@@ -13,6 +13,7 @@
 #include "MapSymbol.h"
 #include "OnPathMapSymbol.h"
 #include "SpriteMapSymbol.h"
+#include "OnSurfaceMapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"
@@ -82,9 +83,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         GL_PUSH_GROUP_MARKER(QString("order %1").arg(mapSymbolsLayerPair.key()));
 
         // Obtain renderables in order how they should be rendered
-        QMultiMap<float, std::shared_ptr<RenderableSymbol>> sortedRenderables;
+        QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
         processOnPathSymbols(mapSymbolsLayer, sortedRenderables, viewport, updatedMapSymbolsResources);
         processSpriteSymbols(mapSymbolsLayer, sortedRenderables, updatedMapSymbolsResources);
+        processOnSurfaceSymbols(mapSymbolsLayer, sortedRenderables, updatedMapSymbolsResources);
 
         // Render symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
         // And rendering needs to be done far->near
@@ -108,6 +110,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(item.value()))
             {
                 renderOnPathSymbol(
+                    renderable,
+                    viewport,
+                    intersections,
+                    lastUsedProgram,
+                    mPerspectiveProjectionView,
+                    distanceFromCamera);
+            }
+            else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(item.value()))
+            {
+                renderOnSurfaceSymbol(
                     renderable,
                     viewport,
                     intersections,
@@ -915,9 +927,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurface()
         "    p.x = in_vs_vertexPosition.x * float(param_vs_symbolSize.x);                                                   ""\n"
         "    p.y = in_vs_vertexPosition.y * float(param_vs_symbolSize.y);                                                   ""\n"
         "    vec4 v;                                                                                                        ""\n"
-        "    v.x = param_vs_symbolOffsetFromTarget.x + (p.x*cos_a - p.y*sin_a);                                             ""\n"
+        "    v.x = param_vs_symbolOffsetFromTarget.x * %TileSize3D%.0 + (p.x*cos_a - p.y*sin_a);                            ""\n"
         "    v.y = 0.0;                                                                                                     ""\n"
-        "    v.z = param_vs_symbolOffsetFromTarget.y + (p.x*sin_a + p.y*cos_a);                                             ""\n"
+        "    v.z = param_vs_symbolOffsetFromTarget.y * %TileSize3D%.0 + (p.x*sin_a + p.y*cos_a);                            ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
         "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
@@ -926,6 +938,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurface()
         "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
+    preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
@@ -1261,7 +1274,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::determineRenderableOnPathSymbo
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::adjustPlacementOfGlyphsOnPath(QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, const glm::vec4& viewport)
 {
     //TODO: improve significantly to place as much SOPs as possible by moving them around. Currently it just centers SOP on path
-    QMutableListIterator<std::shared_ptr<RenderableOnPathSymbol>> itRenderableSOP(entries);
+    QMutableListIterator< std::shared_ptr<RenderableOnPathSymbol> > itRenderableSOP(entries);
     while (itRenderableSOP.hasNext())
     {
         const auto& renderable = itRenderableSOP.next();
@@ -1392,7 +1405,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
     QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources)
 {
-    // Sort pinned symbols by distance to camera
+    // Sort sprite symbols by distance to camera
     for (const auto& symbolEntry : rangeOf(constOf(input)))
     {
         const auto& symbol_ = symbolEntry.key();
@@ -1449,6 +1462,82 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
     }
 }
 
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::processOnSurfaceSymbols(
+    const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
+    QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources)
+{
+    obtainAndSortOnSurfaceSymbols(input, output, updatedMapSymbolsResources);
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
+    const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
+    QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources)
+{
+    // Sort on-surface symbols by distance to camera
+    for (const auto& symbolEntry : rangeOf(constOf(input)))
+    {
+        const auto& symbol_ = symbolEntry.key();
+        const auto& symbol = std::dynamic_pointer_cast<const OnSurfaceMapSymbol>(symbol_);
+        if (!symbol)
+            continue;
+
+        // Take any first resource, since shared symbols can be processed via any resource:
+        const auto& resource = symbolEntry.value().first();
+
+        // Get GPU resource
+        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+        if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+        {
+            // Prepare resource if needed
+            if (!updatedMapSymbolsResources.contains(resource))
+            {
+                if (!resource->prepareForUse())
+                {
+                    resource->setState(MapRendererResourceState::Uploaded);
+                    continue;
+                }
+                updatedMapSymbolsResources.insert(resource);
+            }
+
+            // Capture GPU resource
+            if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
+                gpuResource = tiledResource->getGpuResourceFor(symbol_);
+            else if (const auto keyedResource = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(resource))
+                gpuResource = keyedResource->getGpuResourceFor(symbol_);
+
+            resource->setState(MapRendererResourceState::Uploaded);
+        }
+        if (!gpuResource)
+            continue;
+
+        std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
+        renderable->mapSymbol = symbol;
+        renderable->gpuResource = gpuResource;
+
+        // Calculate location of symbol in world coordinates.
+        renderable->offsetFromTarget31 = symbol->location31 - currentState.target31;
+        renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
+        renderable->positionInWorld = glm::vec3(
+            renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+            0.0f,
+            renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+
+        // Get direction
+        if (symbol->isAzimuthAlignedDirection())
+            renderable->direction = Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f);
+        else
+            renderable->direction = symbol->direction;
+
+        // Get distance from symbol to camera
+        const auto distance = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
+
+        // Insert into map
+        output.insert(distance, qMove(renderable));
+    }
+}
+
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
     const std::shared_ptr<const RenderableSpriteSymbol>& renderable,
     const glm::vec4& viewport,
@@ -1480,11 +1569,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
         // Check intersections
         const auto intersects = intersections.test(boundsInWindow, false,
             [symbolGroupPtr]
-        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-        {
-            // Only accept intersections with symbols from other groups
-            return otherSymbol->groupPtr != symbolGroupPtr;
-        });
+            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+            {
+                // Only accept intersections with symbols from other groups
+                return otherSymbol->groupPtr != symbolGroupPtr;
+            });
         if (intersects)
         {
 #if OSMAND_DEBUG && 0
@@ -1501,12 +1590,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
         const auto& symbolContent = symbol->content;
         const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
             [symbolContent, symbolGroupPtr]
-        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-        {
-            return
-                (otherSymbol->groupPtr != symbolGroupPtr) &&
-                (otherSymbol->content == symbolContent);
-        });
+            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+            {
+                return
+                    (otherSymbol->groupPtr != symbolGroupPtr) &&
+                    (otherSymbol->content == symbolContent);
+            });
         if (hasSimilarContent)
         {
 #if OSMAND_DEBUG && 0
@@ -1536,7 +1625,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
     // Check if correct program is being used
     if (lastUsedProgram != *_spriteSymbolProgram.id)
     {
-        GL_PUSH_GROUP_MARKER("use 'pinned-symbol' program");
+        GL_PUSH_GROUP_MARKER("use 'sprite-symbol' program");
 
         // Set symbol VAO
         gpuAPI->glBindVertexArray_wrapper(_spriteSymbolVAO);
@@ -1570,7 +1659,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
         GL_POP_GROUP_MARKER;
     }
 
-    GL_PUSH_GROUP_MARKER(QString("[%1(%2) pinned \"%3\"]")
+    GL_PUSH_GROUP_MARKER(QString("[%1(%2) sprite symbol \"%3\"]")
         .arg(QString().sprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->getDebugTitle())
         .arg(qPrintable(symbol->content)));
@@ -1788,11 +1877,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             // Check intersections
             const auto intersects = intersections.test(oobb, false,
                 [symbolGroupPtr]
-            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-            {
-                // Only accept intersections with symbols from other groups
-                return otherSymbol->groupPtr != symbolGroupPtr;
-            });
+                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                {
+                    // Only accept intersections with symbols from other groups
+                    return otherSymbol->groupPtr != symbolGroupPtr;
+                });
             if (intersects)
             {
 #if OSMAND_DEBUG && 0
@@ -1809,12 +1898,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             const auto& symbolContent = symbol->content;
             const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
                 [symbolContent, symbolGroupPtr]
-            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-            {
-                return
-                    (otherSymbol->groupPtr != symbolGroupPtr) &&
-                    (otherSymbol->content == symbolContent);
-            });
+                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                {
+                    return
+                        (otherSymbol->groupPtr != symbolGroupPtr) &&
+                        (otherSymbol->content == symbolContent);
+                });
             if (hasSimilarContent)
             {
 #if OSMAND_DEBUG && 0
@@ -1844,7 +1933,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         // Check if correct program is being used
         if (lastUsedProgram != *_onPathSymbol2dProgram.id)
         {
-            GL_PUSH_GROUP_MARKER("use 'symbol-on-path-2d' program");
+            GL_PUSH_GROUP_MARKER("use 'on-path-symbol-2d' program");
 
             // Set symbol VAO
             gpuAPI->glBindVertexArray_wrapper(_onPathSymbol2dVAO);
@@ -2174,11 +2263,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             // Check intersections
             const auto intersects = intersections.test(oobb, false,
                 [symbolGroupPtr]
-            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-            {
-                // Only accept intersections with symbols from other groups
-                return otherSymbol->groupPtr != symbolGroupPtr;
-            });
+                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                {
+                    // Only accept intersections with symbols from other groups
+                    return otherSymbol->groupPtr != symbolGroupPtr;
+                });
             if (intersects)
             {
 #if OSMAND_DEBUG && 0
@@ -2195,12 +2284,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             const auto& symbolContent = symbol->content;
             const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
                 [symbolContent, symbolGroupPtr]
-            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-            {
-                return
-                    (otherSymbol->groupPtr != symbolGroupPtr) &&
-                    (otherSymbol->content == symbolContent);
-            });
+                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                {
+                    return
+                        (otherSymbol->groupPtr != symbolGroupPtr) &&
+                        (otherSymbol->content == symbolContent);
+                });
             if (hasSimilarContent)
             {
 #if OSMAND_DEBUG && 0
@@ -2230,7 +2319,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         // Check if correct program is being used
         if (lastUsedProgram != *_onPathSymbol3dProgram.id)
         {
-            GL_PUSH_GROUP_MARKER("use 'symbol-on-path-3d' program");
+            GL_PUSH_GROUP_MARKER("use 'on-path-symbol-3d' program");
 
             // Set symbol VAO
             gpuAPI->glBindVertexArray_wrapper(_onPathSymbol3dVAO);
@@ -2389,6 +2478,157 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         }
 #endif // OSMAND_DEBUG
     }
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
+    const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+    const glm::vec4& viewport,
+    IntersectionsQuadTree& intersections,
+    int& lastUsedProgram,
+    const glm::mat4x4& mPerspectiveProjectionView,
+    const float distanceFromCamera)
+{
+    const auto gpuAPI = getGPUAPI();
+    const auto renderer = getRenderer();
+
+    const auto& symbol = std::static_pointer_cast<const OnSurfaceMapSymbol>(renderable->mapSymbol);
+    const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+    const auto& symbolGroupPtr = symbol->groupPtr;
+
+//    // Calculate position in screen coordinates (same calculation as done in shader)
+//    const auto symbolOnScreen = glm::project(renderable->positionInWorld, internalState.mCameraView, internalState.mPerspectiveProjection, viewport);
+//
+//    // Get bounds in screen coordinates
+//    auto boundsInWindow = AreaI::fromCenterAndSize(
+//        static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
+//        gpuResource->width, gpuResource->height);
+//    //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
+//    boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+//
+//    if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) != MapSymbol::IgnoredByIntersectionTest)
+//    {
+//#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
+//        // Check intersections
+//        const auto intersects = intersections.test(boundsInWindow, false,
+//            [symbolGroupPtr]
+//            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+//            {
+//                // Only accept intersections with symbols from other groups
+//                return otherSymbol->groupPtr != symbolGroupPtr;
+//            });
+//        if (intersects)
+//        {
+//#if OSMAND_DEBUG && 0
+//            getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+//#endif // OSMAND_DEBUG
+//            return false;
+//        }
+//#endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
+//    }
+//
+//    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
+//    if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
+//    {
+//        const auto& symbolContent = symbol->content;
+//        const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
+//            [symbolContent, symbolGroupPtr]
+//            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+//            {
+//                return
+//                    (otherSymbol->groupPtr != symbolGroupPtr) &&
+//                    (otherSymbol->content == symbolContent);
+//            });
+//        if (hasSimilarContent)
+//        {
+//#if OSMAND_DEBUG && 0
+//            getRenderer()->_debugStage.addRect2D(boundsInWindow.getEnlargedBy(symbol->minDistance), SkColorSetA(SK_ColorRED, 50));
+//            getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 128));
+//#endif // OSMAND_DEBUG
+//            return false;
+//        }
+//    }
+//
+//    if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
+//    {
+//        // Insert into quad-tree
+//        if (!intersections.insert(symbol, boundsInWindow))
+//        {
+//#if OSMAND_DEBUG && 0
+//            getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
+//#endif // OSMAND_DEBUG
+//            return false;
+//        }
+//    }
+
+#if OSMAND_DEBUG && 0
+    getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
+#endif // OSMAND_DEBUG
+
+    // Check if correct program is being used
+    if (lastUsedProgram != *_onSurfaceSymbolProgram.id)
+    {
+        GL_PUSH_GROUP_MARKER("use 'on-surface-symbol' program");
+
+        // Set symbol VAO
+        gpuAPI->glBindVertexArray_wrapper(_onSurfaceSymbolVAO);
+        GL_CHECK_RESULT;
+
+        // Activate program
+        glUseProgram(_onSurfaceSymbolProgram.id);
+        GL_CHECK_RESULT;
+
+        // Set perspective projection-view matrix
+        glUniformMatrix4fv(_onSurfaceSymbolProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Activate texture block for symbol textures
+        glActiveTexture(GL_TEXTURE0 + 0);
+        GL_CHECK_RESULT;
+
+        // Set proper sampler for texture block
+        gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
+
+        lastUsedProgram = _onSurfaceSymbolProgram.id;
+
+        GL_POP_GROUP_MARKER;
+    }
+
+    GL_PUSH_GROUP_MARKER(QString("[%1(%2) on-surface \"%3\"]")
+        .arg(QString().sprintf("%p", symbol->groupPtr))
+        .arg(symbol->group.lock()->getDebugTitle())
+        .arg(qPrintable(symbol->content)));
+
+    // Set symbol offset from target
+    glUniform2f(_onSurfaceSymbolProgram.vs.param.symbolOffsetFromTarget, renderable->offsetFromTarget.x, renderable->offsetFromTarget.y);
+    GL_CHECK_RESULT;
+
+    // Set symbol size
+    glUniform2i(_onSurfaceSymbolProgram.vs.param.symbolSize, gpuResource->width, gpuResource->height);
+    GL_CHECK_RESULT;
+
+    // Set direction
+    glUniform1f(_onSurfaceSymbolProgram.vs.param.direction, qDegreesToRadians(renderable->direction));
+    GL_CHECK_RESULT;
+
+    // Set distance from camera
+    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -distanceFromCamera, 1.0f)).z;
+    glUniform1f(_onSurfaceSymbolProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
+    GL_CHECK_RESULT;
+
+    // Activate symbol texture
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
+    GL_CHECK_RESULT;
+
+    // Apply settings from texture block to texture
+    gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
+
+    // Draw symbol actually
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
+    GL_CHECK_RESULT;
+
+    GL_POP_GROUP_MARKER;
 
     return true;
 }

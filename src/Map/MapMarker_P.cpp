@@ -137,10 +137,9 @@ bool OsmAnd::MapMarker_P::applyChanges()
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
             if (const auto symbol = std::dynamic_pointer_cast<BoundToPointMapSymbol>(symbol_))
-            {
                 symbol->location31 = _position;
-            }
-            else if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceMapSymbol>(symbol_))
+
+            if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceMapSymbol>(symbol_))
             {
                 const auto citDirection = _directions.constFind(symbol->key);
                 if (citDirection != _directions.cend())
@@ -167,13 +166,20 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     // 1. Set of OnSurfaceMapSymbol from onMapSurfaceIcons
     for (const auto& itOnMapSurfaceIcon : rangeOf(constOf(owner->onMapSurfaceIcons)))
     {
+        const auto key = itOnMapSurfaceIcon.key();
         const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
 
         std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
         onMapSurfaceIcon->deepCopyTo(iconClone.get(), onMapSurfaceIcon->getConfig());
 
+        // Get direction
+        float direction = 0.0f;
+        const auto citDirection = _directions.constFind(key);
+        if (citDirection != _directions.cend())
+            direction = *citDirection;
+
         const std::shared_ptr<MapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceMapSymbol(
-            itOnMapSurfaceIcon.key(),
+            key,
             symbolsGroup,
             false, // This symbol is not shareable
             iconClone,
@@ -182,7 +188,8 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels()),
             LanguageId::Invariant,
             PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
-            _position));
+            _position,
+            direction));
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
     }
 
@@ -259,8 +266,9 @@ OsmAnd::MapMarker_P::KeyedOnSurfaceMapSymbol::KeyedOnSurfaceMapSymbol(
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
-    const PointI& location31_)
-    : OnSurfaceMapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_, location31_)
+    const PointI& location31_,
+    const float direction_ /*= 0.0f*/)
+    : OnSurfaceMapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_, location31_, direction_)
     , key(key_)
 {
 }

@@ -30,9 +30,9 @@ namespace OsmAnd
             const float direction = 0.0f);
         virtual ~OnSurfaceMapSymbol();
 
-        // NaN value is considered as "inverted azimuth"
+        // NaN value is considered as "aligned to azimuth"
         float direction;
-        bool isInvertedAzimuthDirection() const;
+        bool isAzimuthAlignedDirection() const;
     };
 }
 

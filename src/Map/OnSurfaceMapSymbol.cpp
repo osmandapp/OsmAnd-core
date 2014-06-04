@@ -20,7 +20,7 @@ OsmAnd::OnSurfaceMapSymbol::~OnSurfaceMapSymbol()
 {
 }
 
-bool OsmAnd::OnSurfaceMapSymbol::isInvertedAzimuthDirection() const
+bool OsmAnd::OnSurfaceMapSymbol::isAzimuthAlignedDirection() const
 {
     return qIsNaN(direction);
 }

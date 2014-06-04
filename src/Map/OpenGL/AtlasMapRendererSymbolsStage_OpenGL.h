@@ -227,6 +227,15 @@ namespace OsmAnd
             glm::vec2 subpathDirectioInWorld;
         };
 
+        struct RenderableOnSurfaceSymbol : RenderableSymbol
+        {
+            PointI offsetFromTarget31;
+            PointF offsetFromTarget;
+            glm::vec3 positionInWorld;
+
+            float direction;
+        };
+
         void processOnPathSymbols(
             const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
@@ -260,6 +269,15 @@ namespace OsmAnd
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
             QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
 
+        void processOnSurfaceSymbols(const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
+            QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources);
+
+        void obtainAndSortOnSurfaceSymbols(
+            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
+            QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
+
         typedef QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > IntersectionsQuadTree;
 
         bool renderSpriteSymbol(
@@ -272,6 +290,14 @@ namespace OsmAnd
 
         bool renderOnPathSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
+            const glm::vec4& viewport,
+            IntersectionsQuadTree& intersections,
+            int& lastUsedProgram,
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
+
+        bool renderOnSurfaceSymbol(
+            const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,
             int& lastUsedProgram,
