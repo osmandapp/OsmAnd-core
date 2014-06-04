@@ -148,7 +148,7 @@ namespace OsmAnd
                 } param;
             } fs;
         } _onPathSymbol3dProgram;
-        GLint _onPathSymbol2dMaxGlyphsPerDrawCall;
+        GLint _onPathSymbol3dMaxGlyphsPerDrawCall;
         void initializeOnPath3D();
         void releaseOnPath3D();
         

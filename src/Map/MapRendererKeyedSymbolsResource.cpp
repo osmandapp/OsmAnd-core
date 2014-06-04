@@ -29,7 +29,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
 
     // Get source
     std::shared_ptr<IMapDataProvider> provider_;
-    bool ok = owner->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(collection), provider_);
+    bool ok = resourcesManager->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(collection), provider_);
     if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
@@ -49,9 +49,19 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     if (!dataAvailable)
         return true;
 
+    // Convert data
+    for (const auto& mapSymbol : constOf(_sourceData->symbolsGroup->symbols))
+    {
+        mapSymbol->bitmap = resourcesManager->adjustBitmapToConfiguration(
+            mapSymbol->bitmap,
+            AlphaChannelData::Present);
+    }
+
     // Register all obtained symbols
+    _mapSymbolsGroup = _sourceData->symbolsGroup;
+    const auto self = shared_from_this();
     for (const auto& symbol : constOf(_sourceData->symbolsGroup->symbols))
-        owner->registerMapSymbol(symbol, shared_from_this());
+        resourcesManager->registerMapSymbol(symbol, self);
 
     return true;
 }
@@ -70,7 +80,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
         // Prepare data and upload to GPU
         assert(static_cast<bool>(symbol->bitmap));
         std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-        ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
+        ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
 
         // If upload have failed, stop
         if (!ok)
@@ -96,7 +106,6 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
     }
 
     // All resources have been uploaded to GPU successfully by this point
-    _mapSymbolsGroup = _sourceData->symbolsGroup;
     _sourceData->releaseConsumableContent();
 
     for (const auto& entry : rangeOf(constOf(uploaded)))
@@ -133,6 +142,11 @@ void OsmAnd::MapRendererKeyedSymbolsResource::unloadFromGPU()
 
 void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
 {
+    // Unregister all obtained symbols
+    const auto self = shared_from_this();
+    for (const auto& symbol : constOf(_mapSymbolsGroup->symbols))
+        resourcesManager->unregisterMapSymbol(symbol, self);
+
     _mapSymbolsGroup.reset();
     _sourceData.reset();
 }

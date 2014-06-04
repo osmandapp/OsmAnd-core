@@ -639,7 +639,10 @@ void OsmAnd::MapRenderer::requestResourcesUploadOrUnload()
         invalidateFrame();
 }
 
-bool OsmAnd::MapRenderer::convertBitmap(const std::shared_ptr<const SkBitmap>& input, std::shared_ptr<const SkBitmap>& output, const AlphaChannelData alphaChannelData /*= AlphaChannelData::Undefined*/) const
+bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
+    const std::shared_ptr<const SkBitmap>& input,
+    std::shared_ptr<const SkBitmap>& output,
+    const AlphaChannelData alphaChannelData /*= AlphaChannelData::Undefined*/) const
 {
     // Check if we're going to convert
     bool doConvert = false;
@@ -698,51 +701,14 @@ bool OsmAnd::MapRenderer::convertBitmap(const std::shared_ptr<const SkBitmap>& i
     return false;
 }
 
-bool OsmAnd::MapRenderer::convertMapTile(std::shared_ptr<const MapTiledData>& mapTile) const
+std::shared_ptr<const SkBitmap> OsmAnd::MapRenderer::adjustBitmapToConfiguration(
+    const std::shared_ptr<const SkBitmap>& input,
+    const AlphaChannelData alphaChannelData /*= AlphaChannelData::Undefined*/) const
 {
-    return convertMapTile(mapTile, mapTile);
-}
-
-bool OsmAnd::MapRenderer::convertMapTile(const std::shared_ptr<const MapTiledData>& input_, std::shared_ptr<const MapTiledData>& output) const
-{
-    if (input_->dataType == MapTiledData::DataType::RasterBitmapTile)
-    {
-        const auto input = std::static_pointer_cast<const RasterBitmapTile>(input_);
-        if (!input)
-            return false;
-
-        std::shared_ptr<const SkBitmap> convertedBitmap;
-        const bool wasConverted = convertBitmap(input->bitmap, convertedBitmap, input->alphaChannelData);
-        if (!wasConverted)
-            return false;
-
-        const auto clone = std::static_pointer_cast<RasterBitmapTile>(input->clone());
-        clone->bitmap = convertedBitmap;
-
-        output = clone;
-        return true;
-    }
-
-    return false;
-}
-
-bool OsmAnd::MapRenderer::convertMapSymbol(std::shared_ptr<const MapSymbol>& mapSymbol) const
-{
-    return convertMapSymbol(mapSymbol, mapSymbol);
-}
-
-bool OsmAnd::MapRenderer::convertMapSymbol(const std::shared_ptr<const MapSymbol>& input, std::shared_ptr<const MapSymbol>& output) const
-{
-    std::shared_ptr<const SkBitmap> convertedBitmap;
-    const bool wasConverted = convertBitmap(input->bitmap, convertedBitmap, AlphaChannelData::Present);
-    if (!wasConverted)
-        return false;
-
-    const auto clone = input->clone();
-    clone->bitmap = convertedBitmap;
-
-    output = clone;
-    return true;
+    std::shared_ptr<const SkBitmap> output;
+    if (adjustBitmapToConfiguration(input, output, alphaChannelData))
+        return output;
+    return input;
 }
 
 bool OsmAnd::MapRenderer::isFrameInvalidated() const

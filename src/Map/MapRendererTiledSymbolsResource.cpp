@@ -40,7 +40,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 
     // Get source of tile
     std::shared_ptr<IMapDataProvider> provider_;
-    bool ok = owner->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(collection), provider_);
+    bool ok = resourcesManager->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(collection), provider_);
     if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapTiledSymbolsProvider>(provider_);
@@ -101,11 +101,22 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     if (!dataAvailable)
         return true;
 
+    // Convert data
+    for (const auto& symbolsGroup : constOf(_sourceData->symbolsGroups))
+    {
+        for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
+        {
+            mapSymbol->bitmap = resourcesManager->adjustBitmapToConfiguration(
+                mapSymbol->bitmap,
+                AlphaChannelData::Present);
+        }
+    }
+
     // Move referenced shared groups
     _referencedSharedGroupsResources = referencedSharedGroupsResources;
 
     // tile->symbolsGroups contains groups that derived from unique symbols, or loaded shared groups
-    for (const auto& symbolsGroup : constOf(tile->symbolsGroups))
+    for (const auto& symbolsGroup : constOf(_sourceData->symbolsGroups))
     {
         if (const auto sharableSymbolsGroup = std::dynamic_pointer_cast<const MapSymbolsGroupShareableById>(symbolsGroup))
         {
@@ -169,7 +180,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
         auto& publishedMapSymbols = _publishedMapSymbols[groupResources->group];
         for (const auto& mapSymbol : constOf(groupResources->group->symbols))
         {
-            owner->registerMapSymbol(mapSymbol, self);
+            resourcesManager->registerMapSymbol(mapSymbol, self);
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
@@ -178,7 +189,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
         auto& publishedMapSymbols = _publishedMapSymbols[groupResources->group];
         for (const auto& mapSymbol : constOf(groupResources->group->symbols))
         {
-            owner->registerMapSymbol(mapSymbol, self);
+            resourcesManager->registerMapSymbol(mapSymbol, self);
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
@@ -210,7 +221,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
             // Prepare data and upload to GPU
             assert(static_cast<bool>(symbol->bitmap));
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-            ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
+            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
 
             // If upload have failed, stop
             if (!ok)
@@ -247,7 +258,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
             // Prepare data and upload to GPU
             assert(static_cast<bool>(symbol->bitmap));
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
-            ok = owner->uploadSymbolToGPU(symbol, resourceInGPU);
+            ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
 
             // If upload have failed, stop
             if (!ok)
@@ -390,7 +401,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     for (const auto& mapSymbols : constOf(_publishedMapSymbols))
     {
         for (const auto& mapSymbol : mapSymbols)
-            owner->unregisterMapSymbol(mapSymbol, self);
+            resourcesManager->unregisterMapSymbol(mapSymbol, self);
     }
     _publishedMapSymbols.clear();
 
@@ -413,7 +424,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 #ifndef Q_COMPILER_RVALUE_REFS
             resourceInGPU.reset();
 #endif //!Q_COMPILER_RVALUE_REFS
-            owner->renderer->getGpuThreadDispatcher().invokeAsync(
+            resourcesManager->renderer->getGpuThreadDispatcher().invokeAsync(
                 [resourceInGPU_]
                 () mutable
                 {
@@ -470,7 +481,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 #ifndef Q_COMPILER_RVALUE_REFS
             resourceInGPU.reset();
 #endif //!Q_COMPILER_RVALUE_REFS
-            owner->renderer->getGpuThreadDispatcher().invokeAsync(
+            resourcesManager->renderer->getGpuThreadDispatcher().invokeAsync(
                 [resourceInGPU_]
                 () mutable
                 {

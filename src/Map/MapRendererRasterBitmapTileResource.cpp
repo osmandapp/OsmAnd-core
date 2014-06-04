@@ -25,7 +25,7 @@ bool OsmAnd::MapRendererRasterBitmapTileResource::obtainData(bool& dataAvailable
     // Get source of tile
     std::shared_ptr<IMapDataProvider> provider_;
     if (const auto link_ = link.lock())
-        ok = owner->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)), provider_);
+        ok = resourcesManager->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)), provider_);
     if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
@@ -40,12 +40,20 @@ bool OsmAnd::MapRendererRasterBitmapTileResource::obtainData(bool& dataAvailable
     _sourceData = std::static_pointer_cast<RasterBitmapTile>(tile);
     dataAvailable = static_cast<bool>(tile);
 
+    // Convert data if such is present
+    if (dataAvailable)
+    {
+        _sourceData->bitmap = resourcesManager->adjustBitmapToConfiguration(
+            _sourceData->bitmap,
+            _sourceData->alphaChannelData);
+    }
+
     return true;
 }
 
 bool OsmAnd::MapRendererRasterBitmapTileResource::uploadToGPU()
 {
-    bool ok = owner->uploadTileToGPU(_sourceData, _resourceInGPU);
+    bool ok = resourcesManager->uploadTileToGPU(_sourceData, _resourceInGPU);
     if (!ok)
         return false;
 

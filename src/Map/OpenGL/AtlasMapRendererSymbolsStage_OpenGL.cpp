@@ -26,7 +26,7 @@
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
     : AtlasMapRendererStage_OpenGL(renderer)
     , _onPathSymbol2dMaxGlyphsPerDrawCall(-1)
-    , _onPathSymbol2dMaxGlyphsPerDrawCall(-1)
+    , _onPathSymbol3dMaxGlyphsPerDrawCall(-1)
 {
 }
 
@@ -71,7 +71,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     IntersectionsQuadTree intersections(currentState.viewport, 8);
 
     // Iterate over symbols by "order" in ascending direction
-    for(const auto& mapSymbolsLayerPair : rangeOf(constOf(mapSymbolsByOrder)))
+    for (const auto& mapSymbolsLayerPair : rangeOf(constOf(mapSymbolsByOrder)))
     {
         // For each "order" value, obtain list of entries and sort them
         const auto& mapSymbolsLayer = mapSymbolsLayerPair.value();
@@ -89,7 +89,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         // And rendering needs to be done far->near
         QMapIterator< float, RenderableSymbolEntry > itRenderableEntry(sortedRenderables);
         itRenderableEntry.toBack();
-        while(itRenderableEntry.hasPrevious())
+        while (itRenderableEntry.hasPrevious())
         {
             const auto& item = itRenderableEntry.previous();
             const auto distanceFromCamera = item.key();
@@ -124,7 +124,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     GL_CHECK_RESULT;
     glBindTexture(GL_TEXTURE_2D, 0);
     GL_CHECK_RESULT;
-    
+
     // Deactivate program
     glUseProgram(0);
     GL_CHECK_RESULT;
@@ -472,7 +472,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     auto& glyphs = _onPathSymbol2dProgram.vs.param.glyphs;
     glyphs.resize(_onPathSymbol2dMaxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
-    for(auto& glyph : glyphs)
+    for (auto& glyph : glyphs)
     {
         const auto glyphStructPrefix =
             QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
@@ -512,7 +512,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     };
     QVector<Vertex> vertices(4 * _onPathSymbol2dMaxGlyphsPerDrawCall);
     auto pVertex = vertices.data();
-    for(int glyphIdx = 0; glyphIdx < _onPathSymbol2dMaxGlyphsPerDrawCall; glyphIdx++)
+    for (int glyphIdx = 0; glyphIdx < _onPathSymbol2dMaxGlyphsPerDrawCall; glyphIdx++)
     {
         auto& p0 = *(pVertex++);
         p0 = templateVertices[0];
@@ -534,7 +534,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     // Index data
     QVector<GLushort> indices(6 * _onPathSymbol2dMaxGlyphsPerDrawCall);
     auto pIndex = indices.data();
-    for(int glyphIdx = 0; glyphIdx < _onPathSymbol2dMaxGlyphsPerDrawCall; glyphIdx++)
+    for (int glyphIdx = 0; glyphIdx < _onPathSymbol2dMaxGlyphsPerDrawCall; glyphIdx++)
     {
         *(pIndex++) = glyphIdx * 4 + 0;
         *(pIndex++) = glyphIdx * 4 + 1;
@@ -594,7 +594,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
-    _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - 8) / 5;
+    _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - 8) / 5;
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -647,7 +647,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(_onPathSymbol2dMaxGlyphsPerDrawCall));
+    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(_onPathSymbol3dMaxGlyphsPerDrawCall));
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
@@ -688,9 +688,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     lookup->lookupLocation(_onPathSymbol3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onPathSymbol3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
     auto& glyphs = _onPathSymbol3dProgram.vs.param.glyphs;
-    glyphs.resize(_onPathSymbol2dMaxGlyphsPerDrawCall);
+    glyphs.resize(_onPathSymbol3dMaxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
-    for(auto& glyph : glyphs)
+    for (auto& glyph : glyphs)
     {
         const auto glyphStructPrefix =
             QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
@@ -728,9 +728,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         { {  0.5f,  0.5f }, 0, { 1.0f - 1.0f, 0.0f } },//TR
         { {  0.5f, -0.5f }, 0, { 1.0f - 1.0f, 1.0f } } //BR
     };
-    QVector<Vertex> vertices(4 * _onPathSymbol2dMaxGlyphsPerDrawCall);
+    QVector<Vertex> vertices(4 * _onPathSymbol3dMaxGlyphsPerDrawCall);
     auto pVertex = vertices.data();
-    for(int glyphIdx = 0; glyphIdx < _onPathSymbol2dMaxGlyphsPerDrawCall; glyphIdx++)
+    for (int glyphIdx = 0; glyphIdx < _onPathSymbol3dMaxGlyphsPerDrawCall; glyphIdx++)
     {
         auto& p0 = *(pVertex++);
         p0 = templateVertices[0];
@@ -750,9 +750,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     }
 
     // Index data
-    QVector<GLushort> indices(6 * _onPathSymbol2dMaxGlyphsPerDrawCall);
+    QVector<GLushort> indices(6 * _onPathSymbol3dMaxGlyphsPerDrawCall);
     auto pIndex = indices.data();
-    for(int glyphIdx = 0; glyphIdx < _onPathSymbol2dMaxGlyphsPerDrawCall; glyphIdx++)
+    for (int glyphIdx = 0; glyphIdx < _onPathSymbol3dMaxGlyphsPerDrawCall; glyphIdx++)
     {
         *(pIndex++) = glyphIdx * 4 + 0;
         *(pIndex++) = glyphIdx * 4 + 1;
@@ -1289,11 +1289,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
         // Check intersections
         const auto intersects = intersections.test(boundsInWindow, false,
             [symbolGroupPtr]
-            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-            {
-                // Only accept intersections with symbols from other groups
-                return otherSymbol->groupPtr != symbolGroupPtr;
-            });
+        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+        {
+            // Only accept intersections with symbols from other groups
+            return otherSymbol->groupPtr != symbolGroupPtr;
+        });
         if (intersects)
         {
 #if OSMAND_DEBUG && 0
@@ -1310,12 +1310,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
         const auto& symbolContent = symbol->content;
         const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
             [symbolContent, symbolGroupPtr]
-            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-            {
-                return
-                    (otherSymbol->groupPtr != symbolGroupPtr) &&
-                    (otherSymbol->content == symbolContent);
-            });
+        (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+        {
+            return
+                (otherSymbol->groupPtr != symbolGroupPtr) &&
+                (otherSymbol->content == symbolContent);
+        });
         if (hasSimilarContent)
         {
 #if OSMAND_DEBUG && 0
@@ -1597,11 +1597,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             // Check intersections
             const auto intersects = intersections.test(oobb, false,
                 [symbolGroupPtr]
-                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                {
-                    // Only accept intersections with symbols from other groups
-                    return otherSymbol->groupPtr != symbolGroupPtr;
-                });
+            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+            {
+                // Only accept intersections with symbols from other groups
+                return otherSymbol->groupPtr != symbolGroupPtr;
+            });
             if (intersects)
             {
 #if OSMAND_DEBUG && 0
@@ -1618,12 +1618,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             const auto& symbolContent = symbol->content;
             const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
                 [symbolContent, symbolGroupPtr]
-                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                {
-                    return
-                        (otherSymbol->groupPtr != symbolGroupPtr) &&
-                        (otherSymbol->content == symbolContent);
-                });
+            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+            {
+                return
+                    (otherSymbol->groupPtr != symbolGroupPtr) &&
+                    (otherSymbol->content == symbolContent);
+            });
             if (hasSimilarContent)
             {
 #if OSMAND_DEBUG && 0
@@ -1983,11 +1983,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             // Check intersections
             const auto intersects = intersections.test(oobb, false,
                 [symbolGroupPtr]
-                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-                {
-                    // Only accept intersections with symbols from other groups
-                    return otherSymbol->groupPtr != symbolGroupPtr;
-                });
+            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+            {
+                // Only accept intersections with symbols from other groups
+                return otherSymbol->groupPtr != symbolGroupPtr;
+            });
             if (intersects)
             {
 #if OSMAND_DEBUG && 0
@@ -2094,7 +2094,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         float widthOfPreviousN = 0.0f;
         while (glyphsDrawn < glyphsCount)
         {
-            const auto glyphsToDraw = qMin(glyphsCount - glyphsDrawn, _onPathSymbol2dMaxGlyphsPerDrawCall);
+            const auto glyphsToDraw = qMin(glyphsCount - glyphsDrawn, _onPathSymbol3dMaxGlyphsPerDrawCall);
 
             for (auto glyphIdx = 0; glyphIdx < glyphsToDraw; glyphIdx++)
             {

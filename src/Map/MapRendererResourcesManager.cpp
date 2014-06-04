@@ -162,16 +162,17 @@ bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources()
 
 bool OsmAnd::MapRendererResourcesManager::uploadTileToGPU(const std::shared_ptr<const MapTiledData>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
-    std::shared_ptr<const MapTiledData> convertedTile;
-    const auto wasConverted = renderer->convertMapTile(mapTile, convertedTile);
-    return renderer->gpuAPI->uploadTileToGPU(wasConverted ? convertedTile : mapTile, outResourceInGPU);
+    return renderer->gpuAPI->uploadTileToGPU(mapTile, outResourceInGPU);
 }
 
 bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
-    std::shared_ptr<const MapSymbol> convertedSymbol;
-    const auto wasConverted = renderer->convertMapSymbol(mapSymbol, convertedSymbol);
-    return renderer->gpuAPI->uploadSymbolToGPU(wasConverted ? convertedSymbol : mapSymbol, outResourceInGPU);
+    return renderer->gpuAPI->uploadSymbolToGPU(mapSymbol, outResourceInGPU);
+}
+
+std::shared_ptr<const SkBitmap> OsmAnd::MapRendererResourcesManager::adjustBitmapToConfiguration(const std::shared_ptr<const SkBitmap>& input, const AlphaChannelData alphaChannelData) const
+{
+    return renderer->adjustBitmapToConfiguration(input, alphaChannelData);
 }
 
 void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const uint32_t updatedMask)

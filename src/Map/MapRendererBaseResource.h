@@ -36,7 +36,7 @@ namespace OsmAnd
     public:
         virtual ~MapRendererBaseResource();
 
-        MapRendererResourcesManager* const owner;
+        MapRendererResourcesManager* const resourcesManager;
         const MapRendererResourceType type;
 
         const bool& isJunk;
