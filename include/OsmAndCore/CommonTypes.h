@@ -1199,6 +1199,59 @@ namespace OsmAnd
 #endif // !defined(SWIG)
     };
 
+    union FColorARGB
+    {
+        inline FColorARGB()
+            : a(1.0f)
+            , r(1.0f)
+            , g(1.0f)
+            , b(1.0f)
+        {
+        }
+
+        inline FColorARGB(const float& a_, const float& r_, const float& g_, const float& b_)
+            : a(a_)
+            , r(r_)
+            , g(g_)
+            , b(b_)
+        {
+        }
+
+#if !defined(SWIG)
+        float value[4];
+        struct
+        {
+            float a;
+            float r;
+            float g;
+            float b;
+        };
+#else
+        // Fake unwrap for SWIG
+        float a, r, g, b;
+#endif // !defined(SWIG)
+
+#if !defined(SWIG)
+        inline bool operator==(const FColorARGB& other) const
+        {
+            return
+                qFuzzyCompare(a, other.a) &&
+                qFuzzyCompare(r, other.r) &&
+                qFuzzyCompare(g, other.g) &&
+                qFuzzyCompare(b, other.b);
+        }
+
+        inline bool operator!=(const FColorARGB& other) const
+        {
+            return
+                !qFuzzyCompare(a, other.a) ||
+                !qFuzzyCompare(r, other.r) ||
+                !qFuzzyCompare(g, other.g) ||
+                !qFuzzyCompare(b, other.b);
+        }
+#endif // !defined(SWIG)
+    };
+
     enum class LanguageId
     {
         Invariant = -1,
