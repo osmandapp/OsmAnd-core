@@ -84,6 +84,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         // Convert all symbols inside group
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
+            assert(static_cast<bool>(rasterizedSymbol->bitmap));
+
             std::shared_ptr<MapSymbol> symbol;
 
             if (const auto spriteSymbol = std::dynamic_pointer_cast<const RasterizedSpriteSymbol>(rasterizedSymbol))
@@ -91,9 +93,9 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 symbol.reset(new SpriteMapSymbol(
                     group,
                     isShareable,
-                    spriteSymbol->bitmap,
                     spriteSymbol->order,
                     MapSymbol::RegularIntersectionProcessing,
+                    spriteSymbol->bitmap,
                     spriteSymbol->content,
                     spriteSymbol->languageId,
                     spriteSymbol->minDistance,
@@ -105,9 +107,9 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 symbol.reset(new OnPathMapSymbol(
                     group,
                     isShareable,
-                    onPathSymbol->bitmap,
                     onPathSymbol->order,
                     MapSymbol::RegularIntersectionProcessing,
+                    onPathSymbol->bitmap,
                     onPathSymbol->content,
                     onPathSymbol->languageId,
                     onPathSymbol->minDistance,
@@ -115,7 +117,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     onPathSymbol->glyphsWidth));
             }
 
-            assert(static_cast<bool>(symbol->bitmap));
             group->symbols.push_back(qMove(symbol));
         }
 

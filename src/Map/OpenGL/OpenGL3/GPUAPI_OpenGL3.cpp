@@ -10,6 +10,7 @@
 #include "MapRendererTypes.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "MapSymbol.h"
+#include "RasterMapSymbol.h"
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT
@@ -271,7 +272,7 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
     return static_cast<TextureFormat>(textureFormat);
 }
 
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol)
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
@@ -327,7 +328,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::
     return sourceFormat;
 }
 
-OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol)
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
     SourceFormat sourceFormat;
     sourceFormat.format = GL_INVALID_ENUM;

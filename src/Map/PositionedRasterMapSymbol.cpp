@@ -1,6 +1,6 @@
-#include "OnPathMapSymbol.h"
+#include "PositionedRasterMapSymbol.h"
 
-OsmAnd::OnPathMapSymbol::OnPathMapSymbol(
+OsmAnd::PositionedRasterMapSymbol::PositionedRasterMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_,
     const bool isShareable_,
     const int order_,
@@ -9,14 +9,22 @@ OsmAnd::OnPathMapSymbol::OnPathMapSymbol(
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
-    const QVector<PointI>& path_,
-    const QVector<float>& glyphsWidth_)
+    const PointI& position31_)
     : RasterMapSymbol(group_, isShareable_, order_, intersectionModeFlags_, bitmap_, content_, languageId_, minDistance_)
-    , path(path_)
-    , glyphsWidth(glyphsWidth_)
+    , position31(position31_)
 {
 }
 
-OsmAnd::OnPathMapSymbol::~OnPathMapSymbol()
+OsmAnd::PositionedRasterMapSymbol::~PositionedRasterMapSymbol()
 {
+}
+
+OsmAnd::PointI OsmAnd::PositionedRasterMapSymbol::getPosition31() const
+{
+    return position31;
+}
+
+void OsmAnd::PositionedRasterMapSymbol::setPosition31(const PointI position)
+{
+    position31 = position;
 }

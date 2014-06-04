@@ -11,6 +11,7 @@
 #include "MapRendererTypes.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "MapSymbol.h"
+#include "RasterMapSymbol.h"
 #include "Logging.h"
 
 #undef GL_CHECK_RESULT
@@ -332,7 +333,7 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat(const s
     return (static_cast<TextureFormat>(format) << 16) | type;
 }
 
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol)
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
     // If current device supports glTexStorage2D, lets use sized format
     if (isSupported_EXT_texture_storage)
@@ -459,7 +460,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std
     return sourceFormat;
 }
 
-OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol)
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
     SourceFormat sourceFormat;
     sourceFormat.format = GL_INVALID_ENUM;

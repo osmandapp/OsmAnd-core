@@ -8,11 +8,11 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/RasterMapSymbol.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API OnPathMapSymbol : public MapSymbol
+    class OSMAND_CORE_API OnPathMapSymbol : public RasterMapSymbol
     {
         Q_DISABLE_COPY(OnPathMapSymbol);
     private:
@@ -21,9 +21,9 @@ namespace OsmAnd
         OnPathMapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
-            const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const IntersectionModeFlags intersectionModeFlags,
+            const std::shared_ptr<const SkBitmap>& bitmap,
             const QString& content,
             const LanguageId& languageId,
             const PointI& minDistance,

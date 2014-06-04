@@ -3,7 +3,7 @@
 
 #include "MapSymbol.h"
 #include "MapSymbolsGroup.h"
-#include "BoundToPointMapSymbol.h"
+#include "PositionedRasterMapSymbol.h"
 #include "SpriteMapSymbol.h"
 #include "OnSurfaceMapSymbol.h"
 #include "QKeyValueIterator.h"
@@ -137,8 +137,8 @@ bool OsmAnd::MapMarker_P::applyChanges()
         {
             symbol_->isHidden = _isHidden;
 
-            if (const auto symbol = std::dynamic_pointer_cast<BoundToPointMapSymbol>(symbol_))
-                symbol->location31 = _position;
+            if (const auto symbol = std::dynamic_pointer_cast<IPositionedMapSymbol>(symbol_))
+                symbol->setPosition31(_position);
 
             if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceMapSymbol>(symbol_))
             {
@@ -183,9 +183,9 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             key,
             symbolsGroup,
             false, // This symbol is not shareable
-            iconClone,
             order++,
             static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+            iconClone,
             QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels()),
             LanguageId::Invariant,
             PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
@@ -206,9 +206,9 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         const std::shared_ptr<MapSymbol> pinIconSymbol(new SpriteMapSymbol(
             symbolsGroup,
             false, // This symbol is not shareable
-            pinIcon,
             order++,
             static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+            pinIcon,
             QString().sprintf("markerGroup(%p:%p)->pinIconBitmap:%p", this, symbolsGroup.get(), pinIcon->getPixels()),
             LanguageId::Invariant,
             PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
@@ -263,14 +263,14 @@ OsmAnd::MapMarker_P::KeyedOnSurfaceMapSymbol::KeyedOnSurfaceMapSymbol(
     const MapMarker::OnSurfaceIconKey key_,
     const std::shared_ptr<MapSymbolsGroup>& group_,
     const bool isShareable_,
-    const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const IntersectionModeFlags intersectionModeFlags_,
+    const std::shared_ptr<const SkBitmap>& bitmap_,
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
     const PointI& location31_)
-    : OnSurfaceMapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_, location31_)
+    : OnSurfaceMapSymbol(group_, isShareable_, order_, intersectionModeFlags_, bitmap_, content_, languageId_, minDistance_, location31_)
     , key(key_)
 {
 }

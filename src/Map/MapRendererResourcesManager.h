@@ -140,6 +140,7 @@ namespace OsmAnd
         std::shared_ptr<const SkBitmap> adjustBitmapToConfiguration(
             const std::shared_ptr<const SkBitmap>& input,
             const AlphaChannelData alphaChannelData) const;
+        void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
         void updateBindings(const MapRendererState& state, const uint32_t updatedMask);
         void updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom);

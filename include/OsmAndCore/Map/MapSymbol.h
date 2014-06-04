@@ -14,7 +14,6 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>
-#include <OsmAndCore/Map/IMapDataProvider.h>
 
 namespace OsmAnd
 {
@@ -38,12 +37,8 @@ namespace OsmAnd
         MapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
-            const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
-            const IntersectionModeFlags intersectionModeFlags,
-            const QString& content,
-            const LanguageId& languageId,
-            const PointI& minDistance);
+            const IntersectionModeFlags intersectionModeFlags);
     public:
         virtual ~MapSymbol();
 
@@ -52,12 +47,8 @@ namespace OsmAnd
 
         const bool isShareable;
 
-        std::shared_ptr<const SkBitmap> bitmap;
         const int order;
         const IntersectionModeFlags intersectionModeFlags;
-        const QString content;
-        const LanguageId languageId;
-        const PointI minDistance;
 
         bool isHidden;
     };

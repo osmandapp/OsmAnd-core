@@ -1451,7 +1451,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
         renderable->gpuResource = gpuResource;
 
         // Calculate location of symbol in world coordinates.
-        renderable->offsetFromTarget31 = symbol->location31 - currentState.target31;
+        renderable->offsetFromTarget31 = symbol->position31 - currentState.target31;
         renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
         renderable->positionInWorld = glm::vec3(
             renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
@@ -1523,7 +1523,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
         renderable->gpuResource = gpuResource;
 
         // Calculate location of symbol in world coordinates.
-        renderable->offsetFromTarget31 = symbol->location31 - currentState.target31;
+        renderable->offsetFromTarget31 = symbol->position31 - currentState.target31;
         renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
         renderable->positionInWorld = glm::vec3(
             renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
@@ -1596,8 +1596,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
         const auto& symbolContent = symbol->content;
         const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
             [symbolContent, symbolGroupPtr]
-            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+            (const std::shared_ptr<const MapSymbol>& otherSymbol_, const IntersectionsQuadTree::BBox& otherBBox) -> bool
             {
+                const auto otherSymbol = std::dynamic_pointer_cast<const RasterMapSymbol>(otherSymbol_);
+                if (!otherSymbol)
+                    return false;
+
                 return
                     (otherSymbol->groupPtr != symbolGroupPtr) &&
                     (otherSymbol->content == symbolContent);
@@ -1904,8 +1908,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             const auto& symbolContent = symbol->content;
             const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
                 [symbolContent, symbolGroupPtr]
-                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                (const std::shared_ptr<const MapSymbol>& otherSymbol_, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                 {
+                    const auto otherSymbol = std::dynamic_pointer_cast<const RasterMapSymbol>(otherSymbol_);
+                    if (!otherSymbol)
+                        return false;
+
                     return
                         (otherSymbol->groupPtr != symbolGroupPtr) &&
                         (otherSymbol->content == symbolContent);
@@ -2290,8 +2298,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             const auto& symbolContent = symbol->content;
             const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
                 [symbolContent, symbolGroupPtr]
-                (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+                (const std::shared_ptr<const MapSymbol>& otherSymbol_, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                 {
+                    const auto otherSymbol = std::dynamic_pointer_cast<const RasterMapSymbol>(otherSymbol_);
+                    if (!otherSymbol)
+                        return false;
+
                     return
                         (otherSymbol->groupPtr != symbolGroupPtr) &&
                         (otherSymbol->content == symbolContent);

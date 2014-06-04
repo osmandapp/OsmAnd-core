@@ -8,6 +8,7 @@
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
+#include "RasterMapSymbol.h"
 #include "IMapTiledSymbolsProvider.h"
 #include "IMapKeyedSymbolsProvider.h"
 #include "MapObject.h"
@@ -173,6 +174,14 @@ bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(const std::shared_pt
 std::shared_ptr<const SkBitmap> OsmAnd::MapRendererResourcesManager::adjustBitmapToConfiguration(const std::shared_ptr<const SkBitmap>& input, const AlphaChannelData alphaChannelData) const
 {
     return renderer->adjustBitmapToConfiguration(input, alphaChannelData);
+}
+
+void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol)
+{
+    if (const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol))
+    {
+        rasterMapSymbol->bitmap.reset();
+    }
 }
 
 void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const uint32_t updatedMask)

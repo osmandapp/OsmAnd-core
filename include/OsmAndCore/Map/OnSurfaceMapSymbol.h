@@ -7,11 +7,11 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/BoundToPointMapSymbol.h>
+#include <OsmAndCore/Map/PositionedRasterMapSymbol.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API OnSurfaceMapSymbol : public BoundToPointMapSymbol
+    class OSMAND_CORE_API OnSurfaceMapSymbol : public PositionedRasterMapSymbol
     {
         Q_DISABLE_COPY(OnSurfaceMapSymbol);
     private:
@@ -20,13 +20,13 @@ namespace OsmAnd
         OnSurfaceMapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
-            const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const IntersectionModeFlags intersectionModeFlags,
+            const std::shared_ptr<const SkBitmap>& bitmap,
             const QString& content,
             const LanguageId& languageId,
             const PointI& minDistance,
-            const PointI& location31);
+            const PointI& position31);
         virtual ~OnSurfaceMapSymbol();
 
         // NaN value is considered as "aligned to azimuth"

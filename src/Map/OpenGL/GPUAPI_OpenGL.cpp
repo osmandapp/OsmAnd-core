@@ -13,6 +13,7 @@
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
+#include "RasterMapSymbol.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -217,7 +218,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileToGPU(const std::shared_ptr< const MapTile
 
 bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
-    return uploadSymbolAsTextureToGPU(symbol, resourceInGPU);
+    if (const auto rasterMapSymbol = std::dynamic_pointer_cast<const RasterMapSymbol>(symbol))
+    {
+        return uploadSymbolAsTextureToGPU(rasterMapSymbol, resourceInGPU);
+    }
+    
+    return false;
 }
 
 bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU( const ResourceInGPU::Type type, const RefInGPU& refInGPU )
@@ -533,7 +539,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< 
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);

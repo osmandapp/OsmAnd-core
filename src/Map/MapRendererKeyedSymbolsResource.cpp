@@ -4,6 +4,7 @@
 #include "IMapKeyedDataProvider.h"
 #include "IMapKeyedSymbolsProvider.h"
 #include "MapSymbol.h"
+#include "RasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "MapRendererKeyedResourcesCollection.h"
 #include "MapRendererResourcesManager.h"
@@ -52,8 +53,12 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     // Convert data
     for (const auto& mapSymbol : constOf(_sourceData->symbolsGroup->symbols))
     {
-        mapSymbol->bitmap = resourcesManager->adjustBitmapToConfiguration(
-            mapSymbol->bitmap,
+        const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol);
+        if (!rasterMapSymbol)
+            continue;
+
+        rasterMapSymbol->bitmap = resourcesManager->adjustBitmapToConfiguration(
+            rasterMapSymbol->bitmap,
             AlphaChannelData::Present);
     }
 
@@ -78,15 +83,13 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
     for (const auto& symbol : constOf(_sourceData->symbolsGroup->symbols))
     {
         // Prepare data and upload to GPU
-        assert(static_cast<bool>(symbol->bitmap));
         std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
         ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
 
         // If upload have failed, stop
         if (!ok)
         {
-            LogPrintf(LogSeverityLevel::Error, "Failed to upload keyed symbol (size %dx%d)",
-                symbol->bitmap->width(), symbol->bitmap->height());
+            LogPrintf(LogSeverityLevel::Error, "Failed to upload keyed symbol");
 
             anyUploadFailed = true;
             break;
@@ -113,8 +116,8 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
         const auto& symbol = entry.key();
         auto& resource = entry.value();
 
-        // Unload bitmap from symbol, since it's uploaded already
-        symbol->bitmap.reset();
+        // Unload GPU data from symbol, since it's uploaded already
+        resourcesManager->releaseGpuUploadableDataFrom(symbol);
 
         // Move reference
         _resourcesInGPU.insert(symbol, qMove(resource));

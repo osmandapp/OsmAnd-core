@@ -68,6 +68,8 @@
 
 namespace OsmAnd
 {
+    class RasterMapSymbol;
+
     enum class GLShaderVariableType
     {
         In,
@@ -188,7 +190,7 @@ namespace OsmAnd
         bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
-        bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
         QStringList _extensions;
@@ -226,9 +228,9 @@ namespace OsmAnd
         virtual GLuint linkProgram(GLuint shadersCount, const GLuint* shaders, const bool autoReleaseShaders = true);
 
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile) = 0;
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapSymbol >& symbol) = 0;
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol) = 0;
         virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile) = 0;
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapSymbol >& symbol) = 0;
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol) = 0;
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format) = 0;
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,

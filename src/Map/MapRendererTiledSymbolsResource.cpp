@@ -5,6 +5,7 @@
 #include "IMapDataProvider.h"
 #include "IMapTiledSymbolsProvider.h"
 #include "MapSymbolsGroupShareableById.h"
+#include "RasterMapSymbol.h"
 #include "MapRendererResourcesManager.h"
 #include "MapRendererBaseResourcesCollection.h"
 #include "MapRendererTiledSymbolsResourcesCollection.h"
@@ -106,8 +107,12 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     {
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
-            mapSymbol->bitmap = resourcesManager->adjustBitmapToConfiguration(
-                mapSymbol->bitmap,
+            const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol);
+            if (!rasterMapSymbol)
+                continue;
+
+            rasterMapSymbol->bitmap = resourcesManager->adjustBitmapToConfiguration(
+                rasterMapSymbol->bitmap,
                 AlphaChannelData::Present);
         }
     }
@@ -219,15 +224,13 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         for (const auto& symbol : constOf(groupResources->group->symbols))
         {
             // Prepare data and upload to GPU
-            assert(static_cast<bool>(symbol->bitmap));
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
             ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
 
             // If upload have failed, stop
             if (!ok)
             {
-                LogPrintf(LogSeverityLevel::Error, "Failed to upload unique symbol (size %dx%d) in %dx%d@%d tile",
-                    symbol->bitmap->width(), symbol->bitmap->height(),
+                LogPrintf(LogSeverityLevel::Error, "Failed to upload unique symbol in %dx%d@%d tile",
                     tileId.x, tileId.y, zoom);
 
                 anyUploadFailed = true;
@@ -256,15 +259,13 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         for (const auto& symbol : constOf(groupResources->group->symbols))
         {
             // Prepare data and upload to GPU
-            assert(static_cast<bool>(symbol->bitmap));
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
             ok = resourcesManager->uploadSymbolToGPU(symbol, resourceInGPU);
 
             // If upload have failed, stop
             if (!ok)
             {
-                LogPrintf(LogSeverityLevel::Error, "Failed to upload unique symbol (size %dx%d) in %dx%d@%d tile",
-                    symbol->bitmap->width(), symbol->bitmap->height(),
+                LogPrintf(LogSeverityLevel::Error, "Failed to upload unique symbol in %dx%d@%d tile",
                     tileId.x, tileId.y, zoom);
 
                 anyUploadFailed = true;
@@ -298,8 +299,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         const auto& symbol = entry.value().first;
         auto& resource = entry.value().second;
 
-        // Unload bitmap from symbol, since it's uploaded already
-        symbol->bitmap.reset();
+        // Unload GPU data from symbol, since it's uploaded already
+        resourcesManager->releaseGpuUploadableDataFrom(symbol);
 
         // Add GPU resource reference
         _symbolToResourceInGpuLUT.insert(symbol, resource);
@@ -313,8 +314,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         auto symbol = entry.value().first;
         auto& resource = entry.value().second;
 
-        // Unload bitmap from symbol, since it's uploaded already
-        symbol->bitmap.reset();
+        // Unload GPU data from symbol, since it's uploaded already
+        resourcesManager->releaseGpuUploadableDataFrom(symbol);
 
         // Add GPU resource reference
         _symbolToResourceInGpuLUT.insert(symbol, resource);
