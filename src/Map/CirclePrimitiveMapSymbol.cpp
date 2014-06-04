@@ -27,7 +27,8 @@ void OsmAnd::CirclePrimitiveMapSymbol::generate(
     indicesCount = 0;
 
     // Allocate space for pointsCount+2 vertices
-    vertices = new Vertex[pointsCount + 2];
+    verticesCount = pointsCount + 2;
+    vertices = new Vertex[verticesCount];
     auto pVertex = vertices;
 
     // First vertex is the center

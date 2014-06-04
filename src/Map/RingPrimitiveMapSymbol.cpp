@@ -28,7 +28,8 @@ void OsmAnd::RingPrimitiveMapSymbol::generateAsLine(
     indicesCount = 0;
 
     // Allocate space for pointsCount vertices
-    vertices = new Vertex[pointsCount];
+    verticesCount = pointsCount;
+    vertices = new Vertex[verticesCount];
     auto pVertex = vertices;
 
     // Generate each vertex

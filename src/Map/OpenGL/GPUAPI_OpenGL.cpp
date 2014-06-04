@@ -512,6 +512,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTiledData >& tile_, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
+    GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
@@ -629,25 +630,58 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
+    // Primitive map symbol has to have vertices, so checks are worthless
+    assert(symbol->vertices && symbol->verticesCount > 0);
+    
+    // Create vertex buffer
+    GLuint vertexBuffer;
+    glGenBuffers(1, &vertexBuffer);
+    GL_CHECK_RESULT;
 
+    // Bind it
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    GL_CHECK_RESULT;
 
-    //// Create vertex buffer and associate it with VAO
-    //glGenBuffers(1, &_spriteSymbolVBO);
-    //GL_CHECK_RESULT;
-    //glBindBuffer(GL_ARRAY_BUFFER, _spriteSymbolVBO);
-    //GL_CHECK_RESULT;
-    //glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
-    //GL_CHECK_RESULT;
+    // Upload data
+    glBufferData(GL_ARRAY_BUFFER, symbol->verticesCount*sizeof(PrimitiveMapSymbol::Vertex), symbol->vertices, GL_STATIC_DRAW);
+    GL_CHECK_RESULT;
 
-    //// Create index buffer and associate it with VAO
-    //glGenBuffers(1, &_spriteSymbolIBO);
-    //GL_CHECK_RESULT;
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _spriteSymbolIBO);
-    //GL_CHECK_RESULT;
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
-    //GL_CHECK_RESULT;
+    // Unbind it
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
 
-    return false;
+    // Create ArrayBuffer resource
+    const std::shared_ptr<ArrayBufferInGPU> vertexBufferResource(new ArrayBufferInGPU(this, reinterpret_cast<RefInGPU>(vertexBuffer), symbol->verticesCount));
+
+    // Primitive map symbol may have no index buffer, so check if it needs to be created
+    std::shared_ptr<ElementArrayBufferInGPU> indexBufferResource;
+    if (symbol->indices != nullptr && symbol->indicesCount > 0)
+    {
+        // Create index buffer
+        GLuint indexBuffer;
+        glGenBuffers(1, &indexBuffer);
+        GL_CHECK_RESULT;
+
+        // Bind it
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+        GL_CHECK_RESULT;
+
+        // Upload data
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, symbol->indicesCount*sizeof(PrimitiveMapSymbol::Index), symbol->indices, GL_STATIC_DRAW);
+        GL_CHECK_RESULT;
+
+        // Unbind it
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL_CHECK_RESULT;
+
+        // Create ElementArrayBuffer resource
+        indexBufferResource.reset(new ElementArrayBufferInGPU(this, reinterpret_cast<RefInGPU>(indexBuffer), symbol->indicesCount));
+    }
+
+    // Create mesh resource
+    resourceInGPU.reset(new MeshInGPU(this, vertexBufferResource, indexBufferResource));
+
+    return true;
 }
 
 void OsmAnd::GPUAPI_OpenGL::waitUntilUploadIsComplete()
