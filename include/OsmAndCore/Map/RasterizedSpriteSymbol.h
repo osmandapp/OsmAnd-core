@@ -35,9 +35,8 @@ namespace OsmAnd
         const PointI location31;
         const PointI offset;
 
-        friend class OsmAnd::Rasterizer_P;
+    friend class OsmAnd::Rasterizer_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZED_PINNED_SYMBOL_H_)

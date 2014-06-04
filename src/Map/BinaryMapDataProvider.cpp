@@ -65,11 +65,6 @@ OsmAnd::BinaryMapDataTile::~BinaryMapDataTile()
     _p->cleanup();
 }
 
-std::shared_ptr<OsmAnd::MapData> OsmAnd::BinaryMapDataTile::clone() const
-{
-    return std::shared_ptr<MapData>(new BinaryMapDataTile(tileFoundation, mapObjects, rasterizerContext, nothingToRasterize, tileId, zoom));
-}
-
 void OsmAnd::BinaryMapDataTile::releaseConsumableContent()
 {
     // There's no consumable data?

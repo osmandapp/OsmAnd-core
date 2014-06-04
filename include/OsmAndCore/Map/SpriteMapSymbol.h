@@ -31,8 +31,6 @@ namespace OsmAnd
         virtual ~SpriteMapSymbol();
 
         PointI offset;
-
-        virtual std::shared_ptr<MapSymbol> clone() const;
     };
 }
 

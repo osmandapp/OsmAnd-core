@@ -33,9 +33,8 @@ namespace OsmAnd
 
         const QVector<SkScalar> glyphsWidth;
 
-        friend class OsmAnd::Rasterizer_P;
+    friend class OsmAnd::Rasterizer_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZED_SYMBOL_ON_PATH_H_)

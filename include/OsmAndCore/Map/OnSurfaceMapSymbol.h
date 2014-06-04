@@ -28,8 +28,6 @@ namespace OsmAnd
             const PointI& minDistance,
             const PointI& location31);
         virtual ~OnSurfaceMapSymbol();
-
-        virtual std::shared_ptr<MapSymbol> clone() const;
     };
 }
 

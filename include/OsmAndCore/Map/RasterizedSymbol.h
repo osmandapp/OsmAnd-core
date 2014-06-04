@@ -40,7 +40,6 @@ namespace OsmAnd
         const LanguageId languageId;
         const PointI minDistance;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZED_SYMBOL_H_)

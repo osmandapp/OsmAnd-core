@@ -79,8 +79,6 @@ namespace OsmAnd
         const std::shared_ptr< const RasterizerContext >& rasterizerContext;
         const bool nothingToRasterize;
 
-        virtual std::shared_ptr<MapData> clone() const;
-
         virtual void releaseConsumableContent();
 
     friend class OsmAnd::BinaryMapDataProvider;

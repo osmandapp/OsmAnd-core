@@ -25,8 +25,3 @@ void OsmAnd::KeyedMapSymbolsData::releaseConsumableContent()
 
     MapKeyedData::releaseConsumableContent();
 }
-
-std::shared_ptr<OsmAnd::MapData> OsmAnd::KeyedMapSymbolsData::clone() const
-{
-    return std::shared_ptr<MapData>(new KeyedMapSymbolsData(symbolsGroup, key));
-}

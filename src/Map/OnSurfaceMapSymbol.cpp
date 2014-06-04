@@ -17,8 +17,3 @@ OsmAnd::OnSurfaceMapSymbol::OnSurfaceMapSymbol(
 OsmAnd::OnSurfaceMapSymbol::~OnSurfaceMapSymbol()
 {
 }
-
-std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::OnSurfaceMapSymbol::clone() const
-{
-    return std::shared_ptr<MapSymbol>(new OnSurfaceMapSymbol(nullptr, isShareable, bitmap, order, intersectionModeFlags, content, languageId, minDistance, location31));
-}

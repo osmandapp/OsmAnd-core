@@ -47,8 +47,6 @@ namespace OsmAnd
         AlphaChannelData alphaChannelData;
         float densityFactor;
 
-        virtual std::shared_ptr<MapData> clone() const;
-
         virtual void releaseConsumableContent();
     };
 }

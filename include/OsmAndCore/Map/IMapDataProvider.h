@@ -55,8 +55,6 @@ namespace OsmAnd
 
         const DataType dataType;
 
-        virtual std::shared_ptr<MapData> clone() const = 0;
-
         const bool& consumableContentReleased;
         virtual void releaseConsumableContent() = 0;
     };

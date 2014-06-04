@@ -58,8 +58,6 @@ namespace OsmAnd
         const QString content;
         const LanguageId languageId;
         const PointI minDistance;
-
-        virtual std::shared_ptr<MapSymbol> clone() const = 0;
     };
 }
 

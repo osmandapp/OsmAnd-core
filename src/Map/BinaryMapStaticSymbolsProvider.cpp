@@ -46,8 +46,3 @@ OsmAnd::BinaryMapStaticSymbolsTile::BinaryMapStaticSymbolsTile(
 OsmAnd::BinaryMapStaticSymbolsTile::~BinaryMapStaticSymbolsTile()
 {
 }
-
-std::shared_ptr<OsmAnd::MapData> OsmAnd::BinaryMapStaticSymbolsTile::clone() const
-{
-    return std::shared_ptr<MapData>(new BinaryMapStaticSymbolsTile(dataTile, symbolsGroups, tileId, zoom));
-}

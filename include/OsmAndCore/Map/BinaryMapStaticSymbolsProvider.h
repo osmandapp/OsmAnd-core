@@ -57,8 +57,6 @@ namespace OsmAnd
 
         const std::shared_ptr<const BinaryMapDataTile> dataTile;
 
-        virtual std::shared_ptr<MapData> clone() const;
- 
     friend class OsmAnd::BinaryMapStaticSymbolsProvider;
     friend class OsmAnd::BinaryMapStaticSymbolsProvider_P;
     };

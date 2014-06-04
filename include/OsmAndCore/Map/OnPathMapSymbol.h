@@ -33,10 +33,7 @@ namespace OsmAnd
 
         const QVector<PointI> path;
         const QVector<float> glyphsWidth;
-
-        virtual std::shared_ptr<MapSymbol> clone() const;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_ON_PATH_MAP_SYMBOL_H_)
