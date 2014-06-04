@@ -29,13 +29,14 @@ namespace OsmAnd
             FColorARGB color;
         };
 #pragma pack(pop)
+        typedef uint16_t Index;
 
         enum class PrimitiveType
         {
             Invalid = -1,
 
-            Triangles,
-            TriangleFan
+            TriangleFan,
+            LineLoop
         };
 
     private:
@@ -48,9 +49,15 @@ namespace OsmAnd
     public:
         virtual ~PrimitiveMapSymbol();
 
-        const Vertex* vertices;
+        Vertex* vertices;
         unsigned int verticesCount;
+
+        Index* indices;
+        unsigned int indicesCount;
+
         PrimitiveType primitiveType;
+
+        void releaseVerticesAndIndices();
 
         PointI position31;
 

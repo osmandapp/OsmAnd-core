@@ -213,6 +213,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileToGPU(const std::shared_ptr< const MapTile
         }
     }
 
+    assert(false);
     return false;
 }
 
@@ -223,6 +224,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(const std::shared_ptr< const MapSy
         return uploadSymbolAsTextureToGPU(rasterMapSymbol, resourceInGPU);
     }
     
+    assert(false);
     return false;
 }
 

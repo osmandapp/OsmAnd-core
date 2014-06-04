@@ -6,6 +6,8 @@
 #include "PositionedRasterMapSymbol.h"
 #include "SpriteMapSymbol.h"
 #include "OnSurfaceMapSymbol.h"
+#include "CirclePrimitiveMapSymbol.h"
+#include "RingPrimitiveMapSymbol.h"
 #include "QKeyValueIterator.h"
 
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
@@ -195,7 +197,25 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
     }
 
-    //TODO: 2. Special OnSurfaceMapSymbol that represents precision circle (PrimitiveOnSurfaceMapSymbol)
+    // Add a circle that represent precision circle
+    const std::shared_ptr<CirclePrimitiveMapSymbol> precisionCircleSymbol(new CirclePrimitiveMapSymbol(
+        symbolsGroup,
+        false, // This symbol is not shareable
+        order++,
+        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup)));
+    precisionCircleSymbol->generate();
+    precisionCircleSymbol->isHidden = _isHidden;
+    symbolsGroup->symbols.push_back(precisionCircleSymbol);
+
+    // Add a ring-line that represent precision circle
+    const std::shared_ptr<RingPrimitiveMapSymbol> precisionRingSymbol(new RingPrimitiveMapSymbol(
+        symbolsGroup,
+        false, // This symbol is not shareable
+        order++,
+        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup)));
+    precisionRingSymbol->generateAsLine();
+    precisionRingSymbol->isHidden = _isHidden;
+    symbolsGroup->symbols.push_back(precisionRingSymbol);
 
     // 3. SpriteMapSymbol with pinIconBitmap as an icon
     if (owner->pinIcon)
