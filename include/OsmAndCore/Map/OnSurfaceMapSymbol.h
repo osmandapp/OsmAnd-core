@@ -26,8 +26,7 @@ namespace OsmAnd
             const QString& content,
             const LanguageId& languageId,
             const PointI& minDistance,
-            const PointI& location31,
-            const float direction = 0.0f);
+            const PointI& location31);
         virtual ~OnSurfaceMapSymbol();
 
         // NaN value is considered as "aligned to azimuth"

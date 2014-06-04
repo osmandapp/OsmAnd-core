@@ -58,6 +58,8 @@ namespace OsmAnd
         const QString content;
         const LanguageId languageId;
         const PointI minDistance;
+
+        bool isHidden;
     };
 }
 

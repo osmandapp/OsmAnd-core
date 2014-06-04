@@ -1113,6 +1113,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainRenderableEntriesForOnPa
     for (const auto& symbolEntry : rangeOf(constOf(input)))
     {
         const auto& symbol_ = symbolEntry.key();
+        if (symbol_->isHidden)
+            continue;
         const auto symbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(symbol_);
         if (!symbol)
             continue;
@@ -1409,6 +1411,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
     for (const auto& symbolEntry : rangeOf(constOf(input)))
     {
         const auto& symbol_ = symbolEntry.key();
+        if (symbol_->isHidden)
+            continue;
         const auto& symbol = std::dynamic_pointer_cast<const SpriteMapSymbol>(symbol_);
         if (!symbol)
             continue;
@@ -1479,6 +1483,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
     for (const auto& symbolEntry : rangeOf(constOf(input)))
     {
         const auto& symbol_ = symbolEntry.key();
+        if (symbol_->isHidden)
+            continue;
         const auto& symbol = std::dynamic_pointer_cast<const OnSurfaceMapSymbol>(symbol_);
         if (!symbol)
             continue;

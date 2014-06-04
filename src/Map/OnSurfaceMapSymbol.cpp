@@ -9,10 +9,9 @@ OsmAnd::OnSurfaceMapSymbol::OnSurfaceMapSymbol(
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
-    const PointI& location31_,
-    const float direction_ /*= 0.0f*/)
+    const PointI& location31_)
     : BoundToPointMapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_, location31_)
-    , direction(direction_)
+    , direction(0.0f)
 {
 }
 

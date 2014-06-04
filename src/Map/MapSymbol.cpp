@@ -18,6 +18,7 @@ OsmAnd::MapSymbol::MapSymbol(
     , content(content_)
     , languageId(languageId_)
     , minDistance(minDistance_)
+    , isHidden(false)
 {
 }
 

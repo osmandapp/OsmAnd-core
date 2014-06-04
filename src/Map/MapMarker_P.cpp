@@ -129,13 +129,14 @@ bool OsmAnd::MapMarker_P::applyChanges()
             continue;
 
         //TODO:
-        //marker->setIsHidden(_isHidden);
         //marker->setIsPrecisionCircleEnabled(_isPrecisionCircleEnabled);
         //marker->setPrecisionCircleRadius(_precisionCircleRadius);
         //marker->setPrecisionCircleBaseColor(_precisionCircleBaseColor);
 
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
+            symbol_->isHidden = _isHidden;
+
             if (const auto symbol = std::dynamic_pointer_cast<BoundToPointMapSymbol>(symbol_))
                 symbol->location31 = _position;
 
@@ -178,7 +179,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         if (citDirection != _directions.cend())
             direction = *citDirection;
 
-        const std::shared_ptr<MapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceMapSymbol(
+        const std::shared_ptr<KeyedOnSurfaceMapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceMapSymbol(
             key,
             symbolsGroup,
             false, // This symbol is not shareable
@@ -188,8 +189,9 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels()),
             LanguageId::Invariant,
             PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
-            _position,
-            direction));
+            _position));
+        onMapSurfaceIconSymbol->direction = direction;
+        onMapSurfaceIconSymbol->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
     }
 
@@ -212,6 +214,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
             _position,
             PointI(0, -pinIcon->height() / 2)));
+        pinIconSymbol->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(pinIconSymbol);
     }
 
@@ -266,9 +269,8 @@ OsmAnd::MapMarker_P::KeyedOnSurfaceMapSymbol::KeyedOnSurfaceMapSymbol(
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
-    const PointI& location31_,
-    const float direction_ /*= 0.0f*/)
-    : OnSurfaceMapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_, location31_, direction_)
+    const PointI& location31_)
+    : OnSurfaceMapSymbol(group_, isShareable_, bitmap_, order_, intersectionModeFlags_, content_, languageId_, minDistance_, location31_)
     , key(key_)
 {
 }
