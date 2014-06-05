@@ -128,7 +128,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
                     viewport,
                     intersections,
                     lastUsedProgram,
-                    mPerspectiveProjectionView);
+                    mPerspectiveProjectionView,
+                    distanceFromCamera);
             }
         }
 
@@ -920,6 +921,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         "uniform highp vec2 param_vs_symbolOffsetFromTarget;                                                                ""\n"
         "uniform float param_vs_direction;                                                                                  ""\n"
         "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
+        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -935,6 +937,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         "    v.z = param_vs_symbolOffsetFromTarget.y * %TileSize3D%.0 + (p.x*sin_a + p.y*cos_a);                            ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
         "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
+        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Prepare texture coordinates
         "    v2f_texCoords = in_vs_vertexTexCoords;                                                                         ""\n"
@@ -980,6 +983,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.direction, "param_vs_direction", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
@@ -1149,6 +1153,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GLShaderVariableType::In);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
@@ -2635,7 +2640,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const glm::vec4& viewport,
     IntersectionsQuadTree& intersections,
     int& lastUsedProgram,
-    const glm::mat4x4& mPerspectiveProjectionView)
+    const glm::mat4x4& mPerspectiveProjectionView,
+    const float distanceFromCamera)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
@@ -2644,7 +2650,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
             viewport,
             intersections,
             lastUsedProgram,
-            mPerspectiveProjectionView);
+            mPerspectiveProjectionView,
+            distanceFromCamera);
     }
     else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
     {
@@ -2653,7 +2660,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
             viewport,
             intersections,
             lastUsedProgram,
-            mPerspectiveProjectionView);
+            mPerspectiveProjectionView,
+            distanceFromCamera);
     }
 
     assert(false);
@@ -2665,7 +2673,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     const glm::vec4& viewport,
     IntersectionsQuadTree& intersections,
     int& lastUsedProgram,
-    const glm::mat4x4& mPerspectiveProjectionView)
+    const glm::mat4x4& mPerspectiveProjectionView,
+    const float distanceFromCamera)
 {
     const auto gpuAPI = getGPUAPI();
     const auto renderer = getRenderer();
@@ -2789,6 +2798,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     glUniform1f(_onSurfaceRasterProgram.vs.param.direction, qDegreesToRadians(renderable->direction));
     GL_CHECK_RESULT;
 
+    // Set distance from camera
+    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -distanceFromCamera, 1.0f)).z;
+    glUniform1f(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
+    GL_CHECK_RESULT;
+
     // Activate symbol texture
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
     GL_CHECK_RESULT;
@@ -2810,7 +2824,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const glm::vec4& viewport,
     IntersectionsQuadTree& intersections,
     int& lastUsedProgram,
-    const glm::mat4x4& mPerspectiveProjectionView)
+    const glm::mat4x4& mPerspectiveProjectionView,
+    const float distanceFromCamera)
 {
     const auto gpuAPI = getGPUAPI();
     const auto renderer = getRenderer();
@@ -2899,6 +2914,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     // Calculate and set model-view-projection matrix (scale -> direction -> position -> camera -> projection)
     const auto mModelViewProjection = mPerspectiveProjectionView * mPosition * mDirection * mScale;
     glUniformMatrix4fv(_onSurfaceVectorProgram.vs.param.mModelViewProjection, 1, GL_FALSE, glm::value_ptr(mModelViewProjection));
+    GL_CHECK_RESULT;
+
+    // Set distance from camera
+    const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -distanceFromCamera, 1.0f)).z;
+    glUniform1f(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
     GL_CHECK_RESULT;
 
     // Deactivate symbol texture

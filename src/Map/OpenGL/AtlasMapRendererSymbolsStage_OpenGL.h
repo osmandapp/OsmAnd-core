@@ -177,6 +177,7 @@ namespace OsmAnd
                     GLlocation symbolOffsetFromTarget;
                     GLlocation direction;
                     GLlocation symbolSize;
+                    GLlocation zDistanceFromCamera;
                 } param;
             } vs;
 
@@ -209,6 +210,7 @@ namespace OsmAnd
 
                     // Per-symbol data
                     GLlocation mModelViewProjection;
+                    GLlocation zDistanceFromCamera;
                 } param;
             } vs;
 
@@ -351,19 +353,22 @@ namespace OsmAnd
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,
             int& lastUsedProgram,
-            const glm::mat4x4& mPerspectiveProjectionView);
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
         bool renderOnSurfaceRasterSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,
             int& lastUsedProgram,
-            const glm::mat4x4& mPerspectiveProjectionView);
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
         bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,
             int& lastUsedProgram,
-            const glm::mat4x4& mPerspectiveProjectionView);
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSymbolsStage_OpenGL();

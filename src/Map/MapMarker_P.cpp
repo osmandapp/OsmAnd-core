@@ -159,7 +159,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         order++,
         static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
         _position));
-    VectorMapSymbol::generateCirclePrimitive(*precisionCircleSymbol, owner->precisionCircleBaseColor.withAlpha(0.35f));
+    VectorMapSymbol::generateCirclePrimitive(*precisionCircleSymbol, owner->precisionCircleBaseColor.withAlpha(0.25f));
     precisionCircleSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
     precisionCircleSymbol->scale = _precisionCircleRadius;
     precisionCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
@@ -173,7 +173,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         order++,
         static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
         _position));
-    VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->precisionCircleBaseColor);
+    VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->precisionCircleBaseColor.withAlpha(0.4f));
     precisionRingSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
     precisionRingSymbol->scale = _precisionCircleRadius;
     precisionRingSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
