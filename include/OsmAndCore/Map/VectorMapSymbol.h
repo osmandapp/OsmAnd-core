@@ -36,6 +36,12 @@ namespace OsmAnd
             LineLoop
         };
 
+        enum class ScaleType
+        {
+            Raw,
+            InMeters
+        };
+
     private:
     protected:
         VectorMapSymbol(
@@ -53,6 +59,9 @@ namespace OsmAnd
         unsigned int indicesCount;
 
         PrimitiveType primitiveType;
+
+        ScaleType scaleType;
+        double scale;
 
         void releaseVerticesAndIndices();
 

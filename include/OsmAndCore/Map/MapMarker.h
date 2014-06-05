@@ -36,7 +36,8 @@ namespace OsmAnd
         MapMarker(
             const int baseOrder,
             const std::shared_ptr<const SkBitmap>& pinIcon,
-            const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons);
+            const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons,
+            const FColorRGB precisionCircleBaseColor);
 
         bool applyChanges();
     public:
@@ -45,6 +46,7 @@ namespace OsmAnd
         const int baseOrder;
         const std::shared_ptr<const SkBitmap> pinIcon;
         const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > onMapSurfaceIcons;
+        const FColorRGB precisionCircleBaseColor;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);
@@ -53,8 +55,6 @@ namespace OsmAnd
         void setIsPrecisionCircleEnabled(const bool enabled);
         double getPrecisionCircleRadius() const;
         void setPrecisionCircleRadius(const double radius);
-        SkColor getPrecisionCircleBaseColor() const;
-        void setPrecisionCircleBaseColor(const SkColor baseColor);
 
         PointI getPosition() const;
         void setPosition(const PointI position);

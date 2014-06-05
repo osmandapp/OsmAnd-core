@@ -38,7 +38,7 @@ namespace OsmAnd
 
         bool _isPrecisionCircleEnabled;
         double _precisionCircleRadius;
-        SkColor _precisionCircleBaseColor;
+        FColorRGB _precisionCircleBaseColor;
 
         PointI _position;
 
@@ -62,8 +62,8 @@ namespace OsmAnd
         void setIsPrecisionCircleEnabled(const bool enabled);
         double getPrecisionCircleRadius() const;
         void setPrecisionCircleRadius(const double radius);
-        SkColor getPrecisionCircleBaseColor() const;
-        void setPrecisionCircleBaseColor(const SkColor baseColor);
+        FColorRGB getPrecisionCircleBaseColor() const;
+        void setPrecisionCircleBaseColor(const FColorRGB baseColor);
 
         PointI getPosition() const;
         void setPosition(const PointI position);

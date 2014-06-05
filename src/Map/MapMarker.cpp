@@ -4,11 +4,13 @@
 OsmAnd::MapMarker::MapMarker(
     const int baseOrder_,
     const std::shared_ptr<const SkBitmap>& pinIcon_,
-    const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons_)
+    const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons_,
+    const FColorRGB precisionCircleBaseColor_)
     : _p(new MapMarker_P(this))
     , baseOrder(baseOrder_)
     , pinIcon(pinIcon_)
     , onMapSurfaceIcons(onMapSurfaceIcons_)
+    , precisionCircleBaseColor(precisionCircleBaseColor_)
 {
 }
 
@@ -44,16 +46,6 @@ double OsmAnd::MapMarker::getPrecisionCircleRadius() const
 void OsmAnd::MapMarker::setPrecisionCircleRadius(const double radius)
 {
     _p->setPrecisionCircleRadius(radius);
-}
-
-SkColor OsmAnd::MapMarker::getPrecisionCircleBaseColor() const
-{
-    return _p->getPrecisionCircleBaseColor();
-}
-
-void OsmAnd::MapMarker::setPrecisionCircleBaseColor(const SkColor baseColor)
-{
-    _p->setPrecisionCircleBaseColor(baseColor);
 }
 
 OsmAnd::PointI OsmAnd::MapMarker::getPosition() const

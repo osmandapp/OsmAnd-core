@@ -11,6 +11,8 @@ OsmAnd::VectorMapSymbol::VectorMapSymbol(
     , indices(nullptr)
     , indicesCount(0)
     , primitiveType(PrimitiveType::Invalid)
+    , scaleType(ScaleType::Raw)
+    , scale(1.0f)
 {
 }
 

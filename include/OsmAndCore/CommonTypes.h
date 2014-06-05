@@ -1158,47 +1158,6 @@ namespace OsmAnd
         ZoomLevelsCount = static_cast<unsigned>(ZoomLevel::MaxZoomLevel) + 1u
     };
 
-    union FColorRGB
-    {
-        inline FColorRGB()
-            : r(1.0f)
-            , g(1.0f)
-            , b(1.0f)
-        {
-        }
-
-        inline FColorRGB(const float& r_, const float& g_, const float& b_)
-            : r(r_)
-            , g(g_)
-            , b(b_)
-        {
-        }
-
-#if !defined(SWIG)
-        float value[3];
-        struct {
-            float r;
-            float g;
-            float b;
-        };
-#else
-        // Fake unwrap for SWIG
-        float r, g, b;
-#endif // !defined(SWIG)
-
-#if !defined(SWIG)
-        inline bool operator==(const FColorRGB& other) const
-        {
-            return qFuzzyCompare(r, other.r) && qFuzzyCompare(g, other.g) && qFuzzyCompare(b, other.b);
-        }
-
-        inline bool operator!=(const FColorRGB& other) const
-        {
-            return !qFuzzyCompare(r, other.r) || !qFuzzyCompare(g, other.g) || !qFuzzyCompare(b, other.b);
-        }
-#endif // !defined(SWIG)
-    };
-
     union FColorARGB
     {
         inline FColorARGB()
@@ -1250,6 +1209,63 @@ namespace OsmAnd
                 !qFuzzyCompare(b, other.b);
         }
 #endif // !defined(SWIG)
+
+        inline FColorARGB withAlpha(const float newAlpha) const
+        {
+            return FColorARGB(newAlpha, r, g, b);
+        }
+    };
+
+    union FColorRGB
+    {
+        inline FColorRGB()
+            : r(1.0f)
+            , g(1.0f)
+            , b(1.0f)
+        {
+        }
+
+        inline FColorRGB(const float& r_, const float& g_, const float& b_)
+            : r(r_)
+            , g(g_)
+            , b(b_)
+        {
+        }
+
+#if !defined(SWIG)
+        float value[3];
+        struct
+        {
+            float r;
+            float g;
+            float b;
+        };
+#else
+        // Fake unwrap for SWIG
+        float r, g, b;
+#endif // !defined(SWIG)
+
+#if !defined(SWIG)
+        inline bool operator==(const FColorRGB& other) const
+        {
+            return qFuzzyCompare(r, other.r) && qFuzzyCompare(g, other.g) && qFuzzyCompare(b, other.b);
+        }
+
+        inline bool operator!=(const FColorRGB& other) const
+        {
+            return !qFuzzyCompare(r, other.r) || !qFuzzyCompare(g, other.g) || !qFuzzyCompare(b, other.b);
+        }
+
+        inline operator FColorARGB() const
+        {
+            return FColorARGB(1.0f, r, g, b);
+        }
+#endif // !defined(SWIG)
+
+        inline FColorARGB withAlpha(const float alpha) const
+        {
+            return FColorARGB(alpha, r, g, b);
+        }
     };
 
     enum class LanguageId

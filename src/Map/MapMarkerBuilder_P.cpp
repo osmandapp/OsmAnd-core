@@ -12,7 +12,6 @@ OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     , _baseOrder(std::numeric_limits<int>::min()) //NOTE: See Rasterizer_P.cpp:1115 - this is needed to keep markers as the most important symbols
     , _isPrecisionCircleEnabled(false)
     , _precisionCircleRadius(0.0)
-    , _precisionCircleBaseColor(SK_ColorTRANSPARENT)
     , _direction(0.0f)
     , owner(owner_)
 {
@@ -78,14 +77,14 @@ void OsmAnd::MapMarkerBuilder_P::setPrecisionCircleRadius(const double radius)
     _precisionCircleRadius = radius;
 }
 
-SkColor OsmAnd::MapMarkerBuilder_P::getPrecisionCircleBaseColor() const
+OsmAnd::FColorRGB OsmAnd::MapMarkerBuilder_P::getPrecisionCircleBaseColor() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _precisionCircleBaseColor;
 }
 
-void OsmAnd::MapMarkerBuilder_P::setPrecisionCircleBaseColor(const SkColor baseColor)
+void OsmAnd::MapMarkerBuilder_P::setPrecisionCircleBaseColor(const FColorRGB baseColor)
 {
     QWriteLocker scopedLocker(&_lock);
 
@@ -153,11 +152,10 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     QReadLocker scopedLocker(&_lock);
 
     // Construct map symbols group for this marker
-    const std::shared_ptr<MapMarker> marker(new MapMarker(_baseOrder, _pinIcon, detachedOf(_onMapSurfaceIcons)));
+    const std::shared_ptr<MapMarker> marker(new MapMarker(_baseOrder, _pinIcon, detachedOf(_onMapSurfaceIcons), _precisionCircleBaseColor));
     marker->setIsHidden(_isHidden);
     marker->setIsPrecisionCircleEnabled(_isPrecisionCircleEnabled);
     marker->setPrecisionCircleRadius(_precisionCircleRadius);
-    marker->setPrecisionCircleBaseColor(_precisionCircleBaseColor);
     marker->setPosition(_position);
     marker->applyChanges();
 

@@ -50,12 +50,12 @@ void OsmAnd::MapMarkerBuilder::setPrecisionCircleRadius(const double radius)
     _p->setPrecisionCircleRadius(radius);
 }
 
-SkColor OsmAnd::MapMarkerBuilder::getPrecisionCircleBaseColor() const
+OsmAnd::FColorRGB OsmAnd::MapMarkerBuilder::getPrecisionCircleBaseColor() const
 {
     return _p->getPrecisionCircleBaseColor();
 }
 
-void OsmAnd::MapMarkerBuilder::setPrecisionCircleBaseColor(const SkColor baseColor)
+void OsmAnd::MapMarkerBuilder::setPrecisionCircleBaseColor(const FColorRGB baseColor)
 {
     _p->setPrecisionCircleBaseColor(baseColor);
 }

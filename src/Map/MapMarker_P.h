@@ -15,6 +15,7 @@
 #include "CommonTypes.h"
 #include "MapSymbolsGroup.h"
 #include "OnSurfaceRasterMapSymbol.h"
+#include "OnSurfaceVectorMapSymbol.h"
 #include "MapMarker.h"
 
 namespace OsmAnd
@@ -38,7 +39,6 @@ namespace OsmAnd
 
         bool _isPrecisionCircleEnabled;
         double _precisionCircleRadius;
-        SkColor _precisionCircleBaseColor;
 
         PointI _position;
 
@@ -84,6 +84,22 @@ namespace OsmAnd
         friend class OsmAnd::MapMarker_P;
         };
 
+        class PrecisionCircleMapSymbol : public OnSurfaceVectorMapSymbol
+        {
+        private:
+        protected:
+            PrecisionCircleMapSymbol(
+                const std::shared_ptr<MapSymbolsGroup>& group,
+                const bool isShareable,
+                const int order,
+                const IntersectionModeFlags intersectionModeFlags,
+                const PointI& position31);
+        public:
+            virtual ~PrecisionCircleMapSymbol();
+
+        friend class OsmAnd::MapMarker_P;
+        };
+
         bool applyChanges();
 
         std::shared_ptr<MapSymbolsGroup> inflateSymbolsGroup() const;
@@ -103,8 +119,6 @@ namespace OsmAnd
         void setIsPrecisionCircleEnabled(const bool enabled);
         double getPrecisionCircleRadius() const;
         void setPrecisionCircleRadius(const double radius);
-        SkColor getPrecisionCircleBaseColor() const;
-        void setPrecisionCircleBaseColor(const SkColor baseColor);
 
         PointI getPosition() const;
         void setPosition(const PointI position);
