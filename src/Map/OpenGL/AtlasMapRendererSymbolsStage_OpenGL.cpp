@@ -2879,7 +2879,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         scaleFactor = symbol->scale;
         break;
     case VectorMapSymbol::ScaleType::InMeters:
-        scaleFactor = symbol->scale * 0.05;//TODO:Utilities::getMetersPerTileUnit;
+        scaleFactor = symbol->scale / Utilities::getMetersPerTileUnit(
+            currentState.zoomBase,
+            symbol->getPosition31().y >> (ZoomLevel31 - currentState.zoomBase),
+            AtlasMapRenderer::TileSize3D);
         break;
     }
     const auto mScale = glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
@@ -2889,7 +2892,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
         0.0f,
         renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D));
-    LogPrintf(LogSeverityLevel::Debug, "%f %f", renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D, renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);// it should stick to zero...
 
     // Calculate direction
     const auto mDirection = glm::rotate(renderable->direction, glm::vec3(0.0f, -1.0f, 0.0f));
