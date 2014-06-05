@@ -177,7 +177,6 @@ namespace OsmAnd
                     GLlocation symbolOffsetFromTarget;
                     GLlocation direction;
                     GLlocation symbolSize;
-                    GLlocation zDistanceFromCamera;
                 } param;
             } vs;
 
@@ -193,6 +192,37 @@ namespace OsmAnd
         } _onSurfaceRasterProgram;
         void initializeOnSurfaceRaster();
         void releaseOnSurfaceRaster();
+
+        struct OnSurfaceVectorProgram {
+            GLname id;
+
+            struct {
+                // Input data
+                struct {
+                    GLlocation vertexPosition;
+                    GLlocation vertexColor;
+                } in;
+
+                // Parameters
+                struct {
+                    // Common data
+
+                    // Per-symbol data
+                    GLlocation mModelViewProjection;
+                } param;
+            } vs;
+
+            struct {
+                // Parameters
+                struct {
+                    // Common data
+
+                    // Per-symbol data
+                } param;
+            } fs;
+        } _onSurfaceVectorProgram;
+        void initializeOnSurfaceVector();
+        void releaseOnSurfaceVector();
 
         struct RenderableSymbol
         {
@@ -321,22 +351,19 @@ namespace OsmAnd
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,
             int& lastUsedProgram,
-            const glm::mat4x4& mPerspectiveProjectionView,
-            const float distanceFromCamera);
+            const glm::mat4x4& mPerspectiveProjectionView);
         bool renderOnSurfaceRasterSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,
             int& lastUsedProgram,
-            const glm::mat4x4& mPerspectiveProjectionView,
-            const float distanceFromCamera);
+            const glm::mat4x4& mPerspectiveProjectionView);
         bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,
             int& lastUsedProgram,
-            const glm::mat4x4& mPerspectiveProjectionView,
-            const float distanceFromCamera);
+            const glm::mat4x4& mPerspectiveProjectionView);
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSymbolsStage_OpenGL();

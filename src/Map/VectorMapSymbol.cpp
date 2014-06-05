@@ -65,7 +65,7 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     pVertex += 1;
 
     // Generate each next vertex except the last one
-    const auto step = M_2_PI / pointsCount;
+    const auto step = (2.0*M_PI) / pointsCount;
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
         const auto angle = step * pointIdx;
@@ -78,7 +78,7 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
 
     // Close the fan
     pVertex->positionXY[0] = mapSymbol.vertices[1].positionXY[0];
-    pVertex->positionXY[1] = mapSymbol.vertices[1].positionXY[0];
+    pVertex->positionXY[1] = mapSymbol.vertices[1].positionXY[1];
     pVertex->color = color;
 }
 
@@ -103,7 +103,7 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
     auto pVertex = mapSymbol.vertices;
 
     // Generate each vertex
-    const auto step = M_2_PI / pointsCount;
+    const auto step = (2.0*M_PI) / pointsCount;
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
         const auto angle = step * pointIdx;

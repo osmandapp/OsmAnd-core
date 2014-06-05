@@ -119,6 +119,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
 
             if (const auto symbol = std::dynamic_pointer_cast<PrecisionCircleMapSymbol>(symbol_))
             {
+                symbol->setPosition31(_position);
                 symbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
                 symbol->scale = _precisionCircleRadius;
             }
@@ -151,8 +152,35 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         std::const_pointer_cast<MapMarker_P>(shared_from_this())));
     int order = owner->baseOrder;
 
-    // Map marker consists one or more of:
-    // 1. Set of OnSurfaceMapSymbol from onMapSurfaceIcons
+    // Add a circle that represent precision circle
+    const std::shared_ptr<PrecisionCircleMapSymbol> precisionCircleSymbol(new PrecisionCircleMapSymbol(
+        symbolsGroup,
+        false, // This symbol is not shareable
+        order++,
+        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+        _position));
+    VectorMapSymbol::generateCirclePrimitive(*precisionCircleSymbol, owner->precisionCircleBaseColor.withAlpha(0.35f));
+    precisionCircleSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
+    precisionCircleSymbol->scale = _precisionCircleRadius;
+    precisionCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
+    precisionCircleSymbol->direction = Q_SNAN;
+    symbolsGroup->symbols.push_back(precisionCircleSymbol);
+
+    // Add a ring-line that represent precision circle
+    const std::shared_ptr<PrecisionCircleMapSymbol> precisionRingSymbol(new PrecisionCircleMapSymbol(
+        symbolsGroup,
+        false, // This symbol is not shareable
+        order++,
+        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+        _position));
+    VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->precisionCircleBaseColor);
+    precisionRingSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
+    precisionRingSymbol->scale = _precisionCircleRadius;
+    precisionRingSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
+    precisionRingSymbol->direction = Q_SNAN;
+    symbolsGroup->symbols.push_back(precisionRingSymbol);
+
+    // Set of OnSurfaceMapSymbol from onMapSurfaceIcons
     for (const auto& itOnMapSurfaceIcon : rangeOf(constOf(owner->onMapSurfaceIcons)))
     {
         const auto key = itOnMapSurfaceIcon.key();
@@ -183,33 +211,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
     }
 
-    // Add a circle that represent precision circle
-    const std::shared_ptr<PrecisionCircleMapSymbol> precisionCircleSymbol(new PrecisionCircleMapSymbol(
-        symbolsGroup,
-        false, // This symbol is not shareable
-        order++,
-        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
-        _position));
-    VectorMapSymbol::generateCirclePrimitive(*precisionCircleSymbol, owner->precisionCircleBaseColor.withAlpha(0.35f));
-    precisionCircleSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
-    precisionCircleSymbol->scale = _precisionCircleRadius;
-    precisionCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-    symbolsGroup->symbols.push_back(precisionCircleSymbol);
-
-    // Add a ring-line that represent precision circle
-    const std::shared_ptr<PrecisionCircleMapSymbol> precisionRingSymbol(new PrecisionCircleMapSymbol(
-        symbolsGroup,
-        false, // This symbol is not shareable
-        order++,
-        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
-        _position));
-    VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->precisionCircleBaseColor);
-    precisionRingSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
-    precisionCircleSymbol->scale = _precisionCircleRadius;
-    precisionCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-    symbolsGroup->symbols.push_back(precisionRingSymbol);
-
-    // 3. SpriteMapSymbol with pinIconBitmap as an icon
+    // SpriteMapSymbol with pinIconBitmap as an icon
     if (owner->pinIcon)
     {
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
