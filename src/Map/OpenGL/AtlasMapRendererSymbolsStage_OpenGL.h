@@ -19,10 +19,10 @@ namespace OsmAnd
     {
     private:
     protected:
-        GLname _spriteSymbolVAO;
-        GLname _spriteSymbolVBO;
-        GLname _spriteSymbolIBO;
-        struct SpriteSymbolProgram {
+        GLname _billboardRasterSymbolVAO;
+        GLname _billboardRasterSymbolVBO;
+        GLname _billboardRasterSymbolIBO;
+        struct BillboardRasterSymbolProgram {
             GLname id;
 
             struct {
@@ -56,9 +56,9 @@ namespace OsmAnd
                     GLlocation sampler;
                 } param;
             } fs;
-        } _spriteSymbolProgram;
-        void initializeSprite();
-        void releaseSprite();
+        } _billboardRasterProgram;
+        void initializeBillboardRaster();
+        void releaseBillboardRaster();
 
         struct Glyph
         {
@@ -105,7 +105,7 @@ namespace OsmAnd
                     GLlocation sampler;
                 } param;
             } fs;
-        } _onPathSymbol2dProgram;
+        } _onPath2dProgram;
         GLint _onPathSymbol2dMaxGlyphsPerDrawCall;
         void initializeOnPath2D();
         void releaseOnPath2D();
@@ -147,7 +147,7 @@ namespace OsmAnd
                     GLlocation sampler;
                 } param;
             } fs;
-        } _onPathSymbol3dProgram;
+        } _onPath3dProgram;
         GLint _onPathSymbol3dMaxGlyphsPerDrawCall;
         void initializeOnPath3D();
         void releaseOnPath3D();
@@ -155,9 +155,9 @@ namespace OsmAnd
         void initializeOnPath();
         void releaseOnPath();
 
-        GLname _onSurfaceSymbolVAO;
-        GLname _onSurfaceSymbolVBO;
-        GLname _onSurfaceSymbolIBO;
+        GLname _onSurfaceRasterSymbolVAO;
+        GLname _onSurfaceRasterSymbolVBO;
+        GLname _onSurfaceRasterSymbolIBO;
         struct OnSurfaceSymbolProgram {
             GLname id;
 
@@ -190,9 +190,9 @@ namespace OsmAnd
                     GLlocation sampler;
                 } param;
             } fs;
-        } _onSurfaceSymbolProgram;
-        void initializeOnSurface();
-        void releaseOnSurface();
+        } _onSurfaceRasterProgram;
+        void initializeOnSurfaceRaster();
+        void releaseOnSurfaceRaster();
 
         struct RenderableSymbol
         {
@@ -202,9 +202,9 @@ namespace OsmAnd
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
         };
 
-        struct RenderableSpriteSymbol : RenderableSymbol
+        struct RenderableBillboardSymbol : RenderableSymbol
         {
-            virtual ~RenderableSpriteSymbol();
+            virtual ~RenderableBillboardSymbol();
 
             PointI offsetFromTarget31;
             PointF offsetFromTarget;
@@ -265,12 +265,12 @@ namespace OsmAnd
 
         void sortRenderableOnPathSymbols(const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output);
 
-        void processSpriteSymbols(
+        void processBillboardSymbols(
             const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
             QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
 
-        void obtainAndSortSpriteSymbols(
+        void obtainAndSortBillboardSymbols(
             const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
             QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
@@ -284,19 +284,24 @@ namespace OsmAnd
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
             QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
 
-        void processVectorSymbols(const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
-            QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources);
-
-        void obtainAndSortVectorSymbols(
-            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
-            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
-            QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
-
         typedef QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > IntersectionsQuadTree;
 
-        bool renderSpriteSymbol(
-            const std::shared_ptr<const RenderableSpriteSymbol>& renderable,
+        bool renderBillboardSymbol(
+            const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
+            const glm::vec4& viewport,
+            IntersectionsQuadTree& intersections,
+            int& lastUsedProgram,
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
+        bool renderBillboardRasterSymbol(
+            const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
+            const glm::vec4& viewport,
+            IntersectionsQuadTree& intersections,
+            int& lastUsedProgram,
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
+        bool renderBillboardVectorSymbol(
+            const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,
             int& lastUsedProgram,
@@ -312,6 +317,20 @@ namespace OsmAnd
             const float distanceFromCamera);
 
         bool renderOnSurfaceSymbol(
+            const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+            const glm::vec4& viewport,
+            IntersectionsQuadTree& intersections,
+            int& lastUsedProgram,
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
+        bool renderOnSurfaceRasterSymbol(
+            const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+            const glm::vec4& viewport,
+            IntersectionsQuadTree& intersections,
+            int& lastUsedProgram,
+            const glm::mat4x4& mPerspectiveProjectionView,
+            const float distanceFromCamera);
+        bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             const glm::vec4& viewport,
             IntersectionsQuadTree& intersections,

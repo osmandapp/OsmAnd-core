@@ -119,8 +119,8 @@ bool OsmAnd::MapMarker_P::applyChanges()
 
             if (const auto symbol = std::dynamic_pointer_cast<PrecisionCircleMapSymbol>(symbol_))
             {
-                symbol->isHidden = _isPrecisionCircleEnabled;
-                symbol->radiusInMeters = _precisionCircleRadius;
+                symbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
+                symbol->scale = _precisionCircleRadius;
             }
 
             if (const auto symbol = std::dynamic_pointer_cast<IBillboardMapSymbol>(symbol_))
@@ -191,7 +191,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
         _position));
     VectorMapSymbol::generateCirclePrimitive(*precisionCircleSymbol, owner->precisionCircleBaseColor.withAlpha(0.35f));
-    precisionCircleSymbol->isHidden = _isHidden;
+    precisionCircleSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
     precisionCircleSymbol->scale = _precisionCircleRadius;
     precisionCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
     symbolsGroup->symbols.push_back(precisionCircleSymbol);
@@ -204,7 +204,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
         _position));
     VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->precisionCircleBaseColor);
-    precisionRingSymbol->isHidden = _isHidden;
+    precisionRingSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
     precisionCircleSymbol->scale = _precisionCircleRadius;
     precisionCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
     symbolsGroup->symbols.push_back(precisionRingSymbol);

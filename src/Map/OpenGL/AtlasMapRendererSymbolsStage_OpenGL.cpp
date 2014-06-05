@@ -11,6 +11,9 @@
 
 #include "AtlasMapRenderer_OpenGL.h"
 #include "MapSymbol.h"
+#include "VectorMapSymbol.h"
+#include "BillboardVectorMapSymbol.h"
+#include "OnSurfaceVectorMapSymbol.h"
 #include "OnPathMapSymbol.h"
 #include "BillboardRasterMapSymbol.h"
 #include "OnSurfaceRasterMapSymbol.h"
@@ -37,9 +40,9 @@ OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::~AtlasMapRendererSymbolsStage_OpenG
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
 {
-    initializeSprite();
+    initializeBillboardRaster();
     initializeOnPath();
-    initializeOnSurface();
+    initializeOnSurfaceRaster();
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
@@ -85,7 +88,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
         // Obtain renderables in order how they should be rendered
         QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
         processOnPathSymbols(mapSymbolsLayer, sortedRenderables, viewport, updatedMapSymbolsResources);
-        processSpriteSymbols(mapSymbolsLayer, sortedRenderables, updatedMapSymbolsResources);
+        processBillboardSymbols(mapSymbolsLayer, sortedRenderables, updatedMapSymbolsResources);
         processOnSurfaceSymbols(mapSymbolsLayer, sortedRenderables, updatedMapSymbolsResources);
 
         // Render symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
@@ -97,9 +100,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
             const auto& item = itRenderableEntry.previous();
             const auto distanceFromCamera = item.key();
 
-            if (const auto& renderable = std::dynamic_pointer_cast<const RenderableSpriteSymbol>(item.value()))
+            if (const auto& renderable = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(item.value()))
             {
-                renderSpriteSymbol(
+                renderBillboardSymbol(
                     renderable,
                     viewport,
                     intersections,
@@ -151,12 +154,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release()
 {
-    releaseSprite();
+    releaseBillboardRaster();
     releaseOnPath();
-    releaseOnSurface();
+    releaseOnSurfaceRaster();
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeSprite()
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -261,20 +264,20 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeSprite()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _spriteSymbolProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_spriteSymbolProgram.id);
+    _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders);
+    assert(_billboardRasterProgram.id);
 
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_spriteSymbolProgram.id);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.param.viewport, "param_vs_viewport", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_spriteSymbolProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_spriteSymbolProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id);
+    lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -308,31 +311,31 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeSprite()
     const auto indicesCount = 6;
 
     // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_spriteSymbolVAO);
+    gpuAPI->glGenVertexArrays_wrapper(1, &_billboardRasterSymbolVAO);
     GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_spriteSymbolVAO);
+    gpuAPI->glBindVertexArray_wrapper(_billboardRasterSymbolVAO);
     GL_CHECK_RESULT;
 
     // Create vertex buffer and associate it with VAO
-    glGenBuffers(1, &_spriteSymbolVBO);
+    glGenBuffers(1, &_billboardRasterSymbolVBO);
     GL_CHECK_RESULT;
-    glBindBuffer(GL_ARRAY_BUFFER, _spriteSymbolVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, _billboardRasterSymbolVBO);
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_spriteSymbolProgram.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_billboardRasterProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_spriteSymbolProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    glVertexAttribPointer(*_billboardRasterProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_spriteSymbolProgram.vs.in.vertexTexCoords);
+    glEnableVertexAttribArray(*_billboardRasterProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_spriteSymbolProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    glVertexAttribPointer(*_billboardRasterProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
-    glGenBuffers(1, &_spriteSymbolIBO);
+    glGenBuffers(1, &_billboardRasterSymbolIBO);
     GL_CHECK_RESULT;
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _spriteSymbolIBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _billboardRasterSymbolIBO);
     GL_CHECK_RESULT;
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
@@ -341,37 +344,37 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeSprite()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseSprite()
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
 {
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_spriteSymbolIBO)
+    if (_billboardRasterSymbolIBO)
     {
-        glDeleteBuffers(1, &_spriteSymbolIBO);
+        glDeleteBuffers(1, &_billboardRasterSymbolIBO);
         GL_CHECK_RESULT;
-        _spriteSymbolIBO.reset();
+        _billboardRasterSymbolIBO.reset();
     }
-    if (_spriteSymbolVBO)
+    if (_billboardRasterSymbolVBO)
     {
-        glDeleteBuffers(1, &_spriteSymbolVBO);
+        glDeleteBuffers(1, &_billboardRasterSymbolVBO);
         GL_CHECK_RESULT;
-        _spriteSymbolVBO.reset();
+        _billboardRasterSymbolVBO.reset();
     }
-    if (_spriteSymbolVAO)
+    if (_billboardRasterSymbolVAO)
     {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_spriteSymbolVAO);
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_billboardRasterSymbolVAO);
         GL_CHECK_RESULT;
-        _spriteSymbolVAO.reset();
+        _billboardRasterSymbolVAO.reset();
     }
 
-    if (_spriteSymbolProgram.id)
+    if (_billboardRasterProgram.id)
     {
-        glDeleteProgram(_spriteSymbolProgram.id);
+        glDeleteProgram(_billboardRasterProgram.id);
         GL_CHECK_RESULT;
-        _spriteSymbolProgram = SpriteSymbolProgram();
+        _billboardRasterProgram = BillboardRasterSymbolProgram();
     }
 }
 
@@ -473,17 +476,17 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _onPathSymbol2dProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onPathSymbol2dProgram.id);
+    _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders);
+    assert(_onPath2dProgram.id);
 
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPathSymbol2dProgram.id);
-    lookup->lookupLocation(_onPathSymbol2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPathSymbol2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPathSymbol2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPathSymbol2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPathSymbol2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPathSymbol2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
-    auto& glyphs = _onPathSymbol2dProgram.vs.param.glyphs;
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath2dProgram.id);
+    lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
+    lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
+    auto& glyphs = _onPath2dProgram.vs.param.glyphs;
     glyphs.resize(_onPathSymbol2dMaxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
     for (auto& glyph : glyphs)
@@ -497,7 +500,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
         lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
     }
-    lookup->lookupLocation(_onPathSymbol2dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -572,18 +575,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), vertices.constData(), GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_onPathSymbol2dProgram.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_onPath2dProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_onPathSymbol2dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    glVertexAttribPointer(*_onPath2dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_onPathSymbol2dProgram.vs.in.glyphIndex);
+    glEnableVertexAttribArray(*_onPath2dProgram.vs.in.glyphIndex);
     GL_CHECK_RESULT;
     //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
-    glVertexAttribPointer(*_onPathSymbol2dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
+    glVertexAttribPointer(*_onPath2dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_onPathSymbol2dProgram.vs.in.vertexTexCoords);
+    glEnableVertexAttribArray(*_onPath2dProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_onPathSymbol2dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    glVertexAttribPointer(*_onPath2dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -691,17 +694,17 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _onPathSymbol3dProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onPathSymbol3dProgram.id);
+    _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders);
+    assert(_onPath3dProgram.id);
 
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPathSymbol3dProgram.id);
-    lookup->lookupLocation(_onPathSymbol3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPathSymbol3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPathSymbol3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPathSymbol3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPathSymbol3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPathSymbol3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
-    auto& glyphs = _onPathSymbol3dProgram.vs.param.glyphs;
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath3dProgram.id);
+    lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
+    lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
+    auto& glyphs = _onPath3dProgram.vs.param.glyphs;
     glyphs.resize(_onPathSymbol3dMaxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
     for (auto& glyph : glyphs)
@@ -715,7 +718,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
         lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
     }
-    lookup->lookupLocation(_onPathSymbol3dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -790,18 +793,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(Vertex), vertices.constData(), GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_onPathSymbol3dProgram.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_onPath3dProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_onPathSymbol3dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    glVertexAttribPointer(*_onPath3dProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_onPathSymbol3dProgram.vs.in.glyphIndex);
+    glEnableVertexAttribArray(*_onPath3dProgram.vs.in.glyphIndex);
     GL_CHECK_RESULT;
     //NOTE: Here should be glVertexAttribIPointer to omit conversion float->int, but it's not supported in OpenGLES 2.0
-    glVertexAttribPointer(*_onPathSymbol3dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
+    glVertexAttribPointer(*_onPath3dProgram.vs.in.glyphIndex, 1, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, glyphIndex)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_onPathSymbol3dProgram.vs.in.vertexTexCoords);
+    glEnableVertexAttribArray(*_onPath3dProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_onPathSymbol3dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    glVertexAttribPointer(*_onPath3dProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
@@ -848,11 +851,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
         _onPathSymbol2dVAO.reset();
     }
 
-    if (_onPathSymbol2dProgram.id)
+    if (_onPath2dProgram.id)
     {
-        glDeleteProgram(_onPathSymbol2dProgram.id);
+        glDeleteProgram(_onPath2dProgram.id);
         GL_CHECK_RESULT;
-        _onPathSymbol2dProgram = OnPathSymbol2dProgram();
+        _onPath2dProgram = OnPathSymbol2dProgram();
     }
 }
 
@@ -882,15 +885,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
         _onPathSymbol3dVAO.reset();
     }
 
-    if (_onPathSymbol3dProgram.id)
+    if (_onPath3dProgram.id)
     {
-        glDeleteProgram(_onPathSymbol3dProgram.id);
+        glDeleteProgram(_onPath3dProgram.id);
         GL_CHECK_RESULT;
-        _onPathSymbol3dProgram = OnPathSymbol3dProgram();
+        _onPath3dProgram = OnPathSymbol3dProgram();
     }
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurface()
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -968,18 +971,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurface()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _onSurfaceSymbolProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onSurfaceSymbolProgram.id);
+    _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders);
+    assert(_onSurfaceRasterProgram.id);
 
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceSymbolProgram.id);
-    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.direction, "param_vs_direction", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceSymbolProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceSymbolProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceRasterProgram.id);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.direction, "param_vs_direction", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1013,31 +1016,31 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurface()
     const auto indicesCount = 6;
 
     // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_onSurfaceSymbolVAO);
+    gpuAPI->glGenVertexArrays_wrapper(1, &_onSurfaceRasterSymbolVAO);
     GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_onSurfaceSymbolVAO);
+    gpuAPI->glBindVertexArray_wrapper(_onSurfaceRasterSymbolVAO);
     GL_CHECK_RESULT;
 
     // Create vertex buffer and associate it with VAO
-    glGenBuffers(1, &_onSurfaceSymbolVBO);
+    glGenBuffers(1, &_onSurfaceRasterSymbolVBO);
     GL_CHECK_RESULT;
-    glBindBuffer(GL_ARRAY_BUFFER, _onSurfaceSymbolVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, _onSurfaceRasterSymbolVBO);
     GL_CHECK_RESULT;
     glBufferData(GL_ARRAY_BUFFER, verticesCount * sizeof(Vertex), vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_onSurfaceSymbolProgram.vs.in.vertexPosition);
+    glEnableVertexAttribArray(*_onSurfaceRasterProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_onSurfaceSymbolProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
+    glVertexAttribPointer(*_onSurfaceRasterProgram.vs.in.vertexPosition, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, positionXY)));
     GL_CHECK_RESULT;
-    glEnableVertexAttribArray(*_onSurfaceSymbolProgram.vs.in.vertexTexCoords);
+    glEnableVertexAttribArray(*_onSurfaceRasterProgram.vs.in.vertexTexCoords);
     GL_CHECK_RESULT;
-    glVertexAttribPointer(*_onSurfaceSymbolProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
+    glVertexAttribPointer(*_onSurfaceRasterProgram.vs.in.vertexTexCoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<GLvoid*>(offsetof(Vertex, textureUV)));
     GL_CHECK_RESULT;
 
     // Create index buffer and associate it with VAO
-    glGenBuffers(1, &_onSurfaceSymbolIBO);
+    glGenBuffers(1, &_onSurfaceRasterSymbolIBO);
     GL_CHECK_RESULT;
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _onSurfaceSymbolIBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _onSurfaceRasterSymbolIBO);
     GL_CHECK_RESULT;
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
@@ -1046,37 +1049,37 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurface()
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurface()
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
 {
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_onSurfaceSymbolIBO)
+    if (_onSurfaceRasterSymbolIBO)
     {
-        glDeleteBuffers(1, &_onSurfaceSymbolIBO);
+        glDeleteBuffers(1, &_onSurfaceRasterSymbolIBO);
         GL_CHECK_RESULT;
-        _onSurfaceSymbolIBO.reset();
+        _onSurfaceRasterSymbolIBO.reset();
     }
-    if (_onSurfaceSymbolVBO)
+    if (_onSurfaceRasterSymbolVBO)
     {
-        glDeleteBuffers(1, &_onSurfaceSymbolVBO);
+        glDeleteBuffers(1, &_onSurfaceRasterSymbolVBO);
         GL_CHECK_RESULT;
-        _onSurfaceSymbolVBO.reset();
+        _onSurfaceRasterSymbolVBO.reset();
     }
-    if (_onSurfaceSymbolVAO)
+    if (_onSurfaceRasterSymbolVAO)
     {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_onSurfaceSymbolVAO);
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_onSurfaceRasterSymbolVAO);
         GL_CHECK_RESULT;
-        _onSurfaceSymbolVAO.reset();
+        _onSurfaceRasterSymbolVAO.reset();
     }
 
-    if (_onSurfaceSymbolProgram.id)
+    if (_onSurfaceRasterProgram.id)
     {
-        glDeleteProgram(_onSurfaceSymbolProgram.id);
+        glDeleteProgram(_onSurfaceRasterProgram.id);
         GL_CHECK_RESULT;
-        _onSurfaceSymbolProgram = OnSurfaceSymbolProgram();
+        _onSurfaceRasterProgram = OnSurfaceSymbolProgram();
     }
 }
 
@@ -1394,15 +1397,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::sortRenderableOnPathSymbols(co
     }
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::processSpriteSymbols(
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::processBillboardSymbols(
     const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
     QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources)
 {
-    obtainAndSortSpriteSymbols(input, output, updatedMapSymbolsResources);
+    obtainAndSortBillboardSymbols(input, output, updatedMapSymbolsResources);
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
+void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortBillboardSymbols(
     const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
     QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources)
@@ -1413,7 +1416,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
         const auto& symbol_ = symbolEntry.key();
         if (symbol_->isHidden)
             continue;
-        const auto& symbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(symbol_);
+        const auto& symbol = std::dynamic_pointer_cast<const IBillboardMapSymbol>(symbol_);
         if (!symbol)
             continue;
 
@@ -1446,12 +1449,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
         if (!gpuResource)
             continue;
 
-        std::shared_ptr<RenderableSpriteSymbol> renderable(new RenderableSpriteSymbol());
-        renderable->mapSymbol = symbol;
+        std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
+        renderable->mapSymbol = symbol_;
         renderable->gpuResource = gpuResource;
 
         // Calculate location of symbol in world coordinates.
-        renderable->offsetFromTarget31 = symbol->position31 - currentState.target31;
+        renderable->offsetFromTarget31 = symbol->getPosition31() - currentState.target31;
         renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
         renderable->positionInWorld = glm::vec3(
             renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
@@ -1485,7 +1488,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
         const auto& symbol_ = symbolEntry.key();
         if (symbol_->isHidden)
             continue;
-        const auto& symbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(symbol_);
+        const auto& symbol = std::dynamic_pointer_cast<const IOnSurfaceMapSymbol>(symbol_);
         if (!symbol)
             continue;
 
@@ -1519,11 +1522,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
             continue;
 
         std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
-        renderable->mapSymbol = symbol;
+        renderable->mapSymbol = symbol_;
         renderable->gpuResource = gpuResource;
 
         // Calculate location of symbol in world coordinates.
-        renderable->offsetFromTarget31 = symbol->position31 - currentState.target31;
+        renderable->offsetFromTarget31 = symbol->getPosition31() - currentState.target31;
         renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
         renderable->positionInWorld = glm::vec3(
             renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
@@ -1534,7 +1537,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
         if (symbol->isAzimuthAlignedDirection())
             renderable->direction = Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f);
         else
-            renderable->direction = symbol->direction;
+            renderable->direction = symbol->getDirection();
 
         // Get distance from symbol to camera
         const auto distance = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
@@ -1544,8 +1547,41 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
     }
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
-    const std::shared_ptr<const RenderableSpriteSymbol>& renderable,
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
+    const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
+    const glm::vec4& viewport,
+    IntersectionsQuadTree& intersections,
+    int& lastUsedProgram,
+    const glm::mat4x4& mPerspectiveProjectionView,
+    const float distanceFromCamera)
+{
+    if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
+    {
+        return renderBillboardRasterSymbol(
+            renderable,
+            viewport,
+            intersections,
+            lastUsedProgram,
+            mPerspectiveProjectionView,
+            distanceFromCamera);
+    }
+    else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
+    {
+        return renderBillboardVectorSymbol(
+            renderable,
+            viewport,
+            intersections,
+            lastUsedProgram,
+            mPerspectiveProjectionView,
+            distanceFromCamera);
+    }
+
+    assert(false);
+    return false;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
+    const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
     const glm::vec4& viewport,
     IntersectionsQuadTree& intersections,
     int& lastUsedProgram,
@@ -1633,28 +1669,28 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
 #endif // OSMAND_DEBUG
 
     // Check if correct program is being used
-    if (lastUsedProgram != *_spriteSymbolProgram.id)
+    if (lastUsedProgram != *_billboardRasterProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'sprite-symbol' program");
 
         // Set symbol VAO
-        gpuAPI->glBindVertexArray_wrapper(_spriteSymbolVAO);
+        gpuAPI->glBindVertexArray_wrapper(_billboardRasterSymbolVAO);
         GL_CHECK_RESULT;
 
         // Activate program
-        glUseProgram(_spriteSymbolProgram.id);
+        glUseProgram(_billboardRasterProgram.id);
         GL_CHECK_RESULT;
 
         // Set perspective projection-view matrix
-        glUniformMatrix4fv(_spriteSymbolProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mPerspectiveProjectionView));
+        glUniformMatrix4fv(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mPerspectiveProjectionView));
         GL_CHECK_RESULT;
 
         // Set orthographic projection matrix
-        glUniformMatrix4fv(_spriteSymbolProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
+        glUniformMatrix4fv(_billboardRasterProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
         GL_CHECK_RESULT;
 
         // Set viewport
-        glUniform4fv(_spriteSymbolProgram.vs.param.viewport, 1, glm::value_ptr(viewport));
+        glUniform4fv(_billboardRasterProgram.vs.param.viewport, 1, glm::value_ptr(viewport));
         GL_CHECK_RESULT;
 
         // Activate texture block for symbol textures
@@ -1664,7 +1700,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
 
-        lastUsedProgram = _spriteSymbolProgram.id;
+        lastUsedProgram = _billboardRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
@@ -1675,19 +1711,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
         .arg(qPrintable(symbol->content)));
 
     // Set symbol offset from target
-    glUniform2f(_spriteSymbolProgram.vs.param.symbolOffsetFromTarget, renderable->offsetFromTarget.x, renderable->offsetFromTarget.y);
+    glUniform2f(_billboardRasterProgram.vs.param.symbolOffsetFromTarget, renderable->offsetFromTarget.x, renderable->offsetFromTarget.y);
     GL_CHECK_RESULT;
 
     // Set symbol size
-    glUniform2i(_spriteSymbolProgram.vs.param.symbolSize, gpuResource->width, gpuResource->height);
+    glUniform2i(_billboardRasterProgram.vs.param.symbolSize, gpuResource->width, gpuResource->height);
     GL_CHECK_RESULT;
 
     // Set distance from camera to symbol
-    glUniform1f(_spriteSymbolProgram.vs.param.distanceFromCamera, distanceFromCamera);
+    glUniform1f(_billboardRasterProgram.vs.param.distanceFromCamera, distanceFromCamera);
     GL_CHECK_RESULT;
 
     // Set on-screen offset
-    glUniform2i(_spriteSymbolProgram.vs.param.onScreenOffset, symbol->offset.x, -symbol->offset.y);
+    glUniform2i(_billboardRasterProgram.vs.param.onScreenOffset, symbol->offset.x, -symbol->offset.y);
     GL_CHECK_RESULT;
 
     // Activate symbol texture
@@ -1704,6 +1740,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
     GL_POP_GROUP_MARKER;
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardVectorSymbol(
+    const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
+    const glm::vec4& viewport,
+    IntersectionsQuadTree& intersections,
+    int& lastUsedProgram,
+    const glm::mat4x4& mPerspectiveProjectionView,
+    const float distanceFromCamera)
+{
+    assert(false);
+    return false;
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
@@ -1945,7 +1993,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
 #endif // OSMAND_DEBUG
 
         // Check if correct program is being used
-        if (lastUsedProgram != *_onPathSymbol2dProgram.id)
+        if (lastUsedProgram != *_onPath2dProgram.id)
         {
             GL_PUSH_GROUP_MARKER("use 'on-path-symbol-2d' program");
 
@@ -1954,11 +2002,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             GL_CHECK_RESULT;
 
             // Activate program
-            glUseProgram(_onPathSymbol2dProgram.id);
+            glUseProgram(_onPath2dProgram.id);
             GL_CHECK_RESULT;
 
             // Set orthographic projection matrix
-            glUniformMatrix4fv(_onPathSymbol2dProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
+            glUniformMatrix4fv(_onPath2dProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
             GL_CHECK_RESULT;
 
             // Activate texture block for symbol textures
@@ -1968,7 +2016,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             // Set proper sampler for texture block
             gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
 
-            lastUsedProgram = _onPathSymbol2dProgram.id;
+            lastUsedProgram = _onPath2dProgram.id;
 
             GL_POP_GROUP_MARKER;
         }
@@ -1979,11 +2027,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             .arg(qPrintable(symbol->content)));
 
         // Set glyph height
-        glUniform1f(_onPathSymbol2dProgram.vs.param.glyphHeight, gpuResource->height);
+        glUniform1f(_onPath2dProgram.vs.param.glyphHeight, gpuResource->height);
         GL_CHECK_RESULT;
 
         // Set distance from camera to symbol
-        glUniform1f(_onPathSymbol2dProgram.vs.param.distanceFromCamera, distanceFromCamera);
+        glUniform1f(_onPath2dProgram.vs.param.distanceFromCamera, distanceFromCamera);
         GL_CHECK_RESULT;
 
         // Activate symbol texture
@@ -1996,7 +2044,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         // Draw chains of glyphs
         int glyphsDrawn = 0;
         auto pGlyph = glyphs.constData();
-        auto pGlyphVS = _onPathSymbol2dProgram.vs.param.glyphs.constData();
+        auto pGlyphVS = _onPath2dProgram.vs.param.glyphs.constData();
         float widthOfPreviousN = 0.0f;
         while (glyphsDrawn < glyphsCount)
         {
@@ -2335,7 +2383,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
 #endif // OSMAND_DEBUG
 
         // Check if correct program is being used
-        if (lastUsedProgram != *_onPathSymbol3dProgram.id)
+        if (lastUsedProgram != *_onPath3dProgram.id)
         {
             GL_PUSH_GROUP_MARKER("use 'on-path-symbol-3d' program");
 
@@ -2344,12 +2392,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             GL_CHECK_RESULT;
 
             // Activate program
-            glUseProgram(_onPathSymbol3dProgram.id);
+            glUseProgram(_onPath3dProgram.id);
             GL_CHECK_RESULT;
 
             // Set view-projection matrix
             const auto mViewProjection = internalState.mPerspectiveProjection * internalState.mCameraView;
-            glUniformMatrix4fv(_onPathSymbol3dProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mViewProjection));
+            glUniformMatrix4fv(_onPath3dProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mViewProjection));
             GL_CHECK_RESULT;
 
             // Activate texture block for symbol textures
@@ -2359,7 +2407,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             // Set proper sampler for texture block
             gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
 
-            lastUsedProgram = _onPathSymbol3dProgram.id;
+            lastUsedProgram = _onPath3dProgram.id;
 
             GL_POP_GROUP_MARKER;
         }
@@ -2370,12 +2418,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             .arg(qPrintable(symbol->content)));
 
         // Set glyph height
-        glUniform1f(_onPathSymbol3dProgram.vs.param.glyphHeight, gpuResource->height*projectionScale);
+        glUniform1f(_onPath3dProgram.vs.param.glyphHeight, gpuResource->height*projectionScale);
         GL_CHECK_RESULT;
 
         // Set distance from camera
         const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -distanceFromCamera, 1.0f)).z;
-        glUniform1f(_onPathSymbol3dProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
+        glUniform1f(_onPath3dProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
         GL_CHECK_RESULT;
 
         // Activate symbol texture
@@ -2388,7 +2436,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         // Draw chains of glyphs
         int glyphsDrawn = 0;
         auto pGlyph = glyphs.constData();
-        auto pGlyphVS = _onPathSymbol3dProgram.vs.param.glyphs.constData();
+        auto pGlyphVS = _onPath3dProgram.vs.param.glyphs.constData();
         float widthOfPreviousN = 0.0f;
         while (glyphsDrawn < glyphsCount)
         {
@@ -2508,6 +2556,39 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const glm::mat4x4& mPerspectiveProjectionView,
     const float distanceFromCamera)
 {
+    if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
+    {
+        return renderOnSurfaceRasterSymbol(
+            renderable,
+            viewport,
+            intersections,
+            lastUsedProgram,
+            mPerspectiveProjectionView,
+            distanceFromCamera);
+    }
+    else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
+    {
+        return renderOnSurfaceVectorSymbol(
+            renderable,
+            viewport,
+            intersections,
+            lastUsedProgram,
+            mPerspectiveProjectionView,
+            distanceFromCamera);
+    }
+
+    assert(false);
+    return false;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
+    const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+    const glm::vec4& viewport,
+    IntersectionsQuadTree& intersections,
+    int& lastUsedProgram,
+    const glm::mat4x4& mPerspectiveProjectionView,
+    const float distanceFromCamera)
+{
     const auto gpuAPI = getGPUAPI();
     const auto renderer = getRenderer();
 
@@ -2585,20 +2666,20 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
 #endif // OSMAND_DEBUG
 
     // Check if correct program is being used
-    if (lastUsedProgram != *_onSurfaceSymbolProgram.id)
+    if (lastUsedProgram != *_onSurfaceRasterProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-symbol' program");
 
         // Set symbol VAO
-        gpuAPI->glBindVertexArray_wrapper(_onSurfaceSymbolVAO);
+        gpuAPI->glBindVertexArray_wrapper(_onSurfaceRasterSymbolVAO);
         GL_CHECK_RESULT;
 
         // Activate program
-        glUseProgram(_onSurfaceSymbolProgram.id);
+        glUseProgram(_onSurfaceRasterProgram.id);
         GL_CHECK_RESULT;
 
         // Set perspective projection-view matrix
-        glUniformMatrix4fv(_onSurfaceSymbolProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mPerspectiveProjectionView));
+        glUniformMatrix4fv(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mPerspectiveProjectionView));
         GL_CHECK_RESULT;
 
         // Activate texture block for symbol textures
@@ -2608,7 +2689,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
 
-        lastUsedProgram = _onSurfaceSymbolProgram.id;
+        lastUsedProgram = _onSurfaceRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
     }
@@ -2619,20 +2700,20 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
         .arg(qPrintable(symbol->content)));
 
     // Set symbol offset from target
-    glUniform2f(_onSurfaceSymbolProgram.vs.param.symbolOffsetFromTarget, renderable->offsetFromTarget.x, renderable->offsetFromTarget.y);
+    glUniform2f(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, renderable->offsetFromTarget.x, renderable->offsetFromTarget.y);
     GL_CHECK_RESULT;
 
     // Set symbol size
-    glUniform2i(_onSurfaceSymbolProgram.vs.param.symbolSize, gpuResource->width*internalState.pixelInWorldProjectionScale, gpuResource->height*internalState.pixelInWorldProjectionScale);
+    glUniform2i(_onSurfaceRasterProgram.vs.param.symbolSize, gpuResource->width*internalState.pixelInWorldProjectionScale, gpuResource->height*internalState.pixelInWorldProjectionScale);
     GL_CHECK_RESULT;
 
     // Set direction
-    glUniform1f(_onSurfaceSymbolProgram.vs.param.direction, qDegreesToRadians(renderable->direction));
+    glUniform1f(_onSurfaceRasterProgram.vs.param.direction, qDegreesToRadians(renderable->direction));
     GL_CHECK_RESULT;
 
     // Set distance from camera
     const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -distanceFromCamera, 1.0f)).z;
-    glUniform1f(_onSurfaceSymbolProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
+    glUniform1f(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
     GL_CHECK_RESULT;
 
     // Activate symbol texture
@@ -2651,11 +2732,23 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     return true;
 }
 
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
+    const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+    const glm::vec4& viewport,
+    IntersectionsQuadTree& intersections,
+    int& lastUsedProgram,
+    const glm::mat4x4& mPerspectiveProjectionView,
+    const float distanceFromCamera)
+{
+    assert(false);
+    return false;
+}
+
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::RenderableSymbol::~RenderableSymbol()
 {
 }
 
-OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::RenderableSpriteSymbol::~RenderableSpriteSymbol()
+OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::RenderableBillboardSymbol::~RenderableBillboardSymbol()
 {
 }
 
