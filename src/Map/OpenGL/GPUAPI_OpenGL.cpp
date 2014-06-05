@@ -14,7 +14,7 @@
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
-#include "PrimitiveMapSymbol.h"
+#include "VectorMapSymbol.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -224,7 +224,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(const std::shared_ptr< const MapSy
     {
         return uploadSymbolAsTextureToGPU(rasterMapSymbol, resourceInGPU);
     }
-    else if (const auto primitiveMapSymbol = std::dynamic_pointer_cast<const PrimitiveMapSymbol>(symbol))
+    else if (const auto primitiveMapSymbol = std::dynamic_pointer_cast<const VectorMapSymbol>(symbol))
     {
         return uploadSymbolAsMeshToGPU(primitiveMapSymbol, resourceInGPU);
     }
@@ -624,7 +624,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const PrimitiveMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -643,7 +643,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const
     GL_CHECK_RESULT;
 
     // Upload data
-    glBufferData(GL_ARRAY_BUFFER, symbol->verticesCount*sizeof(PrimitiveMapSymbol::Vertex), symbol->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, symbol->verticesCount*sizeof(VectorMapSymbol::Vertex), symbol->vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it
@@ -667,7 +667,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const
         GL_CHECK_RESULT;
 
         // Upload data
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, symbol->indicesCount*sizeof(PrimitiveMapSymbol::Index), symbol->indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, symbol->indicesCount*sizeof(VectorMapSymbol::Index), symbol->indices, GL_STATIC_DRAW);
         GL_CHECK_RESULT;
 
         // Unbind it

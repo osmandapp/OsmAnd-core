@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_PRIMITIVE_MAP_SYMBOL_H_
-#define _OSMAND_CORE_PRIMITIVE_MAP_SYMBOL_H_
+#ifndef _OSMAND_CORE_VECTOR_MAP_SYMBOL_H_
+#define _OSMAND_CORE_VECTOR_MAP_SYMBOL_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -12,11 +12,11 @@
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API PrimitiveMapSymbol
+    class OSMAND_CORE_API VectorMapSymbol
         : public MapSymbol
         , public IPositionedMapSymbol
     {
-        Q_DISABLE_COPY(PrimitiveMapSymbol);
+        Q_DISABLE_COPY(VectorMapSymbol);
 
     public:
 #pragma pack(push, 1)
@@ -41,13 +41,13 @@ namespace OsmAnd
 
     private:
     protected:
-        PrimitiveMapSymbol(
+        VectorMapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
             const int order,
             const IntersectionModeFlags intersectionModeFlags);
     public:
-        virtual ~PrimitiveMapSymbol();
+        virtual ~VectorMapSymbol();
 
         Vertex* vertices;
         unsigned int verticesCount;
@@ -66,4 +66,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_PRIMITIVE_MAP_SYMBOL_H_)
+#endif // !defined(_OSMAND_CORE_VECTOR_MAP_SYMBOL_H_)

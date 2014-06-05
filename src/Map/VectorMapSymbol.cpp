@@ -1,6 +1,6 @@
-#include "PrimitiveMapSymbol.h"
+#include "VectorMapSymbol.h"
 
-OsmAnd::PrimitiveMapSymbol::PrimitiveMapSymbol(
+OsmAnd::VectorMapSymbol::VectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_,
     const bool isShareable_,
     const int order_,
@@ -14,22 +14,22 @@ OsmAnd::PrimitiveMapSymbol::PrimitiveMapSymbol(
 {
 }
 
-OsmAnd::PrimitiveMapSymbol::~PrimitiveMapSymbol()
+OsmAnd::VectorMapSymbol::~VectorMapSymbol()
 {
     releaseVerticesAndIndices();
 }
 
-OsmAnd::PointI OsmAnd::PrimitiveMapSymbol::getPosition31() const
+OsmAnd::PointI OsmAnd::VectorMapSymbol::getPosition31() const
 {
     return position31;
 }
 
-void OsmAnd::PrimitiveMapSymbol::setPosition31(const PointI position)
+void OsmAnd::VectorMapSymbol::setPosition31(const PointI position)
 {
     position31 = position;
 }
 
-void OsmAnd::PrimitiveMapSymbol::releaseVerticesAndIndices()
+void OsmAnd::VectorMapSymbol::releaseVerticesAndIndices()
 {
     if (vertices != nullptr)
     {

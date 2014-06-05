@@ -69,7 +69,7 @@
 namespace OsmAnd
 {
     class RasterMapSymbol;
-    class PrimitiveMapSymbol;
+    class VectorMapSymbol;
 
     enum class GLShaderVariableType
     {
@@ -192,7 +192,7 @@ namespace OsmAnd
         bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
         bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
-        bool uploadSymbolAsMeshToGPU(const std::shared_ptr< const PrimitiveMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
         GLint _maxTextureSize;
         QStringList _extensions;
