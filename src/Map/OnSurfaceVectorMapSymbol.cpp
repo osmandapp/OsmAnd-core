@@ -33,5 +33,5 @@ OsmAnd::PointI OsmAnd::OnSurfaceVectorMapSymbol::getPosition31() const
 
 void OsmAnd::OnSurfaceVectorMapSymbol::setPosition31(const PointI position)
 {
-    position31 = position31;
+    position31 = position;
 }
