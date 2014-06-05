@@ -273,7 +273,7 @@ OsmAnd::GPUAPI::MeshInGPU::MeshInGPU(
     const std::shared_ptr<ElementArrayBufferInGPU>& indexBuffer_)
     : MetaResourceInGPU(Type::Mesh, api_)
     , vertexBuffer(vertexBuffer_)
-    , indexBuffer(indexBuffer)
+    , indexBuffer(indexBuffer_)
 {
 }
 
