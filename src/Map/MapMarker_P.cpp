@@ -3,10 +3,9 @@
 
 #include "MapSymbol.h"
 #include "MapSymbolsGroup.h"
-#include "PositionedRasterMapSymbol.h"
-#include "SpriteMapSymbol.h"
-#include "OnSurfaceMapSymbol.h"
-#include "PrimitiveVectorMapSymbol.h"
+#include "BillboardRasterMapSymbol.h"
+#include "OnSurfaceRasterMapSymbol.h"
+#include "OnSurfaceVectorMapSymbol.h"
 #include "QKeyValueIterator.h"
 
 OsmAnd::MapMarker_P::MapMarker_P(MapMarker* const owner_)
@@ -138,11 +137,13 @@ bool OsmAnd::MapMarker_P::applyChanges()
         {
             symbol_->isHidden = _isHidden;
 
-            if (const auto symbol = std::dynamic_pointer_cast<IPositionedMapSymbol>(symbol_))
+            if (const auto symbol = std::dynamic_pointer_cast<IBillboardMapSymbol>(symbol_))
                 symbol->setPosition31(_position);
 
-            if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceMapSymbol>(symbol_))
+            if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceRasterMapSymbol>(symbol_))
             {
+                symbol->setPosition31(_position);
+
                 const auto citDirection = _directions.constFind(symbol->key);
                 if (citDirection != _directions.cend())
                     symbol->direction = *citDirection;
@@ -180,7 +181,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         if (citDirection != _directions.cend())
             direction = *citDirection;
 
-        const std::shared_ptr<KeyedOnSurfaceMapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceMapSymbol(
+        const std::shared_ptr<KeyedOnSurfaceRasterMapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceRasterMapSymbol(
             key,
             symbolsGroup,
             false, // This symbol is not shareable
@@ -197,22 +198,24 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     }
 
     // Add a circle that represent precision circle
-    const std::shared_ptr<PrimitiveVectorMapSymbol> precisionCircleSymbol(new PrimitiveVectorMapSymbol(
+    const std::shared_ptr<OnSurfaceVectorMapSymbol> precisionCircleSymbol(new OnSurfaceVectorMapSymbol(
         symbolsGroup,
         false, // This symbol is not shareable
         order++,
-        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup)));
-    precisionCircleSymbol->generateCircle();
+        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+        _position));
+    VectorMapSymbol::generateCirclePrimitive(*precisionCircleSymbol);
     precisionCircleSymbol->isHidden = _isHidden;
     symbolsGroup->symbols.push_back(precisionCircleSymbol);
 
     // Add a ring-line that represent precision circle
-    const std::shared_ptr<PrimitiveVectorMapSymbol> precisionRingSymbol(new PrimitiveVectorMapSymbol(
+    const std::shared_ptr<OnSurfaceVectorMapSymbol> precisionRingSymbol(new OnSurfaceVectorMapSymbol(
         symbolsGroup,
         false, // This symbol is not shareable
         order++,
-        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup)));
-    precisionRingSymbol->generateRingLine();
+        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+        _position));
+    VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol);
     precisionRingSymbol->isHidden = _isHidden;
     symbolsGroup->symbols.push_back(precisionRingSymbol);
 
@@ -222,7 +225,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
         owner->pinIcon->deepCopyTo(pinIcon.get(), owner->pinIcon->getConfig());
 
-        const std::shared_ptr<MapSymbol> pinIconSymbol(new SpriteMapSymbol(
+        const std::shared_ptr<MapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(
             symbolsGroup,
             false, // This symbol is not shareable
             order++,
@@ -278,7 +281,7 @@ void OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
         mapMarkerP_->applyChanges();
 }
 
-OsmAnd::MapMarker_P::KeyedOnSurfaceMapSymbol::KeyedOnSurfaceMapSymbol(
+OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::KeyedOnSurfaceRasterMapSymbol(
     const MapMarker::OnSurfaceIconKey key_,
     const std::shared_ptr<MapSymbolsGroup>& group_,
     const bool isShareable_,
@@ -289,11 +292,11 @@ OsmAnd::MapMarker_P::KeyedOnSurfaceMapSymbol::KeyedOnSurfaceMapSymbol(
     const LanguageId& languageId_,
     const PointI& minDistance_,
     const PointI& location31_)
-    : OnSurfaceMapSymbol(group_, isShareable_, order_, intersectionModeFlags_, bitmap_, content_, languageId_, minDistance_, location31_)
+    : OnSurfaceRasterMapSymbol(group_, isShareable_, order_, intersectionModeFlags_, bitmap_, content_, languageId_, minDistance_, location31_)
     , key(key_)
 {
 }
 
-OsmAnd::MapMarker_P::KeyedOnSurfaceMapSymbol::~KeyedOnSurfaceMapSymbol()
+OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::~KeyedOnSurfaceRasterMapSymbol()
 {
 }

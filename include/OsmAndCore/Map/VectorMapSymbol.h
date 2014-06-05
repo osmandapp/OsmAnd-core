@@ -8,13 +8,10 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapSymbol.h>
-#include <OsmAndCore/Map/IPositionedMapSymbol.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API VectorMapSymbol
-        : public MapSymbol
-        , public IPositionedMapSymbol
+    class OSMAND_CORE_API VectorMapSymbol : public MapSymbol
     {
         Q_DISABLE_COPY(VectorMapSymbol);
 
@@ -59,10 +56,17 @@ namespace OsmAnd
 
         void releaseVerticesAndIndices();
 
-        PointI position31;
+        static void generateCirclePrimitive(
+            VectorMapSymbol& mapSymbol,
+            const FColorARGB color = FColorARGB(1.0f, 1.0f, 1.0f, 1.0f),
+            const unsigned int pointsCount = 360,
+            float radius = 1.0f);
 
-        virtual PointI getPosition31() const;
-        virtual void setPosition31(const PointI position);
+        static void generateRingLinePrimitive(
+            VectorMapSymbol& mapSymbol,
+            const FColorARGB color = FColorARGB(1.0f, 1.0f, 1.0f, 1.0f),
+            const unsigned int pointsCount = 360,
+            float radius = 1.0f);
     };
 }
 

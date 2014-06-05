@@ -12,8 +12,8 @@
 #include "AtlasMapRenderer_OpenGL.h"
 #include "MapSymbol.h"
 #include "OnPathMapSymbol.h"
-#include "SpriteMapSymbol.h"
-#include "OnSurfaceMapSymbol.h"
+#include "BillboardRasterMapSymbol.h"
+#include "OnSurfaceRasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"
@@ -1413,7 +1413,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortSpriteSymbols(
         const auto& symbol_ = symbolEntry.key();
         if (symbol_->isHidden)
             continue;
-        const auto& symbol = std::dynamic_pointer_cast<const SpriteMapSymbol>(symbol_);
+        const auto& symbol = std::dynamic_pointer_cast<const BillboardRasterMapSymbol>(symbol_);
         if (!symbol)
             continue;
 
@@ -1485,7 +1485,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
         const auto& symbol_ = symbolEntry.key();
         if (symbol_->isHidden)
             continue;
-        const auto& symbol = std::dynamic_pointer_cast<const OnSurfaceMapSymbol>(symbol_);
+        const auto& symbol = std::dynamic_pointer_cast<const OnSurfaceRasterMapSymbol>(symbol_);
         if (!symbol)
             continue;
 
@@ -1555,7 +1555,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderSpriteSymbol(
     const auto gpuAPI = getGPUAPI();
     const auto renderer = getRenderer();
 
-    const auto& symbol = std::static_pointer_cast<const SpriteMapSymbol>(renderable->mapSymbol);
+    const auto& symbol = std::static_pointer_cast<const BillboardRasterMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
@@ -2511,7 +2511,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const auto gpuAPI = getGPUAPI();
     const auto renderer = getRenderer();
 
-    const auto& symbol = std::static_pointer_cast<const OnSurfaceMapSymbol>(renderable->mapSymbol);
+    const auto& symbol = std::static_pointer_cast<const OnSurfaceRasterMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
@@ -2652,5 +2652,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::RenderableSymbol::~RenderableSymbol()
+{
+}
+
+OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::RenderableSpriteSymbol::~RenderableSpriteSymbol()
+{
+}
+
+OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::RenderableOnPathSymbol::~RenderableOnPathSymbol()
+{
+}
+
+OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::RenderableOnSurfaceSymbol::~RenderableOnSurfaceSymbol()
 {
 }

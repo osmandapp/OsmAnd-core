@@ -7,7 +7,7 @@
 #include "RasterizedSymbolsGroup.h"
 #include "RasterizedSpriteSymbol.h"
 #include "RasterizedOnPathSymbol.h"
-#include "SpriteMapSymbol.h"
+#include "BillboardRasterMapSymbol.h"
 #include "OnPathMapSymbol.h"
 #include "MapObject.h"
 #include "Utilities.h"
@@ -90,7 +90,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
             if (const auto spriteSymbol = std::dynamic_pointer_cast<const RasterizedSpriteSymbol>(rasterizedSymbol))
             {
-                symbol.reset(new SpriteMapSymbol(
+                symbol.reset(new BillboardRasterMapSymbol(
                     group,
                     isShareable,
                     spriteSymbol->order,

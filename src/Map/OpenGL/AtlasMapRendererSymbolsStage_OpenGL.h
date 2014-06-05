@@ -204,6 +204,8 @@ namespace OsmAnd
 
         struct RenderableSpriteSymbol : RenderableSymbol
         {
+            virtual ~RenderableSpriteSymbol();
+
             PointI offsetFromTarget31;
             PointF offsetFromTarget;
             glm::vec3 positionInWorld;
@@ -211,6 +213,8 @@ namespace OsmAnd
         
         struct RenderableOnPathSymbol : RenderableSymbol
         {
+            virtual ~RenderableOnPathSymbol();
+
             int subpathStartIndex;
             int subpathEndIndex;
             QVector<glm::vec2> subpathPointsInWorld;
@@ -229,6 +233,8 @@ namespace OsmAnd
 
         struct RenderableOnSurfaceSymbol : RenderableSymbol
         {
+            virtual ~RenderableOnSurfaceSymbol();
+
             PointI offsetFromTarget31;
             PointF offsetFromTarget;
             glm::vec3 positionInWorld;
@@ -274,6 +280,15 @@ namespace OsmAnd
             QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources);
 
         void obtainAndSortOnSurfaceSymbols(
+            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
+            QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);
+
+        void processVectorSymbols(const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
+            QSet< std::shared_ptr<MapRendererBaseResource> > &updatedMapSymbolsResources);
+
+        void obtainAndSortVectorSymbols(
             const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output,
             QSet< std::shared_ptr<MapRendererBaseResource> >& updatedMapSymbolsResources);

@@ -14,7 +14,7 @@
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "MapSymbolsGroup.h"
-#include "OnSurfaceMapSymbol.h"
+#include "OnSurfaceRasterMapSymbol.h"
 #include "MapMarker.h"
 
 namespace OsmAnd
@@ -61,11 +61,11 @@ namespace OsmAnd
         friend class OsmAnd::MapMarker_P;
         };
 
-        class KeyedOnSurfaceMapSymbol : public OnSurfaceMapSymbol
+        class KeyedOnSurfaceRasterMapSymbol : public OnSurfaceRasterMapSymbol
         {
         private:
         protected:
-            KeyedOnSurfaceMapSymbol(
+            KeyedOnSurfaceRasterMapSymbol(
                 const MapMarker::OnSurfaceIconKey key,
                 const std::shared_ptr<MapSymbolsGroup>& group,
                 const bool isShareable,
@@ -77,7 +77,7 @@ namespace OsmAnd
                 const PointI& minDistance,
                 const PointI& location31);
         public:
-            virtual ~KeyedOnSurfaceMapSymbol();
+            virtual ~KeyedOnSurfaceRasterMapSymbol();
 
             const MapMarker::OnSurfaceIconKey key;
 

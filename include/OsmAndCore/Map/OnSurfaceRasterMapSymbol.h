@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_POSITIONED_RASTER_MAP_SYMBOL_H_
-#define _OSMAND_CORE_POSITIONED_RASTER_MAP_SYMBOL_H_
+#ifndef _OSMAND_CORE_ON_SURFACE_RASTER_MAP_SYMBOL_H_
+#define _OSMAND_CORE_ON_SURFACE_RASTER_MAP_SYMBOL_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -8,18 +8,19 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/RasterMapSymbol.h>
-#include <OsmAndCore/Map/IPositionedMapSymbol.h>
+#include <OsmAndCore/Map/IOnSurfaceMapSymbol.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API PositionedRasterMapSymbol
+    class OSMAND_CORE_API OnSurfaceRasterMapSymbol
         : public RasterMapSymbol
-        , public IPositionedMapSymbol
+        , public IOnSurfaceMapSymbol
     {
-        Q_DISABLE_COPY(PositionedRasterMapSymbol);
+        Q_DISABLE_COPY(OnSurfaceRasterMapSymbol);
     private:
     protected:
-        PositionedRasterMapSymbol(
+    public:
+        OnSurfaceRasterMapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group,
             const bool isShareable,
             const int order,
@@ -29,14 +30,16 @@ namespace OsmAnd
             const LanguageId& languageId,
             const PointI& minDistance,
             const PointI& position31);
-    public:
-        virtual ~PositionedRasterMapSymbol();
+        virtual ~OnSurfaceRasterMapSymbol();
+
+        float direction;
+        virtual float getDirection() const;
+        virtual void setDirection(const float direction);
 
         PointI position31;
-
         virtual PointI getPosition31() const;
         virtual void setPosition31(const PointI position);
     };
 }
 
-#endif // !defined(_OSMAND_CORE_POSITIONED_RASTER_MAP_SYMBOL_H_)
+#endif // !defined(_OSMAND_CORE_ON_SURFACE_RASTER_MAP_SYMBOL_H_)
