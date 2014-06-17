@@ -191,8 +191,16 @@ void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std
 
 void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const uint32_t updatedMask)
 {
+    bool wasLocked = false;
+
     if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::ElevationData_Provider))
     {
+        if (!wasLocked)
+        {
+            _resourcesStoragesLock.lockForWrite();
+            wasLocked = true;
+        }
+
         auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
 
@@ -206,8 +214,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             if (itBindedProvider.key() == state.elevationDataProvider)
                 continue;
 
-            // Clean-up resources
-            blockingReleaseResourcesFrom(itBindedProvider.value());
+            // Clean-up resources (deferred)
+            _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
 
             // Remove resources collection
             resources.removeOne(itBindedProvider.value());
@@ -233,6 +241,12 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
     }
     if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::RasterLayers_Providers))
     {
+        if (!wasLocked)
+        {
+            _resourcesStoragesLock.lockForWrite();
+            wasLocked = true;
+        }
+
         auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
 
@@ -249,8 +263,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
                 continue;
             }
 
-            // Clean-up resources
-            blockingReleaseResourcesFrom(itBindedProvider.value());
+            // Clean-up resources (deferred)
+            _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
 
             // Reset reference to resources collection, but keep the space in array
             qFind(resources.begin(), resources.end(), itBindedProvider.value())->reset();
@@ -289,6 +303,12 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
     }
     if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::Symbols_Providers))
     {
+        if (!wasLocked)
+        {
+            _resourcesStoragesLock.lockForWrite();
+            wasLocked = true;
+        }
+
         auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::Symbols)];
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::Symbols)];
 
@@ -302,8 +322,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             if (state.symbolProviders.contains(itBindedProvider.key()))
                 continue;
 
-            // Clean-up resources
-            blockingReleaseResourcesFrom(itBindedProvider.value());
+            // Clean-up resources (deferred)
+            _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
 
             // Remove resources collection
             resources.removeOne(itBindedProvider.value());
@@ -334,6 +354,9 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             resources.push_back(qMove(newResourcesCollection));
         }
     }
+
+    if (wasLocked)
+        _resourcesStoragesLock.unlock();
 }
 
 void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom)
@@ -375,6 +398,30 @@ bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(const std::sh
     const auto& binding = _bindings[static_cast<int>(collection->type)];
 
     return binding.collectionsToProviders.contains(collection);
+}
+
+QList< std::shared_ptr<OsmAnd::MapRendererBaseResourcesCollection> > OsmAnd::MapRendererResourcesManager::safeGetAllResourcesCollections() const
+{
+    QReadLocker scopedLocker(&_resourcesStoragesLock);
+
+    QList< std::shared_ptr<MapRendererBaseResourcesCollection> > result;
+
+    // Add "pending-removal"
+    result.append(_pendingRemovalResourcesCollections);
+
+    // Add regular
+    for (const auto& resourcesCollections : constOf(_storageByType))
+    {
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (!resourcesCollection)
+                continue;
+
+            result.push_back(resourcesCollection);
+        }
+    }
+
+    return result;
 }
 
 void OsmAnd::MapRendererResourcesManager::registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource)
@@ -744,55 +791,54 @@ unsigned int OsmAnd::MapRendererResourcesManager::unloadResources()
 {
     unsigned int totalUnloaded = 0u;
 
-    for(const auto& resourcesCollections : constOf(_storageByType))
-    {
-        for(const auto& resourcesCollection : constOf(resourcesCollections))
-        {
-            // Skip empty entries
-            if (!resourcesCollection)
-                continue;
-
-            // Select all resources with "UnloadPending" state
-            QList< std::shared_ptr<MapRendererBaseResource> > resources;
-            resourcesCollection->obtainResources(&resources,
-                []
-                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
-                {
-                    // Skip not-"UnloadPending" resources
-                    if (entry->getState() != MapRendererResourceState::UnloadPending)
-                        return false;
-
-                    // Accept this resource
-                    return true;
-                });
-            if (resources.isEmpty())
-                continue;
-
-            // Unload from GPU all selected resources
-            for(const auto& resource : constOf(resources))
-            {
-                // Since state change is allowed (it's not changed to "Unloading" during query), check state here
-                if (!resource->setStateIf(MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading))
-                    continue;
-                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading);
-                
-                // Unload from GPU
-                resource->unloadFromGPU();
-
-                // Don't wait until GPU will execute unloading, since this resource won't be used anymore and will eventually be deleted
-
-                // Mark as unloaded
-                assert(resource->getState() == MapRendererResourceState::Unloading);
-                resource->setState(MapRendererResourceState::Unloaded);
-                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unloading, MapRendererResourceState::Unloaded);
-
-                // Count uploaded resources
-                totalUnloaded++;
-            }
-        }
-    }
+    const auto& resourcesCollections = safeGetAllResourcesCollections();
+    for (const auto& resourcesCollection : constOf(resourcesCollections))
+        unloadResourcesFrom(resourcesCollection, totalUnloaded);
 
     return totalUnloaded;
+}
+
+void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
+    const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
+    unsigned int& totalUnloaded)
+{
+    // Select all resources with "UnloadPending" state
+    QList< std::shared_ptr<MapRendererBaseResource> > resources;
+    collection->obtainResources(&resources,
+        []
+        (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
+        {
+            // Skip not-"UnloadPending" resources
+            if (entry->getState() != MapRendererResourceState::UnloadPending)
+                return false;
+
+            // Accept this resource
+            return true;
+        });
+    if (resources.isEmpty())
+        return;
+
+    // Unload from GPU all selected resources
+    for (const auto& resource : constOf(resources))
+    {
+        // Since state change is allowed (it's not changed to "Unloading" during query), check state here
+        if (!resource->setStateIf(MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading))
+            continue;
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading);
+
+        // Unload from GPU
+        resource->unloadFromGPU();
+
+        // Don't wait until GPU will execute unloading, since this resource won't be used anymore and will eventually be deleted
+
+        // Mark as unloaded
+        assert(resource->getState() == MapRendererResourceState::Unloading);
+        resource->setState(MapRendererResourceState::Unloaded);
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unloading, MapRendererResourceState::Unloaded);
+
+        // Count uploaded resources
+        totalUnloaded++;
+    }
 }
 
 unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(const unsigned int limit /*= 0u*/, bool* const outMoreThanLimitAvailable /*= nullptr*/)
@@ -801,85 +847,9 @@ unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(const unsigned
     bool moreThanLimitAvailable = false;
     bool atLeastOneUploadFailed = false;
 
-    for(const auto& resourcesCollections : constOf(_storageByType))
-    {
-        for(const auto& resourcesCollection : constOf(resourcesCollections))
-        {
-            // Skip empty entries
-            if (!resourcesCollection)
-                continue;
-
-            // Select all resources with "Ready" state
-            QList< std::shared_ptr<MapRendererBaseResource> > resources;
-            resourcesCollection->obtainResources(&resources,
-                [&resources, limit, totalUploaded, &moreThanLimitAvailable]
-                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
-                {
-                    // Skip not-ready resources
-                    if (entry->getState() != MapRendererResourceState::Ready)
-                        return false;
-
-                    // Check if limit was reached
-                    if (limit > 0 && (totalUploaded + resources.size()) > limit)
-                    {
-                        // Tell that more resources are available for upload
-                        moreThanLimitAvailable = true;
-
-                        cancel = true;
-                        return false;
-                    }
-
-                    // Accept this resource
-                    return true;
-                });
-            if (resources.isEmpty())
-                continue;
-
-            // Upload to GPU all selected resources
-            for(const auto& resource : constOf(resources))
-            {
-                // Since state change is allowed (it's not changed to "Uploading" during query), check state here
-                if (!resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
-                    continue;
-                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Ready, MapRendererResourceState::Uploading);
-
-                // Actually upload resource to GPU
-                const auto didUpload = resource->uploadToGPU();
-                if (!atLeastOneUploadFailed && !didUpload)
-                    atLeastOneUploadFailed = true;
-                if (!didUpload)
-                {
-                    if (const auto tiledResource = std::dynamic_pointer_cast<const MapRendererBaseTiledResource>(resource))
-                    {
-                        LogPrintf(LogSeverityLevel::Error,
-                            "Failed to upload tiled resource %p for %dx%d@%d to GPU",
-                            resource.get(),
-                            tiledResource->tileId.x, tiledResource->tileId.y, tiledResource->zoom);
-                    }
-                    else
-                    {
-                        LogPrintf(LogSeverityLevel::Error,
-                            "Failed to upload resource %p to GPU",
-                            resource.get());
-                    }
-                    continue;
-                }
-
-                // Before marking as uploaded, if uploading is done from GPU worker thread,
-                // wait until operation completes
-                if (renderer->setupOptions.gpuWorkerThreadEnabled)
-                    renderer->gpuAPI->waitUntilUploadIsComplete();
-
-                // Mark as uploaded
-                assert(resource->getState() == MapRendererResourceState::Uploading);
-                resource->setState(MapRendererResourceState::Uploaded);
-                LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploading, MapRendererResourceState::Uploaded);
-
-                // Count uploaded resources
-                totalUploaded++;
-            }
-        }
-    }
+    const auto& resourcesCollections = safeGetAllResourcesCollections();
+    for (const auto& resourcesCollection : constOf(resourcesCollections))
+        uploadResourcesFrom(resourcesCollection, limit, totalUploaded, moreThanLimitAvailable, atLeastOneUploadFailed);
 
     // If any resource failed to upload, report that more ready resources are available
     if (atLeastOneUploadFailed)
@@ -890,12 +860,109 @@ unsigned int OsmAnd::MapRendererResourcesManager::uploadResources(const unsigned
     return totalUploaded;
 }
 
+void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
+    const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
+    const unsigned int limit,
+    unsigned int& totalUploaded,
+    bool& moreThanLimitAvailable,
+    bool& atLeastOneUploadFailed)
+{
+    // Select all resources with "Ready" state
+    QList< std::shared_ptr<MapRendererBaseResource> > resources;
+    collection->obtainResources(&resources,
+        [&resources, limit, totalUploaded, &moreThanLimitAvailable]
+        (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
+        {
+            // Skip not-ready resources
+            if (entry->getState() != MapRendererResourceState::Ready)
+                return false;
+
+            // Check if limit was reached
+            if (limit > 0 && (totalUploaded + resources.size()) > limit)
+            {
+                // Tell that more resources are available for upload
+                moreThanLimitAvailable = true;
+
+                cancel = true;
+                return false;
+            }
+
+            // Accept this resource
+            return true;
+        });
+    if (resources.isEmpty())
+        return;
+
+    // Upload to GPU all selected resources
+    for (const auto& resource : constOf(resources))
+    {
+        // Since state change is allowed (it's not changed to "Uploading" during query), check state here
+        if (!resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
+            continue;
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Ready, MapRendererResourceState::Uploading);
+
+        // Actually upload resource to GPU
+        const auto didUpload = resource->uploadToGPU();
+        if (!atLeastOneUploadFailed && !didUpload)
+            atLeastOneUploadFailed = true;
+        if (!didUpload)
+        {
+            if (const auto tiledResource = std::dynamic_pointer_cast<const MapRendererBaseTiledResource>(resource))
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to upload tiled resource %p for %dx%d@%d to GPU",
+                    resource.get(),
+                    tiledResource->tileId.x, tiledResource->tileId.y, tiledResource->zoom);
+            }
+            else
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to upload resource %p to GPU",
+                    resource.get());
+            }
+            continue;
+        }
+
+        // Before marking as uploaded, if uploading is done from GPU worker thread,
+        // wait until operation completes
+        if (renderer->setupOptions.gpuWorkerThreadEnabled)
+            renderer->gpuAPI->waitUntilUploadIsComplete();
+
+        // Mark as uploaded
+        assert(resource->getState() == MapRendererResourceState::Uploading);
+        resource->setState(MapRendererResourceState::Uploaded);
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploading, MapRendererResourceState::Uploaded);
+
+        // Count uploaded resources
+        totalUploaded++;
+    }
+}
+
 void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
 {
     // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here
     bool needsResourcesUploadOrUnload = false;
 
-    // Use aggressive cache cleaning: remove all tiled resources that are not needed
+    // Release some resources from "pending-removal" collections
+    QMutableListIterator< std::shared_ptr<MapRendererBaseResourcesCollection> > itPendingRemovalCollection(_pendingRemovalResourcesCollections);
+    while (itPendingRemovalCollection.hasNext())
+    {
+        const auto& pendingRemovalCollection = itPendingRemovalCollection.next();
+
+        // Don't wait for anything. If impossible to process resource right now, just skip it
+        pendingRemovalCollection->removeResources(
+            [this, &needsResourcesUploadOrUnload]
+            (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
+            {
+                return cleanupJunkResource(entry, needsResourcesUploadOrUnload);
+            });
+
+        // Remove empty collections completely
+        if (pendingRemovalCollection->getResourcesCount() == 0)
+            itPendingRemovalCollection.remove();
+    }
+
+    // Use aggressive cache cleaning: remove all resources that are not needed
     for(const auto& resourcesCollections : constOf(_storageByType))
     {
         for(const auto& resourcesCollection : constOf(resourcesCollections))
@@ -939,72 +1006,84 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
                     // Mark this entry as junk until it will die
                     entry->markAsJunk();
 
-                    if (entry->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPending))
-                    {
-                        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPending);
-
-                        // If resource is not needed anymore, change its state to "UnloadPending",
-                        // but keep the resource entry, since it must be unload from GPU in another place
-
-                        needsResourcesUploadOrUnload = true;
-                        return false;
-                    }
-                    else if (entry->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::JustBeforeDeath))
-                    {
-                        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Ready, MapRendererResourceState::JustBeforeDeath);
-
-                        // If resource was not yet uploaded, just remove it.
-                        return true;
-                    }
-                    else if (entry->setStateIf(MapRendererResourceState::ProcessingRequest, MapRendererResourceState::RequestCanceledWhileBeingProcessed))
-                    {
-                        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::ProcessingRequest, MapRendererResourceState::RequestCanceledWhileBeingProcessed);
-
-                        // If resource request is being processed, keep the entry until processing is complete.
-
-                        return false;
-                    }
-                    else if (entry->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath))
-                    {
-                        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath);
-
-                        // If resource was just requested, cancel its task and remove the entry.
-
-                        // Cancel the task
-                        assert(entry->_requestTask != nullptr);
-                        entry->_requestTask->requestCancellation();
-
-                        return true;
-                    }
-                    else if (entry->setStateIf(MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath))
-                    {
-                        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath);
-
-                        // If resource was never available, just remove the entry
-                        return true;
-                    }
-
-                    const auto state = entry->getState();
-                    if (state == MapRendererResourceState::JustBeforeDeath)
-                    {
-                        // If resource has JustBeforeDeath state, it means that it will be deleted from different thread in next few moments,
-                        // so it's safe to remove it here also (since operations with resources removal from collection are atomic, and collection is blocked)
-                        return true;
-                    }
-                
-                    // Resources with states
-                    //  - Uploading (to allow finish uploading)
-                    //  - UnloadPending (to allow start unloading from GPU)
-                    //  - Unloading (to allow finish unloading)
-                    //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
-                    // should be retained, since they are being processed. So try to next time
-                    return false;
+                    return cleanupJunkResource(entry, needsResourcesUploadOrUnload);
                 });
         }
     }
 
     if (needsResourcesUploadOrUnload)
         requestResourcesUploadOrUnload();
+}
+
+bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(const std::shared_ptr<MapRendererBaseResource>& resource, bool& needsResourcesUploadOrUnload)
+{
+    if (resource->setStateIf(MapRendererResourceState::Unloaded, MapRendererResourceState::JustBeforeDeath))
+    {
+        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Unloaded, MapRendererResourceState::JustBeforeDeath);
+
+        // If resource was unloaded from GPU, remove the entry.
+        return true;
+    }
+    else if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPending))
+    {
+        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPending);
+
+        // If resource is not needed anymore, change its state to "UnloadPending",
+        // but keep the resource entry, since it must be unload from GPU in another place
+
+        needsResourcesUploadOrUnload = true;
+        return false;
+    }
+    else if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::JustBeforeDeath))
+    {
+        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Ready, MapRendererResourceState::JustBeforeDeath);
+
+        // If resource was not yet uploaded, just remove it.
+        return true;
+    }
+    else if (resource->setStateIf(MapRendererResourceState::ProcessingRequest, MapRendererResourceState::RequestCanceledWhileBeingProcessed))
+    {
+        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::ProcessingRequest, MapRendererResourceState::RequestCanceledWhileBeingProcessed);
+
+        // If resource request is being processed, keep the entry until processing is complete.
+
+        return false;
+    }
+    else if (resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath))
+    {
+        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath);
+
+        // If resource was just requested, cancel its task and remove the entry.
+
+        // Cancel the task
+        assert(resource->_requestTask != nullptr);
+        resource->_requestTask->requestCancellation();
+
+        return true;
+    }
+    else if (resource->setStateIf(MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath))
+    {
+        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath);
+
+        // If resource was never available, just remove the entry
+        return true;
+    }
+
+    const auto state = resource->getState();
+    if (state == MapRendererResourceState::JustBeforeDeath)
+    {
+        // If resource has JustBeforeDeath state, it means that it will be deleted from different thread in next few moments,
+        // so it's safe to remove it here also (since operations with resources removal from collection are atomic, and collection is blocked)
+        return true;
+    }
+
+    // Resources with states
+    //  - Uploading (to allow finish uploading)
+    //  - UnloadPending (to allow start unloading from GPU)
+    //  - Unloading (to allow finish unloading)
+    //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
+    // should be retained, since they are being processed. So try to next time
+    return false;
 }
 
 void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection)
@@ -1167,7 +1246,7 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
 void OsmAnd::MapRendererResourcesManager::releaseAllResources()
 {
     // Release all resources
-    for(auto& resourcesCollections : _storageByType)
+    for(const auto& resourcesCollections : _storageByType)
     {
         for(const auto& resourcesCollection : constOf(resourcesCollections))
         {
@@ -1176,6 +1255,9 @@ void OsmAnd::MapRendererResourcesManager::releaseAllResources()
             blockingReleaseResourcesFrom(resourcesCollection);
         }
     }
+    for (const auto& resourcesCollection : _pendingRemovalResourcesCollections)
+        blockingReleaseResourcesFrom(resourcesCollection);
+    _pendingRemovalResourcesCollections.clear();
 
     // Release all bindings
     for(auto resourceType = 0; resourceType < MapRendererResourceTypesCount; resourceType++)

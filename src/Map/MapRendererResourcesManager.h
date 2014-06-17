@@ -84,7 +84,10 @@ namespace OsmAnd
         bool isDataSourceAvailableFor(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection) const;
 
         // Resources storages:
+        mutable QReadWriteLock _resourcesStoragesLock;
+        QList< std::shared_ptr<MapRendererBaseResourcesCollection> > _pendingRemovalResourcesCollections;
         ResourcesStorage _storageByType;
+        QList< std::shared_ptr<MapRendererBaseResourcesCollection> > safeGetAllResourcesCollections() const;
 
         // Symbols:
         mutable QMutex _mapSymbolsRegistersMutex;
@@ -112,8 +115,18 @@ namespace OsmAnd
         void requestNeededKeyedResources(const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection);
         void requestNeededResource(const std::shared_ptr<MapRendererBaseResource>& resource);
         void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
+        bool cleanupJunkResource(const std::shared_ptr<MapRendererBaseResource>& resource, bool& needsResourcesUploadOrUnload);
         unsigned int unloadResources();
+        void unloadResourcesFrom(
+            const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
+            unsigned int& totalUnloaded);
         unsigned int uploadResources(const unsigned int limit = 0u, bool* const outMoreThanLimitAvailable = nullptr);
+        void uploadResourcesFrom(
+            const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
+            const unsigned int limit,
+            unsigned int& totalUploaded,
+            bool& moreThanLimitAvailable,
+            bool& atLeastOneUploadFailed);
         void blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection);
         void requestResourcesUploadOrUnload();
         void releaseAllResources();

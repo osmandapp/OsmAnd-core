@@ -166,16 +166,18 @@ bool OsmAnd::MapRenderer::revalidateState()
     if (ok)
     {
         // Sort visible tiles by distance from target
-        qSort(internalState->visibleTiles.begin(), internalState->visibleTiles.end(), [internalState](const TileId& l, const TileId& r) -> bool
-        {
-            const auto lx = l.x - internalState->targetTileId.x;
-            const auto ly = l.y - internalState->targetTileId.y;
+        qSort(internalState->visibleTiles.begin(), internalState->visibleTiles.end(),
+            [internalState]
+            (const TileId& l, const TileId& r) -> bool
+            {
+                const auto lx = l.x - internalState->targetTileId.x;
+                const auto ly = l.y - internalState->targetTileId.y;
 
-            const auto rx = r.x - internalState->targetTileId.x;
-            const auto ry = r.y - internalState->targetTileId.y;
+                const auto rx = r.x - internalState->targetTileId.x;
+                const auto ry = r.y - internalState->targetTileId.y;
 
-            return (lx*lx + ly*ly) > (rx*rx + ry*ry);
-        });
+                return (lx*lx + ly*ly) > (rx*rx + ry*ry);
+            });
     }
 
     // Frame is being invalidated anyways, since a refresh is needed due to state change (successful or not)
