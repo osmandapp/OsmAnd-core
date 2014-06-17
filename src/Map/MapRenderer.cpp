@@ -266,13 +266,13 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
         int unprocessedRequests = 0;
         do
         {
-            const auto requestsToProcess = _resourcesUploadRequestsCounter.fetchAndAddOrdered(0);
+            const auto requestsToProcess = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(0);
             unsigned int resourcesUploaded = 0u;
             unsigned int resourcesUnloaded = 0u;
             _resources->syncResourcesInGPU(0, nullptr, &resourcesUploaded, &resourcesUnloaded);
             if (resourcesUploaded > 0 || resourcesUnloaded > 0)
                 invalidateFrame();
-            unprocessedRequests = _resourcesUploadRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
+            unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
         } while (unprocessedRequests > 0);
 
         // Process GPU dispatcher
@@ -290,7 +290,7 @@ bool OsmAnd::MapRenderer::initializeRendering()
 {
     bool ok;
 
-    _resourcesUploadRequestsCounter.store(0);
+    _resourcesGpuSyncRequestsCounter.store(0);
 
     ok = gpuAPI->initialize();
     if (!ok)
@@ -514,12 +514,12 @@ bool OsmAnd::MapRenderer::doProcessRendering()
     // To reduce FPS drop, upload not more than 1 resource per frame.
     if (!_gpuWorkerThread)
     {
-        const auto requestsToProcess = _resourcesUploadRequestsCounter.fetchAndAddOrdered(0);
+        const auto requestsToProcess = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(0);
         bool moreUploadThanLimitAvailable = false;
         unsigned int resourcesUploaded = 0u;
         unsigned int resourcesUnloaded = 0u;
         _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
-        const auto unprocessedRequests = _resourcesUploadRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
+        const auto unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
 
         // If any resource was uploaded or there is more resources to uploaded, invalidate frame
         // to use that resource
@@ -628,7 +628,7 @@ void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResourceTyp
 
 void OsmAnd::MapRenderer::requestResourcesUploadOrUnload()
 {
-    _resourcesUploadRequestsCounter.fetchAndAddOrdered(1);
+    _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(1);
 
     if (_gpuWorkerThread)
     {

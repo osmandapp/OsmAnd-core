@@ -9,6 +9,7 @@
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
+#include "VectorMapSymbol.h"
 #include "IMapTiledSymbolsProvider.h"
 #include "IMapKeyedSymbolsProvider.h"
 #include "MapObject.h"
@@ -182,6 +183,10 @@ void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std
     {
         rasterMapSymbol->bitmap.reset();
     }
+    else if (const auto vectorMapSymbol = std::dynamic_pointer_cast<VectorMapSymbol>(mapSymbol))
+    {
+        vectorMapSymbol->releaseVerticesAndIndices();
+    }
 }
 
 void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const uint32_t updatedMask)
@@ -202,7 +207,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
                 continue;
 
             // Clean-up resources
-            releaseResourcesFrom(itBindedProvider.value());
+            blockingReleaseResourcesFrom(itBindedProvider.value());
 
             // Remove resources collection
             resources.removeOne(itBindedProvider.value());
@@ -245,7 +250,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             }
 
             // Clean-up resources
-            releaseResourcesFrom(itBindedProvider.value());
+            blockingReleaseResourcesFrom(itBindedProvider.value());
 
             // Reset reference to resources collection, but keep the space in array
             qFind(resources.begin(), resources.end(), itBindedProvider.value())->reset();
@@ -298,7 +303,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
                 continue;
 
             // Clean-up resources
-            releaseResourcesFrom(itBindedProvider.value());
+            blockingReleaseResourcesFrom(itBindedProvider.value());
 
             // Remove resources collection
             resources.removeOne(itBindedProvider.value());
@@ -1002,7 +1007,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
         requestResourcesUploadOrUnload();
 }
 
-void OsmAnd::MapRendererResourcesManager::releaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection)
+void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection)
 {
     // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here.
     // So wait here until all resources will be unloaded from GPU
@@ -1120,8 +1125,26 @@ void OsmAnd::MapRendererResourcesManager::releaseResourcesFrom(const std::shared
             // If there are unprocessable resources and
             if (containedUnprocessableResources && needsResourcesUploadOrUnload)
             {
+                QWaitCondition gpuResourcesSyncStageExecutedOnceCondition;
+                QMutex gpuResourcesSyncStageExecutedOnceMutex;
+
+                // Dispatcher always runs after GPU resources sync stage
+                renderer->getGpuThreadDispatcher().invokeAsync(
+                    [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
+                    ()
+                    {
+                        QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+                        gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
+                    });
+
                 requestResourcesUploadOrUnload();
                 needsResourcesUploadOrUnload = false;
+
+                // Wait up to 250ms for GPU resources sync stage to complete
+                {
+                    QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+                    gpuResourcesSyncStageExecutedOnceCondition.wait(&gpuResourcesSyncStageExecutedOnceMutex, 250);
+                }
             }
     } while(containedUnprocessableResources);
 
@@ -1150,7 +1173,7 @@ void OsmAnd::MapRendererResourcesManager::releaseAllResources()
         {
             if (!resourcesCollection)
                 continue;
-            releaseResourcesFrom(resourcesCollection);
+            blockingReleaseResourcesFrom(resourcesCollection);
         }
     }
 
