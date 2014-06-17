@@ -19,7 +19,7 @@ void OsmAnd::Rasterizer::prepareContext(
     const AreaI& area31,
     const ZoomLevel zoom,
     const MapFoundationType foundation,
-    const QList< std::shared_ptr<const Model::MapObject> >& objects,
+    const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
     bool* nothingToRasterize /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/,
     Rasterizer_Metrics::Metric_prepareContext* const metric /*= nullptr*/)
@@ -38,7 +38,7 @@ void OsmAnd::Rasterizer::rasterizeMap(
 
 void OsmAnd::Rasterizer::rasterizeSymbolsWithoutPaths(
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-    std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter /*= nullptr*/,
+    std::function<bool (const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
     _p->rasterizeSymbolsWithoutPaths(outSymbolsGroups, filter, controller);

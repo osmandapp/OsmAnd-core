@@ -11,7 +11,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/RasterizedSymbolsGroup.h>
-#include <OsmAndCore/Data/Model/MapObject.h>
+#include <OsmAndCore/Data/Model/BinaryMapObject.h>
 
 namespace OsmAnd
 {
@@ -22,7 +22,7 @@ namespace OsmAnd
     protected:
         RasterizedSymbol(
             const std::shared_ptr<const RasterizedSymbolsGroup>& group,
-            const std::shared_ptr<const Model::MapObject>& mapObject,
+            const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,
@@ -33,7 +33,7 @@ namespace OsmAnd
 
         const std::weak_ptr<const RasterizedSymbolsGroup> group;
 
-        const std::shared_ptr<const Model::MapObject> mapObject;
+        const std::shared_ptr<const Model::BinaryMapObject> mapObject;
         const std::shared_ptr<const SkBitmap> bitmap;
         const int order;
         const QString content;

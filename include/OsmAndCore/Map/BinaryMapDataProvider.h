@@ -23,7 +23,7 @@ namespace OsmAnd
     class IExternalResourcesProvider;
     namespace Model
     {
-        class MapObject;
+        class BinaryMapObject;
     }
 
     class BinaryMapDataProvider_P;
@@ -66,7 +66,7 @@ namespace OsmAnd
     protected:
         BinaryMapDataTile(
             const MapFoundationType tileFoundation,
-            const QList< std::shared_ptr<const Model::MapObject> >& mapObjects,
+            const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects,
             const std::shared_ptr< const RasterizerContext >& rasterizerContext,
             const bool nothingToRasterize,
             const TileId tileId,
@@ -75,7 +75,7 @@ namespace OsmAnd
         virtual ~BinaryMapDataTile();
 
         const MapFoundationType tileFoundation;
-        const QList< std::shared_ptr<const Model::MapObject> >& mapObjects;
+        const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects;
         const std::shared_ptr< const RasterizerContext >& rasterizerContext;
         const bool nothingToRasterize;
 

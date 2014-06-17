@@ -14,7 +14,7 @@ namespace OsmAnd
 {
     namespace Model
     {
-        class MapObject;
+        class BinaryMapObject;
     }
     class MapStyleRule;
     class MapStyleValueDefinition;
@@ -42,7 +42,7 @@ namespace OsmAnd
         void setStringValue(const int valueDefId, const QString& value);
 
         bool evaluate(
-            const std::shared_ptr<const Model::MapObject>& mapObject, const MapStyleRulesetType ruleset,
+            const std::shared_ptr<const Model::BinaryMapObject>& mapObject, const MapStyleRulesetType ruleset,
             MapStyleEvaluationResult* const outResultStorage = nullptr,
             bool evaluateChildren = true);
         bool evaluate(

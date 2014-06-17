@@ -13,7 +13,7 @@ namespace OsmAnd
 {
     class RasterizedSymbol;
     namespace Model {
-        class MapObject;
+        class BinaryMapObject;
     } // namespace Model
     class Rasterizer_P;
 
@@ -22,11 +22,11 @@ namespace OsmAnd
         Q_DISABLE_COPY(RasterizedSymbolsGroup);
     private:
     protected:
-        RasterizedSymbolsGroup(const std::shared_ptr<const Model::MapObject>& mapObject);
+        RasterizedSymbolsGroup(const std::shared_ptr<const Model::BinaryMapObject>& mapObject);
     public:
         virtual ~RasterizedSymbolsGroup();
 
-        const std::shared_ptr<const Model::MapObject> mapObject;
+        const std::shared_ptr<const Model::BinaryMapObject> mapObject;
         QList< std::shared_ptr<const RasterizedSymbol> > symbols;
 
         friend class OsmAnd::Rasterizer_P;

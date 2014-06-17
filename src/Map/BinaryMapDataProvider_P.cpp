@@ -18,7 +18,7 @@
 #   include "ObfMapSectionReader_Metrics.h"
 #   include "Rasterizer_Metrics.h"
 #endif // OSMAND_PERFORMANCE_METRICS
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 #include "Rasterizer.h"
 #include "RasterizerContext.h"
 #include "Utilities.h"
@@ -96,9 +96,9 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
     // Perform read-out
-    QList< std::shared_ptr<const Model::MapObject> > referencedMapObjects;
-    QList< proper::shared_future< std::shared_ptr<const Model::MapObject> > > futureReferencedMapObjects;
-    QList< std::shared_ptr<const Model::MapObject> > loadedMapObjects;
+    QList< std::shared_ptr<const Model::BinaryMapObject> > referencedMapObjects;
+    QList< proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > > futureReferencedMapObjects;
+    QList< std::shared_ptr<const Model::BinaryMapObject> > loadedMapObjects;
     QSet< uint64_t > loadedSharedMapObjects;
     MapFoundationType tileFoundation;
 #if OSMAND_PERFORMANCE_METRICS
@@ -137,8 +137,8 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
 
             // Otherwise, this map object can be shared, so it should be checked for
             // being present in shared mapObjects storage, or be reserved there
-            std::shared_ptr<const Model::MapObject> sharedMapObjectReference;
-            proper::shared_future< std::shared_ptr<const Model::MapObject> > futureSharedMapObjectReference;
+            std::shared_ptr<const Model::BinaryMapObject> sharedMapObjectReference;
+            proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > futureSharedMapObjectReference;
             if (_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
             {
                 if (sharedMapObjectReference)

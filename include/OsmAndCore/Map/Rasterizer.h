@@ -20,7 +20,7 @@ namespace OsmAnd
     class RasterizerContext;
     class RasterizedSymbolsGroup;
     namespace Model {
-        class MapObject;
+        class BinaryMapObject;
     } // namespace Model
     class IQueryController;
     namespace Rasterizer_Metrics {
@@ -45,7 +45,7 @@ namespace OsmAnd
             const AreaI& area31,
             const ZoomLevel zoom,
             const MapFoundationType foundation,
-            const QList< std::shared_ptr<const Model::MapObject> >& objects,
+            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
             bool* nothingToRasterize = nullptr,
             const IQueryController* const controller = nullptr,
             Rasterizer_Metrics::Metric_prepareContext* const metric = nullptr);
@@ -58,7 +58,7 @@ namespace OsmAnd
 
         void rasterizeSymbolsWithoutPaths(
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter = nullptr,
+            std::function<bool (const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter = nullptr,
             const IQueryController* const controller = nullptr);
     };
 

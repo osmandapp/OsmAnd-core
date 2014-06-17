@@ -45,7 +45,7 @@ namespace OsmAnd
 
         QVector< std::shared_ptr<const Rasterizer_P::SymbolsGroup> > _symbolsGroups;
         typedef std::pair<
-            std::shared_ptr<const Model::MapObject>,
+            std::shared_ptr<const Model::BinaryMapObject>,
             QVector< std::shared_ptr<const Rasterizer_P::PrimitiveSymbol> >
         > SymbolsEntry;
         QVector<SymbolsEntry> _symbols;

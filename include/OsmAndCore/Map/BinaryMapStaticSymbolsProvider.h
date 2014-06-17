@@ -18,7 +18,7 @@ namespace OsmAnd
     class BinaryMapDataTile;
     namespace Model
     {
-        class MapObject;
+        class BinaryMapObject;
     }
 
     class BinaryMapStaticSymbolsProvider_P;

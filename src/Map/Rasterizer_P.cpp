@@ -21,7 +21,7 @@
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
 #include "MapTypes.h"
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 #include "ObfMapSectionInfo.h"
 #include "IQueryController.h"
 #include "ICU.h"
@@ -58,7 +58,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     const AreaI& area31,
     const ZoomLevel zoom,
     const MapFoundationType foundation,
-    const QList< std::shared_ptr<const Model::MapObject> >& objects,
+    const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
     bool* nothingToRasterize,
     const IQueryController* const controller,
     Rasterizer_Metrics::Metric_prepareContext* const metric)
@@ -78,8 +78,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
         objectsSorting_begin = std::chrono::high_resolution_clock::now();
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
-    QList< std::shared_ptr<const OsmAnd::Model::MapObject> > detailedmapMapObjects, detailedmapCoastlineObjects, basemapMapObjects, basemapCoastlineObjects;
-    QList< std::shared_ptr<const OsmAnd::Model::MapObject> > polygonizedCoastlineObjects;
+    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > detailedmapMapObjects, detailedmapCoastlineObjects, basemapMapObjects, basemapCoastlineObjects;
+    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > polygonizedCoastlineObjects;
     for(const auto& mapObject : constOf(objects))
     {
         if (controller && controller->isAborted())
@@ -178,7 +178,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
     {
         assert(foundation != MapFoundationType::Undefined);
 
-        const std::shared_ptr<Model::MapObject> bgMapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::BinaryMapObject> bgMapObject(new Model::BinaryMapObject(env.dummyMapSection, nullptr));
         bgMapObject->_isArea = true;
         bgMapObject->_points31.push_back(qMove(PointI(area31.left, area31.top)));
         bgMapObject->_points31.push_back(qMove(PointI(area31.right, area31.top)));
@@ -267,7 +267,7 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
 void OsmAnd::Rasterizer_P::obtainPrimitives(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& source,
+    const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& source,
     const IQueryController* const controller,
     Rasterizer_Metrics::Metric_prepareContext* const metric)
 {
@@ -381,7 +381,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
 
 std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_P::createPrimitivesGroup(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const std::shared_ptr<const Model::MapObject>& mapObject,
+    const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
     MapStyleEvaluator& orderEvaluator,
     MapStyleEvaluator& polygonEvaluator,
     MapStyleEvaluator& polylineEvaluator,
@@ -1690,8 +1690,8 @@ bool OsmAnd::Rasterizer_P::contains( const QVector< PointF >& vertices, const Po
 
 bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-    const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& coastlines,
-    QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& outVectorized,
+    const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& coastlines,
+    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& outVectorized,
     bool abortIfBrokenCoastlinesExist,
     bool includeBrokenCoastlines )
 {
@@ -1754,7 +1754,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     // Draw coastlines
     for(const auto& polyline : constOf(coastlinePolylines))
     {
-        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env.dummyMapSection, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polyline;
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
@@ -1766,7 +1766,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     if (!coastlinePolylines.isEmpty())
     {
         // Add complete water tile with holes
-        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env.dummyMapSection, nullptr));
         mapObject->_points31.push_back(qMove(PointI(context._area31.left, context._area31.top)));
         mapObject->_points31.push_back(qMove(PointI(context._area31.right, context._area31.top)));
         mapObject->_points31.push_back(qMove(PointI(context._area31.right, context._area31.bottom)));
@@ -1797,7 +1797,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     {
         for(const auto& polygon : constOf(coastlinePolylines))
         {
-            const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+            const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env.dummyMapSection, nullptr));
             mapObject->_isArea = false;
             mapObject->_points31 = polygon;
             mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
@@ -1809,7 +1809,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
     // Draw coastlines
     for(const auto& polygon : constOf(closedPolygons))
     {
-        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env.dummyMapSection, nullptr));
         mapObject->_isArea = false;
         mapObject->_points31 = polygon;
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
@@ -1830,7 +1830,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
 
         bool clockwise = isClockwiseCoastlinePolygon(polygon);
 
-        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env.dummyMapSection, nullptr));
         mapObject->_points31 = qMove(polygon);
         if (clockwise)
         {
@@ -1859,7 +1859,7 @@ bool OsmAnd::Rasterizer_P::polygonizeCoastlines(
             context._zoom);
 
         // Add complete water tile
-        const std::shared_ptr<Model::MapObject> mapObject(new Model::MapObject(env.dummyMapSection, nullptr));
+        const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env.dummyMapSection, nullptr));
         mapObject->_points31.push_back(qMove(PointI(context._area31.left, context._area31.top)));
         mapObject->_points31.push_back(qMove(PointI(context._area31.right, context._area31.top)));
         mapObject->_points31.push_back(qMove(PointI(context._area31.right, context._area31.bottom)));
@@ -2324,7 +2324,7 @@ bool OsmAnd::Rasterizer_P::isClockwiseCoastlinePolygon( const QVector< PointI > 
 
 void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-    std::function<bool(const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
+    std::function<bool(const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter,
     const IQueryController* const controller )
 {
     for(const auto& symbolsEntry : constOf(context._symbols))

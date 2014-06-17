@@ -1,11 +1,11 @@
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 
 #include <cassert>
 
 #include "ObfMapSectionReader.h"
 #include "ObfMapSectionInfo.h"
 
-OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_, const std::shared_ptr<const ObfMapSectionLevel>& level_)
+OsmAnd::Model::BinaryMapObject::BinaryMapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_, const std::shared_ptr<const ObfMapSectionLevel>& level_)
     : _foundation(MapFoundationType::Undefined)
     , section(section_)
     , level(level_)
@@ -20,11 +20,11 @@ OsmAnd::Model::MapObject::MapObject(const std::shared_ptr<const ObfMapSectionInf
 {
 }
 
-OsmAnd::Model::MapObject::~MapObject()
+OsmAnd::Model::BinaryMapObject::~BinaryMapObject()
 {
 }
 
-int OsmAnd::Model::MapObject::getSimpleLayerValue() const
+int OsmAnd::Model::BinaryMapObject::getSimpleLayerValue() const
 {
     for(const auto& typeRuleId : constOf(_extraTypesRuleIds))
     {
@@ -39,7 +39,7 @@ int OsmAnd::Model::MapObject::getSimpleLayerValue() const
     return 0;
 }
 
-bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
+bool OsmAnd::Model::BinaryMapObject::isClosedFigure(bool checkInner /*= false*/) const
 {
     if (checkInner)
     {
@@ -57,19 +57,19 @@ bool OsmAnd::Model::MapObject::isClosedFigure(bool checkInner /*= false*/) const
         return _points31.first() == _points31.last();
 }
 
-bool OsmAnd::Model::MapObject::containsType(const uint32_t typeRuleId, bool checkAdditional /*= false*/) const
+bool OsmAnd::Model::BinaryMapObject::containsType(const uint32_t typeRuleId, bool checkAdditional /*= false*/) const
 {
     return (checkAdditional ? _extraTypesRuleIds : _typesRuleIds).contains(typeRuleId);
 }
 
-bool OsmAnd::Model::MapObject::containsTypeSlow( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const
+bool OsmAnd::Model::BinaryMapObject::containsTypeSlow( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const
 {
     const auto typeRuleId = section->encodingDecodingRules->encodingRuleIds[tag][value];
 
     return (checkAdditional ? _extraTypesRuleIds : _typesRuleIds).contains(typeRuleId);
 }
 
-bool OsmAnd::Model::MapObject::intersects( const AreaI& area ) const
+bool OsmAnd::Model::BinaryMapObject::intersects( const AreaI& area ) const
 {
     // Check if any of the object points is inside area
     for(const auto& point : constOf(_points31))
@@ -85,12 +85,12 @@ bool OsmAnd::Model::MapObject::intersects( const AreaI& area ) const
     return false;
 }
 
-uint64_t OsmAnd::Model::MapObject::getUniqueId( const std::shared_ptr<const MapObject>& mapObject )
+uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId( const std::shared_ptr<const BinaryMapObject>& mapObject )
 {
     return getUniqueId(mapObject->id, mapObject->section);
 }
 
-uint64_t OsmAnd::Model::MapObject::getUniqueId( const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section )
+uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId( const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section )
 {
     uint64_t uniqueId = id;
 

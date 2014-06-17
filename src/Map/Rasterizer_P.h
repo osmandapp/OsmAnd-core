@@ -27,7 +27,7 @@ namespace OsmAnd
     class RasterizedSymbol;
     namespace Model
     {
-        class MapObject;
+        class BinaryMapObject;
     }
     class IQueryController;
     namespace Rasterizer_Metrics
@@ -54,8 +54,8 @@ namespace OsmAnd
 
         static bool polygonizeCoastlines(
             const RasterizerEnvironment_P& env, const RasterizerContext_P& context,
-            const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& coastlines,
-            QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& outVectorized,
+            const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& coastlines,
+            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& outVectorized,
             bool abortIfBrokenCoastlinesExist,
             bool includeBrokenCoastlines);
         static bool buildCoastlinePolygonSegment(
@@ -96,12 +96,12 @@ namespace OsmAnd
         struct Primitive;
         struct PrimitivesGroup
         {
-            PrimitivesGroup(const std::shared_ptr<const Model::MapObject>& mapObject_)
+            PrimitivesGroup(const std::shared_ptr<const Model::BinaryMapObject>& mapObject_)
                 : mapObject(mapObject_)
             {
             }
 
-            const std::shared_ptr<const Model::MapObject> mapObject;
+            const std::shared_ptr<const Model::BinaryMapObject> mapObject;
 
             QVector< std::shared_ptr<const Primitive> > polygons;
             QVector< std::shared_ptr<const Primitive> > polylines;
@@ -112,7 +112,7 @@ namespace OsmAnd
         {
             Primitive(
                 const std::shared_ptr<const PrimitivesGroup>& group_,
-                const std::shared_ptr<const Model::MapObject>& mapObject_,
+                const std::shared_ptr<const Model::BinaryMapObject>& mapObject_,
                 const PrimitiveType objectType_,
                 const uint32_t typeRuleIdIndex_)
                 : group(group_)
@@ -123,7 +123,7 @@ namespace OsmAnd
             }
 
             const std::weak_ptr<const PrimitivesGroup> group;
-            const std::shared_ptr<const Model::MapObject> mapObject;
+            const std::shared_ptr<const Model::BinaryMapObject> mapObject;
             const PrimitiveType objectType;
             const uint32_t typeRuleIdIndex;
 
@@ -134,12 +134,12 @@ namespace OsmAnd
 
         static void obtainPrimitives(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const QList< std::shared_ptr<const OsmAnd::Model::MapObject> >& source,
+            const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& source,
             const IQueryController* const controller,
             Rasterizer_Metrics::Metric_prepareContext* const metric);
         static std::shared_ptr<const PrimitivesGroup> createPrimitivesGroup(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const std::shared_ptr<const Model::MapObject>& mapObject,
+            const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
             MapStyleEvaluator& orderEvaluator,
             MapStyleEvaluator& polygonEvaluator,
             MapStyleEvaluator& polylineEvaluator,
@@ -153,12 +153,12 @@ namespace OsmAnd
         struct PrimitiveSymbol;
         struct SymbolsGroup
         {
-            SymbolsGroup(const std::shared_ptr<const Model::MapObject>& mapObject_)
+            SymbolsGroup(const std::shared_ptr<const Model::BinaryMapObject>& mapObject_)
                 : mapObject(mapObject_)
             {
             }
 
-            const std::shared_ptr<const Model::MapObject> mapObject;
+            const std::shared_ptr<const Model::BinaryMapObject> mapObject;
 
             QVector< std::shared_ptr<const PrimitiveSymbol> > symbols;
         };
@@ -264,7 +264,7 @@ namespace OsmAnd
             const AreaI& area31,
             const ZoomLevel zoom,
             const MapFoundationType foundation,
-            const QList< std::shared_ptr<const Model::MapObject> >& objects,
+            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
             bool* nothingToRasterize,
             const IQueryController* const controller,
             Rasterizer_Metrics::Metric_prepareContext* const metric);
@@ -277,7 +277,7 @@ namespace OsmAnd
 
         void rasterizeSymbolsWithoutPaths(
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool (const std::shared_ptr<const Model::MapObject>& mapObject)> filter,
+            std::function<bool (const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter,
             const IQueryController* const controller);
 
     friend class OsmAnd::Rasterizer;

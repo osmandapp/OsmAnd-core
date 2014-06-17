@@ -22,7 +22,7 @@ namespace OsmAnd
     class ObfMapSectionLevelTreeNode;
     namespace Model
     {
-        class MapObject;
+        class BinaryMapObject;
     }
     class IQueryController;
     namespace ObfMapSectionReader_Metrics
@@ -63,10 +63,10 @@ namespace OsmAnd
 
         static void readMapObjectsBlock(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
-            QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut,
+            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
             const AreaI* bbox31,
             const FilterMapObjectsByIdSignature filterById,
-            std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
+            std::function<bool (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>&)> visitor,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
@@ -76,7 +76,7 @@ namespace OsmAnd
 
         static void readMapObject(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             uint64_t baseId, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
-            std::shared_ptr<OsmAnd::Model::MapObject>& mapObjectOut,
+            std::shared_ptr<OsmAnd::Model::BinaryMapObject>& mapObjectOut,
             const AreaI* bbox31);
 
         enum : uint32_t {
@@ -86,9 +86,9 @@ namespace OsmAnd
 
         static void loadMapObjects(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             ZoomLevel zoom, const AreaI* bbox31,
-            QList< std::shared_ptr<const OsmAnd::Model::MapObject> >* resultOut, MapFoundationType* foundationOut,
+            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut, MapFoundationType* foundationOut,
             const FilterMapObjectsByIdSignature filterById,
-            std::function<bool (const std::shared_ptr<const OsmAnd::Model::MapObject>&)> visitor,
+            std::function<bool (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>&)> visitor,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 

@@ -56,7 +56,7 @@ void OsmAnd::MapStyleEvaluator::setStringValue(const int valueDefId, const QStri
 }
 
 bool OsmAnd::MapStyleEvaluator::evaluate(
-    const std::shared_ptr<const Model::MapObject>& mapObject, const MapStyleRulesetType ruleset,
+    const std::shared_ptr<const Model::BinaryMapObject>& mapObject, const MapStyleRulesetType ruleset,
     MapStyleEvaluationResult* const outResultStorage /*= nullptr*/,
     bool evaluateChildren /*= true*/)
 {

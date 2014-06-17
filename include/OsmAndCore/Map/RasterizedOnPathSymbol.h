@@ -21,7 +21,7 @@ namespace OsmAnd
     protected:
         RasterizedOnPathSymbol(
             const std::shared_ptr<const RasterizedSymbolsGroup>& group,
-            const std::shared_ptr<const Model::MapObject>& mapObject,
+            const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const int order,
             const QString& content,

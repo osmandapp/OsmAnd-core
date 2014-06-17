@@ -2,7 +2,7 @@
 
 OsmAnd::RasterizedOnPathSymbol::RasterizedOnPathSymbol(
     const std::shared_ptr<const RasterizedSymbolsGroup>& group_,
-    const std::shared_ptr<const Model::MapObject>& mapObject_,
+    const std::shared_ptr<const Model::BinaryMapObject>& mapObject_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
     const QString& content_,

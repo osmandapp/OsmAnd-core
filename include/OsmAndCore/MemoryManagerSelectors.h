@@ -22,10 +22,10 @@ namespace OsmAnd
 
     namespace Model
     {
-        class MapObject;
+        class BinaryMapObject;
     }
     template<>
-    struct MemoryManagerSelector<OsmAnd::Model::MapObject>
+    struct MemoryManagerSelector<OsmAnd::Model::BinaryMapObject>
     {
         static IMemoryManager* get()
         {

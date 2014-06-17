@@ -14,7 +14,7 @@
 #include "PrivateImplementation.h"
 #include "IMapTiledSymbolsProvider.h"
 #include "MapSymbolsGroupShareableById.h"
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 #include "BinaryMapStaticSymbolsProvider.h"
 
 namespace OsmAnd
@@ -41,10 +41,10 @@ namespace OsmAnd
         private:
         protected:
         public:
-            MapSymbolsGroupShareableByMapObjectId(const std::shared_ptr<const Model::MapObject>& mapObject);
+            MapSymbolsGroupShareableByMapObjectId(const std::shared_ptr<const Model::BinaryMapObject>& mapObject);
             virtual ~MapSymbolsGroupShareableByMapObjectId();
 
-            const std::shared_ptr<const Model::MapObject> mapObject;
+            const std::shared_ptr<const Model::BinaryMapObject> mapObject;
 
             virtual QString getDebugTitle() const;
         };

@@ -21,7 +21,7 @@
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 #include "QuadTree.h"
 #include "Logging.h"
 #include "Utilities.h"

@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_MAP_OBJECT_H_
-#define _OSMAND_CORE_MAP_OBJECT_H_
+#ifndef _OSMAND_CORE_BINARY_MAP_OBJECT_H_
+#define _OSMAND_CORE_BINARY_MAP_OBJECT_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -24,12 +24,12 @@ namespace OsmAnd
 
     namespace Model
     {
-        class OSMAND_CORE_API MapObject : public ObjectWithId
+        class OSMAND_CORE_API BinaryMapObject Q_DECL_FINAL : public ObjectWithId
         {
-            Q_DISABLE_COPY(MapObject);
+            Q_DISABLE_COPY(BinaryMapObject);
         private:
         protected:
-            MapObject(const std::shared_ptr<const ObfMapSectionInfo>& section, const std::shared_ptr<const ObfMapSectionLevel>& level);
+            BinaryMapObject(const std::shared_ptr<const ObfMapSectionInfo>& section, const std::shared_ptr<const ObfMapSectionLevel>& level);
 
             MapFoundationType _foundation;
             bool _isArea;
@@ -40,7 +40,7 @@ namespace OsmAnd
             QMap< uint32_t, QString > _names;
             AreaI _bbox31;
         public:
-            virtual ~MapObject();
+            virtual ~BinaryMapObject();
 
             const std::shared_ptr<const ObfMapSectionInfo> section;
             const std::shared_ptr<const ObfMapSectionLevel> level;
@@ -62,7 +62,7 @@ namespace OsmAnd
 
             bool intersects(const AreaI& area) const;
 
-            static uint64_t getUniqueId(const std::shared_ptr<const MapObject>& mapObject);
+            static uint64_t getUniqueId(const std::shared_ptr<const BinaryMapObject>& mapObject);
             static uint64_t getUniqueId(const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section);
 
         friend class OsmAnd::ObfMapSectionReader_P;
@@ -71,4 +71,4 @@ namespace OsmAnd
     }
 }
 
-#endif // !defined(_OSMAND_CORE_MAP_OBJECT_H_)
+#endif // !defined(_OSMAND_CORE_BINARY_MAP_OBJECT_H_)

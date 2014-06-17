@@ -16,7 +16,7 @@
 
 #include <OsmAndCore/Data/ObfMapSectionInfo.h>
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
-#include <OsmAndCore/Data/Model/MapObject.h>
+#include <OsmAndCore/Data/Model/BinaryMapObject.h>
 
 #include <OsmAndCore/Data/ObfAddressSectionInfo.h>
 #include <OsmAndCore/Data/ObfAddressSectionReader.h>

@@ -44,7 +44,7 @@ OsmAnd::ZoomLevel OsmAnd::BinaryMapDataProvider::getMaxZoom() const
 
 OsmAnd::BinaryMapDataTile::BinaryMapDataTile(
     const MapFoundationType tileFoundation_,
-    const QList< std::shared_ptr<const Model::MapObject> >& mapObjects_,
+    const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects_,
     const std::shared_ptr< const RasterizerContext >& rasterizerContext_,
     const bool nothingToRasterize_,
     const TileId tileId_,

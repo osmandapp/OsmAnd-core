@@ -6,7 +6,7 @@
 #include "ObfReader.h"
 #include "ObfMapSectionInfo.h"
 #include "ObfMapSectionReader.h"
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 
@@ -55,7 +55,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
         const auto localizedNameTagPrefixLen = localizedNameTagPrefix.size();
         const auto worldRegionsCollector =
             [&outRegions, &idsCaptured, &nameId, &idId, &regionPrefixId, &regionSuffixId, localizedNameTagPrefix, localizedNameTagPrefixLen]
-            (const std::shared_ptr<const OsmAnd::Model::MapObject>& worldRegionMapObject) -> bool
+            (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>& worldRegionMapObject) -> bool
             {
                 const auto& rules = worldRegionMapObject->section->encodingDecodingRules;
                 if (!idsCaptured)

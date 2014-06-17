@@ -9,7 +9,7 @@
 #include "RasterizedOnPathSymbol.h"
 #include "BillboardRasterMapSymbol.h"
 #include "OnPathMapSymbol.h"
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 #include "Utilities.h"
 
 OsmAnd::BinaryMapStaticSymbolsProvider_P::BinaryMapStaticSymbolsProvider_P(BinaryMapStaticSymbolsProvider* owner_)
@@ -51,7 +51,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     QHash< uint64_t, std::shared_ptr<MapSymbolsGroup> > preallocatedSymbolsGroups;
     const auto rasterizationFilter =
         [this, tileBBox31, filterCallback, &preallocatedSymbolsGroups]
-        (const std::shared_ptr<const Model::MapObject>& mapObject) -> bool
+        (const std::shared_ptr<const Model::BinaryMapObject>& mapObject) -> bool
         {
             const auto isShareable =
                 (mapObject->section != owner->dataProvider->rasterizerEnvironment->dummyMapSection) &&
@@ -130,7 +130,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     return true;
 }
 
-OsmAnd::BinaryMapStaticSymbolsProvider_P::MapSymbolsGroupShareableByMapObjectId::MapSymbolsGroupShareableByMapObjectId(const std::shared_ptr<const Model::MapObject>& mapObject_)
+OsmAnd::BinaryMapStaticSymbolsProvider_P::MapSymbolsGroupShareableByMapObjectId::MapSymbolsGroupShareableByMapObjectId(const std::shared_ptr<const Model::BinaryMapObject>& mapObject_)
     : MapSymbolsGroupShareableById(mapObject_->id)
     , mapObject(mapObject_)
 {

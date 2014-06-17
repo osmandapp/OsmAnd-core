@@ -12,7 +12,7 @@
 #include "VectorMapSymbol.h"
 #include "IMapTiledSymbolsProvider.h"
 #include "IMapKeyedSymbolsProvider.h"
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 #include "EmbeddedResources.h"
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"

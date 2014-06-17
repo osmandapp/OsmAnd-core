@@ -4,7 +4,7 @@
 #include "Rasterizer_P.h"
 #include "RasterizerSharedContext.h"
 #include "RasterizerSharedContext_P.h"
-#include "MapObject.h"
+#include "BinaryMapObject.h"
 
 #include <SkPathEffect.h>
 

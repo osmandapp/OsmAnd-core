@@ -22,7 +22,7 @@ namespace OsmAnd
 {
     namespace Model
     {
-        class MapObject;
+        class BinaryMapObject;
     }
     class BinaryMapDataTile;
     class BinaryMapDataTile_P;
@@ -35,7 +35,7 @@ namespace OsmAnd
     protected:
         BinaryMapDataProvider_P(BinaryMapDataProvider* owner);
 
-        mutable SharedByZoomResourcesContainer<uint64_t, const Model::MapObject> _sharedMapObjects;
+        mutable SharedByZoomResourcesContainer<uint64_t, const Model::BinaryMapObject> _sharedMapObjects;
 
         enum class TileState
         {
@@ -108,7 +108,7 @@ namespace OsmAnd
         std::weak_ptr<BinaryMapDataProvider_P::Link> _link;
         std::weak_ptr<BinaryMapDataProvider_P::TileEntry> _refEntry;
 
-        QList< std::shared_ptr<const Model::MapObject> > _mapObjects;
+        QList< std::shared_ptr<const Model::BinaryMapObject> > _mapObjects;
         std::shared_ptr< const RasterizerContext > _rasterizerContext;
 
         void cleanup();
