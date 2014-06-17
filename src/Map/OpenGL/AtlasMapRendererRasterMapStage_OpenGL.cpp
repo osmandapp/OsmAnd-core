@@ -456,7 +456,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             std::shared_ptr<MapRendererBaseTiledResource> resource_;
-            if (resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
+            if (resourcesCollection->obtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
                 const auto resource = std::static_pointer_cast<MapRendererElevationDataTileResource>(resource_);
 
@@ -569,7 +569,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             std::shared_ptr<MapRendererBaseTiledResource> resource_;
-            if (resourcesCollection->tryObtainEntry(resource_, tileIdN, currentState.zoomBase))
+            if (resourcesCollection->obtainEntry(resource_, tileIdN, currentState.zoomBase))
             {
                 const auto resource = std::static_pointer_cast<MapRendererRasterBitmapTileResource>(resource_);
 
