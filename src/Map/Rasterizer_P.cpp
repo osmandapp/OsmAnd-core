@@ -1067,9 +1067,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
         textEvalResult.getIntegerValue(env.styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
         if (!text->drawOnPath && text->wrapWidth == 0)
         {
-            //TODO: Move to style as constant
-            // Default wrapping width (20 characters)
-            text->wrapWidth = 20;
+            // Default wrapping width (in characters)
+            text->wrapWidth = Rasterizer::DefaultTextLabelWrappingLengthInCharacters;
         }
 
         text->isBold = false;

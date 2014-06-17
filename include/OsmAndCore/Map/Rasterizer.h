@@ -19,13 +19,15 @@ namespace OsmAnd
     class RasterizerEnvironment;
     class RasterizerContext;
     class RasterizedSymbolsGroup;
-    namespace Model {
+    namespace Model
+    {
         class BinaryMapObject;
-    } // namespace Model
+    }
     class IQueryController;
-    namespace Rasterizer_Metrics {
+    namespace Rasterizer_Metrics
+    {
         struct Metric_prepareContext;
-    } // namespace Rasterizer_Metrics
+    }
 
     class Rasterizer_P;
     class OSMAND_CORE_API Rasterizer
@@ -37,6 +39,11 @@ namespace OsmAnd
     public:
         Rasterizer(const std::shared_ptr<const RasterizerContext>& context);
         virtual ~Rasterizer();
+
+        enum
+        {
+            DefaultTextLabelWrappingLengthInCharacters = 20
+        };
 
         const std::shared_ptr<const RasterizerContext> context;
 
@@ -61,7 +68,6 @@ namespace OsmAnd
             std::function<bool (const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter = nullptr,
             const IQueryController* const controller = nullptr);
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZER_H_)
