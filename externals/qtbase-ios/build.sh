@@ -57,27 +57,36 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	makeFlavor "ios.device.armv7s.static" "macx-ios-clang-device-armv7s" "$QTBASE_CONFIGURATION -sdk iphoneos"
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator.static" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static" "$SRCLOC/upstream.patched.ios.simulator.static"
+		(cd "$SRCLOC" && \
+			ln -s "upstream.patched.ios.simulator.i386.static" "upstream.patched.ios.simulator.static")
 	fi
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios.device.static" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.device.armv7.static" "$SRCLOC/upstream.patched.ios.device.static"
+		(cd "$SRCLOC" && \
+			ln -s "upstream.patched.ios.device.armv7.static" "upstream.patched.ios.device.static")
 	fi
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios-iphoneos" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.device.armv7.static" "$SRCLOC/upstream.patched.ios-iphoneos"
+		(cd "$SRCLOC" && \
+			ln -s "upstream.patched.ios.device.armv7.static" "upstream.patched.ios-iphoneos")
 	fi
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios-iphonesimulator" ]; then
-		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static" "$SRCLOC/upstream.patched.ios-iphonesimulator"
+		(cd "$SRCLOC" && \
+			ln -s "upstream.patched.ios.simulator.i386.static" "upstream.patched.ios-iphonesimulator")
 	fi
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios" ]; then
-		# Make link to cmake stuff and includes from already built target (any is suitable)
+		# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
+		(cd "$SRCLOC/upstream.patched.ios" && \
+			ln -s "../upstream.patched.ios.simulator.i386.static/include" "include")
+		(cd "$SRCLOC/upstream.patched.ios" && \
+			ln -s "../upstream.patched.ios.simulator.i386.static/src" "src")
+		(cd "$SRCLOC/upstream.patched.ios" && \
+			ln -s "../upstream.patched.ios.simulator.i386.static/bin" "bin")
 		mkdir -p "$SRCLOC/upstream.patched.ios/lib"
-		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/cmake" "$SRCLOC/upstream.patched.ios/lib/cmake"
-		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static/include" "$SRCLOC/upstream.patched.ios/include"
-		ln -s "$SRCLOC/upstream.patched.ios.simulator.i386.static/bin" "$SRCLOC/upstream.patched.ios/bin"
+		(cd "$SRCLOC/upstream.patched.ios/lib" && \
+			ln -s "../../upstream.patched.ios.simulator.i386.static/lib/cmake" "cmake")
 
 		# Make universal libraries using lipo
 		libraries=(Core Concurrent Network Sql Xml)
@@ -97,9 +106,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		done
 	fi
 	if [ ! -d "$SRCLOC/upstream.patched.ios.fat.static" ]; then
-		mkdir -p "$SRCLOC/upstream.patched.ios.fat.static"
-		ln -s "$SRCLOC/upstream.patched.ios/lib" "$SRCLOC/upstream.patched.ios.fat.static/lib"
-		ln -s "$SRCLOC/upstream.patched.ios/include" "$SRCLOC/upstream.patched.ios.fat.static/include"
-		ln -s "$SRCLOC/upstream.patched.ios/bin" "$SRCLOC/upstream.patched.ios.fat.static/bin"
+		(cd "$SRCLOC" && \
+			ln -s "upstream.patched.ios" "upstream.patched.ios.fat.static")
 	fi
 fi
