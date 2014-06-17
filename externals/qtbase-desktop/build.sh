@@ -102,6 +102,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.intel.shared" ]; then
 		# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
+		mkdir -p "$SRCLOC/upstream.patched.darwin.intel.shared"
 		(cd "$SRCLOC/upstream.patched.darwin.intel.shared" && \
 			ln -s "../upstream.patched.darwin.i386.shared/include" "include")
 		(cd "$SRCLOC/upstream.patched.darwin.intel.shared" && \
@@ -137,6 +138,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 	fi
 	if [ ! -d "$SRCLOC/upstream.patched.darwin.intel.static" ]; then
 		# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
+		mkdir -p "$SRCLOC/upstream.patched.darwin.intel.static"
 		(cd "$SRCLOC/upstream.patched.darwin.intel.static" && \
 			ln -s "../upstream.patched.darwin.i386.static/include" "include")
 		(cd "$SRCLOC/upstream.patched.darwin.intel.static" && \

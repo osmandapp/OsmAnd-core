@@ -78,6 +78,7 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios" ]; then
 		# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
+		mkdir -p "$SRCLOC/upstream.patched.ios"
 		(cd "$SRCLOC/upstream.patched.ios" && \
 			ln -s "../upstream.patched.ios.simulator.i386.static/include" "include")
 		(cd "$SRCLOC/upstream.patched.ios" && \
