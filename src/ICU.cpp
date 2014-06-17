@@ -40,46 +40,7 @@ void OsmAnd::ICU::initialize()
     }
 
     // Allocate resources:
-
-    QString anyToLatinTransliteratorId(QLatin1String("Any-Latin"));
-    icuError = U_ZERO_ERROR;
-    const auto availableTransliteratorIds = Transliterator::getAvailableIDs(icuError);
-    if (U_SUCCESS(icuError))
-    {
-        anyToLatinTransliteratorId.clear();
-
-        const UnicodeString* pTransliteratorId;
-
-        while ((pTransliteratorId = availableTransliteratorIds->snext(icuError)) != nullptr && U_SUCCESS(icuError))
-        {
-            const QString transliteratorId(reinterpret_cast<const QChar*>(pTransliteratorId->getBuffer()), pTransliteratorId->length());
-
-            if (transliteratorId.startsWith(QLatin1String("ASCII")))
-                continue;
-            else if (!transliteratorId.endsWith(QLatin1String("-Latin/BGN"))) // U.S. Board on Geographic Names (BGN)
-                continue;
-
-            anyToLatinTransliteratorId += transliteratorId + QLatin1String("; ");
-        }
-        availableTransliteratorIds->reset(icuError);
-
-        while ((pTransliteratorId = availableTransliteratorIds->snext(icuError)) != nullptr && U_SUCCESS(icuError))
-        {
-            const QString transliteratorId(reinterpret_cast<const QChar*>(pTransliteratorId->getBuffer()), pTransliteratorId->length());
-
-            if (transliteratorId.startsWith(QLatin1String("ASCII")))
-                continue;
-            else if (!transliteratorId.endsWith(QLatin1String("-Latin")))
-                continue;
-
-            anyToLatinTransliteratorId += transliteratorId + QLatin1String("; ");
-        }
-        availableTransliteratorIds->reset(icuError);
-
-        anyToLatinTransliteratorId += QLatin1String("Any-Latin");
-    }
-    icuError = U_ZERO_ERROR;
-    g_pIcuAnyToLatinTransliterator = Transliterator::createInstance(UnicodeString(anyToLatinTransliteratorId.toLatin1().constData()), UTRANS_FORWARD, icuError);
+    g_pIcuAnyToLatinTransliterator = Transliterator::createInstance(UnicodeString("Any-Latin/BGN"), UTRANS_FORWARD, icuError);
     if (U_FAILURE(icuError))
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU Any-to-Latin transliterator: %d", icuError);
 
@@ -165,7 +126,10 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::convertToVisualOrder(const
     return output;
 }
 
-OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(const QString& input, const bool keepAccentsAndDiacriticsInOriginal /*= true*/)
+OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(
+    const QString& input,
+    const bool keepAccentsAndDiacriticsInInput /*= true*/,
+    const bool keepAccentsAndDiacriticsInOutput /*= true*/)
 {
     QString output;
     UErrorCode icuError = U_ZERO_ERROR;
@@ -185,9 +149,9 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::transliterateToLatin(const
     pAnyToLatinTransliterator->transliterate(icuString);
     output = qMove(QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length()));
 
-    // If input and out differ at this point or accents/diacritics should be converted,
+    // If input and output differ at this point or accents/diacritics should be converted,
     // normalize the output again
-    if (input.compare(output, Qt::CaseInsensitive) != 0 || !keepAccentsAndDiacriticsInOriginal)
+    if ((input.compare(output, Qt::CaseInsensitive) != 0 || !keepAccentsAndDiacriticsInInput) && !keepAccentsAndDiacriticsInOutput)
     {
         const auto pIcuAccentsAndDiacriticsConverter = g_pIcuAccentsAndDiacriticsConverter->clone();
         ok = pIcuAccentsAndDiacriticsConverter != nullptr && U_SUCCESS(icuError);
