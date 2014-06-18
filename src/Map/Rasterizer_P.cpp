@@ -1202,19 +1202,24 @@ void OsmAnd::Rasterizer_P::adjustContextFromEnvironment(
 void OsmAnd::Rasterizer_P::rasterizeMap(
     SkCanvas& canvas,
     const bool fillBackground,
-    const AreaI* const destinationArea,
+    const AreaI* const pDestinationArea,
     const IQueryController* const controller)
 {
     // Deal with background
     if (fillBackground)
     {
-        if (destinationArea)
+        if (pDestinationArea)
         {
             // If destination area is specified, fill only it with background
             SkPaint bgPaint;
             bgPaint.setColor(context._defaultBgColor);
             bgPaint.setStyle(SkPaint::kFill_Style);
-            canvas.drawRectCoords(destinationArea->top, destinationArea->left, destinationArea->right, destinationArea->bottom, bgPaint);
+            canvas.drawRectCoords(
+                pDestinationArea->top,
+                pDestinationArea->left,
+                pDestinationArea->right,
+                pDestinationArea->bottom,
+                bgPaint);
         }
         else
         {
@@ -1227,19 +1232,18 @@ void OsmAnd::Rasterizer_P::rasterizeMap(
     _mapPaint = env.mapPaint;
 
     // Precalculate values
-    if (destinationArea)
+    AreaI destinationArea;
+    if (pDestinationArea)
     {
-        _destinationArea = *destinationArea;
-        _customDestinationArea = true;
+        destinationArea = *pDestinationArea;
     }
     else
     {
         const auto targetSize = canvas.getDeviceSize();
-        _destinationArea = AreaI(0, 0, targetSize.height(), targetSize.width());
-        _customDestinationArea = false;
+        destinationArea = AreaI(0, 0, targetSize.height(), targetSize.width());
     }
-    _31toPixelDivisor.x = context._tileDivisor / static_cast<double>(_destinationArea.width());
-    _31toPixelDivisor.y = context._tileDivisor / static_cast<double>(_destinationArea.height());
+    _31toPixelDivisor.x = context._tileDivisor / static_cast<double>(destinationArea.width());
+    _31toPixelDivisor.y = context._tileDivisor / static_cast<double>(destinationArea.height());
 
     // Rasterize layers of map:
     rasterizeMapPrimitives(canvas, context._polygons, Polygons, controller);
@@ -1417,13 +1421,13 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     if (!updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_0, true))
         return;
 
-    // Construct and test geometry against bbox area and destination area (if custom)
+    // Construct and test geometry against bbox area
     SkPath path;
     bool containsAtLeastOnePoint = false;
     int pointIdx = 0;
     PointF vertex;
     int bounds = 0;
-    QVector< PointF > outsideBounds;
+    QVector< PointI > outerPoints;
     const auto pointsCount = primitive->mapObject->points31.size();
     auto pPoint = primitive->mapObject->points31.constData();
     for(auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
@@ -1431,39 +1435,38 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
         const auto& point = *pPoint;
         calculateVertex(point, vertex);
 
+        // Hit-test
+        if (!containsAtLeastOnePoint)
+        {
+            if (context._area31.contains(point))
+                containsAtLeastOnePoint = true;
+            else
+                outerPoints.push_back(point);
+            bounds |= (point.x < context._area31.left ? 1 : 0);
+            bounds |= (point.x > context._area31.right ? 2 : 0);
+            bounds |= (point.y < context._area31.top ? 4 : 0);
+            bounds |= (point.y > context._area31.bottom ? 8 : 0);
+        }
+
+        // Plot vertex
         if (pointIdx == 0)
             path.moveTo(vertex.x, vertex.y);
         else
             path.lineTo(vertex.x, vertex.y);
-
-        if (/*_customDestinationArea && */!containsAtLeastOnePoint)
-        {
-            if (_destinationArea.contains(vertex))
-            {
-                containsAtLeastOnePoint = true;
-            }
-            else
-            {
-                outsideBounds.push_back(qMove(vertex));
-            }
-            bounds |= (vertex.x < _destinationArea.left ? 1 : 0);
-            bounds |= (vertex.x > _destinationArea.right ? 2 : 0);
-            bounds |= (vertex.y < _destinationArea.top ? 4 : 0);
-            bounds |= (vertex.y > _destinationArea.bottom ? 8 : 0);
-        }
     }
 
-    if (/*_customDestinationArea && */!containsAtLeastOnePoint)
+    if (!containsAtLeastOnePoint)
     {
         // fast check for polygons
         if ((bounds & 3) != 3 || (bounds >> 2) != 3)
             return;
 
+        // 
         bool ok = true;
-        ok = ok || contains(outsideBounds, _destinationArea.topLeft);
-        ok = ok || contains(outsideBounds, _destinationArea.bottomRight);
-        ok = ok || contains(outsideBounds, PointF(0, _destinationArea.bottom));
-        ok = ok || contains(outsideBounds, PointF(_destinationArea.right, 0));
+        ok = ok || containsHelper(outerPoints, context._area31.topLeft);
+        ok = ok || containsHelper(outerPoints, context._area31.bottomRight);
+        ok = ok || containsHelper(outerPoints, PointI(0, context._area31.bottom));
+        ok = ok || containsHelper(outerPoints, PointI(context._area31.right, 0));
         if (!ok)
             return;
     }
@@ -1523,7 +1526,7 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
             oneway = -1;
     }
 
-    // Construct and test geometry against bbox area and destination area (if custom)
+    // Construct and test geometry against (wider) bbox area
     SkPath path;
     int pointIdx = 0;
     bool intersect = false;
@@ -1534,27 +1537,22 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
     for(pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
         const auto& point = *pPoint;
-
         calculateVertex(point, vertex);
 
-        if (pointIdx == 0)
-            path.moveTo(vertex.x, vertex.y);
-        else
-            path.lineTo(vertex.x, vertex.y);
-
-        if (/*_customDestinationArea && */!intersect)
+        // Hit-test
+        if (!intersect)
         {
-            if (_destinationArea.contains(vertex))
+            if (context._largerArea31.contains(vertex))
             {
                 intersect = true;
             }
             else
             {
                 int cross = 0;
-                cross |= (vertex.x < _destinationArea.left ? 1 : 0);
-                cross |= (vertex.x > _destinationArea.right ? 2 : 0);
-                cross |= (vertex.y < _destinationArea.top ? 4 : 0);
-                cross |= (vertex.y > _destinationArea.bottom ? 8 : 0);
+                cross |= (point.x < context._largerArea31.left ? 1 : 0);
+                cross |= (point.x > context._largerArea31.right ? 2 : 0);
+                cross |= (point.y < context._largerArea31.top ? 4 : 0);
+                cross |= (point.y > context._largerArea31.bottom ? 8 : 0);
                 if (pointIdx > 0)
                 {
                     if ((prevCross & cross) == 0)
@@ -1565,9 +1563,15 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
                 prevCross = cross;
             }
         }
+
+        // Plot vertex
+        if (pointIdx == 0)
+            path.moveTo(vertex.x, vertex.y);
+        else
+            path.lineTo(vertex.x, vertex.y);
     }
 
-    if (/*_customDestinationArea && */!intersect)
+    if (!intersect)
         return;
 
     if (pointIdx > 0)
@@ -1652,26 +1656,26 @@ void OsmAnd::Rasterizer_P::calculateVertex( const PointI& point31, PointF& verte
     vertex.y = static_cast<float>(point31.y - context._area31.top) / _31toPixelDivisor.y;
 }
 
-bool OsmAnd::Rasterizer_P::contains( const QVector< PointF >& vertices, const PointF& other )
+bool OsmAnd::Rasterizer_P::containsHelper( const QVector< PointI >& points, const PointI& otherPoint )
 {
     uint32_t intersections = 0;
 
-    auto itPrevVertex = vertices.cbegin();
-    auto itVertex = itPrevVertex + 1;
-    for(const auto itEnd = vertices.cend(); itVertex != itEnd; itPrevVertex = itVertex, ++itVertex)
+    auto itPrevPoint = points.cbegin();
+    auto itPoint = itPrevPoint + 1;
+    for (const auto itEnd = points.cend(); itPoint != itEnd; itPrevPoint = itPoint, ++itPoint)
     {
-        const auto& vertex0 = *itPrevVertex;
-        const auto& vertex1 = *itVertex;
+        const auto& point0 = *itPrevPoint;
+        const auto& point1 = *itPoint;
 
-        if (Utilities::rayIntersect(vertex0, vertex1, other))
+        if (Utilities::rayIntersect(point0, point1, otherPoint))
             intersections++;
     }
 
     // special handling, also count first and last, might not be closed, but
     // we want this!
-    const auto& vertex0 = vertices.first();
-    const auto& vertex1 = vertices.last();
-    if (Utilities::rayIntersect(vertex0, vertex1, other))
+    const auto& point0 = points.first();
+    const auto& point1 = points.last();
+    if (Utilities::rayIntersect(point0, point1, otherPoint))
         intersections++;
 
     return intersections % 2 == 1;

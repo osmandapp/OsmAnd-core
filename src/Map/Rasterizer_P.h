@@ -45,8 +45,6 @@ namespace OsmAnd
         const RasterizerContext_P& context;
 
         SkPaint _mapPaint;
-        bool _customDestinationArea;
-        AreaI _destinationArea;
         PointD _31toPixelDivisor;
 
         static void adjustContextFromEnvironment(
@@ -251,7 +249,7 @@ namespace OsmAnd
             SkCanvas& canvas, const SkPath& path, int oneway );
 
         inline void calculateVertex(const PointI& point31, PointF& vertex);
-        static bool contains(const QVector< PointF >& vertices, const PointF& other);
+        static bool containsHelper(const QVector< PointI >& points, const PointI& otherPoint);
     protected:
         Rasterizer_P(Rasterizer* const owner, const RasterizerEnvironment_P& env, const RasterizerContext_P& context);
     public:
