@@ -71,6 +71,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
 
     context._zoom = zoom;
     context._area31 = area31;
+    // Wider area is used to test primitives that have width
+    context._largerArea31 = area31.getEnlargedBy(PointI(area31.width() * 0.25f, area31.height() * 0.25f));
 
     // Update metric
     std::chrono::high_resolution_clock::time_point objectsSorting_begin;
@@ -1228,24 +1230,25 @@ void OsmAnd::Rasterizer_P::rasterizeMap(
     if (destinationArea)
     {
         _destinationArea = *destinationArea;
+        _customDestinationArea = true;
     }
     else
     {
         const auto targetSize = canvas.getDeviceSize();
         _destinationArea = AreaI(0, 0, targetSize.height(), targetSize.width());
+        _customDestinationArea = false;
     }
     _31toPixelDivisor.x = context._tileDivisor / static_cast<double>(_destinationArea.width());
     _31toPixelDivisor.y = context._tileDivisor / static_cast<double>(_destinationArea.height());
 
     // Rasterize layers of map:
-    rasterizeMapPrimitives(destinationArea, canvas, context._polygons, Polygons, controller);
+    rasterizeMapPrimitives(canvas, context._polygons, Polygons, controller);
     if (context._shadowRenderingMode > 1)
-        rasterizeMapPrimitives(destinationArea, canvas, context._polylines, Polylines_ShadowOnly, controller);
-    rasterizeMapPrimitives(destinationArea, canvas, context._polylines, Polylines, controller);
+        rasterizeMapPrimitives(canvas, context._polylines, Polylines_ShadowOnly, controller);
+    rasterizeMapPrimitives(canvas, context._polylines, Polylines, controller);
 }
 
 void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
-    const AreaI* const destinationArea,
     SkCanvas& canvas, const QVector< std::shared_ptr<const Primitive> >& primitives, PrimitivesType type, const IQueryController* const controller)
 {
     assert(type != PrimitivesType::Points);
@@ -1263,11 +1266,11 @@ void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
             if (primitive->zOrder > polygonSizeThreshold + static_cast<int>(primitive->zOrder))
                 continue;
 
-            rasterizePolygon(destinationArea, canvas, primitive);
+            rasterizePolygon(canvas, primitive);
         }
         else if (type == Polylines || type == Polylines_ShadowOnly)
         {
-            rasterizePolyline(destinationArea, canvas, primitive, type == Polylines_ShadowOnly);
+            rasterizePolyline(canvas, primitive, type == Polylines_ShadowOnly);
         }
     }
 }
@@ -1405,7 +1408,6 @@ bool OsmAnd::Rasterizer_P::updatePaint(
 }
 
 void OsmAnd::Rasterizer_P::rasterizePolygon(
-    const AreaI* const destinationArea,
     SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive)
 {
     assert(primitive->mapObject->points31.size() > 2);
@@ -1415,7 +1417,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     if (!updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_0, true))
         return;
 
-    // Construct and test geometry against destination area
+    // Construct and test geometry against bbox area and destination area (if custom)
     SkPath path;
     bool containsAtLeastOnePoint = false;
     int pointIdx = 0;
@@ -1426,16 +1428,17 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     auto pPoint = primitive->mapObject->points31.constData();
     for(auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
-        calculateVertex(*pPoint, vertex);
+        const auto& point = *pPoint;
+        calculateVertex(point, vertex);
 
         if (pointIdx == 0)
             path.moveTo(vertex.x, vertex.y);
         else
             path.lineTo(vertex.x, vertex.y);
 
-        if (destinationArea && !containsAtLeastOnePoint)
+        if (/*_customDestinationArea && */!containsAtLeastOnePoint)
         {
-            if (destinationArea->contains(vertex))
+            if (_destinationArea.contains(vertex))
             {
                 containsAtLeastOnePoint = true;
             }
@@ -1443,25 +1446,24 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
             {
                 outsideBounds.push_back(qMove(vertex));
             }
-            bounds |= (vertex.x < destinationArea->left ? 1 : 0);
-            bounds |= (vertex.x > destinationArea->right ? 2 : 0);
-            bounds |= (vertex.y < destinationArea->top ? 4 : 0);
-            bounds |= (vertex.y > destinationArea->bottom ? 8 : 0);
+            bounds |= (vertex.x < _destinationArea.left ? 1 : 0);
+            bounds |= (vertex.x > _destinationArea.right ? 2 : 0);
+            bounds |= (vertex.y < _destinationArea.top ? 4 : 0);
+            bounds |= (vertex.y > _destinationArea.bottom ? 8 : 0);
         }
-
     }
 
-    if (destinationArea && !containsAtLeastOnePoint)
+    if (/*_customDestinationArea && */!containsAtLeastOnePoint)
     {
         // fast check for polygons
         if ((bounds & 3) != 3 || (bounds >> 2) != 3)
             return;
 
         bool ok = true;
-        ok = ok || contains(outsideBounds, destinationArea->topLeft);
-        ok = ok || contains(outsideBounds, destinationArea->bottomRight);
-        ok = ok || contains(outsideBounds, PointF(0, destinationArea->bottom));
-        ok = ok || contains(outsideBounds, PointF(destinationArea->right, 0));
+        ok = ok || contains(outsideBounds, _destinationArea.topLeft);
+        ok = ok || contains(outsideBounds, _destinationArea.bottomRight);
+        ok = ok || contains(outsideBounds, PointF(0, _destinationArea.bottom));
+        ok = ok || contains(outsideBounds, PointF(_destinationArea.right, 0));
         if (!ok)
             return;
     }
@@ -1491,7 +1493,6 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
 }
 
 void OsmAnd::Rasterizer_P::rasterizePolyline(
-    const AreaI* const destinationArea,
     SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive, bool drawOnlyShadow)
 {
     assert(primitive->mapObject->points31.size() >= 2);
@@ -1522,7 +1523,7 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
             oneway = -1;
     }
 
-    // Construct and test geometry against destination area
+    // Construct and test geometry against bbox area and destination area (if custom)
     SkPath path;
     int pointIdx = 0;
     bool intersect = false;
@@ -1532,26 +1533,28 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
     auto pPoint = primitive->mapObject->points31.constData();
     for(pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
-        calculateVertex(*pPoint, vertex);
+        const auto& point = *pPoint;
+
+        calculateVertex(point, vertex);
 
         if (pointIdx == 0)
             path.moveTo(vertex.x, vertex.y);
         else
             path.lineTo(vertex.x, vertex.y);
 
-        if (destinationArea && !intersect)
+        if (/*_customDestinationArea && */!intersect)
         {
-            if (destinationArea->contains(vertex))
+            if (_destinationArea.contains(vertex))
             {
                 intersect = true;
             }
             else
             {
                 int cross = 0;
-                cross |= (vertex.x < destinationArea->left ? 1 : 0);
-                cross |= (vertex.x > destinationArea->right ? 2 : 0);
-                cross |= (vertex.y < destinationArea->top ? 4 : 0);
-                cross |= (vertex.y > destinationArea->bottom ? 8 : 0);
+                cross |= (vertex.x < _destinationArea.left ? 1 : 0);
+                cross |= (vertex.x > _destinationArea.right ? 2 : 0);
+                cross |= (vertex.y < _destinationArea.top ? 4 : 0);
+                cross |= (vertex.y > _destinationArea.bottom ? 8 : 0);
                 if (pointIdx > 0)
                 {
                     if ((prevCross & cross) == 0)
@@ -1564,7 +1567,7 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
         }
     }
 
-    if (destinationArea && !intersect)
+    if (/*_customDestinationArea && */!intersect)
         return;
 
     if (pointIdx > 0)

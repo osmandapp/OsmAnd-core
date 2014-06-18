@@ -35,6 +35,7 @@ namespace OsmAnd
         uint32_t _roadsDensityLimitPerTile;
 
         AreaI _area31;
+        AreaI _largerArea31;
         ZoomLevel _zoom;
         double _tileDivisor;
         uint32_t _shadowLevelMin;

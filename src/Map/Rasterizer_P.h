@@ -45,6 +45,7 @@ namespace OsmAnd
         const RasterizerContext_P& context;
 
         SkPaint _mapPaint;
+        bool _customDestinationArea;
         AreaI _destinationArea;
         PointD _31toPixelDivisor;
 
@@ -238,14 +239,11 @@ namespace OsmAnd
             const MapStyleEvaluationResult& evalResult, const PaintValuesSet valueSetSelector, const bool isArea);
 
         void rasterizeMapPrimitives(
-            const AreaI* const destinationArea,
             SkCanvas& canvas, const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
 
         void rasterizePolygon(
-            const AreaI* const destinationArea,
             SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive);
         void rasterizePolyline(
-            const AreaI* const destinationArea,
             SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive, bool drawOnlyShadow);
         void rasterizeLineShadow(
             SkCanvas& canvas, const SkPath& path, uint32_t shadowColor, int shadowRadius);
