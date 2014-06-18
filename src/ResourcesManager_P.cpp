@@ -1401,7 +1401,7 @@ std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::ResourcesManager_P::MapStylesCol
 
 bool OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::obtainBakedStyle(const QString& styleName, std::shared_ptr<const MapStyle>& outStyle) const
 {
-    auto resourceId = styleName;
+    auto resourceId = styleName.toLower();
     if (!resourceId.endsWith(QLatin1String(".render.xml")))
         resourceId.append(QLatin1String(".render.xml"));
 
