@@ -17,6 +17,7 @@ OsmAnd::BinaryMapDataProvider::BinaryMapDataProvider(
     , rasterizerEnvironment(new RasterizerEnvironment(mapStyle_, displayDensityFactor, localeLanguageId, externalResourcesProvider))
     , rasterizerSharedContext(new RasterizerSharedContext())
 {
+    assert(mapStyle->isLoaded());
 }
 
 OsmAnd::BinaryMapDataProvider::~BinaryMapDataProvider()
