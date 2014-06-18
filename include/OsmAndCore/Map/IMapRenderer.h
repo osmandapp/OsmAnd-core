@@ -49,6 +49,9 @@ namespace OsmAnd
         virtual bool processRendering() = 0;
         virtual bool releaseRendering() = 0;
 
+        virtual bool pauseGpuWorkerThread() = 0;
+        virtual bool resumeGpuWorkerThread() = 0;
+
         virtual void reloadEverything() = 0;
 
         const MapRendererState& state;

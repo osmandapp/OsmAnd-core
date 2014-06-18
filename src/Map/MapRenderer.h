@@ -51,11 +51,14 @@ namespace OsmAnd
         QAtomicInt _resourcesGpuSyncRequestsCounter;
         
         // GPU worker related:
-        volatile bool _gpuWorkerIsAlive;
         Qt::HANDLE _gpuWorkerThreadId;
         std::unique_ptr<Concurrent::Thread> _gpuWorkerThread;
+        volatile bool _gpuWorkerIsAlive;
         QMutex _gpuWorkerThreadWakeupMutex;
         QWaitCondition _gpuWorkerThreadWakeup;
+        volatile bool _gpuWorkerIsPaused;
+        QMutex _gpuWorkerThreadPausedMutex;
+        QWaitCondition _gpuWorkerThreadPaused;
         void gpuWorkerThreadProcedure();
 
         // General:
@@ -137,6 +140,9 @@ namespace OsmAnd
         virtual bool renderFrame();
         virtual bool processRendering();
         virtual bool releaseRendering();
+
+        virtual bool pauseGpuWorkerThread();
+        virtual bool resumeGpuWorkerThread();
 
         virtual void reloadEverything();
 
