@@ -74,8 +74,10 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider_GPU_P::obtainData(
     // Perform actual rendering
     if (!dataTile->nothingToRasterize)
     {
+        const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
+
         Rasterizer rasterizer(dataTile->rasterizerContext);
-        rasterizer.rasterizeMap(canvas, true, nullptr, queryController);
+        rasterizer.rasterizeMap(canvas, true, &tileBBox31, queryController);
     }
 
 #if OSMAND_PERFORMANCE_METRICS
