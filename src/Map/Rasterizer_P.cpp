@@ -2398,7 +2398,8 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     textShadowPaint = textPaint;
                     textShadowPaint.setStyle(SkPaint::kStroke_Style);
                     textShadowPaint.setColor(textSymbol->shadowColor);
-                    textShadowPaint.setStrokeWidth(textSymbol->shadowRadius);
+                    textShadowPaint.setStrokeWidth(textSymbol->shadowRadius + 2 /*px*/);
+                    //NOTE: ^^^ This is same as specifying 'x:2' in style, but due to backward compatibility with Android, leave as-is
 
                     // Get line spacing
                     SkPaint::FontMetrics shadowFontMetrics;
