@@ -1415,6 +1415,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     if (!updatePaint(*primitive->evaluationResult, PaintValuesSet::Set_0, true))
         return;
 
+    // Construct and test geometry against destination area
     SkPath path;
     bool containsAtLeastOnePoint = false;
     int pointIdx = 0;
@@ -1428,13 +1429,9 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
         calculateVertex(*pPoint, vertex);
 
         if (pointIdx == 0)
-        {
             path.moveTo(vertex.x, vertex.y);
-        }
         else
-        {
             path.lineTo(vertex.x, vertex.y);
-        }
 
         if (destinationArea && !containsAtLeastOnePoint)
         {
@@ -1481,13 +1478,9 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
                 calculateVertex(point, vertex);
 
                 if (pointIdx == 0)
-                {
                     path.moveTo(vertex.x, vertex.y);
-                }
                 else
-                {
                     path.lineTo(vertex.x, vertex.y);
-                }
             }
         }
     }
@@ -1529,29 +1522,22 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
             oneway = -1;
     }
 
+    // Construct and test geometry against destination area
     SkPath path;
     int pointIdx = 0;
     bool intersect = false;
     int prevCross = 0;
-    PointF vertex, middleVertex;
+    PointF vertex;
     const auto pointsCount = primitive->mapObject->points31.size();
-    const auto middleIdx = pointsCount / 2;
     auto pPoint = primitive->mapObject->points31.constData();
     for(pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
         calculateVertex(*pPoint, vertex);
 
         if (pointIdx == 0)
-        {
             path.moveTo(vertex.x, vertex.y);
-        }
         else
-        {
-            if (pointIdx == middleIdx)
-                middleVertex = vertex;
-
             path.lineTo(vertex.x, vertex.y);
-        }
 
         if (destinationArea && !intersect)
         {
