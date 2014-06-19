@@ -8,10 +8,19 @@
 #include "renderRules.h"
 #include "Logging.h"
 
-float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop) {
+float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop, float defValue) {
 	return rc->getDensityValue(render->getFloatPropertyValue(prop, 0),
-		render->getIntPropertyValue(prop, 0));
+		render->getIntPropertyValue(prop, defValue));
 }
+
+
+
+float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, RenderingRuleProperty* prop) 
+{
+	return getDensityValue(rc, render, prop, 0);
+
+}
+
 
 /**
  * Parse the color string, and return the corresponding color-int.

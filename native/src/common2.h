@@ -66,6 +66,7 @@ struct IconDrawInfo
 	float x;
 	float y;
 	int order;
+	float iconSize;
 };
 
 static const int TILE_SIZE = 256;

@@ -682,6 +682,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.x = px;
 		ico.y = py;
 		ico.bmp = bmp;
+		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
 		rc->iconsToDraw.push_back(ico);
 	}
@@ -734,26 +735,40 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 	for(;ji< rc->iconsToDraw.size(); ji++)
 	{
 		IconDrawInfo icon = rc->iconsToDraw.at(ji);
-		if (icon.y >= 0 && icon.y < rc->getHeight() && icon.x >= 0 && icon.x < rc->getWidth() && icon.bmp != NULL) {
+		if (icon.y >= 0 && icon.y < rc->getHeight() && icon.x >= 0 && icon.x < rc->getWidth() && icon.bmp != NULL) 
+		{
 			SkBitmap* ico = icon.bmp;
 			float left = icon.x -  ico->width() / 2 * rc->getScreenDensityRatio();
 			float top = icon.y - ico->height() / 2 * rc->getScreenDensityRatio(); 
 			SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
-						ico->height()* rc->getScreenDensityRatio() );
-			
-			boundsIntersect.query_in_box(r, searchText);
+				ico->height()* rc->getScreenDensityRatio() );
+			float vwidth = icon.iconSize >= 0 ? icon.iconSize : ico->width();
+			float vheight = icon.iconSize >= 0 ? icon.iconSize : ico->height();
+			float vleft = icon.x -  vwidth / 2 * rc->getScreenDensityRatio();
+			float vtop = icon.y - vheight / 2 * rc->getScreenDensityRatio(); 
+						
 			bool intersects = false;
-			for (uint32_t i = 0; i < searchText.size(); i++) {
-				SkRect& t = searchText.at(i);
-				if (SkRect::Intersects(t, r)) {
-					intersects =  true;
-					break;
+			SkRect bbox = SkRect::MakeXYWH(0, 0, 0, 0);
+			if(vwidth > 0 && vheight > 0)  
+			{
+				bbox = SkRect::MakeXYWH(vleft, vtop, vwidth * rc->getScreenDensityRatio(),
+						vheight* rc->getScreenDensityRatio() );
+				boundsIntersect.query_in_box(bbox, searchText);
+			
+				for (uint32_t i = 0; i < searchText.size(); i++) {
+					SkRect& t = searchText.at(i);
+					if (SkRect::Intersects(t, bbox)) {
+						intersects =  true;
+						break;
+					}
 				}
 			}
 			if (!intersects) {
 				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, r, &p));
-				r.inset(-r.width()/4, -r.height()/4);
-				boundsIntersect.insert(r, r);
+				if(bbox.width() > 0) {
+					bbox.inset(-bbox.width()/4, -bbox.height()/4);
+					boundsIntersect.insert(bbox, bbox);
+				}
 			}
 		}
 		if (rc->interrupted()) {
