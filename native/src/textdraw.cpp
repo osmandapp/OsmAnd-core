@@ -85,7 +85,7 @@ int nextWord(uint8_t* s, uint* charRead) {
 void drawWrappedText(RenderingContext* rc, SkCanvas* cv, TextDrawInfo* text, float textSize, SkPaint& paintText) {
 	if(text->textWrap == 0) {
 		// set maximum for all text
-		text->textWrap = 20;
+		text->textWrap = 15;
 	}
 
 	if(text->text.length() > text->textWrap) {
