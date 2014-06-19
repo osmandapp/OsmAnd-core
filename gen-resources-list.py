@@ -69,14 +69,27 @@ if __name__=='__main__':
     rootDir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
     
     rules = [
-    	[r'resources/rendering_styles/default\.render\.xml', r'map/styles/default.render.xml'],
+        # Map styles and related:
+        [r'resources/rendering_styles/default\.render\.xml', r'map/styles/default.render.xml'],
         [r'resources/rendering_styles/default\.map_styles_presets\.xml', r'map/presets/default.map_styles_presets.xml'],
-    	[r'resources/rendering_styles/style-icons/drawable-mdpi/h_(.*shield.*)\.png', r'map/shields/\1.png'],
-    	[r'resources/rendering_styles/style-icons/drawable-mdpi/h_(.*)\.png', r'map/shaders/\1.png'],
-    	[r'resources/rendering_styles/style-icons/drawable-mdpi/mm_(.*)\.png', r'map/map_icons/\1.png'],
-    	[r'resources/rendering_styles/stubs/(.*)\.png', r'map/stubs/\1.png'],
-    	[r'resources/routing/routing\.xml', r'routing/routing.xml'],
-    	[r'core/externals/icu4c/upstream\.data/icudt\d+([lb])\.dat', r'icu4c/icu-data-\1.dat'],
+
+        # Map icons:
+        [r'resources/rendering_styles/style-icons/drawable-mdpi/h_(.*shield.*)\.png', r'map/shields/\1.png'],
+        [r'resources/rendering_styles/style-icons/drawable-mdpi/h_(.*)\.png', r'map/shaders/\1.png'],
+        [r'resources/rendering_styles/style-icons/drawable-mdpi/mm_(.*)\.png', r'map/map_icons/\1.png'],
+
+        # Routing:
+        [r'resources/routing/routing\.xml', r'routing/routing.xml'],
+
+        # Data for ICU
+        [r'core/externals/icu4c/upstream\.data/icudt\d+([lb])\.dat', r'icu4c/icu-data-\1.dat'],
+
+        # Fonts:
+        [r'resources/rendering_styles/fonts/(.*)/(.*)\.(ttf)', r'map/fonts/\1/\2.\3'],
+        [r'resources/rendering_styles/fonts/(.*)\.(ttf)', r'map/fonts/\1.\2'],
+
+        # Misc resources:
+        [r'resources/rendering_styles/stubs/(.*)\.png', r'map/stubs/\1.png'],
     ]
 
     resourcesSubpaths = [

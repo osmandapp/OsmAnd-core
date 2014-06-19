@@ -37,8 +37,7 @@ OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment*
     , attributeRule_roadDensityZoomTile(_attributeRule_roadDensityZoomTile)
     , attributeRule_roadsDensityLimitPerTile(_attributeRule_roadsDensityLimitPerTile)
     , mapPaint(_mapPaint)
-    , regularTextPaint(_regularTextPaint)
-    , boldTextPaint(_boldTextPaint)
+    , textPaint(_textPaint)
     , oneWayPaints(_oneWayPaints)
     , reverseOneWayPaints(_reverseOneWayPaints)
     , dummyMapSection(new ObfMapSectionInfo())
@@ -72,12 +71,42 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
 {
     _mapPaint.setAntiAlias(true);
 
-    _regularTextPaint.setAntiAlias(true);
-    _regularTextPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    _textPaint.setAntiAlias(true);
+    _textPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
     static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
 
-    _boldTextPaint = _regularTextPaint;
-    _boldTextPaint.setFakeBoldText(true);
+    // Fonts register (in priority order):
+    _fontsRegister.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Italic.ttf"), false, true });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Semibold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-SemiboldItalic.ttf"), true, true });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansEthiopic-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansEthiopic-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansArabic.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansHebrew-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansHebrew-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansThai-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansThai-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansArmenian.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansGeorgian.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansDevanagari-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansDevanagari-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansTamil-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansTamil-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansMalayalam.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansMalayalam-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansBengali-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansBengali-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansTelugu-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansTelugu-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansKannada-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansKannada-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansKhmer-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansKhmer-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansLao-Regular.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansLao-Bold.ttf"), true, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansFallback.ttf"), false, false });
+    _fontsRegister.push_back({ QLatin1String("map/fonts/MTLmr3m.ttf"), false, false });
 
     _shadowLevelMin = 0;
     _shadowLevelMax = 256;
@@ -187,6 +216,89 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             _reverseOneWayPaints.push_back(qMove(paint));
         }
     }
+}
+
+void OsmAnd::RasterizerEnvironment_P::clearFontsCache()
+{
+    QMutexLocker scopedLocker(&_fontTypefacesCacheMutex);
+
+    for (const auto& typeface : _fontTypefacesCache)
+        typeface->unref();
+    _fontTypefacesCache.clear();
+}
+
+SkTypeface* OsmAnd::RasterizerEnvironment_P::getTypefaceForFontResource(const QString& fontResource) const
+{
+    QMutexLocker scopedLocker(&_fontTypefacesCacheMutex);
+
+    // Look for loaded typefaces
+    const auto& citTypeface = _fontTypefacesCache.constFind(fontResource);
+    if (citTypeface != _fontTypefacesCache.cend())
+        return *citTypeface;
+
+    // Load raw data from resource
+    const auto fontData = EmbeddedResources::decompressResource(fontResource);
+    if (fontData.isNull())
+        return nullptr;
+
+    // Load typeface from font data
+    const auto fontDataStream = new SkMemoryStream(fontData.constData(), fontData.length(), true);
+    const auto typeface = SkTypeface::CreateFromStream(fontDataStream);
+    fontDataStream->unref();
+    if (!typeface)
+        return nullptr;
+
+    _fontTypefacesCache.insert(fontResource, typeface);
+
+    return typeface;
+}
+
+void OsmAnd::RasterizerEnvironment_P::configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const
+{
+    // Lookup matching font entry
+    const FontsRegisterEntry* pBestMatchEntry = nullptr;
+    SkTypeface* bestMatchTypeface = nullptr;
+    SkPaint textCoverageTestPaint;
+    textCoverageTestPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    for (const auto& entry : constOf(_fontsRegister))
+    {
+        // Get typeface for this entry
+        const auto typeface = getTypefaceForFontResource(entry.resource);
+        if (!typeface)
+            continue;
+
+        // Check if this typeface covers provided text
+        textCoverageTestPaint.setTypeface(typeface);
+        if (!textCoverageTestPaint.containsText(text.constData(), text.length()*sizeof(QChar)))
+            continue;
+
+        // Mark this as best match
+        pBestMatchEntry = &entry;
+        bestMatchTypeface = typeface;
+
+        // If this entry fully matches the request, stop search
+        if (entry.bold == bold && entry.italic == italic)
+            break;
+    }
+    
+    // If there's no best match, fallback to default typeface
+    if (bestMatchTypeface == nullptr)
+    {
+        paint.setTypeface(nullptr);
+
+        // Adjust to handle bold text
+        if (bold)
+            paint.setFakeBoldText(true);
+
+        return;
+    }
+
+    // There was a best match, use that
+    paint.setTypeface(bestMatchTypeface);
+
+    // Adjust to handle bold text
+    if (pBestMatchEntry->bold != bold && bold)
+        paint.setFakeBoldText(true);
 }
 
 QHash< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment_P::getSettings() const

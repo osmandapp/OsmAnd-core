@@ -2356,13 +2356,10 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     env.obtainTextShield(textSymbol->shieldResourceName, textShieldBitmap);
 
                 // Get base text settings from environment
-                SkPaint textPaint = textSymbol->isBold ? env.boldTextPaint : env.regularTextPaint;
-
-                // Check if content is covered by selected typeface. If not - use default
-                if (textPaint.getTypeface() != nullptr && !textPaint.containsText(text.constData(), text.length()*sizeof(QChar)))
-                    textPaint.setTypeface(nullptr);
+                SkPaint textPaint = env.textPaint;
 
                 // Configure paint for text
+                env.configurePaintForText(textPaint, text, textSymbol->isBold, false);
                 textPaint.setTextSize(textSymbol->size);
                 textPaint.setColor(textSymbol->color);
 
@@ -2504,6 +2501,13 @@ void OsmAnd::Rasterizer_P::rasterizeSymbolsWithoutPaths(
                     firstLineNormalizedBounds.offset(
                         (bitmapWidth - qCeil(firstLineNormalizedBounds.width())) / 2.0f,
                         (bitmapHeight - qCeil(firstLineNormalizedBounds.height())) / 2.0f);
+                }
+
+                // Check if bitmap size was successfully calculated
+                if (bitmapWidth <= 0 || bitmapHeight <= 0)
+                {
+                    LogPrintf(LogSeverityLevel::Error, "Failed to rasterize symbol with text '%s'", qPrintable(text));
+                    continue;
                 }
 
                 // Create a bitmap that will be hold entire symbol

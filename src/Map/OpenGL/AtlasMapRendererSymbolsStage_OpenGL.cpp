@@ -27,6 +27,16 @@
 #   define OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK 0
 #endif // !defined(OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK)
 
+//#define OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST 1
+#if !defined(OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST)
+#   define OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST 0
+#endif // !defined(OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST)
+
+//#define OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS 1
+#if !defined(OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS)
+#   define OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS 0
+#endif // !defined(OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS)
+
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
     : AtlasMapRendererStage_OpenGL(renderer)
     , _onPathSymbol2dMaxGlyphsPerDrawCall(-1)
@@ -1705,9 +1715,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
             });
         if (intersects)
         {
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
             getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
             return false;
         }
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
@@ -1744,16 +1754,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         // Insert into quad-tree
         if (!intersections.insert(symbol, boundsInWindow))
         {
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
             getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
             return false;
         }
     }
 
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS
     getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS
 
     // Check if correct program is being used
     if (lastUsedProgram != *_billboardRasterProgram.id)
@@ -2029,9 +2039,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
                 });
             if (intersects)
             {
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 return false;
             }
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
@@ -2068,16 +2078,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             // Insert into quad-tree
             if (!intersections.insert(symbol, oobb))
             {
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 return false;
             }
         }
 
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS
         getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS
 
         // Check if correct program is being used
         if (lastUsedProgram != *_onPath2dProgram.id)
@@ -2419,9 +2429,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
                 });
             if (intersects)
             {
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 return false;
             }
 #endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
@@ -2458,16 +2468,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             // Insert into quad-tree
             if (!intersections.insert(symbol, oobb))
             {
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 return false;
             }
         }
 
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS
         getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS
 
         // Check if correct program is being used
         if (lastUsedProgram != *_onPath3dProgram.id)
@@ -2748,9 +2758,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
 //        }
 //    }
 
-#if OSMAND_DEBUG && 0
+#if OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS
     getRenderer()->_debugStage.addRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
-#endif // OSMAND_DEBUG
+#endif // OSMAND_SHOW_SYMBOLS_ACCEPTED_BY_TESTS
 
     // Check if correct program is being used
     if (lastUsedProgram != *_onSurfaceRasterProgram.id)

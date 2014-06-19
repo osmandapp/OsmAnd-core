@@ -43,8 +43,20 @@ namespace OsmAnd
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _settings;
 
         SkPaint _mapPaint;
-        SkPaint _regularTextPaint;
-        SkPaint _boldTextPaint;
+        SkPaint _textPaint;
+
+        struct FontsRegisterEntry
+        {
+            QString resource;
+            bool bold;
+            bool italic;
+        };
+        QList< FontsRegisterEntry > _fontsRegister;
+
+        mutable QMutex _fontTypefacesCacheMutex;
+        mutable QHash< QString, SkTypeface* > _fontTypefacesCache;
+        void clearFontsCache();
+        SkTypeface* getTypefaceForFontResource(const QString& fontResource) const;
 
         SkColor _defaultBgColor;
         uint32_t _shadowLevelMin;
@@ -86,8 +98,8 @@ namespace OsmAnd
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
 
         const SkPaint& mapPaint;
-        const SkPaint& regularTextPaint;
-        const SkPaint& boldTextPaint;
+        const SkPaint& textPaint;
+        void configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const;
 
         const SkColor& defaultBgColor;
         const uint32_t& shadowLevelMin;

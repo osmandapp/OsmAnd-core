@@ -572,6 +572,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
         symbolUsesPalette = true;
         break;
     default:
+        LogPrintf(LogSeverityLevel::Error, "Tried to upload symbol bitmap with unsupported config %d to GPU", symbol->bitmap->getConfig());
         assert(false);
         return false;
     }
