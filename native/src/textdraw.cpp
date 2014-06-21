@@ -16,6 +16,7 @@
 //#include "utf8.cpp"
 #include "utf8/unchecked.h"
 
+FontRegistry globalFontRegistry;
 
 inline float sqr(float a){
 	return a*a;
@@ -404,9 +405,9 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 	return text1->textOrder < text2->textOrder;
 }
 
-#if defined(ANDROID)
+
 static SkTypeface* sDefaultTypeface = nullptr;
-#endif
+
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
 	r.inset(-100, -100);
@@ -442,21 +443,13 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
             continue;
 
         // Prepare font
-#if defined(ANDROID)
-        if(sDefaultTypeface)
-            paintText.setTypeface(sDefaultTypeface);
-#endif
-        SkTypeface* properTypeface = nullptr;
-#if defined(ANDROID)
-        properTypeface = sDefaultTypeface;
-#endif
-        if(properTypeface)
-            paintText.setTypeface(properTypeface);
-
-		// sest text size before finding intersection (it is used there)
+        globalFontRegistry.updateTypeface(&paintText, 
+			textDrawInfo->text, textDrawInfo->bold, false, sDefaultTypeface); //textDrawInfo->italic
+   		// sest text size before finding intersection (it is used there)
 		float textSize = textDrawInfo->textSize;
 		paintText.setTextSize(textSize);
-		paintText.setFakeBoldText(textDrawInfo->bold);
+		
+		//paintText.setFakeBoldText(textDrawInfo->bold);
 		paintText.setColor(textDrawInfo->textColor);
 		// align center y
 		paintText.getFontMetrics(&fm);
