@@ -18,6 +18,70 @@
 
 FontRegistry globalFontRegistry;
 
+
+const SkTypeface* FontRegistry::registerStream(const char* data, uint32_t length, string fontName, 
+			bool bold, bool italic) {
+	SkMemoryStream* fontDataStream = new SkMemoryStream(data, length, true);
+	SkTypeface* typeface = SkTypeface::CreateFromStream(fontDataStream);
+    fontDataStream->unref();
+     	if (!typeface) 
+	    {
+        		return nullptr;
+     	}
+ 	FontEntry* entry = new FontEntry;
+ 	entry->bold = bold;
+ 	entry->italic = italic;
+ 	entry->fontName = fontName;
+ 	entry->typeface = typeface;
+   	cache.push_back(entry);
+   	return typeface;
+}
+
+void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, bool italic, SkTypeface* def) {
+ 			paint->setTextEncoding(SkPaint::kUTF8_TextEncoding);
+ 			const FontEntry* pBestMatchEntry = nullptr;
+    			SkTypeface* bestMatchTypeface = nullptr;
+ 			for(uint i = 0; i < cache.size(); i++) 
+ 			{
+ 				if(bestMatchTypeface != nullptr && (bold != cache[i]->bold) && (italic != cache[i]->italic))
+ 				{
+ 					continue;
+ 				}
+ 				paint->setTypeface(cache[i]->typeface);
+ 				if (!paint->containsText(text.c_str(), text.length())) {
+            				continue;
+ 				}
+ 				// Mark this as best match
+        			pBestMatchEntry = cache[i];
+        			bestMatchTypeface = cache[i]->typeface;
+            		
+        			// If this entry fully matches the request, stop search
+        			if (cache[i]->bold == bold && cache[i]->italic == italic)
+            				break;
+    			}
+		    
+    		// If there's no best match, fallback to default typeface
+    		if (bestMatchTypeface == nullptr)
+    		{
+        		paint->setTypeface(def);
+		
+        		// Adjust to handle bold text
+        		if (bold)
+            		paint->setFakeBoldText(true);
+		
+        		return;
+    		}
+		
+    		// There was a best match, use that
+    		paint->setTypeface(bestMatchTypeface);
+		
+    		// Adjust to handle bold text
+    		if (pBestMatchEntry->bold != bold && bold) {
+        		paint->setFakeBoldText(true);
+    		}
+}
+
+
 inline float sqr(float a){
 	return a*a;
 }
