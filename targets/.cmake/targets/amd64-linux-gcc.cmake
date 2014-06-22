@@ -4,4 +4,5 @@ set(CMAKE_C_COMPILER gcc-4.6)
 set(CMAKE_CXX_COMPILER g++-4.6)
 set(CMAKE_COMPILER_FAMILY gcc)
 set(CMAKE_C_COMPILER_FLAGS "-m64")
-set(CMAKE_CXX_COMPILER_FLAGS "-std=c++0x -m64")
+set(CMAKE_CXX_COMPILER_FLAGS "-std=c++0x -m64 -fstack-protector-all -Wstack-protector")
+ 
