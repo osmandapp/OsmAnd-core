@@ -47,27 +47,27 @@ class FontRegistry {
 	public:
 		const SkTypeface* registerStream(const char* data, uint32_t length, string fontName, 
 			bool bold, bool italic) {
-     		SkMemoryStream* fontDataStream = new SkMemoryStream(data, length, true);
-     		SkTypeface* typeface = SkTypeface::CreateFromStream(fontDataStream);
-     		fontDataStream->unref();
-     		if (!typeface) 
-     		{
-        	 	return nullptr;
-
-     		}
+     			SkMemoryStream* fontDataStream = new SkMemoryStream(data, length, true);
+     			SkTypeface* typeface = SkTypeface::CreateFromStream(fontDataStream);
+     			//fontDataStream->unref();
+     			if (!typeface) 
+	     		{
+        		 	return nullptr;
+	
+     			}
  			FontEntry* entry = new FontEntry;
  			entry->bold = bold;
  			entry->italic = italic;
  			entry->fontName = fontName;
  			entry->typeface = typeface;
-     		cache.push_back(entry);
-     		return typeface;
+     			cache.push_back(entry);
+     			return typeface;
  		}
 
  		void updateTypeface(SkPaint* paint, std::string text, bool bold, bool italic, SkTypeface* def) {
  			paint->setTextEncoding(SkPaint::kUTF8_TextEncoding);
  			const FontEntry* pBestMatchEntry = nullptr;
-    		SkTypeface* bestMatchTypeface = nullptr;
+    			SkTypeface* bestMatchTypeface = nullptr;
  			for(uint i = 0; i < cache.size(); i++) 
  			{
  				if(bestMatchTypeface != nullptr && (bold != cache[i]->bold) && (italic != cache[i]->italic))
@@ -76,16 +76,16 @@ class FontRegistry {
  				}
  				paint->setTypeface(cache[i]->typeface);
  				if (!paint->containsText(text.c_str(), text.length())) {
-            		continue;
+            				continue;
  				}
  				// Mark this as best match
-        		pBestMatchEntry = cache[i];
-        		bestMatchTypeface = cache[i]->typeface;
-            	
-        		// If this entry fully matches the request, stop search
-        		if (cache[i]->bold == bold && cache[i]->italic == italic)
-            		break;
-    		}
+        			pBestMatchEntry = cache[i];
+        			bestMatchTypeface = cache[i]->typeface;
+            		
+        			// If this entry fully matches the request, stop search
+        			if (cache[i]->bold == bold && cache[i]->italic == italic)
+            				break;
+    			}
 		    
     		// If there's no best match, fallback to default typeface
     		if (bestMatchTypeface == nullptr)
@@ -106,7 +106,7 @@ class FontRegistry {
     		if (pBestMatchEntry->bold != bold && bold) {
         		paint->setFakeBoldText(true);
     		}
- 		}
+ 	}
 };
 
 extern FontRegistry globalFontRegistry;
