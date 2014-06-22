@@ -80,13 +80,13 @@ extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initBinaryMa
 extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initFontType(JNIEnv* ienv,
 		jobject obj, jbyteArray byteData, jstring name, jboolean bold, jboolean italic) {
 	
-	/*std::string fName = getString(ienv, name);
+	std::string fName = getString(ienv, name);
 	jbyte* be = ienv->GetByteArrayElements(byteData, NULL);
 	jsize sz = ienv->GetArrayLength(byteData);
 	globalFontRegistry.registerStream((const char*)be, sz, fName, bold, italic);
 		
 	ienv->ReleaseByteArrayElements(byteData, be, JNI_ABORT);
-	ienv->DeleteLocalRef(byteData);*/
+	ienv->DeleteLocalRef(byteData);
 	return true;
 }
 
