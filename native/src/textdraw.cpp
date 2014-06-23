@@ -23,7 +23,7 @@ const SkTypeface* FontRegistry::registerStream(const char* data, uint32_t length
 			bool bold, bool italic) {
 	SkMemoryStream* fontDataStream = new SkMemoryStream(data, length, true);
 	SkTypeface* typeface = SkTypeface::CreateFromStream(fontDataStream);
-    fontDataStream->unref();
+    	fontDataStream->unref();
      	if (!typeface) 
 	    {
         		return nullptr;
@@ -66,8 +66,7 @@ void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, b
         		paint->setTypeface(def);
 		
         		// Adjust to handle bold text
-        		if (bold)
-            		paint->setFakeBoldText(true);
+        		paint->setFakeBoldText(bold);
 		
         		return;
     		}
@@ -78,6 +77,8 @@ void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, b
     		// Adjust to handle bold text
     		if (pBestMatchEntry->bold != bold && bold) {
         		paint->setFakeBoldText(true);
+    		} else {
+    			paint->setFakeBoldText(false);
     		}
 }
 
