@@ -657,10 +657,12 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	req->setInitialTagValueZoom(tag, value, rc->getZoom(), mObj);
 	req->searchRule(1);
 	std::string resId = req->getStringPropertyValue(req-> props()-> R_ICON);
+	std::string shieldId = req->getStringPropertyValue(req-> props()-> R_SHIELD);
 	SkBitmap* bmp = getCachedBitmap(rc, resId);
 	
 	if (bmp == NULL && !renderTxt)
 		return;
+	SkBitmap* shield = getCachedBitmap(rc, shieldId);
 	
 	size_t length = mObj->points.size();
 	rc->visible++;
@@ -682,6 +684,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.x = px;
 		ico.y = py;
 		ico.bmp = bmp;
+		ico.shield = shield;
 		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
 		rc->iconsToDraw.push_back(ico);
@@ -721,6 +724,14 @@ bool iconOrder(IconDrawInfo text1, IconDrawInfo text2) {
 	return text1.order < text2.order;
 }
 
+SkRect makeRect(RenderingContext* rc,  IconDrawInfo& icon, SkBitmap* ico) {
+	float left = icon.x -  ico->width() / 2 * rc->getScreenDensityRatio();
+	float top = icon.y - ico->height() / 2 * rc->getScreenDensityRatio(); 
+	SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
+			ico->height()* rc->getScreenDensityRatio() );
+	return r;
+}
+
 void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 {
 	std::sort(rc->iconsToDraw.begin(), rc->iconsToDraw.end(), iconOrder);
@@ -738,10 +749,8 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 		if (icon.y >= 0 && icon.y < rc->getHeight() && icon.x >= 0 && icon.x < rc->getWidth() && icon.bmp != NULL) 
 		{
 			SkBitmap* ico = icon.bmp;
-			float left = icon.x -  ico->width() / 2 * rc->getScreenDensityRatio();
-			float top = icon.y - ico->height() / 2 * rc->getScreenDensityRatio(); 
-			SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
-				ico->height()* rc->getScreenDensityRatio() );
+			
+			SkRect r = makeRect(rc, icon, ico);
 			float vwidth = icon.iconSize >= 0 ? icon.iconSize : ico->width();
 			float vheight = icon.iconSize >= 0 ? icon.iconSize : ico->height();
 			float vleft = icon.x -  vwidth / 2 * rc->getScreenDensityRatio();
@@ -764,6 +773,10 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 				}
 			}
 			if (!intersects) {
+				if(icon.shield != NULL) {
+					SkRect rt = makeRect(rc, icon, icon.shield);
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.shield, (SkIRect*) NULL, rt, &p));
+				}
 				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, r, &p));
 				if(bbox.width() > 0) {
 					bbox.inset(-bbox.width()/4, -bbox.height()/4);

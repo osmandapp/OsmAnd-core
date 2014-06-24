@@ -32,7 +32,7 @@ TextDrawInfo::~TextDrawInfo()
 }
 
 IconDrawInfo::IconDrawInfo()
-	: bmp(NULL)
+	: bmp(NULL), shield(NULL)
 {
 
 }

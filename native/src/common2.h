@@ -82,13 +82,14 @@ struct TextDrawInfo {
 
 struct IconDrawInfo
 {
-	IconDrawInfo();
-
 	SkBitmap* bmp;
+	SkBitmap* shield;
 	float x;
 	float y;
 	int order;
 	float iconSize;
+
+	IconDrawInfo();
 };
 
 static const int TILE_SIZE = 256;

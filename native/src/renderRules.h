@@ -202,6 +202,7 @@ public:
 	RenderingRuleProperty* R_TEXT_LENGTH;
 	RenderingRuleProperty* R_REF;
 	RenderingRuleProperty* R_TEXT_SHIELD;
+	RenderingRuleProperty* R_SHIELD;
 	RenderingRuleProperty* R_SHADOW_RADIUS;
 	RenderingRuleProperty* R_SHADOW_COLOR;
 	RenderingRuleProperty* R_SHADER;
@@ -364,6 +365,7 @@ public:
 		// point
 		R_ICON = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon"));
 		R_ICON_ORDER = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("iconOrder"));
+		R_SHIELD = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("shield"));
 		R_ICON_VISIBLE_SIZE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("iconVisibleSize"));
 
 		// polygon/way
