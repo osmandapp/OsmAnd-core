@@ -843,17 +843,27 @@ void filterLinesByDensity(RenderingContext* rc, std::vector<MapDataObjectPrimiti
 	}
 	reverse(linesResArray.begin(), linesResArray.end());
 }
-bool sortByOrder(const MapDataObjectPrimitive& i,const MapDataObjectPrimitive& j) {
+
+bool sortByOrder(const MapDataObjectPrimitive& i,const MapDataObjectPrimitive& j) 
+{
 	if( i.order == j.order) {
 		if(i.typeInd == j.typeInd) {
 			return i.obj->points.size() < j.obj->points.size() ;
+		} 
+		// polygon
+		if(i.objectType == 3) 
+		{
+			return i.typeInd > j.typeInd;	
 		}
 		return i.typeInd < j.typeInd;
 	}
-	return (i.order<j.order); }
-bool sortPolygonsOrder(const MapDataObjectPrimitive& i,const MapDataObjectPrimitive& j) {
+	return (i.order < j.order); 
+}
+bool sortPolygonsOrder(const MapDataObjectPrimitive& i,const MapDataObjectPrimitive& j) 
+{
 	if( i.order == j.order) return i.typeInd < j.typeInd;
-	return (i.order>j.order); }
+	return (i.order>j.order); 
+}
 
 void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 	RenderingRuleSearchRequest* req, RenderingContext* rc,
