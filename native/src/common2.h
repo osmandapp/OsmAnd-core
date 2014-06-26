@@ -268,12 +268,8 @@ public:
 		return val * density + pxValues;
 	}
 
-	void setUseEnglishNames(bool b){
-		if(b) {
-			this->preferredLocale = ":en";
-		} else {
-			this->preferredLocale = "";
-		}		
+	void setPreferredLocale(std::string pref){
+		this->preferredLocale = pref;		
 	}
 
 	std::string getPreferredLocale(){

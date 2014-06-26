@@ -467,7 +467,7 @@ jfieldID jfield_RenderingContext_height = NULL;
 jfieldID jfield_RenderingContext_zoom = NULL;
 jfieldID jfield_RenderingContext_tileDivisor = NULL;
 jfieldID jfield_RenderingContext_rotate = NULL;
-jfieldID jfield_RenderingContext_useEnglishNames = NULL;
+jfieldID jfield_RenderingContext_preferredLocale = NULL;
 jfieldID jfield_RenderingContext_pointCount = NULL;
 jfieldID jfield_RenderingContext_pointInsideCount = NULL;
 jfieldID jfield_RenderingContext_visible = NULL;
@@ -603,7 +603,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RenderingContext_zoom = getFid(env,  jclass_RenderingContext, "zoom", "I" );
 	jfield_RenderingContext_tileDivisor = getFid(env,  jclass_RenderingContext, "tileDivisor", "D" );
 	jfield_RenderingContext_rotate = getFid(env,  jclass_RenderingContext, "rotate", "F" );
-	jfield_RenderingContext_useEnglishNames = getFid(env,  jclass_RenderingContext, "useEnglishNames", "Z" );
+	jfield_RenderingContext_preferredLocale = getFid(env,  jclass_RenderingContext, "preferredLocale", "[Ljava/lang/String;" );
 	jfield_RenderingContext_pointCount = getFid(env,  jclass_RenderingContext, "pointCount", "I" );
 	jfield_RenderingContext_pointInsideCount = getFid(env,  jclass_RenderingContext, "pointInsideCount", "I" );
 	jfield_RenderingContext_visible = getFid(env,  jclass_RenderingContext, "visible", "I" );
@@ -668,7 +668,9 @@ void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext*
 	rc->setDensityScale(env->GetFloatField( jrc, jfield_RenderingContext_density ));
 	rc->setScreenDensityRatio(env->GetFloatField( jrc, jfield_RenderingContext_screenDensityRatio ));
 	
-	rc->setUseEnglishNames(env->GetBooleanField( jrc, jfield_RenderingContext_useEnglishNames ));
+	jstring jpref = (jstring) env->GetObjectField(jrc, jfield_RenderingContext_preferredLocale);
+	rc->setPreferredLocale(getString(env, jpref));
+	env->DeleteLocalRef(jpref);
 	rc->javaRenderingContext = jrc;
 }
 
