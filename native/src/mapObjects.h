@@ -26,6 +26,7 @@ public:
 	UNORDERED(map)< std::string, unsigned int> stringIds;
 
 	UNORDERED(map)< std::string, std::string > objectNames;
+	std::vector< std::string > namesOrder;
 	bool area;
 	long long id;
 

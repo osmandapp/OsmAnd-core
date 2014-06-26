@@ -225,19 +225,22 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
 
 void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingContext* rc, std::string tag,
 		std::string value, float xText, float yText, SkPath* path) {
-	UNORDERED(map)<std::string, std::string>::iterator it, next = obj->objectNames.begin();
-	while (next != obj->objectNames.end()) {
-		it = next++;
-		if (it->second.length() > 0) {
-			std::string name = it->second;
-			std::string tagName = it->first == "name" ? "" : it->first;
-			if (tagName == "" && rc -> isUsingEnglishNames() && obj->objectNames.find("name:en") != 
+	std::vector<std::string>::iterator it = obj->namesOrder.begin();
+	uint k = 0;
+	while (it != obj->namesOrder.end()) {
+		k++;
+		std::string tagName = (*it) == "name" ? "" : (*it);
+		std::string name = obj->objectNames[*it];
+		it++;
+		if (name.length() > 0) {			
+			if (tagName == "" && rc -> getPreferredLocale() != "" && obj->objectNames.find("name:"+rc->getPreferredLocale()) != 
 					obj->objectNames.end()) {
 				continue;
 			} 
-			if (tagName == "name:en" && !rc -> isUsingEnglishNames()) {
-				continue;
-			}
+			// second order makes difference
+			//if (tagName == "name:en" && !rc -> isUsingEnglishNames()) {
+			//	continue;
+			//}
 			name =rc->getTranslatedString(name);
 			name =rc->getReshapedString(name);
 			req->setInitialTagValueZoom(tag, value, rc->getZoom(), obj);
@@ -258,6 +261,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 					info->path = new SkPath(*path);
 
 				fillTextProperties(rc, info, req, xText, yText);
+				info->secondOrder = ((obj->id %10000) < 8) + k;
 				rc->textToDraw.push_back(info);
 			}
 		}
@@ -649,7 +653,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 }
 
 void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
-	RenderingContext* rc, std::pair<std::string, std::string>  pair, bool renderTxt)
+	RenderingContext* rc, std::pair<std::string, std::string>  pair, bool renderTxt, uint ord)
 {
 	std::string tag = pair.first;
 	std::string value = pair.second;
@@ -687,6 +691,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.shield = shield;
 		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
+		ico.secondOrder = ord;
 		rc->iconsToDraw.push_back(ico);
 	}
 	if (renderTxt) {
@@ -713,7 +718,7 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 		} else if (objOrder == 1 || objOrder == 2) {
 			drawPolyline(mObj, req, cv, paint, rc, pair, mObj->getSimpleLayer(), objOrder == 1);
 		} else if (objOrder == 3) {
-			drawPoint(mObj, req, cv, paint, rc, pair, array[i].typeInd == 0);
+			drawPoint(mObj, req, cv, paint, rc, pair, array[i].typeInd == 0, i);
 		}
 		if (i % 25 == 0 && rc->interrupted()) {
 			return;
@@ -721,6 +726,8 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 	}
 }
 bool iconOrder(IconDrawInfo text1, IconDrawInfo text2) {
+	if(text1.order == text2.order)  
+		return text1.secondOrder < text2.secondOrder;
 	return text1.order < text2.order;
 }
 

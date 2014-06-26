@@ -72,6 +72,7 @@ struct TextDrawInfo {
 	bool bold;
 	std::string shieldRes;
 	int textOrder;
+	int secondOrder;
 
 	bool drawOnPath;
 	SkPath* path;
@@ -87,6 +88,7 @@ struct IconDrawInfo
 	float x;
 	float y;
 	int order;
+	int secondOrder;
 	float iconSize;
 
 	IconDrawInfo();
@@ -97,7 +99,7 @@ struct RenderingContext
 {
 private :
 	// parameters
-	bool useEnglishNames;
+	std::string preferredLocale;
 	float density;
 	float screenDensityRatio;
 
@@ -153,7 +155,7 @@ public :
 	int roadsDensityLimitPerTile;
 
 public:
-	RenderingContext() : useEnglishNames(false), density(1), screenDensityRatio(1),
+	RenderingContext() : preferredLocale(""), density(1), screenDensityRatio(1),
 			//leftX, topY, width, height
 			defaultColor(0xfff1eee8), zoom(15), rotate(0),
 			shadowRenderingMode(2), shadowRenderingColor(0xff969696), // defaultIconsDir
@@ -267,11 +269,15 @@ public:
 	}
 
 	void setUseEnglishNames(bool b){
-		this->useEnglishNames = b;
+		if(b) {
+			this->preferredLocale = ":en";
+		} else {
+			this->preferredLocale = "";
+		}		
 	}
 
-	bool isUsingEnglishNames(){
-		return this->useEnglishNames;
+	std::string getPreferredLocale(){
+		return this->preferredLocale;
 	}
 
 };

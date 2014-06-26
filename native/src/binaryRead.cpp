@@ -621,6 +621,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 	std::vector< tag_value > additionalTypes;
 	std::vector< tag_value > types;
 	UNORDERED(map)< std::string, unsigned int> stringIds;
+	std::vector< std::string > namesOrder;
 	bool loop = true;
 	while (loop) {
 		uint32_t t = input->ReadTag();
@@ -690,6 +691,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 				if (root->decodingRules.find(x) != root->decodingRules.end()) {
 					tag_value t = root->decodingRules[x];
 					stringIds[t.first] = y;
+					namesOrder.push_back(t.first);
 				}
 			}
 			input->PopLimit(old);
@@ -720,6 +722,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 	dataObject->id = id;
 	dataObject->area = area;
 	dataObject->stringIds = stringIds;
+	dataObject->namesOrder = namesOrder;
 	dataObject->polygonInnerCoordinates = innercoordinates;
 
 
@@ -978,7 +981,8 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			obj->id = r->id;
 			UNORDERED(map)<int, std::string >::iterator nameIterator = r->names.begin();
 			for (; nameIterator != r->names.end(); nameIterator++) {
-				obj->objectNames[r->region->decodingRules[nameIterator->first].first] = nameIterator->second;
+				std::string ruleId = r->region->decodingRules[nameIterator->first].first;
+				obj->objectNames[ruleId] = nameIterator->second;
 			}
 			obj->area = false;
 			if(renderedState < 2 && checkObjectBounds(q, obj)) {
@@ -1293,6 +1297,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			o->points.push_back(int_pair(q->left + (q->right - q->left) / 2, q->top + (q->bottom - q->top) / 2));
 			o->types.push_back(tag_value("natural", "coastline"));
 			o->objectNames["name"] = msgNothingFound;
+			o->namesOrder.push_back("name");
 			tempResult.push_back(o);
 		}
 		if (q->zoom <= zoomOnlyForBasemaps || emptyData || (objectsFromRoutingSectionRead && q->zoom < detailedZoomStart)) {

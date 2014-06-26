@@ -467,6 +467,9 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDraw
 
 
 bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
+	if(text1->textOrder == text2->textOrder) {
+		return text1->secondOrder < text2->secondOrder;
+	}
 	return text1->textOrder < text2->textOrder;
 }
 
