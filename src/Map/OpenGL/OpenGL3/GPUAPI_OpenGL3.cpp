@@ -76,8 +76,13 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     GL_CHECK_RESULT;
     glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
     GL_CHECK_RESULT;
+    if (glVersion[0] < 3)
+    {
+        LogPrintf(LogSeverityLevel::Error, "Unable to run on OpenGL version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
+        assert(glVersion[0] >= 3);
+        return false;
+    }
     LogPrintf(LogSeverityLevel::Info, "Using OpenGL version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
-    assert(glVersion[0] >= 3);
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
