@@ -7,6 +7,7 @@ set(target_specific_public_definitions "")
 set(target_specific_public_includes "")
 set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")
+set(target_specific_dependencies "")
 
 # Target specific
 if (CMAKE_TARGET_OS STREQUAL "linux")
@@ -72,6 +73,9 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMA
 		${OPENGL_glu_LIBRARY}
 		glew_static
 	)
+	set(target_specific_dependencies ${target_specific_dependencies}
+		glew_static
+	)
 	file(GLOB sources_opengl3 "src/Map/OpenGL/OpenGL3/*.c*")
 	file(GLOB headers_opengl3 "src/Map/OpenGL/OpenGL3/*.h*")
 	set(target_specific_sources ${target_specific_sources}
@@ -124,6 +128,7 @@ set(merged_dependencies
 	gdal_static
 	icu4c_static
 	archive_static
+	${target_specific_dependencies}
 )
 set(merged_compile_definitions_public
 	${target_specific_public_definitions}
