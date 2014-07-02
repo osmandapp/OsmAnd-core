@@ -22,7 +22,7 @@
 namespace OsmAnd
 {
     class OnlineRasterMapTileProvider;
-    class OnlineRasterMapTileProvider_P
+    class OnlineRasterMapTileProvider_P Q_DECL_FINAL
     {
     private:
     protected:

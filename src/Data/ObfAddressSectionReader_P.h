@@ -28,7 +28,7 @@ namespace OsmAnd
     }
     class IQueryController;
 
-    class ObfAddressSectionReader_P
+    class ObfAddressSectionReader_P Q_DECL_FINAL
     {
     private:
         ObfAddressSectionReader_P();

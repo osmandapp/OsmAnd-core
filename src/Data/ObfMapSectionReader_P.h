@@ -31,7 +31,7 @@ namespace OsmAnd
     }
 
     class ObfMapSectionReader;
-    class ObfMapSectionReader_P
+    class ObfMapSectionReader_P Q_DECL_FINAL
     {
     private:
         ObfMapSectionReader_P();

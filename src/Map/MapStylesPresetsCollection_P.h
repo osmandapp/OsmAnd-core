@@ -19,7 +19,7 @@ namespace OsmAnd
     class MapStylePreset;
 
     class MapStylesPresetsCollection;
-    class MapStylesPresetsCollection_P
+    class MapStylesPresetsCollection_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(MapStylesPresetsCollection_P);
     private:

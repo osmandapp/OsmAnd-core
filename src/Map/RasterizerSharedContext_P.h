@@ -18,7 +18,7 @@ namespace OsmAnd
     class RasterizerContext_P;
 
     class RasterizerSharedContext;
-    class RasterizerSharedContext_P
+    class RasterizerSharedContext_P Q_DECL_FINAL
     {
     private:
     protected:

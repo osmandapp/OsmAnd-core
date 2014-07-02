@@ -22,7 +22,7 @@
 namespace OsmAnd
 {
     class WebClient;
-    class WebClient_P
+    class WebClient_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(WebClient_P);
     public:

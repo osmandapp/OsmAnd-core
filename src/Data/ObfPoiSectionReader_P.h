@@ -22,7 +22,7 @@ namespace OsmAnd
     class IQueryController;
 
     class ObfPoiSectionReader;
-    class ObfPoiSectionReader_P
+    class ObfPoiSectionReader_P Q_DECL_FINAL
     {
     private:
         ObfPoiSectionReader_P();

@@ -17,7 +17,7 @@ namespace OsmAnd
     class MapStyle;
 
     class MapStylesCollection;
-    class MapStylesCollection_P
+    class MapStylesCollection_P Q_DECL_FINAL
     {
     private:
     protected:

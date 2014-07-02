@@ -27,7 +27,7 @@ namespace OsmAnd
     class ObfTransportSectionReader_P;
 
     class ObfReader;
-    class ObfReader_P
+    class ObfReader_P Q_DECL_FINAL
     {
     private:
         mutable std::unique_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;

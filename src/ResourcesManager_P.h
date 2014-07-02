@@ -24,7 +24,7 @@
 
 namespace OsmAnd
 {
-    class ResourcesManager_P
+    class ResourcesManager_P Q_DECL_FINAL
     {
     public:
         typedef ResourcesManager::ResourceType ResourceType;

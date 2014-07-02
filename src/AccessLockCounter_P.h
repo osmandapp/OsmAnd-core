@@ -13,7 +13,7 @@
 namespace OsmAnd
 {
     class AccessLockCounter;
-    class AccessLockCounter_P
+    class AccessLockCounter_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(AccessLockCounter_P)
     private:

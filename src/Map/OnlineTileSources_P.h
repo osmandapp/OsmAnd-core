@@ -16,7 +16,7 @@
 
 namespace OsmAnd
 {
-    class OnlineTileSources_P
+    class OnlineTileSources_P Q_DECL_FINAL
     {
     public:
         typedef OnlineTileSources::Source Source;

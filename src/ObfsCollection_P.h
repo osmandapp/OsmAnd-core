@@ -24,7 +24,7 @@ namespace OsmAnd
 
     class ObfsCollection;
     class ObfsCollection_P__SignalProxy;
-    class ObfsCollection_P
+    class ObfsCollection_P Q_DECL_FINAL
     {
     private:
     protected:

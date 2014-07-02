@@ -20,7 +20,7 @@ namespace OsmAnd
     class BinaryMapDataTile;
 
     class BinaryMapRasterBitmapTileProvider_GPU;
-    class BinaryMapRasterBitmapTileProvider_GPU_P : public BinaryMapRasterBitmapTileProvider_P
+    class BinaryMapRasterBitmapTileProvider_GPU_P Q_DECL_FINAL : public BinaryMapRasterBitmapTileProvider_P
     {
     private:
     protected:

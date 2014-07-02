@@ -18,7 +18,7 @@
 namespace OsmAnd
 {
     class HeightmapTileProvider;
-    class HeightmapTileProvider_P
+    class HeightmapTileProvider_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(HeightmapTileProvider_P);
     private:

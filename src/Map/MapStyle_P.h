@@ -22,7 +22,7 @@ namespace OsmAnd
     class MapStyleEvaluator_P;
 
     class MapStyle;
-    class MapStyle_P
+    class MapStyle_P Q_DECL_FINAL
     {
     private:
         bool parseMetadata(QXmlStreamReader& xmlReader);

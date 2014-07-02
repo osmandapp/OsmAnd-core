@@ -29,7 +29,7 @@ namespace OsmAnd
     class RasterizerContext;
 
     class BinaryMapDataProvider;
-    class BinaryMapDataProvider_P
+    class BinaryMapDataProvider_P Q_DECL_FINAL
     {
     private:
     protected:
@@ -97,7 +97,7 @@ namespace OsmAnd
     };
 
     class BinaryMapDataTile;
-    class BinaryMapDataTile_P
+    class BinaryMapDataTile_P Q_DECL_FINAL
     {
     private:
     protected:

@@ -41,7 +41,7 @@ namespace OsmAnd
     friend class OsmAnd::ObfMapSectionReader_P;
     };
 
-    class ObfMapSectionLevel_P
+    class ObfMapSectionLevel_P Q_DECL_FINAL
     {
     private:
     protected:
@@ -63,7 +63,7 @@ namespace OsmAnd
     };
 
     class ObfMapSectionInfo;
-    class ObfMapSectionInfo_P
+    class ObfMapSectionInfo_P Q_DECL_FINAL
     {
     private:
     protected:

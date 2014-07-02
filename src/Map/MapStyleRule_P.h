@@ -20,7 +20,7 @@ namespace OsmAnd
     class MapStyleValueDefinition;
 
     class MapStyleRule;
-    class MapStyleRule_P
+    class MapStyleRule_P Q_DECL_FINAL
     {
     private:
     protected:

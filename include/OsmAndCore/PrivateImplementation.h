@@ -146,4 +146,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_PRIVATE_IMPLEMENTATION_H_) 
+#endif // !defined(_OSMAND_CORE_PRIVATE_IMPLEMENTATION_H_)

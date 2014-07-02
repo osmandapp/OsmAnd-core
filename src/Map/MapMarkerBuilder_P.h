@@ -22,7 +22,7 @@ namespace OsmAnd
     class MapMarkersCollection_P;
 
     class MapMarkerBuilder;
-    class MapMarkerBuilder_P
+    class MapMarkerBuilder_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(MapMarkerBuilder_P);
 

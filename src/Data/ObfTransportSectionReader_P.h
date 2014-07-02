@@ -15,7 +15,7 @@ namespace OsmAnd {
     class ObfTransportSectionInfo;
     class IQueryController;
 
-    class ObfTransportSectionReader_P
+    class ObfTransportSectionReader_P Q_DECL_FINAL
     {
     private:
         ObfTransportSectionReader_P();

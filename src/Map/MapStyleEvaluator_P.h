@@ -20,7 +20,7 @@ namespace OsmAnd
     }
     
     class MapStyleEvaluator;
-    class MapStyleEvaluator_P
+    class MapStyleEvaluator_P Q_DECL_FINAL
     {
     public:
         union InputValue

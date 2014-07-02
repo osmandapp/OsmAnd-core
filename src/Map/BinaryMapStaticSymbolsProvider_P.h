@@ -24,7 +24,7 @@ namespace OsmAnd
     class TiledMapSymbolsData;
 
     class BinaryMapStaticSymbolsProvider;
-    class BinaryMapStaticSymbolsProvider_P
+    class BinaryMapStaticSymbolsProvider_P Q_DECL_FINAL
     {
     public:
         typedef BinaryMapStaticSymbolsProvider::FilterCallback FilterCallback;

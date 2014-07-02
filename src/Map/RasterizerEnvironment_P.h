@@ -31,7 +31,7 @@ namespace OsmAnd
     class ObfMapSectionInfo;
 
     class RasterizerEnvironment;
-    class RasterizerEnvironment_P
+    class RasterizerEnvironment_P Q_DECL_FINAL
     {
     private:
     protected:

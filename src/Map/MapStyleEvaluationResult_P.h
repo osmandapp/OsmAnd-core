@@ -17,7 +17,7 @@ namespace OsmAnd
     class MapStyleValueDefinition;
     
     class MapStyleEvaluationResult;
-    class MapStyleEvaluationResult_P
+    class MapStyleEvaluationResult_P Q_DECL_FINAL
     {
     private:
     protected:

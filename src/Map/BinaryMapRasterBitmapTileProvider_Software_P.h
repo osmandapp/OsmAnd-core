@@ -20,7 +20,7 @@ namespace OsmAnd
     class BinaryMapDataTile;
 
     class BinaryMapRasterBitmapTileProvider_Software;
-    class BinaryMapRasterBitmapTileProvider_Software_P : public BinaryMapRasterBitmapTileProvider_P
+    class BinaryMapRasterBitmapTileProvider_Software_P Q_DECL_FINAL : public BinaryMapRasterBitmapTileProvider_P
     {
     private:
     protected:

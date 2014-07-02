@@ -163,17 +163,17 @@ namespace OsmAnd
             return qFuzzyCompare(a, b);
         }
 
-        static inline bool equal(const float a, const float& b)
+        static inline bool equal(const float a, const float b)
         {
             return qFuzzyCompare(a, b);
         }
 
-        static inline bool equal(const uint32_t& a, const uint32_t& b)
+        static inline bool equal(const uint32_t a, const uint32_t b)
         {
             return a == b;
         }
 
-        static inline bool equal(const int32_t& a, const int32_t& b)
+        static inline bool equal(const int32_t a, const int32_t b)
         {
             return a == b;
         }
@@ -1168,7 +1168,7 @@ namespace OsmAnd
         {
         }
 
-        inline FColorARGB(const float& a_, const float& r_, const float& g_, const float& b_)
+        inline FColorARGB(const float a_, const float r_, const float g_, const float b_)
             : a(a_)
             , r(r_)
             , g(g_)
@@ -1225,7 +1225,7 @@ namespace OsmAnd
         {
         }
 
-        inline FColorRGB(const float& r_, const float& g_, const float& b_)
+        inline FColorRGB(const float r_, const float g_, const float b_)
             : r(r_)
             , g(g_)
             , b(b_)
@@ -1248,12 +1248,18 @@ namespace OsmAnd
 #if !defined(SWIG)
         inline bool operator==(const FColorRGB& other) const
         {
-            return qFuzzyCompare(r, other.r) && qFuzzyCompare(g, other.g) && qFuzzyCompare(b, other.b);
+            return
+                qFuzzyCompare(r, other.r) &&
+                qFuzzyCompare(g, other.g) &&
+                qFuzzyCompare(b, other.b);
         }
 
         inline bool operator!=(const FColorRGB& other) const
         {
-            return !qFuzzyCompare(r, other.r) || !qFuzzyCompare(g, other.g) || !qFuzzyCompare(b, other.b);
+            return
+                !qFuzzyCompare(r, other.r) ||
+                !qFuzzyCompare(g, other.g) ||
+                !qFuzzyCompare(b, other.b);
         }
 
         inline operator FColorARGB() const
@@ -1265,6 +1271,133 @@ namespace OsmAnd
         inline FColorARGB withAlpha(const float alpha) const
         {
             return FColorARGB(alpha, r, g, b);
+        }
+    };
+
+    union ColorARGB
+    {
+        inline ColorARGB()
+            : a(255)
+            , r(255)
+            , g(255)
+            , b(255)
+        {
+        }
+
+        inline ColorARGB(const uint8_t a_, const uint8_t r_, const uint8_t g_, const uint8_t b_)
+            : a(a_)
+            , r(r_)
+            , g(g_)
+            , b(b_)
+        {
+        }
+
+#if !defined(SWIG)
+        uint8_t value[4];
+        uint32_t values;
+        struct
+        {
+            uint8_t a;
+            uint8_t r;
+            uint8_t g;
+            uint8_t b;
+        };
+#else
+        // Fake unwrap for SWIG
+        uint8_t a, r, g, b;
+#endif // !defined(SWIG)
+
+#if !defined(SWIG)
+        inline bool operator==(const ColorARGB& other) const
+        {
+            return
+                a == other.a &&
+                r == other.r &&
+                g == other.g &&
+                b == other.b;
+        }
+
+        inline bool operator!=(const ColorARGB& other) const
+        {
+            return
+                a != other.a ||
+                r != other.r ||
+                g != other.g ||
+                b != other.b;
+        }
+
+        inline operator FColorARGB() const
+        {
+            return FColorARGB(a / 255.0f, r / 255.0f, g / 255.0f, b / 255.0f);
+        }
+#endif // !defined(SWIG)
+
+        inline ColorARGB withAlpha(const uint8_t newAlpha) const
+        {
+            return ColorARGB(newAlpha, r, g, b);
+        }
+    };
+
+    union ColorRGB
+    {
+        inline ColorRGB()
+            : r(255)
+            , g(255)
+            , b(255)
+        {
+        }
+
+        inline ColorRGB(const uint8_t r_, const uint8_t g_, const uint8_t b_)
+            : r(r_)
+            , g(g_)
+            , b(b_)
+        {
+        }
+
+#if !defined(SWIG)
+        uint8_t value[3];
+        struct
+        {
+            uint8_t r;
+            uint8_t g;
+            uint8_t b;
+        };
+#else
+        // Fake unwrap for SWIG
+        uint8_t r, g, b;
+#endif // !defined(SWIG)
+
+#if !defined(SWIG)
+        inline bool operator==(const ColorRGB& other) const
+        {
+            return
+                r == other.r &&
+                g == other.g &&
+                b == other.b;
+        }
+
+        inline bool operator!=(const ColorRGB& other) const
+        {
+            return
+                r != other.r ||
+                g != other.g ||
+                b != other.b;
+        }
+
+        inline operator ColorARGB() const
+        {
+            return ColorARGB(255, r, g, b);
+        }
+
+        inline operator FColorRGB() const
+        {
+            return FColorRGB(r / 255.0f, g / 255.0f, b / 255.0f);
+        }
+#endif // !defined(SWIG)
+
+        inline ColorARGB withAlpha(const uint8_t alpha) const
+        {
+            return ColorARGB(alpha, r, g, b);
         }
     };
 

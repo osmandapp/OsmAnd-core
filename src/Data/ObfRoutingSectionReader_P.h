@@ -28,7 +28,7 @@ namespace OsmAnd {
     class IQueryFilter;
 
     class ObfRoutingSectionReader;
-    class ObfRoutingSectionReader_P
+    class ObfRoutingSectionReader_P Q_DECL_FINAL
     {
     private:
         ObfRoutingSectionReader_P();

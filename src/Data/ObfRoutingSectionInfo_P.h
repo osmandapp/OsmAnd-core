@@ -24,7 +24,7 @@ namespace OsmAnd
     class RoutingRulesetContext;
 
     class ObfRoutingSectionInfo;
-    class ObfRoutingSectionInfo_P
+    class ObfRoutingSectionInfo_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(ObfRoutingSectionInfo_P)
     private:

@@ -36,7 +36,7 @@ namespace OsmAnd
     }
 
     class Rasterizer;
-    class Rasterizer_P
+    class Rasterizer_P Q_DECL_FINAL
     {
     private:
         ImplementationInterface<Rasterizer> owner;

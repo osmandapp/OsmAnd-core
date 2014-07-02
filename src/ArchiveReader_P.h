@@ -18,7 +18,7 @@
 namespace OsmAnd
 {
     class ArchiveReader;
-    class ArchiveReader_P
+    class ArchiveReader_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(ArchiveReader_P);
     public:

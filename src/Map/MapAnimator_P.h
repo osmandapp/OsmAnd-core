@@ -24,7 +24,7 @@ namespace OsmAnd
     class IMapRenderer;
 
     class MapAnimator;
-    class MapAnimator_P
+    class MapAnimator_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(MapAnimator_P);
     public:

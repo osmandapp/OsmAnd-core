@@ -16,7 +16,7 @@ namespace OsmAnd
     class ObfInfo;
 
     class ObfFile;
-    class ObfFile_P
+    class ObfFile_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY(ObfFile_P)
     private:
