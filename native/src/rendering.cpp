@@ -261,7 +261,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 					info->path = new SkPath(*path);
 
 				fillTextProperties(rc, info, req, xText, yText);
-				info->secondOrder = ((obj->id %10000) < 8) + k;
+				info->secondOrder = ((obj->id %10000) << 8) + k;
 				rc->textToDraw.push_back(info);
 			}
 		}
