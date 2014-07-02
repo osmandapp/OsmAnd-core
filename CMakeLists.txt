@@ -124,7 +124,6 @@ set(merged_dependencies
 	gdal_static
 	icu4c_static
 	archive_static
-	${target_specific_public_libraries}
 )
 set(merged_compile_definitions_public
 	${target_specific_public_definitions}
