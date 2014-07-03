@@ -118,7 +118,7 @@ namespace OsmAnd
                 return _link->_linkedEntity;
             }
 
-            friend class WeakEndT;
+        friend class WeakEnd<ENTITY>;
         };
 
     private:
