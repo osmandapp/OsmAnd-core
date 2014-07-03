@@ -63,6 +63,11 @@ namespace OsmAnd
 			{
 				return LinkLockT(_linkWeakReference);
 			}
+
+			inline void reset()
+			{
+				_linkWeakReference.reset();
+			}
 		};
 		typedef WeakEnd<ENTITY> WeakEndT;
 

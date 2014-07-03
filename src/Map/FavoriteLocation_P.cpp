@@ -67,5 +67,5 @@ void OsmAnd::FavoriteLocation_P::setColor(const ColorRGB newColor)
 
 void OsmAnd::FavoriteLocation_P::detach()
 {
-
+	_weakLink.reset();
 }

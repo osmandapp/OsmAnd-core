@@ -14,7 +14,6 @@ OsmAnd::FavoriteLocationsGpxCollection::FavoriteLocationsGpxCollection(FavoriteL
 
 OsmAnd::FavoriteLocationsGpxCollection::~FavoriteLocationsGpxCollection()
 {
-
 }
 
 bool OsmAnd::FavoriteLocationsGpxCollection::saveTo(const QString& filename) const

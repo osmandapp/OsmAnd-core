@@ -1,16 +1,16 @@
 #ifndef _OSMAND_CORE_FAVORITE_LOCATION_H_
 #define _OSMAND_CORE_FAVORITE_LOCATION_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QString>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/Link.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IFavoriteLocation.h>
+#include "OsmAndCore.h"
+#include "PrivateImplementation.h"
+#include "Link.h"
+#include "CommonTypes.h"
+#include "IFavoriteLocation.h"
 
 namespace OsmAnd
 {
@@ -18,7 +18,7 @@ namespace OsmAnd
     class FavoriteLocationsCollection_P;
 
     class FavoriteLocation_P;
-    class OSMAND_CORE_API FavoriteLocation : public IFavoriteLocation
+    class FavoriteLocation : public IFavoriteLocation
     {
         Q_DISABLE_COPY(FavoriteLocation);
 

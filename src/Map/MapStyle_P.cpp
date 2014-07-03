@@ -927,7 +927,13 @@ bool OsmAnd::MapStyle_P::parseValue(const std::shared_ptr<const MapStyleValueDef
         else
             return lookupStringId(input, output.asSimple.asUInt);
     case MapStyleValueDataType::Color:
-        assert(input[0] == '#');
+		if (input.size() < 2 || input[0] != '#')
+		{
+			LogPrintf(LogSeverityLevel::Warning, "Malformed color '%s' in '%s'",
+				qPrintable(input),
+				qPrintable(valueDef->name));
+			return false;
+		}
         output.asSimple.asUInt = input.mid(1).toUInt(nullptr, 16);
         if (input.size() <= 7)
             output.asSimple.asUInt |= 0xFF000000;
