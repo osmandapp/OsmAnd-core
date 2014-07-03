@@ -13,7 +13,7 @@ OsmAnd::FavoriteLocationsCollection::FavoriteLocationsCollection(FavoriteLocatio
 
 OsmAnd::FavoriteLocationsCollection::~FavoriteLocationsCollection()
 {
-	_p->_containerLink.release();
+	_p->_containerLink->release();
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(

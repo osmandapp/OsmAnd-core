@@ -5,6 +5,8 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -28,7 +30,9 @@ namespace OsmAnd
 		virtual ~FavoriteLocationsGpxCollection();
 
 		bool saveTo(const QString& filename) const;
+		bool saveTo(QXmlStreamWriter& writer) const;
 		bool loadFrom(const QString& filename);
+		bool loadFrom(QXmlStreamReader& reader);
     };
 }
 

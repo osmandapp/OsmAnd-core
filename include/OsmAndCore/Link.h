@@ -59,6 +59,11 @@ namespace OsmAnd
 				return *this;
 			}
 
+			inline operator bool() const
+			{
+				return !_linkWeakReference.expired();
+			}
+
 			inline const LinkLockT lock() const
 			{
 				return LinkLockT(_linkWeakReference);

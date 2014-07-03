@@ -4,7 +4,7 @@
 #include "FavoriteLocation.h"
 
 OsmAnd::FavoriteLocationsCollection_P::FavoriteLocationsCollection_P(FavoriteLocationsCollection* const owner_)
-	: _containerLink(owner_)
+	: _containerLink(new Link(owner_))
 	, owner(owner_)
 {
 }
@@ -82,4 +82,13 @@ void OsmAnd::FavoriteLocationsCollection_P::doClearFavoriteLocations()
 		item->detach();
 
 	_collection.clear();
+}
+
+void OsmAnd::FavoriteLocationsCollection_P::appendFrom(const QList< std::shared_ptr<FavoriteLocation> >& collection)
+{
+	for (const auto& item : collection)
+	{
+		item->attach(_containerLink);
+		_collection.insert(item.get(), item);
+	}
 }

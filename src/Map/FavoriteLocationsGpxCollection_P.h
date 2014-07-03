@@ -4,6 +4,9 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include <QString>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -26,7 +29,9 @@ namespace OsmAnd
 		ImplementationInterface<FavoriteLocationsGpxCollection> owner;
 
 		bool saveTo(const QString& filename) const;
+		bool saveTo(QXmlStreamWriter& writer) const;
 		bool loadFrom(const QString& filename);
+		bool loadFrom(QXmlStreamReader& reader);
 
 	friend class OsmAnd::FavoriteLocationsGpxCollection;
 	};

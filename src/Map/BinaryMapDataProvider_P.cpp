@@ -26,13 +26,13 @@
 
 OsmAnd::BinaryMapDataProvider_P::BinaryMapDataProvider_P(BinaryMapDataProvider* owner_)
     : owner(owner_)
-    , _link(this)
+    , _link(new Link(this))
 {
 }
 
 OsmAnd::BinaryMapDataProvider_P::~BinaryMapDataProvider_P()
 {
-	_link.release();
+	_link->release();
 }
 
 bool OsmAnd::BinaryMapDataProvider_P::obtainData(
@@ -238,7 +238,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         nothingToRasterize,
         tileId,
         zoom));
-    newTile->_p->_weakLink = _link.getWeak();
+    newTile->_p->_weakLink = _link->getWeak();
     newTile->_p->_refEntry = tileEntry;
 
     // Publish new tile

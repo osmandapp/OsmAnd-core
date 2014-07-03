@@ -6,6 +6,7 @@
 #include "QtExtensions.h"
 #include <QReadWriteLock>
 #include <QHash>
+#include <QList>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -27,7 +28,8 @@ namespace OsmAnd
     protected:
         FavoriteLocationsCollection_P(FavoriteLocationsCollection* const owner);
 
-		Link<FavoriteLocationsCollection*> _containerLink;
+		typedef Link<FavoriteLocationsCollection*> Link;
+		std::shared_ptr<Link> _containerLink;
 
 		mutable QReadWriteLock _collectionLock;
 		QHash< FavoriteLocation*, std::shared_ptr<FavoriteLocation> > _collection;
@@ -36,6 +38,7 @@ namespace OsmAnd
         void notifyFavoriteLocationChanged(FavoriteLocation* const pFavoriteLocation);
 
 		void doClearFavoriteLocations();
+		void appendFrom(const QList< std::shared_ptr<FavoriteLocation> >& collection);
     public:
         virtual ~FavoriteLocationsCollection_P();
 

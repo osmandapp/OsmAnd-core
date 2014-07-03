@@ -1214,6 +1214,12 @@ namespace OsmAnd
         {
             return FColorARGB(newAlpha, r, g, b);
         }
+
+		inline FColorARGB& setAlpha(const float newAlpha)
+		{
+			a = newAlpha;
+			return *this;
+		}
     };
 
     union FColorRGB
@@ -1294,13 +1300,13 @@ namespace OsmAnd
 
 #if !defined(SWIG)
         uint8_t value[4];
-        uint32_t values;
+        uint32_t argb;
         struct
         {
-            uint8_t a;
-            uint8_t r;
-            uint8_t g;
             uint8_t b;
+			uint8_t g;
+			uint8_t r;
+			uint8_t a;
         };
 #else
         // Fake unwrap for SWIG
@@ -1336,6 +1342,12 @@ namespace OsmAnd
         {
             return ColorARGB(newAlpha, r, g, b);
         }
+
+		inline ColorARGB& setAlpha(const uint8_t newAlpha)
+		{
+			a = newAlpha;
+			return *this;
+		}
     };
 
     union ColorRGB
@@ -1354,13 +1366,20 @@ namespace OsmAnd
         {
         }
 
+		explicit inline ColorRGB(const ColorARGB& other)
+			: r(other.r)
+			, g(other.g)
+			, b(other.b)
+		{
+		}
+
 #if !defined(SWIG)
         uint8_t value[3];
         struct
         {
-            uint8_t r;
+			uint8_t b;
             uint8_t g;
-            uint8_t b;
+			uint8_t r;
         };
 #else
         // Fake unwrap for SWIG

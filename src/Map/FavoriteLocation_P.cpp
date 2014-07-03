@@ -4,9 +4,8 @@
 #include "FavoriteLocationsCollection.h"
 #include "FavoriteLocationsCollection_P.h"
 
-OsmAnd::FavoriteLocation_P::FavoriteLocation_P(Link<FavoriteLocationsCollection*>& containerLink, FavoriteLocation* const owner_)
-	: _weakLink(containerLink)
-	, owner(owner_)
+OsmAnd::FavoriteLocation_P::FavoriteLocation_P(FavoriteLocation* const owner_)
+	: owner(owner_)
 {
 }
 
@@ -63,6 +62,12 @@ void OsmAnd::FavoriteLocation_P::setColor(const ColorRGB newColor)
 
 	if (const auto link = _weakLink.lock())
 		link->_p->notifyFavoriteLocationChanged(owner);
+}
+
+void OsmAnd::FavoriteLocation_P::attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink)
+{
+	assert(!_weakLink);
+	_weakLink = containerLink->getWeak();
 }
 
 void OsmAnd::FavoriteLocation_P::detach()

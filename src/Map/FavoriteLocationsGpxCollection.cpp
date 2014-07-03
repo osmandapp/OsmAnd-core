@@ -21,7 +21,17 @@ bool OsmAnd::FavoriteLocationsGpxCollection::saveTo(const QString& filename) con
 	return _p->saveTo(filename);
 }
 
+bool OsmAnd::FavoriteLocationsGpxCollection::saveTo(QXmlStreamWriter& writer) const
+{
+	return _p->saveTo(writer);
+}
+
 bool OsmAnd::FavoriteLocationsGpxCollection::loadFrom(const QString& filename)
 {
 	return _p->loadFrom(filename);
+}
+
+bool OsmAnd::FavoriteLocationsGpxCollection::loadFrom(QXmlStreamReader& reader)
+{
+	return _p->loadFrom(reader);
 }

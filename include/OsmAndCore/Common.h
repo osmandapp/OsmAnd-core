@@ -67,7 +67,10 @@ namespace OsmAnd
 	T_OUT copyAs(const T_IN& input)
 	{
 		T_OUT copy;
-		std::transform(input.begin(), input.end(), std::back_inserter(copy), static_caster<T_IN::value_type, T_OUT::value_type>());
+		std::transform(
+			input.begin(), input.end(),
+			std::back_inserter(copy),
+			static_caster<typename T_IN::value_type, typename T_OUT::value_type>());
 		return copy;
 	}
 

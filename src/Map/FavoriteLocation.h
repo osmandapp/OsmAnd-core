@@ -25,15 +25,17 @@ namespace OsmAnd
     private:
         PrivateImplementation<FavoriteLocation_P> _p;
     protected:
-        FavoriteLocation(
-			Link<FavoriteLocationsCollection*>& containerLink,
+		FavoriteLocation(
+			const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const PointI position,
             const QString& title,
             const QString& group,
             const ColorRGB color);
 
+		void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
 		void detach();
     public:
+		FavoriteLocation(const PointI position);
         virtual ~FavoriteLocation();
 
         const PointI position;
