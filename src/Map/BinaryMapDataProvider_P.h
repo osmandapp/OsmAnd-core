@@ -46,7 +46,7 @@ namespace OsmAnd
             Loaded,
             Released
         };
-        struct TileEntry : TiledEntriesCollectionEntryWithState<TileEntry, TileState, TileState::Undefined>
+        struct TileEntry : TiledEntriesCollectionEntryWithState < TileEntry, TileState, TileState::Undefined >
         {
             TileEntry(const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
                 : TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
@@ -65,8 +65,8 @@ namespace OsmAnd
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 
-		typedef Link<BinaryMapDataProvider_P*> Link;
-		std::shared_ptr<Link> _link;
+        typedef Link<BinaryMapDataProvider_P*> Link;
+        std::shared_ptr<Link> _link;
     public:
         ~BinaryMapDataProvider_P();
 
@@ -78,8 +78,8 @@ namespace OsmAnd
             std::shared_ptr<MapTiledData>& outTiledData,
             const IQueryController* const queryController);
 
-    friend class OsmAnd::BinaryMapDataProvider;
-    friend class OsmAnd::BinaryMapDataTile_P;
+        friend class OsmAnd::BinaryMapDataProvider;
+        friend class OsmAnd::BinaryMapDataTile_P;
     };
 
     class BinaryMapDataTile;
@@ -91,7 +91,7 @@ namespace OsmAnd
 
         ImplementationInterface<BinaryMapDataTile> owner;
 
-		BinaryMapDataProvider_P::Link::WeakEndT _weakLink;
+        BinaryMapDataProvider_P::Link::WeakEndT _weakLink;
         std::weak_ptr<BinaryMapDataProvider_P::TileEntry> _refEntry;
 
         QList< std::shared_ptr<const Model::BinaryMapObject> > _mapObjects;

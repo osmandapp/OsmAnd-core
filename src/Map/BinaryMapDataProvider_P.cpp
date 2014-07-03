@@ -32,7 +32,7 @@ OsmAnd::BinaryMapDataProvider_P::BinaryMapDataProvider_P(BinaryMapDataProvider* 
 
 OsmAnd::BinaryMapDataProvider_P::~BinaryMapDataProvider_P()
 {
-	_link->release();
+    _link->release();
 }
 
 bool OsmAnd::BinaryMapDataProvider_P::obtainData(
@@ -47,7 +47,8 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     {
         // Try to obtain previous instance of tile
         _tileReferences.obtainOrAllocateEntry(tileEntry, tileId, zoom,
-            [](const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+            []
+            (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
             {
                 return new TileEntry(collection, tileId, zoom);
             });
@@ -115,57 +116,57 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         , &dataFilter
 #endif // OSMAND_PERFORMANCE_METRICS
         ]
-        (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
+    (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
+    {
+#if OSMAND_PERFORMANCE_METRICS
+        const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
+#endif // OSMAND_PERFORMANCE_METRICS
+
+        // This map object may be shared only in case it crosses bounds of a tile
+        const auto canNotBeShared = tileBBox31.contains(bbox);
+
+        // If map object can not be shared, just read it
+        if (canNotBeShared)
         {
 #if OSMAND_PERFORMANCE_METRICS
-            const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
+            const auto dataFilter_End = std::chrono::high_resolution_clock::now();
+            const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
+            dataFilter += dataRead_Elapsed.count();
 #endif // OSMAND_PERFORMANCE_METRICS
 
-            // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = tileBBox31.contains(bbox);
-
-            // If map object can not be shared, just read it
-            if (canNotBeShared)
-            {
-#if OSMAND_PERFORMANCE_METRICS
-                const auto dataFilter_End = std::chrono::high_resolution_clock::now();
-                const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
-                dataFilter += dataRead_Elapsed.count();
-#endif // OSMAND_PERFORMANCE_METRICS
-
-                return true;
-            }
-
-            // Otherwise, this map object can be shared, so it should be checked for
-            // being present in shared mapObjects storage, or be reserved there
-            std::shared_ptr<const Model::BinaryMapObject> sharedMapObjectReference;
-            proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > futureSharedMapObjectReference;
-            if (_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
-            {
-                if (sharedMapObjectReference)
-                {
-                    // If map object is already in shared objects cache and is available, use that one
-                    referencedMapObjects.push_back(qMove(sharedMapObjectReference));
-                }
-                else
-                {
-                    futureReferencedMapObjects.push_back(qMove(futureSharedMapObjectReference));
-                }
-
-#if OSMAND_PERFORMANCE_METRICS
-                const auto dataFilter_End = std::chrono::high_resolution_clock::now();
-                const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
-                dataFilter += dataRead_Elapsed.count();
-#endif // OSMAND_PERFORMANCE_METRICS
-                return false;
-            }
-
-            // This map object was reserved, and is going to be shared, but needs to be loaded
-            loadedSharedMapObjects.insert(id);
             return true;
-        },
+        }
+
+        // Otherwise, this map object can be shared, so it should be checked for
+        // being present in shared mapObjects storage, or be reserved there
+        std::shared_ptr<const Model::BinaryMapObject> sharedMapObjectReference;
+        proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > futureSharedMapObjectReference;
+        if (_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
+        {
+            if (sharedMapObjectReference)
+            {
+                // If map object is already in shared objects cache and is available, use that one
+                referencedMapObjects.push_back(qMove(sharedMapObjectReference));
+            }
+            else
+            {
+                futureReferencedMapObjects.push_back(qMove(futureSharedMapObjectReference));
+            }
+
+#if OSMAND_PERFORMANCE_METRICS
+            const auto dataFilter_End = std::chrono::high_resolution_clock::now();
+            const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
+            dataFilter += dataRead_Elapsed.count();
+#endif // OSMAND_PERFORMANCE_METRICS
+            return false;
+        }
+
+        // This map object was reserved, and is going to be shared, but needs to be loaded
+        loadedSharedMapObjects.insert(id);
+        return true;
+    },
 #if OSMAND_PERFORMANCE_METRICS > 1
-        &dataRead_Metric
+        & dataRead_Metric
 #else
         nullptr
 #endif // OSMAND_PERFORMANCE_METRICS > 1
@@ -219,7 +220,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment, owner->rasterizerSharedContext));
     Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, allMapObjects, &nothingToRasterize, nullptr,
 #if OSMAND_PERFORMANCE_METRICS > 1
-        &dataProcess_metric
+        & dataProcess_metric
 #else
         nullptr
 #endif // OSMAND_PERFORMANCE_METRICS > 1
@@ -372,7 +373,7 @@ void OsmAnd::BinaryMapDataTile_P::cleanup()
     }
 
     // Dereference shared map objects
-	if (const auto link = _weakLink.lock())
+    if (const auto link = _weakLink.lock())
     {
         // Get bounding box that covers this tile
         const auto tileBBox31 = Utilities::tileBoundingBox31(owner->tileId, owner->zoom);

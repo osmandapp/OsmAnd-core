@@ -15,26 +15,26 @@
 
 namespace OsmAnd
 {
-	class FavoriteLocationsGpxCollection;
-	class FavoriteLocationsGpxCollection_P Q_DECL_FINAL : public FavoriteLocationsCollection_P
-	{
-		Q_DISABLE_COPY(FavoriteLocationsGpxCollection_P);
+    class FavoriteLocationsGpxCollection;
+    class FavoriteLocationsGpxCollection_P Q_DECL_FINAL : public FavoriteLocationsCollection_P
+    {
+        Q_DISABLE_COPY(FavoriteLocationsGpxCollection_P);
 
-	private:
-	protected:
-		FavoriteLocationsGpxCollection_P(FavoriteLocationsGpxCollection* const owner);
-	public:
-		virtual ~FavoriteLocationsGpxCollection_P();
+    private:
+    protected:
+        FavoriteLocationsGpxCollection_P(FavoriteLocationsGpxCollection* const owner);
+    public:
+        virtual ~FavoriteLocationsGpxCollection_P();
 
-		ImplementationInterface<FavoriteLocationsGpxCollection> owner;
+        ImplementationInterface<FavoriteLocationsGpxCollection> owner;
 
-		bool saveTo(const QString& filename) const;
-		bool saveTo(QXmlStreamWriter& writer) const;
-		bool loadFrom(const QString& filename);
-		bool loadFrom(QXmlStreamReader& reader);
+        bool saveTo(const QString& filename) const;
+        bool saveTo(QXmlStreamWriter& writer) const;
+        bool loadFrom(const QString& filename);
+        bool loadFrom(QXmlStreamReader& reader);
 
-	friend class OsmAnd::FavoriteLocationsGpxCollection;
-	};
+    friend class OsmAnd::FavoriteLocationsGpxCollection;
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_FAVORITE_LOCATIONS_GPX_COLLECTION_P_H_)

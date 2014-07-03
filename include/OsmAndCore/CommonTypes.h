@@ -611,7 +611,7 @@ namespace OsmAnd
         {
             const auto center_ = center();
 
-            switch(quadrant)
+            switch (quadrant)
             {
             case Quadrant::NE:
                 return AreaT(top, center_.x, center_.y, right);
@@ -892,7 +892,7 @@ namespace OsmAnd
             // In case this OOBB contains that OOBB, all points of that OOBB lay inside this OOBB
             return
                 isPointInside(that.pointInGlobalSpace0) &&
-                isPointInside(that.pointInGlobalSpace1) && 
+                isPointInside(that.pointInGlobalSpace1) &&
                 isPointInside(that.pointInGlobalSpace2) &&
                 isPointInside(that.pointInGlobalSpace3);
         }
@@ -1052,10 +1052,10 @@ namespace OsmAnd
         {
             return OOBBT(
                 AreaT(
-                    _unrotatedBBox.top - dt,
-                    _unrotatedBBox.left - dl,
-                    _unrotatedBBox.bottom + db,
-                    _unrotatedBBox.right + dr),
+                _unrotatedBBox.top - dt,
+                _unrotatedBBox.left - dl,
+                _unrotatedBBox.bottom + db,
+                _unrotatedBBox.right + dr),
                 _rotation);
         }
     };
@@ -1083,28 +1083,28 @@ namespace OsmAnd
             return id;
         }
 
-        inline TileId& operator=( const uint64_t& that )
+        inline TileId& operator=(const uint64_t& that)
         {
             id = that;
             return *this;
         }
 
-        inline bool operator==( const TileId& that )
+        inline bool operator==(const TileId& that)
         {
             return this->id == that.id;
         }
 
-        inline bool operator!=( const TileId& that )
+        inline bool operator!=(const TileId& that)
         {
             return this->id != that.id;
         }
 
-        inline bool operator==( const uint64_t& that )
+        inline bool operator==(const uint64_t& that)
         {
             return this->id == that;
         }
 
-        inline bool operator!=( const uint64_t& that )
+        inline bool operator!=(const uint64_t& that)
         {
             return this->id != that;
         }
@@ -1215,11 +1215,11 @@ namespace OsmAnd
             return FColorARGB(newAlpha, r, g, b);
         }
 
-		inline FColorARGB& setAlpha(const float newAlpha)
-		{
-			a = newAlpha;
-			return *this;
-		}
+        inline FColorARGB& setAlpha(const float newAlpha)
+        {
+            a = newAlpha;
+            return *this;
+        }
     };
 
     union FColorRGB
@@ -1304,9 +1304,9 @@ namespace OsmAnd
         struct
         {
             uint8_t b;
-			uint8_t g;
-			uint8_t r;
-			uint8_t a;
+            uint8_t g;
+            uint8_t r;
+            uint8_t a;
         };
 #else
         // Fake unwrap for SWIG
@@ -1343,11 +1343,11 @@ namespace OsmAnd
             return ColorARGB(newAlpha, r, g, b);
         }
 
-		inline ColorARGB& setAlpha(const uint8_t newAlpha)
-		{
-			a = newAlpha;
-			return *this;
-		}
+        inline ColorARGB& setAlpha(const uint8_t newAlpha)
+        {
+            a = newAlpha;
+            return *this;
+        }
     };
 
     union ColorRGB
@@ -1366,20 +1366,20 @@ namespace OsmAnd
         {
         }
 
-		explicit inline ColorRGB(const ColorARGB& other)
-			: r(other.r)
-			, g(other.g)
-			, b(other.b)
-		{
-		}
+        explicit inline ColorRGB(const ColorARGB& other)
+            : r(other.r)
+            , g(other.g)
+            , b(other.b)
+        {
+        }
 
 #if !defined(SWIG)
         uint8_t value[3];
         struct
         {
-			uint8_t b;
+            uint8_t b;
             uint8_t g;
-			uint8_t r;
+            uint8_t r;
         };
 #else
         // Fake unwrap for SWIG

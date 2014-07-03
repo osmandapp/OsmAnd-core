@@ -99,7 +99,7 @@ namespace OsmAnd
 
         inline static double normalizeLatitude(double latitude)
         {
-            while(latitude < -90.0 || latitude > 90.0)
+            while (latitude < -90.0 || latitude > 90.0)
             {
                 if (latitude < 0.0)
                     latitude += 180.0;
@@ -117,7 +117,7 @@ namespace OsmAnd
 
         inline static double normalizeLongitude(double longitude)
         {
-            while(longitude < -180.0 || longitude >= 180.0)
+            while (longitude < -180.0 || longitude >= 180.0)
             {
                 if (longitude < 0.0)
                     longitude += 360.0;
@@ -205,18 +205,18 @@ namespace OsmAnd
 
         inline static double normalizedAngleRadians(double angle)
         {
-            while(angle > M_PI)
+            while (angle > M_PI)
                 angle -= 2.0 * M_PI;
-            while(angle <= -M_PI)
+            while (angle <= -M_PI)
                 angle += 2.0 * M_PI;
             return angle;
         }
 
         inline static double normalizedAngleDegrees(double angle)
         {
-            while(angle > 180.0)
+            while (angle > 180.0)
                 angle -= 360.0;
-            while(angle <= -180.0)
+            while (angle <= -180.0)
                 angle += 360.;
             return angle;
         }
@@ -229,7 +229,7 @@ namespace OsmAnd
 
             auto p0 = points.constData();
             auto p1 = p0 + 1;
-            for(auto idx = 1, count = points.size(); idx < count; idx++, p0++, p1++)
+            for (auto idx = 1, count = points.size(); idx < count; idx++, p0++, p1++)
             {
                 area += static_cast<double>(p0->x) * static_cast<double>(p1->y) - static_cast<double>(p1->x) * static_cast<double>(p0->y);
             }
@@ -317,9 +317,9 @@ namespace OsmAnd
         inline static double degreesDiff(const double a1, const double a2)
         {
             auto diff = a1 - a2;
-            while(diff > 180.0)
+            while (diff > 180.0)
                 diff -= 360.0;
-            while(diff <= -180.0)
+            while (diff <= -180.0)
                 diff += 360.0;
             return diff;
         }
@@ -423,17 +423,17 @@ namespace OsmAnd
 
             const auto tilesCount = static_cast<int32_t>(1u << zoom);
 
-            while(output.x < 0)
+            while (output.x < 0)
                 output.x += tilesCount;
-            while(output.y < 0)
+            while (output.y < 0)
                 output.y += tilesCount;
 
             // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
             if (zoom < ZoomLevel31)
             {
-                while(output.x >= tilesCount)
+                while (output.x >= tilesCount)
                     output.x -= tilesCount;
-                while(output.y >= tilesCount)
+                while (output.y >= tilesCount)
                     output.y -= tilesCount;
             }
 
@@ -449,17 +449,17 @@ namespace OsmAnd
 
             const auto tilesCount = static_cast<int32_t>(1u << zoom);
 
-            while(output.x < 0)
+            while (output.x < 0)
                 output.x += tilesCount;
-            while(output.y < 0)
+            while (output.y < 0)
                 output.y += tilesCount;
 
             // Max zoom level (31) is skipped, since value stored in int31 can not be more than tilesCount(31)
             if (zoom < ZoomLevel31)
             {
-                while(output.x >= tilesCount)
+                while (output.x >= tilesCount)
                     output.x -= tilesCount;
-                while(output.y >= tilesCount)
+                while (output.y >= tilesCount)
                     output.y -= tilesCount;
             }
 
@@ -475,14 +475,14 @@ namespace OsmAnd
 
             const auto tilesCount = static_cast<int64_t>(1ull << zoom);
 
-            while(output.x < 0)
+            while (output.x < 0)
                 output.x += tilesCount;
-            while(output.y < 0)
+            while (output.y < 0)
                 output.y += tilesCount;
 
-            while(output.x >= tilesCount)
+            while (output.x >= tilesCount)
                 output.x -= tilesCount;
-            while(output.y >= tilesCount)
+            while (output.y >= tilesCount)
                 output.y -= tilesCount;
 
             assert(output.x >= 0 && output.x < tilesCount);
@@ -520,7 +520,7 @@ namespace OsmAnd
         static double parseSpeed(const QString& value, const double defValue, bool* wasParsed = nullptr);
         static double parseLength(const QString& value, const double defValue, bool* wasParsed = nullptr);
         static double parseWeight(const QString& value, const double defValue, bool* wasParsed = nullptr);
-		static ColorARGB parseColor(const QString& value, const ColorARGB defValue, bool* wasParsed = nullptr);
+        static ColorARGB parseColor(const QString& value, const ColorARGB defValue, bool* wasParsed = nullptr);
         static int parseArbitraryInt(const QString& value, const int defValue, bool* wasParsed = nullptr);
         static long parseArbitraryLong(const QString& value, const long defValue, bool* wasParsed = nullptr);
         static unsigned int parseArbitraryUInt(const QString& value, const unsigned int defValue, bool* wasParsed = nullptr);
@@ -538,7 +538,7 @@ namespace OsmAnd
         {
             QSet<ZoomLevel> result;
             result.reserve(to - from + 1);
-            for(int level = from; level <= to; level++)
+            for (int level = from; level <= to; level++)
                 result.insert(static_cast<ZoomLevel>(level));
 
             return result;
@@ -554,7 +554,7 @@ namespace OsmAnd
             ZoomLevel previousZoomLevel = sortedZoomLevels.first();
             bool range = false;
             ZoomLevel rangeStart;
-            for(const auto zoomLevel : sortedZoomLevels)
+            for (const auto zoomLevel : sortedZoomLevels)
             {
                 if (previousCaptured && static_cast<int>(zoomLevel) == static_cast<int>(previousZoomLevel)+1)
                 {

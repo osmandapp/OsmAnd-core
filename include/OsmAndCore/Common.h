@@ -42,37 +42,37 @@ namespace OsmAnd
     template<typename T>
     T detachedOf(const T& input)
     {
-		T copy = input;
+        T copy = input;
         copy.detach();
         return copy;
     }
 
-	template<typename T>
-	const T& assignAndReturn(T& var, const T& value)
-	{
-		var = value;
-		return value;
-	}
+    template<typename T>
+    const T& assignAndReturn(T& var, const T& value)
+    {
+        var = value;
+        return value;
+    }
 
-	template <typename FROM, typename TO>
-	struct static_caster
-	{
-		TO operator()(const FROM& input)
-		{
-			return static_cast<TO>(input);
-		}
-	};
+    template <typename FROM, typename TO>
+    struct static_caster
+    {
+        TO operator()(const FROM& input)
+        {
+            return static_cast<TO>(input);
+        }
+    };
 
-	template<typename T_OUT, typename T_IN>
-	T_OUT copyAs(const T_IN& input)
-	{
-		T_OUT copy;
-		std::transform(
-			input.begin(), input.end(),
-			std::back_inserter(copy),
-			static_caster<typename T_IN::value_type, typename T_OUT::value_type>());
-		return copy;
-	}
+    template<typename T_OUT, typename T_IN>
+    T_OUT copyAs(const T_IN& input)
+    {
+        T_OUT copy;
+        std::transform(
+            input.begin(), input.end(),
+            std::back_inserter(copy),
+            static_caster<typename T_IN::value_type, typename T_OUT::value_type>());
+        return copy;
+    }
 
     template <typename T_>
     static int sign(T_ value)

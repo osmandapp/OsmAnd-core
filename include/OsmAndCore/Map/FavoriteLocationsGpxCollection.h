@@ -15,24 +15,24 @@
 
 namespace OsmAnd
 {
-	class FavoriteLocationsGpxCollection_P;
+    class FavoriteLocationsGpxCollection_P;
     class OSMAND_CORE_API FavoriteLocationsGpxCollection : public FavoriteLocationsCollection
     {
-		Q_DISABLE_COPY(FavoriteLocationsGpxCollection);
+        Q_DISABLE_COPY(FavoriteLocationsGpxCollection);
 
     private:
-		FavoriteLocationsGpxCollection_P* _p;
+        FavoriteLocationsGpxCollection_P* _p;
 
-		FavoriteLocationsGpxCollection(FavoriteLocationsGpxCollection_P* const p);
+        FavoriteLocationsGpxCollection(FavoriteLocationsGpxCollection_P* const p);
     protected:
     public:
-		FavoriteLocationsGpxCollection();
-		virtual ~FavoriteLocationsGpxCollection();
+        FavoriteLocationsGpxCollection();
+        virtual ~FavoriteLocationsGpxCollection();
 
-		bool saveTo(const QString& filename) const;
-		bool saveTo(QXmlStreamWriter& writer) const;
-		bool loadFrom(const QString& filename);
-		bool loadFrom(QXmlStreamReader& reader);
+        bool saveTo(const QString& filename) const;
+        bool saveTo(QXmlStreamWriter& writer) const;
+        bool loadFrom(const QString& filename);
+        bool loadFrom(QXmlStreamReader& reader);
     };
 }
 

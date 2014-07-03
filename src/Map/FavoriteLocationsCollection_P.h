@@ -28,17 +28,17 @@ namespace OsmAnd
     protected:
         FavoriteLocationsCollection_P(FavoriteLocationsCollection* const owner);
 
-		typedef Link<FavoriteLocationsCollection*> Link;
-		std::shared_ptr<Link> _containerLink;
+        typedef Link<FavoriteLocationsCollection*> Link;
+        std::shared_ptr<Link> _containerLink;
 
-		mutable QReadWriteLock _collectionLock;
-		QHash< FavoriteLocation*, std::shared_ptr<FavoriteLocation> > _collection;
+        mutable QReadWriteLock _collectionLock;
+        QHash< FavoriteLocation*, std::shared_ptr<FavoriteLocation> > _collection;
 
         void notifyCollectionChanged();
         void notifyFavoriteLocationChanged(FavoriteLocation* const pFavoriteLocation);
 
-		void doClearFavoriteLocations();
-		void appendFrom(const QList< std::shared_ptr<FavoriteLocation> >& collection);
+        void doClearFavoriteLocations();
+        void appendFrom(const QList< std::shared_ptr<FavoriteLocation> >& collection);
     public:
         virtual ~FavoriteLocationsCollection_P();
 

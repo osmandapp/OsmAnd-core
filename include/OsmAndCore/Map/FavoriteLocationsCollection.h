@@ -25,7 +25,7 @@ namespace OsmAnd
     private:
         PrivateImplementation<FavoriteLocationsCollection_P> _p;
     protected:
-		FavoriteLocationsCollection(FavoriteLocationsCollection_P* const p);
+        FavoriteLocationsCollection(FavoriteLocationsCollection_P* const p);
     public:
         FavoriteLocationsCollection();
         virtual ~FavoriteLocationsCollection();

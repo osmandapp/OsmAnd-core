@@ -25,9 +25,9 @@ namespace OsmAnd
 
     private:
     protected:
-		FavoriteLocation_P(FavoriteLocation* const owner);
+        FavoriteLocation_P(FavoriteLocation* const owner);
 
-		Link<FavoriteLocationsCollection*>::WeakEndT _weakLink;
+        Link<FavoriteLocationsCollection*>::WeakEndT _weakLink;
 
         mutable QReadWriteLock _lock;
 
@@ -35,8 +35,8 @@ namespace OsmAnd
         QString _group;
         ColorRGB _color;
 
-		void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
-		void detach();
+        void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
+        void detach();
     public:
         virtual ~FavoriteLocation_P();
 
