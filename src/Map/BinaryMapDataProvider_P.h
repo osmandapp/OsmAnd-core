@@ -91,7 +91,7 @@ namespace OsmAnd
 
         ImplementationInterface<BinaryMapDataTile> owner;
 
-        BinaryMapDataProvider_P::Link::WeakEndT _weakLink;
+        BinaryMapDataProvider_P::Link::WeakEnd _weakLink;
         std::weak_ptr<BinaryMapDataProvider_P::TileEntry> _refEntry;
 
         QList< std::shared_ptr<const Model::BinaryMapObject> > _mapObjects;

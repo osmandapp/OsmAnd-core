@@ -19,71 +19,14 @@ namespace OsmAnd
         Q_DISABLE_COPY(Link);
 
     public:
-        template<typename ENTITY>
-        class LinkLock;
+        typedef Link<ENTITY> LinkT;
+        class WeakEnd;
+        template<typename ENTITY_> class LinkLock;
+        typedef LinkLock<ENTITY> LinkLockT;
 
-        template<typename ENTITY>
-        class WeakEnd Q_DECL_FINAL
-        {
-        public:
-            typedef Link<ENTITY> LinkT;
-            typedef WeakEnd<ENTITY> WeakEndT;
-            typedef LinkLock<ENTITY> LinkLockT;
-
-        private:
-            std::weak_ptr<LinkT> _linkWeakReference;
-        protected:
-        public:
-            WeakEnd()
-            {
-            }
-
-            WeakEnd(LinkT& link)
-                : _linkWeakReference(link.shared_from_this())
-            {
-            }
-
-            WeakEnd(const WeakEndT& other)
-                : _linkWeakReference(other._linkWeakReference)
-            {
-            }
-
-            ~WeakEnd()
-            {
-            }
-
-            inline WeakEndT& operator=(const WeakEndT& other)
-            {
-                _linkWeakReference = other._linkWeakReference;
-
-                return *this;
-            }
-
-            inline operator bool() const
-            {
-                return !_linkWeakReference.expired();
-            }
-
-            inline const LinkLockT lock() const
-            {
-                return LinkLockT(_linkWeakReference);
-            }
-
-            inline void reset()
-            {
-                _linkWeakReference.reset();
-            }
-        };
-        typedef WeakEnd<ENTITY> WeakEndT;
-
-        template<typename ENTITY>
+        template<typename ENTITY_>
         class LinkLock Q_DECL_FINAL
         {
-        public:
-            typedef Link<ENTITY> LinkT;
-            typedef LinkLock<ENTITY> LinkLockT;
-            typedef WeakEnd<ENTITY> WeakEndT;
-
         private:
             const std::shared_ptr<LinkT> _link;
             const bool _locked;
@@ -113,12 +56,59 @@ namespace OsmAnd
                 return _locked;
             }
 
-            inline ENTITY operator->() const
+            inline ENTITY_ operator->() const
             {
                 return _link->_linkedEntity;
             }
 
-        friend class WeakEnd<ENTITY>;
+        friend class WeakEnd;
+        };
+
+        class WeakEnd Q_DECL_FINAL
+        {
+        private:
+            std::weak_ptr<LinkT> _linkWeakReference;
+        protected:
+        public:
+            WeakEnd()
+            {
+            }
+
+            WeakEnd(LinkT& link)
+                : _linkWeakReference(link.shared_from_this())
+            {
+            }
+
+            WeakEnd(const WeakEnd& other)
+                : _linkWeakReference(other._linkWeakReference)
+            {
+            }
+
+            ~WeakEnd()
+            {
+            }
+
+            inline WeakEnd& operator=(const WeakEnd& other)
+            {
+                _linkWeakReference = other._linkWeakReference;
+
+                return *this;
+            }
+
+            inline operator bool() const
+            {
+                return !_linkWeakReference.expired();
+            }
+
+            inline const LinkLockT lock() const
+            {
+                return LinkLockT(_linkWeakReference);
+            }
+
+            inline void reset()
+            {
+                _linkWeakReference.reset();
+            }
         };
 
     private:
@@ -189,14 +179,14 @@ namespace OsmAnd
             }
         }
 
-        inline operator WeakEndT()
+        inline operator WeakEnd()
         {
-            return WeakEndT(*this);
+            return WeakEnd(*this);
         }
 
-        inline WeakEndT getWeak()
+        inline WeakEnd getWeak()
         {
-            return WeakEndT(*this);
+            return WeakEnd(*this);
         }
     };
 }

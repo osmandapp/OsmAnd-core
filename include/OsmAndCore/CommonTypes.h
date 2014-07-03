@@ -1283,18 +1283,15 @@ namespace OsmAnd
     union ColorARGB
     {
         inline ColorARGB()
-            : a(255)
-            , r(255)
-            , g(255)
-            , b(255)
+            : argb(0xFFFFFFFF)
         {
         }
 
         inline ColorARGB(const uint8_t a_, const uint8_t r_, const uint8_t g_, const uint8_t b_)
-            : a(a_)
-            , r(r_)
+            : b(b_)
             , g(g_)
-            , b(b_)
+            , r(r_)
+            , a(a_)
         {
         }
 
@@ -1316,20 +1313,12 @@ namespace OsmAnd
 #if !defined(SWIG)
         inline bool operator==(const ColorARGB& other) const
         {
-            return
-                a == other.a &&
-                r == other.r &&
-                g == other.g &&
-                b == other.b;
+            return argb == other.argb;
         }
 
         inline bool operator!=(const ColorARGB& other) const
         {
-            return
-                a != other.a ||
-                r != other.r ||
-                g != other.g ||
-                b != other.b;
+            return argb != other.argb;
         }
 
         inline operator FColorARGB() const
@@ -1377,9 +1366,9 @@ namespace OsmAnd
         uint8_t value[3];
         struct
         {
-            uint8_t b;
-            uint8_t g;
             uint8_t r;
+            uint8_t g;
+            uint8_t b;
         };
 #else
         // Fake unwrap for SWIG

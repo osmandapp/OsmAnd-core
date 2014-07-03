@@ -27,7 +27,7 @@ namespace OsmAnd
     protected:
         FavoriteLocation_P(FavoriteLocation* const owner);
 
-        Link<FavoriteLocationsCollection*>::WeakEndT _weakLink;
+        Link<FavoriteLocationsCollection*>::WeakEnd _weakLink;
 
         mutable QReadWriteLock _lock;
 
