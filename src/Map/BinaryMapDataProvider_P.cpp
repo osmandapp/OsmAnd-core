@@ -26,12 +26,13 @@
 
 OsmAnd::BinaryMapDataProvider_P::BinaryMapDataProvider_P(BinaryMapDataProvider* owner_)
     : owner(owner_)
-    , _link(new Link(*this))
+    , _link(this)
 {
 }
 
 OsmAnd::BinaryMapDataProvider_P::~BinaryMapDataProvider_P()
 {
+	_link.release();
 }
 
 bool OsmAnd::BinaryMapDataProvider_P::obtainData(
@@ -237,7 +238,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         nothingToRasterize,
         tileId,
         zoom));
-    newTile->_p->_link = _link;
+    newTile->_p->_weakLink = _link.getWeak();
     newTile->_p->_refEntry = tileEntry;
 
     // Publish new tile
@@ -371,7 +372,7 @@ void OsmAnd::BinaryMapDataTile_P::cleanup()
     }
 
     // Dereference shared map objects
-    if (const auto link = _link.lock())
+	if (const auto link = _weakLink.lock())
     {
         // Get bounding box that covers this tile
         const auto tileBBox31 = Utilities::tileBoundingBox31(owner->tileId, owner->zoom);
@@ -383,7 +384,7 @@ void OsmAnd::BinaryMapDataTile_P::cleanup()
             if (canNotBeShared)
                 continue;
 
-            link->provider._sharedMapObjects.releaseReference(mapObject->id, owner->zoom, mapObject);
+            link->_sharedMapObjects.releaseReference(mapObject->id, owner->zoom, mapObject);
         }
     }
     _mapObjects.clear();

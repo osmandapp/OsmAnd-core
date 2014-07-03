@@ -25,18 +25,26 @@ namespace OsmAnd
 		template<typename ENTITY>
 		class WeakEnd Q_DECL_FINAL
 		{
-			Q_DISABLE_COPY(WeakEnd);
-
 		public:
 			typedef Link<ENTITY> LinkT;
+			typedef WeakEnd<ENTITY> WeakEndT;
 			typedef LinkLock<ENTITY> LinkLockT;
 
 		private:
-			const std::weak_ptr<LinkT> _linkWeakReference;
+			std::weak_ptr<LinkT> _linkWeakReference;
 		protected:
 		public:
+			WeakEnd()
+			{
+			}
+
 			WeakEnd(LinkT& link)
 				: _linkWeakReference(link.shared_from_this())
+			{
+			}
+
+			WeakEnd(const WeakEndT& other)
+				: _linkWeakReference(other._linkWeakReference)
 			{
 			}
 
@@ -44,7 +52,14 @@ namespace OsmAnd
 			{
 			}
 
-			const LinkLockT lock() const
+			inline WeakEndT& operator=(const WeakEndT& other)
+			{
+				_linkWeakReference = other._linkWeakReference;
+
+				return *this;
+			}
+
+			inline const LinkLockT lock() const
 			{
 				return LinkLockT(_linkWeakReference);
 			}
@@ -63,7 +78,7 @@ namespace OsmAnd
 			const std::shared_ptr<LinkT> _link;
 			const bool _locked;
 
-			LinkLockT &operator=(const LinkLockT& other) Q_DECL_EQ_DELETE;
+			LinkLockT& operator=(const LinkLockT& other) Q_DECL_EQ_DELETE;
 		protected:
 			LinkLock(const std::weak_ptr<LinkT>& link)
 				: _link(link.lock())
@@ -105,7 +120,7 @@ namespace OsmAnd
 		mutable QMutex _lockCounterDecrementedMutex;
 		QWaitCondition _lockCounterDecremented;
 
-		bool lock()
+		inline bool lock()
 		{
 			QReadLocker scopedLocker(&_isLockableLock);
 
@@ -116,7 +131,7 @@ namespace OsmAnd
 			return true;
 		}
 
-		void unlock()
+		inline void unlock()
 		{
 			const auto prevLocksCount = _locksCounter.fetchAndSubOrdered(1);
 
@@ -162,6 +177,16 @@ namespace OsmAnd
 				QMutexLocker scopedLocker(&_lockCounterDecrementedMutex);
 				REPEAT_UNTIL(_lockCounterDecremented.wait(&_lockCounterDecrementedMutex));
 			}
+		}
+
+		inline operator WeakEndT()
+		{
+			return WeakEndT(*this);
+		}
+
+		inline WeakEndT getWeak()
+		{
+			return WeakEndT(*this);
 		}
 	};
 }

@@ -12,6 +12,7 @@
 #include <QWaitCondition>
 
 #include "OsmAndCore.h"
+#include "Link.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "IMapTiledDataProvider.h"
@@ -64,23 +65,8 @@ namespace OsmAnd
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 
-        class Link : public std::enable_shared_from_this<Link>
-        {
-        private:
-        protected:
-        public:
-            Link(BinaryMapDataProvider_P& provider_)
-                : provider(provider_)
-            {
-            }
-
-            virtual ~Link()
-            {
-            }
-
-            BinaryMapDataProvider_P& provider;
-        };
-        const std::shared_ptr<Link> _link;
+		typedef Link<BinaryMapDataProvider_P*> Link;
+		Link _link;
     public:
         ~BinaryMapDataProvider_P();
 
@@ -105,7 +91,7 @@ namespace OsmAnd
 
         ImplementationInterface<BinaryMapDataTile> owner;
 
-        std::weak_ptr<BinaryMapDataProvider_P::Link> _link;
+		BinaryMapDataProvider_P::Link::WeakEndT _weakLink;
         std::weak_ptr<BinaryMapDataProvider_P::TileEntry> _refEntry;
 
         QList< std::shared_ptr<const Model::BinaryMapObject> > _mapObjects;
