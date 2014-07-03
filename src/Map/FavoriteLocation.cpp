@@ -1,8 +1,8 @@
 #include "FavoriteLocation.h"
 #include "FavoriteLocation_P.h"
 
-OsmAnd::FavoriteLocation::FavoriteLocation(const PointI position_, const QString& title_, const QString& group_, const ColorRGB color_)
-    : _p(new FavoriteLocation_P(this))
+OsmAnd::FavoriteLocation::FavoriteLocation(Link<FavoriteLocationsCollection*>& containerLink, const PointI position_, const QString& title_, const QString& group_, const ColorRGB color_)
+	: _p(new FavoriteLocation_P(containerLink, this))
     , position(position_)
 {
     _p->_title = title_;
@@ -47,4 +47,9 @@ OsmAnd::ColorRGB OsmAnd::FavoriteLocation::getColor() const
 void OsmAnd::FavoriteLocation::setColor(const ColorRGB newColor)
 {
     _p->setColor(newColor);
+}
+
+void OsmAnd::FavoriteLocation::detach()
+{
+	_p->detach();
 }

@@ -2,25 +2,21 @@
 #include "FavoriteLocationsCollection_P.h"
 
 OsmAnd::FavoriteLocationsCollection::FavoriteLocationsCollection()
-    : _p(new FavoriteLocationsCollection_P(this))
+	: FavoriteLocationsCollection(new FavoriteLocationsCollection_P(this))
+{
+}
+
+OsmAnd::FavoriteLocationsCollection::FavoriteLocationsCollection(FavoriteLocationsCollection_P* const p)
+	: _p(p)
 {
 }
 
 OsmAnd::FavoriteLocationsCollection::~FavoriteLocationsCollection()
 {
+	_p->_containerLink.release();
 }
 
-void OsmAnd::FavoriteLocationsCollection::notifyCollectionChanged()
-{
-    _p->notifyCollectionChanged();
-}
-
-void OsmAnd::FavoriteLocationsCollection::notifyFavoriteLocationChanged(const std::shared_ptr<const FavoriteLocation>& favoriteLocation)
-{
-    _p->notifyFavoriteLocationChanged(favoriteLocation);
-}
-
-std::shared_ptr<OsmAnd::FavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
+std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
     const PointI position,
     const QString& title /*= QString::null*/,
     const QString& group /*= QString::null*/,
@@ -29,7 +25,7 @@ std::shared_ptr<OsmAnd::FavoriteLocation> OsmAnd::FavoriteLocationsCollection::c
     return _p->createFavoriteLocation(position, title, group, color);
 }
 
-bool OsmAnd::FavoriteLocationsCollection::removeFavoriteLocation(const std::shared_ptr<const FavoriteLocation>& favoriteLocation)
+bool OsmAnd::FavoriteLocationsCollection::removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)
 {
     return _p->removeFavoriteLocation(favoriteLocation);
 }
@@ -44,7 +40,7 @@ unsigned int OsmAnd::FavoriteLocationsCollection::getFavoriteLocationsCount() co
     return _p->getFavoriteLocationsCount();
 }
 
-QList< std::shared_ptr<OsmAnd::FavoriteLocation> > OsmAnd::FavoriteLocationsCollection::getFavoriteLocations() const
+QList< std::shared_ptr<OsmAnd::IFavoriteLocation> > OsmAnd::FavoriteLocationsCollection::getFavoriteLocations() const
 {
     return _p->getFavoriteLocations();
 }

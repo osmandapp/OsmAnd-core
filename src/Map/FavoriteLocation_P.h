@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/Link.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IFavoriteLocation.h>
 
@@ -24,13 +25,17 @@ namespace OsmAnd
 
     private:
     protected:
-        FavoriteLocation_P(FavoriteLocation* const owner);
+		FavoriteLocation_P(Link<FavoriteLocationsCollection*>& containerLink, FavoriteLocation* const owner);
+
+		Link<FavoriteLocationsCollection*>::WeakEndT _weakLink;
 
         mutable QReadWriteLock _lock;
 
         QString _title;
         QString _group;
         ColorRGB _color;
+
+		void detach();
     public:
         virtual ~FavoriteLocation_P();
 

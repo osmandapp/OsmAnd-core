@@ -4,9 +4,12 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include <QReadWriteLock>
+#include <QHash>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
+#include "Link.h"
 #include "CommonTypes.h"
 
 namespace OsmAnd
@@ -16,7 +19,7 @@ namespace OsmAnd
     class FavoriteLocation_P;
 
     class FavoriteLocationsCollection;
-    class FavoriteLocationsCollection_P Q_DECL_FINAL
+    class FavoriteLocationsCollection_P
     {
         Q_DISABLE_COPY(FavoriteLocationsCollection_P);
 
@@ -24,10 +27,17 @@ namespace OsmAnd
     protected:
         FavoriteLocationsCollection_P(FavoriteLocationsCollection* const owner);
 
+		Link<FavoriteLocationsCollection*> _containerLink;
+
+		mutable QReadWriteLock _collectionLock;
+		QHash< FavoriteLocation*, std::shared_ptr<FavoriteLocation> > _collection;
+
         void notifyCollectionChanged();
-        void notifyFavoriteLocationChanged(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation);
+        void notifyFavoriteLocationChanged(FavoriteLocation* const pFavoriteLocation);
+
+		void doClearFavoriteLocations();
     public:
-        ~FavoriteLocationsCollection_P();
+        virtual ~FavoriteLocationsCollection_P();
 
         ImplementationInterface<FavoriteLocationsCollection> owner;
 
@@ -36,7 +46,7 @@ namespace OsmAnd
             const QString& title,
             const QString& group,
             const ColorRGB color);
-        bool removeFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation);
+        bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
         void clearFavoriteLocations();
 
         unsigned int getFavoriteLocationsCount() const;
@@ -48,4 +58,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_I_FAVORITE_LOCATIONS_COLLECTION_H_)
+#endif // !defined(_OSMAND_CORE_FAVORITE_LOCATIONS_COLLECTION_P_H_)

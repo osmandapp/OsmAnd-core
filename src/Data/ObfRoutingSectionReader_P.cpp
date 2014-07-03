@@ -591,7 +591,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                 gpb::uint32 id;
                 cis->ReadVarint32(&id);
                 internalId = id;
-                if (id < idsTable.size())
+                if (id < static_cast<unsigned int>(idsTable.size()))
                     road->_id = idsTable[id];
                 else
                     road->_id = id;

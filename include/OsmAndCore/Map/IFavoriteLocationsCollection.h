@@ -22,9 +22,6 @@ namespace OsmAnd
     private:
     protected:
         IFavoriteLocationsCollection();
-
-        virtual void notifyCollectionChanged() = 0;
-        virtual void notifyFavoriteLocationChanged(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation) = 0;
     public:
         virtual ~IFavoriteLocationsCollection();
 
@@ -33,7 +30,7 @@ namespace OsmAnd
             const QString& title = QString::null,
             const QString& group = QString::null,
             const ColorRGB color = ColorRGB()) = 0;
-        virtual bool removeFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation) = 0;
+        virtual bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation) = 0;
         virtual void clearFavoriteLocations() = 0;
 
         virtual unsigned int getFavoriteLocationsCount() const = 0;
