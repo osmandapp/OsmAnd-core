@@ -108,7 +108,7 @@ void dump(std::ostream &output, const OsmAnd::Verifier::Configuration& cfg)
         {
             output << "Processing " << zoomLevel << " zoom level..." << std::endl;
 
-            QList< std::shared_ptr<const OsmAnd::Model::MapObject> > duplicateMapObjects;
+            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > duplicateMapObjects;
             QHash<uint64_t, unsigned int> mapObjectIds;
             const auto idsCollector = [&mapObjectIds, &lastReportedCount, &output, &totalDuplicatesCount](
                 const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section,

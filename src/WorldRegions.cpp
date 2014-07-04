@@ -7,6 +7,7 @@ const QString OsmAnd::WorldRegions::AustraliaAndOceaniaRegionId(QLatin1String("a
 const QString OsmAnd::WorldRegions::CentralAmericaRegionId(QLatin1String("centralamerica"));
 const QString OsmAnd::WorldRegions::EuropeRegionId(QLatin1String("europe"));
 const QString OsmAnd::WorldRegions::NorthAmericaRegionId(QLatin1String("northamerica"));
+const QString OsmAnd::WorldRegions::RussiaRegionId(QLatin1String("russia"));
 const QString OsmAnd::WorldRegions::SouthAmericaRegionId(QLatin1String("southamerica"));
 
 OsmAnd::WorldRegions::WorldRegions(const QString& ocbfFileName_)
@@ -28,10 +29,12 @@ bool OsmAnd::WorldRegions::loadWorldRegions(
 
 OsmAnd::WorldRegions::WorldRegion::WorldRegion(
     const QString& id_,
+    const QString& downloadId_,
     const QString& name_,
     const QHash<QString, QString>& localizedNames_,
     const QString& parentId_ /*= QString::null*/)
     : id(id_)
+    , downloadId(downloadId_)
     , name(name_)
     , localizedNames(localizedNames_)
     , parentId(parentId_)

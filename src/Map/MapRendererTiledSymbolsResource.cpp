@@ -73,7 +73,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
                     LogPrintf(LogSeverityLevel::Debug,
-                        "Shared GroupResources(%p) for MapObject #%" PRIu64 " (%" PRIi64 ") referenced from %p (%dx%d@%d)",
+                        "Shared GroupResources(%p) for BinaryMapObject #%" PRIu64 " (%" PRIi64 ") referenced from %p (%dx%d@%d)",
                         sharedGroupResources.get(),
                         sharableSymbolsGroup->id,
                         static_cast<int64_t>(sharableSymbolsGroup->id) / 2,
@@ -141,7 +141,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
             LogPrintf(LogSeverityLevel::Debug,
-                "Shared GroupResources(%p) for MapObject #%" PRIu64 " (%" PRIi64 ") allocated and referenced from %p (%dx%d@%d): %" PRIu64 " ref(s)",
+                "Shared GroupResources(%p) for BinaryMapObject #%" PRIu64 " (%" PRIi64 ") allocated and referenced from %p (%dx%d@%d): %" PRIu64 " ref(s)",
                 groupResources.get(),
                 sharableSymbolsGroup->id,
                 static_cast<int64_t>(sharableSymbolsGroup->id) / 2,
@@ -168,7 +168,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         const auto sharableSymbolsGroup = std::static_pointer_cast<const MapSymbolsGroupShareableById>(groupResources->group);
         LogPrintf(LogSeverityLevel::Debug,
-            "Shared GroupResources(%p) for MapObject #%" PRIu64 " (%" PRIi64 ") referenced from %p (%dx%d@%d): %" PRIu64 " ref(s)",
+            "Shared GroupResources(%p) for BinaryMapObject #%" PRIu64 " (%" PRIi64 ") referenced from %p (%dx%d@%d): %" PRIu64 " ref(s)",
             groupResources.get(),
             sharableSymbolsGroup->id,
             static_cast<int64_t>(sharableSymbolsGroup->id) / 2,
@@ -373,7 +373,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
 
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         LogPrintf(LogSeverityLevel::Debug,
-            "Shared GroupResources(%p) dereferenced for MapObject #%" PRIu64 " (%" PRIi64 ") in %p (%dx%d@%d): %" PRIu64 " ref(s) remain, %s",
+            "Shared GroupResources(%p) dereferenced for BinaryMapObject #%" PRIu64 " (%" PRIi64 ") in %p (%dx%d@%d): %" PRIu64 " ref(s) remain, %s",
             groupResources.get(),
             sharableSymbolsGroup->id,
             static_cast<int64_t>(sharableSymbolsGroup->id) / 2,
@@ -453,7 +453,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         LogPrintf(LogSeverityLevel::Debug,
-            "Shared GroupResources(%p) dereferenced for MapObject #%" PRIu64 " (%" PRIi64 ") in %p (%dx%d@%d): %" PRIu64 " ref(s) remain, %s",
+            "Shared GroupResources(%p) dereferenced for BinaryMapObject #%" PRIu64 " (%" PRIi64 ") in %p (%dx%d@%d): %" PRIu64 " ref(s) remain, %s",
             groupResources.get(),
             shareableById->id,
             static_cast<int64_t>(shareableById->id) / 2,

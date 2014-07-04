@@ -530,7 +530,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             if (mapObject && mapObject->points31.isEmpty())
             {
                 LogPrintf(LogSeverityLevel::Warning,
-                    "Empty MapObject #%" PRIu64 "(%" PRIi64 ") detected in section '%s'",
+                    "Empty BinaryMapObject #%" PRIu64 "(%" PRIi64 ") detected in section '%s'",
                     mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
                     qPrintable(section->name));
                 mapObject.reset();

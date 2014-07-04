@@ -16,6 +16,7 @@
 #include <OsmAndCore/ObfsCollection.h>
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/Data/ObfReader.h>
+#include <OsmAndCore/Data/Model/BinaryMapObject.h>
 #include <OsmAndCore/Map/Rasterizer.h>
 #include <OsmAndCore/Map/RasterizerContext.h>
 #include <OsmAndCore/Map/RasterizerEnvironment.h>
@@ -189,7 +190,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     obfsCollection.addDirectory(cfg.obfsDir);
 
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
-    QList< std::shared_ptr<const OsmAnd::Model::MapObject> > mapObjects;
+    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
     OsmAnd::AreaI bbox31(
             OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
             OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),

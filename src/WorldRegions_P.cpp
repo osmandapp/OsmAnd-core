@@ -49,12 +49,13 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
         bool idsCaptured = false;
         uint32_t nameId = std::numeric_limits<uint32_t>::max();
         uint32_t idId = std::numeric_limits<uint32_t>::max();
+        uint32_t downloadNameId = std::numeric_limits<uint32_t>::max();
         uint32_t regionPrefixId = std::numeric_limits<uint32_t>::max();
         uint32_t regionSuffixId = std::numeric_limits<uint32_t>::max();
         const QLatin1String localizedNameTagPrefix("name:");
         const auto localizedNameTagPrefixLen = localizedNameTagPrefix.size();
         const auto worldRegionsCollector =
-            [&outRegions, &idsCaptured, &nameId, &idId, &regionPrefixId, &regionSuffixId, localizedNameTagPrefix, localizedNameTagPrefixLen]
+            [&outRegions, &idsCaptured, &nameId, &idId, &downloadNameId, &regionPrefixId, &regionSuffixId, localizedNameTagPrefix, localizedNameTagPrefixLen]
             (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>& worldRegionMapObject) -> bool
             {
                 const auto& rules = worldRegionMapObject->section->encodingDecodingRules;
@@ -63,8 +64,10 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     nameId = rules->name_encodingRuleId;
 
                     QHash< QString, QHash<QString, uint32_t> >::const_iterator citRule;
-                    if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("download_name"))) != rules->encodingRuleIds.cend())
+                    if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("key_name"))) != rules->encodingRuleIds.cend())
                         idId = citRule->constBegin().value();
+                    if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("download_name"))) != rules->encodingRuleIds.cend())
+                        downloadNameId = citRule->constBegin().value();
                     if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("region_prefix"))) != rules->encodingRuleIds.cend())
                         regionPrefixId = citRule->constBegin().value();
                     if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("region_suffix"))) != rules->encodingRuleIds.cend())
@@ -75,20 +78,26 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
 
                 QString name;
                 QString id;
+                QString downloadName;
                 QString regionPrefix;
                 QString regionSuffix;
                 QHash<QString, QString> localizedNames;
                 for(const auto& localizedNameEntry : rangeOf(constOf(worldRegionMapObject->names)))
                 {
                     const auto ruleId = localizedNameEntry.key();
-                    if (ruleId == nameId)
+                    if (ruleId == idId)
+                    {
+                        id = localizedNameEntry.value().toLower();
+                        continue;
+                    }
+                    else if (ruleId == nameId)
                     {
                         name = localizedNameEntry.value();
                         continue;
                     }
-                    else if (ruleId == idId)
+                    else if (ruleId == downloadNameId)
                     {
-                        id = localizedNameEntry.value().toLower();
+                        downloadName = localizedNameEntry.value().toLower();
                         continue;
                     }
                     else if (ruleId == regionPrefixId)
@@ -111,8 +120,20 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
 
                 QString parentId = regionSuffix;
                 if (!regionPrefix.isEmpty())
-                    parentId.prepend(regionPrefix + QLatin1String("_"));
-                std::shared_ptr<const WorldRegion> newRegion(new WorldRegion(id, name, localizedNames, parentId));
+                {
+                    if (!parentId.isEmpty())
+                        parentId.prepend(regionPrefix + QLatin1String("_"));
+                    else
+                        parentId = regionPrefix;
+                }
+
+                // Build up full id
+                if (!regionPrefix.isEmpty())
+                    id.prepend(regionPrefix + QLatin1String("_"));
+                if (!regionSuffix.isEmpty())
+                    id.append(QLatin1String("_") + regionSuffix);
+
+                std::shared_ptr<const WorldRegion> newRegion(new WorldRegion(id, downloadName, name, localizedNames, parentId));
 
                 outRegions.insert(id, qMove(newRegion));
 

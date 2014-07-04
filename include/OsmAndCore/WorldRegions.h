@@ -26,6 +26,7 @@ namespace OsmAnd
         protected:
             WorldRegion(
                 const QString& id,
+                const QString& downloadId,
                 const QString& name,
                 const QHash<QString, QString>& localizedNames,
                 const QString& parentId = QString::null);
@@ -35,6 +36,7 @@ namespace OsmAnd
             const QString parentId;
 
             const QString id;
+            const QString downloadId;
             const QString name;
             const QHash<QString, QString> localizedNames;
 
@@ -57,6 +59,7 @@ namespace OsmAnd
         static const QString CentralAmericaRegionId;
         static const QString EuropeRegionId;
         static const QString NorthAmericaRegionId;
+        static const QString RussiaRegionId;
         static const QString SouthAmericaRegionId;
 
         bool loadWorldRegions(
