@@ -41,6 +41,7 @@ namespace OsmAnd
         void subscribeToChanges();
         void unsubscribeToChanges();
         void syncFavoriteLocationMarkers();
+        void syncFavoriteLocationMarker(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation);
     public:
         ~FavoriteLocationsPresenter_P();
 

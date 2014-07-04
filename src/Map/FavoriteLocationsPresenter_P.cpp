@@ -97,7 +97,7 @@ void OsmAnd::FavoriteLocationsPresenter_P::subscribeToChanges()
         [this]
         (const IFavoriteLocationsCollection* const collection, const std::shared_ptr<const IFavoriteLocation>& favoriteLocation)
         {
-            
+            syncFavoriteLocationMarker(favoriteLocation);
         });
 }
 
@@ -138,7 +138,21 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
             continue;
 
         markerBuilder.setPosition(favoriteLocation->getPosition());
+        //TODO: set color
+
         const auto marker = markerBuilder.buildAndAddToCollection(_markersCollection);
         _favoriteLocationToMarkerMap.insert(favoriteLocation, marker);
     }
+}
+
+void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarker(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation)
+{
+    QReadLocker scopedLocker(&_favoriteLocationToMarkerMapLock);
+
+    const auto citMarker = _favoriteLocationToMarkerMap.constFind(favoriteLocation);
+    if (citMarker == _favoriteLocationToMarkerMap.cend())
+        return;
+
+    const auto& marker = *citMarker;
+    //TODO: set color
 }
