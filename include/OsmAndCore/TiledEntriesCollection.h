@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/QtCommon.h>
 #include <QHash>
 #include <QReadWriteLock>
 #include <QAtomicInt>

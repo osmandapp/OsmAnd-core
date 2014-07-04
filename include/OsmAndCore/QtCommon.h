@@ -26,9 +26,9 @@ namespace OsmAnd
     }
 
     template<typename T>
-    Q_DECL_CONSTEXPR QMutablevectorIterator<T> mutableIteratorOf(QVector<T>& container)
+    Q_DECL_CONSTEXPR QMutableVectorIterator<T> mutableIteratorOf(QVector<T>& container)
     {
-        return QMutablevectorIterator<T>(container);
+        return QMutableVectorIterator<T>(container);
     }
 }
 

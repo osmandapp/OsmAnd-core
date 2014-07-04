@@ -1,6 +1,9 @@
 #include "EmbeddedResources.h"
 #include "EmbeddedResources_private.h"
 
+#include <SkStream.h>
+#include <SkImageDecoder.h>
+
 #include "Logging.h"
 
 OsmAnd::EmbeddedResources::EmbeddedResources()
@@ -11,7 +14,7 @@ OsmAnd::EmbeddedResources::~EmbeddedResources()
 {
 }
 
-QByteArray OsmAnd::EmbeddedResources::decompressResource( const QString& name, bool* ok_ /*= nullptr*/ )
+QByteArray OsmAnd::EmbeddedResources::decompressResource(const QString& name, bool* ok_ /*= nullptr*/)
 {
     bool ok = false;
     const auto compressedData = getRawResource(name, &ok);
@@ -22,12 +25,15 @@ QByteArray OsmAnd::EmbeddedResources::decompressResource( const QString& name, b
         return QByteArray();
     }
 
-    return qUncompress(compressedData);
+    const auto decompressedData = qUncompress(compressedData);
+    if (ok_)
+        *ok_ = !decompressedData.isNull();
+    return decompressedData;
 }
 
-QByteArray OsmAnd::EmbeddedResources::getRawResource( const QString& name, bool* ok /*= nullptr*/ )
+QByteArray OsmAnd::EmbeddedResources::getRawResource(const QString& name, bool* ok /*= nullptr*/)
 {
-    for(auto idx = 0u; idx < __bundled_resources_count; idx++)
+    for (auto idx = 0u; idx < __bundled_resources_count; idx++)
     {
         if (__bundled_resources[idx].name != name)
             continue;
@@ -43,9 +49,34 @@ QByteArray OsmAnd::EmbeddedResources::getRawResource( const QString& name, bool*
     return QByteArray();
 }
 
-bool OsmAnd::EmbeddedResources::containsResource( const QString& name )
+std::shared_ptr<SkBitmap> OsmAnd::EmbeddedResources::getBitmapResource(const QString& name, bool* ok_ /*= nullptr*/)
 {
-    for(auto idx = 0u; idx < __bundled_resources_count; idx++)
+    bool ok = false;
+    const auto data = decompressResource(name, &ok);
+    if (!ok)
+    {
+        if (ok_)
+            *ok_ = false;
+        return nullptr;
+    }
+
+    const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+    SkMemoryStream dataStream(data.constData(), data.length(), false);
+    if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+    {
+        if (ok_)
+            *ok_ = false;
+        return nullptr;
+    }
+
+    if (ok_)
+        *ok_ = true;
+    return bitmap;
+}
+
+bool OsmAnd::EmbeddedResources::containsResource(const QString& name)
+{
+    for (auto idx = 0u; idx < __bundled_resources_count; idx++)
     {
         if (__bundled_resources[idx].name != name)
             continue;

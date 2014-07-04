@@ -29,7 +29,7 @@ namespace OsmAnd
 
         Link<FavoriteLocationsCollection*>::WeakEnd _weakLink;
 
-        mutable QReadWriteLock _visibilitySettingsLock;
+        mutable QReadWriteLock _lock;
 
         QString _title;
         QString _group;

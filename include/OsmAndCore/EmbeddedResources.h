@@ -7,6 +7,8 @@
 #include <QString>
 #include <QByteArray>
 
+#include <SkBitmap.h>
+
 #include <OsmAndCore.h>
 
 namespace OsmAnd
@@ -21,6 +23,7 @@ namespace OsmAnd
 
         static QByteArray decompressResource(const QString& name, bool* ok = nullptr);
         static QByteArray getRawResource(const QString& name, bool* ok = nullptr);
+        static std::shared_ptr<SkBitmap> getBitmapResource(const QString& name, bool* ok = nullptr);
         static bool containsResource(const QString& name);
     };
 }

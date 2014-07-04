@@ -116,12 +116,9 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
 {
     // Upload stubs
     {
-        const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/processing_tile.png"));
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        if (!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
-        {
+        const auto bitmap = EmbeddedResources::getBitmapResource(QLatin1String("map/stubs/processing_tile.png"));
+        if (!bitmap)
             return false;
-        }
         else
         {
             std::shared_ptr<const MapTiledData> bitmapTile(new RasterBitmapTile(bitmap, AlphaChannelData::Undefined, 1.0f, TileId(), InvalidZoom));
@@ -130,12 +127,9 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
         }
     }
     {
-        const auto& data = EmbeddedResources::decompressResource(QLatin1String("map/stubs/unavailable_tile.png"));
-        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-        if (!SkImageDecoder::DecodeMemory(data.data(), data.size(), bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
-        {
+        const auto bitmap = EmbeddedResources::getBitmapResource(QLatin1String("map/stubs/unavailable_tile.png"));
+        if (!bitmap)
             return false;
-        }
         else
         {
             std::shared_ptr<const MapTiledData> bitmapTile(new RasterBitmapTile(bitmap, AlphaChannelData::Undefined, 1.0f, TileId(), InvalidZoom));

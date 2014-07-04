@@ -1,9 +1,14 @@
 #include "FavoriteLocationsPresenter.h"
 #include "FavoriteLocationsPresenter_P.h"
 
-OsmAnd::FavoriteLocationsPresenter::FavoriteLocationsPresenter(const std::shared_ptr<const IFavoriteLocationsCollection>& collection_)
+#include "EmbeddedResources.h"
+
+OsmAnd::FavoriteLocationsPresenter::FavoriteLocationsPresenter(
+    const std::shared_ptr<const IFavoriteLocationsCollection>& collection_,
+    const std::shared_ptr<const SkBitmap>& favoriteLocationPinIconBitmap_ /*= nullptr*/)
     : _p(new FavoriteLocationsPresenter_P(this))
     , collection(collection_)
+    , favoriteLocationPinIconBitmap(favoriteLocationPinIconBitmap_)
 {
     _p->subscribeToChanges();
     _p->syncFavoriteLocationMarkers();
@@ -12,6 +17,13 @@ OsmAnd::FavoriteLocationsPresenter::FavoriteLocationsPresenter(const std::shared
 OsmAnd::FavoriteLocationsPresenter::~FavoriteLocationsPresenter()
 {
     _p->unsubscribeToChanges();
+}
+
+std::shared_ptr<const SkBitmap> OsmAnd::FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconBitmap()
+{
+    static const std::shared_ptr<const SkBitmap> defaultFavoriteLocationPinIconBitmap(
+        EmbeddedResources::getBitmapResource(QLatin1String("map/stubs/favorite_location_pin_icon.png")));
+    return defaultFavoriteLocationPinIconBitmap;
 }
 
 bool OsmAnd::FavoriteLocationsPresenter::isGroupVisible(const QString& group) const

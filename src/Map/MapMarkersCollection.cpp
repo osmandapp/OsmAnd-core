@@ -12,6 +12,21 @@ OsmAnd::MapMarkersCollection::~MapMarkersCollection()
 {
 }
 
+QList< std::shared_ptr<OsmAnd::MapMarker> > OsmAnd::MapMarkersCollection::getMarkers() const
+{
+    return _p->getMarkers();
+}
+
+bool OsmAnd::MapMarkersCollection::removeMarker(const std::shared_ptr<MapMarker>& marker)
+{
+    return _p->removeMarker(marker);
+}
+
+void OsmAnd::MapMarkersCollection::removeAllMarkers()
+{
+    _p->removeAllMarkers();
+}
+
 OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMinZoom() const
 {
     return minZoom;

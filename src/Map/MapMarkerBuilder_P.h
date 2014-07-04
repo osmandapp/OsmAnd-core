@@ -30,7 +30,7 @@ namespace OsmAnd
     protected:
         MapMarkerBuilder_P(MapMarkerBuilder* const owner);
 
-        mutable QReadWriteLock _visibilitySettingsLock;
+        mutable QReadWriteLock _lock;
 
         bool _isHidden;
 

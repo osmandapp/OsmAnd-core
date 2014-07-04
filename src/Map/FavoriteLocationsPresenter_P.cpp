@@ -77,12 +77,12 @@ void OsmAnd::FavoriteLocationsPresenter_P::hideFavoriteLocation(const std::share
 
 QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::FavoriteLocationsPresenter_P::getProvidedDataKeys() const
 {
-    return _markersCollection.getProvidedDataKeys();
+    return _markersCollection->getProvidedDataKeys();
 }
 
 bool OsmAnd::FavoriteLocationsPresenter_P::obtainData(const IMapKeyedSymbolsProvider::Key key, std::shared_ptr<MapKeyedData>& outKeyedData, const IQueryController* const queryController)
 {
-    return _markersCollection.obtainData(key, outKeyedData, queryController);
+    return _markersCollection->obtainData(key, outKeyedData, queryController);
 }
 
 void OsmAnd::FavoriteLocationsPresenter_P::subscribeToChanges()
@@ -91,7 +91,7 @@ void OsmAnd::FavoriteLocationsPresenter_P::subscribeToChanges()
         [this]
         (const IFavoriteLocationsCollection* const collection)
         {
-            
+            syncFavoriteLocationMarkers();
         });
     owner->collection->favoriteLocationChangeObservable.attach(this,
         [this]
@@ -128,12 +128,17 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
 
     // Create markers for all new favorite locations
     MapMarkerBuilder markerBuilder;
+    markerBuilder.setPinIcon(
+        owner->favoriteLocationPinIconBitmap
+        ? owner->favoriteLocationPinIconBitmap
+        : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconBitmap());
     for (const auto& favoriteLocation : favoriteLocations)
     {
         if (_favoriteLocationToMarkerMap.contains(favoriteLocation))
             continue;
 
         markerBuilder.setPosition(favoriteLocation->getPosition());
-        markerBuilder.buildAndAddToCollection(_markersCollection);
+        const auto marker = markerBuilder.buildAndAddToCollection(_markersCollection);
+        _favoriteLocationToMarkerMap.insert(favoriteLocation, marker);
     }
 }

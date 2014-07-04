@@ -6,6 +6,8 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
 
+#include <SkBitmap.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -25,10 +27,15 @@ namespace OsmAnd
         PrivateImplementation<FavoriteLocationsPresenter_P> _p;
     protected:
     public:
-        FavoriteLocationsPresenter(const std::shared_ptr<const IFavoriteLocationsCollection>& collection);
+        FavoriteLocationsPresenter(
+            const std::shared_ptr<const IFavoriteLocationsCollection>& collection,
+            const std::shared_ptr<const SkBitmap>& favoriteLocationPinIconBitmap = nullptr);
         virtual ~FavoriteLocationsPresenter();
 
         const std::shared_ptr<const IFavoriteLocationsCollection> collection;
+        const std::shared_ptr<const SkBitmap> favoriteLocationPinIconBitmap;
+
+        static std::shared_ptr<const SkBitmap> getDefaultFavoriteLocationPinIconBitmap();
 
         bool isGroupVisible(const QString& group) const;
         void setIsGroupVisible(const QString& group, const bool isVisible);

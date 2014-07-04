@@ -48,6 +48,7 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_unc_shield6.png:map/shields/unc_shield6.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_unc_shield7.png:map/shields/unc_shield7.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_unc_shield8.png:map/shields/unc_shield8.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_white_shield.png:map/shields/white_shield.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_amenity_grave_yard.png:map/shaders/amenity_grave_yard.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_arrow.png:map/shaders/arrow.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_beach.png:map/shaders/beach.png
@@ -164,6 +165,18 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_kissing_gate.png:map/map_icons/barrier_kissing_gate.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_lift_gate.png:map/map_icons/barrier_lift_gate.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_sally_port.png:map/map_icons/barrier_sally_port.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_black_1.png:map/map_icons/barrier_small_black_1.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_black_2.png:map/map_icons/barrier_small_black_2.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_black_3.png:map/map_icons/barrier_small_black_3.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_black_4.png:map/map_icons/barrier_small_black_4.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_red_1.png:map/map_icons/barrier_small_red_1.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_red_2.png:map/map_icons/barrier_small_red_2.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_red_3.png:map/map_icons/barrier_small_red_3.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_red_4.png:map/map_icons/barrier_small_red_4.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_white_1.png:map/map_icons/barrier_small_white_1.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_white_2.png:map/map_icons/barrier_small_white_2.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_white_3.png:map/map_icons/barrier_small_white_3.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_small_white_4.png:map/map_icons/barrier_small_white_4.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_barrier_toll_booth.png:map/map_icons/barrier_toll_booth.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_bitcoin_yes.png:map/map_icons/bitcoin_yes.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_building_entrance.png:map/map_icons/building_entrance.png
@@ -257,6 +270,7 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_railway_station_small.png:map/map_icons/railway_station_small.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_railway_subway.png:map/map_icons/railway_subway.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_railway_subway_entrance.png:map/map_icons/railway_subway_entrance.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_railway_subway_entrance_2.png:map/map_icons/railway_subway_entrance_2.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_railway_tram_stop.png:map/map_icons/railway_tram_stop.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_religion_christian.png:map/map_icons/religion_christian.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_religion_jewish.png:map/map_icons/religion_jewish.png
@@ -386,5 +400,6 @@
 /resources/rendering_styles/fonts/NotoSansTelugu-Regular.ttf:map/fonts/NotoSansTelugu-Regular.ttf
 /resources/rendering_styles/fonts/NotoSansThai-Bold.ttf:map/fonts/NotoSansThai-Bold.ttf
 /resources/rendering_styles/fonts/NotoSansThai-Regular.ttf:map/fonts/NotoSansThai-Regular.ttf
+/resources/rendering_styles/stubs/favorite_location_pin_icon.png:map/stubs/favorite_location_pin_icon.png
 /resources/rendering_styles/stubs/processing_tile.png:map/stubs/processing_tile.png
 /resources/rendering_styles/stubs/unavailable_tile.png:map/stubs/unavailable_tile.png
