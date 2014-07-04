@@ -121,7 +121,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
@@ -143,6 +143,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     glEnable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
 #endif
+
+    // Turn off blending
+    glDisable(GL_BLEND);
+    GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
 
