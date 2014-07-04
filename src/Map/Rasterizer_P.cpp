@@ -5,7 +5,7 @@
 #include <cassert>
 #include <set>
 
-#include <QMutableVectorIterator>
+#include "QtCommon.h"
 #include <QReadWriteLock>
 
 #include "Common.h"
@@ -685,7 +685,7 @@ void OsmAnd::Rasterizer_P::filterOutHighwaysByDensity(
     const auto dZ = context._zoom + context._roadDensityZoomTile;
     QHash< uint64_t, std::pair<uint32_t, double> > densityMap;
     
-    QMutableVectorIterator< std::shared_ptr<const Primitive> > itLine(context._polylines);
+    auto itLine = mutableIteratorOf(context._polylines);
     itLine.toBack();
     while(itLine.hasPrevious())
     {
@@ -2091,7 +2091,7 @@ void OsmAnd::Rasterizer_P::convertCoastlinePolylinesToPolygons(
     QList< QVector< PointI > > validPolylines;
 
     // Check if polylines has been cut by rasterization viewport
-    QMutableListIterator< QVector< PointI > > itPolyline(coastlinePolylines);
+    auto itPolyline = mutableIteratorOf(coastlinePolylines);
     while(itPolyline.hasNext())
     {
         const auto& polyline = itPolyline.next();

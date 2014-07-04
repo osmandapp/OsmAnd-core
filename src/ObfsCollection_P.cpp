@@ -6,6 +6,8 @@
 #   include <chrono>
 #endif
 
+#include "QtCommon.h"
+
 #include "OsmAndCore_private.h"
 #include "ObfReader.h"
 #include "ObfDataInterface.h"
@@ -58,7 +60,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
 #endif
 
     // Check all previously collected sources
-    QMutableHashIterator< ObfsCollection::SourceOriginId, QHash<QString, std::shared_ptr<ObfFile> > > itCollectedSourcesEntry(_collectedSources);
+    auto itCollectedSourcesEntry = mutableIteratorOf(_collectedSources);
     while(itCollectedSourcesEntry.hasNext())
     {
         const auto& collectedSourcesEntry = itCollectedSourcesEntry.next();
@@ -86,7 +88,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
         }
 
         // Check for missing files
-        QMutableHashIterator< QString, std::shared_ptr<ObfFile> > itObfFileEntry(collectedSources);
+        auto itObfFileEntry = mutableIteratorOf(collectedSources);
         while(itObfFileEntry.hasNext())
         {
             const auto& sourceFilename = itObfFileEntry.next().key();

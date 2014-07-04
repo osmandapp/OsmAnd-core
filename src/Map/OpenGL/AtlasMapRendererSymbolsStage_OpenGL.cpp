@@ -1376,7 +1376,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::determineRenderableOnPathSymbo
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::adjustPlacementOfGlyphsOnPath(QList< std::shared_ptr<RenderableOnPathSymbol> >& entries, const glm::vec4& viewport)
 {
     //TODO: improve significantly to place as much SOPs as possible by moving them around. Currently it just centers SOP on path
-    QMutableListIterator< std::shared_ptr<RenderableOnPathSymbol> > itRenderableSOP(entries);
+    auto itRenderableSOP = mutableIteratorOf(entries);
     while (itRenderableSOP.hasNext())
     {
         const auto& renderable = itRenderableSOP.next();

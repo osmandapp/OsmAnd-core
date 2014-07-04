@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include "QtCommon.h"
+
 #include "MapRenderer.h"
 #include "IMapDataProvider.h"
 #include "IMapKeyedDataProvider.h"
@@ -205,7 +207,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
 
         // Clean-up and unbind gone providers and their resources
-        QMutableHashIterator< std::shared_ptr<IMapDataProvider>, std::shared_ptr<MapRendererBaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
+        auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
         while(itBindedProvider.hasNext())
         {
             itBindedProvider.next();
@@ -251,7 +253,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
 
         // Clean-up and unbind gone providers and their resources
-        QMutableHashIterator< std::shared_ptr<IMapDataProvider>, std::shared_ptr<MapRendererBaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
+        auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
         while(itBindedProvider.hasNext())
         {
             itBindedProvider.next();
@@ -313,7 +315,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::Symbols)];
 
         // Clean-up and unbind gone providers and their resources
-        QMutableHashIterator< std::shared_ptr<IMapDataProvider>, std::shared_ptr<MapRendererBaseResourcesCollection> > itBindedProvider(bindings.providersToCollections);
+        auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
         while(itBindedProvider.hasNext())
         {
             itBindedProvider.next();
@@ -944,7 +946,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
     bool needsResourcesUploadOrUnload = false;
 
     // Release some resources from "pending-removal" collections
-    QMutableListIterator< std::shared_ptr<MapRendererBaseResourcesCollection> > itPendingRemovalCollection(_pendingRemovalResourcesCollections);
+    auto itPendingRemovalCollection = mutableIteratorOf(_pendingRemovalResourcesCollections);
     while (itPendingRemovalCollection.hasNext())
     {
         const auto& pendingRemovalCollection = itPendingRemovalCollection.next();

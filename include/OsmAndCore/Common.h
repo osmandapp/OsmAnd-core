@@ -48,7 +48,7 @@ namespace OsmAnd
     }
 
     template<typename T>
-    const T& assignAndReturn(T& var, const T& value)
+    Q_DECL_CONSTEXPR const T& assignAndReturn(T& var, const T& value)
     {
         var = value;
         return value;

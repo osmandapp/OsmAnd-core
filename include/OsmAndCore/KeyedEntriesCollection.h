@@ -7,6 +7,7 @@
 #include <type_traits>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/QtCommon.h>
 #include <QHash>
 #include <QReadWriteLock>
 #include <QAtomicInt>
@@ -156,7 +157,7 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
-            QMutableHashIterator< KEY, std::shared_ptr<ENTRY> > itEntryPair(_collection);
+            auto itEntryPair = mutableIteratorOf(_collection);
             while (itEntryPair.hasNext())
             {
                 const auto& value = itEntryPair.next().value();

@@ -170,7 +170,7 @@ namespace OsmAnd
             bool doCancel = false;
             for(auto& zoomLevel : _zoomLevels)
             {
-                QMutableHashIterator< TileId, std::shared_ptr<ENTRY> > itEntryPair(zoomLevel);
+                auto itEntryPair = mutableIteratorOf(zoomLevel);
                 while(itEntryPair.hasNext())
                 {
                     const auto& value = itEntryPair.next().value();

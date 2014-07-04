@@ -5,11 +5,15 @@
 
 #include "QtExtensions.h"
 #include <QList>
+#include <QSet>
+#include <QHash>
+#include <QReadWriteLock>
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "IMapKeyedSymbolsProvider.h"
+#include "MapMarkersCollection.h"
 
 namespace OsmAnd
 {
@@ -25,8 +29,18 @@ namespace OsmAnd
     protected:
         FavoriteLocationsPresenter_P(FavoriteLocationsPresenter* const owner);
 
+        mutable QReadWriteLock _visibilitySettingsLock;
+        QSet<QString> _hiddenGroups;
+        QSet< std::shared_ptr<const IFavoriteLocation> > _hiddenFavoriteLocations;
+
+        const std::shared_ptr<MapMarkersCollection> _markersCollection;
+
+        mutable QReadWriteLock _favoriteLocationToMarkerMapLock;
+        QHash< std::shared_ptr<const IFavoriteLocation>, std::shared_ptr<MapMarker> > _favoriteLocationToMarkerMap;
+
         void subscribeToChanges();
         void unsubscribeToChanges();
+        void syncFavoriteLocationMarkers();
     public:
         ~FavoriteLocationsPresenter_P();
 

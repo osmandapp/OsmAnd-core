@@ -6,6 +6,7 @@ OsmAnd::FavoriteLocationsPresenter::FavoriteLocationsPresenter(const std::shared
     , collection(collection_)
 {
     _p->subscribeToChanges();
+    _p->syncFavoriteLocationMarkers();
 }
 
 OsmAnd::FavoriteLocationsPresenter::~FavoriteLocationsPresenter()

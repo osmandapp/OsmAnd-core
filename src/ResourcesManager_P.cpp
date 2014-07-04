@@ -1,6 +1,7 @@
 #include "ResourcesManager_P.h"
 #include "ResourcesManager.h"
 
+#include "QtCommon.h"
 #include <QXmlStreamReader>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -198,7 +199,7 @@ bool OsmAnd::ResourcesManager_P::rescanUnmanagedStoragePaths() const
     QList< QString > addedResources;
     QList< QString > removedResources;
     QList< QString > updatedResources;
-    QMutableHashIterator< QString, std::shared_ptr<const LocalResource> > itLocalResourceEntry(_localResources);
+    auto itLocalResourceEntry = mutableIteratorOf(_localResources);
     while(itLocalResourceEntry.hasNext())
     {
         const auto& localResourceEntry = itLocalResourceEntry.next();

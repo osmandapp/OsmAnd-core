@@ -1,6 +1,8 @@
 #include "MapAnimator_P.h"
 #include "MapAnimator.h"
 
+#include "QtCommon.h"
+
 #include "IMapRenderer.h"
 #include "Utilities.h"
 
@@ -94,7 +96,7 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
 
     // Apply all animations
     QMutexLocker scopedLocker(&_animationsMutex);
-    QMutableListIterator< std::shared_ptr<GenericAnimation> > itAnimation(_animations);
+    auto itAnimation = mutableIteratorOf(_animations);
     while(itAnimation.hasNext())
     {
         const auto& animation = itAnimation.next();
