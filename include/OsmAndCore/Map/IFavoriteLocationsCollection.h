@@ -5,6 +5,8 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
+#include <QString>
+#include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Callable.h>
@@ -35,6 +37,8 @@ namespace OsmAnd
 
         virtual unsigned int getFavoriteLocationsCount() const = 0;
         virtual QList< std::shared_ptr<IFavoriteLocation> > getFavoriteLocations() const = 0;
+
+        virtual QSet<QString> getGroups() const = 0;
 
         OSMAND_CALLABLE(CollectionChanged, void, const IFavoriteLocationsCollection* const collection);
         const ObservableAs<CollectionChanged> collectionChangeObservable;

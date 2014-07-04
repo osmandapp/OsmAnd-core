@@ -44,3 +44,8 @@ QList< std::shared_ptr<OsmAnd::IFavoriteLocation> > OsmAnd::FavoriteLocationsCol
 {
     return _p->getFavoriteLocations();
 }
+
+QSet<QString> OsmAnd::FavoriteLocationsCollection::getGroups() const
+{
+    return _p->getGroups();
+}

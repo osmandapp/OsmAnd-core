@@ -75,6 +75,17 @@ QList< std::shared_ptr<OsmAnd::IFavoriteLocation> > OsmAnd::FavoriteLocationsCol
 	return copyAs< QList< std::shared_ptr<IFavoriteLocation> > >(_collection.values());
 }
 
+QSet<QString> OsmAnd::FavoriteLocationsCollection_P::getGroups() const
+{
+    QReadLocker scopedLocker(&_collectionLock);
+
+    QSet<QString> result;
+    for (const auto& item : constOf(_collection))
+        result.insert(item->getGroup());
+
+    return result;
+}
+
 void OsmAnd::FavoriteLocationsCollection_P::doClearFavoriteLocations()
 {
 	// Detach all items from this collection to avoid invalid notifications

@@ -55,6 +55,8 @@ namespace OsmAnd
         unsigned int getFavoriteLocationsCount() const;
         QList< std::shared_ptr<IFavoriteLocation> > getFavoriteLocations() const;
 
+        QSet<QString> getGroups() const;
+
     friend class OsmAnd::FavoriteLocationsCollection;
     friend class OsmAnd::FavoriteLocation;
     friend class OsmAnd::FavoriteLocation_P;
