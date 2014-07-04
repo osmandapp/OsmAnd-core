@@ -9,7 +9,7 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #if !defined(qPrintableRef)
-#  define qPrintableRef(stringRef) stringRef.toLocal8Bit().constData()
+#  define qPrintableRef(stringRef) (stringRef).toLocal8Bit().constData()
 #endif // !defined(qPrintableRef)
 
 #if defined(TEXT) && defined(_T)
