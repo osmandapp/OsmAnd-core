@@ -92,6 +92,21 @@ void OsmAnd::MapMarker_P::setOnMapSurfaceIconDirection(const MapMarker::OnSurfac
     _hasUnappliedChanges = true;
 }
 
+OsmAnd::ColorARGB OsmAnd::MapMarker_P::getPinIconModulationColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pinIconModulationColor;
+}
+
+void OsmAnd::MapMarker_P::setPinIconModulationColor(const ColorARGB colorValue)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _pinIconModulationColor = colorValue;
+    _hasUnappliedChanges = true;
+}
+
 bool OsmAnd::MapMarker_P::hasUnappliedChanges() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -229,6 +244,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             _position,
             PointI(0, -pinIcon->height() / 2)));
         pinIconSymbol->isHidden = _isHidden;
+        pinIconSymbol->modulationColor = _pinIconModulationColor;
         symbolsGroup->symbols.push_back(pinIconSymbol);
     }
 

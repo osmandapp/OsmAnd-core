@@ -51,6 +51,7 @@ namespace OsmAnd
         const IntersectionModeFlags intersectionModeFlags;
 
         bool isHidden;
+        FColorARGB modulationColor;
     };
 }
 

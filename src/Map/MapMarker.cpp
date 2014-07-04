@@ -68,6 +68,16 @@ void OsmAnd::MapMarker::setOnMapSurfaceIconDirection(const OnSurfaceIconKey key,
     _p->setOnMapSurfaceIconDirection(key, direction);
 }
 
+OsmAnd::ColorARGB OsmAnd::MapMarker::getPinIconModulationColor() const
+{
+    return _p->getPinIconModulationColor();
+}
+
+void OsmAnd::MapMarker::setPinIconModulationColor(const ColorARGB colorValue)
+{
+    _p->setPinIconModulationColor(colorValue);
+}
+
 bool OsmAnd::MapMarker::hasUnappliedChanges() const
 {
     return _p->hasUnappliedChanges();

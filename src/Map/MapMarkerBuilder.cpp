@@ -80,6 +80,16 @@ void OsmAnd::MapMarkerBuilder::setPinIcon(const std::shared_ptr<const SkBitmap>&
     _p->setPinIcon(bitmap);
 }
 
+OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder::getPinIconModulationColor() const
+{
+    return _p->getPinIconModulationColor();
+}
+
+void OsmAnd::MapMarkerBuilder::setPinIconModulationColor(const ColorARGB colorValue)
+{
+    _p->setPinIconModulationColor(colorValue);
+}
+
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder::buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);

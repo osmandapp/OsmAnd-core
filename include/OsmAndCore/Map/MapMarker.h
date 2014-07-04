@@ -62,6 +62,9 @@ namespace OsmAnd
         float getOnMapSurfaceIconDirection(const OnSurfaceIconKey key) const;
         void setOnMapSurfaceIconDirection(const OnSurfaceIconKey key, const float direction);
 
+        ColorARGB getPinIconModulationColor() const;
+        void setPinIconModulationColor(const ColorARGB colorValue);
+
         bool hasUnappliedChanges() const;
 
         std::shared_ptr<MapSymbolsGroup> createSymbolsGroup() const;

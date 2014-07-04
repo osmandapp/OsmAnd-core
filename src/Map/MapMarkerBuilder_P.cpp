@@ -119,6 +119,20 @@ void OsmAnd::MapMarkerBuilder_P::setPinIcon(const std::shared_ptr<const SkBitmap
     _pinIcon = bitmap;
 }
 
+OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder_P::getPinIconModulationColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pinIconModulationColor;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setPinIconModulationColor(const ColorARGB colorValue)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _pinIconModulationColor = colorValue;
+}
+
 QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > OsmAnd::MapMarkerBuilder_P::getOnMapSurfaceIcons() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -157,6 +171,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     marker->setIsPrecisionCircleEnabled(_isPrecisionCircleEnabled);
     marker->setPrecisionCircleRadius(_precisionCircleRadius);
     marker->setPosition(_position);
+    marker->setPinIconModulationColor(_pinIconModulationColor);
     marker->applyChanges();
 
     // Add marker to collection and return it if adding was successful

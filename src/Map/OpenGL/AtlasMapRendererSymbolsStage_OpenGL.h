@@ -54,6 +54,7 @@ namespace OsmAnd
 
                     // Per-symbol data
                     GLlocation sampler;
+                    GLlocation modulationColor;
                 } param;
             } fs;
         } _billboardRasterProgram;
@@ -103,6 +104,7 @@ namespace OsmAnd
 
                     // Per-symbol data
                     GLlocation sampler;
+                    GLlocation modulationColor;
                 } param;
             } fs;
         } _onPath2dProgram;
@@ -145,6 +147,7 @@ namespace OsmAnd
 
                     // Per-symbol data
                     GLlocation sampler;
+                    GLlocation modulationColor;
                 } param;
             } fs;
         } _onPath3dProgram;
@@ -188,6 +191,7 @@ namespace OsmAnd
 
                     // Per-symbol data
                     GLlocation sampler;
+                    GLlocation modulationColor;
                 } param;
             } fs;
         } _onSurfaceRasterProgram;
@@ -211,6 +215,7 @@ namespace OsmAnd
                     // Per-symbol data
                     GLlocation mModelViewProjection;
                     GLlocation zDistanceFromCamera;
+                    GLlocation modulationColor;
                 } param;
             } vs;
 

@@ -260,12 +260,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         // Parameters: common data
         // Parameters: per-symbol data
         "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
         "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords);                                                                                            ""\n"
+        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -290,6 +291,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     lookup->lookupLocation(_billboardRasterProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_billboardRasterProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -472,12 +474,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         // Parameters: common data
         // Parameters: per-symbol data
         "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
         "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords);                                                                                            ""\n"
+        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -513,6 +516,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
     }
     lookup->lookupLocation(_onPath2dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.fs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -690,12 +694,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         // Parameters: common data
         // Parameters: per-symbol data
         "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
         "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords);                                                                                            ""\n"
+        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -731,6 +736,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
     }
     lookup->lookupLocation(_onPath3dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.fs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -967,12 +973,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         // Parameters: common data
         // Parameters: per-symbol data
         "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
         "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords);                                                                                            ""\n"
+        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedFragmentShader = fragmentShader;
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
@@ -995,6 +1002,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1113,6 +1121,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         // Parameters: per-symbol data
         "uniform mat4 param_vs_mModelViewProjection;                                                                        ""\n"
         "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
+        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -1126,7 +1135,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Prepare color
-        "    v2f_color.argb = in_vs_vertexColor.xyzw;                                                                       ""\n"
+        "    v2f_color.argb = in_vs_vertexColor.xyzw * param_fs_modulationColor.argb;                                       ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
@@ -1164,6 +1173,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GLShaderVariableType::In);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
@@ -1827,6 +1837,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
     GL_CHECK_RESULT;
 
+    // Set modulation color
+    glUniform4f(_billboardRasterProgram.fs.param.modulationColor,
+        symbol->modulationColor.r,
+        symbol->modulationColor.g,
+        symbol->modulationColor.b,
+        symbol->modulationColor.a);
+    GL_CHECK_RESULT;
+
     // Apply settings from texture block to texture
     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
@@ -2137,6 +2155,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
 
         // Apply settings from texture block to texture
         gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
+
+        // Set modulation color
+        glUniform4f(_onPath2dProgram.fs.param.modulationColor,
+            symbol->modulationColor.r,
+            symbol->modulationColor.g,
+            symbol->modulationColor.b,
+            symbol->modulationColor.a);
+        GL_CHECK_RESULT;
 
         // Draw chains of glyphs
         int glyphsDrawn = 0;
@@ -2527,6 +2553,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
         GL_CHECK_RESULT;
 
+        // Set modulation color
+        glUniform4f(_onPath3dProgram.fs.param.modulationColor,
+            symbol->modulationColor.r,
+            symbol->modulationColor.g,
+            symbol->modulationColor.b,
+            symbol->modulationColor.a);
+        GL_CHECK_RESULT;
+
         // Apply settings from texture block to texture
         gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
@@ -2817,6 +2851,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
     GL_CHECK_RESULT;
 
+    // Set modulation color
+    glUniform4f(_onSurfaceRasterProgram.fs.param.modulationColor,
+        symbol->modulationColor.r,
+        symbol->modulationColor.g,
+        symbol->modulationColor.b,
+        symbol->modulationColor.a);
+    GL_CHECK_RESULT;
+
     // Apply settings from texture block to texture
     gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + 0);
 
@@ -2929,6 +2971,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     // Set distance from camera
     const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -distanceFromCamera, 1.0f)).z;
     glUniform1f(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
+    GL_CHECK_RESULT;
+
+    // Set modulation color
+    glUniform4f(_onSurfaceVectorProgram.vs.param.modulationColor,
+        symbol->modulationColor.r,
+        symbol->modulationColor.g,
+        symbol->modulationColor.b,
+        symbol->modulationColor.a);
     GL_CHECK_RESULT;
 
     // Deactivate symbol texture

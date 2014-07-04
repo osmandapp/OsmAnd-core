@@ -49,6 +49,8 @@ namespace OsmAnd
 
         std::shared_ptr<const SkBitmap> getPinIcon() const;
         void setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        ColorARGB getPinIconModulationColor() const;
+        void setPinIconModulationColor(const ColorARGB colorValue);
 
         QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > getOnMapSurfaceIcons() const;
         void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap);

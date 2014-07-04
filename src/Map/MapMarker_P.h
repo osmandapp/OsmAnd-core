@@ -44,6 +44,8 @@ namespace OsmAnd
 
         QHash< MapMarker::OnSurfaceIconKey, float > _directions;
 
+        ColorARGB _pinIconModulationColor;
+
         class LinkedMapSymbolsGroup
             : public MapSymbolsGroup
             , public IUpdatableMapSymbolsGroup
@@ -125,6 +127,9 @@ namespace OsmAnd
 
         float getOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key) const;
         void setOnMapSurfaceIconDirection(const MapMarker::OnSurfaceIconKey key, const float direction);
+
+        ColorARGB getPinIconModulationColor() const;
+        void setPinIconModulationColor(const ColorARGB colorValue);
 
         bool hasUnappliedChanges() const;
         

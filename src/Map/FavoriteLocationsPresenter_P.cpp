@@ -138,7 +138,7 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
             continue;
 
         markerBuilder.setPosition(favoriteLocation->getPosition());
-        //TODO: set color
+        markerBuilder.setPinIconModulationColor(favoriteLocation->getColor());
 
         const auto marker = markerBuilder.buildAndAddToCollection(_markersCollection);
         _favoriteLocationToMarkerMap.insert(favoriteLocation, marker);
@@ -154,5 +154,5 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarker(const std:
         return;
 
     const auto& marker = *citMarker;
-    //TODO: set color
+    marker->setPinIconModulationColor(favoriteLocation->getColor());
 }
