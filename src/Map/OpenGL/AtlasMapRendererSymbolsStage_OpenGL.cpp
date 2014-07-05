@@ -2183,11 +2183,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         // Draw chains of glyphs
         int glyphsDrawn = 0;
         auto pGlyph = glyphs.constData();
-        auto pGlyphVS = _onPath2dProgram.vs.param.glyphs.constData();
+        const auto pFirstGlyphVS = _onPath2dProgram.vs.param.glyphs.constData();
         float widthOfPreviousN = 0.0f;
         while (glyphsDrawn < glyphsCount)
         {
             const auto glyphsToDraw = qMin(glyphsCount - glyphsDrawn, _onPathSymbol2dMaxGlyphsPerDrawCall);
+            auto pGlyphVS = pFirstGlyphVS;
 
             for (auto glyphIdx = 0; glyphIdx < glyphsToDraw; glyphIdx++)
             {
