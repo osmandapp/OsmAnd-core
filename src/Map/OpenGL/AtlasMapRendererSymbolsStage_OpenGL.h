@@ -198,6 +198,7 @@ namespace OsmAnd
         void initializeOnSurfaceRaster();
         void releaseOnSurfaceRaster();
 
+        GLname _onSurfaceVectorSymbolVAO;
         struct OnSurfaceVectorProgram {
             GLname id;
 

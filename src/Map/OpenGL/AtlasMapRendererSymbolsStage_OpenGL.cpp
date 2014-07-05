@@ -1121,7 +1121,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         // Parameters: per-symbol data
         "uniform mat4 param_vs_mModelViewProjection;                                                                        ""\n"
         "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
-        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
+        "uniform lowp vec4 param_vs_modulationColor;                                                                        ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -1135,7 +1135,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
         "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Prepare color
-        "    v2f_color.argb = in_vs_vertexColor.xyzw * param_fs_modulationColor.argb;                                       ""\n"
+        "    v2f_color.argb = in_vs_vertexColor.xyzw * param_vs_modulationColor.argb;                                       ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
     preprocessedVertexShader.replace("%TileSize3D%", QString::number(AtlasMapRenderer::TileSize3D));
@@ -1173,7 +1173,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GLShaderVariableType::In);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GLShaderVariableType::Uniform);
+
+    // Create Vertex Array Object
+    gpuAPI->glGenVertexArrays_wrapper(1, &_onSurfaceVectorSymbolVAO);
+    GL_CHECK_RESULT;
+    gpuAPI->glBindVertexArray_wrapper(_onSurfaceVectorSymbolVAO);
+    GL_CHECK_RESULT;
+
+    gpuAPI->glBindVertexArray_wrapper(0);
+    GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
@@ -1181,6 +1190,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteProgram);
+
+    if (_onSurfaceVectorSymbolVAO)
+    {
+        gpuAPI->glDeleteVertexArrays_wrapper(1, &_onSurfaceVectorSymbolVAO);
+        GL_CHECK_RESULT;
+        _onSurfaceVectorSymbolVAO.reset();
+    }
 
     if (_onSurfaceVectorProgram.id)
     {
@@ -2891,16 +2907,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-vector' program");
 
-        // Deselect any active VAO
-        gpuAPI->glBindVertexArray_wrapper(0);
-        GL_CHECK_RESULT;
-
         // Activate program
         glUseProgram(_onSurfaceVectorProgram.id);
-        GL_CHECK_RESULT;
-        glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
-        GL_CHECK_RESULT;
-        glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
         GL_CHECK_RESULT;
 
         lastUsedProgram = _onSurfaceVectorProgram.id;
@@ -2912,13 +2920,23 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         .arg(QString().sprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->getDebugTitle()));
 
+    // Activate proper VAO
+    gpuAPI->glBindVertexArray_wrapper(_onSurfaceVectorSymbolVAO);
+    GL_CHECK_RESULT;
+
     // Activate vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->vertexBuffer->refInGPU)));
+    GL_CHECK_RESULT;
+
+    glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexPosition);
     GL_CHECK_RESULT;
     glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexPosition,
         2, GL_FLOAT, GL_FALSE,
         sizeof(VectorMapSymbol::Vertex),
         reinterpret_cast<GLvoid*>(offsetof(VectorMapSymbol::Vertex, positionXY)));
+    GL_CHECK_RESULT;
+
+    glEnableVertexAttribArray(*_onSurfaceVectorProgram.vs.in.vertexColor);
     GL_CHECK_RESULT;
     glVertexAttribPointer(*_onSurfaceVectorProgram.vs.in.vertexColor,
         4, GL_FLOAT, GL_FALSE,
@@ -2992,11 +3010,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     {
     case VectorMapSymbol::PrimitiveType::TriangleFan:
         primitivesType = GL_TRIANGLE_FAN;
-        count = symbol->verticesCount;
+        count = gpuResource->vertexBuffer->itemsCount;
         break;
     case VectorMapSymbol::PrimitiveType::LineLoop:
         primitivesType = GL_LINE_LOOP;
-        count = symbol->verticesCount;
+        count = gpuResource->vertexBuffer->itemsCount;
         break;
     }
     if (gpuResource->indexBuffer)
@@ -3015,6 +3033,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    gpuAPI->glBindVertexArray_wrapper(0);
     GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
