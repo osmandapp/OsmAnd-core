@@ -10,8 +10,9 @@
 OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     : _isHidden(false)
     , _baseOrder(std::numeric_limits<int>::min()) //NOTE: See Rasterizer_P.cpp:1115 - this is needed to keep markers as the most important symbols
-    , _isPrecisionCircleEnabled(false)
-    , _precisionCircleRadius(0.0)
+    , _isAccuracyCircleSupported(false)
+    , _isAccuracyCircleVisible(false)
+    , _accuracyCircleRadius(0.0)
     , _direction(0.0f)
     , owner(owner_)
 {
@@ -49,46 +50,60 @@ void OsmAnd::MapMarkerBuilder_P::setBaseOrder(const int baseOrder)
     _baseOrder = baseOrder;
 }
 
-bool OsmAnd::MapMarkerBuilder_P::isPrecisionCircleEnabled() const
+bool OsmAnd::MapMarkerBuilder_P::isAccuracyCircleSupported() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _isPrecisionCircleEnabled;
+    return _isAccuracyCircleSupported;
 }
 
-void OsmAnd::MapMarkerBuilder_P::setIsPrecisionCircleEnabled(const bool enabled)
+void OsmAnd::MapMarkerBuilder_P::setIsAccuracyCircleSupported(const bool supported)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _isPrecisionCircleEnabled = enabled;
+    _isAccuracyCircleSupported = supported;
 }
 
-double OsmAnd::MapMarkerBuilder_P::getPrecisionCircleRadius() const
+bool OsmAnd::MapMarkerBuilder_P::isAccuracyCircleVisible() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _precisionCircleRadius;
+    return _isAccuracyCircleVisible;
 }
 
-void OsmAnd::MapMarkerBuilder_P::setPrecisionCircleRadius(const double radius)
+void OsmAnd::MapMarkerBuilder_P::setIsAccuracyCircleVisible(const bool visible)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _precisionCircleRadius = radius;
+    _isAccuracyCircleVisible = visible;
 }
 
-OsmAnd::FColorRGB OsmAnd::MapMarkerBuilder_P::getPrecisionCircleBaseColor() const
+double OsmAnd::MapMarkerBuilder_P::getAccuracyCircleRadius() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _precisionCircleBaseColor;
+    return _accuracyCircleRadius;
 }
 
-void OsmAnd::MapMarkerBuilder_P::setPrecisionCircleBaseColor(const FColorRGB baseColor)
+void OsmAnd::MapMarkerBuilder_P::setAccuracyCircleRadius(const double radius)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _precisionCircleBaseColor = baseColor;
+    _accuracyCircleRadius = radius;
+}
+
+OsmAnd::FColorRGB OsmAnd::MapMarkerBuilder_P::getAccuracyCircleBaseColor() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _accuracyCircleBaseColor;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setAccuracyCircleBaseColor(const FColorRGB baseColor)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _accuracyCircleBaseColor = baseColor;
 }
 
 OsmAnd::PointI OsmAnd::MapMarkerBuilder_P::getPosition() const
@@ -166,10 +181,13 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     QReadLocker scopedLocker(&_lock);
 
     // Construct map symbols group for this marker
-    const std::shared_ptr<MapMarker> marker(new MapMarker(_baseOrder, _pinIcon, detachedOf(_onMapSurfaceIcons), _precisionCircleBaseColor));
+    const std::shared_ptr<MapMarker> marker(new MapMarker(_baseOrder, _pinIcon, detachedOf(_onMapSurfaceIcons), _isAccuracyCircleSupported, _accuracyCircleBaseColor));
     marker->setIsHidden(_isHidden);
-    marker->setIsPrecisionCircleEnabled(_isPrecisionCircleEnabled);
-    marker->setPrecisionCircleRadius(_precisionCircleRadius);
+    if (_isAccuracyCircleSupported)
+    {
+        marker->setIsAccuracyCircleVisible(_isAccuracyCircleVisible);
+        marker->setAccuracyCircleRadius(_accuracyCircleRadius);
+    }
     marker->setPosition(_position);
     marker->setPinIconModulationColor(_pinIconModulationColor);
     marker->applyChanges();

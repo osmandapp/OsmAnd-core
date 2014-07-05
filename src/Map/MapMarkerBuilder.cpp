@@ -30,34 +30,44 @@ void OsmAnd::MapMarkerBuilder::setBaseOrder(const int baseOrder)
     _p->setBaseOrder(baseOrder);
 }
 
-bool OsmAnd::MapMarkerBuilder::isPrecisionCircleEnabled() const
+bool OsmAnd::MapMarkerBuilder::isAccuracyCircleSupported() const
 {
-    return _p->isPrecisionCircleEnabled();
+    return _p->isAccuracyCircleSupported();
 }
 
-void OsmAnd::MapMarkerBuilder::setIsPrecisionCircleEnabled(const bool enabled)
+void OsmAnd::MapMarkerBuilder::setIsAccuracyCircleSupported(const bool supported)
 {
-    _p->setIsPrecisionCircleEnabled(enabled);
+    _p->setIsAccuracyCircleSupported(supported);
 }
 
-double OsmAnd::MapMarkerBuilder::getPrecisionCircleRadius() const
+bool OsmAnd::MapMarkerBuilder::isAccuracyCircleVisible() const
 {
-    return _p->getPrecisionCircleRadius();
+    return _p->isAccuracyCircleVisible();
 }
 
-void OsmAnd::MapMarkerBuilder::setPrecisionCircleRadius(const double radius)
+void OsmAnd::MapMarkerBuilder::setIsAccuracyCircleVisible(const bool visible)
 {
-    _p->setPrecisionCircleRadius(radius);
+    _p->setIsAccuracyCircleVisible(visible);
 }
 
-OsmAnd::FColorRGB OsmAnd::MapMarkerBuilder::getPrecisionCircleBaseColor() const
+double OsmAnd::MapMarkerBuilder::getAccuracyCircleRadius() const
 {
-    return _p->getPrecisionCircleBaseColor();
+    return _p->getAccuracyCircleRadius();
 }
 
-void OsmAnd::MapMarkerBuilder::setPrecisionCircleBaseColor(const FColorRGB baseColor)
+void OsmAnd::MapMarkerBuilder::setAccuracyCircleRadius(const double radius)
 {
-    _p->setPrecisionCircleBaseColor(baseColor);
+    _p->setAccuracyCircleRadius(radius);
+}
+
+OsmAnd::FColorRGB OsmAnd::MapMarkerBuilder::getAccuracyCircleBaseColor() const
+{
+    return _p->getAccuracyCircleBaseColor();
+}
+
+void OsmAnd::MapMarkerBuilder::setAccuracyCircleBaseColor(const FColorRGB baseColor)
+{
+    _p->setAccuracyCircleBaseColor(baseColor);
 }
 
 OsmAnd::PointI OsmAnd::MapMarkerBuilder::getPosition() const

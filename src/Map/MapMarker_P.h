@@ -37,8 +37,8 @@ namespace OsmAnd
 
         bool _isHidden;
 
-        bool _isPrecisionCircleEnabled;
-        double _precisionCircleRadius;
+        bool _isAccuracyCircleVisible;
+        double _AccuracyCircleRadius;
 
         PointI _position;
 
@@ -86,18 +86,18 @@ namespace OsmAnd
         friend class OsmAnd::MapMarker_P;
         };
 
-        class PrecisionCircleMapSymbol : public OnSurfaceVectorMapSymbol
+        class AccuracyCircleMapSymbol : public OnSurfaceVectorMapSymbol
         {
         private:
         protected:
-            PrecisionCircleMapSymbol(
+            AccuracyCircleMapSymbol(
                 const std::shared_ptr<MapSymbolsGroup>& group,
                 const bool isShareable,
                 const int order,
                 const IntersectionModeFlags intersectionModeFlags,
                 const PointI& position31);
         public:
-            virtual ~PrecisionCircleMapSymbol();
+            virtual ~AccuracyCircleMapSymbol();
 
         friend class OsmAnd::MapMarker_P;
         };
@@ -117,10 +117,10 @@ namespace OsmAnd
         bool isHidden() const;
         void setIsHidden(const bool hidden);
 
-        bool isPrecisionCircleEnabled() const;
-        void setIsPrecisionCircleEnabled(const bool enabled);
-        double getPrecisionCircleRadius() const;
-        void setPrecisionCircleRadius(const double radius);
+        bool isAccuracyCircleVisible() const;
+        void setIsAccuracyCircleVisible(const bool visible);
+        double getAccuracyCircleRadius() const;
+        void setAccuracyCircleRadius(const double radius);
 
         PointI getPosition() const;
         void setPosition(const PointI position);

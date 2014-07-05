@@ -36,9 +36,10 @@ namespace OsmAnd
 
         int _baseOrder;
 
-        bool _isPrecisionCircleEnabled;
-        double _precisionCircleRadius;
-        FColorRGB _precisionCircleBaseColor;
+        bool _isAccuracyCircleSupported;
+        bool _isAccuracyCircleVisible;
+        double _accuracyCircleRadius;
+        FColorRGB _accuracyCircleBaseColor;
 
         PointI _position;
 
@@ -59,12 +60,14 @@ namespace OsmAnd
         int getBaseOrder() const;
         void setBaseOrder(const int baseOrder);
 
-        bool isPrecisionCircleEnabled() const;
-        void setIsPrecisionCircleEnabled(const bool enabled);
-        double getPrecisionCircleRadius() const;
-        void setPrecisionCircleRadius(const double radius);
-        FColorRGB getPrecisionCircleBaseColor() const;
-        void setPrecisionCircleBaseColor(const FColorRGB baseColor);
+        bool isAccuracyCircleSupported() const;
+        void setIsAccuracyCircleSupported(const bool supported);
+        bool isAccuracyCircleVisible() const;
+        void setIsAccuracyCircleVisible(const bool visible);
+        double getAccuracyCircleRadius() const;
+        void setAccuracyCircleRadius(const double radius);
+        FColorRGB getAccuracyCircleBaseColor() const;
+        void setAccuracyCircleBaseColor(const FColorRGB baseColor);
 
         PointI getPosition() const;
         void setPosition(const PointI position);

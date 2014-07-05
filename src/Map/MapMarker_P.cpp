@@ -32,33 +32,33 @@ void OsmAnd::MapMarker_P::setIsHidden(const bool hidden)
     _hasUnappliedChanges = true;
 }
 
-bool OsmAnd::MapMarker_P::isPrecisionCircleEnabled() const
+bool OsmAnd::MapMarker_P::isAccuracyCircleVisible() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _isPrecisionCircleEnabled;
+    return _isAccuracyCircleVisible;
 }
 
-void OsmAnd::MapMarker_P::setIsPrecisionCircleEnabled(const bool enabled)
+void OsmAnd::MapMarker_P::setIsAccuracyCircleVisible(const bool visible)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _isPrecisionCircleEnabled = enabled;
+    _isAccuracyCircleVisible = visible;
     _hasUnappliedChanges = true;
 }
 
-double OsmAnd::MapMarker_P::getPrecisionCircleRadius() const
+double OsmAnd::MapMarker_P::getAccuracyCircleRadius() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _precisionCircleRadius;
+    return _AccuracyCircleRadius;
 }
 
-void OsmAnd::MapMarker_P::setPrecisionCircleRadius(const double radius)
+void OsmAnd::MapMarker_P::setAccuracyCircleRadius(const double radius)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _precisionCircleRadius = radius;
+    _AccuracyCircleRadius = radius;
     _hasUnappliedChanges = true;
 }
 
@@ -132,11 +132,11 @@ bool OsmAnd::MapMarker_P::applyChanges()
         {
             symbol_->isHidden = _isHidden;
 
-            if (const auto symbol = std::dynamic_pointer_cast<PrecisionCircleMapSymbol>(symbol_))
+            if (const auto symbol = std::dynamic_pointer_cast<AccuracyCircleMapSymbol>(symbol_))
             {
                 symbol->setPosition31(_position);
-                symbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
-                symbol->scale = _precisionCircleRadius;
+                symbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
+                symbol->scale = _AccuracyCircleRadius;
             }
 
             if (const auto symbol = std::dynamic_pointer_cast<IBillboardMapSymbol>(symbol_))
@@ -167,33 +167,36 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         std::const_pointer_cast<MapMarker_P>(shared_from_this())));
     int order = owner->baseOrder;
 
-    // Add a circle that represent precision circle
-    const std::shared_ptr<PrecisionCircleMapSymbol> precisionCircleSymbol(new PrecisionCircleMapSymbol(
-        symbolsGroup,
-        false, // This symbol is not shareable
-        order++,
-        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
-        _position));
-    VectorMapSymbol::generateCirclePrimitive(*precisionCircleSymbol, owner->precisionCircleBaseColor.withAlpha(0.25f));
-    precisionCircleSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
-    precisionCircleSymbol->scale = _precisionCircleRadius;
-    precisionCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-    precisionCircleSymbol->direction = Q_SNAN;
-    symbolsGroup->symbols.push_back(precisionCircleSymbol);
+    if (owner->isAccuracyCircleSupported)
+    {
+        // Add a circle that represent precision circle
+        const std::shared_ptr<AccuracyCircleMapSymbol> AccuracyCircleSymbol(new AccuracyCircleMapSymbol(
+            symbolsGroup,
+            false, // This symbol is not shareable
+            order++,
+            static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+            _position));
+        VectorMapSymbol::generateCirclePrimitive(*AccuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
+        AccuracyCircleSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
+        AccuracyCircleSymbol->scale = _AccuracyCircleRadius;
+        AccuracyCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
+        AccuracyCircleSymbol->direction = Q_SNAN;
+        symbolsGroup->symbols.push_back(AccuracyCircleSymbol);
 
-    // Add a ring-line that represent precision circle
-    const std::shared_ptr<PrecisionCircleMapSymbol> precisionRingSymbol(new PrecisionCircleMapSymbol(
-        symbolsGroup,
-        false, // This symbol is not shareable
-        order++,
-        static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
-        _position));
-    VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->precisionCircleBaseColor.withAlpha(0.4f));
-    precisionRingSymbol->isHidden = _isHidden && !_isPrecisionCircleEnabled;
-    precisionRingSymbol->scale = _precisionCircleRadius;
-    precisionRingSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-    precisionRingSymbol->direction = Q_SNAN;
-    symbolsGroup->symbols.push_back(precisionRingSymbol);
+        // Add a ring-line that represent precision circle
+        const std::shared_ptr<AccuracyCircleMapSymbol> precisionRingSymbol(new AccuracyCircleMapSymbol(
+            symbolsGroup,
+            false, // This symbol is not shareable
+            order++,
+            static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
+            _position));
+        VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->accuracyCircleBaseColor.withAlpha(0.4f));
+        precisionRingSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
+        precisionRingSymbol->scale = _AccuracyCircleRadius;
+        precisionRingSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
+        precisionRingSymbol->direction = Q_SNAN;
+        symbolsGroup->symbols.push_back(precisionRingSymbol);
+    }
 
     // Set of OnSurfaceMapSymbol from onMapSurfaceIcons
     for (const auto& itOnMapSurfaceIcon : rangeOf(constOf(owner->onMapSurfaceIcons)))
@@ -309,7 +312,7 @@ OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::~KeyedOnSurfaceRasterMapSymb
 {
 }
 
-OsmAnd::MapMarker_P::PrecisionCircleMapSymbol::PrecisionCircleMapSymbol(
+OsmAnd::MapMarker_P::AccuracyCircleMapSymbol::AccuracyCircleMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_,
     const bool isShareable_,
     const int order_,
@@ -319,6 +322,6 @@ OsmAnd::MapMarker_P::PrecisionCircleMapSymbol::PrecisionCircleMapSymbol(
 {
 }
 
-OsmAnd::MapMarker_P::PrecisionCircleMapSymbol::~PrecisionCircleMapSymbol()
+OsmAnd::MapMarker_P::AccuracyCircleMapSymbol::~AccuracyCircleMapSymbol()
 {
 }

@@ -5,12 +5,14 @@ OsmAnd::MapMarker::MapMarker(
     const int baseOrder_,
     const std::shared_ptr<const SkBitmap>& pinIcon_,
     const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons_,
-    const FColorRGB precisionCircleBaseColor_)
+    const bool isAccuracyCircleSupported_,
+    const FColorRGB accuracyCircleBaseColor_)
     : _p(new MapMarker_P(this))
     , baseOrder(baseOrder_)
     , pinIcon(pinIcon_)
     , onMapSurfaceIcons(onMapSurfaceIcons_)
-    , precisionCircleBaseColor(precisionCircleBaseColor_)
+    , isAccuracyCircleSupported(isAccuracyCircleSupported_)
+    , accuracyCircleBaseColor(accuracyCircleBaseColor_)
 {
 }
 
@@ -28,24 +30,24 @@ void OsmAnd::MapMarker::setIsHidden(const bool hidden)
     _p->setIsHidden(hidden);
 }
 
-bool OsmAnd::MapMarker::isPrecisionCircleEnabled() const
+bool OsmAnd::MapMarker::isAccuracyCircleVisible() const
 {
-    return _p->isPrecisionCircleEnabled();
+    return _p->isAccuracyCircleVisible();
 }
 
-void OsmAnd::MapMarker::setIsPrecisionCircleEnabled(const bool enabled)
+void OsmAnd::MapMarker::setIsAccuracyCircleVisible(const bool visible)
 {
-    _p->setIsPrecisionCircleEnabled(enabled);
+    _p->setIsAccuracyCircleVisible(visible);
 }
 
-double OsmAnd::MapMarker::getPrecisionCircleRadius() const
+double OsmAnd::MapMarker::getAccuracyCircleRadius() const
 {
-    return _p->getPrecisionCircleRadius();
+    return _p->getAccuracyCircleRadius();
 }
 
-void OsmAnd::MapMarker::setPrecisionCircleRadius(const double radius)
+void OsmAnd::MapMarker::setAccuracyCircleRadius(const double radius)
 {
-    _p->setPrecisionCircleRadius(radius);
+    _p->setAccuracyCircleRadius(radius);
 }
 
 OsmAnd::PointI OsmAnd::MapMarker::getPosition() const
