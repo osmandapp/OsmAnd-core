@@ -20,7 +20,7 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P( RasterizerEnvironment* owner_ )
+OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P(RasterizerEnvironment* owner_)
     : owner(owner_)
     , styleBuiltinValueDefs(MapStyle::getBuiltinValueDefinitions())
     , defaultBgColor(_defaultBgColor)
@@ -55,12 +55,12 @@ OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
     {
         QMutexLocker scopedLocker(&_pathEffectsMutex);
 
-        for(auto& pathEffect : _pathEffects)
+        for (auto& pathEffect : _pathEffects)
             pathEffect->unref();
     }
 }
 
-void OsmAnd::RasterizerEnvironment_P::initializeOneWayPaint( SkPaint& paint )
+void OsmAnd::RasterizerEnvironment_P::initializeOneWayPaint(SkPaint& paint)
 {
     paint.setAntiAlias(true);
     paint.setStyle(SkPaint::kStroke_Style);
@@ -170,7 +170,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
             _oneWayPaints.push_back(qMove(paint));
         }
     }
-    
+
     {
         const float intervals_reverse[4][4] =
         {
@@ -280,7 +280,7 @@ void OsmAnd::RasterizerEnvironment_P::configurePaintForText(SkPaint& paint, cons
         if (entry.bold == bold && entry.italic == italic)
             break;
     }
-    
+
     // If there's no best match, fallback to default typeface
     if (bestMatchTypeface == nullptr)
     {
@@ -318,7 +318,7 @@ void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< QString, QString 
     QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > resolvedSettings;
     resolvedSettings.reserve(newSettings.size());
 
-    for(const auto& itSetting : rangeOf(newSettings))
+    for (const auto& itSetting : rangeOf(newSettings))
     {
         const auto& name = itSetting.key();
         const auto& value = itSetting.value();
@@ -338,23 +338,23 @@ void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< QString, QString 
             LogPrintf(LogSeverityLevel::Warning, "Setting of '%s' to '%s' impossible: failed to parse value");
             continue;
         }
-        
+
         resolvedSettings.insert(inputValueDef, parsedValue);
     }
 
     setSettings(resolvedSettings);
 }
 
-void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) const
+void OsmAnd::RasterizerEnvironment_P::applyTo(MapStyleEvaluator& evaluator) const
 {
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 
-    for(const auto& settingEntry : rangeOf(constOf(_settings)))
+    for (const auto& settingEntry : rangeOf(constOf(_settings)))
     {
         const auto& valueDef = settingEntry.key();
         const auto& settingValue = settingEntry.value();
 
-        switch(valueDef->dataType)
+        switch (valueDef->dataType)
         {
         case MapStyleValueDataType::Integer:
             evaluator.setIntegerValue(valueDef->id,
@@ -378,7 +378,7 @@ void OsmAnd::RasterizerEnvironment_P::applyTo( MapStyleEvaluator& evaluator ) co
     }
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, SkBitmapProcShader* &outShader ) const
+bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const
 {
     QMutexLocker scopedLocker(&_shadersBitmapsMutex);
 
@@ -403,7 +403,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader( const QString& name, S
     return true;
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPathEffect, SkPathEffect* &outPathEffect ) const
+bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const
 {
     QMutexLocker scopedLocker(&_pathEffectsMutex);
 
@@ -411,10 +411,11 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
     if (itPathEffects == _pathEffects.cend())
     {
         const auto& strIntervals = encodedPathEffect.split('_', QString::SkipEmptyParts);
+        const auto intervalsCount = strIntervals.size();
 
-        const auto intervals = new SkScalar[strIntervals.size()];
+        const auto intervals = new SkScalar[intervalsCount];
         auto pInterval = intervals;
-        for(const auto& strInterval : constOf(strIntervals))
+        for (const auto& strInterval : constOf(strIntervals))
         {
             float computedValue = 0.0f;
 
@@ -433,7 +434,14 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
             *(pInterval++) = computedValue;
         }
 
-        SkPathEffect* pathEffect = new SkDashPathEffect(intervals, strIntervals.size(), 0);
+        // Validate
+        if (intervalsCount < 2 || intervalsCount % 2 != 0)
+        {
+            LogPrintf(LogSeverityLevel::Warning, "Path effect (%s) with %d intervals is invalid", qPrintable(encodedPathEffect), intervalsCount);
+            return false;
+        }
+
+        SkPathEffect* pathEffect = new SkDashPathEffect(intervals, intervalsCount, 0);
         delete[] intervals;
 
         itPathEffects = _pathEffects.insert(encodedPathEffect, pathEffect);
@@ -443,7 +451,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect( const QString& encodedPa
     return true;
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon( const QString& name, std::shared_ptr<const SkBitmap>& outIcon ) const
+bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const
 {
     QMutexLocker scopedLocker(&_mapIconsMutex);
 
@@ -468,7 +476,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon( const QString& name, std::s
     return true;
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std::shared_ptr<const SkBitmap>& outTextShield ) const
+bool OsmAnd::RasterizerEnvironment_P::obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const
 {
     QMutexLocker scopedLocker(&_textShieldsMutex);
 
@@ -493,7 +501,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainTextShield( const QString& name, std
     return true;
 }
 
-QByteArray OsmAnd::RasterizerEnvironment_P::obtainResourceByName( const QString& name ) const
+QByteArray OsmAnd::RasterizerEnvironment_P::obtainResourceByName(const QString& name) const
 {
     // Try to obtain from external resources first
     if (static_cast<bool>(owner->externalResourcesProvider))
