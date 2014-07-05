@@ -1,4 +1,4 @@
-if (lastUsedProgram != #include "AtlasMapRendererSymbolsStage_OpenGL.h"
+#include "AtlasMapRendererSymbolsStage_OpenGL.h"
 
 #include <cassert>
 
