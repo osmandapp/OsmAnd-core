@@ -11,7 +11,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/FavoriteLocationsCollection.h>
+#include <OsmAndCore/FavoriteLocationsCollection.h>
 
 namespace OsmAnd
 {

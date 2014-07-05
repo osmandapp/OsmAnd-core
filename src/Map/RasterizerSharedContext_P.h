@@ -1,10 +1,10 @@
 #ifndef _OSMAND_CORE_RASTERIZER_SHARED_CONTEXT_P_H_
 #define _OSMAND_CORE_RASTERIZER_SHARED_CONTEXT_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <array>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QtGlobal>
 
 #include "OsmAndCore.h"

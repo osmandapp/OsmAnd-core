@@ -4,7 +4,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QStringList>
 #include <QByteArray>
 #include <QBuffer>

@@ -1,13 +1,13 @@
 #ifndef _OSMAND_CORE_OBF_TRANSPORT_SECTION_READER_P_H_
 #define _OSMAND_CORE_OBF_TRANSPORT_SECTION_READER_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 #include <functional>
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
 
 namespace OsmAnd {
 

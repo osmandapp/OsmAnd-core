@@ -9,7 +9,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IFavoriteLocationsCollection.h>
+#include <OsmAndCore/IFavoriteLocationsCollection.h>
 
 namespace OsmAnd
 {

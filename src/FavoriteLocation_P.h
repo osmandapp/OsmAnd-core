@@ -1,17 +1,17 @@
 #ifndef _OSMAND_CORE_FAVORITE_LOCATION_P_H_
 #define _OSMAND_CORE_FAVORITE_LOCATION_P_H_
 
-#include <OsmAndCore/stdlib_common.h>
+#include "stdlib_common.h"
 
-#include <OsmAndCore/QtExtensions.h>
+#include "QtExtensions.h"
 #include <QString>
 #include <QReadWriteLock>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/Link.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/IFavoriteLocation.h>
+#include "OsmAndCore.h"
+#include "PrivateImplementation.h"
+#include "Link.h"
+#include "CommonTypes.h"
+#include "IFavoriteLocation.h"
 
 namespace OsmAnd
 {
