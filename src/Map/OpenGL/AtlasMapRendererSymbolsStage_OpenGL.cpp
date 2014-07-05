@@ -1,4 +1,4 @@
-#include "AtlasMapRendererSymbolsStage_OpenGL.h"
+if (lastUsedProgram != #include "AtlasMapRendererSymbolsStage_OpenGL.h"
 
 #include <cassert>
 
@@ -1796,6 +1796,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     {
         GL_PUSH_GROUP_MARKER("use 'billboard-raster' program");
 
+        // Raster symbols use premultiplied alpha (due to SKIA)
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK_RESULT;
+
         // Set symbol VAO
         gpuAPI->glBindVertexArray_wrapper(_billboardRasterSymbolVAO);
         GL_CHECK_RESULT;
@@ -2127,6 +2131,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         if (lastUsedProgram != *_onPath2dProgram.id)
         {
             GL_PUSH_GROUP_MARKER("use 'on-path-2d' program");
+
+            // Raster symbols use premultiplied alpha (due to SKIA)
+            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            GL_CHECK_RESULT;
 
             // Set symbol VAO
             gpuAPI->glBindVertexArray_wrapper(_onPathSymbol2dVAO);
@@ -2527,6 +2535,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         {
             GL_PUSH_GROUP_MARKER("use 'on-path-3d' program");
 
+            // Raster symbols use premultiplied alpha (due to SKIA)
+            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+            GL_CHECK_RESULT;
+
             // Set symbol VAO
             gpuAPI->glBindVertexArray_wrapper(_onPathSymbol3dVAO);
             GL_CHECK_RESULT;
@@ -2819,6 +2831,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-raster' program");
 
+        // Raster symbols use premultiplied alpha (due to SKIA)
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK_RESULT;
+
         // Set symbol VAO
         gpuAPI->glBindVertexArray_wrapper(_onSurfaceRasterSymbolVAO);
         GL_CHECK_RESULT;
@@ -2908,6 +2924,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     if (lastUsedProgram != *_onSurfaceVectorProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-vector' program");
+
+        // Raster symbols use non-multiplied alpha
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK_RESULT;
 
         // Activate program
         glUseProgram(_onSurfaceVectorProgram.id);

@@ -119,9 +119,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     _rasterMapStage.render();
 
     // Turn on blending since now objects with transparency are going to be rendered
+    // Blend function is controlled by each symbol on it's own
     glEnable(GL_BLEND);
-    GL_CHECK_RESULT;
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
@@ -136,6 +135,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
 
 #if OSMAND_DEBUG
     glDisable(GL_DEPTH_TEST);
+    GL_CHECK_RESULT;
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
     _debugStage.render();
