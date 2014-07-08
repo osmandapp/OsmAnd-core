@@ -5,6 +5,7 @@
 #include <memory>
 #include <iostream>
 #include <algorithm>
+#include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
@@ -29,6 +30,28 @@ namespace OsmAnd
     Q_DECL_CONSTEXPR QMutableVectorIterator<T> mutableIteratorOf(QVector<T>& container)
     {
         return QMutableVectorIterator<T>(container);
+    }
+
+    template<typename KEY, typename VALUE>
+    QHash< KEY, VALUE > hashFrom(const QList<VALUE>& input, const std::function<KEY(const VALUE& item)> keyGetter)
+    {
+        QHash< KEY, VALUE > result;
+
+        for (const auto& item : input)
+            result.insert(keyGetter(item), item);
+
+        return result;
+    }
+
+    template<typename KEY, typename VALUE>
+    QHash< KEY, VALUE > hashFrom(const QVector<VALUE>& input, const std::function<KEY(const VALUE& item)> keyGetter)
+    {
+        QHash< KEY, VALUE > result;
+
+        for (const auto& item : input)
+            result.insert(keyGetter(item), item);
+
+        return result;
     }
 }
 
