@@ -1238,6 +1238,13 @@ namespace OsmAnd
         {
         }
 
+        explicit inline FColorRGB(const FColorARGB& other)
+            : r(other.r)
+            , g(other.g)
+            , b(other.b)
+        {
+        }
+
 #if !defined(SWIG)
         float value[3];
         struct
@@ -1292,6 +1299,14 @@ namespace OsmAnd
             , g(g_)
             , r(r_)
             , a(a_)
+        {
+        }
+
+        inline ColorARGB(const FColorARGB& other)
+            : b(static_cast<uint8_t>(other.b * 255.0f))
+            , g(static_cast<uint8_t>(other.g * 255.0f))
+            , r(static_cast<uint8_t>(other.r * 255.0f))
+            , a(static_cast<uint8_t>(other.a * 255.0f))
         {
         }
 
@@ -1359,6 +1374,13 @@ namespace OsmAnd
             : r(other.r)
             , g(other.g)
             , b(other.b)
+        {
+        }
+
+        inline ColorRGB(const FColorRGB& other)
+            : r(static_cast<uint8_t>(other.r * 255.0f))
+            , g(static_cast<uint8_t>(other.g * 255.0f))
+            , b(static_cast<uint8_t>(other.b * 255.0f))
         {
         }
 
