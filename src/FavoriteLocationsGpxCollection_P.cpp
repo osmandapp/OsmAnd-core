@@ -91,6 +91,10 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
 			const auto colorValue = '#' + QString::number(ColorARGB(color).argb, 16).right(6);
 			writer.writeTextElement(QLatin1String("color"), colorValue);
 
+            // <hidden>
+            if (item->isHidden())
+                writer.writeEmptyElement(QLatin1String("hidden"));
+
 			// </extensions>
 			writer.writeEndElement();
 		}
@@ -184,6 +188,16 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
 
 				newItem->setColor(static_cast<ColorRGB>(color));
 			}
+            else if (tagName == QLatin1String("color"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unexpected <hidden/>");
+                    return false;
+                }
+
+                newItem->setIsHidden(true);
+            }
 		}
 		else if (reader.isEndElement())
 		{

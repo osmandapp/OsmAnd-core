@@ -31,6 +31,16 @@ OsmAnd::PointI OsmAnd::FavoriteLocation::getPosition() const
     return position;
 }
 
+bool OsmAnd::FavoriteLocation::isHidden() const
+{
+    return _p->isHidden();
+}
+
+void OsmAnd::FavoriteLocation::setIsHidden(const bool isHidden)
+{
+    _p->setIsHidden(isHidden);
+}
+
 QString OsmAnd::FavoriteLocation::getTitle() const
 {
     return _p->getTitle();

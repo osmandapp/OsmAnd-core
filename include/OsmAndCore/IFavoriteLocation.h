@@ -24,6 +24,9 @@ namespace OsmAnd
 
         virtual PointI getPosition() const = 0;
 
+        virtual bool isHidden() const = 0;
+        virtual void setIsHidden(const bool isHidden) = 0;
+
         virtual QString getTitle() const = 0;
         virtual void setTitle(const QString& newTitle) = 0;
 

@@ -37,16 +37,6 @@ namespace OsmAnd
 
         static std::shared_ptr<const SkBitmap> getDefaultFavoriteLocationPinIconBitmap();
 
-        bool isGroupVisible(const QString& group) const;
-        void setIsGroupVisible(const QString& group, const bool isVisible);
-        void showGroup(const QString& group);
-        void hideGroup(const QString& group);
-
-        bool isFavoriteLocationVisible(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation, const bool checkGroup = true) const;
-        void setIsFavoriteLocationVisible(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation, const bool isVisible);
-        void showFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation);
-        void hideFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation);
-
         virtual QList<Key> getProvidedDataKeys() const;
         virtual bool obtainData(
             const Key key,

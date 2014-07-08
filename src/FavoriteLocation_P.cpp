@@ -5,12 +5,30 @@
 #include "FavoriteLocationsCollection_P.h"
 
 OsmAnd::FavoriteLocation_P::FavoriteLocation_P(FavoriteLocation* const owner_)
-	: owner(owner_)
+    : _isHidden(false)
+	, owner(owner_)
 {
 }
 
 OsmAnd::FavoriteLocation_P::~FavoriteLocation_P()
 {
+}
+
+bool OsmAnd::FavoriteLocation_P::isHidden() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _isHidden;
+}
+
+void OsmAnd::FavoriteLocation_P::setIsHidden(const bool isHidden)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _isHidden = isHidden;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
 }
 
 QString OsmAnd::FavoriteLocation_P::getTitle() const

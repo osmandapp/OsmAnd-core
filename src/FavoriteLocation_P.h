@@ -31,6 +31,7 @@ namespace OsmAnd
 
         mutable QReadWriteLock _lock;
 
+        bool _isHidden;
         QString _title;
         QString _group;
         ColorRGB _color;
@@ -41,6 +42,9 @@ namespace OsmAnd
         virtual ~FavoriteLocation_P();
 
         ImplementationInterface<FavoriteLocation> owner;
+
+        bool isHidden() const;
+        void setIsHidden(const bool isHidden);
 
         QString getTitle() const;
         void setTitle(const QString& newTitle);

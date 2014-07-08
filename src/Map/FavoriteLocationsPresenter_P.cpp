@@ -17,64 +17,6 @@ OsmAnd::FavoriteLocationsPresenter_P::~FavoriteLocationsPresenter_P()
 {
 }
 
-bool OsmAnd::FavoriteLocationsPresenter_P::isGroupVisible(const QString& group) const
-{
-    QReadLocker scopedLocker(&_visibilitySettingsLock);
-
-    return !_hiddenGroups.contains(group);
-}
-
-void OsmAnd::FavoriteLocationsPresenter_P::setIsGroupVisible(const QString& group, const bool isVisible)
-{
-    QWriteLocker scopedLocker(&_visibilitySettingsLock);
-
-    if (isVisible)
-        _hiddenGroups.remove(group);
-    else
-        _hiddenGroups.insert(group);
-}
-
-void OsmAnd::FavoriteLocationsPresenter_P::showGroup(const QString& group)
-{
-    setIsGroupVisible(group, true);
-}
-
-void OsmAnd::FavoriteLocationsPresenter_P::hideGroup(const QString& group)
-{
-    setIsGroupVisible(group, false);
-}
-
-bool OsmAnd::FavoriteLocationsPresenter_P::isFavoriteLocationVisible(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation, const bool checkGroup) const
-{
-    QReadLocker scopedLocker(&_visibilitySettingsLock);
-
-    bool visible = !_hiddenFavoriteLocations.contains(favoriteLocation);
-    if (visible && checkGroup)
-        visible = !_hiddenGroups.contains(favoriteLocation->getGroup());
-
-    return visible;
-}
-
-void OsmAnd::FavoriteLocationsPresenter_P::setIsFavoriteLocationVisible(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation, const bool isVisible)
-{
-    QWriteLocker scopedLocker(&_visibilitySettingsLock);
-
-    if (isVisible)
-        _hiddenFavoriteLocations.remove(favoriteLocation);
-    else
-        _hiddenFavoriteLocations.insert(favoriteLocation);
-}
-
-void OsmAnd::FavoriteLocationsPresenter_P::showFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation)
-{
-    setIsFavoriteLocationVisible(favoriteLocation, true);
-}
-
-void OsmAnd::FavoriteLocationsPresenter_P::hideFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation)
-{
-    setIsFavoriteLocationVisible(favoriteLocation, false);
-}
-
 QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::FavoriteLocationsPresenter_P::getProvidedDataKeys() const
 {
     return _markersCollection->getProvidedDataKeys();
@@ -140,6 +82,7 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
 
         markerBuilder.setPosition(favoriteLocation->getPosition());
         markerBuilder.setPinIconModulationColor(favoriteLocation->getColor());
+        markerBuilder.setIsHidden(favoriteLocation->isHidden());
 
         const auto marker = markerBuilder.buildAndAddToCollection(_markersCollection);
         _favoriteLocationToMarkerMap.insert(favoriteLocation, marker);
@@ -156,4 +99,5 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarker(const std:
 
     const auto& marker = *citMarker;
     marker->setPinIconModulationColor(favoriteLocation->getColor());
+    marker->setIsHidden(favoriteLocation->isHidden());
 }
