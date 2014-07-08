@@ -162,7 +162,9 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
 					return false;
 				}
 
-				newItem->setGroup(reader.readElementText());
+                const auto& group = reader.readElementText();
+                if (!group.isEmpty())
+				    newItem->setGroup(reader.readElementText());
 			}
 			else if (tagName == QLatin1String("color"))
 			{
