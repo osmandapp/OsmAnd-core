@@ -12,14 +12,14 @@ OsmAnd::GPUAPI::GPUAPI()
 
 OsmAnd::GPUAPI::~GPUAPI()
 {
-    const int resourcesRemaining = 
+    const int resourcesRemaining =
 #if OSMAND_DEBUG
         _allocatedResources.size();
 #else
         _allocatedResourcesCounter.load();
 #endif
     if (resourcesRemaining > 0)
-        LogPrintf(LogSeverityLevel::Error, "By the time of RenderAPI destruction, it still contained %d allocated resources that will probably leak", resourcesRemaining);
+        LogPrintf(LogSeverityLevel::Error, "By the time of GPU destruction, it still contained %d allocated resources that will probably leak", resourcesRemaining);
     assert(resourcesRemaining == 0);
 }
 
@@ -33,7 +33,7 @@ bool OsmAnd::GPUAPI::release()
     return true;
 }
 
-std::shared_ptr<OsmAnd::GPUAPI::AtlasTexturesPool> OsmAnd::GPUAPI::obtainAtlasTexturesPool( const AtlasTypeId& atlasTypeId )
+std::shared_ptr<OsmAnd::GPUAPI::AtlasTexturesPool> OsmAnd::GPUAPI::obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId)
 {
     auto itPool = _atlasTexturesPools.constFind(atlasTypeId);
     if (itPool == _atlasTexturesPools.cend())
@@ -45,12 +45,12 @@ std::shared_ptr<OsmAnd::GPUAPI::AtlasTexturesPool> OsmAnd::GPUAPI::obtainAtlasTe
     return *itPool;
 }
 
-std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocateTile( const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator )
+std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator)
 {
     return pool->allocateTile(atlasTextureAllocator);
 }
 
-OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU( const Type type_, GPUAPI* api_, const RefInGPU& refInGPU_ )
+OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU(const Type type_, GPUAPI* api_, const RefInGPU& refInGPU_)
     : _refInGPU(refInGPU_)
     , api(api_)
     , type(type_)
@@ -133,8 +133,8 @@ OsmAnd::GPUAPI::AtlasTextureInGPU::AtlasTextureInGPU(GPUAPI* api_, const RefInGP
     : TextureInGPU(api_, refInGPU_, textureSize_, textureSize_, mipmapLevels_)
     , tileSize(pool_->typeId.tileSize)
     , padding(pool_->typeId.tilePadding)
-    , slotsPerSide(textureSize_ / (tileSize + 2*padding))
-    , tileSizeN(static_cast<float>(tileSize + 2*padding) / static_cast<float>(textureSize_))
+    , slotsPerSide(textureSize_ / (tileSize + 2 * padding))
+    , tileSizeN(static_cast<float>(tileSize + 2 * padding) / static_cast<float>(textureSize_))
     , tilePaddingN(static_cast<float>(padding) / static_cast<float>(textureSize_))
     , pool(pool_)
 {
@@ -142,7 +142,7 @@ OsmAnd::GPUAPI::AtlasTextureInGPU::AtlasTextureInGPU(GPUAPI* api_, const RefInGP
 
 OsmAnd::GPUAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
 {
-    const int tilesRemaining = 
+    const int tilesRemaining =
 #if OSMAND_DEBUG
         _tiles.size();
 #else
@@ -208,7 +208,7 @@ OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::~SlotOnAtlasTextureInGPU()
     _refInGPU = nullptr;
 }
 
-OsmAnd::GPUAPI::AtlasTexturesPool::AtlasTexturesPool( GPUAPI* api_, const AtlasTypeId& typeId_ )
+OsmAnd::GPUAPI::AtlasTexturesPool::AtlasTexturesPool(GPUAPI* api_, const AtlasTypeId& typeId_)
     : _lastNonFullAtlasTexture(nullptr)
     , _firstUnusedSlotIndex(0)
     , api(api_)
@@ -220,13 +220,13 @@ OsmAnd::GPUAPI::AtlasTexturesPool::~AtlasTexturesPool()
 {
 }
 
-std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTexturesPool::allocateTile( AtlasTextureAllocatorSignature atlasTextureAllocator )
+std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTexturesPool::allocateTile(AtlasTextureAllocatorSignature atlasTextureAllocator)
 {
     // First look for freed slots
     {
         QMutexLocker scopedLocker(&_freedSlotsMutex);
 
-        while(!_freedSlots.isEmpty())
+        while (!_freedSlots.isEmpty())
         {
             const auto& itFreedSlotEntry = _freedSlots.begin();
 
@@ -240,12 +240,12 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
             return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(atlasTexture.lock(), slotIndex));
         }
     }
-    
+
     {
         QMutexLocker scopedLocker(&_unusedSlotsMutex);
 
         std::shared_ptr<AtlasTextureInGPU> atlasTexture;
-        
+
         // If we've never allocated any atlases yet or next unused slot is beyond allocated spaced - allocate new atlas texture then
         if (!_lastNonFullAtlasTexture || _firstUnusedSlotIndex == _lastNonFullAtlasTexture->slotsPerSide*_lastNonFullAtlasTexture->slotsPerSide)
         {

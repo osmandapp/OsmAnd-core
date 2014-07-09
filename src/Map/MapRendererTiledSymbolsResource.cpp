@@ -336,18 +336,6 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
     // Unique
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
-        // Unload map symbol resources from GPU
-#if OSMAND_DEBUG
-        for (const auto& entryResourceInGPU : rangeOf(groupResources->resourcesInGPU))
-        {
-            const auto& symbol = entryResourceInGPU.key();
-            auto& resourceInGPU = entryResourceInGPU.value();
-
-            assert(resourceInGPU.use_count() == 1);
-            resourceInGPU.reset();
-        }
-#endif
-
         // For unique group resources it's safe to clear 'MapSymbol->ResourceInGPU' map
         groupResources->resourcesInGPU.clear();
     }
@@ -420,7 +408,6 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
             auto& resourceInGPU = entryResourceInGPU.value();
 
             // Unload symbol from GPU thread (using dispatcher)
-            assert(resourceInGPU.use_count() == 1);
             auto resourceInGPU_ = qMove(resourceInGPU);
 #ifndef Q_COMPILER_RVALUE_REFS
             resourceInGPU.reset();
@@ -429,7 +416,6 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
                 [resourceInGPU_]
                 () mutable
                 {
-                    assert(resourceInGPU_.use_count() == 1);
                     resourceInGPU_.reset();
                 });
         }
@@ -477,7 +463,6 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
             auto& resourceInGPU = entryResourceInGPU.value();
 
             // Unload symbol from GPU thread (using dispatcher)
-            assert(resourceInGPU.use_count() == 1);
             auto resourceInGPU_ = qMove(resourceInGPU);
 #ifndef Q_COMPILER_RVALUE_REFS
             resourceInGPU.reset();
@@ -486,7 +471,6 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
                 [resourceInGPU_]
                 () mutable
                 {
-                    assert(resourceInGPU_.use_count() == 1);
                     resourceInGPU_.reset();
                 });
         }

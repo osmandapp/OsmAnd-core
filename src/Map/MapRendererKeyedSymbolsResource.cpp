@@ -128,19 +128,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
 
 void OsmAnd::MapRendererKeyedSymbolsResource::unloadFromGPU()
 {
-    // Unload map symbol resources from GPU
-#if OSMAND_DEBUG
-    for (const auto& entryResourceInGPU : rangeOf(_resourcesInGPU))
-    {
-        const auto& symbol = entryResourceInGPU.key();
-        auto& resourceInGPU = entryResourceInGPU.value();
-
-        assert(resourceInGPU.use_count() == 1);
-        resourceInGPU.reset();
-    }
-#else
     _resourcesInGPU.clear();
-#endif
 }
 
 void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()

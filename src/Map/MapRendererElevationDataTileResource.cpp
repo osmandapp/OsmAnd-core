@@ -57,7 +57,6 @@ bool OsmAnd::MapRendererElevationDataTileResource::uploadToGPU()
 
 void OsmAnd::MapRendererElevationDataTileResource::unloadFromGPU()
 {
-    assert(_resourceInGPU.use_count() == 1);
     _resourceInGPU.reset();
 }
 

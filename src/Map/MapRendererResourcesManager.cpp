@@ -144,16 +144,8 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
 bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources()
 {
     // Release stubs
-    if (_unavailableTileStub)
-    {
-        assert(_unavailableTileStub.use_count() == 1);
-        _unavailableTileStub.reset();
-    }
-    if (_processingTileStub)
-    {
-        assert(_processingTileStub.use_count() == 1);
-        _processingTileStub.reset();
-    }
+    _unavailableTileStub.reset();
+    _processingTileStub.reset();
 
     return true;
 }

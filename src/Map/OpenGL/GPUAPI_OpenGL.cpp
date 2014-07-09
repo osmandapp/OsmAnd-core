@@ -51,7 +51,7 @@ OsmAnd::GPUAPI_OpenGL::~GPUAPI_OpenGL()
 {
 }
 
-GLuint OsmAnd::GPUAPI_OpenGL::compileShader( GLenum shaderType, const char* source )
+GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* source)
 {
     GL_CHECK_PRESENT(glCreateShader);
     GL_CHECK_PRESENT(glShaderSource);
@@ -115,7 +115,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     program = glCreateProgram();
     GL_CHECK_RESULT;
 
-    for(auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
+    for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
     {
         glAttachShader(program, shaders[shaderIdx]);
         GL_CHECK_RESULT;
@@ -124,7 +124,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     glLinkProgram(program);
     GL_CHECK_RESULT;
 
-    for(auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
+    for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
     {
         glDetachShader(program, shaders[shaderIdx]);
         GL_CHECK_RESULT;
@@ -228,16 +228,16 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(const std::shared_ptr< const MapSy
     {
         return uploadSymbolAsMeshToGPU(primitiveMapSymbol, resourceInGPU);
     }
-    
+
     assert(false);
     return false;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU( const ResourceInGPU::Type type, const RefInGPU& refInGPU )
+bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU)
 {
     switch (type)
     {
-    case ResourceInGPU::Type::Texture:
+        case ResourceInGPU::Type::Texture:
         {
             GL_CHECK_PRESENT(glDeleteTextures);
 
@@ -247,8 +247,8 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU( const ResourceInGPU::Type type
 
             return true;
         }
-    case ResourceInGPU::Type::ElementArrayBuffer:
-    case ResourceInGPU::Type::ArrayBuffer:
+        case ResourceInGPU::Type::ElementArrayBuffer:
+        case ResourceInGPU::Type::ArrayBuffer:
         {
             GL_CHECK_PRESENT(glDeleteBuffers);
 
@@ -283,20 +283,20 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
 
         switch (tile->bitmap->getConfig())
         {
-        case SkBitmap::Config::kARGB_8888_Config:
-            sourcePixelByteSize = 4;
-            break;
-        case SkBitmap::Config::kARGB_4444_Config:
-        case SkBitmap::Config::kRGB_565_Config:
-            sourcePixelByteSize = 2;
-            break;
-        case SkBitmap::Config::kIndex8_Config:
-            sourcePixelByteSize = 1;
-            tileUsesPalette = true;
-            break;
-        default:
-            assert(false);
-            return false;
+            case SkBitmap::Config::kARGB_8888_Config:
+                sourcePixelByteSize = 4;
+                break;
+            case SkBitmap::Config::kARGB_4444_Config:
+            case SkBitmap::Config::kRGB_565_Config:
+                sourcePixelByteSize = 2;
+                break;
+            case SkBitmap::Config::kIndex8_Config:
+                sourcePixelByteSize = 1;
+                tileUsesPalette = true;
+                break;
+            default:
+                assert(false);
+                return false;
         }
         tileSize = tile->bitmap->width();
         dataRowLength = tile->bitmap->rowBytes();
@@ -455,31 +455,31 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     // Get free slot from that pool
     const auto slotInGPU = allocateTile(atlasTexturesPool,
         [this, textureSize, mipmapLevels, atlasTexturesPool, textureFormat]
-        () -> AtlasTextureInGPU*
-        {
-            // Allocate texture id
-            GLuint texture;
-            glGenTextures(1, &texture);
-            GL_CHECK_RESULT;
-            assert(texture != 0);
+    () -> AtlasTextureInGPU*
+    {
+        // Allocate texture id
+        GLuint texture;
+        glGenTextures(1, &texture);
+        GL_CHECK_RESULT;
+        assert(texture != 0);
 
-            // Select this texture
-            glBindTexture(GL_TEXTURE_2D, texture);
-            GL_CHECK_RESULT;
+        // Select this texture
+        glBindTexture(GL_TEXTURE_2D, texture);
+        GL_CHECK_RESULT;
 
-            // Allocate space for this texture
-            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
-            GL_CHECK_RESULT;
+        // Allocate space for this texture
+        allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
+        GL_CHECK_RESULT;
 
-            // Set maximal mipmap level
-            setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
+        // Set maximal mipmap level
+        setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
 
-            // Deselect texture
-            glBindTexture(GL_TEXTURE_2D, 0);
-            GL_CHECK_RESULT;
+        // Deselect texture
+        glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
 
-            return new AtlasTextureInGPU(this, reinterpret_cast<RefInGPU>(texture), textureSize, mipmapLevels, atlasTexturesPool);
-        });
+        return new AtlasTextureInGPU(this, reinterpret_cast<RefInGPU>(texture), textureSize, mipmapLevels, atlasTexturesPool);
+    });
 
     // Upload tile to allocated slot in atlas texture
 
@@ -522,7 +522,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< 
         return false;
     }
     const auto tile = std::static_pointer_cast<const ElevationDataTile>(tile_);
-    
+
     // Create array buffer
     GLuint buffer;
     glGenBuffers(1, &buffer);
@@ -558,23 +558,23 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
     // Determine texture properties:
     GLsizei sourcePixelByteSize = 0;
     bool symbolUsesPalette = false;
-    switch(symbol->bitmap->getConfig())
+    switch (symbol->bitmap->getConfig())
     {
-    case SkBitmap::Config::kARGB_8888_Config:
-        sourcePixelByteSize = 4;
-        break;
-    case SkBitmap::Config::kARGB_4444_Config:
-    case SkBitmap::Config::kRGB_565_Config:
-        sourcePixelByteSize = 2;
-        break;
-    case SkBitmap::Config::kIndex8_Config:
-        sourcePixelByteSize = 1;
-        symbolUsesPalette = true;
-        break;
-    default:
-        LogPrintf(LogSeverityLevel::Error, "Tried to upload symbol bitmap with unsupported config %d to GPU", symbol->bitmap->getConfig());
-        assert(false);
-        return false;
+        case SkBitmap::Config::kARGB_8888_Config:
+            sourcePixelByteSize = 4;
+            break;
+        case SkBitmap::Config::kARGB_4444_Config:
+        case SkBitmap::Config::kRGB_565_Config:
+            sourcePixelByteSize = 2;
+            break;
+        case SkBitmap::Config::kIndex8_Config:
+            sourcePixelByteSize = 1;
+            symbolUsesPalette = true;
+            break;
+        default:
+            LogPrintf(LogSeverityLevel::Error, "Tried to upload symbol bitmap with unsupported config %d to GPU", symbol->bitmap->getConfig());
+            assert(false);
+            return false;
     }
     const auto textureFormat = getTextureFormat(symbol);
 
@@ -633,7 +633,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const
 
     // Primitive map symbol has to have vertices, so checks are worthless
     assert(symbol->vertices && symbol->verticesCount > 0);
-    
+
     // Create vertex buffer
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);

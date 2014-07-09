@@ -65,7 +65,6 @@ bool OsmAnd::MapRendererRasterBitmapTileResource::uploadToGPU()
 
 void OsmAnd::MapRendererRasterBitmapTileResource::unloadFromGPU()
 {
-    assert(_resourceInGPU.use_count() == 1);
     _resourceInGPU.reset();
 }
 
