@@ -20,6 +20,19 @@ OsmAnd::MapRendererKeyedSymbolsResource::~MapRendererKeyedSymbolsResource()
     safeUnlink();
 }
 
+bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdates()
+{
+    bool updatesApplied = MapRendererBaseKeyedResource::checkForUpdates();
+
+    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
+    {
+        if (updatableMapSymbolGroup->update())
+            updatesApplied = true;
+    }
+
+    return updatesApplied;
+}
+
 bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
 {
     // Obtain collection link and maintain it
@@ -140,14 +153,6 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
 
     _mapSymbolsGroup.reset();
     _sourceData.reset();
-}
-
-bool OsmAnd::MapRendererKeyedSymbolsResource::prepareForUse()
-{
-    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
-        updatableMapSymbolGroup->update();
-
-    return true;
 }
 
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol)

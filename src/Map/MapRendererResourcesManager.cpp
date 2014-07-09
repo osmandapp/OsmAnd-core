@@ -765,6 +765,30 @@ bool OsmAnd::MapRendererResourcesManager::validateResourcesOfType(const MapRende
     return atLeastOneMarked;
 }
 
+bool OsmAnd::MapRendererResourcesManager::checkForResourcesUpdates() const
+{
+    bool updatesApplied = false;
+
+    for (const auto& resourcesCollections : constOf(_storageByType))
+    {
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (!resourcesCollection)
+                continue;
+
+            resourcesCollection->forEachResourceExecute(
+                [&updatesApplied]
+                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
+                {
+                    if (entry->checkForUpdates())
+                        updatesApplied = true;
+                });
+        }
+    }
+
+    return updatesApplied;
+}
+
 void OsmAnd::MapRendererResourcesManager::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
     // Before requesting missing tiled resources, clean up cache to free some space

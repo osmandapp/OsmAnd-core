@@ -27,6 +27,8 @@ namespace OsmAnd
 
         void markAsJunk();
 
+        virtual bool checkForUpdates();
+
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController = nullptr) = 0;
         virtual bool uploadToGPU() = 0;
         virtual void unloadFromGPU() = 0;
@@ -44,8 +46,6 @@ namespace OsmAnd
         virtual MapRendererResourceState getState() const = 0;
         virtual void setState(const MapRendererResourceState newState) = 0;
         virtual bool setStateIf(const MapRendererResourceState testState, const MapRendererResourceState newState) = 0;
-
-        virtual bool prepareForUse();
 
     friend class OsmAnd::MapRendererResourcesManager;
     };

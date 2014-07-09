@@ -464,8 +464,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
                 if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
                     // Capture GPU resource
-                    if (resource->prepareForUse())
-                        gpuResource = resource->resourceInGPU;
+                    gpuResource = resource->resourceInGPU;
 
                     resource->setState(MapRendererResourceState::Uploaded);
                 }
@@ -577,8 +576,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
                 if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
                 {
                     // Capture GPU resource
-                    if (resource->prepareForUse())
-                        gpuResource = resource->resourceInGPU;
+                    gpuResource = resource->resourceInGPU;
 
                     resource->setState(MapRendererResourceState::Uploaded);
                 }

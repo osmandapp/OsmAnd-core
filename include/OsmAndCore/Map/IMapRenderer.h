@@ -44,9 +44,9 @@ namespace OsmAnd
 
         const bool& isRenderingInitialized;
         virtual bool initializeRendering() = 0;
+        virtual bool update() = 0;
         virtual bool prepareFrame() = 0;
         virtual bool renderFrame() = 0;
-        virtual bool processRendering() = 0;
         virtual bool releaseRendering() = 0;
 
         virtual bool pauseGpuWorkerThread() = 0;

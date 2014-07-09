@@ -374,6 +374,69 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
     return true;
 }
 
+bool OsmAnd::MapRenderer::update()
+{
+    assert(_renderThreadId == QThread::currentThreadId());
+
+    bool ok;
+
+    ok = preUpdate();
+    if (!ok)
+        return false;
+
+    ok = doUpdate();
+    if (!ok)
+        return false;
+
+    ok = postUpdate();
+    if (!ok)
+        return false;
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::preUpdate()
+{
+    // Check for resources updates
+    if (_resources->checkForResourcesUpdates())
+        invalidateFrame();
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::doUpdate()
+{
+    // If GPU worker thread is not enabled, upload resource to GPU from render thread.
+    // To reduce FPS drop, upload not more than 1 resource per frame.
+    if (!_gpuWorkerThread)
+    {
+        const auto requestsToProcess = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(0);
+        bool moreUploadThanLimitAvailable = false;
+        unsigned int resourcesUploaded = 0u;
+        unsigned int resourcesUnloaded = 0u;
+        _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
+        const auto unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
+
+        // If any resource was uploaded or there is more resources to uploaded, invalidate frame
+        // to use that resource
+        if (resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0 || unprocessedRequests > 0)
+            invalidateFrame();
+
+        // Process GPU thread dispatcher
+        _gpuThreadDispatcher.runAll();
+    }
+
+    // Process render thread dispatcher
+    _renderThreadDispatcher.runAll();
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::postUpdate()
+{
+    return true;
+}
+
 bool OsmAnd::MapRenderer::prepareFrame()
 {
     assert(_renderThreadId == QThread::currentThreadId());
@@ -492,65 +555,6 @@ bool OsmAnd::MapRenderer::postRenderFrame()
     // Decrement "frame-invalidates" counter by amount of processed "frame-invalidates"
     _frameInvalidatesCounter.fetchAndAddOrdered(-_frameInvalidatesToBeProcessed);
 
-    return true;
-}
-
-bool OsmAnd::MapRenderer::processRendering()
-{
-    assert(_renderThreadId == QThread::currentThreadId());
-
-    bool ok;
-
-    ok = preProcessRendering();
-    if (!ok)
-        return false;
-
-    ok = doProcessRendering();
-    if (!ok)
-        return false;
-
-    ok = postProcessRendering();
-    if (!ok)
-        return false;
-
-    return true;
-}
-
-bool OsmAnd::MapRenderer::preProcessRendering()
-{
-    return true;
-}
-
-bool OsmAnd::MapRenderer::doProcessRendering()
-{
-    // If GPU worker thread is not enabled, upload resource to GPU from render thread.
-    // To reduce FPS drop, upload not more than 1 resource per frame.
-    if (!_gpuWorkerThread)
-    {
-        const auto requestsToProcess = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(0);
-        bool moreUploadThanLimitAvailable = false;
-        unsigned int resourcesUploaded = 0u;
-        unsigned int resourcesUnloaded = 0u;
-        _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
-        const auto unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
-
-        // If any resource was uploaded or there is more resources to uploaded, invalidate frame
-        // to use that resource
-        if (resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0 || unprocessedRequests > 0)
-            invalidateFrame();
-
-        // Process GPU thread dispatcher
-        _gpuThreadDispatcher.runAll();
-    }
-
-    // Process render thread dispatcher
-    _renderThreadDispatcher.runAll();
-
-    return true;
-}
-
-bool OsmAnd::MapRenderer::postProcessRendering()
-{
     return true;
 }
 

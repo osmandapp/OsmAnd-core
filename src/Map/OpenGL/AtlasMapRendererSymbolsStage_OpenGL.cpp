@@ -1256,14 +1256,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainRenderableEntriesForOnPa
         {
             // Prepare resource if needed
             if (!updatedMapSymbolsResources.contains(resource))
-            {
-                if (!resource->prepareForUse())
-                {
-                    resource->setState(MapRendererResourceState::Uploaded);
-                    continue;
-                }
                 updatedMapSymbolsResources.insert(resource);
-            }
 
             // Capture GPU resource
             if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
@@ -1552,14 +1545,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortBillboardSymbols(
         {
             // Prepare resource if needed
             if (!updatedMapSymbolsResources.contains(resource))
-            {
-                if (!resource->prepareForUse())
-                {
-                    resource->setState(MapRendererResourceState::Uploaded);
-                    continue;
-                }
                 updatedMapSymbolsResources.insert(resource);
-            }
 
             // Capture GPU resource
             if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
@@ -1624,14 +1610,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::obtainAndSortOnSurfaceSymbols(
         {
             // Prepare resource if needed
             if (!updatedMapSymbolsResources.contains(resource))
-            {
-                if (!resource->prepareForUse())
-                {
-                    resource->setState(MapRendererResourceState::Uploaded);
-                    continue;
-                }
                 updatedMapSymbolsResources.insert(resource);
-            }
 
             // Capture GPU resource
             if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))

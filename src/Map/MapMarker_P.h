@@ -38,7 +38,7 @@ namespace OsmAnd
         bool _isHidden;
 
         bool _isAccuracyCircleVisible;
-        double _AccuracyCircleRadius;
+        double _accuracyCircleRadius;
 
         PointI _position;
 
@@ -58,7 +58,7 @@ namespace OsmAnd
 
             const std::weak_ptr<MapMarker_P> mapMarkerP;
 
-            virtual void update();
+            virtual bool update();
 
         friend class OsmAnd::MapMarker_P;
         };

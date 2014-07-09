@@ -51,14 +51,14 @@ double OsmAnd::MapMarker_P::getAccuracyCircleRadius() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _AccuracyCircleRadius;
+    return _accuracyCircleRadius;
 }
 
 void OsmAnd::MapMarker_P::setAccuracyCircleRadius(const double radius)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _AccuracyCircleRadius = radius;
+    _accuracyCircleRadius = radius;
     _hasUnappliedChanges = true;
 }
 
@@ -135,8 +135,8 @@ bool OsmAnd::MapMarker_P::applyChanges()
             if (const auto symbol = std::dynamic_pointer_cast<AccuracyCircleMapSymbol>(symbol_))
             {
                 symbol->setPosition31(_position);
-                symbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
-                symbol->scale = _AccuracyCircleRadius;
+                symbol->isHidden = _isHidden || !_isAccuracyCircleVisible;
+                symbol->scale = _accuracyCircleRadius;
             }
 
             if (const auto symbol = std::dynamic_pointer_cast<IBillboardMapSymbol>(symbol_))
@@ -178,7 +178,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             _position));
         VectorMapSymbol::generateCirclePrimitive(*AccuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
         AccuracyCircleSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
-        AccuracyCircleSymbol->scale = _AccuracyCircleRadius;
+        AccuracyCircleSymbol->scale = _accuracyCircleRadius;
         AccuracyCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
         AccuracyCircleSymbol->direction = Q_SNAN;
         symbolsGroup->symbols.push_back(AccuracyCircleSymbol);
@@ -192,7 +192,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             _position));
         VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->accuracyCircleBaseColor.withAlpha(0.4f));
         precisionRingSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
-        precisionRingSymbol->scale = _AccuracyCircleRadius;
+        precisionRingSymbol->scale = _accuracyCircleRadius;
         precisionRingSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
         precisionRingSymbol->direction = Q_SNAN;
         symbolsGroup->symbols.push_back(precisionRingSymbol);
@@ -286,10 +286,12 @@ OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::~LinkedMapSymbolsGroup()
         mapMarkerP_->unregisterSymbolsGroup(this);
 }
 
-void OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
+bool OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
 {
     if (const auto mapMarkerP_ = mapMarkerP.lock())
-        mapMarkerP_->applyChanges();
+        return mapMarkerP_->applyChanges();
+
+    return false;
 }
 
 OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::KeyedOnSurfaceRasterMapSymbol(

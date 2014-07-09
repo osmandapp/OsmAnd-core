@@ -110,6 +110,10 @@ namespace OsmAnd
         virtual bool doInitializeRendering();
         virtual bool postInitializeRendering();
 
+        virtual bool preUpdate();
+        virtual bool doUpdate();
+        virtual bool postUpdate();
+
         virtual bool prePrepareFrame();
         virtual bool doPrepareFrame();
         virtual bool postPrepareFrame();
@@ -117,10 +121,6 @@ namespace OsmAnd
         virtual bool preRenderFrame();
         virtual bool doRenderFrame() = 0;
         virtual bool postRenderFrame();
-
-        virtual bool preProcessRendering();
-        virtual bool doProcessRendering();
-        virtual bool postProcessRendering();
 
         virtual bool preReleaseRendering();
         virtual bool doReleaseRendering();
@@ -136,9 +136,9 @@ namespace OsmAnd
         virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false);
 
         virtual bool initializeRendering();
+        virtual bool update();
         virtual bool prepareFrame();
         virtual bool renderFrame();
-        virtual bool processRendering();
         virtual bool releaseRendering();
 
         virtual bool pauseGpuWorkerThread();
