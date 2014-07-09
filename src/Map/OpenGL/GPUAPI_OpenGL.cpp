@@ -246,7 +246,7 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
 #if OSMAND_DEBUG
             if (!glIsTexture(texture))
             {
-                LogPrintf(LogSeverityLevel::Error, "%d is not an OpenGL texture on thread %p", QThread::currentThreadId());
+                LogPrintf(LogSeverityLevel::Error, "%d is not an OpenGL texture on thread %p", texture, QThread::currentThreadId());
                 return false;
             }
             GL_CHECK_RESULT;
@@ -266,7 +266,7 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
 #if OSMAND_DEBUG
             if (!glIsBuffer(buffer))
             {
-                LogPrintf(LogSeverityLevel::Error, "%d is not an OpenGL buffer on thread %p", QThread::currentThreadId());
+                LogPrintf(LogSeverityLevel::Error, "%d is not an OpenGL buffer on thread %p", buffer, QThread::currentThreadId());
                 return false;
             }
             GL_CHECK_RESULT;
