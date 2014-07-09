@@ -240,8 +240,17 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
         case ResourceInGPU::Type::Texture:
         {
             GL_CHECK_PRESENT(glDeleteTextures);
+            GL_CHECK_PRESENT(glIsTexture);
 
             GLuint texture = static_cast<GLuint>(reinterpret_cast<intptr_t>(refInGPU));
+#if OSMAND_DEBUG
+            if (!glIsTexture(texture))
+            {
+                LogPrintf(LogSeverityLevel::Error, "%d is not an OpenGL texture on thread %p", QThread::currentThreadId());
+                return false;
+            }
+            GL_CHECK_RESULT;
+#endif
             glDeleteTextures(1, &texture);
             GL_CHECK_RESULT;
 
@@ -251,8 +260,17 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
         case ResourceInGPU::Type::ArrayBuffer:
         {
             GL_CHECK_PRESENT(glDeleteBuffers);
+            GL_CHECK_PRESENT(glIsBuffer);
 
             GLuint buffer = static_cast<GLuint>(reinterpret_cast<intptr_t>(refInGPU));
+#if OSMAND_DEBUG
+            if (!glIsBuffer(buffer))
+            {
+                LogPrintf(LogSeverityLevel::Error, "%d is not an OpenGL buffer on thread %p", QThread::currentThreadId());
+                return false;
+            }
+            GL_CHECK_RESULT;
+#endif
             glDeleteBuffers(1, &buffer);
             GL_CHECK_RESULT;
 
