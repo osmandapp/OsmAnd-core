@@ -566,7 +566,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(const std:
         const auto resourceType = resourcesCollection->type;
         resourcesCollection->obtainOrAllocateEntry(resource, resourceKey,
             [this, resourceType]
-            (const KeyedEntriesCollection<const void*, MapRendererBaseKeyedResource>& collection, const void* const key) -> MapRendererBaseKeyedResource*
+            (const KeyedEntriesCollection<MapRendererKeyedResourcesCollection::Key, MapRendererBaseKeyedResource>& collection, MapRendererKeyedResourcesCollection::Key const key) -> MapRendererBaseKeyedResource*
             {
                 if (resourceType == MapRendererResourceType::Symbols)
                     return new MapRendererKeyedSymbolsResource(this, collection, key);
@@ -765,9 +765,10 @@ bool OsmAnd::MapRendererResourcesManager::validateResourcesOfType(const MapRende
     return atLeastOneMarked;
 }
 
-bool OsmAnd::MapRendererResourcesManager::checkForResourcesUpdates() const
+bool OsmAnd::MapRendererResourcesManager::checkForUpdates() const
 {
     bool updatesApplied = false;
+    bool updatesPresent = false;
 
     for (const auto& resourcesCollections : constOf(_storageByType))
     {
@@ -776,6 +777,20 @@ bool OsmAnd::MapRendererResourcesManager::checkForResourcesUpdates() const
             if (!resourcesCollection)
                 continue;
 
+            // Also check if keyed collection has same keys as respective provider
+            if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
+            {
+                std::shared_ptr<IMapDataProvider> provider_;
+                if (obtainProviderFor(resourcesCollection.get(), provider_))
+                {
+                    const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
+
+                    if (keyedResourcesCollection->getKeys().toSet() != provider->getProvidedDataKeys().toSet())
+                        updatesPresent = true;
+                }
+            }
+
+            // Check if any resource has applied updates
             resourcesCollection->forEachResourceExecute(
                 [&updatesApplied]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
@@ -786,7 +801,7 @@ bool OsmAnd::MapRendererResourcesManager::checkForResourcesUpdates() const
         }
     }
 
-    return updatesApplied;
+    return (updatesApplied || updatesPresent);
 }
 
 void OsmAnd::MapRendererResourcesManager::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)

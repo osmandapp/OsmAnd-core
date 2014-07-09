@@ -10,6 +10,7 @@
 #include "MapRendererResourceState.h"
 #include "KeyedEntriesCollection.h"
 #include "MapRendererBaseResource.h"
+#include "IMapKeyedDataProvider.h"
 
 namespace OsmAnd
 {
@@ -18,10 +19,10 @@ namespace OsmAnd
     // Base class for all keyed resources
     class MapRendererBaseKeyedResource
         : public MapRendererBaseResource
-        , public KeyedEntriesCollectionEntryWithState < const void*, MapRendererBaseKeyedResource, MapRendererResourceState, MapRendererResourceState::Unknown >
+        , public KeyedEntriesCollectionEntryWithState< IMapKeyedDataProvider::Key, MapRendererBaseKeyedResource, MapRendererResourceState, MapRendererResourceState::Unknown >
     {
     public:
-        typedef const void* Key;
+        typedef IMapKeyedDataProvider::Key Key;
         typedef KeyedEntriesCollectionEntryWithState<Key, MapRendererBaseKeyedResource, MapRendererResourceState, MapRendererResourceState::Unknown> BaseKeyedEntriesCollectionEntryWithState;
 
     private:

@@ -109,7 +109,7 @@ namespace OsmAnd
         // Resources management:
         QSet<TileId> _activeTiles;
         ZoomLevel _activeZoom;
-        bool checkForResourcesUpdates() const;
+        bool checkForUpdates() const;
         void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         void requestNeededTiledResources(const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection, const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);

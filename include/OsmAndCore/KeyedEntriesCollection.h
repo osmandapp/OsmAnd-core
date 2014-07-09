@@ -29,6 +29,7 @@ namespace OsmAnd
     class KeyedEntriesCollection
     {
     public:
+        typedef KEY Key;
         typedef KeyedEntriesCollection<KEY, ENTRY> Collection;
 
         class Link : public std::enable_shared_from_this < Link >
@@ -193,6 +194,13 @@ namespace OsmAnd
             QReadLocker scopedLocker(&_collectionLock);
 
             return _collection.size();
+        }
+
+        virtual QList<KEY> getKeys() const
+        {
+            QReadLocker scopedLocker(&_collectionLock);
+
+            return _collection.keys();
         }
 
     friend class OsmAnd::KeyedEntriesCollectionEntry< KEY, ENTRY >;

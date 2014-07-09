@@ -398,7 +398,7 @@ bool OsmAnd::MapRenderer::update()
 bool OsmAnd::MapRenderer::preUpdate()
 {
     // Check for resources updates
-    if (_resources->checkForResourcesUpdates())
+    if (_resources->checkForUpdates())
         invalidateFrame();
 
     return true;

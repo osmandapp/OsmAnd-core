@@ -11,6 +11,7 @@
 #include "KeyedEntriesCollection.h"
 #include "MapRendererBaseKeyedResource.h"
 #include "MapRendererBaseResourcesCollection.h"
+#include "IMapKeyedDataProvider.h"
 
 namespace OsmAnd
 {
@@ -19,7 +20,7 @@ namespace OsmAnd
     // Keyed resources collection:
     class MapRendererKeyedResourcesCollection
         : public MapRendererBaseResourcesCollection
-        , public KeyedEntriesCollection < const void*, MapRendererBaseKeyedResource >
+        , public KeyedEntriesCollection<IMapKeyedDataProvider::Key, MapRendererBaseKeyedResource >
     {
     private:
     protected:
