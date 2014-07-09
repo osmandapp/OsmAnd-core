@@ -15,9 +15,11 @@ bool OsmAnd::MapMarkerBuilder::isHidden() const
     return _p->isHidden();
 }
 
-void OsmAnd::MapMarkerBuilder::setIsHidden(const bool hidden)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setIsHidden(const bool hidden)
 {
     _p->setIsHidden(hidden);
+
+    return *this;
 }
 
 int OsmAnd::MapMarkerBuilder::getBaseOrder() const
@@ -25,9 +27,11 @@ int OsmAnd::MapMarkerBuilder::getBaseOrder() const
     return _p->getBaseOrder();
 }
 
-void OsmAnd::MapMarkerBuilder::setBaseOrder(const int baseOrder)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setBaseOrder(const int baseOrder)
 {
     _p->setBaseOrder(baseOrder);
+
+    return *this;
 }
 
 bool OsmAnd::MapMarkerBuilder::isAccuracyCircleSupported() const
@@ -35,9 +39,11 @@ bool OsmAnd::MapMarkerBuilder::isAccuracyCircleSupported() const
     return _p->isAccuracyCircleSupported();
 }
 
-void OsmAnd::MapMarkerBuilder::setIsAccuracyCircleSupported(const bool supported)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setIsAccuracyCircleSupported(const bool supported)
 {
     _p->setIsAccuracyCircleSupported(supported);
+
+    return *this;
 }
 
 bool OsmAnd::MapMarkerBuilder::isAccuracyCircleVisible() const
@@ -45,9 +51,11 @@ bool OsmAnd::MapMarkerBuilder::isAccuracyCircleVisible() const
     return _p->isAccuracyCircleVisible();
 }
 
-void OsmAnd::MapMarkerBuilder::setIsAccuracyCircleVisible(const bool visible)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setIsAccuracyCircleVisible(const bool visible)
 {
     _p->setIsAccuracyCircleVisible(visible);
+
+    return *this;
 }
 
 double OsmAnd::MapMarkerBuilder::getAccuracyCircleRadius() const
@@ -55,9 +63,11 @@ double OsmAnd::MapMarkerBuilder::getAccuracyCircleRadius() const
     return _p->getAccuracyCircleRadius();
 }
 
-void OsmAnd::MapMarkerBuilder::setAccuracyCircleRadius(const double radius)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setAccuracyCircleRadius(const double radius)
 {
     _p->setAccuracyCircleRadius(radius);
+
+    return *this;
 }
 
 OsmAnd::FColorRGB OsmAnd::MapMarkerBuilder::getAccuracyCircleBaseColor() const
@@ -65,9 +75,11 @@ OsmAnd::FColorRGB OsmAnd::MapMarkerBuilder::getAccuracyCircleBaseColor() const
     return _p->getAccuracyCircleBaseColor();
 }
 
-void OsmAnd::MapMarkerBuilder::setAccuracyCircleBaseColor(const FColorRGB baseColor)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setAccuracyCircleBaseColor(const FColorRGB baseColor)
 {
     _p->setAccuracyCircleBaseColor(baseColor);
+
+    return *this;
 }
 
 OsmAnd::PointI OsmAnd::MapMarkerBuilder::getPosition() const
@@ -75,9 +87,11 @@ OsmAnd::PointI OsmAnd::MapMarkerBuilder::getPosition() const
     return _p->getPosition();
 }
 
-void OsmAnd::MapMarkerBuilder::setPosition(const PointI position)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPosition(const PointI position)
 {
     _p->setPosition(position);
+
+    return *this;
 }
 
 std::shared_ptr<const SkBitmap> OsmAnd::MapMarkerBuilder::getPinIcon() const
@@ -85,9 +99,11 @@ std::shared_ptr<const SkBitmap> OsmAnd::MapMarkerBuilder::getPinIcon() const
     return _p->getPinIcon();
 }
 
-void OsmAnd::MapMarkerBuilder::setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap)
 {
     _p->setPinIcon(bitmap);
+
+    return *this;
 }
 
 OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder::getPinIconModulationColor() const
@@ -95,9 +111,11 @@ OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder::getPinIconModulationColor() const
     return _p->getPinIconModulationColor();
 }
 
-void OsmAnd::MapMarkerBuilder::setPinIconModulationColor(const ColorARGB colorValue)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconModulationColor(const ColorARGB colorValue)
 {
     _p->setPinIconModulationColor(colorValue);
+
+    return *this;
 }
 
 std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder::buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection)
@@ -110,17 +128,23 @@ QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > Os
     return _p->getOnMapSurfaceIcons();
 }
 
-void OsmAnd::MapMarkerBuilder::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap)
 {
     _p->addOnMapSurfaceIcon(key, bitmap);
+
+    return *this;
 }
 
-void OsmAnd::MapMarkerBuilder::removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key)
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key)
 {
     _p->removeOnMapSurfaceIcon(key);
+
+    return *this;
 }
 
-void OsmAnd::MapMarkerBuilder::clearOnMapSurfaceIcons()
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::clearOnMapSurfaceIcons()
 {
     _p->clearOnMapSurfaceIcons();
+
+    return *this;
 }

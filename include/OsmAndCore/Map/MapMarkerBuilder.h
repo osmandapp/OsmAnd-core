@@ -32,32 +32,32 @@ namespace OsmAnd
         virtual ~MapMarkerBuilder();
 
         bool isHidden() const;
-        void setIsHidden(const bool hidden);
+        MapMarkerBuilder& setIsHidden(const bool hidden);
 
         int getBaseOrder() const;
-        void setBaseOrder(const int baseOrder);
+        MapMarkerBuilder& setBaseOrder(const int baseOrder);
 
         bool isAccuracyCircleSupported() const;
-        void setIsAccuracyCircleSupported(const bool supported);
+        MapMarkerBuilder& setIsAccuracyCircleSupported(const bool supported);
         bool isAccuracyCircleVisible() const;
-        void setIsAccuracyCircleVisible(const bool visible);
+        MapMarkerBuilder& setIsAccuracyCircleVisible(const bool visible);
         double getAccuracyCircleRadius() const;
-        void setAccuracyCircleRadius(const double radius);
+        MapMarkerBuilder& setAccuracyCircleRadius(const double radius);
         FColorRGB getAccuracyCircleBaseColor() const;
-        void setAccuracyCircleBaseColor(const FColorRGB baseColor);
+        MapMarkerBuilder& setAccuracyCircleBaseColor(const FColorRGB baseColor);
 
         PointI getPosition() const;
-        void setPosition(const PointI position);
+        MapMarkerBuilder& setPosition(const PointI position);
 
         std::shared_ptr<const SkBitmap> getPinIcon() const;
-        void setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+        MapMarkerBuilder& setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
         ColorARGB getPinIconModulationColor() const;
-        void setPinIconModulationColor(const ColorARGB colorValue);
+        MapMarkerBuilder& setPinIconModulationColor(const ColorARGB colorValue);
 
         QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > getOnMapSurfaceIcons() const;
-        void addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap);
-        void removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
-        void clearOnMapSurfaceIcons();
+        MapMarkerBuilder& addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap);
+        MapMarkerBuilder& removeOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key);
+        MapMarkerBuilder& clearOnMapSurfaceIcons();
 
         std::shared_ptr<MapMarker> buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection);
     };
