@@ -33,6 +33,9 @@ namespace OsmAnd
         bool saveTo(QXmlStreamWriter& writer) const;
         bool loadFrom(const QString& filename);
         bool loadFrom(QXmlStreamReader& reader);
+
+        static std::shared_ptr<FavoriteLocationsGpxCollection> tryLoadFrom(const QString& filename);
+        static std::shared_ptr<FavoriteLocationsGpxCollection> tryLoadFrom(QXmlStreamReader& reader);
     };
 }
 

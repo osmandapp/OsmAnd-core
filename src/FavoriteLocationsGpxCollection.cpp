@@ -35,3 +35,21 @@ bool OsmAnd::FavoriteLocationsGpxCollection::loadFrom(QXmlStreamReader& reader)
 {
 	return _p->loadFrom(reader);
 }
+
+std::shared_ptr<OsmAnd::FavoriteLocationsGpxCollection> OsmAnd::FavoriteLocationsGpxCollection::tryLoadFrom(const QString& filename)
+{
+    std::shared_ptr<FavoriteLocationsGpxCollection> collection(new FavoriteLocationsGpxCollection());
+    if (!collection->loadFrom(filename))
+        return nullptr;
+
+    return collection;
+}
+
+std::shared_ptr<OsmAnd::FavoriteLocationsGpxCollection> OsmAnd::FavoriteLocationsGpxCollection::tryLoadFrom(QXmlStreamReader& reader)
+{
+    std::shared_ptr<FavoriteLocationsGpxCollection> collection(new FavoriteLocationsGpxCollection());
+    if (!collection->loadFrom(reader))
+        return nullptr;
+
+    return collection;
+}
