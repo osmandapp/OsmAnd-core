@@ -40,6 +40,9 @@ namespace OsmAnd
 
         virtual QSet<QString> getGroups() const = 0;
 
+        virtual void copyFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection) = 0;
+        virtual void mergeFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection) = 0;
+
         OSMAND_CALLABLE(CollectionChanged, void, const IFavoriteLocationsCollection* const collection);
         const ObservableAs<CollectionChanged> collectionChangeObservable;
 

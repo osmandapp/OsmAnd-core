@@ -57,6 +57,9 @@ namespace OsmAnd
 
         QSet<QString> getGroups() const;
 
+        void copyFrom(const QList< std::shared_ptr<IFavoriteLocation> >& otherCollection);
+        void mergeFrom(const QList< std::shared_ptr<IFavoriteLocation> >& otherCollection);
+
     friend class OsmAnd::FavoriteLocationsCollection;
     friend class OsmAnd::FavoriteLocation;
     friend class OsmAnd::FavoriteLocation_P;

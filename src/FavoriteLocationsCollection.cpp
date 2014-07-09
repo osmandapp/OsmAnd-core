@@ -49,3 +49,13 @@ QSet<QString> OsmAnd::FavoriteLocationsCollection::getGroups() const
 {
     return _p->getGroups();
 }
+
+void OsmAnd::FavoriteLocationsCollection::copyFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection)
+{
+    _p->copyFrom(otherCollection->getFavoriteLocations());
+}
+
+void OsmAnd::FavoriteLocationsCollection::mergeFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection)
+{
+    _p->mergeFrom(otherCollection->getFavoriteLocations());
+}
