@@ -653,8 +653,9 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 }
 
 void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
-	RenderingContext* rc, std::pair<std::string, std::string>  pair, bool renderTxt, uint ord)
+	RenderingContext* rc, std::pair<std::string, std::string>  pair, uint ord)
 {
+	bool renderTxt = ord == 0;
 	std::string tag = pair.first;
 	std::string value = pair.second;
 
@@ -691,7 +692,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.shield = shield;
 		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
-		ico.secondOrder = ord;
+		ico.secondOrder = ((mObj->id %10000) << 8) + ord;
 		rc->iconsToDraw.push_back(ico);
 	}
 	if (renderTxt) {
@@ -718,7 +719,7 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 		} else if (objOrder == 1 || objOrder == 2) {
 			drawPolyline(mObj, req, cv, paint, rc, pair, mObj->getSimpleLayer(), objOrder == 1);
 		} else if (objOrder == 3) {
-			drawPoint(mObj, req, cv, paint, rc, pair, array[i].typeInd == 0, i);
+			drawPoint(mObj, req, cv, paint, rc, pair, array[i].typeInd);
 		}
 		if (i % 25 == 0 && rc->interrupted()) {
 			return;
