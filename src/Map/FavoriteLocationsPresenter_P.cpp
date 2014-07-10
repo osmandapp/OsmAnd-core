@@ -70,7 +70,7 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
 
     // Create markers for all new favorite locations
     MapMarkerBuilder markerBuilder;
-    markerBuilder.setBaseOrder(std::numeric_limits<int>::max());
+    markerBuilder.setBaseOrder(std::numeric_limits<int>::max() - 1);
     markerBuilder.setIsAccuracyCircleSupported(false);
     markerBuilder.setPinIcon(
         owner->favoriteLocationPinIconBitmap
