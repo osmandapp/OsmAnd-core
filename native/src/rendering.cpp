@@ -26,7 +26,7 @@
 #include "rendering.h"
 #include "Logging.h"
 
-const int MAX_V = 75;
+const int MAX_V = 10;
 
 #if defined(WIN32)
 #undef min
