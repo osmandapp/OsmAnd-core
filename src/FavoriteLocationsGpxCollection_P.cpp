@@ -108,7 +108,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
 	
 	writer.writeEndDocument();
 
-	return false;
+	return true;
 }
 
 bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader)
