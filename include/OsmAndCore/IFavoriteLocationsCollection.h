@@ -32,6 +32,7 @@ namespace OsmAnd
             const QString& title = QString::null,
             const QString& group = QString::null,
             const ColorRGB color = ColorRGB()) = 0;
+        virtual std::shared_ptr<IFavoriteLocation> copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other) = 0;
         virtual bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation) = 0;
         virtual void clearFavoriteLocations() = 0;
 
@@ -41,7 +42,9 @@ namespace OsmAnd
         virtual QSet<QString> getGroups() const = 0;
 
         virtual void copyFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection) = 0;
+        virtual void copyFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection) = 0;
         virtual void mergeFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection) = 0;
+        virtual void mergeFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection) = 0;
 
         OSMAND_CALLABLE(CollectionChanged, void, const IFavoriteLocationsCollection* const collection);
         const ObservableAs<CollectionChanged> collectionChangeObservable;

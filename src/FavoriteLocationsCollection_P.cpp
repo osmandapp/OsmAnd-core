@@ -128,7 +128,44 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
     notifyCollectionChanged();
 }
 
+void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection)
+{
+    QWriteLocker scopedLocker(&_collectionLock);
+
+    doClearFavoriteLocations();
+    for (const auto& item : otherCollection)
+    {
+        std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+            _containerLink,
+            item->getPosition(),
+            item->getTitle(),
+            item->getGroup(),
+            item->getColor()));
+        _collection.insert(newItem.get(), newItem);
+    }
+
+    notifyCollectionChanged();
+}
+
 void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_ptr<IFavoriteLocation> >& otherCollection)
+{
+    QWriteLocker scopedLocker(&_collectionLock);
+
+    for (const auto& item : otherCollection)
+    {
+        std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+            _containerLink,
+            item->getPosition(),
+            item->getTitle(),
+            item->getGroup(),
+            item->getColor()));
+        _collection.insert(newItem.get(), newItem);
+    }
+
+    notifyCollectionChanged();
+}
+
+void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection)
 {
     QWriteLocker scopedLocker(&_collectionLock);
 

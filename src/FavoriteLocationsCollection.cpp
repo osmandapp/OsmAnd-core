@@ -1,6 +1,8 @@
 #include "FavoriteLocationsCollection.h"
 #include "FavoriteLocationsCollection_P.h"
 
+#include "IFavoriteLocation.h"
+
 OsmAnd::FavoriteLocationsCollection::FavoriteLocationsCollection()
 	: FavoriteLocationsCollection(new FavoriteLocationsCollection_P(this))
 {
@@ -23,6 +25,15 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::
     const ColorRGB color /*= ColorRGB()*/)
 {
     return _p->createFavoriteLocation(position, title, group, color);
+}
+
+std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other)
+{
+    return _p->createFavoriteLocation(
+        other->getPosition(),
+        other->getTitle(),
+        other->getGroup(),
+        other->getColor());
 }
 
 bool OsmAnd::FavoriteLocationsCollection::removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)
@@ -55,7 +66,17 @@ void OsmAnd::FavoriteLocationsCollection::copyFrom(const std::shared_ptr<const I
     _p->copyFrom(otherCollection->getFavoriteLocations());
 }
 
+void OsmAnd::FavoriteLocationsCollection::copyFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection)
+{
+    _p->copyFrom(otherCollection);
+}
+
 void OsmAnd::FavoriteLocationsCollection::mergeFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection)
 {
     _p->mergeFrom(otherCollection->getFavoriteLocations());
+}
+
+void OsmAnd::FavoriteLocationsCollection::mergeFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection)
+{
+    _p->mergeFrom(otherCollection);
 }
