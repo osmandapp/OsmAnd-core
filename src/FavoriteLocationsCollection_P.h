@@ -50,6 +50,7 @@ namespace OsmAnd
             const QString& group,
             const ColorRGB color);
         bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
+        bool removeFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations);
         void clearFavoriteLocations();
 
         unsigned int getFavoriteLocationsCount() const;

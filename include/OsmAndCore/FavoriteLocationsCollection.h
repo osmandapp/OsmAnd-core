@@ -37,6 +37,7 @@ namespace OsmAnd
             const ColorRGB color = ColorRGB());
         virtual std::shared_ptr<IFavoriteLocation> copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other);
         virtual bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
+        virtual bool removeFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations);
         virtual void clearFavoriteLocations();
 
         virtual unsigned int getFavoriteLocationsCount() const;

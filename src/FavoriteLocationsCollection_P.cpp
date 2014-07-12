@@ -52,6 +52,25 @@ bool OsmAnd::FavoriteLocationsCollection_P::removeFavoriteLocation(const std::sh
 	return wasRemoved;
 }
 
+bool OsmAnd::FavoriteLocationsCollection_P::removeFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations)
+{
+    QWriteLocker scopedLocker(&_collectionLock);
+
+    int removedCount = 0;
+    for (const auto& favoriteLocation : favoriteLocations)
+    {
+        const auto item = std::static_pointer_cast<FavoriteLocation>(favoriteLocation);
+        item->detach();
+        removedCount += _collection.remove(item.get());
+    }
+
+    const auto wasRemoved = (removedCount > 0);
+    if (wasRemoved)
+        notifyCollectionChanged();
+
+    return wasRemoved;
+}
+
 void OsmAnd::FavoriteLocationsCollection_P::clearFavoriteLocations()
 {
 	QWriteLocker scopedLocker(&_collectionLock);
