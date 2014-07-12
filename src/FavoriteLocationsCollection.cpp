@@ -66,6 +66,11 @@ void OsmAnd::FavoriteLocationsCollection::copyFrom(const std::shared_ptr<const I
     _p->copyFrom(otherCollection->getFavoriteLocations());
 }
 
+void OsmAnd::FavoriteLocationsCollection::copyFrom(const QList< std::shared_ptr<IFavoriteLocation> >& otherCollection)
+{
+    _p->copyFrom(otherCollection);
+}
+
 void OsmAnd::FavoriteLocationsCollection::copyFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection)
 {
     _p->copyFrom(otherCollection);
@@ -74,6 +79,11 @@ void OsmAnd::FavoriteLocationsCollection::copyFrom(const QList< std::shared_ptr<
 void OsmAnd::FavoriteLocationsCollection::mergeFrom(const std::shared_ptr<const IFavoriteLocationsCollection>& otherCollection)
 {
     _p->mergeFrom(otherCollection->getFavoriteLocations());
+}
+
+void OsmAnd::FavoriteLocationsCollection::mergeFrom(const QList< std::shared_ptr<IFavoriteLocation> >& otherCollection)
+{
+    _p->mergeFrom(otherCollection);
 }
 
 void OsmAnd::FavoriteLocationsCollection::mergeFrom(const QList< std::shared_ptr<const IFavoriteLocation> >& otherCollection)
