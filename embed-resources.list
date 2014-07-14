@@ -1,5 +1,10 @@
 /resources/rendering_styles/default.render.xml:map/styles/default.render.xml
 /resources/rendering_styles/default.map_styles_presets.xml:map/presets/default.map_styles_presets.xml
+/resources/rendering_styles/style-icons/drawable-mdpi/h_gray_blue_square_shield.png:map/shields/gray_blue_square_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_gray_brown_square_shield.png:map/shields/gray_brown_square_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_gray_gray_square_shield.png:map/shields/gray_gray_square_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_gray_green_square_shield.png:map/shields/gray_green_square_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_gray_red_square_shield.png:map/shields/gray_red_square_shield.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield1.png:map/shields/mot_shield1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield2.png:map/shields/mot_shield2.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_mot_shield3.png:map/shields/mot_shield3.png
@@ -48,7 +53,12 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_unc_shield6.png:map/shields/unc_shield6.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_unc_shield7.png:map/shields/unc_shield7.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_unc_shield8.png:map/shields/unc_shield8.png
-/resources/rendering_styles/style-icons/drawable-mdpi/h_white_shield.png:map/shields/white_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_white_blue_square_shield.png:map/shields/white_blue_square_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_white_brown_square_shield.png:map/shields/white_brown_square_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_white_gray_square_shield.png:map/shields/white_gray_square_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_white_green_square_shield.png:map/shields/white_green_square_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_white_red_round_shield.png:map/shields/white_red_round_shield.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_white_red_square_shield.png:map/shields/white_red_square_shield.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_amenity_grave_yard.png:map/shaders/amenity_grave_yard.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_arrow.png:map/shaders/arrow.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_beach.png:map/shaders/beach.png
