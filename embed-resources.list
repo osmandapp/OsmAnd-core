@@ -79,6 +79,8 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_nr21.png:map/shaders/nr21.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_nr2_night.png:map/shaders/nr2_night.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_orchard.png:map/shaders/orchard.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_osmc__yellow_diamond.png:map/shaders/osmc__yellow_diamond.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_osmc__yellow_diamond1.png:map/shaders/osmc__yellow_diamond1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_red_white_bar.png:map/shaders/osmc_red_white_bar.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_white_black_bar.png:map/shaders/osmc_white_black_bar.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_white_blue_bar.png:map/shaders/osmc_white_blue_bar.png
@@ -88,8 +90,6 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_white_yellow_bar.png:map/shaders/osmc_white_yellow_bar.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_yellow_diamond.png:map/shaders/osmc_yellow_diamond.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_yellow_diamond1.png:map/shaders/osmc_yellow_diamond1.png
-/resources/rendering_styles/style-icons/drawable-mdpi/h_osmc__yellow_diamond.png:map/shaders/osmc__yellow_diamond.png
-/resources/rendering_styles/style-icons/drawable-mdpi/h_osmc__yellow_diamond1.png:map/shaders/osmc__yellow_diamond1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_quarry2.png:map/shaders/quarry2.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_scrub.png:map/shaders/scrub.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_vineyard.png:map/shaders/vineyard.png
