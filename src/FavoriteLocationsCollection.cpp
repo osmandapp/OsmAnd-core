@@ -43,7 +43,7 @@ bool OsmAnd::FavoriteLocationsCollection::removeFavoriteLocation(const std::shar
 
 bool OsmAnd::FavoriteLocationsCollection::removeFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations)
 {
-    _p->removeFavoriteLocations(favoriteLocations);
+    return _p->removeFavoriteLocations(favoriteLocations);
 }
 
 void OsmAnd::FavoriteLocationsCollection::clearFavoriteLocations()
