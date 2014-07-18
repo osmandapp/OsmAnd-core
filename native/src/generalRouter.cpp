@@ -257,6 +257,9 @@ double GeneralRouter::defineVehicleSpeed(SHARED_PTR<RouteDataObject> road) {
 }
 
 double GeneralRouter::definePenaltyTransition(SHARED_PTR<RouteDataObject> road) {
+	if(!isObjContextAvailable(RouteDataObjectAttribute::PENALTY_TRANSITION)) {
+		return 0;
+	}
 	return getObjContext(RouteDataObjectAttribute::PENALTY_TRANSITION) .evaluateDouble(road, 0);
 }
 

@@ -330,6 +330,9 @@ private :
 
 	uint registerTagValueAttribute(const tag_value& r);
 
+	bool isObjContextAvailable(RouteDataObjectAttribute a) {
+		return objectAttributes.size() > (unsigned int)a;
+	}
 	RouteAttributeContext& getObjContext(RouteDataObjectAttribute a) {
 		return objectAttributes[(unsigned int)a];
 	}
