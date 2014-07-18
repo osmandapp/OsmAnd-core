@@ -358,11 +358,11 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 		}
 		if (ctx->planRouteIn2Directions()) {
 			forwardSearch = !nonHeuristicSegmentsComparator(graphDirectSegments.top(), graphReverseSegments.top());
-			if (graphDirectSegments.size() * 2 > graphReverseSegments.size()) {
-				forwardSearch = false;
-			} else if (graphDirectSegments.size() < 2 * graphReverseSegments.size()) {
-				forwardSearch = true;
-			}
+			//if (graphDirectSegments.size() * 2 > graphReverseSegments.size()) {
+			//	forwardSearch = false;
+			//} else if (graphDirectSegments.size() < 2 * graphReverseSegments.size()) {
+			//	forwardSearch = true;
+			//}
 		} else {
 
 			// different strategy : use onedirectional graph

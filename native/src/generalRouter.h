@@ -31,7 +31,8 @@ enum class RouteDataObjectAttribute : unsigned int {
 	ACCESS = 2, // "access"
 	OBSTACLES = 3, // "obstacle_time"
 	ROUTING_OBSTACLES = 4, // "obstacle"
-	ONEWAY = 5// "oneway"
+	ONEWAY = 5,// "oneway"
+	PENALTY_TRANSITION = 6 // 
 };
 
 enum class GeneralRouterProfile {
@@ -273,6 +274,11 @@ public:
 	 * return routing speed in m/s for vehicle for specified road
 	 */
 	double defineRoutingSpeed(SHARED_PTR<RouteDataObject> road);
+
+	/*
+	* return transition penalty between different road classes in seconds
+	*/
+	double definePenaltyTransition(SHARED_PTR<RouteDataObject> road);
 	
 	/**
 	 * return real speed in m/s for vehicle for specified road
@@ -290,6 +296,8 @@ public:
 	 * @return minimal speed at road in m/s
 	 */
 	double getMinDefaultSpeed();
+
+
 
 	/**
 	 * Used for A* routing to predict h(x) : it should be great any g(x)
