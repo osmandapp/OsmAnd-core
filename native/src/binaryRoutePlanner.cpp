@@ -427,12 +427,16 @@ float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject
 	float priority = ctx->config->router.defineSpeedPriority(road);
 	float speed = ctx->config->router.defineRoutingSpeed(road) * priority;
 	if (speed == 0) {
-		speed = ctx->config->router.getMinDefaultSpeed() * priority;
+		speed = ctx->config->router.getMinDefaultSpeed();
+		if(priority > 0) {
+			speed *= priority;
+		}
 	}
 	// speed can not exceed max default speed according to A*
 	if(speed > ctx->config->router.getMaxDefaultSpeed()) {
 		speed = ctx->config->router.getMaxDefaultSpeed();
 	}
+
 	return obstaclesTime + distOnRoadToPass / speed;
 }
 
@@ -920,7 +924,7 @@ vector<RouteSegmentResult> convertFinalSegmentToResults(RoutingContext* ctx, SHA
 	return result;
 }
 
-vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSideNavigation) {
+vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSideNavigation) {	
 	SHARED_PTR<RouteSegment> start = findRouteSegment(ctx->startX, ctx->startY, ctx);
 	if(start.get() == NULL) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Start point was not found [Native]");

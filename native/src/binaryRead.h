@@ -147,6 +147,17 @@ struct RouteDataObject {
 	bool loop(){
 		return pointsX[0] == pointsX[pointsX.size() - 1] && pointsY[0] == pointsY[pointsY.size() - 1] ; 
 	}
+
+	string getHighway() {
+		uint sz = types.size();
+		for(uint i=0; i < sz; i++) {
+			tag_value r = region->decodingRules[types[i]];
+			if(r.first == "highway") {
+				return r.second;
+			}
+		}
+		return "";
+	}
 	
 	bool roundabout(){
 		uint sz = types.size();

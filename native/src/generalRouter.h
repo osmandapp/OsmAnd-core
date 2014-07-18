@@ -128,7 +128,7 @@ class RouteAttributeContext {
 	friend class GeneralRouter;
 
 private:
-	vector<RouteAttributeEvalRule> rules;
+	vector<RouteAttributeEvalRule*> rules;
 	ParameterContext paramContext ;
 	GeneralRouter* router;
 
@@ -144,23 +144,22 @@ public:
 	}
 
 	RouteAttributeEvalRule* newEvaluationRule() {
-		RouteAttributeEvalRule c;
+		RouteAttributeEvalRule* c = new RouteAttributeEvalRule();
 		rules.push_back(c);
-		return &rules[rules.size() - 1];
+		return rules[rules.size() - 1];
 	}
 
 	void printRules() {
 		for (uint k = 0; k < rules.size(); k++) {
-			RouteAttributeEvalRule r = rules[k];
-			r.printRule(router);
+			RouteAttributeEvalRule* r = rules[k];
+			r->printRule(router);
 		}
 	}
 
 private:
 	double evaluate(dynbitset& types) {
-		for (uint k = 0; k < rules.size(); k++) {
-			RouteAttributeEvalRule r = rules[k];
-			double o = rules[k].eval(types, paramContext, router);
+		for (uint k = 0; k < rules.size(); k++) {			
+			double o = rules[k]->eval(types, paramContext, router);			
 			if (o != DOUBLE_MISSING) {
 				return o;
 			}
@@ -185,7 +184,7 @@ private:
 	}
 
 	double evaluateDouble(RoutingIndex* reg, std::vector<uint32_t>& types, double defValue) {
-		dynbitset local =  convert(reg, types);
+		dynbitset local =  convert(reg, types);		
 		double d = evaluate(local);
 		if(d == DOUBLE_MISSING) {
 			return defValue;

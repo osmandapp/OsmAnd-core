@@ -272,6 +272,21 @@ bool GeneralRouter::restrictionsAware() {
 	return _restrictionsAware;
 }
 
+int getClassRoad(std::string hw) {
+	if (hw =="motorway" || hw =="motorway_link" || 
+		hw =="trunk" || hw =="trunk_link") {
+		return 1;
+	} else if (hw == "primary" || hw == "primary_link") {
+		return 2;
+	} else if (hw == "secondary" || hw == "secondary_link") {
+		return 3;
+	} else if (hw == "tertiary" || hw == "tertiary_link") {
+		return 4;
+	}
+	return 5;
+	
+}
+
 double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment> segment, int segmentEnd, 
 		SHARED_PTR<RouteSegment> prev, int prevSegmentEnd) {
 	if(prev->road->pointTypes.size() > (uint)prevSegmentEnd && prev->road->pointTypes[prevSegmentEnd].size() > 0){
@@ -285,6 +300,12 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment> segment, int se
 			}
 		}
 	}
+	//int cl = getClassRoad(segment->getRoad()->getHighway());
+	//int clp = getClassRoad(prev->getRoad()->getHighway());
+	//if(clp < cl) {
+		//return (cl - clp) * 400;
+	//}
+
 	
 	if(segment->getRoad()->roundabout() && !prev->getRoad()->roundabout()) {
 		double rt = roundaboutTurn;
