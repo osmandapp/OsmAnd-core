@@ -740,6 +740,8 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
         _resourcesInRepository.insert(entry->id, qMove(entry));
     _resourcesInRepositoryLoaded = true;
 
+    owner->repositoryUpdateObservable.postNotify(owner);
+
     return true;
 }
 

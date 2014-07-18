@@ -281,6 +281,10 @@ namespace OsmAnd
             const QList< QString >& removed,
             const QList< QString >& updated);
         const ObservableAs<LocalResourcesChanged> localResourcesChangeObservable;
+        OSMAND_CALLABLE(RepositoryUpdated,
+            void,
+            const ResourcesManager* const resourcesManager);
+        const ObservableAs<RepositoryUpdated> repositoryUpdateObservable;
 
         const std::shared_ptr<const IOnlineTileSources>& onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
