@@ -65,7 +65,7 @@ QList< std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> > OsmAnd::MapAni
 {
     QMutexLocker scopedLocker(&_animationsMutex);
 
-    return copyAs< QList< std::shared_ptr<const IAnimation> > >(_animations.values());
+    return copyAs< QList< std::shared_ptr<const IAnimation> > >(_animations);
 }
 
 std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> OsmAnd::MapAnimator_P::getCurrentAnimationOf(const AnimatedValue value) const
@@ -90,7 +90,7 @@ void OsmAnd::MapAnimator_P::cancelAnimationOf(const AnimatedValue value)
     auto itAnimation = mutableIteratorOf(_animations);
     while (itAnimation.hasNext())
     {
-        const auto& animation = itAnimation.next().value();
+        const auto& animation = itAnimation.next();
 
         if (animation->animatedValue != value || !animation->isActive())
             continue;
@@ -104,7 +104,17 @@ void OsmAnd::MapAnimator_P::cancelAnimation(const std::shared_ptr<const IAnimati
 {
     QMutexLocker scopedLocker(&_animationsMutex);
 
-    _animations.remove(animation.get());
+    auto itOtherAnimation = mutableIteratorOf(_animations);
+    while (itOtherAnimation.hasNext())
+    {
+        const auto& otherAnimation = itOtherAnimation.next();
+
+        if (otherAnimation != animation)
+            continue;
+
+        itOtherAnimation.remove();
+        break;
+    }
 }
 
 void OsmAnd::MapAnimator_P::update(const float timePassed)
@@ -118,7 +128,7 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
     auto itAnimation = mutableIteratorOf(_animations);
     while(itAnimation.hasNext())
     {
-        const auto& animation = itAnimation.next().value();
+        const auto& animation = itAnimation.next();
 
         if (animation->process(timePassed))
             itAnimation.remove();
@@ -131,7 +141,7 @@ void OsmAnd::MapAnimator_P::animateZoomBy(const float deltaValue, const float du
 
     AnimationsCollection newAnimations;
     constructZoomAnimationByDelta(newAnimations, deltaValue, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateZoomTo(const float value, const float duration, const TimingFunction timingFunction)
@@ -140,7 +150,7 @@ void OsmAnd::MapAnimator_P::animateZoomTo(const float value, const float duratio
 
     AnimationsCollection newAnimations;
     constructZoomAnimationToValue(newAnimations, value, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateZoomWith(const float velocity, const float deceleration)
@@ -162,7 +172,7 @@ void OsmAnd::MapAnimator_P::animateTargetBy(const PointI64& deltaValue, const fl
 
     AnimationsCollection newAnimations;
     constructTargetAnimationByDelta(newAnimations, deltaValue, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateTargetTo(const PointI& value, const float duration, const TimingFunction timingFunction)
@@ -171,7 +181,7 @@ void OsmAnd::MapAnimator_P::animateTargetTo(const PointI& value, const float dur
 
     AnimationsCollection newAnimations;
     constructTargetAnimationToValue(newAnimations, value, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateTargetWith(const PointD& velocity, const PointD& deceleration)
@@ -195,7 +205,7 @@ void OsmAnd::MapAnimator_P::parabolicAnimateTargetBy(const PointI64& deltaValue,
 
     AnimationsCollection newAnimations;
     constructParabolicTargetAnimationByDelta(newAnimations, deltaValue, duration, targetTimingFunction, zoomTimingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::parabolicAnimateTargetTo(const PointI& value, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction)
@@ -204,7 +214,7 @@ void OsmAnd::MapAnimator_P::parabolicAnimateTargetTo(const PointI& value, const 
 
     AnimationsCollection newAnimations;
     constructParabolicTargetAnimationToValue(newAnimations, value, duration, targetTimingFunction, zoomTimingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration)
@@ -223,7 +233,7 @@ void OsmAnd::MapAnimator_P::animateAzimuthBy(const float deltaValue, const float
 
     AnimationsCollection newAnimations;
     constructAzimuthAnimationByDelta(newAnimations, deltaValue, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateAzimuthTo(const float value, const float duration, const TimingFunction timingFunction)
@@ -232,7 +242,7 @@ void OsmAnd::MapAnimator_P::animateAzimuthTo(const float value, const float dura
 
     AnimationsCollection newAnimations;
     constructAzimuthAnimationToValue(newAnimations, value, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateAzimuthWith(const float velocity, const float deceleration)
@@ -249,7 +259,7 @@ void OsmAnd::MapAnimator_P::animateElevationAngleBy(const float deltaValue, cons
     
     AnimationsCollection newAnimations;
     constructElevationAngleAnimationByDelta(newAnimations, deltaValue, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateElevationAngleTo(const float value, const float duration, const TimingFunction timingFunction)
@@ -258,7 +268,7 @@ void OsmAnd::MapAnimator_P::animateElevationAngleTo(const float value, const flo
 
     AnimationsCollection newAnimations;
     constructElevationAngleAnimationToValue(newAnimations, value, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateElevationAngleWith(const float velocity, const float deceleration)
@@ -290,7 +300,7 @@ void OsmAnd::MapAnimator_P::animateMoveBy(
         constructZeroizeAzimuthAnimation(newAnimations, duration, timingFunction);
     if (invZeroizeElevationAngle)
         constructInvZeroizeElevationAngleAnimation(newAnimations, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateMoveTo(
@@ -306,7 +316,7 @@ void OsmAnd::MapAnimator_P::animateMoveTo(
         constructZeroizeAzimuthAnimation(newAnimations, duration, timingFunction);
     if (invZeroizeElevationAngle)
         constructInvZeroizeElevationAngleAnimation(newAnimations, duration, timingFunction);
-    _animations.unite(newAnimations);
+    _animations.append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle)
@@ -388,7 +398,7 @@ void OsmAnd::MapAnimator_P::constructZoomAnimationByDelta(
         deltaValue, duration, 0.0f, timingFunction,
         _zoomGetter, _zoomSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructZoomAnimationToValue(
@@ -410,7 +420,7 @@ void OsmAnd::MapAnimator_P::constructZoomAnimationToValue(
         duration, 0.0f, timingFunction,
         _zoomGetter, _zoomSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructTargetAnimationByDelta(
@@ -427,7 +437,7 @@ void OsmAnd::MapAnimator_P::constructTargetAnimationByDelta(
         deltaValue, duration, 0.0f, timingFunction,
         _targetGetter, _targetSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructTargetAnimationToValue(
@@ -449,7 +459,7 @@ void OsmAnd::MapAnimator_P::constructTargetAnimationToValue(
         duration, 0.0f, timingFunction,
         _targetGetter, _targetSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta(
@@ -547,8 +557,8 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
         halfDuration, halfDuration, zoomTimingFunction,
         _zoomGetter, _zoomSetter, sharedContext));
 
-    outAnimation.insert(zoomOutAnimation.get(), qMove(zoomOutAnimation));
-    outAnimation.insert(zoomInAnimation.get(), qMove(zoomInAnimation));
+    outAnimation.push_back(qMove(zoomOutAnimation));
+    outAnimation.push_back(qMove(zoomInAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructAzimuthAnimationByDelta(
@@ -565,7 +575,7 @@ void OsmAnd::MapAnimator_P::constructAzimuthAnimationByDelta(
         deltaValue, duration, 0.0f, timingFunction,
         _azimuthGetter, _azimuthSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructAzimuthAnimationToValue(
@@ -587,7 +597,7 @@ void OsmAnd::MapAnimator_P::constructAzimuthAnimationToValue(
         duration, 0.0f, timingFunction,
         _azimuthGetter, _azimuthSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructElevationAngleAnimationByDelta(
@@ -604,7 +614,7 @@ void OsmAnd::MapAnimator_P::constructElevationAngleAnimationByDelta(
         deltaValue, duration, 0.0f, timingFunction,
         _elevationAngleGetter, _elevationAngleSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructElevationAngleAnimationToValue(
@@ -626,7 +636,7 @@ void OsmAnd::MapAnimator_P::constructElevationAngleAnimationToValue(
         duration, 0.0f, timingFunction,
         _elevationAngleGetter, _elevationAngleSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructZeroizeAzimuthAnimation(
@@ -647,7 +657,7 @@ void OsmAnd::MapAnimator_P::constructZeroizeAzimuthAnimation(
         duration, 0.0f, timingFunction,
         _azimuthGetter, _azimuthSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructInvZeroizeElevationAngleAnimation(
@@ -668,7 +678,7 @@ void OsmAnd::MapAnimator_P::constructInvZeroizeElevationAngleAnimation(
         duration, 0.0f, timingFunction,
         _elevationAngleGetter, _elevationAngleSetter));
 
-    outAnimation.insert(newAnimation.get(), qMove(newAnimation));
+    outAnimation.push_back(qMove(newAnimation));
 }
 
 OsmAnd::MapAnimator_P::GenericAnimation::GenericAnimation(

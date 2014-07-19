@@ -72,8 +72,14 @@ namespace OsmAnd
             // Elapsed time for processing skipped MapObject points (in seconds)
             float elapsedTimeForSkippedMapObjectsPoints;
 
+            // Number of points read from MapObjects that were skipped
+            unsigned int skippedMapObjectsPoints;
+
             // Elapsed time for processing not-skipped MapObject points (in seconds)
             float elapsedTimeForNotSkippedMapObjectsPoints;
+
+            // Number of points read from MapObjects that were not skipped
+            unsigned int notSkippedMapObjectsPoints;
 
             QString toString(const QString& prefix = QString::null) const;
         };

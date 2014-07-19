@@ -638,6 +638,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     {
                         const std::chrono::duration<float> mapObjectPoints_elapsed = std::chrono::high_resolution_clock::now() - mapObjectPoints_begin;
                         metric->elapsedTimeForSkippedMapObjectsPoints += mapObjectPoints_elapsed.count();
+                        metric->skippedMapObjectsPoints += points31.size();
                     }
 
                     cis->Skip(cis->BytesUntilLimit());
@@ -649,6 +650,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 {
                     const std::chrono::duration<float> mapObjectPoints_elapsed = std::chrono::high_resolution_clock::now() - mapObjectPoints_begin;
                     metric->elapsedTimeForNotSkippedMapObjectsPoints += mapObjectPoints_elapsed.count();
+                    metric->notSkippedMapObjectsPoints += points31.size();
                 }
 
                 // In case bbox is not fully calculated, complete this task

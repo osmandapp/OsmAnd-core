@@ -459,7 +459,7 @@ namespace OsmAnd
 
         volatile bool _isAnimationPaused;
         mutable QMutex _animationsMutex;
-        typedef QMap< const IAnimation*, std::shared_ptr<GenericAnimation> > AnimationsCollection;
+        typedef QList< std::shared_ptr<GenericAnimation> > AnimationsCollection;
         AnimationsCollection _animations;
 
         static std::shared_ptr<GenericAnimation> findAnimationOf(
