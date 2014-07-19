@@ -269,17 +269,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         "%d map objects (%d unique, %d shared) from %dx%d@%d in %fs:\n"
         "\topen %fs\n"
         "\tread %fs (filter-by-id %fs):\n"
-        "\t - visitedLevels = %d\n"
-        "\t - acceptedLevels = %d\n"
-        "\t - visitedNodes = %d\n"
-        "\t - acceptedNodes = %d\n"
-        "\t - elapsedTimeForNodes = %fs\n"
-        "\t - mapObjectsBlocksRead = %d\n"
-        "\t - visitedMapObjects = %d\n"
-        "\t - acceptedMapObjects = %d\n"
-        "\t - elapsedTimeForMapObjectsBlocks = %fs\n"
-        "\t - elapsedTimeForOnlyVisitedMapObjects = %fs\n"
-        "\t - elapsedTimeForOnlyAcceptedMapObjects = %fs\n"
+        "%s"
         "\t - average time per 1K only-visited map objects = %fms\n"
         "\t - average time per 1K only-accepted map objects = %fms\n"
         "\tprocess-ids %fs\n"
@@ -309,17 +299,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         total_Elapsed.count(),
         obtainDataInterface_Elapsed.count(),
         dataRead_Elapsed.count(), dataFilter,
-        dataRead_Metric.visitedLevels,
-        dataRead_Metric.acceptedLevels,
-        dataRead_Metric.visitedNodes,
-        dataRead_Metric.acceptedNodes,
-        dataRead_Metric.elapsedTimeForNodes,
-        dataRead_Metric.mapObjectsBlocksRead,
-        dataRead_Metric.visitedMapObjects,
-        dataRead_Metric.acceptedMapObjects,
-        dataRead_Metric.elapsedTimeForMapObjectsBlocks,
-        dataRead_Metric.elapsedTimeForOnlyVisitedMapObjects,
-        dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects,
+        qPrintable(dataRead_Metric.toString(QLatin1String("\t - "))),
         (dataRead_Metric.elapsedTimeForOnlyVisitedMapObjects * 1000.0f) / (static_cast<float>(dataRead_Metric.visitedMapObjects - dataRead_Metric.acceptedMapObjects) / 1000.0f),
         (dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects * 1000.0f) / (static_cast<float>(dataRead_Metric.acceptedMapObjects) / 1000.0f),
         dataIdsProcess_Elapsed.count(),

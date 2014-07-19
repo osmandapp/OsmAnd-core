@@ -60,7 +60,7 @@ namespace OsmAnd
             // Elapsed time for only-accepted MapObjects (in seconds)
             float elapsedTimeForOnlyAcceptedMapObjects;
 
-            QString toString() const;
+            QString toString(const QString& prefix = QString::null) const;
         };
     }
 }
