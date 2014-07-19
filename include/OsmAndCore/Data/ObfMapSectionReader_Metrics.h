@@ -33,11 +33,17 @@ namespace OsmAnd
             // Number of accepted levels
             unsigned int acceptedLevels;
 
+            // Elapsed time to check levels bboxes (in seconds)
+            float elapsedTimeForLevelsBbox;
+
             // Number of visited tree nodes
             unsigned int visitedNodes;
 
             // Number of accepted tree nodes
             unsigned int acceptedNodes;
+
+            // Elapsed time to check nodes bboxes (in seconds)
+            float elapsedTimeForNodesBbox;
 
             // Elapsed time for tree nodes (in seconds)
             float elapsedTimeForNodes;
@@ -59,6 +65,9 @@ namespace OsmAnd
 
             // Elapsed time for only-accepted MapObjects (in seconds)
             float elapsedTimeForOnlyAcceptedMapObjects;
+
+            // Elapsed time for processing MapObjects BBoxes (in seconds)
+            float elapsedTimeForMapObjectsBbox;
 
             QString toString(const QString& prefix = QString::null) const;
         };

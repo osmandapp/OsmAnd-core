@@ -445,7 +445,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 {
                     auto oldLimit = cis->PushLimit(length);
 
-                    readMapObject(reader, section, baseId, tree, mapObject, bbox31);
+                    readMapObject(reader, section, baseId, tree, mapObject, bbox31, metric);
                     assert(cis->BytesUntilLimit() == 0);
 
                     // Update metric
@@ -516,7 +516,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
     uint64_t baseId, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
     std::shared_ptr<OsmAnd::Model::BinaryMapObject>& mapObject,
-    const AreaI* bbox31)
+    const AreaI* bbox31,
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     auto cis = reader._codedInputStream.get();
 
@@ -578,9 +579,22 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     // Check if map object should be maintained
                     if (!shouldNotSkip && bbox31)
                     {
+                        // Update metric
+                        std::chrono::high_resolution_clock::time_point mapObjectBbox_begin;
+                        if (metric)
+                            mapObjectBbox_begin = std::chrono::high_resolution_clock::now();
+
                         shouldNotSkip = bbox31->contains(p);
 
                         objectBBox.enlargeToInclude(p);
+
+                        // Update metric
+                        if (metric)
+                        {
+                            const std::chrono::duration<float> mapObjectBbox_elapsed = std::chrono::high_resolution_clock::now() - mapObjectBbox_begin;
+                            metric->elapsedTimeForMapObjectsBbox += mapObjectBbox_elapsed.count();
+                        }
+
                         lastUnprocessedVertexForBBox = verticesCount;
                     }
                 }
@@ -622,7 +636,19 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 auto pPointForBBox = points31.data() + lastUnprocessedVertexForBBox;
                 while(lastUnprocessedVertexForBBox < points31.size())
                 {
+                    // Update metric
+                    std::chrono::high_resolution_clock::time_point mapObjectBbox_begin;
+                    if (metric)
+                        mapObjectBbox_begin = std::chrono::high_resolution_clock::now();
+
                     objectBBox.enlargeToInclude(*pPointForBBox);
+
+                    // Update metric
+                    if (metric)
+                    {
+                        const std::chrono::duration<float> mapObjectBbox_elapsed = std::chrono::high_resolution_clock::now() - mapObjectBbox_begin;
+                        metric->elapsedTimeForMapObjectsBbox += mapObjectBbox_elapsed.count();
+                    }
 
                     lastUnprocessedVertexForBBox++;
                     pPointForBBox++;
@@ -789,10 +815,23 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
         if (bbox31)
         {
+            // Update metric
+            std::chrono::high_resolution_clock::time_point bboxLevelCheck_begin;
+            if (metric)
+                bboxLevelCheck_begin = std::chrono::high_resolution_clock::now();
+
             const auto shouldSkip =
                 !bbox31->contains(mapLevel->_area31) &&
                 !mapLevel->_area31.contains(*bbox31) &&
                 !bbox31->intersects(mapLevel->_area31);
+
+            // Update metric
+            if (metric)
+            {
+                const std::chrono::duration<float> bboxLevelCheck_elapsed = std::chrono::high_resolution_clock::now() - bboxLevelCheck_begin;
+                metric->elapsedTimeForLevelsBbox += bboxLevelCheck_elapsed.count();
+            }
+
             if (shouldSkip)
                 continue;
         }
@@ -832,10 +871,23 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
             if (bbox31)
             {
+                // Update metric
+                std::chrono::high_resolution_clock::time_point bboxNodeCheck_begin;
+                if (metric)
+                    bboxNodeCheck_begin = std::chrono::high_resolution_clock::now();
+
                 const auto shouldSkip =
                     !bbox31->contains(rootNode->_area31) &&
                     !rootNode->_area31.contains(*bbox31) &&
                     !bbox31->intersects(rootNode->_area31);
+
+                // Update metric
+                if (metric)
+                {
+                    const std::chrono::duration<float> bboxNodeCheck_elapsed = std::chrono::high_resolution_clock::now() - bboxNodeCheck_begin;
+                    metric->elapsedTimeForNodesBbox += bboxNodeCheck_elapsed.count();
+                }
+
                 if (shouldSkip)
                     continue;
             }

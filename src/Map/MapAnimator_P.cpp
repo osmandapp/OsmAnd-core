@@ -487,17 +487,23 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
 {
     const auto halfDuration = duration / 2.0f;
 
-    const auto targetAnimation = findAnimationOf(MapAnimator::AnimatedValue::Target, outAnimation);
-
     const std::shared_ptr<AnimationContext> sharedContext(new AnimationContext());
     std::shared_ptr<GenericAnimation> zoomOutAnimation(new MapAnimator_P::Animation<float>(
         AnimatedValue::Zoom,
-        [this, targetAnimation]
-        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+        [this]
+        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
+            const auto targetAnimation = findAnimationOf(MapAnimator::AnimatedValue::Target, _animations);
+            if (!targetAnimation)
+                return 0.0f;
+
             PointI64 targetDeltaValue;
             bool ok = targetAnimation->obtainDeltaValueAsPointI64(targetDeltaValue);
-            assert(ok);
+            if (!ok)
+            {
+                assert(false);
+                return 0.0f;
+            }
 
             // Recalculate delta to tiles at current zoom base
             PointI64 deltaInTiles;
@@ -529,7 +535,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
     std::shared_ptr<GenericAnimation> zoomInAnimation(new MapAnimator_P::Animation<float>(
         AnimatedValue::Zoom,
         [this]
-        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
             // If shared context contains no data it means that parabolic effect was disabled
             if (sharedContext->storageList.isEmpty())
@@ -634,7 +640,7 @@ void OsmAnd::MapAnimator_P::constructZeroizeAzimuthAnimation(
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
         AnimatedValue::Azimuth,
         [this]
-        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
             return -azimuthGetter(context, sharedContext);
         },
@@ -655,7 +661,7 @@ void OsmAnd::MapAnimator_P::constructInvZeroizeElevationAngleAnimation(
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
         AnimatedValue::ElevationAngle,
         [this]
-        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
+        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
             return 90.0f - elevationAngleGetter(context, sharedContext);
         },

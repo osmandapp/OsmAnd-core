@@ -77,7 +77,8 @@ namespace OsmAnd
         static void readMapObject(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
             uint64_t baseId, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
             std::shared_ptr<OsmAnd::Model::BinaryMapObject>& mapObjectOut,
-            const AreaI* bbox31);
+            const AreaI* bbox31,
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
         enum : uint32_t {
             ShiftCoordinates = 5,
