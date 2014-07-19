@@ -8,6 +8,7 @@
 #include "QtExtensions.h"
 #include <QtMath>
 #include <QHash>
+#include <QMap>
 #include <QList>
 #include <QVector>
 #include <QMutex>
@@ -407,7 +408,7 @@ namespace OsmAnd
             {
                 QReadLocker scopedLocker(&_processLock);
 
-                if (!std::is_same<T, float>::value || !_initialValueCaptured)
+                if (!std::is_same<T, float>::value || !_deltaValueCaptured)
                     return false;
 
                 outValue = *reinterpret_cast<const float*>(&deltaValue);
@@ -458,7 +459,7 @@ namespace OsmAnd
 
         volatile bool _isAnimationPaused;
         mutable QMutex _animationsMutex;
-        typedef QHash< const IAnimation*, std::shared_ptr<GenericAnimation> > AnimationsCollection;
+        typedef QMap< const IAnimation*, std::shared_ptr<GenericAnimation> > AnimationsCollection;
         AnimationsCollection _animations;
 
         static std::shared_ptr<GenericAnimation> findAnimationOf(

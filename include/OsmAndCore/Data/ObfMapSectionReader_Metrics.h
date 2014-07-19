@@ -5,6 +5,7 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QString>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -17,6 +18,11 @@ namespace OsmAnd
         struct Metric_loadMapObjects
         {
             inline Metric_loadMapObjects()
+            {
+                reset();
+            }
+
+            inline void reset()
             {
                 memset(this, 0, sizeof(Metric_loadMapObjects));
             }
@@ -53,10 +59,10 @@ namespace OsmAnd
 
             // Elapsed time for only-accepted MapObjects (in seconds)
             float elapsedTimeForOnlyAcceptedMapObjects;
+
+            QString toString() const;
         };
-
-    } // namespace ObfMapSectionReader_Metrics
-
-} // namespace OsmAnd
+    }
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_MAP_SECTION_READER_METRICS_H_)

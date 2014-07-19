@@ -9,6 +9,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
+#include <QMap>
 #include <QList>
 #include <QVector>
 
@@ -18,6 +19,12 @@ namespace OsmAnd
     Q_DECL_CONSTEXPR QMutableHashIterator<KEY, VALUE> mutableIteratorOf(QHash<KEY, VALUE>& container)
     {
         return QMutableHashIterator<KEY, VALUE>(container);
+    }
+
+    template<typename KEY, typename VALUE>
+    Q_DECL_CONSTEXPR QMutableMapIterator<KEY, VALUE> mutableIteratorOf(QMap<KEY, VALUE>& container)
+    {
+        return QMutableMapIterator<KEY, VALUE>(container);
     }
 
     template<typename T>
