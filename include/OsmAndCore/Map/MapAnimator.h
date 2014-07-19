@@ -100,6 +100,8 @@ namespace OsmAnd
 
         QList< std::shared_ptr<const IAnimation> > getAnimations() const;
         std::shared_ptr<const IAnimation> getCurrentAnimationOf(const AnimatedValue value) const;
+        void cancelAnimationOf(const AnimatedValue value);
+        void cancelAnimation(const std::shared_ptr<const IAnimation>& animation);
 
         void update(const float timePassed);
 

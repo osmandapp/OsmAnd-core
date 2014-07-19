@@ -65,12 +65,7 @@ QList< std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> > OsmAnd::MapAni
 {
     QMutexLocker scopedLocker(&_animationsMutex);
 
-    QList< std::shared_ptr<const IAnimation> > animations;
-    animations.reserve(_animations.count());
-    for (const auto& animation : constOf(_animations))
-        animations.push_back(std::static_pointer_cast<const IAnimation>(animation));
-
-    return animations;
+    return copyAs< QList< std::shared_ptr<const IAnimation> > >(_animations.values());
 }
 
 std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> OsmAnd::MapAnimator_P::getCurrentAnimationOf(const AnimatedValue value) const
@@ -86,6 +81,30 @@ std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> OsmAnd::MapAnimator_P::
     }
 
     return nullptr;
+}
+
+void OsmAnd::MapAnimator_P::cancelAnimationOf(const AnimatedValue value)
+{
+    QMutexLocker scopedLocker(&_animationsMutex);
+
+    auto itAnimation = mutableIteratorOf(_animations);
+    while (itAnimation.hasNext())
+    {
+        const auto& animation = itAnimation.next().value();
+
+        if (animation->animatedValue != value || !animation->isActive())
+            continue;
+
+        itAnimation.remove();
+        break;
+    }
+}
+
+void OsmAnd::MapAnimator_P::cancelAnimation(const std::shared_ptr<const IAnimation>& animation)
+{
+    QMutexLocker scopedLocker(&_animationsMutex);
+
+    _animations.remove(animation.get());
 }
 
 void OsmAnd::MapAnimator_P::update(const float timePassed)

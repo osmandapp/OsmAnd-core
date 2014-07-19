@@ -59,6 +59,16 @@ std::shared_ptr<const OsmAnd::MapAnimator::IAnimation> OsmAnd::MapAnimator::getC
     return _p->getCurrentAnimationOf(value);
 }
 
+void OsmAnd::MapAnimator::cancelAnimationOf(const AnimatedValue value)
+{
+    _p->cancelAnimationOf(value);
+}
+
+void OsmAnd::MapAnimator::cancelAnimation(const std::shared_ptr<const IAnimation>& animation)
+{
+    _p->cancelAnimation(animation);
+}
+
 void OsmAnd::MapAnimator::update(const float timePassed)
 {
     _p->update(timePassed);

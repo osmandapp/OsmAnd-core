@@ -452,7 +452,7 @@ namespace OsmAnd
 
         volatile bool _isAnimationPaused;
         mutable QMutex _animationsMutex;
-        QList< std::shared_ptr<GenericAnimation> > _animations;
+        QHash< const IAnimation*, std::shared_ptr<GenericAnimation> > _animations;
 
         void constructZoomAnimationByDelta(
             QList< std::shared_ptr<GenericAnimation> >& outAnimation,
@@ -555,6 +555,8 @@ namespace OsmAnd
 
         QList< std::shared_ptr<const IAnimation> > getAnimations() const;
         std::shared_ptr<const IAnimation> getCurrentAnimationOf(const AnimatedValue value) const;
+        void cancelAnimationOf(const AnimatedValue value);
+        void cancelAnimation(const std::shared_ptr<const IAnimation>& animation);
 
         void setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer);
 
