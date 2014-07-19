@@ -452,75 +452,80 @@ namespace OsmAnd
 
         volatile bool _isAnimationPaused;
         mutable QMutex _animationsMutex;
-        QHash< const IAnimation*, std::shared_ptr<GenericAnimation> > _animations;
+        typedef QHash< const IAnimation*, std::shared_ptr<GenericAnimation> > AnimationsCollection;
+        AnimationsCollection _animations;
+
+        static std::shared_ptr<GenericAnimation> findAnimationOf(
+            const MapAnimator::AnimatedValue value,
+            const AnimationsCollection& collection);
 
         void constructZoomAnimationByDelta(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructZoomAnimationToValue(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float value,
             const float duration,
             const TimingFunction timingFunction);
 
         void constructTargetAnimationByDelta(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const PointI64& deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructTargetAnimationToValue(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const PointI& value,
             const float duration,
             const TimingFunction timingFunction);
 
         void constructParabolicTargetAnimationByDelta(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const PointI64& deltaValue,
             const float duration,
             const TimingFunction targetTimingFunction,
             const TimingFunction zoomTimingFunction);
         void constructParabolicTargetAnimationToValue(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const PointI& value,
             const float duration,
             const TimingFunction targetTimingFunction,
             const TimingFunction zoomTimingFunction);
         void constructParabolicTargetAnimation_Zoom(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float duration,
             const TimingFunction zoomTimingFunction);
 
         void constructAzimuthAnimationByDelta(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructAzimuthAnimationToValue(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float value,
             const float duration,
             const TimingFunction timingFunction);
 
         void constructElevationAngleAnimationByDelta(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructElevationAngleAnimationToValue(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float value,
             const float duration,
             const TimingFunction timingFunction);
 
         void constructZeroizeAzimuthAnimation(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float duration,
             const TimingFunction timingFunction);
         void constructInvZeroizeElevationAngleAnimation(
-            QList< std::shared_ptr<GenericAnimation> >& outAnimation,
+            AnimationsCollection& outAnimation,
             const float duration,
             const TimingFunction timingFunction);
 
