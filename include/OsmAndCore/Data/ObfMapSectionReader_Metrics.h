@@ -69,6 +69,12 @@ namespace OsmAnd
             // Elapsed time for processing MapObjects BBoxes (in seconds)
             float elapsedTimeForMapObjectsBbox;
 
+            // Elapsed time for processing skipped MapObject points (in seconds)
+            float elapsedTimeForSkippedMapObjectsPoints;
+
+            // Elapsed time for processing not-skipped MapObject points (in seconds)
+            float elapsedTimeForNotSkippedMapObjectsPoints;
+
             QString toString(const QString& prefix = QString::null) const;
         };
     }

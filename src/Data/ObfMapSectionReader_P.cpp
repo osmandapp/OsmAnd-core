@@ -540,6 +540,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         case OBF::MapData::kAreaCoordinatesFieldNumber:
         case OBF::MapData::kCoordinatesFieldNumber:
             {
+                // Update metric
+                std::chrono::high_resolution_clock::time_point mapObjectPoints_begin;
+                if (metric)
+                    mapObjectPoints_begin = std::chrono::high_resolution_clock::now();
+
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
@@ -628,8 +633,22 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 // If map object didn't fit, skip it's entire content
                 if (!shouldNotSkip)
                 {
+                    // Update metric
+                    if (metric)
+                    {
+                        const std::chrono::duration<float> mapObjectPoints_elapsed = std::chrono::high_resolution_clock::now() - mapObjectPoints_begin;
+                        metric->elapsedTimeForSkippedMapObjectsPoints += mapObjectPoints_elapsed.count();
+                    }
+
                     cis->Skip(cis->BytesUntilLimit());
                     break;
+                }
+
+                // Update metric
+                if (metric)
+                {
+                    const std::chrono::duration<float> mapObjectPoints_elapsed = std::chrono::high_resolution_clock::now() - mapObjectPoints_begin;
+                    metric->elapsedTimeForNotSkippedMapObjectsPoints += mapObjectPoints_elapsed.count();
                 }
 
                 // In case bbox is not fully calculated, complete this task

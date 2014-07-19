@@ -20,6 +20,8 @@ QString OsmAnd::ObfMapSectionReader_Metrics::Metric_loadMapObjects::toString(con
     output += prefix + QString(QLatin1String("elapsedTimeForOnlyVisitedMapObjects = %1s\n")).arg(elapsedTimeForOnlyVisitedMapObjects);
     output += prefix + QString(QLatin1String("elapsedTimeForOnlyAcceptedMapObjects = %1s\n")).arg(elapsedTimeForOnlyAcceptedMapObjects);
     output += prefix + QString(QLatin1String("elapsedTimeForMapObjectsBbox = %1s\n")).arg(elapsedTimeForMapObjectsBbox);
+    output += prefix + QString(QLatin1String("elapsedTimeForSkippedMapObjectsPoints = %1s\n")).arg(elapsedTimeForSkippedMapObjectsPoints);
+    output += prefix + QString(QLatin1String("elapsedTimeForNotSkippedMapObjectsPoints = %1s\n")).arg(elapsedTimeForNotSkippedMapObjectsPoints);
 
     return output;
 }
