@@ -295,6 +295,7 @@ namespace OsmAnd
             T _initialValue;
             bool _initialValueCaptured;
             T _deltaValue;
+            bool _deltaValueCaptured;
             T _currentValue;
             bool _currentValueCalculatedOnce;
         public:
@@ -310,6 +311,7 @@ namespace OsmAnd
                 : GenericAnimation(animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
                 , _deltaValue(deltaValue_)
+                , _deltaValueCaptured(true)
                 , _currentValueCalculatedOnce(false)
                 , deltaValue(_deltaValue)
                 , deltaValueObtainer(nullptr)
@@ -331,6 +333,7 @@ namespace OsmAnd
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
                 : GenericAnimation(animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
+                , _deltaValueCaptured(false)
                 , deltaValue(_deltaValue)
                 , deltaValueObtainer(deltaValueObtainer_)
                 , obtainer(obtainer_)
@@ -361,7 +364,10 @@ namespace OsmAnd
                     _initialValue = obtainer(_ownContext, _sharedContext);
                     _initialValueCaptured = true;
                     if (deltaValueObtainer)
+                    {
                         _deltaValue = deltaValueObtainer(_ownContext, _sharedContext);
+                        _deltaValueCaptured = true;
+                    }
                     if (isZero(_deltaValue))
                         return true;
 
@@ -432,7 +438,7 @@ namespace OsmAnd
             {
                 QReadLocker scopedLocker(&_processLock);
 
-                if (!std::is_same<T, PointI64>::value || !_initialValueCaptured)
+                if (!std::is_same<T, PointI64>::value || !_deltaValueCaptured)
                     return false;
 
                 outValue = *reinterpret_cast<const PointI64*>(&deltaValue);
