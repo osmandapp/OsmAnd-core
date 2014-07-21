@@ -429,6 +429,10 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
             return;
         case OBF::MapDataBlock::kBaseIdFieldNumber:
             cis->ReadVarint64(&baseId);
+            //////////////////////////////////////////////////////////////////////////
+            //if (bbox31)
+            //    LogPrintf(LogSeverityLevel::Debug, "BBOX %d %d %d %d - MAP BLOCK %" PRIi64, bbox31->top, bbox31->left, bbox31->bottom, bbox31->right, baseId);
+            //////////////////////////////////////////////////////////////////////////
             break;
         case OBF::MapDataBlock::kDataObjectsFieldNumber:
             {

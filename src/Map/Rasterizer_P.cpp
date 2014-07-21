@@ -1542,7 +1542,7 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
         // Hit-test
         if (!intersect)
         {
-            if (context._largerArea31.contains(vertex))
+            if (context._largerArea31.contains(PointI(vertex)))
             {
                 intersect = true;
             }

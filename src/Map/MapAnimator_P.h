@@ -11,7 +11,6 @@
 #include <QMap>
 #include <QList>
 #include <QVector>
-#include <QMutex>
 #include <QReadWriteLock>
 #include <QVariant>
 
@@ -32,6 +31,7 @@ namespace OsmAnd
         typedef MapAnimator::TimingFunction TimingFunction;
         typedef MapAnimator::AnimatedValue AnimatedValue;
         typedef MapAnimator::IAnimation IAnimation;
+        typedef MapAnimator::Key Key;
 
     private:
     protected:
@@ -53,12 +53,14 @@ namespace OsmAnd
         protected:
             mutable QReadWriteLock _processLock;
 
+            bool _isPaused;
             float _timePassed;
 
             AnimationContext _ownContext;
             const std::shared_ptr<AnimationContext> _sharedContext;
         
             GenericAnimation(
+                const Key key,
                 const AnimatedValue animatedValue,
                 const float duration,
                 const float delay,
@@ -266,6 +268,7 @@ namespace OsmAnd
 
             virtual bool process(const float timePassed) = 0;
 
+            const Key key;
             const AnimatedValue animatedValue;
 
             const float delay;
@@ -273,14 +276,19 @@ namespace OsmAnd
 
             const TimingFunction timingFunction;
 
+            virtual Key getKey() const;
             virtual AnimatedValue getAnimatedValue() const;
-
-            virtual bool isActive() const;
 
             virtual float getTimePassed() const;
             virtual float getDelay() const;
             virtual float getDuration() const;
             virtual TimingFunction getTimingFunction() const;
+
+            virtual void pause();
+            virtual void resume();
+            virtual bool isPaused() const;
+
+            virtual bool isPlaying() const;
         };
 
         template <typename T>
@@ -301,6 +309,7 @@ namespace OsmAnd
             bool _currentValueCalculatedOnce;
         public:
             Animation(
+                const Key key_,
                 const AnimatedValue animatedValue_,
                 const T deltaValue_,
                 const float duration_,
@@ -309,7 +318,7 @@ namespace OsmAnd
                 const GetInitialValueMethod obtainer_,
                 const ApplierMethod applier_,
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
-                : GenericAnimation(animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
+                : GenericAnimation(key_, animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
                 , _deltaValue(deltaValue_)
                 , _deltaValueCaptured(true)
@@ -324,6 +333,7 @@ namespace OsmAnd
             }
 
             Animation(
+                const Key key_,
                 const AnimatedValue animatedValue_,
                 const GetDeltaValueMethod deltaValueObtainer_,
                 const float duration_,
@@ -332,7 +342,7 @@ namespace OsmAnd
                 const GetInitialValueMethod obtainer_,
                 const ApplierMethod applier_,
                 const std::shared_ptr<AnimationContext>& sharedContext_ = nullptr)
-                : GenericAnimation(animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
+                : GenericAnimation(key_, animatedValue_, duration_, delay_, timingFunction_, sharedContext_)
                 , _initialValueCaptured(false)
                 , _deltaValueCaptured(false)
                 , deltaValue(_deltaValue)
@@ -457,82 +467,94 @@ namespace OsmAnd
             }
         };
 
-        volatile bool _isAnimationPaused;
-        mutable QMutex _animationsMutex;
         typedef QList< std::shared_ptr<GenericAnimation> > AnimationsCollection;
-        AnimationsCollection _animations;
 
-        static std::shared_ptr<GenericAnimation> findAnimationOf(
-            const MapAnimator::AnimatedValue value,
-            const AnimationsCollection& collection);
+        mutable QMutex _updateLock;
+        volatile bool _isPaused;
+
+        mutable QReadWriteLock _animationsCollectionLock;
+        QHash<Key, AnimationsCollection> _animationsByKey;
 
         void constructZoomAnimationByDelta(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructZoomAnimationToValue(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float value,
             const float duration,
             const TimingFunction timingFunction);
 
         void constructTargetAnimationByDelta(
             AnimationsCollection& outAnimation,
+            const Key key,
             const PointI64& deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructTargetAnimationToValue(
             AnimationsCollection& outAnimation,
+            const Key key,
             const PointI& value,
             const float duration,
             const TimingFunction timingFunction);
 
         void constructParabolicTargetAnimationByDelta(
             AnimationsCollection& outAnimation,
+            const Key key,
             const PointI64& deltaValue,
             const float duration,
             const TimingFunction targetTimingFunction,
             const TimingFunction zoomTimingFunction);
         void constructParabolicTargetAnimationToValue(
             AnimationsCollection& outAnimation,
+            const Key key,
             const PointI& value,
             const float duration,
             const TimingFunction targetTimingFunction,
             const TimingFunction zoomTimingFunction);
         void constructParabolicTargetAnimation_Zoom(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float duration,
             const TimingFunction zoomTimingFunction);
 
         void constructAzimuthAnimationByDelta(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructAzimuthAnimationToValue(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float value,
             const float duration,
             const TimingFunction timingFunction);
 
         void constructElevationAngleAnimationByDelta(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float deltaValue,
             const float duration,
             const TimingFunction timingFunction);
         void constructElevationAngleAnimationToValue(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float value,
             const float duration,
             const TimingFunction timingFunction);
 
         void constructZeroizeAzimuthAnimation(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float duration,
             const TimingFunction timingFunction);
         void constructInvZeroizeElevationAngleAnimation(
             AnimationsCollection& outAnimation,
+            const Key key,
             const float duration,
             const TimingFunction timingFunction);
 
@@ -555,60 +577,129 @@ namespace OsmAnd
         PointI64 targetGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
         const Animation<PointI64>::ApplierMethod _targetSetter;
         void targetSetter(const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext);
+
+        static std::shared_ptr<GenericAnimation> findCurrentAnimation(const AnimatedValue animatedValue, const AnimationsCollection& collection);
     public:
         ~MapAnimator_P();
 
-        bool isAnimationPaused() const;
-        bool isAnimationRunning() const;
-
-        void pauseAnimation();
-        void resumeAnimation();
-        void cancelAnimation();
-
-        QList< std::shared_ptr<const IAnimation> > getAnimations() const;
-        std::shared_ptr<const IAnimation> getCurrentAnimationOf(const AnimatedValue value) const;
-        void cancelAnimationOf(const AnimatedValue value);
-        void cancelAnimation(const std::shared_ptr<const IAnimation>& animation);
-
         void setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer);
+
+        bool isPaused() const;
+        void pause();
+        void resume();
+
+        QList< std::shared_ptr<IAnimation> > getAnimations(const Key key);
+        QList< std::shared_ptr<const IAnimation> > getAnimations(const Key key) const;
+        bool pauseAnimations(const Key key);
+        bool resumeAnimations(const Key key);
+        bool cancelAnimations(const Key key);
+
+        std::shared_ptr<IAnimation> getCurrentAnimation(const Key key, const AnimatedValue animatedValue);
+        std::shared_ptr<const IAnimation> getCurrentAnimation(const Key key, const AnimatedValue animatedValue) const;
+
+        QList< std::shared_ptr<IAnimation> > getAllAnimations();
+        QList< std::shared_ptr<const IAnimation> > getAllAnimations() const;
+        void cancelAllAnimations();
 
         void update(const float timePassed);
 
-        void animateZoomBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateZoomTo(const float value, const float duration, const TimingFunction timingFunction);
-        void animateZoomWith(const float velocity, const float deceleration);
+        void animateZoomBy(
+            const float deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateZoomTo(
+            const float value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateZoomWith(
+            const float velocity,
+            const float deceleration,
+            const Key key);
 
-        void animateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateTargetTo(const PointI& value, const float duration, const TimingFunction timingFunction);
-        void animateTargetWith(const PointD& velocity, const PointD& deceleration);
+        void animateTargetBy(
+            const PointI64& deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateTargetTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateTargetWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const Key key);
 
-        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
-        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
-        void parabolicAnimateTargetTo(const PointI& value, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
-        void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
+        void parabolicAnimateTargetBy(
+            const PointI64& deltaValue,
+            const float duration,
+            const TimingFunction targetTimingFunction,
+            const TimingFunction zoomTimingFunction,
+            const Key key);
+        void parabolicAnimateTargetTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction targetTimingFunction,
+            const TimingFunction zoomTimingFunction,
+            const Key key);
+        void parabolicAnimateTargetWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const Key key);
 
-        void animateAzimuthBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateAzimuthTo(const float value, const float duration, const TimingFunction timingFunction);
-        void animateAzimuthWith(const float velocity, const float deceleration);
+        void animateAzimuthBy(
+            const float deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateAzimuthTo(
+            const float value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateAzimuthWith(
+            const float velocity,
+            const float deceleration,
+            const Key key);
 
-        void animateElevationAngleBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateElevationAngleTo(const float value, const float duration, const TimingFunction timingFunction);
-        void animateElevationAngleWith(const float velocity, const float deceleration);
+        void animateElevationAngleBy(
+            const float deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateElevationAngleTo(
+            const float value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateElevationAngleWith(
+            const float velocity,
+            const float deceleration,
+            const Key key);
 
         void animateMoveBy(
-            const PointI& deltaValue, const float duration,
-            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const TimingFunction timingFunction);
-        void animateMoveBy(
-            const PointI64& deltaValue, const float duration,
-            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const TimingFunction timingFunction);
+            const PointI64& deltaValue,
+            const float duration,
+            const bool zeroizeAzimuth,
+            const bool invZeroizeElevationAngle,
+            const TimingFunction timingFunction,
+            const Key key);
         void animateMoveTo(
-            const PointI& value, const float duration,
-            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const TimingFunction timingFunction);
-        void animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle);
+            const PointI& value,
+            const float duration,
+            const bool zeroizeAzimuth,
+            const bool invZeroizeElevationAngle,
+            const TimingFunction timingFunction,
+            const Key key);
+        void animateMoveWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const bool zeroizeAzimuth,
+            const bool invZeroizeElevationAngle,
+            const Key key);
 
     friend class OsmAnd::MapAnimator;
     };

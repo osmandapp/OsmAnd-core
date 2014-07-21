@@ -2041,13 +2041,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         OOBBF oobb(bboxInDirection, directionAngle);
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-        oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
         if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) != MapSymbol::IgnoredByIntersectionTest)
         {
 #if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
             // Check intersections
-            const auto intersects = intersections.test(oobb, false,
+            const auto intersects = intersections.test(OOBBI(oobb), false,
                 [symbolGroupPtr]
                 (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                 {
@@ -2068,7 +2068,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
         {
             const auto& symbolContent = symbol->content;
-            const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
+            const auto hasSimilarContent = intersections.test(OOBBI(oobb.getEnlargedBy(PointF(symbol->minDistance))), false,
                 [symbolContent, symbolGroupPtr]
                 (const std::shared_ptr<const MapSymbol>& otherSymbol_, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                 {
@@ -2083,7 +2083,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             if (hasSimilarContent)
             {
 #if OSMAND_DEBUG && 0
-                getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+                getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(PointF(symbol->minDistance)).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
                 getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
 #endif // OSMAND_DEBUG
                 return false;
@@ -2093,7 +2093,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
         {
             // Insert into quad-tree
-            if (!intersections.insert(symbol, oobb))
+            if (!intersections.insert(symbol, OOBBI(oobb)))
             {
 #if OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
@@ -2444,13 +2444,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         OOBBF oobb(bboxInDirection, directionAngle);
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-        oobb.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
         if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) != MapSymbol::IgnoredByIntersectionTest)
         {
 #if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
             // Check intersections
-            const auto intersects = intersections.test(oobb, false,
+            const auto intersects = intersections.test(OOBBI(oobb), false,
                 [symbolGroupPtr]
                 (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                 {
@@ -2471,7 +2471,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
         {
             const auto& symbolContent = symbol->content;
-            const auto hasSimilarContent = intersections.test(oobb.getEnlargedBy(symbol->minDistance), false,
+            const auto hasSimilarContent = intersections.test(OOBBI(oobb).getEnlargedBy(symbol->minDistance), false,
                 [symbolContent, symbolGroupPtr]
                 (const std::shared_ptr<const MapSymbol>& otherSymbol_, const IntersectionsQuadTree::BBox& otherBBox) -> bool
                 {
@@ -2486,7 +2486,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
             if (hasSimilarContent)
             {
 #if OSMAND_DEBUG && 0
-                getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+                getRenderer()->_debugStage.addRect2D(oobb.getEnlargedBy(PointF(symbol->minDistance)).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
                 getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
 #endif // OSMAND_DEBUG
                 return false;
@@ -2496,7 +2496,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
         if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
         {
             // Insert into quad-tree
-            if (!intersections.insert(symbol, oobb))
+            if (!intersections.insert(symbol, OOBBI(oobb)))
             {
 #if OSMAND_SHOW_SYMBOLS_SKIPPED_BY_INTERSECTION_TEST
                 getRenderer()->_debugStage.addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);

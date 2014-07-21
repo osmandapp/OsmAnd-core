@@ -370,10 +370,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     internalState->frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
 
     const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase));
-    internalState->frustum2D31.p0 = (internalState->frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31);
-    internalState->frustum2D31.p1 = (internalState->frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31);
-    internalState->frustum2D31.p2 = (internalState->frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31);
-    internalState->frustum2D31.p3 = (internalState->frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31);
+    internalState->frustum2D31.p0 = PointI((internalState->frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31));
+    internalState->frustum2D31.p1 = PointI((internalState->frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31));
+    internalState->frustum2D31.p2 = PointI((internalState->frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31));
+    internalState->frustum2D31.p3 = PointI((internalState->frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31));
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* internalState, const MapRendererState& state)
@@ -405,9 +405,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
         const auto xMax = qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x));
         const auto yMin = qMin(qMin(p0.y, p1.y), qMin(p2.y, p3.y));
         const auto yMax = qMax(qMax(p0.y, p1.y), qMax(p2.y, p3.y));
-        for(auto x = xMin; x <= xMax; x++)
+        for (auto x = xMin; x <= xMax; x++)
         {
-            for(auto y = yMin; y <= yMax; y++)
+            for (auto y = yMin; y <= yMax; y++)
             {
                 TileId tileId;
                 tileId.x = x + internalState->targetTileId.x;
@@ -461,11 +461,11 @@ OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
     return static_cast<OsmAnd::GPUAPI_OpenGL*>(gpuAPI.get());
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreen( const MapRendererState& state )
+float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreen(const MapRendererState& state)
 {
     const auto& rasterMapProvider = state.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)];
     if (!rasterMapProvider)
-        return static_cast<float>(DefaultReferenceTileSizeOnScreen) * setupOptions.displayDensityFactor;
+        return static_cast<float>(DefaultReferenceTileSizeOnScreen)* setupOptions.displayDensityFactor;
 
     auto tileProvider = std::static_pointer_cast<IMapRasterBitmapTileProvider>(rasterMapProvider);
     return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensityFactor());
@@ -484,7 +484,7 @@ float OsmAnd::AtlasMapRenderer_OpenGL::getScaledTileSizeOnScreen()
     return getReferenceTileSizeOnScreen(state) * internalState.tileScaleFactor;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint( const PointI& screenPoint, PointI& location31 )
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31)
 {
     PointI64 location;
     if (!getLocationFromScreenPoint(screenPoint, location))
@@ -494,7 +494,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint( const PointI& 
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint( const PointI& screenPoint, PointI64& location )
+bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location)
 {
     InternalState internalState;
     bool ok = updateInternalState(&internalState, state);
@@ -528,8 +528,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint( const PointI& 
     x *= tileSize31;
     y *= tileSize31;
 
-    location.x = static_cast<int64_t>(x) + (internalState.targetTileId.x << zoomDiff);
-    location.y = static_cast<int64_t>(y) + (internalState.targetTileId.y << zoomDiff);
-    
+    location.x = static_cast<int64_t>(x)+(internalState.targetTileId.x << zoomDiff);
+    location.y = static_cast<int64_t>(y)+(internalState.targetTileId.y << zoomDiff);
+
     return true;
 }

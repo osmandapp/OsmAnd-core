@@ -24,8 +24,10 @@ namespace OsmAnd
     {
         typedef T CoordType;
         typedef Point<T> PointT;
-        typedef typename std::conditional<std::is_integral<T>::value, int64_t, double>::type LargerSignedCoordType;
-        typedef typename std::conditional<std::is_integral<T>::value, uint64_t, double>::type LargerUnsignedCoordType;
+
+        typedef typename std::conditional<std::is_integral<T>::value, int64_t, double>::type MorePreciseSignedCoordType;
+        typedef typename std::conditional<std::is_integral<T>::value, uint64_t, double>::type MorePreciseUnsignedCoordType;
+        typedef typename std::conditional<std::is_signed<T>::value, MorePreciseSignedCoordType, MorePreciseUnsignedCoordType>::type MorePreciseCoordType;
 
         T x, y;
 
@@ -35,11 +37,17 @@ namespace OsmAnd
             this->y = 0;
         }
 
-        template<typename T_>
-        inline Point(const Point<T_>& that)
+        inline Point(const PointT& that)
         {
             this->x = that.x;
             this->y = that.y;
+        }
+
+        template<typename T_>
+        explicit inline Point(const Point<T_>& that)
+        {
+            this->x = static_cast<T>(that.x);
+            this->y = static_cast<T>(that.y);
         }
 
         inline Point(const T& x, const T& y)
@@ -57,15 +65,6 @@ namespace OsmAnd
 #endif // defined(OSMAND_GLM_AVAILABLE)
 
 #if !defined(SWIG)
-#   if defined(OSMAND_GLM_AVAILABLE)
-        inline PointT& operator=(const glm::detail::tvec2<T, glm::precision::defaultp>& r)
-        {
-            this->x = r.x;
-            this->y = r.y;
-            return *this;
-        }
-#   endif // defined(OSMAND_GLM_AVAILABLE)
-
         inline PointT operator+(const PointT& r) const
         {
             return PointT(x + r.x, y + r.y);
@@ -90,6 +89,30 @@ namespace OsmAnd
             return *this;
         }
 
+        inline PointT operator*(const T r) const
+        {
+            return PointT(x * r, y * r);
+        }
+
+        inline PointT& operator*=(const T r)
+        {
+            x *= r;
+            y *= r;
+            return *this;
+        }
+
+        inline PointT operator/(const T r) const
+        {
+            return PointT(x / r, y / r);
+        }
+
+        inline PointT& operator/=(const T r)
+        {
+            x /= r;
+            y /= r;
+            return *this;
+        }
+
         inline bool operator==(const PointT& r) const
         {
             return equal(x, r.x) && equal(y, r.y);
@@ -110,45 +133,18 @@ namespace OsmAnd
             return *this;
         }
 
-        template<typename T_>
-        inline PointT operator*(const T_& r) const
+#   if defined(OSMAND_GLM_AVAILABLE)
+        inline PointT& operator=(const glm::detail::tvec2<T, glm::precision::defaultp>& r)
         {
-            return PointT(x * r, y * r);
-        }
-
-        template<typename T_>
-        inline PointT& operator*=(const T_& r)
-        {
-            x *= r;
-            y *= r;
+            this->x = r.x;
+            this->y = r.y;
             return *this;
         }
+#   endif // defined(OSMAND_GLM_AVAILABLE)
 
-        template<typename T_>
-        inline PointT operator/(const T_& r) const
+        inline operator Point<MorePreciseCoordType>() const
         {
-            return PointT(x / r, y / r);
-        }
-
-        template<typename T_>
-        inline PointT& operator/=(const T_& r)
-        {
-            x /= r;
-            y /= r;
-            return *this;
-        }
-#endif // !defined(SWIG)
-
-        inline LargerUnsignedCoordType squareNorm() const
-        {
-            return
-                static_cast<LargerUnsignedCoordType>(static_cast<LargerSignedCoordType>(x)*static_cast<LargerSignedCoordType>(x)) +
-                static_cast<LargerUnsignedCoordType>(static_cast<LargerSignedCoordType>(y)*static_cast<LargerSignedCoordType>(y));
-        }
-
-        inline T norm() const
-        {
-            return static_cast<T>(qSqrt(squareNorm()));
+            return Point<MorePreciseCoordType>(x, y);
         }
 
 #if defined(OSMAND_GLM_AVAILABLE)
@@ -157,8 +153,22 @@ namespace OsmAnd
             return glm::detail::tvec2<T, glm::precision::defaultp>(x, y);
         }
 #endif // defined(OSMAND_GLM_AVAILABLE)
+
+#endif // !defined(SWIG)
+
+        inline MorePreciseUnsignedCoordType squareNorm() const
+        {
+            return
+                static_cast<MorePreciseUnsignedCoordType>(static_cast<MorePreciseSignedCoordType>(x)*static_cast<MorePreciseSignedCoordType>(x)) +
+                static_cast<MorePreciseUnsignedCoordType>(static_cast<MorePreciseSignedCoordType>(y)*static_cast<MorePreciseSignedCoordType>(y));
+        }
+
+        inline T norm() const
+        {
+            return static_cast<T>(qSqrt(squareNorm()));
+        }
     private:
-        static inline bool equal(const double& a, const double& b)
+        static inline bool equal(const double a, const double b)
         {
             return qFuzzyCompare(a, b);
         }
@@ -184,14 +194,17 @@ namespace OsmAnd
     typedef Point<float> PointF;
     typedef Point<int32_t> PointI;
     typedef Point<int64_t> PointI64;
+
     inline int crossProductSign(const PointF& a, const PointF& b, const PointF& p)
     {
         return sign((b.y - a.y)*(p.x - a.x) - (b.x - a.x)*(p.y - a.y));
     }
+
     inline int crossProductSign(const PointD& a, const PointD& b, const PointD& p)
     {
         return sign((b.y - a.y)*(p.x - a.x) - (b.x - a.x)*(p.y - a.y));
     }
+
     inline int crossProductSign(const PointI& a, const PointI& b, const PointI& p)
     {
         const int64_t bx_ax = b.x - a.x;
@@ -200,6 +213,7 @@ namespace OsmAnd
         const int64_t py_ay = p.y - a.y;
         return sign(by_ay*px_ax - bx_ax*py_ay);
     }
+
     inline int crossProductSign(const PointI64& a, const PointI64& b, const PointI64& p)
     {
         const double bx_ax = b.x - a.x;
@@ -208,6 +222,7 @@ namespace OsmAnd
         const double py_ay = p.y - a.y;
         return sign(by_ay*px_ax - bx_ax*py_ay);
     }
+
     inline bool testLineLineIntersection(const PointI& a0, const PointI& a1, const PointI& b0, const PointI& b1)
     {
         const auto a1x_a0x = a1.x - a0.x;
@@ -235,6 +250,7 @@ namespace OsmAnd
             t >= 0.0 && t <= 1.0 &&
             u >= 0.0 && u <= 1.0;
     }
+
     inline bool testLineLineIntersection(const PointF& a0, const PointF& a1, const PointF& b0, const PointF& b1)
     {
         const auto a1x_a0x = a1.x - a0.x;
@@ -262,6 +278,7 @@ namespace OsmAnd
             t >= 0.0f && t <= 1.0f &&
             u >= 0.0f && u <= 1.0f;
     }
+
     inline bool testLineLineIntersection(const PointD& a0, const PointD& a1, const PointD& b0, const PointD& b1)
     {
         const auto a1x_a0x = a1.x - a0.x;
@@ -289,6 +306,7 @@ namespace OsmAnd
             t >= 0.0 && t <= 1.0 &&
             u >= 0.0 && u <= 1.0;
     }
+
     inline bool testLineLineIntersection(const PointI64& a0, const PointI64& a1, const PointI64& b0, const PointI64& b1)
     {
         return testLineLineIntersection(PointD(a0), PointD(a1), PointD(b0), PointD(b1));
@@ -350,14 +368,14 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline Area(const Area<T_>& that)
+        explicit inline Area(const Area<T_>& that)
             : top(topLeft.y)
             , left(topLeft.x)
             , bottom(bottomRight.y)
             , right(bottomRight.x)
         {
-            this->topLeft = that.topLeft;
-            this->bottomRight = that.bottomRight;
+            this->topLeft = PointT(that.topLeft);
+            this->bottomRight = PointT(that.bottomRight);
         }
 
         PointT topLeft, bottomRight;
@@ -440,39 +458,7 @@ namespace OsmAnd
                 that.top >= this->top &&
                 that.bottom <= this->bottom;
         }
-
-        template<typename T_>
-        inline bool contains(const T_& x, const T_& y) const
-        {
-            return !(left > x || right < x || top > y || bottom < y);
-        }
-
-        template<typename T_>
-        inline bool contains(const Point<T_>& p) const
-        {
-            return !(left > p.x || right < p.x || top > p.y || bottom < p.y);
-        }
-
-        template<typename T_>
-        inline bool contains(const T_& t, const T_& l, const T_& b, const T_& r) const
-        {
-            return
-                l >= left &&
-                r <= right &&
-                t >= top &&
-                b <= bottom;
-        }
-
-        template<typename T_>
-        inline bool contains(const Area<T_>& that) const
-        {
-            return
-                that.left >= this->left &&
-                that.right <= this->right &&
-                that.top >= this->top &&
-                that.bottom <= this->bottom;
-        }
-
+        
         inline bool intersects(const T& t, const T& l, const T& b, const T& r) const
         {
             return !(
@@ -483,26 +469,6 @@ namespace OsmAnd
         }
 
         inline bool intersects(const AreaT& that) const
-        {
-            return !(
-                that.left > this->right ||
-                that.right < this->left ||
-                that.top > this->bottom ||
-                that.bottom < this->top);
-        }
-
-        template<typename T_>
-        inline bool intersects(const T_& t, const T_& l, const T_& b, const T_& r) const
-        {
-            return !(
-                l > this->right ||
-                r < this->left ||
-                t > this->bottom ||
-                b < this->top);
-        }
-
-        template<typename T_>
-        inline bool intersects(const Area<T_>& that) const
         {
             return !(
                 that.left > this->right ||
@@ -826,7 +792,7 @@ namespace OsmAnd
         }
 
         template<typename T_>
-        inline OOBB(const OOBB<T_>& that)
+        explicit inline OOBB(const OOBB<T_>& that)
             : unrotatedBBox(_unrotatedBBox)
             , rotation(_rotation)
             , aabb(_aabb)
@@ -835,13 +801,13 @@ namespace OsmAnd
             , pointInGlobalSpace2(_pointInGlobalSpace2)
             , pointInGlobalSpace3(_pointInGlobalSpace3)
         {
-            this->_unrotatedBBox = that.unrotatedBBox;
+            this->_unrotatedBBox = AreaT(that.unrotatedBBox);
             this->_rotation = that.rotation;
-            this->_aabb = that.aabb;
-            this->_pointInGlobalSpace0 = that.pointInGlobalSpace0;
-            this->_pointInGlobalSpace1 = that.pointInGlobalSpace1;
-            this->_pointInGlobalSpace2 = that.pointInGlobalSpace2;
-            this->_pointInGlobalSpace3 = that.pointInGlobalSpace3;
+            this->_aabb = AreaT(that.aabb);
+            this->_pointInGlobalSpace0 = PointT(that.pointInGlobalSpace0);
+            this->_pointInGlobalSpace1 = PointT(that.pointInGlobalSpace1);
+            this->_pointInGlobalSpace2 = PointT(that.pointInGlobalSpace2);
+            this->_pointInGlobalSpace3 = PointT(that.pointInGlobalSpace3);
         }
 
         const AreaT& unrotatedBBox;

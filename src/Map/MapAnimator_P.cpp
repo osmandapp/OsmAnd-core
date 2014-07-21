@@ -8,8 +8,7 @@
 
 OsmAnd::MapAnimator_P::MapAnimator_P( MapAnimator* const owner_ )
     : owner(owner_)
-    , _isAnimationPaused(true)
-    , _animationsMutex(QMutex::Recursive)
+    , _isPaused(true)
     , _zoomGetter(std::bind(&MapAnimator_P::zoomGetter, this, std::placeholders::_1, std::placeholders::_2))
     , _zoomSetter(std::bind(&MapAnimator_P::zoomSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
     , _azimuthGetter(std::bind(&MapAnimator_P::azimuthGetter, this, std::placeholders::_1, std::placeholders::_2))
@@ -27,306 +26,430 @@ OsmAnd::MapAnimator_P::~MapAnimator_P()
 
 void OsmAnd::MapAnimator_P::setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QMutexLocker scopedLocker(&_updateLock);
 
-    cancelAnimation();
+    _isPaused = true;
+    _animationsByKey.clear();
     _renderer = mapRenderer;
 }
 
-bool OsmAnd::MapAnimator_P::isAnimationPaused() const
+bool OsmAnd::MapAnimator_P::isPaused() const
 {
-    return _isAnimationPaused;
+    return _isPaused;
 }
 
-bool OsmAnd::MapAnimator_P::isAnimationRunning() const
+void OsmAnd::MapAnimator_P::pause()
 {
-    return !_isAnimationPaused && !_animations.isEmpty();
+    _isPaused = true;
 }
 
-void OsmAnd::MapAnimator_P::pauseAnimation()
+void OsmAnd::MapAnimator_P::resume()
 {
-    _isAnimationPaused = true;
+    _isPaused = false;
 }
 
-void OsmAnd::MapAnimator_P::resumeAnimation()
+QList< std::shared_ptr<OsmAnd::MapAnimator_P::IAnimation> > OsmAnd::MapAnimator_P::getAnimations(const Key key)
 {
-    _isAnimationPaused = false;
+    QReadLocker scopedLocker(&_animationsCollectionLock);
+
+    const auto citAnimations = _animationsByKey.constFind(key);
+    if (citAnimations == _animationsByKey.cend())
+        return QList< std::shared_ptr<IAnimation> >();
+
+    return copyAs< QList< std::shared_ptr<IAnimation> > >(*citAnimations);
 }
 
-void OsmAnd::MapAnimator_P::cancelAnimation()
+QList< std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> > OsmAnd::MapAnimator_P::getAnimations(const Key key) const
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QReadLocker scopedLocker(&_animationsCollectionLock);
 
-    _isAnimationPaused = true;
-    _animations.clear();
+    const auto citAnimations = _animationsByKey.constFind(key);
+    if (citAnimations == _animationsByKey.cend())
+        return QList< std::shared_ptr<const IAnimation> >();
+
+    return copyAs< QList< std::shared_ptr<const IAnimation> > >(*citAnimations);
 }
 
-QList< std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> > OsmAnd::MapAnimator_P::getAnimations() const
+bool OsmAnd::MapAnimator_P::pauseAnimations(const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QReadLocker scopedLocker(&_animationsCollectionLock);
 
-    return copyAs< QList< std::shared_ptr<const IAnimation> > >(_animations);
+    const auto citAnimations = _animationsByKey.constFind(key);
+    if (citAnimations == _animationsByKey.cend())
+        return false;
+    const auto& animations = *citAnimations;
+
+    for (const auto& animation : constOf(animations))
+        animation->pause();
+
+    return true;
 }
 
-std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> OsmAnd::MapAnimator_P::getCurrentAnimationOf(const AnimatedValue value) const
+bool OsmAnd::MapAnimator_P::resumeAnimations(const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QReadLocker scopedLocker(&_animationsCollectionLock);
 
-    for (const auto& animation : constOf(_animations))
-    {
-        if (animation->animatedValue != value || !animation->isActive())
-            continue;
+    const auto citAnimations = _animationsByKey.constFind(key);
+    if (citAnimations == _animationsByKey.cend())
+        return false;
+    const auto& animations = *citAnimations;
 
-        return std::static_pointer_cast<const IAnimation>(animation);
-    }
+    for (const auto& animation : constOf(animations))
+        animation->resume();
 
-    return nullptr;
+    return true;
 }
 
-void OsmAnd::MapAnimator_P::cancelAnimationOf(const AnimatedValue value)
+bool OsmAnd::MapAnimator_P::cancelAnimations(const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
-    auto itAnimation = mutableIteratorOf(_animations);
-    while (itAnimation.hasNext())
-    {
-        const auto& animation = itAnimation.next();
+    const auto itAnimations = _animationsByKey.find(key);
+    if (itAnimations == _animationsByKey.end())
+        return false;
 
-        if (animation->animatedValue != value || !animation->isActive())
-            continue;
+    _animationsByKey.erase(itAnimations);
 
-        itAnimation.remove();
-        break;
-    }
+    return true;
 }
 
-void OsmAnd::MapAnimator_P::cancelAnimation(const std::shared_ptr<const IAnimation>& animation)
+std::shared_ptr<OsmAnd::MapAnimator_P::IAnimation> OsmAnd::MapAnimator_P::getCurrentAnimation(const Key key, const AnimatedValue animatedValue)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QReadLocker scopedLocker(&_animationsCollectionLock);
 
-    auto itOtherAnimation = mutableIteratorOf(_animations);
-    while (itOtherAnimation.hasNext())
-    {
-        const auto& otherAnimation = itOtherAnimation.next();
+    const auto citAnimations = _animationsByKey.constFind(key);
+    if (citAnimations == _animationsByKey.cend())
+        return nullptr;
 
-        if (otherAnimation != animation)
-            continue;
+    return findCurrentAnimation(animatedValue, *citAnimations);
+}
 
-        itOtherAnimation.remove();
-        break;
-    }
+std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> OsmAnd::MapAnimator_P::getCurrentAnimation(const Key key, const AnimatedValue animatedValue) const
+{
+    QReadLocker scopedLocker(&_animationsCollectionLock);
+
+    const auto citAnimations = _animationsByKey.constFind(key);
+    if (citAnimations == _animationsByKey.cend())
+        return nullptr;
+
+    return findCurrentAnimation(animatedValue, *citAnimations);
+}
+
+QList< std::shared_ptr<OsmAnd::MapAnimator_P::IAnimation> > OsmAnd::MapAnimator_P::getAllAnimations()
+{
+    QReadLocker scopedLocker(&_animationsCollectionLock);
+
+    QList< std::shared_ptr<IAnimation> > result;
+    for (const auto& animations : constOf(_animationsByKey))
+        for (const auto& animation : constOf(animations))
+            result.push_back(animation);
+
+    return result;
+}
+
+QList< std::shared_ptr<const OsmAnd::MapAnimator_P::IAnimation> > OsmAnd::MapAnimator_P::getAllAnimations() const
+{
+    QReadLocker scopedLocker(&_animationsCollectionLock);
+
+    QList< std::shared_ptr<const IAnimation> > result;
+    for (const auto& animations : constOf(_animationsByKey))
+        for (const auto& animation : constOf(animations))
+            result.push_back(animation);
+
+    return result;
+}
+
+void OsmAnd::MapAnimator_P::cancelAllAnimations()
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    _animationsByKey.clear();
 }
 
 void OsmAnd::MapAnimator_P::update(const float timePassed)
 {
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
     // Do nothing if animation is paused
-    if (_isAnimationPaused)
+    if (_isPaused)
         return;
 
     // Apply all animations
-    QMutexLocker scopedLocker(&_animationsMutex);
-    auto itAnimation = mutableIteratorOf(_animations);
-    while(itAnimation.hasNext())
+    auto itAnimations = mutableIteratorOf(_animationsByKey);
+    while(itAnimations.hasNext())
     {
-        const auto& animation = itAnimation.next();
+        auto& animations = itAnimations.next().value();
 
-        if (animation->process(timePassed))
-            itAnimation.remove();
+        {
+            auto itAnimation = mutableIteratorOf(animations);
+            while (itAnimation.hasNext())
+            {
+                const auto& animation = itAnimation.next();
+
+                if (!animation->isPaused() && animation->process(timePassed))
+                    itAnimation.remove();
+            }
+        }
+        
+        if (animations.isEmpty())
+            itAnimations.remove();
     }
 }
 
-void OsmAnd::MapAnimator_P::animateZoomBy(const float deltaValue, const float duration, const TimingFunction timingFunction)
+void OsmAnd::MapAnimator_P::animateZoomBy(
+    const float deltaValue,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructZoomAnimationByDelta(newAnimations, deltaValue, duration, timingFunction);
-    _animations.append(newAnimations);
+    constructZoomAnimationByDelta(newAnimations, key, deltaValue, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateZoomTo(const float value, const float duration, const TimingFunction timingFunction)
+void OsmAnd::MapAnimator_P::animateZoomTo(
+    const float value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructZoomAnimationToValue(newAnimations, value, duration, timingFunction);
-    _animations.append(newAnimations);
+    constructZoomAnimationToValue(newAnimations, key, value, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateZoomWith(const float velocity, const float deceleration)
+void OsmAnd::MapAnimator_P::animateZoomWith(
+    const float velocity,
+    const float deceleration,
+    const Key key)
 {
     const auto duration = qAbs(velocity / deceleration);
     const auto deltaValue = 0.5f * velocity * duration;
 
-    animateZoomBy(deltaValue, duration, TimingFunction::EaseOutQuadratic);
+    animateZoomBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, key);
 }
 
-void OsmAnd::MapAnimator_P::animateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction timingFunction)
+void OsmAnd::MapAnimator_P::animateTargetBy(
+    const PointI64& deltaValue,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    animateTargetBy(PointI64(deltaValue), duration, timingFunction);
-}
-
-void OsmAnd::MapAnimator_P::animateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction timingFunction)
-{
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructTargetAnimationByDelta(newAnimations, deltaValue, duration, timingFunction);
-    _animations.append(newAnimations);
+    constructTargetAnimationByDelta(newAnimations, key, deltaValue, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateTargetTo(const PointI& value, const float duration, const TimingFunction timingFunction)
+void OsmAnd::MapAnimator_P::animateTargetTo(
+    const PointI& value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructTargetAnimationToValue(newAnimations, value, duration, timingFunction);
-    _animations.append(newAnimations);
+    constructTargetAnimationToValue(newAnimations, key, value, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateTargetWith(const PointD& velocity, const PointD& deceleration)
+void OsmAnd::MapAnimator_P::animateTargetWith(
+    const PointD& velocity,
+    const PointD& deceleration,
+    const Key key)
 {
     const auto duration = qSqrt((velocity.x*velocity.x + velocity.y*velocity.y) / (deceleration.x*deceleration.x + deceleration.y*deceleration.y));
     const PointI64 deltaValue(
         0.5f * velocity.x * duration,
         0.5f * velocity.y * duration);
 
-    animateTargetBy(deltaValue, duration, TimingFunction::EaseOutQuadratic);
+    animateTargetBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, key);
 }
 
-void OsmAnd::MapAnimator_P::parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction)
+void OsmAnd::MapAnimator_P::parabolicAnimateTargetBy(
+    const PointI64& deltaValue,
+    const float duration,
+    const TimingFunction targetTimingFunction,
+    const TimingFunction zoomTimingFunction,
+    const Key key)
 {
-    parabolicAnimateTargetBy(PointI64(deltaValue), duration, targetTimingFunction, zoomTimingFunction);
-}
-
-void OsmAnd::MapAnimator_P::parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction)
-{
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructParabolicTargetAnimationByDelta(newAnimations, deltaValue, duration, targetTimingFunction, zoomTimingFunction);
-    _animations.append(newAnimations);
+    constructParabolicTargetAnimationByDelta(newAnimations, key, deltaValue, duration, targetTimingFunction, zoomTimingFunction);
+
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::parabolicAnimateTargetTo(const PointI& value, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction)
+void OsmAnd::MapAnimator_P::parabolicAnimateTargetTo(
+    const PointI& value,
+    const float duration,
+    const TimingFunction targetTimingFunction,
+    const TimingFunction zoomTimingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructParabolicTargetAnimationToValue(newAnimations, value, duration, targetTimingFunction, zoomTimingFunction);
-    _animations.append(newAnimations);
+    constructParabolicTargetAnimationToValue(newAnimations, key, value, duration, targetTimingFunction, zoomTimingFunction);
+
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration)
+void OsmAnd::MapAnimator_P::parabolicAnimateTargetWith(
+    const PointD& velocity,
+    const PointD& deceleration,
+    const Key key)
 {
     const auto duration = qSqrt((velocity.x*velocity.x + velocity.y*velocity.y) / (deceleration.x*deceleration.x + deceleration.y*deceleration.y));
     const PointI64 deltaValue(
         0.5f * velocity.x * duration,
         0.5f * velocity.y * duration);
 
-    parabolicAnimateTargetBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, TimingFunction::EaseOutQuadratic);
+    parabolicAnimateTargetBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, TimingFunction::EaseOutQuadratic, key);
 }
 
-void OsmAnd::MapAnimator_P::animateAzimuthBy(const float deltaValue, const float duration, const TimingFunction timingFunction)
+void OsmAnd::MapAnimator_P::animateAzimuthBy(
+    const float deltaValue,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructAzimuthAnimationByDelta(newAnimations, deltaValue, duration, timingFunction);
-    _animations.append(newAnimations);
+    constructAzimuthAnimationByDelta(newAnimations, key, deltaValue, duration, timingFunction);
+    
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateAzimuthTo(const float value, const float duration, const TimingFunction timingFunction)
+void OsmAnd::MapAnimator_P::animateAzimuthTo(
+    const float value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructAzimuthAnimationToValue(newAnimations, value, duration, timingFunction);
-    _animations.append(newAnimations);
+    constructAzimuthAnimationToValue(newAnimations, key, value, duration, timingFunction);
+    
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateAzimuthWith(const float velocity, const float deceleration)
+void OsmAnd::MapAnimator_P::animateAzimuthWith(
+    const float velocity,
+    const float deceleration,
+    const Key key)
 {
     const auto duration = qAbs(velocity / deceleration);
     const auto deltaValue = 0.5f * velocity * duration;
 
-    animateAzimuthBy(deltaValue, duration, TimingFunction::EaseOutQuadratic);
+    animateAzimuthBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, key);
 }
 
-void OsmAnd::MapAnimator_P::animateElevationAngleBy(const float deltaValue, const float duration, const TimingFunction timingFunction)
+void OsmAnd::MapAnimator_P::animateElevationAngleBy(
+    const float deltaValue,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
     
     AnimationsCollection newAnimations;
-    constructElevationAngleAnimationByDelta(newAnimations, deltaValue, duration, timingFunction);
-    _animations.append(newAnimations);
+    constructElevationAngleAnimationByDelta(newAnimations, key, deltaValue, duration, timingFunction);
+    
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateElevationAngleTo(const float value, const float duration, const TimingFunction timingFunction)
+void OsmAnd::MapAnimator_P::animateElevationAngleTo(
+    const float value,
+    const float duration,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructElevationAngleAnimationToValue(newAnimations, value, duration, timingFunction);
-    _animations.append(newAnimations);
+    constructElevationAngleAnimationToValue(newAnimations, key, value, duration, timingFunction);
+    
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateElevationAngleWith(const float velocity, const float deceleration)
+void OsmAnd::MapAnimator_P::animateElevationAngleWith(
+    const float velocity,
+    const float deceleration,
+    const Key key)
 {
     const auto duration = qAbs(velocity / deceleration);
     const auto deltaValue = 0.5f * velocity * duration;
 
-    animateElevationAngleBy(deltaValue, duration, TimingFunction::EaseOutQuadratic);
+    animateElevationAngleBy(deltaValue, duration, TimingFunction::EaseOutQuadratic, key);
 }
 
 void OsmAnd::MapAnimator_P::animateMoveBy(
-    const PointI& deltaValue, const float duration,
-    const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-    const TimingFunction timingFunction)
+    const PointI64& deltaValue,
+    const float duration,
+    const bool zeroizeAzimuth,
+    const bool invZeroizeElevationAngle,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    animateMoveBy(PointI64(deltaValue), duration, zeroizeAzimuth, invZeroizeElevationAngle, timingFunction);
-}
-
-void OsmAnd::MapAnimator_P::animateMoveBy(
-    const PointI64& deltaValue, const float duration,
-    const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-    const TimingFunction timingFunction)
-{
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructParabolicTargetAnimationByDelta(newAnimations, deltaValue, duration, timingFunction, TimingFunction::EaseOutInQuadratic);
+    constructParabolicTargetAnimationByDelta(newAnimations, key, deltaValue, duration, timingFunction, TimingFunction::EaseOutInQuadratic);
     if (zeroizeAzimuth)
-        constructZeroizeAzimuthAnimation(newAnimations, duration, timingFunction);
+        constructZeroizeAzimuthAnimation(newAnimations, key, duration, timingFunction);
     if (invZeroizeElevationAngle)
-        constructInvZeroizeElevationAngleAnimation(newAnimations, duration, timingFunction);
-    _animations.append(newAnimations);
+        constructInvZeroizeElevationAngleAnimation(newAnimations, key, duration, timingFunction);
+    
+    _animationsByKey[key].append(newAnimations);
 }
 
 void OsmAnd::MapAnimator_P::animateMoveTo(
-    const PointI& value, const float duration,
-    const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-    const TimingFunction timingFunction)
+    const PointI& value,
+    const float duration,
+    const bool zeroizeAzimuth,
+    const bool invZeroizeElevationAngle,
+    const TimingFunction timingFunction,
+    const Key key)
 {
-    QMutexLocker scopedLocker(&_animationsMutex);
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
 
     AnimationsCollection newAnimations;
-    constructParabolicTargetAnimationToValue(newAnimations, value, duration, timingFunction, TimingFunction::EaseOutInQuadratic);
+    constructParabolicTargetAnimationToValue(newAnimations, key, value, duration, timingFunction, TimingFunction::EaseOutInQuadratic);
     if (zeroizeAzimuth)
-        constructZeroizeAzimuthAnimation(newAnimations, duration, timingFunction);
+        constructZeroizeAzimuthAnimation(newAnimations, key, duration, timingFunction);
     if (invZeroizeElevationAngle)
-        constructInvZeroizeElevationAngleAnimation(newAnimations, duration, timingFunction);
-    _animations.append(newAnimations);
+        constructInvZeroizeElevationAngleAnimation(newAnimations, key, duration, timingFunction);
+
+    _animationsByKey[key].append(newAnimations);
 }
 
-void OsmAnd::MapAnimator_P::animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle)
+void OsmAnd::MapAnimator_P::animateMoveWith(
+    const PointD& velocity,
+    const PointD& deceleration,
+    const bool zeroizeAzimuth,
+    const bool invZeroizeElevationAngle,
+    const Key key)
 {
     const auto duration = qSqrt((velocity.x*velocity.x + velocity.y*velocity.y) / (deceleration.x*deceleration.x + deceleration.y*deceleration.y));
     const PointI64 deltaValue(
         0.5f * velocity.x * duration,
         0.5f * velocity.y * duration);
 
-    animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, TimingFunction::EaseOutQuadratic);
+    animateMoveBy(deltaValue, duration, zeroizeAzimuth, invZeroizeElevationAngle, TimingFunction::EaseOutQuadratic, key);
 }
 
 float OsmAnd::MapAnimator_P::zoomGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -369,23 +492,9 @@ void OsmAnd::MapAnimator_P::targetSetter(const PointI64 newValue, AnimationConte
     _renderer->setTarget(Utilities::normalizeCoordinates(newValue, ZoomLevel31));
 }
 
-std::shared_ptr<OsmAnd::MapAnimator_P::GenericAnimation> OsmAnd::MapAnimator_P::findAnimationOf(
-    const MapAnimator::AnimatedValue value,
-    const AnimationsCollection& collection)
-{
-    for (const auto& animation : constOf(collection))
-    {
-        if (animation->animatedValue != value)
-            continue;
-
-        return animation;
-    }
-
-    return nullptr;
-}
-
 void OsmAnd::MapAnimator_P::constructZoomAnimationByDelta(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float deltaValue,
     const float duration,
     const TimingFunction timingFunction)
@@ -394,6 +503,7 @@ void OsmAnd::MapAnimator_P::constructZoomAnimationByDelta(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::Zoom,
         deltaValue, duration, 0.0f, timingFunction,
         _zoomGetter, _zoomSetter));
@@ -403,6 +513,7 @@ void OsmAnd::MapAnimator_P::constructZoomAnimationByDelta(
 
 void OsmAnd::MapAnimator_P::constructZoomAnimationToValue(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float value,
     const float duration,
     const TimingFunction timingFunction)
@@ -411,6 +522,7 @@ void OsmAnd::MapAnimator_P::constructZoomAnimationToValue(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::Zoom,
         [this, value]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
@@ -425,6 +537,7 @@ void OsmAnd::MapAnimator_P::constructZoomAnimationToValue(
 
 void OsmAnd::MapAnimator_P::constructTargetAnimationByDelta(
     AnimationsCollection& outAnimation,
+    const Key key,
     const PointI64& deltaValue,
     const float duration,
     const TimingFunction timingFunction)
@@ -433,6 +546,7 @@ void OsmAnd::MapAnimator_P::constructTargetAnimationByDelta(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<PointI64>(
+        key,
         AnimatedValue::Target,
         deltaValue, duration, 0.0f, timingFunction,
         _targetGetter, _targetSetter));
@@ -442,6 +556,7 @@ void OsmAnd::MapAnimator_P::constructTargetAnimationByDelta(
 
 void OsmAnd::MapAnimator_P::constructTargetAnimationToValue(
     AnimationsCollection& outAnimation,
+    const Key key,
     const PointI& value,
     const float duration,
     const TimingFunction timingFunction)
@@ -450,6 +565,7 @@ void OsmAnd::MapAnimator_P::constructTargetAnimationToValue(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<PointI64>(
+        key,
         AnimatedValue::Target,
         [this, value]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> PointI64
@@ -464,6 +580,7 @@ void OsmAnd::MapAnimator_P::constructTargetAnimationToValue(
 
 void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta(
     AnimationsCollection& outAnimation,
+    const Key key,
     const PointI64& deltaValue,
     const float duration,
     const TimingFunction targetTimingFunction,
@@ -472,12 +589,13 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta(
     if (qFuzzyIsNull(duration) || (deltaValue.x == 0 && deltaValue.y == 0))
         return;
 
-    constructTargetAnimationByDelta(outAnimation, deltaValue, duration, targetTimingFunction);
-    constructParabolicTargetAnimation_Zoom(outAnimation, duration, zoomTimingFunction);
+    constructTargetAnimationByDelta(outAnimation, key, deltaValue, duration, targetTimingFunction);
+    constructParabolicTargetAnimation_Zoom(outAnimation, key, duration, zoomTimingFunction);
 }
 
 void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue(
     AnimationsCollection& outAnimation,
+    const Key key,
     const PointI& value,
     const float duration,
     const TimingFunction targetTimingFunction,
@@ -486,12 +604,13 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue(
     if (qFuzzyIsNull(duration))
         return;
 
-    constructTargetAnimationToValue(outAnimation, value, duration, targetTimingFunction);
-    constructParabolicTargetAnimation_Zoom(outAnimation, duration, zoomTimingFunction);
+    constructTargetAnimationToValue(outAnimation, key, value, duration, targetTimingFunction);
+    constructParabolicTargetAnimation_Zoom(outAnimation, key, duration, zoomTimingFunction);
 }
 
 void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float duration,
     const TimingFunction zoomTimingFunction)
 {
@@ -499,13 +618,17 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
 
     const std::shared_ptr<AnimationContext> sharedContext(new AnimationContext());
     std::shared_ptr<GenericAnimation> zoomOutAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::Zoom,
-        [this]
+        [this, key]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
-            const auto targetAnimation = findAnimationOf(MapAnimator::AnimatedValue::Target, _animations);
+            const auto targetAnimation = findCurrentAnimation(MapAnimator::AnimatedValue::Target, _animationsByKey[key]);
             if (!targetAnimation)
+            {
+                assert(false);
                 return 0.0f;
+            }
 
             PointI64 targetDeltaValue;
             bool ok = targetAnimation->obtainDeltaValueAsPointI64(targetDeltaValue);
@@ -543,6 +666,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
         halfDuration, 0.0f, zoomTimingFunction,
         _zoomGetter, _zoomSetter, sharedContext));
     std::shared_ptr<GenericAnimation> zoomInAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::Zoom,
         [this]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
@@ -563,6 +687,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
 
 void OsmAnd::MapAnimator_P::constructAzimuthAnimationByDelta(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float deltaValue,
     const float duration,
     const TimingFunction timingFunction)
@@ -571,6 +696,7 @@ void OsmAnd::MapAnimator_P::constructAzimuthAnimationByDelta(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::Azimuth,
         deltaValue, duration, 0.0f, timingFunction,
         _azimuthGetter, _azimuthSetter));
@@ -580,6 +706,7 @@ void OsmAnd::MapAnimator_P::constructAzimuthAnimationByDelta(
 
 void OsmAnd::MapAnimator_P::constructAzimuthAnimationToValue(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float value,
     const float duration,
     const TimingFunction timingFunction)
@@ -588,6 +715,7 @@ void OsmAnd::MapAnimator_P::constructAzimuthAnimationToValue(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::Azimuth,
         [this, value]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
@@ -602,6 +730,7 @@ void OsmAnd::MapAnimator_P::constructAzimuthAnimationToValue(
 
 void OsmAnd::MapAnimator_P::constructElevationAngleAnimationByDelta(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float deltaValue,
     const float duration,
     const TimingFunction timingFunction)
@@ -610,6 +739,7 @@ void OsmAnd::MapAnimator_P::constructElevationAngleAnimationByDelta(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::ElevationAngle,
         deltaValue, duration, 0.0f, timingFunction,
         _elevationAngleGetter, _elevationAngleSetter));
@@ -619,6 +749,7 @@ void OsmAnd::MapAnimator_P::constructElevationAngleAnimationByDelta(
 
 void OsmAnd::MapAnimator_P::constructElevationAngleAnimationToValue(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float value,
     const float duration,
     const TimingFunction timingFunction)
@@ -627,6 +758,7 @@ void OsmAnd::MapAnimator_P::constructElevationAngleAnimationToValue(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::ElevationAngle,
         [this, value]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
@@ -641,6 +773,7 @@ void OsmAnd::MapAnimator_P::constructElevationAngleAnimationToValue(
 
 void OsmAnd::MapAnimator_P::constructZeroizeAzimuthAnimation(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float duration,
     const TimingFunction timingFunction)
 {
@@ -648,6 +781,7 @@ void OsmAnd::MapAnimator_P::constructZeroizeAzimuthAnimation(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::Azimuth,
         [this]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
@@ -662,6 +796,7 @@ void OsmAnd::MapAnimator_P::constructZeroizeAzimuthAnimation(
 
 void OsmAnd::MapAnimator_P::constructInvZeroizeElevationAngleAnimation(
     AnimationsCollection& outAnimation,
+    const Key key,
     const float duration,
     const TimingFunction timingFunction)
 {
@@ -669,6 +804,7 @@ void OsmAnd::MapAnimator_P::constructInvZeroizeElevationAngleAnimation(
         return;
 
     std::shared_ptr<GenericAnimation> newAnimation(new MapAnimator_P::Animation<float>(
+        key,
         AnimatedValue::ElevationAngle,
         [this]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
@@ -681,14 +817,30 @@ void OsmAnd::MapAnimator_P::constructInvZeroizeElevationAngleAnimation(
     outAnimation.push_back(qMove(newAnimation));
 }
 
+std::shared_ptr<OsmAnd::MapAnimator_P::GenericAnimation> OsmAnd::MapAnimator_P::findCurrentAnimation(const AnimatedValue animatedValue, const AnimationsCollection& collection)
+{
+    for (const auto& animation : constOf(collection))
+    {
+        if (animation->getAnimatedValue() != animatedValue || !animation->isPlaying())
+            continue;
+
+        return animation;
+    }
+
+    return nullptr;
+}
+
 OsmAnd::MapAnimator_P::GenericAnimation::GenericAnimation(
+    const Key key_,
     const AnimatedValue animatedValue_,
     const float duration_,
     const float delay_,
     const TimingFunction timingFunction_,
     const std::shared_ptr<AnimationContext>& sharedContext_)
-    : _timePassed(0.0f)
+    : _isPaused(false)
+    , _timePassed(0.0f)
     , _sharedContext(sharedContext_)
+    , key(key_)
     , animatedValue(animatedValue_)
     , duration(duration_)
     , delay(delay_)
@@ -720,16 +872,14 @@ double OsmAnd::MapAnimator_P::GenericAnimation::properCast(const int64_t value)
     return static_cast<double>(value);
 }
 
+OsmAnd::MapAnimator_P::Key OsmAnd::MapAnimator_P::GenericAnimation::getKey() const
+{
+    return key;
+}
+
 OsmAnd::MapAnimator_P::AnimatedValue OsmAnd::MapAnimator_P::GenericAnimation::getAnimatedValue() const
 {
     return animatedValue;
-}
-
-bool OsmAnd::MapAnimator_P::GenericAnimation::isActive() const
-{
-    QReadLocker scopedLocker(&_processLock);
-
-    return (_timePassed >= delay) && ((_timePassed - delay) < duration);
 }
 
 float OsmAnd::MapAnimator_P::GenericAnimation::getTimePassed() const
@@ -752,4 +902,24 @@ float OsmAnd::MapAnimator_P::GenericAnimation::getDuration() const
 OsmAnd::MapAnimator_P::TimingFunction OsmAnd::MapAnimator_P::GenericAnimation::getTimingFunction() const
 {
     return timingFunction;
+}
+
+void OsmAnd::MapAnimator_P::GenericAnimation::pause()
+{
+    _isPaused = true;
+}
+
+void OsmAnd::MapAnimator_P::GenericAnimation::resume()
+{
+    _isPaused = false;
+}
+
+bool OsmAnd::MapAnimator_P::GenericAnimation::isPaused() const
+{
+    return _isPaused;
+}
+
+bool OsmAnd::MapAnimator_P::GenericAnimation::isPlaying() const
+{
+    return (_timePassed >= delay) && ((_timePassed - delay) < duration);
 }

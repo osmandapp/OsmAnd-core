@@ -20,6 +20,8 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapAnimator);
     public:
+        typedef const void* Key;
+
         enum class TimingFunction
         {
             Invalid = -1,
@@ -63,9 +65,8 @@ namespace OsmAnd
         public:
             virtual ~IAnimation();
 
+            virtual Key getKey() const = 0;
             virtual AnimatedValue getAnimatedValue() const = 0;
-
-            virtual bool isActive() const = 0;
 
             virtual float getTimePassed() const = 0;
             virtual float getDelay() const = 0;
@@ -79,6 +80,12 @@ namespace OsmAnd
             virtual bool obtainInitialValueAsPointI64(PointI64& outValue) const = 0;
             virtual bool obtainDeltaValueAsPointI64(PointI64& outValue) const = 0;
             virtual bool obtainCurrentValueAsPointI64(PointI64& outValue) const = 0;
+
+            virtual void pause() = 0;
+            virtual void resume() = 0;
+            virtual bool isPaused() const = 0;
+
+            virtual bool isPlaying() const = 0;
         };
 
     private:
@@ -91,55 +98,122 @@ namespace OsmAnd
         void setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer);
         const std::shared_ptr<IMapRenderer>& mapRenderer;
 
-        bool isAnimationPaused() const;
-        bool isAnimationRunning() const;
+        bool isPaused() const;
+        void pause();
+        void resume();
 
-        void pauseAnimation();
-        void resumeAnimation();
-        void cancelAnimation();
+        QList< std::shared_ptr<IAnimation> > getAnimations(const Key key);
+        QList< std::shared_ptr<const IAnimation> > getAnimations(const Key key) const;
+        bool pauseAnimations(const Key key);
+        bool resumeAnimations(const Key key);
+        bool cancelAnimations(const Key key);
 
-        QList< std::shared_ptr<const IAnimation> > getAnimations() const;
-        std::shared_ptr<const IAnimation> getCurrentAnimationOf(const AnimatedValue value) const;
-        void cancelAnimationOf(const AnimatedValue value);
-        void cancelAnimation(const std::shared_ptr<const IAnimation>& animation);
+        std::shared_ptr<IAnimation> getCurrentAnimation(const Key key, const AnimatedValue animatedValue);
+        std::shared_ptr<const IAnimation> getCurrentAnimation(const Key key, const AnimatedValue animatedValue) const;
+
+        QList< std::shared_ptr<IAnimation> > getAllAnimations();
+        QList< std::shared_ptr<const IAnimation> > getAllAnimations() const;
+        void cancelAllAnimations();
 
         void update(const float timePassed);
 
-        void animateZoomBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateZoomTo(const float value, const float duration, const TimingFunction timingFunction);
-        void animateZoomWith(const float velocity, const float deceleration);
+        void animateZoomBy(
+            const float deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateZoomTo(
+            const float value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateZoomWith(
+            const float velocity,
+            const float deceleration,
+            const Key key = nullptr);
 
-        void animateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateTargetTo(const PointI& value, const float duration, const TimingFunction timingFunction);
-        void animateTargetWith(const PointD& velocity, const PointD& deceleration);
+        void animateTargetBy(
+            const PointI64& deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateTargetTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateTargetWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const Key key = nullptr);
 
-        void parabolicAnimateTargetBy(const PointI& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
-        void parabolicAnimateTargetBy(const PointI64& deltaValue, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
-        void parabolicAnimateTargetTo(const PointI& value, const float duration, const TimingFunction targetTimingFunction, const TimingFunction zoomTimingFunction);
-        void parabolicAnimateTargetWith(const PointD& velocity, const PointD& deceleration);
+        void parabolicAnimateTargetBy(
+            const PointI64& deltaValue,
+            const float duration,
+            const TimingFunction targetTimingFunction,
+            const TimingFunction zoomTimingFunction,
+            const Key key = nullptr);
+        void parabolicAnimateTargetTo(
+            const PointI& value,
+            const float duration,
+            const TimingFunction targetTimingFunction,
+            const TimingFunction zoomTimingFunction,
+            const Key key = nullptr);
+        void parabolicAnimateTargetWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const Key key = nullptr);
 
-        void animateAzimuthBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateAzimuthTo(const float value, const float duration, const TimingFunction timingFunction);
-        void animateAzimuthWith(const float velocity, const float deceleration);
+        void animateAzimuthBy(
+            const float deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateAzimuthTo(
+            const float value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateAzimuthWith(
+            const float velocity,
+            const float deceleration,
+            const Key key = nullptr);
 
-        void animateElevationAngleBy(const float deltaValue, const float duration, const TimingFunction timingFunction);
-        void animateElevationAngleTo(const float value, const float duration, const TimingFunction timingFunction);
-        void animateElevationAngleWith(const float velocity, const float deceleration);
+        void animateElevationAngleBy(
+            const float deltaValue,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateElevationAngleTo(
+            const float value,
+            const float duration,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateElevationAngleWith(
+            const float velocity,
+            const float deceleration,
+            const Key key = nullptr);
 
         void animateMoveBy(
-            const PointI& deltaValue, const float duration,
-            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const TimingFunction timingFunction);
-        void animateMoveBy(
-            const PointI64& deltaValue, const float duration,
-            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const TimingFunction timingFunction);
+            const PointI64& deltaValue,
+            const float duration,
+            const bool zeroizeAzimuth,
+            const bool invZeroizeElevationAngle,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
         void animateMoveTo(
-            const PointI& deltaValue, const float duration,
-            const bool zeroizeAzimuth, const bool invZeroizeElevationAngle,
-            const TimingFunction timingFunction);
-        void animateMoveWith(const PointD& velocity, const PointD& deceleration, const bool zeroizeAzimuth, const bool invZeroizeElevationAngle);
+            const PointI& deltaValue,
+            const float duration,
+            const bool zeroizeAzimuth,
+            const bool invZeroizeElevationAngle,
+            const TimingFunction timingFunction,
+            const Key key = nullptr);
+        void animateMoveWith(
+            const PointD& velocity,
+            const PointD& deceleration,
+            const bool zeroizeAzimuth,
+            const bool invZeroizeElevationAngle,
+            const Key key = nullptr);
     };
 }
 
