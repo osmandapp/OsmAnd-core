@@ -508,6 +508,12 @@ namespace OsmAnd
             const float duration,
             const TimingFunction targetTimingFunction,
             const TimingFunction zoomTimingFunction);
+        void constructParabolicTargetAnimationByDelta_Zoom(
+            AnimationsCollection& outAnimation,
+            const Key key,
+            const PointI64& targetDeltaValue,
+            const float duration,
+            const TimingFunction zoomTimingFunction);
         void constructParabolicTargetAnimationToValue(
             AnimationsCollection& outAnimation,
             const Key key,
@@ -515,9 +521,10 @@ namespace OsmAnd
             const float duration,
             const TimingFunction targetTimingFunction,
             const TimingFunction zoomTimingFunction);
-        void constructParabolicTargetAnimation_Zoom(
+        void constructParabolicTargetAnimationToValue_Zoom(
             AnimationsCollection& outAnimation,
             const Key key,
+            const PointI& targetValue,
             const float duration,
             const TimingFunction zoomTimingFunction);
 

@@ -621,7 +621,70 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta(
         return;
 
     constructTargetAnimationByDelta(outAnimation, key, deltaValue, duration, targetTimingFunction);
-    constructParabolicTargetAnimation_Zoom(outAnimation, key, duration, zoomTimingFunction);
+    constructParabolicTargetAnimationByDelta_Zoom(outAnimation, key, deltaValue, duration, zoomTimingFunction);
+}
+
+void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta_Zoom(
+    AnimationsCollection& outAnimation,
+    const Key key,
+    const PointI64& targetDeltaValue,
+    const float duration,
+    const TimingFunction zoomTimingFunction)
+{
+    const auto halfDuration = duration / 2.0f;
+
+    const std::shared_ptr<AnimationContext> sharedContext(new AnimationContext());
+    std::shared_ptr<GenericAnimation> zoomOutAnimation(new MapAnimator_P::Animation<float>(
+        key,
+        AnimatedValue::Zoom,
+        [this, targetDeltaValue]
+        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
+        {
+            // Recalculate delta to tiles at current zoom base
+            PointI64 deltaInTiles;
+            const auto bitShift = MaxZoomLevel - _renderer->state.zoomBase;
+            deltaInTiles.x = qAbs(targetDeltaValue.x) >> bitShift;
+            deltaInTiles.y = qAbs(targetDeltaValue.y) >> bitShift;
+
+            // Calculate distance in unscaled visible tiles
+            const auto distance = deltaInTiles.norm();
+
+            // Get current zoom
+            const auto currentZoom = zoomGetter(context, sharedContext);
+            const auto minZoom = _renderer->getMinZoom();
+
+            // Calculate zoom shift
+            float zoomShift = (std::log10(distance) - 1.3f /*~= std::log10f(20.0f)*/) * 7.0f;
+            if (zoomShift <= 0.0f)
+                return 0.0f;
+
+            // If zoom shift will move zoom out of bounds, reduce zoom shift
+            if (currentZoom - zoomShift < minZoom)
+                zoomShift = currentZoom - minZoom;
+
+            sharedContext->storageList.push_back(QVariant(zoomShift));
+            return -zoomShift;
+        },
+        halfDuration, 0.0f, zoomTimingFunction,
+        _zoomGetter, _zoomSetter, sharedContext));
+    std::shared_ptr<GenericAnimation> zoomInAnimation(new MapAnimator_P::Animation<float>(
+        key,
+        AnimatedValue::Zoom,
+        [this]
+        (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
+        {
+            // If shared context contains no data it means that parabolic effect was disabled
+            if (sharedContext->storageList.isEmpty())
+                return 0.0f;
+
+            // Just restore the original zoom
+            return sharedContext->storageList.first().toFloat();
+        },
+        halfDuration, halfDuration, zoomTimingFunction,
+        _zoomGetter, _zoomSetter, sharedContext));
+
+    outAnimation.push_back(qMove(zoomOutAnimation));
+    outAnimation.push_back(qMove(zoomInAnimation));
 }
 
 void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue(
@@ -636,12 +699,13 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue(
         return;
 
     constructTargetAnimationToValue(outAnimation, key, value, duration, targetTimingFunction);
-    constructParabolicTargetAnimation_Zoom(outAnimation, key, duration, zoomTimingFunction);
+    constructParabolicTargetAnimationToValue_Zoom(outAnimation, key, value, duration, zoomTimingFunction);
 }
 
-void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
+void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue_Zoom(
     AnimationsCollection& outAnimation,
     const Key key,
+    const PointI& targetValue,
     const float duration,
     const TimingFunction zoomTimingFunction)
 {
@@ -651,23 +715,10 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimation_Zoom(
     std::shared_ptr<GenericAnimation> zoomOutAnimation(new MapAnimator_P::Animation<float>(
         key,
         AnimatedValue::Zoom,
-        [this, key]
+        [this, targetValue]
         (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext) -> float
         {
-            const auto targetAnimation = findCurrentAnimation(MapAnimator::AnimatedValue::Target, _animationsByKey[key]);
-            if (!targetAnimation)
-            {
-                assert(false);
-                return 0.0f;
-            }
-
-            PointI64 targetDeltaValue;
-            bool ok = targetAnimation->obtainDeltaValueAsPointI64(targetDeltaValue);
-            if (!ok)
-            {
-                assert(false);
-                return 0.0f;
-            }
+            PointI64 targetDeltaValue = PointI64(targetValue) - targetGetter(context, sharedContext);
 
             // Recalculate delta to tiles at current zoom base
             PointI64 deltaInTiles;
