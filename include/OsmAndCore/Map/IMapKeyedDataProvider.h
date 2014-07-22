@@ -20,7 +20,7 @@ namespace OsmAnd
         Q_DISABLE_COPY(IMapKeyedDataProvider);
 
     public:
-        typedef const void* Key;
+        typedef uintptr_t Key;
 
     private:
     protected:

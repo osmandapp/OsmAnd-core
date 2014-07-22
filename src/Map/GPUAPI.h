@@ -28,7 +28,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(GPUAPI);
     public:
-        typedef const void* RefInGPU;
+        typedef uintptr_t RefInGPU;
         typedef uint32_t TextureFormat;
         union SourceFormat
         {
