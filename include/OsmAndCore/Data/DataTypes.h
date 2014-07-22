@@ -25,7 +25,7 @@ namespace OsmAnd
         const uint64_t mapObjectId,
         const AreaI& bbox,
         const ZoomLevel firstZoomLevel,
-        const ZoomLevel lasttZoomLevel)> FilterMapObjectsByIdSignature;
+        const ZoomLevel lasttZoomLevel)> FilterMapObjectsByIdFunction;
 }
 
 #endif // !defined(_OSMAND_CORE_DATA_TYPES_H_)

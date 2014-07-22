@@ -12,6 +12,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "MapTypes.h"
+#include "ObfMapSectionReader.h"
 
 namespace OsmAnd
 {
@@ -33,27 +34,47 @@ namespace OsmAnd
     class ObfMapSectionReader;
     class ObfMapSectionReader_P Q_DECL_FINAL
     {
+    public:
+        typedef ObfMapSectionReader::VisitorFunction VisitorFunction;
+
     private:
         ObfMapSectionReader_P();
         ~ObfMapSectionReader_P();
 
     protected:
-        static void read(const ObfReader_P& reader, const std::shared_ptr<ObfMapSectionInfo>& section);
+        static void read(
+            const ObfReader_P& reader,
+            const std::shared_ptr<ObfMapSectionInfo>& section);
 
-        static void readMapLevelHeader(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readMapLevelHeader(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevel>& level);
 
-        static void readEncodingDecodingRules(const ObfReader_P& reader,
+        static void readEncodingDecodingRules(
+            const ObfReader_P& reader,
             const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
-        static void readEncodingDecodingRule(const ObfReader_P& reader,
-            uint32_t defaultId, const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
 
-        static void readMapLevelTreeNodes(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-            const std::shared_ptr<const ObfMapSectionLevel>& level, QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >& nodes);
-        static void readTreeNode(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readEncodingDecodingRule(
+            const ObfReader_P& reader,
+            uint32_t defaultId,
+            const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
+
+        static void readMapLevelTreeNodes(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const std::shared_ptr<const ObfMapSectionLevel>& level,
+            QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >& nodes);
+
+        static void readTreeNode(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
             const AreaI& parentArea,
             const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode);
-        static void readTreeNodeChildren(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+
+        static void readTreeNodeChildren(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
             MapFoundationType& foundation,
             QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
@@ -61,21 +82,28 @@ namespace OsmAnd
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
-        static void readMapObjectsBlock(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readMapObjectsBlock(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
             QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
             const AreaI* bbox31,
-            const FilterMapObjectsByIdSignature filterById,
-            std::function<bool (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>&)> visitor,
+            const FilterMapObjectsByIdFunction filterById,
+            const VisitorFunction visitor,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
-        static void readMapObjectId(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
+        static void readMapObjectId(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
             uint64_t baseId,
             uint64_t& objectId);
 
-        static void readMapObject(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-            uint64_t baseId, const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
+        static void readMapObject(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
+            uint64_t baseId,
+            const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
             std::shared_ptr<OsmAnd::Model::BinaryMapObject>& mapObjectOut,
             const AreaI* bbox31,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
@@ -85,11 +113,16 @@ namespace OsmAnd
             MaskToRead = ~((1u << ShiftCoordinates) - 1),
         };
 
-        static void loadMapObjects(const ObfReader_P& reader, const std::shared_ptr<const ObfMapSectionInfo>& section,
-            ZoomLevel zoom, const AreaI* bbox31,
-            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut, MapFoundationType* foundationOut,
-            const FilterMapObjectsByIdSignature filterById,
-            std::function<bool (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>&)> visitor,
+    public:
+        static void loadMapObjects(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
+            ZoomLevel zoom,
+            const AreaI* bbox31,
+            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
+            MapFoundationType* foundationOut,
+            const FilterMapObjectsByIdFunction filterById,
+            const VisitorFunction visitor,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 

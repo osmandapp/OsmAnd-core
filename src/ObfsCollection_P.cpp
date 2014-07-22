@@ -2,9 +2,6 @@
 #include "ObfsCollection.h"
 
 #include <cassert>
-#if OSMAND_DEBUG
-#   include <chrono>
-#endif
 
 #include "QtCommon.h"
 
@@ -13,6 +10,7 @@
 #include "ObfDataInterface.h"
 #include "ObfFile.h"
 #include "QKeyValueIterator.h"
+#include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -55,9 +53,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
     if (invalidationsToProcess == 0)
         return;
 
-#if OSMAND_DEBUG
-    const auto collectSources_Begin = std::chrono::high_resolution_clock::now();
-#endif
+    const Stopwatch collectSourcesStopwatch(true);
 
     // Check all previously collected sources
     auto itCollectedSourcesEntry = mutableIteratorOf(_collectedSources);
@@ -171,11 +167,7 @@ void OsmAnd::ObfsCollection_P::collectSources() const
     // Decrement invalidations counter with number of processed onces
     _collectedSourcesInvalidated.fetchAndAddOrdered(-invalidationsToProcess);
 
-#if OSMAND_DEBUG
-    const auto collectSources_End = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<float> collectSources_Elapsed = collectSources_End - collectSources_Begin;
-    LogPrintf(LogSeverityLevel::Info, "Collected OBF sources in %fs", collectSources_Elapsed.count());
-#endif
+    LogPrintf(LogSeverityLevel::Info, "Collected OBF sources in %fs", collectSourcesStopwatch.elapsed());
 }
 
 OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::addDirectory(const QDir& dir, bool recursive)

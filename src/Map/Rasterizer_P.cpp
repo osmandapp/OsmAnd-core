@@ -27,6 +27,7 @@
 #include "ICU.h"
 #include "QKeyValueIterator.h"
 #include "QCachingIterator.h"
+#include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -74,11 +75,8 @@ void OsmAnd::Rasterizer_P::prepareContext(
     // Wider area is used to test primitives that have width
     context._largerArea31 = area31.getEnlargedBy(PointI(area31.width() * 0.25f, area31.height() * 0.25f));
 
-    // Update metric
-    std::chrono::high_resolution_clock::time_point objectsSorting_begin;
-    if (metric)
-        objectsSorting_begin = std::chrono::high_resolution_clock::now();
-
+    const Stopwatch objectsSortingStopwatch(metric != nullptr);
+    
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
     QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > detailedmapMapObjects, detailedmapCoastlineObjects, basemapMapObjects, basemapCoastlineObjects;
     QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > polygonizedCoastlineObjects;
@@ -106,30 +104,18 @@ void OsmAnd::Rasterizer_P::prepareContext(
         }
     }
 
+    if (metric)
+        metric->elapsedTimeForSortingObjects += objectsSortingStopwatch.elapsed();
+    
     // Cleanup if aborted
     if (controller && controller->isAborted())
     {
-        // Update metric
-        if (metric)
-        {
-            const std::chrono::duration<float> objectsSorting_elapsed = std::chrono::high_resolution_clock::now() - objectsSorting_begin;
-            metric->elapsedTimeForSortingObjects += objectsSorting_elapsed.count();
-        }
-
         context.clear();
         return;
     }
 
-    // Update metric
-    std::chrono::high_resolution_clock::time_point polygonizeCoastlines_begin;
-    if (metric)
-    {
-        const std::chrono::duration<float> objectsSorting_elapsed = std::chrono::high_resolution_clock::now() - objectsSorting_begin;
-        metric->elapsedTimeForSortingObjects += objectsSorting_elapsed.count();
-
-        polygonizeCoastlines_begin = std::chrono::high_resolution_clock::now();
-    }
-
+    const Stopwatch polygonizeCoastlinesStopwatch(metric != nullptr);
+    
     // Polygonize coastlines
     bool fillEntireArea = true;
     bool addBasemapCoastlines = true;
@@ -158,12 +144,10 @@ void OsmAnd::Rasterizer_P::prepareContext(
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
     }
 
-    // Update metric
     if (metric)
     {
-        const std::chrono::duration<float> polygonizeCoastlines_elapsed = std::chrono::high_resolution_clock::now() - polygonizeCoastlines_begin;
-        metric->elapsedTimeForPolygonizingCoastlines += polygonizeCoastlines_elapsed.count();
-        metric->polygonizedCoastlines = polygonizedCoastlineObjects.size();
+        metric->elapsedTimeForPolygonizingCoastlines += polygonizeCoastlinesStopwatch.elapsed();
+        metric->polygonizedCoastlines += polygonizedCoastlineObjects.size();
     }
 
     if (basemapMapObjects.isEmpty() && detailedmapMapObjects.isEmpty() && foundation == MapFoundationType::Undefined)
@@ -221,45 +205,44 @@ void OsmAnd::Rasterizer_P::prepareContext(
     if (nothingToRasterize)
         *nothingToRasterize = false;
 
-    // Update metric
-    std::chrono::high_resolution_clock::time_point obtainPrimitives_begin;
-    if (metric)
-        obtainPrimitives_begin = std::chrono::high_resolution_clock::now();
+    // Obtain primitives:
 
-    // Obtain primitives
+    const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
     obtainPrimitives(env, context, detailedmapMapObjects, controller, metric);
+    if (metric)
+        metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
+
     if ((zoom <= static_cast<ZoomLevel>(BasemapZoom)) || detailedDataMissing)
+    {
+        const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
         obtainPrimitives(env, context, basemapMapObjects, controller, metric);
+        if (metric)
+            metric->elapsedTimeForObtainingPrimitivesFromBasemap += obtainPrimitivesFromBasemapStopwatch.elapsed();
+    }
+
+    const Stopwatch obtainPrimitivesFromCoastlinesStopwatch(metric != nullptr);
     obtainPrimitives(env, context, polygonizedCoastlineObjects, controller, metric);
-    sortAndFilterPrimitives(env, context);
+    if (metric)
+        metric->elapsedTimeForObtainingPrimitivesFromCoastlines += obtainPrimitivesFromCoastlinesStopwatch.elapsed();
+    
     if (controller && controller->isAborted())
     {
         context.clear();
         return;
     }
 
-    // Update metric
+    // Sort and filter primitives
+    const Stopwatch sortAndFilterPrimitivesStopwatch(metric != nullptr);
+    sortAndFilterPrimitives(env, context);
     if (metric)
-    {
-        const std::chrono::duration<float> obtainPrimitives_elapsed = std::chrono::high_resolution_clock::now() - obtainPrimitives_begin;
-        metric->elapsedTimeForObtainingPrimitives += obtainPrimitives_elapsed.count();
-    }
-
-    // Update metric
-    std::chrono::high_resolution_clock::time_point obtainPrimitivesSymbols_begin;
-    if (metric)
-        obtainPrimitivesSymbols_begin = std::chrono::high_resolution_clock::now();
+        metric->elapsedTimeForSortingAndFilteringPrimitives += sortAndFilterPrimitivesStopwatch.elapsed();
 
     // Obtain symbols from primitives
+    const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
     obtainPrimitivesSymbols(env, context, controller);
-
-    // Update metric
     if (metric)
-    {
-        const std::chrono::duration<float> obtainPrimitivesSymbols_elapsed = std::chrono::high_resolution_clock::now() - obtainPrimitivesSymbols_begin;
-        metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbols_elapsed.count();
-    }
-
+        metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
+    
     if (controller && controller->isAborted())
     {
         context.clear();
@@ -401,10 +384,7 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
     {
         const auto& decodedType = decRules[*itTypeRuleId];
 
-        // Update metric
-        std::chrono::high_resolution_clock::time_point orderEvaluation_begin;
-        if (metric)
-            orderEvaluation_begin = std::chrono::high_resolution_clock::now();
+        const Stopwatch orderEvaluationStopwatch(metric != nullptr);
 
         // Setup mapObject-specific input data
         orderEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
@@ -417,11 +397,9 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
         MapStyleEvaluationResult orderEvalResult;
         ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &orderEvalResult);
 
-        // Update metric
         if (metric)
         {
-            const std::chrono::duration<float> orderEvaluation_elapsed = std::chrono::high_resolution_clock::now() - orderEvaluation_begin;
-            metric->elapsedTimeForOrderEvaluation += orderEvaluation_elapsed.count();
+            metric->elapsedTimeForOrderEvaluation += orderEvaluationStopwatch.elapsed();
             metric->orderEvaluations++;
         }
 
@@ -466,10 +444,7 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
                 continue;
             }
 
-            // Update metric
-            std::chrono::high_resolution_clock::time_point polygonEvaluation_begin;
-            if (metric)
-                polygonEvaluation_begin = std::chrono::high_resolution_clock::now();
+            const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
             // Setup mapObject-specific input data
             polygonEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
@@ -479,11 +454,9 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
             std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
             ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, evaluatorState.get());
 
-            // Update metric
             if (metric)
             {
-                const std::chrono::duration<float> polygonEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polygonEvaluation_begin;
-                metric->elapsedTimeForPolygonEvaluation += polygonEvaluation_elapsed.count();
+                metric->elapsedTimeForPolygonEvaluation += polygonEvaluationStopwatch.elapsed();
                 metric->polygonEvaluations++;
             }
 
@@ -509,11 +482,8 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
                 if (metric)
                     metric->polygonPrimitives++;
 
-                // Update metric
-                std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
-                if (metric)
-                    pointEvaluation_begin = std::chrono::high_resolution_clock::now();
-
+                const Stopwatch pointEvaluationStopwatch(metric != nullptr);
+                
                 // Setup mapObject-specific input data
                 pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
                 pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
@@ -525,8 +495,7 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
                 // Update metric
                 if (metric)
                 {
-                    const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
-                    metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
+                    metric->elapsedTimeForPointEvaluation += pointEvaluationStopwatch.elapsed();
                     metric->pointEvaluations++;
                 }
 
@@ -557,11 +526,8 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
                 continue;
             }
 
-            // Update metric
-            std::chrono::high_resolution_clock::time_point polylineEvaluation_begin;
-            if (metric)
-                polylineEvaluation_begin = std::chrono::high_resolution_clock::now();
-
+            const Stopwatch polylineEvaluationStopwatch(metric != nullptr);
+            
             // Setup mapObject-specific input data
             polylineEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
             polylineEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
@@ -571,11 +537,9 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
             std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
             ok = polylineEvaluator.evaluate(mapObject, MapStyleRulesetType::Polyline, evaluatorState.get());
 
-            // Update metric
             if (metric)
             {
-                const std::chrono::duration<float> polylineEvaluation_elapsed = std::chrono::high_resolution_clock::now() - polylineEvaluation_begin;
-                metric->elapsedTimeForPolylineEvaluation += polylineEvaluation_elapsed.count();
+                metric->elapsedTimeForPolylineEvaluation += polylineEvaluationStopwatch.elapsed();
                 metric->polylineEvaluations++;
             }
 
@@ -602,11 +566,8 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
                 continue;
             }
 
-            // Update metric
-            std::chrono::high_resolution_clock::time_point pointEvaluation_begin;
-            if (metric)
-                pointEvaluation_begin = std::chrono::high_resolution_clock::now();
-
+            const Stopwatch pointEvaluationStopwatch(metric != nullptr);
+            
             // Setup mapObject-specific input data
             pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
             pointEvaluator.setStringValue(env.styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
@@ -618,8 +579,7 @@ std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_
             // Update metric
             if (metric)
             {
-                const std::chrono::duration<float> pointEvaluation_elapsed = std::chrono::high_resolution_clock::now() - pointEvaluation_begin;
-                metric->elapsedTimeForPointEvaluation += pointEvaluation_elapsed.count();
+                metric->elapsedTimeForPointEvaluation += pointEvaluationStopwatch.elapsed();
                 metric->pointEvaluations++;
             }
 

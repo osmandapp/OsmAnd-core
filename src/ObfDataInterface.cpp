@@ -51,7 +51,7 @@ bool OsmAnd::ObfDataInterface::loadBasemapPresenceFlag( bool& basemapPresent, co
 bool OsmAnd::ObfDataInterface::loadMapObjects(
     QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut, MapFoundationType* foundationOut,
     const AreaI& area31, const ZoomLevel zoom,
-    const IQueryController* const controller /*= nullptr*/, const FilterMapObjectsByIdSignature filterById /*= nullptr*/,
+    const IQueryController* const controller /*= nullptr*/, const FilterMapObjectsByIdFunction filterById /*= nullptr*/,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
 {
     if (foundationOut)

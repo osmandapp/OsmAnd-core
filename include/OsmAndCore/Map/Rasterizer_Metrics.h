@@ -5,18 +5,24 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QString>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
 
-namespace OsmAnd {
-
-    namespace Rasterizer_Metrics {
-
+namespace OsmAnd
+{
+    namespace Rasterizer_Metrics
+    {
         struct Metric_prepareContext
         {
             inline Metric_prepareContext()
+            {
+                memset(this, 0, sizeof(Metric_prepareContext));
+            }
+
+            inline void reset()
             {
                 memset(this, 0, sizeof(Metric_prepareContext));
             }
@@ -30,8 +36,14 @@ namespace OsmAnd {
             // Number of polygonized coastlines
             unsigned int polygonizedCoastlines;
 
-            // Time spent on obtaining primitives
-            float elapsedTimeForObtainingPrimitives;
+            // Time spent on obtaining primitives (from detailedmap)
+            float elapsedTimeForObtainingPrimitivesFromDetailedmap;
+
+            // Time spent on obtaining primitives (from basemap)
+            float elapsedTimeForObtainingPrimitivesFromBasemap;
+
+            // Time spent on obtaining primitives (from coastlines)
+            float elapsedTimeForObtainingPrimitivesFromCoastlines;
 
             // Time spent on Order rules evaluation
             float elapsedTimeForOrderEvaluation;
@@ -66,12 +78,15 @@ namespace OsmAnd {
             // Number of obtained point primitives
             unsigned int pointPrimitives;
 
+            // Time spent on sorting and filtering primitives
+            float elapsedTimeForSortingAndFilteringPrimitives;
+
             // Time spent on obtaining primitives symbols
             float elapsedTimeForObtainingPrimitivesSymbols;
+
+            QString toString(const QString& prefix = QString::null) const;
         };
-
-    } // namespace Rasterizer_Metrics
-
-} // namespace OsmAnd
+    }
+}
 
 #endif // !defined(_OSMAND_CORE_RASTERIZER_METRICS_H_)
