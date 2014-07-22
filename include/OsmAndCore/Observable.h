@@ -20,7 +20,7 @@ namespace OsmAnd
         Q_DISABLE_COPY(Observable);
     public:
         typedef std::function<void (ARGS...)> Handler;
-        typedef uintptr_t Tag;
+        typedef const void* Tag;
 
     private:
         mutable QReadWriteLock _observersLock;

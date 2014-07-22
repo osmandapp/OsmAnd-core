@@ -28,7 +28,7 @@ namespace OsmAnd
         Q_DISABLE_COPY(MapMarker);
 
     public:
-        typedef uintptr_t OnSurfaceIconKey;
+        typedef const void* OnSurfaceIconKey;
 
     private:
         PrivateImplementation<MapMarker_P> _p;

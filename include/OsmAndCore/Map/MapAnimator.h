@@ -20,7 +20,7 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY(MapAnimator);
     public:
-        typedef uintptr_t Key;
+        typedef const void* Key;
 
         enum class TimingFunction
         {
