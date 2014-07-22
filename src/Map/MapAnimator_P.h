@@ -588,6 +588,8 @@ namespace OsmAnd
         void pause();
         void resume();
 
+        bool cancelAnimation(const std::shared_ptr<const IAnimation>& animation);
+
         QList< std::shared_ptr<IAnimation> > getAnimations(const Key key);
         QList< std::shared_ptr<const IAnimation> > getAnimations(const Key key) const;
         bool pauseAnimations(const Key key);

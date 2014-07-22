@@ -39,6 +39,11 @@ void OsmAnd::MapAnimator::resume()
     _p->resume();
 }
 
+bool OsmAnd::MapAnimator::cancelAnimation(const std::shared_ptr<const IAnimation>& animation)
+{
+    return _p->cancelAnimation(animation);
+}
+
 QList< std::shared_ptr<const OsmAnd::MapAnimator::IAnimation> > OsmAnd::MapAnimator::getAnimations(const Key key) const
 {
     return _p->getAnimations(key);
