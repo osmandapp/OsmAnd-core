@@ -51,11 +51,17 @@ namespace OsmAnd
             // Number of order evaluations
             unsigned int orderEvaluations;
 
+            // Number of order rejects
+            unsigned int orderRejects;
+
             // Time spent on Polygon rules evaluation
             float elapsedTimeForPolygonEvaluation;
 
             // Number of polygon evaluations
             unsigned int polygonEvaluations;
+
+            // Number of polygons that were rejected by their size (area)
+            unsigned int polygonsRejectedByArea;
 
             // Number of obtained polygon primitives
             unsigned int polygonPrimitives;

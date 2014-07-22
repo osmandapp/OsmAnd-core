@@ -12,9 +12,11 @@ QString OsmAnd::Rasterizer_Metrics::Metric_prepareContext::toString(const QStrin
     output += prefix + QString(QLatin1String("elapsedTimeForObtainingPrimitivesFromCoastlines = %1s\n")).arg(elapsedTimeForObtainingPrimitivesFromCoastlines);
     output += prefix + QString(QLatin1String("elapsedTimeForOrderEvaluation = %1s\n")).arg(elapsedTimeForOrderEvaluation);
     output += prefix + QString(QLatin1String("orderEvaluations = %1\n")).arg(orderEvaluations);
+    output += prefix + QString(QLatin1String("orderRejects = %1\n")).arg(orderRejects);
     output += prefix + QString(QLatin1String("~time/1k-order = %1ms\n")).arg((elapsedTimeForOrderEvaluation * 1000.0f / static_cast<float>(orderEvaluations)) * 1000.0f);
     output += prefix + QString(QLatin1String("elapsedTimeForPolygonEvaluation = %1s\n")).arg(elapsedTimeForPolygonEvaluation);
     output += prefix + QString(QLatin1String("polygonEvaluations = %1\n")).arg(polygonEvaluations);
+    output += prefix + QString(QLatin1String("polygonsRejectedByArea = %1\n")).arg(polygonsRejectedByArea);
     output += prefix + QString(QLatin1String("polygonPrimitives = %1\n")).arg(polygonPrimitives);
     output += prefix + QString(QLatin1String("~time/1k-polygon = %1ms\n")).arg((elapsedTimeForPolygonEvaluation * 1000.0f / static_cast<float>(polygonEvaluations)) * 1000.0f);
     output += prefix + QString(QLatin1String("elapsedTimeForPolylineEvaluation = %1s\n")).arg(elapsedTimeForPolylineEvaluation);
