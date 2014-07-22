@@ -245,13 +245,13 @@ bool OsmAnd::ObfsCollection_P::remove(const ObfsCollection::SourceOriginId entry
     return true;
 }
 
-QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ObfsCollection_P::getObfFiles() const
+QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ObfsCollection_P::getObfFiles() const
 {
     // Check if sources were invalidated
     if (_collectedSourcesInvalidated.loadAcquire() > 0)
         collectSources();
 
-    QVector< std::shared_ptr<const OsmAnd::ObfFile> > obfFiles;
+    QList< std::shared_ptr<const OsmAnd::ObfFile> > obfFiles;
     {
         QReadLocker scopedLocker(&_collectedSourcesLock);
 

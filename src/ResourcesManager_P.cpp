@@ -1266,12 +1266,12 @@ OsmAnd::ResourcesManager_P::ObfsCollectionProxy::~ObfsCollectionProxy()
 {
 }
 
-QVector< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::ObfsCollectionProxy::getObfFiles() const
+QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::ObfsCollectionProxy::getObfFiles() const
 {
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
     bool otherBasemapPresent = false;
-    QVector< std::shared_ptr<const ObfFile> > obfFiles;
+    QList< std::shared_ptr<const ObfFile> > obfFiles;
     for(const auto& localResource : constOf(owner->_localResources))
     {
         if (localResource->type != ResourceType::MapRegion)

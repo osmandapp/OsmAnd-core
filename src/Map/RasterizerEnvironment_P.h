@@ -5,7 +5,6 @@
 
 #include "QtExtensions.h"
 #include <QMap>
-#include <QVector>
 #include <QHash>
 #include <QMutex>
 
@@ -73,8 +72,8 @@ namespace OsmAnd
         std::shared_ptr<const MapStyleRule> _attributeRule_roadDensityZoomTile;
         std::shared_ptr<const MapStyleRule> _attributeRule_roadsDensityLimitPerTile;
 
-        QVector< SkPaint > _oneWayPaints;
-        QVector< SkPaint > _reverseOneWayPaints;
+        QList< SkPaint > _oneWayPaints;
+        QList< SkPaint > _reverseOneWayPaints;
         static void initializeOneWayPaint(SkPaint& paint);
 
         mutable QMutex _shadersBitmapsMutex;
@@ -116,8 +115,8 @@ namespace OsmAnd
         const std::shared_ptr<const MapStyleRule>& attributeRule_roadDensityZoomTile;
         const std::shared_ptr<const MapStyleRule>& attributeRule_roadsDensityLimitPerTile;
 
-        const QVector< SkPaint >& oneWayPaints;
-        const QVector< SkPaint >& reverseOneWayPaints;
+        const QList< SkPaint >& oneWayPaints;
+        const QList< SkPaint >& reverseOneWayPaints;
 
         const std::shared_ptr<const ObfMapSectionInfo> dummyMapSection;
 

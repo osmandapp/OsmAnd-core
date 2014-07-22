@@ -93,6 +93,8 @@ namespace OsmAnd
         };
 
         struct Primitive;
+        typedef QList< std::shared_ptr<const Primitive> > PrimitivesCollection;
+
         struct PrimitivesGroup
         {
             PrimitivesGroup(const std::shared_ptr<const Model::BinaryMapObject>& mapObject_)
@@ -102,10 +104,11 @@ namespace OsmAnd
 
             const std::shared_ptr<const Model::BinaryMapObject> mapObject;
 
-            QVector< std::shared_ptr<const Primitive> > polygons;
-            QVector< std::shared_ptr<const Primitive> > polylines;
-            QVector< std::shared_ptr<const Primitive> > points;
+            PrimitivesCollection polygons;
+            PrimitivesCollection polylines;
+            PrimitivesCollection points;
         };
+        typedef QList< std::shared_ptr<const PrimitivesGroup> > PrimitivesGroupsCollection;
 
         struct Primitive
         {
@@ -136,7 +139,7 @@ namespace OsmAnd
             const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& source,
             const IQueryController* const controller,
             Rasterizer_Metrics::Metric_prepareContext* const metric);
-        static std::shared_ptr<const PrimitivesGroup> createPrimitivesGroup(
+        static std::shared_ptr<const PrimitivesGroup> obtainPrimitivesGroup(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
             MapStyleEvaluator& orderEvaluator,
@@ -150,6 +153,8 @@ namespace OsmAnd
             const RasterizerEnvironment_P& env, RasterizerContext_P& context);
 
         struct PrimitiveSymbol;
+        typedef QList< std::shared_ptr<const PrimitiveSymbol> > PrimitiveSymbolsCollection;
+
         struct SymbolsGroup
         {
             SymbolsGroup(const std::shared_ptr<const Model::BinaryMapObject>& mapObject_)
@@ -159,7 +164,7 @@ namespace OsmAnd
 
             const std::shared_ptr<const Model::BinaryMapObject> mapObject;
 
-            QVector< std::shared_ptr<const PrimitiveSymbol> > symbols;
+            PrimitiveSymbolsCollection symbols;
         };
 
         struct PrimitiveSymbol
@@ -201,29 +206,29 @@ namespace OsmAnd
             const IQueryController* const controller);
         static void collectSymbolsFromPrimitives(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-            const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type,
-            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols,
+            const PrimitivesCollection& primitives, const PrimitivesType type,
+            PrimitiveSymbolsCollection& outSymbols,
             const IQueryController* const controller);
         static void obtainSymbolsFromPolygon(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive,
-            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
+            PrimitiveSymbolsCollection& outSymbols);
         static void obtainSymbolsFromPolyline(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive,
-            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
+            PrimitiveSymbolsCollection& outSymbols);
         static void obtainSymbolsFromPoint(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive,
-            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
+            PrimitiveSymbolsCollection& outSymbols);
         static void obtainPrimitiveTexts(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive, const PointI& location,
-            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
+            PrimitiveSymbolsCollection& outSymbols);
         static void obtainPrimitiveIcon(
             const RasterizerEnvironment_P& env, RasterizerContext_P& context,
             const std::shared_ptr<const Primitive>& primitive, const PointI& location,
-            QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols);
+            PrimitiveSymbolsCollection& outSymbols);
 
         enum class PaintValuesSet
         {
@@ -237,7 +242,7 @@ namespace OsmAnd
             const MapStyleEvaluationResult& evalResult, const PaintValuesSet valueSetSelector, const bool isArea);
 
         void rasterizeMapPrimitives(
-            SkCanvas& canvas, const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type, const IQueryController* const controller);
+            SkCanvas& canvas, const PrimitivesCollection& primitives, const PrimitivesType type, const IQueryController* const controller);
 
         void rasterizePolygon(
             SkCanvas& canvas, const std::shared_ptr<const Primitive>& primitive);

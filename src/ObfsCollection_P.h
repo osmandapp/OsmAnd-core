@@ -90,7 +90,7 @@ namespace OsmAnd
         ObfsCollection::SourceOriginId addFile(const QFileInfo& fileInfo);
         bool remove(const ObfsCollection::SourceOriginId entryId);
 
-        QVector< std::shared_ptr<const ObfFile> > getObfFiles() const;
+        QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
         std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
 
     friend class OsmAnd::ObfsCollection;

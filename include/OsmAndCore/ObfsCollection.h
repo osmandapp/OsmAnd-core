@@ -39,7 +39,7 @@ namespace OsmAnd
         SourceOriginId addFile(const QString& filePath);
         bool remove(const SourceOriginId entryId);
 
-        virtual QVector< std::shared_ptr<const ObfFile> > getObfFiles() const;
+        virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
         virtual std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
     };
 }

@@ -4,7 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QVector>
+#include <QList>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Data/ObfFile.h>
@@ -22,7 +22,7 @@ namespace OsmAnd
     public:
         virtual ~IObfsCollection();
 
-        virtual QVector< std::shared_ptr<const ObfFile> > getObfFiles() const = 0;
+        virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const = 0;
         virtual std::shared_ptr<ObfDataInterface> obtainDataInterface() const = 0;
     };
 }

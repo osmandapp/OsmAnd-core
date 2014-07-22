@@ -323,7 +323,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         }
 
         // Create a primitives group
-        const auto group = createPrimitivesGroup(env, context, mapObject, orderEvaluator, polygonEvaluator, polylineEvaluator, pointEvaluator, metric);
+        const auto group = obtainPrimitivesGroup(env, context, mapObject, orderEvaluator, polygonEvaluator, polylineEvaluator, pointEvaluator, metric);
 
         // Add this group to shared cache
         if (canBeShared)
@@ -344,6 +344,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         context._primitivesGroups.push_back(qMove(group));
     }
 
+    // Wait for future primitives groups
+    Stopwatch futureSharedPrimitivesGroupsStopwatch(metric != nullptr);
     for(auto& futureSharedGroup : futureSharedPrimitivesGroups)
     {
         auto group = futureSharedGroup.get();
@@ -362,9 +364,11 @@ void OsmAnd::Rasterizer_P::obtainPrimitives(
         // Add shared group to current context
         context._primitivesGroups.push_back(qMove(group));
     }
+    if (metric)
+        metric->elapsedTimeForFutureSharedPrimitivesGroups += futureSharedPrimitivesGroupsStopwatch.elapsed();
 }
 
-std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_P::createPrimitivesGroup(
+std::shared_ptr<const OsmAnd::Rasterizer_P::PrimitivesGroup> OsmAnd::Rasterizer_P::obtainPrimitivesGroup(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
     MapStyleEvaluator& orderEvaluator,
@@ -736,7 +740,6 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
                     entry.second.reserve(group->symbols.size());
                     for(const auto& symbol : constOf(group->symbols))
                         entry.second.push_back(symbol);
-                    entry.second.squeeze();
                     context._symbols.push_back(qMove(entry));
 
                     // Add shared group to current context
@@ -771,7 +774,6 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         entry.second.reserve(group->symbols.size());
         for(const auto& symbol : constOf(group->symbols))
             entry.second.push_back(symbol);
-        entry.second.squeeze();
         context._symbols.push_back(qMove(entry));
 
         // Empty groups are also inserted, to indicate that they are empty
@@ -788,7 +790,6 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
         entry.second.reserve(group->symbols.size());
         for(const auto& symbol : constOf(group->symbols))
             entry.second.push_back(symbol);
-        entry.second.squeeze();
         context._symbols.push_back(qMove(entry));
 
         // Add shared group to current context
@@ -798,8 +799,8 @@ void OsmAnd::Rasterizer_P::obtainPrimitivesSymbols(
 
 void OsmAnd::Rasterizer_P::collectSymbolsFromPrimitives(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
-    const QVector< std::shared_ptr<const Primitive> >& primitives, const PrimitivesType type,
-    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols,
+    const PrimitivesCollection& primitives, const PrimitivesType type,
+    PrimitiveSymbolsCollection& outSymbols,
     const IQueryController* const controller)
 {
     assert(type != PrimitivesType::Polylines_ShadowOnly);
@@ -829,7 +830,7 @@ void OsmAnd::Rasterizer_P::collectSymbolsFromPrimitives(
 void OsmAnd::Rasterizer_P::obtainSymbolsFromPolygon(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Primitive>& primitive,
-    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
+    PrimitiveSymbolsCollection& outSymbols)
 {
     assert(primitive->mapObject->points31.size() > 2);
     assert(primitive->mapObject->isClosedFigure());
@@ -854,7 +855,7 @@ void OsmAnd::Rasterizer_P::obtainSymbolsFromPolygon(
 void OsmAnd::Rasterizer_P::obtainSymbolsFromPolyline(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Primitive>& primitive,
-    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
+    PrimitiveSymbolsCollection& outSymbols)
 {
     assert(primitive->mapObject->points31.size() >= 2);
 
@@ -868,7 +869,7 @@ void OsmAnd::Rasterizer_P::obtainSymbolsFromPolyline(
 void OsmAnd::Rasterizer_P::obtainSymbolsFromPoint(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Primitive>& primitive,
-    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
+    PrimitiveSymbolsCollection& outSymbols)
 {
     assert(primitive->mapObject->points31.size() > 0);
 
@@ -906,7 +907,7 @@ void OsmAnd::Rasterizer_P::obtainSymbolsFromPoint(
 void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Primitive>& primitive, const PointI& location,
-    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
+    PrimitiveSymbolsCollection& outSymbols)
 {
     const auto& mapObject = primitive->mapObject;
     if (mapObject->names.isEmpty())
@@ -1073,7 +1074,7 @@ void OsmAnd::Rasterizer_P::obtainPrimitiveTexts(
 void OsmAnd::Rasterizer_P::obtainPrimitiveIcon(
     const RasterizerEnvironment_P& env, RasterizerContext_P& context,
     const std::shared_ptr<const Primitive>& primitive, const PointI& location,
-    QVector< std::shared_ptr<const PrimitiveSymbol> >& outSymbols)
+    PrimitiveSymbolsCollection& outSymbols)
 {
     if (!primitive->evaluationResult)
         return;
@@ -1232,7 +1233,7 @@ void OsmAnd::Rasterizer_P::rasterizeMap(
 }
 
 void OsmAnd::Rasterizer_P::rasterizeMapPrimitives(
-    SkCanvas& canvas, const QVector< std::shared_ptr<const Primitive> >& primitives, PrimitivesType type, const IQueryController* const controller)
+    SkCanvas& canvas, const PrimitivesCollection& primitives, PrimitivesType type, const IQueryController* const controller)
 {
     assert(type != PrimitivesType::Points);
 

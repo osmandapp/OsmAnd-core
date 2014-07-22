@@ -10,7 +10,6 @@
 #include <QHash>
 #include <QMap>
 #include <QList>
-#include <QVector>
 #include <QReadWriteLock>
 #include <QVariant>
 

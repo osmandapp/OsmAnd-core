@@ -5,7 +5,6 @@
 
 #include "QtExtensions.h"
 #include <QList>
-#include <QVector>
 
 #include <SkColor.h>
 
@@ -41,15 +40,15 @@ namespace OsmAnd
         uint32_t _shadowLevelMin;
         uint32_t _shadowLevelMax;
 
-        QVector< std::shared_ptr<const Rasterizer_P::PrimitivesGroup> > _primitivesGroups;
-        QVector< std::shared_ptr<const Rasterizer_P::Primitive> > _polygons, _polylines, _points;
+        Rasterizer_P::PrimitivesGroupsCollection _primitivesGroups;
+        Rasterizer_P::PrimitivesCollection _polygons, _polylines, _points;
 
-        QVector< std::shared_ptr<const Rasterizer_P::SymbolsGroup> > _symbolsGroups;
+        QList< std::shared_ptr<const Rasterizer_P::SymbolsGroup> > _symbolsGroups;
         typedef std::pair<
             std::shared_ptr<const Model::BinaryMapObject>,
-            QVector< std::shared_ptr<const Rasterizer_P::PrimitiveSymbol> >
+            QList< std::shared_ptr<const Rasterizer_P::PrimitiveSymbol> >
         > SymbolsEntry;
-        QVector<SymbolsEntry> _symbols;
+        QList<SymbolsEntry> _symbols;
 
         void clear();
     public:

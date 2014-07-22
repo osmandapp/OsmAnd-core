@@ -35,7 +35,7 @@ bool OsmAnd::ObfsCollection::remove(const SourceOriginId entryId)
     return _p->remove(entryId);
 }
 
-QVector< std::shared_ptr<const OsmAnd::ObfFile> >OsmAnd::ObfsCollection::getObfFiles() const
+QList< std::shared_ptr<const OsmAnd::ObfFile> >OsmAnd::ObfsCollection::getObfFiles() const
 {
     return _p->getObfFiles();
 }

@@ -10,6 +10,7 @@ QString OsmAnd::Rasterizer_Metrics::Metric_prepareContext::toString(const QStrin
     output += prefix + QString(QLatin1String("elapsedTimeForObtainingPrimitivesFromDetailedmap = %1s\n")).arg(elapsedTimeForObtainingPrimitivesFromDetailedmap);
     output += prefix + QString(QLatin1String("elapsedTimeForObtainingPrimitivesFromBasemap = %1s\n")).arg(elapsedTimeForObtainingPrimitivesFromBasemap);
     output += prefix + QString(QLatin1String("elapsedTimeForObtainingPrimitivesFromCoastlines = %1s\n")).arg(elapsedTimeForObtainingPrimitivesFromCoastlines);
+    output += prefix + QString(QLatin1String("elapsedTimeForFutureSharedPrimitivesGroups = %1s\n")).arg(elapsedTimeForFutureSharedPrimitivesGroups);
     output += prefix + QString(QLatin1String("elapsedTimeForOrderEvaluation = %1s\n")).arg(elapsedTimeForOrderEvaluation);
     output += prefix + QString(QLatin1String("orderEvaluations = %1\n")).arg(orderEvaluations);
     output += prefix + QString(QLatin1String("orderRejects = %1\n")).arg(orderRejects);

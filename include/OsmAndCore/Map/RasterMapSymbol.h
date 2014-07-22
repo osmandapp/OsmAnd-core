@@ -5,8 +5,6 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QList>
-#include <QVector>
 #include <QString>
 
 #include <SkBitmap.h>
