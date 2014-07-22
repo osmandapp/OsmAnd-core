@@ -144,6 +144,37 @@ bool OsmAnd::MapAnimator_P::cancelAnimations(const Key key)
     return true;
 }
 
+bool OsmAnd::MapAnimator_P::cancelCurrentAnimation(const Key key, const AnimatedValue animatedValue)
+{
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    const auto itAnimations = _animationsByKey.find(key);
+    if (itAnimations == _animationsByKey.end())
+        return false;
+    auto& animations = *itAnimations;
+
+    bool wasRemoved = false;
+    {
+        auto itAnimation = mutableIteratorOf(animations);
+        while (itAnimation.hasNext())
+        {
+            const auto& animation = itAnimation.next();
+
+            if (animation->getAnimatedValue() != animatedValue || !animation->isPlaying())
+                continue;
+
+            itAnimation.remove();
+            wasRemoved = true;
+            break;
+        }
+    }
+
+    if (animations.isEmpty())
+        _animationsByKey.erase(itAnimations);
+
+    return wasRemoved;
+}
+
 std::shared_ptr<OsmAnd::MapAnimator_P::IAnimation> OsmAnd::MapAnimator_P::getCurrentAnimation(const Key key, const AnimatedValue animatedValue)
 {
     QReadLocker scopedLocker(&_animationsCollectionLock);

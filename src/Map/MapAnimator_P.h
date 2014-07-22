@@ -603,6 +603,7 @@ namespace OsmAnd
         bool resumeAnimations(const Key key);
         bool cancelAnimations(const Key key);
 
+        bool cancelCurrentAnimation(const Key key, const AnimatedValue animatedValue);
         std::shared_ptr<IAnimation> getCurrentAnimation(const Key key, const AnimatedValue animatedValue);
         std::shared_ptr<const IAnimation> getCurrentAnimation(const Key key, const AnimatedValue animatedValue) const;
 

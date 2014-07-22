@@ -69,6 +69,11 @@ bool OsmAnd::MapAnimator::cancelAnimations(const Key key)
     return _p->cancelAnimations(key);
 }
 
+bool OsmAnd::MapAnimator::cancelCurrentAnimation(const Key key, const AnimatedValue animatedValue)
+{
+    return _p->cancelCurrentAnimation(key, animatedValue);
+}
+
 std::shared_ptr<const OsmAnd::MapAnimator::IAnimation> OsmAnd::MapAnimator::getCurrentAnimation(const Key key, const AnimatedValue animatedValue) const
 {
     return _p->getCurrentAnimation(key, animatedValue);
