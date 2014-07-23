@@ -61,6 +61,11 @@ inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOT
 {
     return ::qHash(static_cast<int>(value), seed);
 }
+
+inline uint qHash(const OsmAnd::ObfMapSectionDataBlockId value, uint seed) Q_DECL_NOTHROW
+{
+    return ::qHash(value.id, seed);
+}
 #endif // !defined(SWIG)
 
 #endif // !defined(_OSMAND_CORE_QT_EXTENSIONS_H_)

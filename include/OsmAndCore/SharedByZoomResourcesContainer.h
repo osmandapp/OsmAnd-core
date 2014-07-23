@@ -81,7 +81,7 @@ namespace OsmAnd
         SharedByZoomResourcesContainer()
         {
         }
-        ~SharedByZoomResourcesContainer()
+        virtual ~SharedByZoomResourcesContainer()
         {
         }
 

@@ -36,6 +36,9 @@ namespace OsmAnd
     {
     public:
         typedef ObfMapSectionReader::VisitorFunction VisitorFunction;
+        typedef ObfMapSectionReader::DataBlockId DataBlockId;
+        typedef ObfMapSectionReader::DataBlock DataBlock;
+        typedef ObfMapSectionReader::DataBlocksCache DataBlocksCache;
 
     private:
         ObfMapSectionReader_P();
@@ -123,6 +126,8 @@ namespace OsmAnd
             MapFoundationType* foundationOut,
             const FilterMapObjectsByIdFunction filterById,
             const VisitorFunction visitor,
+            DataBlocksCache* cache,
+            QSet<DataBlockId>* outReferencedCacheEntries,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 

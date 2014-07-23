@@ -84,7 +84,7 @@ namespace OsmAnd
             : _lock(QReadWriteLock::Recursive)
         {
         }
-        ~SharedResourcesContainer()
+        virtual ~SharedResourcesContainer()
         {
         }
 

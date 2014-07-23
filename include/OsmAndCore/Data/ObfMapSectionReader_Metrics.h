@@ -51,6 +51,9 @@ namespace OsmAnd
             // Number of MapObjectBlock read
             unsigned int mapObjectsBlocksRead;
 
+            // Number of MapObjectBlock referenced
+            unsigned int mapObjectsBlocksReferenced;
+
             // Number of visited MapObjects
             unsigned int visitedMapObjects;
 

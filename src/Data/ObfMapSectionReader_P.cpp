@@ -814,6 +814,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     MapFoundationType* foundationOut,
     const FilterMapObjectsByIdFunction filterById,
     const VisitorFunction visitor,
+    DataBlocksCache* cache,
+    QSet<DataBlockId>* outReferencedCacheEntries,
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
@@ -959,20 +961,123 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             if (controller && controller->isAborted())
                 break;
 
-            cis->Seek(treeNode->_dataOffset);
+            if (cache)
+            {
+                // In case cache is provided, read and cache
 
-            gpb::uint32 length;
-            cis->ReadVarint32(&length);
-            auto oldLimit = cis->PushLimit(length);
+                DataBlockId blockId;
+                blockId.sectionRuntimeGeneratedId = section->runtimeGeneratedId;
+                blockId.offset = treeNode->_dataOffset;
 
-            readMapObjectsBlock(reader, section, treeNode, resultOut, bbox31, filterById, visitor, controller, metric);
-            assert(cis->BytesUntilLimit() == 0);
+                const auto levelZooms = Utilities::enumerateZoomLevels(treeNode->level->minZoom, treeNode->level->maxZoom);
 
-            cis->PopLimit(oldLimit);
+                std::shared_ptr<const DataBlock> dataBlock;
+                std::shared_ptr<const DataBlock> sharedBlockReference;
+                proper::shared_future< std::shared_ptr<const DataBlock> > futureSharedBlockReference;
+                if (cache->obtainReferenceOrFutureReferenceOrMakePromise(blockId, zoom, levelZooms, sharedBlockReference, futureSharedBlockReference))
+                {
+                    // Got reference or future reference
 
-            // Update metric
-            if (metric)
-                metric->mapObjectsBlocksRead++;
+                    // Update metric
+                    if (metric)
+                        metric->mapObjectsBlocksReferenced++;
+
+                    if (sharedBlockReference)
+                    {
+                        // Ok, this block was already loaded, just use it
+                        dataBlock = sharedBlockReference;
+                    }
+                    else
+                    {
+                        // Wait until it will be loaded
+                        dataBlock = futureSharedBlockReference.get();
+                    }
+                }
+                else
+                {
+                    // Made a promise, so load all into temporary storage
+                    QList< std::shared_ptr<const Model::BinaryMapObject> > mapObjects;
+
+                    cis->Seek(treeNode->_dataOffset);
+
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    const auto oldLimit = cis->PushLimit(length);
+
+                    readMapObjectsBlock(
+                        reader,
+                        section,
+                        treeNode,
+                        &mapObjects,
+                        nullptr,
+                        nullptr,
+                        nullptr,
+                        nullptr,
+                        metric);
+                    assert(cis->BytesUntilLimit() == 0);
+
+                    cis->PopLimit(oldLimit);
+
+                    // Update metric
+                    if (metric)
+                        metric->mapObjectsBlocksRead++;
+
+                    // Create a data block and share it
+                    dataBlock.reset(new DataBlock(blockId, treeNode->_area31, treeNode->_foundation, mapObjects));
+                    cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
+                }
+
+                if (outReferencedCacheEntries)
+                    outReferencedCacheEntries->insert(blockId);
+
+                // Process data block
+                for (const auto& mapObject : constOf(dataBlock->mapObjects))
+                {
+                    if (bbox31)
+                    {
+                        const auto shouldNotSkip =
+                            mapObject->bbox31.contains(*bbox31) ||
+                            bbox31->intersects(mapObject->bbox31);
+
+                        if (!shouldNotSkip)
+                            continue;
+                    }
+
+                    if (!visitor || visitor(mapObject))
+                    {
+                        if (resultOut)
+                            resultOut->push_back(qMove(mapObject));
+                    }
+                }
+            }
+            else
+            {
+                // In case there's no cache, simply read
+
+                cis->Seek(treeNode->_dataOffset);
+
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                const auto oldLimit = cis->PushLimit(length);
+
+                readMapObjectsBlock(
+                    reader,
+                    section,
+                    treeNode,
+                    resultOut,
+                    bbox31,
+                    filterById,
+                    visitor,
+                    controller,
+                    metric);
+                assert(cis->BytesUntilLimit() == 0);
+
+                cis->PopLimit(oldLimit);
+
+                // Update metric
+                if (metric)
+                    metric->mapObjectsBlocksRead++;
+            }
         }
 
         // Update metric

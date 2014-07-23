@@ -11,6 +11,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Data/ObfMapSectionReader.h>
 
 namespace OsmAnd
 {
@@ -38,11 +39,23 @@ namespace OsmAnd
 
         const QList< std::shared_ptr<const ObfReader> > obfReaders;
 
-        bool loadObfFiles(QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr, const IQueryController* const controller = nullptr);
-        bool loadBasemapPresenceFlag(bool& basemapPresent, const IQueryController* const controller = nullptr);
-        bool loadMapObjects(QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut, MapFoundationType* foundationOut,
-            const AreaI& area31, const ZoomLevel zoom,
-            const IQueryController* const controller = nullptr, const FilterMapObjectsByIdFunction filterById = nullptr,
+        bool loadObfFiles(
+            QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr,
+            const IQueryController* const controller = nullptr);
+
+        bool loadBasemapPresenceFlag(
+            bool& outBasemapPresent,
+            const IQueryController* const controller = nullptr);
+
+        bool loadMapObjects(
+            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
+            MapFoundationType* foundationOut,
+            const AreaI& area31,
+            const ZoomLevel zoom,
+            const FilterMapObjectsByIdFunction filterById = nullptr,
+            ObfMapSectionReader::DataBlocksCache* cache = nullptr,
+            QSet<ObfMapSectionReader::DataBlockId>* outReferencedCacheEntries = nullptr,
+            const IQueryController* const controller = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
     };
 }

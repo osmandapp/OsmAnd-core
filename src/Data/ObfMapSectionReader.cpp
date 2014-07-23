@@ -20,8 +20,46 @@ void OsmAnd::ObfMapSectionReader::loadMapObjects(
     MapFoundationType* foundationOut /*= nullptr*/,
     const FilterMapObjectsByIdFunction filterById /*= nullptr*/,
     const VisitorFunction visitor /*= nullptr*/,
+    DataBlocksCache* cache /*= nullptr*/,
+    QSet<DataBlockId>* outReferencedCacheEntries /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
 {
-    ObfMapSectionReader_P::loadMapObjects(*reader->_p, section, zoom, bbox31, resultOut, foundationOut, filterById, visitor, controller, metric);
+    ObfMapSectionReader_P::loadMapObjects(
+        *reader->_p,
+        section,
+        zoom,
+        bbox31,
+        resultOut,
+        foundationOut,
+        filterById,
+        visitor,
+        cache,
+        outReferencedCacheEntries,
+        controller,
+        metric);
+}
+
+OsmAnd::ObfMapSectionReader::DataBlock::DataBlock(
+    const DataBlockId id_,
+    const AreaI bbox31_,
+    const MapFoundationType foundationType_,
+    const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& mapObjects_)
+    : id(id_)
+    , bbox31(bbox31_)
+    , foundationType(foundationType_)
+    , mapObjects(mapObjects_)
+{
+}
+
+OsmAnd::ObfMapSectionReader::DataBlock::~DataBlock()
+{
+}
+
+OsmAnd::ObfMapSectionReader::DataBlocksCache::DataBlocksCache()
+{
+}
+
+OsmAnd::ObfMapSectionReader::DataBlocksCache::~DataBlocksCache()
+{
 }

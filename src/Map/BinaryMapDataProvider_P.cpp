@@ -110,63 +110,69 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
 #if OSMAND_PERFORMANCE_METRICS > 1
     ObfMapSectionReader_Metrics::Metric_loadMapObjects dataRead_Metric;
 #endif // OSMAND_PERFORMANCE_METRICS > 1
-    dataInterface->loadMapObjects(&loadedMapObjects, &tileFoundation, tileBBox31, zoom, nullptr,
+    dataInterface->loadMapObjects(
+        &loadedMapObjects,
+        &tileFoundation,
+        tileBBox31,
+        zoom,
         [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, tileBBox31
 #if OSMAND_PERFORMANCE_METRICS
-        , &dataFilter
+            , &dataFilter
 #endif // OSMAND_PERFORMANCE_METRICS
         ]
-    (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
-    {
-#if OSMAND_PERFORMANCE_METRICS
-        const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
-#endif // OSMAND_PERFORMANCE_METRICS
-
-        // This map object may be shared only in case it crosses bounds of a tile
-        const auto canNotBeShared = tileBBox31.contains(bbox);
-
-        // If map object can not be shared, just read it
-        if (canNotBeShared)
+        (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {
 #if OSMAND_PERFORMANCE_METRICS
-            const auto dataFilter_End = std::chrono::high_resolution_clock::now();
-            const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
-            dataFilter += dataRead_Elapsed.count();
+            const auto dataFilter_Begin = std::chrono::high_resolution_clock::now();
 #endif // OSMAND_PERFORMANCE_METRICS
 
+            // This map object may be shared only in case it crosses bounds of a tile
+            const auto canNotBeShared = tileBBox31.contains(bbox);
+
+            // If map object can not be shared, just read it
+            if (canNotBeShared)
+            {
+#if OSMAND_PERFORMANCE_METRICS
+                const auto dataFilter_End = std::chrono::high_resolution_clock::now();
+                const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
+                dataFilter += dataRead_Elapsed.count();
+#endif // OSMAND_PERFORMANCE_METRICS
+
+                return true;
+            }
+
+            // Otherwise, this map object can be shared, so it should be checked for
+            // being present in shared mapObjects storage, or be reserved there
+            std::shared_ptr<const Model::BinaryMapObject> sharedMapObjectReference;
+            proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > futureSharedMapObjectReference;
+            if (_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
+            {
+                if (sharedMapObjectReference)
+                {
+                    // If map object is already in shared objects cache and is available, use that one
+                    referencedMapObjects.push_back(qMove(sharedMapObjectReference));
+                }
+                else
+                {
+                    futureReferencedMapObjects.push_back(qMove(futureSharedMapObjectReference));
+                }
+
+#if OSMAND_PERFORMANCE_METRICS
+                const auto dataFilter_End = std::chrono::high_resolution_clock::now();
+                const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
+                dataFilter += dataRead_Elapsed.count();
+#endif // OSMAND_PERFORMANCE_METRICS
+                return false;
+            }
+
+            // This map object was reserved, and is going to be shared, but needs to be loaded
+            loadedSharedMapObjects.insert(id);
             return true;
-        }
-
-        // Otherwise, this map object can be shared, so it should be checked for
-        // being present in shared mapObjects storage, or be reserved there
-        std::shared_ptr<const Model::BinaryMapObject> sharedMapObjectReference;
-        proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > futureSharedMapObjectReference;
-        if (_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
-        {
-            if (sharedMapObjectReference)
-            {
-                // If map object is already in shared objects cache and is available, use that one
-                referencedMapObjects.push_back(qMove(sharedMapObjectReference));
-            }
-            else
-            {
-                futureReferencedMapObjects.push_back(qMove(futureSharedMapObjectReference));
-            }
-
-#if OSMAND_PERFORMANCE_METRICS
-            const auto dataFilter_End = std::chrono::high_resolution_clock::now();
-            const std::chrono::duration<float> dataRead_Elapsed = dataFilter_End - dataFilter_Begin;
-            dataFilter += dataRead_Elapsed.count();
-#endif // OSMAND_PERFORMANCE_METRICS
-            return false;
-        }
-
-        // This map object was reserved, and is going to be shared, but needs to be loaded
-        loadedSharedMapObjects.insert(id);
-        return true;
-    },
+        },
+        nullptr, nullptr,//cache
+        nullptr,// query controller
 #if OSMAND_PERFORMANCE_METRICS > 1
-        & dataRead_Metric
+        &dataRead_Metric
 #else
         nullptr
 #endif // OSMAND_PERFORMANCE_METRICS > 1

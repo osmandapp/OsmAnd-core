@@ -20,6 +20,43 @@ namespace OsmAnd
         Postcodes = 2,
     };
 
+    union ObfMapSectionDataBlockId
+    {
+        uint64_t id;
+        struct
+        {
+            int sectionRuntimeGeneratedId;
+            uint32_t offset;
+        };
+
+#if !defined(SWIG)
+        inline operator uint64_t() const
+        {
+            return id;
+        }
+
+        inline bool operator==(const ObfMapSectionDataBlockId& that)
+        {
+            return this->id == that.id;
+        }
+
+        inline bool operator!=(const ObfMapSectionDataBlockId& that)
+        {
+            return this->id != that.id;
+        }
+
+        inline bool operator==(const uint64_t& that)
+        {
+            return this->id == that;
+        }
+
+        inline bool operator!=(const uint64_t& that)
+        {
+            return this->id != that;
+        }
+#endif // !defined(SWIG)
+    };
+
     typedef std::function<bool (
         const std::shared_ptr<const ObfMapSectionInfo>& section,
         const uint64_t mapObjectId,

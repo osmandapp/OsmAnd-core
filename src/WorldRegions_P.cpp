@@ -150,6 +150,8 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
             nullptr, // Foundation is not needed
             nullptr, // No filtering by ID
             worldRegionsCollector,
+            nullptr, // No cache
+            nullptr, // No cache
             controller);
     }
 
