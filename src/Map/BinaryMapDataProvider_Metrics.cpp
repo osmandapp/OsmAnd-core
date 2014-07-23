@@ -4,7 +4,8 @@ QString OsmAnd::BinaryMapDataProvider_Metrics::Metric_obtainData::toString(const
 {
     QString output;
 
-    output += loadMapObjectsMetrics.toString(prefix) + QLatin1String("\n");
+    output += loadMapObjectsMetric.toString(prefix) + QLatin1String("\n");
+    output += prepareContextMetric.toString(prefix) + QLatin1String("\n");
     output += prefix + QString(QLatin1String("elapsedTimeForObtainingObfInterface = %1s\n")).arg(elapsedTimeForObtainingObfInterface);
     output += prefix + QString(QLatin1String("elapsedTimeForObjectsFiltering = %1s\n")).arg(elapsedTimeForObjectsFiltering);
     output += prefix + QString(QLatin1String("elapsedTimeForRead = %1s\n")).arg(elapsedTimeForRead);

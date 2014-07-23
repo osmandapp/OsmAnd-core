@@ -10,6 +10,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/ObfMapSectionReader_Metrics.h>
+#include <OsmAndCore/Map/Rasterizer_Metrics.h>
 
 namespace OsmAnd
 {
@@ -24,7 +25,8 @@ namespace OsmAnd
 
             inline void reset()
             {
-                loadMapObjectsMetrics.reset();
+                loadMapObjectsMetric.reset();
+                prepareContextMetric.reset();
                 elapsedTimeForObtainingObfInterface = 0.0f;
                 elapsedTimeForObjectsFiltering = 0.0f;
                 elapsedTimeForRead = 0.0f;
@@ -34,8 +36,11 @@ namespace OsmAnd
                 sharedObjectsCount = 0;
             }
 
-            // Metrics from ObfMapSectionReader
-            ObfMapSectionReader_Metrics::Metric_loadMapObjects loadMapObjectsMetrics;
+            // Metric from ObfMapSectionReader
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects loadMapObjectsMetric;
+
+            // Metric from Rasterizer
+            Rasterizer_Metrics::Metric_prepareContext prepareContextMetric;
 
             // Elapsed time on obtaining OBF interface
             float elapsedTimeForObtainingObfInterface;

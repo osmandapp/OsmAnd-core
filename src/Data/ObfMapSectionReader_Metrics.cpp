@@ -20,7 +20,9 @@ QString OsmAnd::ObfMapSectionReader_Metrics::Metric_loadMapObjects::toString(con
     output += prefix + QString(QLatin1String("acceptedMapObjects = %1\n")).arg(acceptedMapObjects);
     output += prefix + QString(QLatin1String("elapsedTimeForMapObjectsBlocks = %1s\n")).arg(elapsedTimeForMapObjectsBlocks);
     output += prefix + QString(QLatin1String("elapsedTimeForOnlyVisitedMapObjects = %1s\n")).arg(elapsedTimeForOnlyVisitedMapObjects);
+    output += prefix + QString(QLatin1String("~time/1k-only-visited = %1ms\n")).arg((elapsedTimeForOnlyVisitedMapObjects * 1000.0f / static_cast<float>(visitedMapObjects - acceptedMapObjects)) * 1000.0f);
     output += prefix + QString(QLatin1String("elapsedTimeForOnlyAcceptedMapObjects = %1s\n")).arg(elapsedTimeForOnlyAcceptedMapObjects);
+    output += prefix + QString(QLatin1String("~time/1k-only-accepted = %1ms\n")).arg((elapsedTimeForOnlyAcceptedMapObjects * 1000.0f / static_cast<float>(acceptedMapObjects)) * 1000.0f);
     output += prefix + QString(QLatin1String("elapsedTimeForMapObjectsBbox = %1s\n")).arg(elapsedTimeForMapObjectsBbox);
     output += prefix + QString(QLatin1String("elapsedTimeForSkippedMapObjectsPoints = %1s\n")).arg(elapsedTimeForSkippedMapObjectsPoints);
     output += prefix + QString(QLatin1String("skippedMapObjectsPoints = %1\n")).arg(skippedMapObjectsPoints);

@@ -159,7 +159,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         _dataBlocksCache.get(),
         &referencedMapDataBlocks,
         nullptr,// query controller
-        metric ? &metric->loadMapObjectsMetrics : nullptr);
+        metric ? &metric->loadMapObjectsMetric : nullptr);
 
     // Process loaded-and-shared map objects
     for (auto& mapObject : loadedMapObjects)
@@ -186,16 +186,6 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     if (metric)
         metric->elapsedTimeForRead += totalReadTimeStopwatch.elapsed();
 
-//#if OSMAND_PERFORMANCE_METRICS
-//    const auto dataIdsProcess_End = std::chrono::high_resolution_clock::now();
-//    const std::chrono::duration<float> dataIdsProcess_Elapsed = dataIdsProcess_End - dataIdsProcess_Begin;
-//
-//    const auto dataProcess_Begin = std::chrono::high_resolution_clock::now();
-//#endif // OSMAND_PERFORMANCE_METRICS
-//#if OSMAND_PERFORMANCE_METRICS > 1
-//    Rasterizer_Metrics::Metric_prepareContext dataProcess_metric;
-//#endif // OSMAND_PERFORMANCE_METRICS > 1
-
     // Prepare data for the tile
     const auto sharedMapObjectsCount = referencedMapObjects.size() + loadedSharedMapObjects.size();
     const auto allMapObjects = loadedMapObjects + referencedMapObjects;
@@ -203,18 +193,15 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     // Allocate and prepare rasterizer context
     bool nothingToRasterize = false;
     std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment, owner->rasterizerSharedContext));
-    Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, allMapObjects, &nothingToRasterize, nullptr,
-//#if OSMAND_PERFORMANCE_METRICS > 1
-//        &dataProcess_metric
-//#else
-        nullptr
-//#endif // OSMAND_PERFORMANCE_METRICS > 1
-        );
-
-//#if OSMAND_PERFORMANCE_METRICS
-//    const auto dataProcess_End = std::chrono::high_resolution_clock::now();
-//    const std::chrono::duration<float> dataProcess_Elapsed = dataProcess_End - dataProcess_Begin;
-//#endif // OSMAND_PERFORMANCE_METRICS
+    Rasterizer::prepareContext(
+        *rasterizerContext,
+        tileBBox31,
+        zoom,
+        tileFoundation,
+        allMapObjects,
+        &nothingToRasterize,
+        nullptr,
+        metric ? &metric->prepareContextMetric : nullptr);
 
     // Create tile
     const std::shared_ptr<BinaryMapDataTile> newTile(new BinaryMapDataTile(
@@ -272,27 +259,6 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         zoom,
         totalTimeStopwatch.elapsed(),
         qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
-//    LogPrintf(LogSeverityLevel::Info,
-//        "%d map objects (%d unique, %d shared) from %dx%d@%d in %fs:\n"
-//        "\topen %fs\n"
-//        "\tread %fs (filter-by-id %fs):\n"
-//        "%s"
-//        "\t - average time per 1K only-visited map objects = %fms\n"
-//        "\t - average time per 1K only-accepted map objects = %fms\n"
-//        "\tprocess-ids %fs\n"
-//        "\tprocess-content %fs:\n"
-//        "%s",
-//        allMapObjects.size(), allMapObjects.size() - sharedMapObjectsCount, sharedMapObjectsCount,
-//        tileId.x, tileId.y, zoom,
-//        total_Elapsed.count(),
-//        obtainDataInterface_Elapsed.count(),
-//        dataRead_Elapsed.count(), dataFilter,
-//        qPrintable(dataRead_Metric.toString(QLatin1String("\t - "))),
-//        (dataRead_Metric.elapsedTimeForOnlyVisitedMapObjects * 1000.0f) / (static_cast<float>(dataRead_Metric.visitedMapObjects - dataRead_Metric.acceptedMapObjects) / 1000.0f),
-//        (dataRead_Metric.elapsedTimeForOnlyAcceptedMapObjects * 1000.0f) / (static_cast<float>(dataRead_Metric.acceptedMapObjects) / 1000.0f),
-//        dataIdsProcess_Elapsed.count(),
-//        dataProcess_Elapsed.count(),
-//        qPrintable(dataProcess_metric.toString(QLatin1String("\t - "))));
 #endif // OSMAND_PERFORMANCE_METRICS <= 1
 #endif // OSMAND_PERFORMANCE_METRICS
 
