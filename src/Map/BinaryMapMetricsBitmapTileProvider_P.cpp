@@ -58,6 +58,10 @@ bool OsmAnd::BinaryMapMetricsBitmapTileProvider_P::obtainData(const TileId tileI
     canvas.clear(SK_ColorDKGRAY);
 
     QString text;
+    text += QString(QLatin1String("TILE   %1x%2@%3\n"))
+        .arg(tileId.x)
+        .arg(tileId.y)
+        .arg(zoom);
     text += QString(QLatin1String("BLOCKS r:%1+s:%2=%3\n"))
         .arg(obtainDataMetric.loadMapObjectsMetric.mapObjectsBlocksRead)
         .arg(obtainDataMetric.loadMapObjectsMetric.mapObjectsBlocksReferenced)
