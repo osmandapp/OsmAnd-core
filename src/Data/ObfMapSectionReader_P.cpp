@@ -838,6 +838,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         }
     }
 
+    ObfMapSectionReader_Metrics::Metric_loadMapObjects localMetric;
+
     auto foundation = MapFoundationType::Undefined;
     if (foundationOut)
         foundation = *foundationOut;
@@ -1012,7 +1014,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         nullptr,
                         nullptr,
                         nullptr,
-                        metric);
+                        metric ? &localMetric : nullptr);
                     assert(cis->BytesUntilLimit() == 0);
 
                     cis->PopLimit(oldLimit);
@@ -1032,6 +1034,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 // Process data block
                 for (const auto& mapObject : constOf(dataBlock->mapObjects))
                 {
+                    if (metric)
+                        metric->visitedMapObjects++;
+
                     if (bbox31)
                     {
                         const auto shouldNotSkip =
@@ -1048,6 +1053,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
                     if (!visitor || visitor(mapObject))
                     {
+                        if (metric)
+                            metric->acceptedMapObjects++;
+
                         if (resultOut)
                             resultOut->push_back(qMove(mapObject));
                     }
@@ -1094,4 +1102,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
     if (foundationOut)
         *foundationOut = foundation;
+
+    // In case cache was used, and metric was requested, some values must be taken from different parts
+    if (cache && metric)
+    {
+        metric->elapsedTimeForOnlyAcceptedMapObjects += localMetric.elapsedTimeForOnlyAcceptedMapObjects;
+    }
 }

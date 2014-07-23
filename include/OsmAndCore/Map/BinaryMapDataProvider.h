@@ -12,6 +12,7 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
+#include <OsmAndCore/Map/BinaryMapDataProvider_Metrics.h>
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
 
 namespace OsmAnd
@@ -56,6 +57,13 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<MapTiledData>& outTiledData,
+            const IQueryController* const queryController = nullptr);
+
+        bool obtainData(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            std::shared_ptr<MapTiledData>& outTiledData,
+            BinaryMapDataProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController = nullptr);
     };
 

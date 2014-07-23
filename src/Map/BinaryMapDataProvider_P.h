@@ -19,6 +19,7 @@
 #include "TiledEntriesCollection.h"
 #include "SharedByZoomResourcesContainer.h"
 #include "ObfMapSectionReader.h"
+#include "BinaryMapDataProvider_Metrics.h"
 
 namespace OsmAnd
 {
@@ -91,6 +92,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<MapTiledData>& outTiledData,
+            BinaryMapDataProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
 
         friend class OsmAnd::BinaryMapDataProvider;

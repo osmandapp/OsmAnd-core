@@ -30,7 +30,17 @@ bool OsmAnd::BinaryMapDataProvider::obtainData(
     std::shared_ptr<MapTiledData>& outTiledData,
     const IQueryController* const queryController /*= nullptr*/)
 {
-    return _p->obtainData(tileId, zoom, outTiledData, queryController);
+    return _p->obtainData(tileId, zoom, outTiledData, nullptr, queryController);
+}
+
+bool OsmAnd::BinaryMapDataProvider::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<MapTiledData>& outTiledData,
+    BinaryMapDataProvider_Metrics::Metric_obtainData* const metric,
+    const IQueryController* const queryController /*= nullptr*/)
+{
+    return _p->obtainData(tileId, zoom, outTiledData, metric, queryController);
 }
 
 OsmAnd::ZoomLevel OsmAnd::BinaryMapDataProvider::getMinZoom() const
