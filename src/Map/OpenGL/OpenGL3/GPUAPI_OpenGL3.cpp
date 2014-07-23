@@ -503,7 +503,7 @@ void OsmAnd::GPUAPI_OpenGL3::pushDebugGroupMarker(const QString& title)
         {
             QMutexLocker scopedLocker(&_gdebuggerGroupsStackMutex);
             _gdebuggerGroupsStack.push_back(title);
-            marker = _gdebuggerGroupsStack.join(QChar('/'));
+            marker = _gdebuggerGroupsStack.join(QLatin1Char('/'));
         }
         marker = QLatin1String("Group begin '") + marker + QLatin1String("':");
         glStringMarkerGREMEDY(marker.length(), qPrintable(marker));
@@ -521,7 +521,7 @@ void OsmAnd::GPUAPI_OpenGL3::popDebugGroupMarker()
         QString marker;
         {
             QMutexLocker scopedLocker(&_gdebuggerGroupsStackMutex);
-            marker = _gdebuggerGroupsStack.join(QChar('/'));
+            marker = _gdebuggerGroupsStack.join(QLatin1Char('/'));
             _gdebuggerGroupsStack.pop_back();
         }
         marker = QLatin1String("Group end '") + marker + QLatin1String("'.");
