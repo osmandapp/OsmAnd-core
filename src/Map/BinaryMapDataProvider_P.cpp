@@ -7,6 +7,9 @@
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
 
 #include <cassert>
+#if OSMAND_PERFORMANCE_METRICS
+#   include <chrono>
+#endif // OSMAND_PERFORMANCE_METRICS
 
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
