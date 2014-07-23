@@ -80,7 +80,7 @@ namespace OsmAnd
             const FilterMapObjectsByIdFunction filterById = nullptr,
             const VisitorFunction visitor = nullptr,
             DataBlocksCache* cache = nullptr,
-            QSet<DataBlockId>* outReferencedCacheEntries = nullptr,
+            QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries = nullptr,
             const IQueryController* const controller = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
     };

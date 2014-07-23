@@ -54,7 +54,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const FilterMapObjectsByIdFunction filterById = nullptr,
             ObfMapSectionReader::DataBlocksCache* cache = nullptr,
-            QSet<ObfMapSectionReader::DataBlockId>* outReferencedCacheEntries = nullptr,
+            QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
             const IQueryController* const controller = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
     };

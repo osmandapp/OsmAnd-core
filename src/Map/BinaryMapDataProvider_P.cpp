@@ -25,8 +25,9 @@
 #include "Logging.h"
 
 OsmAnd::BinaryMapDataProvider_P::BinaryMapDataProvider_P(BinaryMapDataProvider* owner_)
-    : owner(owner_)
+    : _dataBlocksCache(new ObfMapSectionReader::DataBlocksCache())
     , _link(new Link(this))
+    , owner(owner_)
 {
 }
 
@@ -98,6 +99,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
     // Perform read-out
+    QList< std::shared_ptr< const ObfMapSectionReader::DataBlock > > referencedMapDataBlocks;
     QList< std::shared_ptr<const Model::BinaryMapObject> > referencedMapObjects;
     QList< proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > > futureReferencedMapObjects;
     QList< std::shared_ptr<const Model::BinaryMapObject> > loadedMapObjects;
@@ -169,7 +171,8 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
             loadedSharedMapObjects.insert(id);
             return true;
         },
-        nullptr, nullptr,//cache
+        _dataBlocksCache.get(),
+        &referencedMapDataBlocks,
         nullptr,// query controller
 #if OSMAND_PERFORMANCE_METRICS > 1
         &dataRead_Metric
@@ -226,7 +229,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment, owner->rasterizerSharedContext));
     Rasterizer::prepareContext(*rasterizerContext, tileBBox31, zoom, tileFoundation, allMapObjects, &nothingToRasterize, nullptr,
 #if OSMAND_PERFORMANCE_METRICS > 1
-        & dataProcess_metric
+        &dataProcess_metric
 #else
         nullptr
 #endif // OSMAND_PERFORMANCE_METRICS > 1
@@ -239,6 +242,8 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
 
     // Create tile
     const std::shared_ptr<BinaryMapDataTile> newTile(new BinaryMapDataTile(
+        _dataBlocksCache,
+        referencedMapDataBlocks,
         tileFoundation,
         allMapObjects,
         rasterizerContext,
@@ -309,6 +314,14 @@ OsmAnd::BinaryMapDataTile_P::~BinaryMapDataTile_P()
 
 void OsmAnd::BinaryMapDataTile_P::cleanup()
 {
+    // Dereference DataBlocks from cache
+    if (const auto dataBlocksCache = owner->dataBlocksCache.lock())
+    {
+        for (auto& block : _referencedDataBlocks)
+            dataBlocksCache->releaseReference(block->id, owner->zoom, block);
+        _referencedDataBlocks.clear();
+    }
+
     // Release rasterizer context
     _rasterizerContext.reset();
 

@@ -18,6 +18,7 @@
 #include "IMapTiledDataProvider.h"
 #include "TiledEntriesCollection.h"
 #include "SharedByZoomResourcesContainer.h"
+#include "ObfMapSectionReader.h"
 
 namespace OsmAnd
 {
@@ -35,6 +36,8 @@ namespace OsmAnd
     private:
     protected:
         BinaryMapDataProvider_P(BinaryMapDataProvider* owner);
+
+        const std::shared_ptr<ObfMapSectionReader::DataBlocksCache> _dataBlocksCache;
 
         mutable SharedByZoomResourcesContainer<uint64_t, const Model::BinaryMapObject> _sharedMapObjects;
 
@@ -89,10 +92,10 @@ namespace OsmAnd
     protected:
         BinaryMapDataTile_P(BinaryMapDataTile* owner);
 
-        ImplementationInterface<BinaryMapDataTile> owner;
-
         BinaryMapDataProvider_P::Link::WeakEnd _weakLink;
         std::weak_ptr<BinaryMapDataProvider_P::TileEntry> _refEntry;
+
+        QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> > _referencedDataBlocks;
 
         QList< std::shared_ptr<const Model::BinaryMapObject> > _mapObjects;
         std::shared_ptr< const RasterizerContext > _rasterizerContext;
@@ -100,6 +103,8 @@ namespace OsmAnd
         void cleanup();
     public:
         virtual ~BinaryMapDataTile_P();
+
+        ImplementationInterface<BinaryMapDataTile> owner;
 
     friend class OsmAnd::BinaryMapDataTile;
     friend class OsmAnd::BinaryMapDataProvider_P;

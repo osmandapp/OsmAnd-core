@@ -44,6 +44,8 @@ OsmAnd::ZoomLevel OsmAnd::BinaryMapDataProvider::getMaxZoom() const
 }
 
 OsmAnd::BinaryMapDataTile::BinaryMapDataTile(
+    const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& dataBlocksCache_,
+    const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks_,
     const MapFoundationType tileFoundation_,
     const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects_,
     const std::shared_ptr< const RasterizerContext >& rasterizerContext_,
@@ -52,11 +54,14 @@ OsmAnd::BinaryMapDataTile::BinaryMapDataTile(
     const ZoomLevel zoom_)
     : MapTiledData(DataType::BinaryMapDataTile, tileId_, zoom_)
     , _p(new BinaryMapDataTile_P(this))
+    , dataBlocksCache(dataBlocksCache_)
+    , referencedDataBlocks(_p->_referencedDataBlocks)
     , tileFoundation(tileFoundation_)
     , mapObjects(_p->_mapObjects)
     , rasterizerContext(_p->_rasterizerContext)
     , nothingToRasterize(nothingToRasterize_)
 {
+    _p->_referencedDataBlocks = referencedDataBlocks_;
     _p->_mapObjects = mapObjects_;
     _p->_rasterizerContext = rasterizerContext_;
 }

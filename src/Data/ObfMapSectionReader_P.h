@@ -127,7 +127,7 @@ namespace OsmAnd
             const FilterMapObjectsByIdFunction filterById,
             const VisitorFunction visitor,
             DataBlocksCache* cache,
-            QSet<DataBlockId>* outReferencedCacheEntries,
+            QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 

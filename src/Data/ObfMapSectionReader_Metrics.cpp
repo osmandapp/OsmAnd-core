@@ -13,6 +13,7 @@ QString OsmAnd::ObfMapSectionReader_Metrics::Metric_loadMapObjects::toString(con
     output += prefix + QString(QLatin1String("acceptedNodes = %1\n")).arg(acceptedNodes);
     output += prefix + QString(QLatin1String("elapsedTimeForNodesBbox = %1s\n")).arg(elapsedTimeForNodesBbox);
     output += prefix + QString(QLatin1String("elapsedTimeForNodes = %1s\n")).arg(elapsedTimeForNodes);
+    output += prefix + QString(QLatin1String("mapObjectsBlocksProcessed = %1\n")).arg(mapObjectsBlocksProcessed);
     output += prefix + QString(QLatin1String("mapObjectsBlocksRead = %1\n")).arg(mapObjectsBlocksRead);
     output += prefix + QString(QLatin1String("mapObjectsBlocksReferenced = %1\n")).arg(mapObjectsBlocksReferenced);
     output += prefix + QString(QLatin1String("visitedMapObjects = %1\n")).arg(visitedMapObjects);

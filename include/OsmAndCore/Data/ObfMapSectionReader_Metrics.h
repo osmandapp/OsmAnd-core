@@ -48,6 +48,9 @@ namespace OsmAnd
             // Elapsed time for tree nodes (in seconds)
             float elapsedTimeForNodes;
 
+            // Number of MapObjectBlock processed (read + referenced)
+            unsigned int mapObjectsBlocksProcessed;
+
             // Number of MapObjectBlock read
             unsigned int mapObjectsBlocksRead;
 

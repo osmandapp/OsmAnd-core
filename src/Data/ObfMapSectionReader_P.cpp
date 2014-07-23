@@ -815,7 +815,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const FilterMapObjectsByIdFunction filterById,
     const VisitorFunction visitor,
     DataBlocksCache* cache,
-    QSet<DataBlockId>* outReferencedCacheEntries,
+    QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
@@ -995,7 +995,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 }
                 else
                 {
-                    // Made a promise, so load all into temporary storage
+                    // Made a promise, so load entire block into temporary storage
                     QList< std::shared_ptr<const Model::BinaryMapObject> > mapObjects;
 
                     cis->Seek(treeNode->_dataOffset);
@@ -1028,7 +1028,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 }
 
                 if (outReferencedCacheEntries)
-                    outReferencedCacheEntries->insert(blockId);
+                    outReferencedCacheEntries->push_back(dataBlock);
 
                 // Process data block
                 for (const auto& mapObject : constOf(dataBlock->mapObjects))
@@ -1042,6 +1042,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         if (!shouldNotSkip)
                             continue;
                     }
+
+                    // Check if map object is desired
+                    if (filterById && !filterById(section, mapObject->id, mapObject->bbox31, mapObject->level->minZoom, mapObject->level->maxZoom))
+                        continue;
 
                     if (!visitor || visitor(mapObject))
                     {
@@ -1078,6 +1082,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 if (metric)
                     metric->mapObjectsBlocksRead++;
             }
+
+            // Update metric
+            if (metric)
+                metric->mapObjectsBlocksProcessed++;
         }
 
         // Update metric

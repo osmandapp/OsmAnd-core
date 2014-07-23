@@ -6,11 +6,13 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QList>
+#include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
+#include <OsmAndCore/Data/ObfMapSectionReader.h>
 
 namespace OsmAnd
 {
@@ -65,6 +67,8 @@ namespace OsmAnd
         PrivateImplementation<BinaryMapDataTile_P> _p;
     protected:
         BinaryMapDataTile(
+            const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& dataBlocksCache,
+            const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks,
             const MapFoundationType tileFoundation,
             const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects,
             const std::shared_ptr< const RasterizerContext >& rasterizerContext,
@@ -74,6 +78,8 @@ namespace OsmAnd
     public:
         virtual ~BinaryMapDataTile();
 
+        const std::weak_ptr<ObfMapSectionReader::DataBlocksCache> dataBlocksCache;
+        const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks;
         const MapFoundationType tileFoundation;
         const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects;
         const std::shared_ptr< const RasterizerContext >& rasterizerContext;
