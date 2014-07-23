@@ -63,3 +63,11 @@ OsmAnd::ObfMapSectionReader::DataBlocksCache::DataBlocksCache()
 OsmAnd::ObfMapSectionReader::DataBlocksCache::~DataBlocksCache()
 {
 }
+
+bool OsmAnd::ObfMapSectionReader::DataBlocksCache::shouldCacheBlock(
+    const DataBlockId id,
+    const AreaI blockBBox31,
+    const AreaI* const queryArea31 /*= nullptr*/) const
+{
+    return true;
+}

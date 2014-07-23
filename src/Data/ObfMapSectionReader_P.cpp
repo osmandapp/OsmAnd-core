@@ -961,14 +961,13 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             if (controller && controller->isAborted())
                 break;
 
-            if (cache)
+            DataBlockId blockId;
+            blockId.sectionRuntimeGeneratedId = section->runtimeGeneratedId;
+            blockId.offset = treeNode->_dataOffset;
+
+            if (cache && cache->shouldCacheBlock(blockId, treeNode->_area31, bbox31))
             {
                 // In case cache is provided, read and cache
-
-                DataBlockId blockId;
-                blockId.sectionRuntimeGeneratedId = section->runtimeGeneratedId;
-                blockId.offset = treeNode->_dataOffset;
-
                 const auto levelZooms = Utilities::enumerateZoomLevels(treeNode->level->minZoom, treeNode->level->maxZoom);
 
                 std::shared_ptr<const DataBlock> dataBlock;

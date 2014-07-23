@@ -58,11 +58,16 @@ namespace OsmAnd
 
         class OSMAND_CORE_API DataBlocksCache : public SharedByZoomResourcesContainer<DataBlockId, const DataBlock>
         {
+        public:
+            typedef ObfMapSectionReader::DataBlockId DataBlockId;
+
         private:
         protected:
         public:
             DataBlocksCache();
             virtual ~DataBlocksCache();
+
+            virtual bool shouldCacheBlock(const DataBlockId id, const AreaI blockBBox31, const AreaI* const queryArea31 = nullptr) const;
         };
 
     private:

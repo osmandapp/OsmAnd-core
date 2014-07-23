@@ -37,6 +37,18 @@ namespace OsmAnd
     protected:
         BinaryMapDataProvider_P(BinaryMapDataProvider* owner);
 
+        class DataBlocksCache : public ObfMapSectionReader::DataBlocksCache
+        {
+        private:
+        protected:
+        public:
+            DataBlocksCache(const bool cacheTileInnerDataBlocks);
+            virtual ~DataBlocksCache();
+
+            const bool cacheTileInnerDataBlocks;
+
+            virtual bool shouldCacheBlock(const DataBlockId id, const AreaI blockBBox31, const AreaI* const queryArea31 = nullptr) const;
+        };
         const std::shared_ptr<ObfMapSectionReader::DataBlocksCache> _dataBlocksCache;
 
         mutable SharedByZoomResourcesContainer<uint64_t, const Model::BinaryMapObject> _sharedMapObjects;

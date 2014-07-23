@@ -7,9 +7,6 @@
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
 
 #include <cassert>
-#if OSMAND_PERFORMANCE_METRICS
-#   include <chrono>
-#endif // OSMAND_PERFORMANCE_METRICS
 
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
@@ -25,7 +22,7 @@
 #include "Logging.h"
 
 OsmAnd::BinaryMapDataProvider_P::BinaryMapDataProvider_P(BinaryMapDataProvider* owner_)
-    : _dataBlocksCache(new ObfMapSectionReader::DataBlocksCache())
+    : _dataBlocksCache(new DataBlocksCache(false))
     , _link(new Link(this))
     , owner(owner_)
 {
@@ -350,4 +347,23 @@ void OsmAnd::BinaryMapDataTile_P::cleanup()
         }
     }
     _mapObjects.clear();
+}
+
+OsmAnd::BinaryMapDataProvider_P::DataBlocksCache::DataBlocksCache(const bool cacheTileInnerDataBlocks_)
+    : cacheTileInnerDataBlocks(cacheTileInnerDataBlocks_)
+{
+}
+
+OsmAnd::BinaryMapDataProvider_P::DataBlocksCache::~DataBlocksCache()
+{
+}
+
+bool OsmAnd::BinaryMapDataProvider_P::DataBlocksCache::shouldCacheBlock(const DataBlockId id, const AreaI blockBBox31, const AreaI* const queryArea31 /*= nullptr*/) const
+{
+    if (!queryArea31)
+        return ObfMapSectionReader::DataBlocksCache::shouldCacheBlock(id, blockBBox31, queryArea31);
+
+    if (queryArea31->contains(blockBBox31))
+        return cacheTileInnerDataBlocks;
+    return true;
 }
