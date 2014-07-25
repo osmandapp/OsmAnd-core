@@ -20,7 +20,7 @@ namespace OsmAnd
     class ObfMapSectionInfo;
     class ObfMapSectionLevel;
     class ObfMapSectionReader_P;
-    class Rasterizer_P;
+    class Primitiviser_P;
 
     namespace Model
     {
@@ -66,7 +66,7 @@ namespace OsmAnd
             static uint64_t getUniqueId(const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section);
 
         friend class OsmAnd::ObfMapSectionReader_P;
-        friend class OsmAnd::Rasterizer_P;
+        friend class OsmAnd::Primitiviser_P;
         };
     }
 }

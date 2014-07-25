@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_RASTERIZER_ENVIRONMENT_P_H_
-#define _OSMAND_CORE_RASTERIZER_ENVIRONMENT_P_H_
+#ifndef _OSMAND_CORE_MAP_PRESENTATION_ENVIRONMENT_P_H_
+#define _OSMAND_CORE_MAP_PRESENTATION_ENVIRONMENT_P_H_
 
 #include "stdlib_common.h"
 
@@ -29,12 +29,12 @@ namespace OsmAnd
     class Rasterizer;
     class ObfMapSectionInfo;
 
-    class RasterizerEnvironment;
-    class RasterizerEnvironment_P Q_DECL_FINAL
+    class MapPresentationEnvironment;
+    class MapPresentationEnvironment_P Q_DECL_FINAL
     {
     private:
     protected:
-        RasterizerEnvironment_P(RasterizerEnvironment* owner);
+        MapPresentationEnvironment_P(MapPresentationEnvironment* owner);
 
         void initialize();
 
@@ -57,14 +57,12 @@ namespace OsmAnd
         void clearFontsCache();
         SkTypeface* getTypefaceForFontResource(const QString& fontResource) const;
 
-        SkColor _defaultBgColor;
-        uint32_t _shadowLevelMin;
-        uint32_t _shadowLevelMax;
+        ColorARGB _defaultBgColor;
         double _polygonMinSizeToDisplay;
-        uint32_t _roadDensityZoomTile;
-        uint32_t _roadsDensityLimitPerTile;
+        unsigned int _roadDensityZoomTile;
+        unsigned int _roadsDensityLimitPerTile;
         int _shadowRenderingMode;
-        SkColor _shadowRenderingColor;
+        ColorARGB _shadowRenderingColor;
 
         std::shared_ptr<const MapStyleRule> _attributeRule_defaultColor;
         std::shared_ptr<const MapStyleRule> _attributeRule_shadowRendering;
@@ -90,33 +88,11 @@ namespace OsmAnd
 
         QByteArray obtainResourceByName(const QString& name) const;
     public:
-        virtual ~RasterizerEnvironment_P();
+        virtual ~MapPresentationEnvironment_P();
 
-        ImplementationInterface<RasterizerEnvironment> owner;
+        ImplementationInterface<MapPresentationEnvironment> owner;
 
-        const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
-
-        const SkPaint& mapPaint;
-        const SkPaint& textPaint;
         void configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const;
-
-        const SkColor& defaultBgColor;
-        const uint32_t& shadowLevelMin;
-        const uint32_t& shadowLevelMax;
-        const double& polygonMinSizeToDisplay;
-        const uint32_t& roadDensityZoomTile;
-        const uint32_t& roadsDensityLimitPerTile;
-        const int& shadowRenderingMode;
-        const SkColor& shadowRenderingColor;
-
-        const std::shared_ptr<const MapStyleRule>& attributeRule_defaultColor;
-        const std::shared_ptr<const MapStyleRule>& attributeRule_shadowRendering;
-        const std::shared_ptr<const MapStyleRule>& attributeRule_polygonMinSizeToDisplay;
-        const std::shared_ptr<const MapStyleRule>& attributeRule_roadDensityZoomTile;
-        const std::shared_ptr<const MapStyleRule>& attributeRule_roadsDensityLimitPerTile;
-
-        const QList< SkPaint >& oneWayPaints;
-        const QList< SkPaint >& reverseOneWayPaints;
 
         const std::shared_ptr<const ObfMapSectionInfo> dummyMapSection;
 
@@ -131,8 +107,14 @@ namespace OsmAnd
         bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
         bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
 
-    friend class OsmAnd::RasterizerEnvironment;
+        ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
+        void obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const;
+        double getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const;
+        unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
+        unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;
+
+    friend class OsmAnd::MapPresentationEnvironment;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_RASTERIZER_ENVIRONMENT_P_H_)
+#endif // !defined(_OSMAND_CORE_MAP_PRESENTATION_ENVIRONMENT_P_H_)

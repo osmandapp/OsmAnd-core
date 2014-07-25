@@ -19,7 +19,7 @@
 #include <OsmAndCore/Data/Model/BinaryMapObject.h>
 #include <OsmAndCore/Map/Rasterizer.h>
 #include <OsmAndCore/Map/RasterizerContext.h>
-#include <OsmAndCore/Map/RasterizerEnvironment.h>
+#include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/MapStyleEvaluator.h>
 
 OsmAnd::EyePiece::Configuration::Configuration()

@@ -1,15 +1,15 @@
 #include "BinaryMapRasterBitmapTileProvider.h"
 #include "BinaryMapRasterBitmapTileProvider_P.h"
 
+#include "BinaryMapPrimitivesProvider.h"
+#include "Primitiviser.h"
+#include "MapPresentationEnvironment.h"
+
 OsmAnd::BinaryMapRasterBitmapTileProvider::BinaryMapRasterBitmapTileProvider(
     BinaryMapRasterBitmapTileProvider_P* const p_,
-    const std::shared_ptr<BinaryMapDataProvider>& dataProvider_,
-    const uint32_t tileSize_,
-    const float densityFactor_)
+    const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider_)
     : _p(p_)
-    , dataProvider(dataProvider_)
-    , tileSize(tileSize_)
-    , densityFactor(densityFactor_)
+    , primitivesProvider(primitivesProvider_)
 {
 }
 
@@ -19,12 +19,12 @@ OsmAnd::BinaryMapRasterBitmapTileProvider::~BinaryMapRasterBitmapTileProvider()
 
 float OsmAnd::BinaryMapRasterBitmapTileProvider::getTileDensityFactor() const
 {
-    return densityFactor;
+    return primitivesProvider->primitiviser->environment->displayDensityFactor;
 }
 
 uint32_t OsmAnd::BinaryMapRasterBitmapTileProvider::getTileSize() const
 {
-    return tileSize;
+    return primitivesProvider->tileSize;
 }
 
 bool OsmAnd::BinaryMapRasterBitmapTileProvider::obtainData(
@@ -47,7 +47,7 @@ OsmAnd::ZoomLevel OsmAnd::BinaryMapRasterBitmapTileProvider::getMaxZoom() const
 }
 
 OsmAnd::BinaryMapRasterizedTile::BinaryMapRasterizedTile(
-    const std::shared_ptr<const BinaryMapDataTile>& binaryMapTile_,
+    const std::shared_ptr<const BinaryMapPrimitivesTile>& binaryMapTile_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const AlphaChannelData alphaChannelData_,
     const float densityFactor_,

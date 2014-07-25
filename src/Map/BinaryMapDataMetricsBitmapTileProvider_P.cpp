@@ -1,5 +1,5 @@
-#include "BinaryMapMetricsBitmapTileProvider_P.h"
-#include "BinaryMapMetricsBitmapTileProvider.h"
+#include "BinaryMapDataMetricsBitmapTileProvider_P.h"
+#include "BinaryMapDataMetricsBitmapTileProvider.h"
 
 #include "stdlib_common.h"
 
@@ -17,21 +17,20 @@
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "Rasterizer.h"
-#include "RasterizerContext.h"
-#include "RasterizerEnvironment.h"
+#include "MapPresentationEnvironment.h"
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::BinaryMapMetricsBitmapTileProvider_P::BinaryMapMetricsBitmapTileProvider_P(BinaryMapMetricsBitmapTileProvider* const owner_)
+OsmAnd::BinaryMapDataMetricsBitmapTileProvider_P::BinaryMapDataMetricsBitmapTileProvider_P(BinaryMapDataMetricsBitmapTileProvider* const owner_)
     : owner(owner_)
 {
 }
 
-OsmAnd::BinaryMapMetricsBitmapTileProvider_P::~BinaryMapMetricsBitmapTileProvider_P()
+OsmAnd::BinaryMapDataMetricsBitmapTileProvider_P::~BinaryMapDataMetricsBitmapTileProvider_P()
 {
 }
 
-bool OsmAnd::BinaryMapMetricsBitmapTileProvider_P::obtainData(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTiledData>& outTiledData, const IQueryController* const queryController)
+bool OsmAnd::BinaryMapDataMetricsBitmapTileProvider_P::obtainData(const TileId tileId, const ZoomLevel zoom, std::shared_ptr<MapTiledData>& outTiledData, const IQueryController* const queryController)
 {
     BinaryMapDataProvider_Metrics::Metric_obtainData obtainDataMetric;
 
@@ -94,7 +93,7 @@ bool OsmAnd::BinaryMapMetricsBitmapTileProvider_P::obtainData(const TileId tileI
         topOffset += 1.25f * fontSize;
     }
 
-    outTiledData.reset(new BinaryMapMetricsTile(
+    outTiledData.reset(new BinaryMapDataMetricsTile(
         dataTile,
         bitmap,
         owner->densityFactor,
@@ -104,12 +103,12 @@ bool OsmAnd::BinaryMapMetricsBitmapTileProvider_P::obtainData(const TileId tileI
     return true;
 }
 
-OsmAnd::ZoomLevel OsmAnd::BinaryMapMetricsBitmapTileProvider_P::getMinZoom() const
+OsmAnd::ZoomLevel OsmAnd::BinaryMapDataMetricsBitmapTileProvider_P::getMinZoom() const
 {
     return MinZoomLevel;
 }
 
-OsmAnd::ZoomLevel OsmAnd::BinaryMapMetricsBitmapTileProvider_P::getMaxZoom() const
+OsmAnd::ZoomLevel OsmAnd::BinaryMapDataMetricsBitmapTileProvider_P::getMaxZoom() const
 {
     return MaxZoomLevel;
 }

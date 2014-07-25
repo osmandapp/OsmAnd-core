@@ -14,8 +14,8 @@
 
 namespace OsmAnd
 {
-    class BinaryMapDataProvider;
-    class BinaryMapDataTile;
+    class BinaryMapPrimitivesProvider;
+    class BinaryMapPrimitivesTile;
     namespace Model
     {
         class BinaryMapObject;
@@ -29,10 +29,10 @@ namespace OsmAnd
         PrivateImplementation<BinaryMapStaticSymbolsProvider_P> _p;
     protected:
     public:
-        BinaryMapStaticSymbolsProvider(const std::shared_ptr<BinaryMapDataProvider>& dataProvider);
+        BinaryMapStaticSymbolsProvider(const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider);
         virtual ~BinaryMapStaticSymbolsProvider();
 
-        const std::shared_ptr<BinaryMapDataProvider> dataProvider;
+        const std::shared_ptr<BinaryMapPrimitivesProvider> primitivesProvider;
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
@@ -49,13 +49,13 @@ namespace OsmAnd
     private:
     protected:
         BinaryMapStaticSymbolsTile(
-            const std::shared_ptr<const BinaryMapDataTile>& dataTile,
+            const std::shared_ptr<const BinaryMapPrimitivesTile>& dataTile,
             const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups,
             const TileId tileId, const ZoomLevel zoom);
     public:
         virtual ~BinaryMapStaticSymbolsTile();
 
-        const std::shared_ptr<const BinaryMapDataTile> dataTile;
+        const std::shared_ptr<const BinaryMapPrimitivesTile> dataTile;
 
     friend class OsmAnd::BinaryMapStaticSymbolsProvider;
     friend class OsmAnd::BinaryMapStaticSymbolsProvider_P;

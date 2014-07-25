@@ -17,7 +17,7 @@ class SkBitmap;
 
 namespace OsmAnd
 {
-    class BinaryMapDataTile;
+    class BinaryMapPrimitivesTile;
 
     class BinaryMapRasterBitmapTileProvider_Software;
     class BinaryMapRasterBitmapTileProvider_Software_P Q_DECL_FINAL : public BinaryMapRasterBitmapTileProvider_P

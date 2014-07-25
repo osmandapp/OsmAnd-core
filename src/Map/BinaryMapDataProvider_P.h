@@ -112,7 +112,6 @@ namespace OsmAnd
         QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> > _referencedDataBlocks;
 
         QList< std::shared_ptr<const Model::BinaryMapObject> > _mapObjects;
-        std::shared_ptr< const RasterizerContext > _rasterizerContext;
 
         void cleanup();
     public:

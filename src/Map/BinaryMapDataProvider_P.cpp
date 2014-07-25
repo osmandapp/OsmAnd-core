@@ -6,14 +6,10 @@
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
 
-#include <cassert>
-
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "ObfMapSectionInfo.h"
 #include "BinaryMapObject.h"
-#include "Rasterizer.h"
-#include "RasterizerContext.h"
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
@@ -190,27 +186,12 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     const auto sharedMapObjectsCount = referencedMapObjects.size() + loadedSharedMapObjects.size();
     const auto allMapObjects = loadedMapObjects + referencedMapObjects;
 
-    // Allocate and prepare rasterizer context
-    bool nothingToRasterize = false;
-    std::shared_ptr<RasterizerContext> rasterizerContext(new RasterizerContext(owner->rasterizerEnvironment, owner->rasterizerSharedContext));
-    Rasterizer::prepareContext(
-        *rasterizerContext,
-        tileBBox31,
-        zoom,
-        tileFoundation,
-        allMapObjects,
-        &nothingToRasterize,
-        nullptr,
-        metric ? &metric->prepareContextMetric : nullptr);
-
     // Create tile
     const std::shared_ptr<BinaryMapDataTile> newTile(new BinaryMapDataTile(
         _dataBlocksCache,
         referencedMapDataBlocks,
         tileFoundation,
         allMapObjects,
-        rasterizerContext,
-        nothingToRasterize,
         tileId,
         zoom));
     newTile->_p->_weakLink = _link->getWeak();
@@ -240,7 +221,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
 #if OSMAND_PERFORMANCE_METRICS
 #if OSMAND_PERFORMANCE_METRICS <= 1
     LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) from %dx%d@%d in %fs",
+        "%d map objects (%d unique, %d shared) read from %dx%d@%d in %fs",
         allMapObjects.size(),
         allMapObjects.size() - sharedMapObjectsCount,
         sharedMapObjectsCount,
@@ -250,7 +231,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         totalTimeStopwatch.elapsed());
 #else
     LogPrintf(LogSeverityLevel::Info,
-        "%d map objects (%d unique, %d shared) from %dx%d@%d in %fs:\n%s",
+        "%d map objects (%d unique, %d shared) read from %dx%d@%d in %fs:\n%s",
         allMapObjects.size(),
         allMapObjects.size() - sharedMapObjectsCount,
         sharedMapObjectsCount,
@@ -283,9 +264,6 @@ void OsmAnd::BinaryMapDataTile_P::cleanup()
             dataBlocksCache->releaseReference(block->id, owner->zoom, block);
         _referencedDataBlocks.clear();
     }
-
-    // Release rasterizer context
-    _rasterizerContext.reset();
 
     // Remove tile reference from collection. All checks here does not matter,
     // since entry->tile reference is already expired (execution is already in destructor of OfflineMapDataTile!)

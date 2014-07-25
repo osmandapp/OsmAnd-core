@@ -1,8 +1,9 @@
 #include "BinaryMapStaticSymbolsProvider_P.h"
 #include "BinaryMapStaticSymbolsProvider.h"
 
-#include "BinaryMapDataProvider.h"
-#include "RasterizerEnvironment.h"
+#include "BinaryMapPrimitivesProvider.h"
+#include "MapPresentationEnvironment.h"
+#include "Primitiviser.h"
 #include "Rasterizer.h"
 #include "RasterizedSymbolsGroup.h"
 #include "RasterizedSpriteSymbol.h"
@@ -30,21 +31,18 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 {
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
-    // Obtain offline map data tile
-    std::shared_ptr<MapTiledData> dataTile_;
-    owner->dataProvider->obtainData(tileId, zoom, dataTile_);
-    const auto dataTile = std::static_pointer_cast<BinaryMapDataTile>(dataTile_);
+    // Obtain offline map primitives tile
+    std::shared_ptr<MapTiledData> primitivesTile_;
+    owner->primitivesProvider->obtainData(tileId, zoom, primitivesTile_);
+    const auto primitivesTile = std::static_pointer_cast<BinaryMapPrimitivesTile>(primitivesTile_);
 
     // If tile has nothing to be rasterized, mark that data is not available for it
-    if (!dataTile_ || dataTile->nothingToRasterize)
+    if (!primitivesTile_ || primitivesTile->primitivisedArea->isEmpty())
     {
         // Mark tile as empty
         outTiledData.reset();
         return true;
     }
-
-    // Create rasterizer
-    Rasterizer rasterizer(dataTile->rasterizerContext);
 
     // Rasterize symbols and create symbols groups
     QList< std::shared_ptr<const RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
@@ -54,7 +52,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         (const std::shared_ptr<const Model::BinaryMapObject>& mapObject) -> bool
         {
             const auto isShareable =
-                (mapObject->section != owner->dataProvider->rasterizerEnvironment->dummyMapSection) &&
+                (mapObject->section != owner->primitivesProvider->primitiviser->environment->dummyMapSection) &&
                 !tileBBox31.contains(mapObject->bbox31);
             const std::shared_ptr<MapSymbolsGroup> preallocatedGroup(isShareable
                 ? new MapSymbolsGroupShareableByMapObjectId(mapObject)
@@ -67,7 +65,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             }
             return false;
         };
-    rasterizer.rasterizeSymbolsWithoutPaths(rasterizedSymbolsGroups, rasterizationFilter, nullptr);
+    Rasterizer().rasterizeSymbolsWithoutPaths(primitivesTile->primitivisedArea, rasterizedSymbolsGroups, rasterizationFilter, nullptr);
 
     // Convert results
     QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
@@ -125,7 +123,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     }
 
     // Create output tile
-    outTiledData.reset(new BinaryMapStaticSymbolsTile(dataTile, symbolsGroups, tileId, zoom));
+    outTiledData.reset(new BinaryMapStaticSymbolsTile(primitivesTile, symbolsGroups, tileId, zoom));
 
     return true;
 }

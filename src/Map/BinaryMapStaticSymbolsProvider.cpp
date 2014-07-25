@@ -1,11 +1,11 @@
 #include "BinaryMapStaticSymbolsProvider.h"
 #include "BinaryMapStaticSymbolsProvider_P.h"
 
-#include "BinaryMapDataProvider.h"
+#include "BinaryMapPrimitivesProvider.h"
 
-OsmAnd::BinaryMapStaticSymbolsProvider::BinaryMapStaticSymbolsProvider(const std::shared_ptr<BinaryMapDataProvider>& dataProvider_)
+OsmAnd::BinaryMapStaticSymbolsProvider::BinaryMapStaticSymbolsProvider(const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider_)
     : _p(new BinaryMapStaticSymbolsProvider_P(this))
-    , dataProvider(dataProvider_)
+    , primitivesProvider(primitivesProvider_)
 {
 }
 
@@ -25,16 +25,16 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider::obtainData(
 
 OsmAnd::ZoomLevel OsmAnd::BinaryMapStaticSymbolsProvider::getMinZoom() const
 {
-    return dataProvider->getMinZoom();
+    return primitivesProvider->getMinZoom();
 }
 
 OsmAnd::ZoomLevel OsmAnd::BinaryMapStaticSymbolsProvider::getMaxZoom() const
 {
-    return dataProvider->getMaxZoom();
+    return primitivesProvider->getMaxZoom();
 }
 
 OsmAnd::BinaryMapStaticSymbolsTile::BinaryMapStaticSymbolsTile(
-    const std::shared_ptr<const BinaryMapDataTile>& dataTile_,
+    const std::shared_ptr<const BinaryMapPrimitivesTile>& dataTile_,
     const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups_,
     const TileId tileId_,
     const ZoomLevel zoom_)

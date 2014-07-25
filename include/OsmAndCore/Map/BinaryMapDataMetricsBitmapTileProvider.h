@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_BINARY_MAP_METRICS_BITMAP_TILE_PROVIDER_H_
-#define _OSMAND_CORE_BINARY_MAP_METRICS_BITMAP_TILE_PROVIDER_H_
+#ifndef _OSMAND_CORE_BINARY_MAP_DATA_METRICS_BITMAP_TILE_PROVIDER_H_
+#define _OSMAND_CORE_BINARY_MAP_DATA_METRICS_BITMAP_TILE_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
@@ -19,19 +19,19 @@ namespace OsmAnd
     class BinaryMapDataProvider;
     class BinaryMapDataTile;
 
-    class BinaryMapMetricsBitmapTileProvider_P;
-    class OSMAND_CORE_API BinaryMapMetricsBitmapTileProvider : public IMapRasterBitmapTileProvider
+    class BinaryMapDataMetricsBitmapTileProvider_P;
+    class OSMAND_CORE_API BinaryMapDataMetricsBitmapTileProvider : public IMapRasterBitmapTileProvider
     {
-        Q_DISABLE_COPY(BinaryMapMetricsBitmapTileProvider);
+        Q_DISABLE_COPY(BinaryMapDataMetricsBitmapTileProvider);
     private:
-        PrivateImplementation<BinaryMapMetricsBitmapTileProvider_P> _p;
+        PrivateImplementation<BinaryMapDataMetricsBitmapTileProvider_P> _p;
     protected:
     public:
-        BinaryMapMetricsBitmapTileProvider(
+        BinaryMapDataMetricsBitmapTileProvider(
             const std::shared_ptr<BinaryMapDataProvider>& dataProvider,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f);
-        virtual ~BinaryMapMetricsBitmapTileProvider();
+        virtual ~BinaryMapDataMetricsBitmapTileProvider();
 
         const std::shared_ptr<BinaryMapDataProvider> dataProvider;
         const uint32_t tileSize;
@@ -50,23 +50,23 @@ namespace OsmAnd
         virtual ZoomLevel getMaxZoom() const;
     };
 
-    class OSMAND_CORE_API BinaryMapMetricsTile : public RasterBitmapTile
+    class OSMAND_CORE_API BinaryMapDataMetricsTile : public RasterBitmapTile
     {
-        Q_DISABLE_COPY(BinaryMapMetricsTile);
+        Q_DISABLE_COPY(BinaryMapDataMetricsTile);
 
     private:
     protected:
     public:
-        BinaryMapMetricsTile(
-            const std::shared_ptr<const BinaryMapDataTile>& binaryMapTile,
+        BinaryMapDataMetricsTile(
+            const std::shared_ptr<const BinaryMapDataTile>& binaryMapDataTile,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const float densityFactor,
             const TileId tileId,
             const ZoomLevel zoom);
-        virtual ~BinaryMapMetricsTile();
+        virtual ~BinaryMapDataMetricsTile();
 
-        const std::shared_ptr<const BinaryMapDataTile> binaryMapTile;
+        const std::shared_ptr<const BinaryMapDataTile> binaryMapDataTile;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_BINARY_MAP_METRICS_BITMAP_TILE_PROVIDER_H_)
+#endif // !defined(_OSMAND_CORE_BINARY_MAP_DATA_METRICS_BITMAP_TILE_PROVIDER_H_)

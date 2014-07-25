@@ -18,12 +18,7 @@
 namespace OsmAnd
 {
     class IObfsCollection;
-    class MapStyle;
-    class RasterizerEnvironment;
-    class RasterizerContext;
-    class RasterizerSharedContext;
     class BinaryMapDataTile;
-    class IExternalResourcesProvider;
     namespace Model
     {
         class BinaryMapObject;
@@ -37,18 +32,10 @@ namespace OsmAnd
         PrivateImplementation<BinaryMapDataProvider_P> _p;
     protected:
     public:
-        BinaryMapDataProvider(
-            const std::shared_ptr<const IObfsCollection>& obfsCollection,
-            const std::shared_ptr<const MapStyle>& mapStyle,
-            const float displayDensityFactor,
-            const QString& localeLanguageId = QLatin1String("en"),
-            const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider = nullptr);
+        BinaryMapDataProvider(const std::shared_ptr<const IObfsCollection>& obfsCollection);
         virtual ~BinaryMapDataProvider();
 
         const std::shared_ptr<const IObfsCollection> obfsCollection;
-        const std::shared_ptr<const MapStyle> mapStyle;
-        const std::shared_ptr<RasterizerEnvironment> rasterizerEnvironment;
-        const std::shared_ptr<RasterizerSharedContext> rasterizerSharedContext;
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
@@ -79,8 +66,6 @@ namespace OsmAnd
             const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks,
             const MapFoundationType tileFoundation,
             const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects,
-            const std::shared_ptr< const RasterizerContext >& rasterizerContext,
-            const bool nothingToRasterize,
             const TileId tileId,
             const ZoomLevel zoom);
     public:
@@ -88,10 +73,9 @@ namespace OsmAnd
 
         const std::weak_ptr<ObfMapSectionReader::DataBlocksCache> dataBlocksCache;
         const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks;
+
         const MapFoundationType tileFoundation;
         const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects;
-        const std::shared_ptr< const RasterizerContext >& rasterizerContext;
-        const bool nothingToRasterize;
 
         virtual void releaseConsumableContent();
 

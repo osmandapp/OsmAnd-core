@@ -16,8 +16,8 @@
 
 namespace OsmAnd
 {
-    class BinaryMapDataProvider;
-    class BinaryMapDataTile;
+    class BinaryMapPrimitivesProvider;
+    class BinaryMapPrimitivesTile;
 
     class BinaryMapRasterBitmapTileProvider_P;
     class OSMAND_CORE_API BinaryMapRasterBitmapTileProvider : public IMapRasterBitmapTileProvider
@@ -28,15 +28,11 @@ namespace OsmAnd
     protected:
         BinaryMapRasterBitmapTileProvider(
             BinaryMapRasterBitmapTileProvider_P* const p,
-            const std::shared_ptr<BinaryMapDataProvider>& dataProvider,
-            const uint32_t tileSize,
-            const float densityFactor);
+            const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider);
     public:
         virtual ~BinaryMapRasterBitmapTileProvider();
 
-        const std::shared_ptr<BinaryMapDataProvider> dataProvider;
-        const uint32_t tileSize;
-        const float densityFactor;
+        const std::shared_ptr<BinaryMapPrimitivesProvider> primitivesProvider;
 
         virtual float getTileDensityFactor() const;
         virtual uint32_t getTileSize() const;
@@ -59,7 +55,7 @@ namespace OsmAnd
     protected:
     public:
         BinaryMapRasterizedTile(
-            const std::shared_ptr<const BinaryMapDataTile>& binaryMapTile,
+            const std::shared_ptr<const BinaryMapPrimitivesTile>& binaryMapTile,
             const std::shared_ptr<const SkBitmap>& bitmap,
             const AlphaChannelData alphaChannelData,
             const float densityFactor,
@@ -67,7 +63,7 @@ namespace OsmAnd
             const ZoomLevel zoom);
         virtual ~BinaryMapRasterizedTile();
 
-        const std::shared_ptr<const BinaryMapDataTile> binaryMapTile;
+        const std::shared_ptr<const BinaryMapPrimitivesTile> binaryMapTile;
     };
 }
 

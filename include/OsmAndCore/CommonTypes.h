@@ -10,6 +10,7 @@
 #if defined(OSMAND_GLM_AVAILABLE)
 #   include <glm/glm.hpp>
 #endif // defined(OSMAND_GLM_AVAILABLE)
+#include <SkColor.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
@@ -1306,6 +1307,11 @@ namespace OsmAnd
         {
             return FColorARGB(a / 255.0f, r / 255.0f, g / 255.0f, b / 255.0f);
         }
+
+        inline operator SkColor() const
+        {
+            return SkColorSetARGB(a, r, g, b);
+        }
 #endif // !defined(SWIG)
 
         inline ColorARGB withAlpha(const uint8_t newAlpha) const
@@ -1388,6 +1394,11 @@ namespace OsmAnd
         inline operator FColorRGB() const
         {
             return FColorRGB(r / 255.0f, g / 255.0f, b / 255.0f);
+        }
+
+        inline operator SkColor() const
+        {
+            return SkColorSetRGB(r, g, b);
         }
 #endif // !defined(SWIG)
 

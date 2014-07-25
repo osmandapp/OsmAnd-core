@@ -19,7 +19,7 @@
 
 namespace OsmAnd
 {
-    class BinaryMapDataTile;
+    class BinaryMapPrimitivesTile;
     class MapSymbolsGroup;
     class TiledMapSymbolsData;
 

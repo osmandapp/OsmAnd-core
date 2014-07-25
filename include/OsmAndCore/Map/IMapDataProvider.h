@@ -21,6 +21,7 @@ namespace OsmAnd
 
             // Static tiled data:
             BinaryMapDataTile,
+            BinaryMapPrimitivesTile,
             //FUTURE:VectorMapTile
             RasterBitmapTile,
             ElevationDataTile,

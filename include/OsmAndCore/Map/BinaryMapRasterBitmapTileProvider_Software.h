@@ -12,7 +12,7 @@
 
 namespace OsmAnd
 {
-    class BinaryMapDataProvider;
+    class BinaryMapPrimitivesProvider;
     class BinaryMapRasterBitmapTileProvider_Software_P;
     class OSMAND_CORE_API BinaryMapRasterBitmapTileProvider_Software : public BinaryMapRasterBitmapTileProvider
     {
@@ -20,10 +20,7 @@ namespace OsmAnd
     private:
     protected:
     public:
-        BinaryMapRasterBitmapTileProvider_Software(
-            const std::shared_ptr<BinaryMapDataProvider>& dataProvider,
-            const uint32_t tileSize = 256,
-            const float densityFactor = 1.0f);
+        BinaryMapRasterBitmapTileProvider_Software(const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider);
         virtual ~BinaryMapRasterBitmapTileProvider_Software();
     };
 }

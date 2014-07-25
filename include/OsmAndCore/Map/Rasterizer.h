@@ -11,23 +11,13 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/Primitiviser.h>
 
 class SkCanvas;
 
 namespace OsmAnd
 {
-    class RasterizerEnvironment;
-    class RasterizerContext;
     class RasterizedSymbolsGroup;
-    namespace Model
-    {
-        class BinaryMapObject;
-    }
-    class IQueryController;
-    namespace Rasterizer_Metrics
-    {
-        struct Metric_prepareContext;
-    }
 
     class Rasterizer_P;
     class OSMAND_CORE_API Rasterizer
@@ -37,33 +27,18 @@ namespace OsmAnd
         PrivateImplementation<Rasterizer_P> _p;
     protected:
     public:
-        Rasterizer(const std::shared_ptr<const RasterizerContext>& context);
+        Rasterizer();
         virtual ~Rasterizer();
 
-        enum
-        {
-            DefaultTextLabelWrappingLengthInCharacters = 20
-        };
-
-        const std::shared_ptr<const RasterizerContext> context;
-
-        static void prepareContext(
-            RasterizerContext& context,
-            const AreaI& area31,
-            const ZoomLevel zoom,
-            const MapFoundationType foundation,
-            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
-            bool* nothingToRasterize = nullptr,
-            const IQueryController* const controller = nullptr,
-            Rasterizer_Metrics::Metric_prepareContext* const metric = nullptr);
-
         void rasterizeMap(
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
             SkCanvas& canvas,
             const bool fillBackground = true,
             const AreaI* const destinationArea = nullptr,
             const IQueryController* const controller = nullptr);
 
         void rasterizeSymbolsWithoutPaths(
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             std::function<bool (const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter = nullptr,
             const IQueryController* const controller = nullptr);

@@ -1,5 +1,5 @@
-#include "RasterizerEnvironment_P.h"
-#include "RasterizerEnvironment.h"
+#include "MapPresentationEnvironment_P.h"
+#include "MapPresentationEnvironment.h"
 
 #include <limits>
 
@@ -11,6 +11,7 @@
 
 #include "MapStyle_P.h"
 #include "MapStyleEvaluator.h"
+#include "MapStyleEvaluationResult.h"
 #include "MapStyleValueDefinition.h"
 #include "MapStyleValue.h"
 #include "ObfMapSectionInfo.h"
@@ -20,31 +21,13 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::RasterizerEnvironment_P::RasterizerEnvironment_P(RasterizerEnvironment* owner_)
+OsmAnd::MapPresentationEnvironment_P::MapPresentationEnvironment_P(MapPresentationEnvironment* owner_)
     : owner(owner_)
-    , styleBuiltinValueDefs(MapStyle::getBuiltinValueDefinitions())
-    , defaultBgColor(_defaultBgColor)
-    , shadowLevelMin(_shadowLevelMin)
-    , shadowLevelMax(_shadowLevelMax)
-    , polygonMinSizeToDisplay(_polygonMinSizeToDisplay)
-    , roadDensityZoomTile(_roadDensityZoomTile)
-    , roadsDensityLimitPerTile(_roadsDensityLimitPerTile)
-    , shadowRenderingMode(_shadowRenderingMode)
-    , shadowRenderingColor(_shadowRenderingColor)
-    , attributeRule_defaultColor(_attributeRule_defaultColor)
-    , attributeRule_shadowRendering(_attributeRule_shadowRendering)
-    , attributeRule_polygonMinSizeToDisplay(_attributeRule_polygonMinSizeToDisplay)
-    , attributeRule_roadDensityZoomTile(_attributeRule_roadDensityZoomTile)
-    , attributeRule_roadsDensityLimitPerTile(_attributeRule_roadsDensityLimitPerTile)
-    , mapPaint(_mapPaint)
-    , textPaint(_textPaint)
-    , oneWayPaints(_oneWayPaints)
-    , reverseOneWayPaints(_reverseOneWayPaints)
     , dummyMapSection(new ObfMapSectionInfo())
 {
 }
 
-OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
+OsmAnd::MapPresentationEnvironment_P::~MapPresentationEnvironment_P()
 {
     {
         QMutexLocker scopedLocker(&_shadersBitmapsMutex);
@@ -60,14 +43,14 @@ OsmAnd::RasterizerEnvironment_P::~RasterizerEnvironment_P()
     }
 }
 
-void OsmAnd::RasterizerEnvironment_P::initializeOneWayPaint(SkPaint& paint)
+void OsmAnd::MapPresentationEnvironment_P::initializeOneWayPaint(SkPaint& paint)
 {
     paint.setAntiAlias(true);
     paint.setStyle(SkPaint::kStroke_Style);
     paint.setColor(0xff6c70d5);
 }
 
-void OsmAnd::RasterizerEnvironment_P::initialize()
+void OsmAnd::MapPresentationEnvironment_P::initialize()
 {
     _mapPaint.setAntiAlias(true);
 
@@ -108,14 +91,12 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansFallback.ttf"), false, false });
     _fontsRegister.push_back({ QLatin1String("map/fonts/MTLmr3m.ttf"), false, false });
 
-    _shadowLevelMin = 0;
-    _shadowLevelMax = 256;
     _roadDensityZoomTile = 0;
     _roadsDensityLimitPerTile = 0;
     _shadowRenderingMode = 0;
-    _shadowRenderingColor = 0xff969696;
+    _shadowRenderingColor = ColorRGB(0x96, 0x96, 0x96);
     _polygonMinSizeToDisplay = 0.0;
-    _defaultBgColor = 0xfff1eee8;
+    _defaultBgColor = ColorRGB(0xf1, 0xee, 0xe8);
 
     owner->style->resolveAttribute(QLatin1String("defaultColor"), _attributeRule_defaultColor);
     owner->style->resolveAttribute(QLatin1String("shadowRendering"), _attributeRule_shadowRendering);
@@ -218,7 +199,7 @@ void OsmAnd::RasterizerEnvironment_P::initialize()
     }
 }
 
-void OsmAnd::RasterizerEnvironment_P::clearFontsCache()
+void OsmAnd::MapPresentationEnvironment_P::clearFontsCache()
 {
     QMutexLocker scopedLocker(&_fontTypefacesCacheMutex);
 
@@ -227,7 +208,7 @@ void OsmAnd::RasterizerEnvironment_P::clearFontsCache()
     _fontTypefacesCache.clear();
 }
 
-SkTypeface* OsmAnd::RasterizerEnvironment_P::getTypefaceForFontResource(const QString& fontResource) const
+SkTypeface* OsmAnd::MapPresentationEnvironment_P::getTypefaceForFontResource(const QString& fontResource) const
 {
     QMutexLocker scopedLocker(&_fontTypefacesCacheMutex);
 
@@ -253,7 +234,7 @@ SkTypeface* OsmAnd::RasterizerEnvironment_P::getTypefaceForFontResource(const QS
     return typeface;
 }
 
-void OsmAnd::RasterizerEnvironment_P::configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const
+void OsmAnd::MapPresentationEnvironment_P::configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const
 {
     // Lookup matching font entry
     const FontsRegisterEntry* pBestMatchEntry = nullptr;
@@ -301,19 +282,19 @@ void OsmAnd::RasterizerEnvironment_P::configurePaintForText(SkPaint& paint, cons
         paint.setFakeBoldText(true);
 }
 
-QHash< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::RasterizerEnvironment_P::getSettings() const
+QHash< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::MapPresentationEnvironment_P::getSettings() const
 {
     return _settings;
 }
 
-void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings)
+void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings)
 {
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 
     _settings = newSettings;
 }
 
-void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< QString, QString >& newSettings)
+void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QString >& newSettings)
 {
     QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > resolvedSettings;
     resolvedSettings.reserve(newSettings.size());
@@ -345,7 +326,7 @@ void OsmAnd::RasterizerEnvironment_P::setSettings(const QHash< QString, QString 
     setSettings(resolvedSettings);
 }
 
-void OsmAnd::RasterizerEnvironment_P::applyTo(MapStyleEvaluator& evaluator) const
+void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator) const
 {
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 
@@ -378,7 +359,7 @@ void OsmAnd::RasterizerEnvironment_P::applyTo(MapStyleEvaluator& evaluator) cons
     }
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const
 {
     QMutexLocker scopedLocker(&_shadersBitmapsMutex);
 
@@ -403,7 +384,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainBitmapShader(const QString& name, Sk
     return true;
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const
 {
     QMutexLocker scopedLocker(&_pathEffectsMutex);
 
@@ -451,7 +432,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainPathEffect(const QString& encodedPat
     return true;
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const
 {
     QMutexLocker scopedLocker(&_mapIconsMutex);
 
@@ -476,7 +457,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainMapIcon(const QString& name, std::sh
     return true;
 }
 
-bool OsmAnd::RasterizerEnvironment_P::obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const
+bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const
 {
     QMutexLocker scopedLocker(&_textShieldsMutex);
 
@@ -501,7 +482,7 @@ bool OsmAnd::RasterizerEnvironment_P::obtainTextShield(const QString& name, std:
     return true;
 }
 
-QByteArray OsmAnd::RasterizerEnvironment_P::obtainResourceByName(const QString& name) const
+QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QString& name) const
 {
     // Try to obtain from external resources first
     if (static_cast<bool>(owner->externalResourcesProvider))
@@ -514,4 +495,100 @@ QByteArray OsmAnd::RasterizerEnvironment_P::obtainResourceByName(const QString& 
 
     // Otherwise obtain from embedded
     return EmbeddedResources::decompressResource(name);
+}
+
+OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getDefaultBackgroundColor(const ZoomLevel zoom) const
+{
+    auto result = _defaultBgColor;
+
+    if (_attributeRule_defaultColor)
+    {
+        MapStyleEvaluator evaluator(owner->style, owner->displayDensityFactor);
+        applyTo(evaluator);
+        evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_attributeRule_defaultColor, &evalResult))
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, result.argb);
+    }
+
+    return result;
+}
+
+void OsmAnd::MapPresentationEnvironment_P::obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const
+{
+    mode = _shadowRenderingMode;
+    color = _shadowRenderingColor;
+
+    if (_attributeRule_shadowRendering)
+    {
+        MapStyleEvaluator evaluator(owner->style, owner->displayDensityFactor);
+        applyTo(evaluator);
+        evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_attributeRule_shadowRendering, &evalResult))
+        {
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, mode);
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, color.argb);
+        }
+    }
+}
+
+double OsmAnd::MapPresentationEnvironment_P::getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const
+{
+    auto result = _polygonMinSizeToDisplay;
+
+    if (_attributeRule_polygonMinSizeToDisplay)
+    {
+        MapStyleEvaluator evaluator(owner->style, owner->displayDensityFactor);
+        applyTo(evaluator);
+        evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_attributeRule_polygonMinSizeToDisplay, &evalResult))
+        {
+            int polygonMinSizeToDisplay;
+            if (evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, polygonMinSizeToDisplay))
+                result = polygonMinSizeToDisplay;
+        }
+    }
+
+    return result;
+}
+
+unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadDensityZoomTile(const ZoomLevel zoom) const
+{
+    auto result = _roadDensityZoomTile;
+
+    if (_attributeRule_roadDensityZoomTile)
+    {
+        MapStyleEvaluator evaluator(owner->style, owner->displayDensityFactor);
+        applyTo(evaluator);
+        evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_attributeRule_roadDensityZoomTile, &evalResult))
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, result);
+    }
+
+    return result;
+}
+
+unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadsDensityLimitPerTile(const ZoomLevel zoom) const
+{
+    auto result = _roadsDensityLimitPerTile;
+
+    if (_attributeRule_roadsDensityLimitPerTile)
+    {
+        MapStyleEvaluator evaluator(owner->style, owner->displayDensityFactor);
+        applyTo(evaluator);
+        evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_attributeRule_roadsDensityLimitPerTile, &evalResult))
+            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, result);
+    }
+
+    return result;
 }

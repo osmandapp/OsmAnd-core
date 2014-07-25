@@ -17,7 +17,7 @@ namespace OsmAnd
     class IMapStylesCollection;
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
-    class RasterizerEnvironment_P;
+    class MapPresentationEnvironment_P;
 
     class MapStyleValueDefinition;
     class MapStyleRule;
@@ -80,7 +80,7 @@ namespace OsmAnd
     friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleEvaluator_P;
     friend class OsmAnd::MapStyleRule;
-    friend class OsmAnd::RasterizerEnvironment_P;
+    friend class OsmAnd::MapPresentationEnvironment_P;
     };
 }
 
