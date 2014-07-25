@@ -1056,10 +1056,6 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             continue;
         }
 
-        // Create new primitive
-        std::shared_ptr<Primitive> primitive(new Primitive(group, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
-        primitive->zOrder = zOrder;
-
         if (objectType == PrimitiveType::Polygon)
         {
             // Perform checks on data
@@ -1104,8 +1100,12 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
             // If evaluation failed, skip
             if (!ok)
+            {
+                if (metric)
+                    metric->polygonRejects++;
+
                 continue;
-            primitive->evaluationResult = evaluatorState;
+            }
 
             // Check size of polygon
             const auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
@@ -1118,7 +1118,11 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
                 continue;
             }
-            primitive->zOrder += 1.0 / polygonArea31;
+
+            // Create new primitive
+            const std::shared_ptr<Primitive> primitive(new Primitive(group, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
+            primitive->evaluationResult = evaluatorState;
+            primitive->zOrder = zOrder + (1.0 / polygonArea31);
 
             // Duplicate primitive as point
             std::shared_ptr<Primitive> pointPrimitive(new Primitive(group, PrimitiveType::Point, typeRuleIdIndex));
@@ -1193,7 +1197,16 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
             // If evaluation failed, skip
             if (!ok)
+            {
+                if (metric)
+                    metric->polylineRejects++;
+
                 continue;
+            }
+
+            // Create new primitive
+            const std::shared_ptr<Primitive> primitive(new Primitive(group, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
+            primitive->zOrder = zOrder;
             primitive->evaluationResult = evaluatorState;
 
             // Accept this primitive
@@ -1231,13 +1244,22 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                 metric->pointEvaluations++;
             }
 
+            // Skip is possible if typeIndex != 0 or (there is no text and no icon)
+            if (typeRuleIdIndex != 0 || (mapObject->names.isEmpty() && !ok))
+            {
+                if (metric)
+                    metric->pointRejects++;
+
+                continue;
+            }
+
+            // Create new primitive
+            const std::shared_ptr<Primitive> primitive(new Primitive(group, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
+            primitive->zOrder = zOrder;
+
             // Point evaluation is a bit special, it's success only indicates that point has an icon
             if (ok)
                 primitive->evaluationResult = evaluatorState;
-
-            // Skip is possible if typeIndex != 0 or (there is no text and no icon)
-            if (primitive->typeRuleIdIndex != 0 || (mapObject->names.isEmpty() && !ok))
-                continue;
 
             // Accept this primitive
             constructedGroup->points.push_back(qMove(primitive));

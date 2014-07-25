@@ -63,6 +63,9 @@ namespace OsmAnd
             // Number of polygon evaluations
             unsigned int polygonEvaluations;
 
+            // Number of polygon rejectes
+            unsigned int polygonRejects;
+
             // Number of polygons that were rejected by their size (area)
             unsigned int polygonsRejectedByArea;
 
@@ -75,6 +78,9 @@ namespace OsmAnd
             // Number of polyline evaluations
             unsigned int polylineEvaluations;
 
+            // Number of polyline evaluations
+            unsigned int polylineRejects;
+
             // Number of obtained polyline primitives
             unsigned int polylinePrimitives;
 
@@ -83,6 +89,9 @@ namespace OsmAnd
 
             // Number of point evaluations
             unsigned int pointEvaluations;
+
+            // Number of point evaluations
+            unsigned int pointRejects;
 
             // Number of obtained point primitives
             unsigned int pointPrimitives;

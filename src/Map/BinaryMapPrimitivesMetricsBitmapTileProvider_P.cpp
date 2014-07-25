@@ -60,21 +60,27 @@ bool OsmAnd::BinaryMapPrimitivesMetricsBitmapTileProvider_P::obtainData(const Ti
         .arg(tileId.x)
         .arg(tileId.y)
         .arg(zoom);
-    text = text.trimmed();
     text += QString(QLatin1String("order  %1/-%2 %3s\n"))
         .arg(obtainDataMetric.primitiviseMetric.orderEvaluations)
         .arg(obtainDataMetric.primitiviseMetric.orderRejects)
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForOrderEvaluation, 'f', 2));
-    text += QString(QLatin1String("polyg  %1/-%2 %3s\n"))
+    text += QString(QLatin1String("polyg  %1/-%2(-%3) %4s\n"))
         .arg(obtainDataMetric.primitiviseMetric.polygonEvaluations)
+        .arg(obtainDataMetric.primitiviseMetric.polygonRejects)
         .arg(obtainDataMetric.primitiviseMetric.polygonsRejectedByArea)
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForPolygonEvaluation, 'f', 2));
-    text += QString(QLatin1String("polyl  %1 %2s\n"))
+    text += QString(QLatin1String("polyl  %1/-%2 %3s\n"))
         .arg(obtainDataMetric.primitiviseMetric.polylineEvaluations)
+        .arg(obtainDataMetric.primitiviseMetric.polylineRejects)
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForPolylineEvaluation, 'f', 2));
-    text += QString(QLatin1String("point  %1 %2s\n"))
+    text += QString(QLatin1String("point  %1/-%2 %3s\n"))
         .arg(obtainDataMetric.primitiviseMetric.pointEvaluations)
+        .arg(obtainDataMetric.primitiviseMetric.pointRejects)
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForPointEvaluation, 'f', 2));
+    text += QString(QLatin1String("d/b/c  %1s/%2s/%3s\n"))
+        .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', 2))
+        .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForObtainingPrimitivesFromBasemap, 'f', 2))
+        .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForObtainingPrimitivesFromCoastlines, 'f', 2));
     text += QString(QLatin1String("TIME   r%1+p%2+?=%3s\n"))
         .arg(QString::number(obtainDataMetric.obtainBinaryMapDataMetric.elapsedTime, 'f', 2))
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTime, 'f', 2))
