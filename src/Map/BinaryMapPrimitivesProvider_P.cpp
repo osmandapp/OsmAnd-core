@@ -106,6 +106,8 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
         zoom,
         dataTile->tileFoundation,
         dataTile->mapObjects,
+        //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
+        //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
         nullptr, //_primitiviserCache,
         nullptr,
         metric ? &metric->primitiviseMetric : nullptr);
