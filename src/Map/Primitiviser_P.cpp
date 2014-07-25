@@ -128,6 +128,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     {
         assert(foundation != MapFoundationType::Undefined);
 
+        const auto& encDecRules = owner->environment->dummyMapSection->encodingDecodingRules;
         const std::shared_ptr<Model::BinaryMapObject> bgMapObject(new Model::BinaryMapObject(owner->environment->dummyMapSection, nullptr));
         bgMapObject->_isArea = true;
         bgMapObject->_points31.push_back(qMove(PointI(area31.left, area31.top)));
@@ -136,15 +137,15 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
         bgMapObject->_points31.push_back(qMove(PointI(area31.left, area31.bottom)));
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
         if (foundation == MapFoundationType::FullWater)
-            bgMapObject->_typesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
+            bgMapObject->_typesRuleIds.push_back(encDecRules->naturalCoastline_encodingRuleId);
         else if (foundation == MapFoundationType::FullLand || foundation == MapFoundationType::Mixed)
-            bgMapObject->_typesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->naturalLand_encodingRuleId);
+            bgMapObject->_typesRuleIds.push_back(encDecRules->naturalLand_encodingRuleId);
         else
         {
             bgMapObject->_isArea = false;
-            bgMapObject->_typesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
+            bgMapObject->_typesRuleIds.push_back(encDecRules->naturalCoastlineBroken_encodingRuleId);
         }
-        bgMapObject->_extraTypesRuleIds.push_back(bgMapObject->section->encodingDecodingRules->layerLowest_encodingRuleId);
+        bgMapObject->_extraTypesRuleIds.push_back(encDecRules->layerLowest_encodingRuleId);
 
         assert(bgMapObject->isClosedFigure());
         polygonizedCoastlineObjects.push_back(qMove(bgMapObject));

@@ -75,7 +75,7 @@ bool OsmAnd::BinaryMapPrimitivesMetricsBitmapTileProvider_P::obtainData(const Ti
     text += QString(QLatin1String("point  %1 %2s\n"))
         .arg(obtainDataMetric.primitiviseMetric.pointEvaluations)
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForPointEvaluation, 'f', 2));
-    text += QString(QLatin1String("TIME   %1+%2+?=%3s\n"))
+    text += QString(QLatin1String("TIME   r%1+p%2+?=%3s\n"))
         .arg(QString::number(obtainDataMetric.obtainBinaryMapDataMetric.elapsedTime, 'f', 2))
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTime, 'f', 2))
         .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 2));

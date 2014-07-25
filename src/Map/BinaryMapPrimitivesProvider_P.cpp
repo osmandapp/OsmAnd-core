@@ -1,6 +1,11 @@
 #include "BinaryMapPrimitivesProvider_P.h"
 #include "BinaryMapPrimitivesProvider.h"
 
+#define OSMAND_PERFORMANCE_METRICS 2
+#if !defined(OSMAND_PERFORMANCE_METRICS)
+#   define OSMAND_PERFORMANCE_METRICS 0
+#endif // !defined(OSMAND_PERFORMANCE_METRICS)
+
 #include "BinaryMapDataProvider.h"
 #include "Stopwatch.h"
 #include "Utilities.h"
@@ -128,6 +133,31 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
 
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
+
+#if OSMAND_PERFORMANCE_METRICS
+#if OSMAND_PERFORMANCE_METRICS <= 1
+    LogPrintf(LogSeverityLevel::Info,
+        "%d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs",
+        primitivisedArea->polygons.size(),
+        primitivisedArea->polylines.size(),
+        primitivisedArea->polygons.size(),
+        tileId.x,
+        tileId.y,
+        zoom,
+        totalStopwatch.elapsed());
+#else
+    LogPrintf(LogSeverityLevel::Info,
+        "%d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs:\n%s",
+        primitivisedArea->polygons.size(),
+        primitivisedArea->polylines.size(),
+        primitivisedArea->polygons.size(),
+        tileId.x,
+        tileId.y,
+        zoom,
+        totalStopwatch.elapsed(),
+        qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
+#endif // OSMAND_PERFORMANCE_METRICS <= 1
+#endif // OSMAND_PERFORMANCE_METRICS
     
     return true;
 }
