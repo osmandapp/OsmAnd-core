@@ -1,7 +1,7 @@
 #include "BinaryMapPrimitivesProvider_P.h"
 #include "BinaryMapPrimitivesProvider.h"
 
-#define OSMAND_PERFORMANCE_METRICS 2
+//#define OSMAND_PERFORMANCE_METRICS 2
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
