@@ -26,7 +26,7 @@ using google::protobuf::internal::WireFormatLite;
 #define INT_MAXIMUM 0x7fffffff
 
 static uint zoomForBaseRouteRendering  = 14;
-static uint detailedZoomStart = 13;
+static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
 std::map< std::string, BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
@@ -1300,7 +1300,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			o->namesOrder.push_back("name");
 			tempResult.push_back(o);
 		}
-		if (q->zoom <= zoomOnlyForBasemaps || emptyData || (objectsFromRoutingSectionRead && q->zoom < detailedZoomStart)) {
+		if (q->zoom <= zoomOnlyForBasemaps || emptyData || (objectsFromRoutingSectionRead && q->zoom < detailedZoomStartForRouteSection)) {
 			tempResult.insert(tempResult.end(), basemapResult.begin(), basemapResult.end());
 		} else {
 			deleteObjects(basemapResult);

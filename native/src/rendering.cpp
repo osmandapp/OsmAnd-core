@@ -227,22 +227,29 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 		std::string value, float xText, float yText, SkPath* path) {
 	std::vector<std::string>::iterator it = obj->namesOrder.begin();
 	uint k = 0;
+	bool nameScanned = false;
 	while (it != obj->namesOrder.end()) {
 		k++;
-		std::string tagName = (*it) == "name" ? "" : (*it);
+		bool nameTag = (*it).find("name") == 0;
+		std::string tagName = nameTag ? "" : (*it);
 		std::string name = obj->objectNames[*it];
 		it++;
-		if (name.length() > 0) {			
-			if (tagName == "" && rc -> getPreferredLocale() != "" && obj->objectNames.find("name:"+rc->getPreferredLocale()) != 
-					obj->objectNames.end()) {
+		if(nameTag) {
+			if(nameScanned) {
 				continue;
-			} 
-			// second order makes difference
-			//if (tagName == "name:en" && !rc -> isUsingEnglishNames()) {
-			//	continue;
-			//}
-			name =rc->getTranslatedString(name);
-			name =rc->getReshapedString(name);
+			}
+			if (rc -> getPreferredLocale() != "" && obj->objectNames.find("name:"+rc->getPreferredLocale())  != 
+					obj->objectNames.end() ) {
+				std::string sname  = obj->objectNames["name:"+rc->getPreferredLocale()];
+				if (sname.length() > 0) {
+					name = sname;
+				}
+			}
+			nameScanned = true;				
+		}
+		if (name.length() > 0) {						
+			name = rc->getTranslatedString(name);
+			name = rc->getReshapedString(name);
 			req->setInitialTagValueZoom(tag, value, rc->getZoom(), obj);
 			req->setIntFilter(req->props()->R_TEXT_LENGTH, name.length());			
 			req->setStringFilter(req->props()->R_NAME_TAG, tagName);
