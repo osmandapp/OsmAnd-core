@@ -167,22 +167,23 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     }
 
     // Obtain primitives:
+    MapStyleEvaluationResult evaluationResult;
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
-    obtainPrimitives(owner->environment, primitivisedArea, detailedmapMapObjects, cache, controller, metric);
+    obtainPrimitives(owner->environment, primitivisedArea, detailedmapMapObjects, qMove(evaluationResult), cache, controller, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
     if ((zoom <= static_cast<ZoomLevel>(BasemapZoom)) || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
-        obtainPrimitives(owner->environment, primitivisedArea, basemapMapObjects, cache, controller, metric);
+        obtainPrimitives(owner->environment, primitivisedArea, basemapMapObjects, qMove(evaluationResult), cache, controller, metric);
         if (metric)
             metric->elapsedTimeForObtainingPrimitivesFromBasemap += obtainPrimitivesFromBasemapStopwatch.elapsed();
     }
 
     const Stopwatch obtainPrimitivesFromCoastlinesStopwatch(metric != nullptr);
-    obtainPrimitives(owner->environment, primitivisedArea, polygonizedCoastlineObjects, cache, controller, metric);
+    obtainPrimitives(owner->environment, primitivisedArea, polygonizedCoastlineObjects, qMove(evaluationResult), cache, controller, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromCoastlines += obtainPrimitivesFromCoastlinesStopwatch.elapsed();
 
@@ -197,7 +198,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(owner->environment, primitivisedArea, cache, controller);
+    obtainPrimitivesSymbols(owner->environment, primitivisedArea, qMove(evaluationResult), cache, controller);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -878,6 +879,11 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<PrimitivisedArea>& primitivisedArea,
     const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& source,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     const std::shared_ptr<Cache>& cache,
     const IQueryController* const controller,
     Primitiviser_Metrics::Metric_primitivise* const metric)
@@ -950,6 +956,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
             env,
             primitivisedArea,
             mapObject,
+            qMove(evaluationResult),
             orderEvaluator,
             polygonEvaluator,
             polylineEvaluator,
@@ -993,6 +1000,11 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<PrimitivisedArea>& primitivisedArea,
     const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     MapStyleEvaluator& orderEvaluator,
     MapStyleEvaluator& polygonEvaluator,
     MapStyleEvaluator& polylineEvaluator,
@@ -1000,9 +1012,6 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     Primitiviser_Metrics::Metric_primitivise* const metric)
 {
     bool ok;
-
-    MapStyleEvaluationResult orderEvaluationResult;
-    MapStyleEvaluationResult evaluationResult;
 
     const auto constructedGroup = new PrimitivesGroup(mapObject);
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
@@ -1023,8 +1032,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
         orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
 
-        orderEvaluationResult.clear();
-        ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &orderEvaluationResult);
+        evaluationResult.clear();
+        ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &evaluationResult);
 
         if (metric)
         {
@@ -1042,7 +1051,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         }
 
         int objectType_;
-        if (!orderEvaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType_))
+        if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType_))
         {
             if (metric)
                 metric->orderRejects++;
@@ -1052,13 +1061,16 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         const auto objectType = static_cast<PrimitiveType>(objectType_);
 
         int zOrder;
-        if (!orderEvaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
+        if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
         {
             if (metric)
                 metric->orderRejects++;
 
             continue;
         }
+
+        int shadowLevel;
+        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel);
 
         if (objectType == PrimitiveType::Polygon)
         {
@@ -1308,8 +1320,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             continue;
         }
 
-        int shadowLevel;
-        if (orderEvaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
+        if (shadowLevel > 0)
         {
             primitivisedArea->shadowLevelMin = qMin(primitivisedArea->shadowLevelMin, static_cast<int>(zOrder));
             primitivisedArea->shadowLevelMax = qMax(primitivisedArea->shadowLevelMax, static_cast<int>(zOrder));
@@ -1393,6 +1404,11 @@ void OsmAnd::Primitiviser_P::filterOutHighwaysByDensity(
 void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<PrimitivisedArea>& primitivisedArea,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     const std::shared_ptr<Cache>& cache,
     const IQueryController* const controller)
 {
@@ -1441,9 +1457,32 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
 
         // For each primitive if primitive group, collect symbols from it
         //NOTE: Each polygon that has icon or text is also added as point. So there's no need to process polygons
-        //collectSymbolsFromPrimitives(env, primitivisedArea, primitivesGroup->polygons, PrimitivesType::Polygons, constructedGroup->symbols, controller);
-        collectSymbolsFromPrimitives(env, primitivisedArea, primitivesGroup->polylines, PrimitivesType::Polylines, constructedGroup->symbols, controller);
-        collectSymbolsFromPrimitives(env, primitivisedArea, primitivesGroup->points, PrimitivesType::Points, constructedGroup->symbols, controller);
+        /*
+        collectSymbolsFromPrimitives(
+            env,
+            primitivisedArea,
+            primitivesGroup->polygons,
+            PrimitivesType::Polygons,
+            qMove(evaluationResult),
+            constructedGroup->symbols,
+            controller);
+        */
+        collectSymbolsFromPrimitives(
+            env,
+            primitivisedArea,
+            primitivesGroup->polylines,
+            PrimitivesType::Polylines,
+            qMove(evaluationResult),
+            constructedGroup->symbols,
+            controller);
+        collectSymbolsFromPrimitives(
+            env,
+            primitivisedArea,
+            primitivesGroup->points,
+            PrimitivesType::Points,
+            qMove(evaluationResult),
+            constructedGroup->symbols,
+            controller);
 
         // Add this group to shared cache
         if (pSharedSymbolGroups && canBeShared)
@@ -1474,6 +1513,11 @@ void OsmAnd::Primitiviser_P::collectSymbolsFromPrimitives(
     const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
     const PrimitivesCollection& primitives,
     const PrimitivesType type,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols,
     const IQueryController* const controller)
 {
@@ -1486,17 +1530,17 @@ void OsmAnd::Primitiviser_P::collectSymbolsFromPrimitives(
 
         if (type == PrimitivesType::Polygons)
         {
-            obtainSymbolsFromPolygon(env, primitivisedArea, primitive, outSymbols);
+            obtainSymbolsFromPolygon(env, primitivisedArea, primitive, qMove(evaluationResult), outSymbols);
         }
         else if (type == PrimitivesType::Polylines)
         {
-            obtainSymbolsFromPolyline(env, primitivisedArea, primitive, outSymbols);
+            obtainSymbolsFromPolyline(env, primitivisedArea, primitive, qMove(evaluationResult), outSymbols);
         }
         else if (type == PrimitivesType::Points)
         {
             assert(primitive->typeRuleIdIndex == 0);
 
-            obtainSymbolsFromPoint(env, primitivisedArea, primitive, outSymbols);
+            obtainSymbolsFromPoint(env, primitivisedArea, primitive, qMove(evaluationResult), outSymbols);
         }
     }
 }
@@ -1505,6 +1549,11 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPolygon(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
     const std::shared_ptr<const Primitive>& primitive,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -1526,13 +1575,23 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPolygon(
     center.y /= pointsCount;
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, primitivisedArea, primitive, Utilities::normalizeCoordinates(center, ZoomLevel31), outSymbols);
+    obtainPrimitiveTexts(env,
+        primitivisedArea,
+        primitive,
+        Utilities::normalizeCoordinates(center, ZoomLevel31),
+        qMove(evaluationResult),
+        outSymbols);
 }
 
 void OsmAnd::Primitiviser_P::obtainSymbolsFromPolyline(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
     const std::shared_ptr<const Primitive>& primitive,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -1543,13 +1602,24 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPolyline(
     const auto center = points31[points31.size() >> 1];
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, primitivisedArea, primitive, center, outSymbols);
+    obtainPrimitiveTexts(
+        env,
+        primitivisedArea,
+        primitive,
+        center,
+        qMove(evaluationResult),
+        outSymbols);
 }
 
 void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
     const std::shared_ptr<const Primitive>& primitive,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -1581,10 +1651,21 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
     }
 
     // Obtain icon for this symbol
-    obtainPrimitiveIcon(env, primitive, center, outSymbols);
+    obtainPrimitiveIcon(
+        env,
+        primitive,
+        center,
+        qMove(evaluationResult),
+        outSymbols);
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env, primitivisedArea, primitive, center, outSymbols);
+    obtainPrimitiveTexts(
+        env,
+        primitivisedArea,
+        primitive,
+        center,
+        qMove(evaluationResult),
+        outSymbols);
 }
 
 void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
@@ -1592,6 +1673,11 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
     const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols)
 {
     const auto& mapObject = primitive->sourceObject;
@@ -1600,8 +1686,6 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
     const auto& encDecRules = mapObject->section->encodingDecodingRules;
     const auto typeRuleId = mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
     const auto& decodedType = encDecRules->decodingRules[typeRuleId];
-
-    MapStyleEvaluationResult textEvalResult;
 
     MapStyleEvaluator textEvaluator(env->style, env->displayDensityFactor);
     env->applyTo(textEvaluator);
@@ -1687,13 +1771,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
 
         textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, nameTag);
 
-        textEvalResult.clear();
-        if (!textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &textEvalResult))
+        evaluationResult.clear();
+        if (!textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult))
             continue;
 
         // Skip text that doesn't have valid size
         int textSize = 0;
-        ok = textEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SIZE, textSize);
+        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SIZE, textSize);
         if (!ok || textSize == 0)
             continue;
 
@@ -1709,28 +1793,28 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         text->value = name;
 
         text->drawOnPath = false;
-        textEvalResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
+        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
 
-        textEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
+        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
 
         text->verticalOffset = 0;
-        textEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
+        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
 
-        ok = textEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color);
+        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color);
         if (!ok || !text->color)
             text->color = SK_ColorBLACK;
 
         text->size = textSize;
 
         text->shadowRadius = 0;
-        textEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
+        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
 
-        ok = textEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor);
+        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor);
         if (!ok || !text->shadowColor)
             text->shadowColor = SK_ColorWHITE;
 
         text->wrapWidth = 0;
-        textEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
+        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
         if (!text->drawOnPath && text->wrapWidth == 0)
         {
             // Default wrapping width (in characters)
@@ -1738,9 +1822,9 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         }
 
         text->isBold = false;
-        textEvalResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
+        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
 
-        ok = textEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE_X, text->minDistance.x);
+        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE_X, text->minDistance.x);
         if (ok && (text->minDistance.x > 0 || text->minDistance.y > 0))
         {
             text->minDistance.y = 15.0f*env->displayDensityFactor; /* 15dip */
@@ -1749,7 +1833,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
                 text->minDistance.x = minDistanceX;
         }
 
-        textEvalResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
+        evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
         outSymbols.push_back(qMove(text));
     }
@@ -1759,6 +1843,11 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
+#ifdef Q_COMPILER_RVALUE_REFS
+    MapStyleEvaluationResult&& evaluationResult,
+#else
+    MapStyleEvaluationResult& evaluationResult,
+#endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols)
 {
     if (primitive->evaluationResult.isEmpty())
