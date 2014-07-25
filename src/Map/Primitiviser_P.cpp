@@ -945,6 +945,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
         }
 
         // Create a primitives group
+        const Stopwatch obtainPrimitivesGroupStopwatch(metric != nullptr);
         const auto group = obtainPrimitivesGroup(
             env,
             primitivisedArea,
@@ -954,6 +955,8 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
             polylineEvaluator,
             pointEvaluator,
             metric);
+        if (metric)
+            metric->elapsedTimeForObtainingPrimitivesGroups += obtainPrimitivesGroupStopwatch.elapsed();
 
         // Add this group to shared cache
         if (pSharedPrimitivesGroups && canBeShared)

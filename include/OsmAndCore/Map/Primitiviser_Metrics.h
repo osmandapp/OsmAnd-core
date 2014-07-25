@@ -45,6 +45,9 @@ namespace OsmAnd
             // Time spent on obtaining primitives (from coastlines)
             float elapsedTimeForObtainingPrimitivesFromCoastlines;
 
+            // Time spent on obtaining all primitives groups
+            float elapsedTimeForObtainingPrimitivesGroups;
+
             // Time spent on waiting for future shared primitives groups (for all)
             float elapsedTimeForFutureSharedPrimitivesGroups;
 

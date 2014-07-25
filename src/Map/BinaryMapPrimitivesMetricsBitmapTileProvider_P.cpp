@@ -77,10 +77,14 @@ bool OsmAnd::BinaryMapPrimitivesMetricsBitmapTileProvider_P::obtainData(const Ti
         .arg(obtainDataMetric.primitiviseMetric.pointEvaluations)
         .arg(obtainDataMetric.primitiviseMetric.pointRejects)
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForPointEvaluation, 'f', 2));
+    text += QString(QLatin1String("groups %1s\n"))
+        .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForObtainingPrimitivesGroups, 'f', 2));
     text += QString(QLatin1String("d/b/c  %1s/%2s/%3s\n"))
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', 2))
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForObtainingPrimitivesFromBasemap, 'f', 2))
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForObtainingPrimitivesFromCoastlines, 'f', 2));
+    text += QString(QLatin1String("sym    %1s\n"))
+        .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTimeForObtainingPrimitivesSymbols, 'f', 2));
     text += QString(QLatin1String("TIME   r%1+p%2+?=%3s\n"))
         .arg(QString::number(obtainDataMetric.obtainBinaryMapDataMetric.elapsedTime, 'f', 2))
         .arg(QString::number(obtainDataMetric.primitiviseMetric.elapsedTime, 'f', 2))
