@@ -12,7 +12,7 @@
 namespace OsmAnd
 {
     class MapStyleRule;
-    class MapStyleEvaluationResult;
+    struct MapStyleEvaluationResult;
     class MapStyleBuiltinValueDefinitions;
     namespace Model
     {

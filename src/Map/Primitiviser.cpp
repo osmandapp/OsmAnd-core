@@ -20,7 +20,7 @@ std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitivis
     const ZoomLevel zoom,
     const MapFoundationType foundation,
     const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
-    const std::shared_ptr<Cache>& cache /*= std::shared_ptr<Cache>(new Cache())*/,
+    const std::shared_ptr<Cache>& cache /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/,
     Primitiviser_Metrics::Metric_primitivise* const metric /*= nullptr*/)
 {
@@ -47,6 +47,36 @@ OsmAnd::Primitiviser::Primitive::Primitive(
     , zOrder(0.0)
 {
 }
+
+OsmAnd::Primitiviser::Primitive::Primitive(
+    const std::shared_ptr<const PrimitivesGroup>& group_,
+    const PrimitiveType type_,
+    const uint32_t typeRuleIdIndex_,
+    const MapStyleEvaluationResult& evaluationResult_)
+    : group(group_)
+    , sourceObject(group_->sourceObject)
+    , type(type_)
+    , typeRuleIdIndex(typeRuleIdIndex_)
+    , evaluationResult(evaluationResult_)
+    , zOrder(0.0)
+{
+}
+
+#ifdef Q_COMPILER_RVALUE_REFS
+OsmAnd::Primitiviser::Primitive::Primitive(
+    const std::shared_ptr<const PrimitivesGroup>& group_,
+    const PrimitiveType type_,
+    const uint32_t typeRuleIdIndex_,
+    MapStyleEvaluationResult&& evaluationResult_)
+    : group(group_)
+    , sourceObject(group_->sourceObject)
+    , type(type_)
+    , typeRuleIdIndex(typeRuleIdIndex_)
+    , evaluationResult(qMove(evaluationResult_))
+    , zOrder(0.0)
+{
+}
+#endif // Q_COMPILER_RVALUE_REFS
 
 OsmAnd::Primitiviser::Primitive::~Primitive()
 {
@@ -115,6 +145,26 @@ OsmAnd::Primitiviser::Cache::SharedSymbolsGroupsContainer& OsmAnd::Primitiviser:
 const OsmAnd::Primitiviser::Cache::SharedSymbolsGroupsContainer& OsmAnd::Primitiviser::Cache::getSymbolsGroups(const ZoomLevel zoom) const
 {
     return _sharedSymbolsGroups[zoom];
+}
+
+OsmAnd::Primitiviser::Cache::SharedPrimitivesGroupsContainer* OsmAnd::Primitiviser::Cache::getPrimitivesGroupsPtr(const ZoomLevel zoom)
+{
+    return &getPrimitivesGroups(zoom);
+}
+
+const OsmAnd::Primitiviser::Cache::SharedPrimitivesGroupsContainer* OsmAnd::Primitiviser::Cache::getPrimitivesGroupsPtr(const ZoomLevel zoom) const
+{
+    return &getPrimitivesGroups(zoom);
+}
+
+OsmAnd::Primitiviser::Cache::SharedSymbolsGroupsContainer* OsmAnd::Primitiviser::Cache::getSymbolsGroupsPtr(const ZoomLevel zoom)
+{
+    return &getSymbolsGroups(zoom);
+}
+
+const OsmAnd::Primitiviser::Cache::SharedSymbolsGroupsContainer* OsmAnd::Primitiviser::Cache::getSymbolsGroupsPtr(const ZoomLevel zoom) const
+{
+    return &getSymbolsGroups(zoom);
 }
 
 OsmAnd::Primitiviser::PrimitivisedArea::PrimitivisedArea(

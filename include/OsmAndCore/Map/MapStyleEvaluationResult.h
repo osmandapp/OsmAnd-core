@@ -8,30 +8,31 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
 #include <QVariant>
+#include <QHash>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/PrivateImplementation.h>
 
 namespace OsmAnd
 {
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
 
-    class MapStyleEvaluationResult_P;
-    class OSMAND_CORE_API MapStyleEvaluationResult
+    struct OSMAND_CORE_API MapStyleEvaluationResult Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(MapStyleEvaluationResult);
-    public:
-        typedef std::pair<int, QVariant> PackedResultEntry;
-        typedef QList< PackedResultEntry > PackedResult;
-
-    private:
-        PrivateImplementation<MapStyleEvaluationResult_P> _p;
-    protected:
-    public:
         MapStyleEvaluationResult();
-        virtual ~MapStyleEvaluationResult();
+        MapStyleEvaluationResult(const MapStyleEvaluationResult& that);
+#ifdef Q_COMPILER_RVALUE_REFS
+        MapStyleEvaluationResult(MapStyleEvaluationResult&& that);
+#endif // Q_COMPILER_RVALUE_REFS
+        ~MapStyleEvaluationResult();
 
+        MapStyleEvaluationResult& operator=(const MapStyleEvaluationResult& that);
+#ifdef Q_COMPILER_RVALUE_REFS
+        MapStyleEvaluationResult& operator=(MapStyleEvaluationResult&& that);
+#endif // Q_COMPILER_RVALUE_REFS
+
+        QHash<int, QVariant> values;
+    
         bool getBooleanValue(const int valueDefId, bool& value) const;
         bool getIntegerValue(const int valueDefId, int& value) const;
         bool getIntegerValue(const int valueDefId, unsigned int& value) const;
@@ -39,13 +40,15 @@ namespace OsmAnd
         bool getStringValue(const int valueDefId, QString& value) const;
 
         void clear();
+        bool isEmpty() const;
 
+        typedef std::pair<int, QVariant> PackedResultEntry;
+        typedef QList<PackedResultEntry> PackedResult;
         void pack(PackedResult& packedResult);
 
     friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleEvaluator_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_STYLE_EVALUATION_RESULT_H_)

@@ -215,8 +215,6 @@ void OsmAnd::Primitiviser_P::applyEnvironment(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<PrimitivisedArea>& primitivisedArea)
 {
-    MapStyleEvaluationResult evalResult;
-
     primitivisedArea->defaultBackgroundColor = env->getDefaultBackgroundColor(primitivisedArea->zoom);
     env->obtainShadowRenderingOptions(primitivisedArea->zoom, primitivisedArea->shadowRenderingMode, primitivisedArea->shadowRenderingColor);
     primitivisedArea->polygonAreaMinimalThreshold = env->getPolygonAreaMinimalThreshold(primitivisedArea->zoom);
@@ -910,7 +908,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
     pointEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     pointEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
-    auto& sharedPrimitivesGroups = cache->getPrimitivesGroups(zoom);
+    const auto pSharedPrimitivesGroups = cache ? cache->getPrimitivesGroupsPtr(zoom) : nullptr;
     QList< proper::shared_future< std::shared_ptr<const PrimitivesGroup> > > futureSharedPrimitivesGroups;
     for (const auto& mapObject : constOf(source))
     {
@@ -920,12 +918,12 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
         const auto canBeShared = (mapObject->section != env->dummyMapSection);
 
         // If group can be shared, use already-processed or reserve pending
-        if (canBeShared)
+        if (pSharedPrimitivesGroups && canBeShared)
         {
             // If this group was already processed, use that
             std::shared_ptr<const PrimitivesGroup> group;
             proper::shared_future< std::shared_ptr<const PrimitivesGroup> > futureGroup;
-            if (sharedPrimitivesGroups.obtainReferenceOrFutureReferenceOrMakePromise(mapObject->id, group, futureGroup))
+            if (pSharedPrimitivesGroups->obtainReferenceOrFutureReferenceOrMakePromise(mapObject->id, group, futureGroup))
             {
                 if (group)
                 {
@@ -958,8 +956,8 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
             metric);
 
         // Add this group to shared cache
-        if (canBeShared)
-            sharedPrimitivesGroups.fulfilPromiseAndReference(mapObject->id, group);
+        if (pSharedPrimitivesGroups && canBeShared)
+            pSharedPrimitivesGroups->fulfilPromiseAndReference(mapObject->id, group);
 
         // Add polygons, polylines and points from group to current context
         primitivisedArea->polygons.append(group->polygons);
@@ -1000,6 +998,9 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 {
     bool ok;
 
+    MapStyleEvaluationResult orderEvaluationResult;
+    MapStyleEvaluationResult evaluationResult;
+
     const auto constructedGroup = new PrimitivesGroup(mapObject);
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
@@ -1019,8 +1020,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
         orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
 
-        MapStyleEvaluationResult orderEvalResult;
-        ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &orderEvalResult);
+        orderEvaluationResult.clear();
+        ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &orderEvaluationResult);
 
         if (metric)
         {
@@ -1038,7 +1039,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         }
 
         int objectType_;
-        if (!orderEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType_))
+        if (!orderEvaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType_))
         {
             if (metric)
                 metric->orderRejects++;
@@ -1048,7 +1049,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         const auto objectType = static_cast<PrimitiveType>(objectType_);
 
         int zOrder;
-        if (!orderEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
+        if (!orderEvaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
         {
             if (metric)
                 metric->orderRejects++;
@@ -1089,8 +1090,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
             // Evaluate style for this primitive to check if it passes
-            std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, evaluatorState.get());
+            evaluationResult.clear();
+            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
 
             if (metric)
             {
@@ -1120,13 +1121,12 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             }
 
             // Create new primitive
-            const std::shared_ptr<Primitive> primitive(new Primitive(group, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
-            primitive->evaluationResult = evaluatorState;
+            const std::shared_ptr<Primitive> primitive(new Primitive(
+                group,
+                objectType,
+                typeRuleIdIndex,
+                qMove(evaluationResult)));
             primitive->zOrder = zOrder + (1.0 / polygonArea31);
-
-            // Duplicate primitive as point
-            std::shared_ptr<Primitive> pointPrimitive(new Primitive(group, PrimitiveType::Point, typeRuleIdIndex));
-            pointPrimitive->zOrder = primitive->zOrder;
 
             // Accept this primitive
             constructedGroup->polygons.push_back(qMove(primitive));
@@ -1142,8 +1142,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
             // Evaluate Point rules
-            std::shared_ptr<MapStyleEvaluationResult> pointEvaluatorState(new MapStyleEvaluationResult());
-            ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, pointEvaluatorState.get());
+            evaluationResult.clear();
+            ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
 
             // Update metric
             if (metric)
@@ -1152,13 +1152,29 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                 metric->pointEvaluations++;
             }
 
-            // Point evaluation is a bit special, it's success only indicates that point has an icon
-            if (ok)
-                pointPrimitive->evaluationResult = pointEvaluatorState;
-
             // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
-            if (pointPrimitive->typeRuleIdIndex == 0 && (!mapObject->names.isEmpty() || ok))
+            if (typeRuleIdIndex == 0 && (!mapObject->names.isEmpty() || ok))
             {
+                // Duplicate primitive as point
+                std::shared_ptr<Primitive> pointPrimitive;
+                if (ok)
+                {
+                    // Point evaluation is a bit special, it's success only indicates that point has an icon
+                    pointPrimitive.reset(new Primitive(
+                        group,
+                        PrimitiveType::Point,
+                        typeRuleIdIndex,
+                        qMove(evaluationResult)));
+                }
+                else
+                {
+                    pointPrimitive.reset(new Primitive(
+                        group,
+                        PrimitiveType::Point,
+                        typeRuleIdIndex));
+                }
+                pointPrimitive->zOrder = primitive->zOrder;
+
                 constructedGroup->points.push_back(qMove(pointPrimitive));
 
                 // Update metric
@@ -1186,8 +1202,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, mapObject->getSimpleLayerValue());
 
             // Evaluate style for this primitive to check if it passes
-            std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-            ok = polylineEvaluator.evaluate(mapObject, MapStyleRulesetType::Polyline, evaluatorState.get());
+            evaluationResult.clear();
+            ok = polylineEvaluator.evaluate(mapObject, MapStyleRulesetType::Polyline, &evaluationResult);
 
             if (metric)
             {
@@ -1205,9 +1221,12 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             }
 
             // Create new primitive
-            const std::shared_ptr<Primitive> primitive(new Primitive(group, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
+            const std::shared_ptr<Primitive> primitive(new Primitive(
+                group, 
+                objectType,
+                typeRuleIdIndex,
+                qMove(evaluationResult)));
             primitive->zOrder = zOrder;
-            primitive->evaluationResult = evaluatorState;
 
             // Accept this primitive
             constructedGroup->polylines.push_back(qMove(primitive));
@@ -1234,8 +1253,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
             // Evaluate Point rules
-            std::shared_ptr<MapStyleEvaluationResult> evaluatorState(new MapStyleEvaluationResult());
-            ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, evaluatorState.get());
+            evaluationResult.clear();
+            ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
 
             // Update metric
             if (metric)
@@ -1254,12 +1273,24 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             }
 
             // Create new primitive
-            const std::shared_ptr<Primitive> primitive(new Primitive(group, static_cast<PrimitiveType>(objectType), typeRuleIdIndex));
-            primitive->zOrder = zOrder;
-
-            // Point evaluation is a bit special, it's success only indicates that point has an icon
+            std::shared_ptr<Primitive> primitive;
             if (ok)
-                primitive->evaluationResult = evaluatorState;
+            {
+                // Point evaluation is a bit special, it's success only indicates that point has an icon
+                primitive.reset(new Primitive(
+                    group,
+                    PrimitiveType::Point,
+                    typeRuleIdIndex,
+                    qMove(evaluationResult)));
+            }
+            else
+            {
+                primitive.reset(new Primitive(
+                    group,
+                    PrimitiveType::Point,
+                    typeRuleIdIndex));
+            }
+            primitive->zOrder = zOrder;
 
             // Accept this primitive
             constructedGroup->points.push_back(qMove(primitive));
@@ -1275,7 +1306,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         }
 
         int shadowLevel;
-        if (orderEvalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
+        if (orderEvaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel) && shadowLevel > 0)
         {
             primitivisedArea->shadowLevelMin = qMin(primitivisedArea->shadowLevelMin, static_cast<int>(zOrder));
             primitivisedArea->shadowLevelMax = qMax(primitivisedArea->shadowLevelMax, static_cast<int>(zOrder));
@@ -1365,7 +1396,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
     //NOTE: Em, I'm not sure this is still true
     //NOTE: Since 2 tiles with same BinaryMapObject may have different set of polylines, generated from it,
     //NOTE: then set of symbols also should differ, but it won't.
-    auto& sharedSymbolGroups = cache->getSymbolsGroups(primitivisedArea->zoom);
+    const auto pSharedSymbolGroups = cache ? cache->getSymbolsGroupsPtr(primitivisedArea->zoom) : nullptr;
     QList< proper::shared_future< std::shared_ptr<const SymbolsGroup> > > futureSharedSymbolGroups;
     for (const auto& primitivesGroup : constOf(primitivisedArea->primitivesGroups))
     {
@@ -1377,12 +1408,12 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
         // then symbols group can be shared
         const auto canBeShared = (primitivesGroup->sourceObject->section != env->dummyMapSection);
 
-        if (canBeShared)
+        if (pSharedSymbolGroups && canBeShared)
         {
             // If this group was already processed, use that
             std::shared_ptr<const SymbolsGroup> group;
             proper::shared_future< std::shared_ptr<const SymbolsGroup> > futureGroup;
-            if (sharedSymbolGroups.obtainReferenceOrFutureReferenceOrMakePromise(primitivesGroup->sourceObject->id, group, futureGroup))
+            if (pSharedSymbolGroups->obtainReferenceOrFutureReferenceOrMakePromise(primitivesGroup->sourceObject->id, group, futureGroup))
             {
                 if (group)
                 {
@@ -1412,8 +1443,8 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
         collectSymbolsFromPrimitives(env, primitivisedArea, primitivesGroup->points, PrimitivesType::Points, constructedGroup->symbols, controller);
 
         // Add this group to shared cache
-        if (canBeShared)
-            sharedSymbolGroups.fulfilPromiseAndReference(primitivesGroup->sourceObject->id, group);
+        if (pSharedSymbolGroups && canBeShared)
+            pSharedSymbolGroups->fulfilPromiseAndReference(primitivesGroup->sourceObject->id, group);
 
 
         // Add symbols from group to current context
@@ -1727,13 +1758,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
     const PointI& location,
     SymbolsCollection& outSymbols)
 {
-    if (!primitive->evaluationResult)
+    if (primitive->evaluationResult.isEmpty())
         return;
 
     bool ok;
 
     QString iconResourceName;
-    ok = primitive->evaluationResult->getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
+    ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
 
     if (ok && !iconResourceName.isEmpty())
     {
@@ -1743,7 +1774,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
         icon->resourceName = qMove(iconResourceName);
 
         icon->order = 100;
-        primitive->evaluationResult->getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, icon->order);
+        primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, icon->order);
         //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
         icon->order += 100000;
 

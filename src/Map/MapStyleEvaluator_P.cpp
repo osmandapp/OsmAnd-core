@@ -7,14 +7,13 @@
 #include "MapStyle_P.h"
 #include "MapStyleValueDefinition.h"
 #include "MapStyleEvaluationResult.h"
-#include "MapStyleEvaluationResult_P.h"
 #include "MapStyleValue.h"
 #include "MapStyleRule.h"
 #include "MapStyleRule_P.h"
 #include "BinaryMapObject.h"
 #include "QKeyValueIterator.h"
 
-OsmAnd::MapStyleEvaluator_P::MapStyleEvaluator_P( MapStyleEvaluator* owner_ )
+OsmAnd::MapStyleEvaluator_P::MapStyleEvaluator_P(MapStyleEvaluator* owner_)
     : owner(owner_)
     , _builtinValueDefs(MapStyle::getBuiltinValueDefinitions())
 {
@@ -80,7 +79,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     bool evaluateChildren)
 {
     // Check all values of a rule until all are checked.
-    for(const auto& ruleValueEntry : rangeOf(constOf(rule->_p->_values)))
+    for (const auto& ruleValueEntry : rangeOf(constOf(rule->_p->_values)))
     {
         const auto& valueDef = ruleValueEntry.key();
 
@@ -146,7 +145,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     // Fill output values from rule to result storage, if requested
     if (outResultStorage)
     {
-        for(const auto& ruleValueEntry : rangeOf(constOf(rule->_p->_values)))
+        for (const auto& ruleValueEntry : rangeOf(constOf(rule->_p->_values)))
         {
             const auto& valueDef = ruleValueEntry.key();
             if (valueDef->valueClass != MapStyleValueClass::Output)
@@ -154,47 +153,47 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 
             const auto& ruleValue = ruleValueEntry.value();
 
-            switch(valueDef->dataType)
+            switch (valueDef->dataType)
             {
-            case MapStyleValueDataType::Boolean:
-                assert(!ruleValue.isComplex);
-                outResultStorage->_p->_values[valueDef->id] = (ruleValue.asSimple.asUInt == 1);
-                break;
-            case MapStyleValueDataType::Integer:
-                outResultStorage->_p->_values[valueDef->id] =
-                    ruleValue.isComplex
-                    ? ruleValue.asComplex.asInt.evaluate(owner->displayDensityFactor)
-                    : ruleValue.asSimple.asInt;
-                break;
-            case MapStyleValueDataType::Float:
-                outResultStorage->_p->_values[valueDef->id] =
-                    ruleValue.isComplex
-                    ? ruleValue.asComplex.asFloat.evaluate(owner->displayDensityFactor)
-                    : ruleValue.asSimple.asFloat;
-                break;
-            case MapStyleValueDataType::String:
-                // Save value of a string instead of it's id
-                outResultStorage->_p->_values[valueDef->id] =
-                    owner->style->_p->lookupStringValue(ruleValue.asSimple.asUInt);
-                break;
-            case MapStyleValueDataType::Color:
-                assert(!ruleValue.isComplex);
-                outResultStorage->_p->_values[valueDef->id] = ruleValue.asSimple.asUInt;
-                break;
+                case MapStyleValueDataType::Boolean:
+                    assert(!ruleValue.isComplex);
+                    outResultStorage->values[valueDef->id] = (ruleValue.asSimple.asUInt == 1);
+                    break;
+                case MapStyleValueDataType::Integer:
+                    outResultStorage->values[valueDef->id] =
+                        ruleValue.isComplex
+                        ? ruleValue.asComplex.asInt.evaluate(owner->displayDensityFactor)
+                        : ruleValue.asSimple.asInt;
+                    break;
+                case MapStyleValueDataType::Float:
+                    outResultStorage->values[valueDef->id] =
+                        ruleValue.isComplex
+                        ? ruleValue.asComplex.asFloat.evaluate(owner->displayDensityFactor)
+                        : ruleValue.asSimple.asFloat;
+                    break;
+                case MapStyleValueDataType::String:
+                    // Save value of a string instead of it's id
+                    outResultStorage->values[valueDef->id] =
+                        owner->style->_p->lookupStringValue(ruleValue.asSimple.asUInt);
+                    break;
+                case MapStyleValueDataType::Color:
+                    assert(!ruleValue.isComplex);
+                    outResultStorage->values[valueDef->id] = ruleValue.asSimple.asUInt;
+                    break;
             }
         }
     }
 
     if (evaluateChildren)
     {
-        for(const auto& child : constOf(rule->_p->_ifElseChildren))
+        for (const auto& child : constOf(rule->_p->_ifElseChildren))
         {
             const auto evaluationResult = evaluate(mapObject, child, outResultStorage, true);
             if (evaluationResult)
                 break;
         }
 
-        for(const auto& child : constOf(rule->_p->_ifChildren))
+        for (const auto& child : constOf(rule->_p->_ifChildren))
             evaluate(mapObject, child, outResultStorage, true);
     }
 

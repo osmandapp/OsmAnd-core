@@ -273,7 +273,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     assert(primitive->sourceObject->isClosedFigure(true));
 
     SkPaint paint;
-    if (!updatePaint(primitivizedArea, paint, *primitive->evaluationResult, PaintValuesSet::Set_0, true))
+    if (!updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, true))
         return;
 
     // Construct and test geometry against bbox area
@@ -346,7 +346,7 @@ void OsmAnd::Rasterizer_P::rasterizePolygon(
     }
 
     canvas.drawPath(path, paint);
-    if (updatePaint(primitivizedArea, paint, *primitive->evaluationResult, PaintValuesSet::Set_1, false))
+    if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
         canvas.drawPath(path, paint);
 }
 
@@ -363,18 +363,18 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
     assert(points31.size() >= 2);
 
     SkPaint paint;
-    if (!updatePaint(primitivizedArea, paint, *primitive->evaluationResult, PaintValuesSet::Set_0, false))
+    if (!updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
         return;
 
     bool ok;
 
     ColorARGB shadowColor;
-    ok = primitive->evaluationResult->getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor.argb);
+    ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor.argb);
     if (!ok || shadowColor == 0)
         shadowColor = primitivizedArea->shadowRenderingColor;
 
     int shadowRadius;
-    ok = primitive->evaluationResult->getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
+    ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
     if (drawOnlyShadow && (!ok || shadowRadius == 0))
         return;
 
@@ -446,20 +446,20 @@ void OsmAnd::Rasterizer_P::rasterizePolyline(
         }
         else
         {
-            if (updatePaint(primitivizedArea, paint, *primitive->evaluationResult, PaintValuesSet::Set_minus2, false))
+            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_minus2, false))
                 canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, *primitive->evaluationResult, PaintValuesSet::Set_minus1, false))
+            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_minus1, false))
                 canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, *primitive->evaluationResult, PaintValuesSet::Set_0, false))
+            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
                 canvas.drawPath(path, paint);
             canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, *primitive->evaluationResult, PaintValuesSet::Set_1, false))
+            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
                 canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, *primitive->evaluationResult, PaintValuesSet::Set_3, false))
+            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_3, false))
                 canvas.drawPath(path, paint);
             
             if (oneway && !drawOnlyShadow)

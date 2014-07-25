@@ -19,7 +19,7 @@ namespace OsmAnd
     class MapStyleRule;
     class MapStyleValueDefinition;
     struct MapStyleValue;
-    class MapStyleEvaluationResult;
+    struct MapStyleEvaluationResult;
 
     class MapStyleEvaluator_P;
     class OSMAND_CORE_API MapStyleEvaluator

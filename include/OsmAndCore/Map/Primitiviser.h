@@ -14,6 +14,7 @@
 #include <OsmAndCore/IQueryController.h>
 #include <OsmAndCore/SharedResourcesContainer.h>
 #include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/MapStyleEvaluationResult.h>
 #include <OsmAndCore/Map/Primitiviser_Metrics.h>
 
 namespace OsmAnd
@@ -22,7 +23,6 @@ namespace OsmAnd
     {
         class BinaryMapObject;
     }
-    class MapStyleEvaluationResult;
     class MapPresentationEnvironment;
 
     class Primitiviser_P;
@@ -71,6 +71,20 @@ namespace OsmAnd
                 const std::shared_ptr<const PrimitivesGroup>& group,
                 const PrimitiveType type,
                 const uint32_t typeRuleIdIndex);
+
+            Primitive(
+                const std::shared_ptr<const PrimitivesGroup>& group,
+                const PrimitiveType type,
+                const uint32_t typeRuleIdIndex,
+                const MapStyleEvaluationResult& evaluationResult);
+
+#ifdef Q_COMPILER_RVALUE_REFS
+            Primitive(
+                const std::shared_ptr<const PrimitivesGroup>& group,
+                const PrimitiveType type,
+                const uint32_t typeRuleIdIndex,
+                MapStyleEvaluationResult&& evaluationResult);
+#endif // Q_COMPILER_RVALUE_REFS
         public:
             ~Primitive();
 
@@ -79,10 +93,9 @@ namespace OsmAnd
 
             const PrimitiveType type;
             const uint32_t typeRuleIdIndex;
+            const MapStyleEvaluationResult evaluationResult;
 
             double zOrder;
-
-            std::shared_ptr<MapStyleEvaluationResult> evaluationResult;
 
         friend class OsmAnd::Primitiviser;
         friend class OsmAnd::Primitiviser_P;
@@ -189,6 +202,11 @@ namespace OsmAnd
             virtual const SharedPrimitivesGroupsContainer& getPrimitivesGroups(const ZoomLevel zoom) const;
             virtual SharedSymbolsGroupsContainer& getSymbolsGroups(const ZoomLevel zoom);
             virtual const SharedSymbolsGroupsContainer& getSymbolsGroups(const ZoomLevel zoom) const;
+            
+            SharedPrimitivesGroupsContainer* getPrimitivesGroupsPtr(const ZoomLevel zoom);
+            const SharedPrimitivesGroupsContainer* getPrimitivesGroupsPtr(const ZoomLevel zoom) const;
+            SharedSymbolsGroupsContainer* getSymbolsGroupsPtr(const ZoomLevel zoom);
+            const SharedSymbolsGroupsContainer* getSymbolsGroupsPtr(const ZoomLevel zoom) const;
         };
         
         class OSMAND_CORE_API PrimitivisedArea Q_DECL_FINAL
@@ -250,7 +268,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const MapFoundationType foundation,
             const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
-            const std::shared_ptr<Cache>& cache = std::shared_ptr<Cache>(new Cache()),
+            const std::shared_ptr<Cache>& cache = nullptr,
             const IQueryController* const controller = nullptr,
             Primitiviser_Metrics::Metric_primitivise* const metric = nullptr);
     };

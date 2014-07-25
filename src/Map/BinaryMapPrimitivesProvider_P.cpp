@@ -106,7 +106,7 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
         zoom,
         dataTile->tileFoundation,
         dataTile->mapObjects,
-        _primitiviserCache,
+        nullptr, //_primitiviserCache,
         nullptr,
         metric ? &metric->primitiviseMetric : nullptr);
 
