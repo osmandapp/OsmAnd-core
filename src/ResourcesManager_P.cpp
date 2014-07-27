@@ -878,7 +878,7 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(
     const QString& id,
     const QString& filePath,
     std::shared_ptr<const InstalledResource>& outResource,
-    const QString localPath_ /*= QString::null*/)
+    const QString& localPath_ /*= QString::null*/)
 {
     assert(id.endsWith(".map.obf"));
 
@@ -921,7 +921,7 @@ bool OsmAnd::ResourcesManager_P::installMapRegionFromFile(
     const auto pLocalResource = new InstalledResource(
         id,
         ResourceType::MapRegion,
-        filePath,
+        localFileName,
         obfFile->fileSize,
         obfFile->obfInfo->creationTimestamp);
     outResource.reset(pLocalResource);
@@ -935,7 +935,7 @@ bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(
     const QString& id,
     const QString& filePath,
     std::shared_ptr<const InstalledResource>& outResource,
-    const QString localPath_ /*= QString::null*/)
+    const QString& localPath_ /*= QString::null*/)
 {
     assert(id.endsWith(".voice"));
 
