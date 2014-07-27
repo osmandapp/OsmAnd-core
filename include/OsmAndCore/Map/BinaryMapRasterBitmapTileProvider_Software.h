@@ -9,6 +9,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider.h>
+#include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider_Metrics.h>
 
 namespace OsmAnd
 {

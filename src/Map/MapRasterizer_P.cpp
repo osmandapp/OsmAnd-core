@@ -148,8 +148,11 @@ void OsmAnd::MapRasterizer_P::rasterize(
     SkCanvas& canvas,
     const bool fillBackground,
     const AreaI* const pDestinationArea,
+    MapRasterizer_Metrics::Metric_rasterize* const metric,
     const IQueryController* const controller)
 {
+    const Stopwatch totalStopwatch(metric != nullptr);
+
     // Deal with background
     if (fillBackground)
     {
@@ -190,6 +193,9 @@ void OsmAnd::MapRasterizer_P::rasterize(
     if (primitivizedArea->shadowRenderingMode > 1)
         rasterizeMapPrimitives(primitivizedArea, canvas, primitivizedArea->polylines, PrimitivesType::Polylines_ShadowOnly, controller);
     rasterizeMapPrimitives(primitivizedArea, canvas, primitivizedArea->polylines, PrimitivesType::Polylines, controller);
+
+    if (metric)
+        metric->elapsedTime += totalStopwatch.elapsed();
 }
 
 void OsmAnd::MapRasterizer_P::rasterizeMapPrimitives(

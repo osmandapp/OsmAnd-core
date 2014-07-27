@@ -15,6 +15,23 @@ namespace OsmAnd
 {
     namespace MapRasterizer_Metrics
     {
+        struct Metric_rasterize
+        {
+            inline Metric_rasterize()
+            {
+                reset();
+            }
+
+            inline void reset()
+            {
+                memset(this, 0, sizeof(Metric_rasterize));
+            }
+
+            // Total elapsed time
+            float elapsedTime;
+
+            QString toString(const QString& prefix = QString::null) const;
+        };
     }
 }
 

@@ -13,6 +13,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "IMapRasterBitmapTileProvider.h"
+#include "BinaryMapRasterBitmapTileProvider_Metrics.h"
 
 namespace OsmAnd
 {
@@ -37,6 +38,13 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<MapTiledData>& outTiledData,
+            const IQueryController* const queryController);
+
+        virtual bool obtainData(
+            const TileId tileId,
+            const ZoomLevel zoom,
+            std::shared_ptr<MapTiledData>& outTiledData,
+            BinaryMapRasterBitmapTileProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController) = 0;
 
         ZoomLevel getMinZoom() const;

@@ -37,6 +37,16 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider::obtainData(
     return _p->obtainData(tileId, zoom, outTiledData, queryController);
 }
 
+bool OsmAnd::BinaryMapRasterBitmapTileProvider::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<MapTiledData>& outTiledData,
+    BinaryMapRasterBitmapTileProvider_Metrics::Metric_obtainData* const metric /*= nullptr*/,
+    const IQueryController* const queryController /*= nullptr*/)
+{
+    return _p->obtainData(tileId, zoom, outTiledData, metric, queryController);
+}
+
 OsmAnd::ZoomLevel OsmAnd::BinaryMapRasterBitmapTileProvider::getMinZoom() const
 {
     return _p->getMinZoom();

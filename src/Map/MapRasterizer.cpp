@@ -17,7 +17,8 @@ void OsmAnd::MapRasterizer::rasterize(
     SkCanvas& canvas,
     const bool fillBackground /*= true*/,
     const AreaI* const destinationArea /*= nullptr*/,
+    MapRasterizer_Metrics::Metric_rasterize* const metric /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    _p->rasterize(primitivizedArea, canvas, fillBackground, destinationArea, controller);
+    _p->rasterize(primitivizedArea, canvas, fillBackground, destinationArea, metric, controller);
 }

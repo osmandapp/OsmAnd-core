@@ -16,6 +16,7 @@
 #include "CommonTypes.h"
 #include "MapTypes.h"
 #include "Primitiviser.h"
+#include "MapRasterizer_Metrics.h"
 
 namespace OsmAnd
 {
@@ -119,6 +120,7 @@ namespace OsmAnd
             SkCanvas& canvas,
             const bool fillBackground,
             const AreaI* const destinationArea,
+            MapRasterizer_Metrics::Metric_rasterize* const metric,
             const IQueryController* const controller);
 
     friend class OsmAnd::MapRasterizer;

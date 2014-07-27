@@ -1,6 +1,11 @@
 #include "BinaryMapRasterBitmapTileProvider_Software_P.h"
 #include "BinaryMapRasterBitmapTileProvider_Software.h"
 
+#define OSMAND_PERFORMANCE_METRICS 2
+#if !defined(OSMAND_PERFORMANCE_METRICS)
+#   define OSMAND_PERFORMANCE_METRICS 0
+#endif // !defined(OSMAND_PERFORMANCE_METRICS)
+
 #include <SkStream.h>
 #include <SkBitmap.h>
 #include <SkCanvas.h>
@@ -13,6 +18,7 @@
 #include "ObfDataInterface.h"
 #include "MapRasterizer.h"
 #include "MapPresentationEnvironment.h"
+#include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -30,11 +36,27 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider_Software_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
     std::shared_ptr<MapTiledData>& outTiledData,
+    BinaryMapRasterBitmapTileProvider_Metrics::Metric_obtainData* const metric_,
     const IQueryController* const queryController)
 {
+#if OSMAND_PERFORMANCE_METRICS
+    BinaryMapRasterBitmapTileProvider_Metrics::Metric_obtainData localMetric;
+    const auto metric = metric_ ? metric_ : &localMetric;
+#else
+    const auto metric = metric_;
+#endif
+
+    const Stopwatch totalStopwatch(
+#if OSMAND_PERFORMANCE_METRICS
+        true
+#else
+        metric != nullptr
+#endif // OSMAND_PERFORMANCE_METRICS
+        );
+
     // Obtain offline map primitives tile
     std::shared_ptr<MapTiledData> primitivesTile_;
-    owner->primitivesProvider->obtainData(tileId, zoom, primitivesTile_);
+    owner->primitivesProvider->obtainData(tileId, zoom, primitivesTile_, metric ? &metric->obtainBinaryMapPrimitivesMetric : nullptr);
     if (!primitivesTile_)
     {
         outTiledData.reset();
@@ -64,6 +86,7 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider_Software_P::obtainData(
             canvas,
             true,
             nullptr,
+            metric ? &metric->rasterizeMetric : nullptr,
             queryController);
     }
     else
@@ -81,6 +104,28 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider_Software_P::obtainData(
         owner->getTileDensityFactor(),
         tileId,
         zoom));
+
+    if (metric)
+        metric->elapsedTime += totalStopwatch.elapsed();
+
+#if OSMAND_PERFORMANCE_METRICS
+#if OSMAND_PERFORMANCE_METRICS <= 1
+    LogPrintf(LogSeverityLevel::Info,
+        "%dx%d@%d rasterized on CPU in %fs",
+        tileId.x,
+        tileId.y,
+        zoom,
+        totalStopwatch.elapsed());
+#else
+    LogPrintf(LogSeverityLevel::Info,
+        "%dx%d@%d rasterized on CPU in %fs:\n%s",
+        tileId.x,
+        tileId.y,
+        zoom,
+        totalStopwatch.elapsed(),
+        qPrintable(metric ? metric->toString(QLatin1String("\t - ")) : QLatin1String("(null)")));
+#endif // OSMAND_PERFORMANCE_METRICS <= 1
+#endif // OSMAND_PERFORMANCE_METRICS
 
     return true;
 }

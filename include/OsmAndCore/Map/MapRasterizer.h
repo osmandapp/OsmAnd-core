@@ -12,6 +12,7 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/MapRasterizer_Metrics.h>
 
 class SkCanvas;
 
@@ -37,6 +38,7 @@ namespace OsmAnd
             SkCanvas& canvas,
             const bool fillBackground = true,
             const AreaI* const destinationArea = nullptr,
+            MapRasterizer_Metrics::Metric_rasterize* const metric = nullptr,
             const IQueryController* const controller = nullptr);
     };
 }

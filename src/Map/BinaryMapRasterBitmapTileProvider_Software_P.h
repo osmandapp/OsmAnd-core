@@ -34,6 +34,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<MapTiledData>& outTiledData,
+            BinaryMapRasterBitmapTileProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
 
     friend class OsmAnd::BinaryMapRasterBitmapTileProvider_Software;

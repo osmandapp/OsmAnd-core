@@ -28,3 +28,12 @@ OsmAnd::ZoomLevel OsmAnd::BinaryMapRasterBitmapTileProvider_P::getMaxZoom() cons
 {
     return owner->primitivesProvider->getMaxZoom();
 }
+
+bool OsmAnd::BinaryMapRasterBitmapTileProvider_P::obtainData(
+    const TileId tileId,
+    const ZoomLevel zoom,
+    std::shared_ptr<MapTiledData>& outTiledData,
+    const IQueryController* const queryController)
+{
+    return obtainData(tileId, zoom, outTiledData, nullptr, queryController);
+}
