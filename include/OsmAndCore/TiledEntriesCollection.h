@@ -317,6 +317,8 @@ namespace OsmAnd
     public:
         typedef typename TiledEntriesCollectionEntry<ENTRY>::Collection Collection;
 
+    private:
+        typedef TiledEntriesCollectionEntry < ENTRY > super;
     protected:
 #if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         mutable QMutex _stateLock;
@@ -364,7 +366,7 @@ namespace OsmAnd
             _stateValue.fetchAndStoreOrdered(static_cast<int>(newState));
 #endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
 
-            onEntryModified();
+            super::onEntryModified();
         }
 
         inline bool setStateIf(const STATE_ENUM testState, const STATE_ENUM newState)
@@ -400,12 +402,12 @@ namespace OsmAnd
                     _stateValue, static_cast<int>(newState));
             }
             _stateValue = static_cast<int>(newState);
-            onEntryModified();
+            super::onEntryModified();
             return true;
 #else
             const bool modified = _stateValue.testAndSetOrdered(static_cast<int>(testState), static_cast<int>(newState));
             if (modified)
-                onEntryModified();
+                super::onEntryModified();
             return modified;
 #endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         }
