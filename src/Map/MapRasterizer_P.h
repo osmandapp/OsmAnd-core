@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_RASTERIZER_P_H_
-#define _OSMAND_CORE_RASTERIZER_P_H_
+#ifndef _OSMAND_CORE_MAP_RASTERIZER_P_H_
+#define _OSMAND_CORE_MAP_RASTERIZER_P_H_
 
 #include "stdlib_common.h"
 #include <functional>
@@ -10,6 +10,7 @@
 
 #include <SkCanvas.h>
 #include <SkPaint.h>
+#include <SkBitmapProcShader.h>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -18,20 +19,18 @@
 
 namespace OsmAnd
 {
-    class RasterizedSymbolsGroup;
-    class RasterizedSymbol;
     namespace Model
     {
         class BinaryMapObject;
     }
     class IQueryController;
 
-    class Rasterizer;
-    class Rasterizer_P Q_DECL_FINAL
+    class MapRasterizer;
+    class MapRasterizer_P Q_DECL_FINAL
     {
     private:
     protected:
-        Rasterizer_P(Rasterizer* const owner);
+        MapRasterizer_P(MapRasterizer* const owner);
 
         enum class PrimitivesType
         {
@@ -97,26 +96,33 @@ namespace OsmAnd
         static bool containsHelper(
             const QVector< PointI >& points,
             const PointI& otherPoint);
+
+        void initialize();
+        
+        SkPaint _defaultPaint;
+
+        static void initializeOneWayPaint(SkPaint& paint);
+        QList<SkPaint> _oneWayPaints;
+        QList<SkPaint> _reverseOneWayPaints;
+
+        mutable QMutex _pathEffectsMutex;
+        mutable QHash< QString, SkPathEffect* > _pathEffects;
+        bool obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const;
+        bool obtainBitmapShader(const std::shared_ptr<const MapPresentationEnvironment>& env, const QString& name, SkBitmapProcShader* &outShader);
     public:
-        ~Rasterizer_P();
+        ~MapRasterizer_P();
 
-        ImplementationInterface<Rasterizer> owner;
+        ImplementationInterface<MapRasterizer> owner;
 
-        void rasterizeMap(
+        void rasterize(
             const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
             SkCanvas& canvas,
             const bool fillBackground,
             const AreaI* const destinationArea,
             const IQueryController* const controller);
 
-        void rasterizeSymbolsWithoutPaths(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
-            QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool (const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter,
-            const IQueryController* const controller);
-
-    friend class OsmAnd::Rasterizer;
+    friend class OsmAnd::MapRasterizer;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_RASTERIZER_P_H_)
+#endif // !defined(_OSMAND_CORE_MAP_RASTERIZER_P_H_)

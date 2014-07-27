@@ -11,6 +11,7 @@ OsmAnd::BinaryMapRasterBitmapTileProvider::BinaryMapRasterBitmapTileProvider(
     : _p(p_)
     , primitivesProvider(primitivesProvider_)
 {
+    _p->initialize();
 }
 
 OsmAnd::BinaryMapRasterBitmapTileProvider::~BinaryMapRasterBitmapTileProvider()

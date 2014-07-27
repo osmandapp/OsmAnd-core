@@ -11,7 +11,7 @@
 #include "BinaryMapPrimitivesProvider.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
-#include "Rasterizer.h"
+#include "MapRasterizer.h"
 #include "MapPresentationEnvironment.h"
 #include "Utilities.h"
 #include "Logging.h"
@@ -59,7 +59,7 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider_Software_P::obtainData(
     // Perform actual rendering
     if (!primitivesTile->primitivisedArea->isEmpty())
     {
-        Rasterizer().rasterizeMap(
+        _mapRasterizer->rasterize(
             primitivesTile->primitivisedArea,
             canvas,
             true,

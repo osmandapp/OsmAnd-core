@@ -13,9 +13,6 @@
 #include <OsmAndCore/IExternalResourcesProvider.h>
 #include <OsmAndCore/Map/MapStyle.h>
 
-#include <SkPaint.h>
-class SkBitmapProcShader;
-class SkPathEffect;
 class SkBitmap;
 
 namespace OsmAnd
@@ -47,13 +44,6 @@ namespace OsmAnd
         const QString localeLanguageId;
         const std::shared_ptr<const IExternalResourcesProvider> externalResourcesProvider;
 
-        const SkPaint& mapPaint;
-        const SkPaint& textPaint;
-        void configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const;
-
-        const QList< SkPaint >& oneWayPaints;
-        const QList< SkPaint >& reverseOneWayPaints;
-
         const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;
 
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
@@ -62,8 +52,7 @@ namespace OsmAnd
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 
-        bool obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const;
-        bool obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const;
+        bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const;
         bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
         bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
 

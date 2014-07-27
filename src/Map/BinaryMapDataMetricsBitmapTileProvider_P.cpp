@@ -16,7 +16,7 @@
 #include "BinaryMapDataProvider_Metrics.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
-#include "Rasterizer.h"
+#include "MapRasterizer.h"
 #include "MapPresentationEnvironment.h"
 #include "Utilities.h"
 #include "Logging.h"

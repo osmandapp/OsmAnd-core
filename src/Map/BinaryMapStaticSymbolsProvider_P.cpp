@@ -4,10 +4,7 @@
 #include "BinaryMapPrimitivesProvider.h"
 #include "MapPresentationEnvironment.h"
 #include "Primitiviser.h"
-#include "Rasterizer.h"
-#include "RasterizedSymbolsGroup.h"
-#include "RasterizedSpriteSymbol.h"
-#include "RasterizedOnPathSymbol.h"
+#include "SymbolRasterizer.h"
 #include "BillboardRasterMapSymbol.h"
 #include "OnPathMapSymbol.h"
 #include "BinaryMapObject.h"
@@ -45,7 +42,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     }
 
     // Rasterize symbols and create symbols groups
-    QList< std::shared_ptr<const RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
+    QList< std::shared_ptr<const SymbolRasterizer::RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
     QHash< uint64_t, std::shared_ptr<MapSymbolsGroup> > preallocatedSymbolsGroups;
     const auto rasterizationFilter =
         [this, tileBBox31, filterCallback, &preallocatedSymbolsGroups]
@@ -65,7 +62,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             }
             return false;
         };
-    Rasterizer().rasterizeSymbolsWithoutPaths(primitivesTile->primitivisedArea, rasterizedSymbolsGroups, rasterizationFilter, nullptr);
+    SymbolRasterizer().rasterize(primitivesTile->primitivisedArea, rasterizedSymbolsGroups, rasterizationFilter, nullptr);
 
     // Convert results
     QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
@@ -86,7 +83,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
             std::shared_ptr<MapSymbol> symbol;
 
-            if (const auto spriteSymbol = std::dynamic_pointer_cast<const RasterizedSpriteSymbol>(rasterizedSymbol))
+            if (const auto spriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
             {
                 symbol.reset(new BillboardRasterMapSymbol(
                     group,
@@ -100,7 +97,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     spriteSymbol->location31,
                     spriteSymbol->offset));
             }
-            else if (const auto onPathSymbol = std::dynamic_pointer_cast<const RasterizedOnPathSymbol>(rasterizedSymbol))
+            else if (const auto onPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
             {
                 symbol.reset(new OnPathMapSymbol(
                     group,

@@ -16,6 +16,8 @@
 
 namespace OsmAnd
 {
+    class MapRasterizer;
+
     class BinaryMapRasterBitmapTileProvider;
     class BinaryMapRasterBitmapTileProvider_P
     {
@@ -23,6 +25,9 @@ namespace OsmAnd
     private:
     protected:
         BinaryMapRasterBitmapTileProvider_P(BinaryMapRasterBitmapTileProvider* const owner);
+
+        virtual void initialize();
+        std::unique_ptr<MapRasterizer> _mapRasterizer;
     public:
         virtual ~BinaryMapRasterBitmapTileProvider_P();
 
@@ -36,6 +41,8 @@ namespace OsmAnd
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
+
+    friend class OsmAnd::BinaryMapRasterBitmapTileProvider;
     };
 }
 

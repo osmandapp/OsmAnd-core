@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_RASTERIZER_METRICS_H_
-#define _OSMAND_CORE_RASTERIZER_METRICS_H_
+#ifndef _OSMAND_CORE_MAP_RASTERIZER_METRICS_H_
+#define _OSMAND_CORE_MAP_RASTERIZER_METRICS_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
@@ -13,9 +13,9 @@
 
 namespace OsmAnd
 {
-    namespace Rasterizer_Metrics
+    namespace MapRasterizer_Metrics
     {
     }
 }
 
-#endif // !defined(_OSMAND_CORE_RASTERIZER_METRICS_H_)
+#endif // !defined(_OSMAND_CORE_MAP_RASTERIZER_METRICS_H_)

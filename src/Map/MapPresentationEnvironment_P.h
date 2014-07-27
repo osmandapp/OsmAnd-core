@@ -15,10 +15,8 @@
 #include "PrivateImplementation.h"
 #include "MapStyle.h"
 #include "MapStyleRule.h"
-#include "Rasterizer.h"
+#include "MapRasterizer.h"
 
-class SkBitmapProcShader;
-class SkPathEffect;
 class SkBitmap;
 
 namespace OsmAnd
@@ -26,8 +24,6 @@ namespace OsmAnd
     class MapStyle;
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
-    class Rasterizer;
-    class ObfMapSectionInfo;
 
     class MapPresentationEnvironment;
     class MapPresentationEnvironment_P Q_DECL_FINAL
@@ -40,22 +36,6 @@ namespace OsmAnd
 
         mutable QMutex _settingsChangeMutex;
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _settings;
-
-        SkPaint _mapPaint;
-        SkPaint _textPaint;
-
-        struct FontsRegisterEntry
-        {
-            QString resource;
-            bool bold;
-            bool italic;
-        };
-        QList< FontsRegisterEntry > _fontsRegister;
-
-        mutable QMutex _fontTypefacesCacheMutex;
-        mutable QHash< QString, SkTypeface* > _fontTypefacesCache;
-        void clearFontsCache();
-        SkTypeface* getTypefaceForFontResource(const QString& fontResource) const;
 
         ColorARGB _defaultBgColor;
         double _polygonMinSizeToDisplay;
@@ -70,15 +50,8 @@ namespace OsmAnd
         std::shared_ptr<const MapStyleRule> _attributeRule_roadDensityZoomTile;
         std::shared_ptr<const MapStyleRule> _attributeRule_roadsDensityLimitPerTile;
 
-        QList< SkPaint > _oneWayPaints;
-        QList< SkPaint > _reverseOneWayPaints;
-        static void initializeOneWayPaint(SkPaint& paint);
-
         mutable QMutex _shadersBitmapsMutex;
         mutable QHash< QString, std::shared_ptr<SkBitmap> > _shadersBitmaps;
-
-        mutable QMutex _pathEffectsMutex;
-        mutable QHash< QString, SkPathEffect* > _pathEffects;
 
         mutable QMutex _mapIconsMutex;
         mutable QHash< QString, std::shared_ptr<const SkBitmap> > _mapIcons;
@@ -92,8 +65,6 @@ namespace OsmAnd
 
         ImplementationInterface<MapPresentationEnvironment> owner;
 
-        void configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const;
-
         const std::shared_ptr<const ObfMapSectionInfo> dummyMapSection;
 
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
@@ -102,10 +73,9 @@ namespace OsmAnd
 
         void applyTo(MapStyleEvaluator& evaluator) const;
 
-        bool obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const;
-        bool obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const;
+        bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outBitmap) const;
         bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
-        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
+        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const;

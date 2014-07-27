@@ -16,10 +16,6 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     , localeLanguageId(localeLanguageId_)
     , externalResourcesProvider(externalResourcesProvider_)
     , dummyMapSection(_p->dummyMapSection)
-    , mapPaint(_p->_mapPaint)
-    , textPaint(_p->_textPaint)
-    , oneWayPaints(_p->_oneWayPaints)
-    , reverseOneWayPaints(_p->_reverseOneWayPaints)
 {
     _p->initialize();
 }
@@ -48,19 +44,9 @@ void OsmAnd::MapPresentationEnvironment::applyTo(MapStyleEvaluator& evaluator) c
     _p->applyTo(evaluator);
 }
 
-void OsmAnd::MapPresentationEnvironment::configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const
+bool OsmAnd::MapPresentationEnvironment::obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const
 {
-    _p->configurePaintForText(paint, text, bold, italic);
-}
-
-bool OsmAnd::MapPresentationEnvironment::obtainBitmapShader(const QString& name, SkBitmapProcShader* &outShader) const
-{
-    return _p->obtainBitmapShader(name, outShader);
-}
-
-bool OsmAnd::MapPresentationEnvironment::obtainPathEffect(const QString& encodedPathEffect, SkPathEffect* &outPathEffect) const
-{
-    return _p->obtainPathEffect(encodedPathEffect, outPathEffect);
+    return _p->obtainShaderBitmap(name, outShaderBitmap);
 }
 
 bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const

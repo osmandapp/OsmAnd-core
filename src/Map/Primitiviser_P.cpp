@@ -1800,18 +1800,18 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         text->verticalOffset = 0;
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
 
-        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color);
-        if (!ok || !text->color)
-            text->color = SK_ColorBLACK;
+        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color.argb);
+        if (!ok || text->color == 0)
+            text->color.argb = SK_ColorBLACK;
 
         text->size = textSize;
 
         text->shadowRadius = 0;
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
 
-        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor);
-        if (!ok || !text->shadowColor)
-            text->shadowColor = SK_ColorWHITE;
+        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor.argb);
+        if (!ok || text->shadowColor == 0)
+            text->shadowColor.argb = SK_ColorWHITE;
 
         text->wrapWidth = 0;
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);

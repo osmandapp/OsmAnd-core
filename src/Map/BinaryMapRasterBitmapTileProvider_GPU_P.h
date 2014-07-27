@@ -12,6 +12,7 @@
 #include "PrivateImplementation.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "BinaryMapRasterBitmapTileProvider_P.h"
+#include "MapRasterizer.h"
 
 class SkBitmap;
 

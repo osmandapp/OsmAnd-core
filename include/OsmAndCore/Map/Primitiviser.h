@@ -155,10 +155,10 @@ namespace OsmAnd
             LanguageId languageId;
             bool drawOnPath;
             int verticalOffset;
-            uint32_t color;
+            ColorARGB color;
             int size;
             int shadowRadius;
-            uint32_t shadowColor;
+            ColorARGB shadowColor;
             int wrapWidth;
             bool isBold;
             PointI minDistance;

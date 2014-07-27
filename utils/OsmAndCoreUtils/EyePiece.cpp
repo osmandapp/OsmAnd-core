@@ -17,7 +17,7 @@
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/Data/ObfReader.h>
 #include <OsmAndCore/Data/Model/BinaryMapObject.h>
-#include <OsmAndCore/Map/Rasterizer.h>
+#include <OsmAndCore/Map/MapRasterizer.h>
 #include <OsmAndCore/Map/RasterizerContext.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/MapStyleEvaluator.h>
