@@ -1,7 +1,7 @@
 #include "BinaryMapRasterBitmapTileProvider_Software_P.h"
 #include "BinaryMapRasterBitmapTileProvider_Software.h"
 
-#define OSMAND_PERFORMANCE_METRICS 2
+//#define OSMAND_PERFORMANCE_METRICS 2
 #if !defined(OSMAND_PERFORMANCE_METRICS)
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
