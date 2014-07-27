@@ -49,11 +49,22 @@ namespace OsmAnd
             Collection& collection;
         };
 
+        typedef QHash< KEY, std::shared_ptr<ENTRY> > Storage;
+
     private:
-        QHash< KEY, std::shared_ptr<ENTRY> > _collection;
-        mutable QReadWriteLock _collectionLock;
     protected:
+        Storage _storage;
+        mutable QReadWriteLock _collectionLock;
+
         const std::shared_ptr< Link > _link;
+
+        virtual void onCollectionModified() const
+        {
+        }
+
+        virtual void onEntryModified(const KEY key) const
+        {
+        }
     public:
         KeyedEntriesCollection()
             : _link(new Link(*this))
@@ -68,8 +79,8 @@ namespace OsmAnd
             if (!_collectionLock.tryLockForRead())
                 return false;
 
-            const auto& itEntry = _collection.constFind(key);
-            if (itEntry != _collection.cend())
+            const auto& itEntry = _storage.constFind(key);
+            if (itEntry != _storage.cend())
             {
                 outEntry = *itEntry;
 
@@ -85,8 +96,8 @@ namespace OsmAnd
         {
             QReadLocker scopedLocker(&_collectionLock);
 
-            const auto& itEntry = _collection.constFind(key);
-            if (itEntry != _collection.cend())
+            const auto& itEntry = _storage.constFind(key);
+            if (itEntry != _storage.cend())
             {
                 outEntry = *itEntry;
 
@@ -102,8 +113,8 @@ namespace OsmAnd
 
             QWriteLocker scopedLocker(&_collectionLock);
 
-            auto itEntry = _collection.constFind(key);
-            if (itEntry != _collection.cend())
+            auto itEntry = _storage.constFind(key);
+            if (itEntry != _storage.cend())
             {
                 outEntry = *itEntry;
                 return;
@@ -111,7 +122,9 @@ namespace OsmAnd
 
             auto newEntry = allocator(*this, key);
             outEntry.reset(newEntry);
-            itEntry = _collection.insert(key, outEntry);
+            itEntry = _storage.insert(key, outEntry);
+
+            onCollectionModified();
         }
 
         virtual void obtainEntries(QList< std::shared_ptr<ENTRY> >* outList, std::function<bool(const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr) const
@@ -119,7 +132,7 @@ namespace OsmAnd
             QReadLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
-            for (const auto& entry : constOf(_collection))
+            for (const auto& entry : constOf(_storage))
             {
                 if (!filter || (filter && filter(entry, doCancel)))
                 {
@@ -136,29 +149,36 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&_collectionLock);
 
-            for (const auto& entry : constOf(_collection))
+            const auto modified = !_storage.isEmpty();
+            for (const auto& entry : constOf(_storage))
                 entry->unlink();
-            _collection.clear();
+            _storage.clear();
+
+            if (modified)
+                onCollectionModified();
         }
 
         virtual void removeEntry(const KEY key)
         {
             QWriteLocker scopedLocker(&_collectionLock);
 
-            const auto& itEntry = _collection.find(key);
-            if (itEntry == _collection.end())
+            const auto& itEntry = _storage.find(key);
+            if (itEntry == _storage.end())
                 return;
 
             itEntry.value()->unlink();
-            _collection.erase(itEntry);
+            _storage.erase(itEntry);
+
+            onCollectionModified();
         }
 
         virtual void removeEntries(std::function<bool(const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
         {
             QWriteLocker scopedLocker(&_collectionLock);
 
+            auto modified = false;
             bool doCancel = false;
-            auto itEntryPair = mutableIteratorOf(_collection);
+            auto itEntryPair = mutableIteratorOf(_storage);
             while (itEntryPair.hasNext())
             {
                 const auto& value = itEntryPair.next().value();
@@ -168,11 +188,16 @@ namespace OsmAnd
                 {
                     value->unlink();
                     itEntryPair.remove();
+
+                    modified = true;
                 }
 
                 if (doCancel)
-                    return;
+                    break;
             }
+
+            if (modified)
+                onCollectionModified();
         }
 
         virtual void forAllExecute(std::function<void(const std::shared_ptr<ENTRY>& entry, bool& cancel)> action) const
@@ -180,7 +205,7 @@ namespace OsmAnd
             QReadLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
-            for (const auto& entry : constOf(_collection))
+            for (const auto& entry : constOf(_storage))
             {
                 action(entry, doCancel);
 
@@ -193,17 +218,17 @@ namespace OsmAnd
         {
             QReadLocker scopedLocker(&_collectionLock);
 
-            return _collection.size();
+            return _storage.size();
         }
 
         virtual QList<KEY> getKeys() const
         {
             QReadLocker scopedLocker(&_collectionLock);
 
-            return _collection.keys();
+            return _storage.keys();
         }
 
-    friend class OsmAnd::KeyedEntriesCollectionEntry< KEY, ENTRY >;
+    friend class OsmAnd::KeyedEntriesCollectionEntry < KEY, ENTRY > ;
     };
 
     template<typename KEY, typename ENTRY>
@@ -242,6 +267,12 @@ namespace OsmAnd
             unlink();
             return;
         }
+
+        virtual void onEntryModified() const
+        {
+            if (const auto link = _link.lock())
+                link->collection.onEntryModified(key);
+        }
     public:
         virtual ~KeyedEntriesCollectionEntry()
         {
@@ -252,7 +283,7 @@ namespace OsmAnd
 
         const KEY key;
 
-    friend class OsmAnd::KeyedEntriesCollection<KEY, ENTRY>;
+    friend class OsmAnd::KeyedEntriesCollection < KEY, ENTRY > ;
     };
 
     template<typename KEY, typename ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE
@@ -260,7 +291,7 @@ namespace OsmAnd
         , bool LOG_TRACE = false
 #endif // OSMAND_TRACE_KEYED_ENTRIES_COLLECTION_STATE
     >
-    class KeyedEntriesCollectionEntryWithState : public KeyedEntriesCollectionEntry<KEY, ENTRY>
+    class KeyedEntriesCollectionEntryWithState : public KeyedEntriesCollectionEntry < KEY, ENTRY >
     {
     public:
         typedef typename KeyedEntriesCollectionEntry<KEY, ENTRY>::Collection Collection;
@@ -311,6 +342,8 @@ namespace OsmAnd
 #else
             _stateValue.fetchAndStoreOrdered(static_cast<int>(newState));
 #endif // OSMAND_TRACE_KEYED_ENTRIES_COLLECTION_STATE
+
+            onEntryModified();
         }
 
         inline bool setStateIf(const STATE_ENUM testState, const STATE_ENUM newState)
@@ -346,9 +379,13 @@ namespace OsmAnd
                     _stateValue, static_cast<int>(newState));
             }
             _stateValue = static_cast<int>(newState);
+            onEntryModified();
             return true;
 #else
-            return _stateValue.testAndSetOrdered(static_cast<int>(testState), static_cast<int>(newState));
+            const bool modified = _stateValue.testAndSetOrdered(static_cast<int>(testState), static_cast<int>(newState));
+            if (modified)
+                onEntryModified();
+            return modified;
 #endif // OSMAND_TRACE_KEYED_ENTRIES_COLLECTION_STATE
         }
     };

@@ -450,13 +450,13 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
         bool appliedElevationVertexAttribArray = false;
         if (elevationDataEnabled)
         {
-            const auto& resourcesCollection_ = getResources().getCollection(MapRendererResourceType::ElevationDataTile, currentState.elevationDataProvider);
-            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection>(resourcesCollection_);
+            const auto& resourcesCollection_ = getResources().getShadowCollection(MapRendererResourceType::ElevationDataTile, currentState.elevationDataProvider);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Shadow>(resourcesCollection_);
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             std::shared_ptr<MapRendererBaseTiledResource> resource_;
-            if (resourcesCollection->obtainEntry(resource_, tileIdN, currentState.zoomBase))
+            if (resourcesCollection->obtainResource(tileIdN, currentState.zoomBase, resource_))
             {
                 const auto resource = std::static_pointer_cast<MapRendererElevationDataTileResource>(resource_);
 
@@ -558,8 +558,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             layerLinearIdx++;
 
             // Get resources collection
-            const auto& resourcesCollection_ = getResources().getCollection(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]);
-            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection>(resourcesCollection_);
+            const auto& resourcesCollection_ = getResources().getShadowCollection(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Shadow>(resourcesCollection_);
 
             const auto& perTile_vs = tileProgram.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = tileProgram.fs.param.rasterTileLayers[layerLinearIdx];
@@ -568,7 +568,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             std::shared_ptr<MapRendererBaseTiledResource> resource_;
-            if (resourcesCollection->obtainEntry(resource_, tileIdN, currentState.zoomBase))
+            if (resourcesCollection->obtainResource(tileIdN, currentState.zoomBase, resource_))
             {
                 const auto resource = std::static_pointer_cast<MapRendererRasterBitmapTileResource>(resource_);
 

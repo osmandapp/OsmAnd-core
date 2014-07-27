@@ -776,9 +776,10 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdates() const
         {
             if (!resourcesCollection)
                 continue;
+            const auto shadowCollection = resourcesCollection->getShadowCollection();
 
             // Also check if keyed collection has same keys as respective provider
-            if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
+            if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection::Shadow>(shadowCollection))
             {
                 std::shared_ptr<IMapDataProvider> provider_;
                 if (obtainProviderFor(resourcesCollection.get(), provider_))
@@ -791,7 +792,7 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdates() const
             }
 
             // Check if any resource has applied updates
-            resourcesCollection->forEachResourceExecute(
+            shadowCollection->forEachResourceExecute(
                 [&updatesApplied]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
                 {
@@ -1318,6 +1319,29 @@ std::shared_ptr<const OsmAnd::MapRendererBaseResourcesCollection> OsmAnd::MapRen
     const std::shared_ptr<IMapDataProvider>& provider) const
 {
     return _bindings[static_cast<int>(type)].providersToCollections[provider];
+}
+
+bool OsmAnd::MapRendererResourcesManager::updateShadowCollections() const
+{
+    bool allSuccessful = true;
+
+    for (const auto& binding : constOf(_bindings))
+    {
+        for (const auto& collection : constOf(binding.providersToCollections))
+        {
+            if (!collection->updateShadowCollection())
+                allSuccessful = false;
+        }
+    }
+
+    return allSuccessful;
+}
+
+std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererResourcesManager::getShadowCollection(
+    const MapRendererResourceType type,
+    const std::shared_ptr<IMapDataProvider>& ofProvider) const
+{
+    return getCollection(type, ofProvider)->getShadowCollection();
 }
 
 QMutex& OsmAnd::MapRendererResourcesManager::getMapSymbolsRegistersMutex() const

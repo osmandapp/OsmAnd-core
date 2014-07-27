@@ -32,7 +32,7 @@ namespace OsmAnd
     public:
         typedef TiledEntriesCollection<ENTRY> Collection;
 
-        class Link : public std::enable_shared_from_this< Link >
+        class Link : public std::enable_shared_from_this < Link >
         {
         private:
         protected:
@@ -49,11 +49,22 @@ namespace OsmAnd
             Collection& collection;
         };
 
+        typedef std::array< QHash< TileId, std::shared_ptr<ENTRY> >, ZoomLevelsCount > Storage;
+
     private:
-        std::array< QHash< TileId, std::shared_ptr<ENTRY> >, ZoomLevelsCount > _zoomLevels;
-        mutable QReadWriteLock _collectionLock;
     protected:
+        Storage _storage;
+        mutable QReadWriteLock _collectionLock;
+
         const std::shared_ptr< Link > _link;
+
+        virtual void onCollectionModified() const
+        {
+        }
+
+        virtual void onEntryModified(const TileId tileId, const ZoomLevel zoomLevel) const
+        {
+        }
     public:
         TiledEntriesCollection()
             : _link(new Link(*this))
@@ -68,9 +79,9 @@ namespace OsmAnd
             if (!_collectionLock.tryLockForRead())
                 return false;
 
-            const auto& zoomLevel = _zoomLevels[zoom];
-            const auto& itEntry = zoomLevel.constFind(tileId);
-            if (itEntry != zoomLevel.cend())
+            const auto& storage = _storage[zoom];
+            const auto& itEntry = storage.constFind(tileId);
+            if (itEntry != storage.cend())
             {
                 outEntry = *itEntry;
 
@@ -86,9 +97,9 @@ namespace OsmAnd
         {
             QReadLocker scopedLocker(&_collectionLock);
 
-            const auto& zoomLevel = _zoomLevels[zoom];
-            const auto& itEntry = zoomLevel.constFind(tileId);
-            if (itEntry != zoomLevel.cend())
+            const auto& storage = _storage[zoom];
+            const auto& itEntry = storage.constFind(tileId);
+            if (itEntry != storage.cend())
             {
                 outEntry = *itEntry;
 
@@ -104,9 +115,9 @@ namespace OsmAnd
 
             QWriteLocker scopedLocker(&_collectionLock);
 
-            auto& zoomLevel = _zoomLevels[zoom];
-            auto itEntry = zoomLevel.constFind(tileId);
-            if (itEntry != zoomLevel.cend())
+            auto& storage = _storage[zoom];
+            auto itEntry = storage.constFind(tileId);
+            if (itEntry != storage.cend())
             {
                 outEntry = *itEntry;
                 return;
@@ -114,17 +125,19 @@ namespace OsmAnd
 
             auto newEntry = allocator(*this, tileId, zoom);
             outEntry.reset(newEntry);
-            itEntry = zoomLevel.insert(tileId, outEntry);
+            itEntry = storage.insert(tileId, outEntry);
+
+            onCollectionModified();
         }
 
-        virtual void obtainEntries(QList< std::shared_ptr<ENTRY> >* outList, std::function<bool (const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr) const
+        virtual void obtainEntries(QList< std::shared_ptr<ENTRY> >* outList, std::function<bool(const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr) const
         {
             QReadLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
-            for(const auto& zoomLevel : constOf(_zoomLevels))
+            for (const auto& storage : constOf(_storage))
             {
-                for(const auto& entry : constOf(zoomLevel))
+                for (const auto& entry : constOf(storage))
                 {
                     if (!filter || (filter && filter(entry, doCancel)))
                     {
@@ -142,37 +155,46 @@ namespace OsmAnd
         {
             QWriteLocker scopedLocker(&_collectionLock);
 
-            for(auto& zoomLevel : _zoomLevels)
+            auto modified = false;
+            for (auto& storage : _storage)
             {
-                for(const auto& entry : constOf(zoomLevel))
+                for (const auto& entry : constOf(storage))
                     entry->unlink();
 
-                zoomLevel.clear();
+                if (!modified && !storage.isEmpty())
+                    modified = true;
+                storage.clear();
             }
+
+            if (modified)
+                onCollectionModified();
         }
 
         virtual void removeEntry(const TileId tileId, const ZoomLevel zoom)
         {
             QWriteLocker scopedLocker(&_collectionLock);
 
-            auto& zoomLevel = _zoomLevels[zoom];
-            const auto& itEntry = zoomLevel.find(tileId);
-            if (itEntry == zoomLevel.end())
+            auto& storage = _storage[zoom];
+            const auto& itEntry = storage.find(tileId);
+            if (itEntry == storage.end())
                 return;
 
             itEntry.value()->unlink();
-            zoomLevel.erase(itEntry);
+            storage.erase(itEntry);
+
+            onCollectionModified();
         }
 
-        virtual void removeEntries(std::function<bool (const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
+        virtual void removeEntries(std::function<bool(const std::shared_ptr<ENTRY>& entry, bool& cancel)> filter = nullptr)
         {
             QWriteLocker scopedLocker(&_collectionLock);
 
+            auto modified = false;
             bool doCancel = false;
-            for(auto& zoomLevel : _zoomLevels)
+            for (auto& storage : _storage)
             {
-                auto itEntryPair = mutableIteratorOf(zoomLevel);
-                while(itEntryPair.hasNext())
+                auto itEntryPair = mutableIteratorOf(storage);
+                while (itEntryPair.hasNext())
                 {
                     const auto& value = itEntryPair.next().value();
 
@@ -181,22 +203,30 @@ namespace OsmAnd
                     {
                         value->unlink();
                         itEntryPair.remove();
+
+                        modified = true;
                     }
 
                     if (doCancel)
-                        return;
+                        break;
                 }
+
+                if (doCancel)
+                    break;
             }
+
+            if (modified)
+                onCollectionModified();
         }
 
-        virtual void forAllExecute(std::function<void (const std::shared_ptr<ENTRY>& entry, bool& cancel)> action) const
+        virtual void forAllExecute(std::function<void(const std::shared_ptr<ENTRY>& entry, bool& cancel)> action) const
         {
             QReadLocker scopedLocker(&_collectionLock);
 
             bool doCancel = false;
-            for(const auto& zoomLevel : constOf(_zoomLevels))
+            for (const auto& storage : constOf(_storage))
             {
-                for(const auto& entry : constOf(zoomLevel))
+                for (const auto& entry : constOf(storage))
                 {
                     action(entry, doCancel);
 
@@ -211,13 +241,13 @@ namespace OsmAnd
             QReadLocker scopedLocker(&_collectionLock);
 
             unsigned int count = 0;
-            for(const auto& zoomLevel : constOf(_zoomLevels))
-                count += zoomLevel.size();
+            for (const auto& storage : constOf(_storage))
+                count += storage.size();
 
             return count;
         }
 
-    friend class OsmAnd::TiledEntriesCollectionEntry<ENTRY>;
+    friend class OsmAnd::TiledEntriesCollectionEntry < ENTRY > ;
     };
 
     template<typename ENTRY>
@@ -229,7 +259,7 @@ namespace OsmAnd
 
     private:
         std::weak_ptr<Link> _link;
-        
+
         void unlink()
         {
             detach();
@@ -257,6 +287,12 @@ namespace OsmAnd
             unlink();
             return;
         }
+
+        virtual void onEntryModified() const
+        {
+            if (const auto link = _link.lock())
+                link->collection.onEntryModified(tileId, zoom);
+        }
     public:
         virtual ~TiledEntriesCollectionEntry()
         {
@@ -268,7 +304,7 @@ namespace OsmAnd
         const TileId tileId;
         const ZoomLevel zoom;
 
-    friend class OsmAnd::TiledEntriesCollection<ENTRY>;
+    friend class OsmAnd::TiledEntriesCollection < ENTRY > ;
     };
 
     template<typename ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE
@@ -276,7 +312,7 @@ namespace OsmAnd
         , bool LOG_TRACE = false
 #endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
     >
-    class TiledEntriesCollectionEntryWithState : public TiledEntriesCollectionEntry<ENTRY>
+    class TiledEntriesCollectionEntryWithState : public TiledEntriesCollectionEntry < ENTRY >
     {
     public:
         typedef typename TiledEntriesCollectionEntry<ENTRY>::Collection Collection;
@@ -327,6 +363,8 @@ namespace OsmAnd
 #else
             _stateValue.fetchAndStoreOrdered(static_cast<int>(newState));
 #endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+
+            onEntryModified();
         }
 
         inline bool setStateIf(const STATE_ENUM testState, const STATE_ENUM newState)
@@ -362,9 +400,13 @@ namespace OsmAnd
                     _stateValue, static_cast<int>(newState));
             }
             _stateValue = static_cast<int>(newState);
+            onEntryModified();
             return true;
 #else
-            return _stateValue.testAndSetOrdered(static_cast<int>(testState), static_cast<int>(newState));
+            const bool modified = _stateValue.testAndSetOrdered(static_cast<int>(testState), static_cast<int>(newState));
+            if (modified)
+                onEntryModified();
+            return modified;
 #endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
         }
     };

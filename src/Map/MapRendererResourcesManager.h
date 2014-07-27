@@ -163,6 +163,11 @@ namespace OsmAnd
             bool* const outMoreUploadsThanLimitAvailable = nullptr,
             unsigned int* const outResourcesUploaded = nullptr,
             unsigned int* const outResourcesUnloaded = nullptr);
+
+        std::shared_ptr<const MapRendererBaseResourcesCollection> getCollection(
+            const MapRendererResourceType type,
+            const std::shared_ptr<IMapDataProvider>& ofProvider) const;
+        bool updateShadowCollections() const;
     public:
         ~MapRendererResourcesManager();
 
@@ -172,7 +177,10 @@ namespace OsmAnd
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& processingTileStub;
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
-        std::shared_ptr<const MapRendererBaseResourcesCollection> getCollection(const MapRendererResourceType type, const std::shared_ptr<IMapDataProvider>& ofProvider) const;
+        std::shared_ptr<const IMapRendererResourcesCollection> getShadowCollection(
+            const MapRendererResourceType type,
+            const std::shared_ptr<IMapDataProvider>& ofProvider) const;
+
         QMutex& getMapSymbolsRegistersMutex() const;
         const MapSymbolsByOrderRegister& getMapSymbolsByOrderRegister() const;
         unsigned int getMapSymbolsInRegisterCount() const;

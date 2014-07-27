@@ -9,6 +9,7 @@
 #include "OsmAndCore.h"
 #include "MapRendererResourceType.h"
 #include "MapRendererResourceState.h"
+#include "IMapRendererResourcesCollection.h"
 
 namespace OsmAnd
 {
@@ -16,24 +17,23 @@ namespace OsmAnd
     class MapRendererBaseResource;
 
     // Base Collection of resources
-    class MapRendererBaseResourcesCollection
+    class MapRendererBaseResourcesCollection : public IMapRendererResourcesCollection
     {
-    public:
-        typedef std::function<void(const std::shared_ptr<MapRendererBaseResource>& resource, bool& cancel)> ResourceActionCallback;
-        typedef std::function<bool(const std::shared_ptr<MapRendererBaseResource>& resource, bool& cancel)> ResourceFilterCallback;
-
     private:
     protected:
-        MapRendererBaseResourcesCollection(const MapRendererResourceType& type);
+        MapRendererBaseResourcesCollection(const MapRendererResourceType type);
     public:
         virtual ~MapRendererBaseResourcesCollection();
 
         const MapRendererResourceType type;
 
-        virtual int getResourcesCount() const = 0;
-        virtual void forEachResourceExecute(const ResourceActionCallback action) = 0;
-        virtual void obtainResources(QList< std::shared_ptr<MapRendererBaseResource> >* outList, const ResourceFilterCallback filter) = 0;
+        virtual MapRendererResourceType getType() const;
+
         virtual void removeResources(const ResourceFilterCallback filter) = 0;
+
+        virtual bool updateShadowCollection() const = 0;
+        virtual std::shared_ptr<const IMapRendererResourcesCollection> getShadowCollection() const = 0;
+        virtual std::shared_ptr<IMapRendererResourcesCollection> getShadowCollection() = 0;
 
     friend class OsmAnd::MapRendererResourcesManager;
     };

@@ -37,7 +37,7 @@ OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
     setFogHeightOriginFactor(0.05f, true);
     setFogDensity(1.9f, true);
     setFogColor(FColorRGB(1.0f, 0.0f, 0.0f), true);
-    setSkyColor(FColorRGB(140.0f / 255.0f, 190.0f / 255.0f, 214.0f / 255.0f), true);
+    setSkyColor(ColorRGB(140, 190, 214), true);
     setAzimuth(0.0f, true);
     setElevationAngle(45.0f, true);
     const auto centerIndex = 1u << (ZoomLevel::MaxZoomLevel - 1);
@@ -512,6 +512,10 @@ bool OsmAnd::MapRenderer::doPrepareFrame()
 
 bool OsmAnd::MapRenderer::postPrepareFrame()
 {
+    // Tell resources to update shadow copies of resources collections
+    if (!_resources->updateShadowCollections())
+        invalidateFrame();
+
     // Notify resources manager about new active zone
     _resources->updateActiveZone(_uniqueTiles, _currentState.zoomBase);
 
