@@ -21,7 +21,12 @@
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
 #include <SkError.h>
-#define OSMAND_DUMP_SYMBOLS 0
+
+//#define OSMAND_DUMP_SYMBOLS 1
+#if !defined(OSMAND_DUMP_SYMBOLS)
+#   define OSMAND_DUMP_SYMBOLS 0
+#endif // !defined(OSMAND_DUMP_SYMBOLS)
+
 #if OSMAND_DUMP_SYMBOLS
 #   include <SkImageEncoder.h>
 #endif // OSMAND_DUMP_SYMBOLS
@@ -56,7 +61,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const auto constructedGroup = new RasterizedSymbolsGroup(symbolsEntry.key());
         std::shared_ptr<const RasterizedSymbolsGroup> group(constructedGroup);
 
-        // Total offset allows several texts to stack into column
+        // Total offset allows several symbols to stack into column.
+        // Offset specifies center of symbol bitmap
         PointI totalOffset;
 
         for (const auto& symbol : constOf(symbolsEntry.value()))
@@ -84,6 +90,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     //NOTE: ^^^ This is same as specifying 'x:2' in style, but due to backward compatibility with Android, leave as-is
                 }
 
+                float lineSpacing;
                 float symbolExtraTopSpace;
                 float symbolExtraBottomSpace;
                 QVector<SkScalar> glyphsWidth;
@@ -92,7 +99,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     style,
                     textSymbol->drawOnPath ? &glyphsWidth : nullptr,
                     &symbolExtraTopSpace,
-                    &symbolExtraBottomSpace);
+                    &symbolExtraBottomSpace,
+                    &lineSpacing);
 
 #if OSMAND_DUMP_SYMBOLS
                 {
@@ -100,7 +108,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
                     QString filename;
                     filename.sprintf("%s\\text_symbols\\%p.png", qPrintable(QDir::currentPath()), rasterizedText.get());
-                    encoder->encodeFile(qPrintable(filename), rasterizedText.get(), 100);
+                    encoder->encodeFile(qPrintable(filename), *rasterizedText.get(), 100);
                 }
 #endif // OSMAND_DUMP_SYMBOLS
 
@@ -121,9 +129,19 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
                 else
                 {
-                    // Calculate local offset
+                    // Calculate local offset. Since offset specifies center, it's a sum of
+                    //  - vertical offset
+                    //  - extra top space (which should be in texture, but not rendered, since transparent)
+                    //  - height / 2
+                    // This calculation is used only if this symbol is not first. Otherwise only following is used:
+                    //  - vertical offset
                     PointI localOffset;
-                    localOffset.y = ((symbolExtraTopSpace + rasterizedText->height() + symbolExtraBottomSpace) / 2) + textSymbol->verticalOffset;
+                    localOffset.y += textSymbol->verticalOffset;
+                    if (!constructedGroup->symbols.isEmpty())
+                    {
+                        localOffset.y += symbolExtraTopSpace;
+                        localOffset.y += rasterizedText->height() / 2;
+                    }
 
                     // Increment total offset
                     totalOffset += localOffset;
@@ -138,9 +156,17 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                         textSymbol->languageId,
                         textSymbol->minDistance,
                         textSymbol->location31,
-                        (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
+                        totalOffset);
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
                     constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+
+                    // Next symbol should also take into account:
+                    //  - height / 2
+                    //  - extra bottom space (which should be in texture, but not rendered, since transparent)
+                    //  - spacing between lines
+                    totalOffset.y += rasterizedText->height() / 2;
+                    totalOffset.y += symbolExtraBottomSpace;
+                    totalOffset.y += qCeil(lineSpacing);
                 }
             }
             else if (const auto& iconSymbol = std::dynamic_pointer_cast<const Primitiviser::IconSymbol>(symbol))
@@ -154,14 +180,17 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     QDir::current().mkpath("icon_symbols");
                     std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
                     QString filename;
-                    filename.sprintf("%s\\text_symbols\\%p.png", qPrintable(QDir::currentPath()), bitmap.get());
+                    filename.sprintf("%s\\icon_symbols\\%p.png", qPrintable(QDir::currentPath()), bitmap.get());
                     encoder->encodeFile(qPrintable(filename), *bitmap, 100);
                 }
 #endif // OSMAND_DUMP_SYMBOLS
 
-                // Calculate local offset
+                // Calculate local offset. Since offset specifies center, it's a sum of
+                //  - height / 2
+                // This calculation is used only if this symbol is not first. Otherwise nothing is used.
                 PointI localOffset;
-                localOffset.y = (bitmap->height() / 2);
+                if (!constructedGroup->symbols.isEmpty())
+                    localOffset.y += bitmap->height() / 2;
 
                 // Increment total offset
                 totalOffset += localOffset;
@@ -176,9 +205,13 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     LanguageId::Invariant,
                     PointI(),
                     iconSymbol->location31,
-                    (constructedGroup->symbols.isEmpty() ? PointI() : totalOffset));
+                    totalOffset);
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));
                 constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+
+                // Next symbol should also take into account:
+                //  - height / 2
+                totalOffset.y += bitmap->height() / 2;
             }
         }
 

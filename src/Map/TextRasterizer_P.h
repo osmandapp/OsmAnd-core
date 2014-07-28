@@ -62,7 +62,8 @@ namespace OsmAnd
             const Style& style,
             QVector<SkScalar>* const outGlyphWidths,
             float* const outExtraTopSpace,
-            float* const outExtraBottomSpace) const;
+            float* const outExtraBottomSpace,
+            float* const outLineSpacing) const;
 
         void rasterize(
             SkBitmap& targetBitmap,
@@ -70,7 +71,8 @@ namespace OsmAnd
             const Style& style,
             QVector<SkScalar>* const outGlyphWidths,
             float* const outExtraTopSpace,
-            float* const outExtraBottomSpace) const;
+            float* const outExtraBottomSpace,
+            float* const outLineSpacing) const;
 
     friend class OsmAnd::TextRasterizer;
     };

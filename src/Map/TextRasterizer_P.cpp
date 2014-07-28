@@ -147,10 +147,11 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer_P::rasterize(
     const Style& style,
     QVector<SkScalar>* const outGlyphWidths,
     float* const outExtraTopSpace,
-    float* const outExtraBottomSpace) const
+    float* const outExtraBottomSpace,
+    float* const outLineSpacing) const
 {
     std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    rasterize(*bitmap, text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace);
+    rasterize(*bitmap, text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace, outLineSpacing);
     return bitmap;
 }
 
@@ -160,7 +161,8 @@ void OsmAnd::TextRasterizer_P::rasterize(
     const Style& style,
     QVector<SkScalar>* const outGlyphWidths,
     float* const outExtraTopSpace,
-    float* const outExtraBottomSpace) const
+    float* const outExtraBottomSpace,
+    float* const outLineSpacing) const
 {
     const auto text = ICU::convertToVisualOrder(text_);
     const auto lineRefs =
@@ -237,6 +239,10 @@ void OsmAnd::TextRasterizer_P::rasterize(
             haloPaint.getTextWidths(lineRef.constData(), lineRef.length()*sizeof(QChar), outGlyphWidths->data());
         }
     }
+
+    // Set line spacing
+    if (outLineSpacing)
+        *outLineSpacing = lineSpacing;
 
     // Calculate extra top and bottom space
     if (outExtraTopSpace)

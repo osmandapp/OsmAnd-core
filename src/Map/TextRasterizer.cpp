@@ -22,9 +22,10 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer::rasterize(
     const Style& style /*= Style()*/,
     QVector<SkScalar>* const outGlyphWidths /*= nullptr*/,
     float* const outExtraTopSpace /*= nullptr*/,
-    float* const outExtraBottomSpace /*= nullptr*/) const
+    float* const outExtraBottomSpace /*= nullptr*/,
+    float* const outLineSpacing /*= nullptr*/) const
 {
-    return _p->rasterize(text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace);
+    return _p->rasterize(text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace, outLineSpacing);
 }
 
 void OsmAnd::TextRasterizer::rasterize(
@@ -33,7 +34,8 @@ void OsmAnd::TextRasterizer::rasterize(
     const Style& style /*= Style()*/,
     QVector<SkScalar>* const outGlyphWidths /*= nullptr*/,
     float* const outExtraTopSpace /*= nullptr*/,
-    float* const outExtraBottomSpace /*= nullptr*/) const
+    float* const outExtraBottomSpace /*= nullptr*/,
+    float* const outLineSpacing /*= nullptr*/) const
 {
-    _p->rasterize(targetBitmap, text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace);
+    _p->rasterize(targetBitmap, text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace, outLineSpacing);
 }

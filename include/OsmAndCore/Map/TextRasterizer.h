@@ -113,7 +113,8 @@ namespace OsmAnd
             const Style& style = Style(),
             QVector<SkScalar>* const outGlyphWidths = nullptr,
             float* const outExtraTopSpace = nullptr,
-            float* const outExtraBottomSpace = nullptr) const;
+            float* const outExtraBottomSpace = nullptr,
+            float* const outLineSpacing = nullptr) const;
         
         void rasterize(
             SkBitmap& targetBitmap,
@@ -121,7 +122,8 @@ namespace OsmAnd
             const Style& style = Style(),
             QVector<SkScalar>* const outGlyphWidths = nullptr,
             float* const outExtraTopSpace = nullptr,
-            float* const outExtraBottomSpace = nullptr) const;
+            float* const outExtraBottomSpace = nullptr,
+            float* const outLineSpacing = nullptr) const;
     };
 }
 
