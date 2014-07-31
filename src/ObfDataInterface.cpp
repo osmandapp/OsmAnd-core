@@ -98,8 +98,6 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 }
 
 bool OsmAnd::ObfDataInterface::loadRoads(
-    const std::shared_ptr<const ObfReader>& reader,
-    const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const RoutingDataLevel dataLevel,
     const AreaI* const bbox31 /*= nullptr*/,
     QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut /*= nullptr*/,

@@ -163,12 +163,22 @@ namespace OsmAnd
 
         inline static double x31toMeters(const int32_t x31)
         {
-            return static_cast<double>(x31)* 0.011;
+            return static_cast<double>(x31) * 0.011;
         }
 
         inline static double y31toMeters(const int32_t y31)
         {
-            return static_cast<double>(y31)* 0.01863;
+            return static_cast<double>(y31) * 0.01863;
+        }
+
+        inline static int64_t metersToX31(const double meters)
+        {
+            return static_cast<int64_t>(meters / 0.011);
+        }
+
+        inline static int64_t metersToY31(const double meters)
+        {
+            return static_cast<int64_t>(meters / 0.01863);
         }
 
         inline static double squareDistance31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b)
@@ -336,6 +346,14 @@ namespace OsmAnd
             while (diff <= -180.0)
                 diff += 360.0;
             return diff;
+        }
+        
+        inline static AreaI64 boundingBox31FromAreaInMeters(const double radiusInMeters, const PointI center31)
+        {
+            const auto x31r = metersToX31(radiusInMeters);
+            const auto y31r = metersToY31(radiusInMeters);
+
+            return AreaI64::fromCenterAndSize(center31.x, center31.y, x31r * 2, y31r * 2);
         }
 
         inline static AreaI tileBoundingBox31(const TileId tileId, const ZoomLevel zoom)
