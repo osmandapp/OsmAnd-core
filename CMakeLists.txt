@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 79
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 80
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -99,12 +99,12 @@ file(GLOB_RECURSE includes "include/*.h*")
 file(GLOB headers "src/*.h*")
 file(GLOB headers_data "src/Data/*.h*")
 file(GLOB headers_data_model "src/Data/Model/*.h*")
-file(GLOB headers_routing "src/Routing/*.h*")
+#file(GLOB headers_routing "src/Routing/*.h*")
 file(GLOB headers_map "src/Map/*.h*")
 file(GLOB sources "src/*.c*")
 file(GLOB sources_data "src/Data/*.c*")
 file(GLOB sources_data_model "src/Data/Model/*.c*")
-file(GLOB sources_routing "src/Routing/*.c*")
+#file(GLOB sources_routing "src/Routing/*.c*")
 file(GLOB sources_map "src/Map/*.c*")
 
 set(merged_sources
@@ -112,12 +112,12 @@ set(merged_sources
 	${includes}
 	${headers_data}
 	${headers_data_model}
-	${headers_routing}
+	#${headers_routing}
 	${headers_map}
 	${sources}
 	${sources_data}
 	${sources_data_model}
-	${sources_routing}
+	#${sources_routing}
 	${sources_map}
 	${target_specific_sources}
 	"protos/OBF.pb.h"

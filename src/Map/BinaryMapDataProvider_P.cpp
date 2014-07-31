@@ -107,8 +107,8 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     dataInterface->loadMapObjects(
         &loadedMapObjects,
         &tileFoundation,
-        tileBBox31,
         zoom,
+        &tileBBox31,
         [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, tileBBox31, metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {

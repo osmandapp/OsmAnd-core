@@ -51,7 +51,8 @@ bool OsmAnd::ObfDataInterface::loadBasemapPresenceFlag(bool& outBasemapPresent, 
 bool OsmAnd::ObfDataInterface::loadMapObjects(
     QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
     MapFoundationType* foundationOut,
-    const AreaI& area31, const ZoomLevel zoom,
+    const ZoomLevel zoom,
+    const AreaI* const bbox31 /*= nullptr*/,
     const FilterMapObjectsByIdFunction filterById /*= nullptr*/,
     ObfMapSectionReader::DataBlocksCache* cache /*= nullptr*/,
     QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
@@ -81,9 +82,56 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 obfReader,
                 mapSection,
                 zoom,
-                &area31,
+                bbox31,
                 resultOut,
                 foundationOut,
+                filterById,
+                nullptr,
+                cache,
+                outReferencedCacheEntries,
+                controller,
+                metric);
+        }
+    }
+
+    return true;
+}
+
+bool OsmAnd::ObfDataInterface::loadRoads(
+    const std::shared_ptr<const ObfReader>& reader,
+    const std::shared_ptr<const ObfRoutingSectionInfo>& section,
+    const RoutingDataLevel dataLevel,
+    const AreaI* const bbox31 /*= nullptr*/,
+    QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut /*= nullptr*/,
+    const FilterRoadsByIdFunction filterById /*= nullptr*/,
+    const ObfRoutingSectionReader::VisitorFunction visitor /*= nullptr*/,
+    ObfRoutingSectionReader::DataBlocksCache* cache /*= nullptr*/,
+    QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
+    const IQueryController* const controller /*= nullptr*/,
+    ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric /*= nullptr*/)
+{
+    // Iterate through all OBF readers
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        // Check if request is aborted
+        if (controller && controller->isAborted())
+            return false;
+
+        // Iterate over all map sections of each OBF reader
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& routingSection : constOf(obfInfo->routingSections))
+        {
+            // Check if request is aborted
+            if (controller && controller->isAborted())
+                return false;
+
+            // Read objects from each map section
+            OsmAnd::ObfRoutingSectionReader::loadRoads(
+                obfReader,
+                routingSection,
+                dataLevel,
+                bbox31,
+                resultOut,
                 filterById,
                 nullptr,
                 cache,

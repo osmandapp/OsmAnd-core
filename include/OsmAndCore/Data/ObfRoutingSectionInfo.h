@@ -12,17 +12,47 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 
-namespace OsmAnd {
-
+namespace OsmAnd
+{
     class ObfRoutingSectionReader_P;
     class ObfReader_P;
-    class ObfRoutingSubsectionInfo;
-    namespace Model {
+    namespace Model
+    {
         class Road;
-    } // namespace Model
-    class RoutePlanner;
-    class RoutePlannerContext;
-    class RoutingRulesetContext;
+    }
+
+    struct OSMAND_CORE_API ObfRoutingSectionDecodingRules
+    {
+        enum class RuleType : uint32_t
+        {
+            Access = 1,
+            OneWay = 2,
+            Highway = 3,
+            Maxspeed = 4,
+            Roundabout = 5,
+            TrafficSignals = 6,
+            RailwayCrossing = 7,
+            Lanes = 8,
+        };
+
+        struct OSMAND_CORE_API DecodingRule
+        {
+            uint32_t id;
+            RuleType type;
+            
+            QString tag;
+            QString value;
+            
+            union
+            {
+                int32_t asSignedInt;
+                uint32_t asUnsignedInt;
+                float asFloat;
+            } parsedValue;
+        };
+
+        QList< std::shared_ptr<const DecodingRule> > decodingRules;
+    };
 
     class ObfRoutingSectionInfo_P;
     class OSMAND_CORE_API ObfRoutingSectionInfo : public ObfSectionInfo
@@ -32,103 +62,51 @@ namespace OsmAnd {
         PrivateImplementation<ObfRoutingSectionInfo_P> _p;
     protected:
         ObfRoutingSectionInfo(const std::weak_ptr<ObfInfo>& owner);
-
-        QList< std::shared_ptr<const ObfRoutingSubsectionInfo> > _subsections;
-        QList< std::shared_ptr<const ObfRoutingSubsectionInfo> > _baseSubsections;
     public:
         virtual ~ObfRoutingSectionInfo();
 
-        const QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >& subsections;
-        const QList< std::shared_ptr<const ObfRoutingSubsectionInfo> >& baseSubsections;
-
-    friend class OsmAnd::ObfRoutingSectionReader_P;
-    friend class OsmAnd::ObfReader_P;
-    friend class OsmAnd::Model::Road;
-    friend class OsmAnd::RoutePlanner;
-    friend class OsmAnd::RoutePlannerContext;
-    friend class OsmAnd::RoutingRulesetContext;
-    };
-
-    class OSMAND_CORE_API ObfRoutingSubsectionInfo : public ObfSectionInfo
-    {
-    private:
-    protected:
-        ObfRoutingSubsectionInfo(const std::shared_ptr<const ObfRoutingSubsectionInfo>& parent);
-        ObfRoutingSubsectionInfo(const std::shared_ptr<const ObfRoutingSectionInfo>& section);
-
-        AreaI _area31;
-
-        uint32_t _dataOffset;
-
-        uint32_t _subsectionsOffset;
-        mutable QList< std::shared_ptr<const ObfRoutingSubsectionInfo> > _subsections;
-    public:
-        virtual ~ObfRoutingSubsectionInfo();
-
-        bool containsData() const;
-        const AreaI& area31;
-
-        const std::shared_ptr<const ObfRoutingSubsectionInfo> parent;
-        const std::shared_ptr<const ObfRoutingSectionInfo> section;
+        const std::shared_ptr<const ObfRoutingSectionDecodingRules>& decodingRules;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     friend class OsmAnd::ObfReader_P;
     };
 
-    class OSMAND_CORE_API ObfRoutingBorderLineHeader
+    class ObfRoutingSectionLevelTreeNode;
+    class ObfRoutingSectionLevel_P;
+    class OSMAND_CORE_API ObfRoutingSectionLevel
     {
+        Q_DISABLE_COPY(ObfRoutingSectionLevel);
     private:
+        PrivateImplementation<ObfRoutingSectionLevel_P> _p;
     protected:
-        ObfRoutingBorderLineHeader();
-
-        uint32_t _x;
-        uint32_t _y;
-        uint32_t _x2;
-        bool _x2present;
-        uint32_t _y2;
-        bool _y2present;
-        uint32_t _offset;
+        ObfRoutingSectionLevel(const RoutingDataLevel dataLevel);
     public:
-        virtual ~ObfRoutingBorderLineHeader();
+        virtual ~ObfRoutingSectionLevel();
 
-        uint32_t& x;
-        uint32_t& y;
-        uint32_t& x2;
-        bool& x2present;
-        uint32_t& y2;
-        bool& y2present;
-        uint32_t& offset;
-
-        friend class OsmAnd::ObfRoutingSectionReader_P;
-        friend class OsmAnd::ObfReader_P;
-    };
-    
-    class OSMAND_CORE_API ObfRoutingBorderLinePoint
-    {
-    private:
-    protected:
-        ObfRoutingBorderLinePoint();
-
-        uint64_t _id;
-        PointI _location;
-        QVector<uint32_t> _types;
-        float _distanceToStartPoint;
-        float _distanceToEndPoint;
-    public:
-        virtual ~ObfRoutingBorderLinePoint();
-
-        const uint64_t& id;
-        const PointI& location;
-        const QVector<uint32_t>& types;
-        float& distanceToStartPoint;
-        float& distanceToEndPoint;
-
-        std::shared_ptr<ObfRoutingBorderLinePoint> bboxedClone(uint32_t x31) const;
+        const RoutingDataLevel dataLevel;
+        const QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> > &rootNodes;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
-    friend class OsmAnd::ObfReader_P;
     };
 
-} // namespace OsmAnd
+    class OSMAND_CORE_API ObfRoutingSectionLevelTreeNode Q_DECL_FINAL
+    {
+    private:
+    protected:
+        ObfRoutingSectionLevelTreeNode();
+    public:
+        ~ObfRoutingSectionLevelTreeNode();
+
+        uint32_t length;
+        uint32_t offset;
+
+        AreaI bbox31;
+
+        uint32_t childrenRelativeOffset;
+        uint32_t dataOffset;
+
+    friend class OsmAnd::ObfRoutingSectionReader_P;
+    };
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_ROUTING_SECTION_INFO_H_)

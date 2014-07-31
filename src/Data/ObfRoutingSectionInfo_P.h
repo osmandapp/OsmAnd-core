@@ -2,26 +2,21 @@
 #define _OSMAND_CORE_OBF_ROUTING_SECTION_INFO_P_H_
 
 #include "stdlib_common.h"
+#include <array>
 
 #include "QtExtensions.h"
-#include <QList>
 #include <QString>
+#include <QMutex>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
+#include "ObfRoutingSectionInfo.h"
 
 namespace OsmAnd
 {
     class ObfRoutingSectionReader_P;
-    namespace Model
-    {
-        enum class RoadDirection : int32_t;
-        class Road;
-    }
-    class RoutePlanner;
-    class RoutePlannerContext;
-    class RoutingRulesetContext;
+    class ObfRoutingSectionLevel;
 
     class ObfRoutingSectionInfo;
     class ObfRoutingSectionInfo_P Q_DECL_FINAL
@@ -31,51 +26,40 @@ namespace OsmAnd
     protected:
         ObfRoutingSectionInfo_P(ObfRoutingSectionInfo* owner);
 
-        ImplementationInterface<ObfRoutingSectionInfo> owner;
+        mutable QMutex _decodingRulesMutex;
+        mutable std::shared_ptr<const ObfRoutingSectionDecodingRules> _decodingRules;
 
-        struct EncodingRule
+        struct LevelContainer
         {
-            enum Type : uint32_t
-            {
-                Access = 1,
-                OneWay = 2,
-                Highway = 3,
-                Maxspeed = 4,
-                Roundabout = 5,
-                TrafficSignals = 6,
-                RailwayCrossing = 7,
-                Lanes = 8,
-            };
-
-            uint32_t _id;
-            QString _tag;
-            QString _value;
-            Type _type;
-            union
-            {
-                int32_t asSignedInt;
-                uint32_t asUnsignedInt;
-                float asFloat;
-            } _parsedValue;
-
-            bool isRoundabout() const;
-            Model::RoadDirection getDirection() const;
+            QMutex mutex;
+            std::shared_ptr<const ObfRoutingSectionLevel> level;
         };
-        QList< std::shared_ptr<EncodingRule> > _encodingRules;
-
-        uint32_t _borderBoxOffset;
-        uint32_t _baseBorderBoxOffset;
-        uint32_t _borderBoxLength;
-        uint32_t _baseBorderBoxLength;
+        mutable std::array<LevelContainer, RoutingDataLevelsCount> _levelContainers;
     public:
-        virtual ~ObfRoutingSectionInfo_P();
+        ~ObfRoutingSectionInfo_P();
+
+        ImplementationInterface<ObfRoutingSectionInfo> owner;
 
     friend class OsmAnd::ObfRoutingSectionInfo;
     friend class OsmAnd::ObfRoutingSectionReader_P;
-    friend class OsmAnd::Model::Road;
-    friend class OsmAnd::RoutePlanner;
-    friend class OsmAnd::RoutePlannerContext;
-    friend class OsmAnd::RoutingRulesetContext;
+    };
+
+    class ObfRoutingSectionLevelTreeNode;
+    class ObfRoutingSectionLevel;
+    class ObfRoutingSectionLevel_P Q_DECL_FINAL
+    {
+    private:
+    protected:
+        ObfRoutingSectionLevel_P(ObfRoutingSectionLevel* const owner);
+
+        QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> > _rootNodes;
+    public:
+        ~ObfRoutingSectionLevel_P();
+
+        ImplementationInterface<ObfRoutingSectionLevel> owner;
+
+    friend class OsmAnd::ObfRoutingSectionLevel;
+    friend class OsmAnd::ObfRoutingSectionReader_P;
     };
 }
 

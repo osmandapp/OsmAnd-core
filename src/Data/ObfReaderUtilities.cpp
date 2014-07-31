@@ -7,7 +7,7 @@
 
 #include "OBF.pb.h"
 
-bool OsmAnd::ObfReaderUtilities::readQString( gpb::io::CodedInputStream* cis, QString& output )
+bool OsmAnd::ObfReaderUtilities::readQString(gpb::io::CodedInputStream* cis, QString& output)
 {
     std::string value;
     if (!gpb::internal::WireFormatLite::ReadString(cis, &value))
@@ -17,7 +17,7 @@ bool OsmAnd::ObfReaderUtilities::readQString( gpb::io::CodedInputStream* cis, QS
     return true;
 }
 
-int32_t OsmAnd::ObfReaderUtilities::readSInt32( gpb::io::CodedInputStream* cis )
+int32_t OsmAnd::ObfReaderUtilities::readSInt32(gpb::io::CodedInputStream* cis)
 {
     gpb::uint32 value;
     cis->ReadVarint32(&value);
@@ -26,7 +26,7 @@ int32_t OsmAnd::ObfReaderUtilities::readSInt32( gpb::io::CodedInputStream* cis )
     return decodedValue;
 }
 
-int64_t OsmAnd::ObfReaderUtilities::readSInt64( gpb::io::CodedInputStream* cis )
+int64_t OsmAnd::ObfReaderUtilities::readSInt64(gpb::io::CodedInputStream* cis)
 {
     gpb::uint64 value;
     cis->ReadVarint64(&value);
@@ -35,7 +35,7 @@ int64_t OsmAnd::ObfReaderUtilities::readSInt64( gpb::io::CodedInputStream* cis )
     return decodedValue;
 }
 
-uint32_t OsmAnd::ObfReaderUtilities::readBigEndianInt( gpb::io::CodedInputStream* cis )
+uint32_t OsmAnd::ObfReaderUtilities::readBigEndianInt(gpb::io::CodedInputStream* cis)
 {
     gpb::uint32 be;
     cis->ReadRaw(&be, sizeof(be));
@@ -43,30 +43,37 @@ uint32_t OsmAnd::ObfReaderUtilities::readBigEndianInt( gpb::io::CodedInputStream
     return ne;
 }
 
-void OsmAnd::ObfReaderUtilities::readStringTable( gpb::io::CodedInputStream* cis, QStringList& stringTableOut )
+uint32_t OsmAnd::ObfReaderUtilities::readLength(gpb::io::CodedInputStream* cis)
 {
-    for(;;)
+    gpb::uint32 length;
+    cis->ReadVarint32(&length);
+    return length;
+}
+
+void OsmAnd::ObfReaderUtilities::readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut)
+{
+    for (;;)
     {
         auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            return;
-        case OBF::StringTable::kSFieldNumber:
+            case 0:
+                return;
+            case OBF::StringTable::kSFieldNumber:
             {
                 QString value;
                 if (readQString(cis, value))
                     stringTableOut.push_back(qMove(value));
             }
-            break;
-        default:
-            skipUnknownField(cis, tag);
-            break;
+                break;
+            default:
+                skipUnknownField(cis, tag);
+                break;
         }
     }
 }
 
-void OsmAnd::ObfReaderUtilities::skipUnknownField( gpb::io::CodedInputStream* cis, int tag )
+void OsmAnd::ObfReaderUtilities::skipUnknownField(gpb::io::CodedInputStream* cis, int tag)
 {
     auto wireType = gpb::internal::WireFormatLite::GetTagWireType(tag);
     if (wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED)
@@ -78,28 +85,33 @@ void OsmAnd::ObfReaderUtilities::skipUnknownField( gpb::io::CodedInputStream* ci
         gpb::internal::WireFormatLite::SkipField(cis, tag);
 }
 
-QString OsmAnd::ObfReaderUtilities::encodeIntegerToString( const uint32_t value )
+void OsmAnd::ObfReaderUtilities::skipBlockWithLength(gpb::io::CodedInputStream* cis)
+{
+    cis->Skip(readLength(cis));
+}
+
+QString OsmAnd::ObfReaderUtilities::encodeIntegerToString(const uint32_t value)
 {
     QString fakeQString(2, QChar(QChar::Null));
-    fakeQString.data()[0].unicode() = static_cast<ushort>((value >> 16*0) & 0xffff);
-    fakeQString.data()[1].unicode() = static_cast<ushort>((value >> 16*1) & 0xffff);
+    fakeQString.data()[0].unicode() = static_cast<ushort>((value >> 16 * 0) & 0xffff);
+    fakeQString.data()[1].unicode() = static_cast<ushort>((value >> 16 * 1) & 0xffff);
 
     assert(decodeIntegerFromString(fakeQString) == value);
 
     return fakeQString;
 }
 
-uint32_t OsmAnd::ObfReaderUtilities::decodeIntegerFromString( const QString& container )
+uint32_t OsmAnd::ObfReaderUtilities::decodeIntegerFromString(const QString& container)
 {
     uint32_t res = 0;
 
     ushort value;
 
     value = container.at(0).unicode();
-    res |= (value & 0xffff) << 16*0;
+    res |= (value & 0xffff) << 16 * 0;
 
     value = container.at(1).unicode();
-    res |= (value & 0xffff) << 16*1;
+    res |= (value & 0xffff) << 16 * 1;
 
     return res;
 }

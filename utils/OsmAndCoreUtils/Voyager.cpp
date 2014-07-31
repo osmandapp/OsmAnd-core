@@ -34,9 +34,8 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Voyager::parseCommandL
 {
     bool wasObfRootSpecified = false;
     bool wasRouterConfigSpecified = false;
-    for(auto itArg = cmdLineArgs.cbegin(); itArg != cmdLineArgs.cend(); ++itArg)
+    for (const auto& arg : constOf(cmdLineArgs))
     {
-        auto arg = *itArg;
         if (arg.startsWith("-config="))
         {
             QFile configFile(arg.mid(strlen("-config=")));

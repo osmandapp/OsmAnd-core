@@ -1,7 +1,7 @@
 #include "ObfMapSectionInfo.h"
 #include "ObfMapSectionInfo_P.h"
 
-OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo( const std::weak_ptr<ObfInfo>& owner )
+OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo(const std::weak_ptr<ObfInfo>& owner)
     : ObfSectionInfo(owner)
     , _p(new ObfMapSectionInfo_P(this))
     , _isBasemap(false)
@@ -129,7 +129,7 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createRule(const uint32_t ruleT
 
 void OsmAnd::ObfMapSectionDecodingEncodingRules::createMissingRules()
 {
-    auto nextId = decodingRules.size()*2 + 1;
+    auto nextId = decodingRules.size() * 2 + 1;
 
     // Create 'name' encoding/decoding rule, if it still does not exist
     if (name_encodingRuleId == std::numeric_limits<uint32_t>::max())

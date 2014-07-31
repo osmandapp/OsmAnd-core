@@ -37,11 +37,11 @@ OsmAnd::EyePiece::Configuration::Configuration()
 {
 }
 
-OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
+OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error)
 {
     bool wasObfRootSpecified = false;
-    
-    for(auto itArg = cmdLineArgs.cbegin(); itArg != cmdLineArgs.cend(); ++itArg)
+
+    for (const auto& arg : constOf(cmdLineArgs))
     {
         auto arg = *itArg;
         if (arg == "-verbose")
@@ -68,7 +68,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
         {
             auto path = arg.mid(strlen("-stylesPath="));
             QDir dir(path);
-            if(!dir.exists())
+            if (!dir.exists())
             {
                 error = "Style directory '" + path + "' does not exist";
                 return false;
@@ -83,7 +83,7 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
         else if (arg.startsWith("-obfsDir="))
         {
             QDir obfRoot(arg.mid(strlen("-obfsDir=")));
-            if(!obfRoot.exists())
+            if (!obfRoot.exists())
             {
                 error = "OBF directory does not exist";
                 return false;
@@ -91,44 +91,44 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommand
             cfg.obfsDir = obfRoot;
             wasObfRootSpecified = true;
         }
-        else if(arg.startsWith("-bbox="))
+        else if (arg.startsWith("-bbox="))
         {
             auto values = arg.mid(strlen("-bbox=")).split(",");
             cfg.bbox.left = values[0].toDouble();
             cfg.bbox.top = values[1].toDouble();
             cfg.bbox.right = values[2].toDouble();
-            cfg.bbox.bottom =  values[3].toDouble();
+            cfg.bbox.bottom = values[3].toDouble();
         }
-        else if(arg.startsWith("-zoom="))
+        else if (arg.startsWith("-zoom="))
         {
             cfg.zoom = static_cast<ZoomLevel>(arg.mid(strlen("-zoom=")).toInt());
         }
-        else if(arg.startsWith("-tileSide="))
+        else if (arg.startsWith("-tileSide="))
         {
             cfg.tileSide = arg.mid(strlen("-tileSide=")).toInt();
         }
-        else if(arg.startsWith("-density="))
+        else if (arg.startsWith("-density="))
         {
             cfg.densityFactor = arg.mid(strlen("-density=")).toFloat();
         }
-        else if(arg == "-32bit")
+        else if (arg == "-32bit")
         {
             cfg.is32bit = true;
         }
-        else if(arg.startsWith("-output="))
+        else if (arg.startsWith("-output="))
         {
             cfg.output = arg.mid(strlen("-output="));
         }
     }
 
-    if(!cfg.drawMap && !cfg.drawText && !cfg.drawIcons)
+    if (!cfg.drawMap && !cfg.drawText && !cfg.drawIcons)
     {
         cfg.drawMap = true;
         cfg.drawText = true;
         cfg.drawIcons = true;
     }
 
-    if(!wasObfRootSpecified)
+    if (!wasObfRootSpecified)
         cfg.obfsDir = QDir::current();
 
     return true;
@@ -140,7 +140,7 @@ void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg
 void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg);
 #endif
 
-OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToStdOut( const Configuration& cfg )
+OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToStdOut(const Configuration& cfg)
 {
 #if defined(_UNICODE) || defined(UNICODE)
     rasterize(std::wcout, cfg);
@@ -149,7 +149,7 @@ OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToS
 #endif
 }
 
-OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToString( const Configuration& cfg )
+OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToString(const Configuration& cfg)
 {
 #if defined(_UNICODE) || defined(UNICODE)
     std::wostringstream output;
@@ -170,39 +170,39 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 {
     // Obtain and configure rasterization style context
     OsmAnd::MapStylesCollection stylesCollection;
-    for(auto itStyleFile = cfg.styleFiles.cbegin(); itStyleFile != cfg.styleFiles.cend(); ++itStyleFile)
+    for (auto itStyleFile = cfg.styleFiles.cbegin(); itStyleFile != cfg.styleFiles.cend(); ++itStyleFile)
     {
         const auto& styleFile = *itStyleFile;
 
-        if(!stylesCollection.registerStyle(styleFile.absoluteFilePath()))
+        if (!stylesCollection.registerStyle(styleFile.absoluteFilePath()))
             output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile.fileName()) << xT("' or duplicate style") << std::endl;
     }
     std::shared_ptr<const OsmAnd::MapStyle> style;
-    if(!stylesCollection.obtainBakedStyle(cfg.styleName, style))
+    if (!stylesCollection.obtainBakedStyle(cfg.styleName, style))
     {
         output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
         return;
     }
-    if(cfg.dumpRules)
+    if (cfg.dumpRules)
         style->dump();
-    
+
     OsmAnd::ObfsCollection obfsCollection;
     obfsCollection.addDirectory(cfg.obfsDir);
 
     // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
     QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
     OsmAnd::AreaI bbox31(
-            OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
-            OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
-            OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
-            OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
+        OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
+        OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
+        OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
+        OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
         );
     const auto& obfDI = obfsCollection.obtainDataInterface();
     OsmAnd::MapFoundationType mapFoundation;
     obfDI->loadMapObjects(&mapObjects, &mapFoundation, bbox31, cfg.zoom, nullptr);
     bool basemapAvailable;
     obfDI->loadBasemapPresenceFlag(basemapAvailable);
-    
+
     // Calculate output size in pixels
     const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);
     const auto tileHeight = OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.bottom) - OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.top);
@@ -213,7 +213,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     // Allocate render target
     SkBitmap renderSurface;
     renderSurface.setConfig(cfg.is32bit ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config, pixelWidth, pixelHeight);
-    if(!renderSurface.allocPixels())
+    if (!renderSurface.allocPixels())
     {
         output << xT("Failed to allocated render target ") << pixelWidth << xT("x") << pixelHeight;
         return;
@@ -229,7 +229,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
     OsmAnd::Rasterizer::prepareContext(*rasterizerContext, bbox31, cfg.zoom, mapFoundation, mapObjects);
 
     OsmAnd::Rasterizer rasterizer(rasterizerContext);
-    if(cfg.drawMap)
+    if (cfg.drawMap)
     {
         rasterizer.rasterizeMap(canvas);
     }
@@ -237,7 +237,7 @@ void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
         OsmAnd::Rasterizer::rasterizeText(rasterizerContext, !cfg.drawMap, canvas, nullptr);*/
 
     // Save rendered area
-    if(!cfg.output.isEmpty())
+    if (!cfg.output.isEmpty())
     {
         std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
         encoder->encodeFile(cfg.output.toLocal8Bit(), renderSurface, 100);

@@ -53,9 +53,8 @@ OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::Verifier::parseCommand
 {
     cfg.action = Configuration::Action::Invalid;
 
-    for(auto itArg = cmdLineArgs.cbegin(); itArg != cmdLineArgs.cend(); ++itArg)
+    for (const auto& arg : constOf(cmdLineArgs))
     {
-        auto arg = *itArg;
         if(arg.startsWith("-obfsDir="))
             cfg.obfDirs.append(arg.mid(strlen("-obfsDir=")));
         if(arg.startsWith("-obf="))

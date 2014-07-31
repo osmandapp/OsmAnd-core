@@ -71,7 +71,7 @@ namespace OsmAnd
 
         ImplementationInterface<ObfMapSectionInfo> owner;
 
-        mutable QMutex _encodingDecodingDataMutex;
+        mutable QMutex _encodingDecodingRulesMutex;
         mutable std::shared_ptr<const ObfMapSectionDecodingEncodingRules> _encodingDecodingRules;
     public:
         virtual ~ObfMapSectionInfo_P();

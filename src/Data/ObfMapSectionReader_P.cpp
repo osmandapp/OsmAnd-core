@@ -45,7 +45,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 break;
             }
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
-                ObfReaderUtilities::skipUnknownField(cis, tag);
+                ObfReaderUtilities::skipBlockWithLength(cis);
                 break;
             case OBF::OsmAndMapIndex::kLevelsFieldNumber:
             {
@@ -468,25 +468,21 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 // Read map object content
                 const Stopwatch readMapObjectStopwatch(metric != nullptr);
                 std::shared_ptr<OsmAnd::Model::BinaryMapObject> mapObject;
-                {
-                    auto oldLimit = cis->PushLimit(length);
+                auto oldLimit = cis->PushLimit(length);
+                readMapObject(reader, section, baseId, tree, mapObject, bbox31, metric);
+                assert(cis->BytesUntilLimit() == 0);
+                cis->PopLimit(oldLimit);
 
-                    readMapObject(reader, section, baseId, tree, mapObject, bbox31, metric);
-                    assert(cis->BytesUntilLimit() == 0);
-
-                    // Update metric
-                    if (metric)
-                        metric->visitedMapObjects++;
-
-                    cis->PopLimit(oldLimit);
-                }
+                // Update metric
+                if (metric)
+                    metric->visitedMapObjects++;
 
                 // If map object was not read, skip it
                 if (!mapObject)
                 {
                     if (metric)
                         metric->elapsedTimeForOnlyVisitedMapObjects += readMapObjectStopwatch.elapsed();
-                    
+
                     break;
                 }
 
@@ -610,13 +606,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     if (!shouldNotSkip && bbox31)
                     {
                         const Stopwatch mapObjectBboxStopwatch(metric != nullptr);;
-                        
+
                         shouldNotSkip = bbox31->contains(p);
                         objectBBox.enlargeToInclude(p);
 
                         if (metric)
                             metric->elapsedTimeForMapObjectsBbox += mapObjectBboxStopwatch.elapsed();
-                        
+
                         lastUnprocessedVertexForBBox = verticesCount;
                     }
                 }
@@ -672,12 +668,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 while (lastUnprocessedVertexForBBox < points31.size())
                 {
                     const Stopwatch mapObjectBboxStopwatch(metric != nullptr);
-                    
+
                     objectBBox.enlargeToInclude(*pPointForBBox);
 
                     if (metric)
                         metric->elapsedTimeForMapObjectsBbox += mapObjectBboxStopwatch.elapsed();
-                    
+
                     lastUnprocessedVertexForBBox++;
                     pPointForBBox++;
                 }
@@ -823,7 +819,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
     // Check if this map section has initialized rules
     {
-        QMutexLocker scopedLocker(&section->_p->_encodingDecodingDataMutex);
+        QMutexLocker scopedLocker(&section->_p->_encodingDecodingRulesMutex);
 
         if (!section->_p->_encodingDecodingRules)
         {
@@ -842,7 +838,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
     auto foundation = MapFoundationType::Undefined;
     if (foundationOut)
-        foundation = *foundationOut;
+        *foundationOut = foundation;
     for (const auto& mapLevel : constOf(section->_levels))
     {
         // Update metric
@@ -855,7 +851,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         if (bbox31)
         {
             const Stopwatch bboxLevelCheckStopwatch(metric != nullptr);
-            
+
             const auto shouldSkip =
                 !bbox31->contains(mapLevel->_area31) &&
                 !mapLevel->_area31.contains(*bbox31) &&
@@ -863,7 +859,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
             if (metric)
                 metric->elapsedTimeForLevelsBbox += bboxLevelCheckStopwatch.elapsed();
-            
+
             if (shouldSkip)
                 continue;
         }
@@ -871,7 +867,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         const Stopwatch treeNodesStopwatch(metric != nullptr);
         if (metric)
             metric->acceptedLevels++;
-        
+
         // If there are no tree nodes in map level, it means they are not loaded
         {
             QMutexLocker scopedLocker(&mapLevel->_p->_rootNodesMutex);
@@ -900,7 +896,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             if (bbox31)
             {
                 const Stopwatch bboxNodeCheckStopwatch(metric != nullptr);
-                
+
                 const auto shouldSkip =
                     !bbox31->contains(rootNode->_area31) &&
                     !rootNode->_area31.contains(*bbox31) &&
@@ -909,7 +905,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 // Update metric
                 if (metric)
                     metric->elapsedTimeForNodesBbox += bboxNodeCheckStopwatch.elapsed();
-                
+
                 if (shouldSkip)
                     continue;
             }

@@ -21,8 +21,10 @@ namespace OsmAnd
         int32_t readSInt32(gpb::io::CodedInputStream* cis);
         int64_t readSInt64(gpb::io::CodedInputStream* cis);
         uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
+        uint32_t readLength(gpb::io::CodedInputStream* cis);
         void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
         void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
+        void skipBlockWithLength(gpb::io::CodedInputStream* cis);
         QString encodeIntegerToString(const uint32_t value);
         uint32_t decodeIntegerFromString(const QString& container);
     }

@@ -32,7 +32,7 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfMapSectionReader
     {
     public:
-        typedef std::function<bool (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>&)> VisitorFunction;
+        typedef std::function<bool(const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>&)> VisitorFunction;
         typedef ObfMapSectionDataBlockId DataBlockId;
 
         class OSMAND_CORE_API DataBlock Q_DECL_FINAL
@@ -56,7 +56,7 @@ namespace OsmAnd
         friend class OsmAnd::ObfMapSectionReader_P;
         };
 
-        class OSMAND_CORE_API DataBlocksCache : public SharedByZoomResourcesContainer<DataBlockId, const DataBlock>
+        class OSMAND_CORE_API DataBlocksCache : public SharedByZoomResourcesContainer < DataBlockId, const DataBlock >
         {
         public:
             typedef ObfMapSectionReader::DataBlockId DataBlockId;

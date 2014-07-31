@@ -40,7 +40,7 @@ namespace OsmAnd
 
         const uint32_t& offset;
         const uint32_t& length;
-        
+
         const ZoomLevel& minZoom;
         const ZoomLevel& maxZoom;
         const AreaI& area31;
@@ -108,7 +108,6 @@ namespace OsmAnd
     friend class OsmAnd::ObfMapSectionReader_P;
     friend class OsmAnd::ObfReader_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_MAP_SECTION_INFO_H_)

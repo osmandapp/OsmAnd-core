@@ -12,6 +12,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
+#include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 
 namespace OsmAnd
 {
@@ -21,6 +22,7 @@ namespace OsmAnd
     namespace Model
     {
         class BinaryMapObject;
+        class Road;
     }
     class IQueryController;
     namespace ObfMapSectionReader_Metrics
@@ -50,13 +52,26 @@ namespace OsmAnd
         bool loadMapObjects(
             QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
             MapFoundationType* foundationOut,
-            const AreaI& area31,
             const ZoomLevel zoom,
+            const AreaI* const bbox31 = nullptr,
             const FilterMapObjectsByIdFunction filterById = nullptr,
             ObfMapSectionReader::DataBlocksCache* cache = nullptr,
             QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
             const IQueryController* const controller = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
+
+        bool loadRoads(
+            const std::shared_ptr<const ObfReader>& reader,
+            const std::shared_ptr<const ObfRoutingSectionInfo>& section,
+            const RoutingDataLevel dataLevel,
+            const AreaI* const bbox31 = nullptr,
+            QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut = nullptr,
+            const FilterRoadsByIdFunction filterById = nullptr,
+            const ObfRoutingSectionReader::VisitorFunction visitor = nullptr,
+            ObfRoutingSectionReader::DataBlocksCache* cache = nullptr,
+            QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
+            const IQueryController* const controller = nullptr,
+            ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr);
     };
 }
 

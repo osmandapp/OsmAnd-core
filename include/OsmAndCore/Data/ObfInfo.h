@@ -53,7 +53,6 @@ namespace OsmAnd
     friend class OsmAnd::ObfReader;
     friend class OsmAnd::ObfReader_P;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_INFO_H_)
