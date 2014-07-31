@@ -68,8 +68,8 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
 	{
 		// <wpt>
 		writer.writeStartElement(QLatin1String("wpt"));
-		writer.writeAttribute(QLatin1String("lat"), QString::number(Utilities::get31LatitudeY(item->position.y), 'f', 12));
-		writer.writeAttribute(QLatin1String("lon"), QString::number(Utilities::get31LongitudeX(item->position.x), 'f', 12));
+		writer.writeAttribute(QLatin1String("lat"), QString::number(item->latLon.latitude, 'f', 12));
+        writer.writeAttribute(QLatin1String("lon"), QString::number(item->latLon.longitude, 'f', 12));
 
 		// <name>
 		writer.writeTextElement(QLatin1String("name"), item->getTitle());
@@ -144,9 +144,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
 					return false;
 				}
 
-				newItem.reset(new FavoriteLocation(PointI(
-					Utilities::get31TileNumberX(lon),
-					Utilities::get31TileNumberY(lat))));
+				newItem.reset(new FavoriteLocation(LatLon(lat, lon)));
 			}
 			else if (tagName == QLatin1String("name"))
 			{

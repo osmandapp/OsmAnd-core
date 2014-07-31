@@ -25,7 +25,11 @@ void OsmAnd::FavoriteLocationsCollection_P::notifyFavoriteLocationChanged(Favori
 	owner->favoriteLocationChangeObservable.postNotify(owner, constOf(_collection)[pFavoriteLocation]);
 }
 
-std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P::createFavoriteLocation(const PointI position, const QString& title, const QString& group, const ColorRGB color)
+std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P::createFavoriteLocation(
+    const PointI position,
+    const QString& title,
+    const QString& group,
+    const ColorRGB color)
 {
 	QWriteLocker scopedLocker(&_collectionLock);
 
@@ -35,6 +39,22 @@ std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P
 	notifyCollectionChanged();
 
 	return newItem;
+}
+
+std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection_P::createFavoriteLocation(
+    const LatLon latLon,
+    const QString& title,
+    const QString& group,
+    const ColorRGB color)
+{
+    QWriteLocker scopedLocker(&_collectionLock);
+
+    std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(_containerLink, latLon, title, group, color));
+    _collection.insert(newItem.get(), newItem);
+
+    notifyCollectionChanged();
+
+    return newItem;
 }
 
 bool OsmAnd::FavoriteLocationsCollection_P::removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)
@@ -135,13 +155,26 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
     doClearFavoriteLocations();
     for (const auto& item : otherCollection)
     {
-        std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
-            _containerLink,
-            item->getPosition(),
-            item->getTitle(),
-            item->getGroup(),
-            item->getColor()));
-        _collection.insert(newItem.get(), newItem);
+        if (item->getLocationSource() == IFavoriteLocation::LocationSource::Point31)
+        {
+            std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+                _containerLink,
+                item->getPosition31(),
+                item->getTitle(),
+                item->getGroup(),
+                item->getColor()));
+            _collection.insert(newItem.get(), newItem);
+        }
+        else //if (item->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
+        {
+            std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+                _containerLink,
+                item->getLatLon(),
+                item->getTitle(),
+                item->getGroup(),
+                item->getColor()));
+            _collection.insert(newItem.get(), newItem);
+        }
     }
 
     notifyCollectionChanged();
@@ -154,13 +187,26 @@ void OsmAnd::FavoriteLocationsCollection_P::copyFrom(const QList< std::shared_pt
     doClearFavoriteLocations();
     for (const auto& item : otherCollection)
     {
-        std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
-            _containerLink,
-            item->getPosition(),
-            item->getTitle(),
-            item->getGroup(),
-            item->getColor()));
-        _collection.insert(newItem.get(), newItem);
+        if (item->getLocationSource() == IFavoriteLocation::LocationSource::Point31)
+        {
+            std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+                _containerLink,
+                item->getPosition31(),
+                item->getTitle(),
+                item->getGroup(),
+                item->getColor()));
+            _collection.insert(newItem.get(), newItem);
+        }
+        else //if (item->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
+        {
+            std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+                _containerLink,
+                item->getLatLon(),
+                item->getTitle(),
+                item->getGroup(),
+                item->getColor()));
+            _collection.insert(newItem.get(), newItem);
+        }
     }
 
     notifyCollectionChanged();
@@ -172,13 +218,26 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
 
     for (const auto& item : otherCollection)
     {
-        std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
-            _containerLink,
-            item->getPosition(),
-            item->getTitle(),
-            item->getGroup(),
-            item->getColor()));
-        _collection.insert(newItem.get(), newItem);
+        if (item->getLocationSource() == IFavoriteLocation::LocationSource::Point31)
+        {
+            std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+                _containerLink,
+                item->getPosition31(),
+                item->getTitle(),
+                item->getGroup(),
+                item->getColor()));
+            _collection.insert(newItem.get(), newItem);
+        }
+        else //if (item->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
+        {
+            std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+                _containerLink,
+                item->getLatLon(),
+                item->getTitle(),
+                item->getGroup(),
+                item->getColor()));
+            _collection.insert(newItem.get(), newItem);
+        }
     }
 
     notifyCollectionChanged();
@@ -190,13 +249,26 @@ void OsmAnd::FavoriteLocationsCollection_P::mergeFrom(const QList< std::shared_p
 
     for (const auto& item : otherCollection)
     {
-        std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
-            _containerLink,
-            item->getPosition(),
-            item->getTitle(),
-            item->getGroup(),
-            item->getColor()));
-        _collection.insert(newItem.get(), newItem);
+        if (item->getLocationSource() == IFavoriteLocation::LocationSource::Point31)
+        {
+            std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+                _containerLink,
+                item->getPosition31(),
+                item->getTitle(),
+                item->getGroup(),
+                item->getColor()));
+            _collection.insert(newItem.get(), newItem);
+        }
+        else //if (item->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
+        {
+            std::shared_ptr<FavoriteLocation> newItem(new FavoriteLocation(
+                _containerLink,
+                item->getLatLon(),
+                item->getTitle(),
+                item->getGroup(),
+                item->getColor()));
+            _collection.insert(newItem.get(), newItem);
+        }
     }
 
     notifyCollectionChanged();

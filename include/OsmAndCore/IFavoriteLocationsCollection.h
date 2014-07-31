@@ -28,7 +28,12 @@ namespace OsmAnd
         virtual ~IFavoriteLocationsCollection();
 
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
-            const PointI position,
+            const PointI position31,
+            const QString& title = QString::null,
+            const QString& group = QString::null,
+            const ColorRGB color = ColorRGB()) = 0;
+        virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
+            const LatLon latLon,
             const QString& title = QString::null,
             const QString& group = QString::null,
             const ColorRGB color = ColorRGB()) = 0;

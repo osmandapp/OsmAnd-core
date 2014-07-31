@@ -31,10 +31,16 @@ namespace OsmAnd
         virtual ~FavoriteLocationsCollection();
 
         virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
-            const PointI position,
+            const PointI position31,
             const QString& title = QString::null,
             const QString& group = QString::null,
             const ColorRGB color = ColorRGB());
+        virtual std::shared_ptr<IFavoriteLocation> createFavoriteLocation(
+            const LatLon latLon,
+            const QString& title = QString::null,
+            const QString& group = QString::null,
+            const ColorRGB color = ColorRGB());
+        
         virtual std::shared_ptr<IFavoriteLocation> copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other);
         virtual bool removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation);
         virtual bool removeFavoriteLocations(const QList< std::shared_ptr<IFavoriteLocation> >& favoriteLocations);

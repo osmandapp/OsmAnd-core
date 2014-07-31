@@ -15,6 +15,12 @@ namespace OsmAnd
     class OSMAND_CORE_API IFavoriteLocation
     {
         Q_DISABLE_COPY(IFavoriteLocation);
+    public:
+        enum class LocationSource
+        {
+            Point31,
+            LatLon
+        };
 
     private:
     protected:
@@ -22,7 +28,9 @@ namespace OsmAnd
     public:
         virtual ~IFavoriteLocation();
 
-        virtual PointI getPosition() const = 0;
+        virtual LocationSource getLocationSource() const = 0;
+        virtual PointI getPosition31() const = 0;
+        virtual LatLon getLatLon() const = 0;
 
         virtual bool isHidden() const = 0;
         virtual void setIsHidden(const bool isHidden) = 0;

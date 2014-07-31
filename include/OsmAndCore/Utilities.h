@@ -46,6 +46,13 @@ namespace OsmAnd
             return static_cast<int32_t>((1.0 - eval / M_PI) / 2.0*l);
         }
 
+        inline static PointI convertLatLonTo31(const LatLon latLon)
+        {
+            return PointI(
+                get31TileNumberX(latLon.longitude),
+                get31TileNumberY(latLon.latitude));
+        }
+
         inline static double get31LongitudeX(const double x)
         {
             return getLongitudeFromTile(21, x / 1024.);
@@ -54,6 +61,13 @@ namespace OsmAnd
         inline static double get31LatitudeY(const double y)
         {
             return getLatitudeFromTile(21, y / 1024.);
+        }
+
+        inline static LatLon convert31ToLatLon(const PointI point31)
+        {
+            return LatLon(
+                get31LatitudeY(point31.y),
+                get31LongitudeX(point31.x));
         }
 
         inline static double getTileNumberX(const float zoom, const double longitude)

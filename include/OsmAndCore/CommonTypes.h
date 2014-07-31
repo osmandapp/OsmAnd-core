@@ -1415,6 +1415,54 @@ namespace OsmAnd
         Localized,
         Native
     };
+
+    struct LatLon
+    {
+        double latitude, longitude;
+
+        inline LatLon()
+        {
+            this->latitude = 0;
+            this->longitude = 0;
+        }
+
+        inline LatLon(const LatLon& that)
+        {
+            this->latitude = that.latitude;
+            this->longitude = that.longitude;
+        }
+
+        inline LatLon(const double latitude, const double longitude)
+        {
+            this->latitude = latitude;
+            this->longitude = longitude;
+        }
+
+        inline bool operator==(const LatLon& r) const
+        {
+            return qFuzzyCompare(latitude, r.latitude) && qFuzzyCompare(longitude, r.longitude);
+        }
+
+        inline bool operator!=(const LatLon& r) const
+        {
+            return !qFuzzyCompare(latitude, r.latitude) || !qFuzzyCompare(longitude, r.longitude);
+        }
+
+        inline LatLon& operator=(const LatLon& that)
+        {
+            if (this != &that)
+            {
+                latitude = that.latitude;
+                longitude = that.longitude;
+            }
+            return *this;
+        }
+
+        explicit inline operator PointD() const
+        {
+            return PointD(longitude, latitude);
+        }
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_TYPES_H_)

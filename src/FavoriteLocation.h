@@ -27,7 +27,14 @@ namespace OsmAnd
     protected:
         FavoriteLocation(
             const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
-            const PointI position,
+            const PointI position31,
+            const QString& title,
+            const QString& group,
+            const ColorRGB color);
+
+        FavoriteLocation(
+            const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
+            const LatLon latLon,
             const QString& title,
             const QString& group,
             const ColorRGB color);
@@ -35,11 +42,18 @@ namespace OsmAnd
         void attach(const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink);
         void detach();
     public:
-        FavoriteLocation(const PointI position);
+        FavoriteLocation(const PointI position31);
+        FavoriteLocation(const LatLon latLon);
         virtual ~FavoriteLocation();
 
-        const PointI position;
-        virtual PointI getPosition() const;
+        LocationSource locationSource;
+        virtual LocationSource getLocationSource() const;
+
+        const PointI position31;
+        virtual PointI getPosition31() const;
+
+        const LatLon latLon;
+        virtual LatLon getLatLon() const;
 
         virtual bool isHidden() const;
         virtual void setIsHidden(const bool isHidden);

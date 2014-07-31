@@ -19,21 +19,41 @@ OsmAnd::FavoriteLocationsCollection::~FavoriteLocationsCollection()
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
-    const PointI position,
+    const PointI position31,
     const QString& title /*= QString::null*/,
     const QString& group /*= QString::null*/,
     const ColorRGB color /*= ColorRGB()*/)
 {
-    return _p->createFavoriteLocation(position, title, group, color);
+    return _p->createFavoriteLocation(position31, title, group, color);
+}
+
+std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::createFavoriteLocation(
+    const LatLon latLon,
+    const QString& title /*= QString::null*/,
+    const QString& group /*= QString::null*/,
+    const ColorRGB color /*= ColorRGB()*/)
+{
+    return _p->createFavoriteLocation(latLon, title, group, color);
 }
 
 std::shared_ptr<OsmAnd::IFavoriteLocation> OsmAnd::FavoriteLocationsCollection::copyFavoriteLocation(const std::shared_ptr<const IFavoriteLocation>& other)
 {
-    return _p->createFavoriteLocation(
-        other->getPosition(),
-        other->getTitle(),
-        other->getGroup(),
-        other->getColor());
+    if (other->getLocationSource() == IFavoriteLocation::LocationSource::Point31)
+    {
+        return _p->createFavoriteLocation(
+            other->getPosition31(),
+            other->getTitle(),
+            other->getGroup(),
+            other->getColor());
+    }
+    else //if (other->getLocationSource() == IFavoriteLocation::LocationSource::LatLon)
+    {
+        return _p->createFavoriteLocation(
+            other->getLatLon(),
+            other->getTitle(),
+            other->getGroup(),
+            other->getColor());
+    }
 }
 
 bool OsmAnd::FavoriteLocationsCollection::removeFavoriteLocation(const std::shared_ptr<IFavoriteLocation>& favoriteLocation)

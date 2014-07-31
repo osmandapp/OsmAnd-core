@@ -81,7 +81,7 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
         if (_favoriteLocationToMarkerMap.contains(favoriteLocation))
             continue;
 
-        markerBuilder.setPosition(favoriteLocation->getPosition());
+        markerBuilder.setPosition(favoriteLocation->getPosition31());
         markerBuilder.setPinIconModulationColor(favoriteLocation->getColor());
         markerBuilder.setIsHidden(favoriteLocation->isHidden());
 
