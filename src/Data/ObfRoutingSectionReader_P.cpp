@@ -45,7 +45,7 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
             case OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber:
             case OBF::OsmAndRoutingIndex::kBasemapBoxesFieldNumber:
             {
-                const auto length =  ObfReaderUtilities::readBigEndianInt(cis);
+                const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 cis->Skip(length);
                 break;
             }
@@ -82,7 +82,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readDecodingRules(
                 const std::shared_ptr<ObfRoutingSectionDecodingRules::DecodingRule> decodingRule(new ObfRoutingSectionDecodingRules::DecodingRule());
                 decodingRule->id = ruleId++;
                 readDecodingRule(reader, decodingRule);
-                assert( cis->BytesUntilLimit() == 0);
+                assert(cis->BytesUntilLimit() == 0);
 
                 cis->PopLimit(oldLimit);
 
@@ -222,7 +222,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodes(
                 readLevelTreeNode(reader, treeNode, nullptr);
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
-                
+
                 level->_p->_rootNodes.push_back(qMove(treeNode));
                 break;
             }
@@ -252,25 +252,25 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNode(
             case OBF::OsmAndRoutingIndex_RouteDataBox::kLeftFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                node->bbox31.left = d + (parentNode ? parentNode->bbox31.left : 0);
+                node->area31.left = d + (parentNode ? parentNode->area31.left : 0);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kRightFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                node->bbox31.right = d + (parentNode ? parentNode->bbox31.right : 0);
+                node->area31.right = d + (parentNode ? parentNode->area31.right : 0);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kTopFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                node->bbox31.top = d + (parentNode ? parentNode->bbox31.top : 0);
+                node->area31.top = d + (parentNode ? parentNode->area31.top : 0);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kBottomFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                node->bbox31.bottom = d + (parentNode ? parentNode->bbox31.bottom : 0);
+                node->area31.bottom = d + (parentNode ? parentNode->area31.bottom : 0);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kShiftToDataFieldNumber:
@@ -321,6 +321,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
                 const auto oldLimit = cis->PushLimit(childNode->length);
                 readLevelTreeNode(reader, childNode, treeNode);
                 assert(cis->BytesUntilLimit() == 0);
+                assert(treeNode->area31.contains(childNode->area31));
                 cis->PopLimit(oldLimit);
 
                 // Update metric
@@ -330,17 +331,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
                 if (bbox31)
                 {
                     const auto shouldSkip =
-                        !bbox31->contains(childNode->bbox31) &&
-                        !childNode->bbox31.contains(*bbox31) &&
-                        !bbox31->intersects(childNode->bbox31);
+                        !bbox31->contains(childNode->area31) &&
+                        !childNode->area31.contains(*bbox31) &&
+                        !bbox31->intersects(childNode->area31);
                     if (shouldSkip)
-                    {
-                        cis->Skip(cis->BytesUntilLimit());
-                        cis->PopLimit(oldLimit);
                         break;
-                    }
                 }
-                cis->PopLimit(oldLimit);
 
                 // Update metric
                 if (metric)
@@ -360,8 +356,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
 
                     cis->PopLimit(oldLimit);
                 }
-            }
                 break;
+            }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
@@ -395,10 +391,21 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                 for (const auto& road : constOf(resultsByInternalId))
                 {
                     // Fill names of roads from stringtable
-                    for (auto& encodedId : road->_names)
+                    for (auto& nameValue : road->_names)
                     {
-                        const uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(encodedId);
-                        encodedId = roadNamesTable[stringId];
+                        const uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(nameValue);
+
+                        if (stringId >= roadNamesTable.size())
+                        {
+                            LogPrintf(LogSeverityLevel::Error,
+                                "Data mismatch: string #%d (road #%" PRIu64 " (%" PRIi64 ") not found in string table (size %d) in section '%s'",
+                                stringId,
+                                road->id >> 1, static_cast<int64_t>(road->id) / 2,
+                                roadNamesTable.size(), qPrintable(section->name));
+                            nameValue = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
+                            continue;
+                        }
+                        nameValue = roadNamesTable[stringId];
                     }
 
                     if (!visitor || visitor(road))
@@ -595,8 +602,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
 
                 bool shouldNotSkip = (bbox31 == nullptr);
                 auto pointsCount = 0;
-                auto dx = treeNode->bbox31.left >> ShiftCoordinates;
-                auto dy = treeNode->bbox31.top >> ShiftCoordinates;
+                auto dx = treeNode->area31.left >> ShiftCoordinates;
+                auto dy = treeNode->area31.top >> ShiftCoordinates;
                 auto pPoint = points31.data();
                 while (cis->BytesUntilLimit() > 0)
                 {
@@ -680,7 +687,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     road.reset(new OsmAnd::Model::Road(section));
                 road->_points31 = qMove(points31);
                 road->_bbox31 = roadBBox;
-                
+
                 break;
             }
             case OBF::RouteData::kPointTypesFieldNumber:
@@ -771,7 +778,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
     const IQueryController* const controller,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     // Check if this section has initialized rules
     {
@@ -826,9 +833,9 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             const Stopwatch bboxNodeCheckStopwatch(metric != nullptr);
 
             const auto shouldSkip =
-                !bbox31->contains(rootNode->bbox31) &&
-                !rootNode->bbox31.contains(*bbox31) &&
-                !bbox31->intersects(rootNode->bbox31);
+                !bbox31->contains(rootNode->area31) &&
+                !rootNode->area31.contains(*bbox31) &&
+                !bbox31->intersects(rootNode->area31);
 
             // Update metric
             if (metric)
@@ -845,7 +852,6 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
         if (rootNode->dataOffset > 0)
             treeNodesWithData.push_back(rootNode);
 
-        auto childrenFoundation = MapFoundationType::Undefined;
         if (rootNode->childrenRelativeOffset > 0)
         {
             cis->Seek(rootNode->offset);
@@ -874,6 +880,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
         metric->elapsedTimeForNodes += treeNodesStopwatch.elapsed();
 
     // Read map objects from their blocks
+    QList< std::shared_ptr<const DataBlock> > danglingReferencedCacheEntries;
     for (const auto& treeNode : constOf(treeNodesWithData))
     {
         if (controller && controller->isAborted())
@@ -883,7 +890,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
         blockId.sectionRuntimeGeneratedId = section->runtimeGeneratedId;
         blockId.offset = treeNode->dataOffset;
 
-        if (cache && cache->shouldCacheBlock(blockId, dataLevel, treeNode->bbox31, bbox31))
+        if (cache && cache->shouldCacheBlock(blockId, dataLevel, treeNode->area31, bbox31))
         {
             // In case cache is provided, read and cache
 
@@ -940,12 +947,14 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                     metric->roadsBlocksRead++;
 
                 // Create a data block and share it
-                dataBlock.reset(new DataBlock(blockId, dataLevel, treeNode->bbox31, roads));
+                dataBlock.reset(new DataBlock(blockId, dataLevel, treeNode->area31, roads));
                 cache->fulfilPromiseAndReference(blockId, dataBlock);
             }
 
             if (outReferencedCacheEntries)
                 outReferencedCacheEntries->push_back(dataBlock);
+            else
+                danglingReferencedCacheEntries.push_back(dataBlock);
 
             // Process data block
             for (const auto& road : constOf(dataBlock->roads))
@@ -1011,10 +1020,18 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             metric->roadsBlocksProcessed++;
     }
 
+    // In case cache was supplied, but referenced cache entries output collection was not specified, release all dangling references
+    if (cache && !outReferencedCacheEntries)
+    {
+        for (auto& referencedCacheEntry : danglingReferencedCacheEntries)
+            cache->releaseReference(referencedCacheEntry->id, referencedCacheEntry);
+        danglingReferencedCacheEntries.clear();
+    }
+
     // Update metric
     if (metric)
         metric->elapsedTimeForRoadsBlocks += roadsStopwatch.elapsed();
-    
+
     // In case cache was used, and metric was requested, some values must be taken from different parts
     if (cache && metric)
     {

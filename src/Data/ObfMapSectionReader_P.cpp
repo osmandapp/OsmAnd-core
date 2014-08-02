@@ -839,6 +839,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     auto foundation = MapFoundationType::Undefined;
     if (foundationOut)
         *foundationOut = foundation;
+    QList< std::shared_ptr<const DataBlock> > danglingReferencedCacheEntries;
     for (const auto& mapLevel : constOf(section->_levels))
     {
         // Update metric
@@ -1026,6 +1027,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
                 if (outReferencedCacheEntries)
                     outReferencedCacheEntries->push_back(dataBlock);
+                else
+                    danglingReferencedCacheEntries.push_back(dataBlock);
 
                 // Process data block
                 for (const auto& mapObject : constOf(dataBlock->mapObjects))
@@ -1094,6 +1097,14 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         // Update metric
         if (metric)
             metric->elapsedTimeForMapObjectsBlocks += mapObjectsStopwatch.elapsed();
+    }
+
+    // In case cache was supplied, but referenced cache entries output collection was not specified, release all dangling references
+    if (cache && !outReferencedCacheEntries)
+    {
+        for (auto& referencedCacheEntry : danglingReferencedCacheEntries)
+            cache->releaseReference(referencedCacheEntry->id, zoom, referencedCacheEntry);
+        danglingReferencedCacheEntries.clear();
     }
 
     if (foundationOut)

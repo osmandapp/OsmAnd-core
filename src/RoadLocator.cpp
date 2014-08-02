@@ -6,7 +6,7 @@ OsmAnd::RoadLocator::RoadLocator(
     const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& cache_ /*= nullptr*/)
     : _p(new RoadLocator_P(this))
     , obfsCollection(obfsCollection_)
-    , cache(cache_ ? cache_ : std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>(new ObfRoutingSectionReader::DataBlocksCache()))
+    , cache(cache_)
 {
 }
 

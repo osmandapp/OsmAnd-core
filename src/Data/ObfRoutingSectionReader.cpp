@@ -41,11 +41,11 @@ void OsmAnd::ObfRoutingSectionReader::loadRoads(
 OsmAnd::ObfRoutingSectionReader::DataBlock::DataBlock(
     const DataBlockId id_,
     const RoutingDataLevel dataLevel_,
-    const AreaI bbox31_,
+    const AreaI area31_,
     const QList< std::shared_ptr<const OsmAnd::Model::Road> >& roads_)
     : id(id_)
     , dataLevel(dataLevel_)
-    , bbox31(bbox31_)
+    , area31(area31_)
     , roads(roads_)
 {
 }

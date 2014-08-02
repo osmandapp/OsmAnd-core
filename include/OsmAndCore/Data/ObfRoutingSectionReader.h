@@ -41,14 +41,14 @@ namespace OsmAnd
             DataBlock(
                 const DataBlockId id,
                 const RoutingDataLevel dataLevel,
-                const AreaI bbox31,
+                const AreaI area31,
                 const QList< std::shared_ptr<const OsmAnd::Model::Road> >& roads);
         public:
             ~DataBlock();
 
             const DataBlockId id;
             const RoutingDataLevel dataLevel;
-            const AreaI bbox31;
+            const AreaI area31;
             const QList< std::shared_ptr<const OsmAnd::Model::Road> > roads;
 
         friend class OsmAnd::ObfRoutingSectionReader;

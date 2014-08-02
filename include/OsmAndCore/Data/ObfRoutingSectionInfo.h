@@ -100,7 +100,7 @@ namespace OsmAnd
         uint32_t length;
         uint32_t offset;
 
-        AreaI bbox31;
+        AreaI area31;
 
         uint32_t childrenRelativeOffset;
         uint32_t dataOffset;
