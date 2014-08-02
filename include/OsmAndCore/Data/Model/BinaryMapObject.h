@@ -61,6 +61,9 @@ namespace OsmAnd
 
             bool intersects(const AreaI& area) const;
 
+            QString getNameInNativeLanguage() const;
+            QString getNameInLanguage(const QString& lang) const;
+
             static uint64_t getUniqueId(const std::shared_ptr<const BinaryMapObject>& mapObject);
             static uint64_t getUniqueId(const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section);
 

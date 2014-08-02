@@ -50,6 +50,27 @@ OsmAnd::Model::Road::~Road()
 {
 }
 
+QString OsmAnd::Model::Road::getNameInNativeLanguage() const
+{
+    const auto citName = _names.constFind(section->encodingDecodingRules->name_encodingRuleId);
+    if (citName == _names.cend())
+        return QString::null;
+    return *citName;
+}
+
+QString OsmAnd::Model::Road::getNameInLanguage(const QString& lang) const
+{
+    const auto& encDecRules = section->encodingDecodingRules;
+    const auto citNameId = encDecRules->localizedName_encodingRuleIds.constFind(lang);
+    if (citNameId == encDecRules->localizedName_encodingRuleIds.cend())
+        return QString::null;
+
+    const auto citName = _names.constFind(*citNameId);
+    if (citName == _names.cend())
+        return QString::null;
+    return *citName;
+}
+
 //double OsmAnd::Model::Road::getDirectionDelta( uint32_t originIdx, bool forward ) const
 //{
 //    //NOTE: Victor: the problem to put more than 5 meters that BinaryRoutePlanner will treat

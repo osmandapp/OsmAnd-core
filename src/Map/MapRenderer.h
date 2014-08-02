@@ -153,6 +153,7 @@ namespace OsmAnd
         Concurrent::Dispatcher& getRenderThreadDispatcher();
         Concurrent::Dispatcher& getGpuThreadDispatcher();
 
+        virtual QList<TileId> getVisibleTiles() const;
         virtual unsigned int getVisibleTilesCount() const;
         virtual unsigned int getSymbolsCount() const;
 

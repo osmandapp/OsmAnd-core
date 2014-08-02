@@ -69,6 +69,9 @@ namespace OsmAnd
             const QHash< uint32_t, QVector<uint32_t> >& pointsTypes;
             const QHash< uint64_t, RoadRestriction >& restrictions;
 
+            QString getNameInNativeLanguage() const;
+            QString getNameInLanguage(const QString& lang) const;
+
             /*double getDirectionDelta(uint32_t originIdx, bool forward) const;
             double getDirectionDelta(uint32_t originIdx, bool forward, float distance) const;
 

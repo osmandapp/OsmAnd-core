@@ -5,6 +5,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QSet>
+#include <QList>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -52,6 +53,9 @@ namespace OsmAnd
         virtual bool pauseGpuWorkerThread() = 0;
         virtual bool resumeGpuWorkerThread() = 0;
 
+        OSMAND_CALLABLE(FramePreparedObserver, void, IMapRenderer* mapRenderer);
+        const ObservableAs<FramePreparedObserver> framePreparedObservable;
+
         virtual void reloadEverything() = 0;
 
         const MapRendererState& state;
@@ -59,6 +63,7 @@ namespace OsmAnd
         virtual void forcedFrameInvalidate() = 0;
         virtual void forcedGpuProcessingCycle() = 0;
 
+        virtual QList<TileId> getVisibleTiles() const = 0;
         virtual unsigned int getVisibleTilesCount() const = 0;
         virtual unsigned int getSymbolsCount() const = 0;
 
@@ -96,7 +101,7 @@ namespace OsmAnd
         virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
 
-        OSMAND_CALLABLE(StateChangeObserver, void, const MapRendererStateChange thisChange, const uint32_t allChanges);
+        OSMAND_CALLABLE(StateChangeObserver, void, IMapRenderer* mapRenderer, const MapRendererStateChange thisChange, const uint32_t allChanges);
         const ObservableAs<StateChangeObserver> stateChangeObservable;
 
         virtual float getReferenceTileSizeOnScreen() = 0;

@@ -200,7 +200,7 @@ void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateC
     _requestedStateUpdatedMask |= static_cast<uint32_t>(change);
 
     // Notify all observers
-    stateChangeObservable.postNotify(change, _requestedStateUpdatedMask);
+    stateChangeObservable.postNotify(this, change, _requestedStateUpdatedMask);
 
     // Since our current state is invalid, frame is also invalidated
     invalidateFrame();
@@ -454,6 +454,8 @@ bool OsmAnd::MapRenderer::prepareFrame()
     ok = postPrepareFrame();
     if (!ok)
         return false;
+
+    framePreparedObservable.postNotify(this);
 
     return true;
 }
@@ -796,6 +798,13 @@ OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getRenderThreadDispatcher()
 OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getGpuThreadDispatcher()
 {
     return _gpuThreadDispatcher;
+}
+
+QList<OsmAnd::TileId> OsmAnd::MapRenderer::getVisibleTiles() const
+{
+    QReadLocker scopedLocker(&_internalStateLock);
+
+    return detachedOf(getInternalStateRef()->visibleTiles);
 }
 
 unsigned int OsmAnd::MapRenderer::getVisibleTilesCount() const

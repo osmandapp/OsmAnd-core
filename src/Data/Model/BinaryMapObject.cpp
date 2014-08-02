@@ -85,6 +85,27 @@ bool OsmAnd::Model::BinaryMapObject::intersects( const AreaI& area ) const
     return false;
 }
 
+QString OsmAnd::Model::BinaryMapObject::getNameInNativeLanguage() const
+{
+    const auto citName = _names.constFind(section->encodingDecodingRules->name_encodingRuleId);
+    if (citName == _names.cend())
+        return QString::null;
+    return *citName;
+}
+
+QString OsmAnd::Model::BinaryMapObject::getNameInLanguage(const QString& lang) const
+{
+    const auto& encDecRules = section->encodingDecodingRules;
+    const auto citNameId = encDecRules->localizedName_encodingRuleIds.constFind(lang);
+    if (citNameId == encDecRules->localizedName_encodingRuleIds.cend())
+        return QString::null;
+
+    const auto citName = _names.constFind(*citNameId);
+    if (citName == _names.cend())
+        return QString::null;
+    return *citName;
+}
+
 uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId( const std::shared_ptr<const BinaryMapObject>& mapObject )
 {
     return getUniqueId(mapObject->id, mapObject->section);
