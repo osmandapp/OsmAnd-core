@@ -2,6 +2,7 @@
 #include "ObfRoutingSectionInfo_P.h"
 
 #include "Utilities.h"
+#include "Logging.h"
 
 OsmAnd::ObfRoutingSectionInfo::ObfRoutingSectionInfo(const std::weak_ptr<ObfInfo>& owner)
     : ObfSectionInfo(owner)
@@ -37,13 +38,26 @@ OsmAnd::ObfRoutingSectionLevelTreeNode::~ObfRoutingSectionLevelTreeNode()
 {
 }
 
-void OsmAnd::ObfRoutingSectionEncodingDecodingRules::addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
+OsmAnd::ObfRoutingSectionEncodingDecodingRules::ObfRoutingSectionEncodingDecodingRules()
+    : name_encodingRuleId(std::numeric_limits<uint32_t>::max())
 {
-    /*std::shared_ptr<Rule> rule(new Rule());
+}
 
-    rule->id = ruleId;
-    rule->tag = ruleTag;
-    rule->value = ruleValue;*/
+void OsmAnd::ObfRoutingSectionEncodingDecodingRules::createRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
+{
+    auto itEncodingRule = encodingRuleIds.find(ruleTag);
+    if (itEncodingRule == encodingRuleIds.end())
+        itEncodingRule = encodingRuleIds.insert(ruleTag, QHash<QString, uint32_t>());
+    itEncodingRule->insert(ruleValue, ruleId);
+
+    if (!decodingRules.contains(ruleId))
+    {
+        ObfRoutingSectionDecodingRule rule;
+        rule.tag = ruleTag;
+        rule.value = ruleValue;
+
+        decodingRules.insert(ruleId, rule);
+    }
 
     if (QLatin1String("name") == ruleTag)
     {
@@ -56,6 +70,10 @@ void OsmAnd::ObfRoutingSectionEncodingDecodingRules::addRule(const uint32_t rule
         localizedName_encodingRuleIds.insert(languageId, ruleId);
         namesRuleId.insert(ruleId);
     }
+    /*else
+    {
+        LogPrintf(LogSeverityLevel::Debug, "%s = %s", qPrintable(ruleTag), qPrintable(ruleValue));
+    }*/
     //if (ruleTag.compare(QLatin1String("oneway"), Qt::CaseInsensitive) == 0)
     //{
     //    rule->type = RuleType::OneWay;
@@ -105,4 +123,16 @@ void OsmAnd::ObfRoutingSectionEncodingDecodingRules::addRule(const uint32_t rule
     //while (decodingRules.size() < rule->id)
     //    decodingRules.push_back(nullptr);
     //decodingRules.push_back(rule);
+}
+
+void OsmAnd::ObfRoutingSectionEncodingDecodingRules::createMissingRules()
+{
+    auto nextId = decodingRules.size() * 2 + 1;
+
+    // Create 'name' encoding/decoding rule, if it still does not exist
+    if (name_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    {
+        createRule(nextId++,
+            QLatin1String("name"), QString::null);
+    }
 }

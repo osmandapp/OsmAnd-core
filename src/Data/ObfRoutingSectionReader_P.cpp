@@ -115,7 +115,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRule(
                 if (ruleValue.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
                     ruleValue = QLatin1String("no");
 
-                rules->addRule(ruleId, ruleTag, ruleValue);
+                rules->createRule(ruleId, ruleTag, ruleValue);
                 return;
             }
             case OBF::OsmAndRoutingIndex_RouteEncodingRule::kTagFieldNumber:

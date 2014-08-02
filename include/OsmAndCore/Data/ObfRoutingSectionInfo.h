@@ -23,42 +23,24 @@ namespace OsmAnd
         class Road;
     }
 
+    struct OSMAND_CORE_API ObfRoutingSectionDecodingRule
+    {
+        QString tag;
+        QString value;
+    };
+
     struct OSMAND_CORE_API ObfRoutingSectionEncodingDecodingRules
     {
-        //enum class RuleType : uint32_t
-        //{
-        //    Access = 1,
-        //    OneWay = 2,
-        //    Highway = 3,
-        //    Maxspeed = 4,
-        //    Roundabout = 5,
-        //    TrafficSignals = 6,
-        //    RailwayCrossing = 7,
-        //    Lanes = 8,
-        //};
+        ObfRoutingSectionEncodingDecodingRules();
 
-        //struct OSMAND_CORE_API Rule
-        //{
-        //    uint32_t id;
-        //    RuleType type;
-        //    
-        //    QString tag;
-        //    QString value;
-        //    
-        //    union
-        //    {
-        //        int32_t asSignedInt;
-        //        uint32_t asUnsignedInt;
-        //        float asFloat;
-        //    } parsedValue;
-        //};
-
+        QHash< QString, QHash<QString, uint32_t> > encodingRuleIds;
+        QHash< uint32_t, ObfRoutingSectionDecodingRule > decodingRules;
         uint32_t name_encodingRuleId;
         QHash< QString, uint32_t > localizedName_encodingRuleIds;
         QSet< uint32_t > namesRuleId;
 
-        /*QList< std::shared_ptr<const Rule> > decodingRules;*/
-        void addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
+        void createRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
+        void createMissingRules();
     };
 
     class ObfRoutingSectionInfo_P;
