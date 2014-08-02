@@ -9,6 +9,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/IRoadLocator.h>
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 
 namespace OsmAnd
@@ -20,7 +21,7 @@ namespace OsmAnd
     }
 
     class RoadLocator_P;
-    class OSMAND_CORE_API RoadLocator
+    class OSMAND_CORE_API RoadLocator : public IRoadLocator
     {
         Q_DISABLE_COPY(RoadLocator);
     private:
@@ -35,16 +36,29 @@ namespace OsmAnd
         const std::shared_ptr<const IObfsCollection> obfsCollection;
         const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache> cache;
 
-        std::shared_ptr<const Model::Road> findNearestRoad(
+        virtual std::shared_ptr<const Model::Road> findNearestRoad(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
             int* const outNearestRoadPointIndex = nullptr,
-            double* const outDistanceToNearestRoadPoint = nullptr);
-        QList< std::shared_ptr<const Model::Road> > findRoadsInArea(
+            double* const outDistanceToNearestRoadPoint = nullptr) const;
+        virtual QList< std::shared_ptr<const Model::Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
-            const RoutingDataLevel dataLevel);
+            const RoutingDataLevel dataLevel) const;
+
+        std::shared_ptr<const Model::Road> findNearestRoadEx(
+            const PointI position31,
+            const double radiusInMeters,
+            const RoutingDataLevel dataLevel,
+            int* const outNearestRoadPointIndex = nullptr,
+            double* const outDistanceToNearestRoadPoint = nullptr,
+            QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries = nullptr) const;
+        QList< std::shared_ptr<const Model::Road> > findRoadsInAreaEx(
+            const PointI position31,
+            const double radiusInMeters,
+            const RoutingDataLevel dataLevel,
+            QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries = nullptr) const;
 
         static std::shared_ptr<const Model::Road> findNearestRoad(
             const QList< std::shared_ptr<const Model::Road> >& collection,

@@ -19,17 +19,37 @@ std::shared_ptr<const OsmAnd::Model::Road> OsmAnd::RoadLocator::findNearestRoad(
     const double radiusInMeters,
     const RoutingDataLevel dataLevel,
     int* const outNearestRoadPointIndex /*= nullptr*/,
-    double* const outDistanceToNearestRoadPoint /*= nullptr*/)
+    double* const outDistanceToNearestRoadPoint /*= nullptr*/) const
 {
-    return _p->findNearestRoad(position31, radiusInMeters, dataLevel, outNearestRoadPointIndex, outDistanceToNearestRoadPoint);
+    return findNearestRoadEx(position31, radiusInMeters, dataLevel, outNearestRoadPointIndex, outDistanceToNearestRoadPoint);
 }
 
 QList< std::shared_ptr<const OsmAnd::Model::Road> > OsmAnd::RoadLocator::findRoadsInArea(
     const PointI position31,
     const double radiusInMeters,
-    const RoutingDataLevel dataLevel)
+    const RoutingDataLevel dataLevel) const
 {
-    return _p->findRoadsInArea(position31, radiusInMeters, dataLevel);
+    return findRoadsInArea(position31, radiusInMeters, dataLevel);
+}
+
+std::shared_ptr<const OsmAnd::Model::Road> OsmAnd::RoadLocator::findNearestRoadEx(
+    const PointI position31,
+    const double radiusInMeters,
+    const RoutingDataLevel dataLevel,
+    int* const outNearestRoadPointIndex /*= nullptr*/,
+    double* const outDistanceToNearestRoadPoint /*= nullptr*/,
+    QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries /*= nullptr*/) const
+{
+    return _p->findNearestRoadEx(position31, radiusInMeters, dataLevel, outNearestRoadPointIndex, outDistanceToNearestRoadPoint, outReferencedCacheEntries);
+}
+
+QList< std::shared_ptr<const OsmAnd::Model::Road> > OsmAnd::RoadLocator::findRoadsInAreaEx(
+    const PointI position31,
+    const double radiusInMeters,
+    const RoutingDataLevel dataLevel,
+    QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries /*= nullptr*/) const
+{
+    return _p->findRoadsInAreaEx(position31, radiusInMeters, dataLevel, outReferencedCacheEntries);
 }
 
 std::shared_ptr<const OsmAnd::Model::Road> OsmAnd::RoadLocator::findNearestRoad(

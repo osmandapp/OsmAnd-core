@@ -31,16 +31,18 @@ namespace OsmAnd
 
         ImplementationInterface<RoadLocator> owner;
 
-        std::shared_ptr<const Model::Road> findNearestRoad(
+        std::shared_ptr<const Model::Road> findNearestRoadEx(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
             int* const outNearestRoadPointIndex,
-            double* const outDistanceToNearestRoadPoint);
-        QList< std::shared_ptr<const Model::Road> > findRoadsInArea(
+            double* const outDistanceToNearestRoadPoint,
+            QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const;
+        QList< std::shared_ptr<const Model::Road> > findRoadsInAreaEx(
             const PointI position31,
             const double radiusInMeters,
-            const RoutingDataLevel dataLevel);
+            const RoutingDataLevel dataLevel,
+            QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const;
 
         static std::shared_ptr<const Model::Road> findNearestRoad(
             const QList< std::shared_ptr<const Model::Road> >& collection,
