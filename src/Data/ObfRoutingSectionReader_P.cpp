@@ -427,14 +427,16 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             }
             case OBF::OsmAndRoutingIndex_RouteDataBlock::kDataObjectsFieldNumber:
             {
-                gpb::uint32 length;
-                cis->ReadVarint32(&length);
-                auto oldLimit = cis->PushLimit(length);
-
                 const Stopwatch readRoadStopwatch(metric != nullptr);
                 std::shared_ptr<Model::Road> road;
                 uint32_t internalId;
+
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
                 readRoad(reader, section, treeNode, bbox31, filterById, roadsIdsTable, internalId, road, metric);
+                assert(cis->BytesUntilLimit() == 0);
+                cis->PopLimit(oldLimit);
 
                 // Update metric
                 if (metric)
@@ -459,8 +461,6 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
 
                 resultsByInternalId.insert(internalId, road);
 
-                assert(cis->BytesUntilLimit() == 0);
-                cis->PopLimit(oldLimit);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBlock::kRestrictionsFieldNumber:
