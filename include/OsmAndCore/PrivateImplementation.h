@@ -95,8 +95,8 @@ namespace OsmAnd
         NonConstInterface* const _interface;
     protected:
     public:
-        ImplementationInterface(NonConstInterface* const interface)
-            : _interface(interface)
+        ImplementationInterface(NonConstInterface* const interface_)
+            : _interface(interface_)
         {
         }
 
