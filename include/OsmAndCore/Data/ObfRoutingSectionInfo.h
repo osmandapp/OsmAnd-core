@@ -6,6 +6,8 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
 #include <QVector>
+#include <QHash>
+#include <QSet>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -21,37 +23,42 @@ namespace OsmAnd
         class Road;
     }
 
-    struct OSMAND_CORE_API ObfRoutingSectionDecodingRules
+    struct OSMAND_CORE_API ObfRoutingSectionEncodingDecodingRules
     {
-        enum class RuleType : uint32_t
-        {
-            Access = 1,
-            OneWay = 2,
-            Highway = 3,
-            Maxspeed = 4,
-            Roundabout = 5,
-            TrafficSignals = 6,
-            RailwayCrossing = 7,
-            Lanes = 8,
-        };
+        //enum class RuleType : uint32_t
+        //{
+        //    Access = 1,
+        //    OneWay = 2,
+        //    Highway = 3,
+        //    Maxspeed = 4,
+        //    Roundabout = 5,
+        //    TrafficSignals = 6,
+        //    RailwayCrossing = 7,
+        //    Lanes = 8,
+        //};
 
-        struct OSMAND_CORE_API DecodingRule
-        {
-            uint32_t id;
-            RuleType type;
-            
-            QString tag;
-            QString value;
-            
-            union
-            {
-                int32_t asSignedInt;
-                uint32_t asUnsignedInt;
-                float asFloat;
-            } parsedValue;
-        };
+        //struct OSMAND_CORE_API Rule
+        //{
+        //    uint32_t id;
+        //    RuleType type;
+        //    
+        //    QString tag;
+        //    QString value;
+        //    
+        //    union
+        //    {
+        //        int32_t asSignedInt;
+        //        uint32_t asUnsignedInt;
+        //        float asFloat;
+        //    } parsedValue;
+        //};
 
-        QList< std::shared_ptr<const DecodingRule> > decodingRules;
+        uint32_t name_encodingRuleId;
+        QHash< QString, uint32_t > localizedName_encodingRuleIds;
+        QSet< uint32_t > namesRuleId;
+
+        /*QList< std::shared_ptr<const Rule> > decodingRules;*/
+        void addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
     };
 
     class ObfRoutingSectionInfo_P;
@@ -65,7 +72,7 @@ namespace OsmAnd
     public:
         virtual ~ObfRoutingSectionInfo();
 
-        const std::shared_ptr<const ObfRoutingSectionDecodingRules>& decodingRules;
+        const std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     friend class OsmAnd::ObfReader_P;

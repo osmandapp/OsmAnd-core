@@ -27,7 +27,7 @@ namespace OsmAnd
         ObfRoutingSectionInfo_P(ObfRoutingSectionInfo* owner);
 
         mutable QMutex _decodingRulesMutex;
-        mutable std::shared_ptr<const ObfRoutingSectionDecodingRules> _decodingRules;
+        mutable std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> _decodingRules;
 
         struct LevelContainer
         {

@@ -59,13 +59,13 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
     }
 }
 
-void OsmAnd::ObfRoutingSectionReader_P::readDecodingRules(
+void OsmAnd::ObfRoutingSectionReader_P::readRules(
     const ObfReader_P& reader,
-    const std::shared_ptr<ObfRoutingSectionDecodingRules>& rules)
+    const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules)
 {
     const auto cis = reader._codedInputStream.get();
 
-    uint32_t ruleId = 1;
+    uint32_t defaultRuleId = 1;
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -78,19 +78,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readDecodingRules(
             {
                 const auto length = ObfReaderUtilities::readLength(cis);
                 const auto oldLimit = cis->PushLimit(length);
-
-                const std::shared_ptr<ObfRoutingSectionDecodingRules::DecodingRule> decodingRule(new ObfRoutingSectionDecodingRules::DecodingRule());
-                decodingRule->id = ruleId++;
-                readDecodingRule(reader, decodingRule);
+                readRule(reader, rules, defaultRuleId++);
                 assert(cis->BytesUntilLimit() == 0);
-
                 cis->PopLimit(oldLimit);
 
-                // Fill gaps in IDs
-                while (rules->decodingRules.size() < decodingRule->id)
-                    rules->decodingRules.push_back(nullptr);
-
-                rules->decodingRules.push_back(qMove(decodingRule));
                 break;
             }
             default:
@@ -100,13 +91,16 @@ void OsmAnd::ObfRoutingSectionReader_P::readDecodingRules(
     }
 }
 
-void OsmAnd::ObfRoutingSectionReader_P::readDecodingRule(
+void OsmAnd::ObfRoutingSectionReader_P::readRule(
     const ObfReader_P& reader,
-    const std::shared_ptr<ObfRoutingSectionDecodingRules::DecodingRule>& rule)
+    const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules,
+    const uint32_t defaultId)
 {
     const auto cis = reader._codedInputStream.get();
 
-    typedef ObfRoutingSectionDecodingRules::RuleType RuleType;
+    QString ruleTag;
+    QString ruleValue;
+    uint32_t ruleId = defaultId;
 
     for (;;)
     {
@@ -116,69 +110,25 @@ void OsmAnd::ObfRoutingSectionReader_P::readDecodingRule(
             case 0:
             {
                 // Normalize some values
-                if (rule->value.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0)
-                    rule->value = QLatin1String("yes");
-                if (rule->value.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
-                    rule->value = QLatin1String("no");
+                if (ruleValue.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0)
+                    ruleValue = QLatin1String("yes");
+                if (ruleValue.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
+                    ruleValue = QLatin1String("no");
 
-                if (rule->tag.compare(QLatin1String("oneway"), Qt::CaseInsensitive) == 0)
-                {
-                    rule->type = RuleType::OneWay;
-                    if (rule->value == QLatin1String("-1") || rule->value == QLatin1String("reverse"))
-                        rule->parsedValue.asSignedInt = -1;
-                    else if (rule->value == QLatin1String("1") || rule->value == QLatin1String("yes"))
-                        rule->parsedValue.asSignedInt = 1;
-                    else
-                        rule->parsedValue.asSignedInt = 0;
-                }
-                else if (rule->tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && rule->value == QLatin1String("traffic_signals"))
-                {
-                    rule->type = RuleType::TrafficSignals;
-                }
-                else if (rule->tag.compare(QLatin1String("railway"), Qt::CaseInsensitive) == 0 && (rule->value == QLatin1String("crossing") || rule->value == QLatin1String("level_crossing")))
-                {
-                    rule->type = RuleType::RailwayCrossing;
-                }
-                else if (rule->tag.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0 && !rule->value.isEmpty())
-                {
-                    rule->type = RuleType::Roundabout;
-                }
-                else if (rule->tag.compare(QLatin1String("junction"), Qt::CaseInsensitive) == 0 && rule->value.compare(QLatin1String("roundabout"), Qt::CaseInsensitive) == 0)
-                {
-                    rule->type = RuleType::Roundabout;
-                }
-                else if (rule->tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) == 0 && !rule->value.isEmpty())
-                {
-                    rule->type = RuleType::Highway;
-                }
-                else if (rule->tag.startsWith(QLatin1String("access")) && !rule->value.isEmpty())
-                {
-                    rule->type = RuleType::Access;
-                }
-                else if (rule->tag.compare(QLatin1String("maxspeed"), Qt::CaseInsensitive) == 0 && !rule->value.isEmpty())
-                {
-                    rule->type = RuleType::Maxspeed;
-                    rule->parsedValue.asFloat = Utilities::parseSpeed(rule->value, -1.0);
-                }
-                else if (rule->tag.compare(QLatin1String("lanes"), Qt::CaseInsensitive) == 0 && !rule->value.isEmpty())
-                {
-                    rule->type = RuleType::Lanes;
-                    rule->parsedValue.asSignedInt = Utilities::parseArbitraryInt(rule->value, -1);
-                }
-
+                rules->addRule(ruleId, ruleTag, ruleValue);
                 return;
             }
             case OBF::OsmAndRoutingIndex_RouteEncodingRule::kTagFieldNumber:
-                ObfReaderUtilities::readQString(cis, rule->tag);
+                ObfReaderUtilities::readQString(cis, ruleTag);
                 break;
             case OBF::OsmAndRoutingIndex_RouteEncodingRule::kValueFieldNumber:
-                ObfReaderUtilities::readQString(cis, rule->value);
+                ObfReaderUtilities::readQString(cis, ruleValue);
                 break;
             case OBF::OsmAndRoutingIndex_RouteEncodingRule::kIdFieldNumber:
             {
                 gpb::uint32 id;
                 cis->ReadVarint32(&id);
-                rule->id = id;
+                ruleId = id;
                 break;
             }
             default:
@@ -534,6 +484,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockRestrictions(
             case 0:
             {
                 const auto originRoad = roadsByInternalIds[originInternalId];
+                if (!originRoad)
+                    return;
                 const auto destinationRoadId = roadsInternalIdToGlobalIdMap[destinationInternalId];
                 originRoad->_restrictions.insert(destinationRoadId, static_cast<Model::RoadRestriction>(restrictionType));
                 return;
@@ -789,8 +741,8 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             cis->Seek(section->_offset);
             auto oldLimit = cis->PushLimit(section->_length);
 
-            std::shared_ptr<ObfRoutingSectionDecodingRules> decodingRules(new ObfRoutingSectionDecodingRules());
-            readDecodingRules(reader, decodingRules);
+            std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> decodingRules(new ObfRoutingSectionEncodingDecodingRules());
+            readRules(reader, decodingRules);
             section->_p->_decodingRules = decodingRules;
             assert(cis->BytesUntilLimit() == 0);
 

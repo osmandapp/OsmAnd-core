@@ -51,13 +51,14 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<ObfRoutingSectionInfo>& section);
 
-        static void readDecodingRules(
+        static void readRules(
             const ObfReader_P& reader,
-            const std::shared_ptr<ObfRoutingSectionDecodingRules>& rules);
+            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules);
 
-        static void readDecodingRule(
+        static void readRule(
             const ObfReader_P& reader,
-            const std::shared_ptr<ObfRoutingSectionDecodingRules::DecodingRule>& rule);
+            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules,
+            const uint32_t defaultId);
 
         static void readLevelTreeNodes(
             const ObfReader_P& reader,
