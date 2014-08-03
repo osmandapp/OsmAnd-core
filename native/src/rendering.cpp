@@ -670,7 +670,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 	req->searchRule(1);
 	std::string resId = req->getStringPropertyValue(req-> props()-> R_ICON);
 	std::string shieldId = req->getStringPropertyValue(req-> props()-> R_SHIELD);
-	SkBitmap* bmp = getCachedBitmap(rc, resId);
+	SkBitmap* bmp = getCachedBitmap(rc, resId);	
 	
 	if (bmp == NULL && !renderTxt)
 		return;
@@ -901,34 +901,37 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 				req->setIntFilter(req->props()->R_AREA, mobj->area);
 				req->setIntFilter(req->props()->R_POINT, mobj->points.size() == 1);
 				req->setIntFilter(req->props()->R_CYCLE, mobj->cycle());
-				if (req->searchRule(RenderingRulesStorage::ORDER_RULES)) {
+
+				if (req->searchRule(RenderingRulesStorage::ORDER_RULES)) {					
 					int objectType = req->getIntPropertyValue(req->props()->R_OBJECT_TYPE);
 					int order = req->getIntPropertyValue(req->props()->R_ORDER);
-					// int l = req->getIntPropertyValue(req->props()->R_LAYER);
-					MapDataObjectPrimitive mapObj;
-					mapObj.objectType = objectType;
-					mapObj.order = order;
-					mapObj.typeInd = j;
-					mapObj.obj = mobj;
-					// polygon
-					if(objectType == 3) {
-						MapDataObjectPrimitive pointObj = mapObj;
-						pointObj.objectType = 1;
-						double area = polygonArea(mobj, mult);
-						if(area > MAX_V) { 
-							mapObj.order = mapObj.order + (1. / area);
-							polygonsArray.push_back(mapObj);
-							pointsArray.push_back(pointObj); // TODO fix duplicate text? verify if it is needed for icon
+					if(order >= 0) {
+						// int l = req->getIntPropertyValue(req->props()->R_LAYER);
+						MapDataObjectPrimitive mapObj;
+						mapObj.objectType = objectType;
+						mapObj.order = order;
+						mapObj.typeInd = j;
+						mapObj.obj = mobj;
+						// polygon
+						if(objectType == 3) {
+							MapDataObjectPrimitive pointObj = mapObj;
+							pointObj.objectType = 1;
+							double area = polygonArea(mobj, mult);
+							if(area > MAX_V) { 
+								mapObj.order = mapObj.order + (1. / area);
+								polygonsArray.push_back(mapObj);
+								pointsArray.push_back(pointObj); // TODO fix duplicate text? verify if it is needed for icon
+							}
+						} else if(objectType == 1) {
+							pointsArray.push_back(mapObj);
+						} else {
+							linesArray.push_back(mapObj);
 						}
-					} else if(objectType == 1) {
-						pointsArray.push_back(mapObj);
-					} else {
-						linesArray.push_back(mapObj);
-					}
-					if (req->getIntPropertyValue(req->props()->R_SHADOW_LEVEL) > 0) {
-						rc->shadowLevelMin = std::min(rc->shadowLevelMin, order);
-						rc->shadowLevelMax = std::max(rc->shadowLevelMax, order);
-						req->clearIntvalue(req->props()->R_SHADOW_LEVEL);
+						if (req->getIntPropertyValue(req->props()->R_SHADOW_LEVEL) > 0) {
+							rc->shadowLevelMin = std::min(rc->shadowLevelMin, order);
+							rc->shadowLevelMax = std::max(rc->shadowLevelMax, order);
+							req->clearIntvalue(req->props()->R_SHADOW_LEVEL);
+						}
 					}
 				}
 

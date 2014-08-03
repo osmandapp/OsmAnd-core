@@ -345,7 +345,7 @@ class RenderingRulesHandler {
 			GroupRules group = t->st.top();
 			t->st.pop();
 			if (t->st.size() == 0) {
-				group.registerGlobalRules(t->storage,t->state);
+				group.registerGlobalRules(t->storage, t->state);
 			} else if(t->st.top().isGroup()){
 				t->st.top().childrenGroups.push_back(group);
 			}
