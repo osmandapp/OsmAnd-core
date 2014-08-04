@@ -289,6 +289,8 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_osmwiki.png:map/map_icons/osmwiki.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_other.png:map/map_icons/other.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_parking.png:map/map_icons/parking.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_place_capital.png:map/map_icons/place_capital.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_place_capital_night.png:map/map_icons/place_capital_night.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_place_city.png:map/map_icons/place_city.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_place_city_night.png:map/map_icons/place_city_night.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_place_town.png:map/map_icons/place_town.png
