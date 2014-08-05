@@ -39,8 +39,8 @@ namespace OsmAnd
         std::shared_ptr<MapRendererConfiguration> _currentConfiguration;
         std::shared_ptr<const MapRendererConfiguration> _currentConfigurationAsConst;
         std::shared_ptr<MapRendererConfiguration> _requestedConfiguration;
-        volatile uint32_t _currentConfigurationInvalidatedMask;
-        bool updateCurrentConfiguration();
+        QAtomicInt _currentConfigurationInvalidatedMask;
+        bool updateCurrentConfiguration(const unsigned int currentConfigurationInvalidatedMask);
 
         // State-related:
         mutable QAtomicInt _frameInvalidatesCounter;
@@ -48,8 +48,7 @@ namespace OsmAnd
         mutable QMutex _requestedStateMutex;
         MapRendererState _requestedState;
         MapRendererState _currentState;
-        volatile uint32_t _requestedStateUpdatedMask;
-        bool revalidateState();
+        QAtomicInt _requestedStateUpdatedMask;
         void notifyRequestedStateWasUpdated(const MapRendererStateChange change);
 
         // Resources-related:
@@ -75,6 +74,7 @@ namespace OsmAnd
 
         // Debug-related:
         mutable QReadWriteLock _debugSettingsLock;
+        QAtomicInt _currentDebugSettingsInvalidatedCounter;
         std::shared_ptr<MapRendererDebugSettings> _currentDebugSettings;
         std::shared_ptr<const MapRendererDebugSettings> _currentDebugSettingsAsConst;
         std::shared_ptr<MapRendererDebugSettings> _requestedDebugSettings;

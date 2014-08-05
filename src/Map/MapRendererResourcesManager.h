@@ -100,8 +100,7 @@ namespace OsmAnd
         void notifyNewResourceAvailableForDrawing();
 
         // Invalidated resources:
-        mutable QReadWriteLock _invalidatedResourcesTypesMaskLock;
-        volatile uint32_t _invalidatedResourcesTypesMask;
+        QAtomicInt _invalidatedResourcesTypesMask;
         void invalidateAllResources();
         void invalidateResourcesOfType(const MapRendererResourceType type);
         bool validateResources();

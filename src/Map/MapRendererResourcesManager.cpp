@@ -56,7 +56,6 @@
 OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* const owner_)
     : _taskHostBridge(this)
     , _mapSymbolsInRegisterCount(0)
-    , _invalidatedResourcesTypesMask(0)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
     , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResourcesManager::workerThreadProcedure, this)))
@@ -694,18 +693,15 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(const std::share
 
 void OsmAnd::MapRendererResourcesManager::invalidateAllResources()
 {
-    QWriteLocker scopedLocker(&_invalidatedResourcesTypesMaskLock);
-
-    _invalidatedResourcesTypesMask = ~((std::numeric_limits<uint32_t>::max() >> MapRendererResourceTypesCount) << MapRendererResourceTypesCount);
+    const auto newMask = ~((std::numeric_limits<uint32_t>::max() >> MapRendererResourceTypesCount) << MapRendererResourceTypesCount);
+    _invalidatedResourcesTypesMask.fetchAndStoreOrdered(newMask);
 
     renderer->invalidateFrame();
 }
 
 void OsmAnd::MapRendererResourcesManager::invalidateResourcesOfType(const MapRendererResourceType type)
 {
-    QWriteLocker scopedLocker(&_invalidatedResourcesTypesMaskLock);
-
-    _invalidatedResourcesTypesMask |= 1u << static_cast<int>(type);
+    _invalidatedResourcesTypesMask.fetchAndOrOrdered(1u << static_cast<int>(type));
 
     renderer->invalidateFrame();
 }
@@ -714,14 +710,7 @@ bool OsmAnd::MapRendererResourcesManager::validateResources()
 {
     bool anyResourcesVadilated = false;
 
-    uint32_t invalidatedResourcesTypesMask;
-    {
-        QReadLocker scopedLocker(&_invalidatedResourcesTypesMaskLock);
-
-        invalidatedResourcesTypesMask = _invalidatedResourcesTypesMask;
-        _invalidatedResourcesTypesMask = 0;
-    }
-
+    unsigned int invalidatedResourcesTypesMask = _invalidatedResourcesTypesMask.fetchAndStoreOrdered(0);
     uint32_t typeIndex = 0;
     while(invalidatedResourcesTypesMask != 0 && typeIndex < MapRendererResourceTypesCount)
     {

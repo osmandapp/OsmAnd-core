@@ -19,8 +19,6 @@
 
 OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
     : _isRenderingInitialized(false)
-    , _currentConfigurationInvalidatedMask(0)
-    , _requestedStateUpdatedMask(0)
     , _renderThreadId(nullptr)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerIsAlive(false)
@@ -145,66 +143,21 @@ void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t changesM
         _resources->invalidateResourcesOfType(MapRendererResourceType::Symbols);
     
     // Since our current configuration is invalid, frame is also invalidated
-    _currentConfigurationInvalidatedMask = changesMask;
+    _currentConfigurationInvalidatedMask.fetchAndOrOrdered(changesMask);
     invalidateFrame();
 }
 
-bool OsmAnd::MapRenderer::updateCurrentConfiguration()
+bool OsmAnd::MapRenderer::updateCurrentConfiguration(const unsigned int currentConfigurationInvalidatedMask_)
 {
-    uint32_t bitIndex = 0;
-    while (_currentConfigurationInvalidatedMask)
+    uint32_t changeIndex = 0;
+    unsigned int currentConfigurationInvalidatedMask = currentConfigurationInvalidatedMask_;
+    while (currentConfigurationInvalidatedMask != 0)
     {
-        if (_currentConfigurationInvalidatedMask & 0x1)
-            validateConfigurationChange(static_cast<ConfigurationChange>(bitIndex));
+        if (currentConfigurationInvalidatedMask & 0x1)
+            validateConfigurationChange(static_cast<ConfigurationChange>(changeIndex));
 
-        bitIndex++;
-        _currentConfigurationInvalidatedMask >>= 1;
-    }
-
-    return true;
-}
-
-bool OsmAnd::MapRenderer::revalidateState()
-{
-    bool ok;
-
-    // Capture new state
-    MapRendererState newState;
-    uint32_t updatedMask;
-    {
-        QMutexLocker scopedLocker(&_requestedStateMutex);
-
-        // Check if requested state was updated at all
-        if (!_requestedStateUpdatedMask)
-            return true;
-
-        // Capture new state and mask
-        newState = _requestedState;
-        updatedMask = _requestedStateUpdatedMask;
-
-        // And pull down mask that requested state was updated
-        _requestedStateUpdatedMask = 0;
-    }
-
-    // Save new state as current
-    _currentState = newState;
-
-    // Process updating of providers
-    _resources->updateBindings(_currentState, updatedMask);
-
-    // Update internal state, that is derived from current state
-    ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration);
-
-    // Frame is being invalidated anyways, since a refresh is needed due to state change (successful or not)
-    invalidateFrame();
-
-    // If there was an error, mark current state as updated again
-    if (!ok)
-    {
-        QMutexLocker scopedLocker(&_requestedStateMutex);
-        _requestedStateUpdatedMask = updatedMask;
-
-        return false;
+        changeIndex++;
+        currentConfigurationInvalidatedMask >>= 1;
     }
 
     return true;
@@ -212,10 +165,10 @@ bool OsmAnd::MapRenderer::revalidateState()
 
 void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateChange change)
 {
-    _requestedStateUpdatedMask |= static_cast<uint32_t>(change);
+    const unsigned int mask = _requestedStateUpdatedMask.fetchAndOrOrdered(static_cast<uint32_t>(change)) | static_cast<uint32_t>(change);
 
     // Notify all observers
-    stateChangeObservable.postNotify(this, change, _requestedStateUpdatedMask);
+    stateChangeObservable.postNotify(this, change, mask);
 
     // Since our current state is invalid, frame is also invalidated
     invalidateFrame();
@@ -469,33 +422,76 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
 
     bool ok;
 
+    // Update debug settings if needed
+    const auto currentDebugSettingsInvalidatedCounter = _currentDebugSettingsInvalidatedCounter.fetchAndAddOrdered(0);
+    if (currentDebugSettingsInvalidatedCounter > 0)
+    {
+        updateCurrentDebugSettings();
+
+        _currentDebugSettingsInvalidatedCounter.fetchAndAddOrdered(-currentDebugSettingsInvalidatedCounter);
+    }
+
     // If we have current configuration invalidated, we need to update it
     // and invalidate frame
-    if (_currentConfigurationInvalidatedMask)
+    const unsigned int currentConfigurationInvalidatedMask = _currentConfigurationInvalidatedMask.fetchAndStoreOrdered(0);
+    if (currentConfigurationInvalidatedMask != 0)
     {
         // Capture configuration
+        QReadLocker scopedLocker(&_configurationLock);
+
+        _requestedConfiguration->copyTo(*_currentConfiguration);
+    }
+
+    // Update configuration
+    if (currentConfigurationInvalidatedMask != 0)
+    {
+        ok = updateCurrentConfiguration(currentConfigurationInvalidatedMask);
+        if (!ok)
         {
-            QReadLocker scopedLocker(&_configurationLock);
+            _currentConfigurationInvalidatedMask.fetchAndOrOrdered(currentConfigurationInvalidatedMask);
 
-            _requestedConfiguration->copyTo(*_currentConfiguration);
-        }
+            invalidateFrame();
 
-        bool ok = updateCurrentConfiguration();
-        if (ok)
-            _currentConfigurationInvalidatedMask = 0;
-
-        invalidateFrame();
-
-        // If configuration is still invalidated, abort processing
-        if (_currentConfigurationInvalidatedMask)
             return false;
+        }
     }
 
     // Deal with state
-    ok = revalidateState();
-    if (!ok)
-        return false;
-    
+    unsigned int requestedStateUpdatedMask;
+    if ((requestedStateUpdatedMask = _requestedStateUpdatedMask.fetchAndStoreOrdered(0)) != 0)
+    {
+        QMutexLocker scopedLocker(&_requestedStateMutex);
+
+        // Capture new state
+        _currentState = _requestedState;
+    }
+
+    if (requestedStateUpdatedMask != 0)
+    {
+        // Process updating of providers
+        _resources->updateBindings(_currentState, requestedStateUpdatedMask);
+    }
+
+    // Update internal state, that is derived from current state and configuration
+    if (requestedStateUpdatedMask != 0 || currentConfigurationInvalidatedMask != 0)
+    {
+        ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration);
+
+        // Anyways, invalidate the frame
+        invalidateFrame();
+
+        if (!ok)
+        {
+            // In case updating internal state failed, restore changes as not-applied
+            if (requestedStateUpdatedMask != 0)
+                _requestedStateUpdatedMask.fetchAndOrOrdered(requestedStateUpdatedMask);
+            if (currentConfigurationInvalidatedMask != 0)
+                _currentConfigurationInvalidatedMask.fetchAndOrOrdered(currentConfigurationInvalidatedMask);
+
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -1211,6 +1207,7 @@ void OsmAnd::MapRenderer::setDebugSettings(const std::shared_ptr<const MapRender
     QWriteLocker scopedLocker(&_debugSettingsLock);
 
     debugSettings->copyTo(*_requestedDebugSettings);
+    _currentDebugSettingsInvalidatedCounter.fetchAndAddOrdered(1);
 
     invalidateFrame();
 }
