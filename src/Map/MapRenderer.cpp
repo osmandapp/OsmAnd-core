@@ -25,7 +25,7 @@ OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerIsAlive(false)
     , setupOptions(_setupOptions)
-    , currentConfiguration(_currentConfiguration)
+    , currentConfiguration(_currentConfigurationAsConst)
     , currentState(_currentState)
     , gpuAPI(gpuAPI_)
 {
@@ -69,54 +69,68 @@ bool OsmAnd::MapRenderer::setup(const MapRendererSetupOptions& setupOptions)
         return false;
 
     _setupOptions = setupOptions;
+    _currentConfigurationAsConst = _currentConfiguration = allocateConfiguration();
+    _requestedConfiguration = allocateConfiguration();
 
     return true;
 }
 
-OsmAnd::MapRendererConfiguration OsmAnd::MapRenderer::getConfiguration() const
+std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::MapRenderer::getConfiguration() const
 {
     QReadLocker scopedLocker(&_configurationLock);
 
-    const auto result = _requestedConfiguration;
+    const auto result = allocateConfiguration();
+    _requestedConfiguration->copyTo(*result);
+
     return result;
 }
 
-void OsmAnd::MapRenderer::setConfiguration(const MapRendererConfiguration& configuration_, bool forcedUpdate /*= false*/)
+void OsmAnd::MapRenderer::setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate /*= false*/)
 {
     QWriteLocker scopedLocker(&_configurationLock);
 
-    const bool colorDepthForcingChanged = (_requestedConfiguration.limitTextureColorDepthBy16bits != configuration_.limitTextureColorDepthBy16bits);
-    const bool elevationDataResolutionChanged = (_requestedConfiguration.heixelsPerTileSide != configuration_.heixelsPerTileSide);
-    const bool texturesFilteringChanged = (_requestedConfiguration.texturesFilteringQuality != configuration_.texturesFilteringQuality);
-    const bool paletteTexturesUsageChanged = (_requestedConfiguration.paletteTexturesAllowed != configuration_.paletteTexturesAllowed);
-
-    bool invalidateRasterTextures = false;
-    invalidateRasterTextures = invalidateRasterTextures || colorDepthForcingChanged;
-    invalidateRasterTextures = invalidateRasterTextures || paletteTexturesUsageChanged;
-
-    bool invalidateElevationData = false;
-    invalidateElevationData = invalidateElevationData || elevationDataResolutionChanged;
-
-    bool invalidateSymbols = false;
-    invalidateSymbols = invalidateSymbols || colorDepthForcingChanged;
-
-    bool update = forcedUpdate;
-    update = update || invalidateRasterTextures;
-    update = update || invalidateElevationData;
-    update = update || texturesFilteringChanged;
-    if (!update)
+    const auto mask = getConfigurationChangeMask(_requestedConfiguration, configuration);
+    if (mask == 0 && !forcedUpdate)
         return;
 
-    _requestedConfiguration = configuration_;
+    configuration->copyTo(*_requestedConfiguration);
+
+    invalidateCurrentConfiguration(mask);
+}
+
+uint32_t OsmAnd::MapRenderer::getConfigurationChangeMask(
+    const std::shared_ptr<const MapRendererConfiguration>& current,
+    const std::shared_ptr<const MapRendererConfiguration>& updated) const
+{
+    const bool colorDepthForcingChanged = (current->limitTextureColorDepthBy16bits != updated->limitTextureColorDepthBy16bits);
+    const bool elevationDataResolutionChanged = (current->heixelsPerTileSide != updated->heixelsPerTileSide);
+    const bool texturesFilteringChanged = (current->texturesFilteringQuality != updated->texturesFilteringQuality);
+    const bool paletteTexturesUsageChanged = (current->paletteTexturesAllowed != updated->paletteTexturesAllowed);
+
     uint32_t mask = 0;
     if (colorDepthForcingChanged)
-        mask |= ConfigurationChange::ColorDepthForcing;
+        mask |= enumToBit(ConfigurationChange::ColorDepthForcing);
     if (elevationDataResolutionChanged)
-        mask |= ConfigurationChange::ElevationDataResolution;
+        mask |= enumToBit(ConfigurationChange::ElevationDataResolution);
     if (texturesFilteringChanged)
-        mask |= ConfigurationChange::TexturesFilteringMode;
+        mask |= enumToBit(ConfigurationChange::TexturesFilteringMode);
     if (paletteTexturesUsageChanged)
-        mask |= ConfigurationChange::PaletteTexturesUsage;
+        mask |= enumToBit(ConfigurationChange::PaletteTexturesUsage);
+
+    return mask;
+}
+
+void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t changesMask)
+{
+    bool invalidateRasterTextures = false;
+    invalidateRasterTextures = invalidateRasterTextures || (changesMask & enumToBit(ConfigurationChange::ColorDepthForcing)) != 0;
+    invalidateRasterTextures = invalidateRasterTextures || (changesMask & enumToBit(ConfigurationChange::PaletteTexturesUsage)) != 0;
+
+    bool invalidateElevationData = false;
+    invalidateElevationData = invalidateElevationData || (changesMask & enumToBit(ConfigurationChange::ElevationDataResolution)) != 0;
+
+    bool invalidateSymbols = false;
+    invalidateSymbols = invalidateSymbols || (changesMask & enumToBit(ConfigurationChange::ColorDepthForcing)) != 0;
 
     if (invalidateRasterTextures)
         _resources->invalidateResourcesOfType(MapRendererResourceType::RasterBitmapTile);
@@ -124,14 +138,9 @@ void OsmAnd::MapRenderer::setConfiguration(const MapRendererConfiguration& confi
         _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationDataTile);
     if (invalidateSymbols)
         _resources->invalidateResourcesOfType(MapRendererResourceType::Symbols);
-    invalidateCurrentConfiguration(mask);
-}
-
-void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t changesMask)
-{
-    _currentConfigurationInvalidatedMask = changesMask;
-
+    
     // Since our current configuration is invalid, frame is also invalidated
+    _currentConfigurationInvalidatedMask = changesMask;
     invalidateFrame();
 }
 
@@ -141,7 +150,7 @@ bool OsmAnd::MapRenderer::updateCurrentConfiguration()
     while (_currentConfigurationInvalidatedMask)
     {
         if (_currentConfigurationInvalidatedMask & 0x1)
-            validateConfigurationChange(static_cast<ConfigurationChange>(1 << bitIndex));
+            validateConfigurationChange(static_cast<ConfigurationChange>(bitIndex));
 
         bitIndex++;
         _currentConfigurationInvalidatedMask >>= 1;
@@ -179,8 +188,7 @@ bool OsmAnd::MapRenderer::revalidateState()
     _resources->updateBindings(_currentState, updatedMask);
 
     // Update internal state, that is derived from current state
-    const auto internalState = getInternalStateRef();
-    ok = updateInternalState(internalState, _currentState);
+    ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration);
 
     // Frame is being invalidated anyways, since a refresh is needed due to state change (successful or not)
     invalidateFrame();
@@ -213,7 +221,10 @@ void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange&
     // Empty stub
 }
 
-bool OsmAnd::MapRenderer::updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state)
+bool OsmAnd::MapRenderer::updateInternalState(
+    MapRendererInternalState& outInternalState,
+    const MapRendererState& state,
+    const MapRendererConfiguration& configuration)
 {
     return true;
 }
@@ -461,7 +472,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         {
             QReadLocker scopedLocker(&_configurationLock);
 
-            _currentConfiguration = _requestedConfiguration;
+            _requestedConfiguration->copyTo(*_currentConfiguration);
         }
 
         bool ok = updateCurrentConfiguration();
@@ -692,8 +703,8 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
 {
     // Check if we're going to convert
     bool doConvert = false;
-    const bool force16bit = (currentConfiguration.limitTextureColorDepthBy16bits && input->getConfig() == SkBitmap::Config::kARGB_8888_Config);
-    const bool canUsePaletteTextures = currentConfiguration.paletteTexturesAllowed && gpuAPI->isSupported_8bitPaletteRGBA8;
+    const bool force16bit = (currentConfiguration->limitTextureColorDepthBy16bits && input->getConfig() == SkBitmap::Config::kARGB_8888_Config);
+    const bool canUsePaletteTextures = currentConfiguration->paletteTexturesAllowed && gpuAPI->isSupported_8bitPaletteRGBA8;
     const bool paletteTexture = (input->getConfig() == SkBitmap::Config::kIndex8_Config);
     const bool unsupportedFormat =
         (canUsePaletteTextures ? !paletteTexture : paletteTexture) ||
@@ -736,7 +747,7 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
         auto convertedBitmap = new SkBitmap();
 
         input->deepCopyTo(convertedBitmap,
-            currentConfiguration.limitTextureColorDepthBy16bits
+            currentConfiguration->limitTextureColorDepthBy16bits
             ? (convertedAlphaChannelData == AlphaChannelData::Present ? SkBitmap::Config::kARGB_4444_Config : SkBitmap::Config::kRGB_565_Config)
             : SkBitmap::kARGB_8888_Config);
 

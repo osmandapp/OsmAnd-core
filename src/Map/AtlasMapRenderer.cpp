@@ -1,5 +1,6 @@
 #include "AtlasMapRenderer.h"
 
+#include "AtlasMapRendererConfiguration.h"
 #include "AtlasMapRendererInternalState.h"
 
 OsmAnd::AtlasMapRenderer::AtlasMapRenderer(GPUAPI* const gpuAPI_)
@@ -11,9 +12,17 @@ OsmAnd::AtlasMapRenderer::~AtlasMapRenderer()
 {
 }
 
-bool OsmAnd::AtlasMapRenderer::updateInternalState(MapRendererInternalState* internalState_, const MapRendererState& state)
+std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::AtlasMapRenderer::allocateConfiguration() const
 {
-    const auto internalState = static_cast<AtlasMapRendererInternalState*>(internalState_);
+    return std::shared_ptr<AtlasMapRendererConfiguration>(new AtlasMapRendererConfiguration());
+}
+
+bool OsmAnd::AtlasMapRenderer::updateInternalState(
+    MapRendererInternalState& outInternalState_,
+    const MapRendererState& state,
+    const MapRendererConfiguration& configuration)
+{
+    const auto internalState = static_cast<AtlasMapRendererInternalState*>(&outInternalState_);
 
     const auto zoomDiff = ZoomLevel::MaxZoomLevel - state.zoomBase;
 
@@ -87,4 +96,27 @@ unsigned int OsmAnd::AtlasMapRenderer::getVisibleTilesCount() const
     const auto internalState = static_cast<const AtlasMapRendererInternalState*>(getInternalStateRef());
 
     return internalState->visibleTiles.size();
+}
+
+uint32_t OsmAnd::AtlasMapRenderer::getConfigurationChangeMask(
+    const std::shared_ptr<const MapRendererConfiguration>& current_,
+    const std::shared_ptr<const MapRendererConfiguration>& updated_) const
+{
+    auto mask = MapRenderer::getConfigurationChangeMask(current_, updated_);
+
+    const auto current = std::dynamic_pointer_cast<const AtlasMapRendererConfiguration>(current_);
+    const auto updated = std::dynamic_pointer_cast<const AtlasMapRendererConfiguration>(updated_);
+
+    const bool referenceTileSizeChanged = (current->referenceTileSizeOnScreenInPixels != updated->referenceTileSizeOnScreenInPixels);
+
+    if (referenceTileSizeChanged)
+        mask |= enumToBit(ConfigurationChange::ReferenceTileSize);
+
+    return mask;
+}
+
+void OsmAnd::AtlasMapRenderer::invalidateCurrentConfiguration(const uint32_t changesMask)
+{
+
+    MapRenderer::invalidateCurrentConfiguration(changesMask);
 }

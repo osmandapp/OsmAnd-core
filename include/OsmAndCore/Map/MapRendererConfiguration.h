@@ -2,8 +2,6 @@
 #define _OSMAND_CORE_MAP_RENDERER_CONFIGURATION_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <functional>
-#include <array>
 
 #include <OsmAndCore/QtExtensions.h>
 
@@ -22,12 +20,14 @@ namespace OsmAnd
     struct OSMAND_CORE_API MapRendererConfiguration
     {
         MapRendererConfiguration();
-        ~MapRendererConfiguration();
+        virtual ~MapRendererConfiguration();
 
         TextureFilteringQuality texturesFilteringQuality;
         bool limitTextureColorDepthBy16bits;
         uint32_t heixelsPerTileSide;
         bool paletteTexturesAllowed;
+
+        virtual void copyTo(MapRendererConfiguration& other) const;
     };
 }
 

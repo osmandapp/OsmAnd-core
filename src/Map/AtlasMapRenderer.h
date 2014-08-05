@@ -25,8 +25,27 @@ namespace OsmAnd
     protected:
         AtlasMapRenderer(GPUAPI* const gpuAPI);
 
+        // Configuration-related:
+        virtual std::shared_ptr<MapRendererConfiguration> allocateConfiguration() const;
+        enum class ConfigurationChange
+        {
+            ReferenceTileSize = (MapRenderer::RegisteredConfigurationChangesCount),
+
+            __LAST
+        };
+        enum {
+            RegisteredConfigurationChangesCount = static_cast<unsigned int>(ConfigurationChange::__LAST)
+        };
+        virtual uint32_t getConfigurationChangeMask(
+            const std::shared_ptr<const MapRendererConfiguration>& current,
+            const std::shared_ptr<const MapRendererConfiguration>& updated) const;
+        virtual void invalidateCurrentConfiguration(const uint32_t changesMask);
+
         // State-related:
-        virtual bool updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state);
+        virtual bool updateInternalState(
+            MapRendererInternalState& outInternalState,
+            const MapRendererState& state,
+            const MapRendererConfiguration& configuration);
 
         // Customization points:
         virtual bool prePrepareFrame();

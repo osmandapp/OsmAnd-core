@@ -38,13 +38,13 @@ namespace OsmAnd
         float projectionPlaneHalfWidth;
         float aspectRatio;
         float fovInRadians;
-        float screenTileSize;
+        float referenceTileSizeOnScreenInPixels;
         float nearDistanceFromCameraToTarget;
         float baseDistanceFromCameraToTarget;
         float farDistanceFromCameraToTarget;
         float distanceFromCameraToTarget;
         float groundDistanceFromCameraToTarget;
-        float tileScaleFactor;
+        float tileOnScreenScaleFactor;
         float scaleToRetainProjectedSize;
         float pixelInWorldProjectionScale;
         PointF skyplaneSize;

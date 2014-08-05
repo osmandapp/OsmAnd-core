@@ -316,6 +316,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
 void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 {
     const auto gpuAPI = getGPUAPI();
+    const auto& currentConfiguration = *this->currentConfiguration;
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -696,6 +697,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::release()
 void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::createTilePatch()
 {
     const auto gpuAPI = getGPUAPI();
+    const auto& currentConfiguration = *this->currentConfiguration;
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);

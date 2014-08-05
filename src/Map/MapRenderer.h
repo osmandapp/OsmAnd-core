@@ -36,10 +36,10 @@ namespace OsmAnd
 
         // Configuration-related:
         mutable QReadWriteLock _configurationLock;
-        MapRendererConfiguration _currentConfiguration;
-        MapRendererConfiguration _requestedConfiguration;
+        std::shared_ptr<MapRendererConfiguration> _currentConfiguration;
+        std::shared_ptr<const MapRendererConfiguration> _currentConfigurationAsConst;
+        std::shared_ptr<MapRendererConfiguration> _requestedConfiguration;
         volatile uint32_t _currentConfigurationInvalidatedMask;
-        void invalidateCurrentConfiguration(const uint32_t changesMask);
         bool updateCurrentConfiguration();
 
         // State-related:
@@ -81,14 +81,24 @@ namespace OsmAnd
         const MapRendererSetupOptions& setupOptions;
 
         // Configuration-related:
-        const MapRendererConfiguration& currentConfiguration;
-        enum ConfigurationChange
+        virtual std::shared_ptr<MapRendererConfiguration> allocateConfiguration() const = 0;
+        const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
+        enum class ConfigurationChange
         {
-            ColorDepthForcing = 1 << 0,
-            ElevationDataResolution = 1 << 1,
-            TexturesFilteringMode = 1 << 2,
-            PaletteTexturesUsage = 1 << 3,
+            ColorDepthForcing = 0,
+            ElevationDataResolution,
+            TexturesFilteringMode,
+            PaletteTexturesUsage,
+
+            __LAST
         };
+        enum {
+            RegisteredConfigurationChangesCount = static_cast<unsigned int>(ConfigurationChange::__LAST)
+        };
+        virtual uint32_t getConfigurationChangeMask(
+            const std::shared_ptr<const MapRendererConfiguration>& current,
+            const std::shared_ptr<const MapRendererConfiguration>& updated) const;
+        virtual void invalidateCurrentConfiguration(const uint32_t changesMask);
         virtual void validateConfigurationChange(const ConfigurationChange& change);
 
         // State-related:
@@ -96,7 +106,10 @@ namespace OsmAnd
         mutable QReadWriteLock _internalStateLock;
         virtual const MapRendererInternalState* getInternalStateRef() const = 0;
         virtual MapRendererInternalState* getInternalStateRef() = 0;
-        virtual bool updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state);
+        virtual bool updateInternalState(
+            MapRendererInternalState& outInternalState,
+            const MapRendererState& state,
+            const MapRendererConfiguration& configuration);
 
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;
@@ -142,8 +155,8 @@ namespace OsmAnd
         // General:
 
         // Configuration-related:
-        virtual MapRendererConfiguration getConfiguration() const;
-        virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false);
+        virtual std::shared_ptr<MapRendererConfiguration> getConfiguration() const;
+        virtual void setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate = false);
 
         virtual bool initializeRendering();
         virtual bool update();
@@ -197,9 +210,9 @@ namespace OsmAnd
 
         virtual void dumpResourcesInfo() const;
 
-    friend struct OsmAnd::MapRendererInternalState;
-    friend class OsmAnd::MapRendererStage;
-    friend class OsmAnd::MapRendererResourcesManager;
+        friend struct OsmAnd::MapRendererInternalState;
+        friend class OsmAnd::MapRendererStage;
+        friend class OsmAnd::MapRendererResourcesManager;
     };
 }
 

@@ -32,8 +32,8 @@ namespace OsmAnd
         virtual MapRendererSetupOptions getSetupOptions() const = 0;
         virtual bool setup(const MapRendererSetupOptions& setupOptions) = 0;
 
-        virtual MapRendererConfiguration getConfiguration() const = 0;
-        virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false) = 0;
+        virtual std::shared_ptr<MapRendererConfiguration> getConfiguration() const = 0;
+        virtual void setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate = false) = 0;
 
         virtual bool isRenderingInitialized() const = 0;
         virtual bool initializeRendering() = 0;

@@ -11,3 +11,11 @@ OsmAnd::MapRendererConfiguration::MapRendererConfiguration()
 OsmAnd::MapRendererConfiguration::~MapRendererConfiguration()
 {
 }
+
+void OsmAnd::MapRendererConfiguration::copyTo(MapRendererConfiguration& other) const
+{
+    other.texturesFilteringQuality = texturesFilteringQuality;
+    other.limitTextureColorDepthBy16bits = limitTextureColorDepthBy16bits;
+    other.heixelsPerTileSide = heixelsPerTileSide;
+    other.paletteTexturesAllowed = paletteTexturesAllowed;
+}

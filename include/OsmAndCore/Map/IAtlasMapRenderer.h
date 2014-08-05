@@ -34,9 +34,6 @@ namespace OsmAnd
         virtual QList<TileId> getVisibleTiles() const = 0;
         virtual unsigned int getVisibleTilesCount() const = 0;
 
-//        virtual void setReferenceTileSizeInPixels(const float tileSizeInPixels, bool forcedUpdate = false) = 0;
-
-        virtual float getReferenceTileSizeOnScreenInPixels() = 0;
         virtual float getCurrentTileSizeOnScreenInPixels() = 0;
     };
 }

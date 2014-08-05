@@ -29,7 +29,7 @@ namespace OsmAnd
         const MapRendererResourcesManager& getResources();
         const std::unique_ptr<GPUAPI>& gpuAPI;
         const MapRendererState& currentState;
-        const MapRendererConfiguration& currentConfiguration;
+        const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
         const MapRendererSetupOptions& setupOptions;
 
         virtual void initialize() = 0;

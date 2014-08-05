@@ -16,6 +16,7 @@
 
 #include <SkBitmap.h>
 
+#include "AtlasMapRendererConfiguration.h"
 #include "IMapRenderer.h"
 #include "IMapTiledDataProvider.h"
 #include "IMapRasterBitmapTileProvider.h"
@@ -34,9 +35,7 @@ OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gp
     , _skyStage(this)
     , _rasterMapStage(this)
     , _symbolsStage(this)
-#if OSMAND_DEBUG
     , _debugStage(this)
-#endif
 {
 }
 
@@ -64,9 +63,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
     _skyStage.initialize();
     _rasterMapStage.initialize();
     _symbolsStage.initialize();
-#if OSMAND_DEBUG
     _debugStage.initialize();
-#endif
 
     return true;
 }
@@ -81,9 +78,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     GL_CHECK_PRESENT(glBlendFunc);
     GL_CHECK_PRESENT(glClear);
 
-#if OSMAND_DEBUG
     _debugStage.clear();
-#endif
 
     // Setup viewport
     glViewport(
@@ -133,18 +128,14 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
 
     //TODO: render special fog object some day
 
-#if OSMAND_DEBUG
+    // Render debug stage    
     glDisable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
-
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
-
     _debugStage.render();
-
     glEnable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
-#endif
 
     // Turn off blending
     glDisable(GL_BLEND);
@@ -159,9 +150,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doReleaseRendering()
 {
     bool ok;
 
-#if OSMAND_DEBUG
     _debugStage.release();
-#endif
     _symbolsStage.release();
     _rasterMapStage.release();
     _skyStage.release();
@@ -184,14 +173,18 @@ void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendere
     }
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRendererInternalState* internalState_, const MapRendererState& state)
+bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
+    MapRendererInternalState& outInternalState_,
+    const MapRendererState& state,
+    const MapRendererConfiguration& configuration_)
 {
     bool ok;
-    ok = AtlasMapRenderer::updateInternalState(internalState_, state);
+    ok = AtlasMapRenderer::updateInternalState(outInternalState_, state, configuration_);
     if (!ok)
         return false;
 
-    const auto internalState = static_cast<InternalState*>(internalState_);
+    const auto internalState = static_cast<InternalState*>(&outInternalState_);
+    const auto configuration = static_cast<const AtlasMapRendererConfiguration*>(&configuration_);
 
     // Prepare values for projection matrix
     const auto viewportWidth = state.viewport.width();
@@ -210,10 +203,23 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRendererInternalSta
         _zNear, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
-    internalState->screenTileSize = getReferenceTileSizeOnScreenInPixels(state);
-    internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 1.5f);
-    internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 1.0f);
-    internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 0.75f);
+    internalState->referenceTileSizeOnScreenInPixels = configuration->referenceTileSizeOnScreenInPixels;
+    internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
+        internalState->mPerspectiveProjection,
+        state.viewport, TileSize3D / 2.0f,
+        internalState->referenceTileSizeOnScreenInPixels / 2.0f,
+        1.5f);
+    internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
+        internalState->mPerspectiveProjection,
+        state.viewport,
+        TileSize3D / 2.0f,
+        internalState->referenceTileSizeOnScreenInPixels / 2.0f,
+        1.0f);
+    internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
+        internalState->mPerspectiveProjection,
+        state.viewport,
+        TileSize3D / 2.0f,
+        internalState->referenceTileSizeOnScreenInPixels / 2.0f, 0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
@@ -222,9 +228,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRendererInternalSta
     else
         internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - (internalState->farDistanceFromCameraToTarget - internalState->baseDistanceFromCameraToTarget) * (2.0f * state.zoomFraction);
     internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
-    internalState->tileScaleFactor = ((state.zoomFraction >= 0.0f) ? (1.0f + state.zoomFraction) : (1.0f + 0.5f * state.zoomFraction));
+    internalState->tileOnScreenScaleFactor = ((state.zoomFraction >= 0.0f) ? (1.0f + state.zoomFraction) : (1.0f + 0.5f * state.zoomFraction));
     internalState->scaleToRetainProjectedSize = internalState->distanceFromCameraToTarget / internalState->baseDistanceFromCameraToTarget;
-    internalState->pixelInWorldProjectionScale = (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState->screenTileSize*internalState->tileScaleFactor));
+    internalState->pixelInWorldProjectionScale = (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState->referenceTileSizeOnScreenInPixels*internalState->referenceTileSizeOnScreenInPixels));
 
     // Recalculate perspective projection with obtained value
     internalState->zSkyplane = state.fogDistance * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
@@ -461,29 +467,12 @@ OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
     return static_cast<OsmAnd::GPUAPI_OpenGL*>(gpuAPI.get());
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreenInPixels(const MapRendererState& state)
-{
-    const auto& rasterMapProvider = state.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)];
-    if (!rasterMapProvider)
-        return static_cast<float>(DefaultReferenceTileSizeOnScreenInPixels) * setupOptions.displayDensityFactor;
-
-    auto tileProvider = std::static_pointer_cast<IMapRasterBitmapTileProvider>(rasterMapProvider);
-    return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensityFactor());
-}
-
-float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreenInPixels()
-{
-    return getReferenceTileSizeOnScreenInPixels(getState());
-}
-
 float OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeOnScreenInPixels()
 {
-    const auto state = getState();
-
     InternalState internalState;
-    bool ok = updateInternalState(&internalState, state);
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
 
-    return getReferenceTileSizeOnScreenInPixels(state) * internalState.tileScaleFactor;
+    return internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31)
@@ -501,7 +490,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     const auto state = getState();
 
     InternalState internalState;
-    bool ok = updateInternalState(&internalState, state);
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
     if (!ok)
         return false;
 

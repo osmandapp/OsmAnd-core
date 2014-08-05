@@ -14,9 +14,7 @@
 #include "AtlasMapRendererSkyStage_OpenGL.h"
 #include "AtlasMapRendererRasterMapStage_OpenGL.h"
 #include "AtlasMapRendererSymbolsStage_OpenGL.h"
-#if OSMAND_DEBUG
-#   include "AtlasMapRendererDebugStage_OpenGL.h"
-#endif
+#include "AtlasMapRendererDebugStage_OpenGL.h"
 #include "OpenGL/GPUAPI_OpenGL.h"
 
 namespace OsmAnd
@@ -42,9 +40,7 @@ namespace OsmAnd
         AtlasMapRendererSkyStage_OpenGL _skyStage;
         AtlasMapRendererRasterMapStage_OpenGL _rasterMapStage;
         AtlasMapRendererSymbolsStage_OpenGL _symbolsStage;
-#if OSMAND_DEBUG
         AtlasMapRendererDebugStage_OpenGL _debugStage;
-#endif
 
         virtual bool doInitializeRendering();
         virtual bool doRenderFrame();
@@ -52,19 +48,19 @@ namespace OsmAnd
 
         virtual void onValidateResourcesOfType(const MapRendererResourceType type);
 
-        virtual bool updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state);
+        virtual bool updateInternalState(
+            MapRendererInternalState& outInternalState,
+            const MapRendererState& state,
+            const MapRendererConfiguration& configuration);
 
         virtual bool postInitializeRendering();
         virtual bool preReleaseRendering();
 
         GPUAPI_OpenGL* getGPUAPI() const;
-
-        float getReferenceTileSizeOnScreenInPixels(const MapRendererState& state);
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
 
-        virtual float getReferenceTileSizeOnScreenInPixels();
         virtual float getCurrentTileSizeOnScreenInPixels();
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31);
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location);
@@ -72,9 +68,7 @@ namespace OsmAnd
     friend class OsmAnd::AtlasMapRendererStage_OpenGL;
     friend class OsmAnd::AtlasMapRendererSkyStage_OpenGL;
     friend class OsmAnd::AtlasMapRendererSymbolsStage_OpenGL;
-#if OSMAND_DEBUG
     friend class OsmAnd::AtlasMapRendererDebugStage_OpenGL;
-#endif
     };
 }
 

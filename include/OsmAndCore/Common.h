@@ -74,10 +74,16 @@ namespace OsmAnd
         return copy;
     }
 
-    template <typename T_>
-    static int sign(T_ value)
+    template <typename T>
+    static int sign(T value)
     {
-        return (T_(0) < value) - (value < T_(0));
+        return (T(0) < value) - (value < T(0));
+    }
+
+    template <typename T>
+    static uint32_t enumToBit(const T value)
+    {
+        return (1 << static_cast<unsigned int>(value));
     }
 }
 
