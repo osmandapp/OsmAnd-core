@@ -1,11 +1,6 @@
 #include "IMapRenderer.h"
 
 OsmAnd::IMapRenderer::IMapRenderer()
-    : _isRenderingInitialized(false)
-    , setupOptions(_setupOptions)
-    , configuration(_requestedConfiguration)
-    , isRenderingInitialized(_isRenderingInitialized)
-    , state(_requestedState)
 {
 }
 

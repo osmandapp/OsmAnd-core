@@ -210,7 +210,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(MapRendererInternalSta
         _zNear, 1000.0f);
 
     // Calculate limits of camera distance to target and actual distance
-    internalState->screenTileSize = getReferenceTileSizeOnScreen(state);
+    internalState->screenTileSize = getReferenceTileSizeOnScreenInPixels(state);
     internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 1.5f);
     internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 1.0f);
     internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(internalState->mPerspectiveProjection, state.viewport, TileSize3D / 2.0f, internalState->screenTileSize / 2.0f, 0.75f);
@@ -461,27 +461,29 @@ OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const
     return static_cast<OsmAnd::GPUAPI_OpenGL*>(gpuAPI.get());
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreen(const MapRendererState& state)
+float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreenInPixels(const MapRendererState& state)
 {
     const auto& rasterMapProvider = state.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)];
     if (!rasterMapProvider)
-        return static_cast<float>(DefaultReferenceTileSizeOnScreen)* setupOptions.displayDensityFactor;
+        return static_cast<float>(DefaultReferenceTileSizeOnScreenInPixels) * setupOptions.displayDensityFactor;
 
     auto tileProvider = std::static_pointer_cast<IMapRasterBitmapTileProvider>(rasterMapProvider);
     return tileProvider->getTileSize() * (setupOptions.displayDensityFactor / tileProvider->getTileDensityFactor());
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreen()
+float OsmAnd::AtlasMapRenderer_OpenGL::getReferenceTileSizeOnScreenInPixels()
 {
-    return getReferenceTileSizeOnScreen(state);
+    return getReferenceTileSizeOnScreenInPixels(getState());
 }
 
-float OsmAnd::AtlasMapRenderer_OpenGL::getScaledTileSizeOnScreen()
+float OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeOnScreenInPixels()
 {
+    const auto state = getState();
+
     InternalState internalState;
     bool ok = updateInternalState(&internalState, state);
 
-    return getReferenceTileSizeOnScreen(state) * internalState.tileScaleFactor;
+    return getReferenceTileSizeOnScreenInPixels(state) * internalState.tileScaleFactor;
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31)
@@ -496,6 +498,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location)
 {
+    const auto state = getState();
+
     InternalState internalState;
     bool ok = updateInternalState(&internalState, state);
     if (!ok)

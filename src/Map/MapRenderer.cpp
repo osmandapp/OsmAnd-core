@@ -18,11 +18,13 @@
 #include <SkBitmap.h>
 
 OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
-    : _currentConfigurationInvalidatedMask(0)
+    : _isRenderingInitialized(false)
+    , _currentConfigurationInvalidatedMask(0)
     , _requestedStateUpdatedMask(0)
     , _renderThreadId(nullptr)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerIsAlive(false)
+    , setupOptions(_setupOptions)
     , currentConfiguration(_currentConfiguration)
     , currentState(_currentState)
     , gpuAPI(gpuAPI_)
@@ -50,6 +52,16 @@ OsmAnd::MapRenderer::~MapRenderer()
     releaseRendering();
 }
 
+bool OsmAnd::MapRenderer::isRenderingInitialized() const
+{
+    return _isRenderingInitialized;
+}
+
+OsmAnd::MapRendererSetupOptions OsmAnd::MapRenderer::getSetupOptions() const
+{
+    return _setupOptions;
+}
+
 bool OsmAnd::MapRenderer::setup(const MapRendererSetupOptions& setupOptions)
 {
     // We can not change setup options renderer once rendering has been initialized
@@ -59,6 +71,14 @@ bool OsmAnd::MapRenderer::setup(const MapRendererSetupOptions& setupOptions)
     _setupOptions = setupOptions;
 
     return true;
+}
+
+OsmAnd::MapRendererConfiguration OsmAnd::MapRenderer::getConfiguration() const
+{
+    QReadLocker scopedLocker(&_configurationLock);
+
+    const auto result = _requestedConfiguration;
+    return result;
 }
 
 void OsmAnd::MapRenderer::setConfiguration(const MapRendererConfiguration& configuration_, bool forcedUpdate /*= false*/)
@@ -162,24 +182,6 @@ bool OsmAnd::MapRenderer::revalidateState()
     const auto internalState = getInternalStateRef();
     ok = updateInternalState(internalState, _currentState);
 
-    // Postprocess internal state
-    if (ok)
-    {
-        // Sort visible tiles by distance from target
-        qSort(internalState->visibleTiles.begin(), internalState->visibleTiles.end(),
-            [internalState]
-            (const TileId& l, const TileId& r) -> bool
-            {
-                const auto lx = l.x - internalState->targetTileId.x;
-                const auto ly = l.y - internalState->targetTileId.y;
-
-                const auto rx = r.x - internalState->targetTileId.x;
-                const auto ry = r.y - internalState->targetTileId.y;
-
-                return (lx*lx + ly*ly) > (rx*rx + ry*ry);
-            });
-    }
-
     // Frame is being invalidated anyways, since a refresh is needed due to state change (successful or not)
     invalidateFrame();
 
@@ -213,22 +215,6 @@ void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange&
 
 bool OsmAnd::MapRenderer::updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state)
 {
-    const auto zoomDiff = ZoomLevel::MaxZoomLevel - state.zoomBase;
-
-    // Get target tile id
-    internalState->targetTileId.x = state.target31.x >> zoomDiff;
-    internalState->targetTileId.y = state.target31.y >> zoomDiff;
-
-    // Compute in-tile offset
-    PointI targetTile31;
-    targetTile31.x = internalState->targetTileId.x << zoomDiff;
-    targetTile31.y = internalState->targetTileId.y << zoomDiff;
-
-    const auto tileSize31 = 1u << zoomDiff;
-    const auto inTileOffset = state.target31 - targetTile31;
-    internalState->targetInTileOffsetN.x = static_cast<float>(inTileOffset.x) / tileSize31;
-    internalState->targetInTileOffsetN.y = static_cast<float>(inTileOffset.y) / tileSize31;
-
     return true;
 }
 
@@ -238,20 +224,20 @@ void OsmAnd::MapRenderer::invalidateFrame()
     _frameInvalidatesCounter.fetchAndAddOrdered(1);
 
     // Request frame, if such callback is defined
-    if (setupOptions.frameUpdateRequestCallback)
-        setupOptions.frameUpdateRequestCallback(this);
+    if (_setupOptions.frameUpdateRequestCallback)
+        _setupOptions.frameUpdateRequestCallback(this);
 }
 
 void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 {
-    assert(setupOptions.gpuWorkerThreadEnabled);
+    assert(_setupOptions.gpuWorkerThreadEnabled);
 
     // Capture thread ID
     _gpuWorkerThreadId = QThread::currentThreadId();
 
     // Call prologue if such exists
-    if (setupOptions.gpuWorkerThreadPrologue)
-        setupOptions.gpuWorkerThreadPrologue(this);
+    if (_setupOptions.gpuWorkerThreadPrologue)
+        _setupOptions.gpuWorkerThreadPrologue(this);
 
     while (_gpuWorkerIsAlive)
     {
@@ -292,8 +278,8 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     }
 
     // Call epilogue
-    if (setupOptions.gpuWorkerThreadEpilogue)
-        setupOptions.gpuWorkerThreadEpilogue(this);
+    if (_setupOptions.gpuWorkerThreadEpilogue)
+        _setupOptions.gpuWorkerThreadEpilogue(this);
 
     _gpuWorkerThreadId = nullptr;
 }
@@ -350,7 +336,7 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
 bool OsmAnd::MapRenderer::doInitializeRendering()
 {
     // Create GPU worker thread
-    if (setupOptions.gpuWorkerThreadEnabled)
+    if (_setupOptions.gpuWorkerThreadEnabled)
     {
         const auto thread = new Concurrent::Thread(std::bind(&MapRenderer::gpuWorkerThreadProcedure, this));
         _gpuWorkerThread.reset(thread);
@@ -493,22 +479,16 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     ok = revalidateState();
     if (!ok)
         return false;
-
-    // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
-    const auto internalState = getInternalStateRef();
-    _uniqueTiles.clear();
-    for (const auto& tileId : constOf(internalState->visibleTiles))
-        _uniqueTiles.insert(Utilities::normalizeTileId(tileId, _currentState.zoomBase));
-
-    // Validate resources:
-    // If any resources were validated, they will be updated by worker thread during postPrepareFrame
-    _resources->validateResources();
-
+    
     return true;
 }
 
 bool OsmAnd::MapRenderer::doPrepareFrame()
 {
+    // Validate resources:
+    // If any resources were validated, they will be updated by worker thread during postPrepareFrame
+    _resources->validateResources();
+
     return true;
 }
 
@@ -517,9 +497,6 @@ bool OsmAnd::MapRenderer::postPrepareFrame()
     // Tell resources to update shadow copies of resources collections
     if (!_resources->updateShadowCollections())
         invalidateFrame();
-
-    // Notify resources manager about new active zone
-    _resources->updateActiveZone(_uniqueTiles, _currentState.zoomBase);
 
     return true;
 }
@@ -685,6 +662,11 @@ const OsmAnd::MapRendererResourcesManager& OsmAnd::MapRenderer::getResources() c
     return *_resources.get();
 }
 
+OsmAnd::MapRendererResourcesManager& OsmAnd::MapRenderer::getResources()
+{
+    return *_resources.get();
+}
+
 void OsmAnd::MapRenderer::onValidateResourcesOfType(const MapRendererResourceType type)
 {
     // Empty stub
@@ -775,6 +757,14 @@ std::shared_ptr<const SkBitmap> OsmAnd::MapRenderer::adjustBitmapToConfiguration
     return input;
 }
 
+OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    const auto copy = _requestedState;
+    return copy;
+}
+
 bool OsmAnd::MapRenderer::isFrameInvalidated() const
 {
     return (_frameInvalidatesCounter.load() > 0);
@@ -798,20 +788,6 @@ OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getRenderThreadDispatcher()
 OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getGpuThreadDispatcher()
 {
     return _gpuThreadDispatcher;
-}
-
-QList<OsmAnd::TileId> OsmAnd::MapRenderer::getVisibleTiles() const
-{
-    QReadLocker scopedLocker(&_internalStateLock);
-
-    return detachedOf(getInternalStateRef()->visibleTiles);
-}
-
-unsigned int OsmAnd::MapRenderer::getVisibleTilesCount() const
-{
-    QReadLocker scopedLocker(&_internalStateLock);
-
-    return getInternalStateRef()->visibleTiles.size();
 }
 
 unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
@@ -1199,3 +1175,4 @@ void OsmAnd::MapRenderer::dumpResourcesInfo() const
 {
     getResources().dumpResourcesInfo();
 }
+

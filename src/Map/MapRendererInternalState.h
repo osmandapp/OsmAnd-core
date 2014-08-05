@@ -4,7 +4,6 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
-#include <QList>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -15,10 +14,6 @@ namespace OsmAnd
     {
         MapRendererInternalState();
         virtual ~MapRendererInternalState();
-
-        TileId targetTileId;
-        PointF targetInTileOffsetN;
-        QList<TileId> visibleTiles;
     };
 }
 

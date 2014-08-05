@@ -28,10 +28,16 @@ namespace OsmAnd
     class MapRenderer : public IMapRenderer
     {
         Q_DISABLE_COPY(MapRenderer);
+
     private:
+        // General:
+        bool _isRenderingInitialized;
+        MapRendererSetupOptions _setupOptions;
+
         // Configuration-related:
         mutable QReadWriteLock _configurationLock;
         MapRendererConfiguration _currentConfiguration;
+        MapRendererConfiguration _requestedConfiguration;
         volatile uint32_t _currentConfigurationInvalidatedMask;
         void invalidateCurrentConfiguration(const uint32_t changesMask);
         bool updateCurrentConfiguration();
@@ -40,7 +46,7 @@ namespace OsmAnd
         mutable QAtomicInt _frameInvalidatesCounter;
         int _frameInvalidatesToBeProcessed;
         mutable QMutex _requestedStateMutex;
-        mutable QReadWriteLock _internalStateLock;
+        MapRendererState _requestedState;
         MapRendererState _currentState;
         volatile uint32_t _requestedStateUpdatedMask;
         bool revalidateState();
@@ -62,7 +68,6 @@ namespace OsmAnd
         void gpuWorkerThreadProcedure();
 
         // General:
-        QSet<TileId> _uniqueTiles;
         void invalidateFrame();
         Qt::HANDLE _renderThreadId;
         Concurrent::Dispatcher _renderThreadDispatcher;
@@ -71,7 +76,9 @@ namespace OsmAnd
         MapRenderer(GPUAPI* const gpuAPI);
 
         // General:
+        virtual bool isRenderingInitialized() const;
         const std::unique_ptr<GPUAPI> gpuAPI;
+        const MapRendererSetupOptions& setupOptions;
 
         // Configuration-related:
         const MapRendererConfiguration& currentConfiguration;
@@ -86,13 +93,14 @@ namespace OsmAnd
 
         // State-related:
         const MapRendererState& currentState;
-        
+        mutable QReadWriteLock _internalStateLock;
         virtual const MapRendererInternalState* getInternalStateRef() const = 0;
         virtual MapRendererInternalState* getInternalStateRef() = 0;
         virtual bool updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state);
 
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;
+        MapRendererResourcesManager& getResources();
         virtual void onValidateResourcesOfType(const MapRendererResourceType type);
         void requestResourcesUploadOrUnload();
         bool adjustBitmapToConfiguration(
@@ -128,11 +136,13 @@ namespace OsmAnd
     public:
         virtual ~MapRenderer();
 
+        virtual MapRendererSetupOptions getSetupOptions() const;
         virtual bool setup(const MapRendererSetupOptions& setupOptions);
 
         // General:
 
         // Configuration-related:
+        virtual MapRendererConfiguration getConfiguration() const;
         virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false);
 
         virtual bool initializeRendering();
@@ -146,6 +156,7 @@ namespace OsmAnd
 
         virtual void reloadEverything();
 
+        virtual MapRendererState getState() const;
         virtual bool isFrameInvalidated() const;
         virtual void forcedFrameInvalidate();
         virtual void forcedGpuProcessingCycle();
@@ -153,8 +164,6 @@ namespace OsmAnd
         Concurrent::Dispatcher& getRenderThreadDispatcher();
         Concurrent::Dispatcher& getGpuThreadDispatcher();
 
-        virtual QList<TileId> getVisibleTiles() const;
-        virtual unsigned int getVisibleTilesCount() const;
         virtual unsigned int getSymbolsCount() const;
 
         virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate = false);

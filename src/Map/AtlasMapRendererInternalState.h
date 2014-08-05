@@ -4,7 +4,6 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
-#include <QList>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -15,6 +14,10 @@ namespace OsmAnd
     struct AtlasMapRendererInternalState : public MapRendererInternalState
     {
         virtual ~AtlasMapRendererInternalState();
+
+        TileId targetTileId;
+        PointF targetInTileOffsetN;
+        QList<TileId> visibleTiles;
     };
 }
 

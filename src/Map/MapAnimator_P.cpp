@@ -516,7 +516,7 @@ void OsmAnd::MapAnimator_P::animateMoveWith(
 
 float OsmAnd::MapAnimator_P::zoomGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    return _renderer->state.requestedZoom;
+    return _renderer->getState().requestedZoom;
 }
 
 void OsmAnd::MapAnimator_P::zoomSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -526,7 +526,7 @@ void OsmAnd::MapAnimator_P::zoomSetter(const float newValue, AnimationContext& c
 
 float OsmAnd::MapAnimator_P::azimuthGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    return _renderer->state.azimuth;
+    return _renderer->getState().azimuth;
 }
 
 void OsmAnd::MapAnimator_P::azimuthSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -536,7 +536,7 @@ void OsmAnd::MapAnimator_P::azimuthSetter(const float newValue, AnimationContext
 
 float OsmAnd::MapAnimator_P::elevationAngleGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    return _renderer->state.elevationAngle;
+    return _renderer->getState().elevationAngle;
 }
 
 void OsmAnd::MapAnimator_P::elevationAngleSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -546,7 +546,7 @@ void OsmAnd::MapAnimator_P::elevationAngleSetter(const float newValue, Animation
 
 OsmAnd::PointI64 OsmAnd::MapAnimator_P::targetGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    return _renderer->state.target31;
+    return _renderer->getState().target31;
 }
 
 void OsmAnd::MapAnimator_P::targetSetter(const PointI64 newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -673,7 +673,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta_Zoom(
         {
             // Recalculate delta to tiles at current zoom base
             PointI64 deltaInTiles;
-            const auto bitShift = MaxZoomLevel - _renderer->state.zoomBase;
+            const auto bitShift = MaxZoomLevel - _renderer->getState().zoomBase;
             deltaInTiles.x = qAbs(targetDeltaValue.x) >> bitShift;
             deltaInTiles.y = qAbs(targetDeltaValue.y) >> bitShift;
 
@@ -753,7 +753,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue_Zoom(
 
             // Recalculate delta to tiles at current zoom base
             PointI64 deltaInTiles;
-            const auto bitShift = MaxZoomLevel - _renderer->state.zoomBase;
+            const auto bitShift = MaxZoomLevel - _renderer->getState().zoomBase;
             deltaInTiles.x = qAbs(targetDeltaValue.x) >> bitShift;
             deltaInTiles.y = qAbs(targetDeltaValue.y) >> bitShift;
 

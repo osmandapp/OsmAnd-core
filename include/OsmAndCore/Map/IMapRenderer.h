@@ -19,31 +19,23 @@
 
 namespace OsmAnd
 {
-    class MapRenderer;
     class IMapDataProvider;
 
     class OSMAND_CORE_API IMapRenderer
     {
     private:
-        bool _isRenderingInitialized;
-
-        MapRendererSetupOptions _setupOptions;
-
-        MapRendererConfiguration _requestedConfiguration;
     protected:
         IMapRenderer();
-
-        MapRendererState _requestedState;
     public:
         virtual ~IMapRenderer();
 
-        const MapRendererSetupOptions& setupOptions;
+        virtual MapRendererSetupOptions getSetupOptions() const = 0;
         virtual bool setup(const MapRendererSetupOptions& setupOptions) = 0;
 
-        const MapRendererConfiguration& configuration;
+        virtual MapRendererConfiguration getConfiguration() const = 0;
         virtual void setConfiguration(const MapRendererConfiguration& configuration, bool forcedUpdate = false) = 0;
 
-        const bool& isRenderingInitialized;
+        virtual bool isRenderingInitialized() const = 0;
         virtual bool initializeRendering() = 0;
         virtual bool update() = 0;
         virtual bool prepareFrame() = 0;
@@ -58,13 +50,11 @@ namespace OsmAnd
 
         virtual void reloadEverything() = 0;
 
-        const MapRendererState& state;
+        virtual MapRendererState getState() const = 0;
         virtual bool isFrameInvalidated() const = 0;
         virtual void forcedFrameInvalidate() = 0;
         virtual void forcedGpuProcessingCycle() = 0;
 
-        virtual QList<TileId> getVisibleTiles() const = 0;
-        virtual unsigned int getVisibleTilesCount() const = 0;
         virtual unsigned int getSymbolsCount() const = 0;
 
         virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
@@ -104,15 +94,11 @@ namespace OsmAnd
         OSMAND_CALLABLE(StateChangeObserver, void, IMapRenderer* mapRenderer, const MapRendererStateChange thisChange, const uint32_t allChanges);
         const ObservableAs<StateChangeObserver> stateChangeObservable;
 
-        virtual float getReferenceTileSizeOnScreen() = 0;
-        virtual float getScaledTileSizeOnScreen() = 0;
         //NOTE: screen points origin from top-left
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) = 0;
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) = 0;
 
         virtual void dumpResourcesInfo() const = 0;
-
-    friend class OsmAnd::MapRenderer;
     };
 
     enum class MapRendererClass

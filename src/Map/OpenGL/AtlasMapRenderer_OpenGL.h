@@ -59,13 +59,13 @@ namespace OsmAnd
 
         GPUAPI_OpenGL* getGPUAPI() const;
 
-        float getReferenceTileSizeOnScreen(const MapRendererState& state);
+        float getReferenceTileSizeOnScreenInPixels(const MapRendererState& state);
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
 
-        virtual float getReferenceTileSizeOnScreen();
-        virtual float getScaledTileSizeOnScreen();
+        virtual float getReferenceTileSizeOnScreenInPixels();
+        virtual float getCurrentTileSizeOnScreenInPixels();
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31);
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location);
 
@@ -75,7 +75,6 @@ namespace OsmAnd
 #if OSMAND_DEBUG
     friend class OsmAnd::AtlasMapRendererDebugStage_OpenGL;
 #endif
-    //friend class OsmAnd::AtlasMapRendererStage_OpenGL;
     };
 }
 

@@ -39,13 +39,10 @@ namespace OsmAnd
         Zoom = 1 << 13,
     };
 
-    class OSMAND_CORE_API MapRendererState
+    struct OSMAND_CORE_API MapRendererState Q_DECL_FINAL
     {
-    private:
-    protected:
         MapRendererState();
-    public:
-        virtual ~MapRendererState();
+        ~MapRendererState();
 
         std::array< std::shared_ptr<IMapRasterBitmapTileProvider>, RasterMapLayersCount > rasterLayerProviders;
         std::array< float, RasterMapLayersCount > rasterLayerOpacity;
@@ -67,11 +64,7 @@ namespace OsmAnd
         float requestedZoom;
         ZoomLevel zoomBase;
         float zoomFraction;
-
-    friend class OsmAnd::IMapRenderer;
-    friend class OsmAnd::MapRenderer;
     };
-
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_RENDERER_STATE_H_)

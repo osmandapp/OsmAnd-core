@@ -37,6 +37,7 @@
 
 namespace OsmAnd
 {
+    class AtlasMapRenderer;
     class MapRenderer;
     class IMapDataProvider;
     class TiledMapSymbolsData;
@@ -199,6 +200,9 @@ namespace OsmAnd
     friend class OsmAnd::MapRendererTiledSymbolsResourcesCollection;
     friend class OsmAnd::MapRendererTiledSymbolsResource;
     friend class OsmAnd::MapRendererKeyedSymbolsResource;
+
+    //TODO: MapRendererResourcesManager needs to be splitted into Altas and etc.
+    friend class OsmAnd::AtlasMapRenderer;
     };
 }
 

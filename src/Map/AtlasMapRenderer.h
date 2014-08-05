@@ -8,23 +8,34 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "MapRenderer.h"
+#include "IAtlasMapRenderer.h"
 #include "MapRendererResourcesManager.h"
 
 namespace OsmAnd
 {
-    class AtlasMapRenderer : public MapRenderer
+    class AtlasMapRenderer
+        : public MapRenderer
+        , public IAtlasMapRenderer
     {
         Q_DISABLE_COPY(AtlasMapRenderer);
-    public:
-        enum {
-            TileSize3D = 100u,
-            DefaultReferenceTileSizeOnScreen = 256u,
-        };
+
     private:
+        // General:
+        QSet<TileId> _uniqueTiles;
     protected:
         AtlasMapRenderer(GPUAPI* const gpuAPI);
+
+        // State-related:
+        virtual bool updateInternalState(MapRendererInternalState* internalState, const MapRendererState& state);
+
+        // Customization points:
+        virtual bool prePrepareFrame();
+        virtual bool postPrepareFrame();
     public:
         virtual ~AtlasMapRenderer();
+
+        virtual QList<TileId> getVisibleTiles() const;
+        virtual unsigned int getVisibleTilesCount() const;
     };
 }
 
