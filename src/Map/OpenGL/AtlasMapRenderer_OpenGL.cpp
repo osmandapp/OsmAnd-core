@@ -128,14 +128,17 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
 
     //TODO: render special fog object some day
 
-    // Render debug stage    
-    glDisable(GL_DEPTH_TEST);
-    GL_CHECK_RESULT;
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
-    _debugStage.render();
-    glEnable(GL_DEPTH_TEST);
-    GL_CHECK_RESULT;
+    // Render debug stage
+    if (currentDebugSettings->debugStageEnabled)
+    {
+        glDisable(GL_DEPTH_TEST);
+        GL_CHECK_RESULT;
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK_RESULT;
+        _debugStage.render();
+        glEnable(GL_DEPTH_TEST);
+        GL_CHECK_RESULT;
+    }
 
     // Turn off blending
     glDisable(GL_BLEND);

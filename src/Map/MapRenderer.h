@@ -72,6 +72,13 @@ namespace OsmAnd
         Qt::HANDLE _renderThreadId;
         Concurrent::Dispatcher _renderThreadDispatcher;
         Concurrent::Dispatcher _gpuThreadDispatcher;
+
+        // Debug-related:
+        mutable QReadWriteLock _debugSettingsLock;
+        std::shared_ptr<MapRendererDebugSettings> _currentDebugSettings;
+        std::shared_ptr<const MapRendererDebugSettings> _currentDebugSettingsAsConst;
+        std::shared_ptr<MapRendererDebugSettings> _requestedDebugSettings;
+        bool updateCurrentDebugSettings();
     protected:
         MapRenderer(GPUAPI* const gpuAPI);
 
@@ -125,6 +132,10 @@ namespace OsmAnd
             const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
 
         // General:
+
+        // Debug-related:
+        virtual std::shared_ptr<MapRendererDebugSettings> allocateDebugSettings() const = 0;
+        const std::shared_ptr<const MapRendererDebugSettings>& currentDebugSettings;
 
         // Customization points:
         virtual bool preInitializeRendering();
@@ -208,6 +219,9 @@ namespace OsmAnd
         virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy) const;
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy) const;
 
+        // Debug-related:
+        virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const;
+        virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings);
         virtual void dumpResourcesInfo() const;
 
         friend struct OsmAnd::MapRendererInternalState;

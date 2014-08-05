@@ -16,6 +16,7 @@
 #include <OsmAndCore/Map/MapRendererState.h>
 #include <OsmAndCore/Map/MapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapRendererSetupOptions.h>
+#include <OsmAndCore/Map/MapRendererDebugSettings.h>
 
 namespace OsmAnd
 {
@@ -79,6 +80,9 @@ namespace OsmAnd
         virtual void setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
         virtual void setTarget(const PointI& target31, bool forcedUpdate = false) = 0;
         virtual void setZoom(const float zoom, bool forcedUpdate = false) = 0;
+
+        virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const = 0;
+        virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) = 0;
 
         virtual float getMinZoom() const = 0;
         virtual float getMaxZoom() const = 0;

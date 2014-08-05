@@ -47,6 +47,9 @@ namespace OsmAnd
             const MapRendererState& state,
             const MapRendererConfiguration& configuration);
 
+        // Debug-related:
+        virtual std::shared_ptr<MapRendererDebugSettings> allocateDebugSettings() const;
+
         // Customization points:
         virtual bool prePrepareFrame();
         virtual bool postPrepareFrame();

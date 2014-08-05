@@ -27,6 +27,7 @@ OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
     , setupOptions(_setupOptions)
     , currentConfiguration(_currentConfigurationAsConst)
     , currentState(_currentState)
+    , currentDebugSettings(_currentDebugSettingsAsConst)
     , gpuAPI(gpuAPI_)
 {
     // Fill-up default state
@@ -69,8 +70,12 @@ bool OsmAnd::MapRenderer::setup(const MapRendererSetupOptions& setupOptions)
         return false;
 
     _setupOptions = setupOptions;
+
     _currentConfigurationAsConst = _currentConfiguration = allocateConfiguration();
     _requestedConfiguration = allocateConfiguration();
+
+    _currentDebugSettingsAsConst = _currentDebugSettings = allocateDebugSettings();
+    _requestedDebugSettings = allocateDebugSettings();
 
     return true;
 }
@@ -1182,8 +1187,35 @@ float OsmAnd::MapRenderer::getRecommendedMaxZoom(const ZoomRecommendationStrateg
     return zoomLimit + 0.49999f;
 }
 
+bool OsmAnd::MapRenderer::updateCurrentDebugSettings()
+{
+    QReadLocker scopedLocker(&_debugSettingsLock);
+
+    _requestedDebugSettings->copyTo(*_currentDebugSettings);
+
+    return true;
+}
+
+std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRenderer::getDebugSettings() const
+{
+    QReadLocker scopedLocker(&_debugSettingsLock);
+
+    const auto result = allocateDebugSettings();
+    _requestedDebugSettings->copyTo(*result);
+
+    return result;
+}
+
+void OsmAnd::MapRenderer::setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings)
+{
+    QWriteLocker scopedLocker(&_debugSettingsLock);
+
+    debugSettings->copyTo(*_requestedDebugSettings);
+
+    invalidateFrame();
+}
+
 void OsmAnd::MapRenderer::dumpResourcesInfo() const
 {
     getResources().dumpResourcesInfo();
 }
-

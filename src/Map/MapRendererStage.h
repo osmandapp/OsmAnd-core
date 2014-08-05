@@ -12,6 +12,7 @@
 #include "MapRendererState.h"
 #include "MapRendererInternalState.h"
 #include "MapRendererSetupOptions.h"
+#include "MapRendererDebugSettings.h"
 
 namespace OsmAnd
 {
@@ -31,6 +32,7 @@ namespace OsmAnd
         const MapRendererState& currentState;
         const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
         const MapRendererSetupOptions& setupOptions;
+        const std::shared_ptr<const MapRendererDebugSettings>& debugSettings;
 
         virtual void initialize() = 0;
         virtual void render() = 0;

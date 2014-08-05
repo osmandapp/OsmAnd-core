@@ -8,6 +8,7 @@ OsmAnd::MapRendererStage::MapRendererStage(MapRenderer* const renderer_)
     , currentState(renderer->currentState)
     , currentConfiguration(renderer->currentConfiguration)
     , setupOptions(renderer->setupOptions)
+    , debugSettings(renderer->currentDebugSettings)
 {
 }
 

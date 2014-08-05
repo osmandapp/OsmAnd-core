@@ -117,6 +117,10 @@ uint32_t OsmAnd::AtlasMapRenderer::getConfigurationChangeMask(
 
 void OsmAnd::AtlasMapRenderer::invalidateCurrentConfiguration(const uint32_t changesMask)
 {
-
     MapRenderer::invalidateCurrentConfiguration(changesMask);
+}
+
+std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::AtlasMapRenderer::allocateDebugSettings() const
+{
+    return std::shared_ptr<MapRendererDebugSettings>(new MapRendererDebugSettings());
 }
