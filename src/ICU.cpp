@@ -3,15 +3,20 @@
 
 #include <cassert>
 
+#include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QByteArray>
 #include <QVector>
+#include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include <unicode/uclean.h>
 #include <unicode/udata.h>
 #include <unicode/ubidi.h>
 #include <unicode/ushape.h>
 #include <unicode/translit.h>
 #include <unicode/brkiter.h>
+#include "restore_internal_warnings.h"
 
 #include "EmbeddedResources.h"
 #include "Logging.h"

@@ -5,7 +5,9 @@
 #include "QtExtensions.h"
 #include <QStringList>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
+#include "restore_internal_warnings.h"
 
 #include "MapRendererTypes.h"
 #include "IMapRasterBitmapTileProvider.h"

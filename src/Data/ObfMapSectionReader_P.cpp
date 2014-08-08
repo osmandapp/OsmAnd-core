@@ -2,6 +2,11 @@
 #include "ObfMapSectionReader.h"
 #include "ObfMapSectionReader_Metrics.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include "OBF.pb.h"
+#include <google/protobuf/wire_format_lite.h>
+#include "restore_internal_warnings.h"
+
 #include "Common.h"
 #include "ObfReader.h"
 #include "ObfReader_P.h"
@@ -13,9 +18,6 @@
 #include "Stopwatch.h"
 #include "Logging.h"
 #include "Utilities.h"
-
-#include "OBF.pb.h"
-#include <google/protobuf/wire_format_lite.h>
 
 OsmAnd::ObfMapSectionReader_P::ObfMapSectionReader_P()
 {

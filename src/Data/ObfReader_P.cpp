@@ -4,6 +4,11 @@
 #include "QtExtensions.h"
 #include <QFile>
 
+#include "ignore_warnings_on_external_includes.h"
+#include "OBF.pb.h"
+#include <google/protobuf/wire_format_lite.h>
+#include "restore_internal_warnings.h"
+
 #include "QIODeviceInputStream.h"
 #include "QFileDeviceInputStream.h"
 #include "ObfFile.h"
@@ -21,9 +26,6 @@
 #include "ObfPoiSectionInfo.h"
 #include "ObfPoiSectionReader_P.h"
 #include "ObfReaderUtilities.h"
-
-#include "OBF.pb.h"
-#include <google/protobuf/wire_format_lite.h>
 
 OsmAnd::ObfReader_P::ObfReader_P(ObfReader* const owner_, const std::shared_ptr<QIODevice>& input_)
     : owner(owner_)

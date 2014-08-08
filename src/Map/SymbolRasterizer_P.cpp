@@ -4,6 +4,14 @@
 #include "QtCommon.h"
 #include <QReadWriteLock>
 
+#include "ignore_warnings_on_external_includes.h"
+#include <SkBlurDrawLooper.h>
+#include <SkColorFilter.h>
+#include <SkDashPathEffect.h>
+#include <SkBitmapProcShader.h>
+#include <SkError.h>
+#include "restore_internal_warnings.h"
+
 #include "MapPresentationEnvironment.h"
 #include "MapStyleEvaluationResult.h"
 #include "Primitiviser.h"
@@ -15,12 +23,6 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
-
-#include <SkBlurDrawLooper.h>
-#include <SkColorFilter.h>
-#include <SkDashPathEffect.h>
-#include <SkBitmapProcShader.h>
-#include <SkError.h>
 
 //#define OSMAND_DUMP_SYMBOLS 1
 #if !defined(OSMAND_DUMP_SYMBOLS)

@@ -40,14 +40,6 @@ namespace OsmAnd
     }
 
     template<typename T>
-    T detachedOf(const T& input)
-    {
-        T copy = input;
-        copy.detach();
-        return copy;
-    }
-
-    template<typename T>
     const T& assignAndReturn(T& var, const T& value)
     {
         var = value;

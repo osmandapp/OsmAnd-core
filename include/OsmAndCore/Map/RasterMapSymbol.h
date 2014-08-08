@@ -7,8 +7,6 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 
-#include <SkBitmap.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>

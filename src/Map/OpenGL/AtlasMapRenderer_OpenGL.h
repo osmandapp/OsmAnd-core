@@ -19,7 +19,6 @@
 
 namespace OsmAnd
 {
-    class AtlasMapRendererStage_OpenGL;
     class AtlasMapRenderer_OpenGL : public AtlasMapRenderer
     {
         Q_DISABLE_COPY(AtlasMapRenderer_OpenGL);
@@ -30,45 +29,41 @@ namespace OsmAnd
     protected:
         const static float _zNear;
 
+        void updateFrustum(InternalState* internalState, const MapRendererState& state) const;
+        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state) const;
+        
+        // State-related:
         InternalState _internalState;
         virtual const MapRendererInternalState* getInternalStateRef() const;
         virtual MapRendererInternalState* getInternalStateRef();
-
-        void updateFrustum(InternalState* internalState, const MapRendererState& state);
-        void computeVisibleTileset(InternalState* internalState, const MapRendererState& state);
-
-        AtlasMapRendererSkyStage_OpenGL _skyStage;
-        AtlasMapRendererRasterMapStage_OpenGL _rasterMapStage;
-        AtlasMapRendererSymbolsStage_OpenGL _symbolsStage;
-        AtlasMapRendererDebugStage_OpenGL _debugStage;
-
-        virtual bool doInitializeRendering();
-        virtual bool doRenderFrame();
-        virtual bool doReleaseRendering();
-
-        virtual void onValidateResourcesOfType(const MapRendererResourceType type);
-
+        virtual const MapRendererInternalState& getInternalState() const;
+        virtual MapRendererInternalState& getInternalState();
         virtual bool updateInternalState(
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
-            const MapRendererConfiguration& configuration);
+            const MapRendererConfiguration& configuration) const;
 
-        virtual bool postInitializeRendering();
-        virtual bool preReleaseRendering();
+        // Resources:
+        virtual void onValidateResourcesOfType(const MapRendererResourceType type);
+
+        // Customization points:
+        virtual bool doInitializeRendering();
+        virtual bool doRenderFrame();
 
         GPUAPI_OpenGL* getGPUAPI() const;
+
+        // Stages:
+        virtual AtlasMapRendererSkyStage* createSkyStage();
+        virtual AtlasMapRendererRasterMapStage* createRasterMapStage();
+        virtual AtlasMapRendererSymbolsStage* createSymbolsStage();
+        virtual AtlasMapRendererDebugStage* createDebugStage();
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();
 
-        virtual float getCurrentTileSizeOnScreenInPixels();
-        virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31);
-        virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location);
-
-    friend class OsmAnd::AtlasMapRendererStage_OpenGL;
-    friend class OsmAnd::AtlasMapRendererSkyStage_OpenGL;
-    friend class OsmAnd::AtlasMapRendererSymbolsStage_OpenGL;
-    friend class OsmAnd::AtlasMapRendererDebugStage_OpenGL;
+        virtual float getCurrentTileSizeOnScreenInPixels() const;
+        virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const;
+        virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const;
     };
 }
 

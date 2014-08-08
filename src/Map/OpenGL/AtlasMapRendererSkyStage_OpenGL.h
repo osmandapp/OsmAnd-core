@@ -9,12 +9,14 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
-#include "AtlasMapRendererStage_OpenGL.h"
-#include "GPUAPI_OpenGL.h"
+#include "AtlasMapRendererSkyStage.h"
+#include "AtlasMapRendererStageHelper_OpenGL.h"
 
 namespace OsmAnd
 {
-    class AtlasMapRendererSkyStage_OpenGL : public AtlasMapRendererStage_OpenGL
+    class AtlasMapRendererSkyStage_OpenGL
+        : public AtlasMapRendererSkyStage
+        , private AtlasMapRendererStageHelper_OpenGL
     {
     private:
     protected:

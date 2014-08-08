@@ -263,8 +263,6 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
         // Or let's just continue using current atlas texture
         return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(atlasTexture, _firstUnusedSlotIndex++));
     }
-
-    return nullptr;
 }
 
 OsmAnd::GPUAPI::MeshInGPU::MeshInGPU(

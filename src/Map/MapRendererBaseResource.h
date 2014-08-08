@@ -15,9 +15,10 @@ namespace OsmAnd
 {
     class MapRendererResourcesManager;
 
-    // Base resource
     class MapRendererBaseResource : public std::enable_shared_from_this<MapRendererBaseResource>
     {
+        Q_DISABLE_COPY(MapRendererBaseResource);
+
     private:
         bool _isJunk;
     protected:

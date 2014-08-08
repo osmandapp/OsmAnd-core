@@ -2,7 +2,6 @@
 #define _OSMAND_CORE_FUNCTOR_LOG_SINK_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
 

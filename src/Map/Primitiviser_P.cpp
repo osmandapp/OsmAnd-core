@@ -585,7 +585,7 @@ void OsmAnd::Primitiviser_P::appendCoastlinePolygons(
 
     bool add = true;
 
-    for (auto itPolygon = iteratorOf(coastlinePolylines); itPolygon;)
+    for (auto itPolygon = cachingIteratorOf(coastlinePolylines); itPolygon;)
     {
         auto& polygon = *itPolygon;
 
@@ -669,7 +669,7 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
     std::set< QList< QVector< PointI > >::iterator > processedPolylines;
     while (processedPolylines.size() != validPolylines.size())
     {
-        for (auto itPolyline = iteratorOf(validPolylines); itPolyline; ++itPolyline)
+        for (auto itPolyline = cachingIteratorOf(validPolylines); itPolyline; ++itPolyline)
         {
             // If this polyline was already processed, skip it
             if (processedPolylines.find(itPolyline.current) != processedPolylines.end())
@@ -686,7 +686,7 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
             {
                 const auto currentEdge = static_cast<AreaI::Edge>(idx % 4);
 
-                for (auto itOtherPolyline = iteratorOf(validPolylines); itOtherPolyline; ++itOtherPolyline)
+                for (auto itOtherPolyline = cachingIteratorOf(validPolylines); itOtherPolyline; ++itOtherPolyline)
                 {
                     // If this polyline was already processed, skip it
                     if (processedPolylines.find(itOtherPolyline.current) != processedPolylines.end())
@@ -1018,7 +1018,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
     uint32_t typeRuleIdIndex = 0;
     const auto& decRules = mapObject->section->encodingDecodingRules->decodingRules;
-    for (auto itTypeRuleId = iteratorOf(constOf(mapObject->typesRuleIds)); itTypeRuleId; ++itTypeRuleId, typeRuleIdIndex++)
+    for (auto itTypeRuleId = cachingIteratorOf(constOf(mapObject->typesRuleIds)); itTypeRuleId; ++itTypeRuleId, typeRuleIdIndex++)
     {
         const auto& decodedType = decRules[*itTypeRuleId];
 

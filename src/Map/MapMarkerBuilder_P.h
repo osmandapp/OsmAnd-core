@@ -8,12 +8,12 @@
 #include <QHash>
 #include <QReadWriteLock>
 
-#include <SkBitmap.h>
-
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "MapMarker.h"
+
+class SkBitmap;
 
 namespace OsmAnd
 {

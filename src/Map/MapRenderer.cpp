@@ -6,6 +6,10 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QMutableHashIterator>
 
+#include "ignore_warnings_on_external_includes.h"
+#include <SkBitmap.h>
+#include "restore_internal_warnings.h"
+
 #include "MapRendererInternalState.h"
 #include "MapRendererResourcesManager.h"
 #include "IMapRasterBitmapTileProvider.h"
@@ -14,8 +18,6 @@
 #include "GPUAPI.h"
 #include "Utilities.h"
 #include "Logging.h"
-
-#include <SkBitmap.h>
 
 OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
     : _isRenderingInitialized(false)
@@ -182,7 +184,7 @@ void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange&
 bool OsmAnd::MapRenderer::updateInternalState(
     MapRendererInternalState& outInternalState,
     const MapRendererState& state,
-    const MapRendererConfiguration& configuration)
+    const MapRendererConfiguration& configuration) const
 {
     return true;
 }
@@ -506,8 +508,8 @@ bool OsmAnd::MapRenderer::doPrepareFrame()
 
 bool OsmAnd::MapRenderer::postPrepareFrame()
 {
-    // Tell resources to update shadow copies of resources collections
-    if (!_resources->updateShadowCollections())
+    // Tell resources to update snapshots of resources collections
+    if (!_resources->updateCollectionsSnapshots())
         invalidateFrame();
 
     return true;
@@ -804,7 +806,7 @@ OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getGpuThreadDispatcher()
 
 unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
 {
-    return getResources().getMapSymbolsInRegisterCount();
+    return getResources().getMapSymbolsCount();
 }
 
 void OsmAnd::MapRenderer::setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/)

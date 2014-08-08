@@ -25,18 +25,18 @@ namespace OsmAnd
         , public TiledEntriesCollection < MapRendererBaseTiledResource >
     {
     public:
-        class Shadow
+        class Snapshot
             : public IMapRendererResourcesCollection
             , public IMapRendererTiledResourcesCollection
         {
         private:
         protected:
-            Shadow(const MapRendererResourceType type);
+            Snapshot(const MapRendererResourceType type);
 
             mutable QReadWriteLock _lock;
             MapRendererTiledResourcesCollection::Storage _storage;
         public:
-            virtual ~Shadow();
+            virtual ~Snapshot();
 
             const MapRendererResourceType type;
             virtual MapRendererResourceType getType() const;
@@ -60,8 +60,8 @@ namespace OsmAnd
         void verifyNoUploadedResourcesPresent() const;
         virtual void removeAllEntries();
 
-        const std::shared_ptr<Shadow> _shadow;
-        mutable QAtomicInt _shadowCollectionInvalidatesCount;
+        const std::shared_ptr<Snapshot> _snapshot;
+        mutable QAtomicInt _collectionSnapshotInvalidatesCount;
         virtual void onCollectionModified() const;
     public:
         virtual ~MapRendererTiledResourcesCollection();
@@ -76,9 +76,9 @@ namespace OsmAnd
         virtual void obtainResources(QList< std::shared_ptr<MapRendererBaseResource> >* outList, const ResourceFilterCallback filter);
         virtual void removeResources(const ResourceFilterCallback filter);
 
-        virtual bool updateShadowCollection() const;
-        virtual std::shared_ptr<const IMapRendererResourcesCollection> getShadowCollection() const;
-        virtual std::shared_ptr<IMapRendererResourcesCollection> getShadowCollection();
+        virtual bool updateCollectionSnapshot() const;
+        virtual std::shared_ptr<const IMapRendererResourcesCollection> getCollectionSnapshot() const;
+        virtual std::shared_ptr<IMapRendererResourcesCollection> getCollectionSnapshot();
 
     friend class OsmAnd::MapRendererResourcesManager;
     };

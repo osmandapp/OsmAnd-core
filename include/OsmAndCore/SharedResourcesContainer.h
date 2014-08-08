@@ -2,7 +2,6 @@
 #define _OSMAND_CORE_SHARED_RESOURCES_CONTAINER_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <cassert>
 #include <proper/future.h>
 
 #include <OsmAndCore/QtExtensions.h>
@@ -24,6 +23,8 @@ namespace OsmAnd
     template<typename KEY_TYPE, typename RESOURCE_TYPE>
     class SharedResourcesContainer
     {
+        Q_DISABLE_COPY(SharedResourcesContainer);
+
     public:
         typedef std::shared_ptr<RESOURCE_TYPE> ResourcePtr;
     protected:
@@ -51,6 +52,9 @@ namespace OsmAnd
 
             uintmax_t refCounter;
             const ResourcePtr resourcePtr;
+
+        private:
+            Q_DISABLE_COPY(AvailableResourceEntry);
         };
 
         struct PromisedResourceEntry
@@ -72,10 +76,11 @@ namespace OsmAnd
             uintmax_t refCounter;
             proper::promise<ResourcePtr> promise;
             const proper::shared_future<ResourcePtr> sharedFuture;
+
+        private:
+            Q_DISABLE_COPY(PromisedResourceEntry);
         };
     private:
-        Q_DISABLE_COPY(SharedResourcesContainer)
-
         QHash< KEY_TYPE, std::shared_ptr< AvailableResourceEntry > > _availableResources;
         QHash< KEY_TYPE, std::shared_ptr< PromisedResourceEntry > > _promisedResources;
     protected:

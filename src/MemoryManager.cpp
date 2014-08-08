@@ -15,10 +15,12 @@ OsmAnd::MemoryManager::~MemoryManager()
 
 void* OsmAnd::MemoryManager::allocate(std::size_t size, const char* tag)
 {
+    Q_UNUSED(tag);
     return std::malloc(size);
 }
 
 void OsmAnd::MemoryManager::free(void* ptr, const char* tag)
 {
+    Q_UNUSED(tag);
     std::free(ptr);
 }

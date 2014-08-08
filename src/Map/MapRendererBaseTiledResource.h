@@ -17,7 +17,6 @@ namespace OsmAnd
 {
     class MapRendererResourcesManager;
 
-    // Base class for all tiled resources
     class MapRendererBaseTiledResource
         : public MapRendererBaseResource
         , public TiledEntriesCollectionEntryWithState < MapRendererBaseTiledResource, MapRendererResourceState, MapRendererResourceState::Unknown >

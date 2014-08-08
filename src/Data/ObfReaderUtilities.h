@@ -7,7 +7,9 @@
 #include <QString>
 #include <QStringList>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <google/protobuf/io/coded_stream.h>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 

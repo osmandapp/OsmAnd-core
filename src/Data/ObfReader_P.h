@@ -8,8 +8,10 @@
 #include <QString>
 #include <QIODevice>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"

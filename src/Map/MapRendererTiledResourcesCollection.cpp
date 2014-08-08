@@ -2,7 +2,7 @@
 
 OsmAnd::MapRendererTiledResourcesCollection::MapRendererTiledResourcesCollection(const MapRendererResourceType type_)
     : MapRendererBaseResourcesCollection(type_)
-    , _shadow(new Shadow(type_))
+    , _snapshot(new Snapshot(type_))
 {
 }
 
@@ -94,68 +94,68 @@ void OsmAnd::MapRendererTiledResourcesCollection::removeResources(const Resource
 
 void OsmAnd::MapRendererTiledResourcesCollection::onCollectionModified() const
 {
-    _shadowCollectionInvalidatesCount.fetchAndAddOrdered(1);
+    _collectionSnapshotInvalidatesCount.fetchAndAddOrdered(1);
 }
 
-bool OsmAnd::MapRendererTiledResourcesCollection::updateShadowCollection() const
+bool OsmAnd::MapRendererTiledResourcesCollection::updateCollectionSnapshot() const
 {
-    const auto invalidatesDiscarded = _shadowCollectionInvalidatesCount.fetchAndAddOrdered(0);
+    const auto invalidatesDiscarded = _collectionSnapshotInvalidatesCount.fetchAndAddOrdered(0);
     if (invalidatesDiscarded == 0)
         return true;
 
     // Copy from original storage to temp storage
-    Storage tempShadowStorage;
+    Storage storageCopy;
     {
         if (!_collectionLock.tryLockForRead())
             return false;
 
         for (int zoomLevel = MinZoomLevel; zoomLevel <= MaxZoomLevel; zoomLevel++)
         {
-            const auto& sourceStorage = constOf(_storage)[zoomLevel];
-            auto& targetStorage = tempShadowStorage[zoomLevel];
+            const auto& sourceStorageLevel = constOf(_storage)[zoomLevel];
+            auto& targetStorageLevel = storageCopy[zoomLevel];
 
-            targetStorage = detachedOf(sourceStorage);
+            targetStorageLevel = detachedOf(sourceStorageLevel);
         }
 
         _collectionLock.unlock();
     }
-    _shadowCollectionInvalidatesCount.fetchAndAddOrdered(-invalidatesDiscarded);
+    _collectionSnapshotInvalidatesCount.fetchAndAddOrdered(-invalidatesDiscarded);
 
-    // Copy from temp storage to shadow
+    // Copy from temp storage to snapshot
     {
-        QWriteLocker scopedLocker(&_shadow->_lock);
+        QWriteLocker scopedLocker(&_snapshot->_lock);
 
-        _shadow->_storage = qMove(tempShadowStorage);
+        _snapshot->_storage = qMove(storageCopy);
     }
 
     return true;
 }
 
-std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererTiledResourcesCollection::getShadowCollection() const
+std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererTiledResourcesCollection::getCollectionSnapshot() const
 {
-    return _shadow;
+    return _snapshot;
 }
 
-std::shared_ptr<OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererTiledResourcesCollection::getShadowCollection()
+std::shared_ptr<OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererTiledResourcesCollection::getCollectionSnapshot()
 {
-    return _shadow;
+    return _snapshot;
 }
 
-OsmAnd::MapRendererTiledResourcesCollection::Shadow::Shadow(const MapRendererResourceType type_)
+OsmAnd::MapRendererTiledResourcesCollection::Snapshot::Snapshot(const MapRendererResourceType type_)
     : type(type_)
 {
 }
 
-OsmAnd::MapRendererTiledResourcesCollection::Shadow::~Shadow()
+OsmAnd::MapRendererTiledResourcesCollection::Snapshot::~Snapshot()
 {
 }
 
-OsmAnd::MapRendererResourceType OsmAnd::MapRendererTiledResourcesCollection::Shadow::getType() const
+OsmAnd::MapRendererResourceType OsmAnd::MapRendererTiledResourcesCollection::Snapshot::getType() const
 {
     return type;
 }
 
-int OsmAnd::MapRendererTiledResourcesCollection::Shadow::getResourcesCount() const
+int OsmAnd::MapRendererTiledResourcesCollection::Snapshot::getResourcesCount() const
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -166,7 +166,7 @@ int OsmAnd::MapRendererTiledResourcesCollection::Shadow::getResourcesCount() con
     return count;
 }
 
-void OsmAnd::MapRendererTiledResourcesCollection::Shadow::forEachResourceExecute(const ResourceActionCallback action)
+void OsmAnd::MapRendererTiledResourcesCollection::Snapshot::forEachResourceExecute(const ResourceActionCallback action)
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -183,7 +183,7 @@ void OsmAnd::MapRendererTiledResourcesCollection::Shadow::forEachResourceExecute
     }
 }
 
-void OsmAnd::MapRendererTiledResourcesCollection::Shadow::obtainResources(QList< std::shared_ptr<MapRendererBaseResource> >* outList, const ResourceFilterCallback filter)
+void OsmAnd::MapRendererTiledResourcesCollection::Snapshot::obtainResources(QList< std::shared_ptr<MapRendererBaseResource> >* outList, const ResourceFilterCallback filter)
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -204,7 +204,7 @@ void OsmAnd::MapRendererTiledResourcesCollection::Shadow::obtainResources(QList<
     }
 }
 
-bool OsmAnd::MapRendererTiledResourcesCollection::Shadow::obtainResource(const TileId tileId, const ZoomLevel zoomLevel, std::shared_ptr<MapRendererBaseTiledResource>& outResource) const
+bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::obtainResource(const TileId tileId, const ZoomLevel zoomLevel, std::shared_ptr<MapRendererBaseTiledResource>& outResource) const
 {
     QReadLocker scopedLocker(&_lock);
 

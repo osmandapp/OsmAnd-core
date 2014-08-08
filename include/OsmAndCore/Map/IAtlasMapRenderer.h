@@ -34,7 +34,7 @@ namespace OsmAnd
         virtual QList<TileId> getVisibleTiles() const = 0;
         virtual unsigned int getVisibleTilesCount() const = 0;
 
-        virtual float getCurrentTileSizeOnScreenInPixels() = 0;
+        virtual float getCurrentTileSizeOnScreenInPixels() const = 0;
     };
 }
 

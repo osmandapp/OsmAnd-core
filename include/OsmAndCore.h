@@ -51,7 +51,9 @@
 #include <QtGlobal>
 
 // Ensure that SKIA is using RGBA order
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <SkColor.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 #ifdef SK_CPU_LENDIAN
 #   if (24 != SK_A32_SHIFT) || ( 0 != SK_R32_SHIFT) || \
        ( 8 != SK_G32_SHIFT) || (16 != SK_B32_SHIFT)

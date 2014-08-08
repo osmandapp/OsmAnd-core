@@ -16,9 +16,10 @@ namespace OsmAnd
     class MapRendererResourcesManager;
     class MapRendererBaseResource;
 
-    // Base Collection of resources
     class MapRendererBaseResourcesCollection : public IMapRendererResourcesCollection
     {
+        Q_DISABLE_COPY(MapRendererBaseResourcesCollection);
+
     private:
     protected:
         MapRendererBaseResourcesCollection(const MapRendererResourceType type);
@@ -31,9 +32,9 @@ namespace OsmAnd
 
         virtual void removeResources(const ResourceFilterCallback filter) = 0;
 
-        virtual bool updateShadowCollection() const = 0;
-        virtual std::shared_ptr<const IMapRendererResourcesCollection> getShadowCollection() const = 0;
-        virtual std::shared_ptr<IMapRendererResourcesCollection> getShadowCollection() = 0;
+        virtual bool updateCollectionSnapshot() const = 0;
+        virtual std::shared_ptr<const IMapRendererResourcesCollection> getCollectionSnapshot() const = 0;
+        virtual std::shared_ptr<IMapRendererResourcesCollection> getCollectionSnapshot() = 0;
 
     friend class OsmAnd::MapRendererResourcesManager;
     };

@@ -6,12 +6,12 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
 
-#include <SkBitmap.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
+
+class SkBitmap;
 
 namespace OsmAnd
 {

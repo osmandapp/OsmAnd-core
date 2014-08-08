@@ -2,9 +2,18 @@
 
 #include "AtlasMapRendererConfiguration.h"
 #include "AtlasMapRendererInternalState.h"
+#include "AtlasMapRendererSkyStage.h"
+#include "AtlasMapRendererRasterMapStage.h"
+#include "AtlasMapRendererSymbolsStage.h"
+#include "AtlasMapRendererDebugStage.h"
+#include "Utilities.h"
 
 OsmAnd::AtlasMapRenderer::AtlasMapRenderer(GPUAPI* const gpuAPI_)
     : MapRenderer(gpuAPI_)
+    , skyStage(_skyStage)
+    , rasterMapStage(_rasterMapStage)
+    , symbolsStage(_symbolsStage)
+    , debugStage(_debugStage)
 {
 }
 
@@ -20,7 +29,7 @@ std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::AtlasMapRenderer::allo
 bool OsmAnd::AtlasMapRenderer::updateInternalState(
     MapRendererInternalState& outInternalState_,
     const MapRendererState& state,
-    const MapRendererConfiguration& configuration)
+    const MapRendererConfiguration& configuration) const
 {
     const auto internalState = static_cast<AtlasMapRendererInternalState*>(&outInternalState_);
 
@@ -123,4 +132,78 @@ void OsmAnd::AtlasMapRenderer::invalidateCurrentConfiguration(const uint32_t cha
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::AtlasMapRenderer::allocateDebugSettings() const
 {
     return std::shared_ptr<MapRendererDebugSettings>(new MapRendererDebugSettings());
+}
+
+bool OsmAnd::AtlasMapRenderer::preInitializeRendering()
+{
+    bool ok = MapRenderer::preInitializeRendering();
+    if (!ok)
+        return false;
+
+    _skyStage.reset(createSkyStage());
+    if (!_skyStage)
+        return false;
+
+    _rasterMapStage.reset(createRasterMapStage());
+    if (!_rasterMapStage)
+        return false;
+
+    _symbolsStage.reset(createSymbolsStage());
+    if (!_symbolsStage)
+        return false;
+
+    _debugStage.reset(createDebugStage());
+    if (!_debugStage)
+        return false;
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer::doInitializeRendering()
+{
+    bool ok = MapRenderer::doInitializeRendering();
+    if (!ok)
+        return false;
+
+    _skyStage->initialize();
+    _rasterMapStage->initialize();
+    _symbolsStage->initialize();
+    _debugStage->initialize();
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer::doReleaseRendering()
+{
+    bool ok;
+
+    if (_skyStage)
+    {
+        _skyStage->release();
+        _skyStage.reset();
+    }
+
+    if (_rasterMapStage)
+    {
+        _rasterMapStage->release();
+        _rasterMapStage.reset();
+    }
+
+    if (_symbolsStage)
+    {
+        _symbolsStage->release();
+        _symbolsStage.reset();
+    }
+
+    if (_debugStage)
+    {
+        _debugStage->release();
+        _debugStage.reset();
+    }
+
+    ok = MapRenderer::doReleaseRendering();
+    if (!ok)
+        return false;
+
+    return true;
 }

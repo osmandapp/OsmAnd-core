@@ -5,8 +5,10 @@
 #include "QtExtensions.h"
 #include <QtMath>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
 #include <SkCanvas.h>
+#include "restore_internal_warnings.h"
 
 #include "IMapRenderer.h"
 #include "IMapTiledDataProvider.h"

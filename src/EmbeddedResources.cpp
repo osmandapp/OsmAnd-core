@@ -1,8 +1,10 @@
 #include "EmbeddedResources.h"
 #include "EmbeddedResources_private.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkStream.h>
 #include <SkImageDecoder.h>
+#include "restore_internal_warnings.h"
 
 #include "Logging.h"
 

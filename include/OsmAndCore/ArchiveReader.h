@@ -4,6 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+
 #include <QString>
 #include <QList>
 #include <QDateTime>

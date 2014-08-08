@@ -10,12 +10,14 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
-#include "AtlasMapRendererStage_OpenGL.h"
-#include "GPUAPI_OpenGL.h"
+#include "AtlasMapRendererRasterMapStage.h"
+#include "AtlasMapRendererStageHelper_OpenGL.h"
 
 namespace OsmAnd
 {
-    class AtlasMapRendererRasterMapStage_OpenGL : public AtlasMapRendererStage_OpenGL
+    class AtlasMapRendererRasterMapStage_OpenGL
+        : public AtlasMapRendererRasterMapStage
+        , private AtlasMapRendererStageHelper_OpenGL
     {
     private:
     protected:
@@ -87,7 +89,7 @@ namespace OsmAnd
         virtual void initialize();
         virtual void render();
         virtual void release();
-        void recreateTile();
+        virtual void recreateTile();
     };
 }
 

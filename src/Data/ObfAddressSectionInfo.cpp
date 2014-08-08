@@ -1,6 +1,8 @@
 #include "ObfAddressSectionInfo.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include "OBF.pb.h"
+#include "restore_internal_warnings.h"
 
 typedef OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex_CitiesType _ObfAddressBlockType;
 static_assert(

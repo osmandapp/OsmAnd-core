@@ -3,7 +3,6 @@
 
 #include <OsmAndCore/stdlib_common.h>
 #include <type_traits>
-#include <cassert>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QAtomicInt>

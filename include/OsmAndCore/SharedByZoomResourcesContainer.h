@@ -2,7 +2,6 @@
 #define _OSMAND_CORE_SHARED_BY_ZOOM_RESOURCES_CONTAINER_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <cassert>
 #include <array>
 
 #include <OsmAndCore/QtExtensions.h>
@@ -28,6 +27,7 @@ namespace OsmAnd
     template<typename KEY_TYPE, typename RESOURCE_TYPE>
     class SharedByZoomResourcesContainer : protected SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>
     {
+        Q_DISABLE_COPY(SharedByZoomResourcesContainer);
     public:
         typedef typename SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::ResourcePtr ResourcePtr;
     protected:
@@ -50,6 +50,9 @@ namespace OsmAnd
 #endif // Q_COMPILER_RVALUE_REFS
 
             const QSet<ZoomLevel> zoomLevels;
+
+        private:
+            Q_DISABLE_COPY(AvailableResourceEntry);
         };
 
         struct PromisedResourceEntry : public SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry
@@ -63,10 +66,11 @@ namespace OsmAnd
             }
 
             const QSet<ZoomLevel> zoomLevels;
+
+        private:
+            Q_DISABLE_COPY(PromisedResourceEntry);
         };
     private:
-        Q_DISABLE_COPY(SharedByZoomResourcesContainer)
-
         typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE> base;
 
         typedef std::shared_ptr<AvailableResourceEntry> AvailableResourceEntryPtr;

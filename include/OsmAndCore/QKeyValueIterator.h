@@ -8,27 +8,61 @@
 namespace OsmAnd
 {
     template<class CONTAINER>
-    struct KeyValueContainerWrapper
+    class KeyValueContainerWrapper Q_DECL_FINAL
     {
+    public:
         typedef KeyValueContainerWrapper<CONTAINER> KeyValueContainerWrapperT;
         typedef CONTAINER Container;
         typedef typename CONTAINER::iterator UnderlyingIterator;
         typedef typename CONTAINER::const_iterator UnderlyingConstIterator;
 
-        CONTAINER& container;
-
+    private:
+    protected:
+        CONTAINER* pContainer;
+    public:
         inline KeyValueContainerWrapper(CONTAINER& container_)
-            : container(container_)
+            : pContainer(&container_)
         {
         }
 
         inline KeyValueContainerWrapper(const KeyValueContainerWrapperT& that)
-            : container(that.container)
+            : pContainer(that.pContainer)
         {
         }
 
-        struct Iterator
+        inline ~KeyValueContainerWrapper()
         {
+        }
+
+        inline KeyValueContainerWrapperT& operator=(const KeyValueContainerWrapperT& that)
+        {
+            if (this != &that)
+            {
+                pContainer = that.pContainer;
+            }
+            return *this;
+        }
+
+        struct Iterator Q_DECL_FINAL
+        {
+            inline Iterator(const Iterator& that)
+                : _underlyingIterator(that._underlyingIterator)
+            {
+            }
+
+            inline ~Iterator()
+            {
+            }
+
+            inline Iterator& operator=(const Iterator& that)
+            {
+                if (this != &that)
+                {
+                    _underlyingIterator = that._underlyingIterator;
+                }
+                return *this;
+            }
+
             inline UnderlyingIterator operator*() const
             {
                 return _underlyingIterator;
@@ -64,20 +98,38 @@ namespace OsmAnd
 
             UnderlyingIterator _underlyingIterator;
 
-        friend struct OsmAnd::KeyValueContainerWrapper<CONTAINER>;
+        friend class OsmAnd::KeyValueContainerWrapper<CONTAINER>;
         };
 
         inline Iterator begin()
         {
-            return Iterator(container.begin());
+            return Iterator(pContainer->begin());
         }
         inline Iterator end()
         {
-            return Iterator(container.end());
+            return Iterator(pContainer->end());
         }
 
-        struct ConstIterator
+        struct ConstIterator Q_DECL_FINAL
         {
+            inline ConstIterator(const ConstIterator& that)
+                : _underlyingIterator(that._underlyingIterator)
+            {
+            }
+
+            inline ~ConstIterator()
+            {
+            }
+
+            inline ConstIterator& operator=(const ConstIterator& that)
+            {
+                if (this != &that)
+                {
+                    _underlyingIterator = that._underlyingIterator;
+                }
+                return *this;
+            }
+
             inline UnderlyingConstIterator operator*() const
             {
                 return _underlyingIterator;
@@ -113,24 +165,24 @@ namespace OsmAnd
 
             UnderlyingConstIterator _underlyingIterator;
 
-        friend struct OsmAnd::KeyValueContainerWrapper<CONTAINER>;
+        friend class OsmAnd::KeyValueContainerWrapper<CONTAINER>;
         };
 
         inline ConstIterator begin() const
         {
-            return ConstIterator(container.cbegin());
+            return ConstIterator(pContainer->cbegin());
         }
         inline ConstIterator end() const
         {
-            return ConstIterator(container.cend());
+            return ConstIterator(pContainer->cend());
         }
         inline ConstIterator cbegin() const
         {
-            return ConstIterator(container.cbegin());
+            return ConstIterator(pContainer->cbegin());
         }
         inline ConstIterator cend() const
         {
-            return ConstIterator(container.cend());
+            return ConstIterator(pContainer->cend());
         }
     };
 
@@ -141,26 +193,60 @@ namespace OsmAnd
     }
 
     template<class CONTAINER>
-    struct KeyValueConstContainerWrapper
+    class KeyValueConstContainerWrapper Q_DECL_FINAL
     {
+    public:
         typedef KeyValueConstContainerWrapper<CONTAINER> KeyValueConstContainerWrapperT;
         typedef CONTAINER Container;
         typedef typename CONTAINER::const_iterator UnderlyingConstIterator;
 
-        const CONTAINER& container;
-
+    private:
+    protected:
+        const CONTAINER* pContainer;
+    public:
         inline KeyValueConstContainerWrapper(const CONTAINER& container_)
-            : container(container_)
+            : pContainer(&container_)
         {
         }
 
         inline KeyValueConstContainerWrapper(const KeyValueConstContainerWrapperT& that)
-            : container(that.container)
+            : pContainer(that.pContainer)
         {
         }
 
-        struct ConstIterator
+        inline ~KeyValueConstContainerWrapper()
         {
+        }
+
+        inline KeyValueConstContainerWrapper& operator=(const KeyValueConstContainerWrapper& that)
+        {
+            if (this != &that)
+            {
+                pContainer = that.pContainer;
+            }
+            return *this;
+        }
+
+        struct ConstIterator Q_DECL_FINAL
+        {
+            inline ConstIterator(const ConstIterator& that)
+                : _underlyingIterator(that._underlyingIterator)
+            {
+            }
+
+            inline ~ConstIterator()
+            {
+            }
+
+            inline ConstIterator& operator=(const ConstIterator& that)
+            {
+                if (this != &that)
+                {
+                    _underlyingIterator = that._underlyingIterator;
+                }
+                return *this;
+            }
+
             inline UnderlyingConstIterator operator*() const
             {
                 return _underlyingIterator;
@@ -196,24 +282,24 @@ namespace OsmAnd
 
             UnderlyingConstIterator _underlyingIterator;
 
-        friend struct OsmAnd::KeyValueConstContainerWrapper<CONTAINER>;
+        friend class OsmAnd::KeyValueConstContainerWrapper<CONTAINER>;
         };
 
         inline ConstIterator begin() const
         {
-            return ConstIterator(container.cbegin());
+            return ConstIterator(pContainer->cbegin());
         }
         inline ConstIterator end() const
         {
-            return ConstIterator(container.cend());
+            return ConstIterator(pContainer->cend());
         }
         inline ConstIterator cbegin() const
         {
-            return ConstIterator(container.cbegin());
+            return ConstIterator(pContainer->cbegin());
         }
         inline ConstIterator cend() const
         {
-            return ConstIterator(container.cend());
+            return ConstIterator(pContainer->cend());
         }
     };
 

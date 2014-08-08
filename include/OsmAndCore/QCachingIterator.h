@@ -236,7 +236,7 @@ namespace OsmAnd
     }
 
     template<typename CONTAINER>
-    Q_DECL_CONSTEXPR QCachingIterator<CONTAINER, decltype(std::begin(*(new CONTAINER())))> iteratorOf(CONTAINER& container)
+    Q_DECL_CONSTEXPR QCachingIterator<CONTAINER, decltype(std::begin(*(new CONTAINER())))> cachingIteratorOf(CONTAINER& container)
     {
         return QCachingIterator<CONTAINER, decltype(std::begin(*(new CONTAINER())))>(std::begin(container), std::end(container));
     }

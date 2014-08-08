@@ -2,11 +2,11 @@
 #define _OSMAND_CORE_UTILITIES_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <cassert>
 #include <climits>
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QtMath>
 #include <QtNumeric>
 #include <QString>
@@ -16,6 +16,7 @@
 #include <QFile>
 #include <QVector>
 #include <QSet>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>

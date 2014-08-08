@@ -8,6 +8,7 @@
 #include <QHash>
 #include <QReadWriteLock>
 #include <QThreadPool>
+#include <OsmAndCore/QtCommon.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/QRunnableFunctor.h>
@@ -76,6 +77,7 @@ namespace OsmAnd
                 [=]
                 (const QRunnableFunctor* const runnable)
                 {
+                    Q_UNUSED(runnable);
                     for(const auto& handler : constOf(observers))
                         handler(args...);
                 }));

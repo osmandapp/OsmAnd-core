@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 85
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 86
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -32,13 +32,19 @@ if (CMAKE_TARGET_OS STREQUAL "macosx")
 endif()
 
 if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+	# Set warning level 4
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+
 	# Force warning to be an error "deletion of pointer to incomplete type 'type'; no destructor called"
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /we4150")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4150")
 
-	# Disable warning 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4290")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4290")
+	# Disable following warnings:
+	#  - C4290: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
+	#  - C4201: 'nonstandard extension used : nameless struct/union'
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4290 /wd4201")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4290 /wd4201")
 endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
@@ -216,6 +222,7 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	add_dependencies(OsmAndCore_shared ${merged_dependencies})
 	target_compile_definitions(OsmAndCore_shared
 		PRIVATE
+			-DOSMAND_CORE_INTERNAL
 			-DOSMAND_CORE_EXPORTS
 			${merged_compile_definitions_private}
 		PUBLIC
@@ -324,6 +331,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 		PRIVATE
 			${merged_compile_definitions_private}
 		PUBLIC
+			-DOSMAND_CORE_INTERNAL
 			-DOSMAND_CORE_STATIC
 			${merged_compile_definitions_public}
 	)

@@ -5,6 +5,15 @@
 #include "QtCommon.h"
 #include <QReadWriteLock>
 
+#include "ignore_warnings_on_external_includes.h"
+#include <SkBitmapDevice.h>
+#include <SkBlurDrawLooper.h>
+#include <SkColorFilter.h>
+#include <SkDashPathEffect.h>
+#include <SkBitmapProcShader.h>
+#include <SkError.h>
+#include "restore_internal_warnings.h"
+
 #include "MapPresentationEnvironment.h"
 #include "MapStyleEvaluationResult.h"
 #include "Primitiviser.h"
@@ -15,13 +24,6 @@
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "Logging.h"
-
-#include <SkBitmapDevice.h>
-#include <SkBlurDrawLooper.h>
-#include <SkColorFilter.h>
-#include <SkDashPathEffect.h>
-#include <SkBitmapProcShader.h>
-#include <SkError.h>
 
 OsmAnd::MapRasterizer_P::MapRasterizer_P(MapRasterizer* const owner_)
     : owner(owner_)
@@ -440,7 +442,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         for (const auto& polygon : constOf(primitive->sourceObject->innerPolygonsPoints31))
         {
             pointIdx = 0;
-            for (auto itVertex = iteratorOf(constOf(polygon)); itVertex; ++itVertex, pointIdx++)
+            for (auto itVertex = cachingIteratorOf(constOf(polygon)); itVertex; ++itVertex, pointIdx++)
             {
                 const auto& point = *itVertex;
                 calculateVertex(primitivizedArea, point, vertex);

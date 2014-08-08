@@ -1,9 +1,11 @@
 #include "TextRasterizer_P.h"
 #include "TextRasterizer.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkBitmapDevice.h>
 #include <SkStream.h>
 #include <SkTypeface.h>
+#include "restore_internal_warnings.h"
 
 #include "ICU.h"
 #include "EmbeddedResources.h"

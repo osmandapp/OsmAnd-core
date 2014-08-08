@@ -16,11 +16,12 @@ namespace OsmAnd
 {
     class MapRendererResourcesManager;
 
-    // Base class for all keyed resources
     class MapRendererBaseKeyedResource
         : public MapRendererBaseResource
         , public KeyedEntriesCollectionEntryWithState< IMapKeyedDataProvider::Key, MapRendererBaseKeyedResource, MapRendererResourceState, MapRendererResourceState::Unknown >
     {
+        Q_DISABLE_COPY(MapRendererBaseKeyedResource);
+
     public:
         typedef IMapKeyedDataProvider::Key Key;
         typedef KeyedEntriesCollectionEntryWithState<Key, MapRendererBaseKeyedResource, MapRendererResourceState, MapRendererResourceState::Unknown> BaseKeyedEntriesCollectionEntryWithState;

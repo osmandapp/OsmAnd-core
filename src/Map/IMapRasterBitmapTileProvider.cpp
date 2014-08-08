@@ -2,7 +2,9 @@
 
 #include <cassert>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
+#include "restore_internal_warnings.h"
 
 OsmAnd::IMapRasterBitmapTileProvider::IMapRasterBitmapTileProvider()
     : IMapTiledDataProvider(DataType::RasterBitmapTile)
@@ -22,7 +24,7 @@ OsmAnd::RasterBitmapTile::RasterBitmapTile(
     : MapTiledData(DataType::RasterBitmapTile, tileId_, zoom_)
     , bitmap(bitmap_)
     , alphaChannelData(alphaChannelData_)
-    , densityFactor(densityFactor)
+    , densityFactor(densityFactor_)
 {
     assert(bitmap->width() == bitmap->height());
 }

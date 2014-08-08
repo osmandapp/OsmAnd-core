@@ -4,9 +4,11 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QVector>
 #include <QString>
 #include <QHash>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -42,6 +44,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Road
         {
+            Q_DISABLE_COPY(Road);
         private:
         protected:
             const std::shared_ptr<const Road> _ref;

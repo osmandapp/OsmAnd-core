@@ -7,9 +7,6 @@
 #include <QReadWriteLock>
 #include <QHash>
 
-#include <SkBitmap.h>
-#include <SkColor.h>
-
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
@@ -17,6 +14,8 @@
 #include "OnSurfaceRasterMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
 #include "MapMarker.h"
+
+class SkBitmap;
 
 namespace OsmAnd
 {

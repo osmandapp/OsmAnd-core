@@ -5,8 +5,10 @@
 #include <memory>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QList>
 #include <QVector>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Data/Model/Road.h>

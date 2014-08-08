@@ -113,10 +113,12 @@ namespace OsmAnd
         mutable QReadWriteLock _internalStateLock;
         virtual const MapRendererInternalState* getInternalStateRef() const = 0;
         virtual MapRendererInternalState* getInternalStateRef() = 0;
+        virtual const MapRendererInternalState& getInternalState() const = 0;
+        virtual MapRendererInternalState& getInternalState() = 0;
         virtual bool updateInternalState(
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
-            const MapRendererConfiguration& configuration);
+            const MapRendererConfiguration& configuration) const;
 
         // Resources-related:
         const MapRendererResourcesManager& getResources() const;

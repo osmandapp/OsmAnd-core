@@ -6,8 +6,11 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QIODevice>
 
-#include <OsmAndCore.h>
+#include "ignore_warnings_on_external_includes.h"
 #include <google/protobuf/io/zero_copy_stream.h>
+#include "restore_internal_warnings.h"
+
+#include <OsmAndCore.h>
 
 namespace OsmAnd
 {

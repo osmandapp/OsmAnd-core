@@ -1,5 +1,7 @@
 #include "MapStyleEvaluationResult.h"
 
+#include "QtCommon.h"
+
 #include "QKeyValueIterator.h"
 
 OsmAnd::MapStyleEvaluationResult::MapStyleEvaluationResult()

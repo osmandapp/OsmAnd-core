@@ -4,10 +4,10 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QList>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <QHash>
 #include <QString>
-#include <QByteArray>
-#include <QIODevice>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>

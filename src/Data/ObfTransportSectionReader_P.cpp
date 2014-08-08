@@ -1,12 +1,14 @@
 #include "ObfTransportSectionReader_P.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include "OBF.pb.h"
+#include <google/protobuf/wire_format_lite.h>
+#include "restore_internal_warnings.h"
+
 #include "ObfReader_P.h"
 #include "ObfTransportSectionInfo.h"
 #include "ObfReaderUtilities.h"
 #include "Utilities.h"
-
-#include "OBF.pb.h"
-#include <google/protobuf/wire_format_lite.h>
 
 OsmAnd::ObfTransportSectionReader_P::ObfTransportSectionReader_P()
 {

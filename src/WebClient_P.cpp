@@ -1,6 +1,7 @@
 #include "WebClient_P.h"
 #include "WebClient.h"
 
+#include "QtCommon.h"
 #include <QEventLoop>
 #include <QDir>
 #include <QFile>

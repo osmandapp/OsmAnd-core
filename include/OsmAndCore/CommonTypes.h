@@ -7,10 +7,12 @@
 #include <QtGlobal>
 #include <QtMath>
 
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #if defined(OSMAND_GLM_AVAILABLE)
 #   include <glm/glm.hpp>
 #endif // defined(OSMAND_GLM_AVAILABLE)
 #include <SkColor.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>

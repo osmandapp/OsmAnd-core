@@ -47,9 +47,9 @@ namespace OsmAnd
     class MapRendererResourcesManager
     {
         Q_DISABLE_COPY(MapRendererResourcesManager);
+
     public:
         typedef std::array< QList< std::shared_ptr<MapRendererBaseResourcesCollection> >, MapRendererResourceTypesCount > ResourcesStorage;
-
         typedef QHash< std::shared_ptr<const MapSymbol>, QList< std::shared_ptr<MapRendererBaseResource> > > MapSymbolsByOrderRegisterLayer;
         typedef QMap<int, MapSymbolsByOrderRegisterLayer > MapSymbolsByOrderRegister;
 
@@ -91,11 +91,15 @@ namespace OsmAnd
         QList< std::shared_ptr<MapRendererBaseResourcesCollection> > safeGetAllResourcesCollections() const;
 
         // Symbols:
-        mutable QMutex _mapSymbolsRegistersMutex;
-        MapSymbolsByOrderRegister _mapSymbolsByOrderRegister;
-        unsigned int _mapSymbolsInRegisterCount;
+        mutable QReadWriteLock _mapSymbolsRegisterLock;
+        MapSymbolsByOrderRegister _mapSymbolsRegister;
+        QAtomicInt _mapSymbolsInRegisterCount;
         void registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
         void unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
+        mutable QAtomicInt _mapSymbolsRegisterSnapshotInvalidatesCount;
+        mutable MapSymbolsByOrderRegister _mapSymbolsRegisterSnapshot;
+        mutable QReadWriteLock _mapSymbolsRegisterSnapshotLock;
+        void updateMapSymbolsRegisterSnapshot() const;
 
         void notifyNewResourceAvailableForDrawing();
 
@@ -167,7 +171,7 @@ namespace OsmAnd
         std::shared_ptr<const MapRendererBaseResourcesCollection> getCollection(
             const MapRendererResourceType type,
             const std::shared_ptr<IMapDataProvider>& ofProvider) const;
-        bool updateShadowCollections() const;
+        bool updateCollectionsSnapshots() const;
     public:
         ~MapRendererResourcesManager();
 
@@ -177,13 +181,15 @@ namespace OsmAnd
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& processingTileStub;
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
-        std::shared_ptr<const IMapRendererResourcesCollection> getShadowCollection(
+        std::shared_ptr<const IMapRendererResourcesCollection> getCollectionSnapshot(
             const MapRendererResourceType type,
             const std::shared_ptr<IMapDataProvider>& ofProvider) const;
 
-        QMutex& getMapSymbolsRegistersMutex() const;
-        const MapSymbolsByOrderRegister& getMapSymbolsByOrderRegister() const;
-        unsigned int getMapSymbolsInRegisterCount() const;
+        QReadWriteLock& getMapSymbolsRegisterSnapshotLock() const;
+        const MapSymbolsByOrderRegister& getMapSymbolsRegisterSnapshot() const;
+        MapSymbolsByOrderRegister& getMapSymbolsRegisterSnapshot();
+        MapSymbolsByOrderRegister getMapSymbolsRegisterSnapshotCopy() const;
+        unsigned int getMapSymbolsCount() const;
 
         void dumpResourcesInfo() const;
 

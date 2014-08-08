@@ -24,7 +24,7 @@ QList<OsmAnd::ArchiveReader_P::Item> OsmAnd::ArchiveReader_P::getItems(bool* con
 
     const auto ok = processArchive(owner->fileName, 
         [&result]
-        (archive* archive, archive_entry* entry, bool& doStop) -> bool
+        (archive* /*archive*/, archive_entry* entry, bool& /*doStop*/) -> bool
         {
             Item item;
             item.name = QString::fromWCharArray(archive_entry_pathname_w(entry));
@@ -79,7 +79,7 @@ bool OsmAnd::ArchiveReader_P::extractAllItemsTo(const QString& destinationPath, 
     uint64_t extractedBytes = 0;
     bool ok = processArchive(owner->fileName,
         [destinationPath, &extractedBytes]
-        (archive* archive, archive_entry* entry, bool& doStop) -> bool
+        (archive* archive, archive_entry* entry, bool& /*doStop*/) -> bool
         {
             const auto& currentItemName = QString::fromWCharArray(archive_entry_pathname_w(entry));
             const auto destinationFileName = QDir(destinationPath).absoluteFilePath(currentItemName);

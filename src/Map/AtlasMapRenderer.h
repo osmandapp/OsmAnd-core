@@ -10,9 +10,15 @@
 #include "MapRenderer.h"
 #include "IAtlasMapRenderer.h"
 #include "MapRendererResourcesManager.h"
+#include "QuadTree.h"
 
 namespace OsmAnd
 {
+    class AtlasMapRendererSkyStage;
+    class AtlasMapRendererRasterMapStage;
+    class AtlasMapRendererSymbolsStage;
+    class AtlasMapRendererDebugStage;
+
     class AtlasMapRenderer
         : public MapRenderer
         , public IAtlasMapRenderer
@@ -29,7 +35,7 @@ namespace OsmAnd
         virtual std::shared_ptr<MapRendererConfiguration> allocateConfiguration() const;
         enum class ConfigurationChange
         {
-            ReferenceTileSize = (MapRenderer::RegisteredConfigurationChangesCount),
+            ReferenceTileSize = static_cast<int>(MapRenderer::ConfigurationChange::__LAST),
 
             __LAST
         };
@@ -45,16 +51,37 @@ namespace OsmAnd
         virtual bool updateInternalState(
             MapRendererInternalState& outInternalState,
             const MapRendererState& state,
-            const MapRendererConfiguration& configuration);
+            const MapRendererConfiguration& configuration) const;
 
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> allocateDebugSettings() const;
 
         // Customization points:
+        virtual bool preInitializeRendering();
+        virtual bool doInitializeRendering();
+
         virtual bool prePrepareFrame();
         virtual bool postPrepareFrame();
+
+        virtual bool doReleaseRendering();
+
+        // Stages:
+        std::shared_ptr<AtlasMapRendererSkyStage> _skyStage;
+        virtual AtlasMapRendererSkyStage* createSkyStage() = 0;
+        std::shared_ptr<AtlasMapRendererRasterMapStage> _rasterMapStage;
+        virtual AtlasMapRendererRasterMapStage* createRasterMapStage() = 0;
+        std::shared_ptr<AtlasMapRendererSymbolsStage> _symbolsStage;
+        virtual AtlasMapRendererSymbolsStage* createSymbolsStage() = 0;
+        std::shared_ptr<AtlasMapRendererDebugStage> _debugStage;
+        virtual AtlasMapRendererDebugStage* createDebugStage() = 0;
     public:
         virtual ~AtlasMapRenderer();
+
+        // Stages:
+        const std::shared_ptr<AtlasMapRendererSkyStage>& skyStage;
+        const std::shared_ptr<AtlasMapRendererRasterMapStage>& rasterMapStage;
+        const std::shared_ptr<AtlasMapRendererSymbolsStage>& symbolsStage;
+        const std::shared_ptr<AtlasMapRendererDebugStage>& debugStage;
 
         virtual QList<TileId> getVisibleTiles() const;
         virtual unsigned int getVisibleTilesCount() const;

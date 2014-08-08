@@ -6,7 +6,7 @@
 
 #include <OsmAndCore/QtExtensions.h>
 
-#include <SkBitmap.h>
+class SkBitmap;
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>

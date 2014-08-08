@@ -8,7 +8,9 @@
 #include <QHash>
 #include <QMutex>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkPaint.h>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"

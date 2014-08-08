@@ -16,6 +16,8 @@ namespace OsmAnd
 
     class IMapRendererResourcesCollection
     {
+        Q_DISABLE_COPY(IMapRendererResourcesCollection);
+
     public:
         typedef std::function<void (const std::shared_ptr<MapRendererBaseResource>& resource, bool& cancel)> ResourceActionCallback;
         typedef std::function<bool (const std::shared_ptr<MapRendererBaseResource>& resource, bool& cancel)> ResourceFilterCallback;

@@ -7,10 +7,17 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkColor.h>
+#include "restore_internal_warnings.h"
 
-OsmAnd::AtlasMapRendererDebugStage_OpenGL::AtlasMapRendererDebugStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
-    : AtlasMapRendererStage_OpenGL(renderer)
+#include "OsmAndCore.h"
+#include "CommonTypes.h"
+#include "AtlasMapRenderer_OpenGL.h"
+
+OsmAnd::AtlasMapRendererDebugStage_OpenGL::AtlasMapRendererDebugStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
+    : AtlasMapRendererDebugStage(renderer_)
+    , AtlasMapRendererStageHelper_OpenGL(this)
 {
 }
 
@@ -166,6 +173,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
 void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
 {
     const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -362,6 +370,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
 void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
 {
     const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -561,6 +570,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
 void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
 {
     const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -775,6 +785,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
 void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
 {
     const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -862,34 +873,4 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
         GL_CHECK_RESULT;
         _programQuad3D = ProgramQuad3D();
     }
-}
-
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::clear()
-{
-    _rects2D.clear();
-    _lines2D.clear();
-    _lines3D.clear();
-    _quads3D.clear();
-}
-
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addRect2D(const AreaF& rect, const uint32_t argbColor, const float angle /*= 0.0f*/)
-{
-    _rects2D.push_back(qMove(Rect2D(rect, argbColor, angle)));
-}
-
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addLine2D(const QVector<glm::vec2>& line, const uint32_t argbColor)
-{
-    assert(line.size() >= 2);
-    _lines2D.push_back(qMove(Line2D(line, argbColor)));
-}
-
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addLine3D(const QVector<glm::vec3>& line, const uint32_t argbColor)
-{
-    assert(line.size() >= 2);
-    _lines3D.push_back(qMove(Line3D(line, argbColor)));
-}
-
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::addQuad3D(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const uint32_t argbColor)
-{
-    _quads3D.push_back(qMove(Quad3D(p0, p1, p2, p3, argbColor)));
 }

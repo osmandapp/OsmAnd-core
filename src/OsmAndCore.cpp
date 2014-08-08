@@ -10,8 +10,13 @@
 #include <QWaitCondition>
 #include <QLocale>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <gdal.h>
+#include "restore_internal_warnings.h"
+
+#include "ignore_warnings_on_external_includes.h"
 #include <SkGraphics.h>
+#include "restore_internal_warnings.h"
 
 #include "Common.h"
 #include "Logging.h"

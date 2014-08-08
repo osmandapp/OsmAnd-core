@@ -1,12 +1,14 @@
 #include "BinaryMapRasterBitmapTileProvider_GPU_P.h"
 #include "BinaryMapRasterBitmapTileProvider_GPU.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkStream.h>
 #include <SkBitmap.h>
 #include <SkCanvas.h>
 #include <SkBitmapDevice.h>
 #include <SkImageDecoder.h>
 #include <SkImageEncoder.h>
+#include "restore_internal_warnings.h"
 
 #include "BinaryMapPrimitivesProvider.h"
 #include "ObfsCollection.h"

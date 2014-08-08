@@ -7,12 +7,11 @@
 #include <QList>
 #include <QHash>
 
-#include <SkBitmap.h>
-#include <SkColor.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
+
+class SkBitmap;
 
 namespace OsmAnd
 {

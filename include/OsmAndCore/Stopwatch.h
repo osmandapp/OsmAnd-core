@@ -2,7 +2,6 @@
 #define _OSMAND_CORE_STOPWATCH_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <chrono>
 
 #include <OsmAndCore/QtExtensions.h>
 

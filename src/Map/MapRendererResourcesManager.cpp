@@ -4,6 +4,11 @@
 
 #include "QtCommon.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include <SkBitmap.h>
+#include <SkImageDecoder.h>
+#include "restore_internal_warnings.h"
+
 #include "MapRenderer.h"
 #include "IMapDataProvider.h"
 #include "IMapKeyedDataProvider.h"
@@ -21,9 +26,6 @@
 #include "QCachingIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
-
-#include <SkBitmap.h>
-#include <SkImageDecoder.h>
 
 //#define OSMAND_LOG_RESOURCE_STATE_CHANGE 1
 #ifndef OSMAND_LOG_RESOURCE_STATE_CHANGE
@@ -55,7 +57,6 @@
 
 OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* const owner_)
     : _taskHostBridge(this)
-    , _mapSymbolsInRegisterCount(0)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
     , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResourcesManager::workerThreadProcedure, this)))
@@ -413,11 +414,14 @@ QList< std::shared_ptr<OsmAnd::MapRendererBaseResourcesCollection> > OsmAnd::Map
 
 void OsmAnd::MapRendererResourcesManager::registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    QMutexLocker scopedLocker(&_mapSymbolsRegistersMutex);
+    QWriteLocker scopedLocker(&_mapSymbolsRegisterLock);
 
-    auto& symbolReferencedResources = _mapSymbolsByOrderRegister[symbol->order][symbol];
+    auto& symbolReferencedResources = _mapSymbolsRegister[symbol->order][symbol];
     if (symbolReferencedResources.isEmpty())
-        _mapSymbolsInRegisterCount++;
+    {
+        _mapSymbolsRegisterSnapshotInvalidatesCount.fetchAndAddOrdered(1);
+        _mapSymbolsInRegisterCount.fetchAndAddOrdered(1);
+    }
     symbolReferencedResources.push_back(resource);
 
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
@@ -425,16 +429,16 @@ void OsmAnd::MapRendererResourcesManager::registerMapSymbol(const std::shared_pt
         "Registered map symbol %p from %p (new total %d), now referenced from %d resources",
         symbol.get(),
         resource.get(),
-        _mapSymbolsInRegisterCount,
+        _mapSymbolsInRegisterCount.load(),
         symbolReferencedResources.size());
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
 }
 
 void OsmAnd::MapRendererResourcesManager::unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    QMutexLocker scopedLocker(&_mapSymbolsRegistersMutex);
+    QWriteLocker scopedLocker(&_mapSymbolsRegisterLock);
 
-    const auto itRegisterLayer = _mapSymbolsByOrderRegister.find(symbol->order);
+    const auto itRegisterLayer = _mapSymbolsRegister.find(symbol->order);
     auto& registerLayer = *itRegisterLayer;
 
     const auto itSymbolReferencedResources = registerLayer.find(symbol);
@@ -446,7 +450,8 @@ void OsmAnd::MapRendererResourcesManager::unregisterMapSymbol(const std::shared_
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     if (symbolReferencedResources.isEmpty())
     {
-        _mapSymbolsInRegisterCount--;
+        _mapSymbolsRegisterSnapshotInvalidatesCount.fetchAndAddOrdered(1);
+        _mapSymbolsInRegisterCount.fetchAndAddOrdered(-1);
         registerLayer.erase(itSymbolReferencedResources);
     }
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
@@ -454,13 +459,13 @@ void OsmAnd::MapRendererResourcesManager::unregisterMapSymbol(const std::shared_
         "Unregistered map symbol %p from %p (new total %d), now referenced from %d resources",
         symbol.get(),
         resource.get(),
-        _mapSymbolsInRegisterCount,
+        _mapSymbolsInRegisterCount.load(),
         symbolReferencedResourcesSize);
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
 
     // In case layer is empty, remove it entirely
     if (registerLayer.isEmpty())
-        _mapSymbolsByOrderRegister.erase(itRegisterLayer);
+        _mapSymbolsRegister.erase(itRegisterLayer);
 }
 
 void OsmAnd::MapRendererResourcesManager::notifyNewResourceAvailableForDrawing()
@@ -765,10 +770,10 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdates() const
         {
             if (!resourcesCollection)
                 continue;
-            const auto shadowCollection = resourcesCollection->getShadowCollection();
+            const auto collectionSnapshot = resourcesCollection->getCollectionSnapshot();
 
             // Also check if keyed collection has same keys as respective provider
-            if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection::Shadow>(shadowCollection))
+            if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection::Snapshot>(collectionSnapshot))
             {
                 std::shared_ptr<IMapDataProvider> provider_;
                 if (obtainProviderFor(resourcesCollection.get(), provider_))
@@ -781,7 +786,7 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdates() const
             }
 
             // Check if any resource has applied updates
-            shadowCollection->forEachResourceExecute(
+            collectionSnapshot->forEachResourceExecute(
                 [&updatesApplied]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
                 {
@@ -1310,7 +1315,7 @@ std::shared_ptr<const OsmAnd::MapRendererBaseResourcesCollection> OsmAnd::MapRen
     return _bindings[static_cast<int>(type)].providersToCollections[provider];
 }
 
-bool OsmAnd::MapRendererResourcesManager::updateShadowCollections() const
+bool OsmAnd::MapRendererResourcesManager::updateCollectionsSnapshots() const
 {
     bool allSuccessful = true;
 
@@ -1318,7 +1323,7 @@ bool OsmAnd::MapRendererResourcesManager::updateShadowCollections() const
     {
         for (const auto& collection : constOf(binding.providersToCollections))
         {
-            if (!collection->updateShadowCollection())
+            if (!collection->updateCollectionSnapshot())
                 allSuccessful = false;
         }
     }
@@ -1326,26 +1331,66 @@ bool OsmAnd::MapRendererResourcesManager::updateShadowCollections() const
     return allSuccessful;
 }
 
-std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererResourcesManager::getShadowCollection(
+std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererResourcesManager::getCollectionSnapshot(
     const MapRendererResourceType type,
     const std::shared_ptr<IMapDataProvider>& ofProvider) const
 {
-    return getCollection(type, ofProvider)->getShadowCollection();
+    return getCollection(type, ofProvider)->getCollectionSnapshot();
 }
 
-QMutex& OsmAnd::MapRendererResourcesManager::getMapSymbolsRegistersMutex() const
+void OsmAnd::MapRendererResourcesManager::updateMapSymbolsRegisterSnapshot() const
 {
-    return _mapSymbolsRegistersMutex;
+    MapSymbolsByOrderRegister registerCopy;
+    {
+        const auto invalidatesCount = _mapSymbolsRegisterSnapshotInvalidatesCount.fetchAndAddOrdered(0);
+        if (invalidatesCount <= 0 || !_mapSymbolsRegisterLock.tryLockForRead())
+            return;
+
+        registerCopy = detachedOf(_mapSymbolsRegister);
+
+        _mapSymbolsRegisterLock.unlock();
+    }
+
+    {
+        QWriteLocker scopedLocker(&_mapSymbolsRegisterSnapshotLock);
+
+        _mapSymbolsRegisterSnapshot = registerCopy;
+    }
 }
 
-const OsmAnd::MapRendererResourcesManager::MapSymbolsByOrderRegister& OsmAnd::MapRendererResourcesManager::getMapSymbolsByOrderRegister() const
+QReadWriteLock& OsmAnd::MapRendererResourcesManager::getMapSymbolsRegisterSnapshotLock() const
 {
-    return _mapSymbolsByOrderRegister;
+    return _mapSymbolsRegisterSnapshotLock;
 }
 
-unsigned int OsmAnd::MapRendererResourcesManager::getMapSymbolsInRegisterCount() const
+const OsmAnd::MapRendererResourcesManager::MapSymbolsByOrderRegister& OsmAnd::MapRendererResourcesManager::getMapSymbolsRegisterSnapshot() const
 {
-    return _mapSymbolsInRegisterCount;
+    updateMapSymbolsRegisterSnapshot();
+
+    return _mapSymbolsRegisterSnapshot;
+}
+
+OsmAnd::MapRendererResourcesManager::MapSymbolsByOrderRegister& OsmAnd::MapRendererResourcesManager::getMapSymbolsRegisterSnapshot()
+{
+    updateMapSymbolsRegisterSnapshot();
+
+    return _mapSymbolsRegisterSnapshot;
+}
+
+OsmAnd::MapRendererResourcesManager::MapSymbolsByOrderRegister OsmAnd::MapRendererResourcesManager::getMapSymbolsRegisterSnapshotCopy() const
+{
+    updateMapSymbolsRegisterSnapshot();
+
+    {
+        QReadLocker scopedLocker(&_mapSymbolsRegisterSnapshotLock);
+
+        return detachedOf(_mapSymbolsRegisterSnapshot);
+    }
+}
+
+unsigned int OsmAnd::MapRendererResourcesManager::getMapSymbolsCount() const
+{
+    return _mapSymbolsInRegisterCount.loadAcquire();
 }
 
 void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const

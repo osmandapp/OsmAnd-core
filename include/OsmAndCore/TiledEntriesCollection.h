@@ -2,7 +2,6 @@
 #define _OSMAND_CORE_TILED_ENTRIES_COLLECTION_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <cassert>
 #include <array>
 #include <functional>
 #include <type_traits>
@@ -29,11 +28,15 @@ namespace OsmAnd
     template<typename ENTRY>
     class TiledEntriesCollection
     {
+        Q_DISABLE_COPY(TiledEntriesCollection);
+
     public:
         typedef TiledEntriesCollection<ENTRY> Collection;
 
         class Link : public std::enable_shared_from_this < Link >
         {
+            Q_DISABLE_COPY(Link);
+
         private:
         protected:
         public:
@@ -64,6 +67,8 @@ namespace OsmAnd
 
         virtual void onEntryModified(const TileId tileId, const ZoomLevel zoomLevel) const
         {
+            Q_UNUSED(tileId);
+            Q_UNUSED(zoomLevel);
         }
     public:
         TiledEntriesCollection()
@@ -253,6 +258,8 @@ namespace OsmAnd
     template<typename ENTRY>
     class TiledEntriesCollectionEntry
     {
+        Q_DISABLE_COPY(TiledEntriesCollectionEntry);
+
     public:
         typedef TiledEntriesCollection<ENTRY> Collection;
         typedef typename Collection::Link Link;

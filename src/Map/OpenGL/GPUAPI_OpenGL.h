@@ -5,13 +5,16 @@
 #include <type_traits>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QMap>
 #include <QMultiMap>
 #include <QList>
 #include <QStringList>
 #include <QString>
 #include <QVector>
+#include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #if defined(WIN32)
 #   define WIN32_LEAN_AND_MEAN
 #   include <Windows.h>
@@ -35,6 +38,7 @@
 #endif
 
 #include <glm/glm.hpp>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -171,6 +175,7 @@ namespace OsmAnd
     public:
         class ProgramVariablesLookupContext
         {
+            Q_DISABLE_COPY(ProgramVariablesLookupContext);
         private:
             GPUAPI_OpenGL* const gpuAPI;
             const GLuint program;

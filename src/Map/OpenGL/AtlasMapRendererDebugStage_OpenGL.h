@@ -4,24 +4,21 @@
 #include "stdlib_common.h"
 #include <tuple>
 
-#include <glm/glm.hpp>
-
 #include "QtExtensions.h"
-#include <QList>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
-#include "AtlasMapRendererStage_OpenGL.h"
-#include "GPUAPI_OpenGL.h"
+#include "AtlasMapRendererDebugStage.h"
+#include "AtlasMapRendererStageHelper_OpenGL.h"
 
 namespace OsmAnd
 {
-    class AtlasMapRendererDebugStage_OpenGL : public AtlasMapRendererStage_OpenGL
+    class AtlasMapRendererDebugStage_OpenGL
+        : public AtlasMapRendererDebugStage
+        , private AtlasMapRendererStageHelper_OpenGL
     {
     private:
     protected:
-        typedef std::tuple<AreaF, uint32_t, float> Rect2D;
-        QList<Rect2D> _rects2D;
         GLname _vaoRect2D;
         GLname _vboRect2D;
         GLname _iboRect2D;
@@ -55,8 +52,6 @@ namespace OsmAnd
         void renderRects2D();
         void releaseRects2D();
 
-        typedef std::pair< QVector<glm::vec2>, uint32_t> Line2D;
-        QList<Line2D> _lines2D;
         GLname _vaoLine2D;
         GLname _vboLine2D;
         GLname _iboLine2D;
@@ -90,8 +85,6 @@ namespace OsmAnd
         void renderLines2D();
         void releaseLines2D();
 
-        typedef std::pair< QVector<glm::vec3>, uint32_t> Line3D;
-        QList<Line3D> _lines3D;
         GLname _vaoLine3D;
         GLname _vboLine3D;
         GLname _iboLine3D;
@@ -125,8 +118,6 @@ namespace OsmAnd
         void renderLines3D();
         void releaseLines3D();
 
-        typedef std::tuple< glm::vec3, glm::vec3, glm::vec3, glm::vec3, uint32_t> Quad3D;
-        QList<Quad3D> _quads3D;
         GLname _vaoQuad3D;
         GLname _vboQuad3D;
         GLname _iboQuad3D;
@@ -168,12 +159,6 @@ namespace OsmAnd
         virtual void initialize();
         virtual void render();
         virtual void release();
-
-        void clear();
-        void addRect2D(const AreaF& rect, const uint32_t argbColor, const float angle = 0.0f);
-        void addLine2D(const QVector<glm::vec2>& line, const uint32_t argbColor);
-        void addLine3D(const QVector<glm::vec3>& line, const uint32_t argbColor);
-        void addQuad3D(const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3, const uint32_t argbColor);
     };
 }
 

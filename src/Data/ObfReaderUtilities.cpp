@@ -3,9 +3,10 @@
 #include "QtExtensions.h"
 #include <QtEndian>
 
-#include <google/protobuf/wire_format_lite.h>
-
+#include "ignore_warnings_on_external_includes.h"
 #include "OBF.pb.h"
+#include <google/protobuf/wire_format_lite.h>
+#include "restore_internal_warnings.h"
 
 bool OsmAnd::ObfReaderUtilities::readQString(gpb::io::CodedInputStream* cis, QString& output)
 {

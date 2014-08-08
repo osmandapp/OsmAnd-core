@@ -4,8 +4,10 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
 #include <QByteArray>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/MemoryCommon.h>
@@ -22,6 +24,6 @@ namespace OsmAnd
         virtual QByteArray getResource(const QString& name, bool* ok = nullptr) const = 0;
         virtual bool containsResource(const QString& name) const = 0;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_I_EXTERNAL_RESOURCES_PROVIDER_H_)

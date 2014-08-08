@@ -23,6 +23,7 @@ namespace OsmAnd
 
     class ObfMapSectionLevelTreeNode
     {
+        Q_DISABLE_COPY(ObfMapSectionLevelTreeNode);
     private:
     protected:
         ObfMapSectionLevelTreeNode(const std::shared_ptr<const ObfMapSectionLevel>& level);

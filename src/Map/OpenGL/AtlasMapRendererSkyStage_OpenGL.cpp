@@ -1,14 +1,15 @@
 #include "AtlasMapRendererSkyStage_OpenGL.h"
 
-#include <cassert>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
-OsmAnd::AtlasMapRendererSkyStage_OpenGL::AtlasMapRendererSkyStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
-    : AtlasMapRendererStage_OpenGL(renderer)
+#include "AtlasMapRenderer_OpenGL.h"
+
+OsmAnd::AtlasMapRendererSkyStage_OpenGL::AtlasMapRendererSkyStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
+    : AtlasMapRendererSkyStage(renderer_)
+    , AtlasMapRendererStageHelper_OpenGL(this)
 {
 }
 
@@ -128,6 +129,7 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
 void OsmAnd::AtlasMapRendererSkyStage_OpenGL::render()
 {
     const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
 
     GL_PUSH_GROUP_MARKER(QLatin1String("sky"));
 

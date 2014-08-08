@@ -107,7 +107,7 @@ std::shared_ptr<const OsmAnd::Model::Road> OsmAnd::RoadLocator_P::findNearestRoa
         *outDistanceToNearestRoadPoint = -1.0;
 
     std::shared_ptr<const Model::Road> minDistanceRoad;
-    int minDistancePointIdx;
+    int minDistancePointIdx = -1;
     double minSqDistance = std::numeric_limits<double>::max();
     uint32_t min31x, min31y;
 

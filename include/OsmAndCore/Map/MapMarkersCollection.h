@@ -7,13 +7,13 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
 
-#include <SkBitmap.h>
-
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 #include <OsmAndCore/Map/MapMarker.h>
+
+class SkBitmap;
 
 namespace OsmAnd
 {

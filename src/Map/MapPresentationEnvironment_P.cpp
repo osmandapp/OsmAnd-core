@@ -3,10 +3,12 @@
 
 #include <limits>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
 #include <SkImageDecoder.h>
 #include <SkStream.h>
+#include "restore_internal_warnings.h"
 
 #include "MapStyle_P.h"
 #include "MapStyleEvaluator.h"

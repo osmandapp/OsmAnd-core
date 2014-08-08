@@ -7,7 +7,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkColor.h>
+#include "restore_internal_warnings.h"
 
 #include "AtlasMapRenderer_OpenGL.h"
 #include "IMapTiledDataProvider.h"
@@ -15,8 +17,9 @@
 #include "IMapElevationDataProvider.h"
 #include "Utilities.h"
 
-OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::AtlasMapRendererRasterMapStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer)
-    : AtlasMapRendererStage_OpenGL(renderer)
+OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::AtlasMapRendererRasterMapStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
+    : AtlasMapRendererRasterMapStage(renderer_)
+    , AtlasMapRendererStageHelper_OpenGL(this)
     , _tilePatchIndicesCount(-1)
 {
 }
@@ -316,7 +319,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
 void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
 {
     const auto gpuAPI = getGPUAPI();
-    const auto& currentConfiguration = *this->currentConfiguration;
+    const auto& currentConfiguration = getCurrentConfiguration();
+    const auto& internalState = getInternalState();
 
     GL_CHECK_PRESENT(glUseProgram);
     GL_CHECK_PRESENT(glUniformMatrix4fv);
@@ -451,8 +455,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
         bool appliedElevationVertexAttribArray = false;
         if (elevationDataEnabled)
         {
-            const auto& resourcesCollection_ = getResources().getShadowCollection(MapRendererResourceType::ElevationDataTile, currentState.elevationDataProvider);
-            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Shadow>(resourcesCollection_);
+            const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::ElevationDataTile, currentState.elevationDataProvider);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
@@ -559,8 +563,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
             layerLinearIdx++;
 
             // Get resources collection
-            const auto& resourcesCollection_ = getResources().getShadowCollection(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]);
-            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Shadow>(resourcesCollection_);
+            const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
 
             const auto& perTile_vs = tileProgram.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = tileProgram.fs.param.rasterTileLayers[layerLinearIdx];

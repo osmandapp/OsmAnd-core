@@ -1,5 +1,7 @@
 #include "Logging.h"
 
+#include "QtCommon.h"
+
 #include "Common.h"
 #include "ILogSink.h"
 

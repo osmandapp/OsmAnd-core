@@ -1,6 +1,8 @@
 #include "MapMarkerBuilder_P.h"
 #include "MapMarkerBuilder.h"
 
+#include "QtCommon.h"
+
 #include "MapMarker.h"
 #include "MapMarker_P.h"
 #include "MapMarkersCollection.h"

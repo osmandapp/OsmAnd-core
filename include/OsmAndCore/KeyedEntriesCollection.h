@@ -2,7 +2,6 @@
 #define _OSMAND_CORE_KEYED_ENTRIES_COLLECTION_H_
 
 #include <OsmAndCore/stdlib_common.h>
-#include <cassert>
 #include <functional>
 #include <type_traits>
 
@@ -28,12 +27,16 @@ namespace OsmAnd
     template<typename KEY, typename ENTRY>
     class KeyedEntriesCollection
     {
+        Q_DISABLE_COPY(KeyedEntriesCollection);
+
     public:
         typedef KEY Key;
         typedef KeyedEntriesCollection<KEY, ENTRY> Collection;
 
         class Link : public std::enable_shared_from_this < Link >
         {
+            Q_DISABLE_COPY(Link);
+
         private:
         protected:
         public:
@@ -64,6 +67,7 @@ namespace OsmAnd
 
         virtual void onEntryModified(const KEY key) const
         {
+            Q_UNUSED(key);
         }
     public:
         KeyedEntriesCollection()
@@ -234,6 +238,8 @@ namespace OsmAnd
     template<typename KEY, typename ENTRY>
     class KeyedEntriesCollectionEntry
     {
+        Q_DISABLE_COPY(KeyedEntriesCollectionEntry);
+
     public:
         typedef KeyedEntriesCollection<KEY, ENTRY> Collection;
         typedef typename Collection::Link Link;

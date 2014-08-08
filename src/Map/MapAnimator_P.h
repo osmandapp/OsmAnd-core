@@ -2,7 +2,6 @@
 #define _OSMAND_CORE_MAP_ANIMATOR_P_H_
 
 #include "stdlib_common.h"
-#include <cassert>
 #include <functional>
 
 #include "QtExtensions.h"

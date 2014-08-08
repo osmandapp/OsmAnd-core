@@ -2,7 +2,7 @@
 
 OsmAnd::MapRendererKeyedResourcesCollection::MapRendererKeyedResourcesCollection(const MapRendererResourceType type_)
     : MapRendererBaseResourcesCollection(type_)
-    , _shadow(new Shadow(type_))
+    , _snapshot(new Snapshot(type_))
 {
 }
 
@@ -46,7 +46,7 @@ void OsmAnd::MapRendererKeyedResourcesCollection::removeAllEntries()
 
 void OsmAnd::MapRendererKeyedResourcesCollection::onCollectionModified() const
 {
-    _shadowCollectionInvalidatesCount.fetchAndAddOrdered(1);
+    _collectionSnapshotInvalidatesCount.fetchAndAddOrdered(1);
 }
 
 bool OsmAnd::MapRendererKeyedResourcesCollection::obtainResource(const Key key, std::shared_ptr<MapRendererBaseKeyedResource>& outResource) const
@@ -99,66 +99,66 @@ void OsmAnd::MapRendererKeyedResourcesCollection::removeResources(const Resource
         });
 }
 
-bool OsmAnd::MapRendererKeyedResourcesCollection::updateShadowCollection() const
+bool OsmAnd::MapRendererKeyedResourcesCollection::updateCollectionSnapshot() const
 {
-    const auto invalidatesDiscarded = _shadowCollectionInvalidatesCount.fetchAndAddOrdered(0);
+    const auto invalidatesDiscarded = _collectionSnapshotInvalidatesCount.fetchAndAddOrdered(0);
     if (invalidatesDiscarded == 0)
         return true;
 
     // Copy from original storage to temp storage
-    Storage tempShadowStorage;
+    Storage storageCopy;
     {
         if (!_collectionLock.tryLockForRead())
             return false;
 
-        tempShadowStorage = detachedOf(_storage);
+        storageCopy = detachedOf(_storage);
         
         _collectionLock.unlock();
     }
-    _shadowCollectionInvalidatesCount.fetchAndAddOrdered(-invalidatesDiscarded);
+    _collectionSnapshotInvalidatesCount.fetchAndAddOrdered(-invalidatesDiscarded);
 
-    // Copy from temp storage to shadow
+    // Copy from temp storage to snapshot
     {
-        QWriteLocker scopedLocker(&_shadow->_lock);
+        QWriteLocker scopedLocker(&_snapshot->_lock);
 
-        _shadow->_storage = qMove(tempShadowStorage);
+        _snapshot->_storage = qMove(storageCopy);
     }
 
     return true;
 }
 
-std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererKeyedResourcesCollection::getShadowCollection() const
+std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererKeyedResourcesCollection::getCollectionSnapshot() const
 {
-    return _shadow;
+    return _snapshot;
 }
 
-std::shared_ptr<OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererKeyedResourcesCollection::getShadowCollection()
+std::shared_ptr<OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererKeyedResourcesCollection::getCollectionSnapshot()
 {
-    return _shadow;
+    return _snapshot;
 }
 
-OsmAnd::MapRendererKeyedResourcesCollection::Shadow::Shadow(const MapRendererResourceType type_)
+OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::Snapshot(const MapRendererResourceType type_)
     : type(type_)
 {
 }
 
-OsmAnd::MapRendererKeyedResourcesCollection::Shadow::~Shadow()
+OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::~Snapshot()
 {
 }
 
-OsmAnd::MapRendererResourceType OsmAnd::MapRendererKeyedResourcesCollection::Shadow::getType() const
+OsmAnd::MapRendererResourceType OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::getType() const
 {
     return type;
 }
 
-int OsmAnd::MapRendererKeyedResourcesCollection::Shadow::getResourcesCount() const
+int OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::getResourcesCount() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _storage.size();
 }
 
-void OsmAnd::MapRendererKeyedResourcesCollection::Shadow::forEachResourceExecute(const ResourceActionCallback action)
+void OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::forEachResourceExecute(const ResourceActionCallback action)
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -172,7 +172,7 @@ void OsmAnd::MapRendererKeyedResourcesCollection::Shadow::forEachResourceExecute
     }
 }
 
-void OsmAnd::MapRendererKeyedResourcesCollection::Shadow::obtainResources(QList< std::shared_ptr<MapRendererBaseResource> >* outList, const ResourceFilterCallback filter)
+void OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::obtainResources(QList< std::shared_ptr<MapRendererBaseResource> >* outList, const ResourceFilterCallback filter)
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -190,14 +190,14 @@ void OsmAnd::MapRendererKeyedResourcesCollection::Shadow::obtainResources(QList<
     }
 }
 
-QList<OsmAnd::MapRendererKeyedResourcesCollection::Key> OsmAnd::MapRendererKeyedResourcesCollection::Shadow::getKeys() const
+QList<OsmAnd::MapRendererKeyedResourcesCollection::Key> OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::getKeys() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return _storage.keys();
 }
 
-bool OsmAnd::MapRendererKeyedResourcesCollection::Shadow::obtainResource(const Key key, std::shared_ptr<MapRendererBaseKeyedResource>& outResource) const
+bool OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::obtainResource(const Key key, std::shared_ptr<MapRendererBaseKeyedResource>& outResource) const
 {
     QReadLocker scopedLocker(&_lock);
 

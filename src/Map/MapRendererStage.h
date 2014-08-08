@@ -27,11 +27,14 @@ namespace OsmAnd
         virtual ~MapRendererStage();
 
         MapRenderer* const renderer;
-        const MapRendererResourcesManager& getResources();
+
+        const MapRendererResourcesManager& getResources() const;
+
         const std::unique_ptr<GPUAPI>& gpuAPI;
-        const MapRendererState& currentState;
-        const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
         const MapRendererSetupOptions& setupOptions;
+        const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
+        const MapRendererState& currentState;
+        const MapRendererInternalState& internalState;
         const std::shared_ptr<const MapRendererDebugSettings>& debugSettings;
 
         virtual void initialize() = 0;
