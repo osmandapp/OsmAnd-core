@@ -19,11 +19,20 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::MapRenderer::MapRenderer(GPUAPI* const gpuAPI_)
+OsmAnd::MapRenderer::MapRenderer(
+    GPUAPI* const gpuAPI_,
+    const std::unique_ptr<const MapRendererConfiguration>& baseConfiguration_,
+    const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings_)
     : _isRenderingInitialized(false)
-    , _renderThreadId(nullptr)
+    , _currentConfiguration(baseConfiguration_->createCopy())
+    , _currentConfigurationAsConst(_currentConfiguration)
+    , _requestedConfiguration(baseConfiguration_->createCopy())
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerIsAlive(false)
+    , _renderThreadId(nullptr)
+    , _currentDebugSettings(baseDebugSettings_->createCopy())
+    , _currentDebugSettingsAsConst(_currentDebugSettings)
+    , _requestedDebugSettings(baseDebugSettings_->createCopy())
     , setupOptions(_setupOptions)
     , currentConfiguration(_currentConfigurationAsConst)
     , currentState(_currentState)
@@ -71,12 +80,6 @@ bool OsmAnd::MapRenderer::setup(const MapRendererSetupOptions& setupOptions)
 
     _setupOptions = setupOptions;
 
-    _currentConfigurationAsConst = _currentConfiguration = allocateConfiguration();
-    _requestedConfiguration = allocateConfiguration();
-
-    _currentDebugSettingsAsConst = _currentDebugSettings = allocateDebugSettings();
-    _requestedDebugSettings = allocateDebugSettings();
-
     return true;
 }
 
@@ -84,10 +87,7 @@ std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::MapRenderer::getConfig
 {
     QReadLocker scopedLocker(&_configurationLock);
 
-    const auto result = allocateConfiguration();
-    _requestedConfiguration->copyTo(*result);
-
-    return result;
+    return _requestedConfiguration->createCopy();
 }
 
 void OsmAnd::MapRenderer::setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate /*= false*/)
@@ -1198,10 +1198,7 @@ std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRenderer::getDebugS
 {
     QReadLocker scopedLocker(&_debugSettingsLock);
 
-    const auto result = allocateDebugSettings();
-    _requestedDebugSettings->copyTo(*result);
-
-    return result;
+    return _requestedDebugSettings->createCopy();
 }
 
 void OsmAnd::MapRenderer::setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings)

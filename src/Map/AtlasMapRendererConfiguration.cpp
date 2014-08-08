@@ -20,3 +20,10 @@ void OsmAnd::AtlasMapRendererConfiguration::copyTo(MapRendererConfiguration& oth
 
     MapRendererConfiguration::copyTo(other_);
 }
+
+std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::AtlasMapRendererConfiguration::createCopy() const
+{
+    std::shared_ptr<MapRendererConfiguration> copy(new AtlasMapRendererConfiguration());
+    copyTo(*copy);
+    return copy;
+}

@@ -80,7 +80,10 @@ namespace OsmAnd
         std::shared_ptr<MapRendererDebugSettings> _requestedDebugSettings;
         bool updateCurrentDebugSettings();
     protected:
-        MapRenderer(GPUAPI* const gpuAPI);
+        MapRenderer(
+            GPUAPI* const gpuAPI,
+            const std::unique_ptr<const MapRendererConfiguration>& baseConfiguration,
+            const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings);
 
         // General:
         virtual bool isRenderingInitialized() const;
@@ -88,7 +91,6 @@ namespace OsmAnd
         const MapRendererSetupOptions& setupOptions;
 
         // Configuration-related:
-        virtual std::shared_ptr<MapRendererConfiguration> allocateConfiguration() const = 0;
         const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
         enum class ConfigurationChange
         {
@@ -136,7 +138,6 @@ namespace OsmAnd
         // General:
 
         // Debug-related:
-        virtual std::shared_ptr<MapRendererDebugSettings> allocateDebugSettings() const = 0;
         const std::shared_ptr<const MapRendererDebugSettings>& currentDebugSettings;
 
         // Customization points:

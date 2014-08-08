@@ -37,7 +37,10 @@
 const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 0.1f;
 
 OsmAnd::AtlasMapRenderer_OpenGL::AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI_)
-    : AtlasMapRenderer(gpuAPI_)
+    : AtlasMapRenderer(
+        gpuAPI_,
+        std::unique_ptr<const MapRendererConfiguration>(new AtlasMapRendererConfiguration()),
+        std::unique_ptr<const MapRendererDebugSettings>(new MapRendererDebugSettings()))
 {
 }
 

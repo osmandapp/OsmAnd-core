@@ -8,8 +8,11 @@
 #include "AtlasMapRendererDebugStage.h"
 #include "Utilities.h"
 
-OsmAnd::AtlasMapRenderer::AtlasMapRenderer(GPUAPI* const gpuAPI_)
-    : MapRenderer(gpuAPI_)
+OsmAnd::AtlasMapRenderer::AtlasMapRenderer(
+    GPUAPI* const gpuAPI_,
+    const std::unique_ptr<const MapRendererConfiguration>& baseConfiguration_,
+    const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings_)
+    : MapRenderer(gpuAPI_, baseConfiguration_, baseDebugSettings_)
     , skyStage(_skyStage)
     , rasterMapStage(_rasterMapStage)
     , symbolsStage(_symbolsStage)
@@ -19,11 +22,6 @@ OsmAnd::AtlasMapRenderer::AtlasMapRenderer(GPUAPI* const gpuAPI_)
 
 OsmAnd::AtlasMapRenderer::~AtlasMapRenderer()
 {
-}
-
-std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::AtlasMapRenderer::allocateConfiguration() const
-{
-    return std::shared_ptr<AtlasMapRendererConfiguration>(new AtlasMapRendererConfiguration());
 }
 
 bool OsmAnd::AtlasMapRenderer::updateInternalState(
@@ -127,11 +125,6 @@ uint32_t OsmAnd::AtlasMapRenderer::getConfigurationChangeMask(
 void OsmAnd::AtlasMapRenderer::invalidateCurrentConfiguration(const uint32_t changesMask)
 {
     MapRenderer::invalidateCurrentConfiguration(changesMask);
-}
-
-std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::AtlasMapRenderer::allocateDebugSettings() const
-{
-    return std::shared_ptr<MapRendererDebugSettings>(new MapRendererDebugSettings());
 }
 
 bool OsmAnd::AtlasMapRenderer::preInitializeRendering()

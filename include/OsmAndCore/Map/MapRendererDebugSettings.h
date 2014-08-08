@@ -21,6 +21,7 @@ namespace OsmAnd
         bool showSymbolsBBoxesAcceptedByIntersectionCheck;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;
+        virtual std::shared_ptr<MapRendererDebugSettings> createCopy() const;
     };
 }
 

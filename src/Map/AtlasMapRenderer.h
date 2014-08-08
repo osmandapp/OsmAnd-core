@@ -29,10 +29,12 @@ namespace OsmAnd
         // General:
         QSet<TileId> _uniqueTiles;
     protected:
-        AtlasMapRenderer(GPUAPI* const gpuAPI);
+        AtlasMapRenderer(
+            GPUAPI* const gpuAPI,
+            const std::unique_ptr<const MapRendererConfiguration>& baseConfiguration,
+            const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings);
 
         // Configuration-related:
-        virtual std::shared_ptr<MapRendererConfiguration> allocateConfiguration() const;
         enum class ConfigurationChange
         {
             ReferenceTileSize = static_cast<int>(MapRenderer::ConfigurationChange::__LAST),
@@ -54,7 +56,6 @@ namespace OsmAnd
             const MapRendererConfiguration& configuration) const;
 
         // Debug-related:
-        virtual std::shared_ptr<MapRendererDebugSettings> allocateDebugSettings() const;
 
         // Customization points:
         virtual bool preInitializeRendering();

@@ -19,3 +19,10 @@ void OsmAnd::MapRendererConfiguration::copyTo(MapRendererConfiguration& other) c
     other.heixelsPerTileSide = heixelsPerTileSide;
     other.paletteTexturesAllowed = paletteTexturesAllowed;
 }
+
+std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::MapRendererConfiguration::createCopy() const
+{
+    std::shared_ptr<MapRendererConfiguration> copy(new MapRendererConfiguration());
+    copyTo(*copy);
+    return copy;
+}
