@@ -28,8 +28,6 @@ namespace OsmAnd
         // This callback is called when frame needs update
         OSMAND_CALLABLE(FrameUpdateRequestCallback, void, const IMapRenderer* const mapRenderer);
         FrameUpdateRequestCallback frameUpdateRequestCallback;
-
-        float displayDensityFactor;
     };
 }
 

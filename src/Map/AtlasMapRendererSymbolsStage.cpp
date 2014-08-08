@@ -553,7 +553,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
         static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
         gpuResource->width, gpuResource->height);
     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-    boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+//    boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
     if (!applyIntersectionWithOtherSymbolsFiltering(boundsInWindow, symbol, intersections))
         return false;
@@ -735,7 +735,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         OOBBF oobb(bboxInDirection, directionAngle);
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+//        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
         if (!applyIntersectionWithOtherSymbolsFiltering(oobb, symbol, intersections))
             return false;
@@ -969,7 +969,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         OOBBF oobb(bboxInDirection, directionAngle);
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+//        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
         if (!applyIntersectionWithOtherSymbolsFiltering(oobb, symbol, intersections))
             return false;

@@ -5,7 +5,6 @@ OsmAnd::MapRendererSetupOptions::MapRendererSetupOptions()
     , gpuWorkerThreadPrologue(nullptr)
     , gpuWorkerThreadEpilogue(nullptr)
     , frameUpdateRequestCallback(nullptr)
-    , displayDensityFactor(1.0f)
 {
 }
 
