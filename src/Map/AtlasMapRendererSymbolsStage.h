@@ -15,6 +15,9 @@
 
 namespace OsmAnd
 {
+    class MapSymbol;
+    class RasterMapSymbol;
+
     class AtlasMapRendererSymbolsStage : public AtlasMapRendererStage
     {
     public:
@@ -160,6 +163,34 @@ namespace OsmAnd
         bool plotOnSurfaceVectorSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
             IntersectionsQuadTree& intersections) const;
+
+        bool applyIntersectionWithOtherSymbolsFiltering(
+            const AreaI boundsInWindow,
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const IntersectionsQuadTree& intersections) const;
+        bool applyIntersectionWithOtherSymbolsFiltering(
+            const OOBBF oobb,
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const IntersectionsQuadTree& intersections) const;
+        bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
+            const AreaI boundsInWindow,
+            const std::shared_ptr<const RasterMapSymbol>& symbol,
+            const IntersectionsQuadTree& intersections) const;
+        bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
+            const OOBBF oobb,
+            const std::shared_ptr<const RasterMapSymbol>& symbol,
+            const IntersectionsQuadTree& intersections) const;
+        bool plotSymbol(
+            const AreaI boundsInWindow,
+            const std::shared_ptr<const MapSymbol>& symbol,
+            IntersectionsQuadTree& intersections) const;
+        bool plotSymbol(
+            const OOBBF oobb,
+            const std::shared_ptr<const MapSymbol>& symbol,
+            IntersectionsQuadTree& intersections) const;
+        static std::shared_ptr<const GPUAPI::ResourceInGPU> captureGpuResource(
+            const std::shared_ptr<MapRendererBaseResource>& resource,
+            const std::shared_ptr<const MapSymbol>& mapSymbol);
     protected:
         void obtainRenderableSymbols(
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols) const;
