@@ -180,6 +180,12 @@ namespace OsmAnd
             const OOBBF oobb,
             const std::shared_ptr<const RasterMapSymbol>& symbol,
             const IntersectionsQuadTree& intersections) const;
+        OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
+        OOBBF calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
+        void placeGlyphsOnPathSymbolSubpath(
+            const std::shared_ptr<RenderableOnPathSymbol>& renderable,
+            bool& outShouldInvert,
+            glm::vec2& outDirectionOnScreenN) const;
         bool plotSymbol(
             const AreaI boundsInWindow,
             const std::shared_ptr<const MapSymbol>& symbol,
