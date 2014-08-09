@@ -1193,74 +1193,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceRasterSymbol(
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
-    //    // Calculate position in screen coordinates (same calculation as done in shader)
-    //    const auto symbolOnScreen = glm::project(renderable->positionInWorld, internalState.mCameraView, internalState.mPerspectiveProjection, internalState.glmViewport);
-    //
-    //    // Get bounds in screen coordinates
-    //    auto boundsInWindow = AreaI::fromCenterAndSize(
-    //        static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
-    //        gpuResource->width, gpuResource->height);
-    //    //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-    //    boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
-    //
-    //    if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) != MapSymbol::IgnoredByIntersectionTest)
-    //    {
-    //#if !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
-    //        // Check intersections
-    //        const auto intersects = intersections.test(boundsInWindow, false,
-    //            [symbolGroupPtr]
-    //            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-    //            {
-    //                // Only accept intersections with symbols from other groups
-    //                return otherSymbol->groupPtr != symbolGroupPtr;
-    //            });
-    //        if (intersects)
-    //        {
-    //#if OSMAND_DEBUG && 0
-    //            getRenderer()->debugStage->addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 50));
-    //#endif // OSMAND_DEBUG
-    //            return false;
-    //        }
-    //#endif // !OSMAND_SKIP_SYMBOLS_INTERSECTION_CHECK
-    //    }
-    //
-    //    // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
-    //    if ((symbol->minDistance.x > 0 || symbol->minDistance.y > 0) && !symbol->content.isNull())
-    //    {
-    //        const auto& symbolContent = symbol->content;
-    //        const auto hasSimilarContent = intersections.test(boundsInWindow.getEnlargedBy(symbol->minDistance), false,
-    //            [symbolContent, symbolGroupPtr]
-    //            (const std::shared_ptr<const MapSymbol>& otherSymbol, const IntersectionsQuadTree::BBox& otherBBox) -> bool
-    //            {
-    //                return
-    //                    (otherSymbol->groupPtr != symbolGroupPtr) &&
-    //                    (otherSymbol->content == symbolContent);
-    //            });
-    //        if (hasSimilarContent)
-    //        {
-    //#if OSMAND_DEBUG && 0
-    //            getRenderer()->debugStage->addRect2D(boundsInWindow.getEnlargedBy(symbol->minDistance), SkColorSetA(SK_ColorRED, 50));
-    //            getRenderer()->debugStage->addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 128));
-    //#endif // OSMAND_DEBUG
-    //            return false;
-    //        }
-    //    }
-    //
-    //    if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
-    //    {
-    //        // Insert into quad-tree
-    //        if (!intersections.insert(symbol, boundsInWindow))
-    //        {
-    //#if OSMAND_DEBUG && 0
-    //            getRenderer()->debugStage->addRect2D(boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
-    //#endif // OSMAND_DEBUG
-    //            return false;
-    //        }
-    //    }
-
-    //if (debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck)
-    //    getRenderer()->debugStage->addRect2D(boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
-
     return true;
 }
 
@@ -1285,7 +1217,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) == MapSymbol::IgnoredByIntersectionTest)
         return true;
 
-    if (debugSettings->skipSymbolsIntersectionCheck)
+    if (Q_UNLIKELY(debugSettings->skipSymbolsIntersectionCheck))
         return true;
     
     // Check intersections
@@ -1299,7 +1231,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         });
     if (intersects)
     {
-        if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
+        if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck))
             getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorRED, 50));
         return false;
     }
@@ -1315,7 +1247,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) == MapSymbol::IgnoredByIntersectionTest)
         return true;
 
-    if (debugSettings->skipSymbolsIntersectionCheck)
+    if (Q_UNLIKELY(debugSettings->skipSymbolsIntersectionCheck))
         return true;
 
     // Check intersections
@@ -1329,7 +1261,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         });
     if (intersects)
     {
-        if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
+        if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck))
             getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
         return false;
     }
@@ -1343,6 +1275,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     const IntersectionsQuadTree& intersections) const
 {
     if ((symbol->minDistance.x <= 0 && symbol->minDistance.y <= 0) || symbol->content.isNull())
+        return true;
+
+    if (Q_UNLIKELY(debugSettings->skipMinDistanceToSameContentFromOtherSymbolCheck))
         return true;
 
     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
@@ -1362,10 +1297,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
         });
     if (hasSimilarContent)
     {
-#if OSMAND_DEBUG && 0
-        getRenderer()->debugStage->addRect2D(boundsInWindow.getEnlargedBy(symbol->minDistance), SkColorSetA(SK_ColorRED, 50));
-        getRenderer()->debugStage->addRect2D(boundsInWindow, SkColorSetA(SK_ColorRED, 128));
-#endif // OSMAND_DEBUG
+        if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
+        {
+            getRenderer()->debugStage->addRect2D(AreaF(boundsInWindow.getEnlargedBy(symbol->minDistance)), SkColorSetA(SK_ColorRED, 50));
+            getRenderer()->debugStage->addRect2D(AreaF(boundsInWindow), SkColorSetA(SK_ColorRED, 128));
+        }
         return false;
     }
 
@@ -1378,6 +1314,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     const IntersectionsQuadTree& intersections) const
 {
     if ((symbol->minDistance.x <= 0 && symbol->minDistance.y <= 0) || symbol->content.isNull())
+        return true;
+
+    if (Q_UNLIKELY(debugSettings->skipMinDistanceToSameContentFromOtherSymbolCheck))
         return true;
 
     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
@@ -1397,10 +1336,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
         });
     if (hasSimilarContent)
     {
-#if OSMAND_DEBUG && 0
-        getRenderer()->debugStage->addRect2D(oobb.getEnlargedBy(PointF(symbol->minDistance)).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
-        getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
-#endif // OSMAND_DEBUG
+        if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
+        {
+            getRenderer()->debugStage->addRect2D(oobb.getEnlargedBy(PointF(symbol->minDistance)).unrotatedBBox, SkColorSetA(SK_ColorRED, 50), oobb.rotation);
+            getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorRED, 128), oobb.rotation);
+        }
         return false;
     }
 
@@ -1423,7 +1363,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
         }
     }
 
-    if (debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck)
+    if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
         getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
 
     return true;
@@ -1446,7 +1386,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
         }
     }
 
-    if (debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck)
+    if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
         getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
 
     return true;

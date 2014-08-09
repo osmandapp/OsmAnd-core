@@ -76,11 +76,9 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         const auto group = *citPreallocatedGroup;
         const auto isShareable = (std::dynamic_pointer_cast<MapSymbolsGroupShareableById>(group) != nullptr);
 
-        // Configure group
-        group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowNoneIfIconIsNotShown);
-        group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllCaptionsOrNoCaptions);
-
         // Convert all symbols inside group
+        bool hasAtLeastOneBillboard = false;
+        bool hasAtLeastOneOnPath = false;
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
             assert(static_cast<bool>(rasterizedSymbol->bitmap));
@@ -89,6 +87,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
             if (const auto spriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
             {
+                hasAtLeastOneBillboard = true;
+
                 symbol.reset(new BillboardRasterMapSymbol(
                     group,
                     isShareable,
@@ -103,6 +103,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             }
             else if (const auto onPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
             {
+                hasAtLeastOneOnPath = true;
+
                 symbol.reset(new OnPathMapSymbol(
                     group,
                     isShareable,
@@ -122,6 +124,22 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 symbol->contentClass = MapSymbol::ContentClass::Caption;
 
             group->symbols.push_back(qMove(symbol));
+        }
+
+        // Configure group
+        if (hasAtLeastOneBillboard && !hasAtLeastOneOnPath)
+        {
+            group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowNoneIfIconIsNotShown);
+            group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllCaptionsOrNoCaptions);
+        }
+        else if (!hasAtLeastOneBillboard && hasAtLeastOneOnPath)
+        {
+            group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything);
+        }
+        else
+        {
+            assert(false);
+            group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything);
         }
 
         // Add constructed group to output

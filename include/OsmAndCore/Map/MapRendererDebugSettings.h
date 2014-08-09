@@ -20,8 +20,10 @@ namespace OsmAnd
         bool excludeBillboardSymbols;
         bool excludeOnSurfaceSymbols;
         bool skipSymbolsIntersectionCheck;
-        bool showSymbolsBBoxesRejectedByIntersectionCheck;
         bool showSymbolsBBoxesAcceptedByIntersectionCheck;
+        bool showSymbolsBBoxesRejectedByIntersectionCheck;
+        bool skipMinDistanceToSameContentFromOtherSymbolCheck;
+        bool showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;
         virtual std::shared_ptr<MapRendererDebugSettings> createCopy() const;

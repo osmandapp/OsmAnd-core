@@ -6,8 +6,10 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , excludeBillboardSymbols(false)
     , excludeOnSurfaceSymbols(false)
     , skipSymbolsIntersectionCheck(false)
-    , showSymbolsBBoxesRejectedByIntersectionCheck(false)
     , showSymbolsBBoxesAcceptedByIntersectionCheck(false)
+    , showSymbolsBBoxesRejectedByIntersectionCheck(false)
+    , skipMinDistanceToSameContentFromOtherSymbolCheck(false)
+    , showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck(false)
 {
 }
 
@@ -24,6 +26,8 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.skipSymbolsIntersectionCheck = skipSymbolsIntersectionCheck;
     other.showSymbolsBBoxesRejectedByIntersectionCheck = showSymbolsBBoxesRejectedByIntersectionCheck;
     other.showSymbolsBBoxesAcceptedByIntersectionCheck = showSymbolsBBoxesAcceptedByIntersectionCheck;
+    other.skipMinDistanceToSameContentFromOtherSymbolCheck = skipMinDistanceToSameContentFromOtherSymbolCheck;
+    other.showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck = showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const
