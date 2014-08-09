@@ -11,6 +11,8 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , skipMinDistanceToSameContentFromOtherSymbolCheck(false)
     , showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck(false)
     , showOnPathSubpaths(false)
+    , showOnPath2dSymbolGlyphDetails(false)
+    , showOnPath3dSymbolGlyphDetails(false)
 {
 }
 
@@ -30,6 +32,8 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.skipMinDistanceToSameContentFromOtherSymbolCheck = skipMinDistanceToSameContentFromOtherSymbolCheck;
     other.showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck = showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
     other.showOnPathSubpaths = showOnPathSubpaths;
+    other.showOnPath2dSymbolGlyphDetails = showOnPath2dSymbolGlyphDetails;
+    other.showOnPath3dSymbolGlyphDetails = showOnPath3dSymbolGlyphDetails;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const

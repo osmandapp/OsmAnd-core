@@ -862,46 +862,42 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         if (!plotSymbol(oobb, symbol, intersections))
             return false;
 
-#if OSMAND_DEBUG && 0
-        for (const auto& glyph : constOf(glyphs))
+        if (Q_UNLIKELY(debugSettings->showOnPath2dSymbolGlyphDetails))
         {
-            const auto& anchorPoint = std::get<0>(glyph);
-            const auto& glyphWidth = std::get<1>(glyph);
-            const auto& angle = std::get<2>(glyph);
-            const auto& vN = std::get<3>(glyph);
+            for (const auto& glyph : constOf(renderable->glyphsPlacement))
+            {
+                getRenderer()->debugStage->addRect2D(AreaF::fromCenterAndSize(
+                    glyph.anchorPoint.x, currentState.windowSize.y - glyph.anchorPoint.y,
+                    glyph.width, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), glyph.angle);
 
-            getRenderer()->debugStage->addRect2D(AreaF::fromCenterAndSize(
-                anchorPoint.x, currentState.windowSize.y - anchorPoint.y,
-                glyphWidth, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), angle);
+                QVector<glm::vec2> lineN;
+                const auto ln0 = glyph.anchorPoint;
+                lineN.push_back(glm::vec2(ln0.x, currentState.windowSize.y - ln0.y));
+                const auto ln1 = glyph.anchorPoint + (glyph.vNormal*16.0f);
+                lineN.push_back(glm::vec2(ln1.x, currentState.windowSize.y - ln1.y));
+                getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(shouldInvert ? SK_ColorMAGENTA : SK_ColorYELLOW, 128));
+            }
 
-            QVector<glm::vec2> lineN;
-            const auto ln0 = anchorPoint;
-            lineN.push_back(glm::vec2(ln0.x, currentState.windowSize.y - ln0.y));
-            const auto ln1 = anchorPoint + (vN*16.0f);
-            lineN.push_back(glm::vec2(ln1.x, currentState.windowSize.y - ln1.y));
-            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(shouldInvert ? SK_ColorMAGENTA : SK_ColorYELLOW, 128));
+            // Subpath N (start)
+            {
+                QVector<glm::vec2> lineN;
+                const auto sn0 = points[renderable->subpathStartIndex];
+                lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                const auto sn1 = points[renderable->subpathStartIndex] + (subpathDirectionOnScreenN*32.0f);
+                lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+            }
+
+            // Subpath N (end)
+            {
+                QVector<glm::vec2> lineN;
+                const auto sn0 = points[renderable->subpathEndIndex];
+                lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                const auto sn1 = points[renderable->subpathEndIndex] + (subpathDirectionOnScreenN*32.0f);
+                lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+            }
         }
-
-        // Subpath N (start)
-        {
-            QVector<glm::vec2> lineN;
-            const auto sn0 = points[renderable->subpathStartIndex];
-            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-            const auto sn1 = points[renderable->subpathStartIndex] + (subpathDirectionOnScreenN*32.0f);
-            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-        }
-
-        // Subpath N (end)
-        {
-            QVector<glm::vec2> lineN;
-            const auto sn0 = points[renderable->subpathEndIndex];
-            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-            const auto sn1 = points[renderable->subpathEndIndex] + (subpathDirectionOnScreenN*32.0f);
-            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-        }
-#endif // OSMAND_DEBUG
     }
     else
     {
@@ -1096,66 +1092,62 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         if (!plotSymbol(oobb, symbol, intersections))
             return false;
 
-#if OSMAND_DEBUG && 0
-        for (const auto& glyphLocation : constOf(glyphs))
+        if (Q_UNLIKELY(debugSettings->showOnPath2dSymbolGlyphDetails))
         {
-            const auto& anchorPoint = std::get<0>(glyphLocation);
-            const auto& glyphWidth = std::get<1>(glyphLocation);
-            const auto& angle = std::get<2>(glyphLocation);
-            const auto& vN = std::get<3>(glyphLocation);
+            for (const auto& glyph : constOf(renderable->glyphsPlacement))
+            {
+                const auto& glyphInMapPlane = AreaF::fromCenterAndSize(
+                    glyph.anchorPoint.x, glyph.anchorPoint.y, /* anchor points are specified in world coordinates already */
+                    glyph.width*projectionScale, gpuResource->height*projectionScale);
+                const auto& tl = glyphInMapPlane.topLeft;
+                const auto& tr = glyphInMapPlane.topRight();
+                const auto& br = glyphInMapPlane.bottomRight;
+                const auto& bl = glyphInMapPlane.bottomLeft();
+                const glm::vec3 pC(glyph.anchorPoint.x, 0.0f, glyph.anchorPoint.y);
+                const glm::vec4 p0(tl.x, 0.0f, tl.y, 1.0f);
+                const glm::vec4 p1(tr.x, 0.0f, tr.y, 1.0f);
+                const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
+                const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
+                const auto toCenter = glm::translate(-pC);
+                const auto rotate = glm::rotate(qRadiansToDegrees((float)Utilities::normalizedAngleRadians(glyph.angle + M_PI)), glm::vec3(0.0f, -1.0f, 0.0f));
+                const auto fromCenter = glm::translate(pC);
+                const auto M = fromCenter*rotate*toCenter;
+                getRenderer()->debugStage->addQuad3D((M*p0).xyz, (M*p1).xyz, (M*p2).xyz, (M*p3).xyz, SkColorSetA(SK_ColorGREEN, 128));
 
-            const auto& glyphInMapPlane = AreaF::fromCenterAndSize(
-                anchorPoint.x, anchorPoint.y, /* anchor points are specified in world coordinates already */
-                glyphWidth*projectionScale, gpuResource->height*projectionScale);
-            const auto& tl = glyphInMapPlane.topLeft;
-            const auto& tr = glyphInMapPlane.topRight();
-            const auto& br = glyphInMapPlane.bottomRight;
-            const auto& bl = glyphInMapPlane.bottomLeft();
-            const glm::vec3 pC(anchorPoint.x, 0.0f, anchorPoint.y);
-            const glm::vec4 p0(tl.x, 0.0f, tl.y, 1.0f);
-            const glm::vec4 p1(tr.x, 0.0f, tr.y, 1.0f);
-            const glm::vec4 p2(br.x, 0.0f, br.y, 1.0f);
-            const glm::vec4 p3(bl.x, 0.0f, bl.y, 1.0f);
-            const auto toCenter = glm::translate(-pC);
-            const auto rotate = glm::rotate(qRadiansToDegrees((float)Utilities::normalizedAngleRadians(angle + M_PI)), glm::vec3(0.0f, -1.0f, 0.0f));
-            const auto fromCenter = glm::translate(pC);
-            const auto M = fromCenter*rotate*toCenter;
-            getRenderer()->debugStage->addQuad3D((M*p0).xyz, (M*p1).xyz, (M*p2).xyz, (M*p3).xyz, SkColorSetA(SK_ColorGREEN, 128));
+                QVector<glm::vec3> lineN;
+                const auto ln0 = glyph.anchorPoint;
+                lineN.push_back(glm::vec3(ln0.x, 0.0f, ln0.y));
+                const auto ln1 = glyph.anchorPoint + (glyph.vNormal*16.0f*projectionScale);
+                lineN.push_back(glm::vec3(ln1.x, 0.0f, ln1.y));
+                getRenderer()->debugStage->addLine3D(lineN, SkColorSetA(shouldInvert ? SK_ColorMAGENTA : SK_ColorYELLOW, 128));
+            }
 
-            QVector<glm::vec3> lineN;
-            const auto ln0 = anchorPoint;
-            lineN.push_back(glm::vec3(ln0.x, 0.0f, ln0.y));
-            const auto ln1 = anchorPoint + (vN*16.0f*projectionScale);
-            lineN.push_back(glm::vec3(ln1.x, 0.0f, ln1.y));
-            getRenderer()->debugStage->addLine3D(lineN, SkColorSetA(shouldInvert ? SK_ColorMAGENTA : SK_ColorYELLOW, 128));
+            // Subpath N (start)
+            {
+                const auto a = points[renderable->subpathStartIndex];
+                const auto p0 = glm::project(glm::vec3(a.x, 0.0f, a.y), internalState.mCameraView, internalState.mPerspectiveProjection, internalState.glmViewport);
+
+                QVector<glm::vec2> lineN;
+                const glm::vec2 sn0 = p0.xy;
+                lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                const glm::vec2 sn1 = p0.xy + (subpathDirectionOnScreenN*32.0f);
+                lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+            }
+
+            // Subpath N (end)
+            {
+                const auto a = points[renderable->subpathEndIndex];
+                const auto p0 = glm::project(glm::vec3(a.x, 0.0f, a.y), internalState.mCameraView, internalState.mPerspectiveProjection, internalState.glmViewport);
+
+                QVector<glm::vec2> lineN;
+                const glm::vec2 sn0 = p0.xy;
+                lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                const glm::vec2 sn1 = p0.xy + (subpathDirectionOnScreenN*32.0f);
+                lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+            }
         }
-
-        // Subpath N (start)
-        {
-            const auto a = points[renderable->subpathStartIndex];
-            const auto p0 = glm::project(glm::vec3(a.x, 0.0f, a.y), internalState.mCameraView, internalState.mPerspectiveProjection, internalState.glmViewport);
-
-            QVector<glm::vec2> lineN;
-            const glm::vec2 sn0 = p0.xy;
-            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-            const glm::vec2 sn1 = p0.xy + (subpathDirectionOnScreenN*32.0f);
-            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-        }
-
-        // Subpath N (end)
-        {
-            const auto a = points[renderable->subpathEndIndex];
-            const auto p0 = glm::project(glm::vec3(a.x, 0.0f, a.y), internalState.mCameraView, internalState.mPerspectiveProjection, internalState.glmViewport);
-
-            QVector<glm::vec2> lineN;
-            const glm::vec2 sn0 = p0.xy;
-            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-            const glm::vec2 sn1 = p0.xy + (subpathDirectionOnScreenN*32.0f);
-            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-        }
-#endif // OSMAND_DEBUG
     }
 
     return true;
