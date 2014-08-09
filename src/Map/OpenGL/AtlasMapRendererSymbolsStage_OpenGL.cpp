@@ -1077,8 +1077,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         GL_CHECK_RESULT;
 
         // Set view-projection matrix
-        const auto mViewProjection = internalState.mPerspectiveProjection * internalState.mCameraView;
-        glUniformMatrix4fv(_onPath3dProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(mViewProjection));
+        glUniformMatrix4fv(_onPath3dProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
         GL_CHECK_RESULT;
 
         // Activate texture block for symbol textures

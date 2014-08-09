@@ -587,8 +587,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     GL_CHECK_RESULT;
 
     // Set projection*view*model matrix:
-    const auto& mProjectionView = internalState.mPerspectiveProjection * internalState.mCameraView;
-    glUniformMatrix4fv(_programLine3D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionView));
+    glUniformMatrix4fv(_programLine3D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
     for(const auto& primitive : constOf(_lines3D))
@@ -802,8 +801,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     GL_CHECK_RESULT;
 
     // Set projection*view*model matrix:
-    const auto& mProjectionView = internalState.mPerspectiveProjection * internalState.mCameraView;
-    glUniformMatrix4fv(_programQuad3D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(mProjectionView));
+    glUniformMatrix4fv(_programQuad3D.vs.param.mProjectionViewModel, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
     for(const auto& primitive : constOf(_quads3D))

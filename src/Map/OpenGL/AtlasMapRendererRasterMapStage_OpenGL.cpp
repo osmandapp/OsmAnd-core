@@ -364,8 +364,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
     GL_CHECK_RESULT;
 
     // Set matrices
-    auto mProjectionView = internalState.mPerspectiveProjection * internalState.mCameraView;
-    glUniformMatrix4fv(tileProgram.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(mProjectionView));
+    glUniformMatrix4fv(tileProgram.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
     GL_CHECK_RESULT;
 
     // Set center offset
