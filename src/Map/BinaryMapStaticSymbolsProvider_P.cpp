@@ -76,6 +76,10 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         const auto group = *citPreallocatedGroup;
         const auto isShareable = (std::dynamic_pointer_cast<MapSymbolsGroupShareableById>(group) != nullptr);
 
+        // Configure group
+        group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowNoneIfIconIsNotShown);
+        group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllCaptionsOrNoCaptions);
+
         // Convert all symbols inside group
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
@@ -111,6 +115,11 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     mapObject->points31,
                     onPathSymbol->glyphsWidth));
             }
+
+            if (rasterizedSymbol->contentType == SymbolRasterizer::RasterizedSymbol::ContentType::Icon)
+                symbol->contentClass = MapSymbol::ContentClass::Icon;
+            else if (rasterizedSymbol->contentType == SymbolRasterizer::RasterizedSymbol::ContentType::Text)
+                symbol->contentClass = MapSymbol::ContentClass::Caption;
 
             group->symbols.push_back(qMove(symbol));
         }

@@ -861,12 +861,16 @@ void OsmAnd::MapRenderer::doUnpublishMapSymbol(
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
     const auto itPublishedMapSymbols = _publishedMapSymbols.find(symbol->order);
+    if (itPublishedMapSymbols == _publishedMapSymbols.end())
+        return;
     auto& publishedMapSymbols = *itPublishedMapSymbols;
 
     const auto itSymbolReferencedResources = publishedMapSymbols.find(symbol);
-    assert(itSymbolReferencedResources != publishedMapSymbols.cend());
+    if (itSymbolReferencedResources == publishedMapSymbols.end())
+        return;
     auto& symbolReferencedResources = *itSymbolReferencedResources;
-    symbolReferencedResources.remove(resource);
+    if (!symbolReferencedResources.remove(resource))
+        return;
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     const auto symbolReferencedResourcesSize = symbolReferencedResources.size();
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE

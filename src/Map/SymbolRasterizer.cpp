@@ -33,6 +33,7 @@ OsmAnd::SymbolRasterizer::RasterizedSymbol::RasterizedSymbol(
     const std::shared_ptr<const Model::BinaryMapObject>& mapObject_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
+    const ContentType contentType_,
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_)
@@ -40,6 +41,7 @@ OsmAnd::SymbolRasterizer::RasterizedSymbol::RasterizedSymbol(
     , mapObject(mapObject_)
     , bitmap(bitmap_)
     , order(order_)
+    , contentType(contentType_)
     , content(content_)
     , languageId(languageId_)
     , minDistance(minDistance_)
@@ -56,12 +58,13 @@ OsmAnd::SymbolRasterizer::RasterizedSpriteSymbol::RasterizedSpriteSymbol(
     const std::shared_ptr<const Model::BinaryMapObject>& mapObject_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
+    const ContentType contentType_,
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
     const PointI& location31_,
     const PointI& offset_)
-    : RasterizedSymbol(group_, mapObject_, bitmap_, order_, content_, languageId_, minDistance_)
+    : RasterizedSymbol(group_, mapObject_, bitmap_, order_, contentType_, content_, languageId_, minDistance_)
     , location31(location31_)
     , offset(offset_)
 {
@@ -76,11 +79,12 @@ OsmAnd::SymbolRasterizer::RasterizedOnPathSymbol::RasterizedOnPathSymbol(
     const std::shared_ptr<const Model::BinaryMapObject>& mapObject_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const int order_,
+    const ContentType contentType_,
     const QString& content_,
     const LanguageId& languageId_,
     const PointI& minDistance_,
     const QVector<SkScalar>& glyphsWidth_)
-    : RasterizedSymbol(group_, mapObject_, bitmap_, order_, content_, languageId_, minDistance_)
+    : RasterizedSymbol(group_, mapObject_, bitmap_, order_, contentType_, content_, languageId_, minDistance_)
     , glyphsWidth(glyphsWidth_)
 {
 }

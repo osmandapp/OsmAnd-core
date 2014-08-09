@@ -10,21 +10,36 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapSymbol.h>
 
 namespace OsmAnd
 {
-    class MapSymbol;
-
     class OSMAND_CORE_API MapSymbolsGroup
     {
         Q_DISABLE_COPY(MapSymbolsGroup);
+
+    public:
+        enum class PresentationMode : unsigned int
+        {
+            ShowAnything = 0,
+            ShowAllOrNothing,
+            ShowAllCaptionsOrNoCaptions,
+            ShowNoneIfIconIsNotShown,
+        };
+
     private:
     protected:
     public:
         MapSymbolsGroup();
         virtual ~MapSymbolsGroup();
 
+        unsigned int presentationModesMask;
+        void setPresentationMode(const PresentationMode mode);
+        bool hasPresentationMode(const PresentationMode mode) const;
+
         QList< std::shared_ptr<MapSymbol> > symbols;
+        std::shared_ptr<MapSymbol> getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const;
+        unsigned int numberOfSymbolsWithContentClass(const MapSymbol::ContentClass contentClass) const;
 
         virtual QString getDebugTitle() const;
     };

@@ -73,9 +73,10 @@ namespace OsmAnd
     }
 
     template <typename T>
-    static uint32_t enumToBit(const T value)
+    static unsigned int enumToBit(const T value)
     {
-        return (1 << static_cast<unsigned int>(value));
+        assert(static_cast<unsigned int>(value) <= sizeof(unsigned int) * 8);
+        return (1u << static_cast<unsigned int>(value));
     }
 }
 

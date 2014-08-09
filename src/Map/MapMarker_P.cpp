@@ -169,6 +169,8 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     // Construct new map symbols group for this marker
     const std::shared_ptr<MapSymbolsGroup> symbolsGroup(new LinkedMapSymbolsGroup(
         std::const_pointer_cast<MapMarker_P>(shared_from_this())));
+    symbolsGroup->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllOrNothing);
+
     int order = owner->baseOrder;
 
     if (owner->isAccuracyCircleSupported)

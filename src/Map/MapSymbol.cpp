@@ -9,6 +9,7 @@ OsmAnd::MapSymbol::MapSymbol(
     , groupPtr(group_.get())
     , isShareable(isShareable_)
     , order(order_)
+    , contentClass(ContentClass::Unknown)
     , intersectionModeFlags(intersectionModeFlags_)
     , isHidden(false)
 {

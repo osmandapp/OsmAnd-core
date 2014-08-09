@@ -29,6 +29,13 @@ namespace OsmAnd
             TransparentForIntersectionLookup = 1 << 1,
         };
 
+        enum class ContentClass
+        {
+            Unknown = -1,
+            Icon,
+            Caption,
+        };
+
     private:
     protected:
         MapSymbol(
@@ -44,8 +51,9 @@ namespace OsmAnd
 
         const bool isShareable;
 
-        const int order;
-        const IntersectionModeFlags intersectionModeFlags;
+        int order;
+        ContentClass contentClass;
+        IntersectionModeFlags intersectionModeFlags;
 
         bool isHidden;
         FColorARGB modulationColor;

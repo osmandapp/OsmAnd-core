@@ -43,6 +43,14 @@ namespace OsmAnd
         class OSMAND_CORE_API RasterizedSymbol
         {
             Q_DISABLE_COPY(RasterizedSymbol);
+
+        public:
+            enum class ContentType
+            {
+                Icon,
+                Text
+            };
+
         private:
         protected:
             RasterizedSymbol(
@@ -50,6 +58,7 @@ namespace OsmAnd
                 const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
                 const std::shared_ptr<const SkBitmap>& bitmap,
                 const int order,
+                const ContentType contentType,
                 const QString& content,
                 const LanguageId& languageId,
                 const PointI& minDistance);
@@ -61,6 +70,7 @@ namespace OsmAnd
             const std::shared_ptr<const Model::BinaryMapObject> mapObject;
             const std::shared_ptr<const SkBitmap> bitmap;
             const int order;
+            const ContentType contentType;
             const QString content;
             const LanguageId languageId;
             const PointI minDistance;
@@ -76,6 +86,7 @@ namespace OsmAnd
                 const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
                 const std::shared_ptr<const SkBitmap>& bitmap,
                 const int order,
+                const ContentType contentType,
                 const QString& content,
                 const LanguageId& languageId,
                 const PointI& minDistance,
@@ -100,6 +111,7 @@ namespace OsmAnd
                 const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
                 const std::shared_ptr<const SkBitmap>& bitmap,
                 const int order,
+                const ContentType contentType,
                 const QString& content,
                 const LanguageId& languageId,
                 const PointI& minDistance,

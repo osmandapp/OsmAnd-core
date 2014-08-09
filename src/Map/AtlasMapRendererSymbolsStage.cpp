@@ -1,9 +1,16 @@
 #include "AtlasMapRendererSymbolsStage.h"
 
+#include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
+#include <QLinkedList>
+#include "restore_internal_warnings.h"
+
+#include "ignore_warnings_on_external_includes.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "AtlasMapRenderer.h"
@@ -31,70 +38,171 @@ OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage()
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols) const
 {
+    typedef QLinkedList< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
+    struct PlottedSymbolRef
+    {
+        PlottedSymbols::iterator iterator;
+        std::shared_ptr<const MapSymbol> mapSymbol;
+    };
+
     QReadLocker scopedLocker(&publishedMapSymbolsLock);
 
     const auto& internalState = getInternalState();
 
-    //// Iterate over symbols by "order" in ascending direction
-    //IntersectionsQuadTree intersections(currentState.viewport, 8);
-    //for (const auto& mapSymbolsLayerPair : rangeOf(constOf(mapSymbolsByOrder)))
-    //{
-    //    // For each "order" value, obtain list of entries and sort them
-    //    const auto& mapSymbolsLayer = mapSymbolsLayerPair.value();
-    //    if (mapSymbolsLayer.isEmpty())
-    //        continue;
+    // Iterate over map symbols layer sorted by "order" in ascending direction
+    IntersectionsQuadTree intersections(currentState.viewport, 8);
+    PlottedSymbols plottedSymbols;
+    QHash< const MapSymbolsGroup*, QList< PlottedSymbolRef > > plottedMapSymbolsByGroup;
+    for (const auto& publishedMapSymbols : constOf(publishedMapSymbols))
+    {
+        // Obtain renderables in order how they should be rendered
+        QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
+        if (!debugSettings->excludeOnPathSymbols)
+            processOnPathSymbols(publishedMapSymbols, sortedRenderables);
+        if (!debugSettings->excludeBillboardSymbols)
+            processBillboardSymbols(publishedMapSymbols, sortedRenderables);
+        if (!debugSettings->excludeOnSurfaceSymbols)
+            processOnSurfaceSymbols(publishedMapSymbols, sortedRenderables);
 
-    //    // Obtain renderables in order how they should be rendered
-    //    QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
-    //    if (!debugSettings->excludeOnPathSymbols)
-    //        processOnPathSymbols(mapSymbolsLayer, sortedRenderables);
-    //    if (!debugSettings->excludeBillboardSymbols)
-    //        processBillboardSymbols(mapSymbolsLayer, sortedRenderables);
-    //    if (!debugSettings->excludeOnSurfaceSymbols)
-    //        processOnSurfaceSymbols(mapSymbolsLayer, sortedRenderables);
+        // Plot symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
+        // And rendering needs to be done far->near, as well as plotting
+        auto itRenderableEntry = iteratorOf(sortedRenderables);
+        itRenderableEntry.toBack();
+        while (itRenderableEntry.hasPrevious())
+        {
+            const auto& entry = itRenderableEntry.previous();
+            const auto renderable = entry.value();
 
-    //    // Render symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
-    //    // And rendering needs to be done far->near
-    //    QMapIterator< float, std::shared_ptr<RenderableSymbol> > itRenderableEntry(sortedRenderables);
-    //    itRenderableEntry.toBack();
-    //    while (itRenderableEntry.hasPrevious())
-    //    {
-    //        const auto& entry = itRenderableEntry.previous();
-    //        const auto renderable_ = entry.value();
+            bool plotted = false;
+            if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable))
+            {
+                plotted = plotBillboardSymbol(
+                    renderable_,
+                    intersections);
+            }
+            else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable))
+            {
+                plotted = plotOnPathSymbol(
+                    renderable_,
+                    intersections);
+            }
+            else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable))
+            {
+                plotted = plotOnSurfaceSymbol(
+                    renderable_,
+                    intersections);
+            }
 
-    //        bool plotted = false;
-    //        if (const auto& renderable = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable_))
-    //        {
-    //            plotted = plotBillboardSymbol(
-    //                renderable,
-    //                intersections);
-    //        }
-    //        else if (const auto& renderable = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable_))
-    //        {
-    //            plotted = plotOnPathSymbol(
-    //                renderable,
-    //                intersections);
-    //        }
-    //        else if (const auto& renderable = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable_))
-    //        {
-    //            plotted = plotOnSurfaceSymbol(
-    //                renderable,
-    //                intersections);
-    //        }
+            if (plotted)
+            {
+                const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderable);
+                PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderable->mapSymbol };
 
-    //        if (plotted)
-    //            outRenderableSymbols.push_back(renderable_);
-    //    }
-    //}
+                plottedMapSymbolsByGroup[renderable->mapSymbol->groupPtr].push_back(qMove(plottedSymbolRef));
+            }
+        }
+    }
 
-    //// Post-process renderable symbols
-    //auto itRenderableSymbol = mutableIteratorOf(outRenderableSymbols);
-    //while (itRenderableSymbol.hasNext())
-    //{
-    //    const auto& renderableSymbol = itRenderableSymbol.next();
+    // Remove those plotted symbols that do not conform to presentation rules
+    auto itPlottedSymbolsGroup = mutableIteratorOf(plottedMapSymbolsByGroup);
+    while (itPlottedSymbolsGroup.hasNext())
+    {
+        auto& plottedGroupSymbols = itPlottedSymbolsGroup.next().value();
 
+        const auto mapSymbolGroup = plottedGroupSymbols.first().mapSymbol->group.lock();
+        if (!mapSymbolGroup)
+        {
+            // Discard entire group
+            for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
+                plottedSymbols.erase(plottedGroupSymbol.iterator);
 
-    //}
+            itPlottedSymbolsGroup.remove();
+            continue;
+        }
+
+        // Just skip all rules
+        if (mapSymbolGroup->hasPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything))
+            continue;
+
+        // Rule: show all symbols or no symbols
+        if (mapSymbolGroup->hasPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllOrNothing))
+        {
+            if (mapSymbolGroup->symbols.size() != plottedGroupSymbols.size())
+            {
+                // Discard entire group
+                for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
+                    plottedSymbols.erase(plottedGroupSymbol.iterator);
+
+                itPlottedSymbolsGroup.remove();
+                continue;
+            }
+        }
+
+        // Rule: if there's icon, icon must always be visible. Otherwise discard entire group
+        if (mapSymbolGroup->hasPresentationMode(MapSymbolsGroup::PresentationMode::ShowNoneIfIconIsNotShown))
+        {
+            const auto symbolWithIconContentClass = mapSymbolGroup->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon);
+            if (symbolWithIconContentClass)
+            {
+                bool iconPlotted = false;
+                for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
+                {
+                    if (plottedGroupSymbol.mapSymbol == symbolWithIconContentClass)
+                    {
+                        iconPlotted = true;
+                        break;
+                    }
+                }
+
+                if (!iconPlotted)
+                {
+                    // Discard entire group
+                    for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
+                        plottedSymbols.erase(plottedGroupSymbol.iterator);
+
+                    itPlottedSymbolsGroup.remove();
+                    continue;
+                }
+            }
+        }
+
+        // Rule: if at least one caption was not shown, discard all other captions
+        if (mapSymbolGroup->hasPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllCaptionsOrNoCaptions))
+        {
+            const auto captionsCount = mapSymbolGroup->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption);
+            if (captionsCount > 0)
+            {
+                unsigned int captionsPlotted = 0;
+                for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
+                {
+                    if (plottedGroupSymbol.mapSymbol->contentClass == MapSymbol::ContentClass::Caption)
+                        captionsPlotted++;
+                }
+
+                if (captionsCount != captionsPlotted)
+                {
+                    // Discard all plotted captions from group
+                    auto itPlottedGroupSymbol = mutableIteratorOf(plottedGroupSymbols);
+                    while (itPlottedGroupSymbol.hasNext())
+                    {
+                        const auto& plottedGroupSymbol = itPlottedGroupSymbol.next();
+
+                        if (plottedGroupSymbol.mapSymbol->contentClass != MapSymbol::ContentClass::Caption)
+                            continue;
+
+                        plottedSymbols.erase(plottedGroupSymbol.iterator);
+                        itPlottedGroupSymbol.remove();
+                    }
+                }
+            }
+        }
+    }
+
+    // Publish the result
+    outRenderableSymbols.clear();
+    outRenderableSymbols.reserve(plottedSymbols.size());
+    for (const auto& plottedSymbol : constOf(plottedSymbols))
+        outRenderableSymbols.push_back(plottedSymbol);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::processOnPathSymbols(
