@@ -222,7 +222,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
     internalState->tileOnScreenScaleFactor = ((state.zoomFraction >= 0.0f) ? (1.0f + state.zoomFraction) : (1.0f + 0.5f * state.zoomFraction));
     internalState->scaleToRetainProjectedSize = internalState->distanceFromCameraToTarget / internalState->baseDistanceFromCameraToTarget;
-    internalState->pixelInWorldProjectionScale = (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState->referenceTileSizeOnScreenInPixels*internalState->referenceTileSizeOnScreenInPixels));
+    internalState->pixelInWorldProjectionScale = (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor));
 
     // Recalculate perspective projection with obtained value
     internalState->zSkyplane = state.fogDistance * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
