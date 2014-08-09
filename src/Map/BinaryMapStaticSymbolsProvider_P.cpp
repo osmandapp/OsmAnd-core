@@ -117,6 +117,12 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     mapObject->points31,
                     onPathSymbol->glyphsWidth));
             }
+            else
+            {
+                LogPrintf(LogSeverityLevel::Error, "BinaryMapObject #%" PRIu64 " (%" PRIi64 ") produced unsupported symbol type",
+                    mapObject->id,
+                    static_cast<int64_t>(mapObject->id) / 2);
+            }
 
             if (rasterizedSymbol->contentType == SymbolRasterizer::RasterizedSymbol::ContentType::Icon)
                 symbol->contentClass = MapSymbol::ContentClass::Icon;
@@ -127,19 +133,25 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         }
 
         // Configure group
-        if (hasAtLeastOneBillboard && !hasAtLeastOneOnPath)
+        if (!group->symbols.isEmpty())
         {
-            group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowNoneIfIconIsNotShown);
-            group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllCaptionsOrNoCaptions);
-        }
-        else if (!hasAtLeastOneBillboard && hasAtLeastOneOnPath)
-        {
-            group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything);
-        }
-        else
-        {
-            assert(false);
-            group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything);
+            if (hasAtLeastOneBillboard && !hasAtLeastOneOnPath)
+            {
+                group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowNoneIfIconIsNotShown);
+                group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllCaptionsOrNoCaptions);
+            }
+            else if (!hasAtLeastOneBillboard && hasAtLeastOneOnPath)
+            {
+                group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything);
+            }
+            else
+            {
+                LogPrintf(LogSeverityLevel::Error, "BinaryMapObject #%" PRIu64 " (%" PRIi64 ") produced both billboard and on-path symbols",
+                    mapObject->id,
+                    static_cast<int64_t>(mapObject->id) / 2);
+                assert(false);
+                group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything);
+            }
         }
 
         // Add constructed group to output
