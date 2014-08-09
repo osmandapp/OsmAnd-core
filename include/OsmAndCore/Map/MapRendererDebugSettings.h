@@ -24,6 +24,7 @@ namespace OsmAnd
         bool showSymbolsBBoxesRejectedByIntersectionCheck;
         bool skipMinDistanceToSameContentFromOtherSymbolCheck;
         bool showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
+        bool showOnPathSubpaths;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;
         virtual std::shared_ptr<MapRendererDebugSettings> createCopy() const;

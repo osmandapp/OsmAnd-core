@@ -699,7 +699,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
-#if OSMAND_DEBUG && 0
+    if (Q_UNLIKELY(debugSettings->showOnPathSubpaths))
     {
         QVector< glm::vec3 > debugPoints;
         for (const auto& pointInWorld : renderable->subpathPointsInWorld)
@@ -711,7 +711,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         }
         getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
     }
-#endif // OSMAND_DEBUG
 
     const auto& is2D = renderable->is2D;
     const auto& points = is2D ? renderable->subpathPointsOnScreen : renderable->subpathPointsInWorld;
