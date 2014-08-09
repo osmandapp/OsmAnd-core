@@ -4,10 +4,12 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QString>
 #include <QXmlStreamReader>
 #include <QHash>
 #include <QMap>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "MapStyle.h"

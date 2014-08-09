@@ -1,6 +1,10 @@
 #include "TextRasterizer.h"
 #include "TextRasterizer_P.h"
 
+#include "TextRasterizer_private.h"
+
+static std::shared_ptr<const OsmAnd::TextRasterizer> s_globalTextRasterizer;
+
 OsmAnd::TextRasterizer::TextRasterizer()
     : _p(new TextRasterizer_P(this))
 {
@@ -11,10 +15,9 @@ OsmAnd::TextRasterizer::~TextRasterizer()
 {
 }
 
-const OsmAnd::TextRasterizer& OsmAnd::TextRasterizer::getInstance()
+const OsmAnd::TextRasterizer& OsmAnd::TextRasterizer::globalInstance()
 {
-    static const std::unique_ptr<TextRasterizer> instance(new TextRasterizer());
-    return *instance;
+    return *s_globalTextRasterizer;
 }
 
 std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer::rasterize(
@@ -38,4 +41,14 @@ void OsmAnd::TextRasterizer::rasterize(
     float* const outLineSpacing /*= nullptr*/) const
 {
     _p->rasterize(targetBitmap, text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace, outLineSpacing);
+}
+
+void OsmAnd::TextRasterizer_initializeGlobalInstance()
+{
+    s_globalTextRasterizer.reset(new TextRasterizer());
+}
+
+void OsmAnd::TextRasterizer_releaseGlobalInstance()
+{
+    s_globalTextRasterizer.reset();
 }

@@ -101,12 +101,12 @@ namespace OsmAnd
 
     private:
         void processOnPathSymbols(
-            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
         // Obtains visible portions of each OnPathSymbol
         void obtainRenderableEntriesForOnPathSymbols(
-            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            const MapRenderer::PublishedMapSymbols& input,
             QList< std::shared_ptr<RenderableOnPathSymbol> >& output) const;
 
         // Calculates renderable OnPathSymbols to in world
@@ -126,18 +126,18 @@ namespace OsmAnd
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
         void processBillboardSymbols(
-            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
         void obtainAndSortBillboardSymbols(
-            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
-        void processOnSurfaceSymbols(const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+        void processOnSurfaceSymbols(const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
         void obtainAndSortOnSurfaceSymbols(
-            const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+            const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
         bool plotBillboardSymbol(

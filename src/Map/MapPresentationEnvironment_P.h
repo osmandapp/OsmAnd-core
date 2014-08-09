@@ -4,9 +4,11 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QMap>
 #include <QHash>
 #include <QMutex>
+#include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkPaint.h>

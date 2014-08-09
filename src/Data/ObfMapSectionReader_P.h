@@ -5,9 +5,11 @@
 #include <functional>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QHash>
 #include <QMap>
 #include <QSet>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"

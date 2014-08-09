@@ -16,6 +16,9 @@ namespace OsmAnd
         virtual ~MapRendererDebugSettings();
 
         bool debugStageEnabled;
+        bool excludeOnPathSymbols;
+        bool excludeBillboardSymbols;
+        bool excludeOnSurfaceSymbols;
         bool skipSymbolsIntersectionCheck;
         bool showSymbolsBBoxesRejectedByIntersectionCheck;
         bool showSymbolsBBoxesAcceptedByIntersectionCheck;

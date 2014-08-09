@@ -31,65 +31,74 @@ OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage()
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols) const
 {
-    const auto mapSymbolsByOrder = getResources().getMapSymbolsRegisterSnapshotCopy();
+    QReadLocker scopedLocker(&publishedMapSymbolsLock);
+
     const auto& internalState = getInternalState();
 
-    // Intersections are calculated using quad-tree, and general rule that
-    // map symbol with smaller order [and further from camera] is more important.
-    IntersectionsQuadTree intersections(currentState.viewport, 8);
+    //// Iterate over symbols by "order" in ascending direction
+    //IntersectionsQuadTree intersections(currentState.viewport, 8);
+    //for (const auto& mapSymbolsLayerPair : rangeOf(constOf(mapSymbolsByOrder)))
+    //{
+    //    // For each "order" value, obtain list of entries and sort them
+    //    const auto& mapSymbolsLayer = mapSymbolsLayerPair.value();
+    //    if (mapSymbolsLayer.isEmpty())
+    //        continue;
 
-    // Iterate over symbols by "order" in ascending direction
-    outRenderableSymbols.clear();
-    for (const auto& mapSymbolsLayerPair : rangeOf(constOf(mapSymbolsByOrder)))
-    {
-        // For each "order" value, obtain list of entries and sort them
-        const auto& mapSymbolsLayer = mapSymbolsLayerPair.value();
-        if (mapSymbolsLayer.isEmpty())
-            continue;
+    //    // Obtain renderables in order how they should be rendered
+    //    QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
+    //    if (!debugSettings->excludeOnPathSymbols)
+    //        processOnPathSymbols(mapSymbolsLayer, sortedRenderables);
+    //    if (!debugSettings->excludeBillboardSymbols)
+    //        processBillboardSymbols(mapSymbolsLayer, sortedRenderables);
+    //    if (!debugSettings->excludeOnSurfaceSymbols)
+    //        processOnSurfaceSymbols(mapSymbolsLayer, sortedRenderables);
 
-        // Obtain renderables in order how they should be rendered
-        QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
-        processOnPathSymbols(mapSymbolsLayer, sortedRenderables);
-        processBillboardSymbols(mapSymbolsLayer, sortedRenderables);
-        processOnSurfaceSymbols(mapSymbolsLayer, sortedRenderables);
+    //    // Render symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
+    //    // And rendering needs to be done far->near
+    //    QMapIterator< float, std::shared_ptr<RenderableSymbol> > itRenderableEntry(sortedRenderables);
+    //    itRenderableEntry.toBack();
+    //    while (itRenderableEntry.hasPrevious())
+    //    {
+    //        const auto& entry = itRenderableEntry.previous();
+    //        const auto renderable_ = entry.value();
 
-        // Render symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
-        // And rendering needs to be done far->near
-        QMapIterator< float, std::shared_ptr<RenderableSymbol> > itRenderableEntry(sortedRenderables);
-        itRenderableEntry.toBack();
-        while (itRenderableEntry.hasPrevious())
-        {
-            const auto& entry = itRenderableEntry.previous();
-            const auto renderable_ = entry.value();
+    //        bool plotted = false;
+    //        if (const auto& renderable = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable_))
+    //        {
+    //            plotted = plotBillboardSymbol(
+    //                renderable,
+    //                intersections);
+    //        }
+    //        else if (const auto& renderable = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable_))
+    //        {
+    //            plotted = plotOnPathSymbol(
+    //                renderable,
+    //                intersections);
+    //        }
+    //        else if (const auto& renderable = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable_))
+    //        {
+    //            plotted = plotOnSurfaceSymbol(
+    //                renderable,
+    //                intersections);
+    //        }
 
-            bool plotted = false;
-            if (const auto& renderable = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable_))
-            {
-                plotted = plotBillboardSymbol(
-                    renderable,
-                    intersections);
-            }
-            else if (const auto& renderable = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable_))
-            {
-                plotted = plotOnPathSymbol(
-                    renderable,
-                    intersections);
-            }
-            else if (const auto& renderable = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable_))
-            {
-                plotted = plotOnSurfaceSymbol(
-                    renderable,
-                    intersections);
-            }
+    //        if (plotted)
+    //            outRenderableSymbols.push_back(renderable_);
+    //    }
+    //}
 
-            if (plotted)
-                outRenderableSymbols.push_back(renderable_);
-        }
-    }
+    //// Post-process renderable symbols
+    //auto itRenderableSymbol = mutableIteratorOf(outRenderableSymbols);
+    //while (itRenderableSymbol.hasNext())
+    //{
+    //    const auto& renderableSymbol = itRenderableSymbol.next();
+
+
+    //}
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::processOnPathSymbols(
-    const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+    const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
     // Process symbols-on-path (SOPs) to get visible subpaths from them
@@ -110,7 +119,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::processOnPathSymbols(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableEntriesForOnPathSymbols(
-    const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+    const MapRenderer::PublishedMapSymbols& input,
     QList< std::shared_ptr<RenderableOnPathSymbol> >& output) const
 {
     const auto& internalState = getInternalState();
@@ -128,7 +137,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableEntriesForOnPathSymbo
         assert(points31.size() >= 2);
 
         // Take any first resource, since shared symbols can be processed via any resource:
-        const auto& resource = symbolEntry.value().first();
+        const auto& resource = *symbolEntry.value().cbegin();
 
         // Get GPU resource
         const auto gpuResource = captureGpuResource(resource, symbol_);
@@ -403,14 +412,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::sortRenderableOnPathSymbols(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::processBillboardSymbols(
-    const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+    const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
     obtainAndSortBillboardSymbols(input, output);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortBillboardSymbols(
-    const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+    const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
     const auto& internalState = getInternalState();
@@ -426,7 +435,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortBillboardSymbols(
             continue;
 
         // Take any first resource, since shared symbols can be processed via any resource:
-        const auto& resource = symbolEntry.value().first();
+        const auto& resource = *symbolEntry.value().cbegin();
 
         // Get GPU resource
         const auto gpuResource = captureGpuResource(resource, symbol_);
@@ -454,14 +463,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortBillboardSymbols(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::processOnSurfaceSymbols(
-    const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+    const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
     obtainAndSortOnSurfaceSymbols(input, output);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortOnSurfaceSymbols(
-    const MapRendererResourcesManager::MapSymbolsByOrderRegisterLayer& input,
+    const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
     const auto& internalState = getInternalState();
@@ -477,7 +486,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortOnSurfaceSymbols(
             continue;
 
         // Take any first resource, since shared symbols can be processed via any resource:
-        const auto& resource = symbolEntry.value().first();
+        const auto& resource = *symbolEntry.value().cbegin();
 
         // Get GPU resource
         const auto gpuResource = captureGpuResource(resource, symbol_);

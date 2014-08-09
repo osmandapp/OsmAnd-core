@@ -60,8 +60,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
             continue;
 
         // Create group
-        const auto constructedGroup = new RasterizedSymbolsGroup(symbolsEntry.key());
-        std::shared_ptr<const RasterizedSymbolsGroup> group(constructedGroup);
+        const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(symbolsEntry.key()));
 
         // Total offset allows several symbols to stack into column.
         // Offset specifies center of symbol bitmap
@@ -96,7 +95,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 float symbolExtraTopSpace;
                 float symbolExtraBottomSpace;
                 QVector<SkScalar> glyphsWidth;
-                const auto rasterizedText = TextRasterizer::getInstance().rasterize(
+                const auto rasterizedText = TextRasterizer::globalInstance().rasterize(
                     textSymbol->value,
                     style,
                     textSymbol->drawOnPath ? &glyphsWidth : nullptr,
@@ -119,7 +118,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     // Publish new rasterized symbol
                     const auto rasterizedSymbol = new RasterizedOnPathSymbol(
                         group,
-                        constructedGroup->mapObject,
+                        group->mapObject,
                         qMove(rasterizedText),
                         textSymbol->order,
                         textSymbol->value,
@@ -127,7 +126,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                         textSymbol->minDistance,
                         glyphsWidth);
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
-                    constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                    group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
                 }
                 else
                 {
@@ -139,7 +138,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     //  - vertical offset
                     PointI localOffset;
                     localOffset.y += textSymbol->verticalOffset;
-                    if (!constructedGroup->symbols.isEmpty())
+                    if (!group->symbols.isEmpty())
                     {
                         localOffset.y += symbolExtraTopSpace;
                         localOffset.y += rasterizedText->height() / 2;
@@ -151,7 +150,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     // Publish new rasterized symbol
                     const auto rasterizedSymbol = new RasterizedSpriteSymbol(
                         group,
-                        constructedGroup->mapObject,
+                        group->mapObject,
                         qMove(rasterizedText),
                         textSymbol->order,
                         textSymbol->value,
@@ -160,7 +159,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                         textSymbol->location31,
                         totalOffset);
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
-                    constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                    group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                     // Next symbol should also take into account:
                     //  - height / 2
@@ -191,7 +190,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 //  - height / 2
                 // This calculation is used only if this symbol is not first. Otherwise nothing is used.
                 PointI localOffset;
-                if (!constructedGroup->symbols.isEmpty())
+                if (!group->symbols.isEmpty())
                     localOffset.y += bitmap->height() / 2;
 
                 // Increment total offset
@@ -200,7 +199,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 // Publish new rasterized symbol
                 const auto rasterizedSymbol = new RasterizedSpriteSymbol(
                     group,
-                    constructedGroup->mapObject,
+                    group->mapObject,
                     qMove(bitmap),
                     iconSymbol->order,
                     iconSymbol->resourceName,
@@ -209,7 +208,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     iconSymbol->location31,
                     totalOffset);
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));
-                constructedGroup->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                 // Next symbol should also take into account:
                 //  - height / 2

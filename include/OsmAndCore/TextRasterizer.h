@@ -102,11 +102,11 @@ namespace OsmAnd
     private:
         PrivateImplementation<TextRasterizer_P> _p;
     protected:
-        TextRasterizer();
     public:
+        TextRasterizer();
         virtual ~TextRasterizer();
 
-        static const TextRasterizer& getInstance();
+        static const TextRasterizer& globalInstance();
 
         std::shared_ptr<SkBitmap> rasterize(
             const QString& text,

@@ -4,8 +4,13 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QAtomicInt>
 #include <QHash>
+#include <QMap>
+#include <QReadWriteLock>
+#include <QSet>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -28,6 +33,9 @@ namespace OsmAnd
     class MapRenderer : public IMapRenderer
     {
         Q_DISABLE_COPY(MapRenderer);
+
+    public:
+        typedef QHash< std::shared_ptr<const MapSymbol>, QSet< std::shared_ptr<MapRendererBaseResource> > > PublishedMapSymbols;
 
     private:
         // General:
@@ -54,6 +62,33 @@ namespace OsmAnd
         // Resources-related:
         std::unique_ptr<MapRendererResourcesManager> _resources;
         QAtomicInt _resourcesGpuSyncRequestsCounter;
+
+        // Symbols-related:
+        struct PendingPublishOrUnpublishMapSymbol
+        {
+            std::shared_ptr<const MapSymbol> mapSymbol;
+            std::shared_ptr<MapRendererBaseResource> originResource;
+        };
+        mutable QReadWriteLock _pendingPublishMapSymbolsLock;
+        QList< PendingPublishOrUnpublishMapSymbol > _pendingPublishMapSymbols;
+        mutable QReadWriteLock _pendingUnpublishMapSymbolsLock;
+        QList< PendingPublishOrUnpublishMapSymbol > _pendingUnpublishMapSymbols;
+        mutable QReadWriteLock _publishedMapSymbolsLock;
+        QMap< int, PublishedMapSymbols > _publishedMapSymbols;
+        QAtomicInt _publishedMapSymbolsCount;
+        void publishMapSymbol(
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<MapRendererBaseResource>& resource);
+        void doPublishMapSymbol(
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<MapRendererBaseResource>& resource);
+        void unpublishMapSymbol(
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<MapRendererBaseResource>& resource);
+        void doUnpublishMapSymbol(
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<MapRendererBaseResource>& resource);
+        bool processPendingMapSymbols();
         
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
@@ -135,6 +170,10 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& input,
             const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
 
+        // Symbols-related:
+        QReadWriteLock& publishedMapSymbolsLock;
+        const QMap< int, PublishedMapSymbols >& publishedMapSymbols;
+
         // General:
 
         // Debug-related:
@@ -191,8 +230,6 @@ namespace OsmAnd
         Concurrent::Dispatcher& getRenderThreadDispatcher();
         Concurrent::Dispatcher& getGpuThreadDispatcher();
 
-        virtual unsigned int getSymbolsCount() const;
-
         virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
         virtual void resetRasterLayerProvider(const RasterMapLayerId layerId, bool forcedUpdate = false);
         virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false);
@@ -222,14 +259,17 @@ namespace OsmAnd
         virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy) const;
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy) const;
 
+        // Symbols-related:
+        virtual unsigned int getSymbolsCount() const;
+
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings);
         virtual void dumpResourcesInfo() const;
 
-        friend struct OsmAnd::MapRendererInternalState;
-        friend class OsmAnd::MapRendererStage;
-        friend class OsmAnd::MapRendererResourcesManager;
+    friend struct OsmAnd::MapRendererInternalState;
+    friend class OsmAnd::MapRendererStage;
+    friend class OsmAnd::MapRendererResourcesManager;
     };
 }
 

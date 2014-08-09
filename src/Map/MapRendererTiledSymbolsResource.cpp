@@ -185,7 +185,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
         auto& publishedMapSymbols = _publishedMapSymbols[groupResources->group];
         for (const auto& mapSymbol : constOf(groupResources->group->symbols))
         {
-            resourcesManager->registerMapSymbol(mapSymbol, self);
+            resourcesManager->publishMapSymbol(mapSymbol, self);
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
@@ -194,7 +194,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
         auto& publishedMapSymbols = _publishedMapSymbols[groupResources->group];
         for (const auto& mapSymbol : constOf(groupResources->group->symbols))
         {
-            resourcesManager->registerMapSymbol(mapSymbol, self);
+            resourcesManager->publishMapSymbol(mapSymbol, self);
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
@@ -390,7 +390,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     for (const auto& mapSymbols : constOf(_publishedMapSymbols))
     {
         for (const auto& mapSymbol : mapSymbols)
-            resourcesManager->unregisterMapSymbol(mapSymbol, self);
+            resourcesManager->unpublishMapSymbol(mapSymbol, self);
     }
     _publishedMapSymbols.clear();
 

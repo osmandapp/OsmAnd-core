@@ -5,12 +5,14 @@
 #include <functional>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QtMath>
 #include <QHash>
 #include <QMap>
 #include <QList>
 #include <QReadWriteLock>
 #include <QVariant>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"

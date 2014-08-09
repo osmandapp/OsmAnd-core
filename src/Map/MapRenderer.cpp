@@ -19,6 +19,11 @@
 #include "Utilities.h"
 #include "Logging.h"
 
+//#define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 1
+#ifndef OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+#   define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 0
+#endif // !defined(OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE)
+
 OsmAnd::MapRenderer::MapRenderer(
     GPUAPI* const gpuAPI_,
     const std::unique_ptr<const MapRendererConfiguration>& baseConfiguration_,
@@ -36,6 +41,8 @@ OsmAnd::MapRenderer::MapRenderer(
     , setupOptions(_setupOptions)
     , currentConfiguration(_currentConfigurationAsConst)
     , currentState(_currentState)
+    , publishedMapSymbolsLock(_publishedMapSymbolsLock)
+    , publishedMapSymbols(_publishedMapSymbols)
     , currentDebugSettings(_currentDebugSettingsAsConst)
     , gpuAPI(gpuAPI_)
 {
@@ -356,6 +363,10 @@ bool OsmAnd::MapRenderer::preUpdate()
 {
     // Check for resources updates
     if (_resources->checkForUpdates())
+        invalidateFrame();
+
+    // Check if published map symbols collection have changed
+    if (processPendingMapSymbols())
         invalidateFrame();
 
     return true;
@@ -771,6 +782,146 @@ std::shared_ptr<const SkBitmap> OsmAnd::MapRenderer::adjustBitmapToConfiguration
     return input;
 }
 
+void OsmAnd::MapRenderer::publishMapSymbol(
+    const std::shared_ptr<const MapSymbol>& symbol,
+    const std::shared_ptr<MapRendererBaseResource>& resource)
+{
+    // First try to publish directly
+    if (_publishedMapSymbolsLock.tryLockForWrite())
+    {
+        doPublishMapSymbol(symbol, resource);
+        _publishedMapSymbolsLock.unlock();
+        return;
+    }
+
+    // But if published map symbols are currently in use, put to pending in a blocking way
+    PendingPublishOrUnpublishMapSymbol pendingPublishMapSymbol = { symbol, resource };
+    {
+        QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
+        _pendingPublishMapSymbols.push_back(qMove(pendingPublishMapSymbol));
+    }
+
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    LogPrintf(LogSeverityLevel::Debug,
+        "Published (pending) map symbol %p from %p",
+        symbol.get(),
+        resource.get());
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+}
+
+void OsmAnd::MapRenderer::doPublishMapSymbol(
+    const std::shared_ptr<const MapSymbol>& symbol,
+    const std::shared_ptr<MapRendererBaseResource>& resource)
+{
+    auto& symbolReferencedResources = _publishedMapSymbols[symbol->order][symbol];
+    if (symbolReferencedResources.isEmpty())
+        _publishedMapSymbolsCount.fetchAndAddOrdered(1);
+    assert(!symbolReferencedResources.contains(resource));
+    symbolReferencedResources.insert(resource);
+
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    LogPrintf(LogSeverityLevel::Debug,
+        "Published map symbol %p from %p (new total %d), now referenced from %d resources",
+        symbol.get(),
+        resource.get(),
+        _publishedMapSymbolsCount.load(),
+        symbolReferencedResources.size());
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+}
+
+void OsmAnd::MapRenderer::unpublishMapSymbol(
+    const std::shared_ptr<const MapSymbol>& symbol,
+    const std::shared_ptr<MapRendererBaseResource>& resource)
+{
+    // First try to publish directly
+    if (_publishedMapSymbolsLock.tryLockForWrite())
+    {
+        doUnpublishMapSymbol(symbol, resource);
+        _publishedMapSymbolsLock.unlock();
+        return;
+    }
+
+    // But if published map symbols are currently in use, put to pending in a blocking way
+    PendingPublishOrUnpublishMapSymbol pendingUnpublishMapSymbol = { symbol, resource };
+    {
+        QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
+        _pendingUnpublishMapSymbols.push_back(qMove(pendingUnpublishMapSymbol));
+    }
+
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    LogPrintf(LogSeverityLevel::Debug,
+        "Unpublished (pending) map symbol %p from %p",
+        symbol.get(),
+        resource.get());
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+}
+
+void OsmAnd::MapRenderer::doUnpublishMapSymbol(
+    const std::shared_ptr<const MapSymbol>& symbol,
+    const std::shared_ptr<MapRendererBaseResource>& resource)
+{
+    const auto itPublishedMapSymbols = _publishedMapSymbols.find(symbol->order);
+    auto& publishedMapSymbols = *itPublishedMapSymbols;
+
+    const auto itSymbolReferencedResources = publishedMapSymbols.find(symbol);
+    assert(itSymbolReferencedResources != publishedMapSymbols.cend());
+    auto& symbolReferencedResources = *itSymbolReferencedResources;
+    symbolReferencedResources.remove(resource);
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    const auto symbolReferencedResourcesSize = symbolReferencedResources.size();
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    if (symbolReferencedResources.isEmpty())
+    {
+        _publishedMapSymbolsCount.fetchAndAddOrdered(-1);
+        publishedMapSymbols.erase(itSymbolReferencedResources);
+    }
+    if (publishedMapSymbols.isEmpty())
+        _publishedMapSymbols.erase(itPublishedMapSymbols);
+
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    LogPrintf(LogSeverityLevel::Debug,
+        "Unpublished map symbol %p from %p (new total %d), now referenced from %d resources",
+        symbol.get(),
+        resource.get(),
+        _publishedMapSymbolsCount.load(),
+        symbolReferencedResourcesSize);
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+}
+
+bool OsmAnd::MapRenderer::processPendingMapSymbols()
+{
+    QList< PendingPublishOrUnpublishMapSymbol > pendingPublishMapSymbols;
+    {
+        QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
+        qSwap(pendingPublishMapSymbols, _pendingPublishMapSymbols);
+    }
+    QList< PendingPublishOrUnpublishMapSymbol > pendingUnpublishMapSymbols;
+    {
+        QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
+        qSwap(pendingUnpublishMapSymbols, _pendingUnpublishMapSymbols);
+    }
+
+    if (pendingPublishMapSymbols.isEmpty() && pendingUnpublishMapSymbols.isEmpty())
+        return false;
+    
+    {
+        QWriteLocker scopedLocker(&_publishedMapSymbolsLock);
+
+        for (const auto& entry : constOf(pendingUnpublishMapSymbols))
+            doUnpublishMapSymbol(entry.mapSymbol, entry.originResource);
+
+        for (const auto& entry : constOf(pendingPublishMapSymbols))
+            doPublishMapSymbol(entry.mapSymbol, entry.originResource);
+    }
+
+    return true;
+}
+
+unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
+{
+    return _publishedMapSymbolsCount.loadAcquire();
+}
+
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
@@ -802,11 +953,6 @@ OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getRenderThreadDispatcher()
 OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getGpuThreadDispatcher()
 {
     return _gpuThreadDispatcher;
-}
-
-unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
-{
-    return getResources().getMapSymbolsCount();
 }
 
 void OsmAnd::MapRenderer::setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate /*= false*/)

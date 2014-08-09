@@ -26,6 +26,7 @@
 #include "QMainThreadTaskHost.h"
 #include "QMainThreadTaskEvent.h"
 #include "ICU_private.h"
+#include "TextRasterizer_private.h"
 
 namespace OsmAnd
 {
@@ -92,6 +93,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 
     // Qt
     (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
+
+    // Text rasterizer
+    TextRasterizer_initializeGlobalInstance();
 }
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
@@ -106,6 +110,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
     {
         releaseInAppThread();
     }
+
+    // Text rasterizer
+    TextRasterizer_releaseGlobalInstance();
 
     // ICU
     ICU::release();

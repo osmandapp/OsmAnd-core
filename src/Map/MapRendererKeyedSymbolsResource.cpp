@@ -79,7 +79,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     _mapSymbolsGroup = _sourceData->symbolsGroup;
     const auto self = shared_from_this();
     for (const auto& symbol : constOf(_sourceData->symbolsGroup->symbols))
-        resourcesManager->registerMapSymbol(symbol, self);
+        resourcesManager->publishMapSymbol(symbol, self);
 
     return true;
 }
@@ -149,7 +149,7 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
     // Unregister all obtained symbols
     const auto self = shared_from_this();
     for (const auto& symbol : constOf(_mapSymbolsGroup->symbols))
-        resourcesManager->unregisterMapSymbol(symbol, self);
+        resourcesManager->unpublishMapSymbol(symbol, self);
 
     _mapSymbolsGroup.reset();
     _sourceData.reset();

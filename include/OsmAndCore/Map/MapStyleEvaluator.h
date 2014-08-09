@@ -4,7 +4,6 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QMap>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -52,6 +51,6 @@ namespace OsmAnd
 
         void dump(bool input = true, bool output = true, const QString& prefix = QString::null) const;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_STYLE_EVALUATOR_H_)

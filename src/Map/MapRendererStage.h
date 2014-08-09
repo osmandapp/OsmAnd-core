@@ -7,6 +7,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "MapRenderer.h"
 #include "MapRendererResourcesManager.h"
 #include "MapRendererConfiguration.h"
 #include "MapRendererState.h"
@@ -16,7 +17,6 @@
 
 namespace OsmAnd
 {
-    class MapRenderer;
     class GPUAPI;
 
     class MapRendererStage
@@ -36,6 +36,8 @@ namespace OsmAnd
         const MapRendererState& currentState;
         const MapRendererInternalState& internalState;
         const std::shared_ptr<const MapRendererDebugSettings>& debugSettings;
+        QReadWriteLock& publishedMapSymbolsLock;
+        const QMap< int, MapRenderer::PublishedMapSymbols >& publishedMapSymbols;
 
         virtual void initialize() = 0;
         virtual void render() = 0;

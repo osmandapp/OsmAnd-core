@@ -50,8 +50,6 @@ namespace OsmAnd
 
     public:
         typedef std::array< QList< std::shared_ptr<MapRendererBaseResourcesCollection> >, MapRendererResourceTypesCount > ResourcesStorage;
-        typedef QHash< std::shared_ptr<const MapSymbol>, QList< std::shared_ptr<MapRendererBaseResource> > > MapSymbolsByOrderRegisterLayer;
-        typedef QMap<int, MapSymbolsByOrderRegisterLayer > MapSymbolsByOrderRegister;
 
     private:
         // Resource-requests related:
@@ -90,18 +88,9 @@ namespace OsmAnd
         ResourcesStorage _storageByType;
         QList< std::shared_ptr<MapRendererBaseResourcesCollection> > safeGetAllResourcesCollections() const;
 
-        // Symbols:
-        mutable QReadWriteLock _mapSymbolsRegisterLock;
-        MapSymbolsByOrderRegister _mapSymbolsRegister;
-        QAtomicInt _mapSymbolsInRegisterCount;
-        void registerMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
-        void unregisterMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
-        mutable QAtomicInt _mapSymbolsRegisterSnapshotInvalidatesCount;
-        mutable MapSymbolsByOrderRegister _mapSymbolsRegisterSnapshot;
-        mutable QReadWriteLock _mapSymbolsRegisterSnapshotLock;
-        void updateMapSymbolsRegisterSnapshot() const;
-
-        void notifyNewResourceAvailableForDrawing();
+        // Symbols-related:
+        void publishMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
+        void unpublishMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
 
         // Invalidated resources:
         QAtomicInt _invalidatedResourcesTypesMask;
@@ -134,9 +123,10 @@ namespace OsmAnd
             bool& atLeastOneUploadFailed);
         void blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection);
         void requestResourcesUploadOrUnload();
+        void notifyNewResourceAvailableForDrawing();
         void releaseAllResources();
 
-        // Worker thread
+        // Worker thread:
         volatile bool _workerThreadIsAlive;
         const std::unique_ptr<Concurrent::Thread> _workerThread;
         Qt::HANDLE _workerThreadId;
@@ -144,7 +134,7 @@ namespace OsmAnd
         QWaitCondition _workerThreadWakeup;
         void workerThreadProcedure();
 
-        // Default resources
+        // Default resources:
         bool initializeDefaultResources();
         bool releaseDefaultResources();
         std::shared_ptr<const GPUAPI::ResourceInGPU> _processingTileStub;
@@ -177,19 +167,14 @@ namespace OsmAnd
 
         MapRenderer* const renderer;
 
-        // Default resources
+        // Default resources:
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& processingTileStub;
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
+        // Resources management:
         std::shared_ptr<const IMapRendererResourcesCollection> getCollectionSnapshot(
             const MapRendererResourceType type,
             const std::shared_ptr<IMapDataProvider>& ofProvider) const;
-
-        QReadWriteLock& getMapSymbolsRegisterSnapshotLock() const;
-        const MapSymbolsByOrderRegister& getMapSymbolsRegisterSnapshot() const;
-        MapSymbolsByOrderRegister& getMapSymbolsRegisterSnapshot();
-        MapSymbolsByOrderRegister getMapSymbolsRegisterSnapshotCopy() const;
-        unsigned int getMapSymbolsCount() const;
 
         void dumpResourcesInfo() const;
 

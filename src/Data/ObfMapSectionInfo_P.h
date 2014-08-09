@@ -4,11 +4,13 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QMutex>
 #include <QSet>
 #include <QHash>
 #include <QMap>
 #include <QString>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
