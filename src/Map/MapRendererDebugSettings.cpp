@@ -13,6 +13,7 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , showOnPathSubpaths(false)
     , showOnPath2dSymbolGlyphDetails(false)
     , showOnPath3dSymbolGlyphDetails(false)
+    , allTransparentForIntersectionLookup(false)
 {
 }
 
@@ -34,6 +35,7 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.showOnPathSubpaths = showOnPathSubpaths;
     other.showOnPath2dSymbolGlyphDetails = showOnPath2dSymbolGlyphDetails;
     other.showOnPath3dSymbolGlyphDetails = showOnPath3dSymbolGlyphDetails;
+    other.allTransparentForIntersectionLookup = allTransparentForIntersectionLookup;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const

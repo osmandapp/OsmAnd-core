@@ -121,11 +121,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         }
 
         // Just skip all rules
-        if (mapSymbolGroup->hasPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything))
+        if (mapSymbolGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnything)
             continue;
 
         // Rule: show all symbols or no symbols
-        if (mapSymbolGroup->hasPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllOrNothing))
+        if (mapSymbolGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing)
         {
             if (mapSymbolGroup->symbols.size() != plottedGroupSymbols.size())
             {
@@ -139,7 +139,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         }
 
         // Rule: if there's icon, icon must always be visible. Otherwise discard entire group
-        if (mapSymbolGroup->hasPresentationMode(MapSymbolsGroup::PresentationMode::ShowNoneIfIconIsNotShown))
+        if (mapSymbolGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown)
         {
             const auto symbolWithIconContentClass = mapSymbolGroup->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon);
             if (symbolWithIconContentClass)
@@ -167,7 +167,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         }
 
         // Rule: if at least one caption was not shown, discard all other captions
-        if (mapSymbolGroup->hasPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllCaptionsOrNoCaptions))
+        if (mapSymbolGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions)
         {
             const auto captionsCount = mapSymbolGroup->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption);
             if (captionsCount > 0)
@@ -902,7 +902,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     const std::shared_ptr<const MapSymbol>& symbol,
     const IntersectionsQuadTree& intersections) const
 {
-    if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) == MapSymbol::IgnoredByIntersectionTest)
+    if (symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest)
         return true;
 
     if (Q_UNLIKELY(debugSettings->skipSymbolsIntersectionCheck))
@@ -932,7 +932,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     const std::shared_ptr<const MapSymbol>& symbol,
     const IntersectionsQuadTree& intersections) const
 {
-    if ((symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest) == MapSymbol::IgnoredByIntersectionTest)
+    if (symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest)
         return true;
 
     if (Q_UNLIKELY(debugSettings->skipSymbolsIntersectionCheck))
@@ -1033,68 +1033,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     }
 
     return true;
-}
-
-bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
-    const AreaI boundsInWindow,
-    const std::shared_ptr<const MapSymbol>& symbol,
-    IntersectionsQuadTree& intersections) const
-{
-    if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
-    {
-        // Insert into quad-tree
-        if (!intersections.insert(symbol, boundsInWindow))
-        {
-            if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
-                getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
-            return false;
-        }
-    }
-
-    if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
-        getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
-
-    return true;
-}
-
-bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
-    const OOBBF oobb,
-    const std::shared_ptr<const MapSymbol>& symbol,
-    IntersectionsQuadTree& intersections) const
-{
-    if ((symbol->intersectionModeFlags & MapSymbol::TransparentForIntersectionLookup) != MapSymbol::TransparentForIntersectionLookup)
-    {
-        // Insert into quad-tree
-        if (!intersections.insert(symbol, OOBBI(oobb)))
-        {
-            if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
-                getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
-
-            return false;
-        }
-    }
-
-    if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
-        getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
-
-    return true;
-}
-
-std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSymbolsStage::captureGpuResource(
-    const std::shared_ptr<MapRendererBaseResource>& resource,
-    const std::shared_ptr<const MapSymbol>& mapSymbol)
-{
-    std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
-    if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-    {
-        if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
-            gpuResource = tiledResource->getGpuResourceFor(mapSymbol);
-        else if (const auto keyedResource = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(resource))
-            gpuResource = keyedResource->getGpuResourceFor(mapSymbol);
-
-        resource->setState(MapRendererResourceState::Uploaded);
-    }
-    return gpuResource;
 }
 
 OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const
@@ -1354,7 +1292,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::placeGlyphsOnPathSymbolSubpath(
 {
     const auto& internalState = getInternalState();
     const auto& symbol = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
-    
+
     const auto& is2D = renderable->is2D;
     const auto& points = is2D ? renderable->subpathPointsOnScreen : renderable->subpathPointsInWorld;
     //NOTE: Original algorithm for 3D SOPs contained a top-down projection that didn't include camera elevation angle. But this should give same results.
@@ -1434,6 +1372,70 @@ void OsmAnd::AtlasMapRendererSymbolsStage::placeGlyphsOnPathSymbolSubpath(
 
     outShouldInvert = shouldInvert;
     outDirectionOnScreenN = subpathDirectionOnScreenN;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
+    const AreaI boundsInWindow,
+    const std::shared_ptr<const MapSymbol>& symbol,
+    IntersectionsQuadTree& intersections) const
+{
+    if (!symbol->intersectionModeFlags.isSet(MapSymbol::TransparentForIntersectionLookup) &&
+        !Q_UNLIKELY(debugSettings->allTransparentForIntersectionLookup))
+    {
+        // Insert into quad-tree
+        if (!intersections.insert(symbol, boundsInWindow))
+        {
+            if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
+                getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
+            return false;
+        }
+    }
+
+    if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
+        getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
+    const OOBBF oobb,
+    const std::shared_ptr<const MapSymbol>& symbol,
+    IntersectionsQuadTree& intersections) const
+{
+    if (!symbol->intersectionModeFlags.isSet(MapSymbol::TransparentForIntersectionLookup) &&
+        !Q_UNLIKELY(debugSettings->allTransparentForIntersectionLookup))
+    {
+        // Insert into quad-tree
+        if (!intersections.insert(symbol, OOBBI(oobb)))
+        {
+            if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
+                getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorBLUE, 50), oobb.rotation);
+
+            return false;
+        }
+    }
+
+    if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
+        getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox, SkColorSetA(SK_ColorGREEN, 50), oobb.rotation);
+
+    return true;
+}
+
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSymbolsStage::captureGpuResource(
+    const std::shared_ptr<MapRendererBaseResource>& resource,
+    const std::shared_ptr<const MapSymbol>& mapSymbol)
+{
+    std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+    if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+    {
+        if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
+            gpuResource = tiledResource->getGpuResourceFor(mapSymbol);
+        else if (const auto keyedResource = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(resource))
+            gpuResource = keyedResource->getGpuResourceFor(mapSymbol);
+
+        resource->setState(MapRendererResourceState::Uploaded);
+    }
+    return gpuResource;
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage::RenderableSymbol::~RenderableSymbol()

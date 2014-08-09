@@ -10,6 +10,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/Map/MapSymbol.h>
 
 namespace OsmAnd
@@ -19,13 +20,14 @@ namespace OsmAnd
         Q_DISABLE_COPY(MapSymbolsGroup);
 
     public:
-        enum class PresentationMode : unsigned int
+        enum class PresentationModeFlag : unsigned int
         {
             ShowAnything = 0,
             ShowAllOrNothing,
             ShowAllCaptionsOrNoCaptions,
             ShowNoneIfIconIsNotShown,
         };
+        typedef Bitmask<PresentationModeFlag> PresentationMode;
 
     private:
     protected:
@@ -33,9 +35,7 @@ namespace OsmAnd
         MapSymbolsGroup();
         virtual ~MapSymbolsGroup();
 
-        unsigned int presentationModesMask;
-        void setPresentationMode(const PresentationMode mode);
-        bool hasPresentationMode(const PresentationMode mode) const;
+        PresentationMode presentationMode;
 
         QList< std::shared_ptr<MapSymbol> > symbols;
         std::shared_ptr<MapSymbol> getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const;

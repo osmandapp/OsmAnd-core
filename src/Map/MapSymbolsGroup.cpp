@@ -4,7 +4,6 @@
 #include "Utilities.h"
 
 OsmAnd::MapSymbolsGroup::MapSymbolsGroup()
-    : presentationModesMask(0)
 {
 }
 
@@ -17,16 +16,6 @@ QString OsmAnd::MapSymbolsGroup::getDebugTitle() const
     static QString noDebugTitle(QLatin1String("?"));
 
     return noDebugTitle;
-}
-
-void OsmAnd::MapSymbolsGroup::setPresentationMode(const PresentationMode mode)
-{
-    presentationModesMask |= enumToBit(mode);
-}
-
-bool OsmAnd::MapSymbolsGroup::hasPresentationMode(const PresentationMode mode) const
-{
-    return (presentationModesMask & enumToBit(mode)) != 0;
 }
 
 std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::MapSymbolsGroup::getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const

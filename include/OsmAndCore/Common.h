@@ -78,6 +78,13 @@ namespace OsmAnd
         assert(static_cast<unsigned int>(value) <= sizeof(unsigned int) * 8);
         return (1u << static_cast<unsigned int>(value));
     }
+
+    template <typename C, typename T>
+    static bool hasEnumBit(const C mask, const T value)
+    {
+        assert(static_cast<unsigned int>(value) <= sizeof(C) * 8);
+        return (mask & enumToBit(value)) != 0;
+    }
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_H_)

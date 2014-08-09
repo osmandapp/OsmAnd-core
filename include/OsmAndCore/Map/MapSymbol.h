@@ -11,6 +11,7 @@ class SkBitmap;
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>
+#include <OsmAndCore/Bitmask.h>
 
 namespace OsmAnd
 {
@@ -21,13 +22,15 @@ namespace OsmAnd
         Q_DISABLE_COPY(MapSymbol);
 
     public:
-        enum IntersectionModeFlags : uint32_t
+        enum IntersectionModeFlag : unsigned int
         {
-            RegularIntersectionProcessing = 0,
-
-            IgnoredByIntersectionTest = 1 << 0,
-            TransparentForIntersectionLookup = 1 << 1,
+            IgnoredByIntersectionTest = 0,
+            TransparentForIntersectionLookup,
         };
+        enum : unsigned int {
+            RegularIntersectionProcessing = 0,
+        };
+        typedef Bitmask<IntersectionModeFlag> IntersectionModeFlags;
 
         enum class ContentClass
         {

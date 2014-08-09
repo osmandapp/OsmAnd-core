@@ -137,12 +137,12 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         {
             if (hasAtLeastOneBillboard && !hasAtLeastOneOnPath)
             {
-                group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowNoneIfIconIsNotShown);
-                group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAllCaptionsOrNoCaptions);
+                group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown;
+                group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions;
             }
             else if (!hasAtLeastOneBillboard && hasAtLeastOneOnPath)
             {
-                group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything);
+                group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
             else
             {
@@ -150,7 +150,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     mapObject->id,
                     static_cast<int64_t>(mapObject->id) / 2);
                 assert(false);
-                group->setPresentationMode(MapSymbolsGroup::PresentationMode::ShowAnything);
+                group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
         }
 
