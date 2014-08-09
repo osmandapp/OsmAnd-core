@@ -1053,9 +1053,9 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath2dOOBB(const 
         const glm::vec2 glyphPoints[4] =
         {
             glm::vec2(-halfGlyphWidth, -halfGlyphHeight), // TL
-            glm::vec2(halfGlyphWidth, -halfGlyphHeight), // TR
-            glm::vec2(halfGlyphWidth, halfGlyphHeight), // BR
-            glm::vec2(-halfGlyphWidth, halfGlyphHeight)  // BL
+            glm::vec2( halfGlyphWidth, -halfGlyphHeight), // TR
+            glm::vec2( halfGlyphWidth,  halfGlyphHeight), // BR
+            glm::vec2(-halfGlyphWidth,  halfGlyphHeight)  // BL
         };
 
         const auto segmentAngleCos = qCos(glyph.angle);
@@ -1118,9 +1118,9 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(const 
         const glm::vec2 glyphPoints[4] =
         {
             glm::vec2(-halfGlyphWidth, -halfGlyphHeight), // TL
-            glm::vec2(halfGlyphWidth, -halfGlyphHeight), // TR
-            glm::vec2(halfGlyphWidth, halfGlyphHeight), // BR
-            glm::vec2(-halfGlyphWidth, halfGlyphHeight)  // BL
+            glm::vec2( halfGlyphWidth, -halfGlyphHeight), // TR
+            glm::vec2( halfGlyphWidth,  halfGlyphHeight), // BR
+            glm::vec2(-halfGlyphWidth,  halfGlyphHeight)  // BL
         };
 
         const auto segmentAngleCos = qCos(glyph.angle);
