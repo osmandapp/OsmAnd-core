@@ -209,28 +209,33 @@ void OsmAnd::AtlasMapRendererSymbolsStage::processOnPathSymbols(
     const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
-    // Process symbols-on-path (SOPs) to get visible subpaths from them
-    QList< std::shared_ptr<RenderableOnPathSymbol> > visibleSOPSubpaths;
-    obtainRenderableEntriesForOnPathSymbols(input, visibleSOPSubpaths);
+    // Process on path symbols to get set of renderables
+    QList< std::shared_ptr<RenderableOnPathSymbol> > renderables;
+    obtainRenderablesFromOnPathSymbols(input, renderables);
 
-    // For each subpath, calculate it's points in world. That's needed for both 2D and 3D SOPs
-    calculateRenderableOnPathSymbolsInWorld(visibleSOPSubpaths);
+    // For each renderable, calculate it's points in world. That's needed for both 2D and 3D renderables
+    calculatePointsInWorldForRenderableFromOnPathSymbol(renderables);
 
-    // For each subpath, determine if it will be rendered in 2D or 3D.
-    determineRenderableOnPathSymbolsMode(visibleSOPSubpaths);
+    // For each renderable, determine if it will be rendered in 2D or 3D.
+    determine2dOr3dModeOfRenderableFromOnPathSymbol(renderables);
 
     // Adjust SOPs placement on path
-    adjustPlacementOfGlyphsOnPath(visibleSOPSubpaths);
+    adjustPlacementOfGlyphsOnPath(renderables);
 
     // Sort visible SOPs by distance to camera
-    sortRenderableOnPathSymbols(visibleSOPSubpaths, output);
+    sortRenderablesFromOnPathSymbols(renderables, output);
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableEntriesForOnPathSymbols(
+void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
     const MapRenderer::PublishedMapSymbols& input,
     QList< std::shared_ptr<RenderableOnPathSymbol> >& output) const
 {
     const auto& internalState = getInternalState();
+
+    // Each 'valid' OnPathSymbol may produce more than 1 renderable, because:
+    //  - OnPathSymbol may reference Group with other OnPathSymbols that represent multiple languages.
+    //    In this case whole path is covered with pattern " --- lang1 --- lang2 --- lang1... --- "
+    //  - OnPathSymbol
 
     output.reserve(input.size());
     for (const auto& symbolEntry : rangeOf(constOf(input)))
@@ -303,7 +308,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableEntriesForOnPathSymbo
     }
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::calculateRenderableOnPathSymbolsInWorld(
+void OsmAnd::AtlasMapRendererSymbolsStage::calculatePointsInWorldForRenderableFromOnPathSymbol(
     QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const
 {
     const auto& internalState = getInternalState();
@@ -323,8 +328,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::calculateRenderableOnPathSymbolsInWor
     }
 }
 
-//NOTE: This is not quite correct, since it checks entire subpath instead of just occupied part.
-void OsmAnd::AtlasMapRendererSymbolsStage::determineRenderableOnPathSymbolsMode(
+void OsmAnd::AtlasMapRendererSymbolsStage::determine2dOr3dModeOfRenderableFromOnPathSymbol(
     QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const
 {
     const auto& internalState = getInternalState();
@@ -368,7 +372,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::determineRenderableOnPathSymbolsMode(
 
         if (renderable->is2D)
         {
-            // In case SOP needs 2D mode, all points have been projected on the screen already
+            // In case renderable needs 2D mode, all points have been projected on the screen already
             renderable->subpathPointsOnScreen = qMove(pointsOnScreen);
         }
         else
@@ -492,7 +496,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::adjustPlacementOfGlyphsOnPath(
     }
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::sortRenderableOnPathSymbols(
+void OsmAnd::AtlasMapRendererSymbolsStage::sortRenderablesFromOnPathSymbols(
     const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
@@ -520,10 +524,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::processBillboardSymbols(
     const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
-    obtainAndSortBillboardSymbols(input, output);
+    obtainAndSortRenderablesFromBillboardSymbols(input, output);
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortBillboardSymbols(
+void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortRenderablesFromBillboardSymbols(
     const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
@@ -568,10 +572,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::processOnSurfaceSymbols(
     const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {
-    obtainAndSortOnSurfaceSymbols(input, output);
+    obtainAndSortRenderablesFromOnSurfaceSymbols(input, output);
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortOnSurfaceSymbols(
+void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortRenderablesFromOnSurfaceSymbols(
     const MapRenderer::PublishedMapSymbols& input,
     QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
 {

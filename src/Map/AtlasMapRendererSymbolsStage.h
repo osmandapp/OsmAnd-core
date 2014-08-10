@@ -104,13 +104,12 @@ namespace OsmAnd
             const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
-        // Obtains visible portions of each OnPathSymbol
-        void obtainRenderableEntriesForOnPathSymbols(
+        void obtainRenderablesFromOnPathSymbols(
             const MapRenderer::PublishedMapSymbols& input,
             QList< std::shared_ptr<RenderableOnPathSymbol> >& output) const;
 
         // Calculates renderable OnPathSymbols to in world
-        void calculateRenderableOnPathSymbolsInWorld(
+        void calculatePointsInWorldForRenderableFromOnPathSymbol(
             QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
 
         // Determines if each renderable OnPathSymbol is 2D-mode or 3D-mode
@@ -121,7 +120,7 @@ namespace OsmAnd
         void adjustPlacementOfGlyphsOnPath(
             QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
 
-        void sortRenderableOnPathSymbols(
+        void sortRenderablesFromOnPathSymbols(
             const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
@@ -129,14 +128,14 @@ namespace OsmAnd
             const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
-        void obtainAndSortBillboardSymbols(
+        void obtainAndSortRenderablesFromBillboardSymbols(
             const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
         void processOnSurfaceSymbols(const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
-        void obtainAndSortOnSurfaceSymbols(
+        void obtainAndSortRenderablesFromOnSurfaceSymbols(
             const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
