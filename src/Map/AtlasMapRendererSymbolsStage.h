@@ -113,6 +113,9 @@ namespace OsmAnd
             QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
         QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31) const;
         QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const;
+        QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const;
+        QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld, unsigned int startIndex, unsigned int endIndex) const;
+        bool isInclineAllowedFor2D(const glm::vec2& pointOnScreen0, const glm::vec2& pointOnScreen1) const;
 
         // Determines if each renderable OnPathSymbol is 2D-mode or 3D-mode
         void determine2dOr3dModeOfRenderableFromOnPathSymbol(

@@ -192,7 +192,15 @@ namespace OsmAnd
         }
 
     friend struct OsmAnd::Area<T>;
+    friend PointT operator*(const T l, const PointT& r);
     };
+
+    template<typename T>
+    inline Point<T> operator*(const T l, const Point<T>& r)
+    {
+        return r*l;
+    }
+
     typedef Point<double> PointD;
     typedef Point<float> PointF;
     typedef Point<int32_t> PointI;

@@ -276,11 +276,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             totalWidth += otherSymbol->size.x;
         }
 
-        // Calculate this path in world coordinates
+        // Calculate current path in world and screen coordinates.
+        // NOTE: There's an assumption that all OnPathSymbols from same group share same path
         const auto pathInWorld = convertPoints31ToWorld(currentSymbol->path);
+        const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
 
-        // Plot as many renderables from current symbol as possible
-        unsigned int 
+        // Calculate
+        
         for (;;)
         {
         }
@@ -378,16 +380,56 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(
     const auto count = endIndex - startIndex + 1;
     QVector<glm::vec2> result(count);
     auto pPointInWorld = result.data();
+    auto pPoint31 = points31.constData() + startIndex;
 
-    const auto& pointInWorld0 = *(pPointInWorld++) =
-        Utilities::convert31toFloat(points31[startIndex] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
-
-    for (int idx = startIndex + 1; idx < endIndex; idx++)
+    for (auto idx = 0u; idx < count; idx++)
     {
-        *(pPointInWorld++) = Utilities::convert31toFloat(points31[idx] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
+        *(pPointInWorld++) = static_cast<float>(AtlasMapRenderer::TileSize3D) * Utilities::convert31toFloat(
+                *(pPoint31++) - currentState.target31,
+                currentState.zoomBase);
     }
 
     return result;
+}
+
+QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const
+{
+    return projectFromWorldToScreen(pointsInWorld, 0, pointsInWorld.size() - 1);
+}
+
+QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld, unsigned int startIndex, unsigned int endIndex) const
+{
+    const auto& internalState = getInternalState();
+
+    const auto count = endIndex - startIndex + 1;
+    QVector<glm::vec2> result(count);
+    auto pPointOnScreen = result.data();
+    auto pPointInWorld = pointsInWorld.constData() + startIndex;
+
+    for (auto idx = 0u; idx < count; idx++)
+    {
+        *(pPointOnScreen++) = glm::project(
+            glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
+            internalState.mCameraView,
+            internalState.mPerspectiveProjection,
+            internalState.glmViewport).xy;
+    }
+
+    return result;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::isInclineAllowedFor2D(const glm::vec2& pointOnScreen0, const glm::vec2& pointOnScreen1) const
+{
+    // Calculate 'incline' of line and compare to horizontal direction.
+    // If any 'incline' is larger than 15 degrees, this line can not be rendered as 2D
+
+    const static float inclineThresholdSinSq = 0.0669872981; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
+
+    const auto vSegment = pointOnScreen1 - pointOnScreen0;
+    const auto d = vSegment.y;// horizont.x*vSegment.y - horizont.y*vSegment.x == 1.0f*vSegment.y - 0.0f*vSegment.x
+    const auto inclineSinSq = d*d / (vSegment.x*vSegment.x + vSegment.y*vSegment.y);
+    
+    return !(qAbs(inclineSinSq) > inclineThresholdSinSq);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::determine2dOr3dModeOfRenderableFromOnPathSymbol(
@@ -399,10 +441,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::determine2dOr3dModeOfRenderableFromOn
     {
         const auto& pointsInWorld = renderable->subpathPointsInWorld;
 
-        // Calculate 'incline' of each part of path segment and compare to horizontal direction.
-        // If any 'incline' is larger than 15 degrees, this segment is rendered in the map plane.
         renderable->is2D = true;
-        const auto inclineThresholdSinSq = 0.0669872981f; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
+        
         auto pPointInWorld = pointsInWorld.constData();
         const auto& pointInWorld0 = *(pPointInWorld++);
         QVector<glm::vec2> pointsOnScreen(pointsInWorld.size());
@@ -420,10 +460,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::determine2dOr3dModeOfRenderableFromOn
                 internalState.mPerspectiveProjection,
                 internalState.glmViewport).xy;
 
-            const auto vSegment = pointOnScreen - prevPointOnScreen;
-            const auto d = vSegment.y;// horizont.x*vSegment.y - horizont.y*vSegment.x == 1.0f*vSegment.y - 0.0f*vSegment.x
-            const auto inclineSinSq = d*d / (vSegment.x*vSegment.x + vSegment.y*vSegment.y);
-            if (qAbs(inclineSinSq) > inclineThresholdSinSq)
+            if (!isInclineAllowedFor2D(prevPointOnScreen, pointOnScreen))
             {
                 renderable->is2D = false;
                 break;
