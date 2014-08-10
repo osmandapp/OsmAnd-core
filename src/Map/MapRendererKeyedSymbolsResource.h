@@ -39,7 +39,7 @@ namespace OsmAnd
     public:
         virtual ~MapRendererKeyedSymbolsResource();
 
-        std::shared_ptr<const GPUAPI::ResourceInGPU> getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol);
+        std::shared_ptr<const GPUAPI::ResourceInGPU> getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;
 
         friend class OsmAnd::MapRendererResourcesManager;
     };

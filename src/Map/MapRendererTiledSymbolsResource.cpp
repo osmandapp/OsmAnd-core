@@ -17,6 +17,16 @@
 #   define OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE 0
 #endif // !defined(OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE)
 
+//#define OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES 1
+#ifndef OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
+#   define OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES 0
+#endif // !defined(OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES)
+
+//#define OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS 1
+#ifndef OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS
+#   define OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS 0
+#endif // !defined(OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS)
+
 OsmAnd::MapRendererTiledSymbolsResource::MapRendererTiledSymbolsResource(
     MapRendererResourcesManager* owner,
     const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
@@ -209,7 +219,6 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 {
     typedef std::pair< std::shared_ptr<MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > SymbolResourceEntry;
-    typedef std::pair< std::shared_ptr<MapSymbol>, proper::shared_future< std::shared_ptr<const GPUAPI::ResourceInGPU> > > FutureSymbolResourceEntry;
 
     bool ok;
     bool anyUploadFailed = false;
@@ -238,7 +247,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
             }
 
             // Mark this symbol as uploaded
-            uniqueUploaded.insertMulti(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
+            uniqueUploaded.insert(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
         }
         if (anyUploadFailed)
             break;
@@ -246,6 +255,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 
     // Shared
     QMultiHash< std::shared_ptr<GroupResources>, SymbolResourceEntry > sharedUploaded;
+    QMultiHash< std::shared_ptr<GroupResources>, SymbolResourceEntry > sharedReferenced;
     for (const auto& groupResources : constOf(_referencedSharedGroupsResources))
     {
         if (groupResources->group->symbols.isEmpty())
@@ -254,7 +264,16 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
         // This check means "continue if shared symbols were uploaded by other resource"
         // This check needs no special handling, since all GPU resources work is done from same thread.
         if (!groupResources->resourcesInGPU.isEmpty())
+        {
+            for (const auto& entryResourceInGPU : rangeOf(constOf(groupResources->resourcesInGPU)))
+            {
+                const auto& symbol = entryResourceInGPU.key();
+                auto& resourceInGPU = entryResourceInGPU.value();
+
+                sharedReferenced.insert(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
+            }
             continue;
+        }
 
         for (const auto& symbol : constOf(groupResources->group->symbols))
         {
@@ -273,7 +292,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
             }
 
             // Mark this symbol as uploaded
-            sharedUploaded.insertMulti(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
+            sharedUploaded.insert(groupResources, qMove(SymbolResourceEntry(symbol, resourceInGPU)));
         }
         if (anyUploadFailed)
             break;
@@ -304,10 +323,17 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 
         // Add GPU resource reference
         _symbolToResourceInGpuLUT.insert(symbol, resource);
+#if OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
+        LogPrintf(LogSeverityLevel::Debug,
+            "Inserted GPU resource %p for map symbol %p in %p (uploadToGPU-uniqueUploaded)",
+            resource.get(),
+            symbol.get(),
+            this);
+#endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
     }
 
-    // Shared
+    // Shared (uploaded)
     for (const auto& entry : rangeOf(constOf(sharedUploaded)))
     {
         const auto& groupResources = entry.key();
@@ -319,7 +345,32 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
 
         // Add GPU resource reference
         _symbolToResourceInGpuLUT.insert(symbol, resource);
+#if OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
+        LogPrintf(LogSeverityLevel::Debug,
+            "Inserted GPU resource %p for map symbol %p in %p (uploadToGPU-sharedUploaded)",
+            resource.get(),
+            symbol.get(),
+            this);
+#endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
         groupResources->resourcesInGPU.insert(qMove(symbol), qMove(resource));
+    }
+
+    // Shared (referenced)
+    for (const auto& entry : rangeOf(constOf(sharedReferenced)))
+    {
+        const auto& groupResources = entry.key();
+        auto symbol = entry.value().first;
+        auto& resource = entry.value().second;
+
+        // Add GPU resource reference
+        _symbolToResourceInGpuLUT.insert(symbol, resource);
+#if OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
+        LogPrintf(LogSeverityLevel::Debug,
+            "Inserted GPU resource %p for map symbol %p in %p (uploadToGPU-sharedReferenced)",
+            resource.get(),
+            symbol.get(),
+            this);
+#endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     }
 
     return true;
@@ -331,6 +382,16 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
 
     // Remove quick references
+#if OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
+    for (const auto& symbolToResourceInGpuEntry : rangeOf(constOf(_symbolToResourceInGpuLUT)))
+    {
+        LogPrintf(LogSeverityLevel::Debug,
+            "Removed GPU resource %p for map symbol %p in %p (unloadFromGPU)",
+            symbolToResourceInGpuEntry.value().get(),
+            symbolToResourceInGpuEntry.key().get(),
+            this);
+    }
+#endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     _symbolToResourceInGpuLUT.clear();
 
     // Unique
@@ -395,6 +456,16 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     _publishedMapSymbols.clear();
 
     // Remove quick references (if any left)
+#if OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
+    for (const auto& symbolToResourceInGpuEntry : rangeOf(constOf(_symbolToResourceInGpuLUT)))
+    {
+        LogPrintf(LogSeverityLevel::Debug,
+            "Removed GPU resource %p for map symbol %p in %p (releaseData)",
+            symbolToResourceInGpuEntry.value().get(),
+            symbolToResourceInGpuEntry.key().get(),
+            this);
+    }
+#endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
     _symbolToResourceInGpuLUT.clear();
 
     // Unique
@@ -481,11 +552,28 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     _sourceData.reset();
 }
 
-std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererTiledSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol)
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererTiledSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol) const
 {
+    QReadLocker scopedLocker(&_symbolToResourceInGpuLUTLock);
+
     const auto citResourceInGPU = _symbolToResourceInGpuLUT.constFind(mapSymbol);
     if (citResourceInGPU == _symbolToResourceInGpuLUT.cend())
+    {
+#if OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS
+        LogPrintf(LogSeverityLevel::Debug,
+            "GPU resource not found for map symbol %p in %p",
+            mapSymbol.get(),
+            this);
+#endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS
         return nullptr;
+    }
+#if OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS
+    LogPrintf(LogSeverityLevel::Debug,
+        "Found GPU resource %p for map symbol %p in %p",
+        citResourceInGPU->get(),
+        mapSymbol.get(),
+        this);
+#endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS
     return *citResourceInGPU;
 }
 

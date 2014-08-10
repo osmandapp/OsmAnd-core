@@ -4,6 +4,7 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include <QReadWriteLock>
 
 #include "OsmAndCore.h"
 #include "MapRendererResourceType.h"
@@ -57,6 +58,7 @@ namespace OsmAnd
         QList< std::shared_ptr<SharedGroupResources> > _referencedSharedGroupsResources;
 
         QHash< std::shared_ptr<const MapSymbolsGroup>, QList< std::shared_ptr<const MapSymbol> > > _publishedMapSymbols;
+        mutable QReadWriteLock _symbolToResourceInGpuLUTLock;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _symbolToResourceInGpuLUT;
 
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
@@ -66,7 +68,7 @@ namespace OsmAnd
     public:
         virtual ~MapRendererTiledSymbolsResource();
 
-        std::shared_ptr<const GPUAPI::ResourceInGPU> getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol);
+        std::shared_ptr<const GPUAPI::ResourceInGPU> getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;
 
     friend class OsmAnd::MapRendererResourcesManager;
     friend class OsmAnd::MapRendererTiledSymbolsResourcesCollection;
