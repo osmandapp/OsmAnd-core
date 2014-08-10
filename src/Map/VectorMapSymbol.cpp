@@ -2,10 +2,8 @@
 
 OsmAnd::VectorMapSymbol::VectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_,
-    const int order_,
-    const IntersectionModeFlags intersectionModeFlags_)
-    : MapSymbol(group_, isShareable_, order_, intersectionModeFlags_)
+    const bool isShareable_)
+    : MapSymbol(group_, isShareable_)
     , vertices(nullptr)
     , verticesCount(0)
     , indices(nullptr)

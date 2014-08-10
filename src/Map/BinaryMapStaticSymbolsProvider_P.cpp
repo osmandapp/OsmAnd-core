@@ -1,6 +1,10 @@
 #include "BinaryMapStaticSymbolsProvider_P.h"
 #include "BinaryMapStaticSymbolsProvider.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include <SkBitmap.h>
+#include "restore_internal_warnings.h"
+
 #include "BinaryMapPrimitivesProvider.h"
 #include "MapPresentationEnvironment.h"
 #include "Primitiviser.h"
@@ -84,38 +88,37 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             assert(static_cast<bool>(rasterizedSymbol->bitmap));
 
             std::shared_ptr<MapSymbol> symbol;
-
-            if (const auto spriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
+            if (const auto rasterizedSpriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
             {
                 hasAtLeastOneBillboard = true;
 
-                symbol.reset(new BillboardRasterMapSymbol(
-                    group,
-                    isShareable,
-                    spriteSymbol->order,
-                    MapSymbol::RegularIntersectionProcessing,
-                    spriteSymbol->bitmap,
-                    spriteSymbol->content,
-                    spriteSymbol->languageId,
-                    spriteSymbol->minDistance,
-                    spriteSymbol->location31,
-                    spriteSymbol->offset));
+                const auto billboardRasterSymbol = new BillboardRasterMapSymbol(group, isShareable);
+                billboardRasterSymbol->order = rasterizedSpriteSymbol->order;
+                billboardRasterSymbol->intersectionModeFlags = MapSymbol::RegularIntersectionProcessing;
+                billboardRasterSymbol->bitmap = rasterizedSpriteSymbol->bitmap;
+                billboardRasterSymbol->size = PointI(rasterizedSpriteSymbol->bitmap->width(), rasterizedSpriteSymbol->bitmap->height());
+                billboardRasterSymbol->content = rasterizedSpriteSymbol->content,
+                billboardRasterSymbol->languageId = rasterizedSpriteSymbol->languageId;
+                billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
+                billboardRasterSymbol->position31 = rasterizedSpriteSymbol->location31;
+                billboardRasterSymbol->offset = rasterizedSpriteSymbol->offset;
+                symbol.reset(billboardRasterSymbol);
             }
-            else if (const auto onPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
+            else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
             {
                 hasAtLeastOneOnPath = true;
 
-                symbol.reset(new OnPathMapSymbol(
-                    group,
-                    isShareable,
-                    onPathSymbol->order,
-                    MapSymbol::RegularIntersectionProcessing,
-                    onPathSymbol->bitmap,
-                    onPathSymbol->content,
-                    onPathSymbol->languageId,
-                    onPathSymbol->minDistance,
-                    mapObject->points31,
-                    onPathSymbol->glyphsWidth));
+                const auto onPathSymbol = new OnPathMapSymbol(group, isShareable);
+                onPathSymbol->order = rasterizedOnPathSymbol->order;
+                onPathSymbol->intersectionModeFlags = MapSymbol::RegularIntersectionProcessing;
+                onPathSymbol->bitmap = rasterizedOnPathSymbol->bitmap;
+                onPathSymbol->size = PointI(rasterizedOnPathSymbol->bitmap->width(), rasterizedOnPathSymbol->bitmap->height());
+                onPathSymbol->content = rasterizedOnPathSymbol->content;
+                onPathSymbol->languageId = rasterizedOnPathSymbol->languageId;
+                onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
+                onPathSymbol->path = mapObject->points31;
+                onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
+                symbol.reset(onPathSymbol);
             }
             else
             {

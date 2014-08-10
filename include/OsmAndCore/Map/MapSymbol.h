@@ -43,9 +43,7 @@ namespace OsmAnd
     protected:
         MapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group,
-            const bool isShareable,
-            const int order,
-            const IntersectionModeFlags intersectionModeFlags);
+            const bool isShareable);
     public:
         virtual ~MapSymbol();
 

@@ -249,65 +249,125 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             continue;
         }
 
-        // Get GPU resource for this map symbol
-        const auto gpuResource = captureGpuResource(symbolEntry.value(), symbol_);
-        if (!gpuResource)
-            continue;
-
         // Capture group of this symbol to get widths of all symbols
         const auto& mapSymbolsGroup = symbol->group.lock();
-
-        // Check first point to initialize subdivision
-        auto pPoint31 = points31.constData();
-        auto wasInside = internalState.frustum2D31.test(*(pPoint31++) - currentState.target31);
-        int subpathStartIdx = -1;
-        int subpathEndIdx = -1;
-        if (wasInside)
+        if (!mapSymbolsGroup)
         {
-            subpathStartIdx = 0;
-            subpathEndIdx = 0;
+            // Group has to be present, there's no way to process this without group
+            assert(false);
+            continue;
         }
 
-        // Process rest of points one by one
-        for (int pointIdx = 1, pointsCount = points31.size(); pointIdx < pointsCount; pointIdx++)
+        // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.
+        // They will appear on path in the order they are stored in group.
+
+        struct MapSymbolEntry
         {
-            auto isInside = internalState.frustum2D31.test(*(pPoint31++) - currentState.target31);
-            bool currentWasAdded = false;
-            if (wasInside && !isInside)
-            {
-                subpathEndIdx = pointIdx;
-                currentWasAdded = true;
-            }
-            else if (wasInside && isInside)
-            {
-                subpathEndIdx = pointIdx;
-                currentWasAdded = true;
-            }
-            else if (!wasInside && isInside)
-            {
-                subpathStartIdx = pointIdx - 1;
-                subpathEndIdx = pointIdx;
-                currentWasAdded = true;
-            }
+            std::shared_ptr<const OnPathMapSymbol> mapSymbol;
+            float width;
+        };
 
-            if ((wasInside && !isInside) || (pointIdx == pointsCount - 1 && subpathStartIdx >= 0))
+        bool ok = true;
+        typedef std::tuple< std::shared_ptr<const OnPathMapSymbol>, float > MapSymbolWidthEntry;
+        QVector<MapSymbolWidthEntry> mapSymbolsWidths;
+        mapSymbolsWidths.reserve(mapSymbolsGroup->symbols.size());
+        auto pMapSymbolsWidth = mapSymbolsWidths.data();
+        for (const auto& otherSymbol_ : constOf(mapSymbolsGroup->symbols))
+        {
+            if (otherSymbol_ == symbol_)
             {
-                if (!currentWasAdded)
-                    subpathEndIdx = pointIdx;
-
-                std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
-                renderable->mapSymbol = symbol;
-                renderable->gpuResource = gpuResource;
-                renderable->subpathStartIndex = subpathStartIdx;
-                renderable->subpathEndIndex = subpathEndIdx;
-                output.push_back(qMove(renderable));
-
-                subpathStartIdx = -1;
-                subpathEndIdx = -1;
+                // For current symbol, simply take it's width
+                *(pMapSymbolsWidth++) = MapSymbolWidthEntry(symbol, symbol->size.x);
             }
+            else
+            {
+                // Verify that other symbol is also OnPathSymbol
+                const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
+                if (!otherSymbol)
+                {
+                    ok = false;
+                    break;
+                }
 
-            wasInside = isInside;
+                // Get width of other map symbol
+                *(pMapSymbolsWidth++) = MapSymbolWidthEntry(otherSymbol, otherSymbol->size.x);
+            }
         }
+
+        // If any of sibling symbols was not processed correctly, it's impossible to process this symbol also
+        if (!ok)
+            continue;
+
+        // For each symbol in given order, find proper subpath+offset
+        for (const auto& mapSymbolWidthEntry : constOf(mapSymbolsWidths))
+        {
+
+        }
+
+        int i = 5;
+
+
+        //// Get GPU resource for this map symbol
+        //const auto gpuResource_ = captureGpuResource(symbolEntry.value(), symbol_);
+        //if (!gpuResource_)
+        //    continue;
+        //const auto gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(gpuResource_);
+        //if (!gpuResource)
+        //    continue;
+
+
+
+        //// Check first point to initialize subdivision
+        //auto pPoint31 = points31.constData();
+        //auto wasInside = internalState.frustum2D31.test(*(pPoint31++) - currentState.target31);
+        //int subpathStartIdx = -1;
+        //int subpathEndIdx = -1;
+        //if (wasInside)
+        //{
+        //    subpathStartIdx = 0;
+        //    subpathEndIdx = 0;
+        //}
+
+        //// Process rest of points one by one
+        //for (int pointIdx = 1, pointsCount = points31.size(); pointIdx < pointsCount; pointIdx++)
+        //{
+        //    auto isInside = internalState.frustum2D31.test(*(pPoint31++) - currentState.target31);
+        //    bool currentWasAdded = false;
+        //    if (wasInside && !isInside)
+        //    {
+        //        subpathEndIdx = pointIdx;
+        //        currentWasAdded = true;
+        //    }
+        //    else if (wasInside && isInside)
+        //    {
+        //        subpathEndIdx = pointIdx;
+        //        currentWasAdded = true;
+        //    }
+        //    else if (!wasInside && isInside)
+        //    {
+        //        subpathStartIdx = pointIdx - 1;
+        //        subpathEndIdx = pointIdx;
+        //        currentWasAdded = true;
+        //    }
+
+        //    if ((wasInside && !isInside) || (pointIdx == pointsCount - 1 && subpathStartIdx >= 0))
+        //    {
+        //        if (!currentWasAdded)
+        //            subpathEndIdx = pointIdx;
+
+        //        std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+        //        renderable->mapSymbol = symbol;
+        //        renderable->gpuResource = gpuResource;
+        //        renderable->subpathStartIndex = subpathStartIdx;
+        //        renderable->subpathEndIndex = subpathEndIdx;
+        //        output.push_back(qMove(renderable));
+
+        //        subpathStartIdx = -1;
+        //        subpathEndIdx = -1;
+        //    }
+
+        //    wasInside = isInside;
+        //}
     }
 }
 
@@ -653,7 +713,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     const auto& internalState = getInternalState();
 
     const auto& symbol = std::static_pointer_cast<const BillboardRasterMapSymbol>(renderable->mapSymbol);
-    const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Calculate position in screen coordinates (same calculation as done in shader)
@@ -666,7 +725,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     // Get bounds in screen coordinates
     auto boundsInWindow = AreaI::fromCenterAndSize(
         static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
-        gpuResource->width, gpuResource->height);
+        symbol->size.x, symbol->size.y);
     //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
 //    boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
@@ -694,7 +753,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     const auto& internalState = getInternalState();
 
     const auto& symbol = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
-    const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
@@ -739,7 +797,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
             {
                 getRenderer()->debugStage->addRect2D(AreaF::fromCenterAndSize(
                     glyph.anchorPoint.x, currentState.windowSize.y - glyph.anchorPoint.y,
-                    glyph.width, gpuResource->height), SkColorSetA(SK_ColorGREEN, 128), glyph.angle);
+                    glyph.width, symbol->size.y), SkColorSetA(SK_ColorGREEN, 128), glyph.angle);
 
                 QVector<glm::vec2> lineN;
                 const auto ln0 = glyph.anchorPoint;
@@ -793,7 +851,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
             {
                 const auto& glyphInMapPlane = AreaF::fromCenterAndSize(
                     glyph.anchorPoint.x, glyph.anchorPoint.y, /* anchor points are specified in world coordinates already */
-                    glyph.width*internalState.pixelInWorldProjectionScale, gpuResource->height*internalState.pixelInWorldProjectionScale);
+                    glyph.width*internalState.pixelInWorldProjectionScale, symbol->size.y*internalState.pixelInWorldProjectionScale);
                 const auto& tl = glyphInMapPlane.topLeft;
                 const auto& tr = glyphInMapPlane.topRight();
                 const auto& br = glyphInMapPlane.bottomRight;
@@ -876,7 +934,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceRasterSymbol(
     const auto& internalState = getInternalState();
 
     const auto& symbol = std::static_pointer_cast<const OnSurfaceRasterMapSymbol>(renderable->mapSymbol);
-    const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     return true;
@@ -889,7 +946,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceVectorSymbol(
     const auto& internalState = getInternalState();
 
     const auto& symbol = std::static_pointer_cast<const OnSurfaceVectorMapSymbol>(renderable->mapSymbol);
-    const auto& gpuResource = std::static_pointer_cast<const GPUAPI::MeshInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
     
     return true;
@@ -1035,14 +1091,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
 
 OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const
 {
-    const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+    const auto& symbol = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
 
     const auto directionAngle = qAtan2(renderable->subpathDirectionOnScreen.y, renderable->subpathDirectionOnScreen.x);
     const auto negDirectionAngleCos = qCos(-directionAngle);
     const auto negDirectionAngleSin = qSin(-directionAngle);
     const auto directionAngleCos = qCos(directionAngle);
     const auto directionAngleSin = qSin(directionAngle);
-    const auto halfGlyphHeight = gpuResource->height / 2.0f;
+    const auto halfGlyphHeight = symbol->size.y / 2.0f;
     auto bboxInitialized = false;
     AreaF bboxInDirection;
     for (const auto& glyph : constOf(renderable->glyphsPlacement))
@@ -1100,14 +1156,14 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath2dOOBB(const 
 OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const
 {
     const auto& internalState = getInternalState();
-    const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
+    const auto& symbol = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
 
     const auto directionAngleInWorld = qAtan2(renderable->subpathDirectioInWorld.y, renderable->subpathDirectioInWorld.x);
     const auto negDirectionAngleInWorldCos = qCos(-directionAngleInWorld);
     const auto negDirectionAngleInWorldSin = qSin(-directionAngleInWorld);
     const auto directionAngleInWorldCos = qCos(directionAngleInWorld);
     const auto directionAngleInWorldSin = qSin(directionAngleInWorld);
-    const auto halfGlyphHeight = (gpuResource->height / 2.0f) * internalState.pixelInWorldProjectionScale;
+    const auto halfGlyphHeight = (symbol->size.y / 2.0f) * internalState.pixelInWorldProjectionScale;
     auto bboxInWorldInitialized = false;
     AreaF bboxInWorldDirection;
     for (const auto& glyph : constOf(renderable->glyphsPlacement))

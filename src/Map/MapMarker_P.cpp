@@ -176,26 +176,28 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     if (owner->isAccuracyCircleSupported)
     {
         // Add a circle that represent precision circle
-        const std::shared_ptr<AccuracyCircleMapSymbol> AccuracyCircleSymbol(new AccuracyCircleMapSymbol(
+        const std::shared_ptr<AccuracyCircleMapSymbol> accuracyCircleSymbol(new AccuracyCircleMapSymbol(
             symbolsGroup,
-            false, // This symbol is not shareable
-            order++,
-            static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
-            _position));
-        VectorMapSymbol::generateCirclePrimitive(*AccuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
-        AccuracyCircleSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
-        AccuracyCircleSymbol->scale = _accuracyCircleRadius;
-        AccuracyCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-        AccuracyCircleSymbol->direction = Q_SNAN;
-        symbolsGroup->symbols.push_back(AccuracyCircleSymbol);
+            false /* This symbol is not shareable*/));
+        accuracyCircleSymbol->order = order++;
+        accuracyCircleSymbol->intersectionModeFlags |= MapSymbol::IgnoredByIntersectionTest;
+        accuracyCircleSymbol->intersectionModeFlags |= MapSymbol::TransparentForIntersectionLookup;
+        accuracyCircleSymbol->position31 = _position;
+        VectorMapSymbol::generateCirclePrimitive(*accuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
+        accuracyCircleSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
+        accuracyCircleSymbol->scale = _accuracyCircleRadius;
+        accuracyCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
+        accuracyCircleSymbol->direction = Q_SNAN;
+        symbolsGroup->symbols.push_back(accuracyCircleSymbol);
 
         // Add a ring-line that represent precision circle
         const std::shared_ptr<AccuracyCircleMapSymbol> precisionRingSymbol(new AccuracyCircleMapSymbol(
             symbolsGroup,
-            false, // This symbol is not shareable
-            order++,
-            static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
-            _position));
+            false /* This symbol is not shareable */));
+        precisionRingSymbol->order = order++;
+        precisionRingSymbol->intersectionModeFlags |= MapSymbol::IgnoredByIntersectionTest;
+        precisionRingSymbol->intersectionModeFlags |= MapSymbol::TransparentForIntersectionLookup;
+        precisionRingSymbol->position31 = _position;
         VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->accuracyCircleBaseColor.withAlpha(0.4f));
         precisionRingSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
         precisionRingSymbol->scale = _accuracyCircleRadius;
@@ -222,14 +224,16 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         const std::shared_ptr<KeyedOnSurfaceRasterMapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceRasterMapSymbol(
             key,
             symbolsGroup,
-            false, // This symbol is not shareable
-            order++,
-            static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
-            iconClone,
-            QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels()),
-            LanguageId::Invariant,
-            PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
-            _position));
+            false /* This symbol is not shareable */));
+        onMapSurfaceIconSymbol->order = order++;
+        onMapSurfaceIconSymbol->intersectionModeFlags |= MapSymbol::IgnoredByIntersectionTest;
+        onMapSurfaceIconSymbol->intersectionModeFlags |= MapSymbol::TransparentForIntersectionLookup;
+        onMapSurfaceIconSymbol->bitmap = iconClone;
+        onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
+        onMapSurfaceIconSymbol->content = QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels());
+        onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
+        onMapSurfaceIconSymbol->minDistance = PointI(); // Since minDistance is (0, 0), this map symbol will not be compared to others
+        onMapSurfaceIconSymbol->position31 = _position;
         onMapSurfaceIconSymbol->direction = direction;
         onMapSurfaceIconSymbol->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
@@ -241,17 +245,19 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
         owner->pinIcon->deepCopyTo(pinIcon.get(), owner->pinIcon->getConfig());
 
-        const std::shared_ptr<MapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(
+        const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(
             symbolsGroup,
-            false, // This symbol is not shareable
-            order++,
-            static_cast<MapSymbol::IntersectionModeFlags>(MapSymbol::IgnoredByIntersectionTest | MapSymbol::TransparentForIntersectionLookup),
-            pinIcon,
-            QString().sprintf("markerGroup(%p:%p)->pinIconBitmap:%p", this, symbolsGroup.get(), pinIcon->getPixels()),
-            LanguageId::Invariant,
-            PointI(), // Since minDistance is (0, 0), this map symbol will not be compared to others
-            _position,
-            PointI(0, -pinIcon->height() / 2)));
+            false /* This symbol is not shareable*/));
+        pinIconSymbol->order = order++;
+        pinIconSymbol->intersectionModeFlags |= MapSymbol::IgnoredByIntersectionTest;
+        pinIconSymbol->intersectionModeFlags |= MapSymbol::TransparentForIntersectionLookup;
+        pinIconSymbol->bitmap = pinIcon;
+        pinIconSymbol->size = PointI(pinIcon->width(), pinIcon->height());
+        pinIconSymbol->content = QString().sprintf("markerGroup(%p:%p)->pinIconBitmap:%p", this, symbolsGroup.get(), pinIcon->getPixels());
+        pinIconSymbol->languageId = LanguageId::Invariant;
+        pinIconSymbol->minDistance = PointI(); // Since minDistance is (0, 0), this map symbol will not be compared to others
+        pinIconSymbol->position31 = _position;
+        pinIconSymbol->offset = PointI(0, -pinIcon->height() / 2);
         pinIconSymbol->isHidden = _isHidden;
         pinIconSymbol->modulationColor = _pinIconModulationColor;
         symbolsGroup->symbols.push_back(pinIconSymbol);
@@ -303,15 +309,8 @@ bool OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
 OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::KeyedOnSurfaceRasterMapSymbol(
     const MapMarker::OnSurfaceIconKey key_,
     const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_,
-    const int order_,
-    const IntersectionModeFlags intersectionModeFlags_,
-    const std::shared_ptr<const SkBitmap>& bitmap_,
-    const QString& content_,
-    const LanguageId& languageId_,
-    const PointI& minDistance_,
-    const PointI& location31_)
-    : OnSurfaceRasterMapSymbol(group_, isShareable_, order_, intersectionModeFlags_, bitmap_, content_, languageId_, minDistance_, location31_)
+    const bool isShareable_)
+    : OnSurfaceRasterMapSymbol(group_, isShareable_)
     , key(key_)
 {
 }
@@ -322,11 +321,8 @@ OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::~KeyedOnSurfaceRasterMapSymb
 
 OsmAnd::MapMarker_P::AccuracyCircleMapSymbol::AccuracyCircleMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_,
-    const int order_,
-    const IntersectionModeFlags intersectionModeFlags_,
-    const PointI& position31_)
-    : OnSurfaceVectorMapSymbol(group_, isShareable_, order_, intersectionModeFlags_, position31_)
+    const bool isShareable_)
+    : OnSurfaceVectorMapSymbol(group_, isShareable_)
 {
 }
 

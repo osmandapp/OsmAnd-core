@@ -69,14 +69,7 @@ namespace OsmAnd
             KeyedOnSurfaceRasterMapSymbol(
                 const MapMarker::OnSurfaceIconKey key,
                 const std::shared_ptr<MapSymbolsGroup>& group,
-                const bool isShareable,
-                const int order,
-                const IntersectionModeFlags intersectionModeFlags,
-                const std::shared_ptr<const SkBitmap>& bitmap,
-                const QString& content,
-                const LanguageId& languageId,
-                const PointI& minDistance,
-                const PointI& location31);
+                const bool isShareable);
         public:
             virtual ~KeyedOnSurfaceRasterMapSymbol();
 
@@ -91,10 +84,7 @@ namespace OsmAnd
         protected:
             AccuracyCircleMapSymbol(
                 const std::shared_ptr<MapSymbolsGroup>& group,
-                const bool isShareable,
-                const int order,
-                const IntersectionModeFlags intersectionModeFlags,
-                const PointI& position31);
+                const bool isShareable);
         public:
             virtual ~AccuracyCircleMapSymbol();
 

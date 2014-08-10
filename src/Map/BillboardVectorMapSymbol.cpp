@@ -2,14 +2,8 @@
 
 OsmAnd::BillboardVectorMapSymbol::BillboardVectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_,
-    const int order_,
-    const IntersectionModeFlags intersectionModeFlags_,
-    const PointI& position31_,
-    const PointI& offset_)
-    : VectorMapSymbol(group_, isShareable_, order_, intersectionModeFlags_)
-    , offset(offset_)
-    , position31(position31_)
+    const bool isShareable_)
+    : VectorMapSymbol(group_, isShareable_)
 {
 }
 

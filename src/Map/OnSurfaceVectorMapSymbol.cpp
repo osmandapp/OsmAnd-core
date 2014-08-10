@@ -2,13 +2,9 @@
 
 OsmAnd::OnSurfaceVectorMapSymbol::OnSurfaceVectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_,
-    const int order_,
-    const IntersectionModeFlags intersectionModeFlags_,
-    const PointI& position31_)
-    : VectorMapSymbol(group_, isShareable_, order_, intersectionModeFlags_)
+    const bool isShareable_)
+    : VectorMapSymbol(group_, isShareable_)
     , direction(0.0f)
-    , position31(position31_)
 {
 }
 
