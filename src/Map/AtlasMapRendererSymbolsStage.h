@@ -111,6 +111,8 @@ namespace OsmAnd
         // Calculates renderable OnPathSymbols to in world
         void calculatePointsInWorldForRenderableFromOnPathSymbol(
             QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
+        QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31) const;
+        QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const;
 
         // Determines if each renderable OnPathSymbol is 2D-mode or 3D-mode
         void determine2dOr3dModeOfRenderableFromOnPathSymbol(

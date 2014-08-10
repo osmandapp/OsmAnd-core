@@ -234,13 +234,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 
     for (const auto& symbolEntry : rangeOf(constOf(input)))
     {
-        const auto& symbol_ = symbolEntry.key();
-        if (symbol_->isHidden)
+        const auto& currentSymbol_ = symbolEntry.key();
+        if (currentSymbol_->isHidden)
             continue;
-        const auto symbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(symbol_);
-        if (!symbol)
+        const auto currentSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(currentSymbol_);
+        if (!currentSymbol)
             continue;
-        const auto& points31 = symbol->path;
+        const auto& points31 = currentSymbol->path;
 
         // Path must have at least 2 points
         if (Q_UNLIKELY(points31.size() < 2))
@@ -250,7 +250,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         }
 
         // Capture group of this symbol to get widths of all symbols
-        const auto& mapSymbolsGroup = symbol->group.lock();
+        const auto& mapSymbolsGroup = currentSymbol->group.lock();
         if (!mapSymbolsGroup)
         {
             // Group has to be present, there's no way to process this without group
@@ -261,47 +261,28 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.
         // They will appear on path in the order they are stored in group.
 
-        struct MapSymbolEntry
-        {
-            std::shared_ptr<const OnPathMapSymbol> mapSymbol;
-            float width;
-        };
-
-        bool ok = true;
-        typedef std::tuple< std::shared_ptr<const OnPathMapSymbol>, float > MapSymbolWidthEntry;
-        QVector<MapSymbolWidthEntry> mapSymbolsWidths;
-        mapSymbolsWidths.reserve(mapSymbolsGroup->symbols.size());
-        auto pMapSymbolsWidth = mapSymbolsWidths.data();
+        // Calculate widths of entire on-path-symbols in group and width of symbols before current symbol
+        float totalWidth = 0.0f;
+        float widthBeforeCurrentSymbol = 0.0f;
         for (const auto& otherSymbol_ : constOf(mapSymbolsGroup->symbols))
         {
-            if (otherSymbol_ == symbol_)
-            {
-                // For current symbol, simply take it's width
-                *(pMapSymbolsWidth++) = MapSymbolWidthEntry(symbol, symbol->size.x);
-            }
-            else
-            {
-                // Verify that other symbol is also OnPathSymbol
-                const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
-                if (!otherSymbol)
-                {
-                    ok = false;
-                    break;
-                }
+            // Verify that other symbol is also OnPathSymbol
+            const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
+            if (!otherSymbol)
+                continue;
 
-                // Get width of other map symbol
-                *(pMapSymbolsWidth++) = MapSymbolWidthEntry(otherSymbol, otherSymbol->size.x);
-            }
+            if (otherSymbol == currentSymbol)
+                widthBeforeCurrentSymbol = totalWidth;
+            totalWidth += otherSymbol->size.x;
         }
 
-        // If any of sibling symbols was not processed correctly, it's impossible to process this symbol also
-        if (!ok)
-            continue;
+        // Calculate this path in world coordinates
+        const auto pathInWorld = convertPoints31ToWorld(currentSymbol->path);
 
-        // For each symbol in given order, find proper subpath+offset
-        for (const auto& mapSymbolWidthEntry : constOf(mapSymbolsWidths))
+        // Plot as many renderables from current symbol as possible
+        unsigned int 
+        for (;;)
         {
-
         }
 
         int i = 5;
@@ -378,17 +359,35 @@ void OsmAnd::AtlasMapRendererSymbolsStage::calculatePointsInWorldForRenderableFr
 
     for (auto& renderable : entries)
     {
-        const auto& points = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol)->path;
-        const auto subpathLength = renderable->subpathEndIndex - renderable->subpathStartIndex + 1;
-        renderable->subpathPointsInWorld.resize(subpathLength);
-        auto pPointInWorld = renderable->subpathPointsInWorld.data();
-        const auto& pointInWorld0 = *(pPointInWorld++) =
-            Utilities::convert31toFloat(points[renderable->subpathStartIndex] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
-        for (int idx = renderable->subpathStartIndex + 1, endIdx = renderable->subpathEndIndex; idx <= endIdx; idx++, pPointInWorld++)
-            *pPointInWorld = Utilities::convert31toFloat(points[idx] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
+        const auto& points31 = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol)->path;
+        renderable->subpathPointsInWorld = convertPoints31ToWorld(points31, renderable->subpathStartIndex, renderable->subpathEndIndex);
         renderable->subpathEndIndex -= renderable->subpathStartIndex;
         renderable->subpathStartIndex = 0;
     }
+}
+
+QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(const QVector<PointI>& points31) const
+{
+    return convertPoints31ToWorld(points31, 0, points31.size() - 1);
+}
+
+QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const
+{
+    const auto& internalState = getInternalState();
+
+    const auto count = endIndex - startIndex + 1;
+    QVector<glm::vec2> result(count);
+    auto pPointInWorld = result.data();
+
+    const auto& pointInWorld0 = *(pPointInWorld++) =
+        Utilities::convert31toFloat(points31[startIndex] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
+
+    for (int idx = startIndex + 1; idx < endIndex; idx++)
+    {
+        *(pPointInWorld++) = Utilities::convert31toFloat(points31[idx] - currentState.target31, currentState.zoomBase) * AtlasMapRenderer::TileSize3D;
+    }
+
+    return result;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::determine2dOr3dModeOfRenderableFromOnPathSymbol(
