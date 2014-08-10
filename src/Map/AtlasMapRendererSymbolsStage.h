@@ -116,6 +116,17 @@ namespace OsmAnd
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const;
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld, unsigned int startIndex, unsigned int endIndex) const;
         bool isInclineAllowedFor2D(const glm::vec2& pointOnScreen0, const glm::vec2& pointOnScreen1) const;
+        bool plotRenderableOnPath(
+            const unsigned int pathSize,
+            const QVector<glm::vec2>& pathInWorld,
+            const QVector<glm::vec2>& pathOnScreen,
+            const float renderableWidthInPixels,
+            const unsigned int startPointIndex,
+            const bool alreadyOccupiedLengthIsIn2D,
+            const float alreadyOccupiedLength,
+            unsigned int& endPointIndex,
+            float& lastOccupiedLength,
+            bool& lastOccupiedLengthIsIn2D) const;
 
         // Determines if each renderable OnPathSymbol is 2D-mode or 3D-mode
         void determine2dOr3dModeOfRenderableFromOnPathSymbol(

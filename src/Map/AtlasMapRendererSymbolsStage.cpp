@@ -281,10 +281,64 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         const auto pathInWorld = convertPoints31ToWorld(currentSymbol->path);
         const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
 
-        // Calculate
-        
-        for (;;)
+        // First "plot" virtual renderable that occupies length of "widthBeforeCurrentSymbol" pixels
+        unsigned int originPointIndex = 0;
+        float originOccupiedLength = 0.0f;
+        bool originOccupiedLengthIsIn2D = true;
+        if (widthBeforeCurrentSymbol > 0.0f)
         {
+            const auto offsetBeforeCurrentSymbolFits = plotRenderableOnPath(
+                currentSymbol->path.size(),
+                pathInWorld,
+                pathOnScreen,
+                widthBeforeCurrentSymbol,
+                0,
+                true,
+                0.0f,
+                originPointIndex,
+                originOccupiedLength,
+                originOccupiedLengthIsIn2D);
+
+            // In case even offset failed to fit, nothing can be done
+            if (!offsetBeforeCurrentSymbolFits)
+                continue;
+        }
+        
+        // Try to fit current symbol for the first time
+        unsigned int nextOriginPointIndex = 0;
+        float nextOriginOccupiedLength = 0.0f;
+        bool nextOriginOccupiedLengthIsIn2D = true;
+        const auto currentSymbolFits = plotRenderableOnPath(
+            currentSymbol->path.size(),
+            pathInWorld,
+            pathOnScreen,
+            widthBeforeCurrentSymbol,
+            originPointIndex,
+            originOccupiedLengthIsIn2D,
+            originOccupiedLength,
+            nextOriginPointIndex,
+            nextOriginOccupiedLength,
+            nextOriginOccupiedLengthIsIn2D);
+
+        // In case even offset failed to fit, nothing can be done
+        if (!currentSymbolFits)
+        {
+            // If current symbol is the first one and it doesn't fit, show it
+            if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
+                (currentSymbol_ == mapSymbolsGroup->symbols.first()))
+            {
+                QVector< glm::vec3 > debugPoints;
+                for (const auto& pointInWorld : pathInWorld)
+                {
+                    debugPoints.push_back(qMove(glm::vec3(
+                        pointInWorld.x,
+                        0.0f,
+                        pointInWorld.y)));
+                }
+                getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
+            }
+
+            continue;
         }
 
         int i = 5;
@@ -384,9 +438,9 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(
 
     for (auto idx = 0u; idx < count; idx++)
     {
-        *(pPointInWorld++) = static_cast<float>(AtlasMapRenderer::TileSize3D) * Utilities::convert31toFloat(
+        *(pPointInWorld++) = Utilities::convert31toFloat(
                 *(pPoint31++) - currentState.target31,
-                currentState.zoomBase);
+                currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
     }
 
     return result;
@@ -430,6 +484,75 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::isInclineAllowedFor2D(const glm::vec2
     const auto inclineSinSq = d*d / (vSegment.x*vSegment.x + vSegment.y*vSegment.y);
     
     return !(qAbs(inclineSinSq) > inclineThresholdSinSq);
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderableOnPath(
+    const unsigned int pathSize,
+    const QVector<glm::vec2>& pathInWorld,
+    const QVector<glm::vec2>& pathOnScreen,
+    const float renderableWidthInPixels,
+    const unsigned int startPointIndex,
+    const bool alreadyOccupiedLengthIsIn2D,
+    const float alreadyOccupiedLength_,
+    unsigned int& endPointIndex,
+    float& lastOccupiedLength,
+    bool& lastOccupiedLengthIsIn2D) const
+{
+    const auto& internalState = getInternalState();
+
+    unsigned int testPointIndex = startPointIndex + 1;
+    bool isRenderableAs2D = alreadyOccupiedLengthIsIn2D;
+    float segmentLength = 0.0f;
+    float alreadyOccupiedLength = alreadyOccupiedLength_;
+    while (testPointIndex < pathSize)
+    {
+        // Check if last segment [testPointIndex - 1, testPointIndex] can be 2D.
+        // This check is only performed if previously was renderable as 2D, since after test fails there's no way to go back to 2D
+        if (isRenderableAs2D)
+        {
+            isRenderableAs2D = isInclineAllowedFor2D(pathOnScreen[testPointIndex - 1], pathOnScreen[testPointIndex]);
+            if (!isRenderableAs2D)
+            {
+                // Recalculate entire length of segment [startPointIdx, testPointIdx - 1] as 3D
+                segmentLength = 0.0f;
+                for (auto idx = startPointIndex + 1; idx < testPointIndex; idx++)
+                    segmentLength += glm::distance(pathInWorld[idx - 1], pathInWorld[idx]);
+
+                // Recalculate alreadyOccupiedLength from 2D to 3D length in segment [startPointIdx, startPointIdx + 1]
+                if (alreadyOccupiedLength > 0.0f)
+                {
+                    const auto firstLength = glm::distance(
+                        pathOnScreen[startPointIndex],
+                        pathOnScreen[startPointIndex + 1]);
+                    const auto alreadyOccupiedPortion = alreadyOccupiedLength / firstLength;
+
+                    alreadyOccupiedLength = glm::distance(
+                        pathInWorld[startPointIndex],
+                        pathInWorld[startPointIndex + 1]) * alreadyOccupiedPortion;
+                }
+            }
+        }
+
+        // Add length of last segment [testPointIndex - 1, testPointIndex]
+        segmentLength += glm::distance(
+            (isRenderableAs2D ? pathOnScreen : pathInWorld)[testPointIndex - 1],
+            (isRenderableAs2D ? pathOnScreen : pathInWorld)[testPointIndex]);
+
+        // If segment length with subtracted "already-occupied portion" can fit requested length,
+        // then plot a renderable there
+        const auto requestedLength = renderableWidthInPixels * (isRenderableAs2D ? 1.0f : internalState.pixelInWorldProjectionScale);
+        if (segmentLength - alreadyOccupiedLength >= requestedLength)
+        {
+            endPointIndex = testPointIndex;
+            lastOccupiedLength = (segmentLength - alreadyOccupiedLength) - requestedLength;
+            lastOccupiedLengthIsIn2D = isRenderableAs2D;
+            return true;
+        }
+
+        testPointIndex++;
+    }
+
+    return false;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::determine2dOr3dModeOfRenderableFromOnPathSymbol(
