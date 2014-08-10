@@ -195,7 +195,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbol>& symbol,
             IntersectionsQuadTree& intersections) const;
         static std::shared_ptr<const GPUAPI::ResourceInGPU> captureGpuResource(
-            const std::shared_ptr<MapRendererBaseResource>& resource,
+            const MapRenderer::MapSymbolreferenceOrigins& resources,
             const std::shared_ptr<const MapSymbol>& mapSymbol);
     protected:
         void obtainRenderableSymbols(

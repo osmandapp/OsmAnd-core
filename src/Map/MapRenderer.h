@@ -35,7 +35,8 @@ namespace OsmAnd
         Q_DISABLE_COPY(MapRenderer);
 
     public:
-        typedef QHash< std::shared_ptr<const MapSymbol>, QSet< std::shared_ptr<MapRendererBaseResource> > > PublishedMapSymbols;
+        typedef QSet< std::shared_ptr<MapRendererBaseResource> > MapSymbolreferenceOrigins;
+        typedef QHash< std::shared_ptr<const MapSymbol>, MapSymbolreferenceOrigins > PublishedMapSymbols;
 
     private:
         // General:

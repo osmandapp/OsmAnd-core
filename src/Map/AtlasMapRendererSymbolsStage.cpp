@@ -244,11 +244,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableEntriesForOnPathSymbo
         const auto& points31 = symbol->path;
         assert(points31.size() >= 2);
 
-        // Take any first resource, since shared symbols can be processed via any resource:
-        const auto& resource = *symbolEntry.value().cbegin();
-
         // Get GPU resource
-        const auto gpuResource = captureGpuResource(resource, symbol_);
+        const auto gpuResource = captureGpuResource(symbolEntry.value(), symbol_);
         if (!gpuResource)
             continue;
 
@@ -542,11 +539,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortBillboardSymbols(
         if (!symbol)
             continue;
 
-        // Take any first resource, since shared symbols can be processed via any resource:
-        const auto& resource = *symbolEntry.value().cbegin();
-
         // Get GPU resource
-        const auto gpuResource = captureGpuResource(resource, symbol_);
+        const auto gpuResource = captureGpuResource(symbolEntry.value(), symbol_);
         if (!gpuResource)
             continue;
 
@@ -593,11 +587,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortOnSurfaceSymbols(
         if (!symbol)
             continue;
 
-        // Take any first resource, since shared symbols can be processed via any resource:
-        const auto& resource = *symbolEntry.value().cbegin();
-
         // Get GPU resource
-        const auto gpuResource = captureGpuResource(resource, symbol_);
+        const auto gpuResource = captureGpuResource(symbolEntry.value(), symbol_);
         if (!gpuResource)
             continue;
 
@@ -1422,20 +1413,27 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
 }
 
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSymbolsStage::captureGpuResource(
-    const std::shared_ptr<MapRendererBaseResource>& resource,
+    const MapRenderer::MapSymbolreferenceOrigins& resources,
     const std::shared_ptr<const MapSymbol>& mapSymbol)
 {
-    std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
-    if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+    for (auto& resource : constOf(resources))
     {
-        if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
-            gpuResource = tiledResource->getGpuResourceFor(mapSymbol);
-        else if (const auto keyedResource = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(resource))
-            gpuResource = keyedResource->getGpuResourceFor(mapSymbol);
+        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+        if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+        {
+            if (const auto tiledResource = std::dynamic_pointer_cast<MapRendererTiledSymbolsResource>(resource))
+                gpuResource = tiledResource->getGpuResourceFor(mapSymbol);
+            else if (const auto keyedResource = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(resource))
+                gpuResource = keyedResource->getGpuResourceFor(mapSymbol);
 
-        resource->setState(MapRendererResourceState::Uploaded);
+            resource->setState(MapRendererResourceState::Uploaded);
+        }
+
+        // Stop as soon as GPU resource found
+        if (gpuResource)
+            return gpuResource;
     }
-    return gpuResource;
+    return nullptr;
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage::RenderableSymbol::~RenderableSymbol()
