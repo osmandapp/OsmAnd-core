@@ -16,18 +16,19 @@ namespace OsmAnd
         virtual ~MapRendererDebugSettings();
 
         bool debugStageEnabled;
-        bool excludeOnPathSymbols;
-        bool excludeBillboardSymbols;
-        bool excludeOnSurfaceSymbols;
+        bool excludeOnPathSymbolsFromProcessing;
+        bool excludeBillboardSymbolsFromProcessing;
+        bool excludeOnSurfaceSymbolsFromProcessing;
         bool skipSymbolsIntersectionCheck;
         bool showSymbolsBBoxesAcceptedByIntersectionCheck;
         bool showSymbolsBBoxesRejectedByIntersectionCheck;
-        bool skipMinDistanceToSameContentFromOtherSymbolCheck;
+        bool skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck;
         bool showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
-        bool showOnPathSubpaths;
+        bool showOnPathSymbolsRenderablesPaths;
         bool showOnPath2dSymbolGlyphDetails;
         bool showOnPath3dSymbolGlyphDetails;
-        bool allTransparentForIntersectionLookup;
+        bool allSymbolsTransparentForIntersectionLookup;
+        bool showTooShortOnPathSymbolsRenderablesPaths;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;
         virtual std::shared_ptr<MapRendererDebugSettings> createCopy() const;

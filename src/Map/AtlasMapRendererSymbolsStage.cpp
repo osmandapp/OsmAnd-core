@@ -57,11 +57,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     {
         // Obtain renderables in order how they should be rendered
         QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
-        if (!debugSettings->excludeOnPathSymbols)
+        if (!debugSettings->excludeOnPathSymbolsFromProcessing)
             processOnPathSymbols(publishedMapSymbols, sortedRenderables);
-        if (!debugSettings->excludeBillboardSymbols)
+        if (!debugSettings->excludeBillboardSymbolsFromProcessing)
             processBillboardSymbols(publishedMapSymbols, sortedRenderables);
-        if (!debugSettings->excludeOnSurfaceSymbols)
+        if (!debugSettings->excludeOnSurfaceSymbolsFromProcessing)
             processOnSurfaceSymbols(publishedMapSymbols, sortedRenderables);
 
         // Plot symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
@@ -232,12 +232,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 {
     const auto& internalState = getInternalState();
 
-    // Each 'valid' OnPathSymbol may produce more than 1 renderable, because:
-    //  - OnPathSymbol may reference Group with other OnPathSymbols that represent multiple languages.
-    //    In this case whole path is covered with pattern " --- lang1 --- lang2 --- lang1... --- "
-    //  - OnPathSymbol
-
-    output.reserve(input.size());
     for (const auto& symbolEntry : rangeOf(constOf(input)))
     {
         const auto& symbol_ = symbolEntry.key();
@@ -247,12 +241,21 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         if (!symbol)
             continue;
         const auto& points31 = symbol->path;
-        assert(points31.size() >= 2);
 
-        // Get GPU resource
+        // Path must have at least 2 points
+        if (Q_UNLIKELY(points31.size() < 2))
+        {
+            assert(false);
+            continue;
+        }
+
+        // Get GPU resource for this map symbol
         const auto gpuResource = captureGpuResource(symbolEntry.value(), symbol_);
         if (!gpuResource)
             continue;
+
+        // Capture group of this symbol to get widths of all symbols
+        const auto& mapSymbolsGroup = symbol->group.lock();
 
         // Check first point to initialize subdivision
         auto pPoint31 = points31.constData();
@@ -419,7 +422,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::adjustPlacementOfGlyphsOnPath(
         }
         if (length < symbolWidth)
         {
-#if OSMAND_DEBUG && 0
+            if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths))
             {
                 QVector< glm::vec3 > debugPoints;
                 for (const auto& pointInWorld : renderable->subpathPointsInWorld)
@@ -431,7 +434,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::adjustPlacementOfGlyphsOnPath(
                 }
                 getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(is2D ? SK_ColorYELLOW : SK_ColorBLUE, 128));
             }
-#endif // OSMAND_DEBUG
 
             // If length of path is not enough to contain entire symbol, remove this subpath entirely
             itRenderableSOP.remove();
@@ -695,7 +697,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
-    if (Q_UNLIKELY(debugSettings->showOnPathSubpaths))
+    if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
     {
         QVector< glm::vec3 > debugPoints;
         for (const auto& pointInWorld : renderable->subpathPointsInWorld)
@@ -961,7 +963,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     if ((symbol->minDistance.x <= 0 && symbol->minDistance.y <= 0) || symbol->content.isNull())
         return true;
 
-    if (Q_UNLIKELY(debugSettings->skipMinDistanceToSameContentFromOtherSymbolCheck))
+    if (Q_UNLIKELY(debugSettings->skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck))
         return true;
 
     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
@@ -1000,7 +1002,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     if ((symbol->minDistance.x <= 0 && symbol->minDistance.y <= 0) || symbol->content.isNull())
         return true;
 
-    if (Q_UNLIKELY(debugSettings->skipMinDistanceToSameContentFromOtherSymbolCheck))
+    if (Q_UNLIKELY(debugSettings->skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck))
         return true;
 
     // Query for similar content in area of "minDistance" to exclude duplicates, but keep if from same mapObject
@@ -1376,7 +1378,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
     IntersectionsQuadTree& intersections) const
 {
     if (!symbol->intersectionModeFlags.isSet(MapSymbol::TransparentForIntersectionLookup) &&
-        !Q_UNLIKELY(debugSettings->allTransparentForIntersectionLookup))
+        !Q_UNLIKELY(debugSettings->allSymbolsTransparentForIntersectionLookup))
     {
         // Insert into quad-tree
         if (!intersections.insert(symbol, boundsInWindow))
@@ -1399,7 +1401,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
     IntersectionsQuadTree& intersections) const
 {
     if (!symbol->intersectionModeFlags.isSet(MapSymbol::TransparentForIntersectionLookup) &&
-        !Q_UNLIKELY(debugSettings->allTransparentForIntersectionLookup))
+        !Q_UNLIKELY(debugSettings->allSymbolsTransparentForIntersectionLookup))
     {
         // Insert into quad-tree
         if (!intersections.insert(symbol, OOBBI(oobb)))

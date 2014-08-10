@@ -2,18 +2,19 @@
 
 OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     : debugStageEnabled(false)
-    , excludeOnPathSymbols(false)
-    , excludeBillboardSymbols(false)
-    , excludeOnSurfaceSymbols(false)
+    , excludeOnPathSymbolsFromProcessing(false)
+    , excludeBillboardSymbolsFromProcessing(false)
+    , excludeOnSurfaceSymbolsFromProcessing(false)
     , skipSymbolsIntersectionCheck(false)
     , showSymbolsBBoxesAcceptedByIntersectionCheck(false)
     , showSymbolsBBoxesRejectedByIntersectionCheck(false)
-    , skipMinDistanceToSameContentFromOtherSymbolCheck(false)
+    , skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck(false)
     , showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck(false)
-    , showOnPathSubpaths(false)
+    , showOnPathSymbolsRenderablesPaths(false)
     , showOnPath2dSymbolGlyphDetails(false)
     , showOnPath3dSymbolGlyphDetails(false)
-    , allTransparentForIntersectionLookup(false)
+    , allSymbolsTransparentForIntersectionLookup(false)
+    , showTooShortOnPathSymbolsRenderablesPaths(false)
 {
 }
 
@@ -24,18 +25,19 @@ OsmAnd::MapRendererDebugSettings::~MapRendererDebugSettings()
 void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) const
 {
     other.debugStageEnabled = debugStageEnabled;
-    other.excludeOnPathSymbols = excludeOnPathSymbols;
-    other.excludeBillboardSymbols = excludeBillboardSymbols;
-    other.excludeOnSurfaceSymbols = excludeOnSurfaceSymbols;
+    other.excludeOnPathSymbolsFromProcessing = excludeOnPathSymbolsFromProcessing;
+    other.excludeBillboardSymbolsFromProcessing = excludeBillboardSymbolsFromProcessing;
+    other.excludeOnSurfaceSymbolsFromProcessing = excludeOnSurfaceSymbolsFromProcessing;
     other.skipSymbolsIntersectionCheck = skipSymbolsIntersectionCheck;
     other.showSymbolsBBoxesRejectedByIntersectionCheck = showSymbolsBBoxesRejectedByIntersectionCheck;
     other.showSymbolsBBoxesAcceptedByIntersectionCheck = showSymbolsBBoxesAcceptedByIntersectionCheck;
-    other.skipMinDistanceToSameContentFromOtherSymbolCheck = skipMinDistanceToSameContentFromOtherSymbolCheck;
+    other.skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck = skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck;
     other.showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck = showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
-    other.showOnPathSubpaths = showOnPathSubpaths;
+    other.showOnPathSymbolsRenderablesPaths = showOnPathSymbolsRenderablesPaths;
     other.showOnPath2dSymbolGlyphDetails = showOnPath2dSymbolGlyphDetails;
     other.showOnPath3dSymbolGlyphDetails = showOnPath3dSymbolGlyphDetails;
-    other.allTransparentForIntersectionLookup = allTransparentForIntersectionLookup;
+    other.allSymbolsTransparentForIntersectionLookup = allSymbolsTransparentForIntersectionLookup;
+    other.showTooShortOnPathSymbolsRenderablesPaths = showTooShortOnPathSymbolsRenderablesPaths;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const
