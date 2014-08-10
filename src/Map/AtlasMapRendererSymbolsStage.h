@@ -113,7 +113,7 @@ namespace OsmAnd
             QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
 
         // Determines if each renderable OnPathSymbol is 2D-mode or 3D-mode
-        void determineRenderableOnPathSymbolsMode(
+        void determine2dOr3dModeOfRenderableFromOnPathSymbol(
             QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
 
         // Adjusts renderable OnPathSymbol bitmap placement on entire path

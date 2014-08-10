@@ -373,11 +373,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::determine2dOr3dModeOfRenderableFromOn
         if (renderable->is2D)
         {
             // In case renderable needs 2D mode, all points have been projected on the screen already
+            // because all points have to be checked to ensure that 2D mode will work for this renderable
             renderable->subpathPointsOnScreen = qMove(pointsOnScreen);
         }
         else
         {
-            //NOTE: Well, actually nothing to do here.
+            //NOTE: Well, actually nothing to do here. And pointsOnScreen can be just discarded, that data is not going to be used anymore
         }
     }
 }
