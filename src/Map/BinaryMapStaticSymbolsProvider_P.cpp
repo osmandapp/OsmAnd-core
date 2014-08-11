@@ -152,7 +152,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 LogPrintf(LogSeverityLevel::Error, "BinaryMapObject #%" PRIu64 " (%" PRIi64 ") produced both billboard and on-path symbols",
                     mapObject->id,
                     static_cast<int64_t>(mapObject->id) / 2);
-                assert(false);
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
         }
