@@ -112,22 +112,23 @@ namespace OsmAnd
             const float alreadyOccupiedLength,
             unsigned int& outEndPointIndex,
             bool& outLastOccupiedLengthIsIn2D,
-            float& outLastOccupiedLength) const;
+            float& outLastOccupiedLength,
+            QVector<float>* outLengths = nullptr,
+            float* outRecalculatedAlreadyOccupiedLength = nullptr) const;
         glm::vec2 computeSubpathDirection(
             const QVector<glm::vec2>& path,
             const unsigned int startPointIndex,
             const unsigned int endPointIndex) const;
-        /*QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
+        QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
             const bool is2D,
             const QVector<glm::vec2>& pathInWorld,
             const QVector<glm::vec2>& pathOnScreen,
             const unsigned int startPointIndex,
             const unsigned int endPointIndex,
-            const float offsetFromStart) const;*/
-        //void placeGlyphsOnPathSymbolSubpath(
-        //    const std::shared_ptr<RenderableOnPathSymbol>& renderable,
-        //    bool& outShouldInvert,
-        //    glm::vec2& outDirectionOnScreenN) const;
+            const glm::vec2& directionOnScreen,
+            const QVector<float>& glyphsWidths,
+            const float offsetFromStart,
+            const QVector<float> lengths) const;
         double computeDistanceBetweenCameraToPath(
             const QVector<glm::vec2>& pathInWorld,
             const unsigned int startPointIndex,
