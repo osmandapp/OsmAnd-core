@@ -29,6 +29,7 @@ namespace OsmAnd
         bool showOnPath3dSymbolGlyphDetails;
         bool allSymbolsTransparentForIntersectionLookup;
         bool showTooShortOnPathSymbolsRenderablesPaths;
+        bool showAllPaths;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;
         virtual std::shared_ptr<MapRendererDebugSettings> createCopy() const;

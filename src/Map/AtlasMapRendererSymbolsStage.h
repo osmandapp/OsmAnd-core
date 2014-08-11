@@ -43,14 +43,9 @@ namespace OsmAnd
         {
             virtual ~RenderableOnPathSymbol();
 
-            int subpathStartIndex;
-            int subpathEndIndex;
-            QVector<glm::vec2> subpathPointsInWorld;
-            float offset;
-            float subpathLength;
-            QVector<float> segmentLengths;
-            glm::vec2 subpathDirectionOnScreen;
             bool is2D;
+            glm::vec2 directionInWorld;
+            glm::vec2 directionOnScreen;
 
             struct GlyphPlacement
             {
@@ -78,12 +73,6 @@ namespace OsmAnd
                 glm::vec2 vNormal;
             };
             QVector< GlyphPlacement > glyphsPlacement;
-
-            // 2D-only:
-            QVector<glm::vec2> subpathPointsOnScreen;
-
-            // 3D-only:
-            glm::vec2 subpathDirectioInWorld;
         };
 
         struct RenderableOnSurfaceSymbol : RenderableSymbol
@@ -108,33 +97,41 @@ namespace OsmAnd
             const MapRenderer::PublishedMapSymbols& input,
             QList< std::shared_ptr<RenderableOnPathSymbol> >& output) const;
 
-        // Calculates renderable OnPathSymbols to in world
-        void calculatePointsInWorldForRenderableFromOnPathSymbol(
-            QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
         QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31) const;
         QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const;
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const;
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld, unsigned int startIndex, unsigned int endIndex) const;
         bool isInclineAllowedFor2D(const glm::vec2& pointOnScreen0, const glm::vec2& pointOnScreen1) const;
-        bool plotRenderableOnPath(
+        bool tryToFindSpaceOnPath(
             const unsigned int pathSize,
             const QVector<glm::vec2>& pathInWorld,
             const QVector<glm::vec2>& pathOnScreen,
-            const float renderableWidthInPixels,
+            const float requestedLengthInPixels,
             const unsigned int startPointIndex,
             const bool alreadyOccupiedLengthIsIn2D,
             const float alreadyOccupiedLength,
-            unsigned int& endPointIndex,
-            float& lastOccupiedLength,
-            bool& lastOccupiedLengthIsIn2D) const;
-
-        // Determines if each renderable OnPathSymbol is 2D-mode or 3D-mode
-        void determine2dOr3dModeOfRenderableFromOnPathSymbol(
-            QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
-
-        // Adjusts renderable OnPathSymbol bitmap placement on entire path
-        void adjustPlacementOfGlyphsOnPath(
-            QList< std::shared_ptr<RenderableOnPathSymbol> >& entries) const;
+            unsigned int& outEndPointIndex,
+            bool& outLastOccupiedLengthIsIn2D,
+            float& outLastOccupiedLength) const;
+        glm::vec2 computeSubpathDirection(
+            const QVector<glm::vec2>& path,
+            const unsigned int startPointIndex,
+            const unsigned int endPointIndex) const;
+        /*QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
+            const bool is2D,
+            const QVector<glm::vec2>& pathInWorld,
+            const QVector<glm::vec2>& pathOnScreen,
+            const unsigned int startPointIndex,
+            const unsigned int endPointIndex,
+            const float offsetFromStart) const;*/
+        //void placeGlyphsOnPathSymbolSubpath(
+        //    const std::shared_ptr<RenderableOnPathSymbol>& renderable,
+        //    bool& outShouldInvert,
+        //    glm::vec2& outDirectionOnScreenN) const;
+        double computeDistanceBetweenCameraToPath(
+            const QVector<glm::vec2>& pathInWorld,
+            const unsigned int startPointIndex,
+            const unsigned int endPointIndex) const;
 
         void sortRenderablesFromOnPathSymbols(
             const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries,
@@ -197,10 +194,6 @@ namespace OsmAnd
             const IntersectionsQuadTree& intersections) const;
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
         OOBBF calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
-        void placeGlyphsOnPathSymbolSubpath(
-            const std::shared_ptr<RenderableOnPathSymbol>& renderable,
-            bool& outShouldInvert,
-            glm::vec2& outDirectionOnScreenN) const;
         bool plotSymbol(
             const AreaI boundsInWindow,
             const std::shared_ptr<const MapSymbol>& symbol,
