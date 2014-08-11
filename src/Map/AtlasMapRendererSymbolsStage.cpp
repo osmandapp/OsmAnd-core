@@ -257,8 +257,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 }
                 getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorWHITE);
             }
-
-            //assert(false);
             continue;
         }
 
@@ -281,27 +279,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         }
 
         //////////////////////////////////////////////////////////////////////////
-        if (mapSymbolsGroup->symbols.first() != currentSymbol_)
-            continue;
+        /*if (mapSymbolsGroup->symbols.first() != currentSymbol_)
+            continue;*/
         //////////////////////////////////////////////////////////////////////////
 
         // Calculate current path in world and screen coordinates.
         // NOTE: There's an assumption that all OnPathSymbols from same group share same path
         const auto pathInWorld = convertPoints31ToWorld(currentSymbol->path);
         const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
-
-        if (Q_UNLIKELY(debugSettings->showAllPaths))
-        {
-            QVector< glm::vec3 > debugPoints;
-            for (const auto& pointInWorld : pathInWorld)
-            {
-                debugPoints.push_back(qMove(glm::vec3(
-                    pointInWorld.x,
-                    0.0f,
-                    pointInWorld.y)));
-            }
-            getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorGRAY);
-        }
 
         // First "plot" virtual renderable that occupies length of "widthBeforeCurrentSymbol" pixels
         unsigned int originPointIndex = 0;
@@ -327,12 +312,39 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         }
 
         // Get GPU resource for this map symbol
-        const auto gpuResource_ = captureGpuResource(symbolEntry.value(), currentSymbol_);
-        if (!gpuResource_)
-            continue;
-        const auto gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(gpuResource_);
+        const auto gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(captureGpuResource(symbolEntry.value(), currentSymbol_));
         if (!gpuResource)
+        {
+            if (Q_UNLIKELY(debugSettings->showAllPaths))
+            {
+                QVector< glm::vec3 > debugPoints;
+                for (const auto& pointInWorld : pathInWorld)
+                {
+                    debugPoints.push_back(qMove(glm::vec3(
+                        pointInWorld.x,
+                        0.0f,
+                        pointInWorld.y)));
+                }
+                getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorCYAN);
+            }
+
             continue;
+        }
+
+        // Draw this path fully only once
+        if (Q_UNLIKELY(debugSettings->showAllPaths) &&
+            currentSymbol_ == mapSymbolsGroup->symbols.first())
+        {
+            QVector< glm::vec3 > debugPoints;
+            for (const auto& pointInWorld : pathInWorld)
+            {
+                debugPoints.push_back(qMove(glm::vec3(
+                    pointInWorld.x,
+                    0.0f,
+                    pointInWorld.y)));
+            }
+            getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorGRAY);
+        }
         
         // Try to fit as many instances of current symbol as possible
         unsigned int symbolInstancesFitted = 0;
@@ -444,7 +456,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 
             //TODO: find space for a space between end of current symbol instance and next symbol instance
 
-            break;//just stop for now
+            //break;//just stop for now
         }
 
         int i = 5;
