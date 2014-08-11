@@ -279,8 +279,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         }
 
         //////////////////////////////////////////////////////////////////////////
-        /*if (mapSymbolsGroup->symbols.first() != currentSymbol_)
-            continue;*/
+        if (mapSymbolsGroup->symbols.first() != currentSymbol_)
+            continue;
         //////////////////////////////////////////////////////////////////////////
 
         // Calculate current path in world and screen coordinates.
@@ -477,6 +477,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 nextOriginOccupiedLength);
             if (!offsetBeforeNextSymbolInstanceFits)
                 break;
+
+            //////////////////////////////////////////////////////////////////////////
+            // So far allow only once instance that should be at the very beginning
+            break;
+            //////////////////////////////////////////////////////////////////////////
         }
     }
 }
@@ -731,17 +736,15 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
                 glyphsPlacement.resize(glyphsPlotted);
                 return glyphsPlacement;
             }
-            const auto& p0 = path[testPointIndex];
-            const auto& p1 = path[testPointIndex - 1];
+            const auto& p0 = path[testPointIndex - 1];
+            const auto& p1 = path[testPointIndex];
             lastSegmentLength = lengths[lengthIndex];
             segmentsLengthSum += lastSegmentLength;
             testPointIndex++;
             lengthIndex++;
 
-            vLastPoint0.x = p0.x;
-            vLastPoint0.y = p0.y;
-            vLastPoint1.x = p1.x;
-            vLastPoint1.y = p1.y;
+            vLastPoint0 = p0;
+            vLastPoint1 = p1;
             vLastSegment = (vLastPoint1 - vLastPoint0) / lastSegmentLength;
             if (is2D)
             {
