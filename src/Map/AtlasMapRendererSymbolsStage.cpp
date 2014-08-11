@@ -421,6 +421,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 
             if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
             {
+                const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
+
                 // Path itself
                 QVector< glm::vec3 > debugPoints;
                 auto pPointInWorld = pathInWorld.constData() + subpathStartIndex;
@@ -433,33 +435,42 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 }
                 getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
 
-                //// Subpath N (start)
-                //{
-                //    QVector<glm::vec2> lineN;
-                //    const auto sn0 = pathOnScreen[subpathStartIndex];
-                //    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                //    const auto sn1 = pathOnScreen[subpathStartIndex] + (subpathDirectionOnScreenN*32.0f);
-                //    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                //    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-                //}
+                // Subpath N (start)
+                {
+                    QVector<glm::vec2> lineN;
+                    const auto sn0 = pathOnScreen[subpathStartIndex];
+                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                    const auto sn1 = pathOnScreen[subpathStartIndex] + (directionOnScreenN*32.0f);
+                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+                }
 
-                //// Subpath N (end)
-                //{
-                //    QVector<glm::vec2> lineN;
-                //    const auto sn0 = pathOnScreen[subpathEndIndex];
-                //    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                //    const auto sn1 = pathOnScreen[subpathEndIndex] + (subpathDirectionOnScreenN*32.0f);
-                //    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                //    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-                //}
+                // Subpath N (end)
+                {
+                    QVector<glm::vec2> lineN;
+                    const auto sn0 = pathOnScreen[subpathEndIndex];
+                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                    const auto sn1 = pathOnScreen[subpathEndIndex] + (directionOnScreenN*32.0f);
+                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+                }
             }
 
-            //TODO: find space for a space between end of current symbol instance and next symbol instance
-
-            //break;//just stop for now
+            // Find offset after current instance of the symbol before next instance of the symbol
+            const auto offsetBeforeNextSymbolInstanceFits = tryToFindSpaceOnPath(
+                currentSymbol->path.size(),
+                pathInWorld,
+                pathOnScreen,
+                totalWidth - currentSymbol->size.x,
+                nextOriginPointIndex,
+                nextOriginOccupiedLengthIsIn2D,
+                nextOriginOccupiedLength,
+                nextOriginPointIndex,
+                nextOriginOccupiedLengthIsIn2D,
+                nextOriginOccupiedLength);
+            if (!offsetBeforeNextSymbolInstanceFits)
+                break;
         }
-
-        int i = 5;
     }
 }
 
