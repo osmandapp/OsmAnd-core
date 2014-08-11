@@ -278,13 +278,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             totalWidth += otherSymbol->size.x;
         }
 
-        //////////////////////////////////////////////////////////////////////////
-        if (mapSymbolsGroup->symbols.first() != currentSymbol_)
-            continue;
-        //////////////////////////////////////////////////////////////////////////
-
         // Calculate current path in world and screen coordinates.
         // NOTE: There's an assumption that all OnPathSymbols from same group share same path
+        const auto pathSize = currentSymbol->path.size();
         const auto pathInWorld = convertPoints31ToWorld(currentSymbol->path);
         const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
 
@@ -295,7 +291,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         if (widthBeforeCurrentSymbol > 0.0f)
         {
             const auto offsetBeforeCurrentSymbolFits = tryToFindSpaceOnPath(
-                currentSymbol->path.size(),
+                pathSize,
                 pathInWorld,
                 pathOnScreen,
                 widthBeforeCurrentSymbol,
@@ -305,10 +301,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 originPointIndex,
                 originOccupiedLengthIsIn2D,
                 originOccupiedLength);
-
+            
             // In case even offset failed to fit, nothing can be done
             if (!offsetBeforeCurrentSymbolFits)
                 continue;
+
+            // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
+            // origin points index should point to previous point
+            originPointIndex -= 1;
         }
 
         // Get GPU resource for this map symbol
@@ -357,7 +357,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             float offsetFromStart = nextOriginOccupiedLength;
             QVector<float> lengths;
             const auto currentSymbolInstanceFits = tryToFindSpaceOnPath(
-                currentSymbol->path.size(),
+                pathSize,
                 pathInWorld,
                 pathOnScreen,
                 currentSymbol->size.x,
@@ -391,10 +391,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 
                 break;
             }
+            // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
+            // next origin points index should point to previous point
+            nextOriginPointIndex -= 1;
 
             // Actually plot the instance
             const auto is2D = nextOriginOccupiedLengthIsIn2D;
-            const auto subpathEndIndex = nextOriginPointIndex;
+            const auto subpathEndIndex = nextOriginPointIndex + 1;
             const auto subpathPointsCount = subpathEndIndex - subpathStartIndex + 1;
             assert(lengths.size() == subpathPointsCount - 1);
             std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
@@ -464,11 +467,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             }
 
             // Find offset after current instance of the symbol before next instance of the symbol
+            const auto spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance = totalWidth - currentSymbol->size.x;
             const auto offsetBeforeNextSymbolInstanceFits = tryToFindSpaceOnPath(
-                currentSymbol->path.size(),
+                pathSize,
                 pathInWorld,
                 pathOnScreen,
-                totalWidth - currentSymbol->size.x,
+                spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance,
                 nextOriginPointIndex,
                 nextOriginOccupiedLengthIsIn2D,
                 nextOriginOccupiedLength,
@@ -477,11 +481,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 nextOriginOccupiedLength);
             if (!offsetBeforeNextSymbolInstanceFits)
                 break;
-
-            //////////////////////////////////////////////////////////////////////////
-            // So far allow only once instance that should be at the very beginning
-            break;
-            //////////////////////////////////////////////////////////////////////////
+            // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
+            // next origin points index should point to previous point
+            nextOriginPointIndex -= 1;
         }
     }
 }
