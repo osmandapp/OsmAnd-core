@@ -23,7 +23,7 @@ namespace OsmAnd
         : public MapRenderer
         , public IAtlasMapRenderer
     {
-        Q_DISABLE_COPY(AtlasMapRenderer);
+        Q_DISABLE_COPY_AND_MOVE(AtlasMapRenderer);
 
     private:
         // General:

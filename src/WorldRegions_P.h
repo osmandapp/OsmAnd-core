@@ -18,7 +18,7 @@ namespace OsmAnd
     class WorldRegions;
     class WorldRegions_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(WorldRegions_P)
+        Q_DISABLE_COPY_AND_MOVE(WorldRegions_P)
     public:
         typedef WorldRegions::WorldRegion WorldRegion;
 

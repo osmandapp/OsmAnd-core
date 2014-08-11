@@ -16,7 +16,7 @@ namespace OsmAnd
         : public RasterMapSymbol
         , public IOnSurfaceMapSymbol
     {
-        Q_DISABLE_COPY(OnSurfaceRasterMapSymbol);
+        Q_DISABLE_COPY_AND_MOVE(OnSurfaceRasterMapSymbol);
     private:
     protected:
     public:

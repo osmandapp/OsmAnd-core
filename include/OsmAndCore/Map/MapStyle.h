@@ -38,7 +38,7 @@ namespace OsmAnd
     class MapStyle_P;
     class OSMAND_CORE_API MapStyle
     {
-        Q_DISABLE_COPY(MapStyle);
+        Q_DISABLE_COPY_AND_MOVE(MapStyle);
     private:
         PrivateImplementation<MapStyle_P> _p;
     protected:

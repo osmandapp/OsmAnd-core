@@ -28,7 +28,7 @@ namespace OsmAnd
     class Primitiviser_P;
     class OSMAND_CORE_API Primitiviser
     {
-        Q_DISABLE_COPY(Primitiviser);
+        Q_DISABLE_COPY_AND_MOVE(Primitiviser);
     public:
         enum class PrimitiveType : uint32_t
         {
@@ -45,7 +45,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API PrimitivesGroup Q_DECL_FINAL
         {
-            Q_DISABLE_COPY(PrimitivesGroup);
+            Q_DISABLE_COPY_AND_MOVE(PrimitivesGroup);
         private:
         protected:
             PrimitivesGroup(const std::shared_ptr<const Model::BinaryMapObject>& sourceObject);
@@ -64,7 +64,7 @@ namespace OsmAnd
         
         class OSMAND_CORE_API Primitive Q_DECL_FINAL
         {
-            Q_DISABLE_COPY(Primitive);
+            Q_DISABLE_COPY_AND_MOVE(Primitive);
         private:
         protected:
             Primitive(
@@ -109,7 +109,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API SymbolsGroup Q_DECL_FINAL
         {
-            Q_DISABLE_COPY(SymbolsGroup);
+            Q_DISABLE_COPY_AND_MOVE(SymbolsGroup);
         private:
         protected:
             SymbolsGroup(const std::shared_ptr<const Model::BinaryMapObject>& sourceObject);
@@ -126,7 +126,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Symbol
         {
-            Q_DISABLE_COPY(Symbol);
+            Q_DISABLE_COPY_AND_MOVE(Symbol);
         private:
         protected:
             Symbol(const std::shared_ptr<const Primitive>& primitive);
@@ -144,7 +144,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API TextSymbol : public Symbol
         {
-            Q_DISABLE_COPY(TextSymbol);
+            Q_DISABLE_COPY_AND_MOVE(TextSymbol);
         private:
         protected:
             TextSymbol(const std::shared_ptr<const Primitive>& primitive);
@@ -170,7 +170,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IconSymbol : public Symbol
         {
-            Q_DISABLE_COPY(IconSymbol);
+            Q_DISABLE_COPY_AND_MOVE(IconSymbol);
         private:
         protected:
             IconSymbol(const std::shared_ptr<const Primitive>& primitive);
@@ -185,7 +185,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Cache
         {
-            Q_DISABLE_COPY(Cache);
+            Q_DISABLE_COPY_AND_MOVE(Cache);
         public:
             typedef SharedResourcesContainer<uint64_t, const PrimitivesGroup> SharedPrimitivesGroupsContainer;
             typedef SharedResourcesContainer<uint64_t, const SymbolsGroup> SharedSymbolsGroupsContainer;
@@ -211,7 +211,7 @@ namespace OsmAnd
         
         class OSMAND_CORE_API PrimitivisedArea Q_DECL_FINAL
         {
-            Q_DISABLE_COPY(PrimitivisedArea);
+            Q_DISABLE_COPY_AND_MOVE(PrimitivisedArea);
         private:
             const std::weak_ptr<Cache> _cache;
         protected:

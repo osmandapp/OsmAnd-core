@@ -22,7 +22,7 @@ namespace OsmAnd
     class MapMarkerBuilder_P;
     class OSMAND_CORE_API MapMarkerBuilder
     {
-        Q_DISABLE_COPY(MapMarkerBuilder);
+        Q_DISABLE_COPY_AND_MOVE(MapMarkerBuilder);
 
     private:
         PrivateImplementation<MapMarkerBuilder_P> _p;

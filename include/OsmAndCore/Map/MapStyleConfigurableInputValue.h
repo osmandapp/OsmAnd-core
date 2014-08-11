@@ -16,7 +16,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API MapStyleConfigurableInputValue : public MapStyleValueDefinition
     {
-        Q_DISABLE_COPY(MapStyleConfigurableInputValue);
+        Q_DISABLE_COPY_AND_MOVE(MapStyleConfigurableInputValue);
     private:
     protected:
         MapStyleConfigurableInputValue(const MapStyleValueDataType dataType, const QString& name, const QString& title, const QString& description, const QStringList& possibleValues);

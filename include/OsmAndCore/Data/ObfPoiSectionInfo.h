@@ -16,7 +16,7 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API ObfPoiSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY(ObfPoiSectionInfo)
+        Q_DISABLE_COPY_AND_MOVE(ObfPoiSectionInfo)
     private:
     protected:
         ObfPoiSectionInfo(const std::weak_ptr<ObfInfo>& owner);

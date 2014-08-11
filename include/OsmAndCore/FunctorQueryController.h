@@ -14,7 +14,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API FunctorQueryController : public IQueryController
     {
-        Q_DISABLE_COPY(FunctorQueryController);
+        Q_DISABLE_COPY_AND_MOVE(FunctorQueryController);
 
     public:
         OSMAND_CALLABLE(Callback, bool, const FunctorQueryController* const controller);

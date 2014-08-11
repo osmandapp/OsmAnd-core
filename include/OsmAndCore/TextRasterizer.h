@@ -21,7 +21,7 @@ namespace OsmAnd
     class TextRasterizer_P;
     class OSMAND_CORE_API TextRasterizer
     {
-        Q_DISABLE_COPY(TextRasterizer);
+        Q_DISABLE_COPY_AND_MOVE(TextRasterizer);
     public:
         struct Style Q_DECL_FINAL
         {

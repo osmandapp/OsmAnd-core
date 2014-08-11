@@ -94,16 +94,16 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_minZoom));
                 break;
             case OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.left));
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.left()));
                 break;
             case OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.right));
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.right()));
                 break;
             case OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.top));
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.top()));
                 break;
             case OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.bottom));
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.bottom()));
                 break;
             case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             {
@@ -252,28 +252,28 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
             case OBF::OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                treeNode->_area31.left = d + parentArea.left;
+                treeNode->_area31.left() = d + parentArea.left();
 
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kRightFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                treeNode->_area31.right = d + parentArea.right;
+                treeNode->_area31.right() = d + parentArea.right();
 
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                treeNode->_area31.top = d + parentArea.top;
+                treeNode->_area31.top() = d + parentArea.top();
 
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                treeNode->_area31.bottom = d + parentArea.bottom;
+                treeNode->_area31.bottom() = d + parentArea.bottom();
 
                 break;
             }
@@ -573,12 +573,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 const auto oldLimit = cis->PushLimit(length);
 
                 PointI p;
-                p.x = treeNode->_area31.left & MaskToRead;
-                p.y = treeNode->_area31.top & MaskToRead;
+                p.x = treeNode->_area31.left() & MaskToRead;
+                p.y = treeNode->_area31.top() & MaskToRead;
 
                 AreaI objectBBox;
-                objectBBox.top = objectBBox.left = std::numeric_limits<int32_t>::max();
-                objectBBox.bottom = objectBBox.right = 0;
+                objectBBox.top() = objectBBox.left() = std::numeric_limits<int32_t>::max();
+                objectBBox.bottom() = objectBBox.right() = 0;
                 auto lastUnprocessedVertexForBBox = 0;
 
                 // In protobuf, a sint32 can be encoded using [1..4] bytes,
@@ -686,12 +686,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
                 mapObject->_points31 = qMove(points31);
                 mapObject->_bbox31 = objectBBox;
-                assert(treeNode->_area31.top - mapObject->_bbox31.top <= 32);
-                assert(treeNode->_area31.left - mapObject->_bbox31.left <= 32);
-                assert(mapObject->_bbox31.bottom - treeNode->_area31.bottom <= 1);
-                assert(mapObject->_bbox31.right - treeNode->_area31.right <= 1);
-                assert(mapObject->_bbox31.right >= mapObject->_bbox31.left);
-                assert(mapObject->_bbox31.bottom >= mapObject->_bbox31.top);
+                assert(treeNode->_area31.top() - mapObject->_bbox31.top() <= 32);
+                assert(treeNode->_area31.left() - mapObject->_bbox31.left() <= 32);
+                assert(mapObject->_bbox31.bottom() - treeNode->_area31.bottom() <= 1);
+                assert(mapObject->_bbox31.right() - treeNode->_area31.right() <= 1);
+                assert(mapObject->_bbox31.right() >= mapObject->_bbox31.left());
+                assert(mapObject->_bbox31.bottom() >= mapObject->_bbox31.top());
 
                 break;
             }
@@ -705,8 +705,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 auto oldLimit = cis->PushLimit(length);
 
                 PointI p;
-                p.x = treeNode->_area31.left & MaskToRead;
-                p.y = treeNode->_area31.top & MaskToRead;
+                p.x = treeNode->_area31.left() & MaskToRead;
+                p.y = treeNode->_area31.top() & MaskToRead;
 
                 // Preallocate memory
                 const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);

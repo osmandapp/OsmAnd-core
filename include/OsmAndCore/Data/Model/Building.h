@@ -15,7 +15,7 @@ namespace OsmAnd
     {
         class OSMAND_CORE_API Building
         {
-            Q_DISABLE_COPY(Building);
+            Q_DISABLE_COPY_AND_MOVE(Building);
         public:
             enum Interpolation 
             {

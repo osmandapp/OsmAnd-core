@@ -18,7 +18,7 @@ namespace OsmAnd
     class FavoriteLocationsGpxCollection_P;
     class OSMAND_CORE_API FavoriteLocationsGpxCollection : public FavoriteLocationsCollection
     {
-        Q_DISABLE_COPY(FavoriteLocationsGpxCollection);
+        Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsGpxCollection);
 
     private:
         FavoriteLocationsGpxCollection_P* _p;

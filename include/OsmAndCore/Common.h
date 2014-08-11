@@ -6,11 +6,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include <OsmAndCore/QtExtraDefinitions.h>
 #include <OsmAndCore/QtExtensions.h>
-
-#if !defined(qPrintableRef)
-#  define qPrintableRef(stringRef) (stringRef).toLocal8Bit().constData()
-#endif // !defined(qPrintableRef)
 
 #if defined(TEXT) && defined(_T)
 #   define xT(x) _T(x)
@@ -20,12 +17,6 @@
 #   else
 #       define xT(x) x
 #   endif
-#endif
-
-#if defined(_UNICODE) || defined(UNICODE)
-#   define QStringToStlString(x) (x).toStdWString()
-#else
-#   define QStringToStlString(x) (x).toStdString()
 #endif
 
 #define REPEAT_UNTIL(exp) \

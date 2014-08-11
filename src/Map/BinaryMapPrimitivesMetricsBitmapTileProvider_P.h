@@ -19,7 +19,7 @@ namespace OsmAnd
     class BinaryMapPrimitivesMetricsBitmapTileProvider;
     class BinaryMapPrimitivesMetricsBitmapTileProvider_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(BinaryMapPrimitivesMetricsBitmapTileProvider_P);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapPrimitivesMetricsBitmapTileProvider_P);
     private:
     protected:
         BinaryMapPrimitivesMetricsBitmapTileProvider_P(BinaryMapPrimitivesMetricsBitmapTileProvider* const owner);

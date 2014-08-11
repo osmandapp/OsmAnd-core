@@ -16,7 +16,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IExternalResourcesProvider
     {
-        Q_DISABLE_COPY(IExternalResourcesProvider);
+        Q_DISABLE_COPY_AND_MOVE(IExternalResourcesProvider);
     public:
         IExternalResourcesProvider();
         virtual ~IExternalResourcesProvider();

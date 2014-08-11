@@ -18,7 +18,7 @@ namespace OsmAnd
     template<typename... ARGS>
     class Observable
     {
-        Q_DISABLE_COPY(Observable);
+        Q_DISABLE_COPY_AND_MOVE(Observable);
     public:
         typedef std::function<void (ARGS...)> Handler;
         typedef const void* Tag;
@@ -91,7 +91,7 @@ namespace OsmAnd
     template<typename RETURN_TYPE, typename... ARGS>
     class ObservableAs<RETURN_TYPE(*)(ARGS...)> : public Observable< ARGS... >
     {
-        Q_DISABLE_COPY(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     private:
     protected:
     public:
@@ -107,7 +107,7 @@ namespace OsmAnd
     template<typename CLASS, typename RETURN_TYPE, typename... ARGS>
     class ObservableAs<RETURN_TYPE(CLASS::*)(ARGS...)> : public Observable< ARGS... >
     {
-        Q_DISABLE_COPY(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     private:
     protected:
     public:
@@ -123,7 +123,7 @@ namespace OsmAnd
     template<typename CLASS, typename RETURN_TYPE, typename... ARGS>
     class ObservableAs<RETURN_TYPE(CLASS::*)(ARGS...) const> : public Observable< ARGS... >
     {
-        Q_DISABLE_COPY(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     private:
     protected:
     public:
@@ -139,7 +139,7 @@ namespace OsmAnd
     template<typename CLASS, typename RETURN_TYPE>
     class ObservableAs<RETURN_TYPE(CLASS::*)> : public Observable<>
     {
-        Q_DISABLE_COPY(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     private:
     protected:
     public:
@@ -155,7 +155,7 @@ namespace OsmAnd
     template<class F>
     class ObservableAs : public ObservableAs< decltype(&F::operator()) >
     {
-        Q_DISABLE_COPY(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     private:
     protected:
     public:

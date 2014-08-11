@@ -23,7 +23,7 @@ namespace OsmAnd
     class MapStyleRule_P;
     class OSMAND_CORE_API MapStyleRule
     {
-        Q_DISABLE_COPY(MapStyleRule);
+        Q_DISABLE_COPY_AND_MOVE(MapStyleRule);
     private:
         PrivateImplementation<MapStyleRule_P> _p;
     protected:

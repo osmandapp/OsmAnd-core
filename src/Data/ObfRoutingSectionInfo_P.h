@@ -21,7 +21,7 @@ namespace OsmAnd
     class ObfRoutingSectionInfo;
     class ObfRoutingSectionInfo_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(ObfRoutingSectionInfo_P)
+        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionInfo_P)
     private:
     protected:
         ObfRoutingSectionInfo_P(ObfRoutingSectionInfo* owner);

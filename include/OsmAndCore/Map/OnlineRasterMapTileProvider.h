@@ -18,7 +18,7 @@ namespace OsmAnd
     class OnlineRasterMapTileProvider_P;
     class OSMAND_CORE_API OnlineRasterMapTileProvider : public IMapRasterBitmapTileProvider
     {
-        Q_DISABLE_COPY(OnlineRasterMapTileProvider);
+        Q_DISABLE_COPY_AND_MOVE(OnlineRasterMapTileProvider);
     private:
         PrivateImplementation<OnlineRasterMapTileProvider_P> _p;
     protected:

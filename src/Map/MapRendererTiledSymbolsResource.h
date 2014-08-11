@@ -30,7 +30,7 @@ namespace OsmAnd
 
         class GroupResources
         {
-            Q_DISABLE_COPY(GroupResources);
+            Q_DISABLE_COPY_AND_MOVE(GroupResources);
         private:
         protected:
             GroupResources(const std::shared_ptr<MapSymbolsGroup>& group);
@@ -46,7 +46,7 @@ namespace OsmAnd
 
         class SharedGroupResources : public GroupResources
         {
-            Q_DISABLE_COPY(SharedGroupResources);
+            Q_DISABLE_COPY_AND_MOVE(SharedGroupResources);
         private:
         protected:
             SharedGroupResources(const std::shared_ptr<MapSymbolsGroup>& group);

@@ -16,6 +16,8 @@ namespace OsmAnd
     template<typename ELEMENT_TYPE, typename COORD_TYPE>
     class QuadTree
     {
+        Q_DISABLE_COPY_AND_MOVE(QuadTree);
+
     public:
         typedef Area<COORD_TYPE> AreaT;
         typedef OOBB<COORD_TYPE> OOBBT;
@@ -100,7 +102,6 @@ namespace OsmAnd
 
         typedef std::function<bool (const ELEMENT_TYPE& element, const BBox& bbox)> Acceptor;
     private:
-        Q_DISABLE_COPY(QuadTree)
     protected:
         struct Node
         {
@@ -268,6 +269,9 @@ namespace OsmAnd
                 else /* if (bbox_.type == BBoxType::OOBB) */
                     return which.intersects(what.asOOBB);
             }
+
+        private:
+            Q_DISABLE_COPY_AND_MOVE(Node);
         };
 
         std::unique_ptr< Node > _root;

@@ -31,7 +31,7 @@ namespace OsmAnd
     class ResourcesManager_P;
     class OSMAND_CORE_API ResourcesManager
     {
-        Q_DISABLE_COPY(ResourcesManager);
+        Q_DISABLE_COPY_AND_MOVE(ResourcesManager);
     public:
         enum class ResourceType
         {
@@ -58,7 +58,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Resource
         {
-            Q_DISABLE_COPY(Resource);
+            Q_DISABLE_COPY_AND_MOVE(Resource);
 
         public:
             struct OSMAND_CORE_API Metadata
@@ -89,7 +89,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API LocalResource : public Resource
         {
-            Q_DISABLE_COPY(LocalResource);
+            Q_DISABLE_COPY_AND_MOVE(LocalResource);
         private:
         protected:
             LocalResource(
@@ -109,7 +109,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API UnmanagedResource : public LocalResource
         {
-            Q_DISABLE_COPY(UnmanagedResource);
+            Q_DISABLE_COPY_AND_MOVE(UnmanagedResource);
         private:
         protected:
             UnmanagedResource(
@@ -128,7 +128,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API InstalledResource : public LocalResource
         {
-            Q_DISABLE_COPY(InstalledResource);
+            Q_DISABLE_COPY_AND_MOVE(InstalledResource);
         private:
         protected:
             InstalledResource(
@@ -149,7 +149,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API BuiltinResource : public Resource
         {
-            Q_DISABLE_COPY(BuiltinResource);
+            Q_DISABLE_COPY_AND_MOVE(BuiltinResource);
         private:
         protected:
             BuiltinResource(
@@ -164,7 +164,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API ResourceInRepository : public Resource
         {
-            Q_DISABLE_COPY(ResourceInRepository);
+            Q_DISABLE_COPY_AND_MOVE(ResourceInRepository);
         private:
         protected:
             ResourceInRepository(

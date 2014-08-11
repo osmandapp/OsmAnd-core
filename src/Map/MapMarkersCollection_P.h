@@ -27,7 +27,7 @@ namespace OsmAnd
     class MapMarkersCollection;
     class MapMarkersCollection_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(MapMarkersCollection_P);
+        Q_DISABLE_COPY_AND_MOVE(MapMarkersCollection_P);
 
     public:
         typedef MapMarkersCollection::Key Key;

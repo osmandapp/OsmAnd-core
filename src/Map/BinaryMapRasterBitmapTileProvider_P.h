@@ -22,7 +22,7 @@ namespace OsmAnd
     class BinaryMapRasterBitmapTileProvider;
     class BinaryMapRasterBitmapTileProvider_P
     {
-        Q_DISABLE_COPY(BinaryMapRasterBitmapTileProvider_P);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapRasterBitmapTileProvider_P);
     private:
     protected:
         BinaryMapRasterBitmapTileProvider_P(BinaryMapRasterBitmapTileProvider* const owner);

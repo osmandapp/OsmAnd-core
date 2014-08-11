@@ -79,16 +79,16 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStopsBounds( const ObfRea
         case 0:
             return;
         case OBF::TransportStopsTree::kLeftFieldNumber:
-            section->_area24.left = ObfReaderUtilities::readSInt32(cis);
+            section->_area24.left() = ObfReaderUtilities::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kRightFieldNumber:
-            section->_area24.right = ObfReaderUtilities::readSInt32(cis);
+            section->_area24.right() = ObfReaderUtilities::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kTopFieldNumber:
-            section->_area24.top = ObfReaderUtilities::readSInt32(cis);
+            section->_area24.top() = ObfReaderUtilities::readSInt32(cis);
             break;
         case OBF::TransportStopsTree::kBottomFieldNumber:
-            section->_area24.bottom = ObfReaderUtilities::readSInt32(cis);
+            section->_area24.bottom() = ObfReaderUtilities::readSInt32(cis);
             break;
         default:
             ObfReaderUtilities::skipUnknownField(cis, tag);

@@ -20,7 +20,7 @@ namespace OsmAnd
         : public MapRendererBaseResource
         , public KeyedEntriesCollectionEntryWithState< IMapKeyedDataProvider::Key, MapRendererBaseKeyedResource, MapRendererResourceState, MapRendererResourceState::Unknown >
     {
-        Q_DISABLE_COPY(MapRendererBaseKeyedResource);
+        Q_DISABLE_COPY_AND_MOVE(MapRendererBaseKeyedResource);
 
     public:
         typedef IMapKeyedDataProvider::Key Key;

@@ -204,25 +204,25 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNode(
             case OBF::OsmAndRoutingIndex_RouteDataBox::kLeftFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                node->area31.left = d + (parentNode ? parentNode->area31.left : 0);
+                node->area31.left() = d + (parentNode ? parentNode->area31.left() : 0);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kRightFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                node->area31.right = d + (parentNode ? parentNode->area31.right : 0);
+                node->area31.right() = d + (parentNode ? parentNode->area31.right() : 0);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kTopFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                node->area31.top = d + (parentNode ? parentNode->area31.top : 0);
+                node->area31.top() = d + (parentNode ? parentNode->area31.top() : 0);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kBottomFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                node->area31.bottom = d + (parentNode ? parentNode->area31.bottom : 0);
+                node->area31.bottom() = d + (parentNode ? parentNode->area31.bottom() : 0);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kShiftToDataFieldNumber:
@@ -543,8 +543,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                 auto oldLimit = cis->PushLimit(length);
 
                 AreaI roadBBox;
-                roadBBox.top = roadBBox.left = std::numeric_limits<int32_t>::max();
-                roadBBox.bottom = roadBBox.right = 0;
+                roadBBox.top() = roadBBox.left() = std::numeric_limits<int32_t>::max();
+                roadBBox.bottom() = roadBBox.right() = 0;
                 auto lastUnprocessedPointForBBox = 0;
 
                 // In protobuf, a sint32 can be encoded using [1..4] bytes,
@@ -556,8 +556,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
 
                 bool shouldNotSkip = (bbox31 == nullptr);
                 auto pointsCount = 0;
-                auto dx = treeNode->area31.left >> ShiftCoordinates;
-                auto dy = treeNode->area31.top >> ShiftCoordinates;
+                auto dx = treeNode->area31.left() >> ShiftCoordinates;
+                auto dy = treeNode->area31.top() >> ShiftCoordinates;
                 auto pPoint = points31.data();
                 while (cis->BytesUntilLimit() > 0)
                 {

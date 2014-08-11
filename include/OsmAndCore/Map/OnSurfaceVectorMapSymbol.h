@@ -16,7 +16,7 @@ namespace OsmAnd
         : public VectorMapSymbol
         , public IOnSurfaceMapSymbol
     {
-        Q_DISABLE_COPY(OnSurfaceVectorMapSymbol);
+        Q_DISABLE_COPY_AND_MOVE(OnSurfaceVectorMapSymbol);
 
     private:
     protected:

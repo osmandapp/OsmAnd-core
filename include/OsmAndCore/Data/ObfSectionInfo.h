@@ -18,7 +18,7 @@ namespace OsmAnd
 
     class ObfSectionInfo
     {
-        Q_DISABLE_COPY(ObfSectionInfo);
+        Q_DISABLE_COPY_AND_MOVE(ObfSectionInfo);
     private:
         static QAtomicInt _nextRuntimeGeneratedId;
     protected:

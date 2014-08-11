@@ -23,7 +23,7 @@ namespace OsmAnd
     class CachingRoadLocator_P;
     class OSMAND_CORE_API CachingRoadLocator : public IRoadLocator
     {
-        Q_DISABLE_COPY(CachingRoadLocator);
+        Q_DISABLE_COPY_AND_MOVE(CachingRoadLocator);
     private:
         PrivateImplementation<CachingRoadLocator_P> _p;
     protected:

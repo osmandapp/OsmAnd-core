@@ -12,7 +12,7 @@ namespace OsmAnd
 {
     class MemoryManager : public IMemoryManager
     {
-        Q_DISABLE_COPY(MemoryManager);
+        Q_DISABLE_COPY_AND_MOVE(MemoryManager);
     private:
     protected:
     public:

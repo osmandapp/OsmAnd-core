@@ -131,10 +131,10 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
         const auto& encDecRules = owner->environment->dummyMapSection->encodingDecodingRules;
         const std::shared_ptr<Model::BinaryMapObject> bgMapObject(new Model::BinaryMapObject(owner->environment->dummyMapSection, nullptr));
         bgMapObject->_isArea = true;
-        bgMapObject->_points31.push_back(qMove(PointI(area31.left, area31.top)));
-        bgMapObject->_points31.push_back(qMove(PointI(area31.right, area31.top)));
-        bgMapObject->_points31.push_back(qMove(PointI(area31.right, area31.bottom)));
-        bgMapObject->_points31.push_back(qMove(PointI(area31.left, area31.bottom)));
+        bgMapObject->_points31.push_back(qMove(PointI(area31.left(), area31.top())));
+        bgMapObject->_points31.push_back(qMove(PointI(area31.right(), area31.top())));
+        bgMapObject->_points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
+        bgMapObject->_points31.push_back(qMove(PointI(area31.left(), area31.bottom())));
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
         if (foundation == MapFoundationType::FullWater)
             bgMapObject->_typesRuleIds.push_back(encDecRules->naturalCoastline_encodingRuleId);
@@ -242,10 +242,10 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     // Align area to 32: this fixes coastlines and specifically Antarctica
     const auto area31 = primitivisedArea->area31;
     auto alignedArea31 = primitivisedArea->area31;
-    alignedArea31.top &= ~((1u << 5) - 1);
-    alignedArea31.left &= ~((1u << 5) - 1);
-    alignedArea31.bottom &= ~((1u << 5) - 1);
-    alignedArea31.right &= ~((1u << 5) - 1);
+    alignedArea31.top() &= ~((1u << 5) - 1);
+    alignedArea31.left() &= ~((1u << 5) - 1);
+    alignedArea31.bottom() &= ~((1u << 5) - 1);
+    alignedArea31.right() &= ~((1u << 5) - 1);
 
     uint64_t osmId = 0;
     QVector< PointI > linePoints31;
@@ -309,10 +309,10 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     {
         // Add complete water tile with holes
         const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
-        mapObject->_points31.push_back(qMove(PointI(area31.left, area31.top)));
-        mapObject->_points31.push_back(qMove(PointI(area31.right, area31.top)));
-        mapObject->_points31.push_back(qMove(PointI(area31.right, area31.bottom)));
-        mapObject->_points31.push_back(qMove(PointI(area31.left, area31.bottom)));
+        mapObject->_points31.push_back(qMove(PointI(area31.left(), area31.top())));
+        mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.top())));
+        mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
+        mapObject->_points31.push_back(qMove(PointI(area31.left(), area31.bottom())));
         mapObject->_points31.push_back(mapObject->_points31.first());
         convertCoastlinePolylinesToPolygons(env, primitivisedArea, coastlinePolylines, mapObject->_innerPolygonsPoints31, osmId);
 
@@ -328,10 +328,10 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     if (!coastlinePolylines.isEmpty())
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Invalid polylines found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
-            primitivisedArea->area31.top,
-            primitivisedArea->area31.left,
-            primitivisedArea->area31.bottom,
-            primitivisedArea->area31.right,
+            primitivisedArea->area31.top(),
+            primitivisedArea->area31.left(),
+            primitivisedArea->area31.bottom(),
+            primitivisedArea->area31.right(),
             primitivisedArea->zoom);
     }
 
@@ -394,18 +394,18 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     if (fullWaterObjects == 0u && !coastlineCrossesBounds)
     {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Isolated islands found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
-            primitivisedArea->area31.top,
-            primitivisedArea->area31.left,
-            primitivisedArea->area31.bottom,
-            primitivisedArea->area31.right,
+            primitivisedArea->area31.top(),
+            primitivisedArea->area31.left(),
+            primitivisedArea->area31.bottom(),
+            primitivisedArea->area31.right(),
             primitivisedArea->zoom);
 
         // Add complete water tile
         const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
-        mapObject->_points31.push_back(qMove(PointI(area31.left, area31.top)));
-        mapObject->_points31.push_back(qMove(PointI(area31.right, area31.top)));
-        mapObject->_points31.push_back(qMove(PointI(area31.right, area31.bottom)));
-        mapObject->_points31.push_back(qMove(PointI(area31.left, area31.bottom)));
+        mapObject->_points31.push_back(qMove(PointI(area31.left(), area31.top())));
+        mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.top())));
+        mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
+        mapObject->_points31.push_back(qMove(PointI(area31.left(), area31.bottom())));
         mapObject->_points31.push_back(mapObject->_points31.first());
 
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
@@ -432,10 +432,10 @@ bool OsmAnd::Primitiviser_P::buildCoastlinePolygonSegment(
 
     // Align area to 32: this fixes coastlines and specifically Antarctica
     auto alignedArea31 = primitivisedArea->area31;
-    alignedArea31.top &= ~((1u << 5) - 1);
-    alignedArea31.left &= ~((1u << 5) - 1);
-    alignedArea31.bottom &= ~((1u << 5) - 1);
-    alignedArea31.right &= ~((1u << 5) - 1);
+    alignedArea31.top() &= ~((1u << 5) - 1);
+    alignedArea31.left() &= ~((1u << 5) - 1);
+    alignedArea31.bottom() &= ~((1u << 5) - 1);
+    alignedArea31.right() &= ~((1u << 5) - 1);
 
     auto point = currentPoint31;
     if (prevInside)
@@ -484,10 +484,10 @@ bool OsmAnd::Primitiviser_P::calculateIntersection(const PointI& p1, const Point
     const auto& py = p0.y;
     const auto& x = p1.x;
     const auto& y = p1.y;
-    const auto& leftX = bbox.left;
-    const auto& rightX = bbox.right;
-    const auto& topY = bbox.top;
-    const auto& bottomY = bbox.bottom;
+    const auto& leftX = bbox.left();
+    const auto& rightX = bbox.right();
+    const auto& topY = bbox.top();
+    const auto& bottomY = bbox.bottom();
 
     // firstly try to search if the line goes in
     if (py < topY && y >= topY) {
@@ -640,10 +640,10 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
 {
     // Align area to 32: this fixes coastlines and specifically Antarctica
     auto alignedArea31 = primitivisedArea->area31;
-    alignedArea31.top &= ~((1u << 5) - 1);
-    alignedArea31.left &= ~((1u << 5) - 1);
-    alignedArea31.bottom &= ~((1u << 5) - 1);
-    alignedArea31.right &= ~((1u << 5) - 1);
+    alignedArea31.top() &= ~((1u << 5) - 1);
+    alignedArea31.left() &= ~((1u << 5) - 1);
+    alignedArea31.bottom() &= ~((1u << 5) - 1);
+    alignedArea31.right() &= ~((1u << 5) - 1);
 
     QList< QVector< PointI > > validPolylines;
 
@@ -772,23 +772,23 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
 
                 if (side == AreaI::Edge::Top)
                 {
-                    p.y = alignedArea31.top;
-                    p.x = alignedArea31.left;
+                    p.y = alignedArea31.top();
+                    p.x = alignedArea31.left();
                 }
                 else if (side == AreaI::Edge::Right)
                 {
-                    p.y = alignedArea31.top;
-                    p.x = alignedArea31.right;
+                    p.y = alignedArea31.top();
+                    p.x = alignedArea31.right();
                 }
                 else if (side == AreaI::Edge::Bottom)
                 {
-                    p.y = alignedArea31.bottom;
-                    p.x = alignedArea31.right;
+                    p.y = alignedArea31.bottom();
+                    p.x = alignedArea31.right();
                 }
                 else if (side == AreaI::Edge::Left)
                 {
-                    p.y = alignedArea31.bottom;
-                    p.x = alignedArea31.left;
+                    p.y = alignedArea31.bottom();
+                    p.x = alignedArea31.left();
                 }
 
                 polyline.push_back(qMove(p));

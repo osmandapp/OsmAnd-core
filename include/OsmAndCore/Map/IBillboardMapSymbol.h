@@ -12,7 +12,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IBillboardMapSymbol
     {
-        Q_DISABLE_COPY(IBillboardMapSymbol);
+        Q_DISABLE_COPY_AND_MOVE(IBillboardMapSymbol);
     private:
     protected:
         IBillboardMapSymbol();

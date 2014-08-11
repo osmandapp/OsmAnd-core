@@ -21,7 +21,7 @@ namespace OsmAnd
     class MapStylesPresetsCollection;
     class MapStylesPresetsCollection_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(MapStylesPresetsCollection_P);
+        Q_DISABLE_COPY_AND_MOVE(MapStylesPresetsCollection_P);
     private:
     protected:
         MapStylesPresetsCollection_P(MapStylesPresetsCollection* const owner);

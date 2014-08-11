@@ -19,7 +19,7 @@ namespace OsmAnd
 {
     class GPUAPI_OpenGL3 : public GPUAPI_OpenGL
     {
-        Q_DISABLE_COPY(GPUAPI_OpenGL3);
+        Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL3);
     private:
         void preprocessShader(QString& code);
 

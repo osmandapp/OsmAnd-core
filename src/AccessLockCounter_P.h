@@ -15,7 +15,7 @@ namespace OsmAnd
     class AccessLockCounter;
     class AccessLockCounter_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(AccessLockCounter_P)
+        Q_DISABLE_COPY_AND_MOVE(AccessLockCounter_P)
     private:
         mutable QMutex _lockCounterMutex;
         mutable QWaitCondition _lockCounterWaitCondition;

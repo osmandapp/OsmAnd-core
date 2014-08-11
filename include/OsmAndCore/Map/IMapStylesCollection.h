@@ -15,7 +15,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IMapStylesCollection
     {
-        Q_DISABLE_COPY(IMapStylesCollection);
+        Q_DISABLE_COPY_AND_MOVE(IMapStylesCollection);
     private:
     protected:
         IMapStylesCollection();

@@ -18,7 +18,7 @@ namespace OsmAnd
     class MapAnimator_P;
     class OSMAND_CORE_API MapAnimator
     {
-        Q_DISABLE_COPY(MapAnimator);
+        Q_DISABLE_COPY_AND_MOVE(MapAnimator);
     public:
         typedef const void* Key;
 
@@ -57,7 +57,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IAnimation
         {
-            Q_DISABLE_COPY(IAnimation);
+            Q_DISABLE_COPY_AND_MOVE(IAnimation);
 
         private:
         protected:

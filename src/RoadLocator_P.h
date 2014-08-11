@@ -22,7 +22,7 @@ namespace OsmAnd
     class RoadLocator;
     class RoadLocator_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(RoadLocator_P);
+        Q_DISABLE_COPY_AND_MOVE(RoadLocator_P);
     private:
     protected:
         RoadLocator_P(RoadLocator* const owner);

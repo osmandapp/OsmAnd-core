@@ -363,17 +363,17 @@ namespace OsmAnd
 
             const auto zoomShift = ZoomLevel31 - zoom;
 
-            output.top = tileId.y << zoomShift;
-            output.left = tileId.x << zoomShift;
-            output.bottom = ((tileId.y + 1) << zoomShift) - 1;
-            output.right = ((tileId.x + 1) << zoomShift) - 1;
+            output.top() = tileId.y << zoomShift;
+            output.left() = tileId.x << zoomShift;
+            output.bottom() = ((tileId.y + 1) << zoomShift) - 1;
+            output.right() = ((tileId.x + 1) << zoomShift) - 1;
 
-            assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
-            assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
-            assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
-            assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
-            assert(output.right >= output.left);
-            assert(output.bottom >= output.top);
+            assert(output.top() >= 0 && output.top() <= std::numeric_limits<int32_t>::max());
+            assert(output.left() >= 0 && output.left() <= std::numeric_limits<int32_t>::max());
+            assert(output.bottom() >= 0 && output.bottom() <= std::numeric_limits<int32_t>::max());
+            assert(output.right() >= 0 && output.right() <= std::numeric_limits<int32_t>::max());
+            assert(output.right() >= output.left());
+            assert(output.bottom() >= output.top());
 
             return output;
         }
@@ -383,20 +383,20 @@ namespace OsmAnd
             AreaI output;
             uint32_t tail;
 
-            output.top = input.top >> shift;
-            output.left = input.left >> shift;
+            output.top() = input.top() >> shift;
+            output.left() = input.left() >> shift;
 
-            tail = input.bottom & ((1 << shift) - 1);
-            output.bottom = (input.bottom >> shift) + (tail ? 1 : 0);
-            tail = input.right & ((1 << shift) - 1);
-            output.right = (input.right >> shift) + (tail ? 1 : 0);
+            tail = input.bottom() & ((1 << shift) - 1);
+            output.bottom() = (input.bottom() >> shift) + (tail ? 1 : 0);
+            tail = input.right() & ((1 << shift) - 1);
+            output.right() = (input.right() >> shift) + (tail ? 1 : 0);
 
-            assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
-            assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
-            assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
-            assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
-            assert(output.right >= output.left);
-            assert(output.bottom >= output.top);
+            assert(output.top() >= 0 && output.top() <= std::numeric_limits<int32_t>::max());
+            assert(output.left() >= 0 && output.left() <= std::numeric_limits<int32_t>::max());
+            assert(output.bottom() >= 0 && output.bottom() <= std::numeric_limits<int32_t>::max());
+            assert(output.right() >= 0 && output.right() <= std::numeric_limits<int32_t>::max());
+            assert(output.right() >= output.left());
+            assert(output.bottom() >= output.top());
 
             return output;
         }
@@ -405,17 +405,17 @@ namespace OsmAnd
         {
             AreaI output;
 
-            output.top = input.top << shift;
-            output.left = input.left << shift;
-            output.bottom = input.bottom << shift;
-            output.right = input.right << shift;
+            output.top() = input.top() << shift;
+            output.left() = input.left() << shift;
+            output.bottom() = input.bottom() << shift;
+            output.right() = input.right() << shift;
 
-            assert(output.top >= 0 && output.top <= std::numeric_limits<int32_t>::max());
-            assert(output.left >= 0 && output.left <= std::numeric_limits<int32_t>::max());
-            assert(output.bottom >= 0 && output.bottom <= std::numeric_limits<int32_t>::max());
-            assert(output.right >= 0 && output.right <= std::numeric_limits<int32_t>::max());
-            assert(output.right >= output.left);
-            assert(output.bottom >= output.top);
+            assert(output.top() >= 0 && output.top() <= std::numeric_limits<int32_t>::max());
+            assert(output.left() >= 0 && output.left() <= std::numeric_limits<int32_t>::max());
+            assert(output.bottom() >= 0 && output.bottom() <= std::numeric_limits<int32_t>::max());
+            assert(output.right() >= 0 && output.right() <= std::numeric_limits<int32_t>::max());
+            assert(output.right() >= output.left());
+            assert(output.bottom() >= output.top());
 
             return output;
         }
@@ -537,13 +537,13 @@ namespace OsmAnd
         {
             uint8_t res = static_cast<uint8_t>(CHCode::Inside);
 
-            if (p.x < box.left)           // to the left of clip box
+            if (p.x < box.left())           // to the left of clip box
                 res |= static_cast<uint8_t>(CHCode::Left);
-            else if (p.x > box.right)     // to the right of clip box
+            else if (p.x > box.right())     // to the right of clip box
                 res |= static_cast<uint8_t>(CHCode::Right);
-            if (p.y < box.top)            // above the clip box
+            if (p.y < box.top())            // above the clip box
                 res |= static_cast<uint8_t>(CHCode::Bottom);
-            else if (p.y > box.bottom)    // below the clip box
+            else if (p.y > box.bottom())    // below the clip box
                 res |= static_cast<uint8_t>(CHCode::Top);
 
             return res;

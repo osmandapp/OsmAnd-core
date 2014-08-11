@@ -21,7 +21,7 @@ namespace OsmAnd
 {
     class AtlasMapRenderer_OpenGL : public AtlasMapRenderer
     {
-        Q_DISABLE_COPY(AtlasMapRenderer_OpenGL);
+        Q_DISABLE_COPY_AND_MOVE(AtlasMapRenderer_OpenGL);
     public:
         // Short type aliases:
         typedef AtlasMapRendererInternalState_OpenGL InternalState;

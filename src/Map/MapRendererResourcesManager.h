@@ -46,7 +46,7 @@ namespace OsmAnd
 
     class MapRendererResourcesManager
     {
-        Q_DISABLE_COPY(MapRendererResourcesManager);
+        Q_DISABLE_COPY_AND_MOVE(MapRendererResourcesManager);
 
     public:
         typedef std::array< QList< std::shared_ptr<MapRendererBaseResourcesCollection> >, MapRendererResourceTypesCount > ResourcesStorage;
@@ -57,7 +57,7 @@ namespace OsmAnd
         QThreadPool _resourcesRequestWorkersPool;
         class ResourceRequestTask : public Concurrent::HostedTask
         {
-            Q_DISABLE_COPY(ResourceRequestTask);
+            Q_DISABLE_COPY_AND_MOVE(ResourceRequestTask);
         private:
         protected:
         public:

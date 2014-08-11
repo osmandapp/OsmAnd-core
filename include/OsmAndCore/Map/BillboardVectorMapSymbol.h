@@ -16,7 +16,7 @@ namespace OsmAnd
         : public VectorMapSymbol
         , public IBillboardMapSymbol
     {
-        Q_DISABLE_COPY(BillboardVectorMapSymbol);
+        Q_DISABLE_COPY_AND_MOVE(BillboardVectorMapSymbol);
 
     private:
     protected:

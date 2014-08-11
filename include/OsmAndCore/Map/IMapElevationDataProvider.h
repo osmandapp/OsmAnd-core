@@ -13,7 +13,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IMapElevationDataProvider : public IMapTiledDataProvider
     {
-        Q_DISABLE_COPY(IMapElevationDataProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapElevationDataProvider);
     private:
     protected:
         IMapElevationDataProvider();
@@ -25,7 +25,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ElevationDataTile : public MapTiledData
     {
-        Q_DISABLE_COPY(ElevationDataTile);
+        Q_DISABLE_COPY_AND_MOVE(ElevationDataTile);
     public:
         typedef const float* DataPtr;
 

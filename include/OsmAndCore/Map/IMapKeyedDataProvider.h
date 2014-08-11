@@ -17,7 +17,7 @@ namespace OsmAnd
     // IMapKeyedDataProvider describes minimal interface that providers with keyed-based access must implement
     class OSMAND_CORE_API IMapKeyedDataProvider : public IMapDataProvider
     {
-        Q_DISABLE_COPY(IMapKeyedDataProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapKeyedDataProvider);
 
     public:
         typedef const void* Key;
@@ -37,7 +37,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API MapKeyedData : public MapData
     {
-        Q_DISABLE_COPY(MapKeyedData);
+        Q_DISABLE_COPY_AND_MOVE(MapKeyedData);
 
     public:
         typedef IMapKeyedDataProvider::Key Key;

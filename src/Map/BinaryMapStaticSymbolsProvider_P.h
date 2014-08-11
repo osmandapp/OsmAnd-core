@@ -37,7 +37,7 @@ namespace OsmAnd
 
         class MapSymbolsGroupShareableByMapObjectId : public MapSymbolsGroupShareableById
         {
-            Q_DISABLE_COPY(MapSymbolsGroupShareableByMapObjectId);
+            Q_DISABLE_COPY_AND_MOVE(MapSymbolsGroupShareableByMapObjectId);
         private:
         protected:
         public:

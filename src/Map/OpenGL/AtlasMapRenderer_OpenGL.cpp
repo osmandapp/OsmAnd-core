@@ -179,8 +179,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     if (viewportWidth == 0 || viewportHeight == 0)
         return false;
     internalState->glmViewport = glm::vec4(
-        state.viewport.left,
-        state.windowSize.y - state.viewport.bottom,
+        state.viewport.left(),
+        state.windowSize.y - state.viewport.bottom(),
         state.viewport.width(),
         state.viewport.height());
     internalState->aspectRatio = static_cast<float>(viewportWidth) / static_cast<float>(viewportHeight);
@@ -237,9 +237,9 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->mPerspectiveProjectionInv = glm::inverse(internalState->mPerspectiveProjection);
 
     // Calculate orthographic projection
-    const auto viewportBottom = state.windowSize.y - state.viewport.bottom;
+    const auto viewportBottom = state.windowSize.y - state.viewport.bottom();
     internalState->mOrthographicProjection = glm::ortho(
-        static_cast<float>(state.viewport.left), static_cast<float>(state.viewport.right),
+        static_cast<float>(state.viewport.left()), static_cast<float>(state.viewport.right()),
         static_cast<float>(viewportBottom) /*bottom*/, static_cast<float>(viewportBottom + viewportHeight) /*top*/,
         _zNear, internalState->zFar);
 

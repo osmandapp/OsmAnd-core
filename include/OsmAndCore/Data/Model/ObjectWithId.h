@@ -13,7 +13,7 @@ namespace OsmAnd
     {
         class OSMAND_CORE_API ObjectWithId
         {
-            Q_DISABLE_COPY(ObjectWithId);
+            Q_DISABLE_COPY_AND_MOVE(ObjectWithId);
         private:
         protected:
             ObjectWithId();

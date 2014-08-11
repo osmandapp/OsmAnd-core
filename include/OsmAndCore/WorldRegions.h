@@ -17,11 +17,11 @@ namespace OsmAnd
     class WorldRegions_P;
     class OSMAND_CORE_API WorldRegions
     {
-        Q_DISABLE_COPY(WorldRegions)
+        Q_DISABLE_COPY_AND_MOVE(WorldRegions)
     public:
         class OSMAND_CORE_API WorldRegion
         {
-            Q_DISABLE_COPY(WorldRegion)
+            Q_DISABLE_COPY_AND_MOVE(WorldRegion)
         private:
         protected:
             WorldRegion(

@@ -23,7 +23,7 @@ namespace OsmAnd
     class MapRasterizer_P;
     class OSMAND_CORE_API MapRasterizer
     {
-        Q_DISABLE_COPY(MapRasterizer);
+        Q_DISABLE_COPY_AND_MOVE(MapRasterizer);
     private:
         PrivateImplementation<MapRasterizer_P> _p;
     protected:

@@ -86,7 +86,7 @@ namespace OsmAnd
             float direction;
         };
 
-        typedef QuadTree< std::shared_ptr<const MapSymbol>, AreaI::CoordType > IntersectionsQuadTree;
+        typedef QuadTree< std::shared_ptr<const RenderableSymbol>, AreaI::CoordType > IntersectionsQuadTree;
 
     private:
         void processOnPathSymbols(
@@ -179,29 +179,29 @@ namespace OsmAnd
 
         bool applyIntersectionWithOtherSymbolsFiltering(
             const AreaI boundsInWindow,
-            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<const RenderableSymbol>& renderable,
             const IntersectionsQuadTree& intersections) const;
         bool applyIntersectionWithOtherSymbolsFiltering(
             const OOBBF oobb,
-            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<const RenderableSymbol>& renderable,
             const IntersectionsQuadTree& intersections) const;
         bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
             const AreaI boundsInWindow,
-            const std::shared_ptr<const RasterMapSymbol>& symbol,
+            const std::shared_ptr<const RenderableSymbol>& renderable,
             const IntersectionsQuadTree& intersections) const;
         bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
             const OOBBF oobb,
-            const std::shared_ptr<const RasterMapSymbol>& symbol,
+            const std::shared_ptr<const RenderableSymbol>& renderable,
             const IntersectionsQuadTree& intersections) const;
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
         OOBBF calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
-        bool plotSymbol(
+        bool plotRenderable(
             const AreaI boundsInWindow,
-            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<const RenderableSymbol>& renderable,
             IntersectionsQuadTree& intersections) const;
-        bool plotSymbol(
+        bool plotRenderable(
             const OOBBF oobb,
-            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<const RenderableSymbol>& renderable,
             IntersectionsQuadTree& intersections) const;
         static std::shared_ptr<const GPUAPI::ResourceInGPU> captureGpuResource(
             const MapRenderer::MapSymbolreferenceOrigins& resources,

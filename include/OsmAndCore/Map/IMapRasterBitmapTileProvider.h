@@ -17,7 +17,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IMapRasterBitmapTileProvider : public IMapTiledDataProvider
     {
-        Q_DISABLE_COPY(IMapRasterBitmapTileProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapRasterBitmapTileProvider);
     private:
     protected:
         IMapRasterBitmapTileProvider();
@@ -30,7 +30,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API RasterBitmapTile : public MapTiledData
     {
-        Q_DISABLE_COPY(RasterBitmapTile);
+        Q_DISABLE_COPY_AND_MOVE(RasterBitmapTile);
 
     private:
     protected:

@@ -13,7 +13,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API FunctorLogSink : public ILogSink
     {
-        Q_DISABLE_COPY(FunctorLogSink);
+        Q_DISABLE_COPY_AND_MOVE(FunctorLogSink);
 
     public:
         OSMAND_CALLABLE(WriteCallback, void, FunctorLogSink* const sink, const LogSeverityLevel level, const char* format, va_list args);

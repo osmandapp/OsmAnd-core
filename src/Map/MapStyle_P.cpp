@@ -941,8 +941,6 @@ bool OsmAnd::MapStyle_P::parseValue(const std::shared_ptr<const MapStyleValueDef
     default:
         return false;
     }
-
-    return false;
 }
 
 bool OsmAnd::MapStyle_P::parseValue(const std::shared_ptr<const MapStyleValueDefinition>& valueDef, const QString& input, MapStyleValue& output) const

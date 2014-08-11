@@ -13,7 +13,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API QIODeviceLogSink : public ILogSink
     {
-        Q_DISABLE_COPY(QIODeviceLogSink);
+        Q_DISABLE_COPY_AND_MOVE(QIODeviceLogSink);
     private:
         const std::shared_ptr<QIODevice> _device;
         const bool _autoClose;

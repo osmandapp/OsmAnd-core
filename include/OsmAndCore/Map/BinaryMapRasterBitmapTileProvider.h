@@ -23,7 +23,7 @@ namespace OsmAnd
     class BinaryMapRasterBitmapTileProvider_P;
     class OSMAND_CORE_API BinaryMapRasterBitmapTileProvider : public IMapRasterBitmapTileProvider
     {
-        Q_DISABLE_COPY(BinaryMapRasterBitmapTileProvider);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapRasterBitmapTileProvider);
     private:
         PrivateImplementation<BinaryMapRasterBitmapTileProvider_P> _p;
     protected:
@@ -57,7 +57,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API BinaryMapRasterizedTile : public RasterBitmapTile
     {
-        Q_DISABLE_COPY(BinaryMapRasterizedTile);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapRasterizedTile);
 
     private:
     protected:

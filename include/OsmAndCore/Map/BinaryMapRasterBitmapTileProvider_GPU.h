@@ -17,7 +17,7 @@ namespace OsmAnd
     class BinaryMapRasterBitmapTileProvider_GPU_P;
     class OSMAND_CORE_API BinaryMapRasterBitmapTileProvider_GPU : public BinaryMapRasterBitmapTileProvider
     {
-        Q_DISABLE_COPY(BinaryMapRasterBitmapTileProvider_GPU);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapRasterBitmapTileProvider_GPU);
     private:
     protected:
     public:

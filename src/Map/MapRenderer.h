@@ -32,7 +32,7 @@ namespace OsmAnd
     
     class MapRenderer : public IMapRenderer
     {
-        Q_DISABLE_COPY(MapRenderer);
+        Q_DISABLE_COPY_AND_MOVE(MapRenderer);
 
     public:
         typedef QSet< std::shared_ptr<MapRendererBaseResource> > MapSymbolreferenceOrigins;

@@ -26,7 +26,7 @@ namespace OsmAnd
     class MapAnimator;
     class MapAnimator_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(MapAnimator_P);
+        Q_DISABLE_COPY_AND_MOVE(MapAnimator_P);
     public:
         typedef MapAnimator::TimingFunction TimingFunction;
         typedef MapAnimator::AnimatedValue AnimatedValue;
@@ -48,7 +48,7 @@ namespace OsmAnd
 
         class GenericAnimation : public IAnimation
         {
-            Q_DISABLE_COPY(GenericAnimation);
+            Q_DISABLE_COPY_AND_MOVE(GenericAnimation);
         private:
         protected:
             mutable QReadWriteLock _processLock;
@@ -294,7 +294,7 @@ namespace OsmAnd
         template <typename T>
         class Animation : public GenericAnimation
         {
-            Q_DISABLE_COPY(Animation);
+            Q_DISABLE_COPY_AND_MOVE(Animation);
         public:
             typedef std::function<void (const T newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> ApplierMethod;
             typedef std::function<T (AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)> GetInitialValueMethod;

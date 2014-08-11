@@ -44,7 +44,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Road
         {
-            Q_DISABLE_COPY(Road);
+            Q_DISABLE_COPY_AND_MOVE(Road);
         private:
         protected:
             const std::shared_ptr<const Road> _ref;

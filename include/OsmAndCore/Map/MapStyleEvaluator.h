@@ -23,7 +23,7 @@ namespace OsmAnd
     class MapStyleEvaluator_P;
     class OSMAND_CORE_API MapStyleEvaluator
     {
-        Q_DISABLE_COPY(MapStyleEvaluator);
+        Q_DISABLE_COPY_AND_MOVE(MapStyleEvaluator);
     private:
         PrivateImplementation<MapStyleEvaluator_P> _p;
     protected:

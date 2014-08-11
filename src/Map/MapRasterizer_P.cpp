@@ -165,10 +165,10 @@ void OsmAnd::MapRasterizer_P::rasterize(
             bgPaint.setColor(primitivizedArea->defaultBackgroundColor);
             bgPaint.setStyle(SkPaint::kFill_Style);
             canvas.drawRectCoords(
-                pDestinationArea->top,
-                pDestinationArea->left,
-                pDestinationArea->right,
-                pDestinationArea->bottom,
+                pDestinationArea->top(),
+                pDestinationArea->left(),
+                pDestinationArea->right(),
+                pDestinationArea->bottom(),
                 bgPaint);
         }
         else
@@ -407,10 +407,10 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
                 containsAtLeastOnePoint = true;
             else
                 outerPoints.push_back(point);
-            bounds |= (point.x < area31.left ? 1 : 0);
-            bounds |= (point.x > area31.right ? 2 : 0);
-            bounds |= (point.y < area31.top ? 4 : 0);
-            bounds |= (point.y > area31.bottom ? 8 : 0);
+            bounds |= (point.x < area31.left() ? 1 : 0);
+            bounds |= (point.x > area31.right() ? 2 : 0);
+            bounds |= (point.y < area31.top() ? 4 : 0);
+            bounds |= (point.y > area31.bottom() ? 8 : 0);
         }
 
         // Plot vertex
@@ -430,8 +430,8 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         bool ok = true;
         ok = ok || containsHelper(outerPoints, area31.topLeft);
         ok = ok || containsHelper(outerPoints, area31.bottomRight);
-        ok = ok || containsHelper(outerPoints, PointI(0, area31.bottom));
-        ok = ok || containsHelper(outerPoints, PointI(area31.right, 0));
+        ok = ok || containsHelper(outerPoints, PointI(0, area31.bottom()));
+        ok = ok || containsHelper(outerPoints, PointI(area31.right(), 0));
         if (!ok)
             return;
     }
@@ -523,10 +523,10 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
             else
             {
                 int cross = 0;
-                cross |= (point.x < area31.left ? 1 : 0);
-                cross |= (point.x > area31.right ? 2 : 0);
-                cross |= (point.y < area31.top ? 4 : 0);
-                cross |= (point.y > area31.bottom ? 8 : 0);
+                cross |= (point.x < area31.left() ? 1 : 0);
+                cross |= (point.x > area31.right() ? 2 : 0);
+                cross |= (point.y < area31.top() ? 4 : 0);
+                cross |= (point.y > area31.bottom() ? 8 : 0);
                 if (pointIdx > 0)
                 {
                     if ((prevCross & cross) == 0)
@@ -630,8 +630,8 @@ void OsmAnd::MapRasterizer_P::calculateVertex(
     const PointI& point31,
     PointF& vertex)
 {
-    vertex.x = static_cast<float>(point31.x - primitivizedArea->area31.left) / primitivizedArea->scale31ToPixelDivisor.x;
-    vertex.y = static_cast<float>(point31.y - primitivizedArea->area31.top) / primitivizedArea->scale31ToPixelDivisor.y;
+    vertex.x = static_cast<float>(point31.x - primitivizedArea->area31.left()) / primitivizedArea->scale31ToPixelDivisor.x;
+    vertex.y = static_cast<float>(point31.y - primitivizedArea->area31.top()) / primitivizedArea->scale31ToPixelDivisor.y;
 }
 
 bool OsmAnd::MapRasterizer_P::containsHelper(const QVector< PointI >& points, const PointI& otherPoint)

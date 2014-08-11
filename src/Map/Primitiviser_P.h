@@ -19,7 +19,7 @@ namespace OsmAnd
     class Primitiviser;
     class Primitiviser_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(Primitiviser_P);
+        Q_DISABLE_COPY_AND_MOVE(Primitiviser_P);
     public:
         typedef Primitiviser::PrimitiveType PrimitiveType;
         typedef Primitiviser::Primitive Primitive;

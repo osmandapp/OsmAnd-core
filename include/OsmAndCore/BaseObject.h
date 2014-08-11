@@ -6,7 +6,7 @@
 #include <OsmAndCore.h>
 
 #define OSMAND_OBJECT(name)                                                                                         \
-    Q_DISABLE_COPY(name)                                                                                            \
+    Q_DISABLE_COPY_AND_MOVE(name)                                                                                            \
     public:                                                                                                         \
         typedef name* Ptr;                                                                                          \
         typedef const name* PtrC;                                                                                   \

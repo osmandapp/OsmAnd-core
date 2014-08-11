@@ -12,7 +12,7 @@ namespace OsmAnd
     // IMapDataProvider describes minimal interface that providers of any type of data must implement and support
     class OSMAND_CORE_API IMapDataProvider
     {
-        Q_DISABLE_COPY(IMapDataProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapDataProvider);
 
     public:
         enum class DataType
@@ -42,7 +42,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API MapData
     {
-        Q_DISABLE_COPY(MapData);
+        Q_DISABLE_COPY_AND_MOVE(MapData);
 
     public:
         typedef IMapDataProvider::DataType DataType;

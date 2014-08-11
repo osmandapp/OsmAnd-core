@@ -24,7 +24,7 @@ namespace OsmAnd
     class ObfMapSectionLevel_P;
     class OSMAND_CORE_API ObfMapSectionLevel
     {
-        Q_DISABLE_COPY(ObfMapSectionLevel);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapSectionLevel);
     private:
         PrivateImplementation<ObfMapSectionLevel_P> _p;
     protected:
@@ -90,7 +90,7 @@ namespace OsmAnd
     class ObfMapSectionInfo_P;
     class OSMAND_CORE_API ObfMapSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY(ObfMapSectionInfo);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapSectionInfo);
     private:
         PrivateImplementation<ObfMapSectionInfo_P> _p;
     protected:

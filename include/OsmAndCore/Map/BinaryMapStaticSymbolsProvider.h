@@ -24,7 +24,7 @@ namespace OsmAnd
     class BinaryMapStaticSymbolsProvider_P;
     class OSMAND_CORE_API BinaryMapStaticSymbolsProvider : public IMapTiledSymbolsProvider
     {
-        Q_DISABLE_COPY(BinaryMapStaticSymbolsProvider);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapStaticSymbolsProvider);
     private:
         PrivateImplementation<BinaryMapStaticSymbolsProvider_P> _p;
     protected:

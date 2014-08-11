@@ -27,7 +27,7 @@ namespace OsmAnd
     class BinaryMapDataProvider_P;
     class OSMAND_CORE_API BinaryMapDataProvider : public IMapTiledDataProvider
     {
-        Q_DISABLE_COPY(BinaryMapDataProvider);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapDataProvider);
     private:
         PrivateImplementation<BinaryMapDataProvider_P> _p;
     protected:
@@ -57,7 +57,7 @@ namespace OsmAnd
     class BinaryMapDataTile_P;
     class OSMAND_CORE_API BinaryMapDataTile : public MapTiledData
     {
-        Q_DISABLE_COPY(BinaryMapDataTile);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapDataTile);
     private:
         PrivateImplementation<BinaryMapDataTile_P> _p;
     protected:

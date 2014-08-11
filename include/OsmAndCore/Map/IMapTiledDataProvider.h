@@ -17,7 +17,7 @@ namespace OsmAnd
     // IMapTiledDataProvider describes minimal interface that providers with tile-based access must implement
     class OSMAND_CORE_API IMapTiledDataProvider : public IMapDataProvider
     {
-        Q_DISABLE_COPY(IMapTiledDataProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapTiledDataProvider);
     private:
     protected:
         IMapTiledDataProvider(const DataType dataType);
@@ -36,7 +36,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API MapTiledData : public MapData
     {
-        Q_DISABLE_COPY(MapTiledData);
+        Q_DISABLE_COPY_AND_MOVE(MapTiledData);
     private:
     protected:
         MapTiledData(const DataType dataType, const TileId tileId, const ZoomLevel zoom);

@@ -16,7 +16,7 @@ namespace OsmAnd
 
     class AtlasMapRendererStageHelper
     {
-        Q_DISABLE_COPY(AtlasMapRendererStageHelper);
+        Q_DISABLE_COPY_AND_MOVE(AtlasMapRendererStageHelper);
 
     private:
         AtlasMapRendererStage* const _stage;

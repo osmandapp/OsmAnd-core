@@ -171,11 +171,11 @@ namespace OsmAnd
 
     class GPUAPI_OpenGL : public GPUAPI
     {
-        Q_DISABLE_COPY(GPUAPI_OpenGL);
+        Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL);
     public:
         class ProgramVariablesLookupContext
         {
-            Q_DISABLE_COPY(ProgramVariablesLookupContext);
+            Q_DISABLE_COPY_AND_MOVE(ProgramVariablesLookupContext);
         private:
             GPUAPI_OpenGL* const gpuAPI;
             const GLuint program;

@@ -16,7 +16,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IMapKeyedSymbolsProvider : public IMapKeyedDataProvider
     {
-        Q_DISABLE_COPY(IMapKeyedSymbolsProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapKeyedSymbolsProvider);
     private:
     protected:
         IMapKeyedSymbolsProvider();
@@ -26,7 +26,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API KeyedMapSymbolsData : public MapKeyedData
     {
-        Q_DISABLE_COPY(KeyedMapSymbolsData);
+        Q_DISABLE_COPY_AND_MOVE(KeyedMapSymbolsData);
 
     private:
     protected:

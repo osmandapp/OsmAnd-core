@@ -19,7 +19,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfAddressSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY(ObfAddressSectionInfo)
+        Q_DISABLE_COPY_AND_MOVE(ObfAddressSectionInfo)
     private:
     protected:
         ObfAddressSectionInfo(const std::weak_ptr<ObfInfo>& owner);
@@ -39,7 +39,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfAddressBlocksSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY(ObfAddressBlocksSectionInfo)
+        Q_DISABLE_COPY_AND_MOVE(ObfAddressBlocksSectionInfo)
     private:
     protected:
         ObfAddressBlocksSectionInfo(const std::shared_ptr<const ObfAddressSectionInfo>& addressSection, const std::weak_ptr<ObfInfo>& owner);

@@ -67,16 +67,16 @@ void OsmAnd::ObfPoiSectionReader_P::readBoundaries( const ObfReader_P& reader, c
         case 0:
             return;
         case OBF::OsmAndTileBox::kLeftFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.left));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.left()));
             break;
         case OBF::OsmAndTileBox::kRightFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.right));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.right()));
             break;
         case OBF::OsmAndTileBox::kTopFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.top));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.top()));
             break;
         case OBF::OsmAndTileBox::kBottomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.bottom));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.bottom()));
             break;
         default:
             ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -289,10 +289,10 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
                 if (bbox31)
                 {
                     AreaI area31;
-                    area31.left = tile->_x << (31 - tile->_zoom);
-                    area31.right = (tile->_x + 1) << (31 - tile->_zoom);
-                    area31.top = tile->_y << (31 - tile->_zoom);
-                    area31.bottom = (tile->_y + 1) << (31 - tile->_zoom);
+                    area31.left() = tile->_x << (31 - tile->_zoom);
+                    area31.right() = (tile->_x + 1) << (31 - tile->_zoom);
+                    area31.top() = tile->_y << (31 - tile->_zoom);
+                    area31.bottom() = (tile->_y + 1) << (31 - tile->_zoom);
 
                     const auto shouldSkip =
                         !bbox31->contains(area31) &&

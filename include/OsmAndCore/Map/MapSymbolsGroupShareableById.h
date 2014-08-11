@@ -14,7 +14,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API MapSymbolsGroupShareableById : public MapSymbolsGroup
     {
-        Q_DISABLE_COPY(MapSymbolsGroupShareableById);
+        Q_DISABLE_COPY_AND_MOVE(MapSymbolsGroupShareableById);
     private:
     protected:
     public:

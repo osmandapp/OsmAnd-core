@@ -23,7 +23,7 @@ namespace OsmAnd
     {
         class OSMAND_CORE_API Task : public QRunnable
         {
-            Q_DISABLE_COPY(Task);
+            Q_DISABLE_COPY_AND_MOVE(Task);
         public:
             typedef std::function<void (Task* task, bool& requestCancellation)> PreExecuteSignature;
             typedef std::function<void (Task* task)> ExecuteSignature;
@@ -49,13 +49,13 @@ namespace OsmAnd
         class HostedTask;
         class OSMAND_CORE_API TaskHost : public std::enable_shared_from_this<TaskHost>
         {
-            Q_DISABLE_COPY(TaskHost)
+            Q_DISABLE_COPY_AND_MOVE(TaskHost)
         public:
             typedef const void* OwnerPtr;
 
             class OSMAND_CORE_API Bridge
             {
-                Q_DISABLE_COPY(Bridge)
+                Q_DISABLE_COPY_AND_MOVE(Bridge)
             private:
             protected:
                 std::shared_ptr<TaskHost> _host;
@@ -86,7 +86,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API HostedTask : public Task
         {
-            Q_DISABLE_COPY(HostedTask);
+            Q_DISABLE_COPY_AND_MOVE(HostedTask);
         private:
         protected:
             std::shared_ptr<TaskHost> _host;
@@ -117,7 +117,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Dispatcher
         {
-            Q_DISABLE_COPY(Dispatcher);
+            Q_DISABLE_COPY_AND_MOVE(Dispatcher);
         public:
             typedef std::function<void()> Delegate;
         private:

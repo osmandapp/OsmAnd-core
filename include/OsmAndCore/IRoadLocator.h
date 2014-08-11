@@ -21,7 +21,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IRoadLocator
     {
-        Q_DISABLE_COPY(IRoadLocator);
+        Q_DISABLE_COPY_AND_MOVE(IRoadLocator);
     private:
     protected:
         IRoadLocator();

@@ -26,7 +26,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Logger Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(Logger);
+        Q_DISABLE_COPY_AND_MOVE(Logger);
     private:
         Logger();
     protected:

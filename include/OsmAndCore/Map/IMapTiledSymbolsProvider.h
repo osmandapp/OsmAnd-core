@@ -16,7 +16,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IMapTiledSymbolsProvider : public IMapTiledDataProvider
     {
-        Q_DISABLE_COPY(IMapTiledSymbolsProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapTiledSymbolsProvider);
 
     public:
         OSMAND_CALLABLE(FilterCallback,

@@ -20,7 +20,7 @@ namespace OsmAnd
     class WebClient_P;
     class OSMAND_CORE_API WebClient
     {
-        Q_DISABLE_COPY(WebClient);
+        Q_DISABLE_COPY_AND_MOVE(WebClient);
     public:
         typedef std::function<void(const uint64_t transferredBytes, const uint64_t totalBytes)> RequestProgressCallbackSignature;
 

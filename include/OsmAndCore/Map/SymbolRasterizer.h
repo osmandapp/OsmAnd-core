@@ -21,13 +21,13 @@ namespace OsmAnd
     class SymbolRasterizer_P;
     class OSMAND_CORE_API SymbolRasterizer
     {
-        Q_DISABLE_COPY(SymbolRasterizer);
+        Q_DISABLE_COPY_AND_MOVE(SymbolRasterizer);
     public:
         class RasterizedSymbol;
 
         class OSMAND_CORE_API RasterizedSymbolsGroup
         {
-            Q_DISABLE_COPY(RasterizedSymbolsGroup);
+            Q_DISABLE_COPY_AND_MOVE(RasterizedSymbolsGroup);
         private:
         protected:
             RasterizedSymbolsGroup(const std::shared_ptr<const Model::BinaryMapObject>& mapObject);
@@ -42,7 +42,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API RasterizedSymbol
         {
-            Q_DISABLE_COPY(RasterizedSymbol);
+            Q_DISABLE_COPY_AND_MOVE(RasterizedSymbol);
 
         public:
             enum class ContentType
@@ -78,7 +78,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API RasterizedSpriteSymbol : public RasterizedSymbol
         {
-            Q_DISABLE_COPY(RasterizedSpriteSymbol);
+            Q_DISABLE_COPY_AND_MOVE(RasterizedSpriteSymbol);
         private:
         protected:
             RasterizedSpriteSymbol(
@@ -103,7 +103,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API RasterizedOnPathSymbol : public RasterizedSymbol
         {
-            Q_DISABLE_COPY(RasterizedOnPathSymbol);
+            Q_DISABLE_COPY_AND_MOVE(RasterizedOnPathSymbol);
         private:
         protected:
             RasterizedOnPathSymbol(

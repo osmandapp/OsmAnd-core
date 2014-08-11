@@ -20,7 +20,7 @@ namespace OsmAnd
     class ArchiveReader;
     class ArchiveReader_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY(ArchiveReader_P);
+        Q_DISABLE_COPY_AND_MOVE(ArchiveReader_P);
     public:
         typedef ArchiveReader::Item Item;
 

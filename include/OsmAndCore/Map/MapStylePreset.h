@@ -13,7 +13,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API MapStylePreset
     {
-        Q_DISABLE_COPY(MapStylePreset);
+        Q_DISABLE_COPY_AND_MOVE(MapStylePreset);
 
     public:
         enum class Type

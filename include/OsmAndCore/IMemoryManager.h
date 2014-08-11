@@ -12,7 +12,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IMemoryManager
     {
-        Q_DISABLE_COPY(IMemoryManager);
+        Q_DISABLE_COPY_AND_MOVE(IMemoryManager);
     private:
     protected:
         IMemoryManager();
