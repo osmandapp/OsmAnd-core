@@ -13,7 +13,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "IMapTiledSymbolsProvider.h"
-#include "MapSymbolsGroupShareableById.h"
+#include "BinaryMapObjectSymbolsGroup.h"
 #include "BinaryMapObject.h"
 #include "BinaryMapStaticSymbolsProvider.h"
 
@@ -34,20 +34,6 @@ namespace OsmAnd
         BinaryMapStaticSymbolsProvider_P(BinaryMapStaticSymbolsProvider* owner);
 
         ImplementationInterface<BinaryMapStaticSymbolsProvider> owner;
-
-        class MapSymbolsGroupShareableByMapObjectId : public MapSymbolsGroupShareableById
-        {
-            Q_DISABLE_COPY_AND_MOVE(MapSymbolsGroupShareableByMapObjectId);
-        private:
-        protected:
-        public:
-            MapSymbolsGroupShareableByMapObjectId(const std::shared_ptr<const Model::BinaryMapObject>& mapObject);
-            virtual ~MapSymbolsGroupShareableByMapObjectId();
-
-            const std::shared_ptr<const Model::BinaryMapObject> mapObject;
-
-            virtual QString getDebugTitle() const;
-        };
     public:
         virtual ~BinaryMapStaticSymbolsProvider_P();
 

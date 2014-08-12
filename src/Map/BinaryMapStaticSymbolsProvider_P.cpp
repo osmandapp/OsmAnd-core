@@ -55,13 +55,11 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             const auto isShareable =
                 (mapObject->section != owner->primitivesProvider->primitiviser->environment->dummyMapSection) &&
                 !tileBBox31.contains(mapObject->bbox31);
-            const std::shared_ptr<MapSymbolsGroup> preallocatedGroup(isShareable
-                ? new MapSymbolsGroupShareableByMapObjectId(mapObject)
-                : new MapSymbolsGroup());
+            const std::shared_ptr<MapSymbolsGroup> preallocatedGroup(new BinaryMapObjectSymbolsGroup(mapObject, isShareable));
 
             if (!filterCallback || filterCallback(owner, preallocatedGroup))
             {
-                preallocatedSymbolsGroups.insert(mapObject->id, preallocatedGroup);
+                preallocatedSymbolsGroups.insert(mapObject->id, qMove(preallocatedGroup));
                 return true;
             }
             return false;
@@ -77,8 +75,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         // Get preallocated group
         const auto citPreallocatedGroup = preallocatedSymbolsGroups.constFind(mapObject->id);
         assert(citPreallocatedGroup != preallocatedSymbolsGroups.cend());
-        const auto group = *citPreallocatedGroup;
-        const auto isShareable = (std::dynamic_pointer_cast<MapSymbolsGroupShareableById>(group) != nullptr);
+        const auto group = std::static_pointer_cast<BinaryMapObjectSymbolsGroup>(*citPreallocatedGroup);
 
         // Convert all symbols inside group
         bool hasAtLeastOneBillboard = false;
@@ -92,7 +89,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             {
                 hasAtLeastOneBillboard = true;
 
-                const auto billboardRasterSymbol = new BillboardRasterMapSymbol(group, isShareable);
+                const auto billboardRasterSymbol = new BillboardRasterMapSymbol(group, group->sharableById);
                 billboardRasterSymbol->order = rasterizedSpriteSymbol->order;
                 billboardRasterSymbol->intersectionModeFlags = MapSymbol::RegularIntersectionProcessing;
                 billboardRasterSymbol->bitmap = rasterizedSpriteSymbol->bitmap;
@@ -108,7 +105,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             {
                 hasAtLeastOneOnPath = true;
 
-                const auto onPathSymbol = new OnPathMapSymbol(group, isShareable);
+                const auto onPathSymbol = new OnPathMapSymbol(group, group->sharableById);
                 onPathSymbol->order = rasterizedOnPathSymbol->order;
                 onPathSymbol->intersectionModeFlags = MapSymbol::RegularIntersectionProcessing;
                 onPathSymbol->bitmap = rasterizedOnPathSymbol->bitmap;
@@ -164,19 +161,4 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     outTiledData.reset(new BinaryMapStaticSymbolsTile(primitivesTile, symbolsGroups, tileId, zoom));
 
     return true;
-}
-
-OsmAnd::BinaryMapStaticSymbolsProvider_P::MapSymbolsGroupShareableByMapObjectId::MapSymbolsGroupShareableByMapObjectId(const std::shared_ptr<const Model::BinaryMapObject>& mapObject_)
-    : MapSymbolsGroupShareableById(mapObject_->id)
-    , mapObject(mapObject_)
-{
-}
-
-OsmAnd::BinaryMapStaticSymbolsProvider_P::MapSymbolsGroupShareableByMapObjectId::~MapSymbolsGroupShareableByMapObjectId()
-{
-}
-
-QString OsmAnd::BinaryMapStaticSymbolsProvider_P::MapSymbolsGroupShareableByMapObjectId::getDebugTitle() const
-{
-    return QString(QLatin1String("MO %1,%2")).arg(id).arg(static_cast<int64_t>(id) / 2);
 }

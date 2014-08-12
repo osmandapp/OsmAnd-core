@@ -23,6 +23,7 @@
 #include "BillboardRasterMapSymbol.h"
 #include "OnSurfaceRasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
+#include "MapSymbolsGroupWithId.h"
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"
 
@@ -231,10 +232,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         const auto currentSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(currentSymbol_);
         if (!currentSymbol)
             continue;
-        const auto& points31 = currentSymbol->path;
+        const auto& path31 = currentSymbol->path;
 
         // Path must have at least 2 points
-        if (Q_UNLIKELY(points31.size() < 2))
+        if (Q_UNLIKELY(path31.size() < 2))
         {
             assert(false);
             continue;
@@ -248,7 +249,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             if (Q_UNLIKELY(debugSettings->showAllPaths))
             {
                 QVector< glm::vec3 > debugPoints;
-                for (const auto& pointInWorld : convertPoints31ToWorld(currentSymbol->path))
+                for (const auto& pointInWorld : convertPoints31ToWorld(path31))
                 {
                     debugPoints.push_back(qMove(glm::vec3(
                         pointInWorld.x,
@@ -259,6 +260,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             }
             continue;
         }
+
+        //////////////////////////////////////////////////////////////////////////
+        if (const auto groupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
+        {
+            if (groupWithId->id != 290003243 && groupWithId->id != 26605191)
+                continue;
+        }
+        else
+            continue;
+        //////////////////////////////////////////////////////////////////////////
 
         // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.
         // They will appear on path in the order they are stored in group.
@@ -280,8 +291,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 
         // Calculate current path in world and screen coordinates.
         // NOTE: There's an assumption that all OnPathSymbols from same group share same path
-        const auto pathSize = currentSymbol->path.size();
-        const auto pathInWorld = convertPoints31ToWorld(currentSymbol->path);
+        const auto pathSize = path31.size();
+        const auto pathInWorld = convertPoints31ToWorld(path31);
         const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
 
         // First "plot" virtual renderable that occupies length of "widthBeforeCurrentSymbol" pixels
