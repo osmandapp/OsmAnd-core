@@ -271,11 +271,11 @@ namespace OsmAnd
                     test(bbox_.asOOBB, strict, acceptor);
             }
 
-            inline bool select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor) const
+            inline void select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor) const
             {
                 // If this node can not contain the point, the node can not have anything that will give positive result
                 if (!area.contains(point))
-                    return false;
+                    return;
 
                 for (const auto& entry : constOf(entries))
                 {
@@ -429,9 +429,9 @@ namespace OsmAnd
             return _root->test(bbox, strict, acceptor);
         }
 
-        inline bool select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor = nullptr) const
+        inline void select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor = nullptr) const
         {
-            return _root->select(point, outResults, acceptor);
+            _root->select(point, outResults, acceptor);
         }
     };
 }

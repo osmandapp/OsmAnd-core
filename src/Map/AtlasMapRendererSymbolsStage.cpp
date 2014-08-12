@@ -1611,13 +1611,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare()
     IntersectionsQuadTree intersections;
     obtainRenderableSymbols(renderableSymbols, intersections);
 
-    if (_lastPreparedIntersectionsLock.tryLockForWrite())
     {
+        QWriteLocker scopedLocker(&_lastPreparedIntersectionsLock);
         _lastPreparedIntersections = qMove(intersections);
-        _lastPreparedIntersectionsLock.unlock();
     }
-    else
-        renderer->forcedFrameInvalidate();
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
