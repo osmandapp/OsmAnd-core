@@ -738,7 +738,7 @@ namespace OsmAnd
             _pointInGlobalSpace2 += center;
             const auto p3 = unrotatedBBox().bottomLeft() - center;
             _pointInGlobalSpace3.x = p3.x*cosA - p3.y*sinA;
-            _pointInGlobalSpace3.y = p3.x*sinA + p0.y*cosA;
+            _pointInGlobalSpace3.y = p3.x*sinA + p3.y*cosA;
             _pointInGlobalSpace3 += center;
 
             // Compute external AABB

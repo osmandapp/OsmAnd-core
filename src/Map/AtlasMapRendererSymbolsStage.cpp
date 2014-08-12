@@ -1155,7 +1155,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     if (intersects)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck))
+        {
             getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorRED, 50));
+            getRenderer()->debugStage->addLine2D({
+                (glm::ivec2)boundsInWindow.topLeft,
+                (glm::ivec2)boundsInWindow.topRight(),
+                (glm::ivec2)boundsInWindow.bottomRight,
+                (glm::ivec2)boundsInWindow.bottomLeft(),
+                (glm::ivec2)boundsInWindow.topLeft
+            }, SK_ColorRED);
+        }
         return false;
     }
    
@@ -1189,7 +1198,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     if (intersects)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck))
+        {
             getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorRED, 50), oobb.rotation());
+            getRenderer()->debugStage->addLine2D({
+                oobb.pointInGlobalSpace0(),
+                oobb.pointInGlobalSpace1(),
+                oobb.pointInGlobalSpace2(),
+                oobb.pointInGlobalSpace3(),
+                oobb.pointInGlobalSpace0()
+            }, SK_ColorRED);
+        }
         return false;
     }
     
@@ -1230,6 +1248,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
         {
             getRenderer()->debugStage->addRect2D(AreaF(boundsInWindow.getEnlargedBy(symbol->minDistance)), SkColorSetA(SK_ColorRED, 50));
             getRenderer()->debugStage->addRect2D(AreaF(boundsInWindow), SkColorSetA(SK_ColorRED, 128));
+            getRenderer()->debugStage->addLine2D({
+                (glm::ivec2)boundsInWindow.topLeft,
+                (glm::ivec2)boundsInWindow.topRight(),
+                (glm::ivec2)boundsInWindow.bottomRight,
+                (glm::ivec2)boundsInWindow.bottomLeft(),
+                (glm::ivec2)boundsInWindow.topLeft
+            }, SK_ColorRED);
         }
         return false;
     }
@@ -1271,6 +1296,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
         {
             getRenderer()->debugStage->addRect2D(oobb.getEnlargedBy(PointF(symbol->minDistance)).unrotatedBBox(), SkColorSetA(SK_ColorRED, 50), oobb.rotation());
             getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorRED, 128), oobb.rotation());
+            getRenderer()->debugStage->addLine2D({
+                oobb.pointInGlobalSpace0(),
+                oobb.pointInGlobalSpace1(),
+                oobb.pointInGlobalSpace2(),
+                oobb.pointInGlobalSpace3(),
+                oobb.pointInGlobalSpace0()
+            }, SK_ColorRED);
         }
         return false;
     }
@@ -1538,13 +1570,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
         if (!intersections.insert(renderable, boundsInWindow))
         {
             if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
+            {
                 getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorBLUE, 50));
+                getRenderer()->debugStage->addLine2D({
+                    (glm::ivec2)boundsInWindow.topLeft,
+                    (glm::ivec2)boundsInWindow.topRight(),
+                    (glm::ivec2)boundsInWindow.bottomRight,
+                    (glm::ivec2)boundsInWindow.bottomLeft(),
+                    (glm::ivec2)boundsInWindow.topLeft
+                }, SK_ColorBLUE);
+            }
             return false;
         }
     }
 
     if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
+    {
         getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, SkColorSetA(SK_ColorGREEN, 50));
+        getRenderer()->debugStage->addLine2D({
+            (glm::ivec2)boundsInWindow.topLeft,
+            (glm::ivec2)boundsInWindow.topRight(),
+            (glm::ivec2)boundsInWindow.bottomRight,
+            (glm::ivec2)boundsInWindow.bottomLeft(),
+            (glm::ivec2)boundsInWindow.topLeft
+        }, SK_ColorGREEN);
+    }
 
     return true;
 }
@@ -1561,13 +1611,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
         if (!intersections.insert(renderable, OOBBI(oobb)))
         {
             if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
+            {
                 getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorBLUE, 50), oobb.rotation());
+                getRenderer()->debugStage->addLine2D({
+                    oobb.pointInGlobalSpace0(),
+                    oobb.pointInGlobalSpace1(),
+                    oobb.pointInGlobalSpace2(),
+                    oobb.pointInGlobalSpace3(),
+                    oobb.pointInGlobalSpace0()
+                }, SK_ColorBLUE);
+            }
             return false;
         }
     }
 
     if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
+    {
         getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorGREEN, 50), oobb.rotation());
+        getRenderer()->debugStage->addLine2D({
+            oobb.pointInGlobalSpace0(),
+            oobb.pointInGlobalSpace1(),
+            oobb.pointInGlobalSpace2(),
+            oobb.pointInGlobalSpace3(),
+            oobb.pointInGlobalSpace0(),
+        }, SK_ColorGREEN);
+    }
 
     return true;
 }
