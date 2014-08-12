@@ -49,9 +49,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
+    prepare();
+
     int lastUsedProgram = -1;
-    QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
-    obtainRenderableSymbols(renderableSymbols);
     for (const auto& renderable_ : constOf(renderableSymbols))
     {
         if (const auto& renderable = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderable_))

@@ -200,3 +200,11 @@ bool OsmAnd::AtlasMapRenderer::doReleaseRendering()
 
     return true;
 }
+
+QList< std::shared_ptr<const OsmAnd::MapSymbol> > OsmAnd::AtlasMapRenderer::getSymbolsAt(const PointI& screenPoint) const
+{
+    QList< std::shared_ptr<const MapSymbol> > result;
+    if (symbolsStage)
+        symbolsStage->queryLastPreparedSymbolsAt(screenPoint, result);
+    return result;
+}

@@ -86,6 +86,9 @@ namespace OsmAnd
 
         virtual QList<TileId> getVisibleTiles() const;
         virtual unsigned int getVisibleTilesCount() const;
+
+        // Symbols-related
+        virtual QList< std::shared_ptr<const MapSymbol> > getSymbolsAt(const PointI& screenPoint) const;
     };
 }
 

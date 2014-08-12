@@ -4,8 +4,13 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
+#include <QReadWriteLock>
+#include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include <glm/glm.hpp>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -206,12 +211,24 @@ namespace OsmAnd
         static std::shared_ptr<const GPUAPI::ResourceInGPU> captureGpuResource(
             const MapRenderer::MapSymbolreferenceOrigins& resources,
             const std::shared_ptr<const MapSymbol>& mapSymbol);
-    protected:
+
         void obtainRenderableSymbols(
-            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols) const;
+            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
+            IntersectionsQuadTree& outIntersections) const;
+
+        mutable QReadWriteLock _lastPreparedIntersectionsLock;
+        IntersectionsQuadTree _lastPreparedIntersections;
+    protected:
+        QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
+
+        void prepare();
     public:
         AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererSymbolsStage();
+
+        void queryLastPreparedSymbolsAt(
+            const PointI screenPoint,
+            QList< std::shared_ptr<const MapSymbol> >& outMapSymbols) const;
     };
 }
 

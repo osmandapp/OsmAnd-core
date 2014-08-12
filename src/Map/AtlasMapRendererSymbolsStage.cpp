@@ -3,6 +3,7 @@
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QLinkedList>
+#include <QSet>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -37,7 +38,8 @@ OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage()
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
-    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols) const
+    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
+    IntersectionsQuadTree& outIntersections) const
 {
     typedef QLinkedList< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
     struct PlottedSymbolRef
@@ -51,7 +53,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     const auto& internalState = getInternalState();
 
     // Iterate over map symbols layer sorted by "order" in ascending direction
-    IntersectionsQuadTree intersections(currentState.viewport, 8);
+    outIntersections = IntersectionsQuadTree(currentState.viewport, 8);
     PlottedSymbols plottedSymbols;
     QHash< const MapSymbolsGroup*, QList< PlottedSymbolRef > > plottedMapSymbolsByGroup;
     for (const auto& publishedMapSymbols : constOf(publishedMapSymbols))
@@ -79,19 +81,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             {
                 plotted = plotBillboardSymbol(
                     renderable_,
-                    intersections);
+                    outIntersections);
             }
             else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable))
             {
                 plotted = plotOnPathSymbol(
                     renderable_,
-                    intersections);
+                    outIntersections);
             }
             else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable))
             {
                 plotted = plotOnSurfaceSymbol(
                     renderable_,
-                    intersections);
+                    outIntersections);
             }
 
             if (plotted)
@@ -103,6 +105,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             }
         }
     }
+
+    //TODO: also remove from outIntersections!!!!!
 
     // Remove those plotted symbols that do not conform to presentation rules
     auto itPlottedSymbolsGroup = mutableIteratorOf(plottedMapSymbolsByGroup);
@@ -270,12 +274,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 
         //////////////////////////////////////////////////////////////////////////
         //continue;
-        /*if (const auto groupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
-        {
-            const auto osmId = groupWithId->id >> 1;
-            if (osmId != 290136796 && osmId != 290003243)
-                continue;
-        }*/
+        //if (const auto groupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
+        //{
+        //    const auto osmId = groupWithId->id >> 1;
+        //    if (osmId != 290136796 && osmId != 290003243)
+        //        continue;
+        //}
         //////////////////////////////////////////////////////////////////////////
 
         // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.
@@ -1600,6 +1604,38 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSym
             return gpuResource;
     }
     return nullptr;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::prepare()
+{
+    IntersectionsQuadTree intersections;
+    obtainRenderableSymbols(renderableSymbols, intersections);
+
+    if (_lastPreparedIntersectionsLock.tryLockForWrite())
+    {
+        _lastPreparedIntersections = qMove(intersections);
+        _lastPreparedIntersectionsLock.unlock();
+    }
+    else
+        renderer->forcedFrameInvalidate();
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
+    const PointI screenPoint,
+    QList< std::shared_ptr<const MapSymbol> >& outMapSymbols) const
+{
+    QList< std::shared_ptr<const RenderableSymbol> > selectedRenderables;
+    
+    {
+        QReadLocker scopedLocker(&_lastPreparedIntersectionsLock);
+
+        _lastPreparedIntersections.select(screenPoint, selectedRenderables);
+    }
+
+    QSet< std::shared_ptr<const MapSymbol> > mapSymbolsSet;
+    for (const auto& renderable : constOf(selectedRenderables))
+        mapSymbolsSet.insert(renderable->mapSymbol);
+    outMapSymbols = mapSymbolsSet.toList();
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage::RenderableSymbol::~RenderableSymbol()

@@ -115,7 +115,7 @@ namespace OsmAnd
             Node(const Node& that)
                 : area(that.area)
             {
-                for (const auto idx = 0u; idx < 4; idx++)
+                for (auto idx = 0u; idx < 4; idx++)
                 {
                     const auto& source = that.subnodes[idx];
                     if (!source)

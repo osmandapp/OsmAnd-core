@@ -21,6 +21,7 @@
 namespace OsmAnd
 {
     class IMapDataProvider;
+    class MapSymbol;
 
     class OSMAND_CORE_API IMapRenderer
     {
@@ -57,6 +58,7 @@ namespace OsmAnd
         virtual void forcedGpuProcessingCycle() = 0;
 
         virtual unsigned int getSymbolsCount() const = 0;
+        virtual QList< std::shared_ptr<const MapSymbol> > getSymbolsAt(const PointI& screenPoint) const = 0;
 
         virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate = false) = 0;
         virtual void resetRasterLayerProvider(const RasterMapLayerId layerId, bool forcedUpdate = false) = 0;

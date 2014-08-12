@@ -870,22 +870,35 @@ namespace OsmAnd
                 testLineLineIntersection(a3, a0, p3, p0);
         }
 
-        inline bool contains(const AreaT& that) const
+        inline bool contains(const AreaT& area) const
         {
             // If external AABB doesn't contain that AABB, surely inner OOBB doesn't contain also
-            if (!aabb().contains(that))
+            if (!aabb().contains(area))
                 return false;
 
             // If angle of rotation is zero, check OOBB vs that AABB
             if (qFuzzyIsNull(rotation()))
-                return unrotatedBBox().contains(that);
+                return unrotatedBBox().contains(area);
 
             // If all of points of that AABB are inside, then it's totally inside
-            const auto& a0 = that.topLeft;
-            const auto& a1 = that.topRight();
-            const auto& a2 = that.bottomRight;
-            const auto& a3 = that.bottomLeft();
+            const auto& a0 = area.topLeft;
+            const auto& a1 = area.topRight();
+            const auto& a2 = area.bottomRight;
+            const auto& a3 = area.bottomLeft();
             return isPointInside(a0) && isPointInside(a1) && isPointInside(a2) && isPointInside(a3);
+        }
+
+        inline bool contains(const PointT& point) const
+        {
+            // If external AABB doesn't contain that point, surely inner OOBB doesn't contain also
+            if (!aabb().contains(point))
+                return false;
+
+            // If angle of rotation is zero, check OOBB vs point
+            if (qFuzzyIsNull(rotation()))
+                return unrotatedBBox().contains(point);
+
+            return isPointInside(point);
         }
 
         inline bool intersects(const AreaT& that) const
