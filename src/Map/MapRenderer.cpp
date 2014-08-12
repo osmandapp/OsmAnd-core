@@ -927,10 +927,10 @@ bool OsmAnd::MapRenderer::processPendingMapSymbols()
         QWriteLocker scopedLocker(&_publishedMapSymbolsLock);
 
         for (const auto& entry : constOf(pendingUnpublishMapSymbols))
-            doUnpublishMapSymbol(entry.mapSymbol, entry.originResource);
+            doUnpublishMapSymbol(entry.symbolGroup, entry.mapSymbol, entry.originResource);
 
         for (const auto& entry : constOf(pendingPublishMapSymbols))
-            doPublishMapSymbol(entry.mapSymbol, entry.originResource);
+            doPublishMapSymbol(entry.symbolGroup, entry.mapSymbol, entry.originResource);
     }
 
     return true;

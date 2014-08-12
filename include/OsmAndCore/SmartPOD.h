@@ -15,7 +15,7 @@ namespace OsmAnd
         {
         }
 
-        inline SmartPOD(const T& value_)
+        explicit inline SmartPOD(const T& value_)
             : value(value_)
         {
         }
