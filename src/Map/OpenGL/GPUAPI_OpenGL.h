@@ -42,6 +42,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "SmartPOD.h"
 #include "GPUAPI.h"
 
 #if OSMAND_DEBUG
@@ -82,87 +83,15 @@ namespace OsmAnd
     };
 
     template<typename T, T DEFAULT_VALUE>
-    struct GLref
+    struct GLref : public SmartPOD<T, DEFAULT_VALUE>
     {
-        typedef GLref<T, DEFAULT_VALUE> GLrefT;
-
-        GLref()
-            : value(DEFAULT_VALUE)
+        virtual ~GLref()
         {
-        }
-
-        GLref(const T& value_)
-            : value(value_)
-        {
-        }
-
-        T value;
-
-        inline operator T() const
-        {
-            return value;
         }
 
         inline operator bool() const
         {
             return value != DEFAULT_VALUE;
-        }
-
-        inline bool operator==(const GLrefT& r) const
-        {
-            return value == r.value;
-        }
-
-        inline bool operator==(const T& r) const
-        {
-            return value == r;
-        }
-
-        inline bool operator!=(const GLrefT& r) const
-        {
-            return value != r.value;
-        }
-
-        inline bool operator!=(const T& r) const
-        {
-            return value != r;
-        }
-
-        inline GLrefT& operator=(const GLrefT& that)
-        {
-            value = that.value;
-            return *this;
-        }
-
-        inline GLrefT& operator=(const T& that)
-        {
-            value = that;
-            return *this;
-        }
-
-        inline T& operator*()
-        {
-            return value;
-        }
-
-        inline const T& operator*() const
-        {
-            return value;
-        }
-
-        inline T* operator&()
-        {
-            return &value;
-        }
-
-        inline const T* operator&() const
-        {
-            return &value;
-        }
-
-        inline void reset()
-        {
-            value = DEFAULT_VALUE;
         }
     };
 

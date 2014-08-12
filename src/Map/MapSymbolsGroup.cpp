@@ -2,6 +2,7 @@
 
 #include "MapSymbol.h"
 #include "Utilities.h"
+#include "Logging.h"
 
 OsmAnd::MapSymbolsGroup::MapSymbolsGroup()
 {

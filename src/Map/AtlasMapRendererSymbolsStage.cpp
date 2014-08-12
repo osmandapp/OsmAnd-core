@@ -245,6 +245,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         const auto& mapSymbolsGroup = currentSymbol->group.lock();
         if (!mapSymbolsGroup)
         {
+            LogPrintf(LogSeverityLevel::Error,
+                "Symbol %p group %p is missing!",
+                currentSymbol_.get(),
+                currentSymbol->groupPtr);
+
             // Group has to be present, there's no way to process this without group
             if (Q_UNLIKELY(debugSettings->showAllPaths))
             {
@@ -258,17 +263,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 }
                 getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorWHITE);
             }
+
+            assert(false);
             continue;
         }
 
         //////////////////////////////////////////////////////////////////////////
-        if (const auto groupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
+        continue;
+        /*if (const auto groupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
         {
-            if (groupWithId->id != 290003243 && groupWithId->id != 26605191)
+            const auto osmId = groupWithId->id >> 1;
+            if (osmId != 290136796 && osmId != 290003243)
                 continue;
-        }
-        else
-            continue;
+        }*/
         //////////////////////////////////////////////////////////////////////////
 
         // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.

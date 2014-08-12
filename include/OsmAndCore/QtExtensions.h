@@ -12,6 +12,7 @@
 #include <QtGlobal>
 
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/SmartPOD.h>
 #include <OsmAndCore/Data/DataTypes.h>
 #include <OsmAndCore/Map/MapTypes.h>
 
@@ -65,6 +66,12 @@ inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOT
 inline uint qHash(const OsmAnd::ObfMapSectionDataBlockId value, uint seed) Q_DECL_NOTHROW
 {
     return ::qHash(value.id, seed);
+}
+
+template<typename T, T DEFAULT_VALUE>
+inline uint qHash(const OsmAnd::SmartPOD<T, DEFAULT_VALUE>& value, uint seed) Q_DECL_NOTHROW
+{
+    return ::qHash(static_cast<T>(value), seed);
 }
 #endif // !defined(SWIG)
 

@@ -27,6 +27,7 @@ namespace OsmAnd
 {
     class MapRendererTiledResources;
     class MapSymbol;
+    class MapSymbolsGroup;
     class MapRendererStage;
     struct MapRendererInternalState;
     
@@ -67,6 +68,7 @@ namespace OsmAnd
         // Symbols-related:
         struct PendingPublishOrUnpublishMapSymbol
         {
+            std::shared_ptr<const MapSymbolsGroup> symbolGroup;
             std::shared_ptr<const MapSymbol> mapSymbol;
             std::shared_ptr<MapRendererBaseResource> originResource;
         };
@@ -76,17 +78,22 @@ namespace OsmAnd
         QList< PendingPublishOrUnpublishMapSymbol > _pendingUnpublishMapSymbols;
         mutable QReadWriteLock _publishedMapSymbolsLock;
         QMap< int, PublishedMapSymbols > _publishedMapSymbols;
+        QHash< std::shared_ptr<const MapSymbolsGroup>, SmartPOD<unsigned int, 0> > _publishedMapSymbolsGroups;
         QAtomicInt _publishedMapSymbolsCount;
         void publishMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
         void doPublishMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
         void unpublishMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
         void doUnpublishMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
         bool processPendingMapSymbols();

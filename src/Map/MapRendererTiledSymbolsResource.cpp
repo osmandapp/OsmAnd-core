@@ -193,19 +193,21 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     const auto& self = shared_from_this();
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
-        auto& publishedMapSymbols = _publishedMapSymbols[groupResources->group];
-        for (const auto& mapSymbol : constOf(groupResources->group->symbols))
+        const auto& symbolsGroup = groupResources->group;
+        auto& publishedMapSymbols = _publishedMapSymbols[symbolsGroup];
+        for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
-            resourcesManager->publishMapSymbol(mapSymbol, self);
+            resourcesManager->publishMapSymbol(symbolsGroup, mapSymbol, self);
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
     for (const auto& groupResources : constOf(_referencedSharedGroupsResources))
     {
-        auto& publishedMapSymbols = _publishedMapSymbols[groupResources->group];
-        for (const auto& mapSymbol : constOf(groupResources->group->symbols))
+        const auto& symbolsGroup = groupResources->group;
+        auto& publishedMapSymbols = _publishedMapSymbols[symbolsGroup];
+        for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
-            resourcesManager->publishMapSymbol(mapSymbol, self);
+            resourcesManager->publishMapSymbol(symbolsGroup, mapSymbol, self);
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
@@ -449,10 +451,12 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     const auto& self = shared_from_this();
 
     // Unregister all registered map symbols
-    for (const auto& mapSymbols : constOf(_publishedMapSymbols))
+    for (const auto& publishedMapSymbolsEntry : rangeOf(constOf(_publishedMapSymbols)))
     {
-        for (const auto& mapSymbol : mapSymbols)
-            resourcesManager->unpublishMapSymbol(mapSymbol, self);
+        const auto& symbolsGroup = publishedMapSymbolsEntry.key();
+        const auto& mapSymbols = publishedMapSymbolsEntry.value();
+        for (const auto& mapSymbol : publishedMapSymbolsEntry.value())
+            resourcesManager->unpublishMapSymbol(symbolsGroup, mapSymbol, self);
     }
     _publishedMapSymbols.clear();
 

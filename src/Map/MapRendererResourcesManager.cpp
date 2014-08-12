@@ -407,14 +407,20 @@ QList< std::shared_ptr<OsmAnd::MapRendererBaseResourcesCollection> > OsmAnd::Map
     return result;
 }
 
-void OsmAnd::MapRendererResourcesManager::publishMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource)
+void OsmAnd::MapRendererResourcesManager::publishMapSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
+    const std::shared_ptr<const MapSymbol>& symbol,
+    const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    renderer->publishMapSymbol(symbol, resource);
+    renderer->publishMapSymbol(symbolGroup, symbol, resource);
 }
 
-void OsmAnd::MapRendererResourcesManager::unpublishMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource)
+void OsmAnd::MapRendererResourcesManager::unpublishMapSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
+    const std::shared_ptr<const MapSymbol>& symbol,
+    const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    renderer->unpublishMapSymbol(symbol, resource);
+    renderer->unpublishMapSymbol(symbolGroup, symbol, resource);
 }
 
 void OsmAnd::MapRendererResourcesManager::notifyNewResourceAvailableForDrawing()

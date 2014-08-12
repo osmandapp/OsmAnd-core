@@ -89,8 +89,14 @@ namespace OsmAnd
         QList< std::shared_ptr<MapRendererBaseResourcesCollection> > safeGetAllResourcesCollections() const;
 
         // Symbols-related:
-        void publishMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
-        void unpublishMapSymbol(const std::shared_ptr<const MapSymbol>& symbol, const std::shared_ptr<MapRendererBaseResource>& resource);
+        void publishMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<MapRendererBaseResource>& resource);
+        void unpublishMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<MapRendererBaseResource>& resource);
 
         // Invalidated resources:
         QAtomicInt _invalidatedResourcesTypesMask;
