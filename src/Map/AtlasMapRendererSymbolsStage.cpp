@@ -272,16 +272,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             continue;
         }
 
-        //////////////////////////////////////////////////////////////////////////
-        //continue;
-        //if (const auto groupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
-        //{
-        //    const auto osmId = groupWithId->id >> 1;
-        //    if (osmId != 290136796 && osmId != 290003243)
-        //        continue;
-        //}
-        //////////////////////////////////////////////////////////////////////////
-
         // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.
         // They will appear on path in the order they are stored in group.
 
@@ -1625,7 +1615,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
     
     {
         QReadLocker scopedLocker(&_lastPreparedIntersectionsLock);
-
         _lastPreparedIntersections.select(screenPoint, selectedRenderables);
     }
 
