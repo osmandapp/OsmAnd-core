@@ -21,11 +21,14 @@ namespace OsmAnd
     class OSMAND_CORE_API WebClient
     {
         Q_DISABLE_COPY_AND_MOVE(WebClient);
+
     public:
         typedef std::function<void(const uint64_t transferredBytes, const uint64_t totalBytes)> RequestProgressCallbackSignature;
 
         class OSMAND_CORE_API RequestResult
         {
+            Q_DISABLE_COPY_AND_MOVE(RequestResult);
+
         private:
         protected:
             RequestResult(const QNetworkReply* const networkReply);
@@ -39,6 +42,8 @@ namespace OsmAnd
         
         class OSMAND_CORE_API HttpRequestResult : public RequestResult
         {
+            Q_DISABLE_COPY_AND_MOVE(HttpRequestResult);
+
         private:
         protected:
             HttpRequestResult(const QNetworkReply* const networkReply);

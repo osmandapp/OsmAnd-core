@@ -4,6 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
 #include <utility>
+#include <array>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
@@ -16,17 +17,18 @@ namespace OsmAnd
     template<typename ELEMENT_TYPE, typename COORD_TYPE>
     class QuadTree
     {
-        Q_DISABLE_COPY_AND_MOVE(QuadTree);
-
     public:
+        typedef QuadTree<ELEMENT_TYPE, COORD_TYPE> QuadTreeT;
         typedef Area<COORD_TYPE> AreaT;
         typedef OOBB<COORD_TYPE> OOBBT;
+        typedef Point<COORD_TYPE> PointT;
         enum class BBoxType
         {
             Invalid,
             AABB,
             OOBB,
         };
+
         struct BBox
         {
             enum {
@@ -110,8 +112,25 @@ namespace OsmAnd
             {
             }
 
+            Node(const Node& that)
+                : area(that.area)
+            {
+                for (const auto idx = 0u; idx < 4; idx++)
+                {
+                    const auto& source = that.subnodes[idx];
+                    if (!source)
+                        continue;
+                    auto& target = subnodes[idx];
+
+                    target.reset(new Node(*source));
+                }
+
+                for (const auto& source : constOf(that.entries))
+                    entries.push_back(source);
+            }
+
             const AreaT area;
-            std::unique_ptr< Node > subnodes[4];
+            std::array< std::unique_ptr< Node >, 4 > subnodes;
             typedef std::pair<BBox, ELEMENT_TYPE> EntryPair;
             QList< EntryPair > entries;
 
@@ -252,6 +271,30 @@ namespace OsmAnd
                     test(bbox_.asOOBB, strict, acceptor);
             }
 
+            inline bool select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor) const
+            {
+                // If this node can not contain the point, the node can not have anything that will give positive result
+                if (!area.contains(point))
+                    return false;
+
+                for (const auto& entry : constOf(entries))
+                {
+                    if (contains(point, entry.first))
+                    {
+                        if (!acceptor || acceptor(entry.second, entry.first))
+                            outResults.push_back(entry.second);
+                    }
+                }
+
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    subnodes[idx]->select(point, outResults, acceptor);
+                }
+            }
+
             template<typename BBOX_TYPE>
             static bool contains(const BBOX_TYPE& which, const BBox& what)
             {
@@ -259,6 +302,14 @@ namespace OsmAnd
                     return which.contains(what.asAABB);
                 else /* if (bbox_.type == BBoxType::OOBB) */
                     return which.contains(what.asOOBB);
+            }
+
+            static bool contains(const PointT& which, const BBox& what)
+            {
+                if (what.type == BBoxType::AABB)
+                    return what.asAABB.contains(which);
+                else /* if (bbox_.type == BBoxType::OOBB) */
+                    return what.asOOBB.contains(which);
             }
 
             template<typename BBOX_TYPE>
@@ -271,14 +322,20 @@ namespace OsmAnd
             }
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(Node);
+            Q_DISABLE_MOVE(Node);
         };
 
         std::unique_ptr< Node > _root;
     public:
-        QuadTree(const AreaT& rootArea = AreaT::largest(), const uintmax_t maxDepth_ = std::numeric_limits<uintmax_t>::max())
+        inline QuadTree(const AreaT& rootArea = AreaT::largest(), const uintmax_t maxDepth_ = std::numeric_limits<uintmax_t>::max())
             : _root(new Node(rootArea))
             , maxDepth(std::max(maxDepth_, static_cast<uintmax_t>(1u)))
+        {
+        }
+
+        inline QuadTree(const QuadTreeT& that)
+            : _root(new Node(*that._root))
+            , maxDepth(that.maxDepth)
         {
         }
 
@@ -286,7 +343,17 @@ namespace OsmAnd
         {
         }
 
-        const uintmax_t maxDepth;
+        inline QuadTreeT& operator=(const QuadTreeT& that)
+        {
+            if (this != &that)
+            {
+                maxDepth = that.maxDepth;
+                _root.reset(new Node(*that._root));
+            }
+            return *this;
+        }
+
+        uintmax_t maxDepth;
 
         inline bool insert(const ELEMENT_TYPE& entry, const BBox& bbox, const bool strict = false)
         {
@@ -360,6 +427,11 @@ namespace OsmAnd
         inline bool test(const OOBBT& bbox, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
             return _root->test(bbox, strict, acceptor);
+        }
+
+        inline bool select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor = nullptr) const
+        {
+            return _root->select(point, outResults, acceptor);
         }
     };
 }

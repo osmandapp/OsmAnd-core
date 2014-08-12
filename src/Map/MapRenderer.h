@@ -92,10 +92,11 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
-        void doUnpublishMapSymbol(
+        bool doUnpublishMapSymbol(
             const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
-            const std::shared_ptr<MapRendererBaseResource>& resource);
+            const std::shared_ptr<MapRendererBaseResource>& resource,
+            const bool mayFail);
         bool processPendingMapSymbols();
         
         // GPU worker related:

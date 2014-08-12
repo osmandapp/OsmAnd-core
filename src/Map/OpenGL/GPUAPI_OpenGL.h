@@ -85,8 +85,16 @@ namespace OsmAnd
     template<typename T, T DEFAULT_VALUE>
     struct GLref : public SmartPOD<T, DEFAULT_VALUE>
     {
+        typedef SmartPOD<T, DEFAULT_VALUE> Base;
+
         virtual ~GLref()
         {
+        }
+
+        inline GLref& operator=(const T& that)
+        {
+            Base::operator=(that);
+            return *this;
         }
 
         inline operator bool() const

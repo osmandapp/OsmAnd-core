@@ -804,8 +804,9 @@ void OsmAnd::MapRenderer::publishMapSymbol(
 
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     LogPrintf(LogSeverityLevel::Debug,
-        "Published (pending) map symbol %p from %p",
+        "Published (pending) map symbol %p (group %p) from %p",
         symbol.get(),
+        symbolGroup.get(),
         resource.get());
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
 }
@@ -825,8 +826,10 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
 
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     LogPrintf(LogSeverityLevel::Debug,
-        "Published map symbol %p from %p (new total %d), now referenced from %d resources",
+        "Published map symbol %p (group %p, new refs #%d) from %p (new total %d), now referenced from %d resources",
         symbol.get(),
+        symbolGroup.get(),
+        (unsigned int)_publishedMapSymbolsGroups[symbolGroup],
         resource.get(),
         _publishedMapSymbolsCount.load(),
         symbolReferencedResources.size());
@@ -841,9 +844,12 @@ void OsmAnd::MapRenderer::unpublishMapSymbol(
     // First try to publish directly
     if (_publishedMapSymbolsLock.tryLockForWrite())
     {
-        doUnpublishMapSymbol(symbolGroup, symbol, resource);
+        const bool unpublished = doUnpublishMapSymbol(symbolGroup, symbol, resource, true);
         _publishedMapSymbolsLock.unlock();
-        return;
+
+        // In case unpublish failed, this means that symbol is in pending to publish
+        if (unpublished)
+            return;
     }
 
     // But if published map symbols are currently in use, put to pending in a blocking way
@@ -855,37 +861,72 @@ void OsmAnd::MapRenderer::unpublishMapSymbol(
 
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     LogPrintf(LogSeverityLevel::Debug,
-        "Unpublished (pending) map symbol %p from %p",
+        "Unpublished (pending) map symbol %p (group %p) from %p",
         symbol.get(),
+        symbolGroup.get(),
         resource.get());
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
 }
 
-void OsmAnd::MapRenderer::doUnpublishMapSymbol(
+bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
     const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
     const std::shared_ptr<const MapSymbol>& symbol,
-    const std::shared_ptr<MapRendererBaseResource>& resource)
+    const std::shared_ptr<MapRendererBaseResource>& resource,
+    const bool mayFail)
 {
-    const auto itPublishedMapSymbolsGroup = _publishedMapSymbolsGroups.find(symbolGroup);
-    if (itPublishedMapSymbolsGroup != _publishedMapSymbolsGroups.end())
-    {
-        auto& refsCounter = *itPublishedMapSymbolsGroup;
-        refsCounter -= 1;
-        if (refsCounter == 0)
-            _publishedMapSymbolsGroups.erase(itPublishedMapSymbolsGroup);
-    }
-
     const auto itPublishedMapSymbols = _publishedMapSymbols.find(symbol->order);
     if (itPublishedMapSymbols == _publishedMapSymbols.end())
-        return;
+    {
+        if (!mayFail)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #1!",
+                symbol.get(),
+                symbolGroup.get(),
+                resource.get());
+
+            assert(false);
+        }
+
+        // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
+        return false;
+    }
     auto& publishedMapSymbols = *itPublishedMapSymbols;
 
     const auto itSymbolReferencedResources = publishedMapSymbols.find(symbol);
     if (itSymbolReferencedResources == publishedMapSymbols.end())
-        return;
+    {
+        if (!mayFail)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #1!",
+                symbol.get(),
+                symbolGroup.get(),
+                resource.get());
+
+            assert(false);
+        }
+
+        // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
+        return false;
+    }
     auto& symbolReferencedResources = *itSymbolReferencedResources;
     if (!symbolReferencedResources.remove(resource))
-        return;
+    {
+        if (!mayFail)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #1!",
+                symbol.get(),
+                symbolGroup.get(),
+                resource.get());
+
+            assert(false);
+        }
+
+        // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
+        return false;
+    }
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     const auto symbolReferencedResourcesSize = symbolReferencedResources.size();
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
@@ -897,14 +938,27 @@ void OsmAnd::MapRenderer::doUnpublishMapSymbol(
     if (publishedMapSymbols.isEmpty())
         _publishedMapSymbols.erase(itPublishedMapSymbols);
 
+    const auto itPublishedMapSymbolsGroup = _publishedMapSymbolsGroups.find(symbolGroup);
+    auto& groupRefsCounter = *itPublishedMapSymbolsGroup;
+    groupRefsCounter -= 1;
+#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    const auto newGroupRefsCounter = (unsigned int)groupRefsCounter;
+#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    if (groupRefsCounter == 0)
+        _publishedMapSymbolsGroups.erase(itPublishedMapSymbolsGroup);
+
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     LogPrintf(LogSeverityLevel::Debug,
-        "Unpublished map symbol %p from %p (new total %d), now referenced from %d resources",
+        "Unpublished map symbol %p (group %p, new refs #%d) from %p (new total %d), now referenced from %d resources",
         symbol.get(),
+        symbolGroup.get(),
+        newGroupRefsCounter,
         resource.get(),
         _publishedMapSymbolsCount.load(),
         symbolReferencedResourcesSize);
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+
+    return true;
 }
 
 bool OsmAnd::MapRenderer::processPendingMapSymbols()
@@ -926,11 +980,22 @@ bool OsmAnd::MapRenderer::processPendingMapSymbols()
     {
         QWriteLocker scopedLocker(&_publishedMapSymbolsLock);
 
-        for (const auto& entry : constOf(pendingUnpublishMapSymbols))
-            doUnpublishMapSymbol(entry.symbolGroup, entry.mapSymbol, entry.originResource);
-
         for (const auto& entry : constOf(pendingPublishMapSymbols))
-            doPublishMapSymbol(entry.symbolGroup, entry.mapSymbol, entry.originResource);
+        {
+            doPublishMapSymbol(
+                entry.symbolGroup,
+                entry.mapSymbol,
+                entry.originResource);
+        }
+
+        for (const auto& entry : constOf(pendingUnpublishMapSymbols))
+        {
+            doUnpublishMapSymbol(
+                entry.symbolGroup,
+                entry.mapSymbol,
+                entry.originResource,
+                false);
+        }
     }
 
     return true;

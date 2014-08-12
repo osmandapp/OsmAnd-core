@@ -269,7 +269,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         }
 
         //////////////////////////////////////////////////////////////////////////
-        continue;
+        //continue;
         /*if (const auto groupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
         {
             const auto osmId = groupWithId->id >> 1;

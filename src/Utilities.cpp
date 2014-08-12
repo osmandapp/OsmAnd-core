@@ -62,19 +62,29 @@ double OsmAnd::Utilities::parseSpeed(const QString& value, double defValue, bool
 double OsmAnd::Utilities::parseLength(const QString& value, double defValue, bool* wasParsed/* = nullptr*/)
 {
     int first, last;
+    if (wasParsed)
+        *wasParsed = false;
     if (!extractFirstNumberPosition(value, first, last, false, true))
         return defValue;
     bool ok;
     auto result = value.mid(first, last - first + 1).toDouble(&ok);
     if (!ok)
         return defValue;
+
+    if (wasParsed)
+        *wasParsed = true;
     if (value.contains(QLatin1String("ft")) || value.contains('"'))
         result *= 0.3048;
     if (value.contains('\''))
     {
         auto inchesSubstr = value.mid(value.indexOf('"') + 1);
         if (!extractFirstNumberPosition(inchesSubstr, first, last, false, true))
+        {
+            if (wasParsed)
+                *wasParsed = false;
+
             return defValue;
+        }
         bool ok;
         auto inches = inchesSubstr.mid(first, last - first + 1).toDouble(&ok);
         if (ok)
