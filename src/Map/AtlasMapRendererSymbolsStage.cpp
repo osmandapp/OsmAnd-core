@@ -329,184 +329,168 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         // This will produce start point index and offset
         const auto pathSize = path31.size();
         const auto pathInWorld = convertPoints31ToWorld(path31);
+        unsigned int originPointIndex = 0;
+        float originOffset = 0.0f;
+        if (widthBeforeCurrentSymbol > 0.0f)
+        {
+            unsigned int offsetEndPointIndex = 0;
+            float nextOffset = 0.0f;
+            const auto offsetBeforeCurrentSymbolFits = computeEndPointIndexAndNextOffsetIn3D(
+                pathSize,
+                pathInWorld,
+                widthBeforeCurrentSymbol,
+                0, // Origin is the first point of path
+                0.0f, // There's no offset
+                offsetEndPointIndex,
+                nextOffset);
+            
+            // In case even offset failed to fit, nothing can be done
+            if (!offsetBeforeCurrentSymbolFits)
+                continue;
 
-        //////////////////////////////////////////////////////////////////////////
-        //// Calculate current path in world and screen coordinates.
-        //// NOTE: There's an assumption that all OnPathSymbols from same group share same path
-        //const auto pathSize = path31.size();
-        //const auto pathInWorld = convertPoints31ToWorld(path31);
-        //const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
+            // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
+            // origin points index should point to previous point
+            originPointIndex = offsetEndPointIndex - 1;
+            originOffset = nextOffset;
+        }
+        unsigned int symbolInstancesFitted = 0;
+        for (;;)
+        {
+            // Find start point index of new instance and offset of next instance
+            unsigned int currentInstanceEndPointIndex = 0;
+            float nextOffset = 0.0f;
+            const auto currentSymbolInstanceFits = computeEndPointIndexAndNextOffsetIn3D(
+                pathSize,
+                pathInWorld,
+                widthBeforeCurrentSymbol,
+                originPointIndex,
+                originOffset,
+                currentInstanceEndPointIndex,
+                nextOffset);
 
-        //// First "plot" virtual renderable that occupies length of "widthBeforeCurrentSymbol" pixels
-        //unsigned int originPointIndex = 0;
-        //float originOccupiedLength = 0.0f;
-        //bool originOccupiedLengthIsIn2D = true;
-        //if (widthBeforeCurrentSymbol > 0.0f)
-        //{
-        //    const auto offsetBeforeCurrentSymbolFits = tryToFindSpaceOnPath(
-        //        pathSize,
-        //        pathInWorld,
-        //        pathOnScreen,
-        //        widthBeforeCurrentSymbol,
-        //        0,
-        //        true,
-        //        0.0f,
-        //        originPointIndex,
-        //        originOccupiedLengthIsIn2D,
-        //        originOccupiedLength);
-        //    
-        //    // In case even offset failed to fit, nothing can be done
-        //    if (!offsetBeforeCurrentSymbolFits)
-        //        continue;
+            // Stop in case current symbol doesn't fit anymore
+            if (!currentSymbolInstanceFits)
+            {
+                // If current symbol is the first one and it doesn't fit, show it
+                if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
+                    currentSymbol_ == mapSymbolsGroup->symbols.first() &&
+                    symbolInstancesFitted == 0)
+                {
+                    QVector< glm::vec3 > debugPoints;
+                    for (const auto& pointInWorld : pathInWorld)
+                    {
+                        debugPoints.push_back(qMove(glm::vec3(
+                            pointInWorld.x,
+                            0.0f,
+                            pointInWorld.y)));
+                    }
+                    getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
+                }
 
-        //    // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
-        //    // origin points index should point to previous point
-        //    originPointIndex -= 1;
-        //}
+                break;
+            }
 
-        
+            // Plot symbol instance.
+            // During this actually determine 2D or 3D mode, and compute glyph placement.
+            const auto subpathStartIndex = originPointIndex;
+            const auto subpathEndIndex = currentInstanceEndPointIndex;
+            const auto subpathPointsCount = subpathEndIndex - subpathStartIndex + 1;
+            std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+            renderable->mapSymbol = currentSymbol_;
+            renderable->gpuResource = gpuResource;
+            // Since to check if symbol instance can be rendered in 2D mode entire 2D points are needed,
+            // compute them only for subpath
+            const auto subpathOnScreen = projectFromWorldToScreen(pathInWorld, subpathStartIndex, subpathEndIndex);
+            renderable->is2D = pathRenderableAs2D(subpathOnScreen);
 
+            //TODO: instanciate!!!!
+            //    const auto is2D = nextOriginOccupiedLengthIsIn2D;
+            //    assert(lengths.size() == subpathPointsCount - 1);
+            //    renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
+            //        pathInWorld,
+            //        subpathStartIndex,
+            //        subpathEndIndex);
+            //    renderable->directionInWorld = computeSubpathDirection(
+            //        pathInWorld,
+            //        subpathStartIndex,
+            //        subpathEndIndex);
+            //    renderable->directionOnScreen = computeSubpathDirection(
+            //        pathOnScreen,
+            //        subpathStartIndex,
+            //        subpathEndIndex);
+            //    renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
+            //        renderable->is2D,
+            //        pathInWorld,
+            //        pathOnScreen,
+            //        subpathStartIndex,
+            //        subpathEndIndex,
+            //        renderable->directionOnScreen,
+            //        currentSymbol->glyphsWidth,
+            //        offsetFromStart,
+            //        lengths);
+            //    output.push_back(qMove(renderable));
+            if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
+            {
+                //const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
 
-        //
-        //// Try to fit as many instances of current symbol as possible
-        //unsigned int symbolInstancesFitted = 0;
-        //unsigned int nextOriginPointIndex = originPointIndex;
-        //float nextOriginOccupiedLength = originOccupiedLength;
-        //bool nextOriginOccupiedLengthIsIn2D = originOccupiedLengthIsIn2D;
-        //for (;;)
-        //{
-        //    const auto subpathStartIndex = nextOriginPointIndex;
-        //    float offsetFromStart = nextOriginOccupiedLength;
-        //    QVector<float> lengths;
-        //    const auto currentSymbolInstanceFits = tryToFindSpaceOnPath(
-        //        pathSize,
-        //        pathInWorld,
-        //        pathOnScreen,
-        //        currentSymbol->size.x,
-        //        nextOriginPointIndex,
-        //        nextOriginOccupiedLengthIsIn2D,
-        //        nextOriginOccupiedLength,
-        //        nextOriginPointIndex,
-        //        nextOriginOccupiedLengthIsIn2D,
-        //        nextOriginOccupiedLength,
-        //        &lengths,
-        //        &offsetFromStart);
+                // Path itself
+                QVector< glm::vec3 > debugPoints;
+                auto pPointInWorld = pathInWorld.constData() + subpathStartIndex;
+                for (auto idx = 0u; idx < subpathPointsCount; idx++, pPointInWorld++)
+                {
+                    debugPoints.push_back(qMove(glm::vec3(
+                        pPointInWorld->x,
+                        0.0f,
+                        pPointInWorld->y)));
+                }
+                getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
 
-        //    // Stop in case current symbol doesn't fit anymore
-        //    if (!currentSymbolInstanceFits)
-        //    {
-        //        // If current symbol is the first one and it doesn't fit, show it
-        //        if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
-        //            currentSymbol_ == mapSymbolsGroup->symbols.first() && 
-        //            symbolInstancesFitted == 0)
-        //        {
-        //            QVector< glm::vec3 > debugPoints;
-        //            for (const auto& pointInWorld : pathInWorld)
-        //            {
-        //                debugPoints.push_back(qMove(glm::vec3(
-        //                    pointInWorld.x,
-        //                    0.0f,
-        //                    pointInWorld.y)));
-        //            }
-        //            getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
-        //        }
+            //    // Subpath N (start)
+            //    {
+            //        QVector<glm::vec2> lineN;
+            //        const auto sn0 = pathOnScreen[subpathStartIndex];
+            //        lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+            //        const auto sn1 = pathOnScreen[subpathStartIndex] + (directionOnScreenN*32.0f);
+            //        lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+            //        getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+            //    }
 
-        //        break;
-        //    }
-        //    // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
-        //    // next origin points index should point to previous point
-        //    nextOriginPointIndex -= 1;
+            //    // Subpath N (end)
+            //        {
+            //            QVector<glm::vec2> lineN;
+            //            const auto sn0 = pathOnScreen[subpathEndIndex];
+            //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+            //            const auto sn1 = pathOnScreen[subpathEndIndex] + (directionOnScreenN*32.0f);
+            //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+            //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+            //        }
+            }
+            symbolInstancesFitted++;
 
-        //    // Actually plot the instance
-        //    const auto is2D = nextOriginOccupiedLengthIsIn2D;
-        //    const auto subpathEndIndex = nextOriginPointIndex + 1;
-        //    const auto subpathPointsCount = subpathEndIndex - subpathStartIndex + 1;
-        //    assert(lengths.size() == subpathPointsCount - 1);
-        //    std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
-        //    renderable->mapSymbol = currentSymbol_;
-        //    renderable->gpuResource = gpuResource;
-        //    renderable->is2D = is2D;
-        //    renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-        //        pathInWorld,
-        //        subpathStartIndex,
-        //        subpathEndIndex);
-        //    renderable->directionInWorld = computeSubpathDirection(
-        //        pathInWorld,
-        //        subpathStartIndex,
-        //        subpathEndIndex);
-        //    renderable->directionOnScreen = computeSubpathDirection(
-        //        pathOnScreen,
-        //        subpathStartIndex,
-        //        subpathEndIndex);
-        //    renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
-        //        renderable->is2D,
-        //        pathInWorld,
-        //        pathOnScreen,
-        //        subpathStartIndex,
-        //        subpathEndIndex,
-        //        renderable->directionOnScreen,
-        //        currentSymbol->glyphsWidth,
-        //        offsetFromStart,
-        //        lengths);
-        //    output.push_back(qMove(renderable));
-        //    symbolInstancesFitted++;
+            // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
+            // origin points index should point to previous point
+            originPointIndex = currentInstanceEndPointIndex - 1;
+            originOffset = nextOffset;
 
-        //    if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
-        //    {
-        //        const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
+            // And now compute next instance origin and offset
+            unsigned int spaceBetweenInstancedEndPointIndex = 0;
+            const auto spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance = totalWidth - currentSymbol->size.x;
+            const auto spaceBetweenInstancesFits = computeEndPointIndexAndNextOffsetIn3D(
+                pathSize,
+                pathInWorld,
+                spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance,
+                originPointIndex,
+                originOffset,
+                spaceBetweenInstancedEndPointIndex,
+                nextOffset);
+            if (!spaceBetweenInstancesFits)
+                break;
 
-        //        // Path itself
-        //        QVector< glm::vec3 > debugPoints;
-        //        auto pPointInWorld = pathInWorld.constData() + subpathStartIndex;
-        //        for (auto idx = 0u; idx < subpathPointsCount; idx++, pPointInWorld++)
-        //        {
-        //            debugPoints.push_back(qMove(glm::vec3(
-        //                pPointInWorld->x,
-        //                0.0f,
-        //                pPointInWorld->y)));
-        //        }
-        //        getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
-
-        //        // Subpath N (start)
-        //        {
-        //            QVector<glm::vec2> lineN;
-        //            const auto sn0 = pathOnScreen[subpathStartIndex];
-        //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-        //            const auto sn1 = pathOnScreen[subpathStartIndex] + (directionOnScreenN*32.0f);
-        //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-        //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-        //        }
-
-        //        // Subpath N (end)
-        //        {
-        //            QVector<glm::vec2> lineN;
-        //            const auto sn0 = pathOnScreen[subpathEndIndex];
-        //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-        //            const auto sn1 = pathOnScreen[subpathEndIndex] + (directionOnScreenN*32.0f);
-        //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-        //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-        //        }
-        //    }
-
-        //    // Find offset after current instance of the symbol before next instance of the symbol
-        //    const auto spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance = totalWidth - currentSymbol->size.x;
-        //    const auto offsetBeforeNextSymbolInstanceFits = tryToFindSpaceOnPath(
-        //        pathSize,
-        //        pathInWorld,
-        //        pathOnScreen,
-        //        spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance,
-        //        nextOriginPointIndex,
-        //        nextOriginOccupiedLengthIsIn2D,
-        //        nextOriginOccupiedLength,
-        //        nextOriginPointIndex,
-        //        nextOriginOccupiedLengthIsIn2D,
-        //        nextOriginOccupiedLength);
-        //    if (!offsetBeforeNextSymbolInstanceFits)
-        //        break;
-        //    // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
-        //    // next origin points index should point to previous point
-        //    nextOriginPointIndex -= 1;
-        //}
+            // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
+            // origin points index should point to previous point
+            originPointIndex = spaceBetweenInstancedEndPointIndex - 1;
+            originOffset = nextOffset;
+        }
     }
 }
 
@@ -561,113 +545,58 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScree
     return result;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage::isInclineAllowedFor2D(const glm::vec2& pointOnScreen0, const glm::vec2& pointOnScreen1) const
+bool OsmAnd::AtlasMapRendererSymbolsStage::pathRenderableAs2D(const QVector<glm::vec2>& pathOnScreen) const
 {
     // Calculate 'incline' of line and compare to horizontal direction.
     // If any 'incline' is larger than 15 degrees, this line can not be rendered as 2D
 
     const static float inclineThresholdSinSq = 0.0669872981; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
 
-    const auto vSegment = pointOnScreen1 - pointOnScreen0;
-    const auto d = vSegment.y;// horizont.x*vSegment.y - horizont.y*vSegment.x == 1.0f*vSegment.y - 0.0f*vSegment.x
-    const auto inclineSinSq = d*d / (vSegment.x*vSegment.x + vSegment.y*vSegment.y);
-    
-    return !(qAbs(inclineSinSq) > inclineThresholdSinSq);
+    auto pPointOnScreen = pathOnScreen.data();
+    auto pPrevPointOnScreen = pPointOnScreen++;
+    for (auto idx = 1, count = pathOnScreen.size(); idx < count; idx++)
+    {
+        const auto vSegment = *(pPointOnScreen++) - *(pPrevPointOnScreen++);
+        const auto d = vSegment.y;// horizont.x*vSegment.y - horizont.y*vSegment.x == 1.0f*vSegment.y - 0.0f*vSegment.x
+        const auto inclineSinSq = d*d / (vSegment.x*vSegment.x + vSegment.y*vSegment.y);
+        if (qAbs(inclineSinSq) > inclineThresholdSinSq)
+            return false;
+    }
+
+    return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage::tryToFindSpaceOnPath(
+bool OsmAnd::AtlasMapRendererSymbolsStage::computeEndPointIndexAndNextOffsetIn3D(
     const unsigned int pathSize,
     const QVector<glm::vec2>& pathInWorld,
-    const QVector<glm::vec2>& pathOnScreen,
     const float requestedLengthInPixels,
     const unsigned int startPointIndex,
-    const bool alreadyOccupiedLengthIsIn2D,
-    const float alreadyOccupiedLength_,
+    const float offset,
     unsigned int& outEndPointIndex,
-    bool& outLastOccupiedLengthIsIn2D,
-    float& outLastOccupiedLength,
-    QVector<float>* outLengths /*= nullptr*/,
-    float* outRecalculatedAlreadyOccupiedLength /*= nullptr*/) const
+    float& outNextOffset) const
 {
     const auto& internalState = getInternalState();
 
-    if (outLengths)
-        outLengths->clear();
+    const auto requestedLength = requestedLengthInPixels * internalState.pixelInWorldProjectionScale;
+
     auto testPointIndex = startPointIndex + 1;
-    bool isRenderableAs2D = alreadyOccupiedLengthIsIn2D;
-    auto requestedLength = requestedLengthInPixels * (isRenderableAs2D ? 1.0f : internalState.pixelInWorldProjectionScale);
     float entireSegmentLength = 0.0f;
-    float alreadyOccupiedLength = alreadyOccupiedLength_;
     while (testPointIndex < pathSize)
     {
-        // Check if last segment [testPointIndex - 1, testPointIndex] can be 2D.
-        // This check is only performed if previously was renderable as 2D, since after test fails there's no way to go back to 2D
-        if (isRenderableAs2D)
-        {
-            isRenderableAs2D = isInclineAllowedFor2D(pathOnScreen[testPointIndex - 1], pathOnScreen[testPointIndex]);
-            if (!isRenderableAs2D)
-            {
-                // Recalculate alreadyOccupiedLength from 2D to 3D length in segment [startPointIdx, startPointIdx + 1]
-                if (alreadyOccupiedLength > 0.0f)
-                {
-                    const auto firstLength = glm::distance(
-                        pathOnScreen[startPointIndex],
-                        pathOnScreen[startPointIndex + 1]);
-                    const auto alreadyOccupiedPortion = alreadyOccupiedLength / firstLength;
-
-                    alreadyOccupiedLength = glm::distance(
-                        pathInWorld[startPointIndex],
-                        pathInWorld[startPointIndex + 1]) * alreadyOccupiedPortion;
-                }
-
-                // Recalculate entire length of segment [startPointIdx, testPointIdx - 1] as 3D
-                if (outLengths)
-                    outLengths->clear();
-                entireSegmentLength = 0.0f;
-                requestedLength *= internalState.pixelInWorldProjectionScale;
-                for (auto idx = startPointIndex + 1; idx < testPointIndex; idx++)
-                {
-                    const auto currentSegmentLength = glm::distance(pathInWorld[idx - 1], pathInWorld[idx]);
-                    if (outLengths)
-                        outLengths->push_back(currentSegmentLength);
-                    entireSegmentLength += currentSegmentLength;
-
-                    // Also perform check if entire segment can fit the requested length, since what doesn't fit in 2D may fit in 3D
-                    if (entireSegmentLength - alreadyOccupiedLength >= requestedLength)
-                    {
-                        outEndPointIndex = idx;
-                        outLastOccupiedLengthIsIn2D = false;
-                        outLastOccupiedLength = currentSegmentLength - (entireSegmentLength - alreadyOccupiedLength - requestedLength);
-                        if (outRecalculatedAlreadyOccupiedLength)
-                            *outRecalculatedAlreadyOccupiedLength = alreadyOccupiedLength;
-                        assert(outLastOccupiedLength <= currentSegmentLength);
-                        assert(outLastOccupiedLength >= 0.0f);
-
-                        return true;
-                    }
-                }
-            }
-        }
-
         // Add length of last segment [testPointIndex - 1, testPointIndex]
         const auto currentSegmentLength = glm::distance(
-            (isRenderableAs2D ? pathOnScreen : pathInWorld)[testPointIndex - 1],
-            (isRenderableAs2D ? pathOnScreen : pathInWorld)[testPointIndex]);
-        if (outLengths)
-            outLengths->push_back(currentSegmentLength);
+            pathInWorld[testPointIndex - 1],
+            pathInWorld[testPointIndex]);
         entireSegmentLength += currentSegmentLength;
 
         // If segment length with subtracted "already-occupied portion" can fit requested length,
         // then plot a renderable there
-        if (entireSegmentLength - alreadyOccupiedLength >= requestedLength)
+        if (entireSegmentLength - offset >= requestedLength)
         {
             outEndPointIndex = testPointIndex;
-            outLastOccupiedLengthIsIn2D = isRenderableAs2D;
-            outLastOccupiedLength = currentSegmentLength - (entireSegmentLength - alreadyOccupiedLength - requestedLength);
-            if (outRecalculatedAlreadyOccupiedLength)
-                *outRecalculatedAlreadyOccupiedLength = alreadyOccupiedLength;
-            assert(outLastOccupiedLength <= currentSegmentLength);
-            assert(outLastOccupiedLength >= 0.0f);
+            outNextOffset = currentSegmentLength - (entireSegmentLength - offset - requestedLength);
+            assert(outNextOffset <= currentSegmentLength);
+            assert(outNextOffset >= 0.0f);
 
             return true;
         }
