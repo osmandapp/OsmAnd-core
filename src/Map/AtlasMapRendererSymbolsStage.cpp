@@ -272,6 +272,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             continue;
         }
 
+        //////////////////////////////////////////////////////////////////////////
+        if (const auto mapSymbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
+        {
+            const auto osmId = mapSymbolsGroupWithId->id >> 1;
+            int i = 5;
+        }
+        //////////////////////////////////////////////////////////////////////////
+
         // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.
         // They will appear on path in the order they are stored in group.
 
@@ -1199,7 +1207,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck))
         {
-            getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorRED, 50), oobb.rotation());
+            getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorRED, 50), -oobb.rotation());
             getRenderer()->debugStage->addLine2D({
                 oobb.pointInGlobalSpace0(),
                 oobb.pointInGlobalSpace1(),
@@ -1294,8 +1302,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
         {
-            getRenderer()->debugStage->addRect2D(oobb.getEnlargedBy(PointF(symbol->minDistance)).unrotatedBBox(), SkColorSetA(SK_ColorRED, 50), oobb.rotation());
-            getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorRED, 128), oobb.rotation());
+            getRenderer()->debugStage->addRect2D(oobb.getEnlargedBy(PointF(symbol->minDistance)).unrotatedBBox(), SkColorSetA(SK_ColorRED, 50), -oobb.rotation());
+            getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorRED, 128), -oobb.rotation());
             getRenderer()->debugStage->addLine2D({
                 oobb.pointInGlobalSpace0(),
                 oobb.pointInGlobalSpace1(),
@@ -1370,7 +1378,7 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath2dOOBB(const 
         centerOnScreen.x, currentState.windowSize.y - centerOnScreen.y,
         bboxInDirection.width(), bboxInDirection.height());
     
-    return OOBBF(bboxInDirection, directionAngle);
+    return OOBBF(bboxInDirection, -directionAngle);
 }
 
 OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const
@@ -1555,7 +1563,7 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(const 
         centerOnScreen.x, currentState.windowSize.y - centerOnScreen.y,
         bboxInDirection.width(), bboxInDirection.height());
     
-    return OOBBF(bboxInDirection, directionAngle);
+    return OOBBF(bboxInDirection, -directionAngle);
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
@@ -1612,7 +1620,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
         {
             if (debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck)
             {
-                getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorBLUE, 50), oobb.rotation());
+                getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorBLUE, 50), -oobb.rotation());
                 getRenderer()->debugStage->addLine2D({
                     oobb.pointInGlobalSpace0(),
                     oobb.pointInGlobalSpace1(),
@@ -1627,7 +1635,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
 
     if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
     {
-        getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorGREEN, 50), oobb.rotation());
+        getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorGREEN, 50), -oobb.rotation());
         getRenderer()->debugStage->addLine2D({
             oobb.pointInGlobalSpace0(),
             oobb.pointInGlobalSpace1(),

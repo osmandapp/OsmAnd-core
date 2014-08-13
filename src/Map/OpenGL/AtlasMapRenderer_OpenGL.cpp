@@ -381,10 +381,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     internalState->frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
 
     const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase));
-    internalState->frustum2D31.p0 = PointI((internalState->frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31));
-    internalState->frustum2D31.p1 = PointI((internalState->frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31));
-    internalState->frustum2D31.p2 = PointI((internalState->frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31));
-    internalState->frustum2D31.p3 = PointI((internalState->frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31));
+    internalState->globalFrustum2D31.p0 = PointI64((internalState->frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+    internalState->globalFrustum2D31.p1 = PointI64((internalState->frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+    internalState->globalFrustum2D31.p2 = PointI64((internalState->frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
+    internalState->globalFrustum2D31.p3 = PointI64((internalState->frustum2D.p3 / TileSize3D) * static_cast<double>(tileSize31)) + state.target31;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* internalState, const MapRendererState& state) const

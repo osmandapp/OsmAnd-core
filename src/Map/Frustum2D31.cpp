@@ -1,126 +1,82 @@
 #include "Frustum2D31.h"
-#include "Utilities.h"
 
-OsmAnd::Frustum2D31::Frustum2D31()
+bool OsmAnd::Frustum2D31::test(const PointI& p_) const
 {
-}
+    AreaI64 bbox;
+    bbox.topLeft = bbox.bottomRight = p0;
+    bbox.enlargeToInclude(p1);
+    bbox.enlargeToInclude(p2);
+    bbox.enlargeToInclude(p3);
+    const auto tilesCount = static_cast<int64_t>(1ull << ZoomLevel31);
+    const auto xMinK = qFloor(static_cast<double>(bbox.left()) / tilesCount);
+    const auto xMaxK = qCeil(static_cast<double>(bbox.right()) / tilesCount);
+    const auto yMinK = qFloor(static_cast<double>(bbox.top()) / tilesCount);
+    const auto yMaxK = qCeil(static_cast<double>(bbox.bottom()) / tilesCount);
 
-OsmAnd::Frustum2D31::Frustum2D31(const PointI& p0_, const PointI& p1_, const PointI& p2_, const PointI& p3_)
-    : p0(p0_)
-    , p1(p1_)
-    , p2(p2_)
-    , p3(p3_)
-{
-}
-
-OsmAnd::Frustum2D31::Frustum2D31(const Frustum2D31& that)
-    : p0(that.p0)
-    , p1(that.p1)
-    , p2(that.p2)
-    , p3(that.p3)
-{
-}
-
-OsmAnd::Frustum2D31::~Frustum2D31()
-{
-}
-
-OsmAnd::Frustum2D31& OsmAnd::Frustum2D31::operator=(const Frustum2D31& that)
-{
-    p0 = that.p0;
-    p1 = that.p1;
-    p2 = that.p2;
-    p3 = that.p3;
-
-    return *this;
-}
-
-bool OsmAnd::Frustum2D31::test(const PointI& p) const
-{
-    return isPointInside(p);
-}
-
-bool OsmAnd::Frustum2D31::test(const PointI& lp0, const PointI& lp1) const
-{
-    // Check if any of line points is inside.
-    // This case covers inner line and partially inner line (that has one vertex inside).
-    if (isPointInside(lp0) || isPointInside(lp1))
-        return true;
-
-    // Check if line 'lp0-lp1' intersects any of edges.
-    // This case covers intersecting line, that has start and stop outside of frustum.
-    return
-        testLineLineIntersection(lp0, lp1, p0, p1) ||
-        testLineLineIntersection(lp0, lp1, p1, p2) ||
-        testLineLineIntersection(lp0, lp1, p2, p3) ||
-        testLineLineIntersection(lp0, lp1, p3, p0);
-}
-
-bool OsmAnd::Frustum2D31::test(const AreaI& area) const
-{
-    const auto a0 = area.topLeft;
-    const auto a1 = area.topRight();
-    const auto a2 = area.bottomRight;
-    const auto a3 = area.bottomLeft();
-
-    // Check if any vertex of area is inside.
-    // This case covers inner area and partially inner area (that has at least 1 vertex inside)
-    if (isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
-        return true;
-
-    // Check if any area edge intersects any of frustum edges.
-    // This case covers intersecting area that has no vertex inside frustum.
-    if (
-        testLineLineIntersection(a0, a1, p0, p1) ||
-        testLineLineIntersection(a0, a1, p1, p2) ||
-        testLineLineIntersection(a0, a1, p2, p3) ||
-        testLineLineIntersection(a0, a1, p3, p0) ||
-        testLineLineIntersection(a1, a2, p0, p1) ||
-        testLineLineIntersection(a1, a2, p1, p2) ||
-        testLineLineIntersection(a1, a2, p2, p3) ||
-        testLineLineIntersection(a1, a2, p3, p0) ||
-        testLineLineIntersection(a2, a3, p0, p1) ||
-        testLineLineIntersection(a2, a3, p1, p2) ||
-        testLineLineIntersection(a2, a3, p2, p3) ||
-        testLineLineIntersection(a2, a3, p3, p0) ||
-        testLineLineIntersection(a3, a0, p0, p1) ||
-        testLineLineIntersection(a3, a0, p1, p2) ||
-        testLineLineIntersection(a3, a0, p2, p3) ||
-        testLineLineIntersection(a3, a0, p3, p0))
-        return true;
-
-    // Check if frustum is totally inside area.
-    return
-        area.contains(p0) ||
-        area.contains(p1) ||
-        area.contains(p2) ||
-        area.contains(p3);
-}
-
-bool OsmAnd::Frustum2D31::isPointInside(const PointI& p) const
-{
-    // Check if point 'p' is on the same 'side' of each edge
-    const auto sign0 = crossProductSign(p0, p1, p);
-    const auto sign1 = crossProductSign(p1, p2, p);
-    const auto sign2 = crossProductSign(p2, p3, p);
-    const auto sign3 = crossProductSign(p3, p0, p);
-    int sign = sign0;
-    if (sign1 != 0)
+    PointI64 dP;
+    const PointI64 p(p_);
+    for (auto xK = xMinK; xK <= xMaxK; xK++)
     {
-        if (sign != 0 && sign != sign1)
-            return false;
-        sign = sign1;
+        dP.x = tilesCount * xK;
+        for (auto yK = yMinK; yK <= yMaxK; yK++)
+        {
+            dP.y = tilesCount * yK;
+            if (Frustum2DI64::test(p + dP))
+                return true;
+        }
     }
-    if (sign2 != 0)
+
+    return false;
+}
+
+bool OsmAnd::Frustum2D31::test(const PointI& lp0_, const PointI& lp1_) const
+{
+    AreaI64 bbox;
+    bbox.topLeft = bbox.bottomRight = p0;
+    bbox.enlargeToInclude(p1);
+    bbox.enlargeToInclude(p2);
+    bbox.enlargeToInclude(p3);
+    const auto tilesCount = static_cast<int64_t>(1ull << ZoomLevel31);
+    const auto xMinK = qFloor(static_cast<double>(bbox.left()) / tilesCount);
+    const auto xMaxK = qCeil(static_cast<double>(bbox.right()) / tilesCount);
+    const auto yMinK = qFloor(static_cast<double>(bbox.top()) / tilesCount);
+    const auto yMaxK = qCeil(static_cast<double>(bbox.bottom()) / tilesCount);
+
+    PointI64 dP;
+    const PointI64 lp0(lp0_);
+    const PointI64 lp1(lp1_);
+    for (auto xK = xMinK; xK <= xMaxK; xK++)
     {
-        if (sign != 0 && sign != sign2)
-            return false;
-        sign = sign2;
+        dP.x = tilesCount * xK;
+        for (auto yK = yMinK; yK <= yMaxK; yK++)
+        {
+            dP.y = tilesCount * yK;
+            if (Frustum2DI64::test(lp0 + dP, lp1 + dP))
+                return true;
+        }
     }
-    if (sign3 != 0)
+
+    return false;
+}
+
+bool OsmAnd::Frustum2D31::test(const QVector<PointI>& path) const
+{
+    if (path.isEmpty())
+        return false;
+
+    const auto pathSize = path.size();
+    if (pathSize == 1)
+        return test(path.first());
+    if (pathSize == 2)
+        return test(path.first(), path.last());
+
+    auto pPoint = path.constData();
+    auto pPrevPoint = pPoint++;
+    for (auto idx = 1; idx < pathSize; idx++)
     {
-        if (sign != 0 && sign != sign3)
-            return false;
+        if (test(*(pPrevPoint++), *(pPoint++)))
+            return true;
     }
-    return true;
+
+    return false;
 }

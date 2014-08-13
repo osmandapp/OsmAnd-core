@@ -4,35 +4,29 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
+#include <QVector>
+#include "restore_internal_warnings.h"
+
+#include "ignore_warnings_on_external_includes.h"
+#include <glm/glm.hpp>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "MemoryCommon.h"
 #include "CommonTypes.h"
+#include "Frustum2D.h"
+#include "Utilities.h"
 
 namespace OsmAnd
 {
-    class Frustum2D31 Q_DECL_FINAL
+    struct Frustum2D31 : public Frustum2DI64
     {
         OSMAND_USE_MEMORY_MANAGER(Frustum2D31);
-    private:
-        bool isPointInside(const PointI& p) const;
-    protected:
-    public:
-        Frustum2D31();
-        Frustum2D31(const PointI& p0, const PointI& p1, const PointI& p2, const PointI& p3);
-        Frustum2D31(const Frustum2D31& that);
-        ~Frustum2D31();
-
-        PointI p0;
-        PointI p1;
-        PointI p2;
-        PointI p3;
-        
-        Frustum2D31& operator=(const Frustum2D31& that);
 
         bool test(const PointI& p) const;
         bool test(const PointI& lp0, const PointI& lp1) const;
-        bool test(const AreaI& area) const;
+        bool test(const QVector<PointI>& path) const;
     };
 }
 

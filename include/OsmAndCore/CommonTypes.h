@@ -227,6 +227,46 @@ namespace OsmAnd
         return sign(by_ay*px_ax - bx_ax*py_ay);
     }
 
+    template<typename T>
+    inline bool isPointInsideArea(const Point<T>& p, const Area<T>& area)
+    {
+        const auto& p0 = area.topLeft;
+        const auto& p1 = area.topRight();
+        const auto& p2 = area.bottomRight;
+        const auto& p3 = area.bottomLeft();
+
+        return isPointInsideArea(p, p0, p1, p2, p3);
+    }
+
+    template<typename T>
+    inline bool isPointInsideArea(const Point<T>& p, const Point<T>& p0, const Point<T>& p1, const Point<T>& p2, const Point<T>& p3)
+    {
+        // Check if point 'p' is on the same 'side' of each edge
+        const auto sign0 = crossProductSign(p0, p1, p);
+        const auto sign1 = crossProductSign(p1, p2, p);
+        const auto sign2 = crossProductSign(p2, p3, p);
+        const auto sign3 = crossProductSign(p3, p0, p);
+        int sign = sign0;
+        if (sign1 != 0)
+        {
+            if (sign != 0 && sign != sign1)
+                return false;
+            sign = sign1;
+        }
+        if (sign2 != 0)
+        {
+            if (sign != 0 && sign != sign2)
+                return false;
+            sign = sign2;
+        }
+        if (sign3 != 0)
+        {
+            if (sign != 0 && sign != sign3)
+                return false;
+        }
+        return true;
+    }
+
     inline bool testLineLineIntersection(const PointI& a0, const PointI& a1, const PointI& b0, const PointI& b1)
     {
         const auto a1x_a0x = a1.x - a0.x;
@@ -314,6 +354,37 @@ namespace OsmAnd
     inline bool testLineLineIntersection(const PointI64& a0, const PointI64& a1, const PointI64& b0, const PointI64& b1)
     {
         return testLineLineIntersection(PointD(a0), PointD(a1), PointD(b0), PointD(b1));
+    }
+    
+    template<typename T>
+    inline bool areaContainedInOrIntersectsArea(
+        const Point<T>& a0, const Point<T>& a1, const Point<T>& a2, const Point<T>& a3,
+        const Point<T>& p0, const Point<T>& p1, const Point<T>& p2, const Point<T>& p3)
+    {
+        // Check if any points of that area is inside.
+        // This case covers inner area and partially inner area (that has at least 1 point inside)
+        if (isPointInsideArea(a0, p0, p1, p2, p3) || isPointInsideArea(a1, p0, p1, p2, p3) || isPointInsideArea(a2, p0, p1, p2, p3) || isPointInsideArea(a3, p0, p1, p2, p3))
+            return true;
+
+        // Check if any that A edge intersects any of P edges.
+        // This case covers intersecting area that has no vertex inside P.
+        return
+            testLineLineIntersection(a0, a1, p0, p1) ||
+            testLineLineIntersection(a0, a1, p1, p2) ||
+            testLineLineIntersection(a0, a1, p2, p3) ||
+            testLineLineIntersection(a0, a1, p3, p0) ||
+            testLineLineIntersection(a1, a2, p0, p1) ||
+            testLineLineIntersection(a1, a2, p1, p2) ||
+            testLineLineIntersection(a1, a2, p2, p3) ||
+            testLineLineIntersection(a1, a2, p3, p0) ||
+            testLineLineIntersection(a2, a3, p0, p1) ||
+            testLineLineIntersection(a2, a3, p1, p2) ||
+            testLineLineIntersection(a2, a3, p2, p3) ||
+            testLineLineIntersection(a2, a3, p3, p0) ||
+            testLineLineIntersection(a3, a0, p0, p1) ||
+            testLineLineIntersection(a3, a0, p1, p2) ||
+            testLineLineIntersection(a3, a0, p2, p3) ||
+            testLineLineIntersection(a3, a0, p3, p0);
     }
 
     template<typename T>
@@ -669,6 +740,50 @@ namespace OsmAnd
     typedef Area<int64_t> AreaI64;
 
     template<typename T>
+    inline bool areaContainedInOrIntersectsArea(
+        const Area<T>& area,
+        const Point<T>& p0, const Point<T>& p1, const Point<T>& p2, const Point<T>& p3)
+    {
+        const auto& a0 = area.topLeft;
+        const auto& a1 = area.topRight();
+        const auto& a2 = area.bottomRight;
+        const auto& a3 = area.bottomLeft();
+
+        return areaContainedInOrIntersectsArea(a0, a1, a2, a3, p0, p1, p2, p3);
+    }
+
+    template<typename T>
+    inline bool areaContainedInOrIntersectsArea(
+        const Point<T>& a0, const Point<T>& a1, const Point<T>& a2, const Point<T>& a3,
+        const Area<T>& areaP)
+    {
+        const auto& p0 = areaP.topLeft;
+        const auto& p1 = areaP.topRight();
+        const auto& p2 = areaP.bottomRight;
+        const auto& p3 = areaP.bottomLeft();
+
+        return areaContainedInOrIntersectsArea(a0, a1, a2, a3, p0, p1, p2, p3);
+    }
+
+    template<typename T>
+    inline bool areaContainedInOrIntersectsArea(
+        const Area<T>& areaA,
+        const Area<T>& areaP)
+    {
+        const auto& a0 = areaA.topLeft;
+        const auto& a1 = areaA.topRight();
+        const auto& a2 = areaA.bottomRight;
+        const auto& a3 = areaA.bottomLeft();
+
+        const auto& p0 = areaP.topLeft;
+        const auto& p1 = areaP.topRight();
+        const auto& p2 = areaP.bottomRight;
+        const auto& p3 = areaP.bottomLeft();
+
+        return areaContainedInOrIntersectsArea(a0, a1, a2, a3, p0, p1, p2, p3);
+    }
+
+    template<typename T>
     class OOBB
     {
     public:
@@ -692,30 +807,7 @@ namespace OsmAnd
             const auto& p2 = pointInGlobalSpace2();
             const auto& p3 = pointInGlobalSpace3();
 
-            // Check if point 'p' is on the same 'side' of each edge
-            const auto sign0 = crossProductSign(p0, p1, p);
-            const auto sign1 = crossProductSign(p1, p2, p);
-            const auto sign2 = crossProductSign(p2, p3, p);
-            const auto sign3 = crossProductSign(p3, p0, p);
-            int sign = sign0;
-            if (sign1 != 0)
-            {
-                if (sign != 0 && sign != sign1)
-                    return false;
-                sign = sign1;
-            }
-            if (sign2 != 0)
-            {
-                if (sign != 0 && sign != sign2)
-                    return false;
-                sign = sign2;
-            }
-            if (sign3 != 0)
-            {
-                if (sign != 0 && sign != sign3)
-                    return false;
-            }
-            return true;
+            return isPointInsideArea(p, p0, p1, p2, p3);
         }
 
         void updateDerivedData()
@@ -724,18 +816,22 @@ namespace OsmAnd
             const auto cosA = qCos(rotation());
             const auto sinA = qSin(rotation());
             const auto& center = unrotatedBBox().center();
+
             const auto p0 = unrotatedBBox().topLeft - center;
             _pointInGlobalSpace0.x = p0.x*cosA - p0.y*sinA;
             _pointInGlobalSpace0.y = p0.x*sinA + p0.y*cosA;
             _pointInGlobalSpace0 += center;
+
             const auto p1 = unrotatedBBox().topRight() - center;
             _pointInGlobalSpace1.x = p1.x*cosA - p1.y*sinA;
             _pointInGlobalSpace1.y = p1.x*sinA + p1.y*cosA;
             _pointInGlobalSpace1 += center;
+
             const auto p2 = unrotatedBBox().bottomRight - center;
             _pointInGlobalSpace2.x = p2.x*cosA - p2.y*sinA;
             _pointInGlobalSpace2.y = p2.x*sinA + p2.y*cosA;
             _pointInGlobalSpace2 += center;
+
             const auto p3 = unrotatedBBox().bottomLeft() - center;
             _pointInGlobalSpace3.x = p3.x*cosA - p3.y*sinA;
             _pointInGlobalSpace3.y = p3.x*sinA + p3.y*cosA;
@@ -839,35 +935,15 @@ namespace OsmAnd
             const auto& p1 = pointInGlobalSpace1();
             const auto& p2 = pointInGlobalSpace2();
             const auto& p3 = pointInGlobalSpace3();
+
             const auto& a0 = that.pointInGlobalSpace0();
             const auto& a1 = that.pointInGlobalSpace1();
             const auto& a2 = that.pointInGlobalSpace2();
             const auto& a3 = that.pointInGlobalSpace3();
 
-            // Check if any points of that area is inside.
-            // This case covers inner area and partially inner area (that has at least 1 point inside)
-            if (isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
-                return true;
-
-            // Check if any that OOBB edge intersects any of OOBB edges.
-            // This case covers intersecting area that has no vertex inside OOBB.
-            return
-                testLineLineIntersection(a0, a1, p0, p1) ||
-                testLineLineIntersection(a0, a1, p1, p2) ||
-                testLineLineIntersection(a0, a1, p2, p3) ||
-                testLineLineIntersection(a0, a1, p3, p0) ||
-                testLineLineIntersection(a1, a2, p0, p1) ||
-                testLineLineIntersection(a1, a2, p1, p2) ||
-                testLineLineIntersection(a1, a2, p2, p3) ||
-                testLineLineIntersection(a1, a2, p3, p0) ||
-                testLineLineIntersection(a2, a3, p0, p1) ||
-                testLineLineIntersection(a2, a3, p1, p2) ||
-                testLineLineIntersection(a2, a3, p2, p3) ||
-                testLineLineIntersection(a2, a3, p3, p0) ||
-                testLineLineIntersection(a3, a0, p0, p1) ||
-                testLineLineIntersection(a3, a0, p1, p2) ||
-                testLineLineIntersection(a3, a0, p2, p3) ||
-                testLineLineIntersection(a3, a0, p3, p0);
+            return areaContainedInOrIntersectsArea(
+                a0, a1, a2, a3,
+                p0, p1, p2, p3);
         }
 
         inline bool contains(const AreaT& area) const
@@ -915,35 +991,15 @@ namespace OsmAnd
             const auto& p1 = pointInGlobalSpace1();
             const auto& p2 = pointInGlobalSpace2();
             const auto& p3 = pointInGlobalSpace3();
+
             const auto& a0 = that.topLeft;
             const auto& a1 = that.topRight();
             const auto& a2 = that.bottomRight;
             const auto& a3 = that.bottomLeft();
 
-            // Check if any points of that area is inside.
-            // This case covers inner area and partially inner area (that has at least 1 point inside)
-            if (isPointInside(a0) || isPointInside(a1) || isPointInside(a2) || isPointInside(a3))
-                return true;
-
-            // Check if any that area edge intersects any of OOBB edges.
-            // This case covers intersecting area that has no vertex inside OOBB.
-            return
-                testLineLineIntersection(a0, a1, p0, p1) ||
-                testLineLineIntersection(a0, a1, p1, p2) ||
-                testLineLineIntersection(a0, a1, p2, p3) ||
-                testLineLineIntersection(a0, a1, p3, p0) ||
-                testLineLineIntersection(a1, a2, p0, p1) ||
-                testLineLineIntersection(a1, a2, p1, p2) ||
-                testLineLineIntersection(a1, a2, p2, p3) ||
-                testLineLineIntersection(a1, a2, p3, p0) ||
-                testLineLineIntersection(a2, a3, p0, p1) ||
-                testLineLineIntersection(a2, a3, p1, p2) ||
-                testLineLineIntersection(a2, a3, p2, p3) ||
-                testLineLineIntersection(a2, a3, p3, p0) ||
-                testLineLineIntersection(a3, a0, p0, p1) ||
-                testLineLineIntersection(a3, a0, p1, p2) ||
-                testLineLineIntersection(a3, a0, p2, p3) ||
-                testLineLineIntersection(a3, a0, p3, p0);
+            return areaContainedInOrIntersectsArea(
+                a0, a1, a2, a3,
+                p0, p1, p2, p3);
         }
 
         inline OOBBT& enlargeBy(const PointT& delta)

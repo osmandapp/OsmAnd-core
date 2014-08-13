@@ -56,8 +56,8 @@ namespace OsmAnd
         float pixelInWorldProjectionScale;
         PointF skyplaneSize;
         float correctedFogDistance;
-        Frustum2D frustum2D;
-        Frustum2D31 frustum2D31;
+        Frustum2DF frustum2D;
+        Frustum2D31 globalFrustum2D31;
     };
 }
 

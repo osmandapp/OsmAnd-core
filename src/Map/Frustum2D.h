@@ -4,6 +4,13 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
+#include <QVector>
+#include "restore_internal_warnings.h"
+
+#include "ignore_warnings_on_external_includes.h"
+#include <glm/glm.hpp>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "MemoryCommon.h"
@@ -11,31 +18,105 @@
 
 namespace OsmAnd
 {
-    class Frustum2D Q_DECL_FINAL
+    template<typename T>
+    struct Frustum2D
     {
         OSMAND_USE_MEMORY_MANAGER(Frustum2D);
-    private:
-        bool isPointInside(const PointF& p) const;
-    protected:
-    public:
-        Frustum2D();
-        Frustum2D(const PointF& p0, const PointF& p1, const PointF& p2, const PointF& p3);
-        Frustum2D(const Frustum2D& that);
-        ~Frustum2D();
 
-        PointF p0;
-        PointF p1;
-        PointF p2;
-        PointF p3;
+        typedef Point<T> PointT;
+        typedef Area<T> AreaT;
+
+        PointT p0;
+        PointT p1;
+        PointT p2;
+        PointT p3;
         
-        Frustum2D& operator=(const Frustum2D& that);
+        inline bool test(const PointT& p) const
+        {
+            return isPointInsideArea(p, p0, p1, p2, p3);
+        }
 
-        bool validate() const;
+        inline bool test(const PointT& lp0, const PointT& lp1) const
+        {
+            // Check if any of line points is inside.
+            // This case covers inner line and partially inner line (that has one vertex inside).
+            if (test(lp0) || test(lp1))
+                return true;
 
-        bool test(const PointF& p) const;
-        bool test(const PointF& lp0, const PointF& lp1) const;
-        bool test(const AreaF& area) const;
+            // Check if line 'lp0-lp1' intersects any of edges.
+            // This case covers intersecting line, that has start and stop outside of frustum.
+            return
+                testLineLineIntersection(lp0, lp1, p0, p1) ||
+                testLineLineIntersection(lp0, lp1, p1, p2) ||
+                testLineLineIntersection(lp0, lp1, p2, p3) ||
+                testLineLineIntersection(lp0, lp1, p3, p0);
+        }
+
+        bool test(const QVector<PointT>& path) const
+        {
+            if (path.isEmpty())
+                return false;
+
+            const auto pathSize = path.size();
+            if (pathSize == 1)
+                return test(path.first());
+            if (pathSize == 2)
+                return test(path.first(), path.last());
+
+            auto pPoint = path.constData();
+            auto pPrevPoint = pPoint++;
+            for (auto idx = 1; idx < pathSize; idx++)
+            {
+                if (test(*(pPrevPoint++), *(pPoint++)))
+                    return true;
+            }
+
+            return false;
+        }
+
+#if defined(OSMAND_GLM_AVAILABLE)
+        bool test(const QVector< glm::detail::tvec2<T, glm::precision::defaultp> >& path) const
+        {
+            if (path.isEmpty())
+                return false;
+
+            const auto pathSize = path.size();
+            if (pathSize == 1)
+                return test(path.first());
+            if (pathSize == 2)
+                return test(path.first(), path.last());
+
+            auto pPoint = path.constData();
+            auto pPrevPoint = pPoint++;
+            for (auto idx = 1; idx < pathSize; idx++)
+            {
+                if (test(*(pPrevPoint++), *(pPoint++)))
+                    return true;
+            }
+
+            return false;
+        }
+#endif // defined(OSMAND_GLM_AVAILABLE)
+
+        bool test(const AreaT& area) const
+        {
+            // Check if area is contained or intersects frustum
+            if (areaContainedInOrIntersectsArea(area, p0, p1, p2, p3))
+                return true;
+
+            // Check if frustum is partially inside area.
+            return
+                area.contains(p0) ||
+                area.contains(p1) ||
+                area.contains(p2) ||
+                area.contains(p3);
+        }
     };
+
+    typedef Frustum2D<PointI::CoordType> Frustum2DI;
+    typedef Frustum2D<PointI64::CoordType> Frustum2DI64;
+    typedef Frustum2D<PointF::CoordType> Frustum2DF;
+    typedef Frustum2D<PointD::CoordType> Frustum2DD;
 }
 
 #endif // !defined(_OSMAND_CORE_FRUSTUM_2D_H_)
