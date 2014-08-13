@@ -738,9 +738,11 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     {
         auto pPoint = is2D ? (subpathOnScreen.constData() + 1) : (pathInWorld.constData() + startPointIndex + 1);
         auto pPrevPoint = pPoint;
+
         auto pLength = lengths.data();
+
         *(pLength++) = glm::distance(is2D ? exactStartPointOnScreen : exactStartPointInWorld, *(pPoint++));
-        for (auto idx = 1, count = lengths.size() - 2; idx < count; idx++)
+        for (auto idx = 1, count = lengths.size() - 1; idx < count; idx++)
             *(pLength++) = glm::distance(*(pPrevPoint++), *(pPoint++));
         *pLength = glm::distance(*pPrevPoint, is2D ? exactEndPointOnScreen : exactEndPointInWorld);
     }
