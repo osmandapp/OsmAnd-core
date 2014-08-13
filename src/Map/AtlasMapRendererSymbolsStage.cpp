@@ -402,22 +402,32 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             // compute them only for subpath
             const auto subpathOnScreen = projectFromWorldToScreen(pathInWorld, subpathStartIndex, subpathEndIndex);
             renderable->is2D = pathRenderableAs2D(subpathOnScreen);
-
+            renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
+                pathInWorld,
+                subpathStartIndex,
+                subpathEndIndex);
+            glm::vec2 exactStartPointInWorld;
+            glm::vec2 exactEndPointInWorld;
+            renderable->directionInWorld = computeSubpathDirectionInWorld(
+                pathInWorld,
+                originOffset,
+                nextOffset,
+                subpathStartIndex,
+                subpathEndIndex,
+                &exactStartPointInWorld,
+                &exactEndPointInWorld);
+            glm::vec2 exactStartPointOnScreen;
+            glm::vec2 exactEndPointOnScreen;
+            renderable->directionOnScreen = computePathDirectionOnScreen(
+                subpathOnScreen,
+                exactStartPointInWorld,
+                exactEndPointInWorld,
+                &exactStartPointOnScreen,
+                &exactEndPointOnScreen);
             //TODO: instanciate!!!!
             //    const auto is2D = nextOriginOccupiedLengthIsIn2D;
             //    assert(lengths.size() == subpathPointsCount - 1);
-            //    renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-            //        pathInWorld,
-            //        subpathStartIndex,
-            //        subpathEndIndex);
-            //    renderable->directionInWorld = computeSubpathDirection(
-            //        pathInWorld,
-            //        subpathStartIndex,
-            //        subpathEndIndex);
-            //    renderable->directionOnScreen = computeSubpathDirection(
-            //        pathOnScreen,
-            //        subpathStartIndex,
-            //        subpathEndIndex);
+            // only for 3D
             //    renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
             //        renderable->is2D,
             //        pathInWorld,
@@ -431,39 +441,47 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             //    output.push_back(qMove(renderable));
             if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
             {
-                //const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
+                const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
 
                 // Path itself
                 QVector< glm::vec3 > debugPoints;
                 auto pPointInWorld = pathInWorld.constData() + subpathStartIndex;
-                for (auto idx = 0u; idx < subpathPointsCount; idx++, pPointInWorld++)
+                debugPoints.push_back(qMove(glm::vec3(
+                    exactStartPointInWorld.x,
+                    0.0f,
+                    exactStartPointInWorld.y)));
+                for (auto idx = subpathStartIndex; idx < subpathEndIndex; idx++, pPointInWorld++)
                 {
                     debugPoints.push_back(qMove(glm::vec3(
                         pPointInWorld->x,
                         0.0f,
                         pPointInWorld->y)));
                 }
+                debugPoints.push_back(qMove(glm::vec3(
+                    exactEndPointInWorld.x,
+                    0.0f,
+                    exactEndPointInWorld.y)));
                 getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
 
-            //    // Subpath N (start)
-            //    {
-            //        QVector<glm::vec2> lineN;
-            //        const auto sn0 = pathOnScreen[subpathStartIndex];
-            //        lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-            //        const auto sn1 = pathOnScreen[subpathStartIndex] + (directionOnScreenN*32.0f);
-            //        lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-            //        getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-            //    }
+                // Subpath N (start)
+                {
+                    QVector<glm::vec2> lineN;
+                    const auto sn0 = exactStartPointOnScreen;
+                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
+                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+                }
 
-            //    // Subpath N (end)
-            //        {
-            //            QVector<glm::vec2> lineN;
-            //            const auto sn0 = pathOnScreen[subpathEndIndex];
-            //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-            //            const auto sn1 = pathOnScreen[subpathEndIndex] + (directionOnScreenN*32.0f);
-            //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-            //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-            //        }
+                // Subpath N (end)
+                {
+                    QVector<glm::vec2> lineN;
+                    const auto sn0 = exactEndPointOnScreen;
+                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
+                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+                }
             }
             symbolInstancesFitted++;
 
@@ -608,17 +626,70 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computeEndPointIndexAndNextOffsetIn3D
     return false;
 }
 
-glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computeSubpathDirection(
-    const QVector<glm::vec2>& path,
+glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computeSubpathDirectionInWorld(
+    const QVector<glm::vec2>& pathInWorld,
+    const float offsetFromStart,
+    const float offsetToEnd,
     const unsigned int startPointIndex,
-    const unsigned int endPointIndex) const
+    const unsigned int endPointIndex,
+    glm::vec2* outExactStartPoint /*= nullptr*/,
+    glm::vec2* outExactEndPoint /*= nullptr*/) const
 {
-    //TODO: Here length and offset should be taken into account, since this calculation can give huge errors if first line is large but only 1% of it is used
-    glm::vec2 subpathDirection;
-    auto pPrevPoint = path.constData() + startPointIndex;
+    const auto& startPoint = pathInWorld[startPointIndex];
+    const auto vFromStart = pathInWorld[startPointIndex + 1] - startPoint;
+    glm::vec2 exactStartPoint = startPoint + glm::normalize(vFromStart) * offsetFromStart;
+    if (outExactStartPoint)
+        *outExactStartPoint = exactStartPoint;
+
+    const auto& endPoint = pathInWorld[endPointIndex];
+    const auto& lastPoint = pathInWorld[endPointIndex - 1];
+    const auto vFromEnd = endPoint - lastPoint;
+    glm::vec2 exactEndPoint = lastPoint + glm::normalize(vFromEnd) * offsetToEnd;
+    if (outExactEndPoint)
+        *outExactEndPoint = exactEndPoint;
+
+    glm::vec2 subpathDirection = vFromStart;
+    auto pPrevPoint = &startPoint + 1;
     auto pPoint = pPrevPoint + 1;
-    for (auto idx = startPointIndex + 1; idx <= endPointIndex; idx++)
+    for (auto idx = startPointIndex + 2; idx < endPointIndex; idx++)
         subpathDirection += (*(pPoint++) - *(pPrevPoint++));
+    subpathDirection += vFromEnd;
+
+    return glm::normalize(subpathDirection);
+}
+
+glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computePathDirectionOnScreen(
+    const QVector<glm::vec2>& pathOnScreen,
+    const glm::vec2& exactStartPointInWorld,
+    const glm::vec2& exactEndPointInWorld,
+    glm::vec2* outExactStartPointOnScreen /*= nullptr*/,
+    glm::vec2* outExactEndPointOnScreen /*= nullptr*/) const
+{
+    const auto& internalState = getInternalState();
+
+    glm::vec2 exactStartPointOnScreen = glm::project(
+        glm::vec3(exactStartPointInWorld.x, 0.0f, exactStartPointInWorld.y),
+        internalState.mCameraView,
+        internalState.mPerspectiveProjection,
+        internalState.glmViewport).xy;
+    if (outExactStartPointOnScreen)
+        *outExactStartPointOnScreen = exactStartPointOnScreen;
+
+    glm::vec2 exactEndPointOnScreen = glm::project(
+        glm::vec3(exactEndPointInWorld.x, 0.0f, exactEndPointInWorld.y),
+        internalState.mCameraView,
+        internalState.mPerspectiveProjection,
+        internalState.glmViewport).xy;
+    if (outExactEndPointOnScreen)
+        *outExactEndPointOnScreen = exactEndPointOnScreen;
+
+    const auto pathSize = pathOnScreen.size();
+    glm::vec2 subpathDirection = pathOnScreen[1] - exactStartPointOnScreen;
+    auto pPrevPoint = pathOnScreen.constData() + 1;
+    auto pPoint = pPrevPoint + 1;
+    for (auto idx = 2; idx < pathSize - 1; idx++)
+        subpathDirection += (*(pPoint++) - *(pPrevPoint++));
+    subpathDirection = exactEndPointOnScreen - pathOnScreen[pathSize - 2];
 
     return glm::normalize(subpathDirection);
 }

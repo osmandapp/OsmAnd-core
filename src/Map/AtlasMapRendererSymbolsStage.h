@@ -115,10 +115,20 @@ namespace OsmAnd
             const float offset,
             unsigned int& outEndPointIndex,
             float& outNextOffset) const;
-        glm::vec2 computeSubpathDirection(
-            const QVector<glm::vec2>& path,
+        glm::vec2 computeSubpathDirectionInWorld(
+            const QVector<glm::vec2>& pathInWorld,
+            const float offsetFromStart,
+            const float offsetToEnd,
             const unsigned int startPointIndex,
-            const unsigned int endPointIndex) const;
+            const unsigned int endPointIndex,
+            glm::vec2* outExactStartPoint = nullptr,
+            glm::vec2* outExactEndPoint = nullptr) const;
+        glm::vec2 computePathDirectionOnScreen(
+            const QVector<glm::vec2>& pathOnScreen,
+            const glm::vec2& exactStartPointInWorld,
+            const glm::vec2& exactEndPointInWorld,
+            glm::vec2* outExactStartPointOnScreen = nullptr,
+            glm::vec2* outExactEndPointOnScreen = nullptr) const;
         QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
             const bool is2D,
             const QVector<glm::vec2>& pathInWorld,
