@@ -362,7 +362,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             const auto currentSymbolInstanceFits = computeEndPointIndexAndNextOffsetIn3D(
                 pathSize,
                 pathInWorld,
-                widthBeforeCurrentSymbol,
+                currentSymbol->size.x,
                 originPointIndex,
                 originOffset,
                 currentInstanceEndPointIndex,
