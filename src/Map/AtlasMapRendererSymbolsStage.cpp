@@ -733,13 +733,13 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     const auto shouldInvert = (directionOnScreenN.y /* == horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
 
     // Compute lengths
-    auto pPoint = is2D ? (subpathOnScreen.constData() + 1) : (pathInWorld.constData() + startPointIndex + 1);
     QVector<float> lengths(pathSize - 1);
-    if (lengths.size() > 2)
+    if (pathSize > 2)
     {
+        auto pPoint = is2D ? (subpathOnScreen.constData() + 1) : (pathInWorld.constData() + startPointIndex + 1);
+        auto pPrevPoint = pPoint;
         auto pLength = lengths.data();
         *(pLength++) = glm::distance(is2D ? exactStartPointOnScreen : exactStartPointInWorld, *(pPoint++));
-        auto pPrevPoint = pPoint++;
         for (auto idx = 1, count = lengths.size() - 2; idx < count; idx++)
             *(pLength++) = glm::distance(*(pPrevPoint++), *(pPoint++));
         *pLength = glm::distance(*pPrevPoint, is2D ? exactEndPointOnScreen : exactEndPointInWorld);
@@ -817,7 +817,7 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
                 // Wow! This shouldn't happen ever, since it means that glyphs doesn't fit into the provided path!
                 // And this means that path calculation above gave error!
                 //assert(false);
-                glyphsPlacement.resize(glyphsPlotted);
+                glyphsPlacement.resize(/*glyphsPlotted*/3);
                 return glyphsPlacement;
             }
             const auto& p0 = getPoint(testPointIndex - 1);
