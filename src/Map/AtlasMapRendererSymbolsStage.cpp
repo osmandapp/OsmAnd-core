@@ -272,13 +272,40 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             continue;
         }
 
-        //////////////////////////////////////////////////////////////////////////
-        if (const auto mapSymbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbolsGroup))
+        // Get GPU resource for this map symbol, since it's useless to perform any calculations unless it's possible to draw it
+        const auto gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(captureGpuResource(symbolEntry.value(), currentSymbol_));
+        if (!gpuResource)
         {
-            const auto osmId = mapSymbolsGroupWithId->id >> 1;
-            int i = 5;
+            if (Q_UNLIKELY(debugSettings->showAllPaths))
+            {
+                QVector< glm::vec3 > debugPoints;
+                for (const auto& pointInWorld : convertPoints31ToWorld(path31))
+                {
+                    debugPoints.push_back(qMove(glm::vec3(
+                        pointInWorld.x,
+                        0.0f,
+                        pointInWorld.y)));
+                }
+                getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorCYAN);
+            }
+
+            continue;
         }
-        //////////////////////////////////////////////////////////////////////////
+
+        // Draw this path fully only once
+        if (Q_UNLIKELY(debugSettings->showAllPaths) &&
+            currentSymbol_ == mapSymbolsGroup->symbols.first())
+        {
+            QVector< glm::vec3 > debugPoints;
+            for (const auto& pointInWorld : convertPoints31ToWorld(path31))
+            {
+                debugPoints.push_back(qMove(glm::vec3(
+                    pointInWorld.x,
+                    0.0f,
+                    pointInWorld.y)));
+            }
+            getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorGRAY);
+        }
 
         // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.
         // They will appear on path in the order they are stored in group.
@@ -298,213 +325,188 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             totalWidth += otherSymbol->size.x;
         }
 
-        // Calculate current path in world and screen coordinates.
-        // NOTE: There's an assumption that all OnPathSymbols from same group share same path
+        // Plot multiple renderables using only world coordinates as in top-down viewmode.
+        // This will produce start point index and offset
         const auto pathSize = path31.size();
         const auto pathInWorld = convertPoints31ToWorld(path31);
-        const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
 
-        // First "plot" virtual renderable that occupies length of "widthBeforeCurrentSymbol" pixels
-        unsigned int originPointIndex = 0;
-        float originOccupiedLength = 0.0f;
-        bool originOccupiedLengthIsIn2D = true;
-        if (widthBeforeCurrentSymbol > 0.0f)
-        {
-            const auto offsetBeforeCurrentSymbolFits = tryToFindSpaceOnPath(
-                pathSize,
-                pathInWorld,
-                pathOnScreen,
-                widthBeforeCurrentSymbol,
-                0,
-                true,
-                0.0f,
-                originPointIndex,
-                originOccupiedLengthIsIn2D,
-                originOccupiedLength);
-            
-            // In case even offset failed to fit, nothing can be done
-            if (!offsetBeforeCurrentSymbolFits)
-                continue;
+        //////////////////////////////////////////////////////////////////////////
+        //// Calculate current path in world and screen coordinates.
+        //// NOTE: There's an assumption that all OnPathSymbols from same group share same path
+        //const auto pathSize = path31.size();
+        //const auto pathInWorld = convertPoints31ToWorld(path31);
+        //const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
 
-            // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
-            // origin points index should point to previous point
-            originPointIndex -= 1;
-        }
+        //// First "plot" virtual renderable that occupies length of "widthBeforeCurrentSymbol" pixels
+        //unsigned int originPointIndex = 0;
+        //float originOccupiedLength = 0.0f;
+        //bool originOccupiedLengthIsIn2D = true;
+        //if (widthBeforeCurrentSymbol > 0.0f)
+        //{
+        //    const auto offsetBeforeCurrentSymbolFits = tryToFindSpaceOnPath(
+        //        pathSize,
+        //        pathInWorld,
+        //        pathOnScreen,
+        //        widthBeforeCurrentSymbol,
+        //        0,
+        //        true,
+        //        0.0f,
+        //        originPointIndex,
+        //        originOccupiedLengthIsIn2D,
+        //        originOccupiedLength);
+        //    
+        //    // In case even offset failed to fit, nothing can be done
+        //    if (!offsetBeforeCurrentSymbolFits)
+        //        continue;
 
-        // Get GPU resource for this map symbol
-        const auto gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(captureGpuResource(symbolEntry.value(), currentSymbol_));
-        if (!gpuResource)
-        {
-            if (Q_UNLIKELY(debugSettings->showAllPaths))
-            {
-                QVector< glm::vec3 > debugPoints;
-                for (const auto& pointInWorld : pathInWorld)
-                {
-                    debugPoints.push_back(qMove(glm::vec3(
-                        pointInWorld.x,
-                        0.0f,
-                        pointInWorld.y)));
-                }
-                getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorCYAN);
-            }
+        //    // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
+        //    // origin points index should point to previous point
+        //    originPointIndex -= 1;
+        //}
 
-            continue;
-        }
-
-        // Draw this path fully only once
-        if (Q_UNLIKELY(debugSettings->showAllPaths) &&
-            currentSymbol_ == mapSymbolsGroup->symbols.first())
-        {
-            QVector< glm::vec3 > debugPoints;
-            for (const auto& pointInWorld : pathInWorld)
-            {
-                debugPoints.push_back(qMove(glm::vec3(
-                    pointInWorld.x,
-                    0.0f,
-                    pointInWorld.y)));
-            }
-            getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorGRAY);
-        }
         
-        // Try to fit as many instances of current symbol as possible
-        unsigned int symbolInstancesFitted = 0;
-        unsigned int nextOriginPointIndex = originPointIndex;
-        float nextOriginOccupiedLength = originOccupiedLength;
-        bool nextOriginOccupiedLengthIsIn2D = originOccupiedLengthIsIn2D;
-        for (;;)
-        {
-            const auto subpathStartIndex = nextOriginPointIndex;
-            float offsetFromStart = nextOriginOccupiedLength;
-            QVector<float> lengths;
-            const auto currentSymbolInstanceFits = tryToFindSpaceOnPath(
-                pathSize,
-                pathInWorld,
-                pathOnScreen,
-                currentSymbol->size.x,
-                nextOriginPointIndex,
-                nextOriginOccupiedLengthIsIn2D,
-                nextOriginOccupiedLength,
-                nextOriginPointIndex,
-                nextOriginOccupiedLengthIsIn2D,
-                nextOriginOccupiedLength,
-                &lengths,
-                &offsetFromStart);
 
-            // Stop in case current symbol doesn't fit anymore
-            if (!currentSymbolInstanceFits)
-            {
-                // If current symbol is the first one and it doesn't fit, show it
-                if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
-                    currentSymbol_ == mapSymbolsGroup->symbols.first() && 
-                    symbolInstancesFitted == 0)
-                {
-                    QVector< glm::vec3 > debugPoints;
-                    for (const auto& pointInWorld : pathInWorld)
-                    {
-                        debugPoints.push_back(qMove(glm::vec3(
-                            pointInWorld.x,
-                            0.0f,
-                            pointInWorld.y)));
-                    }
-                    getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
-                }
 
-                break;
-            }
-            // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
-            // next origin points index should point to previous point
-            nextOriginPointIndex -= 1;
+        //
+        //// Try to fit as many instances of current symbol as possible
+        //unsigned int symbolInstancesFitted = 0;
+        //unsigned int nextOriginPointIndex = originPointIndex;
+        //float nextOriginOccupiedLength = originOccupiedLength;
+        //bool nextOriginOccupiedLengthIsIn2D = originOccupiedLengthIsIn2D;
+        //for (;;)
+        //{
+        //    const auto subpathStartIndex = nextOriginPointIndex;
+        //    float offsetFromStart = nextOriginOccupiedLength;
+        //    QVector<float> lengths;
+        //    const auto currentSymbolInstanceFits = tryToFindSpaceOnPath(
+        //        pathSize,
+        //        pathInWorld,
+        //        pathOnScreen,
+        //        currentSymbol->size.x,
+        //        nextOriginPointIndex,
+        //        nextOriginOccupiedLengthIsIn2D,
+        //        nextOriginOccupiedLength,
+        //        nextOriginPointIndex,
+        //        nextOriginOccupiedLengthIsIn2D,
+        //        nextOriginOccupiedLength,
+        //        &lengths,
+        //        &offsetFromStart);
 
-            // Actually plot the instance
-            const auto is2D = nextOriginOccupiedLengthIsIn2D;
-            const auto subpathEndIndex = nextOriginPointIndex + 1;
-            const auto subpathPointsCount = subpathEndIndex - subpathStartIndex + 1;
-            assert(lengths.size() == subpathPointsCount - 1);
-            std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
-            renderable->mapSymbol = currentSymbol_;
-            renderable->gpuResource = gpuResource;
-            renderable->is2D = is2D;
-            renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-                pathInWorld,
-                subpathStartIndex,
-                subpathEndIndex);
-            renderable->directionInWorld = computeSubpathDirection(
-                pathInWorld,
-                subpathStartIndex,
-                subpathEndIndex);
-            renderable->directionOnScreen = computeSubpathDirection(
-                pathOnScreen,
-                subpathStartIndex,
-                subpathEndIndex);
-            renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
-                renderable->is2D,
-                pathInWorld,
-                pathOnScreen,
-                subpathStartIndex,
-                subpathEndIndex,
-                renderable->directionOnScreen,
-                currentSymbol->glyphsWidth,
-                offsetFromStart,
-                lengths);
-            output.push_back(qMove(renderable));
-            symbolInstancesFitted++;
+        //    // Stop in case current symbol doesn't fit anymore
+        //    if (!currentSymbolInstanceFits)
+        //    {
+        //        // If current symbol is the first one and it doesn't fit, show it
+        //        if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
+        //            currentSymbol_ == mapSymbolsGroup->symbols.first() && 
+        //            symbolInstancesFitted == 0)
+        //        {
+        //            QVector< glm::vec3 > debugPoints;
+        //            for (const auto& pointInWorld : pathInWorld)
+        //            {
+        //                debugPoints.push_back(qMove(glm::vec3(
+        //                    pointInWorld.x,
+        //                    0.0f,
+        //                    pointInWorld.y)));
+        //            }
+        //            getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
+        //        }
 
-            if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
-            {
-                const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
+        //        break;
+        //    }
+        //    // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
+        //    // next origin points index should point to previous point
+        //    nextOriginPointIndex -= 1;
 
-                // Path itself
-                QVector< glm::vec3 > debugPoints;
-                auto pPointInWorld = pathInWorld.constData() + subpathStartIndex;
-                for (auto idx = 0u; idx < subpathPointsCount; idx++, pPointInWorld++)
-                {
-                    debugPoints.push_back(qMove(glm::vec3(
-                        pPointInWorld->x,
-                        0.0f,
-                        pPointInWorld->y)));
-                }
-                getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
+        //    // Actually plot the instance
+        //    const auto is2D = nextOriginOccupiedLengthIsIn2D;
+        //    const auto subpathEndIndex = nextOriginPointIndex + 1;
+        //    const auto subpathPointsCount = subpathEndIndex - subpathStartIndex + 1;
+        //    assert(lengths.size() == subpathPointsCount - 1);
+        //    std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+        //    renderable->mapSymbol = currentSymbol_;
+        //    renderable->gpuResource = gpuResource;
+        //    renderable->is2D = is2D;
+        //    renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
+        //        pathInWorld,
+        //        subpathStartIndex,
+        //        subpathEndIndex);
+        //    renderable->directionInWorld = computeSubpathDirection(
+        //        pathInWorld,
+        //        subpathStartIndex,
+        //        subpathEndIndex);
+        //    renderable->directionOnScreen = computeSubpathDirection(
+        //        pathOnScreen,
+        //        subpathStartIndex,
+        //        subpathEndIndex);
+        //    renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
+        //        renderable->is2D,
+        //        pathInWorld,
+        //        pathOnScreen,
+        //        subpathStartIndex,
+        //        subpathEndIndex,
+        //        renderable->directionOnScreen,
+        //        currentSymbol->glyphsWidth,
+        //        offsetFromStart,
+        //        lengths);
+        //    output.push_back(qMove(renderable));
+        //    symbolInstancesFitted++;
 
-                // Subpath N (start)
-                {
-                    QVector<glm::vec2> lineN;
-                    const auto sn0 = pathOnScreen[subpathStartIndex];
-                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = pathOnScreen[subpathStartIndex] + (directionOnScreenN*32.0f);
-                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-                }
+        //    if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
+        //    {
+        //        const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
 
-                // Subpath N (end)
-                {
-                    QVector<glm::vec2> lineN;
-                    const auto sn0 = pathOnScreen[subpathEndIndex];
-                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = pathOnScreen[subpathEndIndex] + (directionOnScreenN*32.0f);
-                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-                }
-            }
+        //        // Path itself
+        //        QVector< glm::vec3 > debugPoints;
+        //        auto pPointInWorld = pathInWorld.constData() + subpathStartIndex;
+        //        for (auto idx = 0u; idx < subpathPointsCount; idx++, pPointInWorld++)
+        //        {
+        //            debugPoints.push_back(qMove(glm::vec3(
+        //                pPointInWorld->x,
+        //                0.0f,
+        //                pPointInWorld->y)));
+        //        }
+        //        getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
 
-            // Find offset after current instance of the symbol before next instance of the symbol
-            const auto spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance = totalWidth - currentSymbol->size.x;
-            const auto offsetBeforeNextSymbolInstanceFits = tryToFindSpaceOnPath(
-                pathSize,
-                pathInWorld,
-                pathOnScreen,
-                spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance,
-                nextOriginPointIndex,
-                nextOriginOccupiedLengthIsIn2D,
-                nextOriginOccupiedLength,
-                nextOriginPointIndex,
-                nextOriginOccupiedLengthIsIn2D,
-                nextOriginOccupiedLength);
-            if (!offsetBeforeNextSymbolInstanceFits)
-                break;
-            // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
-            // next origin points index should point to previous point
-            nextOriginPointIndex -= 1;
-        }
+        //        // Subpath N (start)
+        //        {
+        //            QVector<glm::vec2> lineN;
+        //            const auto sn0 = pathOnScreen[subpathStartIndex];
+        //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+        //            const auto sn1 = pathOnScreen[subpathStartIndex] + (directionOnScreenN*32.0f);
+        //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+        //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+        //        }
+
+        //        // Subpath N (end)
+        //        {
+        //            QVector<glm::vec2> lineN;
+        //            const auto sn0 = pathOnScreen[subpathEndIndex];
+        //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+        //            const auto sn1 = pathOnScreen[subpathEndIndex] + (directionOnScreenN*32.0f);
+        //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+        //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+        //        }
+        //    }
+
+        //    // Find offset after current instance of the symbol before next instance of the symbol
+        //    const auto spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance = totalWidth - currentSymbol->size.x;
+        //    const auto offsetBeforeNextSymbolInstanceFits = tryToFindSpaceOnPath(
+        //        pathSize,
+        //        pathInWorld,
+        //        pathOnScreen,
+        //        spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance,
+        //        nextOriginPointIndex,
+        //        nextOriginOccupiedLengthIsIn2D,
+        //        nextOriginOccupiedLength,
+        //        nextOriginPointIndex,
+        //        nextOriginOccupiedLengthIsIn2D,
+        //        nextOriginOccupiedLength);
+        //    if (!offsetBeforeNextSymbolInstanceFits)
+        //        break;
+        //    // Since tryToFindSpaceOnPath() returns end-point-index, which includes optionally half-used segment,
+        //    // next origin points index should point to previous point
+        //    nextOriginPointIndex -= 1;
+        //}
     }
 }
 
