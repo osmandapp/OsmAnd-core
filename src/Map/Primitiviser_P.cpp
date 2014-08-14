@@ -1866,7 +1866,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
         icon->resourceName = qMove(iconResourceName);
 
         icon->order = 100;
-        primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, icon->order);
+        primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);
         //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
         icon->order += 100000;
 
