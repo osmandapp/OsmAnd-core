@@ -1,6 +1,9 @@
 #include "BinaryMapStaticSymbolsProvider_P.h"
 #include "BinaryMapStaticSymbolsProvider.h"
 
+#include "QtExtensions.h"
+#include "QtCommon.h"
+
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
 #include "restore_internal_warnings.h"
@@ -95,7 +98,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 billboardRasterSymbol->intersectionModeFlags = MapSymbol::RegularIntersectionProcessing;
                 billboardRasterSymbol->bitmap = rasterizedSpriteSymbol->bitmap;
                 billboardRasterSymbol->size = PointI(rasterizedSpriteSymbol->bitmap->width(), rasterizedSpriteSymbol->bitmap->height());
-                billboardRasterSymbol->content = rasterizedSpriteSymbol->content,
+                billboardRasterSymbol->content = rasterizedSpriteSymbol->content;
                 billboardRasterSymbol->languageId = rasterizedSpriteSymbol->languageId;
                 billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
                 billboardRasterSymbol->position31 = rasterizedSpriteSymbol->location31;
@@ -138,6 +141,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         //  - Split path between them
         if (hasAtLeastOneOnPath)
         {
+            // Compose list of symbols to compute pin-points for
             QList<SymbolForPinPointsComputation> symbolsForComputation;
             symbolsForComputation.reserve(group->symbols.size());
             for (const auto& symbol : constOf(group->symbols))
@@ -152,8 +156,72 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 }
             }
 
-            //TODO: blaaa
-            int i = 5;
+            const auto computedPinPoints = computePinPoints(
+                mapObject->points31,
+                0.0f,
+                0.0f,
+                symbolsForComputation,
+                mapObject->level->minZoom,
+                mapObject->level->maxZoom);
+
+            // After pin-points were computed, assign them to symbols in the same order
+            QHash< std::shared_ptr<MapSymbol>, QList<std::shared_ptr<MapSymbol>> > extraSymbolInstances;
+            auto citComputedPinPoint = computedPinPoints.begin();
+            const auto citComputedPinPointsEnd = computedPinPoints.end();
+            for (const auto& symbol : constOf(group->symbols))
+            {
+                // Stop in case no more pin-points left
+                if (citComputedPinPoint == citComputedPinPointsEnd)
+                    break;
+                const auto& computedPinPoint = *(citComputedPinPoint++);
+
+                if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
+                {
+                    // Create additional instance of billboard raster map symbol
+                    std::shared_ptr<BillboardRasterMapSymbol> extraSymbolInstance(new BillboardRasterMapSymbol(group, group->sharableById));
+                    extraSymbolInstance->order = billboardSymbol->order;
+                    extraSymbolInstance->intersectionModeFlags = billboardSymbol->intersectionModeFlags;
+                    extraSymbolInstance->bitmap = billboardSymbol->bitmap;
+                    extraSymbolInstance->size = billboardSymbol->size;
+                    extraSymbolInstance->content = billboardSymbol->content;
+                    extraSymbolInstance->contentClass = billboardSymbol->contentClass;
+                    extraSymbolInstance->languageId = billboardSymbol->languageId;
+                    extraSymbolInstance->minDistance = billboardSymbol->minDistance;
+                    extraSymbolInstance->position31 = computedPinPoint.point;
+                    extraSymbolInstance->offset = billboardSymbol->offset;
+
+                    extraSymbolInstances[billboardSymbol].push_back(extraSymbolInstance);
+                }
+                else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
+                {
+                    OnPathMapSymbol::PinPoint pinPoint;
+                    pinPoint.point = computedPinPoint.point;
+                    pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
+                    pinPoint.offsetFromBasePathPoint = computedPinPoint.offsetFromBasePathPoint;
+                    pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
+
+                    onPathSymbol->pinPoints.push_back(qMove(pinPoint));
+                }
+            }
+
+            // Now merge from extraSymbolInstances into group
+            auto itSymbol = mutableIteratorOf(group->symbols);
+            while (itSymbol.hasNext())
+            {
+                const auto& currentSymbol = itSymbol.next();
+
+                // In case extraSymbolInstances have symbols derived from this one, replace current with those
+                const auto itReplacementSymbols = extraSymbolInstances.find(currentSymbol);
+                if (itReplacementSymbols != extraSymbolInstances.end())
+                {
+                    const auto& replacementSymbols = *itReplacementSymbols;
+
+                    itSymbol.remove();
+                    for (const auto& replacementSymbol : constOf(replacementSymbols))
+                        itSymbol.insert(replacementSymbol);
+                    extraSymbolInstances.erase(itReplacementSymbols);
+                }
+            }
         }
 
         // Configure group

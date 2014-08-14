@@ -19,20 +19,13 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(OnPathMapSymbol);
 
     public:
-        struct OSMAND_CORE_API PinPoint Q_DECL_FINAL
+        struct PinPoint Q_DECL_FINAL
         {
-            PinPoint();
-            PinPoint(
-                const unsigned int basePathPointIndex,
-                const double offsetFromBasePathPoint,
-                const float kOffsetFromBasePathPoint,
-                const PointI& point);
-            ~PinPoint();
+            PointI point;
 
             unsigned int basePathPointIndex;
             double offsetFromBasePathPoint;
-            double kOffsetFromBasePathPoint;
-            PointI point;
+            float normalizedOffsetFromBasePathPoint;
         };
 
     private:
@@ -45,7 +38,7 @@ namespace OsmAnd
 
         QVector<PointI> path;
         QVector<float> glyphsWidth;
-        QVector<PinPoint> pinPoints;
+        QList<PinPoint> pinPoints;
     };
 }
 
