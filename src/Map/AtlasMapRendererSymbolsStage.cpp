@@ -236,38 +236,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         const auto currentSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(currentSymbol_);
         if (!currentSymbol)
             continue;
+
         const auto& path31 = currentSymbol->path;
+        const auto pathSize = path31.size();
+        const auto& pathPinPoints = currentSymbol->pinPoints;
 
-        // Path must have at least 2 points
-        if (Q_UNLIKELY(path31.size() < 2))
+        // Path must have at least 2 points and there must be at least one pin-point
+        if (Q_UNLIKELY(pathSize < 2) || Q_UNLIKELY(pathPinPoints.isEmpty()))
         {
-            assert(false);
-            continue;
-        }
-
-        // Capture group of this symbol to get widths of all symbols
-        const auto& mapSymbolsGroup = currentSymbol->group.lock();
-        if (!mapSymbolsGroup)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Symbol %p group %p is missing!",
-                currentSymbol_.get(),
-                currentSymbol->groupPtr);
-
-            // Group has to be present, there's no way to process this without group
-            if (Q_UNLIKELY(debugSettings->showAllPaths))
-            {
-                QVector< glm::vec3 > debugPoints;
-                for (const auto& pointInWorld : convertPoints31ToWorld(path31))
-                {
-                    debugPoints.push_back(qMove(glm::vec3(
-                        pointInWorld.x,
-                        0.0f,
-                        pointInWorld.y)));
-                }
-                getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorWHITE);
-            }
-
             assert(false);
             continue;
         }
@@ -292,221 +268,215 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             continue;
         }
 
-        // Draw this path fully only once
-        if (Q_UNLIKELY(debugSettings->showAllPaths) &&
-            currentSymbol_ == mapSymbolsGroup->symbols.first())
-        {
-            QVector< glm::vec3 > debugPoints;
-            for (const auto& pointInWorld : convertPoints31ToWorld(path31))
-            {
-                debugPoints.push_back(qMove(glm::vec3(
-                    pointInWorld.x,
-                    0.0f,
-                    pointInWorld.y)));
-            }
-            getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorGRAY);
-        }
+        //// Processing pin-points needs path in world and path on screen, as well as lenths of those segments
+        //const auto pathInWorld = convertPoints31ToWorld(path31);
 
-        // Ordering of OnPathSymbols is maintained, regardless of locale or whatever.
-        // They will appear on path in the order they are stored in group.
+        //// For each pin point generate an instance of current symbol
+        //for (const auto& pinPoint : pinPoints)
+        //{
+        //    // pin points represents center of subpath!!!!
 
-        // Calculate widths of entire on-path-symbols in group and width of symbols before current symbol
-        float totalWidth = 0.0f;
-        float widthBeforeCurrentSymbol = 0.0f;
-        for (const auto& otherSymbol_ : constOf(mapSymbolsGroup->symbols))
-        {
-            // Verify that other symbol is also OnPathSymbol
-            const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
-            if (!otherSymbol)
-                continue;
+        //    // first try 2D mode : calculate center in 2D, then try left and right half to check if it's still 2D
+        //    // otherwise use 3D. 
+        //}
 
-            if (otherSymbol == currentSymbol)
-                widthBeforeCurrentSymbol = totalWidth;
-            totalWidth += otherSymbol->size.x;
-        }
+        //// Calculate widths of entire on-path-symbols in group and width of symbols before current symbol
+        //float totalWidth = 0.0f;
+        //float widthBeforeCurrentSymbol = 0.0f;
+        //for (const auto& otherSymbol_ : constOf(mapSymbolsGroup->symbols))
+        //{
+        //    // Verify that other symbol is also OnPathSymbol
+        //    const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
+        //    if (!otherSymbol)
+        //        continue;
 
-        // Plot multiple renderables using only world coordinates as in top-down viewmode.
-        // This will produce start point index and offset
-        const auto pathSize = path31.size();
-        const auto pathInWorld = convertPoints31ToWorld(path31);
-        unsigned int originPointIndex = 0;
-        float originOffset = 0.0f;
-        if (widthBeforeCurrentSymbol > 0.0f)
-        {
-            unsigned int offsetEndPointIndex = 0;
-            float nextOffset = 0.0f;
-            const auto offsetBeforeCurrentSymbolFits = computeEndPointIndexAndNextOffsetIn3D(
-                pathSize,
-                pathInWorld,
-                widthBeforeCurrentSymbol,
-                0, // Origin is the first point of path
-                0.0f, // There's no offset
-                offsetEndPointIndex,
-                nextOffset);
-            
-            // In case even offset failed to fit, nothing can be done
-            if (!offsetBeforeCurrentSymbolFits)
-                continue;
+        //    if (otherSymbol == currentSymbol)
+        //        widthBeforeCurrentSymbol = totalWidth;
+        //    totalWidth += otherSymbol->size.x;
+        //}
 
-            // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
-            // origin points index should point to previous point
-            originPointIndex = offsetEndPointIndex - 1;
-            originOffset = nextOffset;
-        }
-        unsigned int symbolInstancesFitted = 0;
-        for (;;)
-        {
-            // Find start point index of new instance and offset of next instance
-            unsigned int currentInstanceEndPointIndex = 0;
-            float nextOffset = 0.0f;
-            const auto currentSymbolInstanceFits = computeEndPointIndexAndNextOffsetIn3D(
-                pathSize,
-                pathInWorld,
-                currentSymbol->size.x,
-                originPointIndex,
-                originOffset,
-                currentInstanceEndPointIndex,
-                nextOffset);
+        //// Plot multiple renderables using only world coordinates as in top-down viewmode.
+        //// This will produce start point index and offset
+        //
+        //
+        //unsigned int originPointIndex = 0;
+        //float originOffset = 0.0f;
+        //if (widthBeforeCurrentSymbol > 0.0f)
+        //{
+        //    unsigned int offsetEndPointIndex = 0;
+        //    float nextOffset = 0.0f;
+        //    const auto offsetBeforeCurrentSymbolFits = computeEndPointIndexAndNextOffsetIn3D(
+        //        pathSize,
+        //        pathInWorld,
+        //        widthBeforeCurrentSymbol,
+        //        0, // Origin is the first point of path
+        //        0.0f, // There's no offset
+        //        offsetEndPointIndex,
+        //        nextOffset);
+        //    
+        //    // In case even offset failed to fit, nothing can be done
+        //    if (!offsetBeforeCurrentSymbolFits)
+        //        continue;
 
-            // Stop in case current symbol doesn't fit anymore
-            if (!currentSymbolInstanceFits)
-            {
-                // If current symbol is the first one and it doesn't fit, show it
-                if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
-                    currentSymbol_ == mapSymbolsGroup->symbols.first() &&
-                    symbolInstancesFitted == 0)
-                {
-                    QVector< glm::vec3 > debugPoints;
-                    for (const auto& pointInWorld : pathInWorld)
-                    {
-                        debugPoints.push_back(qMove(glm::vec3(
-                            pointInWorld.x,
-                            0.0f,
-                            pointInWorld.y)));
-                    }
-                    getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
-                }
+        //    // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
+        //    // origin points index should point to previous point
+        //    originPointIndex = offsetEndPointIndex - 1;
+        //    originOffset = nextOffset;
+        //}
+        //unsigned int symbolInstancesFitted = 0;
+        //for (;;)
+        //{
+        //    // Find start point index of new instance and offset of next instance
+        //    unsigned int currentInstanceEndPointIndex = 0;
+        //    float nextOffset = 0.0f;
+        //    const auto currentSymbolInstanceFits = computeEndPointIndexAndNextOffsetIn3D(
+        //        pathSize,
+        //        pathInWorld,
+        //        currentSymbol->size.x,
+        //        originPointIndex,
+        //        originOffset,
+        //        currentInstanceEndPointIndex,
+        //        nextOffset);
 
-                break;
-            }
+        //    // Stop in case current symbol doesn't fit anymore
+        //    if (!currentSymbolInstanceFits)
+        //    {
+        //        // If current symbol is the first one and it doesn't fit, show it
+        //        if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
+        //            currentSymbol_ == mapSymbolsGroup->symbols.first() &&
+        //            symbolInstancesFitted == 0)
+        //        {
+        //            QVector< glm::vec3 > debugPoints;
+        //            for (const auto& pointInWorld : pathInWorld)
+        //            {
+        //                debugPoints.push_back(qMove(glm::vec3(
+        //                    pointInWorld.x,
+        //                    0.0f,
+        //                    pointInWorld.y)));
+        //            }
+        //            getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(SK_ColorYELLOW, 128));
+        //        }
 
-            // Plot symbol instance.
-            // During this actually determine 2D or 3D mode, and compute glyph placement.
-            const auto subpathStartIndex = originPointIndex;
-            const auto subpathEndIndex = currentInstanceEndPointIndex;
-            const auto subpathPointsCount = subpathEndIndex - subpathStartIndex + 1;
-            std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
-            renderable->mapSymbol = currentSymbol_;
-            renderable->gpuResource = gpuResource;
-            // Since to check if symbol instance can be rendered in 2D mode entire 2D points are needed,
-            // compute them only for subpath
-            const auto subpathOnScreen = projectFromWorldToScreen(pathInWorld, subpathStartIndex, subpathEndIndex);
-            renderable->is2D = pathRenderableAs2D(subpathOnScreen);
-            renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-                pathInWorld,
-                subpathStartIndex,
-                subpathEndIndex);
-            glm::vec2 exactStartPointInWorld;
-            glm::vec2 exactEndPointInWorld;
-            renderable->directionInWorld = computeSubpathDirectionInWorld(
-                pathInWorld,
-                originOffset,
-                nextOffset,
-                subpathStartIndex,
-                subpathEndIndex,
-                &exactStartPointInWorld,
-                &exactEndPointInWorld);
-            glm::vec2 exactStartPointOnScreen;
-            glm::vec2 exactEndPointOnScreen;
-            renderable->directionOnScreen = computePathDirectionOnScreen(
-                subpathOnScreen,
-                exactStartPointInWorld,
-                exactEndPointInWorld,
-                &exactStartPointOnScreen,
-                &exactEndPointOnScreen);
-            renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
-                renderable->is2D,
-                pathInWorld,
-                subpathStartIndex,
-                subpathEndIndex,
-                exactStartPointInWorld,
-                exactEndPointInWorld,
-                subpathOnScreen,
-                exactStartPointOnScreen,
-                exactEndPointOnScreen,
-                renderable->directionOnScreen,
-                currentSymbol->glyphsWidth);
-            output.push_back(qMove(renderable));
-            if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
-            {
-                const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
+        //        break;
+        //    }
 
-                // Path itself
-                QVector< glm::vec3 > debugPoints;
-                debugPoints.push_back(qMove(glm::vec3(
-                    exactStartPointInWorld.x,
-                    0.0f,
-                    exactStartPointInWorld.y)));
-                auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
-                for (auto idx = subpathStartIndex + 1; idx < subpathEndIndex; idx++, pPointInWorld++)
-                {
-                    debugPoints.push_back(qMove(glm::vec3(
-                        pPointInWorld->x,
-                        0.0f,
-                        pPointInWorld->y)));
-                }
-                debugPoints.push_back(qMove(glm::vec3(
-                    exactEndPointInWorld.x,
-                    0.0f,
-                    exactEndPointInWorld.y)));
-                getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
+        //    // Plot symbol instance.
+        //    // During this actually determine 2D or 3D mode, and compute glyph placement.
+        //    const auto subpathStartIndex = originPointIndex;
+        //    const auto subpathEndIndex = currentInstanceEndPointIndex;
+        //    const auto subpathPointsCount = subpathEndIndex - subpathStartIndex + 1;
+        //    std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+        //    renderable->mapSymbol = currentSymbol_;
+        //    renderable->gpuResource = gpuResource;
+        //    // Since to check if symbol instance can be rendered in 2D mode entire 2D points are needed,
+        //    // compute them only for subpath
+        //    const auto subpathOnScreen = projectFromWorldToScreen(pathInWorld, subpathStartIndex, subpathEndIndex);
+        //    renderable->is2D = pathRenderableAs2D(subpathOnScreen);
+        //    renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
+        //        pathInWorld,
+        //        subpathStartIndex,
+        //        subpathEndIndex);
+        //    glm::vec2 exactStartPointInWorld;
+        //    glm::vec2 exactEndPointInWorld;
+        //    renderable->directionInWorld = computeSubpathDirectionInWorld(
+        //        pathInWorld,
+        //        originOffset,
+        //        nextOffset,
+        //        subpathStartIndex,
+        //        subpathEndIndex,
+        //        &exactStartPointInWorld,
+        //        &exactEndPointInWorld);
+        //    glm::vec2 exactStartPointOnScreen;
+        //    glm::vec2 exactEndPointOnScreen;
+        //    renderable->directionOnScreen = computePathDirectionOnScreen(
+        //        subpathOnScreen,
+        //        exactStartPointInWorld,
+        //        exactEndPointInWorld,
+        //        &exactStartPointOnScreen,
+        //        &exactEndPointOnScreen);
+        //    renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
+        //        renderable->is2D,
+        //        pathInWorld,
+        //        subpathStartIndex,
+        //        subpathEndIndex,
+        //        exactStartPointInWorld,
+        //        exactEndPointInWorld,
+        //        subpathOnScreen,
+        //        exactStartPointOnScreen,
+        //        exactEndPointOnScreen,
+        //        renderable->directionOnScreen,
+        //        currentSymbol->glyphsWidth);
+        //    output.push_back(qMove(renderable));
+        //    if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
+        //    {
+        //        const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
 
-                // Subpath N (start)
-                {
-                    QVector<glm::vec2> lineN;
-                    const auto sn0 = exactStartPointOnScreen;
-                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
-                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-                }
+        //        // Path itself
+        //        QVector< glm::vec3 > debugPoints;
+        //        debugPoints.push_back(qMove(glm::vec3(
+        //            exactStartPointInWorld.x,
+        //            0.0f,
+        //            exactStartPointInWorld.y)));
+        //        auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
+        //        for (auto idx = subpathStartIndex + 1; idx < subpathEndIndex; idx++, pPointInWorld++)
+        //        {
+        //            debugPoints.push_back(qMove(glm::vec3(
+        //                pPointInWorld->x,
+        //                0.0f,
+        //                pPointInWorld->y)));
+        //        }
+        //        debugPoints.push_back(qMove(glm::vec3(
+        //            exactEndPointInWorld.x,
+        //            0.0f,
+        //            exactEndPointInWorld.y)));
+        //        getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
 
-                // Subpath N (end)
-                {
-                    QVector<glm::vec2> lineN;
-                    const auto sn0 = exactEndPointOnScreen;
-                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
-                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-                }
-            }
-            symbolInstancesFitted++;
+        //        // Subpath N (start)
+        //        {
+        //            QVector<glm::vec2> lineN;
+        //            const auto sn0 = exactStartPointOnScreen;
+        //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+        //            const auto sn1 = sn0 + (directionOnScreenN*32.0f);
+        //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+        //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+        //        }
 
-            // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
-            // origin points index should point to previous point
-            originPointIndex = currentInstanceEndPointIndex - 1;
-            originOffset = nextOffset;
+        //        // Subpath N (end)
+        //        {
+        //            QVector<glm::vec2> lineN;
+        //            const auto sn0 = exactEndPointOnScreen;
+        //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+        //            const auto sn1 = sn0 + (directionOnScreenN*32.0f);
+        //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+        //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+        //        }
+        //    }
+        //    symbolInstancesFitted++;
 
-            // And now compute next instance origin and offset
-            unsigned int spaceBetweenInstancedEndPointIndex = 0;
-            const auto spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance = totalWidth - currentSymbol->size.x;
-            const auto spaceBetweenInstancesFits = computeEndPointIndexAndNextOffsetIn3D(
-                pathSize,
-                pathInWorld,
-                spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance,
-                originPointIndex,
-                originOffset,
-                spaceBetweenInstancedEndPointIndex,
-                nextOffset);
-            if (!spaceBetweenInstancesFits)
-                break;
+        //    // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
+        //    // origin points index should point to previous point
+        //    originPointIndex = currentInstanceEndPointIndex - 1;
+        //    originOffset = nextOffset;
 
-            // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
-            // origin points index should point to previous point
-            originPointIndex = spaceBetweenInstancedEndPointIndex - 1;
-            originOffset = nextOffset;
-        }
+        //    // And now compute next instance origin and offset
+        //    unsigned int spaceBetweenInstancedEndPointIndex = 0;
+        //    const auto spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance = totalWidth - currentSymbol->size.x;
+        //    const auto spaceBetweenInstancesFits = computeEndPointIndexAndNextOffsetIn3D(
+        //        pathSize,
+        //        pathInWorld,
+        //        spaceBetweenEndOfCurrentInstanceAndStartOfNextInstance,
+        //        originPointIndex,
+        //        originOffset,
+        //        spaceBetweenInstancedEndPointIndex,
+        //        nextOffset);
+        //    if (!spaceBetweenInstancesFits)
+        //        break;
+
+        //    // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
+        //    // origin points index should point to previous point
+        //    originPointIndex = spaceBetweenInstancedEndPointIndex - 1;
+        //    originOffset = nextOffset;
+        //}
     }
 }
 

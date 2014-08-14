@@ -10,6 +10,14 @@
 
 #include "Logging.h"
 
+OsmAnd::Utilities::Utilities()
+{
+}
+
+OsmAnd::Utilities::~Utilities()
+{
+}
+
 bool OsmAnd::Utilities::extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot)
 {
     first = -1;
@@ -500,4 +508,19 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
     // Cleanup
     for(const auto& edge : constOf(edges))
         delete edge;
+}
+
+QVector<OsmAnd::PointI> OsmAnd::Utilities::computePathInnerPoints(const QVector<PointI>& path, const QVector<float>& ks_)
+{
+    const auto count = ks.size();
+    QVector<PointI> result(count);
+    
+    auto pPoint = result.data();
+    auto pK = ks.constData();
+    for (auto idx = 0; idx < count; idx++)
+    {
+        
+    }
+
+    return result;
 }

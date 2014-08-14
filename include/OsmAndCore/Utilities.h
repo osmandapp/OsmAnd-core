@@ -94,13 +94,6 @@ namespace OsmAnd
 
         inline static float convert31toFloat(const int32_t value, const ZoomLevel zoom)
         {
-            /*
-            const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
-            const auto fractionalMask = ?;
-            const auto intPart = value >> (ZoomLevel::MaxZoomLevel - zoom);
-            const auto intFractionalPart = tileSize31 / (value & fractionalMask);
-            // res = intPart + 1.0f/intFractionalPart + float<remainder>/(value & fractionalMask)
-            */
             return static_cast<float>((static_cast<double>(value) / (1u << (ZoomLevel::MaxZoomLevel - zoom))));
         }
 
@@ -625,13 +618,8 @@ namespace OsmAnd
         }
 
     private:
-        Utilities()
-        {
-        }
-
-        ~Utilities()
-        {
-        }
+        Utilities();
+        ~Utilities();
     };
 }
 

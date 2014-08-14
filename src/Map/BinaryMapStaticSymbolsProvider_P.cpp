@@ -12,6 +12,7 @@
 #include "BillboardRasterMapSymbol.h"
 #include "OnPathMapSymbol.h"
 #include "BinaryMapObject.h"
+#include "ObfMapSectionInfo.h"
 #include "Utilities.h"
 
 OsmAnd::BinaryMapStaticSymbolsProvider_P::BinaryMapStaticSymbolsProvider_P(BinaryMapStaticSymbolsProvider* owner_)
@@ -115,6 +116,11 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
                 onPathSymbol->path = mapObject->points31;
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
+                onPathSymbol->pinPoints = computePinPoints(
+                    mapObject->points31,
+                    rasterizedOnPathSymbol->bitmap->width(),
+                    mapObject->level->minZoom,
+                    mapObject->level->maxZoom);
                 symbol.reset(onPathSymbol);
             }
             else
@@ -161,4 +167,85 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     outTiledData.reset(new BinaryMapStaticSymbolsTile(primitivesTile, symbolsGroups, tileId, zoom));
 
     return true;
+}
+
+QVector<OsmAnd::OnPathMapSymbol::PinPoint> OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoints(
+    const QVector<PointI>& path31,
+    const float widthOfSymbolInPixels,
+    const ZoomLevel minZoom,
+    const ZoomLevel maxZoom)
+{
+    QVector<OnPathMapSymbol::PinPoint> pinPoints;
+
+    // Compute pin-points placement starting from minZoom to maxZoom.
+    
+    // Example of symbol instance placement assuming it fits exactly 4 times on minZoom ('si' is symbol instance):
+    // minZoom+0: sisisisi
+    // Since each next zoom is 2x bigger, thus here's how minZoom+1 will look like without additional instances ('-' is widthOfSymbolInPixels/2)
+    // minZoom+1: -si--si--si--si-
+    // After placing 3 additional instances it will look like
+    // minZoom+1: -sisisisisisisi-
+    // On next zoom without additional instances it will look like
+    // minZoom+2: ---si--si--si--si--si--si--si---
+    // After placing additional 8 instances it will look like
+    // minZoom+2: -sisisisisisisisisisisisisisisi-
+    // On next zoom without additional 16 instances it will look like
+    // minZoom+3: ---si--si--si--si--si--si--si--si--si--si--si--si--si--si--si---
+    // On next zoom without additional 32 instances it will look like
+    // minZoom+4: ---si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si---
+    // This gives following sequence : (+4 on minZoom+0);(+3 on minZoom+1);(+8 on minZoom+2);(+16 on minZoom+3);(+32 on minZoom+4)
+
+    // Another example of symbol instance placement assuming only 3.5 symbol instances fit ('.' is widthOfSymbolInPixels/4)
+    // minZoom+0: .sisisi.
+    // On next zoom without 4 additional instances
+    // minZoom+1: --si--si--si--
+    // After placement additional 4 instances
+    // minZoom+1: sisisisisisisi
+    // On next zoom without additional 6 instances
+    // minZoom+2: -si--si--si--si--si--si--si-
+    // minZoom+2: -sisisisisisisisisisisisisi-
+    // On next zoom without additional 14 instances
+    // minZoom+3: ---si--si--si--si--si--si--si--si--si--si--si--si--si---
+    // This gives following sequence : (+3 on minZoom+0);(+4 on minZoom+1);(+6 on minZoom+2);(+14 on minZoom+3);(+24? on minZoom+4)
+
+    // As clearly seen - on each next zoom level number of instances is doubled.
+    // Expressing this fact as numbers here what will be the result:
+    // lengthOfPathInPixelsOnBaseZoom = computePathLengthInPixels(path, minZoom)
+    // baseNumberOfInstances = | lengthOfPathInPixels / widthOfSymbolInPixels |
+    // remainingLength = lengthOfPathInPixelsOnBaseZoom - baseNumberOfInstances * widthOfSymbolInPixels
+    // numberOfNewInstancesOnNextZoom = (baseNumberOfInstances - 1) + 2*|remainingLength / widthOfSymbolInPixels|;
+
+    // Check for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
+    // minZoom+0: sisisisi
+    //  - baseNumberOfInstances = | 40/10 | -> 4
+    //  - remainingLength = 40 - 4*10 -> 0
+    //  - numberOfNewInstancesOnNextZoom = (4-1) + 2*|0 / 10| -> 3 + 2*0 -> 3
+    // minZoom+1: -si--si--si--si-
+    //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 40 * 2 -> 80
+    //  - numberOfInstances = 4 + 3 -> 7
+    //  - remainingLength = 80 - 7*10 -> 10
+    //  - numberOfNewInstancesOnNextZoom = (7-1) + 2*|10 / 10| -> 6 + 2*1 -> 8
+    // minZoom+2: ---si--si--si--si--si--si--si---
+    //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 80 * 2 -> 160
+    //  - numberOfInstances = 7 + 8 -> 15
+    //  - remainingLength = 160 - 15*10 -> 10
+    //  - numberOfNewInstancesOnNextZoom = (15-1) + 2*|10 / 10| -> 14 + 2*1 -> 16
+
+    // Check for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
+    // minZoom+0: .sisisi.
+    //  - baseNumberOfInstances = | 35/10 | -> 3
+    //  - remainingLength = 40 - 3*10 -> 10
+    //  - numberOfNewInstancesOnNextZoom = (3-1) + 2*|10 / 10| -> 2 + 2*1 -> 4
+    // minZoom+1: --si--si--si--
+    //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 35 * 2 -> 70
+    //  - numberOfInstances = 3 + 4 -> 7
+    //  - remainingLength = 70 - 7*10 -> 0
+    //  - numberOfNewInstancesOnNextZoom = (7-1) + 2*|0 / 10| -> 6 + 2*0 -> 6
+    // minZoom+2: -si--si--si--si--si--si--si-
+    //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 70 * 2 -> 140
+    //  - numberOfInstances = 7 + 6 -> 13
+    //  - remainingLength = 140 - 13*10 -> 10
+    //  - numberOfNewInstancesOnNextZoom = (13-1) + 2*|10 / 10| -> 12 + 2*1 -> 14
+
+    return pinPoints;
 }

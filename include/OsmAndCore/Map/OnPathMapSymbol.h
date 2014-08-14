@@ -17,6 +17,24 @@ namespace OsmAnd
     class OSMAND_CORE_API OnPathMapSymbol : public RasterMapSymbol
     {
         Q_DISABLE_COPY_AND_MOVE(OnPathMapSymbol);
+
+    public:
+        struct OSMAND_CORE_API PinPoint Q_DECL_FINAL
+        {
+            PinPoint();
+            PinPoint(
+                const unsigned int basePathPointIndex,
+                const double offsetFromBasePathPoint,
+                const float kOffsetFromBasePathPoint,
+                const PointI& point);
+            ~PinPoint();
+
+            unsigned int basePathPointIndex;
+            double offsetFromBasePathPoint;
+            double kOffsetFromBasePathPoint;
+            PointI point;
+        };
+
     private:
     protected:
     public:
@@ -27,6 +45,7 @@ namespace OsmAnd
 
         QVector<PointI> path;
         QVector<float> glyphsWidth;
+        QVector<PinPoint> pinPoints;
     };
 }
 
