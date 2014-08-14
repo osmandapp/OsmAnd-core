@@ -238,7 +238,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             }
             else
             {
-                // This happens when road has 'ref'+'name*' tags, what is also a valid situation
+                // This happens when e.g. road has 'ref'+'name*' tags, what is also a valid situation
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
         }
