@@ -200,7 +200,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     OnPathMapSymbol::PinPoint pinPoint;
                     pinPoint.point = computedPinPoint.point;
                     pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
-                    pinPoint.offsetFromBasePathPoint = computedPinPoint.offsetFromBasePathPoint;
+                    pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
                     pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
 
                     onPathSymbol->pinPoints.push_back(qMove(pinPoint));
@@ -260,7 +260,7 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     const QVector<PointI>& path31,
     const float globalLeftPaddingInPixels,
     const float globalRightPaddingInPixels,
-    const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
+    const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation_,
     const ZoomLevel minZoom,
     const ZoomLevel maxZoom)
 {
@@ -268,81 +268,81 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
 
     // Compute pin-points placement starting from minZoom to maxZoom. How this works:
     //
-    // Example of symbol instance placement assuming it fits exactly 4 times on minZoom ('si' is symbol instance):
-    // minZoom+0: sisisisi
-    // Since each next zoom is 2x bigger, thus here's how minZoom+1 will look like without additional instances ('-' is widthOfSymbolInPixels/2)
-    // minZoom+1: -si--si--si--si-
+    // Example of block instance placement assuming it fits exactly 4 times on minZoom ('bi' is block instance):
+    // minZoom+0: bibibibi
+    // Since each next zoom is 2x bigger, thus here's how minZoom+1 will look like without additional instances ('-' is widthOfBlockInPixels/2)
+    // minZoom+1: -bi--bi--bi--bi-
     // After placing 3 additional instances it will look like
-    // minZoom+1: -sisisisisisisi-
+    // minZoom+1: -bibibibibibibi-
     // On next zoom without additional instances it will look like
-    // minZoom+2: ---si--si--si--si--si--si--si---
+    // minZoom+2: ---bi--bi--bi--bi--bi--bi--bi---
     // After placing additional 8 instances it will look like
-    // minZoom+2: -sisisisisisisisisisisisisisisi-
+    // minZoom+2: -bibibibibibibibibibibibibibibi-
     // On next zoom without additional 16 instances it will look like
-    // minZoom+3: ---si--si--si--si--si--si--si--si--si--si--si--si--si--si--si---
+    // minZoom+3: ---bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi---
     // On next zoom without additional 32 instances it will look like
-    // minZoom+4: ---si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si---
+    // minZoom+4: ---bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi---
     // This gives following sequence : (+4 on minZoom+0);(+3 on minZoom+1);(+8 on minZoom+2);(+16 on minZoom+3);(+32 on minZoom+4)
     //
-    // Another example of symbol instance placement assuming only 3.5 symbol instances fit ('.' is widthOfSymbolInPixels/4)
-    // minZoom+0: .sisisi.
+    // Another example of block instance placement assuming only 3.5 block instances fit ('.' is widthOfBlockInPixels/4)
+    // minZoom+0: .bibibi.
     // On next zoom without 4 additional instances
-    // minZoom+1: --si--si--si--
+    // minZoom+1: --bi--bi--bi--
     // After placement additional 4 instances
-    // minZoom+1: sisisisisisisi
+    // minZoom+1: bibibibibibibi
     // On next zoom without additional 6 instances
-    // minZoom+2: -si--si--si--si--si--si--si-
-    // minZoom+2: -sisisisisisisisisisisisisi-
+    // minZoom+2: -bi--bi--bi--bi--bi--bi--bi-
+    // minZoom+2: -bibibibibibibibibibibibibi-
     // On next zoom without additional 14 instances
-    // minZoom+3: ---si--si--si--si--si--si--si--si--si--si--si--si--si---
+    // minZoom+3: ---bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi---
     // This gives following sequence : (+3 on minZoom+0);(+4 on minZoom+1);(+6 on minZoom+2);(+14 on minZoom+3)
     //
     // As clearly seen - on each next zoom level number of instances is doubled.
     // Expressing this fact as numbers here what will be the result:
     // lengthOfPathInPixelsOnBaseZoom = computePathLengthInPixels(path, minZoom)
-    // baseNumberOfInstances = | lengthOfPathInPixels / widthOfSymbolInPixels |
-    // remainingLength = lengthOfPathInPixelsOnBaseZoom - baseNumberOfInstances * widthOfSymbolInPixels
-    // numberOfNewInstancesOnNextZoom = (baseNumberOfInstances - 1) + 2*|remainingLength / widthOfSymbolInPixels|;
+    // baseNumberOfInstances = | lengthOfPathInPixels / widthOfBlockInPixels |
+    // remainingLength = lengthOfPathInPixelsOnBaseZoom - baseNumberOfInstances * widthOfBlockInPixels
+    // numberOfNewInstancesOnNextZoom = (baseNumberOfInstances - 1) + 2*|remainingLength / widthOfBlockInPixels|;
     //
-    // Check for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
-    // minZoom+0: sisisisi
+    // Check for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
+    // minZoom+0: bibibibi
     //  - baseNumberOfInstances = | 40/10 | -> 4
     //  - remainingLength = 40 - 4*10 -> 0
     //  - numberOfNewInstancesOnNextZoom = (4-1) + 2*|0 / 10| -> 3 + 2*0 -> 3
-    // minZoom+1: -si--si--si--si-
+    // minZoom+1: -bi--bi--bi--bi-
     //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 40 * 2 -> 80
     //  - numberOfInstances = 4 + 3 -> 7
     //  - remainingLength = 80 - 7*10 -> 10
     //  - numberOfNewInstancesOnNextZoom = (7-1) + 2*|10 / 10| -> 6 + 2*1 -> 8
-    // minZoom+2: ---si--si--si--si--si--si--si---
+    // minZoom+2: ---bi--bi--bi--bi--bi--bi--bi---
     //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 80 * 2 -> 160
     //  - numberOfInstances = 7 + 8 -> 15
     //  - remainingLength = 160 - 15*10 -> 10
     //  - numberOfNewInstancesOnNextZoom = (15-1) + 2*|10 / 10| -> 14 + 2*1 -> 16
     //
-    // Check for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
-    // minZoom+0: .sisisi.
+    // Check for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
+    // minZoom+0: .bibibi.
     //  - baseNumberOfInstances = | 35/10 | -> 3
     //  - remainingLength = 40 - 3*10 -> 10
     //  - numberOfNewInstancesOnNextZoom = (3-1) + 2*|10 / 10| -> 2 + 2*1 -> 4
-    // minZoom+1: --si--si--si--
+    // minZoom+1: --bi--bi--bi--
     //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 35 * 2 -> 70
     //  - numberOfInstances = 3 + 4 -> 7
     //  - remainingLength = 70 - 7*10 -> 0
     //  - numberOfNewInstancesOnNextZoom = (7-1) + 2*|0 / 10| -> 6 + 2*0 -> 6
-    // minZoom+2: -si--si--si--si--si--si--si-
+    // minZoom+2: -bi--bi--bi--bi--bi--bi--bi-
     //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 70 * 2 -> 140
     //  - numberOfInstances = 7 + 6 -> 13
     //  - remainingLength = 140 - 13*10 -> 10
     //  - numberOfNewInstancesOnNextZoom = (13-1) + 2*|10 / 10| -> 12 + 2*1 -> 14
     //
     // Placement of pin-points is aligned to center, so there's a special offset variable computed as
-    // offsetOnBaseZoom = {lengthOfPathInPixelsOnBaseZoom / widthOfSymbolInPixels} / 2.0
-    // Example for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
+    // offsetOnBaseZoom = {lengthOfPathInPixelsOnBaseZoom / widthOfBlockInPixels} / 2.0
+    // Example for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
     // offsetOnBaseZoom = {40 / 10} / 2.0 -> 0 / 2.0 -> 0
-    // Example for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
+    // Example for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
     // offsetOnBaseZoom = {35 / 10} / 2.0 -> 0.5 / 2.0 -> 0.25
-    // This offsetOnBase zoom specifies offset measured in 'widthOfSymbolInPixels' to first instance start (present or not)
+    // This offsetOnBase zoom specifies offset measured in 'widthOfBlockInPixels' to first instance start (present or not)
     //
     // On each next level:
     // offsetToFirstPresentInstance = 0.5 + offsetOnPrevZoom * 2
@@ -351,6 +351,75 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     // Each next instance on this level is located at offsetOnCurrentZoom + 2*instancesPlotted
 
     // And here's the implementation:
-    
+    auto symbolsForPinPointsComputation = symbolsForPinPointsComputation_;
+
+    // Step 0. Initial checks
+    if (symbolsForPinPointsComputation.isEmpty())
+        return computedPinPoints;
+
+    // Step 1. Get scale factor from 31 to pixels for minZoom.
+    // Only display density is used, since it's not real calculation, thus tile is imagined to be 256????
+
+    // Step 2. Compute path length, path segments length (in 31 and in pixels)
+    const auto pathSize = path31.size();
+    const auto pathSegmentsCount = pathSize - 1;
+    float pathLengthInPixels = 0.0f;
+    QVector<float> pathSegmentsLengthInPixels(pathSegmentsCount);
+    auto pPathSegmentLengthInPixels = pathSegmentsLengthInPixels.data();
+    double pathLength31 = 0.0;
+    QVector<double> pathSegmentsLength31(pathSegmentsCount);
+    auto pPathSegmentLength31 = pathSegmentsLength31.data();
+    auto pPoint31 = path31.constData();
+    auto pPrevPoint31 = pPoint31++;
+    for (auto segmentIdx = 0; segmentIdx < pathSegmentsCount; segmentIdx++)
+    {
+        const auto segmentLength31 = qSqrt((*(pPoint31++) - *(pPrevPoint31++)).squareNorm());
+        *(pPathSegmentLength31++) = segmentLength31;
+        pathLength31 += segmentLength31;
+
+        const auto segmentLengthInPixels = ;
+        *(pPathSegmentLengthInPixels++) = segmentLengthInPixels;
+        pathLengthInPixels += segmentLengthInPixels;
+    }
+    const auto usablePathLengthInPixels = pathLengthInPixels - globalLeftPaddingInPixels - globalRightPaddingInPixels;
+
+    // Step 3. Compute total width of all symbols requested. This will be the block width.
+    float blockWidth = 0.0f;
+    bool limitToOneBlockInstance = false;
+    unsigned int symbolsInBlockThatFit = 0;
+    for (const auto& symbolForPinPointsComputation : constOf(symbolsForPinPointsComputation))
+    {
+        const auto previousBlockWidth = blockWidth;
+
+        blockWidth += symbolForPinPointsComputation.leftPaddingInPixels;
+        blockWidth += symbolForPinPointsComputation.widthInPixels;
+        blockWidth += symbolForPinPointsComputation.rightPaddingInPixels;
+
+        // If block can not fit, use shorted version
+        if (usablePathLengthInPixels < blockWidth)
+        {
+            blockWidth = previousBlockWidth;
+            limitToOneBlockInstance = true;
+            symbolsForPinPointsComputation = symbolsForPinPointsComputation.mid(0, symbolsInBlockThatFit);
+
+            break;
+        }
+        symbolsInBlockThatFit++;
+    }
+    if (symbolsForPinPointsComputation.isEmpty() || qFuzzyIsNull(blockWidth))
+        return computedPinPoints;
+
+    // Step 4. Process base zoom level
+    const auto lengthOfPathInPixelsOnBaseZoom = usablePathLengthInPixels;
+    const auto numberOfInstancesOnBaseZoom = limitToOneBlockInstance ? 1 : qFloor(lengthOfPathInPixelsOnBaseZoom / blockWidth);
+    const auto remainingLengthOnBaseZoom = usablePathLengthInPixels - numberOfInstancesOnBaseZoom * blockWidth;
+    const auto numberOfNewInstancesOnNextZoom = (numberOfInstancesOnBaseZoom - 1) + 2 * qFloor(remainingLengthOnBaseZoom / blockWidth);
+
+    // Step 5. Process remaining zoom levels
+    for (auto currentZoomLevel = minZoom + 1; currentZoomLevel <= maxZoom; currentZoomLevel++)
+    {
+
+    }
+
     return computedPinPoints;
 }
