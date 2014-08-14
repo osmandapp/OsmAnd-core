@@ -509,18 +509,3 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
     for(const auto& edge : constOf(edges))
         delete edge;
 }
-
-QVector<OsmAnd::PointI> OsmAnd::Utilities::computePathInnerPoints(const QVector<PointI>& path, const QVector<float>& ks_)
-{
-    const auto count = ks.size();
-    QVector<PointI> result(count);
-    
-    auto pPoint = result.data();
-    auto pK = ks.constData();
-    for (auto idx = 0; idx < count; idx++)
-    {
-        
-    }
-
-    return result;
-}
