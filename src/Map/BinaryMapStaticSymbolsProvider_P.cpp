@@ -185,15 +185,15 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     return true;
 }
 
-QVector<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoints(
+QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoints(
     const QVector<PointI>& path31,
     const float globalLeftPaddingInPixels,
     const float globalRightPaddingInPixels,
-    const QVector<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
+    const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
     const ZoomLevel minZoom,
     const ZoomLevel maxZoom)
 {
-    QVector<ComputedPinPoint> computedPinPoints;
+    QList<ComputedPinPoint> computedPinPoints;
 
     // Compute pin-points placement starting from minZoom to maxZoom.
     
