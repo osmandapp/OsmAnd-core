@@ -116,11 +116,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
                 onPathSymbol->path = mapObject->points31;
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
-                /*onPathSymbol->pinPoints = computePinPoints(
-                    mapObject->points31,
-                    rasterizedOnPathSymbol->bitmap->width(),
-                    mapObject->level->minZoom,
-                    mapObject->level->maxZoom);*/
                 symbol.reset(onPathSymbol);
             }
             else
@@ -138,6 +133,29 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             group->symbols.push_back(qMove(symbol));
         }
 
+        // If there's at least one on-path symbol, this group needs special post-processing:
+        //  - Compute pin-points for all symbols in group (including billboard ones)
+        //  - Split path between them
+        if (hasAtLeastOneOnPath)
+        {
+            QList<SymbolForPinPointsComputation> symbolsForComputation;
+            symbolsForComputation.reserve(group->symbols.size());
+            for (const auto& symbol : constOf(group->symbols))
+            {
+                if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
+                {
+                    symbolsForComputation.push_back({ 0, billboardSymbol->size.x, 0 });
+                }
+                else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
+                {
+                    symbolsForComputation.push_back({ 0, onPathSymbol->size.x, 0 });
+                }
+            }
+
+            //TODO: blaaa
+            int i = 5;
+        }
+
         // Configure group
         if (!group->symbols.isEmpty())
         {
@@ -152,9 +170,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             }
             else
             {
-                LogPrintf(LogSeverityLevel::Error, "BinaryMapObject #%" PRIu64 " (%" PRIi64 ") produced both billboard and on-path symbols",
-                    mapObject->id,
-                    static_cast<int64_t>(mapObject->id) / 2);
+                // This happens when road has 'ref'+'name*' tags, what is also a valid situation
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
         }

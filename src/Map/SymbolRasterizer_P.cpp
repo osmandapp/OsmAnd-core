@@ -115,6 +115,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 
                 if (textSymbol->drawOnPath)
                 {
+                    if (textSymbol->drawOnPath && textSymbol->verticalOffset > 0)
+                    {
+                        LogPrintf(LogSeverityLevel::Warning, "Hey, on-path + vertical offset is not supported!");
+                        assert(false);
+                    }
+
                     // Publish new rasterized symbol
                     const auto rasterizedSymbol = new RasterizedOnPathSymbol(
                         group,

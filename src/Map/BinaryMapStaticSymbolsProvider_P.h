@@ -6,8 +6,11 @@
 #include <functional>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QReadWriteLock>
 #include <QList>
+#include <QVector>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -44,11 +47,11 @@ namespace OsmAnd
             double offsetFromBasePathPoint;
             float normalizedOffsetFromBasePathPoint;
         };
-        static QVector<ComputedPinPoint> computePinPoints(
+        static QList<ComputedPinPoint> computePinPoints(
             const QVector<PointI>& path31,
             const float globalLeftPaddingInPixels,
             const float globalRightPaddingInPixels,
-            const QVector<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
+            const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom);
     protected:
