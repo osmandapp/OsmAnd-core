@@ -148,7 +148,10 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             {
                 if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                 {
-                    symbolsForComputation.push_back({ 0, billboardSymbol->size.x, 0 });
+                    // Get larger bbox, to take into account possible rotation
+                    const auto maxSize = qMax(billboardSymbol->size.x, billboardSymbol->size.y);
+                    const auto outerCircleRadius = 0.5f * qSqrt(2 * maxSize * maxSize);
+                    symbolsForComputation.push_back({ 0, 2.0f * outerCircleRadius, 0 });
                 }
                 else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
                 {
@@ -263,8 +266,8 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
 {
     QList<ComputedPinPoint> computedPinPoints;
 
-    // Compute pin-points placement starting from minZoom to maxZoom.
-    
+    // Compute pin-points placement starting from minZoom to maxZoom. How this works:
+    //
     // Example of symbol instance placement assuming it fits exactly 4 times on minZoom ('si' is symbol instance):
     // minZoom+0: sisisisi
     // Since each next zoom is 2x bigger, thus here's how minZoom+1 will look like without additional instances ('-' is widthOfSymbolInPixels/2)
@@ -280,7 +283,7 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     // On next zoom without additional 32 instances it will look like
     // minZoom+4: ---si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si--si---
     // This gives following sequence : (+4 on minZoom+0);(+3 on minZoom+1);(+8 on minZoom+2);(+16 on minZoom+3);(+32 on minZoom+4)
-
+    //
     // Another example of symbol instance placement assuming only 3.5 symbol instances fit ('.' is widthOfSymbolInPixels/4)
     // minZoom+0: .sisisi.
     // On next zoom without 4 additional instances
@@ -293,14 +296,14 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     // On next zoom without additional 14 instances
     // minZoom+3: ---si--si--si--si--si--si--si--si--si--si--si--si--si---
     // This gives following sequence : (+3 on minZoom+0);(+4 on minZoom+1);(+6 on minZoom+2);(+14 on minZoom+3)
-
+    //
     // As clearly seen - on each next zoom level number of instances is doubled.
     // Expressing this fact as numbers here what will be the result:
     // lengthOfPathInPixelsOnBaseZoom = computePathLengthInPixels(path, minZoom)
     // baseNumberOfInstances = | lengthOfPathInPixels / widthOfSymbolInPixels |
     // remainingLength = lengthOfPathInPixelsOnBaseZoom - baseNumberOfInstances * widthOfSymbolInPixels
     // numberOfNewInstancesOnNextZoom = (baseNumberOfInstances - 1) + 2*|remainingLength / widthOfSymbolInPixels|;
-
+    //
     // Check for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
     // minZoom+0: sisisisi
     //  - baseNumberOfInstances = | 40/10 | -> 4
@@ -316,7 +319,7 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     //  - numberOfInstances = 7 + 8 -> 15
     //  - remainingLength = 160 - 15*10 -> 10
     //  - numberOfNewInstancesOnNextZoom = (15-1) + 2*|10 / 10| -> 14 + 2*1 -> 16
-
+    //
     // Check for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
     // minZoom+0: .sisisi.
     //  - baseNumberOfInstances = | 35/10 | -> 3
@@ -332,7 +335,7 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     //  - numberOfInstances = 7 + 6 -> 13
     //  - remainingLength = 140 - 13*10 -> 10
     //  - numberOfNewInstancesOnNextZoom = (13-1) + 2*|10 / 10| -> 12 + 2*1 -> 14
-
+    //
     // Placement of pin-points is aligned to center, so there's a special offset variable computed as
     // offsetOnBaseZoom = {lengthOfPathInPixelsOnBaseZoom / widthOfSymbolInPixels} / 2.0
     // Example for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
@@ -340,10 +343,14 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     // Example for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
     // offsetOnBaseZoom = {35 / 10} / 2.0 -> 0.5 / 2.0 -> 0.25
     // This offsetOnBase zoom specifies offset measured in 'widthOfSymbolInPixels' to first instance start (present or not)
-
+    //
     // On each next level:
     // offsetToFirstPresentInstance = 0.5 + offsetOnPrevZoom * 2
     // offsetOnCurrentZoom = (offsetToFirstPresentInstance > 1.0) ? offsetToFirstPresentInstance - 1.0 : offsetToFirstPresentInstance + 1.0;
+    //
+    // Each next instance on this level is located at offsetOnCurrentZoom + 2*instancesPlotted
 
+    // And here's the implementation:
+    
     return computedPinPoints;
 }
