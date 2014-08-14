@@ -15,7 +15,8 @@ OsmAnd::Model::BinaryMapObject::BinaryMapObject(const std::shared_ptr<const ObfM
     , typesRuleIds(_typesRuleIds)
     , extraTypesRuleIds(_extraTypesRuleIds)
     , foundation(_foundation)
-    , names(_names)
+    , captions(_captions)
+    , captionsOrder(_captionsOrder)
     , bbox31(_bbox31)
 {
 }
@@ -87,8 +88,8 @@ bool OsmAnd::Model::BinaryMapObject::intersects( const AreaI& area ) const
 
 QString OsmAnd::Model::BinaryMapObject::getNameInNativeLanguage() const
 {
-    const auto citName = _names.constFind(section->encodingDecodingRules->name_encodingRuleId);
-    if (citName == _names.cend())
+    const auto citName = _captions.constFind(section->encodingDecodingRules->name_encodingRuleId);
+    if (citName == _captions.cend())
         return QString::null;
     return *citName;
 }
@@ -100,8 +101,8 @@ QString OsmAnd::Model::BinaryMapObject::getNameInLanguage(const QString& lang) c
     if (citNameId == encDecRules->localizedName_encodingRuleIds.cend())
         return QString::null;
 
-    const auto citName = _names.constFind(*citNameId);
-    if (citName == _names.cend())
+    const auto citName = _captions.constFind(*citNameId);
+    if (citName == _captions.cend())
         return QString::null;
     return *citName;
 }

@@ -38,7 +38,8 @@ namespace OsmAnd
             QList< QVector< PointI > > _innerPolygonsPoints31;
             QVector< uint32_t > _typesRuleIds;
             QVector< uint32_t > _extraTypesRuleIds;
-            QHash< uint32_t, QString > _names;
+            QHash< uint32_t, QString > _captions;
+            QList<uint32_t> _captionsOrder;
             AreaI _bbox31;
         public:
             virtual ~BinaryMapObject();
@@ -52,7 +53,8 @@ namespace OsmAnd
             const QVector< uint32_t >& typesRuleIds;
             const QVector< uint32_t >& extraTypesRuleIds;
             const MapFoundationType& foundation;
-            const QHash<uint32_t, QString>& names;
+            const QHash<uint32_t, QString>& captions;
+            const QList<uint32_t>& captionsOrder;
             const AreaI& bbox31;
 
             int getSimpleLayerValue() const;

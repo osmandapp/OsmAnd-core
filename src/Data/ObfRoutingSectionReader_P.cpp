@@ -328,7 +328,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
     const IQueryController* const controller,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
-    QStringList roadNamesTable;
+    QStringList roadsCaptionsTable;
     QList<uint64_t> roadsIdsTable;
     QHash< uint32_t, std::shared_ptr<Model::Road> > resultsByInternalId;
 
@@ -342,22 +342,22 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             {
                 for (const auto& road : constOf(resultsByInternalId))
                 {
-                    // Fill names of roads from stringtable
-                    for (auto& nameValue : road->_names)
+                    // Fill captions of roads from stringtable
+                    for (auto& caption : road->_captions)
                     {
-                        const uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(nameValue);
+                        const uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(caption);
 
-                        if (stringId >= roadNamesTable.size())
+                        if (stringId >= roadsCaptionsTable.size())
                         {
                             LogPrintf(LogSeverityLevel::Error,
                                 "Data mismatch: string #%d (road #%" PRIu64 " (%" PRIi64 ") not found in string table (size %d) in section '%s'",
                                 stringId,
                                 road->id >> 1, static_cast<int64_t>(road->id) / 2,
-                                roadNamesTable.size(), qPrintable(section->name));
-                            nameValue = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
+                                roadsCaptionsTable.size(), qPrintable(section->name));
+                            caption = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
                             continue;
                         }
-                        nameValue = roadNamesTable[stringId];
+                        caption = roadsCaptionsTable[stringId];
                     }
 
                     if (!visitor || visitor(road))
@@ -429,7 +429,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
-                ObfReaderUtilities::readStringTable(cis, roadNamesTable);
+                ObfReaderUtilities::readStringTable(cis, roadsCaptionsTable);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -707,7 +707,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     gpb::uint32 stringId;
                     cis->ReadVarint32(&stringId);
 
-                    road->_names.insert(stringTag, ObfReaderUtilities::encodeIntegerToString(stringId));
+                    road->_captions.insert(stringTag, ObfReaderUtilities::encodeIntegerToString(stringId));
+                    road->_captionsOrder.push_back(stringTag);
                 }
                 cis->PopLimit(oldLimit);
                 break;

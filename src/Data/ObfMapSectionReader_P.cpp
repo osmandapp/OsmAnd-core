@@ -412,7 +412,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     auto cis = reader._codedInputStream.get();
 
     QList< std::shared_ptr<Model::BinaryMapObject> > intermediateResult;
-    QStringList mapObjectsNamesTable;
+    QStringList mapObjectsCaptionsTable;
     gpb::uint64 baseId = 0;
     for (;;)
     {
@@ -426,22 +426,22 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
             {
                 for (const auto& mapObject : constOf(intermediateResult))
                 {
-                    // Fill mapObject names from stringtable
-                    for (auto& nameValue : mapObject->_names)
+                    // Fill mapObject captions from string-table
+                    for (auto& caption : mapObject->_captions)
                     {
-                        const auto stringId = ObfReaderUtilities::decodeIntegerFromString(nameValue);
+                        const auto stringId = ObfReaderUtilities::decodeIntegerFromString(caption);
 
-                        if (stringId >= mapObjectsNamesTable.size())
+                        if (stringId >= mapObjectsCaptionsTable.size())
                         {
                             LogPrintf(LogSeverityLevel::Error,
                                 "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table (size %d) in section '%s'",
                                 stringId,
                                 mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
-                                mapObjectsNamesTable.size(), qPrintable(section->name));
-                            nameValue = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
+                                mapObjectsCaptionsTable.size(), qPrintable(section->name));
+                            caption = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
                             continue;
                         }
-                        nameValue = mapObjectsNamesTable[stringId];
+                        caption = mapObjectsCaptionsTable[stringId];
                     }
 
                     if (!visitor || visitor(mapObject))
@@ -520,7 +520,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     cis->PopLimit(oldLimit);
                     break;
                 }
-                ObfReaderUtilities::readStringTable(cis, mapObjectsNamesTable);
+                ObfReaderUtilities::readStringTable(cis, mapObjectsCaptionsTable);
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
@@ -782,7 +782,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     ok = cis->ReadVarint32(&stringId);
                     assert(ok);
 
-                    mapObject->_names.insert(stringRuleId, qMove(ObfReaderUtilities::encodeIntegerToString(stringId)));
+                    mapObject->_captions.insert(stringRuleId, qMove(ObfReaderUtilities::encodeIntegerToString(stringId)));
+                    mapObject->_captionsOrder.push_back(stringRuleId);
                 }
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);

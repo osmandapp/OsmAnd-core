@@ -82,40 +82,40 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                 QString regionPrefix;
                 QString regionSuffix;
                 QHash<QString, QString> localizedNames;
-                for(const auto& localizedNameEntry : rangeOf(constOf(worldRegionMapObject->names)))
+                for(const auto& captionEntry : rangeOf(constOf(worldRegionMapObject->captions)))
                 {
-                    const auto ruleId = localizedNameEntry.key();
+                    const auto ruleId = captionEntry.key();
                     if (ruleId == idId)
                     {
-                        id = localizedNameEntry.value().toLower();
+                        id = captionEntry.value().toLower();
                         continue;
                     }
                     else if (ruleId == nameId)
                     {
-                        name = localizedNameEntry.value();
+                        name = captionEntry.value();
                         continue;
                     }
                     else if (ruleId == downloadNameId)
                     {
-                        downloadName = localizedNameEntry.value().toLower();
+                        downloadName = captionEntry.value().toLower();
                         continue;
                     }
                     else if (ruleId == regionPrefixId)
                     {
-                        regionPrefix = localizedNameEntry.value().toLower();
+                        regionPrefix = captionEntry.value().toLower();
                         continue;
                     }
                     else if (ruleId == regionSuffixId)
                     {
-                        regionSuffix = localizedNameEntry.value().toLower();
+                        regionSuffix = captionEntry.value().toLower();
                         continue;
                     }
 
-                    const auto& nameTag = rules->decodingRules[localizedNameEntry.key()].tag;
+                    const auto& nameTag = rules->decodingRules[captionEntry.key()].tag;
                     if (!nameTag.startsWith(localizedNameTagPrefix))
                         continue;
                     const auto languageId = nameTag.mid(localizedNameTagPrefixLen).toLower();
-                    localizedNames.insert(languageId, localizedNameEntry.value());
+                    localizedNames.insert(languageId, captionEntry.value());
                 }
 
                 QString parentId = regionSuffix;

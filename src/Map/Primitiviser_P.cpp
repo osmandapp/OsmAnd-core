@@ -1061,7 +1061,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         const auto objectType = static_cast<PrimitiveType>(objectType_);
 
         int zOrder;
-        if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder))
+        if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) || zOrder < 0)
         {
             if (metric)
                 metric->orderRejects++;
@@ -1168,7 +1168,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             }
 
             // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
-            if (typeRuleIdIndex == 0 && (!mapObject->names.isEmpty() || ok))
+            if (typeRuleIdIndex == 0 && (!mapObject->captions.isEmpty() || ok))
             {
                 // Duplicate primitive as point
                 std::shared_ptr<Primitive> pointPrimitive;
@@ -1279,7 +1279,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             }
 
             // Skip is possible if typeIndex != 0 or (there is no text and no icon)
-            if (typeRuleIdIndex != 0 || (mapObject->names.isEmpty() && !ok))
+            if (typeRuleIdIndex != 0 || (mapObject->captions.isEmpty() && !ok))
             {
                 if (metric)
                     metric->pointRejects++;
@@ -1681,8 +1681,11 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
     SymbolsCollection& outSymbols)
 {
     const auto& mapObject = primitive->sourceObject;
-    if (mapObject->names.isEmpty())
+
+    // Text symbols can only be obtained from captions
+    if (mapObject->captions.isEmpty())
         return;
+
     const auto& encDecRules = mapObject->section->encodingDecodingRules;
     const auto typeRuleId = mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
     const auto& decodedType = encDecRules->decodingRules[typeRuleId];
@@ -1690,70 +1693,82 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
     MapStyleEvaluator textEvaluator(env->style, env->displayDensityFactor);
     env->applyTo(textEvaluator);
 
-    // Process native and localized names
-    auto names = mapObject->names;
+    // Get captions and their order
+    auto captions = mapObject->captions;
+    auto captionsOrder = mapObject->captionsOrder;
 
-    const auto citNamesEnd = names.cend();
-
-    const auto citNativeName =
-        (encDecRules->name_encodingRuleId == std::numeric_limits<uint32_t>::max())
-        ? citNamesEnd
-        : names.constFind(encDecRules->name_encodingRuleId);
-    auto hasNativeName = (citNativeName != citNamesEnd);
-
-    const auto citLocalizedNameRuleId = encDecRules->localizedName_encodingRuleIds.constFind(env->localeLanguageId);
-    const auto localizedNameRuleId =
-        (citLocalizedNameRuleId == encDecRules->localizedName_encodingRuleIds.cend())
-        ? std::numeric_limits<uint32_t>::max()
-        : *citLocalizedNameRuleId;
-    const auto citLocalizedName =
-        (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
-        ? citNamesEnd
-        : names.constFind(localizedNameRuleId);
-    auto hasLocalizedName = (citLocalizedName != citNamesEnd);
-
-    bool forceLangInvariantName = false;
-    if (hasNativeName && hasLocalizedName)
+    // Process captions to find out what names are present and modify that if needed
+    bool hasNativeName = false;
+    bool hasLocalizedName = false;
+    uint32_t localizedNameRuleId = std::numeric_limits<uint32_t>::max();
     {
-        const auto& nativeNameValue = citNativeName.value();
-        const auto& localizedNameValue = citLocalizedName.value();
+        const auto citCaptionsEnd = captions.cend();
 
-        // If mapObject has both native and localized names and they are equal - prefer native
-        if (nativeNameValue.compare(localizedNameValue, Qt::CaseInsensitive) == 0)
+        // Look for native name
+        const auto citNativeName =
+            (encDecRules->name_encodingRuleId == std::numeric_limits<uint32_t>::max())
+            ? citCaptionsEnd
+            : captions.constFind(encDecRules->name_encodingRuleId);
+        auto hasNativeName = (citNativeName != citCaptionsEnd);
+
+        // Look for localized name
+        const auto citLocalizedNameRuleId = encDecRules->localizedName_encodingRuleIds.constFind(env->localeLanguageId);
+        if (citLocalizedNameRuleId != encDecRules->localizedName_encodingRuleIds.cend())
+            localizedNameRuleId = *citLocalizedNameRuleId;
+        const auto citLocalizedName =
+            (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
+            ? citCaptionsEnd
+            : captions.constFind(localizedNameRuleId);
+        auto hasLocalizedName = (citLocalizedName != citCaptionsEnd);
+
+        // Post-process names-only captions
+        if (hasNativeName && hasLocalizedName)
         {
-            names.remove(localizedNameRuleId);
-            hasLocalizedName = false;
+            const auto& nativeNameValue = citNativeName.value();
+            const auto& localizedNameValue = citLocalizedName.value();
+
+            // If mapObject has both native and localized names and they are equal - prefer native
+            if (nativeNameValue.compare(localizedNameValue, Qt::CaseInsensitive) == 0)
+            {
+                captions.remove(localizedNameRuleId);
+                captionsOrder.removeOne(localizedNameRuleId);
+                hasLocalizedName = false;
+            }
+        }
+        else if (hasNativeName && !hasLocalizedName)
+        {
+            const auto& nativeNameValue = citNativeName.value();
+
+            // If mapObject has native name, but doesn't have localized name - create such (as a Latin)
+            const auto latinNameValue = ICU::transliterateToLatin(nativeNameValue);
+
+            // If transliterated name differs from native name, add it to captions as 'localized' name
+            if (nativeNameValue.compare(latinNameValue, Qt::CaseInsensitive) != 0)
+            {
+                captions.insert(localizedNameRuleId, latinNameValue);
+                // 'Localized' name should go after native name, according to following content from 'rendering_types.xml':
+                // <type tag="name" additional="text" order="40"/>
+                // <type tag="name:*" additional="text" order="45" />
+                captionsOrder.insert(captionsOrder.indexOf(encDecRules->name_encodingRuleId) + 1, localizedNameRuleId);
+                hasLocalizedName = true;
+            }
         }
     }
-    else if (hasNativeName && !hasLocalizedName)
-    {
-        const auto& nativeNameValue = citNativeName.value();
-
-        // If mapObject has native name, but doesn't have localized name - create such (as a Latin)
-        const auto latinNameValue = ICU::transliterateToLatin(nativeNameValue);
-
-        // If transliterated name differs from native name, add it to names
-        if (nativeNameValue.compare(latinNameValue, Qt::CaseInsensitive) != 0)
-        {
-            hasLocalizedName = true;
-            names.insert(localizedNameRuleId, latinNameValue);
-        }
-    }
-
+    
+    // Process captions in order how captions where declared in OBF source (what is being controlled by 'rendering_types.xml')
     bool ok;
-    for (const auto& nameEntry : rangeOf(constOf(names)))
+    for (const auto& captionRuleId : constOf(captionsOrder))
     {
-        const auto& nameTagId = nameEntry.key();
-        const auto& name = nameEntry.value();
+        const auto& caption = constOf(captions)[captionRuleId];
 
-        // Skip empty names
-        if (name.isEmpty())
+        // If it's empty, it can not be primitivised
+        if (caption.isEmpty())
             continue;
 
-        // Skip names that are from different languages
-        if (nameTagId != encDecRules->name_encodingRuleId &&
-            nameTagId != localizedNameRuleId &&
-            encDecRules->namesRuleId.contains(nameTagId))
+        // Skip captions that are names but not of 'native' or 'localized' language
+        if (captionRuleId != encDecRules->name_encodingRuleId &&
+            captionRuleId != localizedNameRuleId &&
+            encDecRules->namesRuleId.contains(captionRuleId))
         {
             continue;
         }
@@ -1763,13 +1778,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
         textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, primitivisedArea->zoom);
         textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, primitivisedArea->zoom);
-        textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, name.length());
+        textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
 
-        QString nameTag;
-        if (nameTagId != encDecRules->name_encodingRuleId && nameTagId != localizedNameRuleId)
-            nameTag = encDecRules->decodingRules[nameTagId].tag;
-
-        textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, nameTag);
+        // Get tag of rule, in case caption is not a name
+        QString captionRuleTag;
+        if (captionRuleId != encDecRules->name_encodingRuleId && captionRuleId != localizedNameRuleId)
+            captionRuleTag = encDecRules->decodingRules[captionRuleId].tag;
+        textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, captionRuleTag);
 
         evaluationResult.clear();
         if (!textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult))
@@ -1783,14 +1798,19 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
 
         // Determine language of this text
         auto languageId = LanguageId::Invariant;
-        if ((nameTagId == encDecRules->name_encodingRuleId || nameTagId == localizedNameRuleId) && hasLocalizedName && hasNativeName)
-            languageId = (nameTagId == localizedNameRuleId) ? LanguageId::Localized : LanguageId::Native;
+        if (hasLocalizedName && hasNativeName)
+        {
+            if (captionRuleId == encDecRules->name_encodingRuleId)
+                languageId = LanguageId::Native;
+            else if (captionRuleId == localizedNameRuleId)
+                languageId = LanguageId::Localized;
+        }
 
         // Create primitive
         const std::shared_ptr<TextSymbol> text(new TextSymbol(primitive));
         text->location31 = location;
         text->languageId = languageId;
-        text->value = name;
+        text->value = caption;
 
         text->drawOnPath = false;
         evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);

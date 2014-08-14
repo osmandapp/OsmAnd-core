@@ -9,7 +9,8 @@
 OsmAnd::Model::Road::Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section_)
     : section(section_)
     , id(_id)
-    , names(_names)
+    , captions(_captions)
+    , captionsOrder(_captionsOrder)
     , bbox31(_bbox31)
     , points31(_points31)
     , types(_types)
@@ -52,8 +53,8 @@ OsmAnd::Model::Road::~Road()
 
 QString OsmAnd::Model::Road::getNameInNativeLanguage() const
 {
-    const auto citName = _names.constFind(section->encodingDecodingRules->name_encodingRuleId);
-    if (citName == _names.cend())
+    const auto citName = _captions.constFind(section->encodingDecodingRules->name_encodingRuleId);
+    if (citName == _captions.cend())
         return QString::null;
     return *citName;
 }
@@ -65,8 +66,8 @@ QString OsmAnd::Model::Road::getNameInLanguage(const QString& lang) const
     if (citNameId == encDecRules->localizedName_encodingRuleIds.cend())
         return QString::null;
 
-    const auto citName = _names.constFind(*citNameId);
-    if (citName == _names.cend())
+    const auto citName = _captions.constFind(*citNameId);
+    if (citName == _captions.cend())
         return QString::null;
     return *citName;
 }
