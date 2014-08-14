@@ -116,11 +116,11 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
                 onPathSymbol->path = mapObject->points31;
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
-                onPathSymbol->pinPoints = computePinPoints(
+                /*onPathSymbol->pinPoints = computePinPoints(
                     mapObject->points31,
                     rasterizedOnPathSymbol->bitmap->width(),
                     mapObject->level->minZoom,
-                    mapObject->level->maxZoom);
+                    mapObject->level->maxZoom);*/
                 symbol.reset(onPathSymbol);
             }
             else
@@ -169,13 +169,15 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     return true;
 }
 
-QVector<OsmAnd::OnPathMapSymbol::PinPoint> OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoints(
+QVector<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoints(
     const QVector<PointI>& path31,
-    const float widthOfSymbolInPixels,
+    const float globalLeftPaddingInPixels,
+    const float globalRightPaddingInPixels,
+    const QVector<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
     const ZoomLevel minZoom,
     const ZoomLevel maxZoom)
 {
-    QVector<OnPathMapSymbol::PinPoint> pinPoints;
+    QVector<ComputedPinPoint> computedPinPoints;
 
     // Compute pin-points placement starting from minZoom to maxZoom.
     
@@ -206,7 +208,7 @@ QVector<OsmAnd::OnPathMapSymbol::PinPoint> OsmAnd::BinaryMapStaticSymbolsProvide
     // minZoom+2: -sisisisisisisisisisisisisi-
     // On next zoom without additional 14 instances
     // minZoom+3: ---si--si--si--si--si--si--si--si--si--si--si--si--si---
-    // This gives following sequence : (+3 on minZoom+0);(+4 on minZoom+1);(+6 on minZoom+2);(+14 on minZoom+3);(+24? on minZoom+4)
+    // This gives following sequence : (+3 on minZoom+0);(+4 on minZoom+1);(+6 on minZoom+2);(+14 on minZoom+3)
 
     // As clearly seen - on each next zoom level number of instances is doubled.
     // Expressing this fact as numbers here what will be the result:
@@ -247,5 +249,17 @@ QVector<OsmAnd::OnPathMapSymbol::PinPoint> OsmAnd::BinaryMapStaticSymbolsProvide
     //  - remainingLength = 140 - 13*10 -> 10
     //  - numberOfNewInstancesOnNextZoom = (13-1) + 2*|10 / 10| -> 12 + 2*1 -> 14
 
-    return pinPoints;
+    // Placement of pin-points is aligned to center, so there's a special offset variable computed as
+    // offsetOnBaseZoom = {lengthOfPathInPixelsOnBaseZoom / widthOfSymbolInPixels} / 2.0
+    // Example for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
+    // offsetOnBaseZoom = {40 / 10} / 2.0 -> 0 / 2.0 -> 0
+    // Example for widthOfSymbolInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
+    // offsetOnBaseZoom = {35 / 10} / 2.0 -> 0.5 / 2.0 -> 0.25
+    // This offsetOnBase zoom specifies offset measured in 'widthOfSymbolInPixels' to first instance start (present or not)
+
+    // On each next level:
+    // offsetToFirstPresentInstance = 0.5 + offsetOnPrevZoom * 2
+    // offsetOnCurrentZoom = (offsetToFirstPresentInstance > 1.0) ? offsetToFirstPresentInstance - 1.0 : offsetToFirstPresentInstance + 1.0;
+
+    return computedPinPoints;
 }

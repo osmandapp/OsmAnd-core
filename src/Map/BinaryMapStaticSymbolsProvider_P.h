@@ -13,7 +13,6 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "IMapTiledSymbolsProvider.h"
-#include "OnPathMapSymbol.h"
 #include "BinaryMapObjectSymbolsGroup.h"
 #include "BinaryMapObject.h"
 #include "BinaryMapStaticSymbolsProvider.h"
@@ -31,9 +30,25 @@ namespace OsmAnd
         typedef BinaryMapStaticSymbolsProvider::FilterCallback FilterCallback;
 
     private:
-        static QVector<OnPathMapSymbol::PinPoint> computePinPoints(
+        struct SymbolForPinPointsComputation
+        {
+            float leftPaddingInPixels;
+            float widthInPixels;
+            float rightPaddingInPixels;
+        };
+        struct ComputedPinPoint
+        {
+            PointI point;
+
+            unsigned int basePathPointIndex;
+            double offsetFromBasePathPoint;
+            float normalizedOffsetFromBasePathPoint;
+        };
+        static QVector<ComputedPinPoint> computePinPoints(
             const QVector<PointI>& path31,
-            const float widthOfSymbolInPixels,
+            const float globalLeftPaddingInPixels,
+            const float globalRightPaddingInPixels,
+            const QVector<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom);
     protected:
