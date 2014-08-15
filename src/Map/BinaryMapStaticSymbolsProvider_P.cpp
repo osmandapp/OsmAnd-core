@@ -141,6 +141,15 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         //  - Split path between them
         if (hasAtLeastOneOnPath)
         {
+            //////////////////////////////////////////////////////////////////////////
+           /* {
+                if ((mapObject->id >> 1) == 28191391)
+                {
+                    int i = 5;
+                }
+            }*/
+            //////////////////////////////////////////////////////////////////////////
+
             // Compose list of symbols to compute pin-points for
             QList<SymbolForPinPointsComputation> symbolsForComputation;
             symbolsForComputation.reserve(group->symbols.size());
@@ -167,9 +176,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 mapObject->level->minZoom,
                 mapObject->level->maxZoom,
                 zoom);
-
-            
-            //////////////////////////////////////////////////////////////////////////
 
             // After pin-points were computed, assign them to symbols in the same order
             QHash< std::shared_ptr<MapSymbol>, QList<std::shared_ptr<MapSymbol>> > extraSymbolInstances;
@@ -480,8 +486,8 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
         const auto remainingPathLengthOnCurrentZoom = lengthOfPathInPixelsOnCurrentZoom - blocksToInstantiate * blockWidth;
         const auto offsetToFirstNewBlockInPixels = kOffsetToFirstNewBlockOnCurrentZoom * blockWidth;
 
-        // Compute actual pin-points only for needed zoom.
-        if (currentZoomLevel == neededZoom)
+        // Compute actual pin-points only for zoom levels less detained that needed, including needed
+        if (currentZoomLevel <= neededZoom)
         {
             // In case at least 1 block fits, only complete blocks are being used.
             // Otherwise, plot only part of symbols (virtually, smaller block)

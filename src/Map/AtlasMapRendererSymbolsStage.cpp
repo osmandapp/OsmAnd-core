@@ -248,6 +248,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             continue;
         }
 
+        ////////////////////////////////////////////////////////////////////////////
+        //{
+        //    if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(currentSymbol->group.lock()))
+        //    {
+        //        if ((symbolsGroupWithId->id >> 1) != 28191391)
+        //            continue;
+        //    }
+        //}
+        ////////////////////////////////////////////////////////////////////////////
+
         // Skip if there are no pin-points
         if (Q_UNLIKELY(symbolPinPoints.isEmpty()))
         {
@@ -265,6 +275,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 
                     if (!seenOnPathSymbolInGroup)
                     {
+                        seenOnPathSymbolInGroup = true;
+
                         if (otherSymbol == currentSymbol)
                         {
                             thisIsFirstOnPathSymbolInGroup = true;
@@ -272,7 +284,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                         }
                         else
                             break;
-                        seenOnPathSymbolInGroup = true;
                     }
 
                     if (!otherSymbol->pinPoints.isEmpty())
