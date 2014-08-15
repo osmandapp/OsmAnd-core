@@ -242,9 +242,60 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         const auto& symbolPinPoints = currentSymbol->pinPoints;
 
         // Path must have at least 2 points and there must be at least one pin-point
-        if (Q_UNLIKELY(pathSize < 2) || Q_UNLIKELY(symbolPinPoints.isEmpty()))
+        if (Q_UNLIKELY(pathSize < 2))
         {
             assert(false);
+            continue;
+        }
+
+        // Skip if there are no pin-points
+        if (Q_UNLIKELY(symbolPinPoints.isEmpty()))
+        {
+            if (debugSettings->showAllPaths)
+            {
+                bool seenOnPathSymbolInGroup = false;
+                bool thisIsFirstOnPathSymbolInGroup = false;
+                bool allSymbolsHaveNoPinPoints = true;
+                const auto symbolsGroup = currentSymbol->group.lock();
+                for (const auto& otherSymbol_ : constOf(symbolsGroup->symbols))
+                {
+                    const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
+                    if (!otherSymbol)
+                        continue;
+
+                    if (!seenOnPathSymbolInGroup)
+                    {
+                        if (otherSymbol == currentSymbol)
+                        {
+                            thisIsFirstOnPathSymbolInGroup = true;
+                            continue;
+                        }
+                        else
+                            break;
+                        seenOnPathSymbolInGroup = true;
+                    }
+
+                    if (!otherSymbol->pinPoints.isEmpty())
+                    {
+                        allSymbolsHaveNoPinPoints = false;
+                        break;
+                    }
+                }
+
+                if (thisIsFirstOnPathSymbolInGroup && allSymbolsHaveNoPinPoints)
+                {
+                    QVector< glm::vec3 > debugPoints;
+                    for (const auto& pointInWorld : convertPoints31ToWorld(path31))
+                    {
+                        debugPoints.push_back(qMove(glm::vec3(
+                            pointInWorld.x,
+                            0.0f,
+                            pointInWorld.y)));
+                    }
+                    getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorYELLOW);
+                }
+            }
+
             continue;
         }
 
