@@ -242,7 +242,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         const auto& pathPinPoints = currentSymbol->pinPoints;
 
         // Path must have at least 2 points and there must be at least one pin-point
-        if (Q_UNLIKELY(pathSize < 2) /*|| Q_UNLIKELY(pathPinPoints.isEmpty())*/)
+        if (Q_UNLIKELY(pathSize < 2) || Q_UNLIKELY(pathPinPoints.isEmpty()))
         {
             assert(false);
             continue;

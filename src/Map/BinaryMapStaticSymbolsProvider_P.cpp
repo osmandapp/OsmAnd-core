@@ -227,6 +227,11 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                         itSymbol.insert(replacementSymbol);
                     extraSymbolInstances.erase(itReplacementSymbols);
                 }
+                else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(currentSymbol))
+                {
+                    // If on-path symbol has no pin-points, it's invalid
+                    itSymbol.remove();
+                }
             }
         }
 
