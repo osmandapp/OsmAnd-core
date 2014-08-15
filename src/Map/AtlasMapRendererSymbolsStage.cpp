@@ -239,10 +239,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
 
         const auto& path31 = currentSymbol->path;
         const auto pathSize = path31.size();
-        const auto& pathPinPoints = currentSymbol->pinPoints;
+        const auto& symbolPinPoints = currentSymbol->pinPoints;
 
         // Path must have at least 2 points and there must be at least one pin-point
-        if (Q_UNLIKELY(pathSize < 2) || Q_UNLIKELY(pathPinPoints.isEmpty()))
+        if (Q_UNLIKELY(pathSize < 2) || Q_UNLIKELY(symbolPinPoints.isEmpty()))
         {
             assert(false);
             continue;
@@ -268,8 +268,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             continue;
         }
 
-        //// Processing pin-points needs path in world and path on screen, as well as lenths of those segments
-        //const auto pathInWorld = convertPoints31ToWorld(path31);
+        // Processing pin-points needs path in world and path on screen, as well as lengths of all segments
+        const auto pathInWorld = convertPoints31ToWorld(path31);
+        const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
+        for (const auto& pinPoint : constOf(symbolPinPoints))
+        {
+            // pin point represents cennter.
+            // so, find endpint and start point in 2d and see if it's ok
+            // if it doesn't, find endpoint and startpoint in 3D and plot
+        }
 
         //// For each pin point generate an instance of current symbol
         //for (const auto& pinPoint : pinPoints)

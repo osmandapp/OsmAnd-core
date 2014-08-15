@@ -165,7 +165,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 0.0f,
                 symbolsForComputation,
                 mapObject->level->minZoom,
-                mapObject->level->maxZoom);
+                mapObject->level->maxZoom,
+                zoom);
 
             // After pin-points were computed, assign them to symbols in the same order
             QHash< std::shared_ptr<MapSymbol>, QList<std::shared_ptr<MapSymbol>> > extraSymbolInstances;
@@ -270,7 +271,8 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
     const float globalRightPaddingInPixels,
     const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
     const ZoomLevel minZoom,
-    const ZoomLevel maxZoom) const
+    const ZoomLevel maxZoom,
+    const ZoomLevel neededZoom) const
 {
     QList< QList<ComputedPinPoint> > computedPinPointsByLayer;
 
@@ -484,24 +486,69 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
         if (blocksToInstantiate == 0 && numberOfSymbolsThatFit == 0)
             continue;
 
-        // In case at least 1 block fits, only complete blocks are being used.
-        // Otherwise, plot only part of symbols (virtually, smaller block)
-        if (blocksToInstantiate > 0)
+        // Compute actual pin-points only for needed zoom.
+        if (currentZoomLevel == neededZoom)
         {
-            QList<ComputedPinPoint> computedPinPoints;
-            unsigned int scanOriginPathPointIndex = basePathPointIndex;
-            float scanOriginPathPointOffsetInPixels = globalPaddingInPixelsFromBasePathPointOnCurrentZoom;
-            for (auto blockIdx = 0; blockIdx < blocksToInstantiate; blockIdx++)
+            // In case at least 1 block fits, only complete blocks are being used.
+            // Otherwise, plot only part of symbols (virtually, smaller block)
+            if (blocksToInstantiate > 0)
             {
-                bool fits = false;
-                for (auto symbolIdx = 0u; symbolIdx < symbolsCount; symbolIdx++)
+                QList<ComputedPinPoint> computedPinPoints;
+                unsigned int scanOriginPathPointIndex = basePathPointIndex;
+                float scanOriginPathPointOffsetInPixels = globalPaddingInPixelsFromBasePathPointOnCurrentZoom;
+                for (auto blockIdx = 0; blockIdx < blocksToInstantiate; blockIdx++)
+                {
+                    bool fits = false;
+                    for (auto symbolIdx = 0u; symbolIdx < symbolsCount; symbolIdx++)
+                    {
+                        const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
+
+                        ComputedPinPoint computedPinPoint;
+                        unsigned int nextScanOriginPathPointIndex;
+                        float nextScanOriginPathPointOffsetInPixels;
+                        fits = computePinPoint(
+                            pathSegmentsLengthInPixelsOnCurrentZoom,
+                            lengthOfPathInPixelsOnCurrentZoom,
+                            pathSegmentsLength31,
+                            path31,
+                            symbol,
+                            offsetToFirstNewBlockInPixels,
+                            scanOriginPathPointIndex,
+                            scanOriginPathPointOffsetInPixels,
+                            nextScanOriginPathPointIndex,
+                            nextScanOriginPathPointOffsetInPixels,
+                            computedPinPoint);
+                        if (!fits)
+                        {
+                            assert(false);
+                            break;
+                        }
+                        scanOriginPathPointIndex = nextScanOriginPathPointIndex;
+                        scanOriginPathPointOffsetInPixels = nextScanOriginPathPointOffsetInPixels;
+
+                        computedPinPoints.push_back(qMove(computedPinPoint));
+                    }
+                    if (!fits)
+                    {
+                        assert(false);
+                        break;
+                    }
+                }
+                computedPinPointsByLayer.push_back(qMove(computedPinPoints));
+            }
+            else // if (numberOfSymbolsThatFit > 0)
+            {
+                QList<ComputedPinPoint> computedPinPoints;
+                unsigned int scanOriginPathPointIndex = basePathPointIndex;
+                float scanOriginPathPointOffsetInPixels = globalPaddingInPixelsFromBasePathPointOnCurrentZoom;
+                for (auto symbolIdx = 0u; symbolIdx < numberOfSymbolsThatFit; symbolIdx++)
                 {
                     const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
 
                     ComputedPinPoint computedPinPoint;
                     unsigned int nextScanOriginPathPointIndex;
                     float nextScanOriginPathPointOffsetInPixels;
-                    fits = computePinPoint(
+                    const auto fits = computePinPoint(
                         pathSegmentsLengthInPixelsOnCurrentZoom,
                         lengthOfPathInPixelsOnCurrentZoom,
                         pathSegmentsLength31,
@@ -523,49 +570,8 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
 
                     computedPinPoints.push_back(qMove(computedPinPoint));
                 }
-                if (!fits)
-                {
-                    assert(false);
-                    break;
-                }
+                computedPinPointsByLayer.push_back(qMove(computedPinPoints));
             }
-            computedPinPointsByLayer.push_back(qMove(computedPinPoints));
-        }
-        else // if (numberOfSymbolsThatFit > 0)
-        {
-            QList<ComputedPinPoint> computedPinPoints;
-            unsigned int scanOriginPathPointIndex = basePathPointIndex;
-            float scanOriginPathPointOffsetInPixels = globalPaddingInPixelsFromBasePathPointOnCurrentZoom;
-            for (auto symbolIdx = 0u; symbolIdx < numberOfSymbolsThatFit; symbolIdx++)
-            {
-                const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
-
-                ComputedPinPoint computedPinPoint;
-                unsigned int nextScanOriginPathPointIndex;
-                float nextScanOriginPathPointOffsetInPixels;
-                const auto fits = computePinPoint(
-                    pathSegmentsLengthInPixelsOnCurrentZoom,
-                    lengthOfPathInPixelsOnCurrentZoom,
-                    pathSegmentsLength31,
-                    path31,
-                    symbol,
-                    offsetToFirstNewBlockInPixels,
-                    scanOriginPathPointIndex,
-                    scanOriginPathPointOffsetInPixels,
-                    nextScanOriginPathPointIndex,
-                    nextScanOriginPathPointOffsetInPixels,
-                    computedPinPoint);
-                if (!fits)
-                {
-                    assert(false);
-                    break;
-                }
-                scanOriginPathPointIndex = nextScanOriginPathPointIndex;
-                scanOriginPathPointOffsetInPixels = nextScanOriginPathPointOffsetInPixels;
-
-                computedPinPoints.push_back(qMove(computedPinPoint));
-            }
-            computedPinPointsByLayer.push_back(qMove(computedPinPoints));
         }
 
         // Move to next zoom level

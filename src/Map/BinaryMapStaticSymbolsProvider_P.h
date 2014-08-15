@@ -55,7 +55,8 @@ namespace OsmAnd
             const float globalRightPaddingInPixels,
             const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
             const ZoomLevel minZoom,
-            const ZoomLevel maxZoom) const;
+            const ZoomLevel maxZoom,
+            const ZoomLevel neededZoom) const;
 
         bool computePinPoint(
             const QVector<float>& pathSegmentsLengthInPixels,
