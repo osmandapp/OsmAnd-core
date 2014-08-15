@@ -202,7 +202,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                         extraSymbolInstance->contentClass = billboardSymbol->contentClass;
                         extraSymbolInstance->languageId = billboardSymbol->languageId;
                         extraSymbolInstance->minDistance = billboardSymbol->minDistance;
-                        extraSymbolInstance->position31 = computedPinPoint.point;
+                        extraSymbolInstance->position31 = computedPinPoint.point31;
                         extraSymbolInstance->offset = billboardSymbol->offset;
 
                         extraSymbolInstances[billboardSymbol].push_back(extraSymbolInstance);
@@ -210,7 +210,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
                     {
                         OnPathMapSymbol::PinPoint pinPoint;
-                        pinPoint.point = computedPinPoint.point;
+                        pinPoint.point31 = computedPinPoint.point31;
                         pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
                         pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
                         pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
@@ -486,8 +486,8 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
         const auto remainingPathLengthOnCurrentZoom = lengthOfPathInPixelsOnCurrentZoom - blocksToInstantiate * blockWidth;
         const auto offsetToFirstNewBlockInPixels = kOffsetToFirstNewBlockOnCurrentZoom * blockWidth;
 
-        // Compute actual pin-points only for zoom levels less detained that needed, including needed
-        if (currentZoomLevel <= neededZoom)
+        // Compute actual pin-points only for zoom levels less detained that needed, including needed + 1
+        if (currentZoomLevel <= neededZoom + 1)
         {
             // In case at least 1 block fits, only complete blocks are being used.
             // Otherwise, plot only part of symbols (virtually, smaller block)
@@ -630,7 +630,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoint(
             const auto& vSegment31 = segmentEndPoint - segmentStartPoint;
             
             // Compute pin-point
-            outComputedPinPoint.point = segmentStartPoint + PointI(PointD(vSegment31) * nOffsetFromPoint);
+            outComputedPinPoint.point31 = segmentStartPoint + PointI(PointD(vSegment31) * nOffsetFromPoint);
             outComputedPinPoint.basePathPointIndex = testPathPointIndex;
             outComputedPinPoint.offsetFromBasePathPoint31 = pathSegmentsLength31[testPathPointIndex] * nOffsetFromPoint;
             outComputedPinPoint.normalizedOffsetFromBasePathPoint = nOffsetFromPoint;

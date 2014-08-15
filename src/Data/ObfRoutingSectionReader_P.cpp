@@ -536,7 +536,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                 return;
             case OBF::RouteData::kPointsFieldNumber:
             {
-                const Stopwatch roadPointsStopwatch(metric != nullptr);;
+                const Stopwatch roadPointsStopwatch(metric != nullptr);
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -578,7 +578,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     // Check if road should be maintained
                     if (!shouldNotSkip && bbox31)
                     {
-                        const Stopwatch roadBboxStopwatch(metric != nullptr);;
+                        const Stopwatch roadBboxStopwatch(metric != nullptr);
 
                         shouldNotSkip = bbox31->contains(point31);
                         roadBBox.enlargeToInclude(point31);

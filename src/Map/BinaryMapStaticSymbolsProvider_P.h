@@ -42,7 +42,7 @@ namespace OsmAnd
 
         struct ComputedPinPoint
         {
-            PointI point;
+            PointI point31;
 
             unsigned int basePathPointIndex;
             double offsetFromBasePathPoint31;

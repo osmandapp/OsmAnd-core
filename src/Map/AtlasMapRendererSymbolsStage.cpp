@@ -261,7 +261,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         // Skip if there are no pin-points
         if (Q_UNLIKELY(symbolPinPoints.isEmpty()))
         {
-            if (debugSettings->showAllPaths)
+            if (debugSettings->showTooShortOnPathSymbolsRenderablesPaths)
             {
                 bool seenOnPathSymbolInGroup = false;
                 bool thisIsFirstOnPathSymbolInGroup = false;
@@ -368,6 +368,71 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             // pin point represents cennter.
             // so, find endpint and start point in 2d and see if it's ok
             // if it doesn't, find endpoint and startpoint in 3D and plot
+
+            if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
+            {
+                //const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
+                const glm::vec2 directionOnScreenN(0.0f, 1.0f);
+
+                //// Path itself
+                //QVector< glm::vec3 > debugPoints;
+                //debugPoints.push_back(qMove(glm::vec3(
+                //    exactStartPointInWorld.x,
+                //    0.0f,
+                //    exactStartPointInWorld.y)));
+                //auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
+                //for (auto idx = subpathStartIndex + 1; idx < subpathEndIndex; idx++, pPointInWorld++)
+                //{
+                //    debugPoints.push_back(qMove(glm::vec3(
+                //        pPointInWorld->x,
+                //        0.0f,
+                //        pPointInWorld->y)));
+                //}
+                //debugPoints.push_back(qMove(glm::vec3(
+                //    exactEndPointInWorld.x,
+                //    0.0f,
+                //    exactEndPointInWorld.y)));
+                //getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
+
+                //// Subpath N (start)
+                //{
+                //    QVector<glm::vec2> lineN;
+                //    const auto sn0 = exactStartPointOnScreen;
+                //    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                //    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
+                //    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                //    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+                //}
+
+                //// Subpath N (end)
+                //{
+                //    QVector<glm::vec2> lineN;
+                //    const auto sn0 = exactEndPointOnScreen;
+                //    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                //    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
+                //    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                //    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+                //}
+                
+                // Pin-point location
+                {
+                    const auto pinPointInWorld = Utilities::convert31toFloat(
+                        pinPoint.point31 - currentState.target31,
+                        currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
+                    const auto pinPointOnScreen = glm::project(
+                        glm::vec3(pinPointInWorld.x, 0.0f, pinPointInWorld.y),
+                        internalState.mCameraView,
+                        internalState.mPerspectiveProjection,
+                        internalState.glmViewport).xy();
+
+                    QVector<glm::vec2> lineN;
+                    const auto sn0 = pinPointOnScreen;
+                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
+                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorBLUE, 128));
+                }
+            }
         }
 
         //// For each pin point generate an instance of current symbol
@@ -506,50 +571,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         //        renderable->directionOnScreen,
         //        currentSymbol->glyphsWidth);
         //    output.push_back(qMove(renderable));
-        //    if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
-        //    {
-        //        const glm::vec2 directionOnScreenN(-renderable->directionOnScreen.y, renderable->directionOnScreen.x);
-
-        //        // Path itself
-        //        QVector< glm::vec3 > debugPoints;
-        //        debugPoints.push_back(qMove(glm::vec3(
-        //            exactStartPointInWorld.x,
-        //            0.0f,
-        //            exactStartPointInWorld.y)));
-        //        auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
-        //        for (auto idx = subpathStartIndex + 1; idx < subpathEndIndex; idx++, pPointInWorld++)
-        //        {
-        //            debugPoints.push_back(qMove(glm::vec3(
-        //                pPointInWorld->x,
-        //                0.0f,
-        //                pPointInWorld->y)));
-        //        }
-        //        debugPoints.push_back(qMove(glm::vec3(
-        //            exactEndPointInWorld.x,
-        //            0.0f,
-        //            exactEndPointInWorld.y)));
-        //        getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(renderable->is2D ? SK_ColorGREEN : SK_ColorRED, 128));
-
-        //        // Subpath N (start)
-        //        {
-        //            QVector<glm::vec2> lineN;
-        //            const auto sn0 = exactStartPointOnScreen;
-        //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-        //            const auto sn1 = sn0 + (directionOnScreenN*32.0f);
-        //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-        //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-        //        }
-
-        //        // Subpath N (end)
-        //        {
-        //            QVector<glm::vec2> lineN;
-        //            const auto sn0 = exactEndPointOnScreen;
-        //            lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-        //            const auto sn1 = sn0 + (directionOnScreenN*32.0f);
-        //            lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-        //            getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-        //        }
-        //    }
+        
         //    symbolInstancesFitted++;
 
         //    // Since computeEndPointIndexAndNextOffsetIn3D() returns end-point-index, which includes optionally half-used segment,
@@ -635,7 +657,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::pathRenderableAs2D(const QVector<glm:
     // Calculate 'incline' of line and compare to horizontal direction.
     // If any 'incline' is larger than 15 degrees, this line can not be rendered as 2D
 
-    const static float inclineThresholdSinSq = 0.0669872981; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
+    const static float inclineThresholdSinSq = 0.0669872981f; // qSin(qDegreesToRadians(15.0f))*qSin(qDegreesToRadians(15.0f))
 
     auto pPointOnScreen = pathOnScreen.data();
     auto pPrevPointOnScreen = pPointOnScreen++;

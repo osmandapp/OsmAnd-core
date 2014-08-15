@@ -566,7 +566,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             case OBF::MapData::kAreaCoordinatesFieldNumber:
             case OBF::MapData::kCoordinatesFieldNumber:
             {
-                const Stopwatch mapObjectPointsStopwatch(metric != nullptr);;
+                const Stopwatch mapObjectPointsStopwatch(metric != nullptr);
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -607,7 +607,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     // Check if map object should be maintained
                     if (!shouldNotSkip && bbox31)
                     {
-                        const Stopwatch mapObjectBboxStopwatch(metric != nullptr);;
+                        const Stopwatch mapObjectBboxStopwatch(metric != nullptr);
 
                         shouldNotSkip = bbox31->contains(p);
                         objectBBox.enlargeToInclude(p);

@@ -317,7 +317,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
         output << std::endl;
         return;
     }
-    output << ":" << std::endl;;
+    output << ":" << std::endl;
     for (auto itAmenity = amenities.cbegin(); itAmenity != amenities.cend(); ++itAmenity)
     {
         auto amenity = *itAmenity;
