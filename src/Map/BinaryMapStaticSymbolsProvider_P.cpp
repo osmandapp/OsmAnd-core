@@ -168,6 +168,9 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 mapObject->level->maxZoom,
                 zoom);
 
+            
+            //////////////////////////////////////////////////////////////////////////
+
             // After pin-points were computed, assign them to symbols in the same order
             QHash< std::shared_ptr<MapSymbol>, QList<std::shared_ptr<MapSymbol>> > extraSymbolInstances;
             for (const auto& computedPinPoints : constOf(computedPinPointsByLayer))
@@ -477,10 +480,6 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
         const auto remainingPathLengthOnCurrentZoom = lengthOfPathInPixelsOnCurrentZoom - blocksToInstantiate * blockWidth;
         const auto offsetToFirstNewBlockInPixels = kOffsetToFirstNewBlockOnCurrentZoom * blockWidth;
 
-        // If nothing fits, nothing to do on this zoom level
-        if (blocksToInstantiate == 0 && numberOfSymbolsThatFit == 0)
-            continue;
-
         // Compute actual pin-points only for needed zoom.
         if (currentZoomLevel == neededZoom)
         {
@@ -531,7 +530,7 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
                 }
                 computedPinPointsByLayer.push_back(qMove(computedPinPoints));
             }
-            else // if (numberOfSymbolsThatFit > 0)
+            else  if (numberOfSymbolsThatFit > 0)
             {
                 QList<ComputedPinPoint> computedPinPoints;
                 unsigned int scanOriginPathPointIndex = basePathPointIndex;
