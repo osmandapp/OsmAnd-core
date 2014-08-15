@@ -39,6 +39,7 @@ namespace OsmAnd
             float widthInPixels;
             float rightPaddingInPixels;
         };
+
         struct ComputedPinPoint
         {
             PointI point;
@@ -47,6 +48,7 @@ namespace OsmAnd
             double offsetFromBasePathPoint31;
             float normalizedOffsetFromBasePathPoint;
         };
+
         QList< QList<ComputedPinPoint> > computePinPoints(
             const QVector<PointI>& path31,
             const float globalLeftPaddingInPixels,
@@ -54,6 +56,17 @@ namespace OsmAnd
             const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom) const;
+
+        bool computePinPoint(
+            const QVector<float>& pathSegmentsLengthInPixels,
+            const float pathLengthInPixels,
+            const SymbolForPinPointsComputation& symbol,
+            const float offsetFromPathStartInPixels,
+            const unsigned int scanOriginPathPointIndex,
+            const float scanOriginPathPointOffsetInPixels,
+            unsigned int& outNextScanOriginPathPointIndex,
+            float& outNextScanOriginPathPointOffsetInPixels,
+            ComputedPinPoint& outComputedPinPoint) const;
     protected:
         BinaryMapStaticSymbolsProvider_P(BinaryMapStaticSymbolsProvider* owner);
 
