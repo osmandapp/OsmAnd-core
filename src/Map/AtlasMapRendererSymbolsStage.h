@@ -106,15 +106,21 @@ namespace OsmAnd
         QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const;
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const;
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld, unsigned int startIndex, unsigned int endIndex) const;
+        bool computeStartPointIndexAndOffset(
+            const QVector<float>& pathSegmentsLengths,
+            const unsigned int originPathPointIndex,
+            const float nOffsetFromOriginPathPoint,
+            const float lengthFromOriginToStart,
+            unsigned int& outStartPathPointIndex,
+            float& outOffsetFromStartPathPoint) const;
+        bool computeEndPointIndexAndOffset(
+            const QVector<float>& pathSegmentsLengths,
+            const unsigned int originPathPointIndex,
+            const float nOffsetFromOriginPathPoint,
+            const float lengthFromOriginToEnd,
+            unsigned int& outStartPathPointIndex,
+            float& outOffsetFromStartPathPoint) const;
         bool pathRenderableAs2D(const QVector<glm::vec2>& pathOnScreen) const;
-        bool computeEndPointIndexAndNextOffsetIn3D(
-            const unsigned int pathSize,
-            const QVector<glm::vec2>& pathInWorld,
-            const float requestedLengthInPixels,
-            const unsigned int startPointIndex,
-            const float offset,
-            unsigned int& outEndPointIndex,
-            float& outNextOffset) const;
         glm::vec2 computeSubpathDirectionInWorld(
             const QVector<glm::vec2>& pathInWorld,
             const float offsetFromStart,
