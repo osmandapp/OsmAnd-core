@@ -319,6 +319,36 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             continue;
         }
 
+        if (debugSettings->showAllPaths)
+        {
+            bool thisIsFirstOnPathSymbolInGroup = false;
+            const auto symbolsGroup = currentSymbol->group.lock();
+            for (const auto& otherSymbol_ : constOf(symbolsGroup->symbols))
+            {
+                const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
+                if (!otherSymbol)
+                    continue;
+
+                if (otherSymbol != currentSymbol)
+                    break;
+                thisIsFirstOnPathSymbolInGroup = true;
+                break;
+            }
+
+            if (thisIsFirstOnPathSymbolInGroup)
+            {
+                QVector< glm::vec3 > debugPoints;
+                for (const auto& pointInWorld : convertPoints31ToWorld(path31))
+                {
+                    debugPoints.push_back(qMove(glm::vec3(
+                        pointInWorld.x,
+                        0.0f,
+                        pointInWorld.y)));
+                }
+                getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorGRAY);
+            }
+        }
+
         // Processing pin-points needs path in world and path on screen, as well as lengths of all segments
         const auto pathInWorld = convertPoints31ToWorld(path31);
         const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
