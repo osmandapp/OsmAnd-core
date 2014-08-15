@@ -479,26 +479,6 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
         if (blocksToInstantiate == 0 && numberOfSymbolsThatFit == 0)
             continue;
 
-        //// Find originPathPointIndex and offset from it
-        //auto originPathPointIndex = -1;
-        //auto offsetFromOriginPathPoint = 0.0f;
-        //auto scannedLengthInPixels = 0.0f;
-        //for (auto pathPointIdx = basePathPointIndex; pathPointIdx < pathSegmentsCount; pathPointIdx++)
-        //{
-        //    const auto& pathSegmentLengthInPixels = pathSegmentsLengthInPixelsOnCurrentZoom[pathPointIdx];
-        //    
-        //    if (scannedLengthInPixels - globalPaddingFromBasePathPoint + pathSegmentLengthInPixels > offsetToFirstNewBlockInPixels)
-        //    {
-        //        originPathPointIndex = pathPointIdx;
-        //        offsetFromOriginPathPoint = globalPaddingFromBasePathPoint + offsetToFirstNewBlockInPixels - scannedLengthInPixels;
-        //        assert(offsetFromOriginPathPoint >= 0.0f);
-        //        break;
-        //    }
-
-        //    scannedLengthInPixels += pathSegmentLengthInPixels;
-        //}
-        //assert(originPathPointIndex >= 0);
-
         // In case at least 1 block fits, only complete blocks are being used.
         // Otherwise, plot only part of symbols (virtually, smaller block)
         if (blocksToInstantiate > 0)
@@ -519,6 +499,8 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
                     fits = computePinPoint(
                         pathSegmentsLengthInPixelsOnCurrentZoom,
                         lengthOfPathInPixelsOnCurrentZoom,
+                        pathSegmentsLength31,
+                        path31,
                         symbol,
                         offsetToFirstNewBlockInPixels,
                         scanOriginPathPointIndex,
@@ -559,6 +541,8 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
                 const auto fits = computePinPoint(
                     pathSegmentsLengthInPixelsOnCurrentZoom,
                     lengthOfPathInPixelsOnCurrentZoom,
+                    pathSegmentsLength31,
+                    path31,
                     symbol,
                     offsetToFirstNewBlockInPixels,
                     scanOriginPathPointIndex,
@@ -596,6 +580,8 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
 bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoint(
     const QVector<float>& pathSegmentsLengthInPixels,
     const float pathLengthInPixels,
+    const QVector<double>& pathSegmentsLength31,
+    const QVector<PointI>& path31,
     const SymbolForPinPointsComputation& symbol,
     const float offsetFromPathStartInPixels,
     const unsigned int scanOriginPathPointIndex,
@@ -627,10 +613,20 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoint(
         const auto& segmentLengthInPixels = pathSegmentsLengthInPixels[testPathPointIndex];
         if (scannedLengthInPixels + segmentLengthInPixels > pinPointOffset)
         {
-            //TODO:            
+            const auto nOffsetFromPoint = (pinPointOffset - scannedLengthInPixels) / segmentLengthInPixels;
+            const auto& segmentStartPoint = path31[testPathPointIndex + 0];
+            const auto& segmentEndPoint = path31[testPathPointIndex + 1];
+            const auto& vSegment31 = segmentEndPoint - segmentStartPoint;
+            
+            // Compute pin-point
+            outComputedPinPoint.point = segmentStartPoint + PointI(PointD(vSegment31) * nOffsetFromPoint);
+            outComputedPinPoint.basePathPointIndex = testPathPointIndex;
+            outComputedPinPoint.offsetFromBasePathPoint31 = pathSegmentsLength31[testPathPointIndex] * nOffsetFromPoint;
+            outComputedPinPoint.normalizedOffsetFromBasePathPoint = nOffsetFromPoint;
 
             outNextScanOriginPathPointIndex = testPathPointIndex;
             outNextScanOriginPathPointOffsetInPixels = scannedLengthInPixels;          
+            break;
         }
         scannedLengthInPixels += segmentLengthInPixels;
         testPathPointIndex++;
@@ -647,6 +643,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoint(
         {
             outNextScanOriginPathPointIndex = testPathPointIndex;
             outNextScanOriginPathPointOffsetInPixels = scannedLengthInPixels;
+            break;
         }
         scannedLengthInPixels += segmentLengthInPixels;
         testPathPointIndex++;

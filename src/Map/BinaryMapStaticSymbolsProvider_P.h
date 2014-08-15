@@ -60,6 +60,8 @@ namespace OsmAnd
         bool computePinPoint(
             const QVector<float>& pathSegmentsLengthInPixels,
             const float pathLengthInPixels,
+            const QVector<double>& pathSegmentsLength31,
+            const QVector<PointI>& path31,
             const SymbolForPinPointsComputation& symbol,
             const float offsetFromPathStartInPixels,
             const unsigned int scanOriginPathPointIndex,
