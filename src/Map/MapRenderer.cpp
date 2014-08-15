@@ -145,11 +145,11 @@ void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t changesM
     invalidateSymbols = invalidateSymbols || (changesMask & enumToBit(ConfigurationChange::ColorDepthForcing)) != 0;
 
     if (invalidateRasterTextures)
-        _resources->invalidateResourcesOfType(MapRendererResourceType::RasterBitmapTile);
+        getResources().invalidateResourcesOfType(MapRendererResourceType::RasterBitmapTile);
     if (invalidateElevationData)
-        _resources->invalidateResourcesOfType(MapRendererResourceType::ElevationDataTile);
+        getResources().invalidateResourcesOfType(MapRendererResourceType::ElevationDataTile);
     if (invalidateSymbols)
-        _resources->invalidateResourcesOfType(MapRendererResourceType::Symbols);
+        getResources().invalidateResourcesOfType(MapRendererResourceType::Symbols);
     
     // Since our current configuration is invalid, frame is also invalidated
     _currentConfigurationInvalidatedMask.fetchAndOrOrdered(changesMask);

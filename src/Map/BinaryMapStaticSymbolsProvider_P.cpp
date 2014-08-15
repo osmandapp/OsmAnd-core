@@ -159,7 +159,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 }
             }
 
-            const auto computedPinPoints = computePinPoints(
+            const auto computedPinPointsByLayer = computePinPoints(
                 mapObject->points31,
                 0.0f,
                 0.0f,
@@ -169,44 +169,47 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
             // After pin-points were computed, assign them to symbols in the same order
             QHash< std::shared_ptr<MapSymbol>, QList<std::shared_ptr<MapSymbol>> > extraSymbolInstances;
-            auto citComputedPinPoint = computedPinPoints.begin();
-            const auto citComputedPinPointsEnd = computedPinPoints.end();
-            for (const auto& symbol : constOf(group->symbols))
+            for (const auto& computedPinPoints : constOf(computedPinPointsByLayer))
             {
-                // Stop in case no more pin-points left
-                if (citComputedPinPoint == citComputedPinPointsEnd)
-                    break;
-                const auto& computedPinPoint = *(citComputedPinPoint++);
-
-                if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
+                auto citComputedPinPoint = computedPinPoints.cbegin();
+                const auto citComputedPinPointsEnd = computedPinPoints.cend();
+                for (const auto& symbol : constOf(group->symbols))
                 {
-                    // Create additional instance of billboard raster map symbol
-                    std::shared_ptr<BillboardRasterMapSymbol> extraSymbolInstance(new BillboardRasterMapSymbol(group, group->sharableById));
-                    extraSymbolInstance->order = billboardSymbol->order;
-                    extraSymbolInstance->intersectionModeFlags = billboardSymbol->intersectionModeFlags;
-                    extraSymbolInstance->bitmap = billboardSymbol->bitmap;
-                    extraSymbolInstance->size = billboardSymbol->size;
-                    extraSymbolInstance->content = billboardSymbol->content;
-                    extraSymbolInstance->contentClass = billboardSymbol->contentClass;
-                    extraSymbolInstance->languageId = billboardSymbol->languageId;
-                    extraSymbolInstance->minDistance = billboardSymbol->minDistance;
-                    extraSymbolInstance->position31 = computedPinPoint.point;
-                    extraSymbolInstance->offset = billboardSymbol->offset;
+                    // Stop in case no more pin-points left
+                    if (citComputedPinPoint == citComputedPinPointsEnd)
+                        break;
+                    const auto& computedPinPoint = *(citComputedPinPoint++);
 
-                    extraSymbolInstances[billboardSymbol].push_back(extraSymbolInstance);
-                }
-                else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
-                {
-                    OnPathMapSymbol::PinPoint pinPoint;
-                    pinPoint.point = computedPinPoint.point;
-                    pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
-                    pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
-                    pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
+                    if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
+                    {
+                        // Create additional instance of billboard raster map symbol
+                        std::shared_ptr<BillboardRasterMapSymbol> extraSymbolInstance(new BillboardRasterMapSymbol(group, group->sharableById));
+                        extraSymbolInstance->order = billboardSymbol->order;
+                        extraSymbolInstance->intersectionModeFlags = billboardSymbol->intersectionModeFlags;
+                        extraSymbolInstance->bitmap = billboardSymbol->bitmap;
+                        extraSymbolInstance->size = billboardSymbol->size;
+                        extraSymbolInstance->content = billboardSymbol->content;
+                        extraSymbolInstance->contentClass = billboardSymbol->contentClass;
+                        extraSymbolInstance->languageId = billboardSymbol->languageId;
+                        extraSymbolInstance->minDistance = billboardSymbol->minDistance;
+                        extraSymbolInstance->position31 = computedPinPoint.point;
+                        extraSymbolInstance->offset = billboardSymbol->offset;
 
-                    onPathSymbol->pinPoints.push_back(qMove(pinPoint));
+                        extraSymbolInstances[billboardSymbol].push_back(extraSymbolInstance);
+                    }
+                    else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
+                    {
+                        OnPathMapSymbol::PinPoint pinPoint;
+                        pinPoint.point = computedPinPoint.point;
+                        pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
+                        pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
+                        pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
+
+                        onPathSymbol->pinPoints.push_back(qMove(pinPoint));
+                    }
                 }
             }
-
+            
             // Now merge from extraSymbolInstances into group
             auto itSymbol = mutableIteratorOf(group->symbols);
             while (itSymbol.hasNext())
@@ -256,15 +259,15 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     return true;
 }
 
-QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoints(
+QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoints(
     const QVector<PointI>& path31,
     const float globalLeftPaddingInPixels,
     const float globalRightPaddingInPixels,
-    const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation_,
+    const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
     const ZoomLevel minZoom,
-    const ZoomLevel maxZoom)
+    const ZoomLevel maxZoom) const
 {
-    QList<ComputedPinPoint> computedPinPoints;
+    QList< QList<ComputedPinPoint> > computedPinPointsByLayer;
 
     // Compute pin-points placement starting from minZoom to maxZoom. How this works:
     //
@@ -302,7 +305,7 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     // lengthOfPathInPixelsOnBaseZoom = computePathLengthInPixels(path, minZoom)
     // baseNumberOfInstances = | lengthOfPathInPixels / widthOfBlockInPixels |
     // remainingLength = lengthOfPathInPixelsOnBaseZoom - baseNumberOfInstances * widthOfBlockInPixels
-    // numberOfNewInstancesOnNextZoom = (baseNumberOfInstances - 1) + 2*|remainingLength / widthOfBlockInPixels|;
+    // numberOfNewInstancesOnNextZoom = (currentNumberOfInstances - 1) + 2*|remainingLength / widthOfBlockInPixels|;
     //
     // Check for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
     // minZoom+0: bibibibi
@@ -349,16 +352,17 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     // offsetOnCurrentZoom = (offsetToFirstPresentInstance > 1.0) ? offsetToFirstPresentInstance - 1.0 : offsetToFirstPresentInstance + 1.0;
     //
     // Each next instance on this level is located at offsetOnCurrentZoom + 2*instancesPlotted
-
+    
     // And here's the implementation:
-    auto symbolsForPinPointsComputation = symbolsForPinPointsComputation_;
 
     // Step 0. Initial checks
     if (symbolsForPinPointsComputation.isEmpty())
-        return computedPinPoints;
+        return computedPinPointsByLayer;
 
     // Step 1. Get scale factor from 31 to pixels for minZoom.
-    // Only display density is used, since it's not real calculation, thus tile is imagined to be 256????
+    // Length on path in pixels depends on tile size in pixels, and density
+    const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - minZoom));
+    const auto from31toPixelsScale = static_cast<double>(owner->referenceTileSizeInPixels) / tileSize31;
 
     // Step 2. Compute path length, path segments length (in 31 and in pixels)
     const auto pathSize = path31.size();
@@ -371,55 +375,132 @@ QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> OsmAnd::Binary
     auto pPathSegmentLength31 = pathSegmentsLength31.data();
     auto pPoint31 = path31.constData();
     auto pPrevPoint31 = pPoint31++;
+    auto basePathPointIndex = 0;
+    auto globalPaddingFromBasePathPoint = 0.0f;
+    bool capturedBasePathPointIndex = false;
     for (auto segmentIdx = 0; segmentIdx < pathSegmentsCount; segmentIdx++)
     {
         const auto segmentLength31 = qSqrt((*(pPoint31++) - *(pPrevPoint31++)).squareNorm());
         *(pPathSegmentLength31++) = segmentLength31;
         pathLength31 += segmentLength31;
 
-        const auto segmentLengthInPixels = ;
+        const auto segmentLengthInPixels = segmentLength31 * from31toPixelsScale;
         *(pPathSegmentLengthInPixels++) = segmentLengthInPixels;
         pathLengthInPixels += segmentLengthInPixels;
+
+        if (pathLength31 > globalLeftPaddingInPixels && !capturedBasePathPointIndex)
+        {
+            basePathPointIndex = segmentIdx;
+            if (!qFuzzyIsNull(globalLeftPaddingInPixels))
+                globalPaddingFromBasePathPoint = globalLeftPaddingInPixels - (pathLengthInPixels - segmentLengthInPixels);
+
+            capturedBasePathPointIndex = true;
+        }
     }
     const auto usablePathLengthInPixels = pathLengthInPixels - globalLeftPaddingInPixels - globalRightPaddingInPixels;
+    if (usablePathLengthInPixels <= 0.0f)
+        return computedPinPointsByLayer;
 
     // Step 3. Compute total width of all symbols requested. This will be the block width.
+    const auto symbolsCount = symbolsForPinPointsComputation.size();
+    QVector<float> symbolsFullSizesInPixels(symbolsCount);
+    auto pSymbolFullSizeInPixels = symbolsFullSizesInPixels.data();
     float blockWidth = 0.0f;
-    bool limitToOneBlockInstance = false;
-    unsigned int symbolsInBlockThatFit = 0;
     for (const auto& symbolForPinPointsComputation : constOf(symbolsForPinPointsComputation))
     {
-        const auto previousBlockWidth = blockWidth;
-
-        blockWidth += symbolForPinPointsComputation.leftPaddingInPixels;
-        blockWidth += symbolForPinPointsComputation.widthInPixels;
-        blockWidth += symbolForPinPointsComputation.rightPaddingInPixels;
-
-        // If block can not fit, use shorted version
-        if (usablePathLengthInPixels < blockWidth)
-        {
-            blockWidth = previousBlockWidth;
-            limitToOneBlockInstance = true;
-            symbolsForPinPointsComputation = symbolsForPinPointsComputation.mid(0, symbolsInBlockThatFit);
-
-            break;
-        }
-        symbolsInBlockThatFit++;
+        auto symbolWidth = 0.0f;
+        symbolWidth += symbolForPinPointsComputation.leftPaddingInPixels;
+        symbolWidth += symbolForPinPointsComputation.widthInPixels;
+        symbolWidth += symbolForPinPointsComputation.rightPaddingInPixels;
+        *(pSymbolFullSizeInPixels++) = symbolWidth;
+        blockWidth += symbolWidth;
     }
     if (symbolsForPinPointsComputation.isEmpty() || qFuzzyIsNull(blockWidth))
-        return computedPinPoints;
+        return computedPinPointsByLayer;
 
-    // Step 4. Process base zoom level
+    // Step 4. Process values for base zoom level
     const auto lengthOfPathInPixelsOnBaseZoom = usablePathLengthInPixels;
-    const auto numberOfInstancesOnBaseZoom = limitToOneBlockInstance ? 1 : qFloor(lengthOfPathInPixelsOnBaseZoom / blockWidth);
-    const auto remainingLengthOnBaseZoom = usablePathLengthInPixels - numberOfInstancesOnBaseZoom * blockWidth;
-    const auto numberOfNewInstancesOnNextZoom = (numberOfInstancesOnBaseZoom - 1) + 2 * qFloor(remainingLengthOnBaseZoom / blockWidth);
-
-    // Step 5. Process remaining zoom levels
-    for (auto currentZoomLevel = minZoom + 1; currentZoomLevel <= maxZoom; currentZoomLevel++)
+    //const auto numberOfBlocksOnBaseZoom = qFloor(lengthOfPathInPixelsOnBaseZoom / blockWidth);
+    /*float lastIncompleteBlockWidth = 0.0;
+    auto lastIncompleteBlockSymbolsCount = 0;
+    if (numberOfCompleteBlocksOnBaseZoom < numberOfBlocksOnBaseZoom)
     {
+        const auto lengthOfPathInPixelsForIncompleteBlock;
+        for (auto symbolIdx = 0; symbolIdx < symbolsCount; symbolIdx++)
+        {
+            const auto& symbolFullSize = symbolsFullSizesInPixels[symbolIdx];
 
+
+        }
+    }*/
+    
+    //const auto remainingLengthOnBaseZoom = usablePathLengthInPixels - numberOfBlocksOnBaseZoom * blockWidth;
+    //const auto offsetOfFirstBlockOnBaseZoom = (remainingLengthOnBaseZoom / 2.0f) / blockWidth;
+
+    // Step 5. Process by zoom levels
+    auto lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnBaseZoom;
+    auto totalNumberOfCompleteBlocks = 0;
+    auto remainingPathLengthOnPrevZoom = 0.0f;
+    //auto numberOfBlocksToInstantiate = numberOfBlocksOnBaseZoom;
+    //auto numberOfCompleteBlocksToInstantiate = numberOfCompleteBlocksOnBaseZoom;
+    //auto totalNumberOfInstances = 0;
+    //auto numberOfInstancesToAdd = (numberOfInstancesOnBaseZoom - 1) + 2 * qFloor(remainingLengthOnBaseZoom / blockWidth);
+    //auto offsetToFirstNewInstance = offsetOfFirstBlockOnBaseZoom;
+    for (int currentZoomLevel = minZoom; currentZoomLevel <= maxZoom; currentZoomLevel++)
+    {
+        // Compute how many new blocks will fit, where and how to place them
+        auto blocksToInstantiate = 0;
+        if (totalNumberOfCompleteBlocks == 0)
+        {
+            blocksToInstantiate = qFloor(lengthOfPathInPixelsOnCurrentZoom / blockWidth);
+        }
+        else
+        {
+            blocksToInstantiate = (totalNumberOfCompleteBlocks - 1) + 2 * qFloor(remainingPathLengthOnPrevZoom / blockWidth);
+        }
+        const auto remainingPathLengthOnCurrentZoom = lengthOfPathInPixelsOnCurrentZoom - blocksToInstantiate * blockWidth;
+
+        //auto currentPathPointIndex = basePathPointIndex;
+        //globalPaddingFromBasePathPoint auto current
+
+        //// Plot block instances, symbol by symbol
+        //QList<ComputedPinPoint> computedPinPoints;
+        //for (auto blockIdx = 0; blockIdx < numberOfBlocksToInstantiate; blockIdx++)
+        //{
+        //    for (auto symbolIdx = 0; symbolIdx < symbolsCount; symbolIdx++)
+        //    {
+        //        const auto& symbolFullSize = symbolsFullSizesInPixels[symbolIdx];
+
+        //        //TODO: compute actually
+        //        ComputedPinPoint computedPinPoint;
+        //        computedPinPoint.point;
+        //        computedPinPoint.basePathPointIndex;
+        //        computedPinPoint.offsetFromBasePathPoint31;
+        //        computedPinPoint.normalizedOffsetFromBasePathPoint;
+
+        //        computedPinPoints.push_back(qMove(computedPinPoint));
+        //    }
+        //}
+        //computedPinPointsByLayer.push_back(qMove(computedPinPoints));
+
+        // Move to next zoom level
+        lengthOfPathInPixelsOnCurrentZoom *= 2.0f;
+        totalNumberOfCompleteBlocks += blocksToInstantiate;
+        remainingPathLengthOnPrevZoom = remainingPathLengthOnCurrentZoom;
     }
+    //{
+    //    // TODO: actually plot
+    //    totalNumberOfInstances += numberOfInstancesToAdd;
 
-    return computedPinPoints;
+    //    // Prepare values for next zoom level
+    //    numberOfInstancesToAdd = (totalNumberOfInstances - 1) + 2 * qFloor(remainingLengthOnCurrentZoom / blockWidth);
+    //    //offsetToFirstNewInstance = (currentNumberOfInstances - 1) + 2 * | remainingLength / widthOfBlockInPixels | ;;
+    //    //// On each next level:
+    //    //// offsetToFirstPresentInstance = 0.5 + offsetOnPrevZoom * 2
+    //    // offsetOnCurrentZoom = (offsetToFirstPresentInstance > 1.0) ? offsetToFirstPresentInstance - 1.0 : offsetToFirstPresentInstance + 1.0;
+    //    //
+    //    // Each next instance on this level is located at offsetOnCurrentZoom + 2*instancesPlotted
+    //}
+
+    return computedPinPointsByLayer;
 }

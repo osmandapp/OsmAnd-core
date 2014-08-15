@@ -29,10 +29,13 @@ namespace OsmAnd
         PrivateImplementation<BinaryMapStaticSymbolsProvider_P> _p;
     protected:
     public:
-        BinaryMapStaticSymbolsProvider(const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider);
+        BinaryMapStaticSymbolsProvider(
+            const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider,
+            const unsigned int referenceTileSizeInPixels);
         virtual ~BinaryMapStaticSymbolsProvider();
 
         const std::shared_ptr<BinaryMapPrimitivesProvider> primitivesProvider;
+        unsigned int referenceTileSizeInPixels;
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;

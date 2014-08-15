@@ -47,13 +47,13 @@ namespace OsmAnd
             double offsetFromBasePathPoint31;
             float normalizedOffsetFromBasePathPoint;
         };
-        static QList<ComputedPinPoint> computePinPoints(
+        QList< QList<ComputedPinPoint> > computePinPoints(
             const QVector<PointI>& path31,
             const float globalLeftPaddingInPixels,
             const float globalRightPaddingInPixels,
             const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
             const ZoomLevel minZoom,
-            const ZoomLevel maxZoom);
+            const ZoomLevel maxZoom) const;
     protected:
         BinaryMapStaticSymbolsProvider_P(BinaryMapStaticSymbolsProvider* owner);
 

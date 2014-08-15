@@ -3,9 +3,12 @@
 
 #include "BinaryMapPrimitivesProvider.h"
 
-OsmAnd::BinaryMapStaticSymbolsProvider::BinaryMapStaticSymbolsProvider(const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider_)
+OsmAnd::BinaryMapStaticSymbolsProvider::BinaryMapStaticSymbolsProvider(
+    const std::shared_ptr<BinaryMapPrimitivesProvider>& primitivesProvider_,
+    const unsigned int referenceTileSizeInPixels_)
     : _p(new BinaryMapStaticSymbolsProvider_P(this))
     , primitivesProvider(primitivesProvider_)
+    , referenceTileSizeInPixels(referenceTileSizeInPixels_)
 {
 }
 
