@@ -136,20 +136,12 @@ namespace OsmAnd
             const glm::vec2& exactStartPoint,
             const unsigned int endPathPointIndex,
             const glm::vec2& exactEndPoint);
-        glm::vec2 computeSubpathDirectionInWorld(
+        double computeDistanceBetweenCameraToPath(
             const QVector<glm::vec2>& pathInWorld,
-            const float offsetFromStart,
-            const float offsetToEnd,
-            const unsigned int startPointIndex,
-            const unsigned int endPointIndex,
-            glm::vec2* outExactStartPoint = nullptr,
-            glm::vec2* outExactEndPoint = nullptr) const;
-        glm::vec2 computePathDirectionOnScreen(
-            const QVector<glm::vec2>& pathOnScreen,
+            const unsigned int startPathPointIndex,
             const glm::vec2& exactStartPointInWorld,
-            const glm::vec2& exactEndPointInWorld,
-            glm::vec2* outExactStartPointOnScreen = nullptr,
-            glm::vec2* outExactEndPointOnScreen = nullptr) const;
+            const unsigned int endPathPointIndex,
+            const glm::vec2& exactEndPointInWorld) const;
         QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
             const bool is2D,
             const QVector<glm::vec2>& pathInWorld,
@@ -162,10 +154,6 @@ namespace OsmAnd
             const glm::vec2& exactEndPointOnScreen,
             const glm::vec2& directionOnScreen,
             const QVector<float>& glyphsWidths) const;
-        double computeDistanceBetweenCameraToPath(
-            const QVector<glm::vec2>& pathInWorld,
-            const unsigned int startPointIndex,
-            const unsigned int endPointIndex) const;
 
         void sortRenderablesFromOnPathSymbols(
             const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries,

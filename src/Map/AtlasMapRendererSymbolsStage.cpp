@@ -506,55 +506,34 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 subpathEndIndex,
                 exactEndPointOnScreen);
 
-            //////////////////////////////////////////////////////////////////////////
-            //    // Plot symbol instance.
-            //    // During this actually determine 2D or 3D mode, and compute glyph placement.
-            //    const auto subpathStartIndex = originPointIndex;
-            //    const auto subpathEndIndex = currentInstanceEndPointIndex;
-            //    const auto subpathPointsCount = subpathEndIndex - subpathStartIndex + 1;
-            //    std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
-            //    renderable->mapSymbol = currentSymbol_;
-            //    renderable->gpuResource = gpuResource;
-            //    // Since to check if symbol instance can be rendered in 2D mode entire 2D points are needed,
-            //    // compute them only for subpath
-            //    const auto subpathOnScreen = projectFromWorldToScreen(pathInWorld, subpathStartIndex, subpathEndIndex);
-            //    renderable->is2D = pathRenderableAs2D(subpathOnScreen);
-            //    renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-            //        pathInWorld,
-            //        subpathStartIndex,
-            //        subpathEndIndex);
-            //    glm::vec2 exactStartPointInWorld;
-            //    glm::vec2 exactEndPointInWorld;
-            //    renderable->directionInWorld = computeSubpathDirectionInWorld(
-            //        pathInWorld,
-            //        originOffset,
-            //        nextOffset,
-            //        subpathStartIndex,
-            //        subpathEndIndex,
-            //        &exactStartPointInWorld,
-            //        &exactEndPointInWorld);
-            //    glm::vec2 exactStartPointOnScreen;
-            //    glm::vec2 exactEndPointOnScreen;
-            //    renderable->directionOnScreen = computePathDirectionOnScreen(
-            //        subpathOnScreen,
-            //        exactStartPointInWorld,
-            //        exactEndPointInWorld,
-            //        &exactStartPointOnScreen,
-            //        &exactEndPointOnScreen);
-            //    renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
-            //        renderable->is2D,
-            //        pathInWorld,
-            //        subpathStartIndex,
-            //        subpathEndIndex,
-            //        exactStartPointInWorld,
-            //        exactEndPointInWorld,
-            //        subpathOnScreen,
-            //        exactStartPointOnScreen,
-            //        exactEndPointOnScreen,
-            //        renderable->directionOnScreen,
-            //        currentSymbol->glyphsWidth);
-            //    output.push_back(qMove(renderable));
-            //////////////////////////////////////////////////////////////////////////
+            // Plot symbol instance.
+            std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+            renderable->mapSymbol = currentSymbol_;
+            renderable->gpuResource = gpuResource;
+            renderable->is2D = is2D;
+            renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
+                pathInWorld,
+                subpathStartIndex,
+                exactStartPointInWorld,
+                subpathEndIndex,
+                exactEndPointOnScreen);
+            renderable->directionInWorld = directionInWorld;
+            glm::vec2 exactStartPointOnScreen;
+            glm::vec2 exactEndPointOnScreen;
+            renderable->directionOnScreen = directionOnScreen;
+            renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
+                is2D,
+                subpathStartIndex,
+                subpathEndIndex,
+                pathInWorld,
+                exactStartPointInWorld,
+                exactEndPointInWorld,
+                pathOnScreen,
+                exactStartPointOnScreen,
+                exactEndPointOnScreen,
+                directionOnScreen,
+                currentSymbol->glyphsWidth);
+            output.push_back(qMove(renderable));
 
             if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
             {
@@ -884,6 +863,53 @@ glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computePathDirection(
     return glm::normalize(subpathDirection);
 }
 
+double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceBetweenCameraToPath(
+    const QVector<glm::vec2>& pathInWorld,
+    const unsigned int startPathPointIndex,
+    const glm::vec2& exactStartPointInWorld,
+    const unsigned int endPathPointIndex,
+    const glm::vec2& exactEndPointInWorld) const
+{
+    const auto& internalState = getInternalState();
+
+    assert(endPathPointIndex >= startPathPointIndex);
+
+    auto distanceToCamera = 0.0;
+
+    // First process distance to exactStartPointInWorld
+    {
+        const auto distance = glm::distance(
+            internalState.worldCameraPosition,
+            glm::vec3(exactStartPointInWorld.x, 0.0f, exactStartPointInWorld.y));
+        distanceToCamera += distance;
+    }
+
+    // Process distances to inner points
+    auto pPathPointInWorld = pathInWorld.constData() + 1;
+    for (auto pathPointIdx = startPathPointIndex + 1; pathPointIdx <= endPathPointIndex; pathPointIdx)
+    {
+        const auto& pathPointInWorld = *(pPathPointInWorld++);
+
+        const auto& distance = glm::distance(
+            internalState.worldCameraPosition,
+            glm::vec3(pathPointInWorld.x, 0.0f, pathPointInWorld.y));
+        distanceToCamera += distance;
+    }
+
+    // At last process distance to exactEndPointInWorld
+    {
+        const auto distance = glm::distance(
+            internalState.worldCameraPosition,
+            glm::vec3(exactEndPointInWorld.x, 0.0f, exactEndPointInWorld.y));
+        distanceToCamera += distance;
+    }
+
+    // Normalize result
+    distanceToCamera /= endPathPointIndex - startPathPointIndex + 2;
+
+    return distanceToCamera;
+}
+
 QVector<OsmAnd::AtlasMapRendererSymbolsStage::RenderableOnPathSymbol::GlyphPlacement>
 OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     const bool is2D,
@@ -1037,24 +1063,6 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     }
 
     return glyphsPlacement;
-}
-
-double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceBetweenCameraToPath(
-    const QVector<glm::vec2>& pathInWorld,
-    const unsigned int startPointIndex,
-    const unsigned int endPointIndex) const
-{
-    const auto& internalState = getInternalState();
-
-    auto distanceToCamera = 0.0;
-    for (const auto& pointInWorld : constOf(pathInWorld))
-    {
-        const auto& distance = glm::distance(internalState.worldCameraPosition, glm::vec3(pointInWorld.x, 0.0f, pointInWorld.y));
-        if (distance > distanceToCamera)
-            distanceToCamera = distance;
-    }
-
-    return distanceToCamera;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::sortRenderablesFromOnPathSymbols(
