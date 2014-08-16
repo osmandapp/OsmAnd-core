@@ -95,7 +95,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
                 const auto billboardRasterSymbol = new BillboardRasterMapSymbol(group, group->sharableById);
                 billboardRasterSymbol->order = rasterizedSpriteSymbol->order;
-                billboardRasterSymbol->intersectionModeFlags = MapSymbol::RegularIntersectionProcessing;
+                billboardRasterSymbol->intersectionModeFlags |= MapSymbol::IgnoreIntersectionsInOwnGroup;
                 billboardRasterSymbol->bitmap = rasterizedSpriteSymbol->bitmap;
                 billboardRasterSymbol->size = PointI(rasterizedSpriteSymbol->bitmap->width(), rasterizedSpriteSymbol->bitmap->height());
                 billboardRasterSymbol->content = rasterizedSpriteSymbol->content;
@@ -111,7 +111,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
                 const auto onPathSymbol = new OnPathMapSymbol(group, group->sharableById);
                 onPathSymbol->order = rasterizedOnPathSymbol->order;
-                onPathSymbol->intersectionModeFlags = MapSymbol::RegularIntersectionProcessing;
+                onPathSymbol->intersectionModeFlags |= MapSymbol::IgnoreIntersectionsInOwnGroup;
                 onPathSymbol->bitmap = rasterizedOnPathSymbol->bitmap;
                 onPathSymbol->size = PointI(rasterizedOnPathSymbol->bitmap->width(), rasterizedOnPathSymbol->bitmap->height());
                 onPathSymbol->content = rasterizedOnPathSymbol->content;
@@ -141,20 +141,14 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         //  - Split path between them
         if (hasAtLeastOneOnPath)
         {
-            //////////////////////////////////////////////////////////////////////////
-           /* {
-                if ((mapObject->id >> 1) == 28191391)
-                {
-                    int i = 5;
-                }
-            }*/
-            //////////////////////////////////////////////////////////////////////////
-
             // Compose list of symbols to compute pin-points for
             QList<SymbolForPinPointsComputation> symbolsForComputation;
             symbolsForComputation.reserve(group->symbols.size());
             for (const auto& symbol : constOf(group->symbols))
             {
+                // For on path entire check has to be performed to exclude intended duplicates
+                symbol->intersectionModeFlags.unset(MapSymbol::IgnoreIntersectionsInOwnGroup);
+
                 if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                 {
                     // Get larger bbox, to take into account possible rotation

@@ -104,6 +104,8 @@ namespace OsmAnd
             assert(static_cast<unsigned int>(flag) <= sizeof(unsigned int) * 8);
 
             _storage &= ~(STORAGE(1) << static_cast<unsigned int>(flag));
+
+            return *this;
         }
     };
 }

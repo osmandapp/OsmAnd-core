@@ -26,6 +26,7 @@ namespace OsmAnd
         {
             IgnoredByIntersectionTest = 0,
             TransparentForIntersectionLookup,
+            IgnoreIntersectionsInOwnGroup,
         };
         enum : unsigned int {
             RegularIntersectionProcessing = 0,

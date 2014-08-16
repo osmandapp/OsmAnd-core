@@ -1344,15 +1344,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         return true;
     
     // Check intersections
+    const auto checkIntersectionsInOwnGroup = !symbol->intersectionModeFlags.isSet(MapSymbol::IgnoreIntersectionsInOwnGroup);
     const auto symbolGroupPtr = symbol->groupPtr;
     const auto intersects = intersections.test(boundsInWindow, false,
-        [symbolGroupPtr]
+        [symbolGroupPtr, checkIntersectionsInOwnGroup]
         (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const IntersectionsQuadTree::BBox& otherBBox) -> bool
         {
-            const auto& otherSymbol = otherRenderable->mapSymbol;
+            if (checkIntersectionsInOwnGroup)
+                return true;
 
             // Only accept intersections with symbols from other groups
-            return otherSymbol->groupPtr != symbolGroupPtr;
+            const auto& otherSymbol = otherRenderable->mapSymbol;
+            const auto shouldCheck = otherSymbol->groupPtr != symbolGroupPtr;
+            return shouldCheck;
         });
     if (intersects)
     {
@@ -1387,15 +1391,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         return true;
 
     // Check intersections
+    const auto checkIntersectionsInOwnGroup = !symbol->intersectionModeFlags.isSet(MapSymbol::IgnoreIntersectionsInOwnGroup);
     const auto symbolGroupPtr = symbol->groupPtr;
     const auto intersects = intersections.test(OOBBI(oobb), false,
-        [symbolGroupPtr]
+        [symbolGroupPtr, checkIntersectionsInOwnGroup]
         (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const IntersectionsQuadTree::BBox& otherBBox) -> bool
         {
-            const auto& otherSymbol = otherRenderable->mapSymbol;
+            if (checkIntersectionsInOwnGroup)
+                return true;
 
             // Only accept intersections with symbols from other groups
-            return otherSymbol->groupPtr != symbolGroupPtr;
+            const auto& otherSymbol = otherRenderable->mapSymbol;
+            const auto shouldCheck = otherSymbol->groupPtr != symbolGroupPtr;
+            return shouldCheck;
         });
     if (intersects)
     {
@@ -1440,9 +1448,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
             if (!otherSymbol)
                 return false;
 
-            return
-                (otherSymbol->groupPtr != symbolGroupPtr) &&
-                (otherSymbol->content == symbolContent);
+            const auto shouldCheck = (otherSymbol->content == symbolContent);
+            return shouldCheck;
         });
     if (hasSimilarContent)
     {
@@ -1488,9 +1495,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
             if (!otherSymbol)
                 return false;
 
-            return
-                (otherSymbol->groupPtr != symbolGroupPtr) &&
-                (otherSymbol->content == symbolContent);
+            const auto shouldCheck = (otherSymbol->content == symbolContent);
+            return shouldCheck;
         });
     if (hasSimilarContent)
     {
