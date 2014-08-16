@@ -954,7 +954,7 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
         prevGlyphOffset += glyphWidthScaled;
 
         // Find path segment where this glyph should be placed
-        while (anchorOffset < scannedSegmentsLength)
+        while (anchorOffset > scannedSegmentsLength)
         {
             if (segmentScanIndex > endPathPointIndex)
             {
@@ -970,12 +970,12 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
             consumedSegmentsLength = scannedSegmentsLength;
             scannedSegmentsLength += segmentLength;
             segmentScanIndex++;
-            if (anchorOffset < scannedSegmentsLength)
+            if (anchorOffset > scannedSegmentsLength)
                 continue;
 
             // Get points for this segment
-            const auto& segmentStartPoint = path[segmentScanIndex + 0];
-            const auto& segmentEndPoint = path[segmentScanIndex + 1];
+            const auto& segmentStartPoint = path[segmentScanIndex - 1 ];
+            const auto& segmentEndPoint = path[segmentScanIndex - 0];
             currentSegmentStartPoint = segmentStartPoint;
 
             // Get segment direction and normal
