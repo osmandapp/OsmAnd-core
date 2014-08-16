@@ -362,7 +362,7 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
     // offsetToFirstPresentInstance = 0.5 + offsetOnPrevZoom * 2
     // offsetOnCurrentZoom = (offsetToFirstPresentInstance > 1.0) ? offsetToFirstPresentInstance - 1.0 : offsetToFirstPresentInstance + 1.0;
     //
-    // Each next instance on this level is located at offsetOnCurrentZoom + 2*instancesPlotted
+    // Each next instance on zoom level is located at offsetOnCurrentZoom + (currentNumberOfInstances > 0) ? 2*instancesPlotted : instancesPlotted
     
     // And here's the implementation:
 
@@ -479,12 +479,13 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
             blocksToInstantiate = (totalNumberOfCompleteBlocks - 1) + 2 * qFloor(remainingPathLengthOnPrevZoom / blockWidth);
             kOffsetToFirstPresentBlockOnCurrentZoom = 0.5f + kOffsetToFirstBlockOnPrevZoom * 2.0f;
             kOffsetToFirstNewBlockOnCurrentZoom =
-                (kOffsetToFirstPresentBlockOnCurrentZoom > 1.0)
-                ? kOffsetToFirstPresentBlockOnCurrentZoom - 1.0
-                : kOffsetToFirstPresentBlockOnCurrentZoom + 1.0;
+                (kOffsetToFirstPresentBlockOnCurrentZoom > 1.0f)
+                ? kOffsetToFirstPresentBlockOnCurrentZoom - 1.0f
+                : kOffsetToFirstPresentBlockOnCurrentZoom + 1.0f;
         }
         const auto remainingPathLengthOnCurrentZoom = lengthOfPathInPixelsOnCurrentZoom - blocksToInstantiate * blockWidth;
         const auto offsetToFirstNewBlockInPixels = kOffsetToFirstNewBlockOnCurrentZoom * blockWidth;
+        const auto eachNewBlockAfterFirstOffsetInPixels = (totalNumberOfCompleteBlocks > 0 ? 2.0f : 1.0f) * blockWidth;
 
         // Compute actual pin-points only for zoom levels less detained that needed, including needed + 1
         if (currentZoomLevel <= neededZoom + 1)
@@ -498,40 +499,41 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
                 float scanOriginPathPointOffsetInPixels = globalPaddingInPixelsFromBasePathPointOnCurrentZoom;
                 for (auto blockIdx = 0; blockIdx < blocksToInstantiate; blockIdx++)
                 {
-                    bool fits = false;
-                    for (auto symbolIdx = 0u; symbolIdx < symbolsCount; symbolIdx++)
-                    {
-                        const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
-
-                        ComputedPinPoint computedPinPoint;
-                        unsigned int nextScanOriginPathPointIndex;
-                        float nextScanOriginPathPointOffsetInPixels;
-                        fits = computePinPoint(
-                            pathSegmentsLengthInPixelsOnCurrentZoom,
-                            lengthOfPathInPixelsOnCurrentZoom,
-                            pathSegmentsLength31,
-                            path31,
-                            symbol,
-                            offsetToFirstNewBlockInPixels,
-                            scanOriginPathPointIndex,
-                            scanOriginPathPointOffsetInPixels,
-                            nextScanOriginPathPointIndex,
-                            nextScanOriginPathPointOffsetInPixels,
-                            computedPinPoint);
-                        if (!fits)
-                        {
-                            assert(false);
-                            break;
-                        }
-                        scanOriginPathPointIndex = nextScanOriginPathPointIndex;
-                        scanOriginPathPointOffsetInPixels = nextScanOriginPathPointOffsetInPixels;
-
-                        computedPinPoints.push_back(qMove(computedPinPoint));
-                    }
+                    // Compute base pin-point of block. Actually blocks get pinned,
+                    // symbols inside block just receive offset from base pin-point
+                    ComputedPinPoint computedBlockPinPoint;
+                    unsigned int nextScanOriginPathPointIndex;
+                    float nextScanOriginPathPointOffsetInPixels;
+                    bool fits = computeBlockPinPoint(
+                        pathSegmentsLengthInPixelsOnCurrentZoom,
+                        lengthOfPathInPixelsOnCurrentZoom,
+                        pathSegmentsLength31,
+                        path31,
+                        blockWidth,
+                        offsetToFirstNewBlockInPixels + blockIdx * eachNewBlockAfterFirstOffsetInPixels,
+                        scanOriginPathPointIndex,
+                        scanOriginPathPointOffsetInPixels,
+                        nextScanOriginPathPointIndex,
+                        nextScanOriginPathPointOffsetInPixels,
+                        computedBlockPinPoint);
                     if (!fits)
                     {
                         assert(false);
                         break;
+                    }
+                    scanOriginPathPointIndex = nextScanOriginPathPointIndex;
+                    scanOriginPathPointOffsetInPixels = nextScanOriginPathPointOffsetInPixels;
+
+                    float symbolPinPointOffset = -blockWidth / 2.0f;
+                    for (auto symbolIdx = 0u; symbolIdx < symbolsCount; symbolIdx++)
+                    {
+                        const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
+
+                        ComputedPinPoint computedPinPoint = computedBlockPinPoint;
+                        computedPinPoint.offsetFromPointInPixels = symbolPinPointOffset + symbol.leftPaddingInPixels + symbol.widthInPixels / 2.0f;
+                        symbolPinPointOffset += symbolsFullSizesInPixels[symbolIdx];
+
+                        computedPinPoints.push_back(qMove(computedPinPoint));
                     }
                 }
                 computedPinPointsByLayer.push_back(qMove(computedPinPoints));
@@ -541,33 +543,41 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
                 QList<ComputedPinPoint> computedPinPoints;
                 unsigned int scanOriginPathPointIndex = basePathPointIndex;
                 float scanOriginPathPointOffsetInPixels = globalPaddingInPixelsFromBasePathPointOnCurrentZoom;
+
+                // Compute base pin-point of this virtual block. Actually blocks get pinned,
+                // symbols inside block just receive offset from base pin-point
+                ComputedPinPoint computedBlockPinPoint;
+                unsigned int nextScanOriginPathPointIndex;
+                float nextScanOriginPathPointOffsetInPixels;
+                bool fits = computeBlockPinPoint(
+                    pathSegmentsLengthInPixelsOnCurrentZoom,
+                    lengthOfPathInPixelsOnCurrentZoom,
+                    pathSegmentsLength31,
+                    path31,
+                    fullSizeOfSymbolsThatFit,
+                    offsetToFirstNewBlockInPixels,
+                    scanOriginPathPointIndex,
+                    scanOriginPathPointOffsetInPixels,
+                    nextScanOriginPathPointIndex,
+                    nextScanOriginPathPointOffsetInPixels,
+                    computedBlockPinPoint);
+                if (!fits)
+                {
+                    assert(false);
+                    break;
+                }
+                scanOriginPathPointIndex = nextScanOriginPathPointIndex;
+                scanOriginPathPointOffsetInPixels = nextScanOriginPathPointOffsetInPixels;
+
+                float symbolPinPointOffset = -fullSizeOfSymbolsThatFit / 2.0f;
                 for (auto symbolIdx = 0u; symbolIdx < numberOfSymbolsThatFit; symbolIdx++)
                 {
                     const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
 
-                    ComputedPinPoint computedPinPoint;
-                    unsigned int nextScanOriginPathPointIndex;
-                    float nextScanOriginPathPointOffsetInPixels;
-                    const auto fits = computePinPoint(
-                        pathSegmentsLengthInPixelsOnCurrentZoom,
-                        lengthOfPathInPixelsOnCurrentZoom,
-                        pathSegmentsLength31,
-                        path31,
-                        symbol,
-                        offsetToFirstNewBlockInPixels,
-                        scanOriginPathPointIndex,
-                        scanOriginPathPointOffsetInPixels,
-                        nextScanOriginPathPointIndex,
-                        nextScanOriginPathPointOffsetInPixels,
-                        computedPinPoint);
-                    if (!fits)
-                    {
-                        assert(false);
-                        break;
-                    }
-                    scanOriginPathPointIndex = nextScanOriginPathPointIndex;
-                    scanOriginPathPointOffsetInPixels = nextScanOriginPathPointOffsetInPixels;
-
+                    ComputedPinPoint computedPinPoint = computedBlockPinPoint;
+                    computedPinPoint.offsetFromPointInPixels = symbolPinPointOffset + symbol.leftPaddingInPixels + symbol.widthInPixels / 2.0f;
+                    symbolPinPointOffset += symbolsFullSizesInPixels[symbolIdx];
+                    
                     computedPinPoints.push_back(qMove(computedPinPoint));
                 }
                 computedPinPointsByLayer.push_back(qMove(computedPinPoints));
@@ -588,27 +598,23 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
     return computedPinPointsByLayer;
 }
 
-bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoint(
+bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computeBlockPinPoint(
     const QVector<float>& pathSegmentsLengthInPixels,
     const float pathLengthInPixels,
     const QVector<double>& pathSegmentsLength31,
     const QVector<PointI>& path31,
-    const SymbolForPinPointsComputation& symbol,
+    const float blockWidthInPixels,
     const float offsetFromPathStartInPixels,
     const unsigned int scanOriginPathPointIndex,
     const float scanOriginPathPointOffsetInPixels,
     unsigned int& outNextScanOriginPathPointIndex,
     float& outNextScanOriginPathPointOffsetInPixels,
-    ComputedPinPoint& outComputedPinPoint) const
+    ComputedPinPoint& outComputedBlockPinPoint) const
 {
-    const auto symbolFullSize =
-        symbol.leftPaddingInPixels +
-        symbol.widthInPixels + 
-        symbol.rightPaddingInPixels;
     const auto pathSegmentsCount = pathSegmentsLengthInPixels.size();
     const auto startOffset = offsetFromPathStartInPixels;
-    const auto pinPointOffset = startOffset + symbol.leftPaddingInPixels + symbol.widthInPixels / 2.0f;
-    const auto endOffset = startOffset + symbolFullSize;
+    const auto pinPointOffset = startOffset + blockWidthInPixels / 2.0f;
+    const auto endOffset = startOffset + blockWidthInPixels;
     if (endOffset > pathLengthInPixels)
         return false;
 
@@ -628,15 +634,16 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoint(
             const auto& segmentStartPoint = path31[testPathPointIndex + 0];
             const auto& segmentEndPoint = path31[testPathPointIndex + 1];
             const auto& vSegment31 = segmentEndPoint - segmentStartPoint;
-            
-            // Compute pin-point
-            outComputedPinPoint.point31 = segmentStartPoint + PointI(PointD(vSegment31) * nOffsetFromPoint);
-            outComputedPinPoint.basePathPointIndex = testPathPointIndex;
-            outComputedPinPoint.offsetFromBasePathPoint31 = pathSegmentsLength31[testPathPointIndex] * nOffsetFromPoint;
-            outComputedPinPoint.normalizedOffsetFromBasePathPoint = nOffsetFromPoint;
+
+            // Compute block pin-point
+            outComputedBlockPinPoint.point31 = segmentStartPoint + PointI(PointD(vSegment31) * nOffsetFromPoint);
+            outComputedBlockPinPoint.offsetFromPointInPixels = 0.0f;
+            outComputedBlockPinPoint.basePathPointIndex = testPathPointIndex;
+            outComputedBlockPinPoint.offsetFromBasePathPoint31 = pathSegmentsLength31[testPathPointIndex] * nOffsetFromPoint;
+            outComputedBlockPinPoint.normalizedOffsetFromBasePathPoint = nOffsetFromPoint;
 
             outNextScanOriginPathPointIndex = testPathPointIndex;
-            outNextScanOriginPathPointOffsetInPixels = scannedLengthInPixels;          
+            outNextScanOriginPathPointOffsetInPixels = scannedLengthInPixels;
             break;
         }
         scannedLengthInPixels += segmentLengthInPixels;
@@ -659,6 +666,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoint(
         scannedLengthInPixels += segmentLengthInPixels;
         testPathPointIndex++;
     }
-    
+
     return true;
 }
