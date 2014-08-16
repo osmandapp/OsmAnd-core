@@ -202,8 +202,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                         extraSymbolInstance->contentClass = billboardSymbol->contentClass;
                         extraSymbolInstance->languageId = billboardSymbol->languageId;
                         extraSymbolInstance->minDistance = billboardSymbol->minDistance;
-                        extraSymbolInstance->position31 = computedPinPoint.point31; //! WRONG!
-                        extraSymbolInstance->offset = billboardSymbol->offset;
+                        extraSymbolInstance->position31 = computedPinPoint.point31;
+                        extraSymbolInstance->offset = billboardSymbol->offset /*+ computedPinPoint.offsetFromPointInPixels*/;
 
                         extraSymbolInstances[billboardSymbol].push_back(extraSymbolInstance);
                     }

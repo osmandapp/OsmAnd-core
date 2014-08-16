@@ -106,21 +106,32 @@ namespace OsmAnd
         QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const;
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const;
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld, unsigned int startIndex, unsigned int endIndex) const;
-        bool computeStartPointIndexAndOffset(
+        static QVector<float> computePathSegmentsLengths(const QVector<glm::vec2>& path);
+        static bool computePointIndexAndOffsetFromOriginAndOffset(
             const QVector<float>& pathSegmentsLengths,
             const unsigned int originPathPointIndex,
             const float nOffsetFromOriginPathPoint,
-            const float lengthFromOriginToStart,
-            unsigned int& outStartPathPointIndex,
-            float& outOffsetFromStartPathPoint) const;
-        bool computeEndPointIndexAndOffset(
+            const float offsetToPoint,
+            unsigned int& outPathPointIndex,
+            float& outOffsetFromPathPoint);
+        static glm::vec2 computeExactPointFromOriginAndOffset(
+            const QVector<glm::vec2>& path,
             const QVector<float>& pathSegmentsLengths,
             const unsigned int originPathPointIndex,
-            const float nOffsetFromOriginPathPoint,
-            const float lengthFromOriginToEnd,
-            unsigned int& outStartPathPointIndex,
-            float& outOffsetFromStartPathPoint) const;
-        bool pathRenderableAs2D(const QVector<glm::vec2>& pathOnScreen) const;
+            const float offsetFromOriginPathPoint);
+        static bool pathRenderableAs2D(
+            const QVector<glm::vec2>& pathOnScreen,
+            const unsigned int startPathPointIndex,
+            const glm::vec2& exactStartPointOnScreen,
+            const unsigned int endPathPointIndex,
+            const glm::vec2& exactEndPointOnScreen);
+        static bool segmentValidFor2D(const glm::vec2& vSegment);
+        static glm::vec2 computePathDirection(
+            const QVector<glm::vec2>& path,
+            const unsigned int startPathPointIndex,
+            const glm::vec2& exactStartPoint,
+            const unsigned int endPathPointIndex,
+            const glm::vec2& exactEndPoint);
         glm::vec2 computeSubpathDirectionInWorld(
             const QVector<glm::vec2>& pathInWorld,
             const float offsetFromStart,
