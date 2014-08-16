@@ -406,36 +406,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                     endPathPointIndex2D,
                     offsetFromEndPathPoint2D);
 
-                //////////////////////////////////////////////////////////////////////////
-                QVector< glm::vec3 > debugPoints;
-                auto pPointInWorld = pathInWorld.constData();
-                for (auto idx = startPathPointIndex2D; idx <= endPathPointIndex2D; idx++, pPointInWorld++)
-                {
-                    debugPoints.push_back(qMove(glm::vec3(
-                        pPointInWorld->x,
-                        0.0f,
-                        pPointInWorld->y)));
-                }
-                if (debugPoints.size() > 1)
-                    getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(SK_ColorGREEN, 128));
-                {
-                    QVector<glm::vec2> lineN;
-                    const auto sn0 = exactStartPointOnScreen;
-                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = sn0 + (glm::vec2(0.0f, 1.0f)*32.0f);
-                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
-                }
-                {
-                    QVector<glm::vec2> lineN;
-                    const auto sn0 = exactEndPointOnScreen;
-                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = sn0 + (glm::vec2(0.0f, 1.0f)*32.0f);
-                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-                }
-                //////////////////////////////////////////////////////////////////////////
-
                 is2D = pathRenderableAs2D(
                     pathOnScreen,
                     startPathPointIndex2D,
@@ -454,9 +424,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             if (!fits || !is2D)
             {
                 is2D = false;
-                fits = true;
                 const auto halfSizeInWorld = halfSizeInPixels * internalState.pixelInWorldProjectionScale;
 
+                fits = true;
                 fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
                     pathSegmentsLengthsInWorld,
                     pinPoint.basePathPointIndex,
@@ -491,6 +461,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             if (!fits)
                 continue;
 
+            //////////////////////////////////////////////////////////////////////////
+            if (is2D)
+                continue;
+            //TODO: something wrong below
+            //////////////////////////////////////////////////////////////////////////
+
             // Compute exact points
             if (is2D)
             {
@@ -524,6 +500,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             // Compute direction of subpath on screen and in world
             const auto subpathStartIndex = is2D ? startPathPointIndex2D : startPathPointIndex3D;
             const auto subpathEndIndex = is2D ? endPathPointIndex2D : endPathPointIndex3D;
+            assert(subpathEndIndex >= subpathStartIndex);
             const auto directionInWorld = computePathDirection(
                 pathInWorld,
                 subpathStartIndex,
@@ -591,25 +568,39 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
             {
                 const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
 
-                //// Path itself
-                //QVector< glm::vec3 > debugPoints;
-                //debugPoints.push_back(qMove(glm::vec3(
-                //    exactStartPointInWorld.x,
-                //    0.0f,
-                //    exactStartPointInWorld.y)));
-                //auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
-                //for (auto idx = subpathStartIndex + 1; idx < subpathEndIndex; idx++, pPointInWorld++)
-                //{
-                //    debugPoints.push_back(qMove(glm::vec3(
-                //        pPointInWorld->x,
-                //        0.0f,
-                //        pPointInWorld->y)));
-                //}
-                //debugPoints.push_back(qMove(glm::vec3(
-                //    exactEndPointInWorld.x,
-                //    0.0f,
-                //    exactEndPointInWorld.y)));
-                //getRenderer()->debugStage->addLine3D(debugPoints, SkColorSetA(is2D ? SK_ColorGREEN : SK_ColorRED, 128));
+                // Path itself
+                QVector< glm::vec3 > debugPoints;
+                debugPoints.push_back(qMove(glm::vec3(
+                    exactStartPointInWorld.x,
+                    0.0f,
+                    exactStartPointInWorld.y)));
+                auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
+                for (auto idx = subpathStartIndex + 1; idx <= subpathEndIndex; idx++)
+                {
+                    const auto& pointInWorld = *(pPointInWorld++);
+                    debugPoints.push_back(qMove(glm::vec3(
+                        pointInWorld.x,
+                        0.0f,
+                        pointInWorld.y)));
+                }
+                debugPoints.push_back(qMove(glm::vec3(
+                    exactEndPointInWorld.x,
+                    0.0f,
+                    exactEndPointInWorld.y)));
+                getRenderer()->debugStage->addLine3D(debugPoints, is2D ? SK_ColorGREEN : SK_ColorRED);
+
+                {
+                    QVector< glm::vec3 > debugPoints;
+                    debugPoints.push_back(qMove(glm::vec3(
+                        exactStartPointInWorld.x,
+                        0.0f,
+                        exactStartPointInWorld.y)));
+                    debugPoints.push_back(qMove(glm::vec3(
+                        exactEndPointInWorld.x,
+                        0.0f,
+                        exactEndPointInWorld.y)));
+                    getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorBLUE);
+                }
 
                 //// Subpath N (start)
                 //{
@@ -642,12 +633,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                         internalState.mPerspectiveProjection,
                         internalState.glmViewport).xy();
 
-                    QVector<glm::vec2> lineN;
-                    const auto sn0 = pinPointOnScreen;
-                    lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
-                    lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorBLUE, 128));
+                    {
+                        QVector<glm::vec2> lineN;
+                        const auto sn0 = pinPointOnScreen;
+                        lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                        const auto sn1 = sn0 + (directionOnScreenN*32.0f);
+                        lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                        getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorWHITE, 128));
+                    }
+
+                    {
+                        QVector<glm::vec2> lineN;
+                        const auto sn0 = pinPointOnScreen;
+                        lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                        const auto sn1 = sn0 + (directionOnScreen*32.0f);
+                        lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                        getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorGREEN, 128));
+                    }
                 }
             }
         }
@@ -823,24 +825,33 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::pathRenderableAs2D(
     const glm::vec2& exactEndPointOnScreen)
 {
     assert(endPathPointIndex >= startPathPointIndex);
-    const auto subpathSize = endPathPointIndex - startPathPointIndex + 1;
 
-    if (subpathSize > 2)
+    if (endPathPointIndex > startPathPointIndex)
     {
+        const auto segmentsCount = endPathPointIndex - startPathPointIndex + 1;
+
+        // First check segment between exact start point (which is after startPathPointIndex)
+        // and next point (startPathPointIndex + 1)
         if (!segmentValidFor2D(pathOnScreen[startPathPointIndex + 1] - exactStartPointOnScreen))
             return false;
-        auto pPrevPoint = pathOnScreen.constData() + startPathPointIndex + 1;
-        auto pPoint = pPrevPoint + 1;
-        for (auto idx = 2; idx < subpathSize - 1; idx++)
+
+        auto pPathPoint = pathOnScreen.constData() + startPathPointIndex + 1;
+        auto pPrevPathPoint = pPathPoint++;
+        for (auto segmentIdx = 1; segmentIdx < segmentsCount - 1; segmentIdx++)
         {
-            const auto vSegment = (*(pPoint++) - *(pPrevPoint++));
+            const auto vSegment = (*(pPathPoint++) - *(pPrevPathPoint++));
             if (!segmentValidFor2D(vSegment))
                 return false;
         }
-        return segmentValidFor2D(exactEndPointOnScreen - pathOnScreen[subpathSize - 2]);
+
+        // Last check is between pathOnScreen[endPathPointIndex] and exact end point,
+        // which is always after endPathPointIndex
+        assert(pPrevPathPoint == &pathOnScreen[endPathPointIndex]);
+        return segmentValidFor2D(exactEndPointOnScreen - *pPrevPathPoint);
     }
     else
     {
+        // In case both exact points are on the same segment, check is simple
         return segmentValidFor2D(exactEndPointOnScreen - exactStartPointOnScreen);
     }
 }
@@ -866,20 +877,30 @@ glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computePathDirection(
     const glm::vec2& exactEndPoint)
 {
     assert(endPathPointIndex >= startPathPointIndex);
-    const auto subpathSize = endPathPointIndex - startPathPointIndex + 1;
 
     glm::vec2 subpathDirection;
-    if (subpathSize > 2)
+    if (endPathPointIndex > startPathPointIndex)
     {
+        const auto segmentsCount = endPathPointIndex - startPathPointIndex + 1;
+
+        // First compute segment between exact start point (which is after startPathPointIndex)
+        // and next point (startPathPointIndex + 1)
         subpathDirection += path[startPathPointIndex + 1] - exactStartPoint;
-        auto pPrevPoint = path.constData() + startPathPointIndex + 1;
-        auto pPoint = pPrevPoint + 1;
-        for (auto idx = 2; idx < subpathSize - 1; idx++)
-            subpathDirection += (*(pPoint++) - *(pPrevPoint++));
-        subpathDirection += exactEndPoint - path[subpathSize - 2];
+        
+        auto pPathPoint = path.constData() + startPathPointIndex + 1;
+        auto pPrevPathPoint = pPathPoint++;
+        for (auto segmentIdx = 1; segmentIdx < segmentsCount - 1; segmentIdx++)
+            subpathDirection += *(pPathPoint++) - *(pPrevPathPoint++);
+        
+        // Last check is between path[endPathPointIndex] and exact end point,
+        // which is always after endPathPointIndex
+        assert(pPrevPathPoint == &path[endPathPointIndex]);
+        subpathDirection += exactEndPoint - *pPrevPathPoint;
     }
     else
     {
+        // In case both exact points are on the same segment,
+        // computation is simple
         subpathDirection = exactEndPoint - exactStartPoint;
     }
 
@@ -902,14 +923,15 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
 {
     const auto& internalState = getInternalState();
 
-    const auto pathSize = endPointIndex - startPointIndex + 1;
+    assert(endPointIndex >= startPointIndex);
+    const auto subpathSize = endPointIndex - startPointIndex + 1;
     const auto projectionScale = is2D ? 1.0f : internalState.pixelInWorldProjectionScale;
     const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
     const auto shouldInvert = (directionOnScreenN.y /* == horizont.x*dirN.y - horizont.y*dirN.x == 1.0f*dirN.y - 0.0f*dirN.x */) < 0;
 
     // Compute lengths
-    QVector<float> lengths(pathSize - 1);
-    if (pathSize > 2)
+    QVector<float> lengths(subpathSize);
+    if (subpathSize >= 2)
     {
         auto pPoint = is2D ? (subpathOnScreen.constData() + 1) : (pathInWorld.constData() + startPointIndex + 1);
         auto pPrevPoint = pPoint;
