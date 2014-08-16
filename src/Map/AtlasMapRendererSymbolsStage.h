@@ -121,7 +121,6 @@ namespace OsmAnd
             const float offsetFromOriginPathPoint);
         static glm::vec2 computeExactPointFromOriginAndNormalizedOffset(
             const QVector<glm::vec2>& path,
-            const QVector<float>& pathSegmentsLengths,
             const unsigned int originPathPointIndex,
             const float nOffsetFromOriginPathPoint);
         static bool pathRenderableAs2D(
