@@ -43,7 +43,6 @@ namespace OsmAnd
         struct ComputedPinPoint
         {
             PointI point31;
-            float offsetFromPointInPixels;
 
             unsigned int basePathPointIndex;
             double offsetFromBasePathPoint31;
@@ -71,6 +70,16 @@ namespace OsmAnd
             unsigned int& outNextScanOriginPathPointIndex,
             float& outNextScanOriginPathPointOffsetInPixels,
             ComputedPinPoint& outComputedBlockPinPoint) const;
+
+        bool computeSymbolPinPoint(
+            const QVector<float>& pathSegmentsLengthInPixels,
+            const float pathLengthInPixels,
+            const QVector<double>& pathSegmentsLength31,
+            const QVector<PointI>& path31,
+            const ComputedPinPoint& blockPinPoint,
+            const float neededZoomPixelScaleFactor,
+            const float offsetFromBlockPinPointInPixelsOnNeededZoom,
+            ComputedPinPoint& outComputedSymbolPinPoint) const;
     protected:
         BinaryMapStaticSymbolsProvider_P(BinaryMapStaticSymbolsProvider* owner);
 

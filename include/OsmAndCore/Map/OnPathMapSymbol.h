@@ -22,7 +22,6 @@ namespace OsmAnd
         struct PinPoint Q_DECL_FINAL
         {
             PointI point31;
-            float offsetFromPointInPixels;
 
             unsigned int basePathPointIndex;
             double offsetFromBasePathPoint31;

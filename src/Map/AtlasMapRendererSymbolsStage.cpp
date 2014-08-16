@@ -381,7 +381,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 pathSegmentsLengthsOnScreen,
                 pinPoint.basePathPointIndex,
                 pinPoint.normalizedOffsetFromBasePathPoint,
-                pinPoint.offsetFromPointInPixels + halfSizeInPixels,
+                halfSizeInPixels,
                 startPathPointIndex2D,
                 offsetFromStartPathPoint2D);
             unsigned int endPathPointIndex2D = 0;
@@ -390,7 +390,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 pathSegmentsLengthsOnScreen,
                 pinPoint.basePathPointIndex,
                 pinPoint.normalizedOffsetFromBasePathPoint,
-                pinPoint.offsetFromPointInPixels - halfSizeInPixels,
+                -halfSizeInPixels,
                 endPathPointIndex2D,
                 offsetFromEndPathPoint2D);
             if (fits)
@@ -426,20 +426,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 is2D = false;
                 fits = true;
                 const auto halfSizeInWorld = halfSizeInPixels * internalState.pixelInWorldProjectionScale;
-                const auto offsetFromPointInWorld = pinPoint.offsetFromPointInPixels * internalState.pixelInWorldProjectionScale;
 
                 fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
                     pathSegmentsLengthsInWorld,
                     pinPoint.basePathPointIndex,
                     pinPoint.normalizedOffsetFromBasePathPoint,
-                    offsetFromPointInWorld + halfSizeInWorld,
+                    halfSizeInWorld,
                     startPathPointIndex3D,
                     offsetFromStartPathPoint3D);
                 fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
                     pathSegmentsLengthsInWorld,
                     pinPoint.basePathPointIndex,
                     pinPoint.normalizedOffsetFromBasePathPoint,
-                    offsetFromPointInWorld - halfSizeInWorld,
+                    -halfSizeInWorld,
                     endPathPointIndex3D,
                     offsetFromEndPathPoint3D);
 
@@ -716,6 +715,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
             {
                 outPathPointIndex = testPathPointIndex;
                 outOffsetFromPathPoint = offsetFromOriginPathPoint - scannedLength;
+                assert(outOffsetFromPathPoint >= 0.0f);
             }
             scannedLength += segmentLength;
             testPathPointIndex++;
@@ -736,6 +736,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
             {
                 outPathPointIndex = testPathPointIndex;
                 outOffsetFromPathPoint = segmentLength + (offsetFromOriginPathPoint - scannedLength);
+                assert(outOffsetFromPathPoint >= 0.0f);
             }
             scannedLength -= segmentLength;
             if (testPathPointIndex == 0)

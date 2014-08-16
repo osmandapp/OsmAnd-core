@@ -203,7 +203,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                         extraSymbolInstance->languageId = billboardSymbol->languageId;
                         extraSymbolInstance->minDistance = billboardSymbol->minDistance;
                         extraSymbolInstance->position31 = computedPinPoint.point31;
-                        extraSymbolInstance->offset = billboardSymbol->offset /*+ computedPinPoint.offsetFromPointInPixels*/;
+                        extraSymbolInstance->offset = billboardSymbol->offset;
 
                         extraSymbolInstances[billboardSymbol].push_back(extraSymbolInstance);
                     }
@@ -211,7 +211,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     {
                         OnPathMapSymbol::PinPoint pinPoint;
                         pinPoint.point31 = computedPinPoint.point31;
-                        pinPoint.offsetFromPointInPixels = computedPinPoint.offsetFromPointInPixels;
                         pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
                         pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
                         pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
@@ -270,6 +269,11 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     return true;
 }
 
+#define OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION 1
+#ifndef OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION
+#   define OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION 0
+#endif // !defined(OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION)
+
 QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAnd::BinaryMapStaticSymbolsProvider_P::computePinPoints(
     const QVector<PointI>& path31,
     const float globalLeftPaddingInPixels,
@@ -297,7 +301,6 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
     // minZoom+3: ---bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi---
     // On next zoom without additional 32 instances it will look like
     // minZoom+4: ---bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi---
-    // This gives following sequence : (+4 on minZoom+0);(+3 on minZoom+1);(+8 on minZoom+2);(+16 on minZoom+3);(+32 on minZoom+4)
     //
     // Another example of block instance placement assuming only 3.5 block instances fit ('.' is widthOfBlockInPixels/4)
     // minZoom+0: .bibibi.
@@ -310,62 +313,7 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
     // minZoom+2: -bibibibibibibibibibibibibi-
     // On next zoom without additional 14 instances
     // minZoom+3: ---bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi--bi---
-    // This gives following sequence : (+3 on minZoom+0);(+4 on minZoom+1);(+6 on minZoom+2);(+14 on minZoom+3)
     //
-    // As clearly seen - on each next zoom level number of instances is doubled.
-    // Expressing this fact as numbers here what will be the result:
-    // lengthOfPathInPixelsOnBaseZoom = computePathLengthInPixels(path, minZoom)
-    // baseNumberOfInstances = | lengthOfPathInPixels / widthOfBlockInPixels |
-    // remainingLength = lengthOfPathInPixelsOnBaseZoom - baseNumberOfInstances * widthOfBlockInPixels
-    // numberOfNewInstancesOnNextZoom = (currentNumberOfInstances - 1) + 2*|remainingLength / widthOfBlockInPixels|;
-    //
-    // Check for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
-    // minZoom+0: bibibibi
-    //  - baseNumberOfInstances = | 40/10 | -> 4
-    //  - remainingLength = 40 - 4*10 -> 0
-    //  - numberOfNewInstancesOnNextZoom = (4-1) + 2*|0 / 10| -> 3 + 2*0 -> 3
-    // minZoom+1: -bi--bi--bi--bi-
-    //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 40 * 2 -> 80
-    //  - numberOfInstances = 4 + 3 -> 7
-    //  - remainingLength = 80 - 7*10 -> 10
-    //  - numberOfNewInstancesOnNextZoom = (7-1) + 2*|10 / 10| -> 6 + 2*1 -> 8
-    // minZoom+2: ---bi--bi--bi--bi--bi--bi--bi---
-    //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 80 * 2 -> 160
-    //  - numberOfInstances = 7 + 8 -> 15
-    //  - remainingLength = 160 - 15*10 -> 10
-    //  - numberOfNewInstancesOnNextZoom = (15-1) + 2*|10 / 10| -> 14 + 2*1 -> 16
-    //
-    // Check for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
-    // minZoom+0: .bibibi.
-    //  - baseNumberOfInstances = | 35/10 | -> 3
-    //  - remainingLength = 40 - 3*10 -> 10
-    //  - numberOfNewInstancesOnNextZoom = (3-1) + 2*|10 / 10| -> 2 + 2*1 -> 4
-    // minZoom+1: --bi--bi--bi--
-    //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 35 * 2 -> 70
-    //  - numberOfInstances = 3 + 4 -> 7
-    //  - remainingLength = 70 - 7*10 -> 0
-    //  - numberOfNewInstancesOnNextZoom = (7-1) + 2*|0 / 10| -> 6 + 2*0 -> 6
-    // minZoom+2: -bi--bi--bi--bi--bi--bi--bi-
-    //  - lengthOfPathInPixelsOnCurrentZoom = lengthOfPathInPixelsOnPrevZoom * 2 -> 70 * 2 -> 140
-    //  - numberOfInstances = 7 + 6 -> 13
-    //  - remainingLength = 140 - 13*10 -> 10
-    //  - numberOfNewInstancesOnNextZoom = (13-1) + 2*|10 / 10| -> 12 + 2*1 -> 14
-    //
-    // Placement of pin-points is aligned to center, so there's a special offset variable computed as
-    // offsetOnBaseZoom = {lengthOfPathInPixelsOnBaseZoom / widthOfBlockInPixels} / 2.0
-    // Example for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=40
-    // offsetOnBaseZoom = {40 / 10} / 2.0 -> 0 / 2.0 -> 0
-    // Example for widthOfBlockInPixels=10 and lengthOfPathInPixelsOnBaseZoom=35
-    // offsetOnBaseZoom = {35 / 10} / 2.0 -> 0.5 / 2.0 -> 0.25
-    // This offsetOnBase zoom specifies offset measured in 'widthOfBlockInPixels' to first instance start (present or not)
-    //
-    // On each next level:
-    // offsetToFirstPresentInstance = 0.5 + offsetOnPrevZoom * 2
-    // offsetOnCurrentZoom = (offsetToFirstPresentInstance > 1.0) ? offsetToFirstPresentInstance - 1.0 : offsetToFirstPresentInstance + 1.0;
-    //
-    // Each next instance on zoom level is located at offsetOnCurrentZoom + (currentNumberOfInstances > 0) ? 2*instancesPlotted : instancesPlotted
-    
-    // And here's the implementation:
 
     // Step 0. Initial checks
     if (symbolsForPinPointsComputation.isEmpty())
@@ -455,7 +403,7 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
             if (blocksToInstantiate > 0)
             {
                 kOffsetToFirstNewBlockOnCurrentZoom = (numberOfBlocksThatFit - static_cast<int>(numberOfBlocksThatFit)) / 2.0f;
-                kOffsetToFirstPresentBlockOnCurrentZoom = kOffsetToFirstNewBlockOnCurrentZoom;
+                kOffsetToFirstPresentBlockOnCurrentZoom = -1.0f;
             }
             else
             {
@@ -477,16 +425,57 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
         }
         else
         {
-            blocksToInstantiate = (totalNumberOfCompleteBlocks - 1) + 2 * qFloor(remainingPathLengthOnPrevZoom / blockWidth);
-            kOffsetToFirstPresentBlockOnCurrentZoom = 0.5f + kOffsetToFirstBlockOnPrevZoom * 2.0f;
-            kOffsetToFirstNewBlockOnCurrentZoom =
-                (kOffsetToFirstPresentBlockOnCurrentZoom > 1.0f)
-                ? kOffsetToFirstPresentBlockOnCurrentZoom - 1.0f
-                : kOffsetToFirstPresentBlockOnCurrentZoom + 1.0f;
+            kOffsetToFirstPresentBlockOnCurrentZoom = kOffsetToFirstBlockOnPrevZoom * 2.0f + 0.5f; // 0.5f represents shift of present instance due to x2 scale-up
+            blocksToInstantiate = qRound((lengthOfPathInPixelsOnCurrentZoom / blockWidth) - 2.0f * kOffsetToFirstPresentBlockOnCurrentZoom) - totalNumberOfCompleteBlocks;
+            assert(blocksToInstantiate >= 0);
+            if (kOffsetToFirstPresentBlockOnCurrentZoom > 1.0f)
+            {
+                // Insert new block before present. This will add 2 extra blocks on both sides
+                kOffsetToFirstNewBlockOnCurrentZoom = kOffsetToFirstPresentBlockOnCurrentZoom - 1.0f;
+                blocksToInstantiate += 2;
+            }
+            else
+            {
+                // Insert new block after present
+                kOffsetToFirstNewBlockOnCurrentZoom = kOffsetToFirstPresentBlockOnCurrentZoom + 1.0f;
+            }
+            if (blocksToInstantiate == 0)
+                kOffsetToFirstNewBlockOnCurrentZoom = -1.0f;
         }
         const auto remainingPathLengthOnCurrentZoom = lengthOfPathInPixelsOnCurrentZoom - (totalNumberOfCompleteBlocks + blocksToInstantiate) * blockWidth;
         const auto offsetToFirstNewBlockInPixels = kOffsetToFirstNewBlockOnCurrentZoom * blockWidth;
         const auto eachNewBlockAfterFirstOffsetInPixels = (totalNumberOfCompleteBlocks > 0 ? 2.0f : 1.0f) * blockWidth;
+
+#if OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION
+        LogPrintf(LogSeverityLevel::Debug,
+            "%d->%f/(%d of [%d;%d]):"
+            "\n\ttotalNumberOfCompleteBlocks=%d"
+            "\n\tremainingPathLengthOnPrevZoom=%f"
+            "\n\tkOffsetToFirstBlockOnPrevZoom=%f"
+            "\n\tblocksToInstantiate=%d"
+            "\n\tkOffsetToFirstNewBlockOnCurrentZoom=%f"
+            "\n\tkOffsetToFirstPresentBlockOnCurrentZoom=%f"
+            "\n\tfullSizeOfSymbolsThatFit=%f"
+            "\n\tnumberOfSymbolsThatFit=%d"
+            "\n\tlengthOfPathInPixelsOnCurrentZoom=%f"
+            "\n\tblockWidth=%f"
+            /*"\n\t=%f"*/,
+            symbolsForPinPointsComputation.size(),
+            pathLength31,
+            currentZoomLevel,
+            minZoom,
+            maxZoom,
+            totalNumberOfCompleteBlocks,
+            remainingPathLengthOnPrevZoom,
+            kOffsetToFirstBlockOnPrevZoom,
+            blocksToInstantiate,
+            kOffsetToFirstNewBlockOnCurrentZoom,
+            kOffsetToFirstPresentBlockOnCurrentZoom,
+            fullSizeOfSymbolsThatFit,
+            numberOfSymbolsThatFit,
+            lengthOfPathInPixelsOnCurrentZoom,
+            blockWidth);
+#endif // OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION
 
         // Compute actual pin-points only for zoom levels less detained that needed, including needed + 1
         if (currentZoomLevel <= neededZoom + 1)
@@ -530,12 +519,28 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
                     {
                         const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
 
-                        ComputedPinPoint computedPinPoint = computedBlockPinPoint;
-                        computedPinPoint.offsetFromPointInPixels = symbolPinPointOffset + symbol.leftPaddingInPixels + symbol.widthInPixels / 2.0f;
-                        computedPinPoint.offsetFromPointInPixels *= qPow(2.0f, neededZoom - currentZoomLevel); // Maintain proper offset pixels scale
+                        const auto offsetFromBlockPinPointInPixelOnCurrentZoom = symbolPinPointOffset + symbol.leftPaddingInPixels + symbol.widthInPixels / 2.0f;
+                        const auto zoomShiftScaleFactor = qPow(2.0f, neededZoom - currentZoomLevel);
+                        const auto offsetFromBlockPinPointInPixelOnNeededZoom = offsetFromBlockPinPointInPixelOnCurrentZoom * zoomShiftScaleFactor;
                         symbolPinPointOffset += symbolsFullSizesInPixels[symbolIdx];
 
-                        computedPinPoints.push_back(qMove(computedPinPoint));
+                        ComputedPinPoint computedSymbolPinPoint;
+                        fits = computeSymbolPinPoint(
+                            pathSegmentsLengthInPixelsOnCurrentZoom,
+                            lengthOfPathInPixelsOnCurrentZoom,
+                            pathSegmentsLength31,
+                            path31,
+                            computedBlockPinPoint,
+                            zoomShiftScaleFactor,
+                            offsetFromBlockPinPointInPixelOnNeededZoom,
+                            computedSymbolPinPoint);
+                        if (!fits)
+                        {
+                            assert(false);
+                            continue;
+                        }
+                        
+                        computedPinPoints.push_back(qMove(computedSymbolPinPoint));
                     }
                 }
                 computedPinPointsByLayer.push_back(qMove(computedPinPoints));
@@ -576,11 +581,28 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
                 {
                     const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
 
-                    ComputedPinPoint computedPinPoint = computedBlockPinPoint;
-                    computedPinPoint.offsetFromPointInPixels = symbolPinPointOffset + symbol.leftPaddingInPixels + symbol.widthInPixels / 2.0f;
+                    const auto offsetFromBlockPinPointInPixelOnCurrentZoom = symbolPinPointOffset + symbol.leftPaddingInPixels + symbol.widthInPixels / 2.0f;
+                    const auto zoomShiftScaleFactor = qPow(2.0f, neededZoom - currentZoomLevel);
+                    const auto offsetFromBlockPinPointInPixelOnNeededZoom = offsetFromBlockPinPointInPixelOnCurrentZoom * zoomShiftScaleFactor;
                     symbolPinPointOffset += symbolsFullSizesInPixels[symbolIdx];
+
+                    ComputedPinPoint computedSymbolPinPoint;
+                    fits = computeSymbolPinPoint(
+                        pathSegmentsLengthInPixelsOnCurrentZoom,
+                        lengthOfPathInPixelsOnCurrentZoom,
+                        pathSegmentsLength31,
+                        path31,
+                        computedBlockPinPoint,
+                        zoomShiftScaleFactor,
+                        offsetFromBlockPinPointInPixelOnNeededZoom,
+                        computedSymbolPinPoint);
+                    if (!fits)
+                    {
+                        assert(false);
+                        continue;
+                    }
                     
-                    computedPinPoints.push_back(qMove(computedPinPoint));
+                    computedPinPoints.push_back(qMove(computedSymbolPinPoint));
                 }
                 computedPinPointsByLayer.push_back(qMove(computedPinPoints));
             }
@@ -591,10 +613,26 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
         for (auto& pathSegmentLengthInPixelsOnCurrentZoom : pathSegmentsLengthInPixelsOnCurrentZoom)
             pathSegmentLengthInPixelsOnCurrentZoom *= 2.0f;
         globalPaddingInPixelsFromBasePathPointOnCurrentZoom *= 2.0f;
-        totalNumberOfCompleteBlocks += blocksToInstantiate;
         remainingPathLengthOnPrevZoom = remainingPathLengthOnCurrentZoom;
-        if (blocksToInstantiate > 0)
-            kOffsetToFirstBlockOnPrevZoom = qMin(kOffsetToFirstNewBlockOnCurrentZoom, kOffsetToFirstPresentBlockOnCurrentZoom);
+        if (blocksToInstantiate > 0 || totalNumberOfCompleteBlocks > 0)
+        {
+            if (blocksToInstantiate > 0 && totalNumberOfCompleteBlocks > 0)
+            {
+                // In case new blocks added and there was previous blocks, use block offset closest to start
+                kOffsetToFirstBlockOnPrevZoom = qMin(kOffsetToFirstNewBlockOnCurrentZoom, kOffsetToFirstPresentBlockOnCurrentZoom);
+            }
+            else if (blocksToInstantiate > 0 && totalNumberOfCompleteBlocks == 0)
+            {
+                // In case blocks were added and they are first ones, use first new block offset
+                kOffsetToFirstBlockOnPrevZoom = kOffsetToFirstNewBlockOnCurrentZoom;
+            }
+            else if (blocksToInstantiate == 0 && totalNumberOfCompleteBlocks > 0)
+            {
+                // In case no blocks were added, but there was previously blocks, use offset to first present block
+                kOffsetToFirstBlockOnPrevZoom = kOffsetToFirstPresentBlockOnCurrentZoom;
+            }
+        }
+        totalNumberOfCompleteBlocks += blocksToInstantiate;
     }
 
     return computedPinPointsByLayer;
@@ -633,13 +671,12 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computeBlockPinPoint(
         if (scannedLengthInPixels + segmentLengthInPixels > pinPointOffset)
         {
             const auto nOffsetFromPoint = (pinPointOffset - scannedLengthInPixels) / segmentLengthInPixels;
-            const auto& segmentStartPoint = path31[testPathPointIndex + 0];
-            const auto& segmentEndPoint = path31[testPathPointIndex + 1];
-            const auto& vSegment31 = segmentEndPoint - segmentStartPoint;
+            const auto& segmentStartPoint31 = path31[testPathPointIndex + 0];
+            const auto& segmentEndPoint31 = path31[testPathPointIndex + 1];
+            const auto& vSegment31 = segmentEndPoint31 - segmentStartPoint31;
 
             // Compute block pin-point
-            outComputedBlockPinPoint.point31 = segmentStartPoint + PointI(PointD(vSegment31) * nOffsetFromPoint);
-            outComputedBlockPinPoint.offsetFromPointInPixels = 0.0f;
+            outComputedBlockPinPoint.point31 = segmentStartPoint31 + PointI(PointD(vSegment31) * nOffsetFromPoint);
             outComputedBlockPinPoint.basePathPointIndex = testPathPointIndex;
             outComputedBlockPinPoint.offsetFromBasePathPoint31 = pathSegmentsLength31[testPathPointIndex] * nOffsetFromPoint;
             outComputedBlockPinPoint.normalizedOffsetFromBasePathPoint = nOffsetFromPoint;
@@ -670,4 +707,87 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computeBlockPinPoint(
     }
 
     return true;
+}
+
+bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computeSymbolPinPoint(
+    const QVector<float>& pathSegmentsLengthInPixels,
+    const float pathLengthInPixels,
+    const QVector<double>& pathSegmentsLength31,
+    const QVector<PointI>& path31,
+    const ComputedPinPoint& blockPinPoint,
+    const float neededZoomPixelScaleFactor,
+    const float offsetFromBlockPinPointInPixelsOnNeededZoom,
+    ComputedPinPoint& outComputedSymbolPinPoint) const
+{
+    const auto pathSegmentsCount = pathSegmentsLengthInPixels.size();
+    const auto offsetFromOriginPathPoint =
+        (pathSegmentsLengthInPixels[blockPinPoint.basePathPointIndex] * blockPinPoint.normalizedOffsetFromBasePathPoint * neededZoomPixelScaleFactor) +
+        offsetFromBlockPinPointInPixelsOnNeededZoom;
+
+    if (offsetFromOriginPathPoint >= 0.0f)
+    {
+        // In case start point is located after origin point ('on the right'), usual search is used
+
+        auto testPathPointIndex = blockPinPoint.basePathPointIndex;
+        auto scannedLength = 0.0f;
+        while (scannedLength < offsetFromOriginPathPoint)
+        {
+            if (testPathPointIndex >= pathSegmentsCount)
+                return false;
+            const auto segmentLength = pathSegmentsLengthInPixels[testPathPointIndex] * neededZoomPixelScaleFactor;
+            if (scannedLength + segmentLength > offsetFromOriginPathPoint)
+            {
+                const auto pathPointIndex = testPathPointIndex;
+                const auto offsetFromPathPoint = offsetFromOriginPathPoint - scannedLength;
+                const auto nOffsetFromPoint = offsetFromPathPoint / segmentLength;
+                const auto& segmentStartPoint31 = path31[testPathPointIndex + 0];
+                const auto& segmentEndPoint31 = path31[testPathPointIndex + 1];
+                const auto& vSegment31 = segmentEndPoint31 - segmentStartPoint31;
+
+                outComputedSymbolPinPoint.point31 = segmentStartPoint31 + PointI(PointD(vSegment31) * nOffsetFromPoint);
+                outComputedSymbolPinPoint.basePathPointIndex = pathPointIndex;
+                outComputedSymbolPinPoint.offsetFromBasePathPoint31 = pathSegmentsLength31[testPathPointIndex] * nOffsetFromPoint;
+                outComputedSymbolPinPoint.normalizedOffsetFromBasePathPoint = nOffsetFromPoint;
+
+                return true;
+            }
+            scannedLength += segmentLength;
+            testPathPointIndex++;
+        }
+    }
+    else
+    {
+        // In case start point is located before origin point ('on the left'), reversed search is used
+        if (blockPinPoint.basePathPointIndex == 0)
+            return false;
+
+        auto testPathPointIndex = blockPinPoint.basePathPointIndex - 1;
+        auto scannedLength = 0.0f;
+        while (scannedLength > offsetFromOriginPathPoint)
+        {
+            const auto& segmentLength = pathSegmentsLengthInPixels[testPathPointIndex] * neededZoomPixelScaleFactor;
+            if (scannedLength - segmentLength < offsetFromOriginPathPoint)
+            {
+                const auto pathPointIndex = testPathPointIndex;
+                const auto offsetFromPathPoint = segmentLength + (offsetFromOriginPathPoint - scannedLength);
+                const auto nOffsetFromPoint = offsetFromPathPoint / segmentLength;
+                const auto& segmentStartPoint31 = path31[testPathPointIndex + 0];
+                const auto& segmentEndPoint31 = path31[testPathPointIndex + 1];
+                const auto& vSegment31 = segmentEndPoint31 - segmentStartPoint31;
+
+                outComputedSymbolPinPoint.point31 = segmentStartPoint31 + PointI(PointD(vSegment31) * nOffsetFromPoint);
+                outComputedSymbolPinPoint.basePathPointIndex = pathPointIndex;
+                outComputedSymbolPinPoint.offsetFromBasePathPoint31 = pathSegmentsLength31[testPathPointIndex] * nOffsetFromPoint;
+                outComputedSymbolPinPoint.normalizedOffsetFromBasePathPoint = nOffsetFromPoint;
+
+                return true;
+            }
+            scannedLength -= segmentLength;
+            if (testPathPointIndex == 0)
+                return false;
+            testPathPointIndex--;
+        }
+    }
+
+    return false;
 }
