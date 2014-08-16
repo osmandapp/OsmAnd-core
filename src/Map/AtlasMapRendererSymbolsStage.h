@@ -144,14 +144,11 @@ namespace OsmAnd
             const glm::vec2& exactEndPointInWorld) const;
         QVector<RenderableOnPathSymbol::GlyphPlacement> computePlacementOfGlyphsOnPath(
             const bool is2D,
-            const QVector<glm::vec2>& pathInWorld,
-            const unsigned int startPointIndex,
-            const unsigned int endPointIndex,
-            const glm::vec2& exactStartPointInWorld,
-            const glm::vec2& exactEndPointInWorld,
-            const QVector<glm::vec2>& subpathOnScreen,
-            const glm::vec2& exactStartPointOnScreen,
-            const glm::vec2& exactEndPointOnScreen,
+            const QVector<glm::vec2>& path,
+            const QVector<float>& pathSegmentsLengths,
+            const unsigned int startPathPointIndex,
+            const float offsetFromStartPathPoint,
+            const unsigned int endPathPointIndex,
             const glm::vec2& directionOnScreen,
             const QVector<float>& glyphsWidths) const;
 
