@@ -603,7 +603,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 }
                 
                 // Pin-point location
-                {
+                /*{
                     const auto pinPointInWorld = Utilities::convert31toFloat(
                         pinPoint.point31 - currentState.target31,
                         currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
@@ -619,7 +619,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                     const auto sn1 = sn0 + (directionOnScreenN*32.0f);
                     lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
                     getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorBLUE, 128));
-                }
+                }*/
             }
         }
     }
