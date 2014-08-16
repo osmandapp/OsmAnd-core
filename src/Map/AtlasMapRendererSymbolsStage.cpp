@@ -247,15 +247,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         }
 
         ////////////////////////////////////////////////////////////////////////////
-        /*
+        
         {
             if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(currentSymbol->group.lock()))
             {
-                if ((symbolsGroupWithId->id >> 1) != 8388578)
+                if ((symbolsGroupWithId->id >> 1) != 31314189)
                     continue;
             }
         }
-        */
+        
         ////////////////////////////////////////////////////////////////////////////
 
         // Skip if there are no pin-points
@@ -1835,6 +1835,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
 
     if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
     {
+        getRenderer()->debugStage->addRect2D(oobb.aabb(), SkColorSetA(SK_ColorGREEN, 50));
         getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorGREEN, 50), -oobb.rotation());
         getRenderer()->debugStage->addLine2D({
             oobb.pointInGlobalSpace0(),

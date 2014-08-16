@@ -300,7 +300,7 @@ namespace OsmAnd
             {
                 if (what.type == BBoxType::AABB)
                     return which.contains(what.asAABB);
-                else /* if (bbox_.type == BBoxType::OOBB) */
+                else /* if (what.type == BBoxType::OOBB) */
                     return which.contains(what.asOOBB);
             }
 
@@ -308,7 +308,7 @@ namespace OsmAnd
             {
                 if (what.type == BBoxType::AABB)
                     return what.asAABB.contains(which);
-                else /* if (bbox_.type == BBoxType::OOBB) */
+                else /* if (what.type == BBoxType::OOBB) */
                     return what.asOOBB.contains(which);
             }
 
@@ -317,7 +317,7 @@ namespace OsmAnd
             {
                 if (what.type == BBoxType::AABB)
                     return which.intersects(what.asAABB);
-                else /* if (bbox_.type == BBoxType::OOBB) */
+                else /* if (what.type == BBoxType::OOBB) */
                     return which.intersects(what.asOOBB);
             }
 

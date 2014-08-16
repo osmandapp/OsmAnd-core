@@ -909,8 +909,8 @@ namespace OsmAnd
             if (!aabb().contains(that.aabb()))
                 return false;
 
-            // If angle of rotation is equal, check unrotated
-            if (qFuzzyCompare(rotation(), that.rotation()))
+            // If angle of rotation is equal and is zero, check unrotated
+            if (qFuzzyCompare(rotation(), that.rotation()) && qFuzzyIsNull(rotation()))
                 return unrotatedBBox().contains(that.unrotatedBBox());
 
             // In case this OOBB contains that OOBB, all points of that OOBB lay inside this OOBB
@@ -927,8 +927,8 @@ namespace OsmAnd
             if (!aabb().intersects(that.aabb()))
                 return false;
 
-            // If angle of rotation is equal, intersect unrotated
-            if (qFuzzyCompare(rotation(), that.rotation()))
+            // If angle of rotation is equal and is zero, intersect unrotated
+            if (qFuzzyCompare(rotation(), that.rotation()) && qFuzzyIsNull(rotation()))
                 return unrotatedBBox().intersects(that.unrotatedBBox());
 
             const auto& p0 = pointInGlobalSpace0();
