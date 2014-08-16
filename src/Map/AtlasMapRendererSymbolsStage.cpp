@@ -1835,7 +1835,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
 
     if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
     {
-        getRenderer()->debugStage->addRect2D(oobb.aabb(), SkColorSetA(SK_ColorGREEN, 50));
         getRenderer()->debugStage->addRect2D(oobb.unrotatedBBox(), SkColorSetA(SK_ColorGREEN, 50), -oobb.rotation());
         getRenderer()->debugStage->addLine2D({
             oobb.pointInGlobalSpace0(),
