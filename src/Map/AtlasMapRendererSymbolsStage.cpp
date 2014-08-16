@@ -381,7 +381,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 pathSegmentsLengthsOnScreen,
                 pinPoint.basePathPointIndex,
                 pinPoint.normalizedOffsetFromBasePathPoint,
-                halfSizeInPixels,
+                -halfSizeInPixels,
                 startPathPointIndex2D,
                 offsetFromStartPathPoint2D);
             unsigned int endPathPointIndex2D = 0;
@@ -390,7 +390,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 pathSegmentsLengthsOnScreen,
                 pinPoint.basePathPointIndex,
                 pinPoint.normalizedOffsetFromBasePathPoint,
-                -halfSizeInPixels,
+                halfSizeInPixels,
                 endPathPointIndex2D,
                 offsetFromEndPathPoint2D);
             if (fits)
@@ -431,14 +431,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                     pathSegmentsLengthsInWorld,
                     pinPoint.basePathPointIndex,
                     pinPoint.normalizedOffsetFromBasePathPoint,
-                    halfSizeInWorld,
+                    -halfSizeInWorld,
                     startPathPointIndex3D,
                     offsetFromStartPathPoint3D);
                 fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
                     pathSegmentsLengthsInWorld,
                     pinPoint.basePathPointIndex,
                     pinPoint.normalizedOffsetFromBasePathPoint,
-                    -halfSizeInWorld,
+                    halfSizeInWorld,
                     endPathPointIndex3D,
                     offsetFromEndPathPoint3D);
 
@@ -602,7 +602,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                 }
                 
                 // Pin-point location
-                /*{
+                {
                     const auto pinPointInWorld = Utilities::convert31toFloat(
                         pinPoint.point31 - currentState.target31,
                         currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
@@ -618,7 +618,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                     const auto sn1 = sn0 + (directionOnScreenN*32.0f);
                     lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
                     getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorBLUE, 128));
-                }*/
+                }
             }
         }
     }
@@ -633,6 +633,7 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(
 {
     const auto& internalState = getInternalState();
 
+    assert(endIndex >= startIndex);
     const auto count = endIndex - startIndex + 1;
     QVector<glm::vec2> result(count);
     auto pPointInWorld = result.data();
@@ -657,6 +658,7 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScree
 {
     const auto& internalState = getInternalState();
 
+    assert(endIndex >= startIndex);
     const auto count = endIndex - startIndex + 1;
     QVector<glm::vec2> result(count);
     auto pPointOnScreen = result.data();
@@ -772,6 +774,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::pathRenderableAs2D(
     const unsigned int endPathPointIndex,
     const glm::vec2& exactEndPointOnScreen)
 {
+    assert(endPathPointIndex >= startPathPointIndex);
     const auto subpathSize = endPathPointIndex - startPathPointIndex + 1;
 
     if (subpathSize > 2)
@@ -814,6 +817,7 @@ glm::vec2 OsmAnd::AtlasMapRendererSymbolsStage::computePathDirection(
     const unsigned int endPathPointIndex,
     const glm::vec2& exactEndPoint)
 {
+    assert(endPathPointIndex >= startPathPointIndex);
     const auto subpathSize = endPathPointIndex - startPathPointIndex + 1;
 
     glm::vec2 subpathDirection;
