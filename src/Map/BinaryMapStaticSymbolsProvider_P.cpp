@@ -202,7 +202,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                         extraSymbolInstance->contentClass = billboardSymbol->contentClass;
                         extraSymbolInstance->languageId = billboardSymbol->languageId;
                         extraSymbolInstance->minDistance = billboardSymbol->minDistance;
-                        extraSymbolInstance->position31 = computedPinPoint.point31;
+                        extraSymbolInstance->position31 = computedPinPoint.point31; //! WRONG!
                         extraSymbolInstance->offset = billboardSymbol->offset;
 
                         extraSymbolInstances[billboardSymbol].push_back(extraSymbolInstance);
@@ -211,6 +211,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     {
                         OnPathMapSymbol::PinPoint pinPoint;
                         pinPoint.point31 = computedPinPoint.point31;
+                        pinPoint.offsetFromPointInPixels = computedPinPoint.offsetFromPointInPixels;
                         pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
                         pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
                         pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
@@ -531,6 +532,7 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
 
                         ComputedPinPoint computedPinPoint = computedBlockPinPoint;
                         computedPinPoint.offsetFromPointInPixels = symbolPinPointOffset + symbol.leftPaddingInPixels + symbol.widthInPixels / 2.0f;
+                        computedPinPoint.offsetFromPointInPixels *= qPow(2.0f, neededZoom - currentZoomLevel); // Maintain proper offset pixels scale
                         symbolPinPointOffset += symbolsFullSizesInPixels[symbolIdx];
 
                         computedPinPoints.push_back(qMove(computedPinPoint));
