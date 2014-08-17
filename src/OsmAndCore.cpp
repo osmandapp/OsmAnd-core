@@ -27,6 +27,7 @@
 #include "QMainThreadTaskEvent.h"
 #include "ICU_private.h"
 #include "TextRasterizer_private.h"
+#include "MapSymbolIntersectionClassesRegistry_private.h"
 
 namespace OsmAnd
 {
@@ -96,6 +97,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 
     // Text rasterizer
     TextRasterizer_initializeGlobalInstance();
+
+    // MapSymbol intersection classes registry
+    MapSymbolIntersectionClassesRegistry_initializeGlobalInstance();
 }
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
@@ -110,6 +114,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
     {
         releaseInAppThread();
     }
+
+    // MapSymbol intersection classes registry
+    MapSymbolIntersectionClassesRegistry_releaseGlobalInstance();
 
     // Text rasterizer
     TextRasterizer_releaseGlobalInstance();

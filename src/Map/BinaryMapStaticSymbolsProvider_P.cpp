@@ -8,6 +8,7 @@
 #include <SkBitmap.h>
 #include "restore_internal_warnings.h"
 
+#include "MapSymbolIntersectionClassesRegistry.h"
 #include "BinaryMapPrimitivesProvider.h"
 #include "MapPresentationEnvironment.h"
 #include "Primitiviser.h"
@@ -71,6 +72,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     SymbolRasterizer().rasterize(primitivesTile->primitivisedArea, rasterizedSymbolsGroups, rasterizationFilter, nullptr);
 
     // Convert results
+    auto& mapSymbolIntersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
     QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
     for (const auto& rasterizedGroup : constOf(rasterizedSymbolsGroups))
     {
@@ -99,7 +101,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
                 const auto billboardRasterSymbol = new BillboardRasterMapSymbol(group, group->sharableById);
                 billboardRasterSymbol->order = rasterizedSpriteSymbol->order;
-                billboardRasterSymbol->intersectionModeFlags |= MapSymbol::IgnoreIntersectionsInOwnGroup;
                 billboardRasterSymbol->bitmap = rasterizedSpriteSymbol->bitmap;
                 billboardRasterSymbol->size = PointI(rasterizedSpriteSymbol->bitmap->width(), rasterizedSpriteSymbol->bitmap->height());
                 billboardRasterSymbol->content = rasterizedSpriteSymbol->content;
@@ -109,15 +110,24 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 billboardRasterSymbol->offset = rasterizedSpriteSymbol->offset;
                 if (rasterizedSpriteSymbol->intersectionSize.x == 0 && rasterizedSpriteSymbol->intersectionSize.y == 0)
                 {
-                    billboardRasterSymbol->intersectionModeFlags |= MapSymbol::IntersectionModeFlag::IgnoredByIntersectionTest;
-                    billboardRasterSymbol->intersectionModeFlags |= MapSymbol::IntersectionModeFlag::TransparentForIntersectionLookup;
+                    // In this case ignore any intersection classes set
                 }
-                else if (rasterizedSpriteSymbol->intersectionSize.x > 0 || rasterizedSpriteSymbol->intersectionSize.y > 0)
+                else
                 {
                     if (rasterizedSpriteSymbol->intersectionSize.x > 0)
                         billboardRasterSymbol->margin.x = rasterizedSpriteSymbol->intersectionSize.x - billboardRasterSymbol->size.x;
                     if (rasterizedSpriteSymbol->intersectionSize.y > 0)
                         billboardRasterSymbol->margin.y = rasterizedSpriteSymbol->intersectionSize.y + billboardRasterSymbol->size.y;
+
+                    // Collect intersection classes
+                    for (const auto& intersectsWithClass : constOf(rasterizedSpriteSymbol->primitiveSymbol->intersectsWith))
+                    {
+                        billboardRasterSymbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectsWithClass));
+                    }
+                    for (const auto& intersectedByClass : constOf(rasterizedSpriteSymbol->primitiveSymbol->intersectedBy))
+                    {
+                        billboardRasterSymbol->intersectedByClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectedByClass));
+                    }
                 }
                 symbol.reset(billboardRasterSymbol);
             }
@@ -127,7 +137,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
                 const auto onPathSymbol = new OnPathMapSymbol(group, group->sharableById);
                 onPathSymbol->order = rasterizedOnPathSymbol->order;
-                onPathSymbol->intersectionModeFlags |= MapSymbol::IgnoreIntersectionsInOwnGroup;
                 onPathSymbol->bitmap = rasterizedOnPathSymbol->bitmap;
                 onPathSymbol->size = PointI(rasterizedOnPathSymbol->bitmap->width(), rasterizedOnPathSymbol->bitmap->height());
                 onPathSymbol->content = rasterizedOnPathSymbol->content;
@@ -163,7 +172,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             for (const auto& symbol : constOf(group->symbols))
             {
                 // For on path entire check has to be performed to exclude intended duplicates
-                symbol->intersectionModeFlags.unset(MapSymbol::IgnoreIntersectionsInOwnGroup);
+                symbol->intersectedByClasses.insert(mapSymbolIntersectionClassesRegistry.ownGroupClass);
+                symbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.ownGroupClass);
 
                 if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                 {

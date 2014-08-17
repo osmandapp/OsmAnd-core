@@ -1857,6 +1857,18 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
 
         evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
+        QString intersectedBy;
+        ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTED_BY, intersectedBy);
+        if (!ok)
+            intersectedBy = QLatin1String("any");
+        text->intersectedBy = intersectedBy.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+
+        QString intersectsWith;
+        ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
+        if (!ok)
+            intersectsWith = QLatin1String("any");
+        text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+
         outSymbols.push_back(qMove(text));
     }
 }
@@ -1880,26 +1892,38 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
     QString iconResourceName;
     ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
 
-    if (ok && !iconResourceName.isEmpty())
-    {
-        const std::shared_ptr<IconSymbol> icon(new IconSymbol(primitive));
-        icon->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
-        icon->location31 = location;
+    if (!ok || iconResourceName.isEmpty())
+        return;
 
-        icon->resourceName = qMove(iconResourceName);
+    const std::shared_ptr<IconSymbol> icon(new IconSymbol(primitive));
+    icon->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
+    icon->location31 = location;
 
-        icon->order = 100;
-        primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);
-        //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
-        icon->order += 100000;
+    icon->resourceName = qMove(iconResourceName);
 
-        primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIELD, icon->shieldResourceName);
+    icon->order = 100;
+    primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);
+    //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
+    icon->order += 100000;
 
-        icon->intersectionSize = 0.0f; // 0.0 means 'Excluded from intersection check'
-        ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_INTERSECTION_SIZE, icon->intersectionSize);
-        if (!ok)
-            icon->intersectionSize = -1.0f; // < 0 means 'Determined by it's real size'
+    primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIELD, icon->shieldResourceName);
 
-        outSymbols.push_back(qMove(icon));
-    }
+    icon->intersectionSize = 0.0f; // 0.0 means 'Excluded from intersection check'
+    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_INTERSECTION_SIZE, icon->intersectionSize);
+    if (!ok)
+        icon->intersectionSize = -1.0f; // < 0 means 'Determined by it's real size'
+
+    QString intersectedBy;
+    ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTED_BY, intersectedBy);
+    if (!ok)
+        intersectedBy = QLatin1String("any");
+    icon->intersectedBy = intersectedBy.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+
+    QString intersectsWith;
+    ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
+    if (!ok)
+        intersectsWith = QLatin1String("any");
+    icon->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+
+    outSymbols.push_back(qMove(icon));
 }

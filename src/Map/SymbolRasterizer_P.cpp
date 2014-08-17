@@ -123,18 +123,15 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     }
 
                     // Publish new rasterized symbol
-                    const auto rasterizedSymbol = new RasterizedOnPathSymbol(
-                        group,
-                        group->mapObject,
-                        qMove(rasterizedText),
-                        textSymbol->order,
-                        RasterizedSymbol::ContentType::Text,
-                        textSymbol->value,
-                        textSymbol->languageId,
-                        textSymbol->minDistance,
-                        glyphsWidth);
-                    assert(static_cast<bool>(rasterizedSymbol->bitmap));
-                    group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
+                    const std::shared_ptr<RasterizedOnPathSymbol> rasterizedSymbol(new RasterizedOnPathSymbol(group, textSymbol));
+                    rasterizedSymbol->bitmap = qMove(rasterizedText);
+                    rasterizedSymbol->order = textSymbol->order;
+                    rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Text;
+                    rasterizedSymbol->content = textSymbol->value;
+                    rasterizedSymbol->languageId = textSymbol->languageId;
+                    rasterizedSymbol->minDistance = textSymbol->minDistance;
+                    rasterizedSymbol->glyphsWidth = glyphsWidth;
+                    group->symbols.push_back(qMove(rasterizedSymbol));
                 }
                 else
                 {
@@ -157,20 +154,17 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                         totalOffset += localOffset;
 
                     // Publish new rasterized symbol
-                    const auto rasterizedSymbol = new RasterizedSpriteSymbol(
-                        group,
-                        group->mapObject,
-                        rasterizedText,
-                        textSymbol->order,
-                        RasterizedSymbol::ContentType::Text,
-                        textSymbol->value,
-                        textSymbol->languageId,
-                        textSymbol->minDistance,
-                        textSymbol->location31,
-                        textSymbol->drawAlongPath ? localOffset : totalOffset,
-                        textSymbol->drawAlongPath,
-                        PointI(-1, -1));
-                    assert(static_cast<bool>(rasterizedSymbol->bitmap));
+                    const std::shared_ptr<RasterizedSpriteSymbol> rasterizedSymbol(new RasterizedSpriteSymbol(group, textSymbol));
+                    rasterizedSymbol->bitmap = rasterizedText;
+                    rasterizedSymbol->order = textSymbol->order;
+                    rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Text;
+                    rasterizedSymbol->content = textSymbol->value;
+                    rasterizedSymbol->languageId = textSymbol->languageId;
+                    rasterizedSymbol->minDistance = textSymbol->minDistance;
+                    rasterizedSymbol->location31 = textSymbol->location31;
+                    rasterizedSymbol->offset = textSymbol->drawAlongPath ? localOffset : totalOffset;
+                    rasterizedSymbol->drawAlongPath = textSymbol->drawAlongPath;
+                    rasterizedSymbol->intersectionSize = PointI(-1, -1);
                     group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                     // Next symbol should also take into account:
@@ -253,20 +247,17 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     totalOffset += localOffset;
 
                 // Publish new rasterized symbol
-                const auto rasterizedSymbol = new RasterizedSpriteSymbol(
-                    group,
-                    group->mapObject,
-                    rasterizedIcon,
-                    iconSymbol->order,
-                    RasterizedSymbol::ContentType::Icon,
-                    iconSymbol->resourceName,
-                    LanguageId::Invariant,
-                    PointI(),
-                    iconSymbol->location31,
-                    iconSymbol->drawAlongPath ? localOffset : totalOffset,
-                    iconSymbol->drawAlongPath,
-                    PointI(iconSymbol->intersectionSize, iconSymbol->intersectionSize));
-                assert(static_cast<bool>(rasterizedSymbol->bitmap));
+                const std::shared_ptr<RasterizedSpriteSymbol> rasterizedSymbol(new RasterizedSpriteSymbol(group, iconSymbol));
+                rasterizedSymbol->bitmap = rasterizedIcon;
+                rasterizedSymbol->order = iconSymbol->order;
+                rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Icon;
+                rasterizedSymbol->content = iconSymbol->resourceName;
+                rasterizedSymbol->languageId = LanguageId::Invariant;
+                rasterizedSymbol->minDistance = PointI();
+                rasterizedSymbol->location31 = iconSymbol->location31;
+                rasterizedSymbol->offset = iconSymbol->drawAlongPath ? localOffset : totalOffset;
+                rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;
+                rasterizedSymbol->intersectionSize = PointI(iconSymbol->intersectionSize, iconSymbol->intersectionSize);
                 group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                 // Next symbol should also take into account:

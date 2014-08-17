@@ -42,13 +42,13 @@ namespace OsmAnd
 
         SkPaint _defaultPaint;
 
-        struct FontsRegisterEntry
+        struct FontsRegistryEntry
         {
             QString resource;
             bool bold;
             bool italic;
         };
-        QList< FontsRegisterEntry > _fontsRegister;
+        QList< FontsRegistryEntry > _fontsRegistry;
 
         mutable QMutex _fontTypefacesCacheMutex;
         mutable QHash< QString, SkTypeface* > _fontTypefacesCache;

@@ -8,7 +8,6 @@ OsmAnd::MapSymbol::MapSymbol(
     , isShareable(isShareable_)
     , order(0)
     , contentClass(ContentClass::Unknown)
-    , intersectionModeFlags(RegularIntersectionProcessing)
     , isHidden(false)
 {
 }

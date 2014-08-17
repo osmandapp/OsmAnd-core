@@ -125,8 +125,8 @@ bool OsmAnd::MapMarker_P::applyChanges()
     if (!_hasUnappliedChanges)
         return false;
 
-    QReadLocker scopedLocker2(&_symbolsGroupsRegisterLock);
-    for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegister))
+    QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
+    for (const auto& symbolGroup_ : constOf(_symbolsGroupsRegistry))
     {
         const auto symbolGroup = symbolGroup_.lock();
         if (!symbolGroup)
@@ -180,8 +180,6 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             symbolsGroup,
             false /* This symbol is not shareable*/));
         accuracyCircleSymbol->order = order++;
-        accuracyCircleSymbol->intersectionModeFlags |= MapSymbol::IgnoredByIntersectionTest;
-        accuracyCircleSymbol->intersectionModeFlags |= MapSymbol::TransparentForIntersectionLookup;
         accuracyCircleSymbol->position31 = _position;
         VectorMapSymbol::generateCirclePrimitive(*accuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
         accuracyCircleSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
@@ -195,8 +193,6 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             symbolsGroup,
             false /* This symbol is not shareable */));
         precisionRingSymbol->order = order++;
-        precisionRingSymbol->intersectionModeFlags |= MapSymbol::IgnoredByIntersectionTest;
-        precisionRingSymbol->intersectionModeFlags |= MapSymbol::TransparentForIntersectionLookup;
         precisionRingSymbol->position31 = _position;
         VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->accuracyCircleBaseColor.withAlpha(0.4f));
         precisionRingSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
@@ -226,8 +222,6 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             symbolsGroup,
             false /* This symbol is not shareable */));
         onMapSurfaceIconSymbol->order = order++;
-        onMapSurfaceIconSymbol->intersectionModeFlags |= MapSymbol::IgnoredByIntersectionTest;
-        onMapSurfaceIconSymbol->intersectionModeFlags |= MapSymbol::TransparentForIntersectionLookup;
         onMapSurfaceIconSymbol->bitmap = iconClone;
         onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
         onMapSurfaceIconSymbol->content = QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels());
@@ -249,8 +243,6 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             symbolsGroup,
             false /* This symbol is not shareable*/));
         pinIconSymbol->order = order++;
-        pinIconSymbol->intersectionModeFlags |= MapSymbol::IgnoredByIntersectionTest;
-        pinIconSymbol->intersectionModeFlags |= MapSymbol::TransparentForIntersectionLookup;
         pinIconSymbol->bitmap = pinIcon;
         pinIconSymbol->size = PointI(pinIcon->width(), pinIcon->height());
         pinIconSymbol->content = QString().sprintf("markerGroup(%p:%p)->pinIconBitmap:%p", this, symbolsGroup.get(), pinIcon->getPixels());
@@ -275,16 +267,16 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::createSymbolsGroup
 
 void OsmAnd::MapMarker_P::registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const
 {
-    QWriteLocker scopedLocker(&_symbolsGroupsRegisterLock);
+    QWriteLocker scopedLocker(&_symbolsGroupsRegistryLock);
 
-    _symbolsGroupsRegister.insert(symbolsGroup.get(), symbolsGroup);
+    _symbolsGroupsRegistry.insert(symbolsGroup.get(), symbolsGroup);
 }
 
 void OsmAnd::MapMarker_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const
 {
-    QWriteLocker scopedLocker(&_symbolsGroupsRegisterLock);
+    QWriteLocker scopedLocker(&_symbolsGroupsRegistryLock);
 
-    _symbolsGroupsRegister.remove(symbolsGroup);
+    _symbolsGroupsRegistry.remove(symbolsGroup);
 }
 
 OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::LinkedMapSymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP_)

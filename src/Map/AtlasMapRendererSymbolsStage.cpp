@@ -27,6 +27,7 @@
 #include "MapSymbolsGroupWithId.h"
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"
+#include "MapSymbolIntersectionClassesRegistry.h"
 
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
@@ -1388,26 +1389,50 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
 {
     const auto& symbol = renderable->mapSymbol;
 
-    if (symbol->intersectionModeFlags & MapSymbol::IgnoredByIntersectionTest)
+    if (symbol->intersectsWithClasses.isEmpty())
         return true;
 
     if (Q_UNLIKELY(debugSettings->skipSymbolsIntersectionCheck))
         return true;
     
     // Check intersections
-    const auto checkIntersectionsInOwnGroup = !symbol->intersectionModeFlags.isSet(MapSymbol::IgnoreIntersectionsInOwnGroup);
+    const auto& intersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
+    const auto& symbolIntersectsWithClasses = symbol->intersectsWithClasses;
+    const auto symbolIntersectsWithAnyClass = symbolIntersectsWithClasses.contains(intersectionClassesRegistry.anyClass);
+    const auto symbolIntersectsWithAnyExceptOwnGroupClass = symbolIntersectsWithClasses.contains(intersectionClassesRegistry.anyClass);
+    const auto ownGroupClass = intersectionClassesRegistry.ownGroupClass;
     const auto symbolGroupPtr = symbol->groupPtr;
     const auto intersects = intersections.test(renderable->intersectionBBox, false,
-        [symbolGroupPtr, checkIntersectionsInOwnGroup]
+        [symbolGroupPtr, symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, symbolIntersectsWithAnyExceptOwnGroupClass, ownGroupClass]
         (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const IntersectionsQuadTree::BBox& otherBBox) -> bool
         {
-            if (checkIntersectionsInOwnGroup)
+            const auto& otherSymbol = otherRenderable->mapSymbol;
+
+            // Special case to handle "this-to-any" intersection
+            if (symbolIntersectsWithAnyClass && !otherSymbol->intersectedByClasses.isEmpty())
                 return true;
 
-            // Only accept intersections with symbols from other groups
-            const auto& otherSymbol = otherRenderable->mapSymbol;
-            const auto shouldCheck = otherSymbol->groupPtr != symbolGroupPtr;
-            return shouldCheck;
+            // Special case to handle "any-except-own-group" intersection
+            if (symbolIntersectsWithAnyExceptOwnGroupClass && !otherSymbol->intersectedByClasses.isEmpty())
+            {
+                const auto sameGroup = (symbolGroupPtr == otherSymbol->groupPtr);
+                if (sameGroup)
+                    return false;
+            }
+
+            const auto commonIntersectionClasses = symbolIntersectsWithClasses & otherSymbol->intersectedByClasses;
+            
+            // Special case to handle "ownGroup" intersection
+            if (commonIntersectionClasses.size() == 1 &&
+                *commonIntersectionClasses.begin() == ownGroupClass)
+            {
+                const auto sameGroup = (symbolGroupPtr == otherSymbol->groupPtr);
+                if (sameGroup)
+                    return true;
+            }
+
+            const auto hasCommonIntersectionClasses = !commonIntersectionClasses.isEmpty();
+            return hasCommonIntersectionClasses;
         });
 
     if (intersects)
@@ -1709,11 +1734,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
     const std::shared_ptr<const RenderableSymbol>& renderable,
     IntersectionsQuadTree& intersections) const
 {
-    if (renderable->mapSymbol->intersectionModeFlags.isSet(MapSymbol::TransparentForIntersectionLookup) ||
-        Q_UNLIKELY(debugSettings->allSymbolsTransparentForIntersectionLookup))
-    {
+    if (renderable->mapSymbol->intersectedByClasses.isEmpty())
         return true;
-    }
+    
+    if (Q_UNLIKELY(debugSettings->allSymbolsTransparentForIntersectionLookup))
+        return true;
 
     if (!intersections.insert(renderable, renderable->intersectionBBox))
     {

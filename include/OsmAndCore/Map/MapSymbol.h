@@ -5,13 +5,14 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QSet>
 
 class SkBitmap;
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>
-#include <OsmAndCore/Bitmask.h>
+#include <OsmAndCore/Map/MapTypes.h>
 
 namespace OsmAnd
 {
@@ -22,17 +23,6 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(MapSymbol);
 
     public:
-        enum IntersectionModeFlag : unsigned int
-        {
-            IgnoredByIntersectionTest = 0,
-            TransparentForIntersectionLookup,
-            IgnoreIntersectionsInOwnGroup,
-        };
-        enum : unsigned int {
-            RegularIntersectionProcessing = 0,
-        };
-        typedef Bitmask<IntersectionModeFlag> IntersectionModeFlags;
-
         enum class ContentClass
         {
             Unknown = -1,
@@ -55,7 +45,8 @@ namespace OsmAnd
 
         int order;
         ContentClass contentClass;
-        IntersectionModeFlags intersectionModeFlags;
+        QSet<MapSymbolIntersectionClassId> intersectsWithClasses;
+        QSet<MapSymbolIntersectionClassId> intersectedByClasses;
 
         bool isHidden;
         FColorARGB modulationColor;

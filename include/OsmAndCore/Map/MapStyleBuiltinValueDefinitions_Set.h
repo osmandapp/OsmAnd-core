@@ -28,7 +28,11 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_ORDER, Output, Integer, "order", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_OBJECT_TYPE, Output, Integer, "objectType", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", false)
 
-// text properties
+// Text&Icon properties
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, Output, String, "intersectsWith", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTED_BY, Output, String, "intersectedBy", false)
+
+// Text properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_DY, Output, Integer, "textDy", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_HALO_RADIUS, Output, Integer, "textHaloRadius", true)
@@ -37,12 +41,11 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_SIZE, Output, Integer, "textSize", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ORDER, Output, Integer, "textOrder", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_MIN_DISTANCE_X, Output, Integer, "textMinDistance", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_SHIELD, Output, String, "textShield", false)
-
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_COLOR, Output, Color, "textColor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_BOLD, Output, Boolean, "textBold", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath", false)
 
-// point
+// Icon properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_ORDER, Output, Integer, "iconOrder", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIELD, Output, String, "shield", false)

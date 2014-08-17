@@ -26,37 +26,37 @@ void OsmAnd::TextRasterizer_P::initialize()
     static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
 
     // Fonts register (in priority order):
-    _fontsRegister.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Italic.ttf"), false, true });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Semibold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-SemiboldItalic.ttf"), true, true });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansEthiopic-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansEthiopic-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansArabic.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansHebrew-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansHebrew-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansThai-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansThai-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansArmenian.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansGeorgian.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansDevanagari-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansDevanagari-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansTamil-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansTamil-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansMalayalam.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansMalayalam-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansBengali-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansBengali-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansTelugu-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansTelugu-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansKannada-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansKannada-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansKhmer-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansKhmer-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansLao-Regular.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/NotoSansLao-Bold.ttf"), true, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/DroidSansFallback.ttf"), false, false });
-    _fontsRegister.push_back({ QLatin1String("map/fonts/MTLmr3m.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Italic.ttf"), false, true });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Semibold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-SemiboldItalic.ttf"), true, true });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansEthiopic-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansEthiopic-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansArabic.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansHebrew-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansHebrew-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansThai-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansThai-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansArmenian.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansGeorgian.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansDevanagari-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansDevanagari-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansTamil-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansTamil-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansMalayalam.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansMalayalam-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansBengali-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansBengali-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansTelugu-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansTelugu-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansKannada-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansKannada-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansKhmer-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansKhmer-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansLao-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansLao-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansFallback.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/MTLmr3m.ttf"), false, false });
 }
 
 void OsmAnd::TextRasterizer_P::clearFontsCache()
@@ -99,11 +99,11 @@ void OsmAnd::TextRasterizer_P::configurePaintForText(SkPaint& paint, const QStri
     paint = _defaultPaint;
 
     // Lookup matching font entry
-    const FontsRegisterEntry* pBestMatchEntry = nullptr;
+    const FontsRegistryEntry* pBestMatchEntry = nullptr;
     SkTypeface* bestMatchTypeface = nullptr;
     SkPaint textCoverageTestPaint;
     textCoverageTestPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
-    for (const auto& entry : constOf(_fontsRegister))
+    for (const auto& entry : constOf(_fontsRegistry))
     {
         // Get typeface for this entry
         const auto typeface = getTypefaceForFontResource(entry.resource);

@@ -94,8 +94,8 @@ namespace OsmAnd
         bool applyChanges();
 
         std::shared_ptr<MapSymbolsGroup> inflateSymbolsGroup() const;
-        mutable QReadWriteLock _symbolsGroupsRegisterLock;
-        mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegister;
+        mutable QReadWriteLock _symbolsGroupsRegistryLock;
+        mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
     public:

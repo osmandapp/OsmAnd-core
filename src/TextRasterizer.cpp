@@ -3,8 +3,6 @@
 
 #include "TextRasterizer_private.h"
 
-static std::shared_ptr<const OsmAnd::TextRasterizer> s_globalTextRasterizer;
-
 OsmAnd::TextRasterizer::TextRasterizer()
     : _p(new TextRasterizer_P(this))
 {
@@ -15,6 +13,7 @@ OsmAnd::TextRasterizer::~TextRasterizer()
 {
 }
 
+static std::shared_ptr<const OsmAnd::TextRasterizer> s_globalTextRasterizer;
 const OsmAnd::TextRasterizer& OsmAnd::TextRasterizer::globalInstance()
 {
     return *s_globalTextRasterizer;

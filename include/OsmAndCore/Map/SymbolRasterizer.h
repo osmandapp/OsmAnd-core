@@ -55,25 +55,19 @@ namespace OsmAnd
         protected:
             RasterizedSymbol(
                 const std::shared_ptr<const RasterizedSymbolsGroup>& group,
-                const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-                const std::shared_ptr<const SkBitmap>& bitmap,
-                const int order,
-                const ContentType contentType,
-                const QString& content,
-                const LanguageId& languageId,
-                const PointI& minDistance);
+                const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol);
         public:
             virtual ~RasterizedSymbol();
 
             const std::weak_ptr<const RasterizedSymbolsGroup> group;
+            const std::shared_ptr<const Primitiviser::Symbol> primitiveSymbol;
 
-            const std::shared_ptr<const Model::BinaryMapObject> mapObject;
-            const std::shared_ptr<const SkBitmap> bitmap;
-            const int order;
-            const ContentType contentType;
-            const QString content;
-            const LanguageId languageId;
-            const PointI minDistance;
+            std::shared_ptr<const SkBitmap> bitmap;
+            int order;
+            ContentType contentType;
+            QString content;
+            LanguageId languageId;
+            PointI minDistance;
         };
 
         class OSMAND_CORE_API RasterizedSpriteSymbol : public RasterizedSymbol
@@ -83,24 +77,14 @@ namespace OsmAnd
         protected:
             RasterizedSpriteSymbol(
                 const std::shared_ptr<const RasterizedSymbolsGroup>& group,
-                const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-                const std::shared_ptr<const SkBitmap>& bitmap,
-                const int order,
-                const ContentType contentType,
-                const QString& content,
-                const LanguageId& languageId,
-                const PointI& minDistance,
-                const PointI& location31,
-                const PointI& offset,
-                const bool drawAlongPath,
-                const PointI intersectionSize);
+                const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol);
         public:
             virtual ~RasterizedSpriteSymbol();
 
-            const PointI location31;
-            const PointI offset;
-            const bool drawAlongPath;
-            const PointI intersectionSize;
+            PointI location31;
+            PointI offset;
+            bool drawAlongPath;
+            PointI intersectionSize;
 
         friend class OsmAnd::SymbolRasterizer_P;
         };
@@ -112,18 +96,11 @@ namespace OsmAnd
         protected:
             RasterizedOnPathSymbol(
                 const std::shared_ptr<const RasterizedSymbolsGroup>& group,
-                const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-                const std::shared_ptr<const SkBitmap>& bitmap,
-                const int order,
-                const ContentType contentType,
-                const QString& content,
-                const LanguageId& languageId,
-                const PointI& minDistance,
-                const QVector<SkScalar>& glyphsWidth);
+                const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol);
         public:
             virtual ~RasterizedOnPathSymbol();
 
-            const QVector<SkScalar> glyphsWidth;
+            QVector<SkScalar> glyphsWidth;
 
         friend class OsmAnd::SymbolRasterizer_P;
         };

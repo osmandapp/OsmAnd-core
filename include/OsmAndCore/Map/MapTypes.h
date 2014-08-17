@@ -24,6 +24,8 @@ namespace OsmAnd
         NotPresent,
         Undefined
     };
+
+    typedef int MapSymbolIntersectionClassId;
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_TYPES_H_)
