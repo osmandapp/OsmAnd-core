@@ -331,7 +331,7 @@ namespace OsmAnd
 
             inline bool removeOne(const ELEMENT_TYPE& element, const BBox& bbox_)
             {
-                if (!contains(area, bbox_) && intersects(bbox_, area))
+                if (!contains(area, bbox_) && !intersects(bbox_, area))
                     return false;
 
                 auto itEntry = mutableIteratorOf(entries);
@@ -360,7 +360,7 @@ namespace OsmAnd
 
             inline unsigned int removeAll(const ELEMENT_TYPE& element, const BBox& bbox_)
             {
-                if (!contains(area, bbox_) && intersects(bbox_, area))
+                if (!contains(area, bbox_) && !intersects(bbox_, area))
                     return false;
 
                 unsigned int removedCount = 0;

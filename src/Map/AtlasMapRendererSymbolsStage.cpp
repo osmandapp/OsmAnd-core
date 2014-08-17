@@ -37,7 +37,7 @@ OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage()
 {
 }
 
-#define OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE 1
+//#define OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE 1
 #ifndef OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
 #   define OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE 0
 #endif // !defined(OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE)
@@ -122,8 +122,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             // Discard entire group
             for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
             {
+                if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
+                    addRenderableDebugBox(plottedGroupSymbol.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-                outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
+                const auto removed = outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
+                assert(removed);
 #endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 plottedSymbols.erase(plottedGroupSymbol.iterator);
             }
@@ -148,7 +152,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         addRenderableDebugBox(plottedGroupSymbol.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-                    outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
+                    const auto removed = outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
+                    assert(removed);
 #endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                     plottedSymbols.erase(plottedGroupSymbol.iterator);
                 }
@@ -183,7 +188,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             addRenderableDebugBox(plottedGroupSymbol.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-                        outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
+                        const auto removed = outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
+                        assert(removed);
 #endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                         plottedSymbols.erase(plottedGroupSymbol.iterator);
                     }
@@ -220,8 +226,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
                         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
                             addRenderableDebugBox(plottedGroupSymbol.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-                        outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
+                        const auto removed = outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
+                        assert(removed);
 #endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                         plottedSymbols.erase(plottedGroupSymbol.iterator);
                         itPlottedGroupSymbol.remove();
@@ -1806,7 +1814,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::addRenderableDebugBox(
             (glm::ivec2)boundsInWindow.bottomRight,
             (glm::ivec2)boundsInWindow.bottomLeft(),
             (glm::ivec2)boundsInWindow.topLeft
-        }, SK_ColorGREEN);
+        }, color.withAlpha(255).argb);
     }
     else /* if (renderable->intersectionBBox.type == IntersectionsQuadTree::BBoxType::OOBB) */
     {
@@ -1819,7 +1827,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::addRenderableDebugBox(
             (PointF)oobb.pointInGlobalSpace2(),
             (PointF)oobb.pointInGlobalSpace3(),
             (PointF)oobb.pointInGlobalSpace0(),
-        }, SK_ColorGREEN);
+        }, color.withAlpha(255).argb);
     }
 }
 
