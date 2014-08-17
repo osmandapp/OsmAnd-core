@@ -90,14 +90,16 @@ else()
 			#include <iconv.h>
 			int main(int argc, char ** argv)
 			{ return iconv(0, (const char **)0, 0, (char**)0, 0); }
-			" ICONV_CONST)
+			" ICONV_NEEDS_C_CONST)
 		# Check if iconv() takes char ** (C)
 		check_c_source_compiles("
 			#include <iconv.h>
 			int main(int argc, char ** argv)
 			{ return iconv(0, (char **)0, 0, (char**)0, 0); }
-			" ICONV_NON_CONST)
-		if (ICONV_NON_CONST)
+			" ICONV_NEEDS_C_NON_CONST)
+		if (ICONV_NEEDS_C_CONST AND NOT ICONV_NEEDS_C_NON_CONST)
+			set(ICONV_CONST "const")
+		elseif (NOT ICONV_NEEDS_C_CONST AND ICONV_NEEDS_C_NON_CONST)
 			set(ICONV_CONST "")
 		endif()
 
@@ -106,14 +108,16 @@ else()
 			#include <iconv.h>
 			int main(int argc, char ** argv)
 			{ return iconv(0, (const char **)0, 0, (char**)0, 0); }
-			" ICONV_CPP_CONST)
+			" ICONV_NEEDS_CPP_CONST)
 		# Check if iconv() takes char ** (C++)
 		check_cxx_source_compiles("
 			#include <iconv.h>
 			int main(int argc, char ** argv)
 			{ return iconv(0, (char **)0, 0, (char**)0, 0); }
-			" ICONV_CPP_NON_CONST)
-		if (ICONV_CPP_NON_CONST)
+			" ICONV_NEEDS_CPP_NON_CONST)
+		if (ICONV_NEEDS_CPP_CONST AND NOT ICONV_NEEDS_CPP_NON_CONST)
+			set(ICONV_CPP_CONST "const")
+		elseif (NOT ICONV_NEEDS_CPP_CONST AND ICONV_NEEDS_CPP_NON_CONST)
 			set(ICONV_CPP_CONST "")
 		endif()
 	else()
