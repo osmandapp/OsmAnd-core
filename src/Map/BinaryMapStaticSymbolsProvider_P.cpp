@@ -188,7 +188,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 {
                     // Get larger bbox, to take into account possible rotation
                     const auto maxSize = qMax(billboardSymbol->size.x, billboardSymbol->size.y);
-                    const auto outerCircleRadius = 0.5f * qSqrt(2 * maxSize * maxSize);
+                    const auto outerCircleRadius = 0.5f * static_cast<float>(qSqrt(2 * maxSize * maxSize));
                     symbolsForComputation.push_back({ 0, 2.0f * outerCircleRadius, 0 });
                 }
                 else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
