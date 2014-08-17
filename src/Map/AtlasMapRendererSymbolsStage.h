@@ -218,7 +218,12 @@ namespace OsmAnd
 
         void addRenderableDebugBox(
             const std::shared_ptr<const RenderableSymbol>& renderable,
-            const ColorARGB color) const;
+            const ColorARGB color,
+            const bool drawBorder = true) const;
+        void addRenderableDebugBox(
+            const IntersectionsQuadTree::BBox intersectionBBox,
+            const ColorARGB color,
+            const bool drawBorder = true) const;
     protected:
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 

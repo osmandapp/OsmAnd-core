@@ -1086,6 +1086,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(billboardMapSymbol);
 
     //////////////////////////////////////////////////////////////////////////
+    /*
     {
         if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbol->group.lock()))
         {
@@ -1093,6 +1094,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
                 return;
         }
     }
+    */
     //////////////////////////////////////////////////////////////////////////
 
     // Get GPU resource
@@ -1448,37 +1450,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     if (hasSimilarContent)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
-        {
-            if (renderable->intersectionBBox.type == IntersectionsQuadTree::BBoxType::AABB)
-            {
-                const auto& boundsInWindow = renderable->intersectionBBox.asAABB;
+            addRenderableDebugBox(renderable, ColorARGB::fromSkColor(SK_ColorRED).withAlpha(128));
 
-                getRenderer()->debugStage->addRect2D(AreaF(boundsInWindow.getEnlargedBy(symbol->minDistance)), SkColorSetA(SK_ColorRED, 50));
-                getRenderer()->debugStage->addRect2D(AreaF(boundsInWindow), SkColorSetA(SK_ColorRED, 128));
-                getRenderer()->debugStage->addLine2D({
-                    (glm::ivec2)boundsInWindow.topLeft,
-                    (glm::ivec2)boundsInWindow.topRight(),
-                    (glm::ivec2)boundsInWindow.bottomRight,
-                    (glm::ivec2)boundsInWindow.bottomLeft(),
-                    (glm::ivec2)boundsInWindow.topLeft
-                }, SK_ColorRED);
-            }
-            else if (renderable->intersectionBBox.type == IntersectionsQuadTree::BBoxType::OOBB)
-            {
-                const auto& oobb = renderable->intersectionBBox.asOOBB;
-
-                getRenderer()->debugStage->addRect2D((AreaF)oobb.getEnlargedBy(symbol->minDistance).unrotatedBBox(), SkColorSetA(SK_ColorRED, 50), -oobb.rotation());
-                getRenderer()->debugStage->addRect2D((AreaF)oobb.unrotatedBBox(), SkColorSetA(SK_ColorRED, 128), -oobb.rotation());
-                getRenderer()->debugStage->addLine2D({
-                    (PointF)oobb.pointInGlobalSpace0(),
-                    (PointF)oobb.pointInGlobalSpace1(),
-                    (PointF)oobb.pointInGlobalSpace2(),
-                    (PointF)oobb.pointInGlobalSpace3(),
-                    (PointF)oobb.pointInGlobalSpace0()
-                }, SK_ColorRED);
-            }
-        }
-        return false;
+        if (Q_UNLIKELY(debugSettings->showSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
+            addRenderableDebugBox(renderable->intersectionBBox.getEnlargedBy(symbol->minDistance), ColorARGB::fromSkColor(SK_ColorRED).withAlpha(128), false);
     }
 
     return true;
@@ -1807,33 +1782,48 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
 
 void OsmAnd::AtlasMapRendererSymbolsStage::addRenderableDebugBox(
     const std::shared_ptr<const RenderableSymbol>& renderable,
-    const ColorARGB color) const
+    const ColorARGB color,
+    const bool drawBorder /* = true*/) const
 {
-    if (renderable->intersectionBBox.type == IntersectionsQuadTree::BBoxType::AABB)
+    addRenderableDebugBox(renderable->intersectionBBox, color, drawBorder);
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::addRenderableDebugBox(
+    const IntersectionsQuadTree::BBox intersectionBBox,
+    const ColorARGB color,
+    const bool drawBorder /*= true*/) const
+{
+    if (intersectionBBox.type == IntersectionsQuadTree::BBoxType::AABB)
     {
-        const auto& boundsInWindow = renderable->intersectionBBox.asAABB;
+        const auto& boundsInWindow = intersectionBBox.asAABB;
 
         getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, color.argb);
-        getRenderer()->debugStage->addLine2D({
-            (glm::ivec2)boundsInWindow.topLeft,
-            (glm::ivec2)boundsInWindow.topRight(),
-            (glm::ivec2)boundsInWindow.bottomRight,
-            (glm::ivec2)boundsInWindow.bottomLeft(),
-            (glm::ivec2)boundsInWindow.topLeft
-        }, color.withAlpha(255).argb);
+        if (drawBorder)
+        {
+            getRenderer()->debugStage->addLine2D({
+                (glm::ivec2)boundsInWindow.topLeft,
+                (glm::ivec2)boundsInWindow.topRight(),
+                (glm::ivec2)boundsInWindow.bottomRight,
+                (glm::ivec2)boundsInWindow.bottomLeft(),
+                (glm::ivec2)boundsInWindow.topLeft
+            }, color.withAlpha(255).argb);
+        }
     }
-    else /* if (renderable->intersectionBBox.type == IntersectionsQuadTree::BBoxType::OOBB) */
+    else /* if (intersectionBBox.type == IntersectionsQuadTree::BBoxType::OOBB) */
     {
-        const auto& oobb = renderable->intersectionBBox.asOOBB;
+        const auto& oobb = intersectionBBox.asOOBB;
 
         getRenderer()->debugStage->addRect2D((AreaF)oobb.unrotatedBBox(), color.argb, -oobb.rotation());
-        getRenderer()->debugStage->addLine2D({
-            (PointF)oobb.pointInGlobalSpace0(),
-            (PointF)oobb.pointInGlobalSpace1(),
-            (PointF)oobb.pointInGlobalSpace2(),
-            (PointF)oobb.pointInGlobalSpace3(),
-            (PointF)oobb.pointInGlobalSpace0(),
-        }, color.withAlpha(255).argb);
+        if (drawBorder)
+        {
+            getRenderer()->debugStage->addLine2D({
+                (PointF)oobb.pointInGlobalSpace0(),
+                (PointF)oobb.pointInGlobalSpace1(),
+                (PointF)oobb.pointInGlobalSpace2(),
+                (PointF)oobb.pointInGlobalSpace3(),
+                (PointF)oobb.pointInGlobalSpace0(),
+            }, color.withAlpha(255).argb);
+        }
     }
 }
 

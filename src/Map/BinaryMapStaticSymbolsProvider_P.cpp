@@ -145,13 +145,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         //  - Split path between them
         if (hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard)
         {
-            //////////////////////////////////////////////////////////////////////////
-            if ((mapObject->id >> 1) == 244622303)
-            {
-                int i = 5;
-            }
-            //////////////////////////////////////////////////////////////////////////
-
             // Compose list of symbols to compute pin-points for
             QList<SymbolForPinPointsComputation> symbolsForComputation;
             symbolsForComputation.reserve(group->symbols.size());

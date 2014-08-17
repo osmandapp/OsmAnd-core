@@ -24,6 +24,7 @@ namespace OsmAnd
         bool showSymbolsBBoxesRejectedByIntersectionCheck;
         bool skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck;
         bool showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
+        bool showSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
         bool showSymbolsBBoxesRejectedByPresentationMode;
         bool showOnPathSymbolsRenderablesPaths;
         bool showOnPath2dSymbolGlyphDetails;
