@@ -16,6 +16,8 @@ else()
 	include(CheckLibraryExists)
 	include(CheckTypeSize)
 	include(TestBigEndian)
+	include(CheckCSourceCompiles) 
+	include(CheckCXXSourceCompiles) 
 	
 	check_include_file("pthread.h" CPL_MULTIPROC_PTHREAD)
 	check_symbol_exists("PTHREAD_MUTEX_RECURSIVE" "pthread.h" PTHREAD_MUTEX_RECURSIVE)
