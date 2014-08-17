@@ -314,11 +314,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     ////////////////////////////////////////////////////////////////////////////
     /*
     {
-    if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(currentSymbol->group.lock()))
-    {
-    if ((symbolsGroupWithId->id >> 1) != 31314189)
-    continue;
-    }
+        if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(onPathMapSymbol->group.lock()))
+        {
+            if ((symbolsGroupWithId->id >> 1) != 244622303)
+                return;
+        }
     }
     */
     ////////////////////////////////////////////////////////////////////////////
@@ -1084,6 +1084,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
 {
     const auto& internalState = getInternalState();
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(billboardMapSymbol);
+
+    //////////////////////////////////////////////////////////////////////////
+    {
+        if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(mapSymbol->group.lock()))
+        {
+            if ((symbolsGroupWithId->id >> 1) != 244622303)
+                return;
+        }
+    }
+    //////////////////////////////////////////////////////////////////////////
 
     // Get GPU resource
     const auto gpuResource = captureGpuResource(referenceOrigins, mapSymbol);

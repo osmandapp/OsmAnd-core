@@ -75,7 +75,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     for (const auto& rasterizedGroup : constOf(rasterizedSymbolsGroups))
     {
         const auto& mapObject = rasterizedGroup->mapObject;
-        
+
         // Get preallocated group
         const auto citPreallocatedGroup = preallocatedSymbolsGroups.constFind(mapObject->id);
         assert(citPreallocatedGroup != preallocatedSymbolsGroups.cend());
@@ -145,6 +145,13 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         //  - Split path between them
         if (hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard)
         {
+            //////////////////////////////////////////////////////////////////////////
+            if ((mapObject->id >> 1) == 244622303)
+            {
+                int i = 5;
+            }
+            //////////////////////////////////////////////////////////////////////////
+
             // Compose list of symbols to compute pin-points for
             QList<SymbolForPinPointsComputation> symbolsForComputation;
             symbolsForComputation.reserve(group->symbols.size());
@@ -181,34 +188,37 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             {
                 auto citComputedPinPoint = computedPinPoints.cbegin();
                 const auto citComputedPinPointsEnd = computedPinPoints.cend();
-                for (const auto& symbol : constOf(group->symbols))
+                while (citComputedPinPoint != citComputedPinPointsEnd)
                 {
-                    // Stop in case no more pin-points left
-                    if (citComputedPinPoint == citComputedPinPointsEnd)
-                        break;
-                    const auto& computedPinPoint = *(citComputedPinPoint++);
-
-                    if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
+                    for (const auto& symbol : constOf(group->symbols))
                     {
-                        if (!billboardSymbolsWithReplacedMainPositions.contains(billboardSymbol))
-                        {
-                            billboardSymbol->position31 = computedPinPoint.point31;
-                            billboardSymbolsWithReplacedMainPositions.insert(billboardSymbol);
-                        }
-                        else
-                        {
-                            billboardSymbol->additionalPositions31.push_back(computedPinPoint.point31);
-                        }
-                    }
-                    else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
-                    {
-                        OnPathMapSymbol::PinPoint pinPoint;
-                        pinPoint.point31 = computedPinPoint.point31;
-                        pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
-                        pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
-                        pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
+                        // Stop in case no more pin-points left
+                        if (citComputedPinPoint == citComputedPinPointsEnd)
+                            break;
+                        const auto& computedPinPoint = *(citComputedPinPoint++);
 
-                        onPathSymbol->pinPoints.push_back(qMove(pinPoint));
+                        if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
+                        {
+                            if (!billboardSymbolsWithReplacedMainPositions.contains(billboardSymbol))
+                            {
+                                billboardSymbol->position31 = computedPinPoint.point31;
+                                billboardSymbolsWithReplacedMainPositions.insert(billboardSymbol);
+                            }
+                            else
+                            {
+                                billboardSymbol->additionalPositions31.push_back(computedPinPoint.point31);
+                            }
+                        }
+                        else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
+                        {
+                            OnPathMapSymbol::PinPoint pinPoint;
+                            pinPoint.point31 = computedPinPoint.point31;
+                            pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
+                            pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
+                            pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
+
+                            onPathSymbol->pinPoints.push_back(qMove(pinPoint));
+                        }
                     }
                 }
             }
