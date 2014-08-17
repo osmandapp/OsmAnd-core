@@ -107,6 +107,18 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
                 billboardRasterSymbol->position31 = rasterizedSpriteSymbol->location31;
                 billboardRasterSymbol->offset = rasterizedSpriteSymbol->offset;
+                if (rasterizedSpriteSymbol->intersectionSize.x == 0 && rasterizedSpriteSymbol->intersectionSize.y == 0)
+                {
+                    billboardRasterSymbol->intersectionModeFlags |= MapSymbol::IntersectionModeFlag::IgnoredByIntersectionTest;
+                    billboardRasterSymbol->intersectionModeFlags |= MapSymbol::IntersectionModeFlag::TransparentForIntersectionLookup;
+                }
+                else if (rasterizedSpriteSymbol->intersectionSize.x > 0 || rasterizedSpriteSymbol->intersectionSize.y > 0)
+                {
+                    if (rasterizedSpriteSymbol->intersectionSize.x > 0)
+                        billboardRasterSymbol->margin.x = rasterizedSpriteSymbol->intersectionSize.x - billboardRasterSymbol->size.x;
+                    if (rasterizedSpriteSymbol->intersectionSize.y > 0)
+                        billboardRasterSymbol->margin.y = rasterizedSpriteSymbol->intersectionSize.y + billboardRasterSymbol->size.y;
+                }
                 symbol.reset(billboardRasterSymbol);
             }
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))

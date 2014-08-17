@@ -168,7 +168,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                         textSymbol->minDistance,
                         textSymbol->location31,
                         textSymbol->drawAlongPath ? localOffset : totalOffset,
-                        textSymbol->drawAlongPath);
+                        textSymbol->drawAlongPath,
+                        PointI(-1, -1));
                     assert(static_cast<bool>(rasterizedSymbol->bitmap));
                     group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
@@ -263,7 +264,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     PointI(),
                     iconSymbol->location31,
                     iconSymbol->drawAlongPath ? localOffset : totalOffset,
-                    iconSymbol->drawAlongPath);
+                    iconSymbol->drawAlongPath,
+                    PointI(iconSymbol->intersectionSize, iconSymbol->intersectionSize));
                 assert(static_cast<bool>(rasterizedSymbol->bitmap));
                 group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 

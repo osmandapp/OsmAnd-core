@@ -1219,10 +1219,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     // Get bounds in screen coordinates
     auto boundsInWindow = AreaI::fromCenterAndSize(
         static_cast<int>(symbolOnScreen.x + symbol->offset.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + symbol->offset.y),
-        symbol->size.x, symbol->size.y);
+        symbol->size.x + symbol->margin.x, symbol->size.y + symbol->margin.y);
     renderable->intersectionBBox = boundsInWindow;
-    //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-//    boundsInWindow.enlargeBy(PointI(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
     if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections))
         return false;

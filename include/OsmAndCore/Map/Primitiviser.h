@@ -180,6 +180,7 @@ namespace OsmAnd
 
             QString resourceName;
             QString shieldResourceName;
+            float intersectionSize;
 
         friend class OsmAnd::Primitiviser;
         friend class OsmAnd::Primitiviser_P;

@@ -113,6 +113,7 @@ OsmAnd::Primitiviser::TextSymbol::~TextSymbol()
 
 OsmAnd::Primitiviser::IconSymbol::IconSymbol(const std::shared_ptr<const Primitive>& primitive_)
     : Symbol(primitive_)
+    , intersectionSize(-1.0f)
 {
 }
 

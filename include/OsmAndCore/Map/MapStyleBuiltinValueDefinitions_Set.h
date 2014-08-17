@@ -46,6 +46,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath", fal
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_ORDER, Output, Integer, "iconOrder", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIELD, Output, String, "shield", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_INTERSECTION_SIZE, Output, Float, "iconVisibleSize", true)
 
 // polygon/way
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR, Output, Color, "color", false)

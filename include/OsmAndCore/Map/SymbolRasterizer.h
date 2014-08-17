@@ -92,13 +92,15 @@ namespace OsmAnd
                 const PointI& minDistance,
                 const PointI& location31,
                 const PointI& offset,
-                const bool drawAlongPath);
+                const bool drawAlongPath,
+                const PointI intersectionSize);
         public:
             virtual ~RasterizedSpriteSymbol();
 
             const PointI location31;
             const PointI offset;
             const bool drawAlongPath;
+            const PointI intersectionSize;
 
         friend class OsmAnd::SymbolRasterizer_P;
         };

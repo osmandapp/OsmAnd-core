@@ -31,6 +31,7 @@ namespace OsmAnd
         QString content;
         LanguageId languageId;
         PointI minDistance;
+        PointI margin;
     };
 }
 

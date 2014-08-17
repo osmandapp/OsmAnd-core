@@ -1895,6 +1895,11 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
 
         primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIELD, icon->shieldResourceName);
 
+        icon->intersectionSize = 0.0f; // 0.0 means 'Excluded from intersection check'
+        ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_INTERSECTION_SIZE, icon->intersectionSize);
+        if (!ok)
+            icon->intersectionSize = -1.0f; // < 0 means 'Determined by it's real size'
+
         outSymbols.push_back(qMove(icon));
     }
 }
