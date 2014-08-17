@@ -205,6 +205,31 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(const QString& name,
     return true;
 }
 
+bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outIconShield) const
+{
+    QMutexLocker scopedLocker(&_iconShieldsMutex);
+
+    auto itIconShield = _iconShields.constFind(name);
+    if (itIconShield == _iconShields.cend())
+    {
+        const auto bitmapPath = QString::fromLatin1("map/shields/%1.png").arg(name);
+
+        // Get data from embedded resources
+        auto data = obtainResourceByName(bitmapPath);
+
+        // Decode data
+        const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+        SkMemoryStream dataStream(data.constData(), data.length(), false);
+        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+            return false;
+
+        itIconShield = _iconShields.insert(name, bitmap);
+    }
+
+    outIconShield = *itIconShield;
+    return true;
+}
+
 QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QString& name) const
 {
     // Try to obtain from external resources first

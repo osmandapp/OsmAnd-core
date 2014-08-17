@@ -179,6 +179,7 @@ namespace OsmAnd
             virtual ~IconSymbol();
 
             QString resourceName;
+            QString shieldResourceName;
 
         friend class OsmAnd::Primitiviser;
         friend class OsmAnd::Primitiviser_P;

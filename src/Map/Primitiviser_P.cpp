@@ -1893,6 +1893,8 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
         //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
         icon->order += 100000;
 
+        primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIELD, icon->shieldResourceName);
+
         outSymbols.push_back(qMove(icon));
     }
 }

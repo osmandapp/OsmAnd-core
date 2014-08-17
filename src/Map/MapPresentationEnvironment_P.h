@@ -63,6 +63,9 @@ namespace OsmAnd
         mutable QMutex _textShieldsMutex;
         mutable QHash< QString, std::shared_ptr<const SkBitmap> > _textShields;
 
+        mutable QMutex _iconShieldsMutex;
+        mutable QHash< QString, std::shared_ptr<const SkBitmap> > _iconShields;
+
         QByteArray obtainResourceByName(const QString& name) const;
     public:
         virtual ~MapPresentationEnvironment_P();
@@ -79,7 +82,8 @@ namespace OsmAnd
 
         bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outBitmap) const;
         bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
-        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outShield) const;
+        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
+        bool obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const;

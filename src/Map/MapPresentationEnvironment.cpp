@@ -54,9 +54,14 @@ bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(const QString& name, std:
     return _p->obtainMapIcon(name, outIcon);
 }
 
-bool OsmAnd::MapPresentationEnvironment::obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const
+bool OsmAnd::MapPresentationEnvironment::obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const
 {
-    return _p->obtainTextShield(name, outIcon);
+    return _p->obtainTextShield(name, outTextShield);
+}
+
+bool OsmAnd::MapPresentationEnvironment::obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outIconShield) const
+{
+    return _p->obtainIconShield(name, outIconShield);
 }
 
 OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getDefaultBackgroundColor(const ZoomLevel zoom) const

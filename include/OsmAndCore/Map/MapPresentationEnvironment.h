@@ -56,7 +56,8 @@ namespace OsmAnd
 
         bool obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const;
         bool obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
-        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const;
+        bool obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
+        bool obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outIconShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
         void obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const;

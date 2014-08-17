@@ -10,6 +10,7 @@
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
 #include <SkError.h>
+#include <SkBitmapDevice.h>
 #include "restore_internal_warnings.h"
 
 #include "MapPresentationEnvironment.h"
@@ -159,7 +160,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     const auto rasterizedSymbol = new RasterizedSpriteSymbol(
                         group,
                         group->mapObject,
-                        qMove(rasterizedText),
+                        rasterizedText,
                         textSymbol->order,
                         RasterizedSymbol::ContentType::Text,
                         textSymbol->value,
@@ -185,17 +186,57 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
             }
             else if (const auto& iconSymbol = std::dynamic_pointer_cast<const Primitiviser::IconSymbol>(symbol))
             {
-                std::shared_ptr<const SkBitmap> bitmap;
-                if (!env->obtainMapIcon(iconSymbol->resourceName, bitmap) || !bitmap)
+                std::shared_ptr<const SkBitmap> iconBitmap;
+                if (!env->obtainMapIcon(iconSymbol->resourceName, iconBitmap) || !iconBitmap)
                     continue;
+                std::shared_ptr<const SkBitmap> backgroundBitmap;
+                if (!iconSymbol->shieldResourceName.isEmpty())
+                    env->obtainIconShield(iconSymbol->shieldResourceName, backgroundBitmap);
+
+                // Compose final image
+                std::shared_ptr<const SkBitmap> rasterizedIcon;
+                if (!backgroundBitmap)
+                    rasterizedIcon = iconBitmap;
+                else
+                {
+                    // Compute composed image size
+                    const auto rasterizedIconWidth = qMax(iconBitmap->width(), backgroundBitmap->width());
+                    const auto rasterizedIconHeight = qMax(iconBitmap->height(), backgroundBitmap->height());
+
+                    // Create a bitmap that will be hold entire symbol
+                    const auto pRasterizedIcon = new SkBitmap();
+                    rasterizedIcon.reset(pRasterizedIcon);
+                    pRasterizedIcon->setConfig(SkBitmap::kARGB_8888_Config, rasterizedIconWidth, rasterizedIconHeight);
+                    pRasterizedIcon->allocPixels();
+                    pRasterizedIcon->eraseColor(SK_ColorTRANSPARENT);
+                    
+                    // Create canvas
+                    SkBitmapDevice target(*pRasterizedIcon);
+                    SkCanvas canvas(&target);
+
+                    // Draw the background
+                    canvas.drawBitmap(*backgroundBitmap,
+                        (rasterizedIconWidth - backgroundBitmap->width()) / 2.0f,
+                        (rasterizedIconHeight - backgroundBitmap->height()) / 2.0f,
+                        nullptr);
+
+                    // Draw the icon
+                    canvas.drawBitmap(*iconBitmap,
+                        (rasterizedIconWidth - iconBitmap->width()) / 2.0f,
+                        (rasterizedIconHeight - iconBitmap->height()) / 2.0f,
+                        nullptr);
+
+                    // Flush all operations
+                    canvas.flush();
+                }
 
 #if OSMAND_DUMP_SYMBOLS
                 {
                     QDir::current().mkpath("icon_symbols");
                     std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
                     QString filename;
-                    filename.sprintf("%s\\icon_symbols\\%p.png", qPrintable(QDir::currentPath()), bitmap.get());
-                    encoder->encodeFile(qPrintable(filename), *bitmap, 100);
+                    filename.sprintf("%s\\icon_symbols\\%p.png", qPrintable(QDir::currentPath()), rasterizedIcon.get());
+                    encoder->encodeFile(qPrintable(filename), *rasterizedIcon, 100);
                 }
 #endif // OSMAND_DUMP_SYMBOLS
 
@@ -204,7 +245,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 // This calculation is used only if this symbol is not first. Otherwise nothing is used.
                 PointI localOffset;
                 if (!group->symbols.isEmpty() && !iconSymbol->drawAlongPath)
-                    localOffset.y += bitmap->height() / 2;
+                    localOffset.y += rasterizedIcon->height() / 2;
 
                 // Increment total offset
                 if (!iconSymbol->drawAlongPath)
@@ -214,7 +255,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 const auto rasterizedSymbol = new RasterizedSpriteSymbol(
                     group,
                     group->mapObject,
-                    qMove(bitmap),
+                    rasterizedIcon,
                     iconSymbol->order,
                     RasterizedSymbol::ContentType::Icon,
                     iconSymbol->resourceName,
@@ -229,7 +270,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 // Next symbol should also take into account:
                 //  - height / 2
                 if (!iconSymbol->drawAlongPath)
-                    totalOffset.y += bitmap->height() / 2;
+                    totalOffset.y += rasterizedIcon->height() / 2;
             }
         }
 
