@@ -76,8 +76,8 @@ namespace OsmAnd
         QList< PendingPublishOrUnpublishMapSymbol > _pendingPublishMapSymbols;
         mutable QReadWriteLock _pendingUnpublishMapSymbolsLock;
         QList< PendingPublishOrUnpublishMapSymbol > _pendingUnpublishMapSymbols;
-        mutable QReadWriteLock _publishedMapSymbolsLock;
-        QMap< int, PublishedMapSymbols > _publishedMapSymbols;
+        mutable QReadWriteLock _publishedMapSymbolsByOrderLock;
+        QMap< int, PublishedMapSymbols > _publishedMapSymbolsByOrder;
         QHash< std::shared_ptr<const MapSymbolsGroup>, SmartPOD<unsigned int, 0> > _publishedMapSymbolsGroups;
         QAtomicInt _publishedMapSymbolsCount;
         void publishMapSymbol(
@@ -180,8 +180,8 @@ namespace OsmAnd
             const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
 
         // Symbols-related:
-        QReadWriteLock& publishedMapSymbolsLock;
-        const QMap< int, PublishedMapSymbols >& publishedMapSymbols;
+        QReadWriteLock& publishedMapSymbolsByOrderLock;
+        const QMap< int, PublishedMapSymbols >& publishedMapSymbolsByOrder;
 
         // General:
 

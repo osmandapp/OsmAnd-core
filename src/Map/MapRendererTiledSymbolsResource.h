@@ -57,7 +57,7 @@ namespace OsmAnd
         };
         QList< std::shared_ptr<SharedGroupResources> > _referencedSharedGroupsResources;
 
-        QHash< std::shared_ptr<const MapSymbolsGroup>, QList< std::shared_ptr<const MapSymbol> > > _publishedMapSymbols;
+        QHash< std::shared_ptr<const MapSymbolsGroup>, QList< std::shared_ptr<const MapSymbol> > > _publishedMapSymbolsByGroup;
         mutable QReadWriteLock _symbolToResourceInGpuLUTLock;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _symbolToResourceInGpuLUT;
 

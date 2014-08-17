@@ -10,8 +10,8 @@ OsmAnd::MapRendererStage::MapRendererStage(MapRenderer* const renderer_)
     , currentState(renderer->currentState)
     , internalState(renderer->getInternalState())
     , debugSettings(renderer->currentDebugSettings)
-    , publishedMapSymbolsLock(renderer->publishedMapSymbolsLock)
-    , publishedMapSymbols(renderer->publishedMapSymbols)
+    , publishedMapSymbolsByOrderLock(renderer->publishedMapSymbolsByOrderLock)
+    , publishedMapSymbolsByOrder(renderer->publishedMapSymbolsByOrder)
 {
 }
 

@@ -172,6 +172,9 @@ namespace OsmAnd
             const MapRenderer::PublishedMapSymbols& input,
             QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
 
+        bool plotSymbol(
+            const std::shared_ptr<RenderableSymbol>& renderable,
+            IntersectionsQuadTree& intersections) const;
         bool plotBillboardSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
             IntersectionsQuadTree& intersections) const;

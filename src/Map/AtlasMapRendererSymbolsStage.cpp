@@ -54,13 +54,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         std::shared_ptr<const MapSymbol> mapSymbol;
     };
 
-    QReadLocker scopedLocker(&publishedMapSymbolsLock);
+    QReadLocker scopedLocker(&publishedMapSymbolsByOrderLock);
 
     // Iterate over map symbols layer sorted by "order" in ascending direction
     outIntersections = IntersectionsQuadTree(currentState.viewport, 8);
     PlottedSymbols plottedSymbols;
     QHash< const MapSymbolsGroup*, QList< PlottedSymbolRef > > plottedMapSymbolsByGroup;
-    for (const auto& publishedMapSymbols : constOf(publishedMapSymbols))
+    for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
     {
         // Obtain renderables in order how they should be rendered
         QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
@@ -80,33 +80,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             const auto& entry = itRenderableEntry.previous();
             const auto renderable = entry.value();
 
-            bool plotted = false;
-            if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable))
-            {
-                plotted = plotBillboardSymbol(
-                    renderable_,
-                    outIntersections);
-            }
-            else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable))
-            {
-                plotted = plotOnPathSymbol(
-                    renderable_,
-                    outIntersections);
-            }
-            else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable))
-            {
-                plotted = plotOnSurfaceSymbol(
-                    renderable_,
-                    outIntersections);
-            }
+            if (!plotSymbol(renderable, outIntersections))
+                continue;
+            
+            const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderable);
+            PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderable, renderable->mapSymbol };
 
-            if (plotted)
-            {
-                const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderable);
-                PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderable, renderable->mapSymbol };
-
-                plottedMapSymbolsByGroup[renderable->mapSymbol->groupPtr].push_back(qMove(plottedSymbolRef));
-            }
+            plottedMapSymbolsByGroup[renderable->mapSymbol->groupPtr].push_back(qMove(plottedSymbolRef));
         }
     }
 
@@ -249,6 +229,27 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
         outRenderableSymbols.push_back(qMove(plottedSymbol));
     }
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
+    const std::shared_ptr<RenderableSymbol>& renderable,
+    IntersectionsQuadTree& intersections) const
+{
+    if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable))
+    {
+        return plotBillboardSymbol(renderable_, intersections);
+    }
+    else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable))
+    {
+        return plotOnPathSymbol(renderable_, intersections);
+    }
+    else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable))
+    {
+        return plotOnSurfaceSymbol(renderable_, intersections);
+    }
+
+    assert(false);
+    return false;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::processOnPathSymbols(

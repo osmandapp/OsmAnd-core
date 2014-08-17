@@ -194,7 +194,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
         const auto& symbolsGroup = groupResources->group;
-        auto& publishedMapSymbols = _publishedMapSymbols[symbolsGroup];
+        auto& publishedMapSymbols = _publishedMapSymbolsByGroup[symbolsGroup];
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
             resourcesManager->publishMapSymbol(symbolsGroup, mapSymbol, self);
@@ -204,7 +204,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     for (const auto& groupResources : constOf(_referencedSharedGroupsResources))
     {
         const auto& symbolsGroup = groupResources->group;
-        auto& publishedMapSymbols = _publishedMapSymbols[symbolsGroup];
+        auto& publishedMapSymbols = _publishedMapSymbolsByGroup[symbolsGroup];
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
             resourcesManager->publishMapSymbol(symbolsGroup, mapSymbol, self);
@@ -451,14 +451,14 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     const auto& self = shared_from_this();
 
     // Unregister all registered map symbols
-    for (const auto& publishedMapSymbolsEntry : rangeOf(constOf(_publishedMapSymbols)))
+    for (const auto& publishedMapSymbolsEntry : rangeOf(constOf(_publishedMapSymbolsByGroup)))
     {
         const auto& symbolsGroup = publishedMapSymbolsEntry.key();
         const auto& mapSymbols = publishedMapSymbolsEntry.value();
         for (const auto& mapSymbol : publishedMapSymbolsEntry.value())
             resourcesManager->unpublishMapSymbol(symbolsGroup, mapSymbol, self);
     }
-    _publishedMapSymbols.clear();
+    _publishedMapSymbolsByGroup.clear();
 
     // Remove quick references (if any left)
 #if OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES

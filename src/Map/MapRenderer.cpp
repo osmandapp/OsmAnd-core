@@ -41,8 +41,8 @@ OsmAnd::MapRenderer::MapRenderer(
     , setupOptions(_setupOptions)
     , currentConfiguration(_currentConfigurationAsConst)
     , currentState(_currentState)
-    , publishedMapSymbolsLock(_publishedMapSymbolsLock)
-    , publishedMapSymbols(_publishedMapSymbols)
+    , publishedMapSymbolsByOrderLock(_publishedMapSymbolsByOrderLock)
+    , publishedMapSymbolsByOrder(_publishedMapSymbolsByOrder)
     , currentDebugSettings(_currentDebugSettingsAsConst)
     , gpuAPI(gpuAPI_)
 {
@@ -788,10 +788,10 @@ void OsmAnd::MapRenderer::publishMapSymbol(
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
     // First try to publish directly
-    if (_publishedMapSymbolsLock.tryLockForWrite())
+    if (_publishedMapSymbolsByOrderLock.tryLockForWrite())
     {
         doPublishMapSymbol(symbolGroup, symbol, resource);
-        _publishedMapSymbolsLock.unlock();
+        _publishedMapSymbolsByOrderLock.unlock();
         return;
     }
 
@@ -816,7 +816,7 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
     const std::shared_ptr<const MapSymbol>& symbol,
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    auto& symbolReferencedResources = _publishedMapSymbols[symbol->order][symbol];
+    auto& symbolReferencedResources = _publishedMapSymbolsByOrder[symbol->order][symbol];
     if (symbolReferencedResources.isEmpty())
         _publishedMapSymbolsCount.fetchAndAddOrdered(1);
     assert(!symbolReferencedResources.contains(resource));
@@ -842,10 +842,10 @@ void OsmAnd::MapRenderer::unpublishMapSymbol(
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
     // First try to publish directly
-    if (_publishedMapSymbolsLock.tryLockForWrite())
+    if (_publishedMapSymbolsByOrderLock.tryLockForWrite())
     {
         const bool unpublished = doUnpublishMapSymbol(symbolGroup, symbol, resource, true);
-        _publishedMapSymbolsLock.unlock();
+        _publishedMapSymbolsByOrderLock.unlock();
 
         // In case unpublish failed, this means that symbol is in pending to publish
         if (unpublished)
@@ -874,8 +874,8 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
     const std::shared_ptr<MapRendererBaseResource>& resource,
     const bool mayFail)
 {
-    const auto itPublishedMapSymbols = _publishedMapSymbols.find(symbol->order);
-    if (itPublishedMapSymbols == _publishedMapSymbols.end())
+    const auto itPublishedMapSymbols = _publishedMapSymbolsByOrder.find(symbol->order);
+    if (itPublishedMapSymbols == _publishedMapSymbolsByOrder.end())
     {
         if (!mayFail)
         {
@@ -936,7 +936,7 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
         publishedMapSymbols.erase(itSymbolReferencedResources);
     }
     if (publishedMapSymbols.isEmpty())
-        _publishedMapSymbols.erase(itPublishedMapSymbols);
+        _publishedMapSymbolsByOrder.erase(itPublishedMapSymbols);
 
     const auto itPublishedMapSymbolsGroup = _publishedMapSymbolsGroups.find(symbolGroup);
     auto& groupRefsCounter = *itPublishedMapSymbolsGroup;
@@ -978,7 +978,7 @@ bool OsmAnd::MapRenderer::processPendingMapSymbols()
         return false;
     
     {
-        QWriteLocker scopedLocker(&_publishedMapSymbolsLock);
+        QWriteLocker scopedLocker(&_publishedMapSymbolsByOrderLock);
 
         for (const auto& entry : constOf(pendingPublishMapSymbols))
         {
