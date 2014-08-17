@@ -304,7 +304,32 @@ else()
 	check_function_exists("_get_timezone" HAVE__GET_TIMEZONE)
 	check_function_exists("_localtime64_s" HAVE__LOCALTIME64_S)
 	check_function_exists("_mkgmtime64" HAVE__MKGMTIME64)
-	unset(ICONV_CONST)
+	if (HAVE_ICONV)
+		# Check if iconv() takes const char ** (C)
+		check_c_source_compiles("
+			#include <iconv.h>
+			int main(int argc, char ** argv)
+			{ return iconv(0, (const char **)0, 0, (char**)0, 0); }
+			" ICONV_NEEDS_C_CONST)
+		# Check if iconv() takes char ** (C)
+		check_c_source_compiles("
+			#include <iconv.h>
+			int main(int argc, char ** argv)
+			{ return iconv(0, (char **)0, 0, (char**)0, 0); }
+			" ICONV_NEEDS_C_NON_CONST)
+		if (ICONV_NEEDS_C_CONST AND NOT ICONV_NEEDS_C_NON_CONST)
+			set(ICONV_CONST "const")
+		elseif (NOT ICONV_NEEDS_C_CONST AND ICONV_NEEDS_C_NON_CONST)
+			set(ICONV_CONST "")
+		elseif (ICONV_NEEDS_C_CONST AND ICONV_NEEDS_C_NON_CONST)
+			# Doesn't matter
+			set(ICONV_CONST "")
+		else()
+			message(FATAL_ERROR "iconv.h: Take a look on iconv() declaration")
+		endif()
+	else()
+		unset(ICONV_CONST)
+	endif()
 	unset(LIBARCHIVE_VERSION_NUMBER)
 	unset(LIBARCHIVE_VERSION_STRING)
 	unset(LSTAT_FOLLOWS_SLASHED_SYMLINK)

@@ -898,6 +898,9 @@
 
 /* Define as const if the declaration of iconv() needs const. */
 #cmakedefine ICONV_CONST @ICONV_CONST@
+#ifndef ICONV_CONST
+#   define ICONV_CONST
+#endif // !defined(ICONV_CONST)
 
 /* Version number of libarchive as a single integer */
 #cmakedefine LIBARCHIVE_VERSION_NUMBER @LIBARCHIVE_VERSION_NUMBER@
