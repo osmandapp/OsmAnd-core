@@ -99,7 +99,7 @@ namespace OsmAnd
 
         inline operator bool() const
         {
-            return value != DEFAULT_VALUE;
+            return this->value != DEFAULT_VALUE;
         }
     };
 
