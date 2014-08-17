@@ -26,6 +26,9 @@ namespace OsmAnd
     class AtlasMapRendererSymbolsStage : public AtlasMapRendererStage
     {
     public:
+        struct RenderableSymbol;
+        typedef QuadTree< std::shared_ptr<const RenderableSymbol>, AreaI::CoordType > IntersectionsQuadTree;
+
         struct RenderableSymbol
         {
             virtual ~RenderableSymbol();
@@ -33,6 +36,7 @@ namespace OsmAnd
             std::shared_ptr<const MapSymbol> mapSymbol;
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             double distanceToCamera;
+            IntersectionsQuadTree::BBox intersectionBBox;
         };
 
         struct RenderableBillboardSymbol : RenderableSymbol
@@ -90,9 +94,6 @@ namespace OsmAnd
 
             float direction;
         };
-
-        typedef QuadTree< std::shared_ptr<const RenderableSymbol>, AreaI::CoordType > IntersectionsQuadTree;
-
     private:
         void processOnPathSymbols(
             const MapRenderer::PublishedMapSymbols& input,
@@ -196,29 +197,14 @@ namespace OsmAnd
             IntersectionsQuadTree& intersections) const;
 
         bool applyIntersectionWithOtherSymbolsFiltering(
-            const AreaI boundsInWindow,
-            const std::shared_ptr<const RenderableSymbol>& renderable,
-            const IntersectionsQuadTree& intersections) const;
-        bool applyIntersectionWithOtherSymbolsFiltering(
-            const OOBBF oobb,
             const std::shared_ptr<const RenderableSymbol>& renderable,
             const IntersectionsQuadTree& intersections) const;
         bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
-            const AreaI boundsInWindow,
-            const std::shared_ptr<const RenderableSymbol>& renderable,
-            const IntersectionsQuadTree& intersections) const;
-        bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
-            const OOBBF oobb,
             const std::shared_ptr<const RenderableSymbol>& renderable,
             const IntersectionsQuadTree& intersections) const;
         OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
         OOBBF calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
         bool plotRenderable(
-            const AreaI boundsInWindow,
-            const std::shared_ptr<const RenderableSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
-        bool plotRenderable(
-            const OOBBF oobb,
             const std::shared_ptr<const RenderableSymbol>& renderable,
             IntersectionsQuadTree& intersections) const;
         static std::shared_ptr<const GPUAPI::ResourceInGPU> captureGpuResource(
@@ -231,6 +217,10 @@ namespace OsmAnd
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         IntersectionsQuadTree _lastPreparedIntersections;
+
+        void addRenderableDebugBox(
+            const std::shared_ptr<const RenderableSymbol>& renderable,
+            const ColorARGB color) const;
     protected:
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 

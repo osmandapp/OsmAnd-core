@@ -96,6 +96,40 @@ namespace OsmAnd
                 return *this;
             }
 
+            inline BBox& operator=(const AreaT& that)
+            {
+                new(&asAABB) AreaT();
+                asAABB = that;
+                type = BBoxType::AABB;
+
+                return *this;
+            }
+
+            inline BBox& operator=(const OOBBT& that)
+            {
+                new(&asOOBB) OOBBT();
+                asOOBB = that;
+                type = BBoxType::OOBB;
+
+                return *this;
+            }
+
+            inline BBox getEnlargedBy(const PointT& delta) const
+            {
+                if (type == BBoxType::AABB)
+                    return BBox(asAABB.getEnlargedBy(delta));
+                else /* if (type == BBoxType::OOBB) */
+                    return BBox(asOOBB.getEnlargedBy(delta));
+            }
+
+            inline BBox getEnlargedBy(const COORD_TYPE& dt, const COORD_TYPE& dl, const COORD_TYPE& db, const COORD_TYPE& dr) const
+            {
+                if (type == BBoxType::AABB)
+                    return BBox(asAABB.getEnlargedBy(dt, dl, db, dr));
+                else /* if (type == BBoxType::OOBB) */
+                    return BBox(asOOBB.getEnlargedBy(dt, dl, db, dr));
+            }
+
             uint8_t data[DataSize];
             AreaT& asAABB;
             OOBBT& asOOBB;
@@ -279,7 +313,7 @@ namespace OsmAnd
 
                 for (const auto& entry : constOf(entries))
                 {
-                    if (contains(point, entry.first))
+                    if (contains(entry.first, point))
                     {
                         if (!acceptor || acceptor(entry.second, entry.first))
                             outResults.push_back(entry.second);
@@ -293,6 +327,65 @@ namespace OsmAnd
 
                     subnodes[idx]->select(point, outResults, acceptor);
                 }
+            }
+
+            inline bool removeOne(const ELEMENT_TYPE& element, const BBox& bbox_)
+            {
+                if (!contains(area, bbox_) && intersects(bbox_, area))
+                    return false;
+
+                auto itEntry = mutableIteratorOf(entries);
+                while (itEntry.hasNext())
+                {
+                    const auto& entry = itEntry.next();
+
+                    if (entry.second != element)
+                        continue;
+
+                    itEntry.remove();
+                    return true;
+                }
+
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    if (subnodes[idx]->removeOne(element, bbox_))
+                        return true;
+                }
+
+                return false;
+            }
+
+            inline unsigned int removeAll(const ELEMENT_TYPE& element, const BBox& bbox_)
+            {
+                if (!contains(area, bbox_) && intersects(bbox_, area))
+                    return false;
+
+                unsigned int removedCount = 0;
+
+                auto itEntry = mutableIteratorOf(entries);
+                while (itEntry.hasNext())
+                {
+                    const auto& entry = itEntry.next();
+
+                    if (entry.second != element)
+                        continue;
+
+                    itEntry.remove();
+                    removedCount++;
+                }
+
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    removedCount += subnodes[idx]->removeAll(element, bbox_);
+                }
+
+                return removedCount;
             }
 
             inline bool removeOneSlow(const ELEMENT_TYPE& element)
@@ -384,12 +477,20 @@ namespace OsmAnd
                     return which.contains(what.asOOBB);
             }
 
-            static bool contains(const PointT& which, const BBox& what)
+            static bool contains(const BBox& which, const PointT& what)
             {
-                if (what.type == BBoxType::AABB)
-                    return what.asAABB.contains(which);
-                else /* if (what.type == BBoxType::OOBB) */
-                    return what.asOOBB.contains(which);
+                if (which.type == BBoxType::AABB)
+                    return which.asAABB.contains(what);
+                else /* if (which.type == BBoxType::OOBB) */
+                    return which.asOOBB.contains(what);
+            }
+
+            static bool intersects(const BBox& which, const BBox& what)
+            {
+                if (which.type == BBoxType::AABB)
+                    return intersects(which.asAABB, what);
+                else /* if (which.type == BBoxType::OOBB) */
+                    return intersects(which.asOOBB, what);
             }
 
             template<typename BBOX_TYPE>
@@ -512,6 +613,16 @@ namespace OsmAnd
         inline void select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor = nullptr) const
         {
             _root->select(point, outResults, acceptor);
+        }
+
+        inline bool removeOne(const ELEMENT_TYPE& entry, const BBox& bbox)
+        {
+            return _root->removeOne(entry, bbox);
+        }
+
+        inline unsigned int removeAll(const ELEMENT_TYPE& entry, const BBox& bbox)
+        {
+            return _root->removeAll(entry, bbox);
         }
 
         inline bool removeOneSlow(const ELEMENT_TYPE& entry)

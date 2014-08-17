@@ -51,13 +51,6 @@ endif()
 if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB sources_opengl "src/Map/OpenGL/*.c*")
 	file(GLOB headers_opengl "src/Map/OpenGL/*.h*")
-	set(target_specific_public_definitions ${target_specific_public_definitions}
-		-DOSMAND_GLM_AVAILABLE
-		-DGLM_SWIZZLE
-	)
-	set(target_specific_public_includes ${target_specific_public_includes}
-		"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
-	)
 	set(target_specific_sources ${target_specific_sources}
 		${headers_opengl}
 		${sources_opengl}
@@ -137,6 +130,7 @@ set(merged_dependencies
 	${target_specific_dependencies}
 )
 set(merged_compile_definitions_public
+	-DGLM_SWIZZLE
 	${target_specific_public_definitions}
 )
 set(merged_compile_definitions_private
@@ -157,6 +151,7 @@ set(merged_include_dirs_private
 )
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
+	"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
 	${target_specific_public_includes}
 )
 set(merged_link_libs_public

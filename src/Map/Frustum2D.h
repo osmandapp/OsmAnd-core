@@ -74,7 +74,6 @@ namespace OsmAnd
             return false;
         }
 
-#if defined(OSMAND_GLM_AVAILABLE)
         bool test(const QVector< glm::detail::tvec2<T, glm::precision::defaultp> >& path) const
         {
             if (path.isEmpty())
@@ -96,7 +95,6 @@ namespace OsmAnd
 
             return false;
         }
-#endif // defined(OSMAND_GLM_AVAILABLE)
 
         bool test(const AreaT& area) const
         {

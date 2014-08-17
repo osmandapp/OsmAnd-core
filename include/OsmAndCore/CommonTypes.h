@@ -8,9 +8,10 @@
 #include <QtMath>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
-#if defined(OSMAND_GLM_AVAILABLE)
-#   include <glm/glm.hpp>
-#endif // defined(OSMAND_GLM_AVAILABLE)
+#include <glm/glm.hpp>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <SkColor.h>
 #include <OsmAndCore/restore_internal_warnings.h>
 
@@ -60,13 +61,11 @@ namespace OsmAnd
             this->y = y;
         }
 
-#if defined(OSMAND_GLM_AVAILABLE)
         inline Point(const glm::detail::tvec2<T, glm::precision::defaultp>& that)
         {
             this->x = that.x;
             this->y = that.y;
         }
-#endif // defined(OSMAND_GLM_AVAILABLE)
 
 #if !defined(SWIG)
         inline PointT operator+(const PointT& r) const
@@ -137,26 +136,22 @@ namespace OsmAnd
             return *this;
         }
 
-#   if defined(OSMAND_GLM_AVAILABLE)
         inline PointT& operator=(const glm::detail::tvec2<T, glm::precision::defaultp>& r)
         {
             this->x = r.x;
             this->y = r.y;
             return *this;
         }
-#   endif // defined(OSMAND_GLM_AVAILABLE)
 
         inline operator Point<MorePreciseCoordType>() const
         {
             return Point<MorePreciseCoordType>(x, y);
         }
 
-#if defined(OSMAND_GLM_AVAILABLE)
         inline operator glm::detail::tvec2<T, glm::precision::defaultp>() const
         {
             return glm::detail::tvec2<T, glm::precision::defaultp>(x, y);
         }
-#endif // defined(OSMAND_GLM_AVAILABLE)
 
 #endif // !defined(SWIG)
 
@@ -1291,6 +1286,15 @@ namespace OsmAnd
         {
         }
 
+        static ColorARGB fromSkColor(const SkColor skColor)
+        {
+            return ColorARGB(
+                SkColorGetA(skColor),
+                SkColorGetR(skColor),
+                SkColorGetG(skColor),
+                SkColorGetB(skColor));
+        }
+
         inline ColorARGB(const uint8_t a_, const uint8_t r_, const uint8_t g_, const uint8_t b_)
             : b(b_)
             , g(g_)
@@ -1363,6 +1367,14 @@ namespace OsmAnd
             , g(255)
             , b(255)
         {
+        }
+
+        static ColorRGB fromSkColor(const SkColor skColor)
+        {
+            return ColorRGB(
+                SkColorGetR(skColor),
+                SkColorGetG(skColor),
+                SkColorGetB(skColor));
         }
 
         inline ColorRGB(const uint8_t r_, const uint8_t g_, const uint8_t b_)
