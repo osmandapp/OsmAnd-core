@@ -30,3 +30,13 @@ void OsmAnd::BillboardRasterMapSymbol::setPosition31(const PointI position)
 {
     position31 = position;
 }
+
+QList<OsmAnd::PointI> OsmAnd::BillboardRasterMapSymbol::getAdditionalPositions31() const
+{
+    return additionalPositions31;
+}
+
+void OsmAnd::BillboardRasterMapSymbol::setAdditionalPositions31(const QList<PointI>& additionalPositions31_)
+{
+    additionalPositions31 = additionalPositions31_;
+}

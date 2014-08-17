@@ -4,6 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QList>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -24,6 +25,9 @@ namespace OsmAnd
 
         virtual PointI getPosition31() const = 0;
         virtual void setPosition31(const PointI position) = 0;
+
+        virtual QList<PointI> getAdditionalPositions31() const = 0;
+        virtual void setAdditionalPositions31(const QList<PointI>& additionalPositions31) = 0;
     };
 }
 

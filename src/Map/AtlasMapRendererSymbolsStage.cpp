@@ -1090,21 +1090,45 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     if (!gpuResource)
         return;
 
-    std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
-    renderable->mapSymbol = mapSymbol;
-    renderable->gpuResource = gpuResource;
-    outRenderableSymbols.push_back(renderable);
+    // Process main position
+    {
+        std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
+        renderable->mapSymbol = mapSymbol;
+        renderable->gpuResource = gpuResource;
+        outRenderableSymbols.push_back(renderable);
 
-    // Calculate location of symbol in world coordinates.
-    renderable->offsetFromTarget31 = billboardMapSymbol->getPosition31() - currentState.target31;
-    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
-    renderable->positionInWorld = glm::vec3(
-        renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-        0.0f,
-        renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+        // Calculate location of symbol in world coordinates.
+        renderable->offsetFromTarget31 = billboardMapSymbol->getPosition31() - currentState.target31;
+        renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
+        renderable->positionInWorld = glm::vec3(
+            renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+            0.0f,
+            renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
-    // Get distance from symbol to camera
-    renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
+        // Get distance from symbol to camera
+        renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
+    }
+
+    // Process additional positions
+    const auto additionalPositions31 = billboardMapSymbol->getAdditionalPositions31();
+    for (const auto& additionalPosition31 : constOf(additionalPositions31))
+    {
+        std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
+        renderable->mapSymbol = mapSymbol;
+        renderable->gpuResource = gpuResource;
+        outRenderableSymbols.push_back(renderable);
+
+        // Calculate location of symbol in world coordinates.
+        renderable->offsetFromTarget31 = additionalPosition31 - currentState.target31;
+        renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
+        renderable->positionInWorld = glm::vec3(
+            renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+            0.0f,
+            renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+
+        // Get distance from symbol to camera
+        renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
+    }
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(

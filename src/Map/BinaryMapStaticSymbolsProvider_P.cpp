@@ -107,7 +107,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
                 billboardRasterSymbol->position31 = rasterizedSpriteSymbol->location31;
                 billboardRasterSymbol->offset = rasterizedSpriteSymbol->offset;
-                //billboardRasterSymbol->alongPath = mapObject->points31; SOMEHOW MARK!
                 symbol.reset(billboardRasterSymbol);
             }
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
@@ -177,7 +176,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 zoom);
 
             // After pin-points were computed, assign them to symbols in the same order
-            QHash< std::shared_ptr<MapSymbol>, QList<std::shared_ptr<MapSymbol>> > extraSymbolInstances;
+            QSet< std::shared_ptr<BillboardRasterMapSymbol> > billboardSymbolsWithReplacedMainPositions;
             for (const auto& computedPinPoints : constOf(computedPinPointsByLayer))
             {
                 auto citComputedPinPoint = computedPinPoints.cbegin();
@@ -191,20 +190,15 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
                     if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                     {
-                        // Create additional instance of billboard raster map symbol
-                        std::shared_ptr<BillboardRasterMapSymbol> extraSymbolInstance(new BillboardRasterMapSymbol(group, group->sharableById));
-                        extraSymbolInstance->order = billboardSymbol->order;
-                        extraSymbolInstance->intersectionModeFlags = billboardSymbol->intersectionModeFlags;
-                        extraSymbolInstance->bitmap = billboardSymbol->bitmap;
-                        extraSymbolInstance->size = billboardSymbol->size;
-                        extraSymbolInstance->content = billboardSymbol->content;
-                        extraSymbolInstance->contentClass = billboardSymbol->contentClass;
-                        extraSymbolInstance->languageId = billboardSymbol->languageId;
-                        extraSymbolInstance->minDistance = billboardSymbol->minDistance;
-                        extraSymbolInstance->position31 = computedPinPoint.point31;
-                        extraSymbolInstance->offset = billboardSymbol->offset;
-
-                        extraSymbolInstances[billboardSymbol].push_back(extraSymbolInstance);
+                        if (!billboardSymbolsWithReplacedMainPositions.contains(billboardSymbol))
+                        {
+                            billboardSymbol->position31 = computedPinPoint.point31;
+                            billboardSymbolsWithReplacedMainPositions.insert(billboardSymbol);
+                        }
+                        else
+                        {
+                            billboardSymbol->additionalPositions31.push_back(computedPinPoint.point31);
+                        }
                     }
                     else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
                     {
@@ -216,25 +210,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
                         onPathSymbol->pinPoints.push_back(qMove(pinPoint));
                     }
-                }
-            }
-            
-            // Now merge from extraSymbolInstances into group
-            auto itSymbol = mutableIteratorOf(group->symbols);
-            while (itSymbol.hasNext())
-            {
-                const auto& currentSymbol = itSymbol.next();
-
-                // In case extraSymbolInstances have symbols derived from this one, replace current with those
-                const auto itReplacementSymbols = extraSymbolInstances.find(currentSymbol);
-                if (itReplacementSymbols != extraSymbolInstances.end())
-                {
-                    const auto& replacementSymbols = *itReplacementSymbols;
-
-                    itSymbol.remove();
-                    for (const auto& replacementSymbol : constOf(replacementSymbols))
-                        itSymbol.insert(replacementSymbol);
-                    extraSymbolInstances.erase(itReplacementSymbols);
                 }
             }
         }

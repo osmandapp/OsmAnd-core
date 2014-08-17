@@ -32,6 +32,10 @@ namespace OsmAnd
         PointI position31;
         virtual PointI getPosition31() const;
         virtual void setPosition31(const PointI position);
+
+        QList<PointI> additionalPositions31;
+        virtual QList<PointI> getAdditionalPositions31() const;
+        virtual void setAdditionalPositions31(const QList<PointI>& additionalPositions31);
     };
 }
 
