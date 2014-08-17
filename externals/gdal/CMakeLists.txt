@@ -97,6 +97,9 @@ else()
 			int main(int argc, char ** argv)
 			{ return iconv(0, (char **)0, 0, (char**)0, 0); }
 			" ICONV_NON_CONST)
+		if (ICONV_NON_CONST)
+			set(ICONV_CONST "")
+		endif()
 
 		# Check if iconv() takes const char ** (C++)
 		check_cxx_source_compiles("
@@ -110,6 +113,9 @@ else()
 			int main(int argc, char ** argv)
 			{ return iconv(0, (char **)0, 0, (char**)0, 0); }
 			" ICONV_CPP_NON_CONST)
+		if (ICONV_CPP_NON_CONST)
+			set(ICONV_CPP_CONST "")
+		endif()
 	else()
 		unset(ICONV_CONST)
 		unset(ICONV_CPP_CONST)
