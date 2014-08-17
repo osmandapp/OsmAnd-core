@@ -146,9 +146,15 @@
 
 /* Define as const if the declaration of iconv() needs const. */
 #cmakedefine ICONV_CONST @ICONV_CONST@
+#ifndef ICONV_CONST
+#   define ICONV_CONST
+#endif // !defined(ICONV_CONST)
 
 /* For .cpp files, define as const if the declaration of iconv() needs const. */
 #cmakedefine ICONV_CPP_CONST @ICONV_CPP_CONST@
+#ifndef ICONV_CPP_CONST
+#   define ICONV_CPP_CONST
+#endif // !defined(ICONV_CPP_CONST)
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
