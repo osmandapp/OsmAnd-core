@@ -137,6 +137,7 @@ namespace OsmAnd
 
             PointI location31;
             int order;
+            bool drawAlongPath;
 
         friend class OsmAnd::Primitiviser;
         friend class OsmAnd::Primitiviser_P;

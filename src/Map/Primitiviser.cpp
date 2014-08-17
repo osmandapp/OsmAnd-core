@@ -94,6 +94,7 @@ OsmAnd::Primitiviser::SymbolsGroup::~SymbolsGroup()
 OsmAnd::Primitiviser::Symbol::Symbol(const std::shared_ptr<const Primitive>& primitive_)
     : primitive(primitive_)
     , order(-1)
+    , drawAlongPath(false)
 {
 }
 

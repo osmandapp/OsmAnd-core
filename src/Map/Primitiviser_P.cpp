@@ -1814,6 +1814,8 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
 
         text->drawOnPath = false;
         evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
+        if (!text->drawOnPath)
+            text->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
 
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
 
@@ -1881,6 +1883,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
     if (ok && !iconResourceName.isEmpty())
     {
         const std::shared_ptr<IconSymbol> icon(new IconSymbol(primitive));
+        icon->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
         icon->location31 = location;
 
         icon->resourceName = qMove(iconResourceName);

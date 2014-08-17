@@ -63,10 +63,12 @@ OsmAnd::SymbolRasterizer::RasterizedSpriteSymbol::RasterizedSpriteSymbol(
     const LanguageId& languageId_,
     const PointI& minDistance_,
     const PointI& location31_,
-    const PointI& offset_)
+    const PointI& offset_,
+    const bool drawAlongPath_)
     : RasterizedSymbol(group_, mapObject_, bitmap_, order_, contentType_, content_, languageId_, minDistance_)
     , location31(location31_)
     , offset(offset_)
+    , drawAlongPath(drawAlongPath_)
 {
 }
 

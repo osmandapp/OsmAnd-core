@@ -82,8 +82,9 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         const auto group = std::static_pointer_cast<BinaryMapObjectSymbolsGroup>(*citPreallocatedGroup);
 
         // Convert all symbols inside group
-        bool hasAtLeastOneBillboard = false;
         bool hasAtLeastOneOnPath = false;
+        bool hasAtLeastOneAlongPathBillboard = false;
+        bool hasAtLeastOneSimpleBillboard = false;
         for (const auto& rasterizedSymbol : constOf(rasterizedGroup->symbols))
         {
             assert(static_cast<bool>(rasterizedSymbol->bitmap));
@@ -91,7 +92,10 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             std::shared_ptr<MapSymbol> symbol;
             if (const auto rasterizedSpriteSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedSpriteSymbol>(rasterizedSymbol))
             {
-                hasAtLeastOneBillboard = true;
+                if (!hasAtLeastOneAlongPathBillboard && rasterizedSpriteSymbol->drawAlongPath)
+                    hasAtLeastOneAlongPathBillboard = true;
+                if (!hasAtLeastOneSimpleBillboard && !rasterizedSpriteSymbol->drawAlongPath)
+                    hasAtLeastOneSimpleBillboard = true;
 
                 const auto billboardRasterSymbol = new BillboardRasterMapSymbol(group, group->sharableById);
                 billboardRasterSymbol->order = rasterizedSpriteSymbol->order;
@@ -103,6 +107,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
                 billboardRasterSymbol->position31 = rasterizedSpriteSymbol->location31;
                 billboardRasterSymbol->offset = rasterizedSpriteSymbol->offset;
+                //billboardRasterSymbol->alongPath = mapObject->points31; SOMEHOW MARK!
                 symbol.reset(billboardRasterSymbol);
             }
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
@@ -136,10 +141,10 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             group->symbols.push_back(qMove(symbol));
         }
 
-        // If there's at least one on-path symbol, this group needs special post-processing:
+        // If there's at least one on-path symbol or along-path symbol, this group needs special post-processing:
         //  - Compute pin-points for all symbols in group (including billboard ones)
         //  - Split path between them
-        if (hasAtLeastOneOnPath)
+        if (hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard)
         {
             // Compose list of symbols to compute pin-points for
             QList<SymbolForPinPointsComputation> symbolsForComputation;
@@ -237,18 +242,20 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         // Configure group
         if (!group->symbols.isEmpty())
         {
-            if (hasAtLeastOneBillboard && !hasAtLeastOneOnPath)
+            if (hasAtLeastOneSimpleBillboard && !(hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard))
             {
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown;
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions;
             }
-            else if (!hasAtLeastOneBillboard && hasAtLeastOneOnPath)
+            else if (!hasAtLeastOneSimpleBillboard && (hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard))
             {
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
             else
             {
-                // This happens when e.g. road has 'ref'+'name*' tags, what is also a valid situation
+                LogPrintf(LogSeverityLevel::Error,
+                    "BinaryMapObject #" PRIu64 " produced incompatible set of map symbols to compute presentation mode",
+                    mapObject->id >> 1);
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
         }
