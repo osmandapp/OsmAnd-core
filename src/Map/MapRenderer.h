@@ -38,13 +38,13 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(MapRenderer);
 
     public:
-        // Map symbols groups comprarator:
+        // Map symbols groups comparator:
         // - If ID is available, sort by ID in ascending order
         // - If ID is unavailable, sort by pointer
         // - If ID vs no-ID is sorted, no-ID is always goes after
         struct MapSymbolsGroupsComparator
         {
-            bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r)
+            bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const
             {
                 const auto lWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(l);
                 const auto rWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(r);

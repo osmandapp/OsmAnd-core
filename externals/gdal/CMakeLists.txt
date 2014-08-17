@@ -85,10 +85,31 @@ else()
 	check_function_exists("vfork" HAVE_VFORK)
 	check_function_exists("lstat" HAVE_LSTAT)
 	if (HAVE_ICONV)
-		#set(ICONV_CONST "const")
-		#set(ICONV_CPP_CONST "const")
-		unset(ICONV_CONST)
-		unset(ICONV_CPP_CONST)
+		# Check if iconv() takes const char ** (C)
+		check_c_source_compiles("
+			#include <iconv.h>
+			int main(int argc, char ** argv)
+			{ return iconv(0, (const char **)0, 0, (char**)0, 0); }
+			" ICONV_CONST)
+		# Check if iconv() takes char ** (C)
+		check_c_source_compiles("
+			#include <iconv.h>
+			int main(int argc, char ** argv)
+			{ return iconv(0, (char **)0, 0, (char**)0, 0); }
+			" ICONV_NON_CONST)
+
+		# Check if iconv() takes const char ** (C++)
+		check_cxx_source_compiles("
+			#include <iconv.h>
+			int main(int argc, char ** argv)
+			{ return iconv(0, (const char **)0, 0, (char**)0, 0); }
+			" ICONV_CPP_CONST)
+		# Check if iconv() takes char ** (C++)
+		check_cxx_source_compiles("
+			#include <iconv.h>
+			int main(int argc, char ** argv)
+			{ return iconv(0, (char **)0, 0, (char**)0, 0); }
+			" ICONV_CPP_NON_CONST)
 	else()
 		unset(ICONV_CONST)
 		unset(ICONV_CPP_CONST)
