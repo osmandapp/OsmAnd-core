@@ -22,6 +22,9 @@ namespace OsmAnd
 {
     class MapSymbol;
     class RasterMapSymbol;
+    class OnPathMapSymbol;
+    class IOnSurfaceMapSymbol;
+    class IBillboardMapSymbol;
 
     class AtlasMapRendererSymbolsStage : public AtlasMapRendererStage
     {
@@ -95,14 +98,15 @@ namespace OsmAnd
             float direction;
         };
     private:
-        void processOnPathSymbols(
-            const MapRenderer::PublishedMapSymbols& input,
-            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
+        void obtainRenderablesFromSymbol(
+            const std::shared_ptr<const MapSymbol>& mapSymbol,
+            const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
 
-        void obtainRenderablesFromOnPathSymbols(
-            const MapRenderer::PublishedMapSymbols& input,
-            QList< std::shared_ptr<RenderableOnPathSymbol> >& output) const;
-
+        void obtainRenderablesFromOnPathSymbol(
+            const std::shared_ptr<const OnPathMapSymbol>& onPathMapSymbol,
+            const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
         QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31) const;
         QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const;
         QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const;
@@ -153,24 +157,15 @@ namespace OsmAnd
             const glm::vec2& directionOnScreen,
             const QVector<float>& glyphsWidths) const;
 
-        void sortRenderablesFromOnPathSymbols(
-            const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries,
-            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
+        void obtainRenderablesFromBillboardSymbol(
+            const std::shared_ptr<const IBillboardMapSymbol>& billboardMapSymbol,
+            const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
 
-        void processBillboardSymbols(
-            const MapRenderer::PublishedMapSymbols& input,
-            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
-
-        void obtainAndSortRenderablesFromBillboardSymbols(
-            const MapRenderer::PublishedMapSymbols& input,
-            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
-
-        void processOnSurfaceSymbols(const MapRenderer::PublishedMapSymbols& input,
-            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
-
-        void obtainAndSortRenderablesFromOnSurfaceSymbols(
-            const MapRenderer::PublishedMapSymbols& input,
-            QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const;
+        void obtainRenderablesFromOnSurfaceSymbol(
+            const std::shared_ptr<const IOnSurfaceMapSymbol>& onSurfaceMapSymbol,
+            const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
 
         bool plotSymbol(
             const std::shared_ptr<RenderableSymbol>& renderable,
@@ -188,6 +183,8 @@ namespace OsmAnd
         bool plotOnPathSymbol(
             const std::shared_ptr<RenderableOnPathSymbol>& renderable,
             IntersectionsQuadTree& intersections) const;
+        OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
+        OOBBF calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
 
         bool plotOnSurfaceSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
@@ -205,13 +202,11 @@ namespace OsmAnd
         bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
             const std::shared_ptr<const RenderableSymbol>& renderable,
             const IntersectionsQuadTree& intersections) const;
-        OOBBF calculateOnPath2dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
-        OOBBF calculateOnPath3dOOBB(const std::shared_ptr<RenderableOnPathSymbol>& renderable) const;
         bool plotRenderable(
             const std::shared_ptr<const RenderableSymbol>& renderable,
             IntersectionsQuadTree& intersections) const;
         static std::shared_ptr<const GPUAPI::ResourceInGPU> captureGpuResource(
-            const MapRenderer::MapSymbolreferenceOrigins& resources,
+            const MapRenderer::MapSymbolReferenceOrigins& resources,
             const std::shared_ptr<const MapSymbol>& mapSymbol);
 
         void obtainRenderableSymbols(

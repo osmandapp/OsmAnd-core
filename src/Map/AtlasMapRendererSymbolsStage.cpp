@@ -56,37 +56,81 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
     QReadLocker scopedLocker(&publishedMapSymbolsByOrderLock);
 
-    // Iterate over map symbols layer sorted by "order" in ascending direction
+    // Map symbols groups sorter:
+    // - If ID is available, sort by ID in ascending order
+    // - If ID is unavailable, sort by pointer
+    // - If ID vs no-ID is sorted, no-ID is always goes after
+    const auto mapSymbolsGroupsSort =
+        []
+        (const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) -> bool
+        {
+            const auto lWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(l);
+            const auto rWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(r);
+
+            if (lWithId && rWithId)
+            {
+                return lWithId->id < rWithId->id;
+            }
+            else if (!lWithId && !rWithId)
+            {
+                return l.get() < r.get();
+            }
+            else if (lWithId && !rWithId)
+            {
+                return true;
+            }
+            else /* if (!lWithId && rWithId) */
+            {
+                return false;
+            }
+        };
+
+    // Iterate over map symbols layer sorted by "order" in ascending direction.
+    // This means that map symbols with smaller order value are more important than map symbols with
+    // larger order value.
     outIntersections = IntersectionsQuadTree(currentState.viewport, 8);
     PlottedSymbols plottedSymbols;
     QHash< const MapSymbolsGroup*, QList< PlottedSymbolRef > > plottedMapSymbolsByGroup;
     for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
     {
-        // Obtain renderables in order how they should be rendered
-        QMultiMap< float, std::shared_ptr<RenderableSymbol> > sortedRenderables;
-        if (!debugSettings->excludeOnPathSymbolsFromProcessing)
-            processOnPathSymbols(publishedMapSymbols, sortedRenderables);
-        if (!debugSettings->excludeBillboardSymbolsFromProcessing)
-            processBillboardSymbols(publishedMapSymbols, sortedRenderables);
-        if (!debugSettings->excludeOnSurfaceSymbolsFromProcessing)
-            processOnSurfaceSymbols(publishedMapSymbols, sortedRenderables);
+        // Sort map symbols groups
+        auto mapSymbolsGroups = publishedMapSymbols.keys();
+        qSort(mapSymbolsGroups.begin(), mapSymbolsGroups.end(), mapSymbolsGroupsSort);
 
-        // Plot symbols in reversed order, since sortedSymbols contains symbols by distance from camera from near->far.
-        // And rendering needs to be done far->near, as well as plotting
-        auto itRenderableEntry = iteratorOf(sortedRenderables);
-        itRenderableEntry.toBack();
-        while (itRenderableEntry.hasPrevious())
+        // Iterate over all groups in proper order
+        for (const auto& mapSymbolGroup : constOf(mapSymbolsGroups))
         {
-            const auto& entry = itRenderableEntry.previous();
-            const auto renderable = entry.value();
-
-            if (!plotSymbol(renderable, outIntersections))
+            const auto citPublishedMapSymbolsFromGroup = publishedMapSymbols.constFind(mapSymbolGroup);
+            if (citPublishedMapSymbolsFromGroup == publishedMapSymbols.cend())
+            {
+                assert(false);
                 continue;
-            
-            const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderable);
-            PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderable, renderable->mapSymbol };
+            }
+            const auto& publishedMapSymbolsFromGroup = *citPublishedMapSymbolsFromGroup;
 
-            plottedMapSymbolsByGroup[renderable->mapSymbol->groupPtr].push_back(qMove(plottedSymbolRef));
+            // Process symbols from this group in order as they are stored in group
+            for (const auto& mapSymbol : constOf(mapSymbolGroup->symbols))
+            {
+                // If this map symbol is not published yet or is located at different order, skip
+                const auto citReferencesOrigins = publishedMapSymbolsFromGroup.constFind(mapSymbol);
+                if (citReferencesOrigins == publishedMapSymbolsFromGroup.cend())
+                    continue;
+                const auto& referencesOrigins = *citReferencesOrigins;
+
+                QList< std::shared_ptr<RenderableSymbol> > renderableSymbols;
+                obtainRenderablesFromSymbol(mapSymbol, referencesOrigins, renderableSymbols);
+
+                for (const auto& renderableSymbol : constOf(renderableSymbols))
+                {
+                    if (!plotSymbol(renderableSymbol, outIntersections))
+                        continue;
+
+                    const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderableSymbol);
+                    PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol, mapSymbol };
+
+                    plottedMapSymbolsByGroup[mapSymbol->groupPtr].push_back(qMove(plottedSymbolRef));
+                }
+            }
         }
     }
 
@@ -231,166 +275,128 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     }
 }
 
+void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
+    const std::shared_ptr<const MapSymbol>& mapSymbol,
+    const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
+{
+    if (mapSymbol->isHidden)
+        return;
+
+    if (const auto onPathMapSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(mapSymbol))
+    {
+        if (Q_UNLIKELY(debugSettings->excludeOnPathSymbolsFromProcessing))
+            return;
+
+        obtainRenderablesFromOnPathSymbol(onPathMapSymbol, referenceOrigins, outRenderableSymbols);
+    }
+    else if (const auto onSurfaceMapSymbol = std::dynamic_pointer_cast<const IOnSurfaceMapSymbol>(mapSymbol))
+    {
+        if (Q_UNLIKELY(debugSettings->excludeOnSurfaceSymbolsFromProcessing))
+            return;
+
+        obtainRenderablesFromOnSurfaceSymbol(onSurfaceMapSymbol, referenceOrigins, outRenderableSymbols);
+    }
+    else if (const auto billboardMapSymbol = std::dynamic_pointer_cast<const IBillboardMapSymbol>(mapSymbol))
+    {
+        if (Q_UNLIKELY(debugSettings->excludeBillboardSymbolsFromProcessing))
+            return;
+
+        obtainRenderablesFromBillboardSymbol(billboardMapSymbol, referenceOrigins, outRenderableSymbols);
+    }
+    else
+    {
+        assert(false);
+    }
+}
+
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
     const std::shared_ptr<RenderableSymbol>& renderable,
     IntersectionsQuadTree& intersections) const
 {
-    if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable))
+    if (const auto& renderableBillboard = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable))
     {
-        return plotBillboardSymbol(renderable_, intersections);
+        return plotBillboardSymbol(renderableBillboard, intersections);
     }
-    else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable))
+    else if (const auto& renderableOnPath = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable))
     {
-        return plotOnPathSymbol(renderable_, intersections);
+        return plotOnPathSymbol(renderableOnPath, intersections);
     }
-    else if (const auto& renderable_ = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable))
+    else if (const auto& renderableOnSurface = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable))
     {
-        return plotOnSurfaceSymbol(renderable_, intersections);
+        return plotOnSurfaceSymbol(renderableOnSurface, intersections);
     }
 
     assert(false);
     return false;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::processOnPathSymbols(
-    const MapRenderer::PublishedMapSymbols& input,
-    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
-{
-    // Process on path symbols to get set of renderables
-    QList< std::shared_ptr<RenderableOnPathSymbol> > renderables;
-    obtainRenderablesFromOnPathSymbols(input, renderables);
-
-    // Sort visible SOPs by distance to camera
-    sortRenderablesFromOnPathSymbols(renderables, output);
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
-    const MapRenderer::PublishedMapSymbols& input,
-    QList< std::shared_ptr<RenderableOnPathSymbol> >& output) const
+void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
+    const std::shared_ptr<const OnPathMapSymbol>& onPathMapSymbol,
+    const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
 {
     const auto& internalState = getInternalState();
 
-    for (const auto& symbolEntry : rangeOf(constOf(input)))
+    const auto& path31 = onPathMapSymbol->path;
+    const auto pathSize = path31.size();
+    const auto& symbolPinPoints = onPathMapSymbol->pinPoints;
+
+    // Path must have at least 2 points and there must be at least one pin-point
+    if (Q_UNLIKELY(pathSize < 2))
     {
-        const auto& currentSymbol_ = symbolEntry.key();
-        if (currentSymbol_->isHidden)
-            continue;
-        const auto currentSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(currentSymbol_);
-        if (!currentSymbol)
-            continue;
+        assert(false);
+        return;
+    }
 
-        const auto& path31 = currentSymbol->path;
-        const auto pathSize = path31.size();
-        const auto& symbolPinPoints = currentSymbol->pinPoints;
+    ////////////////////////////////////////////////////////////////////////////
+    /*
+    {
+    if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(currentSymbol->group.lock()))
+    {
+    if ((symbolsGroupWithId->id >> 1) != 31314189)
+    continue;
+    }
+    }
+    */
+    ////////////////////////////////////////////////////////////////////////////
 
-        // Path must have at least 2 points and there must be at least one pin-point
-        if (Q_UNLIKELY(pathSize < 2))
+    // Skip if there are no pin-points
+    if (Q_UNLIKELY(symbolPinPoints.isEmpty()))
+    {
+        if (debugSettings->showTooShortOnPathSymbolsRenderablesPaths)
         {
-            assert(false);
-            continue;
-        }
-
-        ////////////////////////////////////////////////////////////////////////////
-        /*
-        {
-            if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(currentSymbol->group.lock()))
-            {
-                if ((symbolsGroupWithId->id >> 1) != 31314189)
-                    continue;
-            }
-        }
-        */
-        ////////////////////////////////////////////////////////////////////////////
-
-        // Skip if there are no pin-points
-        if (Q_UNLIKELY(symbolPinPoints.isEmpty()))
-        {
-            if (debugSettings->showTooShortOnPathSymbolsRenderablesPaths)
-            {
-                bool seenOnPathSymbolInGroup = false;
-                bool thisIsFirstOnPathSymbolInGroup = false;
-                bool allSymbolsHaveNoPinPoints = true;
-                const auto symbolsGroup = currentSymbol->group.lock();
-                for (const auto& otherSymbol_ : constOf(symbolsGroup->symbols))
-                {
-                    const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
-                    if (!otherSymbol)
-                        continue;
-
-                    if (!seenOnPathSymbolInGroup)
-                    {
-                        seenOnPathSymbolInGroup = true;
-
-                        if (otherSymbol == currentSymbol)
-                        {
-                            thisIsFirstOnPathSymbolInGroup = true;
-                            continue;
-                        }
-                        else
-                            break;
-                    }
-
-                    if (!otherSymbol->pinPoints.isEmpty())
-                    {
-                        allSymbolsHaveNoPinPoints = false;
-                        break;
-                    }
-                }
-
-                if (thisIsFirstOnPathSymbolInGroup && allSymbolsHaveNoPinPoints)
-                {
-                    QVector< glm::vec3 > debugPoints;
-                    for (const auto& pointInWorld : convertPoints31ToWorld(path31))
-                    {
-                        debugPoints.push_back(qMove(glm::vec3(
-                            pointInWorld.x,
-                            0.0f,
-                            pointInWorld.y)));
-                    }
-                    getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorYELLOW);
-                }
-            }
-
-            continue;
-        }
-
-        // Get GPU resource for this map symbol, since it's useless to perform any calculations unless it's possible to draw it
-        const auto gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(captureGpuResource(symbolEntry.value(), currentSymbol_));
-        if (!gpuResource)
-        {
-            if (Q_UNLIKELY(debugSettings->showAllPaths))
-            {
-                QVector< glm::vec3 > debugPoints;
-                for (const auto& pointInWorld : convertPoints31ToWorld(path31))
-                {
-                    debugPoints.push_back(qMove(glm::vec3(
-                        pointInWorld.x,
-                        0.0f,
-                        pointInWorld.y)));
-                }
-                getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorCYAN);
-            }
-
-            continue;
-        }
-
-        if (debugSettings->showAllPaths)
-        {
+            bool seenOnPathSymbolInGroup = false;
             bool thisIsFirstOnPathSymbolInGroup = false;
-            const auto symbolsGroup = currentSymbol->group.lock();
+            bool allSymbolsHaveNoPinPoints = true;
+            const auto symbolsGroup = onPathMapSymbol->group.lock();
             for (const auto& otherSymbol_ : constOf(symbolsGroup->symbols))
             {
                 const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
                 if (!otherSymbol)
                     continue;
 
-                if (otherSymbol != currentSymbol)
+                if (!seenOnPathSymbolInGroup)
+                {
+                    seenOnPathSymbolInGroup = true;
+
+                    if (otherSymbol == onPathMapSymbol)
+                    {
+                        thisIsFirstOnPathSymbolInGroup = true;
+                        continue;
+                    }
+                    else
+                        break;
+                }
+
+                if (!otherSymbol->pinPoints.isEmpty())
+                {
+                    allSymbolsHaveNoPinPoints = false;
                     break;
-                thisIsFirstOnPathSymbolInGroup = true;
-                break;
+                }
             }
 
-            if (thisIsFirstOnPathSymbolInGroup)
+            if (thisIsFirstOnPathSymbolInGroup && allSymbolsHaveNoPinPoints)
             {
                 QVector< glm::vec3 > debugPoints;
                 for (const auto& pointInWorld : convertPoints31ToWorld(path31))
@@ -400,251 +406,303 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                         0.0f,
                         pointInWorld.y)));
                 }
-                getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorGRAY);
+                getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorYELLOW);
             }
         }
 
-        // Processing pin-points needs path in world and path on screen, as well as lengths of all segments
-        const auto pathInWorld = convertPoints31ToWorld(path31);
-        const auto pathSegmentsLengthsInWorld = computePathSegmentsLengths(pathInWorld);
-        const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
-        const auto pathSegmentsLengthsOnScreen = computePathSegmentsLengths(pathOnScreen);
-        for (const auto& pinPoint : constOf(symbolPinPoints))
+        return;
+    }
+
+    // Get GPU resource for this map symbol, since it's useless to perform any calculations unless it's possible to draw it
+    const auto gpuResource = std::dynamic_pointer_cast<const GPUAPI::TextureInGPU>(captureGpuResource(referenceOrigins, onPathMapSymbol));
+    if (!gpuResource)
+    {
+        if (Q_UNLIKELY(debugSettings->showAllPaths))
         {
-            // Pin-point represents center of symbol
-            const auto halfSizeInPixels = currentSymbol->size.x / 2.0f;
-            bool fits = true;
-            bool is2D = true;
-            
-            // Check if this symbol instance can be rendered in 2D mode
-            glm::vec2 exactStartPointOnScreen;
-            glm::vec2 exactEndPointOnScreen;
-            unsigned int startPathPointIndex2D = 0;
-            float offsetFromStartPathPoint2D = 0.0f;
-            fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
-                pathSegmentsLengthsOnScreen,
-                pinPoint.basePathPointIndex,
-                pinPoint.normalizedOffsetFromBasePathPoint,
-                -halfSizeInPixels,
-                startPathPointIndex2D,
-                offsetFromStartPathPoint2D);
-            unsigned int endPathPointIndex2D = 0;
-            float offsetFromEndPathPoint2D = 0.0f;
-            fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
-                pathSegmentsLengthsOnScreen,
-                pinPoint.basePathPointIndex,
-                pinPoint.normalizedOffsetFromBasePathPoint,
-                halfSizeInPixels,
-                endPathPointIndex2D,
-                offsetFromEndPathPoint2D);
-            if (fits)
+            QVector< glm::vec3 > debugPoints;
+            for (const auto& pointInWorld : convertPoints31ToWorld(path31))
             {
-                exactStartPointOnScreen = computeExactPointFromOriginAndOffset(
-                    pathOnScreen,
-                    pathSegmentsLengthsOnScreen,
-                    startPathPointIndex2D,
-                    offsetFromStartPathPoint2D);
-                exactEndPointOnScreen = computeExactPointFromOriginAndOffset(
-                    pathOnScreen,
-                    pathSegmentsLengthsOnScreen,
-                    endPathPointIndex2D,
-                    offsetFromEndPathPoint2D);
-
-                is2D = pathRenderableAs2D(
-                    pathOnScreen,
-                    startPathPointIndex2D,
-                    exactStartPointOnScreen,
-                    endPathPointIndex2D,
-                    exactEndPointOnScreen);
+                debugPoints.push_back(qMove(glm::vec3(
+                    pointInWorld.x,
+                    0.0f,
+                    pointInWorld.y)));
             }
+            getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorCYAN);
+        }
 
-            // If 2D failed, check if renderable as 3D
-            glm::vec2 exactStartPointInWorld;
-            glm::vec2 exactEndPointInWorld;
-            unsigned int startPathPointIndex3D = 0;
-            float offsetFromStartPathPoint3D = 0.0f;
-            unsigned int endPathPointIndex3D = 0;
-            float offsetFromEndPathPoint3D = 0.0f;
-            if (!fits || !is2D)
-            {
-                is2D = false;
-                const auto halfSizeInWorld = halfSizeInPixels * internalState.pixelInWorldProjectionScale;
+        return;
+    }
 
-                fits = true;
-                fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
-                    pathSegmentsLengthsInWorld,
-                    pinPoint.basePathPointIndex,
-                    pinPoint.normalizedOffsetFromBasePathPoint,
-                    -halfSizeInWorld,
-                    startPathPointIndex3D,
-                    offsetFromStartPathPoint3D);
-                fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
-                    pathSegmentsLengthsInWorld,
-                    pinPoint.basePathPointIndex,
-                    pinPoint.normalizedOffsetFromBasePathPoint,
-                    halfSizeInWorld,
-                    endPathPointIndex3D,
-                    offsetFromEndPathPoint3D);
-
-                if (fits)
-                {
-                    exactStartPointInWorld = computeExactPointFromOriginAndOffset(
-                        pathInWorld,
-                        pathSegmentsLengthsInWorld,
-                        startPathPointIndex3D,
-                        offsetFromStartPathPoint3D);
-                    exactEndPointInWorld = computeExactPointFromOriginAndOffset(
-                        pathInWorld,
-                        pathSegmentsLengthsInWorld,
-                        endPathPointIndex3D,
-                        offsetFromEndPathPoint3D);
-                }
-            }
-
-            // If this symbol instance doesn't fit in both 2D and 3D, skip it
-            if (!fits)
+    if (debugSettings->showAllPaths)
+    {
+        bool thisIsFirstOnPathSymbolInGroup = false;
+        const auto symbolsGroup = onPathMapSymbol->group.lock();
+        for (const auto& otherSymbol_ : constOf(symbolsGroup->symbols))
+        {
+            const auto otherSymbol = std::dynamic_pointer_cast<const OnPathMapSymbol>(otherSymbol_);
+            if (!otherSymbol)
                 continue;
 
-            // Compute exact points
-            if (is2D)
-            {
-                // Get 3D exact points from 2D
-                exactStartPointInWorld = computeExactPointFromOriginAndNormalizedOffset(
-                    pathInWorld,
-                    startPathPointIndex2D,
-                    offsetFromStartPathPoint2D / pathSegmentsLengthsOnScreen[startPathPointIndex2D]);
-                exactEndPointInWorld = computeExactPointFromOriginAndNormalizedOffset(
-                    pathInWorld,
-                    endPathPointIndex2D,
-                    offsetFromEndPathPoint2D / pathSegmentsLengthsOnScreen[endPathPointIndex2D]);
-            }
-            else
-            {
-                // Get 2D exact points from 3D
-                exactStartPointOnScreen = computeExactPointFromOriginAndNormalizedOffset(
-                    pathOnScreen,
-                    startPathPointIndex3D,
-                    offsetFromStartPathPoint3D / pathSegmentsLengthsInWorld[startPathPointIndex3D]);
-                exactEndPointOnScreen = computeExactPointFromOriginAndNormalizedOffset(
-                    pathOnScreen,
-                    endPathPointIndex3D,
-                    offsetFromEndPathPoint3D / pathSegmentsLengthsInWorld[endPathPointIndex3D]);
-            }
+            if (otherSymbol != onPathMapSymbol)
+                break;
+            thisIsFirstOnPathSymbolInGroup = true;
+            break;
+        }
 
-            // Compute direction of subpath on screen and in world
-            const auto subpathStartIndex = is2D ? startPathPointIndex2D : startPathPointIndex3D;
-            const auto subpathEndIndex = is2D ? endPathPointIndex2D : endPathPointIndex3D;
-            assert(subpathEndIndex >= subpathStartIndex);
-            const auto directionInWorld = computePathDirection(
-                pathInWorld,
-                subpathStartIndex,
-                exactStartPointInWorld,
-                subpathEndIndex,
-                exactEndPointInWorld);
-            const auto directionOnScreen = computePathDirection(
+        if (thisIsFirstOnPathSymbolInGroup)
+        {
+            QVector< glm::vec3 > debugPoints;
+            for (const auto& pointInWorld : convertPoints31ToWorld(path31))
+            {
+                debugPoints.push_back(qMove(glm::vec3(
+                    pointInWorld.x,
+                    0.0f,
+                    pointInWorld.y)));
+            }
+            getRenderer()->debugStage->addLine3D(debugPoints, SK_ColorGRAY);
+        }
+    }
+
+    // Processing pin-points needs path in world and path on screen, as well as lengths of all segments
+    const auto pathInWorld = convertPoints31ToWorld(path31);
+    const auto pathSegmentsLengthsInWorld = computePathSegmentsLengths(pathInWorld);
+    const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
+    const auto pathSegmentsLengthsOnScreen = computePathSegmentsLengths(pathOnScreen);
+    for (const auto& pinPoint : constOf(symbolPinPoints))
+    {
+        // Pin-point represents center of symbol
+        const auto halfSizeInPixels = onPathMapSymbol->size.x / 2.0f;
+        bool fits = true;
+        bool is2D = true;
+
+        // Check if this symbol instance can be rendered in 2D mode
+        glm::vec2 exactStartPointOnScreen;
+        glm::vec2 exactEndPointOnScreen;
+        unsigned int startPathPointIndex2D = 0;
+        float offsetFromStartPathPoint2D = 0.0f;
+        fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
+            pathSegmentsLengthsOnScreen,
+            pinPoint.basePathPointIndex,
+            pinPoint.normalizedOffsetFromBasePathPoint,
+            -halfSizeInPixels,
+            startPathPointIndex2D,
+            offsetFromStartPathPoint2D);
+        unsigned int endPathPointIndex2D = 0;
+        float offsetFromEndPathPoint2D = 0.0f;
+        fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
+            pathSegmentsLengthsOnScreen,
+            pinPoint.basePathPointIndex,
+            pinPoint.normalizedOffsetFromBasePathPoint,
+            halfSizeInPixels,
+            endPathPointIndex2D,
+            offsetFromEndPathPoint2D);
+        if (fits)
+        {
+            exactStartPointOnScreen = computeExactPointFromOriginAndOffset(
                 pathOnScreen,
-                subpathStartIndex,
+                pathSegmentsLengthsOnScreen,
+                startPathPointIndex2D,
+                offsetFromStartPathPoint2D);
+            exactEndPointOnScreen = computeExactPointFromOriginAndOffset(
+                pathOnScreen,
+                pathSegmentsLengthsOnScreen,
+                endPathPointIndex2D,
+                offsetFromEndPathPoint2D);
+
+            is2D = pathRenderableAs2D(
+                pathOnScreen,
+                startPathPointIndex2D,
                 exactStartPointOnScreen,
-                subpathEndIndex,
+                endPathPointIndex2D,
                 exactEndPointOnScreen);
+        }
 
-            // Plot symbol instance.
-            std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
-            renderable->mapSymbol = currentSymbol_;
-            renderable->gpuResource = gpuResource;
-            renderable->is2D = is2D;
-            renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-                pathInWorld,
-                subpathStartIndex,
-                exactStartPointInWorld,
-                subpathEndIndex,
-                exactEndPointOnScreen);
-            renderable->directionInWorld = directionInWorld;
-            renderable->directionOnScreen = directionOnScreen;
-            renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
-                is2D,
-                is2D ? pathOnScreen : pathInWorld,
-                is2D ? pathSegmentsLengthsOnScreen : pathSegmentsLengthsInWorld,
-                subpathStartIndex,
-                is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
-                subpathEndIndex,
-                directionOnScreen,
-                currentSymbol->glyphsWidth);
-            output.push_back(qMove(renderable));
+        // If 2D failed, check if renderable as 3D
+        glm::vec2 exactStartPointInWorld;
+        glm::vec2 exactEndPointInWorld;
+        unsigned int startPathPointIndex3D = 0;
+        float offsetFromStartPathPoint3D = 0.0f;
+        unsigned int endPathPointIndex3D = 0;
+        float offsetFromEndPathPoint3D = 0.0f;
+        if (!fits || !is2D)
+        {
+            is2D = false;
+            const auto halfSizeInWorld = halfSizeInPixels * internalState.pixelInWorldProjectionScale;
 
-            if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
+            fits = true;
+            fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
+                pathSegmentsLengthsInWorld,
+                pinPoint.basePathPointIndex,
+                pinPoint.normalizedOffsetFromBasePathPoint,
+                -halfSizeInWorld,
+                startPathPointIndex3D,
+                offsetFromStartPathPoint3D);
+            fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
+                pathSegmentsLengthsInWorld,
+                pinPoint.basePathPointIndex,
+                pinPoint.normalizedOffsetFromBasePathPoint,
+                halfSizeInWorld,
+                endPathPointIndex3D,
+                offsetFromEndPathPoint3D);
+
+            if (fits)
             {
-                const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
+                exactStartPointInWorld = computeExactPointFromOriginAndOffset(
+                    pathInWorld,
+                    pathSegmentsLengthsInWorld,
+                    startPathPointIndex3D,
+                    offsetFromStartPathPoint3D);
+                exactEndPointInWorld = computeExactPointFromOriginAndOffset(
+                    pathInWorld,
+                    pathSegmentsLengthsInWorld,
+                    endPathPointIndex3D,
+                    offsetFromEndPathPoint3D);
+            }
+        }
 
-                // Path itself
-                QVector< glm::vec3 > debugPoints;
-                debugPoints.push_back(qMove(glm::vec3(
-                    exactStartPointInWorld.x,
-                    0.0f,
-                    exactStartPointInWorld.y)));
-                auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
-                for (auto idx = subpathStartIndex + 1; idx <= subpathEndIndex; idx++)
-                {
-                    const auto& pointInWorld = *(pPointInWorld++);
-                    debugPoints.push_back(qMove(glm::vec3(
-                        pointInWorld.x,
-                        0.0f,
-                        pointInWorld.y)));
-                }
-                debugPoints.push_back(qMove(glm::vec3(
-                    exactEndPointInWorld.x,
-                    0.0f,
-                    exactEndPointInWorld.y)));
-                getRenderer()->debugStage->addLine3D(debugPoints, is2D ? SK_ColorGREEN : SK_ColorRED);
+        // If this symbol instance doesn't fit in both 2D and 3D, skip it
+        if (!fits)
+            continue;
 
-                // Subpath N (start)
+        // Compute exact points
+        if (is2D)
+        {
+            // Get 3D exact points from 2D
+            exactStartPointInWorld = computeExactPointFromOriginAndNormalizedOffset(
+                pathInWorld,
+                startPathPointIndex2D,
+                offsetFromStartPathPoint2D / pathSegmentsLengthsOnScreen[startPathPointIndex2D]);
+            exactEndPointInWorld = computeExactPointFromOriginAndNormalizedOffset(
+                pathInWorld,
+                endPathPointIndex2D,
+                offsetFromEndPathPoint2D / pathSegmentsLengthsOnScreen[endPathPointIndex2D]);
+        }
+        else
+        {
+            // Get 2D exact points from 3D
+            exactStartPointOnScreen = computeExactPointFromOriginAndNormalizedOffset(
+                pathOnScreen,
+                startPathPointIndex3D,
+                offsetFromStartPathPoint3D / pathSegmentsLengthsInWorld[startPathPointIndex3D]);
+            exactEndPointOnScreen = computeExactPointFromOriginAndNormalizedOffset(
+                pathOnScreen,
+                endPathPointIndex3D,
+                offsetFromEndPathPoint3D / pathSegmentsLengthsInWorld[endPathPointIndex3D]);
+        }
+
+        // Compute direction of subpath on screen and in world
+        const auto subpathStartIndex = is2D ? startPathPointIndex2D : startPathPointIndex3D;
+        const auto subpathEndIndex = is2D ? endPathPointIndex2D : endPathPointIndex3D;
+        assert(subpathEndIndex >= subpathStartIndex);
+        const auto directionInWorld = computePathDirection(
+            pathInWorld,
+            subpathStartIndex,
+            exactStartPointInWorld,
+            subpathEndIndex,
+            exactEndPointInWorld);
+        const auto directionOnScreen = computePathDirection(
+            pathOnScreen,
+            subpathStartIndex,
+            exactStartPointOnScreen,
+            subpathEndIndex,
+            exactEndPointOnScreen);
+
+        // Plot symbol instance.
+        std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+        renderable->mapSymbol = onPathMapSymbol;
+        renderable->gpuResource = gpuResource;
+        renderable->is2D = is2D;
+        renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
+            pathInWorld,
+            subpathStartIndex,
+            exactStartPointInWorld,
+            subpathEndIndex,
+            exactEndPointOnScreen);
+        renderable->directionInWorld = directionInWorld;
+        renderable->directionOnScreen = directionOnScreen;
+        renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
+            is2D,
+            is2D ? pathOnScreen : pathInWorld,
+            is2D ? pathSegmentsLengthsOnScreen : pathSegmentsLengthsInWorld,
+            subpathStartIndex,
+            is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
+            subpathEndIndex,
+            directionOnScreen,
+            onPathMapSymbol->glyphsWidth);
+        outRenderableSymbols.push_back(renderable);
+
+        if (Q_UNLIKELY(debugSettings->showOnPathSymbolsRenderablesPaths))
+        {
+            const glm::vec2 directionOnScreenN(-directionOnScreen.y, directionOnScreen.x);
+
+            // Path itself
+            QVector< glm::vec3 > debugPoints;
+            debugPoints.push_back(qMove(glm::vec3(
+                exactStartPointInWorld.x,
+                0.0f,
+                exactStartPointInWorld.y)));
+            auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
+            for (auto idx = subpathStartIndex + 1; idx <= subpathEndIndex; idx++)
+            {
+                const auto& pointInWorld = *(pPointInWorld++);
+                debugPoints.push_back(qMove(glm::vec3(
+                    pointInWorld.x,
+                    0.0f,
+                    pointInWorld.y)));
+            }
+            debugPoints.push_back(qMove(glm::vec3(
+                exactEndPointInWorld.x,
+                0.0f,
+                exactEndPointInWorld.y)));
+            getRenderer()->debugStage->addLine3D(debugPoints, is2D ? SK_ColorGREEN : SK_ColorRED);
+
+            // Subpath N (start)
+            {
+                QVector<glm::vec2> lineN;
+                const auto sn0 = exactStartPointOnScreen;
+                lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                const auto sn1 = sn0 + (directionOnScreenN*24.0f);
+                lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+            }
+
+            // Subpath N (end)
+            {
+                QVector<glm::vec2> lineN;
+                const auto sn0 = exactEndPointOnScreen;
+                lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
+                const auto sn1 = sn0 + (directionOnScreenN*24.0f);
+                lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
+                getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
+            }
+
+            // Pin-point location
+            {
+                const auto pinPointInWorld = Utilities::convert31toFloat(
+                    pinPoint.point31 - currentState.target31,
+                    currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
+                const auto pinPointOnScreen = glm::project(
+                    glm::vec3(pinPointInWorld.x, 0.0f, pinPointInWorld.y),
+                    internalState.mCameraView,
+                    internalState.mPerspectiveProjection,
+                    internalState.glmViewport).xy();
+
                 {
                     QVector<glm::vec2> lineN;
-                    const auto sn0 = exactStartPointOnScreen;
+                    const auto sn0 = pinPointOnScreen;
                     lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = sn0 + (directionOnScreenN*24.0f);
+                    const auto sn1 = sn0 + (directionOnScreenN*32.0f);
                     lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorCYAN, 128));
+                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorWHITE, 128));
                 }
 
-                // Subpath N (end)
                 {
                     QVector<glm::vec2> lineN;
-                    const auto sn0 = exactEndPointOnScreen;
+                    const auto sn0 = pinPointOnScreen;
                     lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                    const auto sn1 = sn0 + (directionOnScreenN*24.0f);
+                    const auto sn1 = sn0 + (directionOnScreen*32.0f);
                     lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorMAGENTA, 128));
-                }
-                
-                // Pin-point location
-                {
-                    const auto pinPointInWorld = Utilities::convert31toFloat(
-                        pinPoint.point31 - currentState.target31,
-                        currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
-                    const auto pinPointOnScreen = glm::project(
-                        glm::vec3(pinPointInWorld.x, 0.0f, pinPointInWorld.y),
-                        internalState.mCameraView,
-                        internalState.mPerspectiveProjection,
-                        internalState.glmViewport).xy();
-
-                    {
-                        QVector<glm::vec2> lineN;
-                        const auto sn0 = pinPointOnScreen;
-                        lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                        const auto sn1 = sn0 + (directionOnScreenN*32.0f);
-                        lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                        getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorWHITE, 128));
-                    }
-
-                    {
-                        QVector<glm::vec2> lineN;
-                        const auto sn0 = pinPointOnScreen;
-                        lineN.push_back(glm::vec2(sn0.x, currentState.windowSize.y - sn0.y));
-                        const auto sn1 = sn0 + (directionOnScreen*32.0f);
-                        lineN.push_back(glm::vec2(sn1.x, currentState.windowSize.y - sn1.y));
-                        getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorGREEN, 128));
-                    }
+                    getRenderer()->debugStage->addLine2D(lineN, SkColorSetA(SK_ColorGREEN, 128));
                 }
             }
         }
@@ -1057,119 +1115,70 @@ OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
     return glyphsPlacement;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::sortRenderablesFromOnPathSymbols(
-    const QList< std::shared_ptr<RenderableOnPathSymbol> >& entries,
-    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
-{
-    // Sort visible SOPs by distance to camera
-    for (auto& renderable : entries)
-    {
-        // Insert into map
-        const auto distanceToCamera = renderable->distanceToCamera;
-        output.insert(distanceToCamera, qMove(renderable));
-    }
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage::processBillboardSymbols(
-    const MapRenderer::PublishedMapSymbols& input,
-    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
-{
-    obtainAndSortRenderablesFromBillboardSymbols(input, output);
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortRenderablesFromBillboardSymbols(
-    const MapRenderer::PublishedMapSymbols& input,
-    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
+void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
+    const std::shared_ptr<const IBillboardMapSymbol>& billboardMapSymbol,
+    const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
 {
     const auto& internalState = getInternalState();
+    const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(billboardMapSymbol);
 
-    // Sort sprite symbols by distance to camera
-    for (const auto& symbolEntry : rangeOf(constOf(input)))
-    {
-        const auto& symbol_ = symbolEntry.key();
-        if (symbol_->isHidden)
-            continue;
-        const auto& symbol = std::dynamic_pointer_cast<const IBillboardMapSymbol>(symbol_);
-        if (!symbol)
-            continue;
+    // Get GPU resource
+    const auto gpuResource = captureGpuResource(referenceOrigins, mapSymbol);
+    if (!gpuResource)
+        return;
 
-        // Get GPU resource
-        const auto gpuResource = captureGpuResource(symbolEntry.value(), symbol_);
-        if (!gpuResource)
-            continue;
+    std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
+    renderable->mapSymbol = mapSymbol;
+    renderable->gpuResource = gpuResource;
+    outRenderableSymbols.push_back(renderable);
 
-        std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
-        renderable->mapSymbol = symbol_;
-        renderable->gpuResource = gpuResource;
+    // Calculate location of symbol in world coordinates.
+    renderable->offsetFromTarget31 = billboardMapSymbol->getPosition31() - currentState.target31;
+    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
+    renderable->positionInWorld = glm::vec3(
+        renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+        0.0f,
+        renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
-        // Calculate location of symbol in world coordinates.
-        renderable->offsetFromTarget31 = symbol->getPosition31() - currentState.target31;
-        renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
-        renderable->positionInWorld = glm::vec3(
-            renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-            0.0f,
-            renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
-
-        // Get distance from symbol to camera
-        const auto distanceToCamera = renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
-
-        // Insert into map
-        output.insert(distanceToCamera, qMove(renderable));
-    }
+    // Get distance from symbol to camera
+    renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::processOnSurfaceSymbols(
-    const MapRenderer::PublishedMapSymbols& input,
-    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
-{
-    obtainAndSortRenderablesFromOnSurfaceSymbols(input, output);
-}
-
-void OsmAnd::AtlasMapRendererSymbolsStage::obtainAndSortRenderablesFromOnSurfaceSymbols(
-    const MapRenderer::PublishedMapSymbols& input,
-    QMultiMap< float, std::shared_ptr<RenderableSymbol> >& output) const
+void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
+    const std::shared_ptr<const IOnSurfaceMapSymbol>& onSurfaceMapSymbol,
+    const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
 {
     const auto& internalState = getInternalState();
+    const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(onSurfaceMapSymbol);
 
-    // Sort on-surface symbols by distance to camera
-    for (const auto& symbolEntry : rangeOf(constOf(input)))
-    {
-        const auto& symbol_ = symbolEntry.key();
-        if (symbol_->isHidden)
-            continue;
-        const auto& symbol = std::dynamic_pointer_cast<const IOnSurfaceMapSymbol>(symbol_);
-        if (!symbol)
-            continue;
+    // Get GPU resource
+    const auto gpuResource = captureGpuResource(referenceOrigins, mapSymbol);
+    if (!gpuResource)
+        return;
 
-        // Get GPU resource
-        const auto gpuResource = captureGpuResource(symbolEntry.value(), symbol_);
-        if (!gpuResource)
-            continue;
+    std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
+    renderable->mapSymbol = mapSymbol;
+    renderable->gpuResource = gpuResource;
+    outRenderableSymbols.push_back(renderable);
 
-        std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
-        renderable->mapSymbol = symbol_;
-        renderable->gpuResource = gpuResource;
+    // Calculate location of symbol in world coordinates.
+    renderable->offsetFromTarget31 = onSurfaceMapSymbol->getPosition31() - currentState.target31;
+    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
+    renderable->positionInWorld = glm::vec3(
+        renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+        0.0f,
+        renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
 
-        // Calculate location of symbol in world coordinates.
-        renderable->offsetFromTarget31 = symbol->getPosition31() - currentState.target31;
-        renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
-        renderable->positionInWorld = glm::vec3(
-            renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
-            0.0f,
-            renderable->offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+    // Get direction
+    if (onSurfaceMapSymbol->isAzimuthAlignedDirection())
+        renderable->direction = Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f);
+    else
+        renderable->direction = onSurfaceMapSymbol->getDirection();
 
-        // Get direction
-        if (symbol->isAzimuthAlignedDirection())
-            renderable->direction = Utilities::normalizedAngleDegrees(currentState.azimuth + 180.0f);
-        else
-            renderable->direction = symbol->getDirection();
-
-        // Get distance from symbol to camera
-        const auto distanceToCamera = renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
-
-        // Insert into map
-        output.insert(distanceToCamera, qMove(renderable));
-    }
+    // Get distance from symbol to camera
+    renderable->distanceToCamera = glm::distance(internalState.worldCameraPosition, renderable->positionInWorld);
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardSymbol(
@@ -1749,7 +1758,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotRenderable(
 }
 
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSymbolsStage::captureGpuResource(
-    const MapRenderer::MapSymbolreferenceOrigins& resources,
+    const MapRenderer::MapSymbolReferenceOrigins& resources,
     const std::shared_ptr<const MapSymbol>& mapSymbol)
 {
     for (auto& resource : constOf(resources))

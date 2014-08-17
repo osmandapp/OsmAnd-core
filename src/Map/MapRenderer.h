@@ -36,8 +36,10 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(MapRenderer);
 
     public:
-        typedef QSet< std::shared_ptr<MapRendererBaseResource> > MapSymbolreferenceOrigins;
-        typedef QHash< std::shared_ptr<const MapSymbol>, MapSymbolreferenceOrigins > PublishedMapSymbols;
+        typedef QSet< std::shared_ptr<MapRendererBaseResource> > MapSymbolReferenceOrigins;
+        typedef QHash< std::shared_ptr<const MapSymbol>, MapSymbolReferenceOrigins > PublishedMapSymbols;
+        typedef QHash< std::shared_ptr<const MapSymbolsGroup>, PublishedMapSymbols > PublishedMapSymbolsByGroup;
+        typedef QMap< int, PublishedMapSymbolsByGroup > PublishedMapSymbolsByOrder;
 
     private:
         // General:
@@ -77,7 +79,7 @@ namespace OsmAnd
         mutable QReadWriteLock _pendingUnpublishMapSymbolsLock;
         QList< PendingPublishOrUnpublishMapSymbol > _pendingUnpublishMapSymbols;
         mutable QReadWriteLock _publishedMapSymbolsByOrderLock;
-        QMap< int, PublishedMapSymbols > _publishedMapSymbolsByOrder;
+        PublishedMapSymbolsByOrder _publishedMapSymbolsByOrder;
         QHash< std::shared_ptr<const MapSymbolsGroup>, SmartPOD<unsigned int, 0> > _publishedMapSymbolsGroups;
         QAtomicInt _publishedMapSymbolsCount;
         void publishMapSymbol(
@@ -181,7 +183,7 @@ namespace OsmAnd
 
         // Symbols-related:
         QReadWriteLock& publishedMapSymbolsByOrderLock;
-        const QMap< int, PublishedMapSymbols >& publishedMapSymbolsByOrder;
+        const PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
 
         // General:
 

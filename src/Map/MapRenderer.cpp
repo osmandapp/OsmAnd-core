@@ -816,7 +816,8 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
     const std::shared_ptr<const MapSymbol>& symbol,
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    auto& symbolReferencedResources = _publishedMapSymbolsByOrder[symbol->order][symbol];
+    auto& publishedMapSymbolsByGroup = _publishedMapSymbolsByOrder[symbol->order][symbolGroup];
+    auto& symbolReferencedResources = publishedMapSymbolsByGroup[symbol];
     if (symbolReferencedResources.isEmpty())
         _publishedMapSymbolsCount.fetchAndAddOrdered(1);
     assert(!symbolReferencedResources.contains(resource));
@@ -874,13 +875,32 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
     const std::shared_ptr<MapRendererBaseResource>& resource,
     const bool mayFail)
 {
-    const auto itPublishedMapSymbols = _publishedMapSymbolsByOrder.find(symbol->order);
-    if (itPublishedMapSymbols == _publishedMapSymbolsByOrder.end())
+    const auto itPublishedMapSymbolsByGroup = _publishedMapSymbolsByOrder.find(symbol->order);
+    if (itPublishedMapSymbolsByGroup == _publishedMapSymbolsByOrder.end())
     {
         if (!mayFail)
         {
             LogPrintf(LogSeverityLevel::Error,
                 "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #1!",
+                symbol.get(),
+                symbolGroup.get(),
+                resource.get());
+
+            assert(false);
+        }
+
+        // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
+        return false;
+    }
+    auto& publishedMapSymbolsByGroup = *itPublishedMapSymbolsByGroup;
+
+    const auto itPublishedMapSymbols = publishedMapSymbolsByGroup.find(symbolGroup);
+    if (itPublishedMapSymbols == publishedMapSymbolsByGroup.end())
+    {
+        if (!mayFail)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #2!",
                 symbol.get(),
                 symbolGroup.get(),
                 resource.get());
@@ -899,7 +919,7 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
         if (!mayFail)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #1!",
+                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #3!",
                 symbol.get(),
                 symbolGroup.get(),
                 resource.get());
@@ -911,12 +931,13 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
         return false;
     }
     auto& symbolReferencedResources = *itSymbolReferencedResources;
+
     if (!symbolReferencedResources.remove(resource))
     {
         if (!mayFail)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #1!",
+                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #4!",
                 symbol.get(),
                 symbolGroup.get(),
                 resource.get());
@@ -936,16 +957,18 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
         publishedMapSymbols.erase(itSymbolReferencedResources);
     }
     if (publishedMapSymbols.isEmpty())
-        _publishedMapSymbolsByOrder.erase(itPublishedMapSymbols);
+        publishedMapSymbolsByGroup.erase(itPublishedMapSymbols);
+    if (publishedMapSymbolsByGroup.isEmpty())
+        _publishedMapSymbolsByOrder.erase(itPublishedMapSymbolsByGroup);
 
-    const auto itPublishedMapSymbolsGroup = _publishedMapSymbolsGroups.find(symbolGroup);
-    auto& groupRefsCounter = *itPublishedMapSymbolsGroup;
+    const auto itGroupRefsCounter = _publishedMapSymbolsGroups.find(symbolGroup);
+    auto& groupRefsCounter = *itGroupRefsCounter;
     groupRefsCounter -= 1;
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     const auto newGroupRefsCounter = (unsigned int)groupRefsCounter;
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     if (groupRefsCounter == 0)
-        _publishedMapSymbolsGroups.erase(itPublishedMapSymbolsGroup);
+        _publishedMapSymbolsGroups.erase(itGroupRefsCounter);
 
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     LogPrintf(LogSeverityLevel::Debug,
