@@ -45,6 +45,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     struct PlottedSymbolRef
     {
         PlottedSymbols::iterator iterator;
+        std::shared_ptr<const RenderableSymbol> renderable;
         std::shared_ptr<const MapSymbol> mapSymbol;
     };
 
@@ -97,14 +98,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             if (plotted)
             {
                 const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderable);
-                PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderable->mapSymbol };
+                PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderable, renderable->mapSymbol };
 
                 plottedMapSymbolsByGroup[renderable->mapSymbol->groupPtr].push_back(qMove(plottedSymbolRef));
             }
         }
     }
-
-    //TODO: also remove from outIntersections!!!!!
 
     // Remove those plotted symbols that do not conform to presentation rules
     auto itPlottedSymbolsGroup = mutableIteratorOf(plottedMapSymbolsByGroup);
@@ -117,7 +116,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         {
             // Discard entire group
             for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
+            {
+                //outIntersections.removeOneSlow(plottedGroupSymbol.renderable);
                 plottedSymbols.erase(plottedGroupSymbol.iterator);
+            }
 
             itPlottedSymbolsGroup.remove();
             continue;
@@ -134,7 +136,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             {
                 // Discard entire group
                 for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
+                {
+                    //outIntersections.removeOneSlow(plottedGroupSymbol.renderable);
                     plottedSymbols.erase(plottedGroupSymbol.iterator);
+                }
 
                 itPlottedSymbolsGroup.remove();
                 continue;
@@ -161,7 +166,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 {
                     // Discard entire group
                     for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
+                    {
+                        //outIntersections.removeOneSlow(plottedGroupSymbol.renderable);
                         plottedSymbols.erase(plottedGroupSymbol.iterator);
+                    }
 
                     itPlottedSymbolsGroup.remove();
                     continue;
@@ -193,6 +201,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         if (plottedGroupSymbol.mapSymbol->contentClass != MapSymbol::ContentClass::Caption)
                             continue;
 
+                        //outIntersections.removeOneSlow(plottedGroupSymbol.renderable);
                         plottedSymbols.erase(plottedGroupSymbol.iterator);
                         itPlottedGroupSymbol.remove();
                     }
@@ -247,7 +256,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
         }
 
         ////////////////////////////////////////////////////////////////////////////
-        
+        /*
         {
             if (const auto symbolsGroupWithId = std::dynamic_pointer_cast<MapSymbolsGroupWithId>(currentSymbol->group.lock()))
             {
@@ -255,7 +264,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbols(
                     continue;
             }
         }
-        
+        */
         ////////////////////////////////////////////////////////////////////////////
 
         // Skip if there are no pin-points

@@ -295,6 +295,86 @@ namespace OsmAnd
                 }
             }
 
+            inline bool removeOneSlow(const ELEMENT_TYPE& element)
+            {
+                auto itEntry = mutableIteratorOf(entries);
+                while (itEntry.hasNext())
+                {
+                    const auto& entry = itEntry.next();
+
+                    if (entry.second != element)
+                        continue;
+
+                    itEntry.remove();
+                    return true;
+                }
+
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    if (subnodes[idx]->removeOneSlow(element))
+                        return true;
+                }
+
+                return false;
+            }
+
+            inline unsigned int removeAllSlow(const ELEMENT_TYPE& element)
+            {
+                unsigned int removedCount = 0;
+
+                auto itEntry = mutableIteratorOf(entries);
+                while (itEntry.hasNext())
+                {
+                    const auto& entry = itEntry.next();
+
+                    if (entry.second != element)
+                        continue;
+
+                    itEntry.remove();
+                    removedCount++;
+                }
+
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    removedCount += subnodes[idx]->removeAllSlow(element);
+                }
+
+                return removedCount;
+            }
+
+            inline unsigned int removeSlow(const Acceptor acceptor)
+            {
+                unsigned int removedCount = 0;
+
+                auto itEntry = mutableIteratorOf(entries);
+                while (itEntry.hasNext())
+                {
+                    const auto& entry = itEntry.next();
+
+                    if (!acceptor(entry.second, entry.first, doStop))
+                        continue;
+
+                    itEntry.remove();
+                    removedCount++;
+                }
+
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    removedCount += subnodes[idx]->removeSlow(element);
+                }
+
+                return removedCount;
+            }
+
             template<typename BBOX_TYPE>
             static bool contains(const BBOX_TYPE& which, const BBox& what)
             {
@@ -432,6 +512,21 @@ namespace OsmAnd
         inline void select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor = nullptr) const
         {
             _root->select(point, outResults, acceptor);
+        }
+
+        inline bool removeOneSlow(const ELEMENT_TYPE& entry)
+        {
+            return _root->removeOneSlow(entry);
+        }
+
+        inline unsigned int removeAllSlow(const ELEMENT_TYPE& entry)
+        {
+            return _root->removeAllSlow(entry);
+        }
+
+        inline unsigned int removeSlow(const Acceptor acceptor)
+        {
+            return _root->removeAllSlow(acceptor);
         }
     };
 }
