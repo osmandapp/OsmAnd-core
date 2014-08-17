@@ -450,7 +450,7 @@ namespace OsmAnd
                 {
                     const auto& entry = itEntry.next();
 
-                    if (!acceptor(entry.second, entry.first, doStop))
+                    if (!acceptor(entry.second, entry.first))
                         continue;
 
                     itEntry.remove();
@@ -462,7 +462,7 @@ namespace OsmAnd
                     if (!subnodes[idx])
                         continue;
 
-                    removedCount += subnodes[idx]->removeSlow(element);
+                    removedCount += subnodes[idx]->removeSlow(acceptor);
                 }
 
                 return removedCount;
