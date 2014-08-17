@@ -193,7 +193,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 }
                 else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
                 {
-                    symbolsForComputation.push_back({ 0, onPathSymbol->size.x, 0 });
+                    symbolsForComputation.push_back({ 0, static_cast<float>(onPathSymbol->size.x), 0 });
                 }
             }
 
