@@ -911,7 +911,7 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
         // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
         return false;
     }
-    auto& publishedMapSymbols = *itPublishedMapSymbols;
+    auto& publishedMapSymbols = itPublishedMapSymbols->second;
 
     const auto itSymbolReferencedResources = publishedMapSymbols.find(symbol);
     if (itSymbolReferencedResources == publishedMapSymbols.end())
@@ -958,7 +958,7 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
     }
     if (publishedMapSymbols.isEmpty())
         publishedMapSymbolsByGroup.erase(itPublishedMapSymbols);
-    if (publishedMapSymbolsByGroup.isEmpty())
+    if (publishedMapSymbolsByGroup.size() == 0)
         _publishedMapSymbolsByOrder.erase(itPublishedMapSymbolsByGroup);
 
     const auto itGroupRefsCounter = _publishedMapSymbolsGroups.find(symbolGroup);

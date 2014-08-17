@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_MAP_RENDERER_H_
 
 #include "stdlib_common.h"
+#include <map>
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
@@ -22,12 +23,13 @@
 #include "TiledEntriesCollection.h"
 #include "MapRendererInternalState.h"
 #include "MapRendererResourcesManager.h"
+#include "MapSymbolsGroup.h"
+#include "MapSymbolsGroupWithId.h"
 
 namespace OsmAnd
 {
     class MapRendererTiledResources;
     class MapSymbol;
-    class MapSymbolsGroup;
     class MapRendererStage;
     struct MapRendererInternalState;
     
@@ -36,9 +38,39 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(MapRenderer);
 
     public:
+        // Map symbols groups comprarator:
+        // - If ID is available, sort by ID in ascending order
+        // - If ID is unavailable, sort by pointer
+        // - If ID vs no-ID is sorted, no-ID is always goes after
+        struct MapSymbolsGroupsComparator
+        {
+            bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r)
+            {
+                const auto lWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(l);
+                const auto rWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(r);
+
+                if (lWithId && rWithId)
+                {
+                    return lWithId->id < rWithId->id;
+                }
+                else if (!lWithId && !rWithId)
+                {
+                    return l.get() < r.get();
+                }
+                else if (lWithId && !rWithId)
+                {
+                    return true;
+                }
+                else /* if (!lWithId && rWithId) */
+                {
+                    return false;
+                }
+            }
+        };
+
         typedef QSet< std::shared_ptr<MapRendererBaseResource> > MapSymbolReferenceOrigins;
         typedef QHash< std::shared_ptr<const MapSymbol>, MapSymbolReferenceOrigins > PublishedMapSymbols;
-        typedef QHash< std::shared_ptr<const MapSymbolsGroup>, PublishedMapSymbols > PublishedMapSymbolsByGroup;
+        typedef std::map< std::shared_ptr<const MapSymbolsGroup>, PublishedMapSymbols, MapSymbolsGroupsComparator > PublishedMapSymbolsByGroup;
         typedef QMap< int, PublishedMapSymbolsByGroup > PublishedMapSymbolsByOrder;
 
     private:

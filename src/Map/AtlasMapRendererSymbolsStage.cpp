@@ -56,35 +56,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
     QReadLocker scopedLocker(&publishedMapSymbolsByOrderLock);
 
-    // Map symbols groups sorter:
-    // - If ID is available, sort by ID in ascending order
-    // - If ID is unavailable, sort by pointer
-    // - If ID vs no-ID is sorted, no-ID is always goes after
-    const auto mapSymbolsGroupsSort =
-        []
-        (const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) -> bool
-        {
-            const auto lWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(l);
-            const auto rWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(r);
-
-            if (lWithId && rWithId)
-            {
-                return lWithId->id < rWithId->id;
-            }
-            else if (!lWithId && !rWithId)
-            {
-                return l.get() < r.get();
-            }
-            else if (lWithId && !rWithId)
-            {
-                return true;
-            }
-            else /* if (!lWithId && rWithId) */
-            {
-                return false;
-            }
-        };
-
     // Iterate over map symbols layer sorted by "order" in ascending direction.
     // This means that map symbols with smaller order value are more important than map symbols with
     // larger order value.
@@ -93,20 +64,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QHash< const MapSymbolsGroup*, QList< PlottedSymbolRef > > plottedMapSymbolsByGroup;
     for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
     {
-        // Sort map symbols groups
-        auto mapSymbolsGroups = publishedMapSymbols.keys();
-        qSort(mapSymbolsGroups.begin(), mapSymbolsGroups.end(), mapSymbolsGroupsSort);
-
-        // Iterate over all groups in proper order
-        for (const auto& mapSymbolGroup : constOf(mapSymbolsGroups))
+        // Iterate over all groups in proper order (proper order is maintained during publishing)
+        for (const auto& publishedMapSymbolsEntry : constOf(publishedMapSymbols))
         {
-            const auto citPublishedMapSymbolsFromGroup = publishedMapSymbols.constFind(mapSymbolGroup);
-            if (citPublishedMapSymbolsFromGroup == publishedMapSymbols.cend())
-            {
-                assert(false);
-                continue;
-            }
-            const auto& publishedMapSymbolsFromGroup = *citPublishedMapSymbolsFromGroup;
+            const auto& mapSymbolGroup = publishedMapSymbolsEntry.first;
+            const auto& publishedMapSymbolsFromGroup = publishedMapSymbolsEntry.second;
 
             // Process symbols from this group in order as they are stored in group
             for (const auto& mapSymbol : constOf(mapSymbolGroup->symbols))
