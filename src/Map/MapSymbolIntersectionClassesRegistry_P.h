@@ -40,12 +40,6 @@ namespace OsmAnd
         // Predefined 'any' class
         const ClassId anyClass;
 
-        // Predefined 'anyExceptOwnGroup' class
-        const ClassId anyExceptOwnGroupClass;
-
-        // Predefined 'ownGroup' class
-        const ClassId ownGroupClass;
-
     friend class OsmAnd::MapSymbolIntersectionClassesRegistry;
     };
 }

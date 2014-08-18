@@ -6,8 +6,6 @@
 OsmAnd::MapSymbolIntersectionClassesRegistry::MapSymbolIntersectionClassesRegistry()
     : _p(new MapSymbolIntersectionClassesRegistry_P(this))
     , anyClass(_p->anyClass)
-    , anyExceptOwnGroupClass(_p->anyExceptOwnGroupClass)
-    , ownGroupClass(_p->ownGroupClass)
 {
 }
 

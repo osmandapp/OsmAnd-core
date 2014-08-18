@@ -180,10 +180,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             symbolsForComputation.reserve(group->symbols.size());
             for (const auto& symbol : constOf(group->symbols))
             {
-                // For on path entire check has to be performed to exclude intended duplicates
-                symbol->intersectedByClasses.insert(mapSymbolIntersectionClassesRegistry.ownGroupClass);
-                symbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.ownGroupClass);
-
                 if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                 {
                     // Get larger bbox, to take into account possible rotation
@@ -263,7 +259,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             else
             {
                 LogPrintf(LogSeverityLevel::Error,
-                    "BinaryMapObject #" PRIu64 " produced incompatible set of map symbols to compute presentation mode",
+                    "%s produced incompatible set of map symbols to compute presentation mode",
+                    qPrintable(group->getDebugTitle()),
                     mapObject->id >> 1);
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }

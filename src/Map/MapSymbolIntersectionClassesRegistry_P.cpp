@@ -4,8 +4,6 @@
 OsmAnd::MapSymbolIntersectionClassesRegistry_P::MapSymbolIntersectionClassesRegistry_P(MapSymbolIntersectionClassesRegistry* const owner_)
     : owner(owner_)
     , anyClass(unsafeRegisterClassIdByName(QLatin1String("any")))
-    , anyExceptOwnGroupClass(unsafeRegisterClassIdByName(QLatin1String("anyExceptOwnGroupClass")))
-    , ownGroupClass(unsafeRegisterClassIdByName(QLatin1String("ownGroup")))
 {
 }
 

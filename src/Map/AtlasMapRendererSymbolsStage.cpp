@@ -1398,39 +1398,29 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
     // Check intersections
     const auto& intersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
     const auto& symbolIntersectsWithClasses = symbol->intersectsWithClasses;
+    const auto anyIntersectionClass = intersectionClassesRegistry.anyClass;
     const auto symbolIntersectsWithAnyClass = symbolIntersectsWithClasses.contains(intersectionClassesRegistry.anyClass);
-    const auto symbolIntersectsWithAnyExceptOwnGroupClass = symbolIntersectsWithClasses.contains(intersectionClassesRegistry.anyClass);
-    const auto ownGroupClass = intersectionClassesRegistry.ownGroupClass;
     const auto symbolGroupPtr = symbol->groupPtr;
     const auto intersects = intersections.test(renderable->intersectionBBox, false,
-        [symbolGroupPtr, symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, symbolIntersectsWithAnyExceptOwnGroupClass, ownGroupClass]
+        [symbolGroupPtr, symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, anyIntersectionClass]
         (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const IntersectionsQuadTree::BBox& otherBBox) -> bool
         {
             const auto& otherSymbol = otherRenderable->mapSymbol;
 
-            // Special case to handle "this-to-any" intersection
+            // Symbols never intersect anything inside own group
+            if (symbolGroupPtr == otherSymbol->groupPtr)
+                return false;
+
+            // Special case: tested symbol intersects any other symbol with at least 1 any class
             if (symbolIntersectsWithAnyClass && !otherSymbol->intersectedByClasses.isEmpty())
                 return true;
 
-            // Special case to handle "any-except-own-group" intersection
-            if (symbolIntersectsWithAnyExceptOwnGroupClass && !otherSymbol->intersectedByClasses.isEmpty())
-            {
-                const auto sameGroup = (symbolGroupPtr == otherSymbol->groupPtr);
-                if (sameGroup)
-                    return false;
-            }
+            // Special case: other symbol intersects tested symbol with at least 1 any class (which is true already)
+            if (otherSymbol->intersectedByClasses.contains(anyIntersectionClass))
+                return true;
 
+            // General case:
             const auto commonIntersectionClasses = symbolIntersectsWithClasses & otherSymbol->intersectedByClasses;
-            
-            // Special case to handle "ownGroup" intersection
-            if (commonIntersectionClasses.size() == 1 &&
-                *commonIntersectionClasses.begin() == ownGroupClass)
-            {
-                const auto sameGroup = (symbolGroupPtr == otherSymbol->groupPtr);
-                if (sameGroup)
-                    return true;
-            }
-
             const auto hasCommonIntersectionClasses = !commonIntersectionClasses.isEmpty();
             return hasCommonIntersectionClasses;
         });

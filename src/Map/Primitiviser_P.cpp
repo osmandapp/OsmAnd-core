@@ -1853,13 +1853,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         QString intersectedBy;
         ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTED_BY, intersectedBy);
         if (!ok)
-            intersectedBy = QLatin1String("any");
+            intersectedBy = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
         text->intersectedBy = intersectedBy.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
         QString intersectsWith;
         ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
         if (!ok)
-            intersectsWith = QLatin1String("any");
+            intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
         text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
         outSymbols.push_back(qMove(text));
@@ -1909,13 +1909,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
     QString intersectedBy;
     ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTED_BY, intersectedBy);
     if (!ok)
-        intersectedBy = QLatin1String("any");
+        intersectedBy = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
     icon->intersectedBy = intersectedBy.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
     QString intersectsWith;
     ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
     if (!ok)
-        intersectsWith = QLatin1String("any");
+        intersectsWith = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
     icon->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
     outSymbols.push_back(qMove(icon));
