@@ -8,7 +8,8 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapSymbolsGroupWithId.h>
+#include <OsmAndCore/Map/MapSymbolsGroup.h>
+#include <OsmAndCore/Map/IMapSymbolsGroupWithUniqueId.h>
 
 namespace OsmAnd
 {
@@ -17,7 +18,9 @@ namespace OsmAnd
         class BinaryMapObject;
     }
 
-    class OSMAND_CORE_API BinaryMapObjectSymbolsGroup : public MapSymbolsGroupWithId
+    class OSMAND_CORE_API BinaryMapObjectSymbolsGroup
+        : public MapSymbolsGroup
+        , public IMapSymbolsGroupWithUniqueId
     {
         Q_DISABLE_COPY_AND_MOVE(BinaryMapObjectSymbolsGroup);
     private:
@@ -29,6 +32,12 @@ namespace OsmAnd
         virtual ~BinaryMapObjectSymbolsGroup();
 
         const std::shared_ptr<const Model::BinaryMapObject> mapObject;
+        
+        const uint64_t id;
+        virtual uint64_t getId() const;
+
+        const bool sharableById;
+        virtual bool isSharableById() const;
 
         virtual QString getDebugTitle() const;
     };

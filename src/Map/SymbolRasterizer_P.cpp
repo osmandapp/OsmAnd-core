@@ -51,23 +51,26 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 {
     const auto& env = primitivizedArea->mapPresentationEnvironment;
 
-    for (const auto& symbolsEntry : rangeOf(constOf(primitivizedArea->symbolsBySourceObjects)))
+    for (const auto& symbolGroupEntry : rangeOf(constOf(primitivizedArea->symbolsGroups)))
     {
         if (controller && controller->isAborted())
             return;
 
+        const auto& mapObject = symbolGroupEntry.key();
+        const auto& symbolsGroup = symbolGroupEntry.value();
+
         // Apply filter, if it's present
-        if (filter && !filter(symbolsEntry.key()))
+        if (filter && !filter(mapObject))
             continue;
 
         // Create group
-        const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(symbolsEntry.key()));
+        const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(mapObject));
 
         // Total offset allows several symbols to stack into column. Offset specifies center of symbol bitmap.
         // This offset is computed only in case symbol is not on-path and not along-path
         PointI totalOffset;
 
-        for (const auto& symbol : constOf(symbolsEntry.value()))
+        for (const auto& symbol : constOf(symbolsGroup->symbols))
         {
             if (controller && controller->isAborted())
                 return;

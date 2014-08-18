@@ -24,7 +24,7 @@
 #include "MapRendererInternalState.h"
 #include "MapRendererResourcesManager.h"
 #include "MapSymbolsGroup.h"
-#include "MapSymbolsGroupWithId.h"
+#include "IMapSymbolsGroupWithUniqueId.h"
 
 namespace OsmAnd
 {
@@ -46,12 +46,12 @@ namespace OsmAnd
         {
             bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const
             {
-                const auto lWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(l);
-                const auto rWithId = std::dynamic_pointer_cast<const MapSymbolsGroupWithId>(r);
+                const auto lWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(l);
+                const auto rWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(r);
 
                 if (lWithId && rWithId)
                 {
-                    return lWithId->id < rWithId->id;
+                    return lWithId->getId() < rWithId->getId();
                 }
                 else if (!lWithId && !rWithId)
                 {

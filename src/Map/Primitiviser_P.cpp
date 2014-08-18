@@ -1436,11 +1436,9 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
             {
                 if (group)
                 {
-                    // Add symbols from group to current context
-                    primitivisedArea->symbolsBySourceObjects[group->sourceObject].append(group->symbols);
-
                     // Add shared group to current context
-                    primitivisedArea->symbolsGroups.push_back(qMove(group));
+                    assert(!primitivisedArea->symbolsGroups.contains(group->sourceObject));
+                    primitivisedArea->symbolsGroups.insert(group->sourceObject, qMove(group));
                 }
                 else
                 {
@@ -1488,23 +1486,18 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
         if (pSharedSymbolGroups && canBeShared)
             pSharedSymbolGroups->fulfilPromiseAndReference(primitivesGroup->sourceObject->id, group);
 
-
-        // Add symbols from group to current context
-        primitivisedArea->symbolsBySourceObjects[group->sourceObject].append(group->symbols);
-
         // Empty groups are also inserted, to indicate that they are empty
-        primitivisedArea->symbolsGroups.push_back(qMove(group));
+        assert(!primitivisedArea->symbolsGroups.contains(group->sourceObject));
+        primitivisedArea->symbolsGroups.insert(group->sourceObject, qMove(group));
     }
 
     for (auto& futureGroup : futureSharedSymbolGroups)
     {
         auto group = futureGroup.get();
 
-        // Add symbols from group to current context
-        primitivisedArea->symbolsBySourceObjects[group->sourceObject].append(group->symbols);
-
         // Add shared group to current context
-        primitivisedArea->symbolsGroups.push_back(qMove(group));
+        assert(!primitivisedArea->symbolsGroups.contains(group->sourceObject));
+        primitivisedArea->symbolsGroups.insert(group->sourceObject, qMove(group));
     }
 }
 

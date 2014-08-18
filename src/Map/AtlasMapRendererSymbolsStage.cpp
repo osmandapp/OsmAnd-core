@@ -24,7 +24,7 @@
 #include "BillboardRasterMapSymbol.h"
 #include "OnSurfaceRasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
-#include "MapSymbolsGroupWithId.h"
+#include "IMapSymbolsGroupWithUniqueId.h"
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"
 #include "MapSymbolIntersectionClassesRegistry.h"

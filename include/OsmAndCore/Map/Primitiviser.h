@@ -105,7 +105,7 @@ namespace OsmAnd
         typedef QList< std::shared_ptr<const Symbol> > SymbolsCollection;
 
         class SymbolsGroup;
-        typedef QList< std::shared_ptr<const SymbolsGroup> > SymbolsGroupsCollection;
+        typedef QHash< std::shared_ptr<const Model::BinaryMapObject>, std::shared_ptr<const SymbolsGroup> > SymbolsGroupsCollection;
 
         class OSMAND_CORE_API SymbolsGroup Q_DECL_FINAL
         {
@@ -251,7 +251,6 @@ namespace OsmAnd
             PrimitivesCollection points;
 
             SymbolsGroupsCollection symbolsGroups;
-            QHash< std::shared_ptr<const Model::BinaryMapObject>, SymbolsCollection > symbolsBySourceObjects;
 
             bool isEmpty() const;
 
