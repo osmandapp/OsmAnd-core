@@ -28,7 +28,7 @@ namespace OsmAnd
     protected:
         FavoriteLocationsCollection_P(FavoriteLocationsCollection* const owner);
 
-        typedef Link<FavoriteLocationsCollection*> Link;
+        typedef OsmAnd::Link<FavoriteLocationsCollection*> Link;
         std::shared_ptr<Link> _containerLink;
 
         mutable QReadWriteLock _collectionLock;

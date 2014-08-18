@@ -81,7 +81,7 @@ namespace OsmAnd
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 
-        typedef Link<BinaryMapDataProvider_P*> Link;
+        typedef OsmAnd::Link<BinaryMapDataProvider_P*> Link;
         std::shared_ptr<Link> _link;
     public:
         ~BinaryMapDataProvider_P();
