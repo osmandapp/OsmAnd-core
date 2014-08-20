@@ -69,8 +69,10 @@ if [[ "$targetOS" == "linux" ]]; then
 	
 	if [[ "$compiler" == "gcc" ]]; then
 		if [[ "$targetArch" == "i686" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
 			makeStaticAndSharedFlavor "linux.gcc-i686" "linux-g++-32" "$QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "amd64" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
 			makeStaticAndSharedFlavor "linux.gcc-amd64" "linux-g++-64" "$QTBASE_CONFIGURATION"
 		else
 			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
@@ -78,8 +80,10 @@ if [[ "$targetOS" == "linux" ]]; then
 		fi
 	elif [[ "$compiler" == "clang" ]]; then
 		if [[ "$targetArch" == "i686" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
 			makeStaticAndSharedFlavor "linux.clang-i686" "linux-clang-32" "$QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "amd64" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
 			makeStaticAndSharedFlavor "linux.clang-amd64" "linux-clang-64" "$QTBASE_CONFIGURATION"
 		else
 			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
@@ -104,8 +108,10 @@ elif [[ "$targetOS" == "darwin" ]]; then
 	
 	if [[ "$compiler" == "clang" ]]; then
 		if [[ "$targetArch" == "i386" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
 			makeStaticAndSharedFlavor "darwin.clang-i386" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "x86_64" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
 			makeStaticAndSharedFlavor "darwin.clang-x86_64" "macx-clang-libc++-64" "$QTBASE_CONFIGURATION"
 		else
 			echo "Only 'i386' and 'x86_64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
