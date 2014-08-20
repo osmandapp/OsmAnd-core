@@ -1,8 +1,3 @@
-if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
-	# External : msinttypes
-	add_subdirectory("${OSMAND_ROOT}/core/externals/msinttypes" "core/externals/msinttypes")
-endif()
-
 # External : z
 add_subdirectory("${OSMAND_ROOT}/core/externals/zlib" "core/externals/zlib")
 
