@@ -1,0 +1,26 @@
+diff -rupN upstream.original/mkspecs/linux-clang-32/qmake.conf upstream.patched/mkspecs/linux-clang-32/qmake.conf
+--- upstream.original/mkspecs/linux-clang-32/qmake.conf	2014-07-02 13:04:30.509950600 +0300
++++ upstream.patched/mkspecs/linux-clang-32/qmake.conf	2014-08-20 14:55:22.787086700 +0300
+@@ -7,6 +7,9 @@ CONFIG += incremental
+ 
+ QMAKE_INCREMENTAL_STYLE = sublib
+ 
++QMAKE_CFLAGS = -m32
++QMAKE_LFLAGS = -m32
++
+ include(../common/linux.conf)
+ include(../common/gcc-base-unix.conf)
+ include(../common/clang.conf)
+diff -rupN upstream.original/mkspecs/linux-clang-64/qmake.conf upstream.patched/mkspecs/linux-clang-64/qmake.conf
+--- upstream.original/mkspecs/linux-clang-64/qmake.conf	2014-07-02 13:04:30.509950600 +0300
++++ upstream.patched/mkspecs/linux-clang-64/qmake.conf	2014-08-20 14:55:34.779506900 +0300
+@@ -7,6 +7,9 @@ CONFIG += incremental
+ 
+ QMAKE_INCREMENTAL_STYLE = sublib
+ 
++QMAKE_CFLAGS = -m64
++QMAKE_LFLAGS = -m64
++
+ include(../common/linux.conf)
+ include(../common/gcc-base-unix.conf)
+ include(../common/clang.conf)
