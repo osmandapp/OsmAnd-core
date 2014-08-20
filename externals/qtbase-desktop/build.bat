@@ -1,5 +1,25 @@
 @echo off
 
+REM Get and verify arguments
+set targetOS=%1
+set compiler=%2
+set targetArch=%3
+if NOT "%targetOS%"=="windows" (
+	echo 'windows' is the only supported target, while '%targetOS%' was specified
+	exit /B 1
+)
+if NOT "%compiler%"=="msvc" (
+	echo 'msvc' is the only supported compiler, while '%compiler%' was specified
+	exit /B 1
+)
+if NOT "%targetArch%"=="i686" (
+	if NOT "%targetArch%"=="amd64" (
+		echo 'i686' and 'amd64' are the only supported target architectures, while '%targetArch%' was specified
+		exit /B 1
+	)
+)
+echo Going to build embedded Qt for %targetOS%/%compiler%/%targetArch%
+
 setlocal
 
 REM Prepare environment
@@ -17,17 +37,21 @@ REM Initialize VisualC variables
 call "%VS120COMNTOOLS%\VCVarsQueryRegistry.bat"
 
 REM Build for x86
-setlocal
-call "%VCINSTALLDIR%\vcvarsall.bat" x86
-call :build
-endlocal
+if "%targetArch%"=="i686" (
+	setlocal
+	call "%VCINSTALLDIR%\vcvarsall.bat" x86
+	call :build
+	endlocal
+)
 
 REM Build for amd64
-setlocal
-call "%VCINSTALLDIR%\vcvarsall.bat" x86_amd64
-call :build
-endlocal
-
+if "%targetArch%"=="amd64" (
+	setlocal
+	call "%VCINSTALLDIR%\vcvarsall.bat" x86_amd64
+	call :build
+	endlocal
+)
+	
 REM Quit from script
 endlocal
 exit /B

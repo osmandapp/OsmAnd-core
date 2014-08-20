@@ -8,12 +8,9 @@ if [ -z "$BASH_VERSION" ]; then
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-OSMAND_ARCHITECTURES_SET=($*)
-
-if [[ "$(uname -a)" =~ Cygwin ]]; then
-	echo "Building under Cygwin is not supported, use build.bat"
-	exit 1
-fi
+targetOS=$1
+compiler=$2
+targetArch=$3
 
 # Function: makeFlavor(name, platform, configuration)
 makeFlavor()
@@ -57,7 +54,7 @@ makeStaticAndSharedFlavor()
 	makeFlavor "$name.shared" $platform "-shared $configuration"
 }
 
-if [[ "$(uname -a)" =~ Linux ]]; then
+if [[ "$targetOS" == "linux" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
@@ -70,26 +67,29 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	fi
 	
-	# GCC
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		makeStaticAndSharedFlavor "linux.gcc-i686" "linux-g++-32" "$QTBASE_CONFIGURATION"
+	if [[ "$compiler" == "gcc" ]]; then
+		if [[ "$targetArch" == "i686" ]]; then
+			makeStaticAndSharedFlavor "linux.gcc-i686" "linux-g++-32" "$QTBASE_CONFIGURATION"
+		elif [[ "$targetArch" == "amd64" ]]; then
+			makeStaticAndSharedFlavor "linux.gcc-amd64" "linux-g++-64" "$QTBASE_CONFIGURATION"
+		else
+			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
+			exit 1
+		fi
+	elif [[ "$compiler" == "clang" ]]; then
+		if [[ "$targetArch" == "i686" ]]; then
+			makeStaticAndSharedFlavor "linux.clang-i686" "linux-clang-32" "$QTBASE_CONFIGURATION"
+		elif [[ "$targetArch" == "amd64" ]]; then
+			makeStaticAndSharedFlavor "linux.clang-amd64" "linux-clang-64" "$QTBASE_CONFIGURATION"
+		else
+			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
+			exit 1
+		fi
+	else
+		echo "Only 'gcc' and 'clang' are supported compilers for '${targetOS}' target, while '${compiler}' was specified"
+		exit 1
 	fi
-
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		makeStaticAndSharedFlavor "linux.gcc-amd64" "linux-g++-64" "$QTBASE_CONFIGURATION"
-	fi
-	
-	# Clang
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		makeStaticAndSharedFlavor "linux.clang-i686" "linux-clang-32" "$QTBASE_CONFIGURATION"
-	fi
-
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		makeStaticAndSharedFlavor "linux.clang-amd64" "linux-clang-64" "$QTBASE_CONFIGURATION"
-	fi
-fi
-
-if [[ "$(uname -a)" =~ Darwin ]]; then
+elif [[ "$targetOS" == "darwin" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-debug-and-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
@@ -102,83 +102,20 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
 	
-	makeFat()
-	{
-		local compiler = $1
-		
-		if [ ! -d "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared" ]; then
-			# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
-			mkdir -p "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared"
-			(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared" && \
-				ln -s "../upstream.patched.darwin.${compiler}-i386.shared/include" "include")
-			(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared" && \
-				ln -s "../upstream.patched.darwin.${compiler}-i386.shared/src" "src")
-			(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared" && \
-				ln -s "../upstream.patched.darwin.${compiler}-i386.shared/bin" "bin")
-			mkdir -p "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared/lib"
-			(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared/lib" && \
-				ln -s "../../upstream.patched.darwin.${compiler}-i386.shared/lib/cmake" "cmake")
-
-			# Make universal libraries using lipo
-			libraries=(Core Concurrent Network Sql Xml)
-			for libName in "${libraries[@]}" ; do
-				echo "Packing '$libName'..."
-				lipo -create \
-					"$SRCLOC/upstream.patched.darwin.${compiler}-x86_64.shared/lib/libQt5${libName}.5.3.0.dylib" \
-					"$SRCLOC/upstream.patched.darwin.${compiler}-i386.shared/lib/libQt5${libName}.5.3.0.dylib" \
-					-output "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared/lib/libQt5${libName}.5.3.0.dylib"
-				(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared/lib" && \
-					ln -s "libQt5${libName}.5.3.0.dylib" "libQt5${libName}.5.3.dylib" && \
-					ln -s "libQt5${libName}.5.3.0.dylib" "libQt5${libName}.5.dylib" && \
-					ln -s "libQt5${libName}.5.3.0.dylib" "libQt5${libName}.dylib")
-				
-				lipo -create \
-					"$SRCLOC/upstream.patched.darwin.${compiler}-x86_64.shared/lib/libQt5${libName}_debug.5.3.0.dylib" \
-					"$SRCLOC/upstream.patched.darwin.${compiler}-i386.shared/lib/libQt5${libName}_debug.5.3.0.dylib" \
-					-output "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared/lib/libQt5${libName}_debug.5.3.0.dylib"
-				(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.shared/lib" && \
-					ln -s "libQt5${libName}_debug.5.3.0.dylib" "libQt5${libName}_debug.5.3.dylib" && \
-					ln -s "libQt5${libName}_debug.5.3.0.dylib" "libQt5${libName}_debug.5.dylib" && \
-					ln -s "libQt5${libName}_debug.5.3.0.dylib" "libQt5${libName}_debug.dylib")
-			done
+	if [[ "$compiler" == "clang" ]]; then
+		if [[ "$targetArch" == "i386" ]]; then
+			makeStaticAndSharedFlavor "darwin.clang-i386" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
+		elif [[ "$targetArch" == "x86_64" ]]; then
+			makeStaticAndSharedFlavor "darwin.clang-x86_64" "macx-clang-libc++-64" "$QTBASE_CONFIGURATION"
+		else
+			echo "Only 'i386' and 'x86_64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
+			exit 1
 		fi
-		if [ ! -d "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static" ]; then
-			# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
-			mkdir -p "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static"
-			(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static" && \
-				ln -s "../upstream.patched.darwin.${compiler}-i386.static/include" "include")
-			(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static" && \
-				ln -s "../upstream.patched.darwin.${compiler}-i386.static/src" "src")
-			(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static" && \
-				ln -s "../upstream.patched.darwin.${compiler}-i386.static/bin" "bin")
-			mkdir -p "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static/lib"
-			(cd "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static/lib" && \
-				ln -s "../../upstream.patched.darwin.${compiler}-i386.static/lib/cmake" "cmake")
-
-			# Make universal libraries using lipo
-			libraries=(Core Concurrent Network Sql Xml)
-			for libName in "${libraries[@]}" ; do
-				echo "Packing '$libName'..."
-				lipo -create \
-					"$SRCLOC/upstream.patched.darwin.${compiler}-x86_64.static/lib/libQt5${libName}.a" \
-					"$SRCLOC/upstream.patched.darwin.${compiler}-i386.static/lib/libQt5${libName}.a" \
-					-output "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static/lib/libQt5${libName}.a"
-				lipo -create \
-					"$SRCLOC/upstream.patched.darwin.${compiler}-x86_64.static/lib/libQt5${libName}_debug.a" \
-					"$SRCLOC/upstream.patched.darwin.${compiler}-i386.static/lib/libQt5${libName}_debug.a" \
-					-output "$SRCLOC/upstream.patched.darwin.${compiler}-intel.static/lib/libQt5${libName}_debug.a"
-			done
-		fi
-	}
-
-	# Clang
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		makeStaticAndSharedFlavor "darwin.clang-i386" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
+	else
+		echo "Only 'clang' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
+		exit 1
 	fi
-
-	if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x64 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-		makeStaticAndSharedFlavor "darwin.clang-x86_64" "macx-clang-libc++-64" "$QTBASE_CONFIGURATION"
-	fi
-
-	makeFat "clang"
+else
+	echo "Only 'linux' and 'darwin' are supported targets, while '${targetOS}' was specified"
+	exit 1
 fi
