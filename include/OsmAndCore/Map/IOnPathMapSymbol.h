@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_ON_PATH_MAP_SYMBOL_H_
-#define _OSMAND_CORE_ON_PATH_MAP_SYMBOL_H_
+#ifndef _OSMAND_CORE_I_ON_PATH_MAP_SYMBOL_H_
+#define _OSMAND_CORE_I_ON_PATH_MAP_SYMBOL_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -10,13 +10,12 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/RasterMapSymbol.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API OnPathMapSymbol : public RasterMapSymbol
+    class OSMAND_CORE_API IOnPathMapSymbol
     {
-        Q_DISABLE_COPY_AND_MOVE(OnPathMapSymbol);
+        Q_DISABLE_COPY_AND_MOVE(IOnPathMapSymbol);
 
     public:
         struct PinPoint Q_DECL_FINAL
@@ -28,18 +27,17 @@ namespace OsmAnd
             float normalizedOffsetFromBasePathPoint;
         };
 
-    private:
     protected:
+        IOnPathMapSymbol();
     public:
-        OnPathMapSymbol(
-            const std::shared_ptr<MapSymbolsGroup>& group,
-            const bool isShareable);
-        virtual ~OnPathMapSymbol();
+        virtual ~IOnPathMapSymbol();
+        
+        virtual QVector<PointI> getPath31() const = 0;
+        virtual void setPath31(const QVector<PointI>& path31) = 0;
 
-        QVector<PointI> path;
-        QVector<float> glyphsWidth;
-        QList<PinPoint> pinPoints;
+        virtual PinPoint getPinPointOnPath() const = 0;
+        virtual void setPinPointOnPath(const PinPoint& pinPoint) = 0;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_ON_PATH_MAP_SYMBOL_H_)
+#endif // !defined(_OSMAND_CORE_I_ON_PATH_MAP_SYMBOL_H_)

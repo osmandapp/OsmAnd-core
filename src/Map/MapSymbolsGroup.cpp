@@ -5,6 +5,7 @@
 #include "Logging.h"
 
 OsmAnd::MapSymbolsGroup::MapSymbolsGroup()
+    : additionalInstancesDiscardOriginal(false)
 {
 }
 
@@ -14,9 +15,7 @@ OsmAnd::MapSymbolsGroup::~MapSymbolsGroup()
 
 QString OsmAnd::MapSymbolsGroup::getDebugTitle() const
 {
-    static QString noDebugTitle(QLatin1String("?"));
-
-    return noDebugTitle;
+    return QString().sprintf("MapSymbolsGroup %p", this);
 }
 
 std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::MapSymbolsGroup::getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const
@@ -36,17 +35,59 @@ unsigned int OsmAnd::MapSymbolsGroup::numberOfSymbolsWithContentClass(const MapS
 
     for (const auto& symbol : constOf(symbols))
     {
-        if (symbol->contentClass == contentClass)
-            count++;
+        if (symbol->contentClass != contentClass)
+            continue;
+
+        count++;
     }
 
     return count;
 }
 
-OsmAnd::IUpdatableMapSymbolsGroup::IUpdatableMapSymbolsGroup()
+OsmAnd::MapSymbolsGroup::AdditionalInstance::AdditionalInstance(const std::shared_ptr<MapSymbolsGroup>& originalGroup_)
+    : originalGroup(originalGroup_)
 {
 }
 
-OsmAnd::IUpdatableMapSymbolsGroup::~IUpdatableMapSymbolsGroup()
+OsmAnd::MapSymbolsGroup::AdditionalInstance::~AdditionalInstance()
+{
+}
+
+OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters::AdditionalSymbolInstanceParameters()
+{
+
+}
+
+OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters::~AdditionalSymbolInstanceParameters()
+{
+
+}
+
+OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters::AdditionalBillboardSymbolInstanceParameters()
+    : overridesPosition31(false)
+    , overridesOffset(false)
+{
+}
+
+OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters::~AdditionalBillboardSymbolInstanceParameters()
+{
+}
+
+OsmAnd::MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters::AdditionalOnSurfaceSymbolInstanceParameters()
+    : overridesPosition31(false)
+    , overridesDirection(false)
+{
+}
+
+OsmAnd::MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters::~AdditionalOnSurfaceSymbolInstanceParameters()
+{
+}
+
+OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters::AdditionalOnPathSymbolInstanceParameters()
+    : overridesPinPointOnPath(false)
+{
+}
+
+OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters::~AdditionalOnPathSymbolInstanceParameters()
 {
 }

@@ -11,6 +11,7 @@
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "MapSymbolsGroup.h"
+#include "IUpdatableMapSymbolsGroup.h"
 #include "OnSurfaceRasterMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
 #include "MapMarker.h"

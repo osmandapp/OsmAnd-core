@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_MAP_SYMBOL_GROUP_H_
-#define _OSMAND_CORE_MAP_SYMBOL_GROUP_H_
+#ifndef _OSMAND_CORE_MAP_SYMBOLS_GROUP_H_
+#define _OSMAND_CORE_MAP_SYMBOLS_GROUP_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
@@ -12,6 +12,9 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/IBillboardMapSymbol.h>
+#include <OsmAndCore/Map/IOnSurfaceMapSymbol.h>
+#include <OsmAndCore/Map/IOnPathMapSymbol.h>
 
 namespace OsmAnd
 {
@@ -29,6 +32,66 @@ namespace OsmAnd
         };
         typedef Bitmask<PresentationModeFlag> PresentationMode;
 
+        // Additional instance shares all resources and settings. It's lifetime ends with original group.
+        // Additional instance allows to customize:
+        //  - IBillboardMapSymbol: position31, offset
+        //  - IOnSurfaceMapSymbol: position31, direction
+        //  - IOnPathMapSymbol: pinPointOnPath
+        // Symbols are still processed in order of original group
+        struct AdditionalSymbolInstanceParameters;
+        struct OSMAND_CORE_API AdditionalInstance
+        {
+            AdditionalInstance(
+                const std::shared_ptr<MapSymbolsGroup>& originalGroup);
+            virtual ~AdditionalInstance();
+
+            const std::weak_ptr<MapSymbolsGroup> originalGroup;
+
+            QHash< std::shared_ptr<MapSymbol>, std::shared_ptr<AdditionalSymbolInstanceParameters> > symbols;
+
+        private:
+            Q_DISABLE_COPY(AdditionalInstance);
+        };
+
+        struct OSMAND_CORE_API AdditionalSymbolInstanceParameters
+        {
+            AdditionalSymbolInstanceParameters();
+            virtual ~AdditionalSymbolInstanceParameters();
+        };
+
+        struct OSMAND_CORE_API AdditionalBillboardSymbolInstanceParameters : public AdditionalSymbolInstanceParameters
+        {
+            AdditionalBillboardSymbolInstanceParameters();
+            virtual ~AdditionalBillboardSymbolInstanceParameters();
+
+            bool overridesPosition31;
+            PointI position31;
+
+            bool overridesOffset;
+            PointI offset;
+        };
+
+        struct OSMAND_CORE_API AdditionalOnSurfaceSymbolInstanceParameters : public AdditionalSymbolInstanceParameters
+        {
+            AdditionalOnSurfaceSymbolInstanceParameters();
+            virtual ~AdditionalOnSurfaceSymbolInstanceParameters();
+
+            bool overridesPosition31;
+            PointI position31;
+
+            bool overridesDirection;
+            float direction;
+        };
+
+        struct OSMAND_CORE_API AdditionalOnPathSymbolInstanceParameters : public AdditionalSymbolInstanceParameters
+        {
+            AdditionalOnPathSymbolInstanceParameters();
+            virtual ~AdditionalOnPathSymbolInstanceParameters();
+
+            bool overridesPinPointOnPath;
+            IOnPathMapSymbol::PinPoint pinPointOnPath;
+        };
+
     private:
     protected:
     public:
@@ -42,18 +105,10 @@ namespace OsmAnd
         unsigned int numberOfSymbolsWithContentClass(const MapSymbol::ContentClass contentClass) const;
 
         virtual QString getDebugTitle() const;
-    };
 
-    class OSMAND_CORE_API IUpdatableMapSymbolsGroup
-    {
-    private:
-    protected:
-        IUpdatableMapSymbolsGroup();
-    public:
-        virtual ~IUpdatableMapSymbolsGroup();
-
-        virtual bool update() = 0;
+        bool additionalInstancesDiscardOriginal;
+        QList< std::shared_ptr<AdditionalInstance> > additionalInstances;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_MAP_SYMBOL_GROUP_H_)
+#endif // !defined(_OSMAND_CORE_MAP_SYMBOLS_GROUP_H_)

@@ -10,7 +10,7 @@
 #include "VectorMapSymbol.h"
 #include "BillboardVectorMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
-#include "OnPathMapSymbol.h"
+#include "OnPathRasterMapSymbol.h"
 #include "BillboardRasterMapSymbol.h"
 #include "OnSurfaceRasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
@@ -933,7 +933,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
-    const auto& symbol = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
+    const auto& symbol = std::static_pointer_cast<const OnPathRasterMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 
@@ -1055,7 +1055,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
-    const auto& symbol = std::static_pointer_cast<const OnPathMapSymbol>(renderable->mapSymbol);
+    const auto& symbol = std::static_pointer_cast<const OnPathRasterMapSymbol>(renderable->mapSymbol);
     const auto& gpuResource = std::static_pointer_cast<const GPUAPI::TextureInGPU>(renderable->gpuResource);
     const auto& symbolGroupPtr = symbol->groupPtr;
 

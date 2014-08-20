@@ -14,7 +14,7 @@
 #include "Primitiviser.h"
 #include "SymbolRasterizer.h"
 #include "BillboardRasterMapSymbol.h"
-#include "OnPathMapSymbol.h"
+#include "OnPathRasterMapSymbol.h"
 #include "BinaryMapObject.h"
 #include "ObfMapSectionInfo.h"
 #include "Utilities.h"
@@ -135,14 +135,14 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             {
                 hasAtLeastOneOnPath = true;
 
-                const auto onPathSymbol = new OnPathMapSymbol(group, group->sharableById);
+                const auto onPathSymbol = new OnPathRasterMapSymbol(group, group->sharableById);
                 onPathSymbol->order = rasterizedOnPathSymbol->order;
                 onPathSymbol->bitmap = rasterizedOnPathSymbol->bitmap;
                 onPathSymbol->size = PointI(rasterizedOnPathSymbol->bitmap->width(), rasterizedOnPathSymbol->bitmap->height());
                 onPathSymbol->content = rasterizedOnPathSymbol->content;
                 onPathSymbol->languageId = rasterizedOnPathSymbol->languageId;
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
-                onPathSymbol->path = mapObject->points31;
+                onPathSymbol->path31 = mapObject->points31;
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
                 symbol.reset(onPathSymbol);
             }
@@ -187,7 +187,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     const auto outerCircleRadius = 0.5f * static_cast<float>(qSqrt(2 * maxSize * maxSize));
                     symbolsForComputation.push_back({ 0, 2.0f * outerCircleRadius, 0 });
                 }
-                else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
+                else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathRasterMapSymbol>(symbol))
                 {
                     symbolsForComputation.push_back({ 0, static_cast<float>(onPathSymbol->size.x), 0 });
                 }
@@ -203,13 +203,15 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 zoom);
 
             // After pin-points were computed, assign them to symbols in the same order
-            QSet< std::shared_ptr<BillboardRasterMapSymbol> > billboardSymbolsWithReplacedMainPositions;
             for (const auto& computedPinPoints : constOf(computedPinPointsByLayer))
             {
                 auto citComputedPinPoint = computedPinPoints.cbegin();
                 const auto citComputedPinPointsEnd = computedPinPoints.cend();
                 while (citComputedPinPoint != citComputedPinPointsEnd)
                 {
+                    // Construct new additional instance of group
+                    std::shared_ptr<MapSymbolsGroup::AdditionalInstance> additionalGroupInstance(new MapSymbolsGroup::AdditionalInstance(group));
+                    
                     for (const auto& symbol : constOf(group->symbols))
                     {
                         // Stop in case no more pin-points left
@@ -217,31 +219,38 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                             break;
                         const auto& computedPinPoint = *(citComputedPinPoint++);
 
+                        std::shared_ptr<MapSymbolsGroup::AdditionalSymbolInstanceParameters> additionalSymbolInstance;
                         if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                         {
-                            if (!billboardSymbolsWithReplacedMainPositions.contains(billboardSymbol))
-                            {
-                                billboardSymbol->position31 = computedPinPoint.point31;
-                                billboardSymbolsWithReplacedMainPositions.insert(billboardSymbol);
-                            }
-                            else
-                            {
-                                billboardSymbol->additionalPositions31.push_back(computedPinPoint.point31);
-                            }
+                            const auto billboardSymbolInstance = new MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters();
+                            billboardSymbolInstance->overridesPosition31 = true;
+                            billboardSymbolInstance->position31 = computedPinPoint.point31;
+                            additionalSymbolInstance.reset(billboardSymbolInstance);
                         }
-                        else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathMapSymbol>(symbol))
+                        else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathRasterMapSymbol>(symbol))
                         {
-                            OnPathMapSymbol::PinPoint pinPoint;
+                            IOnPathMapSymbol::PinPoint pinPoint;
                             pinPoint.point31 = computedPinPoint.point31;
                             pinPoint.basePathPointIndex = computedPinPoint.basePathPointIndex;
                             pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
                             pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
 
-                            onPathSymbol->pinPoints.push_back(qMove(pinPoint));
+                            const auto onPathSymbolInstance = new MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters();
+                            onPathSymbolInstance->overridesPinPointOnPath = true;
+                            onPathSymbolInstance->pinPointOnPath = pinPoint;
+                            additionalSymbolInstance.reset(onPathSymbolInstance);
                         }
+
+                        if (additionalSymbolInstance)
+                            additionalGroupInstance->symbols.insert(symbol, qMove(additionalSymbolInstance));
                     }
+
+                    group->additionalInstances.push_back(qMove(additionalGroupInstance));
                 }
             }
+
+            // Finally there's no need in original, so turn it off
+            group->additionalInstancesDiscardOriginal = true;
         }
 
         // Configure group

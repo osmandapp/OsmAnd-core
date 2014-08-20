@@ -6,6 +6,7 @@
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
+#include "IUpdatableMapSymbolsGroup.h"
 #include "MapRendererKeyedResourcesCollection.h"
 #include "MapRendererResourcesManager.h"
 #include "QKeyValueIterator.h"
