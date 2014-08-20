@@ -134,17 +134,17 @@ makeFlavor()
 }
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "armeabi.static" "armeabi" "8" "$QTBASE_CONFIGURATION"
+	makeFlavor "gcc-armeabi.static" "armeabi" "8" "$QTBASE_CONFIGURATION"
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "armeabi-v7a.static" "armeabi-v7a" "8" "$QTBASE_CONFIGURATION"
+	makeFlavor "gcc-armeabi-v7a.static" "armeabi-v7a" "8" "$QTBASE_CONFIGURATION"
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "x86.static" "x86" "9" "$QTBASE_CONFIGURATION"
+	makeFlavor "gcc-x86.static" "x86" "9" "$QTBASE_CONFIGURATION"
 fi
 
 if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "mips.static" "mips" "9" "$QTBASE_CONFIGURATION"
+	makeFlavor "gcc-mips.static" "mips" "9" "$QTBASE_CONFIGURATION"
 fi

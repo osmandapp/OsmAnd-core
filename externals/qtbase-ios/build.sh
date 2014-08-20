@@ -52,52 +52,52 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 		fi
 	}
 	
-	makeFlavor "ios.simulator.i386.static" "macx-ios-clang-simulator-i386" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
-	makeFlavor "ios.device.armv7.static" "macx-ios-clang-device-armv7" "$QTBASE_CONFIGURATION -sdk iphoneos"
-	makeFlavor "ios.device.armv7s.static" "macx-ios-clang-device-armv7s" "$QTBASE_CONFIGURATION -sdk iphoneos"
+	makeFlavor "ios.simulator.clang-i386.static" "macx-ios-clang-simulator-i386" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
+	makeFlavor "ios.device.clang-armv7.static" "macx-ios-clang-device-armv7" "$QTBASE_CONFIGURATION -sdk iphoneos"
+	makeFlavor "ios.device.clang-armv7s.static" "macx-ios-clang-device-armv7s" "$QTBASE_CONFIGURATION -sdk iphoneos"
 
-	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator.static" ]; then
+	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator.clang.static" ]; then
 		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios.simulator.i386.static" "upstream.patched.ios.simulator.static")
+			ln -s "upstream.patched.ios.simulator.clang-i386.static" "upstream.patched.ios.simulator.clang.static")
 	fi
 
-	if [ ! -h "$SRCLOC/upstream.patched.ios.device.static" ]; then
+	if [ ! -h "$SRCLOC/upstream.patched.ios.device.clang.static" ]; then
 		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios.device.armv7.static" "upstream.patched.ios.device.static")
+			ln -s "upstream.patched.ios.device.clang-armv7.static" "upstream.patched.ios.device.clang.static")
 	fi
 
-	if [ ! -h "$SRCLOC/upstream.patched.ios-iphoneos" ]; then
+	if [ ! -h "$SRCLOC/upstream.patched.ios.clang-iphoneos" ]; then
 		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios.device.armv7.static" "upstream.patched.ios-iphoneos")
+			ln -s "upstream.patched.ios.device.clang-armv7.static" "upstream.patched.ios.clang-iphoneos")
 	fi
 
-	if [ ! -h "$SRCLOC/upstream.patched.ios-iphonesimulator" ]; then
+	if [ ! -h "$SRCLOC/upstream.patched.ios.clang-iphonesimulator" ]; then
 		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios.simulator.i386.static" "upstream.patched.ios-iphonesimulator")
+			ln -s "upstream.patched.ios.simulator.clang-i386.static" "upstream.patched.ios.clang-iphonesimulator")
 	fi
 
-	if [ ! -d "$SRCLOC/upstream.patched.ios" ]; then
+	if [ ! -d "$SRCLOC/upstream.patched.ios.clang" ]; then
 		# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
-		mkdir -p "$SRCLOC/upstream.patched.ios"
-		(cd "$SRCLOC/upstream.patched.ios" && \
-			ln -s "../upstream.patched.ios.simulator.i386.static/include" "include")
-		(cd "$SRCLOC/upstream.patched.ios" && \
-			ln -s "../upstream.patched.ios.simulator.i386.static/src" "src")
-		(cd "$SRCLOC/upstream.patched.ios" && \
-			ln -s "../upstream.patched.ios.simulator.i386.static/bin" "bin")
-		mkdir -p "$SRCLOC/upstream.patched.ios/lib"
-		(cd "$SRCLOC/upstream.patched.ios/lib" && \
-			ln -s "../../upstream.patched.ios.simulator.i386.static/lib/cmake" "cmake")
+		mkdir -p "$SRCLOC/upstream.patched.ios.clang"
+		(cd "$SRCLOC/upstream.patched.ios.clang" && \
+			ln -s "../upstream.patched.ios.simulator.clang-i386.static/include" "include")
+		(cd "$SRCLOC/upstream.patched.ios.clang" && \
+			ln -s "../upstream.patched.ios.simulator.clang-i386.static/src" "src")
+		(cd "$SRCLOC/upstream.patched.ios.clang" && \
+			ln -s "../upstream.patched.ios.simulator.clang-i386.static/bin" "bin")
+		mkdir -p "$SRCLOC/upstream.patched.ios.clang/lib"
+		(cd "$SRCLOC/upstream.patched.ios.clang/lib" && \
+			ln -s "../../upstream.patched.ios.simulator.clang-i386.static/lib/cmake" "cmake")
 
 		# Make universal libraries using lipo
 		libraries=(Core Concurrent Network Sql Xml)
 		for libName in "${libraries[@]}" ; do
 			echo "Packing '$libName'..."
 			lipo -create \
-				"$SRCLOC/upstream.patched.ios.simulator.i386.static/lib/libQt5${libName}.a" \
-				"$SRCLOC/upstream.patched.ios.device.armv7.static/lib/libQt5${libName}.a" \
-				"$SRCLOC/upstream.patched.ios.device.armv7s.static/lib/libQt5${libName}.a" \
-				-output "$SRCLOC/upstream.patched.ios/lib/libQt5${libName}.a"
+				"$SRCLOC/upstream.patched.ios.simulator.clang-i386.static/lib/libQt5${libName}.a" \
+				"$SRCLOC/upstream.patched.ios.device.clang-armv7.static/lib/libQt5${libName}.a" \
+				"$SRCLOC/upstream.patched.ios.device.clang-armv7s.static/lib/libQt5${libName}.a" \
+				-output "$SRCLOC/upstream.patched.ios.clang/lib/libQt5${libName}.a"
 			retcode=$?
 			if [ $retcode -ne 0 ]; then
 				echo "Failed to lipo 'libQt5${libName}.a', aborting..."
@@ -106,8 +106,8 @@ if [[ "$(uname -a)" =~ Darwin ]]; then
 			fi
 		done
 	fi
-	if [ ! -d "$SRCLOC/upstream.patched.ios.fat.static" ]; then
+	if [ ! -d "$SRCLOC/upstream.patched.ios.clang-fat.static" ]; then
 		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios" "upstream.patched.ios.fat.static")
+			ln -s "upstream.patched.ios.clang" "upstream.patched.ios.clang-fat.static")
 	fi
 fi

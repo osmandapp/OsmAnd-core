@@ -47,27 +47,27 @@ for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
 	goto envDetected
 )
 :envDetected:
-echo Building for %envArch%
+echo Building for msvc-%envArch%
 
 REM Check if we have a build directory (shared)
-if not exist "%~dp0upstream.patched.windows.%envArch%.shared" (
-	mkdir "%~dp0upstream.patched.windows.%envArch%.shared"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.%envArch%.shared" /E /Q
-	(pushd %~dp0upstream.patched.windows.%envArch%.shared && (cmd /C "configure.bat -shared %QTBASE_CONFIGURATION%" & popd))
+if not exist "%~dp0upstream.patched.windows.msvc-%envArch%.shared" (
+	mkdir "%~dp0upstream.patched.windows.msvc-%envArch%.shared"
+	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.msvc-%envArch%.shared" /E /Q
+	(pushd %~dp0upstream.patched.windows.msvc-%envArch%.shared && (cmd /C "configure.bat -shared %QTBASE_CONFIGURATION%" & popd))
 )
 
 REM Perform build (shared)
-(pushd %~dp0upstream.patched.windows.%envArch%.shared && (cmd /C "nmake" & popd))
+(pushd %~dp0upstream.patched.windows.msvc-%envArch%.shared && (cmd /C "nmake" & popd))
 
 REM Check if we have a build directory (static)
-if not exist "%~dp0upstream.patched.windows.%envArch%.static" (
-	mkdir "%~dp0upstream.patched.windows.%envArch%.static"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.%envArch%.static" /E /Q
-	(pushd %~dp0upstream.patched.windows.%envArch%.static && (cmd /C "configure.bat -static %QTBASE_CONFIGURATION%" & popd))
+if not exist "%~dp0upstream.patched.windows.msvc-%envArch%.static" (
+	mkdir "%~dp0upstream.patched.windows.msvc-%envArch%.static"
+	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.msvc-%envArch%.static" /E /Q
+	(pushd %~dp0upstream.patched.windows.msvc-%envArch%.static && (cmd /C "configure.bat -static %QTBASE_CONFIGURATION%" & popd))
 )
 
 REM Perform build (static)
-(pushd %~dp0upstream.patched.windows.%envArch%.static && (cmd /C "nmake" & popd))
+(pushd %~dp0upstream.patched.windows.msvc-%envArch%.static && (cmd /C "nmake" & popd))
 
 endlocal
 exit /B

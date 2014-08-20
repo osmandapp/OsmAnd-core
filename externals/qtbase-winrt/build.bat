@@ -36,14 +36,14 @@ REM ### Function start : BUILD
 :BUILD
 
 REM Check if we have a build directory
-if not exist "%~dp0upstream.patched.%arch%.static" (
-	mkdir "%~dp0upstream.patched.%arch%.static"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.%arch%.static" /E /Q
-	(pushd %~dp0upstream.patched.%arch%.static && (cmd /C "configure.bat %QTBASE_CONFIGURATION% -xplatform %xPlatform%" & popd))
+if not exist "%~dp0upstream.patched.msvc-%arch%.static" (
+	mkdir "%~dp0upstream.patched.msvc-%arch%.static"
+	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.msvc-%arch%.static" /E /Q
+	(pushd %~dp0upstream.patched.msvc-%arch%.static && (cmd /C "configure.bat %QTBASE_CONFIGURATION% -xplatform %xPlatform%" & popd))
 )
 
 REM Perform build
-(pushd %~dp0upstream.patched.%arch%.static && (cmd /C "nmake" & popd))
+(pushd %~dp0upstream.patched.msvc-%arch%.static && (cmd /C "nmake" & popd))
 
 goto :EOF
 REM ### Function end : BUILD

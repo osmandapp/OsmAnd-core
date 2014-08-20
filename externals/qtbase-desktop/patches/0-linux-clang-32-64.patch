@@ -1,0 +1,22 @@
+diff -rupN upstream.original/mkspecs/linux-clang-32/qmake.conf upstream.patched/mkspecs/linux-clang-32/qmake.conf
+--- upstream.original/mkspecs/linux-clang-32/qmake.conf	2014-07-02 13:04:30.509950600 +0300
++++ upstream.patched/mkspecs/linux-clang-32/qmake.conf	2014-08-20 12:11:15.479376100 +0300
+@@ -12,5 +12,7 @@ include(../common/gcc-base-unix.conf)
+ include(../common/clang.conf)
+ 
+ QMAKE_LFLAGS += -ccc-gcc-name g++
++QMAKE_CFLAGS += -m32
++QMAKE_LFLAGS += -m32
+ 
+ load(qt_config)
+diff -rupN upstream.original/mkspecs/linux-clang-64/qmake.conf upstream.patched/mkspecs/linux-clang-64/qmake.conf
+--- upstream.original/mkspecs/linux-clang-64/qmake.conf	2014-07-02 13:04:30.509950600 +0300
++++ upstream.patched/mkspecs/linux-clang-64/qmake.conf	2014-08-20 12:11:22.879373800 +0300
+@@ -12,5 +12,7 @@ include(../common/gcc-base-unix.conf)
+ include(../common/clang.conf)
+ 
+ QMAKE_LFLAGS += -ccc-gcc-name g++
++QMAKE_CFLAGS += -m64
++QMAKE_LFLAGS += -m64
+ 
+ load(qt_config)
