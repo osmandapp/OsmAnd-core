@@ -1,5 +1,7 @@
 project(skia)
 
+prepare_upstream()
+
 set(target_specific_sources "")
 set(target_specific_dependencies "")
 set(target_specific_libraries_public "")

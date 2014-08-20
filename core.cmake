@@ -38,6 +38,9 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/icu4c" "core/externals/icu4c")
 # External: libarchive
 add_subdirectory("${OSMAND_ROOT}/core/externals/libarchive" "core/externals/libarchive")
 
+# External: glm
+add_subdirectory("${OSMAND_ROOT}/core/externals/glm" "core/externals/glm")
+
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core/OsmAndCore")
 

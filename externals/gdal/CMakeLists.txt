@@ -1,5 +1,7 @@
 project(gdal)
 
+prepare_upstream()
+
 set(target_specific_sources "")
 set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")

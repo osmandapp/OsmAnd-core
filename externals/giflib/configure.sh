@@ -7,7 +7,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromTarArchive "$SRCLOC" "http://download.osmand.net/prebuilt/giflib-4.2.3.tar.bz2"
-patchExternal "$SRCLOC"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://download.osmand.net/prebuilt/giflib-4.2.3.tar.bz2"
+patchUpstream "$SRCLOC"

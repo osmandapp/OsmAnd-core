@@ -157,7 +157,6 @@ set(merged_include_dirs_private
 )
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
-	"${OSMAND_ROOT}/core/externals/glm/upstream.patched"
 	${target_specific_public_includes}
 )
 set(merged_link_libs_public
@@ -166,6 +165,7 @@ set(merged_link_libs_public
 	gdal_static
 	icu4c_static
 	archive_static
+	glm_headers_only
 	${target_specific_public_libraries}
 )
 

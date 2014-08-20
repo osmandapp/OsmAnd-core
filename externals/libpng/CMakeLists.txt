@@ -1,5 +1,7 @@
 project(png)
 
+prepare_upstream()
+
 set(target_specific_sources "")
 
 #TODO: filter_neon.S needs to be patched to support neon

@@ -1,5 +1,7 @@
 project(protobuf)
 
+prepare_upstream()
+
 add_library(protobuf_static STATIC
 	"upstream.patched/src/google/protobuf/extension_set.cc"
 	"upstream.patched/src/google/protobuf/generated_message_util.cc"

@@ -1,5 +1,7 @@
 project(zlib)
 
+prepare_upstream()
+
 add_library(z_static STATIC
 	"upstream.patched/adler32.c"
 	"upstream.patched/compress.c"

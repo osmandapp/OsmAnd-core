@@ -1,5 +1,7 @@
 project(glew)
 
+prepare_upstream()
+
 add_library(glew_static STATIC
 	"upstream.patched/include/GL/glew.h"
 	"upstream.patched/src/glew.c"

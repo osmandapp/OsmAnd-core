@@ -7,7 +7,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromTarArchive "$SRCLOC" "http://www.libarchive.org/downloads/libarchive-3.1.2.tar.gz"
-patchExternal "$SRCLOC"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://www.libarchive.org/downloads/libarchive-3.1.2.tar.gz"
+patchUpstream "$SRCLOC"

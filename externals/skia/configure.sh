@@ -7,7 +7,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-skia.git" "chromium-31.0.1626.2"
-patchExternal "$SRCLOC"
+prepareUpstreamFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-skia.git" "chromium-31.0.1626.2"
+patchUpstream "$SRCLOC"

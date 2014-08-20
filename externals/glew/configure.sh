@@ -7,7 +7,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromTarArchive "$SRCLOC" "https://sourceforge.net/projects/glew/files/glew/1.10.0/glew-1.10.0.tgz/download"
-patchExternal "$SRCLOC"
+prepareUpstreamFromTarArchive "$SRCLOC" "https://sourceforge.net/projects/glew/files/glew/1.10.0/glew-1.10.0.tgz/download"
+patchUpstream "$SRCLOC"

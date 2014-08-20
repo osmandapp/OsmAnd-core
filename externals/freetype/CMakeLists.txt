@@ -1,5 +1,7 @@
 project(freetype2)
 
+prepare_upstream()
+
 add_library(freetype2_static STATIC
 	"upstream.patched/src/base/ftbase.c"
 	"upstream.patched/src/base/ftbbox.c"

@@ -7,7 +7,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromTarArchive "$SRCLOC" "http://download.osmand.net/prebuilt/libpng-1.6.6.tar.xz"
-patchExternal "$SRCLOC"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://download.osmand.net/prebuilt/libpng-1.6.6.tar.xz"
+patchUpstream "$SRCLOC"

@@ -7,7 +7,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromTarArchive "$SRCLOC" "http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2"
-patchExternal "$SRCLOC"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2"
+patchUpstream "$SRCLOC"

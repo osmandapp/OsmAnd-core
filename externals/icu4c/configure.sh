@@ -7,10 +7,10 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromTarArchive "$SRCLOC" "http://download.icu-project.org/files/icu4c/52.1/icu4c-52_1-src.tgz"
-patchExternal "$SRCLOC"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://download.icu-project.org/files/icu4c/52.1/icu4c-52_1-src.tgz"
+patchUpstream "$SRCLOC"
 
 # Download upstream data if needed
 if [ ! -f "$SRCLOC/upstream.data-pack" ]; then

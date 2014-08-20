@@ -1,5 +1,7 @@
 project(icu4c)
 
+prepare_upstream()
+
 file(GLOB_RECURSE source_common "upstream.patched/source/common/*.[ch]*")
 set_source_files_properties(${source_common}
 	PROPERTIES
