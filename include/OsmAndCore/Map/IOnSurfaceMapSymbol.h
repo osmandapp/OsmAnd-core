@@ -22,10 +22,11 @@ namespace OsmAnd
         // NaN value is considered as "aligned to azimuth"
         virtual float getDirection() const = 0;
         virtual void setDirection(const float direction) = 0;
-        bool isAzimuthAlignedDirection() const;
-
+        
         virtual PointI getPosition31() const = 0;
         virtual void setPosition31(const PointI position) = 0;
+
+        static bool isAzimuthAlignedDirection(const float direction);
     };
 }
 

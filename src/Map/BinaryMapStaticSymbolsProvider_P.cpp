@@ -144,6 +144,14 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
                 onPathSymbol->path31 = mapObject->points31;
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
+                for (const auto& intersectsWithClass : constOf(rasterizedOnPathSymbol->primitiveSymbol->intersectsWith))
+                {
+                    onPathSymbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectsWithClass));
+                }
+                for (const auto& intersectedByClass : constOf(rasterizedOnPathSymbol->primitiveSymbol->intersectedBy))
+                {
+                    onPathSymbol->intersectedByClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectedByClass));
+                }
                 symbol.reset(onPathSymbol);
             }
             else
@@ -222,7 +230,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                         std::shared_ptr<MapSymbolsGroup::AdditionalSymbolInstanceParameters> additionalSymbolInstance;
                         if (const auto billboardSymbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol))
                         {
-                            const auto billboardSymbolInstance = new MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters();
+                            const auto billboardSymbolInstance = new MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters(additionalGroupInstance.get());
                             billboardSymbolInstance->overridesPosition31 = true;
                             billboardSymbolInstance->position31 = computedPinPoint.point31;
                             additionalSymbolInstance.reset(billboardSymbolInstance);
@@ -235,7 +243,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                             pinPoint.offsetFromBasePathPoint31 = computedPinPoint.offsetFromBasePathPoint31;
                             pinPoint.normalizedOffsetFromBasePathPoint = computedPinPoint.normalizedOffsetFromBasePathPoint;
 
-                            const auto onPathSymbolInstance = new MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters();
+                            const auto onPathSymbolInstance = new MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters(additionalGroupInstance.get());
                             onPathSymbolInstance->overridesPinPointOnPath = true;
                             onPathSymbolInstance->pinPointOnPath = pinPoint;
                             additionalSymbolInstance.reset(onPathSymbolInstance);

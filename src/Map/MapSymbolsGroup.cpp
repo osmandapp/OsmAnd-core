@@ -80,18 +80,18 @@ unsigned int OsmAnd::MapSymbolsGroup::AdditionalInstance::numberOfSymbolsWithCon
     return count;
 }
 
-OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters::AdditionalSymbolInstanceParameters()
+OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters::AdditionalSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr_)
+    : groupInstancePtr(groupInstancePtr_)
 {
-
 }
 
 OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters::~AdditionalSymbolInstanceParameters()
 {
-
 }
 
-OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters::AdditionalBillboardSymbolInstanceParameters()
-    : overridesPosition31(false)
+OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters::AdditionalBillboardSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr_)
+    : AdditionalSymbolInstanceParameters(groupInstancePtr_)
+    , overridesPosition31(false)
     , overridesOffset(false)
 {
 }
@@ -100,8 +100,9 @@ OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters::~Additiona
 {
 }
 
-OsmAnd::MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters::AdditionalOnSurfaceSymbolInstanceParameters()
-    : overridesPosition31(false)
+OsmAnd::MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters::AdditionalOnSurfaceSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr_)
+    : AdditionalSymbolInstanceParameters(groupInstancePtr_)
+    , overridesPosition31(false)
     , overridesDirection(false)
 {
 }
@@ -110,8 +111,9 @@ OsmAnd::MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters::~Additiona
 {
 }
 
-OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters::AdditionalOnPathSymbolInstanceParameters()
-    : overridesPinPointOnPath(false)
+OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters::AdditionalOnPathSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr_)
+    : AdditionalSymbolInstanceParameters(groupInstancePtr_)
+    , overridesPinPointOnPath(false)
 {
 }
 

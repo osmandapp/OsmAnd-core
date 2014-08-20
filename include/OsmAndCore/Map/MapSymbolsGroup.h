@@ -57,13 +57,18 @@ namespace OsmAnd
 
         struct OSMAND_CORE_API AdditionalSymbolInstanceParameters
         {
-            AdditionalSymbolInstanceParameters();
+            AdditionalSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr);
             virtual ~AdditionalSymbolInstanceParameters();
+
+            const AdditionalInstance* const groupInstancePtr;
+        
+        private:
+            Q_DISABLE_COPY(AdditionalSymbolInstanceParameters);
         };
 
         struct OSMAND_CORE_API AdditionalBillboardSymbolInstanceParameters : public AdditionalSymbolInstanceParameters
         {
-            AdditionalBillboardSymbolInstanceParameters();
+            AdditionalBillboardSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr);
             virtual ~AdditionalBillboardSymbolInstanceParameters();
 
             bool overridesPosition31;
@@ -71,11 +76,14 @@ namespace OsmAnd
 
             bool overridesOffset;
             PointI offset;
+
+        private:
+            Q_DISABLE_COPY(AdditionalBillboardSymbolInstanceParameters);
         };
 
         struct OSMAND_CORE_API AdditionalOnSurfaceSymbolInstanceParameters : public AdditionalSymbolInstanceParameters
         {
-            AdditionalOnSurfaceSymbolInstanceParameters();
+            AdditionalOnSurfaceSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr);
             virtual ~AdditionalOnSurfaceSymbolInstanceParameters();
 
             bool overridesPosition31;
@@ -83,15 +91,21 @@ namespace OsmAnd
 
             bool overridesDirection;
             float direction;
+
+        private:
+            Q_DISABLE_COPY(AdditionalOnSurfaceSymbolInstanceParameters);
         };
 
         struct OSMAND_CORE_API AdditionalOnPathSymbolInstanceParameters : public AdditionalSymbolInstanceParameters
         {
-            AdditionalOnPathSymbolInstanceParameters();
+            AdditionalOnPathSymbolInstanceParameters(const AdditionalInstance* const groupInstancePtr);
             virtual ~AdditionalOnPathSymbolInstanceParameters();
 
             bool overridesPinPointOnPath;
             IOnPathMapSymbol::PinPoint pinPointOnPath;
+
+        private:
+            Q_DISABLE_COPY(AdditionalOnPathSymbolInstanceParameters);
         };
 
     private:

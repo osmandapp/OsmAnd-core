@@ -422,7 +422,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     GL_CHECK_RESULT;
 
     // Set on-screen offset
-    glUniform2i(_billboardRasterProgram.vs.param.onScreenOffset, symbol->offset.x, -symbol->offset.y);
+    const auto& offsetOnScreen =
+        (renderable->instanceParameters && renderable->instanceParameters->overridesOffset)
+        ? renderable->instanceParameters->offset
+        : symbol->offset;
+    glUniform2i(_billboardRasterProgram.vs.param.onScreenOffset, offsetOnScreen.x, -offsetOnScreen.y);
     GL_CHECK_RESULT;
 
     // Activate symbol texture
@@ -1677,6 +1681,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     }
 
     // Get proper scale
+    const auto& position31 =
+        (renderable->instanceParameters && renderable->instanceParameters->overridesPosition31)
+        ? renderable->instanceParameters->position31
+        : symbol->getPosition31();
     float scaleFactor = 1.0f;
     switch (symbol->scaleType)
     {
@@ -1686,7 +1694,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         case VectorMapSymbol::ScaleType::InMeters:
             scaleFactor = symbol->scale / Utilities::getMetersPerTileUnit(
                 currentState.zoomBase,
-                symbol->getPosition31().y >> (ZoomLevel31 - currentState.zoomBase),
+                position31.y >> (ZoomLevel31 - currentState.zoomBase),
                 AtlasMapRenderer::TileSize3D);
             break;
     }

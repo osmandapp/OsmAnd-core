@@ -10,7 +10,7 @@ OsmAnd::IOnSurfaceMapSymbol::~IOnSurfaceMapSymbol()
 
 }
 
-bool OsmAnd::IOnSurfaceMapSymbol::isAzimuthAlignedDirection() const
+bool OsmAnd::IOnSurfaceMapSymbol::isAzimuthAlignedDirection(const float direction)
 {
-    return qIsNaN(getDirection());
+    return qIsNaN(direction);
 }
