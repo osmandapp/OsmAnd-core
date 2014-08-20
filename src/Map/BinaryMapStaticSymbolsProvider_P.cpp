@@ -257,6 +257,9 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 }
             }
 
+            // This group needs intersection check inside group
+            group->intersectionProcessingMode |= MapSymbolsGroup::IntersectionProcessingModeFlag::CheckIntersectionsWithinGroup;
+
             // Finally there's no need in original, so turn it off
             group->additionalInstancesDiscardOriginal = true;
         }

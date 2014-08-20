@@ -36,6 +36,7 @@ namespace OsmAnd
         {
             virtual ~RenderableSymbol();
 
+            std::shared_ptr<const MapSymbolsGroup> mapSymbolGroup;
             std::shared_ptr<const MapSymbol> mapSymbol;
             std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters> genericInstanceParameters;
 
@@ -114,6 +115,7 @@ namespace OsmAnd
         IntersectionsQuadTree _lastPreparedIntersections;
 
         void obtainRenderablesFromSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
             const std::shared_ptr<const MapSymbol>& mapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
@@ -125,6 +127,7 @@ namespace OsmAnd
 
         // Billboard symbols:
         void obtainRenderablesFromBillboardSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
             const std::shared_ptr<const IBillboardMapSymbol>& billboardMapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
@@ -141,6 +144,7 @@ namespace OsmAnd
 
         // On-surface symbols:
         void obtainRenderablesFromOnSurfaceSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
             const std::shared_ptr<const IOnSurfaceMapSymbol>& onSurfaceMapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
@@ -157,6 +161,7 @@ namespace OsmAnd
 
         // On-path symbols:
         void obtainRenderablesFromOnPathSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
             const std::shared_ptr<const OnPathRasterMapSymbol>& onPathMapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,

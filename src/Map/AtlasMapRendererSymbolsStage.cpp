@@ -197,7 +197,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     const auto& referencesOrigins = *citReferencesOrigins;
 
                     QList< std::shared_ptr<RenderableSymbol> > renderableSymbols;
-                    obtainRenderablesFromSymbol(mapSymbol, nullptr, referencesOrigins, renderableSymbols);
+                    obtainRenderablesFromSymbol(mapSymbolsGroup, mapSymbol, nullptr, referencesOrigins, renderableSymbols);
 
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
@@ -233,7 +233,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     const auto& additionalSymbolInstance = *citAdditionalSymbolInstance;
 
                     QList< std::shared_ptr<RenderableSymbol> > renderableSymbols;
-                    obtainRenderablesFromSymbol(mapSymbol, additionalSymbolInstance, referencesOrigins, renderableSymbols);
+                    obtainRenderablesFromSymbol(mapSymbolsGroup, mapSymbol, additionalSymbolInstance, referencesOrigins, renderableSymbols);
 
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
@@ -372,6 +372,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
     const std::shared_ptr<const MapSymbol>& mapSymbol,
     const std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters>& instanceParameters_,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
@@ -387,6 +388,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
 
         const auto instanceParameters = std::static_pointer_cast<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>(instanceParameters_);
         obtainRenderablesFromOnPathSymbol(
+            mapSymbolGroup,
             onPathMapSymbol,
             instanceParameters,
             referenceOrigins,
@@ -399,6 +401,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
 
         const auto instanceParameters = std::static_pointer_cast<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters>(instanceParameters_);
         obtainRenderablesFromOnSurfaceSymbol(
+            mapSymbolGroup,
             onSurfaceMapSymbol,
             instanceParameters,
             referenceOrigins,
@@ -411,6 +414,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
 
         const auto instanceParameters = std::static_pointer_cast<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>(instanceParameters_);
         obtainRenderablesFromBillboardSymbol(
+            mapSymbolGroup,
             billboardMapSymbol,
             instanceParameters,
             referenceOrigins,
@@ -444,6 +448,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
     const std::shared_ptr<const IBillboardMapSymbol>& billboardMapSymbol,
     const std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>& instanceParameters,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
@@ -474,6 +479,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         return;
 
     std::shared_ptr<RenderableBillboardSymbol> renderable(new RenderableBillboardSymbol());
+    renderable->mapSymbolGroup = mapSymbolGroup;
     renderable->mapSymbol = mapSymbol;
     renderable->genericInstanceParameters = instanceParameters;
     renderable->instanceParameters = instanceParameters;
@@ -558,6 +564,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardVectorSymbol(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
     const std::shared_ptr<const IOnSurfaceMapSymbol>& onSurfaceMapSymbol,
     const std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters>& instanceParameters,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
@@ -581,6 +588,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         return;
 
     std::shared_ptr<RenderableOnSurfaceSymbol> renderable(new RenderableOnSurfaceSymbol());
+    renderable->mapSymbolGroup = mapSymbolGroup;
     renderable->mapSymbol = mapSymbol;
     renderable->genericInstanceParameters = instanceParameters;
     renderable->instanceParameters = instanceParameters;
@@ -651,6 +659,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceVectorSymbol(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
+    const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
     const std::shared_ptr<const OnPathRasterMapSymbol>& onPathMapSymbol,
     const std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>& instanceParameters,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
@@ -835,6 +844,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
     // Plot symbol instance.
     std::shared_ptr<RenderableOnPathSymbol> renderable(new RenderableOnPathSymbol());
+    renderable->mapSymbolGroup = mapSymbolGroup;
     renderable->mapSymbol = onPathMapSymbol;
     renderable->genericInstanceParameters = instanceParameters;
     renderable->instanceParameters = instanceParameters;
@@ -1047,6 +1057,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         return true;
     
     // Check intersections
+    const auto checkIntersectionsWithinGroup = renderable->mapSymbolGroup->intersectionProcessingMode.isSet(MapSymbolsGroup::IntersectionProcessingModeFlag::CheckIntersectionsWithinGroup);
     const auto& intersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();
     const auto& symbolIntersectsWithClasses = symbol->intersectsWithClasses;
     const auto anyIntersectionClass = intersectionClassesRegistry.anyClass;
@@ -1056,13 +1067,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         ? renderable->genericInstanceParameters->groupInstancePtr
         : nullptr;
     const auto intersects = intersections.test(renderable->intersectionBBox, false,
-        [symbolGroupPtr, symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, anyIntersectionClass, symbolGroupInstancePtr]
+        [symbolGroupPtr, symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, anyIntersectionClass, symbolGroupInstancePtr, checkIntersectionsWithinGroup]
         (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const IntersectionsQuadTree::BBox& otherBBox) -> bool
         {
             const auto& otherSymbol = otherRenderable->mapSymbol;
 
             // Symbols never intersect anything inside own group (different instances are treated as different groups)
-            if (symbolGroupPtr == otherSymbol->groupPtr)
+            if (!checkIntersectionsWithinGroup && symbolGroupPtr == otherSymbol->groupPtr)
             {
                 const auto otherSymbolGroupInstancePtr = otherRenderable->genericInstanceParameters
                     ? otherRenderable->genericInstanceParameters->groupInstancePtr

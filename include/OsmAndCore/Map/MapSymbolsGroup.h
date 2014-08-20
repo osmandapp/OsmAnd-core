@@ -29,8 +29,15 @@ namespace OsmAnd
             ShowAllOrNothing,
             ShowAllCaptionsOrNoCaptions,
             ShowNoneIfIconIsNotShown,
+            CheckIntersectionsWithinGroup,
         };
         typedef Bitmask<PresentationModeFlag> PresentationMode;
+
+        enum class IntersectionProcessingModeFlag : unsigned int
+        {
+            CheckIntersectionsWithinGroup = 0,
+        };
+        typedef Bitmask<IntersectionProcessingModeFlag> IntersectionProcessingMode;
 
         // Additional instance shares all resources and settings. It's lifetime ends with original group.
         // Additional instance allows to customize:
@@ -115,6 +122,7 @@ namespace OsmAnd
         virtual ~MapSymbolsGroup();
 
         PresentationMode presentationMode;
+        IntersectionProcessingMode intersectionProcessingMode;
 
         QList< std::shared_ptr<MapSymbol> > symbols;
         std::shared_ptr<MapSymbol> getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const;
