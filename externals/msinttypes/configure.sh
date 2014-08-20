@@ -7,7 +7,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromSvn "$SRCLOC" "http://msinttypes.googlecode.com/svn/trunk/"
-patchExternal "$SRCLOC"
+prepareUpstreamFromSvn "$SRCLOC" "http://msinttypes.googlecode.com/svn/trunk/"
+patchUpstream "$SRCLOC"
