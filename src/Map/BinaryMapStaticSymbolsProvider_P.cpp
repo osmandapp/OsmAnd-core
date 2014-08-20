@@ -501,8 +501,8 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
             blockWidth);
 #endif // OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION
 
-        // Compute actual pin-points only for zoom levels less detained that needed, including needed + 1
-        if (currentZoomLevel <= neededZoom + 1)
+        // Compute actual pin-points only for zoom levels less detained that needed, including needed
+        if (currentZoomLevel <= neededZoom)
         {
             // In case at least 1 block fits, only complete blocks are being used.
             // Otherwise, plot only part of symbols (virtually, smaller block)
@@ -567,7 +567,7 @@ QList< QList<OsmAnd::BinaryMapStaticSymbolsProvider_P::ComputedPinPoint> > OsmAn
                         computedPinPoints.push_back(qMove(computedSymbolPinPoint));
                     }
                 }
-                computedPinPointsByLayer.push_back(qMove(computedPinPoints));
+                computedPinPointsByLayer.push_front(qMove(computedPinPoints));
             }
             else  if (numberOfSymbolsThatFit > 0)
             {
