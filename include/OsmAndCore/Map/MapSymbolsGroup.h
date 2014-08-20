@@ -48,6 +48,8 @@ namespace OsmAnd
             const std::weak_ptr<MapSymbolsGroup> originalGroup;
 
             QHash< std::shared_ptr<MapSymbol>, std::shared_ptr<AdditionalSymbolInstanceParameters> > symbols;
+            std::shared_ptr<MapSymbol> getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const;
+            unsigned int numberOfSymbolsWithContentClass(const MapSymbol::ContentClass contentClass) const;
 
         private:
             Q_DISABLE_COPY(AdditionalInstance);

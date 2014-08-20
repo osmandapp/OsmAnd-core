@@ -112,10 +112,6 @@ namespace OsmAnd
         //    const std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>& symbolInstanceParameters,
         //    const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
         //    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
-        //QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31) const;
-        //QVector<glm::vec2> convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const;
-        //QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const;
-        //QVector<glm::vec2> projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld, unsigned int startIndex, unsigned int endIndex) const;
         //static QVector<float> computePathSegmentsLengths(const QVector<glm::vec2>& path);
         //static bool computePointIndexAndOffsetFromOriginAndOffset(
         //    const QVector<float>& pathSegmentsLengths,
@@ -221,17 +217,35 @@ namespace OsmAnd
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         IntersectionsQuadTree _lastPreparedIntersections;
 
-        //void addPathDebugLine(
-        //    const QVector<PointI>& path31,
-        //    const ColorARGB color) const;
-        //void addRenderableDebugBox(
-        //    const std::shared_ptr<const RenderableSymbol>& renderable,
-        //    const ColorARGB color,
-        //    const bool drawBorder = true) const;
-        //void addRenderableDebugBox(
-        //    const IntersectionsQuadTree::BBox intersectionBBox,
-        //    const ColorARGB color,
-        //    const bool drawBorder = true) const;
+        // Utilities:
+        QVector<glm::vec2> convertPoints31ToWorld(
+            const QVector<PointI>& points31) const;
+        QVector<glm::vec2> convertPoints31ToWorld(
+            const QVector<PointI>& points31,
+            const unsigned int startIndex,
+            const unsigned int endIndex) const;
+
+        QVector<glm::vec2> projectFromWorldToScreen(
+            const QVector<glm::vec2>& pointsInWorld) const;
+        QVector<glm::vec2> projectFromWorldToScreen(
+            const QVector<glm::vec2>& pointsInWorld,
+            const unsigned int startIndex,
+            const unsigned int endIndex) const;
+
+        // Debug-related:
+        void addPathDebugLine(
+            const QVector<PointI>& path31,
+            const ColorARGB color) const;
+
+        void addIntersectionDebugBox(
+            const std::shared_ptr<const RenderableSymbol>& renderable,
+            const ColorARGB color,
+            const bool drawBorder = true) const;
+
+        void addIntersectionDebugBox(
+            const IntersectionsQuadTree::BBox intersectionBBox,
+            const ColorARGB color,
+            const bool drawBorder = true) const;
     protected:
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 

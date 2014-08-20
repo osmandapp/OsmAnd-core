@@ -75,23 +75,79 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
     IntersectionsQuadTree& outIntersections) const
 {
-//    typedef QLinkedList< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
-//    struct PlottedSymbolRef
-//    {
-//        PlottedSymbols::iterator iterator;
-//        std::shared_ptr<const RenderableSymbol> renderable;
-//    };
-//
-//    QReadLocker scopedLocker(&publishedMapSymbolsByOrderLock);
-//
-//    // Iterate over map symbols layer sorted by "order" in ascending direction.
-//    // This means that map symbols with smaller order value are more important than map symbols with
-//    // larger order value.
-//    outIntersections = IntersectionsQuadTree(currentState.viewport, 8);
-//    PlottedSymbols plottedSymbols;
-//    QHash< const MapSymbolsGroup*, QList< PlottedSymbolRef > > plottedMapSymbolsByGroup;
-//    for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
-//    {
+    QReadLocker scopedLocker(&publishedMapSymbolsByOrderLock);
+
+    typedef QLinkedList< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
+    PlottedSymbols plottedSymbols;
+    
+    struct PlottedSymbolRef
+    {
+        PlottedSymbols::iterator iterator;
+        std::shared_ptr<const RenderableSymbol> renderable;
+    };
+    struct PlottedSymbolsRefGroupInstance
+    {
+        QList< PlottedSymbolRef > symbolsRefs;
+
+        void discard(const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, IntersectionsQuadTree& intersections)
+        {
+            // Discard entire group
+            for (auto& symbolRef : symbolsRefs)
+            {
+                if (Q_UNLIKELY(stage->debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
+                    stage->addIntersectionDebugBox(symbolRef.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+
+#if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
+                const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
+                assert(removed);
+#endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
+                plottedSymbols.erase(symbolRef.iterator);
+            }
+            symbolsRefs.clear();
+        }
+
+        void discardAllOf(const MapSymbol::ContentClass contentClass, const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, IntersectionsQuadTree& intersections)
+        {
+            auto itSymbolRef = mutableIteratorOf(symbolsRefs);
+            while (itSymbolRef.hasNext())
+            {
+                const auto& symbolRef = itSymbolRef.next();
+
+                if (symbolRef.renderable->mapSymbol->contentClass != contentClass)
+                    continue;
+
+                if (Q_UNLIKELY(stage->debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
+                    stage->addIntersectionDebugBox(symbolRef.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+
+#if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
+                const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
+                assert(removed);
+#endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
+                plottedSymbols.erase(symbolRef.iterator);
+                itSymbolRef.remove();
+            }
+        }
+    };
+    struct PlottedSymbolsRefGroupInstances
+    {
+        QHash< std::shared_ptr<const MapSymbolsGroup::AdditionalInstance>, PlottedSymbolsRefGroupInstance > instancesRefs;
+
+        void discard(const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, IntersectionsQuadTree& intersections)
+        {
+            // Discard all instances
+            for (auto& instanceRef : instancesRefs)
+                instanceRef.discard(stage, plottedSymbols, intersections);
+            instancesRefs.clear();
+        }
+    };
+    QHash< std::shared_ptr<const MapSymbolsGroup>, PlottedSymbolsRefGroupInstances> plottedSymbolsMapByGroupAndInstance;
+
+    // Iterate over map symbols layer sorted by "order" in ascending direction.
+    // This means that map symbols with smaller order value are more important than map symbols with
+    // larger order value.
+    outIntersections = IntersectionsQuadTree(currentState.viewport, 8);
+    for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
+    {
 //        // Iterate over all groups in proper order (proper order is maintained during publishing)
 //        for (const auto& publishedMapSymbolsEntry : constOf(publishedMapSymbols))
 //        {
@@ -190,147 +246,113 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 //                }
 //            }
 //        }
-//    }
-//
-//    // Remove those plotted symbols that do not conform to presentation rules
-//    auto itPlottedSymbolsGroup = mutableIteratorOf(plottedMapSymbolsByGroup);
-//    while (itPlottedSymbolsGroup.hasNext())
-//    {
-//        auto& plottedGroupSymbols = itPlottedSymbolsGroup.next().value();
-//
-//        const auto mapSymbolGroup = plottedGroupSymbols.first().mapSymbol->group.lock();
-//        if (!mapSymbolGroup)
-//        {
-//            // Discard entire group
-//            for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
-//            {
-//                if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
-//                    addRenderableDebugBox(plottedGroupSymbol.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
-//
-//#if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-//                const auto removed = outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
-//                assert(removed);
-//#endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-//                plottedSymbols.erase(plottedGroupSymbol.iterator);
-//            }
-//
-//            itPlottedSymbolsGroup.remove();
-//            continue;
-//        }
-//
-//        // Just skip all rules
-//        if (mapSymbolGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnything)
-//            continue;
-//
-//        // Rule: show all symbols or no symbols
-//        if (mapSymbolGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing)
-//        {
-//            if (mapSymbolGroup->symbols.size() != plottedGroupSymbols.size())
-//            {
-//                // Discard entire group
-//                for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
-//                {
-//                    if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
-//                        addRenderableDebugBox(plottedGroupSymbol.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
-//
-//#if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-//                    const auto removed = outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
-//                    assert(removed);
-//#endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-//                    plottedSymbols.erase(plottedGroupSymbol.iterator);
-//                }
-//
-//                itPlottedSymbolsGroup.remove();
-//                continue;
-//            }
-//        }
-//
-//        // Rule: if there's icon, icon must always be visible. Otherwise discard entire group
-//        if (mapSymbolGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown)
-//        {
-//            const auto symbolWithIconContentClass = mapSymbolGroup->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon);
-//            if (symbolWithIconContentClass)
-//            {
-//                bool iconPlotted = false;
-//                for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
-//                {
-//                    if (plottedGroupSymbol.mapSymbol == symbolWithIconContentClass)
-//                    {
-//                        iconPlotted = true;
-//                        break;
-//                    }
-//                }
-//
-//                if (!iconPlotted)
-//                {
-//                    // Discard entire group
-//                    for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
-//                    {
-//                        if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
-//                            addRenderableDebugBox(plottedGroupSymbol.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
-//
-//#if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-//                        const auto removed = outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
-//                        assert(removed);
-//#endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-//                        plottedSymbols.erase(plottedGroupSymbol.iterator);
-//                    }
-//
-//                    itPlottedSymbolsGroup.remove();
-//                    continue;
-//                }
-//            }
-//        }
-//
-//        // Rule: if at least one caption was not shown, discard all other captions
-//        if (mapSymbolGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions)
-//        {
-//            const auto captionsCount = mapSymbolGroup->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption);
-//            if (captionsCount > 0)
-//            {
-//                unsigned int captionsPlotted = 0;
-//                for (const auto& plottedGroupSymbol : constOf(plottedGroupSymbols))
-//                {
-//                    if (plottedGroupSymbol.mapSymbol->contentClass == MapSymbol::ContentClass::Caption)
-//                        captionsPlotted++;
-//                }
-//
-//                if (captionsCount != captionsPlotted)
-//                {
-//                    // Discard all plotted captions from group
-//                    auto itPlottedGroupSymbol = mutableIteratorOf(plottedGroupSymbols);
-//                    while (itPlottedGroupSymbol.hasNext())
-//                    {
-//                        const auto& plottedGroupSymbol = itPlottedGroupSymbol.next();
-//
-//                        if (plottedGroupSymbol.mapSymbol->contentClass != MapSymbol::ContentClass::Caption)
-//                            continue;
-//
-//                        if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
-//                            addRenderableDebugBox(plottedGroupSymbol.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
-//
-//#if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-//                        const auto removed = outIntersections.removeOne(plottedGroupSymbol.renderable, plottedGroupSymbol.renderable->intersectionBBox);
-//                        assert(removed);
-//#endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
-//                        plottedSymbols.erase(plottedGroupSymbol.iterator);
-//                        itPlottedGroupSymbol.remove();
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    // Publish the result
-//    outRenderableSymbols.clear();
-//    outRenderableSymbols.reserve(plottedSymbols.size());
-//    for (const auto& plottedSymbol : constOf(plottedSymbols))
-//    {
-//        if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
-//            addRenderableDebugBox(plottedSymbol, ColorARGB::fromSkColor(SK_ColorGREEN).withAlpha(50));
-//
-//        outRenderableSymbols.push_back(qMove(plottedSymbol));
-//    }
+    }
+
+    // Remove those plotted symbols that do not conform to presentation rules
+    auto itPlottedSymbolsGroupInstancesEntry = mutableIteratorOf(plottedSymbolsMapByGroupAndInstance);
+    while (itPlottedSymbolsGroupInstancesEntry.hasNext())
+    {
+        const auto& plottedSymbolsGroupInstancesEntry = itPlottedSymbolsGroupInstancesEntry.next();
+        const auto& mapSymbolsGroup = plottedSymbolsGroupInstancesEntry.key();
+        auto& plottedSymbolsGroupInstances = plottedSymbolsGroupInstancesEntry.value();
+        
+        if (!mapSymbolsGroup)
+        {
+            plottedSymbolsGroupInstances.discard(this, plottedSymbols, outIntersections);
+            itPlottedSymbolsGroupInstancesEntry.remove();
+            continue;
+        }
+
+        // Each instance of group is treated as separated group
+        auto itPlottedSymbolsGroupInstanceEntry = mutableIteratorOf(plottedSymbolsGroupInstances.instancesRefs);
+        while (itPlottedSymbolsGroupInstanceEntry.hasNext())
+        {
+            const auto& plottedSymbolsGroupInstanceEntry = itPlottedSymbolsGroupInstanceEntry.next();
+            const auto& mapSymbolsGroupInstance = plottedSymbolsGroupInstanceEntry.key();
+            auto& plottedSymbolsGroupInstance = plottedSymbolsGroupInstanceEntry.value();
+            
+            // Just skip all rules
+            if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnything)
+                continue;
+
+            // Rule: show all symbols or no symbols
+            if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing)
+            {
+                if (mapSymbolsGroupInstance->symbols.size() != plottedSymbolsGroupInstance.symbolsRefs.size())
+                {
+                    // Discard entire group instance
+                    plottedSymbolsGroupInstance.discard(this, plottedSymbols, outIntersections);
+                    itPlottedSymbolsGroupInstanceEntry.remove();
+                    continue;
+                }
+            }
+
+            // Rule: if there's icon, icon must always be visible. Otherwise discard entire group
+            if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown)
+            {
+                const auto symbolWithIconContentClass = mapSymbolsGroupInstance->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon);
+                if (symbolWithIconContentClass)
+                {
+                    bool iconPlotted = false;
+                    for (const auto& plottedGroupSymbol : constOf(plottedSymbolsGroupInstance.symbolsRefs))
+                    {
+                        if (plottedGroupSymbol.renderable->mapSymbol == symbolWithIconContentClass)
+                        {
+                            iconPlotted = true;
+                            break;
+                        }
+                    }
+
+                    if (!iconPlotted)
+                    {
+                        // Discard entire group instance
+                        plottedSymbolsGroupInstance.discard(this, plottedSymbols, outIntersections);
+                        itPlottedSymbolsGroupInstanceEntry.remove();
+                        continue;
+                    }
+                }
+            }
+
+            // Rule: if at least one caption was not shown, discard all other captions
+            if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions)
+            {
+                const auto captionsCount = mapSymbolsGroupInstance->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption);
+                if (captionsCount > 0)
+                {
+                    unsigned int captionsPlotted = 0;
+                    for (const auto& plottedGroupSymbol : constOf(plottedSymbolsGroupInstance.symbolsRefs))
+                    {
+                        if (plottedGroupSymbol.renderable->mapSymbol->contentClass == MapSymbol::ContentClass::Caption)
+                            captionsPlotted++;
+                    }
+
+                    if (captionsCount != captionsPlotted)
+                    {
+                        // Discard all captions since at least one was not shown
+                        plottedSymbolsGroupInstance.discardAllOf(MapSymbol::ContentClass::Caption, this, plottedSymbols, outIntersections);
+                        if (plottedSymbolsGroupInstance.symbolsRefs.isEmpty())
+                            itPlottedSymbolsGroupInstanceEntry.remove();
+                        continue;
+                    }
+                }
+            }
+        }
+
+        // In case all instances of group was removed, erase the group
+        if (plottedSymbolsGroupInstances.instancesRefs.isEmpty())
+            itPlottedSymbolsGroupInstancesEntry.remove();
+    }
+
+    // Publish the result
+    outRenderableSymbols.clear();
+    outRenderableSymbols.reserve(plottedSymbols.size());
+    for (const auto& plottedSymbol : constOf(plottedSymbols))
+    {
+        if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesAcceptedByIntersectionCheck))
+            addIntersectionDebugBox(plottedSymbol, ColorARGB::fromSkColor(SK_ColorGREEN).withAlpha(50));
+
+        outRenderableSymbols.push_back(qMove(plottedSymbol));
+    }
 }
 
 //void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
@@ -693,57 +715,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 //            }
 //        }
 //    }
-//}
-//
-//QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(const QVector<PointI>& points31) const
-//{
-//    return convertPoints31ToWorld(points31, 0, points31.size() - 1);
-//}
-//
-//QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(const QVector<PointI>& points31, unsigned int startIndex, unsigned int endIndex) const
-//{
-//    assert(endIndex >= startIndex);
-//    const auto count = endIndex - startIndex + 1;
-//    QVector<glm::vec2> result(count);
-//    auto pPointInWorld = result.data();
-//    auto pPoint31 = points31.constData() + startIndex;
-//
-//    for (auto idx = 0u; idx < count; idx++)
-//    {
-//        *(pPointInWorld++) = Utilities::convert31toFloat(
-//                *(pPoint31++) - currentState.target31,
-//                currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
-//    }
-//
-//    return result;
-//}
-//
-//QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld) const
-//{
-//    return projectFromWorldToScreen(pointsInWorld, 0, pointsInWorld.size() - 1);
-//}
-//
-//QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(const QVector<glm::vec2>& pointsInWorld, unsigned int startIndex, unsigned int endIndex) const
-//{
-//    const auto& internalState = getInternalState();
-//
-//    assert(endIndex >= startIndex);
-//    const auto count = endIndex - startIndex + 1;
-//    QVector<glm::vec2> result(count);
-//    auto pPointOnScreen = result.data();
-//    auto pPointInWorld = pointsInWorld.constData() + startIndex;
-//
-//    for (auto idx = 0u; idx < count; idx++)
-//    {
-//        *(pPointOnScreen++) = glm::project(
-//            glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
-//            internalState.mCameraView,
-//            internalState.mPerspectiveProjection,
-//            internalState.glmViewport).xy;
-//        pPointInWorld++;
-//    }
-//
-//    return result;
 //}
 //
 //QVector<float> OsmAnd::AtlasMapRendererSymbolsStage::computePathSegmentsLengths(const QVector<glm::vec2>& path)
@@ -1788,65 +1759,124 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 //    return nullptr;
 //}
 
-//void OsmAnd::AtlasMapRendererSymbolsStage::addRenderableDebugBox(
-//    const std::shared_ptr<const RenderableSymbol>& renderable,
-//    const ColorARGB color,
-//    const bool drawBorder /* = true*/) const
-//{
-//    addRenderableDebugBox(renderable->intersectionBBox, color, drawBorder);
-//}
-//
-//void OsmAnd::AtlasMapRendererSymbolsStage::addRenderableDebugBox(
-//    const IntersectionsQuadTree::BBox intersectionBBox,
-//    const ColorARGB color,
-//    const bool drawBorder /*= true*/) const
-//{
-//    if (intersectionBBox.type == IntersectionsQuadTree::BBoxType::AABB)
-//    {
-//        const auto& boundsInWindow = intersectionBBox.asAABB;
-//
-//        getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, color.argb);
-//        if (drawBorder)
-//        {
-//            getRenderer()->debugStage->addLine2D({
-//                (glm::ivec2)boundsInWindow.topLeft,
-//                (glm::ivec2)boundsInWindow.topRight(),
-//                (glm::ivec2)boundsInWindow.bottomRight,
-//                (glm::ivec2)boundsInWindow.bottomLeft(),
-//                (glm::ivec2)boundsInWindow.topLeft
-//            }, color.withAlpha(255).argb);
-//        }
-//    }
-//    else /* if (intersectionBBox.type == IntersectionsQuadTree::BBoxType::OOBB) */
-//    {
-//        const auto& oobb = intersectionBBox.asOOBB;
-//
-//        getRenderer()->debugStage->addRect2D((AreaF)oobb.unrotatedBBox(), color.argb, -oobb.rotation());
-//        if (drawBorder)
-//        {
-//            getRenderer()->debugStage->addLine2D({
-//                (PointF)oobb.pointInGlobalSpace0(),
-//                (PointF)oobb.pointInGlobalSpace1(),
-//                (PointF)oobb.pointInGlobalSpace2(),
-//                (PointF)oobb.pointInGlobalSpace3(),
-//                (PointF)oobb.pointInGlobalSpace0(),
-//            }, color.withAlpha(255).argb);
-//        }
-//    }
-//}
-//
-//void OsmAnd::AtlasMapRendererSymbolsStage::addPathDebugLine(const QVector<PointI>& path31, const ColorARGB color) const
-//{
-//    QVector< glm::vec3 > debugPoints;
-//    for (const auto& pointInWorld : convertPoints31ToWorld(path31))
-//    {
-//        debugPoints.push_back(qMove(glm::vec3(
-//            pointInWorld.x,
-//            0.0f,
-//            pointInWorld.y)));
-//    }
-//    getRenderer()->debugStage->addLine3D(debugPoints, color.argb);
-//}
+QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(
+    const QVector<PointI>& points31) const
+{
+    return convertPoints31ToWorld(points31, 0, points31.size() - 1);
+}
+
+QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(
+    const QVector<PointI>& points31,
+    const unsigned int startIndex,
+    const unsigned int endIndex) const
+{
+    assert(endIndex >= startIndex);
+    const auto count = endIndex - startIndex + 1;
+    QVector<glm::vec2> result(count);
+    auto pPointInWorld = result.data();
+    auto pPoint31 = points31.constData() + startIndex;
+
+    for (auto idx = 0u; idx < count; idx++)
+    {
+        *(pPointInWorld++) = 
+            Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase) *
+            static_cast<float>(AtlasMapRenderer::TileSize3D);
+    }
+
+    return result;
+}
+
+QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
+    const QVector<glm::vec2>& pointsInWorld) const
+{
+    return projectFromWorldToScreen(pointsInWorld, 0, pointsInWorld.size() - 1);
+}
+
+QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScreen(
+    const QVector<glm::vec2>& pointsInWorld,
+    const unsigned int startIndex,
+    const unsigned int endIndex) const
+{
+    const auto& internalState = getInternalState();
+
+    assert(endIndex >= startIndex);
+    const auto count = endIndex - startIndex + 1;
+    QVector<glm::vec2> result(count);
+    auto pPointOnScreen = result.data();
+    auto pPointInWorld = pointsInWorld.constData() + startIndex;
+
+    for (auto idx = 0u; idx < count; idx++)
+    {
+        *(pPointOnScreen++) = glm::project(
+            glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
+            internalState.mCameraView,
+            internalState.mPerspectiveProjection,
+            internalState.glmViewport).xy;
+        pPointInWorld++;
+    }
+
+    return result;
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::addPathDebugLine(const QVector<PointI>& path31, const ColorARGB color) const
+{
+    QVector< glm::vec3 > debugPoints;
+    for (const auto& pointInWorld : convertPoints31ToWorld(path31))
+    {
+        debugPoints.push_back(qMove(glm::vec3(
+            pointInWorld.x,
+            0.0f,
+            pointInWorld.y)));
+    }
+    getRenderer()->debugStage->addLine3D(debugPoints, color.argb);
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::addIntersectionDebugBox(
+    const std::shared_ptr<const RenderableSymbol>& renderable,
+    const ColorARGB color,
+    const bool drawBorder /* = true*/) const
+{
+    addIntersectionDebugBox(renderable->intersectionBBox, color, drawBorder);
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::addIntersectionDebugBox(
+    const IntersectionsQuadTree::BBox intersectionBBox,
+    const ColorARGB color,
+    const bool drawBorder /*= true*/) const
+{
+    if (intersectionBBox.type == IntersectionsQuadTree::BBoxType::AABB)
+    {
+        const auto& boundsInWindow = intersectionBBox.asAABB;
+
+        getRenderer()->debugStage->addRect2D((AreaF)boundsInWindow, color.argb);
+        if (drawBorder)
+        {
+            getRenderer()->debugStage->addLine2D({
+                (glm::ivec2)boundsInWindow.topLeft,
+                (glm::ivec2)boundsInWindow.topRight(),
+                (glm::ivec2)boundsInWindow.bottomRight,
+                (glm::ivec2)boundsInWindow.bottomLeft(),
+                (glm::ivec2)boundsInWindow.topLeft
+            }, color.withAlpha(255).argb);
+        }
+    }
+    else /* if (intersectionBBox.type == IntersectionsQuadTree::BBoxType::OOBB) */
+    {
+        const auto& oobb = intersectionBBox.asOOBB;
+
+        getRenderer()->debugStage->addRect2D((AreaF)oobb.unrotatedBBox(), color.argb, -oobb.rotation());
+        if (drawBorder)
+        {
+            getRenderer()->debugStage->addLine2D({
+                (PointF)oobb.pointInGlobalSpace0(),
+                (PointF)oobb.pointInGlobalSpace1(),
+                (PointF)oobb.pointInGlobalSpace2(),
+                (PointF)oobb.pointInGlobalSpace3(),
+                (PointF)oobb.pointInGlobalSpace0(),
+            }, color.withAlpha(255).argb);
+        }
+    }
+}
 
 OsmAnd::AtlasMapRendererSymbolsStage::RenderableSymbol::~RenderableSymbol()
 {

@@ -1,6 +1,7 @@
 #include "MapSymbolsGroup.h"
 
 #include "MapSymbol.h"
+#include "QKeyValueIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -51,6 +52,32 @@ OsmAnd::MapSymbolsGroup::AdditionalInstance::AdditionalInstance(const std::share
 
 OsmAnd::MapSymbolsGroup::AdditionalInstance::~AdditionalInstance()
 {
+}
+
+std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::MapSymbolsGroup::AdditionalInstance::getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const
+{
+    for(const auto& symbol : rangeOf(constOf(symbols)))
+    {
+        if (symbol.key()->contentClass == contentClass)
+            return symbol.key();
+    }
+
+    return nullptr;
+}
+
+unsigned int OsmAnd::MapSymbolsGroup::AdditionalInstance::numberOfSymbolsWithContentClass(const MapSymbol::ContentClass contentClass) const
+{
+    unsigned int count = 0;
+
+    for (const auto& symbol : rangeOf(constOf(symbols)))
+    {
+        if (symbol.key()->contentClass != contentClass)
+            continue;
+
+        count++;
+    }
+
+    return count;
 }
 
 OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters::AdditionalSymbolInstanceParameters()
