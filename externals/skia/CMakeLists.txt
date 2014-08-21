@@ -182,7 +182,8 @@ elseif (CMAKE_TARGET_OS STREQUAL "ios")
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
 		"upstream.patched/src/utils/SkThreadUtils_pthread_mach.cpp"
-		${src_utils_ios}
+		#${src_utils_ios}
+		"upstream.patched/src/utils/mac/SkStream_mac.cpp"
 		${src_gpu_gl_ios}
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
