@@ -202,7 +202,7 @@ namespace OsmAnd
                 {
                     if (!subnodes[idx])
                     {
-                        const auto subArea = area.getQuadrant(static_cast<typename Quadrant>(idx));
+                        const auto subArea = area.getQuadrant(static_cast<Quadrant>(idx));
                         if (!subArea.contains(bbox_))
                             continue;
                         subnodes[idx].reset(new Node(subArea));
