@@ -229,10 +229,10 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 #endif
 {
     OsmAnd::AreaI bbox31;
-    bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top());
-    bbox31.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
-    bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
-    bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
+    bbox31.top() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top());
+    bbox31.bottom() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
+    bbox31.left() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
+    bbox31.right() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
     if (cfg.verboseMapObjects)
     {
         QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
@@ -287,10 +287,10 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 
     QList< std::shared_ptr<const OsmAnd::Model::Amenity> > amenities;
     OsmAnd::AreaI bbox31;
-    bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top());
-    bbox31.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
-    bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
-    bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
+    bbox31.top() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top());
+    bbox31.bottom() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
+    bbox31.left() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
+    bbox31.right() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
     OsmAnd::ObfPoiSectionReader::loadAmenities(reader, section, cfg.zoom, 3, &bbox31, nullptr, &amenities);
     output << xT("\tAmenities, ") << amenities.count() << xT(" item(s)");
     if (!cfg.verboseAmenities)

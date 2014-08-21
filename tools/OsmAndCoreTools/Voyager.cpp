@@ -1,37 +1,37 @@
-//#include "Voyager.h"
-//
-//#include <iostream>
-//#include <sstream>
-//#include <ctime>
-//#include <chrono>
-//
-//#include <OsmAndCore/QtExtensions.h>
-//#include <QDateTime>
-//#include <QTextStream>
-//
-//#include <OsmAndCore/Common.h>
-//#include <OsmAndCore/Data/ObfReader.h>
-//#include <OsmAndCore/Utilities.h>
+#include "Voyager.h"
+
+#include <iostream>
+#include <sstream>
+#include <ctime>
+#include <chrono>
+
+#include <OsmAndCore/QtExtensions.h>
+#include <QDateTime>
+#include <QTextStream>
+
+#include <OsmAndCore/Common.h>
+#include <OsmAndCore/Data/ObfReader.h>
+#include <OsmAndCore/Utilities.h>
 //#include <OsmAndCore/Routing/RoutePlanner.h>
 //#include <OsmAndCore/Routing/RoutePlannerContext.h>
-//
-//OsmAnd::Voyager::Configuration::Configuration()
-//    //: verbose(false)
-//    //, generateXml(false)
-//    //, doRecalculate(false)
-//    //, vehicle("car")
-//    //, memoryLimit(0)
-//    //, startLatitude(0)
-//    //, startLongitude(0)
-//    //, endLatitude(0)
-//    //, endLongitude(0)
-//    //, leftSide(false)
-//    //, routingConfig(new RoutingConfiguration())
-//{
-//}
-//
-//OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::Voyager::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
-//{
+
+OsmAnd::Voyager::Configuration::Configuration()
+    //: verbose(false)
+    //, generateXml(false)
+    //, doRecalculate(false)
+    //, vehicle("car")
+    //, memoryLimit(0)
+    //, startLatitude(0)
+    //, startLongitude(0)
+    //, endLatitude(0)
+    //, endLongitude(0)
+    //, leftSide(false)
+    //, routingConfig(new RoutingConfiguration())
+{
+}
+
+OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::Voyager::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
+{
 //    bool wasObfRootSpecified = false;
 //    bool wasRouterConfigSpecified = false;
 //    for (const auto& arg : constOf(cmdLineArgs))

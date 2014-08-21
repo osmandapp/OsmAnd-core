@@ -13,6 +13,29 @@ set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/tools"
 )
 
+if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
+	# Set warning level 4
+	set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} /W4")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+
+	# Force warning to be an error "deletion of pointer to incomplete type 'type'; no destructor called"
+	set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} /we4150")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /we4150")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4150")
+
+	# Disable following warnings:
+	#  - C4290: 'C++ exception specification ignored except to indicate a function is not __declspec(nothrow)'
+	#  - C4201: 'nonstandard extension used : nameless struct/union'
+	set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} /wd4290 /wd4201")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4290 /wd4201")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4290 /wd4201")
+elseif (CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
+	set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -Wall")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+endif()
+
 if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCoreTools_shared SHARED ${merged_sources})
 	add_dependencies(OsmAndCoreTools_shared OsmAndCore_shared)
