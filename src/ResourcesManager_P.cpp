@@ -1408,22 +1408,7 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::obtainBakedStyle(cons
     if (!resourceId.endsWith(QLatin1String(".render.xml")))
         resourceId.append(QLatin1String(".render.xml"));
 
-    for(const auto& builtinResource : constOf(owner->_builtinResources))
-    {
-        if (builtinResource->type != ResourceType::MapStyle)
-            continue;
-
-        if (builtinResource->id != resourceId)
-            continue;
-
-        const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
-
-        outStyle = mapStyle;
-        assert(outStyle->isMetadataLoaded() && outStyle->isLoaded());
-
-        return true;
-    }
-
+    // First of all, resolve external resources
     {
         QReadLocker scopedLocker(&owner->_localResourcesLock);
 
@@ -1443,6 +1428,23 @@ bool OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::obtainBakedStyle(cons
 
             return true;
         }
+    }
+
+    // If not found, use embedded one
+    for (const auto& builtinResource : constOf(owner->_builtinResources))
+    {
+        if (builtinResource->type != ResourceType::MapStyle)
+            continue;
+
+        if (builtinResource->id != resourceId)
+            continue;
+
+        const auto& mapStyle = std::static_pointer_cast<const MapStyleMetadata>(builtinResource->_metadata)->mapStyle;
+
+        outStyle = mapStyle;
+        assert(outStyle->isMetadataLoaded() && outStyle->isLoaded());
+
+        return true;
     }
 
     return false;
