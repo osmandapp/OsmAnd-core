@@ -233,6 +233,7 @@ file(GLOB src_images__remove
 	"upstream.patched/src/images/SkImageDecoder_libwebp.*"
 	"upstream.patched/src/images/SkImageRef_ashmem.*")
 list(REMOVE_ITEM src_images ${src_images__remove})
+file(GLOB src_lazy "upstream.patched/src/lazy/*")
 file(GLOB src_sfnt "upstream.patched/src/sfnt/*")
 file(GLOB src_pathops "upstream.patched/src/pathops/*")
 file(GLOB src_gpu "upstream.patched/src/gpu/*")
@@ -251,6 +252,7 @@ add_library(skia_static STATIC
 	"upstream.patched/src/fonts/SkRemotableFontMgr.cpp"
 	${src_image}
 	${src_images}
+	${src_lazy}
 	${src_sfnt}
 	${src_pathops}
 	${src_gpu}
@@ -311,6 +313,7 @@ target_include_directories(skia_static
 		"upstream.patched/src/fonts"
 		"upstream.patched/src/image"
 		"upstream.patched/src/images"
+		"upstream.patched/src/lazy"
 		"upstream.patched/src/ports"
 		"upstream.patched/src/utils"
 		"upstream.patched/src/xml"
