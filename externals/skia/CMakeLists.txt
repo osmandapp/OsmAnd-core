@@ -203,6 +203,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 		"upstream.patched/src/fonts/SkFontMgr_fontconfig.cpp"
 		"upstream.patched/src/ports/SkDebug_stdio.cpp"
 		"upstream.patched/src/ports/SkDiscardableMemory_none.cpp"
+		"upstream.patched/src/ports/SkFontConfigInterface_direct.cpp"
 		"upstream.patched/src/ports/SkFontHost_fontconfig.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType_common.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType.cpp"
