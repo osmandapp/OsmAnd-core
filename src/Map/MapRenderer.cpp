@@ -66,7 +66,8 @@ OsmAnd::MapRenderer::MapRenderer(
 
 OsmAnd::MapRenderer::~MapRenderer()
 {
-    releaseRendering();
+    if (_isRenderingInitialized)
+        releaseRendering();
 }
 
 bool OsmAnd::MapRenderer::isRenderingInitialized() const
