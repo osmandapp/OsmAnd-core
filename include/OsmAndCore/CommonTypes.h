@@ -646,6 +646,7 @@ namespace OsmAnd
             return *this;
         }
 
+#if !defined(SWIG)
         inline AreaT& enlargeToInclude(const PointT& p)
         {
             top() = std::min(top(), p.y);
@@ -655,6 +656,7 @@ namespace OsmAnd
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline AreaT getEnlargedToInclude(const PointT& p) const
         {
@@ -665,6 +667,7 @@ namespace OsmAnd
                 std::max(right(), p.x));
         }
 
+#if !defined(SWIG)
         inline AreaT& enlargeBy(const PointT& delta)
         {
             top() -= delta.y;
@@ -674,6 +677,7 @@ namespace OsmAnd
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline AreaT getEnlargedBy(const PointT& delta) const
         {
@@ -684,6 +688,7 @@ namespace OsmAnd
                 right() + delta.x);
         }
 
+#if !defined(SWIG)
         inline AreaT& enlargeBy(const T& dt, const T& dl, const T& db, const T& dr)
         {
             top() -= dt;
@@ -693,6 +698,7 @@ namespace OsmAnd
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline AreaT getEnlargedBy(const T& dt, const T& dl, const T& db, const T& dr) const
         {
@@ -986,6 +992,7 @@ namespace OsmAnd
                 p0, p1, p2, p3);
         }
 
+#if !defined(SWIG)
         inline OOBBT& enlargeBy(const PointT& delta)
         {
             _unrotatedBBox.top() -= delta.y;
@@ -996,6 +1003,7 @@ namespace OsmAnd
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline OOBBT getEnlargedBy(const PointT& delta) const
         {
@@ -1008,6 +1016,7 @@ namespace OsmAnd
                 _rotation);
         }
 
+#if !defined(SWIG)
         inline OOBBT& enlargeBy(const T& dt, const T& dl, const T& db, const T& dr)
         {
             _unrotatedBBox.top() -= dt;
@@ -1018,6 +1027,7 @@ namespace OsmAnd
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline OOBBT getEnlargedBy(const T& dt, const T& dl, const T& db, const T& dr) const
         {

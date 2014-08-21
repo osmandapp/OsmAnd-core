@@ -1,7 +1,7 @@
 %module(directors="1") OsmAndCore
 
 // Generate directors for all classes that have virtual methods
-%feature("director");
+//%feature("director");
 
 %{
 
@@ -34,12 +34,19 @@ using namespace OsmAnd;
 // Common
 %include "OsmAndCore.h"
 %include "OsmAndCore/QuickAccessors.h"
+%include "OsmAndCore/Callable.h"
 %include "OsmAndCore/CommonTypes.h"
 
 // Data-related
 
 // Map-related
 %include "OsmAndCore/Map/MapTypes.h"
+//%include "OsmAndCore/Map/MapRendererSetupOptions.h"
+//%include "OsmAndCore/Map/MapRendererDebugSettings.h"
+//%include "OsmAndCore/Map/MapRendererConfiguration.h"
+//%include "OsmAndCore/Map/MapRendererState.h"
+//%include "OsmAndCore/Map/MapRendererDebugSettings.h"
+//%include "OsmAndCore/Map/IMapRenderer.h"
 
 %template(PointI) OsmAnd::Point<int32_t>;
 %template(PointI64) OsmAnd::Point<int64_t>;
