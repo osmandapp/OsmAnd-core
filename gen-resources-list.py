@@ -99,4 +99,19 @@ if __name__=='__main__':
     resourcesListFilename = rootDir + "/core/embed-resources.list";
     generator = OsmAndCoreResourcesListGenerator()
     ok = generator.generate(rootDir, resourcesSubpaths, rules, resourcesListFilename)
-    sys.exit(0 if ok else -1)
+
+    if not ok:
+    	sys.exit(0 if ok else -1)
+
+    # Update stamp
+    currentStamp = ""
+    with open(rootDir + "/core/embed-resources.stamp", "r") as stampFile:
+    	currentStamp = stampFile.read().strip()
+    if not currentStamp:
+    	currentStamp = "#1"
+    else:
+    	currentStamp = "#" + str(int(currentStamp[1:]) + 1)
+    with open(rootDir + "/core/embed-resources.stamp", "w") as stampFile:
+    	stampFile.write(currentStamp)
+
+    sys.exit(0)

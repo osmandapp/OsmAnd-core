@@ -184,6 +184,7 @@ else()
 	find_package(Qt5Sql REQUIRED)
 endif()
 
+include("${CMAKE_CURRENT_LIST_DIR}/embed-resources.stamp")
 file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/embed-resources.list" OsmAndCore_resources_list)
 set(OsmAndCore_resources)
 foreach(OsmAndCore_resourceEntry IN LISTS OsmAndCore_resources_list)
