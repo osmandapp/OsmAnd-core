@@ -83,11 +83,15 @@ std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::MapStylesCollection_P::getAsIsSt
     return *citStyle;
 }
 
-bool OsmAnd::MapStylesCollection_P::obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const
+bool OsmAnd::MapStylesCollection_P::obtainBakedStyle(const QString& styleName_, std::shared_ptr<const MapStyle>& outStyle) const
 {
     QReadLocker scopedLocker(&_stylesLock);
 
-    const auto citStyle = _styles.constFind(name);
+    auto styleName = styleName_.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+
+    const auto citStyle = _styles.constFind(styleName);
     if (citStyle == _styles.cend())
         return false;
     const auto& style = *citStyle;
