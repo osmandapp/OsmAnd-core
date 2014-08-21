@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_UTILS_VOYAGER_H_
-#define _OSMAND_CORE_UTILS_VOYAGER_H_
+#ifndef _OSMAND_CORE_TOOLS_VOYAGER_H_
+#define _OSMAND_CORE_TOOLS_VOYAGER_H_
 
 #include <memory>
 
@@ -9,14 +9,14 @@
 #include <QDir>
 #include <QFile>
 
-#include <OsmAndCoreUtils.h>
+#include <OsmAndCoreTools.h>
 #include <OsmAndCore/Routing/RoutingConfiguration.h>
 
 namespace OsmAnd
 {
     namespace Voyager
     {
-        struct OSMAND_CORE_UTILS_API Configuration
+        struct OSMAND_CORE_TOOLS_API Configuration
         {
             Configuration();
             
@@ -36,10 +36,10 @@ namespace OsmAnd
 
             std::shared_ptr<RoutingConfiguration> routingConfig;
         };
-        OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error);
-        OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL logJourneyToStdOut(const Configuration& cfg);
-        OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL logJourneyToString(const Configuration& cfg);
+        OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error);
+        OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL logJourneyToStdOut(const Configuration& cfg);
+        OSMAND_CORE_TOOLS_API QString OSMAND_CORE_TOOLS_CALL logJourneyToString(const Configuration& cfg);
     }
 }
 
-#endif // !defined(_OSMAND_CORE_UTILS_VOYAGER_H_)
+#endif // !defined(_OSMAND_CORE_TOOLS_VOYAGER_H_)

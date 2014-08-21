@@ -42,10 +42,10 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/libarchive" "core/externals/liba
 add_subdirectory("${OSMAND_ROOT}/core/externals/glm" "core/externals/glm")
 
 # OsmAnd Core
-add_subdirectory("${OSMAND_ROOT}/core" "core/OsmAndCore")
+add_subdirectory("${OSMAND_ROOT}/core" "core")
 
 # OsmAnd Core wrappers
 include("${OSMAND_ROOT}/core/wrappers/wrappers.cmake")
 
-# OsmAnd Core Utils
-add_subdirectory("${OSMAND_ROOT}/core/utils" "core/OsmAndCoreUtils")
+# OsmAnd Core Tools
+add_subdirectory("${OSMAND_ROOT}/core/tools" "core/tools")

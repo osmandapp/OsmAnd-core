@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_UTILS_COMMON_H_
-#define _OSMAND_CORE_UTILS_COMMON_H_
+#ifndef _OSMAND_CORE_TOOLS_COMMON_H_
+#define _OSMAND_CORE_TOOLS_COMMON_H_
 
 #include <memory>
 
@@ -13,4 +13,4 @@ namespace OsmAnd
 {
 } // namespace OsmAnd 
 
-#endif // !defined(_OSMAND_CORE_UTILS_COMMON_H_)
+#endif // !defined(_OSMAND_CORE_TOOLS_COMMON_H_)

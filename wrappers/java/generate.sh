@@ -21,4 +21,12 @@ if [[ -z "$SWIG" ]]; then
 	SWIG=`which swig`
 fi
 
-$SWIG -java -package net.osmand.core.jni -outdir "$SRCLOC/gen/java/net/osmand/core/jni" -o "$SRCLOC/gen/cpp/swig.cpp" -I"$REAL_SRCLOC/../../include" -c++ -v "$REAL_SRCLOC/../../core.swig"
+$SWIG \
+	-java \
+	-package net.osmand.core.jni \
+	-outdir "$SRCLOC/gen/java/net/osmand/core/jni" \
+	-o "$SRCLOC/gen/cpp/swig.cpp" \
+	-I"$REAL_SRCLOC/../../include" \
+	-c++ \
+	-v \
+	"$REAL_SRCLOC/../../core.swig"

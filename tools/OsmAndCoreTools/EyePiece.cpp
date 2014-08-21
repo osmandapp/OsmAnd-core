@@ -37,7 +37,7 @@ OsmAnd::EyePiece::Configuration::Configuration()
 {
 }
 
-OSMAND_CORE_UTILS_API bool OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error)
+OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::EyePiece::parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error)
 {
     bool wasObfRootSpecified = false;
 
@@ -140,7 +140,7 @@ void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg
 void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg);
 #endif
 
-OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToStdOut(const Configuration& cfg)
+OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL OsmAnd::EyePiece::rasterizeToStdOut(const Configuration& cfg)
 {
 #if defined(_UNICODE) || defined(UNICODE)
     rasterize(std::wcout, cfg);
@@ -149,7 +149,7 @@ OSMAND_CORE_UTILS_API void OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToS
 #endif
 }
 
-OSMAND_CORE_UTILS_API QString OSMAND_CORE_UTILS_CALL OsmAnd::EyePiece::rasterizeToString(const Configuration& cfg)
+OSMAND_CORE_TOOLS_API QString OSMAND_CORE_TOOLS_CALL OsmAnd::EyePiece::rasterizeToString(const Configuration& cfg)
 {
 #if defined(_UNICODE) || defined(UNICODE)
     std::wostringstream output;

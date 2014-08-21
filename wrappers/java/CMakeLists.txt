@@ -53,23 +53,23 @@ target_include_directories(OsmAndCoreJNI
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_dependencies(OsmAndCoreJNI
 		OsmAndCore_static
-		OsmAndCoreUtils_static
+		OsmAndCoreTools_static
 	)
 	target_link_libraries(OsmAndCoreJNI
 		LINK_PUBLIC
 			OsmAndCore_static
-			OsmAndCoreUtils_static
+			OsmAndCoreTools_static
 			${target_specific_public_libraries}
 	)
 else()
 	add_dependencies(OsmAndCoreJNI
 		OsmAndCore_shared
-		OsmAndCoreUtils_shared
+		OsmAndCoreTools_shared
 	)
 	target_link_libraries(OsmAndCoreJNI
 		LINK_PUBLIC
 			OsmAndCore_shared
-			OsmAndCoreUtils_shared
+			OsmAndCoreTools_shared
 			${target_specific_public_libraries}
 	)
 endif()
