@@ -1,25 +1,13 @@
 %module(directors="1") OsmAndCore
 
-// Generate directors for all classes that have virtual methods
-//%feature("director");
-
 %{
-
-// Common
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-
-// Main
-
-// Data-related
 #include <OsmAndCore/Data/DataTypes.h>
-
-// Map-related
 #include <OsmAndCore/Map/MapTypes.h>
 
 // To omit 'OsmAnd::' prefixes inside namespace itself, use that namespace
 using namespace OsmAnd;
-
 %}
 
 %include <enums.swg>
@@ -30,32 +18,35 @@ using namespace OsmAnd;
 %include <std_string.i>
 %include <swig/qstring.i>
 
-//%shared_ptr(OsmAnd::MapStyle)
-
 %apply QString { std::string };
 
-// SWIG-only stubs
+%shared_ptr(OsmAnd::IObfsCollection)
+%shared_ptr(OsmAnd::ObfDataInterface)
+%shared_ptr(OsmAnd::ResourcesManager::Resource)
+%shared_ptr(OsmAnd::ResourcesManager::BuiltinResource)
+%shared_ptr(OsmAnd::ResourcesManager::LocalResource)
+%shared_ptr(OsmAnd::ResourcesManager::ResourceInRepository)
+%shared_ptr(OsmAnd::ResourcesManager::InstalledResource)
+%shared_ptr(OsmAnd::ResourcesManager::UnmanagedResource)
+%shared_ptr(OsmAnd::IMapStylesCollection)
+%shared_ptr(OsmAnd::IMapStylesPresetsCollection)
+%shared_ptr(OsmAnd::MapStyle)
+%shared_ptr(OsmAnd::MapStylePreset)
+
 %include <swig/OsmAndCore_Stubs.h>
-
-// Common
 %include <OsmAndCore/QuickAccessors.h>
-%include "OsmAndCore/Callable.h"
-%include "OsmAndCore/CommonTypes.h"
-
-// Main
-%include "OsmAndCore/ResourcesManager.h"
-
-// Data-related
-%include "OsmAndCore/Data/DataTypes.h"
-
-// Map-related
-%include "OsmAndCore/Map/MapTypes.h"
-//%include "OsmAndCore/Map/MapRendererSetupOptions.h"
-//%include "OsmAndCore/Map/MapRendererDebugSettings.h"
-//%include "OsmAndCore/Map/MapRendererConfiguration.h"
-//%include "OsmAndCore/Map/MapRendererState.h"
-//%include "OsmAndCore/Map/MapRendererDebugSettings.h"
-//%include "OsmAndCore/Map/IMapRenderer.h"
+%include <OsmAndCore/Callable.h>
+%include <OsmAndCore/CommonTypes.h>
+%include <OsmAndCore/IObfsCollection.h>
+%include <OsmAndCore/ObfDataInterface.h>
+%include <OsmAndCore/ResourcesManager.h>
+%include <OsmAndCore/Data/DataTypes.h>
+%include <OsmAndCore/Data/ObfFile.h>
+%include <OsmAndCore/Map/MapTypes.h>
+%include <OsmAndCore/Map/IMapStylesCollection.h>
+%include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
+%include <OsmAndCore/Map/MapStyle.h>
+%include <OsmAndCore/Map/MapStylePreset.h>
 
 %template(PointI) OsmAnd::Point<int32_t>;
 %template(PointI64) OsmAnd::Point<int64_t>;

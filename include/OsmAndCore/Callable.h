@@ -73,6 +73,7 @@
 #   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
         typedef std::function< return_type ( __VA_ARGS__ )> name;                                                               \
                                                                                                                                 \
+        %feature("director") I##name;                                                                                           \
         struct I##name                                                                                                          \
         {                                                                                                                       \
             I##name()                                                                                                           \

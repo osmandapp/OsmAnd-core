@@ -678,13 +678,13 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
             // Start from tail of the polyline and search for it's continuation in CCV order
             auto& polyline = *itPolyline;
             const auto& tail = polyline.last();
-            auto tailEdge = AreaI::Edge::Invalid;
+            auto tailEdge = Edge::Invalid;
             alignedArea31.isOnEdge(tail, &tailEdge);
             auto itNearestPolyline = itPolyline.getEnd();
             auto firstIteration = true;
             for (int idx = static_cast<int>(tailEdge)+4; (idx >= static_cast<int>(tailEdge)) && (!itNearestPolyline); idx--, firstIteration = false)
             {
-                const auto currentEdge = static_cast<AreaI::Edge>(idx % 4);
+                const auto currentEdge = static_cast<Edge>(idx % 4);
 
                 for (auto itOtherPolyline = cachingIteratorOf(validPolylines); itOtherPolyline; ++itOtherPolyline)
                 {
@@ -694,7 +694,7 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
 
                     // Skip polylines that are on other edges
                     const auto& otherHead = itOtherPolyline->first();
-                    auto otherHeadEdge = AreaI::Edge::Invalid;
+                    auto otherHeadEdge = Edge::Invalid;
                     alignedArea31.isOnEdge(otherHead, &otherHeadEdge);
                     if (otherHeadEdge != currentEdge)
                         continue;
@@ -703,13 +703,13 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
                     if (firstIteration)
                     {
                         bool isNextByCCV = false;
-                        if (currentEdge == AreaI::Edge::Top)
+                        if (currentEdge == Edge::Top)
                             isNextByCCV = (otherHead.x <= tail.x);
-                        else if (currentEdge == AreaI::Edge::Right)
+                        else if (currentEdge == Edge::Right)
                             isNextByCCV = (otherHead.y <= tail.y);
-                        else if (currentEdge == AreaI::Edge::Bottom)
+                        else if (currentEdge == Edge::Bottom)
                             isNextByCCV = (tail.x <= otherHead.x);
-                        else if (currentEdge == AreaI::Edge::Left)
+                        else if (currentEdge == Edge::Left)
                             isNextByCCV = (tail.y <= otherHead.y);
                         if (!isNextByCCV)
                             continue;
@@ -725,13 +725,13 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
                     // Check if current polyline's head is closer (by CCV) that previously selected
                     const auto& previouslySelectedHead = itNearestPolyline->first();
                     bool isCloserByCCV = false;
-                    if (currentEdge == AreaI::Edge::Top)
+                    if (currentEdge == Edge::Top)
                         isCloserByCCV = (otherHead.x > previouslySelectedHead.x);
-                    else if (currentEdge == AreaI::Edge::Right)
+                    else if (currentEdge == Edge::Right)
                         isCloserByCCV = (otherHead.y > previouslySelectedHead.y);
-                    else if (currentEdge == AreaI::Edge::Bottom)
+                    else if (currentEdge == Edge::Bottom)
                         isCloserByCCV = (otherHead.x < previouslySelectedHead.x);
-                    else if (currentEdge == AreaI::Edge::Left)
+                    else if (currentEdge == Edge::Left)
                         isCloserByCCV = (otherHead.y < previouslySelectedHead.y);
 
                     // If closer-by-CCV, then select this
@@ -742,7 +742,7 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
             assert(itNearestPolyline /* means '!= end' */);
 
             // Get edge of nearest-by-CCV head
-            auto nearestHeadEdge = AreaI::Edge::Invalid;
+            auto nearestHeadEdge = Edge::Invalid;
             const auto& nearestHead = itNearestPolyline->first();
             alignedArea31.isOnEdge(nearestHead, &nearestHeadEdge);
 
@@ -753,13 +753,13 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
             else if (tailEdge == nearestHeadEdge)
             {
                 bool skipAddingSides = false;
-                if (tailEdge == AreaI::Edge::Top)
+                if (tailEdge == Edge::Top)
                     skipAddingSides = (tail.x >= nearestHead.x);
-                else if (tailEdge == AreaI::Edge::Right)
+                else if (tailEdge == Edge::Right)
                     skipAddingSides = (tail.y >= nearestHead.y);
-                else if (tailEdge == AreaI::Edge::Bottom)
+                else if (tailEdge == Edge::Bottom)
                     skipAddingSides = (tail.x <= nearestHead.x);
-                else if (tailEdge == AreaI::Edge::Left)
+                else if (tailEdge == Edge::Left)
                     skipAddingSides = (tail.y <= nearestHead.y);
 
                 if (!skipAddingSides)
@@ -767,25 +767,25 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
             }
             for (int idx = static_cast<int>(tailEdge)+loopShift; idx > static_cast<int>(nearestHeadEdge); idx--)
             {
-                const auto side = static_cast<AreaI::Edge>(idx % 4);
+                const auto side = static_cast<Edge>(idx % 4);
                 PointI p;
 
-                if (side == AreaI::Edge::Top)
+                if (side == Edge::Top)
                 {
                     p.y = alignedArea31.top();
                     p.x = alignedArea31.left();
                 }
-                else if (side == AreaI::Edge::Right)
+                else if (side == Edge::Right)
                 {
                     p.y = alignedArea31.top();
                     p.x = alignedArea31.right();
                 }
-                else if (side == AreaI::Edge::Bottom)
+                else if (side == Edge::Bottom)
                 {
                     p.y = alignedArea31.bottom();
                     p.x = alignedArea31.right();
                 }
-                else if (side == AreaI::Edge::Left)
+                else if (side == Edge::Left)
                 {
                     p.y = alignedArea31.bottom();
                     p.x = alignedArea31.left();
