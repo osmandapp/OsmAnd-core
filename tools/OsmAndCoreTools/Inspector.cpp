@@ -13,24 +13,19 @@
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/Data/ObfReader.h>
-
 #include <OsmAndCore/Data/ObfMapSectionInfo.h>
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
 #include <OsmAndCore/Data/Model/BinaryMapObject.h>
-
 #include <OsmAndCore/Data/ObfAddressSectionInfo.h>
 #include <OsmAndCore/Data/ObfAddressSectionReader.h>
 #include <OsmAndCore/Data/Model/Street.h>
 #include <OsmAndCore/Data/Model/StreetIntersection.h>
 #include <OsmAndCore/Data/Model/StreetGroup.h>
 #include <OsmAndCore/Data/Model/Building.h>
-
 #include <OsmAndCore/Data/ObfTransportSectionInfo.h>
 #include <OsmAndCore/Data/ObfTransportSectionReader.h>
-
 #include <OsmAndCore/Data/ObfRoutingSectionInfo.h>
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
-
 #include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 #include <OsmAndCore/Data/ObfPoiSectionReader.h>
 #include <OsmAndCore/Data/Model/Amenity.h>
@@ -136,10 +131,10 @@ OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::Inspector::parseComman
         else if (arg.startsWith("-bbox="))
         {
             auto values = arg.mid(strlen("-bbox=")).split(",");
-            cfg.bbox.left = values[0].toDouble();
-            cfg.bbox.top = values[1].toDouble();
-            cfg.bbox.right = values[2].toDouble();
-            cfg.bbox.bottom = values[3].toDouble();
+            cfg.bbox.left() = values[0].toDouble();
+            cfg.bbox.top() = values[1].toDouble();
+            cfg.bbox.right() = values[2].toDouble();
+            cfg.bbox.bottom() = values[3].toDouble();
         }
         else if (arg.startsWith("-obf="))
         {
@@ -189,7 +184,7 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
         {
             auto level = (*itLevel);
             output << xT("\t") << idx << xT(".") << levelIdx << xT(" Map level minZoom = ") << level->minZoom << xT(", maxZoom = ") << level->maxZoom << std::endl;
-            output << xT("\t\tBounds ") << formatBounds(level->area31.left, level->area31.right, level->area31.top, level->area31.bottom) << std::endl;
+            output << xT("\t\tBounds ") << formatBounds(level->area31.left(), level->area31.right(), level->area31.top(), level->area31.bottom()) << std::endl;
         }
 
         if (cfg.verboseMap)
@@ -200,27 +195,13 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
         const auto& section = *itSection;
 
         output << idx << xT(". Transport data '") << QStringToStlString(section->name) << xT("' - ") << section->length << xT(" bytes") << std::endl;
-        output << "\tBounds " << formatBounds(section->area24.left << (31 - 24), section->area24.right << (31 - 24), section->area24.top << (31 - 24), section->area24.bottom << (31 - 24)) << std::endl;
+        output << "\tBounds " << formatBounds(section->area24.left() << (31 - 24), section->area24.right() << (31 - 24), section->area24.top() << (31 - 24), section->area24.bottom() << (31 - 24)) << std::endl;
     }
     for (auto itSection = obfInfo->routingSections.cbegin(); itSection != obfInfo->routingSections.cend(); ++itSection, idx++)
     {
         const auto& section = *itSection;
 
         output << idx << xT(". Routing data '") << QStringToStlString(section->name) << xT("' - ") << section->length << xT(" bytes") << std::endl;
-        double lonLeft = 180;
-        double lonRight = -180;
-        double latTop = -90;
-        double latBottom = 90;
-        for (auto itSubsection = section->root.cbegin(); itSubsection != section->subsections.cend(); ++itSubsection)
-        {
-            auto subsection = itSubsection->get();
-
-            lonLeft = std::min(lonLeft, OsmAnd::Utilities::get31LongitudeX(subsection->area31.left));
-            lonRight = std::max(lonRight, OsmAnd::Utilities::get31LongitudeX(subsection->area31.right));
-            latTop = std::max(latTop, OsmAnd::Utilities::get31LatitudeY(subsection->area31.top));
-            latBottom = std::min(latBottom, OsmAnd::Utilities::get31LatitudeY(subsection->area31.bottom));
-        }
-        output << xT("\tBounds ") << formatGeoBounds(lonLeft, lonRight, latTop, latBottom) << std::endl;
     }
     for (auto itSection = obfInfo->poiSections.cbegin(); itSection != obfInfo->poiSections.cend(); ++itSection, idx++)
     {
@@ -248,10 +229,10 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 #endif
 {
     OsmAnd::AreaI bbox31;
-    bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top);
-    bbox31.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom);
-    bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left);
-    bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right);
+    bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top());
+    bbox31.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
+    bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
+    bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
     if (cfg.verboseMapObjects)
     {
         QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
@@ -261,13 +242,13 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
         {
             auto mapObject = *itMapObject;
             output << xT("\t\t") << mapObject->id << std::endl;
-            if (mapObject->names.count() > 0)
+            if (mapObject->captions.count() > 0)
             {
                 output << xT("\t\t\tNames:") << std::endl;
-                for (auto itName = mapObject->names.cbegin(); itName != mapObject->names.cend(); ++itName)
+                for (auto itCaption = mapObject->captions.cbegin(); itCaption != mapObject->captions.cend(); ++itCaption)
                 {
-                    const auto& rule = mapObject->section->encodingDecodingRules->decodingRules[itName.key()];
-                    output << xT("\t\t\t\t") << QStringToStlString(rule.tag) << xT(" = ") << QStringToStlString(itName.value()) << std::endl;
+                    const auto& rule = mapObject->section->encodingDecodingRules->decodingRules[itCaption.key()];
+                    output << xT("\t\t\t\t") << QStringToStlString(rule.tag) << xT(" = ") << QStringToStlString(itCaption.value()) << std::endl;
                 }
             }
         }
@@ -277,11 +258,11 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
         uint32_t mapObjectsCount = 0;
         OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, cfg.zoom, &bbox31, nullptr, nullptr, nullptr,
             [&mapObjectsCount]
-        (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>& mapObject) -> bool
-        {
-            mapObjectsCount++;
-            return false;
-        });
+            (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>& mapObject) -> bool
+            {
+                mapObjectsCount++;
+                return false;
+            });
         output << xT("\tTotal map objects: ") << mapObjectsCount << std::endl;
     }
 }
@@ -292,7 +273,7 @@ void printPOIDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configur
 void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section)
 #endif
 {
-    output << xT("\tBounds ") << formatBounds(section->area31.left, section->area31.right, section->area31.top, section->area31.bottom) << std::endl;
+    output << xT("\tBounds ") << formatBounds(section->area31.left(), section->area31.right(), section->area31.top(), section->area31.bottom()) << std::endl;
     QList< std::shared_ptr<const OsmAnd::Model::AmenityCategory> > categories;
     OsmAnd::ObfPoiSectionReader::loadCategories(reader, section, categories);
     output << xT("\tCategories:") << std::endl;
@@ -306,10 +287,10 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 
     QList< std::shared_ptr<const OsmAnd::Model::Amenity> > amenities;
     OsmAnd::AreaI bbox31;
-    bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top);
-    bbox31.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom);
-    bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left);
-    bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right);
+    bbox31.top = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top());
+    bbox31.bottom = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
+    bbox31.left = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
+    bbox31.right = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
     OsmAnd::ObfPoiSectionReader::loadAmenities(reader, section, cfg.zoom, 3, &bbox31, nullptr, &amenities);
     output << xT("\tAmenities, ") << amenities.count() << xT(" item(s)");
     if (!cfg.verboseAmenities)

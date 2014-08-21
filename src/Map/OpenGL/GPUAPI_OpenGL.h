@@ -24,7 +24,7 @@
 #   include <GL/glew.h>
 #endif
 
-#if defined(OSMAND_TARGET_OS_darwin)
+#if defined(OSMAND_TARGET_OS_macosx)
 #   include <OpenGL/gl.h>
 #elif defined(OSMAND_TARGET_OS_ios)
 #   include <OpenGLES/ES2/gl.h>
