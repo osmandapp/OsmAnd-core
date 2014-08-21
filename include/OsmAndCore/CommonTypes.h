@@ -30,9 +30,11 @@ namespace OsmAnd
         typedef T CoordType;
         typedef Point<T> PointT;
 
+#if !defined(SWIG)
         typedef typename std::conditional<std::is_integral<T>::value, int64_t, double>::type MorePreciseSignedCoordType;
         typedef typename std::conditional<std::is_integral<T>::value, uint64_t, double>::type MorePreciseUnsignedCoordType;
         typedef typename std::conditional<std::is_signed<T>::value, MorePreciseSignedCoordType, MorePreciseUnsignedCoordType>::type MorePreciseCoordType;
+#endif // !defined(SWIG)
 
         T x, y;
 
@@ -152,7 +154,6 @@ namespace OsmAnd
         {
             return glm::detail::tvec2<T, glm::precision::defaultp>(x, y);
         }
-#endif // !defined(SWIG)
 
         inline MorePreciseUnsignedCoordType squareNorm() const
         {
@@ -165,6 +166,7 @@ namespace OsmAnd
         {
             return static_cast<T>(qSqrt(squareNorm()));
         }
+#endif // !defined(SWIG)
     private:
         static inline bool equal(const double a, const double b)
         {
@@ -384,6 +386,24 @@ namespace OsmAnd
     template<typename T>
     class OOBB;
 
+    enum class Edge
+    {
+        Invalid = -1,
+
+        Left = 0,
+        Top = 1,
+        Right = 2,
+        Bottom = 3
+    };
+
+    enum class Quadrant
+    {
+        NE = 0,
+        SE,
+        SW,
+        NW
+    };
+
     template<typename T>
     struct Area
     {
@@ -570,16 +590,7 @@ namespace OsmAnd
             return PointT(left(), bottom());
         }
 
-        enum class Edge
-        {
-            Invalid = -1,
-
-            Left = 0,
-            Top = 1,
-            Right = 2,
-            Bottom = 3
-        };
-
+#if !defined(SWIG)
         bool isOnEdge(const PointT& p, Edge* edge = nullptr) const
         {
             bool res = false;
@@ -614,14 +625,8 @@ namespace OsmAnd
 
             return res;
         }
+#endif // !defined(SWIG)
 
-        enum class Quadrant
-        {
-            NE = 0,
-            SE,
-            SW,
-            NW
-        };
         inline AreaT getQuadrant(const Quadrant quadrant) const
         {
             const auto center_ = center();
@@ -1260,6 +1265,7 @@ namespace OsmAnd
         {
         }
 
+#if !defined(SWIG)
         static ColorARGB fromSkColor(const SkColor skColor)
         {
             return ColorARGB(
@@ -1268,6 +1274,7 @@ namespace OsmAnd
                 SkColorGetG(skColor),
                 SkColorGetB(skColor));
         }
+#endif // !defined(SWIG)
 
         inline ColorARGB(const uint8_t a_, const uint8_t r_, const uint8_t g_, const uint8_t b_)
             : b(b_)
@@ -1343,6 +1350,7 @@ namespace OsmAnd
         {
         }
 
+#if !defined(SWIG)
         static ColorRGB fromSkColor(const SkColor skColor)
         {
             return ColorRGB(
@@ -1350,6 +1358,7 @@ namespace OsmAnd
                 SkColorGetG(skColor),
                 SkColorGetB(skColor));
         }
+#endif // !defined(SWIG)
 
         inline ColorRGB(const uint8_t r_, const uint8_t g_, const uint8_t b_)
             : r(r_)

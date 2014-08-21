@@ -50,3 +50,8 @@ using namespace OsmAnd;
 %template(AreaI64) OsmAnd::Area<int64_t>;
 %template(AreaF) OsmAnd::Area<float>;
 %template(AreaD) OsmAnd::Area<double>;
+
+%template(OOBBI) OsmAnd::OOBB<int32_t>;
+%template(OOBBI64) OsmAnd::OOBB<int64_t>;
+%template(OOBBF) OsmAnd::OOBB<float>;
+%template(OOBBD) OsmAnd::OOBB<double>;
