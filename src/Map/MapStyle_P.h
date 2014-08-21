@@ -9,6 +9,7 @@
 #include <QXmlStreamReader>
 #include <QHash>
 #include <QMap>
+#include <QMutex>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
