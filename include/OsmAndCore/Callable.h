@@ -71,6 +71,8 @@
         }
 #else
 #   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
+        typedef std::function< return_type ( __VA_ARGS__ )> name;                                                               \
+                                                                                                                                \
         struct I##name                                                                                                          \
         {                                                                                                                       \
             I##name()                                                                                                           \
@@ -79,6 +81,12 @@
                                                                                                                                 \
             virtual ~I##name()                                                                                                  \
             {                                                                                                                   \
+            }                                                                                                                   \
+                                                                                                                                \
+            name getBinding() const                                                                                             \
+            {                                                                                                                   \
+                return (name)std::bind(&I##name::method, this                                                                   \
+                    _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                                    \
             }                                                                                                                   \
                                                                                                                                 \
             virtual return_type method( __VA_ARGS__ ) const = 0;                                                                \
