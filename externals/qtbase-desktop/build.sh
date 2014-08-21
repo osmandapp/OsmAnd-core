@@ -92,7 +92,7 @@ if [[ "$targetOS" == "linux" ]]; then
 		echo "Only 'gcc' and 'clang' are supported compilers for '${targetOS}' target, while '${compiler}' was specified"
 		exit 1
 	fi
-elif [[ "$targetOS" == "darwin" ]]; then
+elif [[ "$targetOS" == "macosx" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-debug-and-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
@@ -108,10 +108,10 @@ elif [[ "$targetOS" == "darwin" ]]; then
 	if [[ "$compiler" == "clang" ]]; then
 		if [[ "$targetArch" == "i386" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "darwin.clang-i386" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "macosx.clang-i386" "macx-clang-libc++-32" "$QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "x86_64" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "darwin.clang-x86_64" "macx-clang-libc++-64" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "macosx.clang-x86_64" "macx-clang-libc++-64" "$QTBASE_CONFIGURATION"
 		else
 			echo "Only 'i386' and 'x86_64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
 			exit 1
@@ -121,6 +121,6 @@ elif [[ "$targetOS" == "darwin" ]]; then
 		exit 1
 	fi
 else
-	echo "Only 'linux' and 'darwin' are supported targets, while '${targetOS}' was specified"
+	echo "Only 'linux' and 'macosx' are supported targets, while '${targetOS}' was specified"
 	exit 1
 fi
