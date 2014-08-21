@@ -42,31 +42,47 @@
 #define _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS_HELPER1(count) _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS_HELPER2(count)
 #define _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS(count) _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS_HELPER1(count)
 
-#define OSMAND_CALLABLE(name, return_type, ...)                                                                             \
-    typedef std::function< return_type ( __VA_ARGS__ )> name;                                                               \
-                                                                                                                            \
-    struct I##name                                                                                                          \
-    {                                                                                                                       \
-        I##name()                                                                                                           \
-        {                                                                                                                   \
-        }                                                                                                                   \
-                                                                                                                            \
-        virtual ~I##name()                                                                                                  \
-        {                                                                                                                   \
-        }                                                                                                                   \
-                                                                                                                            \
-        operator name() const                                                                                               \
-        {                                                                                                                   \
-            return getBinding();                                                                                            \
-        }                                                                                                                   \
-                                                                                                                            \
-        name getBinding() const                                                                                             \
-        {                                                                                                                   \
-            return (name)std::bind(&I##name::method, this                                                                   \
-                _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                                    \
-        }                                                                                                                   \
-                                                                                                                            \
-        virtual return_type method( __VA_ARGS__ ) const = 0;                                                                \
-    }
+#if !defined(SWIG)
+#   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
+        typedef std::function< return_type ( __VA_ARGS__ )> name;                                                               \
+                                                                                                                                \
+        struct I##name                                                                                                          \
+        {                                                                                                                       \
+            I##name()                                                                                                           \
+            {                                                                                                                   \
+            }                                                                                                                   \
+                                                                                                                                \
+            virtual ~I##name()                                                                                                  \
+            {                                                                                                                   \
+            }                                                                                                                   \
+                                                                                                                                \
+            operator name() const                                                                                               \
+            {                                                                                                                   \
+                return getBinding();                                                                                            \
+            }                                                                                                                   \
+                                                                                                                                \
+            name getBinding() const                                                                                             \
+            {                                                                                                                   \
+                return (name)std::bind(&I##name::method, this                                                                   \
+                    _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                                    \
+            }                                                                                                                   \
+                                                                                                                                \
+            virtual return_type method( __VA_ARGS__ ) const = 0;                                                                \
+        }
+#else
+#   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
+        struct I##name                                                                                                          \
+        {                                                                                                                       \
+            I##name()                                                                                                           \
+            {                                                                                                                   \
+            }                                                                                                                   \
+                                                                                                                                \
+            virtual ~I##name()                                                                                                  \
+            {                                                                                                                   \
+            }                                                                                                                   \
+                                                                                                                                \
+            virtual return_type method( __VA_ARGS__ ) const = 0;                                                                \
+        }
+#endif
 
 #endif // !defined(_OSMAND_CORE_CALLABLE_H_)

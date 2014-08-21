@@ -9,6 +9,8 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
+// Main
+
 // Data-related
 #include <OsmAndCore/Data/DataTypes.h>
 
@@ -32,10 +34,16 @@ using namespace OsmAnd;
 
 %apply QString { std::string };
 
+// SWIG-only stubs
+%include <swig/OsmAndCore_Stubs.h>
+
 // Common
-%include "OsmAndCore/QuickAccessors.h"
+%include <OsmAndCore/QuickAccessors.h>
 %include "OsmAndCore/Callable.h"
 %include "OsmAndCore/CommonTypes.h"
+
+// Main
+%include "OsmAndCore/ResourcesManager.h"
 
 // Data-related
 %include "OsmAndCore/Data/DataTypes.h"
