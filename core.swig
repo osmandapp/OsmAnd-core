@@ -10,6 +10,7 @@
 #include <OsmAndCore/CommonTypes.h>
 
 // Data-related
+#include <OsmAndCore/Data/DataTypes.h>
 
 // Map-related
 #include <OsmAndCore/Map/MapTypes.h>
@@ -32,12 +33,12 @@ using namespace OsmAnd;
 %apply QString { std::string };
 
 // Common
-%include "OsmAndCore.h"
 %include "OsmAndCore/QuickAccessors.h"
 %include "OsmAndCore/Callable.h"
 %include "OsmAndCore/CommonTypes.h"
 
 // Data-related
+%include "OsmAndCore/Data/DataTypes.h"
 
 // Map-related
 %include "OsmAndCore/Map/MapTypes.h"
