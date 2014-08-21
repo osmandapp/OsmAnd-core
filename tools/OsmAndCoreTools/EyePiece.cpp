@@ -18,28 +18,27 @@
 #include <OsmAndCore/Data/ObfReader.h>
 #include <OsmAndCore/Data/Model/BinaryMapObject.h>
 #include <OsmAndCore/Map/MapRasterizer.h>
-#include <OsmAndCore/Map/RasterizerContext.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/MapStyleEvaluator.h>
 
 OsmAnd::EyePiece::Configuration::Configuration()
-    : verbose(false)
-    , dumpRules(false)
-    , styleName("default")
-    , bbox(90, -180, -90, 179.9999999999)
-    , tileSide(256)
-    , densityFactor(1.0)
-    , zoom(ZoomLevel15)
-    , is32bit(true)
-    , drawMap(false)
-    , drawText(false)
-    , drawIcons(false)
+    //: verbose(false)
+    //, dumpRules(false)
+    //, styleName("default")
+    //, bbox(90, -180, -90, 179.9999999999)
+    //, tileSide(256)
+    //, densityFactor(1.0)
+    //, zoom(ZoomLevel15)
+    //, is32bit(true)
+    //, drawMap(false)
+    //, drawText(false)
+    //, drawIcons(false)
 {
 }
 
 OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::EyePiece::parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error)
 {
-    bool wasObfRootSpecified = false;
+   /* bool wasObfRootSpecified = false;
 
     for (const auto& arg : constOf(cmdLineArgs))
     {
@@ -130,7 +129,7 @@ OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::EyePiece::parseCommand
 
     if (!wasObfRootSpecified)
         cfg.obfsDir = QDir::current();
-
+*/
     return true;
 }
 
@@ -168,80 +167,80 @@ void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg
 void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 #endif
 {
-    // Obtain and configure rasterization style context
-    OsmAnd::MapStylesCollection stylesCollection;
-    for (auto itStyleFile = cfg.styleFiles.cbegin(); itStyleFile != cfg.styleFiles.cend(); ++itStyleFile)
-    {
-        const auto& styleFile = *itStyleFile;
+    //// Obtain and configure rasterization style context
+    //OsmAnd::MapStylesCollection stylesCollection;
+    //for (auto itStyleFile = cfg.styleFiles.cbegin(); itStyleFile != cfg.styleFiles.cend(); ++itStyleFile)
+    //{
+    //    const auto& styleFile = *itStyleFile;
 
-        if (!stylesCollection.registerStyle(styleFile.absoluteFilePath()))
-            output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile.fileName()) << xT("' or duplicate style") << std::endl;
-    }
-    std::shared_ptr<const OsmAnd::MapStyle> style;
-    if (!stylesCollection.obtainBakedStyle(cfg.styleName, style))
-    {
-        output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
-        return;
-    }
-    if (cfg.dumpRules)
-        style->dump();
+    //    if (!stylesCollection.registerStyle(styleFile.absoluteFilePath()))
+    //        output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile.fileName()) << xT("' or duplicate style") << std::endl;
+    //}
+    //std::shared_ptr<const OsmAnd::MapStyle> style;
+    //if (!stylesCollection.obtainBakedStyle(cfg.styleName, style))
+    //{
+    //    output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
+    //    return;
+    //}
+    //if (cfg.dumpRules)
+    //    style->dump();
 
-    OsmAnd::ObfsCollection obfsCollection;
-    obfsCollection.addDirectory(cfg.obfsDir);
+    //OsmAnd::ObfsCollection obfsCollection;
+    //obfsCollection.addDirectory(cfg.obfsDir);
 
-    // Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
-    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
-    OsmAnd::AreaI bbox31(
-        OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
-        OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
-        OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
-        OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
-        );
-    const auto& obfDI = obfsCollection.obtainDataInterface();
-    OsmAnd::MapFoundationType mapFoundation;
-    obfDI->loadMapObjects(&mapObjects, &mapFoundation, bbox31, cfg.zoom, nullptr);
-    bool basemapAvailable;
-    obfDI->loadBasemapPresenceFlag(basemapAvailable);
+    //// Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
+    //QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
+    //OsmAnd::AreaI bbox31(
+    //    OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
+    //    OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
+    //    OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
+    //    OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
+    //    );
+    //const auto& obfDI = obfsCollection.obtainDataInterface();
+    //OsmAnd::MapFoundationType mapFoundation;
+    //obfDI->loadMapObjects(&mapObjects, &mapFoundation, bbox31, cfg.zoom, nullptr);
+    //bool basemapAvailable;
+    //obfDI->loadBasemapPresenceFlag(basemapAvailable);
 
-    // Calculate output size in pixels
-    const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);
-    const auto tileHeight = OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.bottom) - OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.top);
-    const auto pixelWidth = qCeil(tileWidth * cfg.tileSide);
-    const auto pixelHeight = qCeil(tileHeight * cfg.tileSide);
-    output << xT("Will rasterize ") << mapObjects.count() << xT(" objects onto ") << pixelWidth << xT("x") << pixelHeight << xT(" bitmap") << std::endl;
+    //// Calculate output size in pixels
+    //const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);
+    //const auto tileHeight = OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.bottom) - OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.top);
+    //const auto pixelWidth = qCeil(tileWidth * cfg.tileSide);
+    //const auto pixelHeight = qCeil(tileHeight * cfg.tileSide);
+    //output << xT("Will rasterize ") << mapObjects.count() << xT(" objects onto ") << pixelWidth << xT("x") << pixelHeight << xT(" bitmap") << std::endl;
 
-    // Allocate render target
-    SkBitmap renderSurface;
-    renderSurface.setConfig(cfg.is32bit ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config, pixelWidth, pixelHeight);
-    if (!renderSurface.allocPixels())
-    {
-        output << xT("Failed to allocated render target ") << pixelWidth << xT("x") << pixelHeight;
-        return;
-    }
-    SkBitmapDevice renderTarget(renderSurface);
+    //// Allocate render target
+    //SkBitmap renderSurface;
+    //renderSurface.setConfig(cfg.is32bit ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config, pixelWidth, pixelHeight);
+    //if (!renderSurface.allocPixels())
+    //{
+    //    output << xT("Failed to allocated render target ") << pixelWidth << xT("x") << pixelHeight;
+    //    return;
+    //}
+    //SkBitmapDevice renderTarget(renderSurface);
 
-    // Create render canvas
-    SkCanvas canvas(&renderTarget);
+    //// Create render canvas
+    //SkCanvas canvas(&renderTarget);
 
-    // Perform actual rendering
-    std::shared_ptr<OsmAnd::RasterizerEnvironment> rasterizerEnv(new OsmAnd::RasterizerEnvironment(style, cfg.densityFactor));
-    std::shared_ptr<OsmAnd::RasterizerContext> rasterizerContext(new OsmAnd::RasterizerContext(rasterizerEnv));
-    OsmAnd::Rasterizer::prepareContext(*rasterizerContext, bbox31, cfg.zoom, mapFoundation, mapObjects);
+    //// Perform actual rendering
+    //std::shared_ptr<OsmAnd::RasterizerEnvironment> rasterizerEnv(new OsmAnd::RasterizerEnvironment(style, cfg.densityFactor));
+    //std::shared_ptr<OsmAnd::RasterizerContext> rasterizerContext(new OsmAnd::RasterizerContext(rasterizerEnv));
+    //OsmAnd::Rasterizer::prepareContext(*rasterizerContext, bbox31, cfg.zoom, mapFoundation, mapObjects);
 
-    OsmAnd::Rasterizer rasterizer(rasterizerContext);
-    if (cfg.drawMap)
-    {
-        rasterizer.rasterizeMap(canvas);
-    }
-    /*if(cfg.drawText)
-        OsmAnd::Rasterizer::rasterizeText(rasterizerContext, !cfg.drawMap, canvas, nullptr);*/
+    //OsmAnd::Rasterizer rasterizer(rasterizerContext);
+    //if (cfg.drawMap)
+    //{
+    //    rasterizer.rasterizeMap(canvas);
+    //}
+    ///*if(cfg.drawText)
+    //    OsmAnd::Rasterizer::rasterizeText(rasterizerContext, !cfg.drawMap, canvas, nullptr);*/
 
-    // Save rendered area
-    if (!cfg.output.isEmpty())
-    {
-        std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-        encoder->encodeFile(cfg.output.toLocal8Bit(), renderSurface, 100);
-    }
+    //// Save rendered area
+    //if (!cfg.output.isEmpty())
+    //{
+    //    std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
+    //    encoder->encodeFile(cfg.output.toLocal8Bit(), renderSurface, 100);
+    //}
 
-    return;
+    //return;
 }
