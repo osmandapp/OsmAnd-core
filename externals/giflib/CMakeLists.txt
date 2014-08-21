@@ -73,24 +73,9 @@ target_compile_definitions(gif_static
 		${target_specific_private_definitions}
 )
 
-set(target_specific_public_includes "")
-if (CMAKE_TARGET_OS STREQUAL "windows")
-	if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
-		set(target_specific_public_includes ${target_specific_public_includes}
-			"include/unistd.h"
-		)
-		if (MSVC_VERSION LESS 1800)
-			set(target_specific_public_includes ${target_specific_public_includes}
-				"include/stdbool.h"
-			)
-		endif()
-	endif()
-endif()
-
 target_include_directories(gif_static
 	PRIVATE
 		"${CMAKE_CURRENT_BINARY_DIR}"
 	PUBLIC
 		"upstream.patched/lib"
-		${target_specific_public_includes}
 )

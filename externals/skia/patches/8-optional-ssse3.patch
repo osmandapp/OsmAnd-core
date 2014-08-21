@@ -1,7 +1,8 @@
-diff -rupN upstream.original/src/opts/opts_check_SSE2.cpp upstream.patched/src/opts/opts_check_SSE2.cpp
---- upstream.original/src/opts/opts_check_SSE2.cpp	2013-09-27 17:22:47.591877900 +0300
-+++ upstream.patched/src/opts/opts_check_SSE2.cpp	2014-02-06 20:54:04.653031600 +0200
-@@ -81,6 +81,27 @@ static inline bool hasSSE2() {
+diff --git a/src/opts/opts_check_x86.cpp b/src/opts/opts_check_x86.cpp
+index 0b0debb..0c8879c 100644
+--- a/src/opts/opts_check_x86.cpp
++++ b/src/opts/opts_check_x86.cpp
+@@ -88,6 +88,27 @@ static inline bool hasSSE2() {
  }
  #endif
  
@@ -29,7 +30,7 @@ diff -rupN upstream.original/src/opts/opts_check_SSE2.cpp upstream.patched/src/o
  #if SK_CPU_SSE_LEVEL >= SK_CPU_SSE_LEVEL_SSSE3
  /* If we know SSSE3 is supported at compile time, don't even bother checking. */
  static inline bool hasSSSE3() {
-@@ -94,6 +115,7 @@ static inline bool hasSSSE3() {
+@@ -111,6 +132,7 @@ static inline bool hasSSSE3() {
      return (cpu_info[2] & 0x200) != 0;
  }
  #endif

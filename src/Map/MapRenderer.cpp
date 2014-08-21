@@ -746,10 +746,15 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
     {
         auto convertedBitmap = new SkBitmap();
 
-        input->deepCopyTo(convertedBitmap,
+        const bool ok = input->copyTo(convertedBitmap,
             convertedAlphaChannelData == AlphaChannelData::Present
-            ? SkBitmap::Config::kARGB_4444_Config
-            : SkBitmap::Config::kRGB_565_Config);
+            ? SkColorType::kARGB_4444_SkColorType
+            : SkColorType::kRGB_565_SkColorType);
+        if (!ok)
+        {
+            assert(false);
+            return false;
+        }
 
         output.reset(convertedBitmap);
         return true;
@@ -760,10 +765,15 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
     {
         auto convertedBitmap = new SkBitmap();
 
-        input->deepCopyTo(convertedBitmap,
+        const bool ok = input->copyTo(convertedBitmap,
             currentConfiguration->limitTextureColorDepthBy16bits
-            ? (convertedAlphaChannelData == AlphaChannelData::Present ? SkBitmap::Config::kARGB_4444_Config : SkBitmap::Config::kRGB_565_Config)
-            : SkBitmap::kARGB_8888_Config);
+            ? (convertedAlphaChannelData == AlphaChannelData::Present ? SkColorType::kARGB_4444_SkColorType : SkColorType::kRGB_565_SkColorType)
+            : SkColorType::kN32_SkColorType);
+        if (!ok)
+        {
+            assert(false);
+            return false;
+        }
 
         output.reset(convertedBitmap);
         return true;

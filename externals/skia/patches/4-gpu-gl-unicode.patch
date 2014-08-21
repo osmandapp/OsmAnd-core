@@ -1,8 +1,8 @@
 diff --git a/src/gpu/gl/win/GrGLCreateNativeInterface_win.cpp b/src/gpu/gl/win/GrGLCreateNativeInterface_win.cpp
-index e9207b1..eadb26c 100644
+index 6adaf19..5e5b0a3 100644
 --- a/src/gpu/gl/win/GrGLCreateNativeInterface_win.cpp
 +++ b/src/gpu/gl/win/GrGLCreateNativeInterface_win.cpp
-@@ -27,7 +27,7 @@
+@@ -14,7 +14,7 @@
  class AutoLibraryUnload {
  public:
      AutoLibraryUnload(const char* moduleName) {

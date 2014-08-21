@@ -166,6 +166,8 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
 {
     QReadLocker scopedLocker(&_lock);
 
+    bool ok;
+
     // Construct new map symbols group for this marker
     const std::shared_ptr<MapSymbolsGroup> symbolsGroup(new LinkedMapSymbolsGroup(
         std::const_pointer_cast<MapMarker_P>(shared_from_this())));
@@ -209,7 +211,8 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
 
         std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
-        onMapSurfaceIcon->deepCopyTo(iconClone.get(), onMapSurfaceIcon->getConfig());
+        ok = onMapSurfaceIcon->deepCopyTo(iconClone.get());
+        assert(ok);
 
         // Get direction
         float direction = 0.0f;
@@ -237,7 +240,8 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     if (owner->pinIcon)
     {
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
-        owner->pinIcon->deepCopyTo(pinIcon.get(), owner->pinIcon->getConfig());
+        ok = owner->pinIcon->deepCopyTo(pinIcon.get());
+        assert(ok);
 
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(
             symbolsGroup,

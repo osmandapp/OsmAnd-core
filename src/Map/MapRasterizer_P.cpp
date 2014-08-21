@@ -53,10 +53,10 @@ void OsmAnd::MapRasterizer_P::initialize()
             { 0, 12 + 6 * intervalW, 2 * intervalW, 152 + 2 * intervalW },
             { 0, 12 + 6 * intervalW, 1 * intervalW, 152 + 3 * intervalW }
         };
-        SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_oneway[0], 4, 0);
-        SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_oneway[1], 4, 1);
-        SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_oneway[2], 4, 1);
-        SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_oneway[3], 4, 1);
+        SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_oneway[0], 4, 0);
+        SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_oneway[1], 4, 1);
+        SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_oneway[2], 4, 1);
+        SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_oneway[3], 4, 1);
 
         {
             SkPaint paint;
@@ -99,10 +99,10 @@ void OsmAnd::MapRasterizer_P::initialize()
             { 0, 12 + 2 * intervalW, 2 * intervalW, 152 + 6 * intervalW },
             { 0, 12 + 3 * intervalW, 1 * intervalW, 152 + 6 * intervalW }
         };
-        SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_reverse[0], 4, 0);
-        SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_reverse[1], 4, 1);
-        SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_reverse[2], 4, 1);
-        SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_reverse[3], 4, 1);
+        SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_reverse[0], 4, 0);
+        SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_reverse[1], 4, 1);
+        SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_reverse[2], 4, 1);
+        SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_reverse[3], 4, 1);
 
         {
             SkPaint paint;
@@ -364,7 +364,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             shadowRadius = 0;
 
         if (shadowRadius > 0)
-            paint.setLooper(new SkBlurDrawLooper(static_cast<SkScalar>(shadowRadius), 0, 0, shadowColor))->unref();
+            paint.setLooper(SkBlurDrawLooper::Create(static_cast<SkScalar>(shadowRadius), 0, 0, shadowColor))->unref();
     }
 
     return true;
@@ -591,7 +591,7 @@ void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
     {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        paint.setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
+        paint.setLooper(SkBlurDrawLooper::Create(shadowRadius, 0, 0, shadowColor))->unref();
         canvas.drawPath(path, paint);
     }
 
@@ -697,7 +697,7 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
             return false;
         }
 
-        SkPathEffect* pathEffect = new SkDashPathEffect(intervals, intervalsCount, 0);
+        SkPathEffect* pathEffect = SkDashPathEffect::Create(intervals, intervalsCount, 0);
         delete[] intervals;
 
         itPathEffects = _pathEffects.insert(encodedPathEffect, pathEffect);

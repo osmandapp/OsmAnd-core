@@ -1,0 +1,26 @@
+diff -rupN upstream.original/lib/dgif_lib.c upstream.patched/lib/dgif_lib.c
+--- upstream.original/lib/dgif_lib.c	2013-09-03 16:43:22.000000000 +0300
++++ upstream.patched/lib/dgif_lib.c	2014-08-21 11:29:32.924832400 +0300
+@@ -14,7 +14,9 @@
+ #include <limits.h>
+ #include <stdint.h>
+ #include <fcntl.h>
++#if defined(HAVE_UNISTD_H) && HAVE_UNISTD_H
+ #include <unistd.h>
++#endif // defined(HAVE_UNISTD_H) && HAVE_UNISTD_H
+ #include <stdio.h>
+ #include <string.h>
+ 
+diff -rupN upstream.original/lib/gif_hash.h upstream.patched/lib/gif_hash.h
+--- upstream.original/lib/gif_hash.h	2013-09-03 16:41:31.000000000 +0300
++++ upstream.patched/lib/gif_hash.h	2014-08-21 11:29:18.797137600 +0300
+@@ -10,7 +10,9 @@
+ #ifndef _GIF_HASH_H_
+ #define _GIF_HASH_H_
+ 
++#if defined(HAVE_UNISTD_H) && HAVE_UNISTD_H
+ #include <unistd.h>
++#endif // defined(HAVE_UNISTD_H) && HAVE_UNISTD_H
+ #include <stdint.h>
+ 
+ #define HT_SIZE			8192	   /* 12bits = 4096 or twice as big! */
