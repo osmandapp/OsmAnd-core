@@ -61,13 +61,13 @@ namespace OsmAnd
             this->y = y;
         }
 
+#if !defined(SWIG)
         inline Point(const glm::detail::tvec2<T, glm::precision::defaultp>& that)
         {
             this->x = that.x;
             this->y = that.y;
         }
 
-#if !defined(SWIG)
         inline PointT operator+(const PointT& r) const
         {
             return PointT(x + r.x, y + r.y);
@@ -152,7 +152,6 @@ namespace OsmAnd
         {
             return glm::detail::tvec2<T, glm::precision::defaultp>(x, y);
         }
-
 #endif // !defined(SWIG)
 
         inline MorePreciseUnsignedCoordType squareNorm() const
@@ -652,11 +651,6 @@ namespace OsmAnd
             return *this;
         }
 
-        inline AreaT enlargeToInclude(const PointT& p) const
-        {
-            return getEnlargedToInclude(p);
-        }
-
         inline AreaT getEnlargedToInclude(const PointT& p) const
         {
             return AreaT(
@@ -676,11 +670,6 @@ namespace OsmAnd
             return *this;
         }
 
-        inline AreaT enlargeBy(const PointT& delta) const
-        {
-            return getEnlargedBy(delta);
-        }
-
         inline AreaT getEnlargedBy(const PointT& delta) const
         {
             return AreaT(
@@ -698,11 +687,6 @@ namespace OsmAnd
             right() += dr;
 
             return *this;
-        }
-
-        inline AreaT enlargeBy(const T& dt, const T& dl, const T& db, const T& dr) const
-        {
-            return getEnlargedBy(dt, dl, db, dr);
         }
 
         inline AreaT getEnlargedBy(const T& dt, const T& dl, const T& db, const T& dr) const
@@ -1008,11 +992,6 @@ namespace OsmAnd
             return *this;
         }
 
-        inline OOBBT enlargeBy(const PointT& delta) const
-        {
-            return getEnlargedBy(delta);
-        }
-
         inline OOBBT getEnlargedBy(const PointT& delta) const
         {
             return OOBBT(
@@ -1033,11 +1012,6 @@ namespace OsmAnd
             updateDerivedData();
 
             return *this;
-        }
-
-        inline OOBBT enlargeBy(const T& dt, const T& dl, const T& db, const T& dr) const
-        {
-            return getEnlargedBy(dt, dl, db, dr);
         }
 
         inline OOBBT getEnlargedBy(const T& dt, const T& dl, const T& db, const T& dr) const
@@ -1480,6 +1454,7 @@ namespace OsmAnd
             this->longitude = longitude;
         }
 
+#if !defined(SWIG)
         inline bool operator==(const LatLon& r) const
         {
             return qFuzzyCompare(latitude, r.latitude) && qFuzzyCompare(longitude, r.longitude);
@@ -1504,6 +1479,7 @@ namespace OsmAnd
         {
             return PointD(longitude, latitude);
         }
+#endif // !defined(SWIG)
     };
 }
 
