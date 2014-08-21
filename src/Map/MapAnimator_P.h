@@ -11,6 +11,7 @@
 #include <QMap>
 #include <QList>
 #include <QReadWriteLock>
+#include <QMutex>
 #include <QVariant>
 #include "restore_internal_warnings.h"
 
