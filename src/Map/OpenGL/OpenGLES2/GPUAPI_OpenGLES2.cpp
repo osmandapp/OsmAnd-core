@@ -136,8 +136,8 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     QRegExp glVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
-    _version = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 version %d [%s]", _version, glVersionString);
+    _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 version %d [%s]", _glVersion, glVersionString);
 
     const auto glslVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION); // Format: "OpenGL<space>ES<space>GLSL<space>ES<space><version number><space><vendor-specific information>"
     GL_CHECK_RESULT;

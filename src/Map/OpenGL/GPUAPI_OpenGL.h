@@ -142,7 +142,7 @@ namespace OsmAnd
         bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
-        unsigned int _version;
+        unsigned int _glVersion;
         unsigned int _glslVersion;
         QStringList _extensions;
         QVector<GLint> _compressedFormats;
@@ -163,7 +163,7 @@ namespace OsmAnd
         GPUAPI_OpenGL();
         virtual ~GPUAPI_OpenGL();
 
-        const unsigned int& version;
+        const unsigned int& glVersion;
         const unsigned int& glslVersion;
         const QStringList& extensions;
         const QVector<GLint>& compressedFormats;

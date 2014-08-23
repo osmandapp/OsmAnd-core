@@ -29,7 +29,12 @@
 #endif
 
 OsmAnd::GPUAPI_OpenGL3::GPUAPI_OpenGL3()
-    : isSupported_GREMEDY_string_marker(_isSupported_GREMEDY_string_marker)
+    : _isSupported_GREMEDY_string_marker(false)
+    , _isSupported_samplerObjects(false)
+    , _isSupported_textureStorage2D(false)
+    , isSupported_GREMEDY_string_marker(_isSupported_GREMEDY_string_marker)
+    , isSupported_samplerObjects(_isSupported_samplerObjects)
+    , isSupported_textureStorage2D(_isSupported_textureStorage2D)
 {
 }
 
@@ -66,20 +71,16 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
 
     GL_CHECK_PRESENT(glGetError);
     GL_CHECK_PRESENT(glGetString);
-    GL_CHECK_PRESENT(glGetStringi);
     GL_CHECK_PRESENT(glGetFloatv);
     GL_CHECK_PRESENT(glGetIntegerv);
-    GL_CHECK_PRESENT(glGenSamplers);
-    GL_CHECK_PRESENT(glSamplerParameteri);
-    GL_CHECK_PRESENT(glSamplerParameterf);
     GL_CHECK_PRESENT(glHint);
 
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
     QRegExp glVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
-    _version = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
-    LogPrintf(LogSeverityLevel::Info, "OpenGL version %d [%s]", _version, glVersionString);
+    _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
+    LogPrintf(LogSeverityLevel::Info, "OpenGL version %d [%s]", _glVersion, glVersionString);
     
     const auto glslVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     GL_CHECK_RESULT;
@@ -138,7 +139,7 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in fragment shader %d", maxFragmentUniformComponents);
     _maxFragmentUniformVectors = maxFragmentUniformComponents / 4; // Workaround for AMD/ATI (see above)
 
-    if (version >= 43)
+    if (glVersion >= 43)
     {
         GLint maxUniformLocations;
         glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformLocations);
@@ -146,8 +147,10 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
         LogPrintf(LogSeverityLevel::Info, "OpenGL maximal defined parameters %d", maxUniformLocations);
     }
     
-    if (version >= 30)
+    if (glVersion >= 30)
     {
+        GL_CHECK_PRESENT(glGetStringi);
+
         GLint numExtensions = 0;
         glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions); // fails 148
         GL_CHECK_RESULT;
@@ -171,9 +174,20 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
 
     // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+), or if GL_ARB_shader_texture_lod is available
     _isSupported_textureLod = (glslVersion >= 130) || extensions.contains(QLatin1String("GL_ARB_shader_texture_lod"));
-    _isSupported_texturesNPOT = (version >= 20); // OpenGL 2.0+ fully supports NPOT textures
-    _isSupported_GREMEDY_string_marker = extensions.contains("GL_GREMEDY_string_marker");
+    _isSupported_texturesNPOT = (glVersion >= 20); // OpenGL 2.0+ fully supports NPOT textures
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
+    _isSupported_GREMEDY_string_marker = extensions.contains("GL_GREMEDY_string_marker");
+    // http://www.opengl.org/sdk/docs/man/html/glGenSamplers.xhtml are supported only if OpenGL 3.3+ or GL_ARB_sampler_objects is available
+    _isSupported_samplerObjects = (glVersion >= 33) || extensions.contains(QLatin1String("GL_ARB_sampler_objects"));
+    if (glVersion < 30 && !extensions.contains(QLatin1String("GL_ARB_vertex_array_object")))
+    {
+        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_ARB_vertex_array_object' extension and OpenGL version is less than 3.0");
+        return false;
+    }
+
+    // glTexStorage2D is supported in OpenGL 4.2+ or if GL_ARB_texture_storage is available
+    // https://www.opengl.org/sdk/docs/man/html/glTexStorage2D.xhtml
+    _isSupported_textureStorage2D = (glVersion >= 42) || extensions.contains(QLatin1String("GL_ARB_texture_storage"));
 
     GLint compressedFormatsLength = 0;
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
@@ -187,65 +201,72 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     _isSupported_8bitPaletteRGBA8 = extensions.contains("GL_OES_compressed_paletted_texture") || compressedFormats.contains(GL_PALETTE8_RGBA8_OES);
     LogPrintf(LogSeverityLevel::Info, "OpenGL 8-bit palette RGBA8 textures: %s", isSupported_8bitPaletteRGBA8 ? "supported" : "not supported");
 
-    // Allocate samplers
-    glGenSamplers(SamplerTypesCount, _textureSamplers.data());
-    GL_CHECK_RESULT;
-    GLuint sampler;
+    if (isSupported_samplerObjects)
+    {
+        GL_CHECK_PRESENT(glGenSamplers);
+        GL_CHECK_PRESENT(glSamplerParameteri);
+        GL_CHECK_PRESENT(glSamplerParameterf);
 
-    // ElevationDataTile sampler
-    sampler = _textureSamplers[static_cast<int>(SamplerType::ElevationDataTile)];
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    GL_CHECK_RESULT;
+        // Allocate samplers
+        glGenSamplers(SamplerTypesCount, _textureSamplers.data());
+        GL_CHECK_RESULT;
+        GLuint sampler;
 
-    // BitmapTile_Bilinear sampler
-    sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_Bilinear)];
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GL_CHECK_RESULT;
+        // ElevationDataTile sampler
+        sampler = _textureSamplers[static_cast<int>(SamplerType::ElevationDataTile)];
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GL_CHECK_RESULT;
 
-    // BitmapTile_BilinearMipmap sampler
-    sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_BilinearMipmap)];
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GL_CHECK_RESULT;
+        // BitmapTile_Bilinear sampler
+        sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_Bilinear)];
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
 
-    // BitmapTile_TrilinearMipmap sampler
-    sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_TrilinearMipmap)];
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GL_CHECK_RESULT;
+        // BitmapTile_BilinearMipmap sampler
+        sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_BilinearMipmap)];
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
 
-    // Symbol sampler
-    sampler = _textureSamplers[static_cast<int>(SamplerType::Symbol)];
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    GL_CHECK_RESULT;
-    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    GL_CHECK_RESULT;
+        // BitmapTile_TrilinearMipmap sampler
+        sampler = _textureSamplers[static_cast<int>(SamplerType::BitmapTile_TrilinearMipmap)];
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+
+        // Symbol sampler
+        sampler = _textureSamplers[static_cast<int>(SamplerType::Symbol)];
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GL_CHECK_RESULT;
+    }
 
     return true;
 }
@@ -254,13 +275,15 @@ bool OsmAnd::GPUAPI_OpenGL3::release()
 {
     bool ok;
 
-    GL_CHECK_PRESENT(glDeleteSamplers);
-
-    if (_textureSamplers[0] != 0)
+    if (isSupported_samplerObjects)
     {
-        glDeleteSamplers(1, _textureSamplers.data());
-        GL_CHECK_RESULT;
-        _textureSamplers.fill(0);
+        GL_CHECK_PRESENT(glDeleteSamplers);
+        if (_textureSamplers[0] != 0)
+        {
+            glDeleteSamplers(1, _textureSamplers.data());
+            GL_CHECK_RESULT;
+            _textureSamplers.fill(0);
+        }
     }
 
     ok = GPUAPI_OpenGL::release();
@@ -414,6 +437,7 @@ void OsmAnd::GPUAPI_OpenGL3::setMipMapLevelsLimit(GLenum target, const uint32_t 
 {
     GL_CHECK_PRESENT(glTexParameteri);
 
+    // Supported from OpenGL 1.2+
     glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, mipmapLevelsCount);
     GL_CHECK_RESULT;
 }
@@ -558,15 +582,86 @@ void OsmAnd::GPUAPI_OpenGL3::optimizeFragmentShader(QString& code)
 
 void OsmAnd::GPUAPI_OpenGL3::setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType)
 {
-    GL_CHECK_PRESENT(glBindSampler);
-
-    glBindSampler(textureBlock - GL_TEXTURE0, _textureSamplers[static_cast<int>(samplerType)]);
-    GL_CHECK_RESULT;
+    if (isSupported_samplerObjects)
+    {
+        GL_CHECK_PRESENT(glBindSampler);
+        glBindSampler(textureBlock - GL_TEXTURE0, _textureSamplers[static_cast<int>(samplerType)]);
+        GL_CHECK_RESULT;
+    }
+    else
+    {
+        // In case sampler objects are not supported, use settings per-texture
+        _textureBlocksSamplers[textureBlock] = samplerType;
+    }
 }
 
 void OsmAnd::GPUAPI_OpenGL3::applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock)
 {
-    // In OpenGL 3.0+ there's nothing to do here
+    if (isSupported_samplerObjects)
+    {
+        // In case sampler objects are supported, nothing to do here
+    }
+    else
+    {
+        GL_CHECK_PRESENT(glTexParameteri);
+
+        const auto samplerType = _textureBlocksSamplers[textureBlock];
+        if (samplerType == SamplerType::ElevationDataTile)
+        {
+            glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            GL_CHECK_RESULT;
+        }
+        else if (samplerType == SamplerType::BitmapTile_Bilinear)
+        {
+            glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GL_CHECK_RESULT;
+        }
+        else if (samplerType == SamplerType::BitmapTile_BilinearMipmap)
+        {
+            glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GL_CHECK_RESULT;
+        }
+        else if (samplerType == SamplerType::BitmapTile_TrilinearMipmap)
+        {
+            glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GL_CHECK_RESULT;
+        }
+        else if (samplerType == SamplerType::Symbol)
+        {
+            glTexParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            GL_CHECK_RESULT;
+            glTexParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GL_CHECK_RESULT;
+        }
+    }
 }
 
 void OsmAnd::GPUAPI_OpenGL3::glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker)

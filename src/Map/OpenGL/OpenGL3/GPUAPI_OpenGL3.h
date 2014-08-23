@@ -24,8 +24,11 @@ namespace OsmAnd
         void preprocessShader(QString& code);
 
         bool _isSupported_GREMEDY_string_marker;
+        bool _isSupported_samplerObjects;
+        bool _isSupported_textureStorage2D;
 
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
+        QHash<GLenum, SamplerType> _textureBlocksSamplers;
 
         // Groups emulation for gDEBugger
         QStringList _gdebuggerGroupsStack;
@@ -42,6 +45,8 @@ namespace OsmAnd
         virtual bool release();
 
         const bool& isSupported_GREMEDY_string_marker;
+        const bool& isSupported_samplerObjects;
+        const bool& isSupported_textureStorage2D;
 
         virtual GLenum validateResult();
 
