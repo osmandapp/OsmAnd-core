@@ -90,7 +90,7 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     //////////////////////////////////////////////////////////////////////////
     //NOTE: For testing, limit GLSL version to 1.30, what corresponds to OpenGL 3.0
     //NOTE: For testing, limit GLSL version to 1.10, what corresponds to OpenGL 2.0
-    _glslVersion = 110;
+    //_glslVersion = 110;
     //////////////////////////////////////////////////////////////////////////
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
@@ -138,23 +138,37 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in fragment shader %d", maxFragmentUniformComponents);
     _maxFragmentUniformVectors = maxFragmentUniformComponents / 4; // Workaround for AMD/ATI (see above)
 
-    GLint maxUniformLocations;
-    glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformLocations);
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal defined parameters %d", maxUniformLocations);
-
-    GLint numExtensions = 0;
-    glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-    GL_CHECK_RESULT;
-    _extensions.clear();
-    for (auto extensionIdx = 0; extensionIdx < numExtensions; extensionIdx++)
+    if (version >= 43)
     {
-        const auto& extension = QLatin1String(reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extensionIdx)));
+        GLint maxUniformLocations;
+        glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &maxUniformLocations);
         GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal defined parameters %d", maxUniformLocations);
+    }
+    
+    if (version >= 30)
+    {
+        GLint numExtensions = 0;
+        glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions); // fails 148
+        GL_CHECK_RESULT;
+        _extensions.clear();
+        for (auto extensionIdx = 0; extensionIdx < numExtensions; extensionIdx++)
+        {
+            const auto& extension = QLatin1String(reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extensionIdx)));
+            GL_CHECK_RESULT;
 
-        _extensions.push_back(extension);
+            _extensions.push_back(extension);
+        }
+    }
+    else
+    {
+        const auto& extensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensionsString));
+        _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
     }
     LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(extensions.join(' ')));
+
     // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+), or if GL_ARB_shader_texture_lod is available
     _isSupported_textureLod = (glslVersion >= 130) || extensions.contains(QLatin1String("GL_ARB_shader_texture_lod"));
     _isSupported_texturesNPOT = (version >= 20); // OpenGL 2.0+ fully supports NPOT textures
