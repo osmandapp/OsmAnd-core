@@ -76,20 +76,11 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
 
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
-    GLint glVersion[2] = { 0, 0 };
-    glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
-    GL_CHECK_RESULT;
-    glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
-    GL_CHECK_RESULT;
-    if (glVersion[0] < 2)
-    {
-        LogPrintf(LogSeverityLevel::Error, "Unable to run on OpenGL version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
-        assert(false);
-        return false;
-    }
-    LogPrintf(LogSeverityLevel::Info, "OpenGL version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
-    _version = glVersion[0] * 10 + glVersion[1];
-
+    QRegExp glVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
+    glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
+    _version = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
+    LogPrintf(LogSeverityLevel::Info, "OpenGL version %d [%s]", _version, glVersionString);
+    
     const auto glslVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     GL_CHECK_RESULT;
     QRegExp glslVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
