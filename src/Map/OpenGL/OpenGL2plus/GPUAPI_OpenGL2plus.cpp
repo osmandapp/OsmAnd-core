@@ -569,6 +569,11 @@ void OsmAnd::GPUAPI_OpenGL2plus::preprocessFragmentShader(QString& code)
     else if (glslVersion >= 110)
     {
         shaderHeader = QLatin1String(
+            // Make some extensions required
+            "#ifdef GL_ARB_shader_texture_lod                                                                                   ""\n"
+            "#extension GL_ARB_shader_texture_lod : require                                                                     ""\n"
+            "#endif // GL_ARB_shader_texture_lod                                                                                ""\n"
+            "                                                                                                                   ""\n"
             // Fragment shader output declaration
             "#define FRAGMENT_COLOR_OUTPUT gl_FragColor                                                                         ""\n"
             "                                                                                                                   ""\n");
