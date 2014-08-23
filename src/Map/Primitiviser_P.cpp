@@ -1815,7 +1815,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             text->drawOnPath = false;
 
             OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                "Text from primitive in map object #%" PRIu64 " (%" PRIi64 ") is set to be rendered on-path by style, but there's no path at asll",
+                "Text from primitive in map object #%" PRIu64 " (%" PRIi64 ") is set to be rendered on-path by style, but there's no path at all",
                 primitive->sourceObject->id >> 1, static_cast<int64_t>(primitive->sourceObject->id) / 2);
         }
         
