@@ -1806,9 +1806,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         text->value = caption;
 
         text->drawOnPath = false;
-        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
-        if (!text->drawOnPath)
-            text->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
+        text->drawAlongPath = false;
+        if (primitive->type == PrimitiveType::Polyline)
+        {
+            evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
+            if (!text->drawOnPath)
+                text->drawAlongPath = true;
+        }
 
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
 

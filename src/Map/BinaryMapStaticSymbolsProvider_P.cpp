@@ -143,6 +143,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 onPathSymbol->languageId = rasterizedOnPathSymbol->languageId;
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
                 onPathSymbol->path31 = mapObject->points31;
+                assert(onPathSymbol->path31.size() >= 2);
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
                 for (const auto& intersectsWithClass : constOf(rasterizedOnPathSymbol->primitiveSymbol->intersectsWith))
                 {
