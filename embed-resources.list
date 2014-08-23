@@ -103,6 +103,8 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc_yellow_diamond1.png:map/shaders/osmc_yellow_diamond1.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc__yellow_diamond.png:map/shaders/osmc__yellow_diamond.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_osmc__yellow_diamond1.png:map/shaders/osmc__yellow_diamond1.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_pedestrian_paved.png:map/shaders/pedestrian_paved.png
+/resources/rendering_styles/style-icons/drawable-mdpi/h_pedestrian_paved_night.png:map/shaders/pedestrian_paved_night.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_quarry2.png:map/shaders/quarry2.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_quarry3.png:map/shaders/quarry3.png
 /resources/rendering_styles/style-icons/drawable-mdpi/h_quarry3night.png:map/shaders/quarry3night.png
@@ -358,6 +360,7 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_religion_muslim.png:map/map_icons/religion_muslim.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_religion_shinto.png:map/map_icons/religion_shinto.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_religion_sikh.png:map/map_icons/religion_sikh.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_religion_taoist.png:map/map_icons/religion_taoist.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_restaurants.png:map/map_icons/restaurants.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_seamark.png:map/map_icons/seamark.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_shop.png:map/map_icons/shop.png
