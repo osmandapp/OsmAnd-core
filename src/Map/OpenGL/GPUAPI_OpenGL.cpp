@@ -479,31 +479,31 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     // Get free slot from that pool
     const auto slotInGPU = allocateTile(atlasTexturesPool,
         [this, textureSize, mipmapLevels, atlasTexturesPool, textureFormat]
-    () -> AtlasTextureInGPU*
-    {
-        // Allocate texture id
-        GLuint texture;
-        glGenTextures(1, &texture);
-        GL_CHECK_RESULT;
-        assert(texture != 0);
+        () -> AtlasTextureInGPU*
+        {
+            // Allocate texture id
+            GLuint texture;
+            glGenTextures(1, &texture);
+            GL_CHECK_RESULT;
+            assert(texture != 0);
 
-        // Select this texture
-        glBindTexture(GL_TEXTURE_2D, texture);
-        GL_CHECK_RESULT;
+            // Select this texture
+            glBindTexture(GL_TEXTURE_2D, texture);
+            GL_CHECK_RESULT;
 
-        // Allocate space for this texture
-        allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
-        GL_CHECK_RESULT;
+            // Allocate space for this texture
+            allocateTexture2D(GL_TEXTURE_2D, mipmapLevels, textureSize, textureSize, textureFormat);
+            GL_CHECK_RESULT;
 
-        // Set maximal mipmap level
-        setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
+            // Set maximal mipmap level
+            setMipMapLevelsLimit(GL_TEXTURE_2D, mipmapLevels - 1);
 
-        // Deselect texture
-        glBindTexture(GL_TEXTURE_2D, 0);
-        GL_CHECK_RESULT;
+            // Deselect texture
+            glBindTexture(GL_TEXTURE_2D, 0);
+            GL_CHECK_RESULT;
 
-        return new AtlasTextureInGPU(this, reinterpret_cast<RefInGPU>(texture), textureSize, mipmapLevels, atlasTexturesPool);
-    });
+            return new AtlasTextureInGPU(this, reinterpret_cast<RefInGPU>(texture), textureSize, mipmapLevels, atlasTexturesPool);
+        });
 
     // Upload tile to allocated slot in atlas texture
 
@@ -603,7 +603,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
     const auto textureFormat = getTextureFormat(symbol);
 
     // Symbols don't use mipmapping, so there is no difference between POT vs NPOT size of texture.
-    // In OpenGLES 2.0 and OpenGL 3.0+, NPOT textures are supported in general.
+    // In OpenGLES 2.0 and OpenGL 2.0+, NPOT textures are supported in general.
     // OpenGLES 2.0 has some limitations without isSupported_texturesNPOT:
     //  - no mipmaps
     //  - only LINEAR or NEAREST minification filter.

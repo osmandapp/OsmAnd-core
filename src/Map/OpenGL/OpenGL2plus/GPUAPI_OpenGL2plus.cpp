@@ -186,9 +186,9 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     _isSupported_GREMEDY_string_marker = extensions.contains("GL_GREMEDY_string_marker");
     // http://www.opengl.org/sdk/docs/man/html/glGenSamplers.xhtml are supported only if OpenGL 3.3+ or GL_ARB_sampler_objects is available
     _isSupported_samplerObjects = (glVersion >= 33) || extensions.contains(QLatin1String("GL_ARB_sampler_objects"));
-    if (glVersion < 30 && !extensions.contains(QLatin1String("GL_ARB_vertex_array_object")))
+    if (glVersion < 30 && !extensions.contains(QLatin1String("GL_ARB_vertex_array_object")) && !extensions.contains(QLatin1String("GL_APPLE_vertex_array_object")))
     {
-        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_ARB_vertex_array_object' extension and OpenGL version is less than 3.0");
+        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_ARB_vertex_array_object' or 'GL_APPLE_vertex_array_object' extension and OpenGL version is less than 3.0");
         return false;
     }
 
@@ -431,6 +431,7 @@ void OsmAnd::GPUAPI_OpenGL2plus::uploadDataToTexture2D(
     GL_CHECK_PRESENT(glPixelStorei);
     GL_CHECK_PRESENT(glTexSubImage2D);
 
+    // GL_UNPACK_ROW_LENGTH is supported from OpenGL 1.1+
     glPixelStorei(GL_UNPACK_ROW_LENGTH, dataRowLengthInElements);
     GL_CHECK_RESULT;
 
@@ -446,7 +447,7 @@ void OsmAnd::GPUAPI_OpenGL2plus::setMipMapLevelsLimit(GLenum target, const uint3
 {
     GL_CHECK_PRESENT(glTexParameteri);
 
-    // Supported from OpenGL 1.2+
+    // GL_TEXTURE_MAX_LEVEL supported from OpenGL 1.2+
     glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, mipmapLevelsCount);
     GL_CHECK_RESULT;
 }
