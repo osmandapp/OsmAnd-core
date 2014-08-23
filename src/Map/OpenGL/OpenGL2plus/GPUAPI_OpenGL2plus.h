@@ -17,9 +17,9 @@
 
 namespace OsmAnd 
 {
-    class GPUAPI_OpenGL3 : public GPUAPI_OpenGL
+    class GPUAPI_OpenGL2plus : public GPUAPI_OpenGL
     {
-        Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL3);
+        Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL2plus);
     private:
         void preprocessShader(QString& code);
 
@@ -38,8 +38,8 @@ namespace OsmAnd
         virtual void glPopGroupMarkerEXT_wrapper();
     protected:
     public:
-        GPUAPI_OpenGL3();
-        virtual ~GPUAPI_OpenGL3();
+        GPUAPI_OpenGL2plus();
+        virtual ~GPUAPI_OpenGL2plus();
 
         virtual bool initialize();
         virtual bool release();

@@ -53,7 +53,6 @@ elseif (CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
 
-# 3D rendering: OpenGL, OpenGLES2, Direct3D
 if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "macosx" OR
 	CMAKE_TARGET_OS STREQUAL "windows" OR
@@ -65,6 +64,9 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 		${headers_opengl}
 		${sources_opengl}
 	)
+	set(target_specific_private_definitions ${target_specific_private_definitions}
+		-DOSMAND_OPENGL_RENDERERS_SUPPORTED
+	)
 endif()
 if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "macosx" OR
@@ -74,7 +76,7 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 		${OPENGL_DEFINITIONS}
 	)
 	set(target_specific_private_definitions ${target_specific_private_definitions}
-		-DOSMAND_OPENGL3_RENDERER_SUPPORTED
+		-DOSMAND_OPENGL2PLUS_RENDERER_SUPPORTED
 	)
 	set(target_specific_public_includes ${target_specific_public_includes}
 		${OPENGL_INCLUDE_DIRS}
@@ -87,11 +89,11 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	set(target_specific_dependencies ${target_specific_dependencies}
 		glew_static
 	)
-	file(GLOB sources_opengl3 "src/Map/OpenGL/OpenGL3/*.c*")
-	file(GLOB headers_opengl3 "src/Map/OpenGL/OpenGL3/*.h*")
+	file(GLOB sources_opengl2plus "src/Map/OpenGL/OpenGL2plus/*.c*")
+	file(GLOB headers_opengl2plus "src/Map/OpenGL/OpenGL2plus/*.h*")
 	set(target_specific_sources ${target_specific_sources}
-		${headers_opengl3}
-		${sources_opengl3}
+		${headers_opengl2plus}
+		${sources_opengl2plus}
 	)
 endif()
 if (CMAKE_TARGET_OS STREQUAL "ios" OR

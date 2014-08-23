@@ -1,4 +1,4 @@
-#include "GPUAPI_OpenGL3.h"
+#include "GPUAPI_OpenGL2plus.h"
 
 #include <cassert>
 
@@ -28,7 +28,7 @@
 #   define GL_GET_RESULT glGetError()
 #endif
 
-OsmAnd::GPUAPI_OpenGL3::GPUAPI_OpenGL3()
+OsmAnd::GPUAPI_OpenGL2plus::GPUAPI_OpenGL2plus()
     : _isSupported_GREMEDY_string_marker(false)
     , _isSupported_samplerObjects(false)
     , _isSupported_textureStorage2D(false)
@@ -38,11 +38,11 @@ OsmAnd::GPUAPI_OpenGL3::GPUAPI_OpenGL3()
 {
 }
 
-OsmAnd::GPUAPI_OpenGL3::~GPUAPI_OpenGL3()
+OsmAnd::GPUAPI_OpenGL2plus::~GPUAPI_OpenGL2plus()
 {
 }
 
-GLenum OsmAnd::GPUAPI_OpenGL3::validateResult()
+GLenum OsmAnd::GPUAPI_OpenGL2plus::validateResult()
 {
     GL_CHECK_PRESENT(glGetError);
 
@@ -55,7 +55,7 @@ GLenum OsmAnd::GPUAPI_OpenGL3::validateResult()
     return result;
 }
 
-bool OsmAnd::GPUAPI_OpenGL3::initialize()
+bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
 {
     bool ok;
 
@@ -81,6 +81,10 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
     _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
     LogPrintf(LogSeverityLevel::Info, "OpenGL version %d [%s]", _glVersion, glVersionString);
+    //////////////////////////////////////////////////////////////////////////
+    //NOTE: For testing, limit GL version to 2.0
+    //_glVersion = 20;
+    //////////////////////////////////////////////////////////////////////////
     
     const auto glslVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
     GL_CHECK_RESULT;
@@ -93,6 +97,31 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     //NOTE: For testing, limit GLSL version to 1.10, what corresponds to OpenGL 2.0
     //_glslVersion = 110;
     //////////////////////////////////////////////////////////////////////////
+
+    if (glVersion >= 30)
+    {
+        GL_CHECK_PRESENT(glGetStringi);
+
+        GLint numExtensions = 0;
+        glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+        GL_CHECK_RESULT;
+        _extensions.clear();
+        for (auto extensionIdx = 0; extensionIdx < numExtensions; extensionIdx++)
+        {
+            const auto& extension = QLatin1String(reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extensionIdx)));
+            GL_CHECK_RESULT;
+
+            _extensions.push_back(extension);
+        }
+    }
+    else
+    {
+        const auto& extensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensionsString));
+        _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    }
+    LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(extensions.join(' ')));
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
@@ -119,20 +148,23 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units (combined) %d", maxTextureUnitsCombined);
 
-    // According to http://www.opengl.org/wiki/GLSL_Uniform ("Implementation limits") , this will give incorrect results for AMD/ATI
-    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &_maxVertexUniformVectors);
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal 4-component parameters in vertex shader %d", _maxVertexUniformVectors);
+    if (extensions.contains(QLatin1String("GL_ARB_ES2_compatibility")))
+    {
+        // According to http://www.opengl.org/wiki/GLSL_Uniform ("Implementation limits") , this will give incorrect results for AMD/ATI
+        glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &_maxVertexUniformVectors);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal 4-component parameters in vertex shader %d", _maxVertexUniformVectors);
+
+        // According to http://www.opengl.org/wiki/GLSL_Uniform ("Implementation limits") , this will give incorrect results for AMD/ATI
+        glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &_maxFragmentUniformVectors);
+        GL_CHECK_RESULT;
+        LogPrintf(LogSeverityLevel::Info, "OpenGL maximal 4-component parameters in fragment shader %d", _maxFragmentUniformVectors);
+    }
 
     GLint maxVertexUniformComponents;
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &maxVertexUniformComponents);
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in vertex shader %d", maxVertexUniformComponents);
     _maxVertexUniformVectors = maxVertexUniformComponents / 4; // Workaround for AMD/ATI (see above)
-
-    // According to http://www.opengl.org/wiki/GLSL_Uniform ("Implementation limits") , this will give incorrect results for AMD/ATI
-    glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &_maxFragmentUniformVectors);
-    GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal 4-component parameters in fragment shader %d", _maxFragmentUniformVectors);
 
     GLint maxFragmentUniformComponents;
     glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &maxFragmentUniformComponents);
@@ -146,31 +178,6 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
         GL_CHECK_RESULT;
         LogPrintf(LogSeverityLevel::Info, "OpenGL maximal defined parameters %d", maxUniformLocations);
     }
-    
-    if (glVersion >= 30)
-    {
-        GL_CHECK_PRESENT(glGetStringi);
-
-        GLint numExtensions = 0;
-        glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions); // fails 148
-        GL_CHECK_RESULT;
-        _extensions.clear();
-        for (auto extensionIdx = 0; extensionIdx < numExtensions; extensionIdx++)
-        {
-            const auto& extension = QLatin1String(reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extensionIdx)));
-            GL_CHECK_RESULT;
-
-            _extensions.push_back(extension);
-        }
-    }
-    else
-    {
-        const auto& extensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
-        GL_CHECK_RESULT;
-        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensionsString));
-        _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
-    }
-    LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(extensions.join(' ')));
 
     // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+), or if GL_ARB_shader_texture_lod is available
     _isSupported_textureLod = (glslVersion >= 130) || extensions.contains(QLatin1String("GL_ARB_shader_texture_lod"));
@@ -271,7 +278,7 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL3::release()
+bool OsmAnd::GPUAPI_OpenGL2plus::release()
 {
     bool ok;
 
@@ -293,7 +300,7 @@ bool OsmAnd::GPUAPI_OpenGL3::release()
     return true;
 }
 
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std::shared_ptr< const MapTiledData >& tile)
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL2plus::getTextureFormat(const std::shared_ptr< const MapTiledData >& tile)
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
@@ -324,7 +331,7 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
     return static_cast<TextureFormat>(textureFormat);
 }
 
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
+OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL2plus::getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
@@ -346,7 +353,7 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
     return static_cast<TextureFormat>(textureFormat);
 }
 
-OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::shared_ptr< const MapTiledData >& tile)
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL2plus::getSourceFormat(const std::shared_ptr< const MapTiledData >& tile)
 {
     SourceFormat sourceFormat;
     sourceFormat.format = GL_INVALID_ENUM;
@@ -380,7 +387,7 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::
     return sourceFormat;
 }
 
-OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
+OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL2plus::getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
     SourceFormat sourceFormat;
     sourceFormat.format = GL_INVALID_ENUM;
@@ -405,15 +412,17 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::
     return sourceFormat;
 }
 
-void OsmAnd::GPUAPI_OpenGL3::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format)
+void OsmAnd::GPUAPI_OpenGL2plus::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format)
 {
+    GL_CHECK_PRESENT(glTexStorage2D);
+
     GLenum textureFormat = static_cast<GLenum>(format);
 
     glTexStorage2D(target, levels, textureFormat, width, height);
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::GPUAPI_OpenGL3::uploadDataToTexture2D(
+void OsmAnd::GPUAPI_OpenGL2plus::uploadDataToTexture2D(
     GLenum target, GLint level,
     GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
     const GLvoid *data, GLsizei dataRowLengthInElements, GLsizei elementSize,
@@ -433,7 +442,7 @@ void OsmAnd::GPUAPI_OpenGL3::uploadDataToTexture2D(
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::GPUAPI_OpenGL3::setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount)
+void OsmAnd::GPUAPI_OpenGL2plus::setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount)
 {
     GL_CHECK_PRESENT(glTexParameteri);
 
@@ -442,28 +451,28 @@ void OsmAnd::GPUAPI_OpenGL3::setMipMapLevelsLimit(GLenum target, const uint32_t 
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::GPUAPI_OpenGL3::glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays)
+void OsmAnd::GPUAPI_OpenGL2plus::glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays)
 {
     GL_CHECK_PRESENT(glGenVertexArrays);
 
     glGenVertexArrays(n, arrays);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::glBindVertexArray_wrapper(GLuint array)
+void OsmAnd::GPUAPI_OpenGL2plus::glBindVertexArray_wrapper(GLuint array)
 {
     GL_CHECK_PRESENT(glBindVertexArray);
 
     glBindVertexArray(array);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays)
+void OsmAnd::GPUAPI_OpenGL2plus::glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays)
 {
     GL_CHECK_PRESENT(glDeleteVertexArrays);
 
     glDeleteVertexArrays(n, arrays);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::preprocessShader(QString& code)
+void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
 {
     QString shaderHeader;
     if (glslVersion >= 330)
@@ -537,12 +546,12 @@ void OsmAnd::GPUAPI_OpenGL3::preprocessShader(QString& code)
     code.prepend(shaderSourcePreprocessed);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::preprocessVertexShader(QString& code)
+void OsmAnd::GPUAPI_OpenGL2plus::preprocessVertexShader(QString& code)
 {
     preprocessShader(code);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::preprocessFragmentShader(QString& code)
+void OsmAnd::GPUAPI_OpenGL2plus::preprocessFragmentShader(QString& code)
 {
     QString commonHeader;
     preprocessShader(commonHeader);
@@ -572,15 +581,15 @@ void OsmAnd::GPUAPI_OpenGL3::preprocessFragmentShader(QString& code)
     code.prepend(commonHeader);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::optimizeVertexShader(QString& code)
+void OsmAnd::GPUAPI_OpenGL2plus::optimizeVertexShader(QString& code)
 {
 }
 
-void OsmAnd::GPUAPI_OpenGL3::optimizeFragmentShader(QString& code)
+void OsmAnd::GPUAPI_OpenGL2plus::optimizeFragmentShader(QString& code)
 {
 }
 
-void OsmAnd::GPUAPI_OpenGL3::setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType)
+void OsmAnd::GPUAPI_OpenGL2plus::setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType)
 {
     if (isSupported_samplerObjects)
     {
@@ -595,7 +604,7 @@ void OsmAnd::GPUAPI_OpenGL3::setTextureBlockSampler(const GLenum textureBlock, c
     }
 }
 
-void OsmAnd::GPUAPI_OpenGL3::applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock)
+void OsmAnd::GPUAPI_OpenGL2plus::applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock)
 {
     if (isSupported_samplerObjects)
     {
@@ -664,19 +673,19 @@ void OsmAnd::GPUAPI_OpenGL3::applyTextureBlockToTexture(const GLenum texture, co
     }
 }
 
-void OsmAnd::GPUAPI_OpenGL3::glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker)
+void OsmAnd::GPUAPI_OpenGL2plus::glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker)
 {
     GL_CHECK_PRESENT(glPushGroupMarkerEXT);
     glPushGroupMarkerEXT(length, marker);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::glPopGroupMarkerEXT_wrapper()
+void OsmAnd::GPUAPI_OpenGL2plus::glPopGroupMarkerEXT_wrapper()
 {
     GL_CHECK_PRESENT(glPopGroupMarkerEXT);
     glPopGroupMarkerEXT();
 }
 
-void OsmAnd::GPUAPI_OpenGL3::pushDebugGroupMarker(const QString& title)
+void OsmAnd::GPUAPI_OpenGL2plus::pushDebugGroupMarker(const QString& title)
 {
     if (isSupported_GREMEDY_string_marker)
     {
@@ -694,7 +703,7 @@ void OsmAnd::GPUAPI_OpenGL3::pushDebugGroupMarker(const QString& title)
     GPUAPI_OpenGL::pushDebugGroupMarker(title);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::popDebugGroupMarker()
+void OsmAnd::GPUAPI_OpenGL2plus::popDebugGroupMarker()
 {
     GPUAPI_OpenGL::popDebugGroupMarker();
     if (isSupported_GREMEDY_string_marker)

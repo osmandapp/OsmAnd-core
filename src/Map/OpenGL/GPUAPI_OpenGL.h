@@ -22,7 +22,7 @@
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#if defined(OSMAND_OPENGL3_RENDERER_SUPPORTED)
+#if defined(OSMAND_OPENGL2PLUS_RENDERER_SUPPORTED)
 #   include <GL/glew.h>
 #endif
 #include "restore_internal_warnings.h"
@@ -56,14 +56,19 @@
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
 #   define GL_GET_RESULT \
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
-#   define GL_CHECK_PRESENT(x)                                                                     \
-        {                                                                                          \
-            static bool __checked_presence_of_##x = std::is_function<decltype(x)>::value;          \
-            if (!__checked_presence_of_##x)                                                        \
-            {                                                                                      \
-                assert(x != nullptr);                                                              \
-                __checked_presence_of_##x = true;                                                  \
-            }                                                                                      \
+#   define GL_CHECK_PRESENT(funcName)                                                                           \
+        {                                                                                                       \
+            static bool __checked_presence_of_##funcName = std::is_function<decltype(funcName)>::value;         \
+            if (!__checked_presence_of_##funcName)                                                              \
+            {                                                                                                   \
+                if (funcName == nullptr)                                                                        \
+                {                                                                                               \
+                    LogPrintf(LogSeverityLevel::Error, "Missing '" #funcName "()'!");                           \
+                    LogFlush();                                                                                 \
+                    std::terminate();                                                                           \
+                }                                                                                               \
+                __checked_presence_of_##funcName = true;                                                        \
+            }                                                                                                   \
         }
 #   define GL_PUSH_GROUP_MARKER(title) \
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->pushDebugGroupMarker((title))

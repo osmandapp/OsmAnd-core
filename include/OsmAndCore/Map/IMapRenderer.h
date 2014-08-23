@@ -109,7 +109,7 @@ namespace OsmAnd
 
     enum class MapRendererClass
     {
-        AtlasMapRenderer_OpenGL3,
+        AtlasMapRenderer_OpenGL2plus,
         AtlasMapRenderer_OpenGLES2,
     };
     OSMAND_CORE_API std::shared_ptr<OsmAnd::IMapRenderer> OSMAND_CORE_CALL createMapRenderer(const MapRendererClass mapRendererClass);
