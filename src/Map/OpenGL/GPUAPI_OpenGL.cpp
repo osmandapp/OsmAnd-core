@@ -31,12 +31,16 @@
 #endif
 
 OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
-    : _maxTextureSize(0)
+    : _version(0)
+    , _glslVersion(0)
+    , _maxTextureSize(0)
     , _isSupported_vertexShaderTextureLookup(false)
     , _isSupported_textureLod(false)
     , _isSupported_texturesNPOT(false)
     , _maxVertexUniformVectors(-1)
     , _maxFragmentUniformVectors(-1)
+    , version(_version)
+    , glslVersion(_glslVersion)
     , extensions(_extensions)
     , compressedFormats(_compressedFormats)
     , maxTextureSize(_maxTextureSize)

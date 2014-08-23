@@ -54,7 +54,11 @@ elseif (CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "
 endif()
 
 # 3D rendering: OpenGL, OpenGLES2, Direct3D
-if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMAKE_TARGET_OS STREQUAL "windows" OR CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
+if (CMAKE_TARGET_OS STREQUAL "linux" OR
+	CMAKE_TARGET_OS STREQUAL "macosx" OR
+	CMAKE_TARGET_OS STREQUAL "windows" OR
+	CMAKE_TARGET_OS STREQUAL "ios" OR
+	CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB sources_opengl "src/Map/OpenGL/*.c*")
 	file(GLOB headers_opengl "src/Map/OpenGL/*.h*")
 	set(target_specific_sources ${target_specific_sources}
@@ -62,7 +66,9 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMA
 		${sources_opengl}
 	)
 endif()
-if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMAKE_TARGET_OS STREQUAL "windows")
+if (CMAKE_TARGET_OS STREQUAL "linux" OR
+	CMAKE_TARGET_OS STREQUAL "macosx" OR
+	CMAKE_TARGET_OS STREQUAL "windows")
 	find_package(OpenGL REQUIRED)
 	set(target_specific_public_definitions ${target_specific_public_definitions}
 		${OPENGL_DEFINITIONS}
@@ -88,7 +94,8 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMA
 		${sources_opengl3}
 	)
 endif()
-if (CMAKE_TARGET_OS STREQUAL "ios" OR CMAKE_TARGET_OS STREQUAL "android")
+if (CMAKE_TARGET_OS STREQUAL "ios" OR
+	CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_OPENGLES2_RENDERER_SUPPORTED
 	)

@@ -3,7 +3,10 @@
 #include <cassert>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QStringList>
+#include <QRegExp>
+#include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
@@ -70,21 +73,34 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     GL_CHECK_PRESENT(glSamplerParameteri);
     GL_CHECK_PRESENT(glSamplerParameterf);
     GL_CHECK_PRESENT(glHint);
-    
+
     const auto glVersionString = glGetString(GL_VERSION);
     GL_CHECK_RESULT;
-    GLint glVersion[2] = {0, 0};
+    GLint glVersion[2] = { 0, 0 };
     glGetIntegerv(GL_MAJOR_VERSION, &glVersion[0]);
     GL_CHECK_RESULT;
     glGetIntegerv(GL_MINOR_VERSION, &glVersion[1]);
     GL_CHECK_RESULT;
-    if (glVersion[0] < 3)
+    if (glVersion[0] < 2)
     {
         LogPrintf(LogSeverityLevel::Error, "Unable to run on OpenGL version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
-        assert(glVersion[0] >= 3);
+        assert(false);
         return false;
     }
-    LogPrintf(LogSeverityLevel::Info, "Using OpenGL version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
+    _version = glVersion[0] * 10 + glVersion[1];
+
+    const auto glslVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    GL_CHECK_RESULT;
+    QRegExp glslVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
+    glslVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glslVersionString))));
+    _glslVersion = glslVersionRegExp.cap(1).toUInt() * 100 + glslVersionRegExp.cap(2).toUInt();
+    LogPrintf(LogSeverityLevel::Info, "GLSL version %d [%s]", _glslVersion, glslVersionString);
+    //////////////////////////////////////////////////////////////////////////
+    //NOTE: For testing, limit GLSL version to 1.30, what corresponds to OpenGL 3.0
+    //NOTE: For testing, limit GLSL version to 1.10, what corresponds to OpenGL 2.0
+    _glslVersion = 110;
+    //////////////////////////////////////////////////////////////////////////
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
@@ -140,7 +156,7 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
     GL_CHECK_RESULT;
     _extensions.clear();
-    for(auto extensionIdx = 0; extensionIdx < numExtensions; extensionIdx++)
+    for (auto extensionIdx = 0; extensionIdx < numExtensions; extensionIdx++)
     {
         const auto& extension = QLatin1String(reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extensionIdx)));
         GL_CHECK_RESULT;
@@ -148,8 +164,9 @@ bool OsmAnd::GPUAPI_OpenGL3::initialize()
         _extensions.push_back(extension);
     }
     LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(extensions.join(' ')));
-    _isSupported_textureLod = true; // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+)
-    _isSupported_texturesNPOT = true; // OpenGL 2.0+ fully supports NPOT textures
+    // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+), or if GL_ARB_shader_texture_lod is available
+    _isSupported_textureLod = (glslVersion >= 130) || extensions.contains(QLatin1String("GL_ARB_shader_texture_lod"));
+    _isSupported_texturesNPOT = (version >= 20); // OpenGL 2.0+ fully supports NPOT textures
     _isSupported_GREMEDY_string_marker = extensions.contains("GL_GREMEDY_string_marker");
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
 
@@ -240,7 +257,7 @@ bool OsmAnd::GPUAPI_OpenGL3::release()
         GL_CHECK_RESULT;
         _textureSamplers.fill(0);
     }
-    
+
     ok = GPUAPI_OpenGL::release();
     if (!ok)
         return false;
@@ -258,15 +275,15 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
 
         switch (bitmapTile->bitmap->getConfig())
         {
-        case SkBitmap::Config::kARGB_8888_Config:
-            textureFormat = GL_RGBA8;
-            break;
-        case SkBitmap::Config::kARGB_4444_Config:
-            textureFormat = GL_RGBA4;
-            break;
-        case SkBitmap::Config::kRGB_565_Config:
-            textureFormat = GL_RGB565;
-            break;
+            case SkBitmap::Config::kARGB_8888_Config:
+                textureFormat = GL_RGBA8;
+                break;
+            case SkBitmap::Config::kARGB_4444_Config:
+                textureFormat = GL_RGBA4;
+                break;
+            case SkBitmap::Config::kRGB_565_Config:
+                textureFormat = GL_RGB565;
+                break;
         }
     }
     else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
@@ -283,19 +300,19 @@ OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGL3::getTextureFormat(const std
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
-    switch(symbol->bitmap->getConfig())
+    switch (symbol->bitmap->getConfig())
     {
-    case SkBitmap::Config::kARGB_8888_Config:
-        textureFormat = GL_RGBA8;
-        break;
-    case SkBitmap::Config::kARGB_4444_Config:
-        textureFormat = GL_RGBA4;
-        break;
-    case SkBitmap::Config::kRGB_565_Config:
-        textureFormat = GL_RGB565;
-        break;
+        case SkBitmap::Config::kARGB_8888_Config:
+            textureFormat = GL_RGBA8;
+            break;
+        case SkBitmap::Config::kARGB_4444_Config:
+            textureFormat = GL_RGBA4;
+            break;
+        case SkBitmap::Config::kRGB_565_Config:
+            textureFormat = GL_RGB565;
+            break;
     }
-    
+
     assert(textureFormat != GL_INVALID_ENUM);
 
     return static_cast<TextureFormat>(textureFormat);
@@ -310,20 +327,20 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::
     {
         const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
 
-        switch(bitmapTile->bitmap->getConfig())
+        switch (bitmapTile->bitmap->getConfig())
         {
-        case SkBitmap::Config::kARGB_8888_Config:
-            sourceFormat.format = GL_RGBA;
-            sourceFormat.type = GL_UNSIGNED_BYTE;
-            break;
-        case SkBitmap::Config::kARGB_4444_Config:
-            sourceFormat.format = GL_RGBA;
-            sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
-            break;
-        case SkBitmap::Config::kRGB_565_Config:
-            sourceFormat.format = GL_RGB;
-            sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
-            break;
+            case SkBitmap::Config::kARGB_8888_Config:
+                sourceFormat.format = GL_RGBA;
+                sourceFormat.type = GL_UNSIGNED_BYTE;
+                break;
+            case SkBitmap::Config::kARGB_4444_Config:
+                sourceFormat.format = GL_RGBA;
+                sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
+                break;
+            case SkBitmap::Config::kRGB_565_Config:
+                sourceFormat.format = GL_RGB;
+                sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
+                break;
         }
     }
     else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
@@ -341,20 +358,20 @@ OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGL3::getSourceFormat(const std::
     sourceFormat.format = GL_INVALID_ENUM;
     sourceFormat.type = GL_INVALID_ENUM;
 
-    switch(symbol->bitmap->getConfig())
+    switch (symbol->bitmap->getConfig())
     {
-    case SkBitmap::Config::kARGB_8888_Config:
-        sourceFormat.format = GL_RGBA;
-        sourceFormat.type = GL_UNSIGNED_BYTE;
-        break;
-    case SkBitmap::Config::kARGB_4444_Config:
-        sourceFormat.format = GL_RGBA;
-        sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
-        break;
-    case SkBitmap::Config::kRGB_565_Config:
-        sourceFormat.format = GL_RGB;
-        sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
-        break;
+        case SkBitmap::Config::kARGB_8888_Config:
+            sourceFormat.format = GL_RGBA;
+            sourceFormat.type = GL_UNSIGNED_BYTE;
+            break;
+        case SkBitmap::Config::kARGB_4444_Config:
+            sourceFormat.format = GL_RGBA;
+            sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
+            break;
+        case SkBitmap::Config::kRGB_565_Config:
+            sourceFormat.format = GL_RGB;
+            sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
+            break;
     }
 
     return sourceFormat;
@@ -388,7 +405,7 @@ void OsmAnd::GPUAPI_OpenGL3::uploadDataToTexture2D(
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::GPUAPI_OpenGL3::setMipMapLevelsLimit( GLenum target, const uint32_t mipmapLevelsCount )
+void OsmAnd::GPUAPI_OpenGL3::setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount)
 {
     GL_CHECK_PRESENT(glTexParameteri);
 
@@ -396,77 +413,141 @@ void OsmAnd::GPUAPI_OpenGL3::setMipMapLevelsLimit( GLenum target, const uint32_t
     GL_CHECK_RESULT;
 }
 
-void OsmAnd::GPUAPI_OpenGL3::glGenVertexArrays_wrapper( GLsizei n, GLuint* arrays )
+void OsmAnd::GPUAPI_OpenGL3::glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays)
 {
     GL_CHECK_PRESENT(glGenVertexArrays);
 
     glGenVertexArrays(n, arrays);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::glBindVertexArray_wrapper( GLuint array )
+void OsmAnd::GPUAPI_OpenGL3::glBindVertexArray_wrapper(GLuint array)
 {
     GL_CHECK_PRESENT(glBindVertexArray);
 
     glBindVertexArray(array);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::glDeleteVertexArrays_wrapper( GLsizei n, const GLuint* arrays )
+void OsmAnd::GPUAPI_OpenGL3::glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays)
 {
     GL_CHECK_PRESENT(glDeleteVertexArrays);
 
     glDeleteVertexArrays(n, arrays);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::preprocessShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL3::preprocessShader(QString& code)
 {
-    const auto& shaderSource = QString::fromLatin1(
-        // Declare version of GLSL used
-        "#version 430 core                                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // General definitions
-        "#define INPUT in                                                                                                   ""\n"
-        "#define PARAM_OUTPUT out                                                                                           ""\n"
-        "#define PARAM_INPUT in                                                                                             ""\n"
-        "                                                                                                                   ""\n"
-        // Features definitions
-        "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
-        "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
-        "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
-        "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
-        "                                                                                                                   ""\n");
+    QString shaderHeader;
+    if (glslVersion >= 330)
+    {
+        shaderHeader = QString::fromLatin1(
+            // Declare version of GLSL used
+            "#version 330 core                                                                                                  ""\n"
+            "                                                                                                                   ""\n"
+            // General definitions
+            "#define INPUT in                                                                                                   ""\n"
+            "#define PARAM_OUTPUT out                                                                                           ""\n"
+            "#define PARAM_INPUT in                                                                                             ""\n"
+            "                                                                                                                   ""\n"
+            // Features definitions
+            "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
+            "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D texture                                                                                  ""\n"
+            "#define SAMPLE_TEXTURE_2D_LOD textureLod                                                                           ""\n"
+            "                                                                                                                   ""\n");
+    }
+    else if (glslVersion >= 130)
+    {
+        shaderHeader = QString::fromLatin1(
+            // Declare version of GLSL used
+            "#version 130                                                                                                       ""\n"
+            "                                                                                                                   ""\n"
+            // General definitions
+            "#define INPUT in                                                                                                   ""\n"
+            "#define PARAM_OUTPUT out                                                                                           ""\n"
+            "#define PARAM_INPUT in                                                                                             ""\n"
+            "                                                                                                                   ""\n"
+            // Features definitions
+            "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
+            "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
+            "                                                                                                                   ""\n");
+    }
+    else if (glslVersion >= 110)
+    {
+        shaderHeader = QString::fromLatin1(
+            // Declare version of GLSL used
+            "#version 110                                                                                                       ""\n"
+            "                                                                                                                   ""\n"
+            // General definitions
+            "#define INPUT attribute                                                                                            ""\n"
+            "#define PARAM_OUTPUT varying                                                                                       ""\n"
+            "#define PARAM_INPUT varying                                                                                        ""\n"
+            "                                                                                                                   ""\n"
+            // Precision specifying is not supported
+            "#define highp                                                                                                      ""\n"
+            "#define mediump                                                                                                    ""\n"
+            "#define lowp                                                                                                       ""\n"
+            "                                                                                                                   ""\n"
+            // Features definitions
+            "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
+            "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D texture2D                                                                                ""\n"
+            "#define SAMPLE_TEXTURE_2D_LOD texture2DLod                                                                         ""\n"
+            "                                                                                                                   ""\n");
+    }
+    else
+    {
+        assert(false);
+    }
 
-    auto shaderSourcePreprocessed = shaderSource;
+    auto shaderSourcePreprocessed = shaderHeader;
     shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
     shaderSourcePreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
 
     code.prepend(shaderSourcePreprocessed);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::preprocessVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL3::preprocessVertexShader(QString& code)
 {
     preprocessShader(code);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::preprocessFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL3::preprocessFragmentShader(QString& code)
 {
-    QString common;
-    preprocessShader(common);
+    QString commonHeader;
+    preprocessShader(commonHeader);
 
-    const auto& shaderSource = QLatin1String(
-        // Fragment shader output declaration
-        "#define FRAGMENT_COLOR_OUTPUT out_FragColor                                                                        ""\n"
-        "out vec4 out_FragColor;                                                                                            ""\n"
-        "                                                                                                                   ""\n");
+    QString shaderHeader;
+    if (glslVersion >= 130)
+    {
+        shaderHeader = QLatin1String(
+            // Fragment shader output declaration
+            "#define FRAGMENT_COLOR_OUTPUT out_FragColor                                                                        ""\n"
+            "out vec4 out_FragColor;                                                                                            ""\n"
+            "                                                                                                                   ""\n");
+    }
+    else if (glslVersion >= 110)
+    {
+        shaderHeader = QLatin1String(
+            // Fragment shader output declaration
+            "#define FRAGMENT_COLOR_OUTPUT gl_FragColor                                                                         ""\n"
+            "                                                                                                                   ""\n");
+    }
+    else
+    {
+        assert(false);
+    }
 
-    code.prepend(shaderSource);
-    code.prepend(common);
+    code.prepend(shaderHeader);
+    code.prepend(commonHeader);
 }
 
-void OsmAnd::GPUAPI_OpenGL3::optimizeVertexShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL3::optimizeVertexShader(QString& code)
 {
 }
 
-void OsmAnd::GPUAPI_OpenGL3::optimizeFragmentShader( QString& code )
+void OsmAnd::GPUAPI_OpenGL3::optimizeFragmentShader(QString& code)
 {
 }
 

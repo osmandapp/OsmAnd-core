@@ -132,9 +132,24 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     if (!ok)
         return false;
 
-    const auto glVersionString = glGetString(GL_VERSION);
+    const auto glVersionString = glGetString(GL_VERSION); // Format: "OpenGL<space>ES<space><version number><space><vendor-specific information>"
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "Using OpenGLES2 version %s", glVersionString);
+    GLint glVersion[2] = { 0, 0 };
+    sscanf(reinterpret_cast<const char*>(glVersionString), "OpenGL ES %d.%d ", &glVersion[0], &glVersion[1]);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 version %d.%d [%s]", glVersion[0], glVersion[1], glVersionString);
+    _version = glVersion[0] * 10 + glVersion[1];
+
+    const auto glslVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION); // Format: "OpenGL<space>ES<space>GLSL<space>ES<space><version number><space><vendor-specific information>"
+    GL_CHECK_RESULT;
+    QRegExp glslVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
+    glslVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glslVersionString))));
+    _glslVersion = glslVersionRegExp.cap(1).toUInt() * 100;
+    const auto minorVersion = glslVersionRegExp.cap(2).toUInt();
+    if (minorVersion < 10)
+        _glslVersion += minorVersion * 10;
+    else
+        _glslVersion += minorVersion;
+    LogPrintf(LogSeverityLevel::Info, "GLSL version %d [%s]", _glslVersion, glslVersionString);
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;

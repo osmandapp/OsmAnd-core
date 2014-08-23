@@ -19,11 +19,15 @@
 #   define WIN32_LEAN_AND_MEAN
 #   include <Windows.h>
 #endif
+#include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #if defined(OSMAND_OPENGL3_RENDERER_SUPPORTED)
 #   include <GL/glew.h>
 #endif
+#include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #if defined(OSMAND_TARGET_OS_macosx)
 #   include <OpenGL/gl.h>
 #elif defined(OSMAND_TARGET_OS_ios)
@@ -36,7 +40,9 @@
 #else
 #   include <GL/gl.h>
 #endif
+#include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include <glm/glm.hpp>
 #include "restore_internal_warnings.h"
 
@@ -136,10 +142,12 @@ namespace OsmAnd
         bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
     protected:
-        GLint _maxTextureSize;
+        unsigned int _version;
+        unsigned int _glslVersion;
         QStringList _extensions;
         QVector<GLint> _compressedFormats;
 
+        GLint _maxTextureSize;
         bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
@@ -155,6 +163,8 @@ namespace OsmAnd
         GPUAPI_OpenGL();
         virtual ~GPUAPI_OpenGL();
 
+        const unsigned int& version;
+        const unsigned int& glslVersion;
         const QStringList& extensions;
         const QVector<GLint>& compressedFormats;
 
