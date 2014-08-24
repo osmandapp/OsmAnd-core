@@ -19,6 +19,8 @@
 #elif defined(OSMAND_TARGET_OS_linux)
 #   include <GL/glxew.h>
 #   include <GL/gl.h>
+#   include <X11/Xlib.h>
+#   include <X11/extensions/Xrender.h>
 #endif
 #include <OsmAndCore/restore_internal_warnings.h>
 
