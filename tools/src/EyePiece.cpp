@@ -218,16 +218,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     output << xT("WGL extensions: ") << QStringToStlString(wglExtensions.join(' ')) << std::endl;
     
     // Create pbuffer
-    int pbufferContextAttribs[] =
-    {
-        //WGL_CONTEXT_MAJOR_VERSION_ARB, 2,
-        //WGL_CONTEXT_MINOR_VERSION_ARB, 0,
-        //WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-        //WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-        //WGL_COLOR_BITS_ARB, 32,
-        //WGL_DEPTH_BITS_ARB, 24,
-        0
-    };
+    int pbufferContextAttribs[] = { 0 };
     void* pBufferHandle = nullptr;
     if (wglExtensions.contains(QLatin1String("WGL_ARB_pbuffer")) &&
         wglCreatePbufferARB != nullptr)
@@ -420,7 +411,15 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
 
     // Query available framebuffer configurations
-    int framebufferConfigurationAttribs[] = { None };
+    int framebufferConfigurationAttribs[] = {
+        GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
+        GLX_PIXEL_TYPE_ARB, GLX_TYPE_RGBA_ARB,
+        GLX_RED_SIZE, 8,
+        GLX_GREEN_SIZE, 8,
+        GLX_BLUE_SIZE, 8,
+        GLX_ALPHA_SIZE, 8,
+        GLX_DEPTH_SIZE, 16,
+        None };
     int framebufferConfigurationsCount = 0;
     const auto framebufferConfigurations = glXChooseFBConfig(
         xDisplay,
@@ -449,11 +448,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Create windowless context
-    int windowlessContextAttribs[] = { 
-        GLX_PIXEL_TYPE_ARB, GLX_TYPE_RGBA_ARB,
-        GLX_COLOR_BITS_ARB, 32,
-        GLX_DEPTH_BITS_ARB, 24,
-        None };
+    int windowlessContextAttribs[] = { None };
     const auto windowlessContext = glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
     if (windowlessContext == nullptr)
     {
