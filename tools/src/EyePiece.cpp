@@ -475,13 +475,13 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
     const auto framebufferConfiguration = framebufferConfigurations[0];
+    XFree(framebufferConfigurations);
 
     // Check that needed API is present
     const auto p_glXCreatePbuffer = (PFNGLXCREATEPBUFFERPROC)glXGetProcAddress((const GLubyte *)"glXCreatePbuffer");
     const auto p_glXDestroyPbuffer = (PFNGLXDESTROYPBUFFERPROC)glXGetProcAddress((const GLubyte *)"glXDestroyPbuffer");
     if (p_glXCreatePbuffer == nullptr || p_glXDestroyPbuffer == nullptr)
     {
-        XFree(framebufferConfigurations);
         XCloseDisplay(xDisplay);
 
         output << xT("glXCreatePbuffer and glXDestroyPbuffer have to be supported") << std::endl;
@@ -497,7 +497,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     const auto pbuffer = p_glXCreatePbuffer(xDisplay, framebufferConfiguration, pbufferAttribs);
     if (!pbuffer)
     {
-        XFree(framebufferConfigurations);
         XCloseDisplay(xDisplay);
 
         output << xT("Failed to create pbuffer") << std::endl;
@@ -511,7 +510,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         p_glXMakeContextCurrent == nullptr)
     {
         p_glXDestroyPbuffer(xDisplay, pbuffer);
-        XFree(framebufferConfigurations);
         XCloseDisplay(xDisplay);
 
         output << xT("glXCreateContextAttribsARB and glXMakeContextCurrent have to be supported") << std::endl;
@@ -524,17 +522,15 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         GLX_CONTEXT_MAJOR_VERSION_ARB, 2,
         GLX_CONTEXT_MINOR_VERSION_ARB, 0,
         None };
-    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfiguration, nullptr, False, windowlessContextAttribs);
+    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfiguration, nullptr, True, windowlessContextAttribs);
     if (windowlessContext == nullptr)
     {
         p_glXDestroyPbuffer(xDisplay, pbuffer);
-        XFree(framebufferConfigurations);
         XCloseDisplay(xDisplay);
 
         output << xT("Failed to create windowless context") << std::endl;
         return false;
     }
-    XFree(framebufferConfigurations);
 
     // Activate pbuffer and context
     if (!p_glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
