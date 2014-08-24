@@ -2,15 +2,19 @@ project(OsmAndCoreTools)
 
 # Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 1
 
-file(GLOB_RECURSE sources "*.c*")
-file(GLOB_RECURSE headers "*.h*")
+set(target_specific_sources "")
+set(target_specific_public_definitions "")
+set(target_specific_public_includes "")
+set(target_specific_public_libraries "")
+set(target_specific_private_definitions "")
+set(target_specific_dependencies "")
+
+file(GLOB_RECURSE sources "src/*.c*")
+file(GLOB_RECURSE headers "include/*.h*")
 
 set(merged_sources
 	${sources}
 	${headers}
-)
-set(merged_include_dirs_public
-	"${OSMAND_ROOT}/core/tools"
 )
 
 if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
@@ -36,36 +40,70 @@ elseif (CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
 
+if (CMAKE_TARGET_OS STREQUAL "linux" OR
+	CMAKE_TARGET_OS STREQUAL "macosx" OR
+	CMAKE_TARGET_OS STREQUAL "windows")
+	find_package(OpenGL REQUIRED)
+	set(target_specific_public_definitions ${target_specific_public_definitions}
+		${OPENGL_DEFINITIONS}
+	)
+	set(target_specific_public_includes ${target_specific_public_includes}
+		${OPENGL_INCLUDE_DIRS}
+	)
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		${OPENGL_gl_LIBRARY}
+		${OPENGL_glu_LIBRARY}
+		glew_static
+	)
+	set(target_specific_dependencies ${target_specific_dependencies}
+		glew_static
+	)
+endif()
+
 if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCoreTools_shared SHARED ${merged_sources})
-	add_dependencies(OsmAndCoreTools_shared OsmAndCore_shared)
+	add_dependencies(OsmAndCoreTools_shared
+		OsmAndCore_shared
+		${target_specific_dependencies})
 	target_compile_definitions(OsmAndCoreTools_shared
 		PRIVATE
 			-DOSMAND_CORE_TOOLS_EXPORTS
+			${target_specific_public_definitions}
 	)
 	target_include_directories(OsmAndCoreTools_shared
+		PRIVATE
+			"${OSMAND_ROOT}/core/tools/include/OsmAndCoreTools"
 		PUBLIC
-			${merged_include_dirs_public}
+			"${OSMAND_ROOT}/core/tools/include"
+			${target_specific_public_includes}
 	)
 	target_link_libraries(OsmAndCoreTools_shared
 		LINK_PUBLIC
 			OsmAndCore_shared
+			${target_specific_public_libraries}
 	)
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_library(OsmAndCoreTools_static STATIC ${merged_sources})
-	add_dependencies(OsmAndCoreTools_static OsmAndCore_static)
+	add_dependencies(OsmAndCoreTools_static
+		OsmAndCore_static
+		${target_specific_dependencies})
 	target_compile_definitions(OsmAndCoreTools_static
 		PUBLIC
 			-DOSMAND_CORE_TOOLS_STATIC
+			${target_specific_public_definitions}
 	)
 	target_include_directories(OsmAndCoreTools_static
+		PRIVATE
+			"${OSMAND_ROOT}/core/tools/include/OsmAndCoreTools"
 		PUBLIC
-			${merged_include_dirs_public}
+			"${OSMAND_ROOT}/core/tools/include"
+			${target_specific_public_includes}
 	)
 	target_link_libraries(OsmAndCoreTools_static
 		LINK_PUBLIC
 			OsmAndCore_static
+			${target_specific_public_libraries}
 	)
 endif()

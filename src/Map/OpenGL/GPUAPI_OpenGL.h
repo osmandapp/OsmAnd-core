@@ -15,7 +15,7 @@
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
-#if defined(WIN32)
+#if defined(OSMAND_TARGET_OS_windows)
 #   define WIN32_LEAN_AND_MEAN
 #   include <Windows.h>
 #endif

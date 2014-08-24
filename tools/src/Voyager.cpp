@@ -15,7 +15,7 @@
 //#include <OsmAndCore/Routing/RoutePlanner.h>
 //#include <OsmAndCore/Routing/RoutePlannerContext.h>
 
-OsmAnd::Voyager::Configuration::Configuration()
+OsmAndTools::Voyager::Configuration::Configuration()
     //: verbose(false)
     //, generateXml(false)
     //, doRecalculate(false)
@@ -30,7 +30,7 @@ OsmAnd::Voyager::Configuration::Configuration()
 {
 }
 
-OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::Voyager::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
+OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAndTools::Voyager::parseCommandLineArguments( const QStringList& cmdLineArgs, Configuration& cfg, QString& error )
 {
 //    bool wasObfRootSpecified = false;
 //    bool wasRouterConfigSpecified = false;
@@ -133,12 +133,12 @@ OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::Voyager::parseCommandL
 }
 
 #if defined(_UNICODE) || defined(UNICODE)
-void performJourney(std::wostream &output, const OsmAnd::Voyager::Configuration& cfg);
+void performJourney(std::wostream &output, const OsmAndTools::Voyager::Configuration& cfg);
 #else
-void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& cfg);
+void performJourney(std::ostream &output, const OsmAndTools::Voyager::Configuration& cfg);
 #endif
 
-OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL OsmAnd::Voyager::logJourneyToStdOut( const Configuration& cfg )
+OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL OsmAndTools::Voyager::logJourneyToStdOut(const Configuration& cfg)
 {
 #if defined(_UNICODE) || defined(UNICODE)
     performJourney(std::wcout, cfg);
@@ -147,7 +147,7 @@ OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL OsmAnd::Voyager::logJourneyToS
 #endif
 }
 
-OSMAND_CORE_TOOLS_API QString OSMAND_CORE_TOOLS_CALL OsmAnd::Voyager::logJourneyToString( const Configuration& cfg )
+OSMAND_CORE_TOOLS_API QString OSMAND_CORE_TOOLS_CALL OsmAndTools::Voyager::logJourneyToString(const Configuration& cfg)
 {
 #if defined(_UNICODE) || defined(UNICODE)
     std::wostringstream output;
@@ -161,9 +161,9 @@ OSMAND_CORE_TOOLS_API QString OSMAND_CORE_TOOLS_CALL OsmAnd::Voyager::logJourney
 }
 
 #if defined(_UNICODE) || defined(UNICODE)
-void performJourney(std::wostream &output, const OsmAnd::Voyager::Configuration& cfg)
+void performJourney(std::wostream &output, const OsmAndTools::Voyager::Configuration& cfg)
 #else
-void performJourney(std::ostream &output, const OsmAnd::Voyager::Configuration& cfg)
+void performJourney(std::ostream &output, const OsmAndTools::Voyager::Configuration& cfg)
 #endif
 {
 //    if(cfg.generateXml)

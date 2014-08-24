@@ -12,7 +12,7 @@
 #include <OsmAndCoreTools.h>
 //#include <OsmAndCore/Routing/RoutingConfiguration.h>
 
-namespace OsmAnd
+namespace OsmAndTools
 {
     namespace Voyager
     {

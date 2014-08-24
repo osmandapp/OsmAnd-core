@@ -31,7 +31,7 @@
 #include <OsmAndCore/Data/Model/Amenity.h>
 #include <OsmAndCore/Data/Model/AmenityCategory.h>
 
-OsmAnd::Inspector::Configuration::Configuration()
+OsmAndTools::Inspector::Configuration::Configuration()
     : bbox(90.0, -180.0, -90.0, 179.9999999999)
 {
     verboseAddress = false;
@@ -44,10 +44,10 @@ OsmAnd::Inspector::Configuration::Configuration()
     verbosePoi = false;
     verboseAmenities = false;
     verboseTrasport = false;
-    zoom = ZoomLevel15;
+    zoom = OsmAnd::ZoomLevel15;
 }
 
-OsmAnd::Inspector::Configuration::Configuration(const QString& fileName_)
+OsmAndTools::Inspector::Configuration::Configuration(const QString& fileName_)
     : bbox(90.0, -180.0, -90.0, 179.9999999999)
 {
     fileName = fileName_;
@@ -60,27 +60,27 @@ OsmAnd::Inspector::Configuration::Configuration(const QString& fileName_)
     verbosePoi = false;
     verboseAmenities = false;
     verboseTrasport = false;
-    zoom = ZoomLevel15;
+    zoom = OsmAnd::ZoomLevel15;
 }
 
 // Forward declarations
 #if defined(_UNICODE) || defined(UNICODE)
-void dump(std::wostream &output, const QString& filePath, const OsmAnd::Inspector::Configuration& cfg);
-void printMapDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section);
-void printPOIDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section);
-void printAddressDetailedInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section);
+void dump(std::wostream &output, const QString& filePath, const OsmAndTools::Inspector::Configuration& cfg);
+void printMapDetailInfo(std::wostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section);
+void printPOIDetailInfo(std::wostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section);
+void printAddressDetailedInfo(std::wostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section);
 std::wstring formatBounds(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom);
 std::wstring formatGeoBounds(double l, double r, double t, double b);
 #else
-void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector::Configuration& cfg);
-void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section);
-void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section);
-void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section);
+void dump(std::ostream &output, const QString& filePath, const OsmAndTools::Inspector::Configuration& cfg);
+void printMapDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section);
+void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section);
+void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section);
 std::string formatBounds(uint32_t left, uint32_t right, uint32_t top, uint32_t bottom);
 std::string formatGeoBounds(double l, double r, double t, double b);
 #endif
 
-OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL OsmAnd::Inspector::dumpToStdOut(const Configuration& cfg)
+OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL OsmAndTools::Inspector::dumpToStdOut(const Configuration& cfg)
 {
 #if defined(_UNICODE) || defined(UNICODE)
     dump(std::wcout, cfg.fileName, cfg);
@@ -89,7 +89,7 @@ OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL OsmAnd::Inspector::dumpToStdOu
 #endif
 }
 
-OSMAND_CORE_TOOLS_API QString OSMAND_CORE_TOOLS_CALL OsmAnd::Inspector::dumpToString(const Configuration& cfg)
+OSMAND_CORE_TOOLS_API QString OSMAND_CORE_TOOLS_CALL OsmAndTools::Inspector::dumpToString(const Configuration& cfg)
 {
 #if defined(_UNICODE) || defined(UNICODE)
     std::wostringstream output;
@@ -102,9 +102,9 @@ OSMAND_CORE_TOOLS_API QString OSMAND_CORE_TOOLS_CALL OsmAnd::Inspector::dumpToSt
 #endif
 }
 
-OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::Inspector::parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error)
+OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAndTools::Inspector::parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error)
 {
-    for (const auto& arg : constOf(cmdLineArgs))
+    for (const auto& arg : OsmAnd::constOf(cmdLineArgs))
     {
         if (arg == "-vaddress")
             cfg.verboseAddress = true;
@@ -127,7 +127,7 @@ OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::Inspector::parseComman
         else if (arg == "-vtransport")
             cfg.verboseTrasport = true;
         else if (arg.startsWith("-zoom="))
-            cfg.zoom = static_cast<ZoomLevel>(arg.mid(strlen("-zoom=")).toInt());
+            cfg.zoom = static_cast<OsmAnd::ZoomLevel>(arg.mid(strlen("-zoom=")).toInt());
         else if (arg.startsWith("-bbox="))
         {
             auto values = arg.mid(strlen("-bbox=")).split(",");
@@ -151,9 +151,9 @@ OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::Inspector::parseComman
 }
 
 #if defined(_UNICODE) || defined(UNICODE)
-void dump(std::wostream &output, const QString& filePath, const OsmAnd::Inspector::Configuration& cfg)
+void dump(std::wostream &output, const QString& filePath, const OsmAndTools::Inspector::Configuration& cfg)
 #else
-void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector::Configuration& cfg)
+void dump(std::ostream &output, const QString& filePath, const OsmAndTools::Inspector::Configuration& cfg)
 #endif
 {
     std::shared_ptr<QFile> file(new QFile(filePath));
@@ -223,9 +223,9 @@ void dump(std::ostream &output, const QString& filePath, const OsmAnd::Inspector
 }
 
 #if defined(_UNICODE) || defined(UNICODE)
-void printMapDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section)
+void printMapDetailInfo(std::wostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section)
 #else
-void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section)
+void printMapDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section)
 #endif
 {
     OsmAnd::AreaI bbox31;
@@ -268,9 +268,9 @@ void printMapDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 }
 
 #if defined(_UNICODE) || defined(UNICODE)
-void printPOIDetailInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section)
+void printPOIDetailInfo(std::wostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section)
 #else
-void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section)
+void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section)
 #endif
 {
     output << xT("\tBounds ") << formatBounds(section->area31.left(), section->area31.right(), section->area31.top(), section->area31.bottom()) << std::endl;
@@ -311,9 +311,9 @@ void printPOIDetailInfo(std::ostream& output, const OsmAnd::Inspector::Configura
 }
 
 #if defined(_UNICODE) || defined(UNICODE)
-void printAddressDetailedInfo(std::wostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section)
+void printAddressDetailedInfo(std::wostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section)
 #else
-void printAddressDetailedInfo(std::ostream& output, const OsmAnd::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section)
+void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section)
 #endif
 {
     OsmAnd::ObfAddressBlockType types[] = {

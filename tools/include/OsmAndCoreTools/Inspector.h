@@ -8,7 +8,7 @@
 #include <OsmAndCoreTools.h>
 #include <OsmAndCore/CommonTypes.h>
 
-namespace OsmAnd
+namespace OsmAndTools
 {
     namespace Inspector
     {
@@ -28,8 +28,8 @@ namespace OsmAnd
             bool verbosePoi;
             bool verboseAmenities;
             bool verboseTrasport;
-            AreaD bbox;
-            ZoomLevel zoom;
+            OsmAnd::AreaD bbox;
+            OsmAnd::ZoomLevel zoom;
         };
         OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error);
         OSMAND_CORE_TOOLS_API void OSMAND_CORE_TOOLS_CALL dumpToStdOut(const Configuration& cfg);

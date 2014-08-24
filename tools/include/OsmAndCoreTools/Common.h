@@ -1,3 +1,4 @@
+
 #ifndef _OSMAND_CORE_TOOLS_COMMON_H_
 #define _OSMAND_CORE_TOOLS_COMMON_H_
 
@@ -9,8 +10,8 @@
 #include <QDir>
 #include <QFile>
 
-namespace OsmAnd
+namespace OsmAndTools
 {
-} // namespace OsmAnd 
+}
 
 #endif // !defined(_OSMAND_CORE_TOOLS_COMMON_H_)
