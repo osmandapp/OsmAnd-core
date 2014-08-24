@@ -474,6 +474,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("No valid framebuffer configurations available") << std::endl;
         return false;
     }
+    const auto framebufferConfiguration = framebufferConfigurations[0];
 
     // Check that needed API is present
     const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
@@ -488,24 +489,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
 
-    // Create windowless context
-    const int windowlessContextAttribs[] = { None };
-    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
-    if (windowlessContext == nullptr)
-    {
-        XFree(framebufferConfigurations);
-        XCloseDisplay(xDisplay);
-
-        output << xT("Failed to create windowless context") << std::endl;
-        return false;
-    }
-
     // Check that needed API is present
     const auto p_glXCreatePbuffer = (PFNGLXCREATEPBUFFERPROC)glXGetProcAddress((const GLubyte *)"glXCreatePbuffer");
     const auto p_glXDestroyPbuffer = (PFNGLXDESTROYPBUFFERPROC)glXGetProcAddress((const GLubyte *)"glXDestroyPbuffer");
     if (p_glXCreatePbuffer == nullptr || p_glXDestroyPbuffer == nullptr)
     {
-        glXDestroyContext(xDisplay, windowlessContext);
         XFree(framebufferConfigurations);
         XCloseDisplay(xDisplay);
 
@@ -522,7 +510,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     const auto pbuffer = p_glXCreatePbuffer(xDisplay, framebufferConfigurations[0], pbufferAttribs);
     if (!pbuffer)
     {
-        glXDestroyContext(xDisplay, windowlessContext);
         XFree(framebufferConfigurations);
         XCloseDisplay(xDisplay);
 
@@ -530,6 +517,19 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
     XFree(framebufferConfigurations);
+    output << xT("CONTEXT") << std::endl;
+    // Create windowless context
+    const int windowlessContextAttribs[] = { None };
+    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
+    if (windowlessContext == nullptr)
+    {
+        p_glXDestroyPbuffer(xDisplay, pbuffer);
+        XFree(framebufferConfigurations);
+        XCloseDisplay(xDisplay);
+
+        output << xT("Failed to create windowless context") << std::endl;
+        return false;
+    }
 
     // Activate pbuffer and context
     if (!p_glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
