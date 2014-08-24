@@ -474,7 +474,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("No valid framebuffer configurations available") << std::endl;
         return false;
     }
-    output << xT("Going to use ") << std::hex << std::setfill(xT('0')) << std::setw(8) << framebufferConfigurations[0]->id << std::dec << xT(" configuration") << std::endl;
 
     // Check that needed API is present
     const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
