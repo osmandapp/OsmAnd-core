@@ -474,6 +474,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("No valid framebuffer configurations available") << std::endl;
         return false;
     }
+    output << xT("Going to use ") << std::hex << std::setfill(xT('0')) << std::setw(8) << framebufferConfigurations[0]->id << std::dec << xT(" configuration") << std::endl;
 
     // Check that needed API is present
     const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
@@ -555,6 +556,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Silence OpenGL errors here, it's inside GLEW, so it's not ours
     (void)glGetError();
 #else
+    //TODO: support MacOSX http://renderingpipeline.com/2012/05/windowless-opengl-on-macos-x/
     output << xT("Operating system not supported") << std::endl;
     return false;
 #endif
