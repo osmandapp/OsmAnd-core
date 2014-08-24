@@ -1807,16 +1807,11 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
 
         text->drawOnPath = false;
         text->drawAlongPath = false;
-        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
-        if (!text->drawOnPath)
-            text->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
-        if (primitive->type != PrimitiveType::Polyline && text->drawOnPath)
+        if (primitive->type == PrimitiveType::Polyline)
         {
-            text->drawOnPath = false;
-
-            OsmAnd::LogPrintf(LogSeverityLevel::Warning,
-                "Text from primitive in map object #%" PRIu64 " (%" PRIi64 ") is set to be rendered on-path by style, but there's no path at all",
-                primitive->sourceObject->id >> 1, static_cast<int64_t>(primitive->sourceObject->id) / 2);
+            evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
+            if (!text->drawOnPath)
+                text->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
         }
         
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
