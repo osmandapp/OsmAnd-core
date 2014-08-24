@@ -445,9 +445,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     else if (glxExtensions.contains(QLatin1String("GLX_SGIX_fbconfig")) && glXChooseFBConfigSGIX != nullptr)
     {
         //////////////////////////////////////////////////////////////////////////
-        if (!glXGetProcAddress("glXChooseFBConfigSGIX"))
+        if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfigSGIX"))
             output << xT("test 1 failed;");
-        if (!glXGetProcAddress("glXChooseFBConfig"))
+        if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfig"))
             output << xT("test 2 failed;");
         //////////////////////////////////////////////////////////////////////////
 
