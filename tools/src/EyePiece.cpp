@@ -466,7 +466,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         None
     };
     const auto pbuffer = glXCreatePbuffer(xDisplay, framebufferConfigurations[0], pbufferAttribs);
-    if (pbuffer == nullptr)
+    if (!pbuffer)
     {
         glXDestroyContext(xDisplay, windowlessContext);
         XFree(framebufferConfigurations);
@@ -480,7 +480,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Activate pbuffer and context
     if (!glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
     {
-        glXDestroyPbuffer(pbuffer);
+        glXDestroyPbuffer(xDisplay, pbuffer);
         glXDestroyContext(xDisplay, windowlessContext);
         XCloseDisplay(xDisplay);
 
@@ -549,7 +549,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         wglDestroyPbufferEXT(reinterpret_cast<HPBUFFEREXT>(pBufferHandle));
     }
 #elif defined(OSMAND_TARGET_OS_linux)
-    glXDestroyPbuffer(pbuffer);
+    glXDestroyPbuffer(xDisplay, pbuffer);
     glXDestroyContext(xDisplay, windowlessContext);
     XCloseDisplay(xDisplay);
 #endif
