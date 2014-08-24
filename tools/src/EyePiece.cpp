@@ -637,6 +637,16 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     const auto glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
     output << "OpenGL version " << glVersion << " [" << glVersionString << "]" << std::endl;
 
+    //////////////////////////////////////////////////////////////////////////
+    glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
+    glVerifyResult(output);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glVerifyResult(output);
+    std::vector<std::uint8_t> data(width*height * 4);
+    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, &data[0]);
+    glVerifyResult(output);
+    //////////////////////////////////////////////////////////////////////////
+
 #if defined(OSMAND_TARGET_OS_windows)
     // Finally release the PBuffer
     wglMakeCurrent(NULL, NULL);
