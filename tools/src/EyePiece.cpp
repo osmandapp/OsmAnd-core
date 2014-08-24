@@ -413,7 +413,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Query available framebuffer configurations
     int framebufferConfigurationAttribs[] = {
         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
-        GLX_PIXEL_TYPE_ARB, GLX_TYPE_RGBA_ARB,
+        GLX_RENDER_TYPE, GLX_RGBA_BIT,
         GLX_RED_SIZE, 8,
         GLX_GREEN_SIZE, 8,
         GLX_BLUE_SIZE, 8,
