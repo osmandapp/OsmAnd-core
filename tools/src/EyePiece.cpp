@@ -507,7 +507,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         GLX_PBUFFER_HEIGHT, (int)configuration.outputImageHeight,
         None
     };
-    const auto pbuffer = p_glXCreatePbuffer(xDisplay, framebufferConfigurations[0], pbufferAttribs);
+    const auto pbuffer = p_glXCreatePbuffer(xDisplay, framebufferConfiguration, pbufferAttribs);
     if (!pbuffer)
     {
         XFree(framebufferConfigurations);
@@ -520,8 +520,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     output << xT("CONTEXT") << std::endl;
 
     // Create windowless context
-    const int windowlessContextAttribs[] = { None };
-    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
+    const int windowlessContextAttribs[] = {
+        GLX_CONTEXT_MAJOR_VERSION_ARB, 2,
+        GLX_CONTEXT_MINOR_VERSION_ARB, 0,
+        None };
+    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfiguration, nullptr, True, windowlessContextAttribs);
     if (windowlessContext == nullptr)
     {
         p_glXDestroyPbuffer(xDisplay, pbuffer);
