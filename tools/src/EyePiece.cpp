@@ -181,6 +181,14 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to activate temporary OpenGL context") << std::endl;
         return false;
     }
+#elif defined(OSMAND_TARGET_OS_linux)
+    // Open default display (specified by DISPLAY env-var)
+    const auto xDisplay = XOpenDisplay(nullptr);
+    if (xDisplay == nullptr)
+    {
+        output << xT("Failed to open X display") << std::endl;
+        return false;
+    }
 #endif
 
     glewExperimental = GL_TRUE;
@@ -397,14 +405,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
 #elif defined(OSMAND_TARGET_OS_linux)
-    // Open default display (specified by DISPLAY env-var)
-    const auto xDisplay = XOpenDisplay(nullptr);
-    if (xDisplay == nullptr)
-    {
-        output << xT("Failed to open X display") << std::endl;
-        return false;
-    }
-
     // Get the default screen's GLX extension list
     const char* glxExtensionsString = glXQueryExtensionsString(xDisplay, XDefaultScreen(xDisplay));
     const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
