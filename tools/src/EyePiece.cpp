@@ -411,13 +411,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
 
     // Query available framebuffer configurations
-    if (glXChooseFBConfig == nullptr)
-    {
-        XCloseDisplay(xDisplay);
-
-        output << xT("glXChooseFBConfig not found") << std::endl;
-        return false;
-    }
+    int framebufferConfigurationsCount = 0;
+    GLXFBConfig* framebufferConfigurations = nullptr;
     const int framebufferConfigurationAttribs[] = {
         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
         GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -427,12 +422,29 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         GLX_ALPHA_SIZE, 8,
         GLX_DEPTH_SIZE, 16,
         None };
-    int framebufferConfigurationsCount = 0;
-    const auto framebufferConfigurations = glXChooseFBConfig(
-        xDisplay,
-        DefaultScreen(xDisplay),
-        framebufferConfigurationAttribs,
-        &framebufferConfigurationsCount);
+    if (glXChooseFBConfig != nullptr)
+    {
+        framebufferConfigurations = glXChooseFBConfig(
+            xDisplay,
+            DefaultScreen(xDisplay),
+            framebufferConfigurationAttribs,
+            &framebufferConfigurationsCount);
+    }
+    else if (glxExtensions.contains(QLatin1String("GLX_SGIX_fbconfig")) && glXChooseFBConfigSGIX != nullptr)
+    {
+        framebufferConfigurations = glXChooseFBConfigSGIX(
+            xDisplay,
+            DefaultScreen(xDisplay),
+            framebufferConfigurationAttribs,
+            &framebufferConfigurationsCount);
+    }
+    else
+    {
+        XCloseDisplay(xDisplay);
+
+        output << xT("glXChooseFBConfig or glXChooseFBConfigSGIX/GLX_SGIX_fbconfig have to be supported") << std::endl;
+        return false;
+    }
     if (framebufferConfigurationsCount == 0 || framebufferConfigurations == nullptr)
     {
         XCloseDisplay(xDisplay);
