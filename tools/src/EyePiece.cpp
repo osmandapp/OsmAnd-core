@@ -183,23 +183,22 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to activate temporary OpenGL context") << std::endl;
         return false;
     }
-#elif defined(OSMAND_TARGET_OS_linux)
-    // Open default display (specified by DISPLAY env-var)
-    const auto xDisplay = XOpenDisplay(nullptr);
-    if (xDisplay == nullptr)
+
+    // Initialize GLEW
+    if (glewInit() != GLEW_NO_ERROR)
     {
-        output << xT("Failed to open X display") << std::endl;
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(hTempGLRC);
+        ReleaseDC(hTempWindow, hTempWindowDC);
+        DestroyWindow(hTempWindow);
+        UnregisterClass(wndClass.lpszClassName, hInstance);
+
+        output << xT("Failed to initialize GLEW") << std::endl;
         return false;
     }
-#endif
-
-    glewExperimental = GL_TRUE;
-    const auto glewInitResult = glewInit();
-    output << "GLEW init result " << glewInitResult << std::endl;
-    // For now, silence OpenGL error here, it's inside GLEW, so it's not ours
+    // Silence OpenGL errors here, it's inside GLEW, so it's not ours
     (void)glGetError();
 
-#if defined(OSMAND_TARGET_OS_windows)
     // To find out what current system supports, use wglGetExtensionsString*
     const char* wglExtensionsString = nullptr;
     if (wglGetExtensionsStringEXT != nullptr)
@@ -408,6 +407,14 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
 #elif defined(OSMAND_TARGET_OS_linux)
+    // Open default display (specified by DISPLAY environment variable)
+    const auto xDisplay = XOpenDisplay(nullptr);
+    if (xDisplay == nullptr)
+    {
+        output << xT("Failed to open X display") << std::endl;
+        return false;
+    }
+
     // Get the default screen's GLX extension list
     const char* glxExtensionsString = glXQueryExtensionsString(xDisplay, XDefaultScreen(xDisplay));
     const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
@@ -424,6 +431,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Query available framebuffer configurations
+    const auto p_glXChooseFBConfig = (PFNGLXCHOOSEFBCONFIGPROC)glXGetProcAddress((const GLubyte *)"glXChooseFBConfig");
+    const auto p_glXChooseFBConfigSGIX = (PFNGLXCHOOSEFBCONFIGSGIXPROC)glXGetProcAddress((const GLubyte *)"glXChooseFBConfigSGIX");
     int framebufferConfigurationsCount = 0;
     GLXFBConfig* framebufferConfigurations = nullptr;
     const int framebufferConfigurationAttribs[] = {
@@ -435,17 +444,17 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         GLX_ALPHA_SIZE, 8,
         GLX_DEPTH_SIZE, 16,
         None };
-    if (glXChooseFBConfig != nullptr)
+    if (p_glXChooseFBConfig != nullptr)
     {
-        framebufferConfigurations = glXChooseFBConfig(
+        framebufferConfigurations = p_glXChooseFBConfig(
             xDisplay,
             DefaultScreen(xDisplay),
             framebufferConfigurationAttribs,
             &framebufferConfigurationsCount);
     }
-    else if (glxExtensions.contains(QLatin1String("GLX_SGIX_fbconfig")) && glXChooseFBConfigSGIX != nullptr)
+    else if (glxExtensions.contains(QLatin1String("GLX_SGIX_fbconfig")) && p_glXChooseFBConfigSGIX != nullptr)
     {
-        framebufferConfigurations = glXChooseFBConfigSGIX(
+        framebufferConfigurations = p_glXChooseFBConfigSGIX(
             xDisplay,
             DefaultScreen(xDisplay),
             framebufferConfigurationAttribs,
@@ -467,10 +476,12 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Check that needed API is present
+    const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
+    const auto p_glXMakeContextCurrent = (PFNGLXMAKECONTEXTCURRENTPROC)glXGetProcAddress((const GLubyte *)"glXMakeContextCurrent");
     if (!glxExtensions.contains(QLatin1String("GLX_ARB_create_context")) ||
         !glxExtensions.contains(QLatin1String("GLX_ARB_create_context_profile")) ||
-        glXCreateContextAttribsARB == nullptr ||
-        glXMakeContextCurrent == nullptr)
+        p_glXCreateContextAttribsARB == nullptr ||
+        p_glXMakeContextCurrent == nullptr)
     {
         XFree(framebufferConfigurations);
         XCloseDisplay(xDisplay);
@@ -481,7 +492,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
     // Create windowless context
     const int windowlessContextAttribs[] = { None };
-    const auto windowlessContext = glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
+    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
     if (windowlessContext == nullptr)
     {
         XFree(framebufferConfigurations);
@@ -491,13 +502,26 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
 
+    // Check that needed API is present
+    const auto p_glXCreatePbuffer = (PFNGLXCREATEPBUFFERPROC)glXGetProcAddress((const GLubyte *)"glXCreatePbuffer");
+    const auto p_glXDestroyPbuffer = (PFNGLXDESTROYPBUFFERPROC)glXGetProcAddress((const GLubyte *)"glXDestroyPbuffer");
+    if (p_glXCreatePbuffer == nullptr || p_glXDestroyPbuffer == nullptr)
+    {
+        glXDestroyContext(xDisplay, windowlessContext);
+        XFree(framebufferConfigurations);
+        XCloseDisplay(xDisplay);
+
+        output << xT("glXCreatePbuffer and glXDestroyPbuffer have to be supported") << std::endl;
+        return false;
+    }
+
     // Create pbuffer
     const int pbufferAttribs[] = {
         GLX_PBUFFER_WIDTH, (int)configuration.outputImageWidth,
         GLX_PBUFFER_HEIGHT, (int)configuration.outputImageHeight,
         None
     };
-    const auto pbuffer = glXCreatePbuffer(xDisplay, framebufferConfigurations[0], pbufferAttribs);
+    const auto pbuffer = p_glXCreatePbuffer(xDisplay, framebufferConfigurations[0], pbufferAttribs);
     if (!pbuffer)
     {
         glXDestroyContext(xDisplay, windowlessContext);
@@ -510,15 +534,28 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     XFree(framebufferConfigurations);
 
     // Activate pbuffer and context
-    if (!glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
+    if (!p_glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
     {
-        glXDestroyPbuffer(xDisplay, pbuffer);
+        p_glXDestroyPbuffer(xDisplay, pbuffer);
         glXDestroyContext(xDisplay, windowlessContext);
         XCloseDisplay(xDisplay);
 
         output << xT("Failed to activate pbuffer and context") << std::endl;
         return false;
     }
+
+    // Initialize GLEW
+    if (glewInit() != GLEW_NO_ERROR)
+    {
+        p_glXDestroyPbuffer(xDisplay, pbuffer);
+        glXDestroyContext(xDisplay, windowlessContext);
+        XCloseDisplay(xDisplay);
+
+        output << xT("Failed to initialize GLEW") << std::endl;
+        return false;
+    }
+    // Silence OpenGL errors here, it's inside GLEW, so it's not ours
+    (void)glGetError();
 #else
     output << xT("Operating system not supported") << std::endl;
     return false;

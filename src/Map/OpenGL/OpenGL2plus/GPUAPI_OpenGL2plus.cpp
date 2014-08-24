@@ -75,11 +75,10 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     if (!ok)
         return false;
 
-    glewExperimental = GL_TRUE;
-    glewInit();
-    // For now, silence OpenGL error here, it's inside GLEW, so it's not ours
+    if (glewInit() != GLEW_NO_ERROR)
+        return false;
+    // Silence OpenGL error here, it's inside GLEW, so it's not ours
     (void)glGetError();
-    //GL_CHECK_RESULT;
 
     GL_CHECK_PRESENT(glGetError);
     GL_CHECK_PRESENT(glGetString);
