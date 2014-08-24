@@ -29,7 +29,9 @@ namespace OsmAnd
         bool _isSupported_ARB_vertex_array_object;
         bool _isSupported_APPLE_vertex_array_object;
         bool _isSupported_ARB_texture_storage;
-        bool _isSupported_textureStorage2D;
+        bool _isSupported_ARB_texture_float;
+        bool _isSupported_ATI_texture_float;
+        bool _isSupported_ARB_texture_rg;
 
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
@@ -41,6 +43,10 @@ namespace OsmAnd
         virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
         virtual void glPopGroupMarkerEXT_wrapper();
     protected:
+        virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const;
+        virtual TextureFormat getTextureSizedFormat_float() const;
+
+        virtual SourceFormat getSourceFormat_float() const;
     public:
         GPUAPI_OpenGL2plus();
         virtual ~GPUAPI_OpenGL2plus();
@@ -54,14 +60,13 @@ namespace OsmAnd
         const bool& isSupported_ARB_vertex_array_object;
         const bool& isSupported_APPLE_vertex_array_object;
         const bool& isSupported_ARB_texture_storage;
-        const bool& isSupported_textureStorage2D;
+        const bool& isSupported_ARB_texture_float;
+        const bool& isSupported_ATI_texture_float;
+        const bool& isSupported_ARB_texture_rg;
 
         virtual GLenum validateResult();
 
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile);
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
         virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile);
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,

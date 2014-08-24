@@ -46,6 +46,10 @@
 #include <glm/glm.hpp>
 #include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include <SkBitmap.h>
+#include "restore_internal_warnings.h"
+
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "SmartPOD.h"
@@ -157,6 +161,9 @@ namespace OsmAnd
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
         bool _isSupported_EXT_debug_marker;
+        bool _isSupported_texture_storage;
+        bool _isSupported_texture_float;
+        bool _isSupported_texture_rg;
         GLint _maxVertexUniformVectors;
         GLint _maxFragmentUniformVectors;
         
@@ -164,6 +171,13 @@ namespace OsmAnd
 
         virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker) = 0;
         virtual void glPopGroupMarkerEXT_wrapper() = 0;
+
+        virtual TextureFormat getTextureFormat(const SkBitmap::Config skBitmapConfig) const;
+        virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const = 0;
+        virtual TextureFormat getTextureSizedFormat_float() const = 0;
+
+        virtual SourceFormat getSourceFormat(const SkBitmap::Config skBitmapConfig) const;
+        virtual SourceFormat getSourceFormat_float() const = 0;
     public:
         GPUAPI_OpenGL();
         virtual ~GPUAPI_OpenGL();
@@ -178,6 +192,9 @@ namespace OsmAnd
         const bool& isSupported_textureLod;
         const bool& isSupported_texturesNPOT;
         const bool& isSupported_EXT_debug_marker;
+        const bool& isSupported_texture_storage;
+        const bool& isSupported_texture_float;
+        const bool& isSupported_texture_rg;
         const GLint& maxVertexUniformVectors;
         const GLint& maxFragmentUniformVectors;
         
@@ -186,11 +203,11 @@ namespace OsmAnd
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(GLuint shadersCount, const GLuint* shaders, const bool autoReleaseShaders = true);
 
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile) = 0;
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol) = 0;
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile) = 0;
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol) = 0;
-        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format) = 0;
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile);
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile);
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
+        virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
             const GLvoid *data, GLsizei dataRowLengthInElements, GLsizei elementSize,

@@ -718,14 +718,14 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
 {
     // Check if we're going to convert
     bool doConvert = false;
-    const bool force16bit = (currentConfiguration->limitTextureColorDepthBy16bits && input->getConfig() == SkBitmap::Config::kARGB_8888_Config);
+    const bool force16bit = (currentConfiguration->limitTextureColorDepthBy16bits && input->config() == SkBitmap::Config::kARGB_8888_Config);
     const bool canUsePaletteTextures = currentConfiguration->paletteTexturesAllowed && gpuAPI->isSupported_8bitPaletteRGBA8;
-    const bool paletteTexture = (input->getConfig() == SkBitmap::Config::kIndex8_Config);
+    const bool paletteTexture = (input->config() == SkBitmap::Config::kIndex8_Config);
     const bool unsupportedFormat =
         (canUsePaletteTextures ? !paletteTexture : paletteTexture) ||
-        (input->getConfig() != SkBitmap::Config::kARGB_8888_Config) ||
-        (input->getConfig() != SkBitmap::Config::kARGB_4444_Config) ||
-        (input->getConfig() != SkBitmap::Config::kRGB_565_Config);
+        (input->config() != SkBitmap::Config::kARGB_8888_Config) ||
+        (input->config() != SkBitmap::Config::kARGB_4444_Config) ||
+        (input->config() != SkBitmap::Config::kRGB_565_Config);
     doConvert = doConvert || force16bit;
     doConvert = doConvert || unsupportedFormat;
 

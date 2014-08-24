@@ -37,6 +37,9 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _isSupported_vertexShaderTextureLookup(false)
     , _isSupported_textureLod(false)
     , _isSupported_texturesNPOT(false)
+    , _isSupported_texture_storage(false)
+    , _isSupported_texture_float(false)
+    , _isSupported_texture_rg(false)
     , _maxVertexUniformVectors(-1)
     , _maxFragmentUniformVectors(-1)
     , glVersion(_glVersion)
@@ -48,6 +51,9 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , isSupported_textureLod(_isSupported_textureLod)
     , isSupported_texturesNPOT(_isSupported_texturesNPOT)
     , isSupported_EXT_debug_marker(_isSupported_EXT_debug_marker)
+    , isSupported_texture_storage(_isSupported_texture_storage)
+    , isSupported_texture_float(_isSupported_texture_float)
+    , isSupported_texture_rg(_isSupported_texture_rg)
     , maxVertexUniformVectors(_maxVertexUniformVectors)
     , maxFragmentUniformVectors(_maxFragmentUniformVectors)
 {
@@ -305,7 +311,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     {
         const auto tile = std::static_pointer_cast<const RasterBitmapTile>(tile_);
 
-        switch (tile->bitmap->getConfig())
+        switch (tile->bitmap->config())
         {
             case SkBitmap::Config::kARGB_8888_Config:
                 sourcePixelByteSize = 4;
@@ -582,7 +588,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
     // Determine texture properties:
     GLsizei sourcePixelByteSize = 0;
     bool symbolUsesPalette = false;
-    switch (symbol->bitmap->getConfig())
+    switch (symbol->bitmap->config())
     {
         case SkBitmap::Config::kARGB_8888_Config:
             sourcePixelByteSize = 4;
@@ -596,7 +602,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
             symbolUsesPalette = true;
             break;
         default:
-            LogPrintf(LogSeverityLevel::Error, "Tried to upload symbol bitmap with unsupported config %d to GPU", symbol->bitmap->getConfig());
+            LogPrintf(LogSeverityLevel::Error, "Tried to upload symbol bitmap with unsupported config %d to GPU", symbol->bitmap->config());
             assert(false);
             return false;
     }
@@ -726,6 +732,144 @@ void OsmAnd::GPUAPI_OpenGL::popDebugGroupMarker()
 {
     if (isSupported_EXT_debug_marker)
         glPopGroupMarkerEXT_wrapper();
+}
+
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const MapTiledData >& tile)
+{
+    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
+    {
+        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
+
+        return getTextureFormat(bitmapTile->bitmap->config());
+    }
+    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
+    {
+        assert(isSupported_vertexShaderTextureLookup);
+
+        if (isSupported_texture_storage)
+            return getTextureSizedFormat_float();
+        
+        // The only supported format
+        const GLenum format = GL_LUMINANCE;
+        const GLenum type = GL_UNSIGNED_BYTE;
+
+        assert((format >> 16) == 0);
+        assert((type >> 16) == 0);
+        return (static_cast<TextureFormat>(format) << 16) | type;
+    }
+}
+
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
+{
+    return getTextureFormat(symbol->bitmap->config());
+}
+
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const SkBitmap::Config skBitmapConfig) const
+{
+    // If current device supports glTexStorage2D, lets use sized format
+    if (isSupported_texture_storage)
+        return getTextureSizedFormat(skBitmapConfig);
+
+    // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
+    GLenum format = GL_INVALID_ENUM;
+    GLenum type = GL_INVALID_ENUM;
+    switch (skBitmapConfig)
+    {
+        case SkBitmap::Config::kARGB_8888_Config:
+            format = GL_RGBA;
+            type = GL_UNSIGNED_BYTE;
+            break;
+
+        case SkBitmap::Config::kARGB_4444_Config:
+            format = GL_RGBA;
+            type = GL_UNSIGNED_SHORT_4_4_4_4;
+            break;
+
+        case SkBitmap::Config::kRGB_565_Config:
+            format = GL_RGB;
+            type = GL_UNSIGNED_SHORT_5_6_5;
+            break;
+
+        default:
+            assert(false);
+            return static_cast<TextureFormat>(GL_INVALID_ENUM);
+    }
+
+    assert(format != GL_INVALID_ENUM);
+    assert(type != GL_INVALID_ENUM);
+    assert((format >> 16) == 0);
+    assert((type >> 16) == 0);
+    return (static_cast<TextureFormat>(format) << 16) | type;
+}
+
+OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const std::shared_ptr< const MapTiledData >& tile)
+{
+    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
+    {
+        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
+        return getSourceFormat(bitmapTile->bitmap->config());
+    }
+    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
+    {
+        return getSourceFormat_float();
+    }
+
+    SourceFormat sourceFormat;
+    sourceFormat.format = GL_INVALID_ENUM;
+    sourceFormat.type = GL_INVALID_ENUM;
+    return sourceFormat;
+}
+
+OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
+{
+    return getSourceFormat(symbol->bitmap->config());
+}
+
+OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const SkBitmap::Config skBitmapConfig) const
+{
+    SourceFormat sourceFormat;
+    sourceFormat.format = GL_INVALID_ENUM;
+    sourceFormat.type = GL_INVALID_ENUM;
+
+    switch (skBitmapConfig)
+    {
+        case SkBitmap::Config::kARGB_8888_Config:
+            sourceFormat.format = GL_RGBA;
+            sourceFormat.type = GL_UNSIGNED_BYTE;
+            break;
+        case SkBitmap::Config::kARGB_4444_Config:
+            sourceFormat.format = GL_RGBA;
+            sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
+            break;
+        case SkBitmap::Config::kRGB_565_Config:
+            sourceFormat.format = GL_RGB;
+            sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
+            break;
+    }
+
+    return sourceFormat;
+}
+
+void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat encodedFormat)
+{
+    GLenum format = static_cast<GLenum>(encodedFormat >> 16);
+    GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
+    GLsizei pixelSizeInBytes = 0;
+    if (format == GL_RGBA && type == GL_UNSIGNED_BYTE)
+        pixelSizeInBytes = 4;
+    else if (format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
+        pixelSizeInBytes = 2;
+    else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
+        pixelSizeInBytes = 2;
+    else if (format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE)
+        pixelSizeInBytes = 1;
+
+    uint8_t* dummyBuffer = new uint8_t[width * height * pixelSizeInBytes];
+
+    glTexImage2D(target, 0, format, width, height, 0, format, type, dummyBuffer);
+    GL_CHECK_RESULT;
+
+    delete[] dummyBuffer;
 }
 
 OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::ProgramVariablesLookupContext(GPUAPI_OpenGL* gpuAPI_, GLuint program_)

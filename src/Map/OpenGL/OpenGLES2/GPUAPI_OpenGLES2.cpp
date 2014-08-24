@@ -100,24 +100,24 @@ GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
     const char* errorString = nullptr;
     switch (result)
     {
-    case GL_NO_ERROR:
-        errorString = "no error";
-        break;
-    case GL_INVALID_ENUM:
-        errorString = "invalid enumerant";
-        break;
-    case GL_INVALID_VALUE:
-        errorString = "invalid value";
-        break;
-    case GL_INVALID_OPERATION:
-        errorString = "invalid operation";
-        break;
-    case GL_OUT_OF_MEMORY:
-        errorString = "out of memory";
-        break;
-    default:
-        errorString = "(unknown)";
-        break;
+        case GL_NO_ERROR:
+            errorString = "no error";
+            break;
+        case GL_INVALID_ENUM:
+            errorString = "invalid enumerant";
+            break;
+        case GL_INVALID_VALUE:
+            errorString = "invalid value";
+            break;
+        case GL_INVALID_OPERATION:
+            errorString = "invalid operation";
+            break;
+        case GL_OUT_OF_MEMORY:
+            errorString = "out of memory";
+            break;
+        default:
+            errorString = "(unknown)";
+            break;
     }
     LogPrintf(LogSeverityLevel::Error, "OpenGLES2 error 0x%08x : %s", result, errorString);
 
@@ -180,28 +180,31 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in fragment shader %d", _maxFragmentUniformVectors);
 
-    if (!extensions.contains("GL_OES_vertex_array_object"))
+    _isSupported_OES_vertex_array_object = extensions.contains("GL_OES_vertex_array_object");
+    if (!isSupported_OES_vertex_array_object)
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_vertex_array_object' extension");
         return false;
     }
-    _isSupported_OES_vertex_array_object = true;
-    if (!extensions.contains("GL_OES_rgb8_rgba8"))
+
+    _isSupported_OES_rgb8_rgba8 = extensions.contains("GL_OES_rgb8_rgba8");
+    if (!isSupported_OES_rgb8_rgba8)
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_rgb8_rgba8' extension");
         return false;
     }
-    _isSupported_OES_rgb8_rgba8 = true;
-    if (!extensions.contains("GL_OES_texture_float"))
+
+    _isSupported_texture_float = _isSupported_OES_texture_float = extensions.contains("GL_OES_texture_float");
+    if (!isSupported_OES_texture_float)
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_texture_float' extension");
         return false;
     }
-    _isSupported_OES_texture_float = true;
+
     _isSupported_EXT_shader_texture_lod = _isSupported_textureLod = extensions.contains("GL_EXT_shader_texture_lod");
-    _isSupported_EXT_texture_rg = extensions.contains("GL_EXT_texture_rg");
+    _isSupported_texture_rg = _isSupported_EXT_texture_rg = extensions.contains("GL_EXT_texture_rg");
     _isSupported_EXT_unpack_subimage = extensions.contains("GL_EXT_unpack_subimage");
-    _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
+    _isSupported_textureStorage2D = _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
     _isSupported_APPLE_texture_max_level = extensions.contains("GL_APPLE_texture_max_level");
     _isSupported_texturesNPOT = extensions.contains("GL_OES_texture_npot");
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
@@ -267,238 +270,81 @@ bool OsmAnd::GPUAPI_OpenGLES2::release()
     return true;
 }
 
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat(const std::shared_ptr< const MapTiledData >& tile)
+OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const
 {
-    // If current device supports glTexStorage2D, lets use sized format
-    if (isSupported_EXT_texture_storage)
+    GLenum textureFormat = GL_INVALID_ENUM;
+
+    switch (skBitmapConfig)
     {
-        GLenum textureFormat = GL_INVALID_ENUM;
-
-        if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
-        {
-            const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
-
-            switch (bitmapTile->bitmap->getConfig())
-            {
-            case SkBitmap::Config::kARGB_8888_Config:
-                textureFormat = GL_RGBA8_OES;
-                break;
-            case SkBitmap::Config::kARGB_4444_Config:
-                textureFormat = GL_RGBA4;
-                break;
-            case SkBitmap::Config::kRGB_565_Config:
-                textureFormat = GL_RGB565;
-                break;
-            }
-        }
-        else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
-        {
-            if (isSupported_vertexShaderTextureLookup)
-            {
-                if (isSupported_OES_texture_float && isSupported_EXT_texture_rg)
-                    textureFormat = GL_R32F_EXT;
-                else if (isSupported_EXT_texture_rg)
-                    textureFormat = GL_R8_EXT;
-                else
-                    textureFormat = GL_LUMINANCE8_EXT;
-            }
-        }
-
-        assert(textureFormat != GL_INVALID_ENUM);
-
-        return static_cast<TextureFormat>(textureFormat);
-    }
-
-    // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
-    GLenum format = GL_INVALID_ENUM;
-    GLenum type = GL_INVALID_ENUM;
-    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
-    {
-        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
-
-        switch (bitmapTile->bitmap->getConfig())
-        {
-        case SkBitmap::Config::kARGB_8888_Config:
-            format = GL_RGBA;
-            type = GL_UNSIGNED_BYTE;
-            break;
-        case SkBitmap::Config::kARGB_4444_Config:
-            format = GL_RGBA;
-            type = GL_UNSIGNED_SHORT_4_4_4_4;
-            break;
-        case SkBitmap::Config::kRGB_565_Config:
-            format = GL_RGB;
-            type = GL_UNSIGNED_SHORT_5_6_5;
-            break;
-        }
-    }
-    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
-    {
-        if (isSupported_vertexShaderTextureLookup)
-        {
-            format = GL_LUMINANCE;
-            type = GL_UNSIGNED_BYTE;
-        }
-    }
-
-    assert(format != GL_INVALID_ENUM);
-    assert(format != GL_INVALID_ENUM);
-    assert((format >> 16) == 0);
-    assert((type >> 16) == 0);
-
-    return (static_cast<TextureFormat>(format) << 16) | type;
-}
-
-OsmAnd::GPUAPI::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
-{
-    // If current device supports glTexStorage2D, lets use sized format
-    if (isSupported_EXT_texture_storage)
-    {
-        GLenum textureFormat = GL_INVALID_ENUM;
-
-        switch (symbol->bitmap->getConfig())
-        {
         case SkBitmap::Config::kARGB_8888_Config:
             textureFormat = GL_RGBA8_OES;
             break;
+
         case SkBitmap::Config::kARGB_4444_Config:
             textureFormat = GL_RGBA4;
             break;
+
         case SkBitmap::Config::kRGB_565_Config:
             textureFormat = GL_RGB565;
             break;
-        }
 
-        assert(textureFormat != GL_INVALID_ENUM);
-
-        return static_cast<TextureFormat>(textureFormat);
+        default:
+            assert(false);
+            return static_cast<TextureFormat>(GL_INVALID_ENUM);
     }
 
-    // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
-    GLenum format = GL_INVALID_ENUM;
-    GLenum type = GL_INVALID_ENUM;
-    switch (symbol->bitmap->getConfig())
-    {
-    case SkBitmap::Config::kARGB_8888_Config:
-        format = GL_RGBA;
-        type = GL_UNSIGNED_BYTE;
-        break;
-    case SkBitmap::Config::kARGB_4444_Config:
-        format = GL_RGBA;
-        type = GL_UNSIGNED_SHORT_4_4_4_4;
-        break;
-    case SkBitmap::Config::kRGB_565_Config:
-        format = GL_RGB;
-        type = GL_UNSIGNED_SHORT_5_6_5;
-        break;
-    }
-
-    assert(format != GL_INVALID_ENUM);
-    assert(format != GL_INVALID_ENUM);
-    assert((format >> 16) == 0);
-    assert((type >> 16) == 0);
-
-    return (static_cast<TextureFormat>(format) << 16) | type;
+    assert(textureFormat != GL_INVALID_ENUM);
+    return static_cast<TextureFormat>(textureFormat);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat encodedFormat)
+OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureSizedFormat_float() const
+{
+    GLenum textureFormat = GL_INVALID_ENUM;
+
+    if (isSupported_texture_float && isSupported_texture_rg)
+        textureFormat = GL_R32F_EXT;
+    else if (isSupported_texture_rg)
+        textureFormat = GL_R8_EXT;
+    else
+        textureFormat = GL_LUMINANCE8_EXT;
+
+    assert(textureFormat != GL_INVALID_ENUM);
+    return static_cast<TextureFormat>(textureFormat);
+}
+
+OsmAnd::GPUAPI_OpenGLES2::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat_float() const
+{
+    SourceFormat sourceFormat;
+    sourceFormat.format = GL_INVALID_ENUM;
+    sourceFormat.type = GL_INVALID_ENUM;
+
+    if (isSupported_EXT_texture_rg)
+        sourceFormat.format = GL_RED_EXT;
+    else
+        sourceFormat.format = GL_LUMINANCE;
+
+    if (isSupported_OES_texture_float)
+        sourceFormat.type = GL_FLOAT;
+    else
+        sourceFormat.type = GL_UNSIGNED_BYTE;
+
+    return sourceFormat;
+}
+
+void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format)
 {
     // Use glTexStorage2D if possible
     if (isSupported_EXT_texture_storage)
     {
         GL_CHECK_PRESENT(glTexStorage2DEXT);
 
-        glTexStorage2DEXT(target, levels, static_cast<GLenum>(encodedFormat), width, height);
+        glTexStorage2DEXT(target, levels, static_cast<GLenum>(format), width, height);
         GL_CHECK_RESULT;
         return;
     }
 
     // Fallback to dumb allocation
-    GLenum format = static_cast<GLenum>(encodedFormat >> 16);
-    GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
-    GLsizei pixelSizeInBytes = 0;
-    if (format == GL_RGBA && type == GL_UNSIGNED_BYTE)
-        pixelSizeInBytes = 4;
-    else if (format == GL_RGBA && type == GL_UNSIGNED_SHORT_4_4_4_4)
-        pixelSizeInBytes = 2;
-    else if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)
-        pixelSizeInBytes = 2;
-    else if (format == GL_LUMINANCE && type == GL_UNSIGNED_BYTE)
-        pixelSizeInBytes = 1;
-
-    uint8_t* dummyBuffer = new uint8_t[width * height * pixelSizeInBytes];
-
-    glTexImage2D(target, 0, format, width, height, 0, format, type, dummyBuffer);
-    GL_CHECK_RESULT;
-
-    delete[] dummyBuffer;
-}
-
-OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std::shared_ptr< const MapTiledData >& tile)
-{
-    SourceFormat sourceFormat;
-    sourceFormat.format = GL_INVALID_ENUM;
-    sourceFormat.type = GL_INVALID_ENUM;
-
-    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
-    {
-        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
-
-        switch (bitmapTile->bitmap->getConfig())
-        {
-        case SkBitmap::Config::kARGB_8888_Config:
-            sourceFormat.format = GL_RGBA;
-            sourceFormat.type = GL_UNSIGNED_BYTE;
-            break;
-        case SkBitmap::Config::kARGB_4444_Config:
-            sourceFormat.format = GL_RGBA;
-            sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
-            break;
-        case SkBitmap::Config::kRGB_565_Config:
-            sourceFormat.format = GL_RGB;
-            sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
-            break;
-        }
-    }
-    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
-    {
-        if (isSupported_EXT_texture_rg)
-            sourceFormat.format = GL_RED_EXT;
-        else
-            sourceFormat.format = GL_LUMINANCE;
-
-        if (isSupported_OES_texture_float)
-            sourceFormat.type = GL_FLOAT;
-        else
-            sourceFormat.type = GL_UNSIGNED_BYTE;
-    }
-
-    return sourceFormat;
-}
-
-OsmAnd::GPUAPI::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
-{
-    SourceFormat sourceFormat;
-    sourceFormat.format = GL_INVALID_ENUM;
-    sourceFormat.type = GL_INVALID_ENUM;
-
-    switch (symbol->bitmap->getConfig())
-    {
-    case SkBitmap::Config::kARGB_8888_Config:
-        sourceFormat.format = GL_RGBA;
-        sourceFormat.type = GL_UNSIGNED_BYTE;
-        break;
-    case SkBitmap::Config::kARGB_4444_Config:
-        sourceFormat.format = GL_RGBA;
-        sourceFormat.type = GL_UNSIGNED_SHORT_4_4_4_4;
-        break;
-    case SkBitmap::Config::kRGB_565_Config:
-        sourceFormat.format = GL_RGB;
-        sourceFormat.type = GL_UNSIGNED_SHORT_5_6_5;
-        break;
-    }
-
-    return sourceFormat;
+    GPUAPI_OpenGL::allocateTexture2D(target, levels, width, height, format);
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::uploadDataToTexture2D(

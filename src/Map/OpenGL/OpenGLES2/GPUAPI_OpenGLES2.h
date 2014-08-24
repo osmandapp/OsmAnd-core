@@ -49,6 +49,10 @@ namespace OsmAnd
         virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
         virtual void glPopGroupMarkerEXT_wrapper();
     protected:
+        virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const;
+        virtual TextureFormat getTextureSizedFormat_float() const;
+
+        virtual SourceFormat getSourceFormat_float() const;
     public:
         GPUAPI_OpenGLES2();
         virtual ~GPUAPI_OpenGLES2();
@@ -67,10 +71,7 @@ namespace OsmAnd
 
         virtual GLenum validateResult();
 
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile);
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
         virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile);
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
