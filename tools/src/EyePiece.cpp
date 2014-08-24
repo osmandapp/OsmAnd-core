@@ -416,7 +416,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Get the default screen's GLX extension list
-    const char* glxExtensionsString = glXQueryExtensionsString(xDisplay, XDefaultScreen(xDisplay));
+    const char* glxExtensionsString = glXQueryExtensionsString(xDisplay, DefaultScreen(xDisplay));
     const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
     output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
 
@@ -477,19 +477,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     const auto framebufferConfiguration = framebufferConfigurations[0];
 
     // Check that needed API is present
-    const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
-    const auto p_glXMakeContextCurrent = (PFNGLXMAKECONTEXTCURRENTPROC)glXGetProcAddress((const GLubyte *)"glXMakeContextCurrent");
-    if (p_glXCreateContextAttribsARB == nullptr ||
-        p_glXMakeContextCurrent == nullptr)
-    {
-        XFree(framebufferConfigurations);
-        XCloseDisplay(xDisplay);
-
-        output << xT("glXCreateContextAttribsARB and glXMakeContextCurrent have to be supported") << std::endl;
-        return false;
-    }
-
-    // Check that needed API is present
     const auto p_glXCreatePbuffer = (PFNGLXCREATEPBUFFERPROC)glXGetProcAddress((const GLubyte *)"glXCreatePbuffer");
     const auto p_glXDestroyPbuffer = (PFNGLXDESTROYPBUFFERPROC)glXGetProcAddress((const GLubyte *)"glXDestroyPbuffer");
     if (p_glXCreatePbuffer == nullptr || p_glXDestroyPbuffer == nullptr)
@@ -517,6 +504,19 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
     
+    // Check that needed API is present
+    const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
+    const auto p_glXMakeContextCurrent = (PFNGLXMAKECONTEXTCURRENTPROC)glXGetProcAddress((const GLubyte *)"glXMakeContextCurrent");
+    if (p_glXCreateContextAttribsARB == nullptr ||
+        p_glXMakeContextCurrent == nullptr)
+    {
+        p_glXDestroyPbuffer(xDisplay, pbuffer);
+        XFree(framebufferConfigurations);
+        XCloseDisplay(xDisplay);
+
+        output << xT("glXCreateContextAttribsARB and glXMakeContextCurrent have to be supported") << std::endl;
+        return false;
+    }
     output << xT("CONTEXT") << std::endl;
 
     // Create windowless context
@@ -524,7 +524,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         GLX_CONTEXT_MAJOR_VERSION_ARB, 2,
         GLX_CONTEXT_MINOR_VERSION_ARB, 0,
         None };
-    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfiguration, nullptr, True, windowlessContextAttribs);
+    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfiguration, nullptr, False, windowlessContextAttribs);
     if (windowlessContext == nullptr)
     {
         p_glXDestroyPbuffer(xDisplay, pbuffer);
