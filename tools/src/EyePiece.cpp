@@ -194,7 +194,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 #endif
 
     glewExperimental = GL_TRUE;
-    glewInit();
+    const auto glewInitResult = glewInit();
+    output << "GLEW init result " << glewInitResult << std::endl;
     // For now, silence OpenGL error here, it's inside GLEW, so it's not ours
     (void)glGetError();
 
@@ -423,16 +424,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Query available framebuffer configurations
-    //////////////////////////////////////////////////////////////////////////
-    if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfigSGIX"))
-        output << xT("test 1 failed;");
-    else
-        output << xT("test 1 success;");
-    if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfig"))
-        output << xT("test 2 failed;");
-    else
-        output << xT("test 2 success;");
-    //////////////////////////////////////////////////////////////////////////
     int framebufferConfigurationsCount = 0;
     GLXFBConfig* framebufferConfigurations = nullptr;
     const int framebufferConfigurationAttribs[] = {
