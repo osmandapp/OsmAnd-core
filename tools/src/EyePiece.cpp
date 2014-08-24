@@ -444,6 +444,13 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
     else if (glxExtensions.contains(QLatin1String("GLX_SGIX_fbconfig")) && glXChooseFBConfigSGIX != nullptr)
     {
+        //////////////////////////////////////////////////////////////////////////
+        if (!glXGetProcAddress("glXChooseFBConfigSGIX"))
+            output << xT("test 1 failed;");
+        if (!glXGetProcAddress("glXChooseFBConfig"))
+            output << xT("test 2 failed;");
+        //////////////////////////////////////////////////////////////////////////
+
         framebufferConfigurations = glXChooseFBConfigSGIX(
             xDisplay,
             DefaultScreen(xDisplay),
