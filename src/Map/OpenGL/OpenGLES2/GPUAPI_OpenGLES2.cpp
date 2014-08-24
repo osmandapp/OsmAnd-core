@@ -153,8 +153,8 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
 
     const auto& extensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensionsString));
     _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensions.join(' ')));
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
@@ -413,7 +413,7 @@ void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D(GLenum target, GLsizei levels, 
         return;
     }
 
-    // Fallback to dump allocation
+    // Fallback to dumb allocation
     GLenum format = static_cast<GLenum>(encodedFormat >> 16);
     GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
     GLsizei pixelSizeInBytes = 0;

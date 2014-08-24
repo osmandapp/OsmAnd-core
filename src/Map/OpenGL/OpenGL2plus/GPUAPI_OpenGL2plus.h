@@ -24,7 +24,11 @@ namespace OsmAnd
         void preprocessShader(QString& code);
 
         bool _isSupported_GREMEDY_string_marker;
+        bool _isSupported_ARB_sampler_objects;
         bool _isSupported_samplerObjects;
+        bool _isSupported_ARB_vertex_array_object;
+        bool _isSupported_APPLE_vertex_array_object;
+        bool _isSupported_ARB_texture_storage;
         bool _isSupported_textureStorage2D;
 
         std::array< GLuint, SamplerTypesCount > _textureSamplers;
@@ -45,7 +49,11 @@ namespace OsmAnd
         virtual bool release();
 
         const bool& isSupported_GREMEDY_string_marker;
+        const bool& isSupported_ARB_sampler_objects;
         const bool& isSupported_samplerObjects;
+        const bool& isSupported_ARB_vertex_array_object;
+        const bool& isSupported_APPLE_vertex_array_object;
+        const bool& isSupported_ARB_texture_storage;
         const bool& isSupported_textureStorage2D;
 
         virtual GLenum validateResult();

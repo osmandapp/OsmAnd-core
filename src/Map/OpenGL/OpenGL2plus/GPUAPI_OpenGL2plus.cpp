@@ -30,10 +30,18 @@
 
 OsmAnd::GPUAPI_OpenGL2plus::GPUAPI_OpenGL2plus()
     : _isSupported_GREMEDY_string_marker(false)
+    , _isSupported_ARB_sampler_objects(false)
     , _isSupported_samplerObjects(false)
+    , _isSupported_ARB_vertex_array_object(false)
+    , _isSupported_APPLE_vertex_array_object(false)
+    , _isSupported_ARB_texture_storage(false)
     , _isSupported_textureStorage2D(false)
     , isSupported_GREMEDY_string_marker(_isSupported_GREMEDY_string_marker)
+    , isSupported_ARB_sampler_objects(_isSupported_ARB_sampler_objects)
     , isSupported_samplerObjects(_isSupported_samplerObjects)
+    , isSupported_ARB_vertex_array_object(_isSupported_ARB_vertex_array_object)
+    , isSupported_APPLE_vertex_array_object(_isSupported_APPLE_vertex_array_object)
+    , isSupported_ARB_texture_storage(_isSupported_ARB_texture_storage)
     , isSupported_textureStorage2D(_isSupported_textureStorage2D)
 {
 }
@@ -118,7 +126,6 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     {
         const auto& extensionsString = QString::fromLatin1(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
         GL_CHECK_RESULT;
-        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensionsString));
         _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
     }
     LogPrintf(LogSeverityLevel::Info, "OpenGL extensions: %s", qPrintable(extensions.join(' ')));
@@ -185,8 +192,11 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
     _isSupported_GREMEDY_string_marker = extensions.contains("GL_GREMEDY_string_marker");
     // http://www.opengl.org/sdk/docs/man/html/glGenSamplers.xhtml are supported only if OpenGL 3.3+ or GL_ARB_sampler_objects is available
-    _isSupported_samplerObjects = (glVersion >= 33) || extensions.contains(QLatin1String("GL_ARB_sampler_objects"));
-    if (glVersion < 30 && !extensions.contains(QLatin1String("GL_ARB_vertex_array_object")) && !extensions.contains(QLatin1String("GL_APPLE_vertex_array_object")))
+    _isSupported_ARB_sampler_objects = extensions.contains(QLatin1String("GL_ARB_sampler_objects"));
+    _isSupported_samplerObjects = (glVersion >= 33) || _isSupported_ARB_sampler_objects;
+    _isSupported_ARB_vertex_array_object = extensions.contains(QLatin1String("GL_ARB_vertex_array_object"));
+    _isSupported_APPLE_vertex_array_object = extensions.contains(QLatin1String("GL_APPLE_vertex_array_object"));
+    if (glVersion < 30 && !isSupported_ARB_vertex_array_object && !isSupported_APPLE_vertex_array_object)
     {
         LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_ARB_vertex_array_object' or 'GL_APPLE_vertex_array_object' extension and OpenGL version is less than 3.0");
         return false;
@@ -194,7 +204,8 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
 
     // glTexStorage2D is supported in OpenGL 4.2+ or if GL_ARB_texture_storage is available
     // https://www.opengl.org/sdk/docs/man/html/glTexStorage2D.xhtml
-    _isSupported_textureStorage2D = (glVersion >= 42) || extensions.contains(QLatin1String("GL_ARB_texture_storage"));
+    _isSupported_ARB_texture_storage = extensions.contains(QLatin1String("GL_ARB_texture_storage"));
+    _isSupported_textureStorage2D = (glVersion >= 42) || isSupported_ARB_texture_storage;
 
     GLint compressedFormatsLength = 0;
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &compressedFormatsLength);
