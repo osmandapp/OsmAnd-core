@@ -431,23 +431,50 @@ void OsmAnd::GPUAPI_OpenGL2plus::setMipMapLevelsLimit(GLenum target, const uint3
 
 void OsmAnd::GPUAPI_OpenGL2plus::glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays)
 {
-    GL_CHECK_PRESENT(glGenVertexArrays);
+    if (glVersion >= 30 || isSupported_ARB_vertex_array_object)
+    {
+        GL_CHECK_PRESENT(glGenVertexArrays);
 
-    glGenVertexArrays(n, arrays);
+        glGenVertexArrays(n, arrays);
+    }
+    else if (isSupported_APPLE_vertex_array_object)
+    {
+        GL_CHECK_PRESENT(glGenVertexArraysAPPLE);
+
+        glGenVertexArraysAPPLE(n, arrays);
+    }
 }
 
 void OsmAnd::GPUAPI_OpenGL2plus::glBindVertexArray_wrapper(GLuint array)
 {
-    GL_CHECK_PRESENT(glBindVertexArray);
+    if (glVersion >= 30 || isSupported_ARB_vertex_array_object)
+    {
+        GL_CHECK_PRESENT(glBindVertexArray);
 
-    glBindVertexArray(array);
+        glBindVertexArray(array);
+    }
+    else if (isSupported_APPLE_vertex_array_object)
+    {
+        GL_CHECK_PRESENT(glBindVertexArrayAPPLE);
+
+        glBindVertexArrayAPPLE(array);
+    }
 }
 
 void OsmAnd::GPUAPI_OpenGL2plus::glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays)
 {
-    GL_CHECK_PRESENT(glDeleteVertexArrays);
+    if (glVersion >= 30 || isSupported_ARB_vertex_array_object)
+    {
+        GL_CHECK_PRESENT(glDeleteVertexArrays);
 
-    glDeleteVertexArrays(n, arrays);
+        glDeleteVertexArrays(n, arrays);
+    }
+    else if (isSupported_APPLE_vertex_array_object)
+    {
+        GL_CHECK_PRESENT(glDeleteVertexArraysAPPLE);
+
+        glDeleteVertexArraysAPPLE(n, arrays);
+    }
 }
 
 void OsmAnd::GPUAPI_OpenGL2plus::preprocessShader(QString& code)
