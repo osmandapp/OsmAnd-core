@@ -436,8 +436,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Check that needed API is present
-    if (
-        !glxExtensions.contains(QLatin1String("GLX_ARB_create_context")) ||
+    if (!glxExtensions.contains(QLatin1String("GLX_ARB_create_context")) ||
         !glxExtensions.contains(QLatin1String("GLX_ARB_create_context_profile")) ||
         glXCreateContextAttribsARB == nullptr ||
         glXMakeContextCurrent == nullptr)
@@ -450,7 +449,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Create windowless context
-    int windowlessContextAttribs[] = { None };
+    int windowlessContextAttribs[] = { 
+        GLX_PIXEL_TYPE_ARB, GLX_TYPE_RGBA_ARB,
+        GLX_COLOR_BITS_ARB, 32,
+        GLX_DEPTH_BITS_ARB, 24,
+        None };
     const auto windowlessContext = glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
     if (windowlessContext == nullptr)
     {
