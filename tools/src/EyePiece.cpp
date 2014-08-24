@@ -423,6 +423,12 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Query available framebuffer configurations
+    //////////////////////////////////////////////////////////////////////////
+    if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfigSGIX"))
+        output << xT("test 1 failed;");
+    if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfig"))
+        output << xT("test 2 failed;");
+    //////////////////////////////////////////////////////////////////////////
     int framebufferConfigurationsCount = 0;
     GLXFBConfig* framebufferConfigurations = nullptr;
     const int framebufferConfigurationAttribs[] = {
@@ -444,13 +450,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
     else if (glxExtensions.contains(QLatin1String("GLX_SGIX_fbconfig")) && glXChooseFBConfigSGIX != nullptr)
     {
-        //////////////////////////////////////////////////////////////////////////
-        if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfigSGIX"))
-            output << xT("test 1 failed;");
-        if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfig"))
-            output << xT("test 2 failed;");
-        //////////////////////////////////////////////////////////////////////////
-
         framebufferConfigurations = glXChooseFBConfigSGIX(
             xDisplay,
             DefaultScreen(xDisplay),
