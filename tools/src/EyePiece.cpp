@@ -411,6 +411,13 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
 
     // Query available framebuffer configurations
+    if (glXChooseFBConfig == nullptr)
+    {
+        XCloseDisplay(xDisplay);
+
+        output << xT("glXChooseFBConfig not found") << std::endl;
+        return false;
+    }
     const int framebufferConfigurationAttribs[] = {
         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
         GLX_RENDER_TYPE, GLX_RGBA_BIT,
@@ -428,15 +435,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         &framebufferConfigurationsCount);
     if (framebufferConfigurationsCount == 0 || framebufferConfigurations == nullptr)
     {
-        output << xT("0;");
-
         XCloseDisplay(xDisplay);
 
         output << xT("No valid framebuffer configurations available") << std::endl;
         return false;
     }
-
-    output << xT("1;");
 
     // Check that needed API is present
     if (!glxExtensions.contains(QLatin1String("GLX_ARB_create_context")) ||
@@ -451,8 +454,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
 
-    output << xT("2;");
-
     // Create windowless context
     const int windowlessContextAttribs[] = { None };
     const auto windowlessContext = glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
@@ -464,8 +465,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to create windowless context") << std::endl;
         return false;
     }
-
-    output << xT("3;");
 
     // Create pbuffer
     const int pbufferAttribs[] = {
@@ -485,8 +484,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
     XFree(framebufferConfigurations);
 
-    output << xT("4;");
-
     // Activate pbuffer and context
     if (!glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
     {
@@ -497,8 +494,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to activate pbuffer and context") << std::endl;
         return false;
     }
-
-    output << xT("5;");
 #else
     output << xT("Operating system not supported") << std::endl;
     return false;
