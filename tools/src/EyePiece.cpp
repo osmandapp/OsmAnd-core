@@ -11,19 +11,13 @@
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <GL/glew.h>
-#if defined(OSMAND_TARGET_OS_windows)
-#   include <GL/wglew.h>
-#endif
 #if defined(OSMAND_TARGET_OS_macosx)
 #   include <OpenGL/gl.h>
-#elif defined(OSMAND_TARGET_OS_ios)
-#   include <OpenGLES/ES2/gl.h>
-#   include <OpenGLES/ES2/glext.h>
-#elif defined(OSMAND_TARGET_OS_android)
-#   include <EGL/egl.h>
-#   include <GLES2/gl2.h>
-#   include <GLES2/gl2ext.h>
-#else
+#elif defined(OSMAND_TARGET_OS_windows)
+#   include <GL/wglew.h>
+#   include <GL/gl.h>
+#elif defined(OSMAND_TARGET_OS_linux)
+#   include <GL/glxew.h>
 #   include <GL/gl.h>
 #endif
 #include <OsmAndCore/restore_internal_warnings.h>
@@ -32,115 +26,6 @@
 #include <SkBitmap.h>
 #include <SkImageEncoder.h>
 #include <OsmAndCore/restore_internal_warnings.h>
-//
-//#include <OsmAndCore/QtExtensions.h>
-//#include <QtMath>
-//
-//#include <OsmAndCore/Common.h>
-//#include <OsmAndCore/Utilities.h>
-//#include <OsmAndCore/ObfsCollection.h>
-//#include <OsmAndCore/ObfDataInterface.h>
-//#include <OsmAndCore/Data/ObfReader.h>
-//#include <OsmAndCore/Data/Model/BinaryMapObject.h>
-//#include <OsmAndCore/Map/MapRasterizer.h>
-//#include <OsmAndCore/Map/MapPresentationEnvironment.h>
-//#include <OsmAndCore/Map/MapStyleEvaluator.h>
-//
-//OsmAnd::EyePiece::Configuration::Configuration()
-//    //: verbose(false)
-//    //, dumpRules(false)
-//    //, styleName("default")
-//    //, bbox(90, -180, -90, 179.9999999999)
-//    //, tileSide(256)
-//    //, densityFactor(1.0)
-//    //, zoom(ZoomLevel15)
-//    //, is32bit(true)
-//    //, drawMap(false)
-//    //, drawText(false)
-//    //, drawIcons(false)
-//{
-//ined(_UNICODE) || defined(UNICODE)
-//void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg)
-//#else
-//void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
-//#endif
-//{
-//    //// Obtain and configure rasterization style context
-//    //OsmAnd::MapStylesCollection stylesCollection;
-//    //for (auto itStyleFile = cfg.styleFiles.cbegin(); itStyleFile != cfg.styleFiles.cend(); ++itStyleFile)
-//    //{
-//    //    const auto& styleFile = *itStyleFile;
-//
-//    //    if (!stylesCollection.registerStyle(styleFile.absoluteFilePath()))
-//    //        output << xT("Failed to parse metadata of '") << QStringToStlString(styleFile.fileName()) << xT("' or duplicate style") << std::endl;
-//    //}
-//    //std::shared_ptr<const OsmAnd::MapStyle> style;
-//    //if (!stylesCollection.obtainBakedStyle(cfg.styleName, style))
-//    //{
-//    //    output << xT("Failed to resolve style '") << QStringToStlString(cfg.styleName) << xT("'") << std::endl;
-//    //    return;
-//    //}
-//    //if (cfg.dumpRules)
-//    //    style->dump();
-//
-//    //OsmAnd::ObfsCollection obfsCollection;
-//    //obfsCollection.addDirectory(cfg.obfsDir);
-//
-//    //// Collect all map objects (this should be replaced by something like RasterizerViewport/RasterizerContext)
-//    //QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
-//    //OsmAnd::AreaI bbox31(
-//    //    OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top),
-//    //    OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left),
-//    //    OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom),
-//    //    OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right)
-//    //    );
-//    //const auto& obfDI = obfsCollection.obtainDataInterface();
-//    //OsmAnd::MapFoundationType mapFoundation;
-//    //obfDI->loadMapObjects(&mapObjects, &mapFoundation, bbox31, cfg.zoom, nullptr);
-//    //bool basemapAvailable;
-//    //obfDI->loadBasemapPresenceFlag(basemapAvailable);
-//
-//    //// Calculate output size in pixels
-//    //const auto tileWidth = OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.right) - OsmAnd::Utilities::getTileNumberX(cfg.zoom, cfg.bbox.left);
-//    //const auto tileHeight = OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.bottom) - OsmAnd::Utilities::getTileNumberY(cfg.zoom, cfg.bbox.top);
-//    //const auto pixelWidth = qCeil(tileWidth * cfg.tileSide);
-//    //const auto pixelHeight = qCeil(tileHeight * cfg.tileSide);
-//    //output << xT("Will rasterize ") << mapObjects.count() << xT(" objects onto ") << pixelWidth << xT("x") << pixelHeight << xT(" bitmap") << std::endl;
-//
-//    //// Allocate render target
-//    //SkBitmap renderSurface;
-//    //renderSurface.setConfig(cfg.is32bit ? SkBitmap::kARGB_8888_Config : SkBitmap::kRGB_565_Config, pixelWidth, pixelHeight);
-//    //if (!renderSurface.allocPixels())
-//    //{
-//    //    output << xT("Failed to allocated render target ") << pixelWidth << xT("x") << pixelHeight;
-//    //    return;
-//    //}
-//    //SkBitmapDevice renderTarget(renderSurface);
-//
-//    //// Create render canvas
-//    //SkCanvas canvas(&renderTarget);
-//
-//    //// Perform actual rendering
-//    //std::shared_ptr<OsmAnd::RasterizerEnvironment> rasterizerEnv(new OsmAnd::RasterizerEnvironment(style, cfg.densityFactor));
-//    //std::shared_ptr<OsmAnd::RasterizerContext> rasterizerContext(new OsmAnd::RasterizerContext(rasterizerEnv));
-//    //OsmAnd::Rasterizer::prepareContext(*rasterizerContext, bbox31, cfg.zoom, mapFoundation, mapObjects);
-//
-//    //OsmAnd::Rasterizer rasterizer(rasterizerContext);
-//    //if (cfg.drawMap)
-//    //{
-//    //    rasterizer.rasterizeMap(canvas);
-//    //}
-//    ///*if(cfg.drawText)
-//    //    OsmAnd::Rasterizer::rasterizeText(rasterizerContext, !cfg.drawMap, canvas, nullptr);*/
-//
-//    //// Save rendered area
-//    //if (!cfg.output.isEmpty())
-//    //{
-//    //    
-//    //}
-//
-//    //return;
-//}
 
 OsmAndTools::EyePiece::EyePiece(const Configuration& configuration_)
     : configuration(configuration_)
@@ -304,8 +189,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     (void)glGetError();
 
 #if defined(OSMAND_TARGET_OS_windows)
-    // Windows is using WGL, so wglGetProcAddress is used to find out what current system supports.
-    
     // To find out what current system supports, use wglGetExtensionsString*
     const char* wglExtensionsString = nullptr;
     if (wglGetExtensionsStringEXT != nullptr)
@@ -328,7 +211,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         DestroyWindow(hTempWindow);
         UnregisterClass(wndClass.lpszClassName, hInstance);
 
-        output << xT("WGL_EXT_extensions_string or WGL_ARB_extensions_string has to be supported");
+        output << xT("WGL_EXT_extensions_string or WGL_ARB_extensions_string has to be supported") << std::endl;
         return false;
     }
     const auto wglExtensions = QString::fromLatin1(wglExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
@@ -376,7 +259,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         DestroyWindow(hTempWindow);
         UnregisterClass(wndClass.lpszClassName, hInstance);
 
-        output << xT("WGL_ARB_pbuffer or WGL_EXT_pbuffer has to be supported (wglCreatePbuffer*)");
+        output << xT("WGL_ARB_pbuffer or WGL_EXT_pbuffer has to be supported (wglCreatePbuffer*)") << std::endl;
         return false;
     }
     if (!pBufferHandle)
@@ -387,7 +270,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         DestroyWindow(hTempWindow);
         UnregisterClass(wndClass.lpszClassName, hInstance);
 
-        output << xT("Failed to create pbuffer");
+        output << xT("Failed to create pbuffer") << std::endl;
         return false;
     }
 
@@ -413,7 +296,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         DestroyWindow(hTempWindow);
         UnregisterClass(wndClass.lpszClassName, hInstance);
 
-        output << xT("WGL_ARB_pbuffer or WGL_EXT_pbuffer has to be supported (wglGetPbufferDC*)");
+        output << xT("WGL_ARB_pbuffer or WGL_EXT_pbuffer has to be supported (wglGetPbufferDC*)") << std::endl;
         return false;
     }
     if (!hPBufferDC)
@@ -435,7 +318,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         DestroyWindow(hTempWindow);
         UnregisterClass(wndClass.lpszClassName, hInstance);
 
-        output << xT("Failed to get pbuffer DC");
+        output << xT("Failed to get pbuffer DC") << std::endl;
         return false;
     }
 
@@ -463,7 +346,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         DestroyWindow(hTempWindow);
         UnregisterClass(wndClass.lpszClassName, hInstance);
 
-        output << xT("WGL_ARB_create_context, WGL_ARB_create_context_profile and WGL_ARB_make_current_read are required to perform windowless rendering");
+        output << xT("WGL_ARB_create_context, WGL_ARB_create_context_profile and WGL_ARB_make_current_read are required to perform windowless rendering") << std::endl;
         return false;
     }
     const auto hPBufferContext = wglCreateContextAttribsARB(hPBufferDC, NULL, pbufferContextAttribs);
@@ -490,7 +373,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         DestroyWindow(hTempWindow);
         UnregisterClass(wndClass.lpszClassName, hInstance);
 
-        output << xT("Failed to create windowless OpenGL context");
+        output << xT("Failed to create windowless OpenGL context") << std::endl;
         return false;
     }
 
@@ -519,10 +402,95 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             wglDestroyPbufferEXT(reinterpret_cast<HPBUFFEREXT>(pBufferHandle));
         }
 
-        output << xT("Failed to activate windowless/framebufferless OpenGL context");
+        output << xT("Failed to activate windowless/framebufferless OpenGL context") << std::endl;
+        return false;
+    }
+#elif defined(OSMAND_TARGET_OS_linux)
+    // Open default display (specified by DISPLAY env-var)
+    const auto xDisplay = XOpenDisplay(nullptr);
+    if (xDisplay == nullptr)
+    {
+        output << xT("Failed to open X display") << std::endl;
+        return false;
+    }
+
+    // Get the default screen's GLX extension list
+    const char* glxExtensionsString = glXQueryExtensionsString(xDisplay, XDefaultScreen(xDisplay));
+    const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
+
+    // Query available framebuffer configurations
+    int framebufferConfigurationAttribs[] = { None };
+    int framebufferConfigurationsCount = 0;
+    const auto framebufferConfigurations = glXChooseFBConfig(
+        xDisplay,
+        XDefaultScreen(xDisplay),
+        framebufferConfigurationAttribs,
+        &framebufferConfigurationsCount);
+    if (framebufferConfigurationsCount == 0 || framebufferConfigurations == nullptr)
+    {
+        XCloseDisplay(xDisplay);
+
+        output << xT("No valid framebuffer configurations available") << std::endl;
+        return false;
+    }
+
+    // Check that needed API is present
+    if (
+        !glxExtensions.contains(QLatin1String("GLX_ARB_create_context")) ||
+        !glxExtensions.contains(QLatin1String("GLX_ARB_create_context_profile")) ||
+        glXCreateContextAttribsARB == nullptr ||
+        glXMakeContextCurrent == nullptr)
+    {
+        XFree(framebufferConfigurations);
+        XCloseDisplay(xDisplay);
+
+        output << xT("GLX_ARB_create_context, GLX_ARB_create_context_profile and glXMakeContextCurrent have to be supported") << std::endl;
+        return false;
+    }
+
+    // Create windowless context
+    int windowlessContextAttribs[] = { None };
+    const auto windowlessContext = glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
+    if (windowlessContext == nullptr)
+    {
+        XFree(framebufferConfigurations);
+        XCloseDisplay(xDisplay);
+
+        output << xT("Failed to create windowless context") << std::endl;
+        return false;
+    }
+
+    // Create pbuffer
+    int pbufferAttribs[] = {
+        GLX_PBUFFER_WIDTH, configuration.outputImageWidth,
+        GLX_PBUFFER_HEIGHT, configuration.outputImageHeight,
+        None
+    };
+    const auto pbuffer = glXCreatePbuffer(xDisplay, framebufferConfigurations[0], pbufferAttribs);
+    if (pbuffer == nullptr)
+    {
+        glXDestroyContext(xDisplay, windowlessContext);
+        XFree(framebufferConfigurations);
+        XCloseDisplay(xDisplay);
+
+        output << xT("Failed to create pbuffer") << std::endl;
+        return false;
+    }
+    XFree(framebufferConfigurations);
+
+    // Activate pbuffer and context
+    if (!glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
+    {
+        glXDestroyPbuffer(pbuffer);
+        glXDestroyContext(xDisplay, windowlessContext);
+        XCloseDisplay(xDisplay);
+
+        output << xT("Failed to activate pbuffer and context") << std::endl;
         return false;
     }
 #else
+    output << xT("Operating system not supported") << std::endl;
     return false;
 #endif
 
@@ -582,8 +550,10 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         wglReleasePbufferDCEXT(reinterpret_cast<HPBUFFEREXT>(pBufferHandle), hPBufferDC);
         wglDestroyPbufferEXT(reinterpret_cast<HPBUFFEREXT>(pBufferHandle));
     }
-#else
-    return false;
+#elif defined(OSMAND_TARGET_OS_linux)
+    glXDestroyPbuffer(pbuffer);
+    glXDestroyContext(xDisplay, windowlessContext);
+    XCloseDisplay(xDisplay);
 #endif
 
     return true;
