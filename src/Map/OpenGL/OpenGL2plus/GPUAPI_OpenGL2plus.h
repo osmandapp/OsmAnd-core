@@ -87,6 +87,8 @@ namespace OsmAnd
 
         virtual void pushDebugGroupMarker(const QString& title);
         virtual void popDebugGroupMarker();
+
+        virtual void glClearDepth_wrapper(const float depth);
     };
 }
 

@@ -579,3 +579,10 @@ void OsmAnd::GPUAPI_OpenGLES2::glPopGroupMarkerEXT_wrapper()
     GL_CHECK_PRESENT(glPopGroupMarkerEXT);
     glPopGroupMarkerEXT();
 }
+
+void OsmAnd::GPUAPI_OpenGLES2::glClearDepth_wrapper(const float depth)
+{
+    GL_CHECK_PRESENT(glClearDepthf);
+
+    glClearDepthf(depth);
+}

@@ -51,7 +51,8 @@ OsmAnd::AtlasMapRenderer_OpenGL::~AtlasMapRenderer_OpenGL()
 bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
 {
     GL_CHECK_PRESENT(glClearColor);
-    GL_CHECK_PRESENT(glClearDepthf);
+    
+    const auto gpuAPI = getGPUAPI();
 
     bool ok;
 
@@ -62,7 +63,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     GL_CHECK_RESULT;
 
-    glClearDepthf(1.0f);
+    gpuAPI->glClearDepth_wrapper(1.0f);
     GL_CHECK_RESULT;
     
     return true;

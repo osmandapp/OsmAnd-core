@@ -731,3 +731,10 @@ void OsmAnd::GPUAPI_OpenGL2plus::popDebugGroupMarker()
         glStringMarkerGREMEDY(marker.length(), qPrintable(marker));
     }
 }
+
+void OsmAnd::GPUAPI_OpenGL2plus::glClearDepth_wrapper(const float depth)
+{
+    GL_CHECK_PRESENT(glClearDepth);
+
+    glClearDepth(depth);
+}
