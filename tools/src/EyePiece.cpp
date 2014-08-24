@@ -28,13 +28,10 @@
 #endif
 #include <OsmAndCore/restore_internal_warnings.h>
 
-//
-
-//
-//#include <SkBitmap.h>
-//#include <SkCanvas.h>
-//#include <SkBitmapDevice.h>
-//#include <SkImageEncoder.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <SkBitmap.h>
+#include <SkImageEncoder.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 //
 //#include <OsmAndCore/QtExtensions.h>
 //#include <QtMath>
@@ -62,113 +59,7 @@
 //    //, drawText(false)
 //    //, drawIcons(false)
 //{
-//}
-//
-//OSMAND_CORE_TOOLS_API bool OSMAND_CORE_TOOLS_CALL OsmAnd::EyePiece::parseCommandLineArguments(const QStringList& cmdLineArgs, Configuration& cfg, QString& error)
-//{
-//   /* bool wasObfRootSpecified = false;
-//
-//    for (const auto& arg : constOf(cmdLineArgs))
-//    {
-//        auto arg = *itArg;
-//        if (arg == "-verbose")
-//        {
-//            cfg.verbose = true;
-//        }
-//        else if (arg == "-dumpRules")
-//        {
-//            cfg.dumpRules = true;
-//        }
-//        else if (arg == "-map")
-//        {
-//            cfg.drawMap = true;
-//        }
-//        else if (arg == "-text")
-//        {
-//            cfg.drawText = true;
-//        }
-//        else if (arg == "-icons")
-//        {
-//            cfg.drawIcons = true;
-//        }
-//        else if (arg.startsWith("-stylesPath="))
-//        {
-//            auto path = arg.mid(strlen("-stylesPath="));
-//            QDir dir(path);
-//            if (!dir.exists())
-//            {
-//                error = "Style directory '" + path + "' does not exist";
-//                return false;
-//            }
-//
-//            Utilities::findFiles(dir, QStringList() << "*.render.xml", cfg.styleFiles);
-//        }
-//        else if (arg.startsWith("-style="))
-//        {
-//            cfg.styleName = arg.mid(strlen("-style="));
-//        }
-//        else if (arg.startsWith("-obfsDir="))
-//        {
-//            QDir obfRoot(arg.mid(strlen("-obfsDir=")));
-//            if (!obfRoot.exists())
-//            {
-//                error = "OBF directory does not exist";
-//                return false;
-//            }
-//            cfg.obfsDir = obfRoot;
-//            wasObfRootSpecified = true;
-//        }
-//        else if (arg.startsWith("-bbox="))
-//        {
-//            auto values = arg.mid(strlen("-bbox=")).split(",");
-//            cfg.bbox.left = values[0].toDouble();
-//            cfg.bbox.top = values[1].toDouble();
-//            cfg.bbox.right = values[2].toDouble();
-//            cfg.bbox.bottom = values[3].toDouble();
-//        }
-//        else if (arg.startsWith("-zoom="))
-//        {
-//            cfg.zoom = static_cast<ZoomLevel>(arg.mid(strlen("-zoom=")).toInt());
-//        }
-//        else if (arg.startsWith("-tileSide="))
-//        {
-//            cfg.tileSide = arg.mid(strlen("-tileSide=")).toInt();
-//        }
-//        else if (arg.startsWith("-density="))
-//        {
-//            cfg.densityFactor = arg.mid(strlen("-density=")).toFloat();
-//        }
-//        else if (arg == "-32bit")
-//        {
-//            cfg.is32bit = true;
-//        }
-//        else if (arg.startsWith("-output="))
-//        {
-//            cfg.output = arg.mid(strlen("-output="));
-//        }
-//    }
-//
-//    if (!cfg.drawMap && !cfg.drawText && !cfg.drawIcons)
-//    {
-//        cfg.drawMap = true;
-//        cfg.drawText = true;
-//        cfg.drawIcons = true;
-//    }
-//
-//    if (!wasObfRootSpecified)
-//        cfg.obfsDir = QDir::current();
-//*/
-//    return true;
-//}
-//
-//#if defined(_UNICODE) || defined(UNICODE)
-//void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg);
-//#else
-//void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg);
-//#endif
-//
-
-//#if defined(_UNICODE) || defined(UNICODE)
+//ined(_UNICODE) || defined(UNICODE)
 //void rasterize(std::wostream &output, const OsmAnd::EyePiece::Configuration& cfg)
 //#else
 //void rasterize(std::ostream &output, const OsmAnd::EyePiece::Configuration& cfg)
@@ -245,8 +136,7 @@
 //    //// Save rendered area
 //    //if (!cfg.output.isEmpty())
 //    //{
-//    //    std::unique_ptr<SkImageEncoder> encoder(CreatePNGImageEncoder());
-//    //    encoder->encodeFile(cfg.output.toLocal8Bit(), renderSurface, 100);
+//    //    
 //    //}
 //
 //    //return;
@@ -282,8 +172,16 @@ bool OsmAndTools::EyePiece::rasterize(std::wostream& output)
 bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 #endif
 {
-    int width = 1024;
-    int height = 1024;
+    if (configuration.outputImageWidth == 0)
+    {
+        output << xT("Output image width can not be 0") << std::endl;
+        return false;
+    }
+    if (configuration.outputImageHeight == 0)
+    {
+        output << xT("Output image width can not be 0") << std::endl;
+        return false;
+    }
 
 #if defined(OSMAND_TARGET_OS_windows)
     // On windows, to create a windowless OpenGL context, a window is needed. Nonsense, totally.
@@ -454,8 +352,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const auto hPBufferARB = wglCreatePbufferARB(
             hTempWindowDC,
             tempWindowPixelFormat,
-            width,
-            height,
+            configuration.outputImageWidth,
+            configuration.outputImageHeight,
             pbufferContextAttribs);
         pBufferHandle = hPBufferARB;
     }
@@ -465,8 +363,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const auto hPBufferEXT = wglCreatePbufferEXT(
             hTempWindowDC,
             tempWindowPixelFormat,
-            width,
-            height,
+            configuration.outputImageWidth,
+            configuration.outputImageHeight,
             pbufferContextAttribs);
         pBufferHandle = hPBufferEXT;
     }
@@ -638,14 +536,35 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     output << "OpenGL version " << glVersion << " [" << glVersionString << "]" << std::endl;
 
     //////////////////////////////////////////////////////////////////////////
-    glClearColor(1.0f, 1.0f, 0.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glVerifyResult(output);
     glClear(GL_COLOR_BUFFER_BIT);
     glVerifyResult(output);
-    std::vector<std::uint8_t> data(width*height * 4);
-    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, &data[0]);
-    glVerifyResult(output);
     //////////////////////////////////////////////////////////////////////////
+
+    // Read image from render-target
+    SkBitmap outputBitmap;
+    outputBitmap.setConfig(SkBitmap::kARGB_8888_Config, configuration.outputImageWidth, configuration.outputImageHeight);
+    outputBitmap.allocPixels();
+    glReadPixels(0, 0, configuration.outputImageWidth, configuration.outputImageHeight, GL_RGBA, GL_UNSIGNED_BYTE, outputBitmap.getPixels());
+    glVerifyResult(output);
+
+    // Save bitmap to image (if required)
+    if (!configuration.outputImageFilename.isEmpty())
+    {
+        std::unique_ptr<SkImageEncoder> imageEncoder;
+        switch (configuration.outputImageFormat)
+        {
+            case ImageFormat::PNG:
+                imageEncoder.reset(CreatePNGImageEncoder());
+                break;
+
+            case ImageFormat::JPEG:
+                imageEncoder.reset(CreateJPEGImageEncoder());
+                break;
+        }
+        imageEncoder->encodeFile(configuration.outputImageFilename.toLocal8Bit(), outputBitmap, 100);
+    }
 
 #if defined(OSMAND_TARGET_OS_windows)
     // Finally release the PBuffer
@@ -697,6 +616,9 @@ bool OsmAndTools::EyePiece::rasterize(QString *pLog /*= nullptr*/)
 }
 
 OsmAndTools::EyePiece::Configuration::Configuration()
+    : outputImageWidth(0)
+    , outputImageHeight(0)
+    , outputImageFormat(ImageFormat::PNG)
 {
 }
 
@@ -706,6 +628,143 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
     QString& outError)
 {
     outConfiguration = Configuration();
+
+    for (const auto& arg : commandLineArgs)
+    {
+        if (arg.startsWith(QLatin1String("-outputImageWidth=")))
+        {
+            const auto value = arg.mid(strlen("-outputImageWidth="));
+            bool ok = false;
+            outConfiguration.outputImageWidth = value.toUInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as output image width").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-outputImageHeight=")))
+        {
+            const auto value = arg.mid(strlen("-outputImageHeight="));
+            bool ok = false;
+            outConfiguration.outputImageHeight = value.toUInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as output image height").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-outputImageFormat=")))
+        {
+            const auto value = arg.mid(strlen("-outputImageFormat="));
+            if (value.compare(QLatin1String("png"), Qt::CaseInsensitive) == 0)
+                outConfiguration.outputImageFormat = ImageFormat::PNG;
+            else if (value.compare(QLatin1String("jpeg"), Qt::CaseInsensitive) == 0 || value.compare(QLatin1String("jpg"), Qt::CaseInsensitive) == 0)
+                outConfiguration.outputImageFormat = ImageFormat::JPEG;
+            else
+            {
+                outError = QString("'{0}' can not be parsed as output image format").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-outputImageFilename=")))
+        {
+            outConfiguration.outputImageFilename = arg.mid(strlen("-outputImageFilename="));
+        }
+    }
+
+    //    bool wasObfRootSpecified = false;
+    //
+    //    for (const auto& arg : constOf(cmdLineArgs))
+    //    {
+    //        auto arg = *itArg;
+    //        if (arg == "-verbose")
+    //        {
+    //            cfg.verbose = true;
+    //        }
+    //        else if (arg == "-dumpRules")
+    //        {
+    //            cfg.dumpRules = true;
+    //        }
+    //        else if (arg == "-map")
+    //        {
+    //            cfg.drawMap = true;
+    //        }
+    //        else if (arg == "-text")
+    //        {
+    //            cfg.drawText = true;
+    //        }
+    //        else if (arg == "-icons")
+    //        {
+    //            cfg.drawIcons = true;
+    //        }
+    //        else if (arg.startsWith("-stylesPath="))
+    //        {
+    //            auto path = arg.mid(strlen("-stylesPath="));
+    //            QDir dir(path);
+    //            if (!dir.exists())
+    //            {
+    //                error = "Style directory '" + path + "' does not exist";
+    //                return false;
+    //            }
+    //
+    //            Utilities::findFiles(dir, QStringList() << "*.render.xml", cfg.styleFiles);
+    //        }
+    //        else if (arg.startsWith("-style="))
+    //        {
+    //            cfg.styleName = arg.mid(strlen("-style="));
+    //        }
+    //        else if (arg.startsWith("-obfsDir="))
+    //        {
+    //            QDir obfRoot(arg.mid(strlen("-obfsDir=")));
+    //            if (!obfRoot.exists())
+    //            {
+    //                error = "OBF directory does not exist";
+    //                return false;
+    //            }
+    //            cfg.obfsDir = obfRoot;
+    //            wasObfRootSpecified = true;
+    //        }
+    //        else if (arg.startsWith("-bbox="))
+    //        {
+    //            auto values = arg.mid(strlen("-bbox=")).split(",");
+    //            cfg.bbox.left = values[0].toDouble();
+    //            cfg.bbox.top = values[1].toDouble();
+    //            cfg.bbox.right = values[2].toDouble();
+    //            cfg.bbox.bottom = values[3].toDouble();
+    //        }
+    //        else if (arg.startsWith("-zoom="))
+    //        {
+    //            cfg.zoom = static_cast<ZoomLevel>(arg.mid(strlen("-zoom=")).toInt());
+    //        }
+    //        else if (arg.startsWith("-tileSide="))
+    //        {
+    //            cfg.tileSide = arg.mid(strlen("-tileSide=")).toInt();
+    //        }
+    //        else if (arg.startsWith("-density="))
+    //        {
+    //            cfg.densityFactor = arg.mid(strlen("-density=")).toFloat();
+    //        }
+    //        else if (arg == "-32bit")
+    //        {
+    //            cfg.is32bit = true;
+    //        }
+    //        else if (arg.startsWith("-output="))
+    //        {
+    //            cfg.output = arg.mid(strlen("-output="));
+    //        }
+    //    }
+    //
+    //    if (!cfg.drawMap && !cfg.drawText && !cfg.drawIcons)
+    //    {
+    //        cfg.drawMap = true;
+    //        cfg.drawText = true;
+    //        cfg.drawIcons = true;
+    //    }
+    //
+    //    if (!wasObfRootSpecified)
+    //        cfg.obfsDir = QDir::current();
+    //*/
+    //    return true;
 
     return true;
 }

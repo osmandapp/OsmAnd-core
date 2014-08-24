@@ -20,9 +20,20 @@ namespace OsmAndTools
         Q_DISABLE_COPY_AND_MOVE(EyePiece);
 
     public:
+        enum class ImageFormat
+        {
+            PNG,
+            JPEG
+        };
+
         struct OSMAND_CORE_TOOLS_API Configuration Q_DECL_FINAL
         {
             Configuration();
+
+            unsigned int outputImageWidth;
+            unsigned int outputImageHeight;
+            ImageFormat outputImageFormat;
+            QString outputImageFilename;
 
             static bool parseFromCommandLineArguments(
                 const QStringList& commandLineArgs,
