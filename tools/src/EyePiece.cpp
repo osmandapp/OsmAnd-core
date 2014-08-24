@@ -516,8 +516,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to create pbuffer") << std::endl;
         return false;
     }
-    XFree(framebufferConfigurations);
+    
     output << xT("CONTEXT") << std::endl;
+
     // Create windowless context
     const int windowlessContextAttribs[] = { None };
     const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
@@ -530,6 +531,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to create windowless context") << std::endl;
         return false;
     }
+    XFree(framebufferConfigurations);
 
     // Activate pbuffer and context
     if (!p_glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
