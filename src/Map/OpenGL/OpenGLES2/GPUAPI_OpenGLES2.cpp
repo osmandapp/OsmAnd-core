@@ -204,7 +204,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     _isSupported_EXT_shader_texture_lod = _isSupported_textureLod = extensions.contains("GL_EXT_shader_texture_lod");
     _isSupported_texture_rg = _isSupported_EXT_texture_rg = extensions.contains("GL_EXT_texture_rg");
     _isSupported_EXT_unpack_subimage = extensions.contains("GL_EXT_unpack_subimage");
-    _isSupported_textureStorage2D = _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
+    _isSupported_texture_storage = _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
     _isSupported_APPLE_texture_max_level = extensions.contains("GL_APPLE_texture_max_level");
     _isSupported_texturesNPOT = extensions.contains("GL_OES_texture_npot");
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
