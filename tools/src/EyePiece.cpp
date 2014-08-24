@@ -426,8 +426,12 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     //////////////////////////////////////////////////////////////////////////
     if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfigSGIX"))
         output << xT("test 1 failed;");
+    else
+        output << xT("test 1 success;");
     if (!glXGetProcAddress((const GLubyte *)"glXChooseFBConfig"))
         output << xT("test 2 failed;");
+    else
+        output << xT("test 2 success;");
     //////////////////////////////////////////////////////////////////////////
     int framebufferConfigurationsCount = 0;
     GLXFBConfig* framebufferConfigurations = nullptr;
