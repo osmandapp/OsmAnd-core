@@ -757,6 +757,9 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(con
         assert((type >> 16) == 0);
         return (static_cast<TextureFormat>(format) << 16) | type;
     }
+
+    assert(false);
+    return static_cast<TextureFormat>(GL_INVALID_ENUM);
 }
 
 OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)

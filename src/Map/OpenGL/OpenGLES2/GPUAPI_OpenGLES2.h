@@ -71,7 +71,6 @@ namespace OsmAnd
 
         virtual GLenum validateResult();
 
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile);
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
             GLint xoffset, GLint yoffset, GLsizei width, GLsizei height,
