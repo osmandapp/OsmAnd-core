@@ -478,15 +478,13 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Check that needed API is present
     const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
     const auto p_glXMakeContextCurrent = (PFNGLXMAKECONTEXTCURRENTPROC)glXGetProcAddress((const GLubyte *)"glXMakeContextCurrent");
-    if (!glxExtensions.contains(QLatin1String("GLX_ARB_create_context")) ||
-        !glxExtensions.contains(QLatin1String("GLX_ARB_create_context_profile")) ||
-        p_glXCreateContextAttribsARB == nullptr ||
+    if (p_glXCreateContextAttribsARB == nullptr ||
         p_glXMakeContextCurrent == nullptr)
     {
         XFree(framebufferConfigurations);
         XCloseDisplay(xDisplay);
 
-        output << xT("GLX_ARB_create_context, GLX_ARB_create_context_profile and glXMakeContextCurrent have to be supported") << std::endl;
+        output << xT("glXCreateContextAttribsARB and glXMakeContextCurrent have to be supported") << std::endl;
         return false;
     }
 
