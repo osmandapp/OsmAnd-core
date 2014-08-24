@@ -515,12 +515,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("glXCreateContextAttribsARB and glXMakeContextCurrent have to be supported") << std::endl;
         return false;
     }
-    output << xT("CONTEXT") << std::endl;
 
     // Create windowless context
     const int windowlessContextAttribs[] = {
-        GLX_CONTEXT_MAJOR_VERSION_ARB, 2,
-        GLX_CONTEXT_MINOR_VERSION_ARB, 0,
         None };
     const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfiguration, nullptr, True, windowlessContextAttribs);
     if (windowlessContext == nullptr)
