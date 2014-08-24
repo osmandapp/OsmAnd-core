@@ -393,6 +393,7 @@ void OsmAnd::GPUAPI_OpenGL2plus::allocateTexture2D(GLenum target, GLsizei levels
 
         glTexStorage2D(target, levels, textureFormat, width, height);
         GL_CHECK_RESULT;
+        return;
     }
 
     // Fallback to dumb allocation
