@@ -411,7 +411,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
 
     // Query available framebuffer configurations
-    int framebufferConfigurationAttribs[] = {
+    const int framebufferConfigurationAttribs[] = {
         GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
         GLX_RENDER_TYPE, GLX_RGBA_BIT,
         GLX_RED_SIZE, 8,
@@ -448,7 +448,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Create windowless context
-    int windowlessContextAttribs[] = { None };
+    const int windowlessContextAttribs[] = { None };
     const auto windowlessContext = glXCreateContextAttribsARB(xDisplay, framebufferConfigurations[0], 0, True, windowlessContextAttribs);
     if (windowlessContext == nullptr)
     {
@@ -460,9 +460,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Create pbuffer
-    int pbufferAttribs[] = {
-        GLX_PBUFFER_WIDTH, configuration.outputImageWidth,
-        GLX_PBUFFER_HEIGHT, configuration.outputImageHeight,
+    const int pbufferAttribs[] = {
+        GLX_PBUFFER_WIDTH, (int)configuration.outputImageWidth,
+        GLX_PBUFFER_HEIGHT, (int)configuration.outputImageHeight,
         None
     };
     const auto pbuffer = glXCreatePbuffer(xDisplay, framebufferConfigurations[0], pbufferAttribs);
