@@ -410,6 +410,16 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
     output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
 
+    // Check if X contains Render extension
+    int xRenderEventBaseP = 0, xRenderErrorBaseP = 0;
+    if (!XRenderQueryExtension(xDisplay, &xRenderEventBaseP, &xRenderErrorBaseP))
+    {
+        XCloseDisplay(xDisplay);
+
+        output << xT("X server doesn't support Render extension") << std::endl;
+        return false;
+    }
+
     // Query available framebuffer configurations
     int framebufferConfigurationsCount = 0;
     GLXFBConfig* framebufferConfigurations = nullptr;
