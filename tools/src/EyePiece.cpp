@@ -423,11 +423,13 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     int framebufferConfigurationsCount = 0;
     const auto framebufferConfigurations = glXChooseFBConfig(
         xDisplay,
-        XDefaultScreen(xDisplay),
+        DefaultScreen(xDisplay),
         framebufferConfigurationAttribs,
         &framebufferConfigurationsCount);
     if (framebufferConfigurationsCount == 0 || framebufferConfigurations == nullptr)
     {
+        output << xT("0;");
+
         XCloseDisplay(xDisplay);
 
         output << xT("No valid framebuffer configurations available") << std::endl;
