@@ -565,7 +565,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Silence OpenGL errors here, it's inside GLEW, so it's not ours
     (void)glGetError();
 #elif defined(OSMAND_TARGET_OS_macosx)
-    bool coreProfile = false;
+    bool coreProfile = true;
 
     // First select pixel format using attributes
     CGLPixelFormatObj pixelFormat;
@@ -586,10 +586,10 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
         const CGLPixelFormatAttribute pixelFormatAttrins[] = {
             kCGLPFAAccelerated,
-            kCGLPFAPBuffer,
             kCGLPFAColorSize, (CGLPixelFormatAttribute)24,
             kCGLPFAAlphaSize, (CGLPixelFormatAttribute)8,
             kCGLPFADepthSize, (CGLPixelFormatAttribute)16,
+            kCGLPFAOpenGLProfile, (CGLPixelFormatAttribute)(coreProfile ? kCGLOGLPVersion_3_2_Core : kCGLOGLPVersion_Legacy),
             (CGLPixelFormatAttribute)0
         };
         cglError = CGLChoosePixelFormat(pixelFormatAttrins, &pixelFormat, &matchingPixelFormats);
@@ -623,6 +623,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Initialize GLEW
+    if (coreProfile)
+        glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_NO_ERROR)
     {
         CGLSetCurrentContext(NULL);
@@ -636,9 +638,86 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
     // Create PBuffer or Framebuffer, depending on profile
     CGLPBufferObj pbuffer;
+    GLuint framebuffer;
+    GLuint framebufferColorTexture;
+    GLuint framebufferDepthRenderbuffer;
     if (coreProfile)
     {
+        // Create color texture
+        glGenTextures(1, &framebufferColorTexture);
+        glBindTexture(GL_TEXTURE_2D, framebufferColorTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, configuration.outputImageWidth, configuration.outputImageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        if (!glVerifyResult(output))
+        {
+            glDeleteTextures(1, &framebufferColorTexture);
+            CGLSetCurrentContext(NULL);
+            CGLDestroyContext(windowlessContext);
 
+            output << xT("Failed to create color texture for framebuffer") << std::endl;
+            return false;
+        }
+
+        // Create depth renderbuffer
+        glGenRenderbuffers(1, &framebufferDepthRenderbuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, framebufferDepthRenderbuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, configuration.outputImageWidth, configuration.outputImageHeight);
+        if (!glVerifyResult(output))
+        {
+            glDeleteTextures(1, &framebufferColorTexture);
+            glDeleteRenderbuffers(1, &framebufferDepthRenderbuffer);
+            CGLSetCurrentContext(NULL);
+            CGLDestroyContext(windowlessContext);
+
+            output << xT("Failed to create color texture for framebuffer") << std::endl;
+            return false;
+        }
+
+        // Create framebuffer
+        glGenFramebuffers(1, &framebuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, framebufferColorTexture, 0);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, framebufferDepthRenderbuffer);
+        if (!glVerifyResult(output))
+        {
+            glDeleteTextures(1, &framebufferColorTexture);
+            glDeleteRenderbuffers(1, &framebufferDepthRenderbuffer);
+            glDeleteFramebuffers(1, &framebuffer);
+            CGLSetCurrentContext(NULL);
+            CGLDestroyContext(windowlessContext);
+
+            output << xT("Failed to create framebuffer") << std::endl;
+            return false;
+        }
+
+        // Set the list of draw buffers.
+        GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, drawBuffers);
+        if (!glVerifyResult(output))
+        {
+            glDeleteTextures(1, &framebufferColorTexture);
+            glDeleteRenderbuffers(1, &framebufferDepthRenderbuffer);
+            glDeleteFramebuffers(1, &framebuffer);
+            CGLSetCurrentContext(NULL);
+            CGLDestroyContext(windowlessContext);
+
+            output << xT("Failed to set draw-buffer") << std::endl;
+            return false;
+        }
+
+        // Always check that our framebuffer is ok
+        if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            glDeleteTextures(1, &framebufferColorTexture);
+            glDeleteRenderbuffers(1, &framebufferDepthRenderbuffer);
+            glDeleteFramebuffers(1, &framebuffer);
+            CGLSetCurrentContext(NULL);
+            CGLDestroyContext(windowlessContext);
+
+            output << xT("Framebuffer incomlete") << std::endl;
+            return false;
+        }
     }
     else
     {
@@ -745,7 +824,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 #elif defined(OSMAND_TARGET_OS_macosx)
     if (coreProfile)
     {
-
+        glDeleteFramebuffers(1, &framebuffer);
+        glDeleteTextures(1, &framebufferColorTexture);
+        glDeleteRenderbuffers(1, &framebufferDepthRenderbuffer);
     }
     else
     {
