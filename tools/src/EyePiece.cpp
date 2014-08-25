@@ -134,7 +134,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         1,
         PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,
         PFD_TYPE_RGBA,
-        24,
+        32,
         0, 0, 0, 0, 0, 0,
         0,
         0,
@@ -416,9 +416,19 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Get the default screen's GLX extension list
-    const char* glxExtensionsString = glXQueryExtensionsString(xDisplay, DefaultScreen(xDisplay));
+    const auto glxExtensionsString = glXQueryExtensionsString(xDisplay, DefaultScreen(xDisplay));
     const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
     output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
+
+    // GLX client extensions
+    const auto glxClientExtensionsString = glXGetClientString(xDisplay, GLX_EXTENSIONS);
+    const auto glxClientExtensions = QString::fromLatin1(glxClientExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    output << xT("GLX client extensions: ") << QStringToStlString(glxClientExtensions.join(' ')) << std::endl;
+
+    // GLX server extensions
+    const auto glxServerExtensionsString = glXQueryServerString(xDisplay, DefaultScreen(xDisplay), GLX_EXTENSIONS);
+    const auto glxServerExtensions = QString::fromLatin1(glxServerExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    output << xT("GLX server extensions: ") << QStringToStlString(glxServerExtensions.join(' ')) << std::endl;
 
     // Check if X contains Render extension
     int xRenderEventBaseP = 0, xRenderErrorBaseP = 0;
