@@ -515,14 +515,12 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     
     // Check that needed API is present
     const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
-    const auto p_glXMakeContextCurrent = (PFNGLXMAKECONTEXTCURRENTPROC)glXGetProcAddress((const GLubyte *)"glXMakeContextCurrent");
-    if (p_glXCreateContextAttribsARB == nullptr ||
-        p_glXMakeContextCurrent == nullptr)
+    if (p_glXCreateContextAttribsARB == nullptr)
     {
         p_glXDestroyPbuffer(xDisplay, pbuffer);
         XCloseDisplay(xDisplay);
 
-        output << xT("glXCreateContextAttribsARB and glXMakeContextCurrent have to be supported") << std::endl;
+        output << xT("GLX_ARB_create_context/glXCreateContextAttribsARB has to be supported") << std::endl;
         return false;
     }
 
@@ -540,7 +538,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
 
     // Activate pbuffer and context
-    if (!p_glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
+    const auto p_glXMakeContextCurrent = (PFNGLXMAKECONTEXTCURRENTPROC)glXGetProcAddress((const GLubyte *)"glXMakeContextCurrent");
+    if (!p_glXMakeContextCurrent || !p_glXMakeContextCurrent(xDisplay, pbuffer, pbuffer, windowlessContext))
     {
         p_glXDestroyPbuffer(xDisplay, pbuffer);
         glXDestroyContext(xDisplay, windowlessContext);
