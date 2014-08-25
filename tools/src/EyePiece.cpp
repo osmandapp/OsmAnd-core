@@ -13,6 +13,8 @@
 #include <GL/glew.h>
 #if defined(OSMAND_TARGET_OS_macosx)
 #   include <OpenGL/gl.h>
+#   include <OpenGL/CGLTypes.h>
+#   include <OpenGL/CGLCurrent.h>
 #elif defined(OSMAND_TARGET_OS_windows)
 #   include <GL/wglew.h>
 #   include <GL/gl.h>
@@ -561,8 +563,60 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
     // Silence OpenGL errors here, it's inside GLEW, so it's not ours
     (void)glGetError();
+#elif defined(OSMAND_TARGET_OS_macosx)
+    // First select pixel format using attributes
+    const CGLPixelFormatAttribute pixelFormatAttrins[] = {
+        kCGLPFAPBuffer,
+        kCGLPFAAccelerated,
+        kCGLPFAColorSize, (CGLPixelFormatAttribute)24,
+        kCGLPFAAlphaSize, (CGLPixelFormatAttribute)8,
+        kCGLPFADepthSize, (CGLPixelFormatAttribute)16,
+        (CGLPixelFormatAttribute)0
+    };
+    CGLPixelFormatObj pixelFormat;
+    GLint matchingPixelFormats;
+    auto cglError = CGLChoosePixelFormat(attributes, &pixelFormat, &matchingPixelFormats);
+    if (cglError != kCGLNoError)
+    {
+        output << xT("Failed find proper pixel format: ") << CGLErrorString(cglError) << std::endl;
+        return false;
+    }
+
+    // Create context
+    CGLContextObj windowlessContext;
+    cglError = CGLCreateContext(pixelFormat, NULL, &windowlessContext);
+    if (cglError != kCGLNoError)
+    {
+        CGLDestroyPixelFormat(pixelFormat);
+
+        output << xT("Failed to create windowless context: ") << CGLErrorString(cglError) << std::endl;
+        return false;
+    }
+
+    // Activate context
+    cglError = CGLSetCurrentContext(windowlessContext);
+    if (cglError != kCGLNoError)
+    {
+        CGLDestroyPixelFormat(pixelFormat);
+        CGLDestroyContext(windowlessContext);
+
+        output << xT("Failed to activate windowless context: ") << CGLErrorString(cglError) << std::endl;
+        return false;
+    }
+
+    // Initialize GLEW
+    if (glewInit() != GLEW_NO_ERROR)
+    {
+        p_glXDestroyPbuffer(xDisplay, pbuffer);
+        glXDestroyContext(xDisplay, windowlessContext);
+        XCloseDisplay(xDisplay);
+
+        output << xT("Failed to initialize GLEW") << std::endl;
+        return false;
+    }
+    // Silence OpenGL errors here, it's inside GLEW, so it's not ours
+    (void)glGetError();
 #else
-    //TODO: support MacOSX http://renderingpipeline.com/2012/05/windowless-opengl-on-macos-x/
     output << xT("Operating system not supported") << std::endl;
     return false;
 #endif
@@ -627,6 +681,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     glXDestroyPbuffer(xDisplay, pbuffer);
     glXDestroyContext(xDisplay, windowlessContext);
     XCloseDisplay(xDisplay);
+#elif defined(OSMAND_TARGET_OS_macosx)
+    CGLSetCurrentContext(NULL);
+    CGLDestroyContext(windowlessContext);
 #endif
 
     return true;
