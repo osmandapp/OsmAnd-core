@@ -534,8 +534,13 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     }
     
     // Check that needed API is present
+    //NOTE: according to https://www.opengl.org/registry/specs/ARB/glx_create_context.txt if GLX_ARB_create_context is present,
+    //NOTE: it's safe to use this method. But, on several particular configurations, glXCreateContextAttribsARB returns proper address
+    //NOTE: and GLX_ARB_create_context is present, but actual call glXCreateContextAttribsARB crashes.
+    //NOTE: Probably this means that GLX supports this extension, but underlying graphics driver has no clue about it.
     const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
-    if (p_glXCreateContextAttribsARB == nullptr)
+    if (p_glXCreateContextAttribsARB == nullptr ||
+        !glxClientExtensions.contains(QLatin1String("GLX_ARB_create_context")))
     {
         p_glXDestroyPbuffer(xDisplay, pbuffer);
         XCloseDisplay(xDisplay);
