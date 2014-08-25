@@ -55,6 +55,7 @@ namespace OsmAnd
         // Resource-requests related:
         const Concurrent::TaskHost::Bridge _taskHostBridge;
         QThreadPool _resourcesRequestWorkersPool;
+        mutable QAtomicInt _resourcesRequestTasksCounter;
         class ResourceRequestTask : public Concurrent::HostedTask
         {
             Q_DISABLE_COPY_AND_MOVE(ResourceRequestTask);
@@ -69,6 +70,7 @@ namespace OsmAnd
                 PostExecuteSignature postExecuteMethod = nullptr);
             virtual ~ResourceRequestTask();
 
+            const MapRendererResourcesManager* const manager;
             const std::shared_ptr<MapRendererBaseResource> requestedResource;
         };
 
@@ -108,7 +110,8 @@ namespace OsmAnd
         // Resources management:
         QSet<TileId> _activeTiles;
         ZoomLevel _activeZoom;
-        bool checkForUpdates() const;
+        bool updatesPresent() const;
+        bool checkForUpdatesAndApply() const;
         void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         void requestNeededTiledResources(const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection, const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
@@ -178,6 +181,7 @@ namespace OsmAnd
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
 
         // Resources management:
+        bool collectionsSnapshotsInvalidated() const;
         std::shared_ptr<const IMapRendererResourcesCollection> getCollectionSnapshot(
             const MapRendererResourceType type,
             const std::shared_ptr<IMapDataProvider>& ofProvider) const;

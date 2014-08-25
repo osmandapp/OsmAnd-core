@@ -714,7 +714,46 @@ bool OsmAnd::MapRendererResourcesManager::validateResourcesOfType(const MapRende
     return atLeastOneMarked;
 }
 
-bool OsmAnd::MapRendererResourcesManager::checkForUpdates() const
+bool OsmAnd::MapRendererResourcesManager::updatesPresent() const
+{
+    bool updatesPresent = false;
+
+    for (const auto& resourcesCollections : constOf(_storageByType))
+    {
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (!resourcesCollection)
+                continue;
+            const auto collectionSnapshot = resourcesCollection->getCollectionSnapshot();
+
+            // Also check if keyed collection has same keys as respective provider
+            if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection::Snapshot>(collectionSnapshot))
+            {
+                std::shared_ptr<IMapDataProvider> provider_;
+                if (obtainProviderFor(resourcesCollection.get(), provider_))
+                {
+                    const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
+
+                    if (keyedResourcesCollection->getKeys().toSet() != provider->getProvidedDataKeys().toSet())
+                        updatesPresent = true;
+                }
+            }
+
+            // Check if any resource has applied updates
+            collectionSnapshot->forEachResourceExecute(
+                [&updatesPresent]
+                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
+                {
+                    if (entry->updatesPresent())
+                        updatesPresent = true;
+                });
+        }
+    }
+
+    return updatesPresent;
+}
+
+bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply() const
 {
     bool updatesApplied = false;
     bool updatesPresent = false;
@@ -745,7 +784,7 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdates() const
                 [&updatesApplied]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
                 {
-                    if (entry->checkForUpdates())
+                    if (entry->checkForUpdatesAndApply())
                         updatesApplied = true;
                 });
         }
@@ -1302,6 +1341,28 @@ bool OsmAnd::MapRendererResourcesManager::updateCollectionsSnapshots() const
     return allSuccessful;
 }
 
+bool OsmAnd::MapRendererResourcesManager::collectionsSnapshotsInvalidated() const
+{
+    bool atLeastOneInvalidated = false;
+
+    for (const auto& binding : constOf(_bindings))
+    {
+        for (const auto& collection : constOf(binding.providersToCollections))
+        {
+            if (collection->collectionSnapshotInvalidated())
+            {
+                atLeastOneInvalidated = true;
+                break;
+            }
+        }
+
+        if (atLeastOneInvalidated)
+            break;
+    }
+
+    return atLeastOneInvalidated;
+}
+
 std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererResourcesManager::getCollectionSnapshot(
     const MapRendererResourceType type,
     const std::shared_ptr<IMapDataProvider>& ofProvider) const
@@ -1399,12 +1460,18 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
 
 OsmAnd::MapRendererResourcesManager::ResourceRequestTask::ResourceRequestTask(
     const std::shared_ptr<MapRendererBaseResource>& requestedResource_,
-    const Concurrent::TaskHost::Bridge& bridge, ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod /*= nullptr*/, PostExecuteSignature postExecuteMethod /*= nullptr*/)
-    : HostedTask(bridge, executeMethod, preExecuteMethod, postExecuteMethod)
+    const Concurrent::TaskHost::Bridge& bridge_,
+    ExecuteSignature executeMethod_,
+    PreExecuteSignature preExecuteMethod_ /*= nullptr*/,
+    PostExecuteSignature postExecuteMethod_ /*= nullptr*/)
+    : HostedTask(bridge_, executeMethod_, preExecuteMethod_, postExecuteMethod_)
+    , manager(reinterpret_cast<const MapRendererResourcesManager*>(lockedOwner))
     , requestedResource(requestedResource_)
 {
+    manager->_resourcesRequestTasksCounter.fetchAndAddOrdered(1);
 }
 
 OsmAnd::MapRendererResourcesManager::ResourceRequestTask::~ResourceRequestTask()
 {
+    manager->_resourcesRequestTasksCounter.fetchAndSubOrdered(1);
 }

@@ -21,6 +21,7 @@ namespace OsmAnd
     public:
         virtual ~IUpdatableMapSymbolsGroup();
 
+        virtual bool updatesPresent() = 0;
         virtual bool update() = 0;
     };
 }

@@ -406,7 +406,7 @@ bool OsmAnd::MapRenderer::update()
 bool OsmAnd::MapRenderer::preUpdate()
 {
     // Check for resources updates
-    if (_resources->checkForUpdates())
+    if (_resources->checkForUpdatesAndApply())
         invalidateFrame();
 
     // Check if published map symbols collection have changed
@@ -590,6 +590,7 @@ bool OsmAnd::MapRenderer::postRenderFrame()
 {
     // Decrement "frame-invalidates" counter by amount of processed "frame-invalidates"
     _frameInvalidatesCounter.fetchAndAddOrdered(-_frameInvalidatesToBeProcessed);
+    _frameInvalidatesToBeProcessed = 0;
 
     return true;
 }
@@ -663,6 +664,34 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     _isRenderingInitialized = false;
 
     return true;
+}
+
+bool OsmAnd::MapRenderer::isIdle() const
+{
+    bool isNotIdle = false;
+
+    isNotIdle = isNotIdle || _resources->updatesPresent();
+    {
+        QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
+
+        isNotIdle = isNotIdle || !_pendingPublishMapSymbols.isEmpty();
+    }
+    {
+        QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
+        
+        isNotIdle = isNotIdle || !_pendingUnpublishMapSymbols.isEmpty();
+    }
+    isNotIdle = isNotIdle || (_resourcesGpuSyncRequestsCounter.loadAcquire() > 0);
+    isNotIdle = isNotIdle || (_renderThreadDispatcher.queueSize() > 0);
+    isNotIdle = isNotIdle || (_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0);
+    isNotIdle = isNotIdle || (_currentConfigurationInvalidatedMask.loadAcquire() != 0);
+    isNotIdle = isNotIdle || (_requestedStateUpdatedMask.loadAcquire() != 0);
+    isNotIdle = isNotIdle || (_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0);
+    isNotIdle = isNotIdle || (_resources->_resourcesRequestTasksCounter.loadAcquire() > 0);
+    isNotIdle = isNotIdle || _resources->collectionsSnapshotsInvalidated();
+    isNotIdle = isNotIdle || (_frameInvalidatesCounter.loadAcquire() > 0);
+
+    return !isNotIdle;
 }
 
 bool OsmAnd::MapRenderer::pauseGpuWorkerThread()

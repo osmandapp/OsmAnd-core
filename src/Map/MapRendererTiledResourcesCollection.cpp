@@ -131,6 +131,11 @@ bool OsmAnd::MapRendererTiledResourcesCollection::updateCollectionSnapshot() con
     return true;
 }
 
+bool OsmAnd::MapRendererTiledResourcesCollection::collectionSnapshotInvalidated() const
+{
+    return (_collectionSnapshotInvalidatesCount.loadAcquire() > 0);
+}
+
 std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererTiledResourcesCollection::getCollectionSnapshot() const
 {
     return _snapshot;

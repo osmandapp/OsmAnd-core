@@ -294,6 +294,14 @@ OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::~LinkedMapSymbolsGroup()
         mapMarkerP_->unregisterSymbolsGroup(this);
 }
 
+bool OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::updatesPresent()
+{
+    if (const auto mapMarkerP_ = mapMarkerP.lock())
+        return mapMarkerP_->hasUnappliedChanges();
+
+    return false;
+}
+
 bool OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
 {
     if (const auto mapMarkerP_ = mapMarkerP.lock())

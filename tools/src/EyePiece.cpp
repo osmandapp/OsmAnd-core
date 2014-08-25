@@ -858,8 +858,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         // Repeat processing and rendering until everything is complete
-        //for (;;)
-        for (int i = 0; i < 200; i++)
+        for (;;)
         {
             // Update must be performed before each frame
             if (!mapRenderer->update())
@@ -879,7 +878,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             glFlush();
             glVerifyResult(output);
 
-            Sleep(33);
+            // Check if map renderer finished processing
+            if (mapRenderer->isIdle())
+                break;
         }
 
         // Wait until everything is ready on GPU

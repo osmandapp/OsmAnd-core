@@ -137,6 +137,11 @@ std::shared_ptr<OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRendererKeye
     return _snapshot;
 }
 
+bool OsmAnd::MapRendererKeyedResourcesCollection::collectionSnapshotInvalidated() const
+{
+    return (_collectionSnapshotInvalidatesCount.loadAcquire() > 0);
+}
+
 OsmAnd::MapRendererKeyedResourcesCollection::Snapshot::Snapshot(const MapRendererResourceType type_)
     : type(type_)
 {

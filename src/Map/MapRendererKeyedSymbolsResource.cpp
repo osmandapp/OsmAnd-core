@@ -21,9 +21,22 @@ OsmAnd::MapRendererKeyedSymbolsResource::~MapRendererKeyedSymbolsResource()
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdates()
+bool OsmAnd::MapRendererKeyedSymbolsResource::updatesPresent()
 {
-    bool updatesApplied = MapRendererBaseKeyedResource::checkForUpdates();
+    bool updatesPresent = MapRendererBaseKeyedResource::updatesPresent();
+
+    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
+    {
+        if (updatableMapSymbolGroup->updatesPresent())
+            updatesPresent = true;
+    }
+
+    return updatesPresent;
+}
+
+bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply()
+{
+    bool updatesApplied = MapRendererBaseKeyedResource::checkForUpdatesAndApply();
 
     if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
     {

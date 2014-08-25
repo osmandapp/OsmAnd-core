@@ -58,6 +58,7 @@ namespace OsmAnd
 
             const std::weak_ptr<MapMarker_P> mapMarkerP;
 
+            virtual bool updatesPresent();
             virtual bool update();
 
         friend class OsmAnd::MapMarker_P;

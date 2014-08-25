@@ -30,8 +30,9 @@ namespace OsmAnd
         std::shared_ptr<MapSymbolsGroup> _mapSymbolsGroup;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
 
-        virtual bool checkForUpdates();
-
+        virtual bool updatesPresent();
+        virtual bool checkForUpdatesAndApply();
+        
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();

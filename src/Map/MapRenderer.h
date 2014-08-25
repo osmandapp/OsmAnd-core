@@ -264,6 +264,8 @@ namespace OsmAnd
         virtual bool renderFrame();
         virtual bool releaseRendering();
 
+        virtual bool isIdle() const;
+
         virtual bool pauseGpuWorkerThread();
         virtual bool resumeGpuWorkerThread();
 

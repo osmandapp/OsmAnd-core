@@ -75,7 +75,7 @@ namespace OsmAnd
             QWaitCondition _unlockedCondition;
             volatile bool _ownerIsBeingDestructed;
 
-            TaskHost(const OwnerPtr& owner);
+            TaskHost(const OwnerPtr& ownerPtr);
             void onOwnerIsBeingDestructed();
         public:
             ~TaskHost();
@@ -132,6 +132,8 @@ namespace OsmAnd
         public:
             Dispatcher();
             virtual ~Dispatcher();
+
+            int queueSize() const;
 
             void runAll();
             void runOne();

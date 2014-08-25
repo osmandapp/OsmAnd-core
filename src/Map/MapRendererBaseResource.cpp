@@ -18,7 +18,12 @@ void OsmAnd::MapRendererBaseResource::markAsJunk()
     _isJunk = true;
 }
 
-bool OsmAnd::MapRendererBaseResource::checkForUpdates()
+bool OsmAnd::MapRendererBaseResource::updatesPresent()
+{
+    return false;
+}
+
+bool OsmAnd::MapRendererBaseResource::checkForUpdatesAndApply()
 {
     return false;
 }

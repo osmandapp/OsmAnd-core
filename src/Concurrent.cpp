@@ -4,7 +4,7 @@
 
 #include "Common.h"
 
-OsmAnd::Concurrent::Task::Task( ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod /*= nullptr*/, PostExecuteSignature postExecuteMethod /*= nullptr*/ )
+OsmAnd::Concurrent::Task::Task(ExecuteSignature executeMethod, PreExecuteSignature preExecuteMethod /*= nullptr*/, PostExecuteSignature postExecuteMethod /*= nullptr*/)
     : _cancellationRequestedByTask(false)
     , _cancellationRequestedByExternal(0)
     , preExecute(preExecuteMethod)
@@ -48,8 +48,8 @@ bool OsmAnd::Concurrent::Task::isCancellationRequested() const
     return _cancellationRequestedByTask || _cancellationRequestedByExternal.loadAcquire() > 0;
 }
 
-OsmAnd::Concurrent::TaskHost::TaskHost( const OwnerPtr& owner )
-    : _ownerPtr(owner)
+OsmAnd::Concurrent::TaskHost::TaskHost(const OwnerPtr& ownerPtr_)
+    : _ownerPtr(ownerPtr_)
     , _ownerIsBeingDestructed(false)
 {
 }
@@ -67,19 +67,19 @@ void OsmAnd::Concurrent::TaskHost::onOwnerIsBeingDestructed()
     {
         QReadLocker scopedLocker(&_hostedTasksLock);
 
-        for(const auto& task : constOf(_hostedTasks))
+        for (const auto& task : constOf(_hostedTasks))
             task->requestCancellation();
     }
 
     // Hold until all tasks are released
     {
         QReadLocker scopedLocker(&_hostedTasksLock);
-        while(_hostedTasks.size() != 0)
+        while (_hostedTasks.size() != 0)
             REPEAT_UNTIL(_unlockedCondition.wait(&_hostedTasksLock));
     }
 }
 
-OsmAnd::Concurrent::TaskHost::Bridge::Bridge( const OwnerPtr& owner )
+OsmAnd::Concurrent::TaskHost::Bridge::Bridge(const OwnerPtr& owner)
     : _host(new TaskHost(owner))
 {
 }
@@ -97,7 +97,7 @@ void OsmAnd::Concurrent::TaskHost::Bridge::onOwnerIsBeingDestructed() const
     _host->onOwnerIsBeingDestructed();
 }
 
-OsmAnd::Concurrent::HostedTask::HostedTask( const TaskHost::Bridge& bridge, ExecuteSignature executeMethod_, PreExecuteSignature preExecuteMethod_ /*= nullptr*/, PostExecuteSignature postExecuteMethod_ /*= nullptr*/ )
+OsmAnd::Concurrent::HostedTask::HostedTask(const TaskHost::Bridge& bridge, ExecuteSignature executeMethod_, PreExecuteSignature preExecuteMethod_ /*= nullptr*/, PostExecuteSignature postExecuteMethod_ /*= nullptr*/)
     : Task(executeMethod_, preExecuteMethod_, postExecuteMethod_)
     , _host(bridge._host)
     , _lockedOwner(nullptr)
@@ -138,7 +138,7 @@ void OsmAnd::Concurrent::HostedTask::run()
     Task::run();
 }
 
-OsmAnd::Concurrent::Thread::Thread( ThreadProcedureSignature threadProcedure_ )
+OsmAnd::Concurrent::Thread::Thread(ThreadProcedureSignature threadProcedure_)
     : QThread(nullptr)
     , threadProcedure(threadProcedure_)
 {
@@ -164,9 +164,16 @@ OsmAnd::Concurrent::Dispatcher::~Dispatcher()
 {
 }
 
+int OsmAnd::Concurrent::Dispatcher::queueSize() const
+{
+    QMutexLocker scopedLocker(&_queueMutex);
+
+    return _queue.size();
+}
+
 void OsmAnd::Concurrent::Dispatcher::runAll()
 {
-    for(;;)
+    for (;;)
     {
         Delegate method = nullptr;
         {
@@ -200,7 +207,7 @@ void OsmAnd::Concurrent::Dispatcher::run()
     _shutdownRequested = false;
     _isRunningStandalone = true;
 
-    while(!_shutdownRequested)
+    while (!_shutdownRequested)
         runOne();
 
     _isRunningStandalone = false;

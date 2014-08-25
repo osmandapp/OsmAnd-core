@@ -33,6 +33,7 @@ namespace OsmAnd
         virtual void removeResources(const ResourceFilterCallback filter) = 0;
 
         virtual bool updateCollectionSnapshot() const = 0;
+        virtual bool collectionSnapshotInvalidated() const = 0;
         virtual std::shared_ptr<const IMapRendererResourcesCollection> getCollectionSnapshot() const = 0;
         virtual std::shared_ptr<IMapRendererResourcesCollection> getCollectionSnapshot() = 0;
 
