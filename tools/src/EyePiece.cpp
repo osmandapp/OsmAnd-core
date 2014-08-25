@@ -32,6 +32,19 @@
 #include <SkImageEncoder.h>
 #include <OsmAndCore/restore_internal_warnings.h>
 
+#include <OsmAndCore.h>
+#include <OsmAndCore/ObfsCollection.h>
+#include <OsmAndCore/Utilities.h>
+#include <OsmAndCore/Map/IMapRenderer.h>
+#include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
+#include <OsmAndCore/Map/MapStylesCollection.h>
+#include <OsmAndCore/Map/MapPresentationEnvironment.h>
+#include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/BinaryMapDataProvider.h>
+#include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
+#include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
+#include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider_Software.h>
+
 OsmAndTools::EyePiece::EyePiece(const Configuration& configuration_)
     : configuration(configuration_)
 {
@@ -228,7 +241,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
     const auto wglExtensions = QString::fromLatin1(wglExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
-    output << xT("WGL extensions: ") << QStringToStlString(wglExtensions.join(' ')) << std::endl;
+    if (configuration.verbose)
+        output << xT("WGL extensions: ") << QStringToStlString(wglExtensions.join(' ')) << std::endl;
     
     // Create pbuffer
     int pbufferContextAttribs[] = { 0 };
@@ -421,17 +435,20 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Get the default screen's GLX extension list
     const auto glxExtensionsString = glXQueryExtensionsString(xDisplay, DefaultScreen(xDisplay));
     const auto glxExtensions = QString::fromLatin1(glxExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
-    output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
+    if (configuration.verbose)
+        output << xT("GLX extensions: ") << QStringToStlString(glxExtensions.join(' ')) << std::endl;
 
     // GLX client extensions
     const auto glxClientExtensionsString = glXGetClientString(xDisplay, GLX_EXTENSIONS);
     const auto glxClientExtensions = QString::fromLatin1(glxClientExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
-    output << xT("GLX client extensions: ") << QStringToStlString(glxClientExtensions.join(' ')) << std::endl;
+    if (configuration.verbose)
+        output << xT("GLX client extensions: ") << QStringToStlString(glxClientExtensions.join(' ')) << std::endl;
 
     // GLX server extensions
     const auto glxServerExtensionsString = glXQueryServerString(xDisplay, DefaultScreen(xDisplay), GLX_EXTENSIONS);
     const auto glxServerExtensions = QString::fromLatin1(glxServerExtensionsString).split(QRegExp("\\s+"), QString::SkipEmptyParts);
-    output << xT("GLX server extensions: ") << QStringToStlString(glxServerExtensions.join(' ')) << std::endl;
+    if (configuration.verbose)
+        output << xT("GLX server extensions: ") << QStringToStlString(glxServerExtensions.join(' ')) << std::endl;
 
     // Check if X contains Render extension
     int xRenderEventBaseP = 0, xRenderErrorBaseP = 0;
@@ -599,6 +616,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             return false;
         }
     }
+    if (configuration.verbose)
+        output << xT("Using ") << (coreProfile ? xT("Core") : xT("Legacy") ) << xT(" OpenGL profile") << std::endl;
 
     // Create context
     CGLContextObj windowlessContext;
@@ -761,21 +780,124 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     return false;
 #endif
 
-    // Get OpenGL version
-    const auto glVersionString = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-    if (!glVerifyResult(output))
-        return false;
-    QRegExp glVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
-    glVersionRegExp.indexIn(QString(QLatin1String(glVersionString)));
-    const auto glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
-    output << "OpenGL version " << glVersion << " [" << glVersionString << "]" << std::endl;
+    bool success = true;
+    OsmAnd::InitializeCore();
+    for (;;)
+    {
+        // Find style
+        std::shared_ptr<const OsmAnd::MapStyle> mapStyle;
+        if (!configuration.stylesCollection->obtainBakedStyle(configuration.styleName, mapStyle))
+        {
+            output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "'" << std::endl;
+            break;
+        }
 
-    //////////////////////////////////////////////////////////////////////////
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-    glVerifyResult(output);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glVerifyResult(output);
-    //////////////////////////////////////////////////////////////////////////
+        // Prepare all resources for renderer
+        const std::shared_ptr<OsmAnd::MapPresentationEnvironment> mapPresentationEnvironment(new OsmAnd::MapPresentationEnvironment(
+            mapStyle,
+            configuration.displayDensityFactor,
+            configuration.locale));
+        const std::shared_ptr<OsmAnd::Primitiviser> primitivizer(new OsmAnd::Primitiviser(
+            mapPresentationEnvironment));
+        const std::shared_ptr<OsmAnd::BinaryMapDataProvider> binaryMapDataProvider(new OsmAnd::BinaryMapDataProvider(
+            configuration.obfsCollection));
+        const std::shared_ptr<OsmAnd::BinaryMapPrimitivesProvider> binaryMapPrimitivesProvider(new OsmAnd::BinaryMapPrimitivesProvider(
+            binaryMapDataProvider,
+            primitivizer,
+            configuration.referenceTileSize));
+        const std::shared_ptr<OsmAnd::BinaryMapStaticSymbolsProvider> binaryMapStaticSymbolProvider(new OsmAnd::BinaryMapStaticSymbolsProvider(
+            binaryMapPrimitivesProvider,
+            configuration.referenceTileSize));
+        const std::shared_ptr<OsmAnd::BinaryMapRasterBitmapTileProvider_Software> binaryMapRasterTileProvider(new OsmAnd::BinaryMapRasterBitmapTileProvider_Software(
+            binaryMapPrimitivesProvider));
+        
+        // Create renderer
+        const auto mapRenderer = OsmAnd::createMapRenderer(OsmAnd::MapRendererClass::AtlasMapRenderer_OpenGL2plus);
+        if (!mapRenderer)
+        {
+            output << xT("No supported OsmAnd renderer found") << std::endl;
+
+            success = false;
+            break;
+        }
+
+        // Setup renderer
+        OsmAnd::MapRendererSetupOptions mapRendererSetupOptions;
+        mapRendererSetupOptions.gpuWorkerThreadEnabled = false;
+        if (!mapRenderer->setup(mapRendererSetupOptions))
+        {
+            output << xT("Failed to setup OsmAnd map renderer") << std::endl;
+
+            success = false;
+            break;
+        }
+
+        // Apply configuration to map renderer
+        const auto mapRendererConfiguration = std::static_pointer_cast<OsmAnd::AtlasMapRendererConfiguration>(mapRenderer->getConfiguration());
+        mapRendererConfiguration->referenceTileSizeOnScreenInPixels = configuration.referenceTileSize;
+        mapRenderer->setConfiguration(mapRendererConfiguration);
+        mapRenderer->setTarget(configuration.target31);
+        mapRenderer->setZoom(configuration.zoom);
+        mapRenderer->setAzimuth(configuration.azimuth);
+        mapRenderer->setElevationAngle(configuration.elevationAngle);
+        mapRenderer->setWindowSize(OsmAnd::PointI(configuration.outputImageWidth, configuration.outputImageHeight));
+        mapRenderer->setViewport(OsmAnd::AreaI(0, 0, configuration.outputImageHeight, configuration.outputImageWidth));
+        mapRenderer->setFieldOfView(configuration.fov);
+
+        // Add providers
+        mapRenderer->addSymbolProvider(binaryMapStaticSymbolProvider);
+        mapRenderer->setRasterLayerProvider(OsmAnd::RasterMapLayerId::BaseLayer, binaryMapRasterTileProvider);
+        
+        // Initialize rendering
+        if(!mapRenderer->initializeRendering())
+        {
+            output << xT("Failed to initialize rendering") << std::endl;
+
+            success = false;
+            break;
+        }
+
+        // Repeat processing and rendering until everything is complete
+        //for (;;)
+        for (int i = 0; i < 200; i++)
+        {
+            // Update must be performed before each frame
+            if (!mapRenderer->update())
+                output << xT("Map renderer: update failed") << std::endl;
+
+            // If frame was prepared, it means there's something to render
+            if (mapRenderer->prepareFrame())
+            {
+                const auto ok = mapRenderer->renderFrame();
+                glVerifyResult(output);
+
+                if (!ok)
+                    output << xT("Map renderer: frame rendering failed") << std::endl;
+            }
+
+            // Send everything to GPU
+            glFlush();
+            glVerifyResult(output);
+
+            Sleep(33);
+        }
+
+        // Wait until everything is ready on GPU
+        glFinish();
+        glVerifyResult(output);
+
+        // Release rendering
+        if (!mapRenderer->releaseRendering())
+        {
+            output << xT("Failed to release rendering") << std::endl;
+
+            success = false;
+            break;
+        }
+
+        break;
+    }
+    OsmAnd::ReleaseCore();
 
     // Read image from render-target
     SkBitmap outputBitmap;
@@ -783,6 +905,18 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     outputBitmap.allocPixels();
     glReadPixels(0, 0, configuration.outputImageWidth, configuration.outputImageHeight, GL_RGBA, GL_UNSIGNED_BYTE, outputBitmap.getPixels());
     glVerifyResult(output);
+
+    // Flip image vertically
+    SkBitmap filledOutputBitmap;
+    filledOutputBitmap.setConfig(SkBitmap::kARGB_8888_Config, configuration.outputImageWidth, configuration.outputImageHeight);
+    filledOutputBitmap.allocPixels();
+    const auto rowSizeInBytes = outputBitmap.rowBytes();
+    for (int row = 0; row < configuration.outputImageHeight; row++)
+    {
+        const auto pSrcRow = reinterpret_cast<uint8_t*>(outputBitmap.getPixels()) + (row * rowSizeInBytes);
+        const auto pDstRow = reinterpret_cast<uint8_t*>(filledOutputBitmap.getPixels()) + ((configuration.outputImageHeight - row - 1) * rowSizeInBytes);
+        memcpy(pDstRow, pSrcRow, rowSizeInBytes);
+    }
 
     // Save bitmap to image (if required)
     if (!configuration.outputImageFilename.isEmpty())
@@ -798,7 +932,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                 imageEncoder.reset(CreateJPEGImageEncoder());
                 break;
         }
-        imageEncoder->encodeFile(configuration.outputImageFilename.toLocal8Bit(), outputBitmap, 100);
+        imageEncoder->encodeFile(configuration.outputImageFilename.toLocal8Bit(), filledOutputBitmap, 100);
     }
 
 #if defined(OSMAND_TARGET_OS_windows)
@@ -836,7 +970,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     CGLDestroyContext(windowlessContext);
 #endif
 
-    return true;
+    return success;
 }
 
 bool OsmAndTools::EyePiece::rasterize(QString *pLog /*= nullptr*/)
@@ -866,9 +1000,18 @@ bool OsmAndTools::EyePiece::rasterize(QString *pLog /*= nullptr*/)
 }
 
 OsmAndTools::EyePiece::Configuration::Configuration()
-    : outputImageWidth(0)
+    : styleName(QLatin1String("default"))
+    , outputImageWidth(0)
     , outputImageHeight(0)
     , outputImageFormat(ImageFormat::PNG)
+    , zoom(15.0f)
+    , azimuth(0.0f)
+    , elevationAngle(90.0f)
+    , fov(16.5f)
+    , referenceTileSize(256)
+    , displayDensityFactor(1.0f)
+    , locale(QLatin1String("en"))
+    , verbose(false)
 {
 }
 
@@ -879,9 +1022,81 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 {
     outConfiguration = Configuration();
 
+    const std::shared_ptr<OsmAnd::ObfsCollection> obfsCollection(new OsmAnd::ObfsCollection());
+    outConfiguration.obfsCollection = obfsCollection;
+
+    const std::shared_ptr<OsmAnd::MapStylesCollection> stylesCollection(new OsmAnd::MapStylesCollection());
+    outConfiguration.stylesCollection = stylesCollection;
+
     for (const auto& arg : commandLineArgs)
     {
-        if (arg.startsWith(QLatin1String("-outputImageWidth=")))
+        if (arg.startsWith(QLatin1String("-obfsPath=")))
+        {
+            const auto value = arg.mid(strlen("-obfsPath="));
+            if (!QDir(value).exists())
+            {
+                outError = QString("'{0}' path does not exist").arg(value);
+                return false;
+            }
+
+            obfsCollection->addDirectory(value, false);
+        }
+        else if (arg.startsWith(QLatin1String("-obfsRecursivePath=")))
+        {
+            const auto value = arg.mid(strlen("-obfsRecursivePath="));
+            if (!QDir(value).exists())
+            {
+                outError = QString("'{0}' path does not exist").arg(value);
+                return false;
+            }
+
+            obfsCollection->addDirectory(value, true);
+        }
+        else if (arg.startsWith(QLatin1String("-obfFile=")))
+        {
+            const auto value = arg.mid(strlen("-obfFile="));
+            if (!QFile(value).exists())
+            {
+                outError = QString("'{0}' file does not exist").arg(value);
+                return false;
+            }
+
+            obfsCollection->addFile(value);
+        }
+        else if (arg.startsWith(QLatin1String("-stylesPath=")))
+        {
+            const auto value = arg.mid(strlen("-stylesPath="));
+            if (!QDir(value).exists())
+            {
+                outError = QString("'{0}' path does not exist").arg(value);
+                return false;
+            }
+
+            QFileInfoList styleFilesList;
+            OsmAnd::Utilities::findFiles(QDir(value), QStringList() << QLatin1String("*.render.xml"), styleFilesList, false);
+            for (const auto& styleFile : styleFilesList)
+                stylesCollection->registerStyle(styleFile.absoluteFilePath());
+        }
+        else if (arg.startsWith(QLatin1String("-stylesRecursivePath=")))
+        {
+            const auto value = arg.mid(strlen("-stylesRecursivePath="));
+            if (!QDir(value).exists())
+            {
+                outError = QString("'{0}' path does not exist").arg(value);
+                return false;
+            }
+
+            QFileInfoList styleFilesList;
+            OsmAnd::Utilities::findFiles(QDir(value), QStringList() << QLatin1String("*.render.xml"), styleFilesList, true);
+            for (const auto& styleFile : styleFilesList)
+                stylesCollection->registerStyle(styleFile.absoluteFilePath());
+        }
+        else if (arg.startsWith(QLatin1String("-styleName=")))
+        {
+            const auto value = arg.mid(strlen("-styleName="));
+            outConfiguration.styleName = value;
+        }
+        else if (arg.startsWith(QLatin1String("-outputImageWidth=")))
         {
             const auto value = arg.mid(strlen("-outputImageWidth="));
             bool ok = false;
@@ -903,6 +1118,10 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 return false;
             }
         }
+        else if (arg.startsWith(QLatin1String("-outputImageFilename=")))
+        {
+            outConfiguration.outputImageFilename = arg.mid(strlen("-outputImageFilename="));
+        }
         else if (arg.startsWith(QLatin1String("-outputImageFormat=")))
         {
             const auto value = arg.mid(strlen("-outputImageFormat="));
@@ -916,105 +1135,144 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 return false;
             }
         }
-        else if (arg.startsWith(QLatin1String("-outputImageFilename=")))
+        else if (arg.startsWith(QLatin1String("-latLon=")))
         {
-            outConfiguration.outputImageFilename = arg.mid(strlen("-outputImageFilename="));
+            const auto value = arg.mid(strlen("-latLon="));
+            const auto latLonValues = value.split(QLatin1Char(';'));
+            if (latLonValues.size() != 2)
+            {
+                outError = QString("'{0}' can not be parsed as latitude and longitude").arg(value);
+                return false;
+            }
+
+            OsmAnd::LatLon latLon;
+            bool ok = false;
+            latLon.latitude = latLonValues[0].toDouble(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as latitude").arg(latLonValues[0]);
+                return false;
+            }
+
+            ok = false;
+            latLon.longitude = latLonValues[1].toDouble(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as longitude").arg(latLonValues[1]);
+                return false;
+            }
+
+            outConfiguration.target31 = OsmAnd::Utilities::convertLatLonTo31(latLon);
+        }
+        else if (arg.startsWith(QLatin1String("-target31=")))
+        {
+            const auto value = arg.mid(strlen("-target31="));
+            const auto target31Values = value.split(QLatin1Char(';'));
+            if (target31Values.size() != 2)
+            {
+                outError = QString("'{0}' can not be parsed as target31 point").arg(value);
+                return false;
+            }
+
+            bool ok = false;
+            outConfiguration.target31.x = target31Values[0].toInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as target31.x").arg(target31Values[0]);
+                return false;
+            }
+
+            ok = false;
+            outConfiguration.target31.y = target31Values[1].toInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as target31.y").arg(target31Values[1]);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-zoom=")))
+        {
+            const auto value = arg.mid(strlen("-zoom="));
+
+            bool ok = false;
+            outConfiguration.zoom = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as zoom").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-azimuth=")))
+        {
+            const auto value = arg.mid(strlen("-azimuth="));
+
+            bool ok = false;
+            outConfiguration.azimuth = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as azimuth").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-elevationAngle=")))
+        {
+            const auto value = arg.mid(strlen("-elevationAngle="));
+
+            bool ok = false;
+            outConfiguration.elevationAngle = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as elevation angle").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-fov=")))
+        {
+            const auto value = arg.mid(strlen("-fov="));
+
+            bool ok = false;
+            outConfiguration.fov = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as field-of-view angle").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-referenceTileSize=")))
+        {
+            const auto value = arg.mid(strlen("-referenceTileSize="));
+
+            bool ok = false;
+            outConfiguration.referenceTileSize = value.toUInt(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as reference tile size in pixels").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-displayDensityFactor=")))
+        {
+            const auto value = arg.mid(strlen("-displayDensityFactor="));
+
+            bool ok = false;
+            outConfiguration.displayDensityFactor = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'{0}' can not be parsed as display density factor").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-locale=")))
+        {
+            const auto value = arg.mid(strlen("-locale="));
+
+            outConfiguration.locale = value;
+        }
+        else if (arg == QLatin1String("-verbose"))
+        {
+            outConfiguration.verbose = true;
         }
     }
-
-    //    bool wasObfRootSpecified = false;
-    //
-    //    for (const auto& arg : constOf(cmdLineArgs))
-    //    {
-    //        auto arg = *itArg;
-    //        if (arg == "-verbose")
-    //        {
-    //            cfg.verbose = true;
-    //        }
-    //        else if (arg == "-dumpRules")
-    //        {
-    //            cfg.dumpRules = true;
-    //        }
-    //        else if (arg == "-map")
-    //        {
-    //            cfg.drawMap = true;
-    //        }
-    //        else if (arg == "-text")
-    //        {
-    //            cfg.drawText = true;
-    //        }
-    //        else if (arg == "-icons")
-    //        {
-    //            cfg.drawIcons = true;
-    //        }
-    //        else if (arg.startsWith("-stylesPath="))
-    //        {
-    //            auto path = arg.mid(strlen("-stylesPath="));
-    //            QDir dir(path);
-    //            if (!dir.exists())
-    //            {
-    //                error = "Style directory '" + path + "' does not exist";
-    //                return false;
-    //            }
-    //
-    //            Utilities::findFiles(dir, QStringList() << "*.render.xml", cfg.styleFiles);
-    //        }
-    //        else if (arg.startsWith("-style="))
-    //        {
-    //            cfg.styleName = arg.mid(strlen("-style="));
-    //        }
-    //        else if (arg.startsWith("-obfsDir="))
-    //        {
-    //            QDir obfRoot(arg.mid(strlen("-obfsDir=")));
-    //            if (!obfRoot.exists())
-    //            {
-    //                error = "OBF directory does not exist";
-    //                return false;
-    //            }
-    //            cfg.obfsDir = obfRoot;
-    //            wasObfRootSpecified = true;
-    //        }
-    //        else if (arg.startsWith("-bbox="))
-    //        {
-    //            auto values = arg.mid(strlen("-bbox=")).split(",");
-    //            cfg.bbox.left = values[0].toDouble();
-    //            cfg.bbox.top = values[1].toDouble();
-    //            cfg.bbox.right = values[2].toDouble();
-    //            cfg.bbox.bottom = values[3].toDouble();
-    //        }
-    //        else if (arg.startsWith("-zoom="))
-    //        {
-    //            cfg.zoom = static_cast<ZoomLevel>(arg.mid(strlen("-zoom=")).toInt());
-    //        }
-    //        else if (arg.startsWith("-tileSide="))
-    //        {
-    //            cfg.tileSide = arg.mid(strlen("-tileSide=")).toInt();
-    //        }
-    //        else if (arg.startsWith("-density="))
-    //        {
-    //            cfg.densityFactor = arg.mid(strlen("-density=")).toFloat();
-    //        }
-    //        else if (arg == "-32bit")
-    //        {
-    //            cfg.is32bit = true;
-    //        }
-    //        else if (arg.startsWith("-output="))
-    //        {
-    //            cfg.output = arg.mid(strlen("-output="));
-    //        }
-    //    }
-    //
-    //    if (!cfg.drawMap && !cfg.drawText && !cfg.drawIcons)
-    //    {
-    //        cfg.drawMap = true;
-    //        cfg.drawText = true;
-    //        cfg.drawIcons = true;
-    //    }
-    //
-    //    if (!wasObfRootSpecified)
-    //        cfg.obfsDir = QDir::current();
-    //*/
-    //    return true;
 
     return true;
 }

@@ -1178,28 +1178,41 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(const std
                 return false;
             });
 
-            // If there are unprocessable resources and
+            // If there are unprocessable resources and upload/upload is required
             if (containedUnprocessableResources && needsResourcesUploadOrUnload)
             {
-                QWaitCondition gpuResourcesSyncStageExecutedOnceCondition;
-                QMutex gpuResourcesSyncStageExecutedOnceMutex;
+                if (renderer->hasGpuWorkerThread())
+                {
+                    // This method should not be called from GPU worker thread
+                    assert(!renderer->isInGpuWorkerThread());
 
-                // Dispatcher always runs after GPU resources sync stage
-                renderer->getGpuThreadDispatcher().invokeAsync(
-                    [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
-                    ()
+                    QWaitCondition gpuResourcesSyncStageExecutedOnceCondition;
+                    QMutex gpuResourcesSyncStageExecutedOnceMutex;
+
+                    // Dispatcher always runs after GPU resources sync stage
+                    renderer->getGpuThreadDispatcher().invokeAsync(
+                        [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
+                        ()
+                        {
+                            QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+                            gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
+                        });
+
+                    requestResourcesUploadOrUnload();
+                    needsResourcesUploadOrUnload = false;
+
+                    // Wait up to 250ms for GPU resources sync stage to complete
                     {
                         QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
-                        gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
-                    });
-
-                requestResourcesUploadOrUnload();
-                needsResourcesUploadOrUnload = false;
-
-                // Wait up to 250ms for GPU resources sync stage to complete
+                        gpuResourcesSyncStageExecutedOnceCondition.wait(&gpuResourcesSyncStageExecutedOnceMutex, 250);
+                    }
+                }
+                else
                 {
-                    QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
-                    gpuResourcesSyncStageExecutedOnceCondition.wait(&gpuResourcesSyncStageExecutedOnceMutex, 250);
+                    // If there's no GPU worker thread, this method has to be called from render thread
+                    assert(renderer->isInRenderThread());
+
+                    renderer->processGpuWorker();
                 }
             }
     } while(containedUnprocessableResources);
@@ -1207,7 +1220,10 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(const std
     // Perform final request to upload or unload resources
     if (needsResourcesUploadOrUnload)
     {
-        requestResourcesUploadOrUnload();
+        if (renderer->hasGpuWorkerThread())
+            requestResourcesUploadOrUnload();
+        else
+            renderer->processGpuWorker();
         needsResourcesUploadOrUnload = false;
     }
 

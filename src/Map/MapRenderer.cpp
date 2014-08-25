@@ -75,6 +75,21 @@ bool OsmAnd::MapRenderer::isRenderingInitialized() const
     return _isRenderingInitialized;
 }
 
+bool OsmAnd::MapRenderer::hasGpuWorkerThread() const
+{
+    return (_gpuWorkerThreadId != nullptr);
+}
+
+bool OsmAnd::MapRenderer::isInGpuWorkerThread() const
+{
+    return (_gpuWorkerThreadId == QThread::currentThreadId());
+}
+
+bool OsmAnd::MapRenderer::isInRenderThread() const
+{
+    return (_renderThreadId == QThread::currentThreadId());
+}
+
 OsmAnd::MapRendererSetupOptions OsmAnd::MapRenderer::getSetupOptions() const
 {
     return _setupOptions;
@@ -239,6 +254,20 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
         if (!_gpuWorkerIsAlive)
             break;
 
+        processGpuWorker();
+    }
+
+    // Call epilogue
+    if (_setupOptions.gpuWorkerThreadEpilogue)
+        _setupOptions.gpuWorkerThreadEpilogue(this);
+
+    _gpuWorkerThreadId = nullptr;
+}
+
+void OsmAnd::MapRenderer::processGpuWorker()
+{
+    if (isInGpuWorkerThread())
+    {
         // In every layer we have, upload pending resources to GPU without limiting
         int unprocessedRequests = 0;
         do
@@ -251,16 +280,30 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
                 invalidateFrame();
             unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
         } while (unprocessedRequests > 0);
+    }
+    else if (isInRenderThread())
+    {
+        // To reduce FPS drop, upload not more than 1 resource per frame.
+        const auto requestsToProcess = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(0);
+        bool moreUploadThanLimitAvailable = false;
+        unsigned int resourcesUploaded = 0u;
+        unsigned int resourcesUnloaded = 0u;
+        _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
+        const auto unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
 
-        // Process GPU dispatcher
-        _gpuThreadDispatcher.runAll();
+        // If any resource was uploaded or there is more resources to uploaded, invalidate frame
+        // to use that resource
+        if (resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0 || unprocessedRequests > 0)
+            invalidateFrame();
+    }
+    else
+    {
+        LogPrintf(LogSeverityLevel::Error, "MapRenderer::processGpuWorker() was called from invalid thread");
+        assert(false);
     }
 
-    // Call epilogue
-    if (_setupOptions.gpuWorkerThreadEpilogue)
-        _setupOptions.gpuWorkerThreadEpilogue(this);
-
-    _gpuWorkerThreadId = nullptr;
+    // Process GPU dispatcher
+    _gpuThreadDispatcher.runAll();
 }
 
 bool OsmAnd::MapRenderer::initializeRendering()
@@ -376,24 +419,8 @@ bool OsmAnd::MapRenderer::preUpdate()
 bool OsmAnd::MapRenderer::doUpdate()
 {
     // If GPU worker thread is not enabled, upload resource to GPU from render thread.
-    // To reduce FPS drop, upload not more than 1 resource per frame.
     if (!_gpuWorkerThread)
-    {
-        const auto requestsToProcess = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(0);
-        bool moreUploadThanLimitAvailable = false;
-        unsigned int resourcesUploaded = 0u;
-        unsigned int resourcesUnloaded = 0u;
-        _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
-        const auto unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
-
-        // If any resource was uploaded or there is more resources to uploaded, invalidate frame
-        // to use that resource
-        if (resourcesUploaded > 0 || moreUploadThanLimitAvailable || resourcesUnloaded > 0 || unprocessedRequests > 0)
-            invalidateFrame();
-
-        // Process GPU thread dispatcher
-        _gpuThreadDispatcher.runAll();
-    }
+        processGpuWorker();
 
     // Process render thread dispatcher
     _renderThreadDispatcher.runAll();

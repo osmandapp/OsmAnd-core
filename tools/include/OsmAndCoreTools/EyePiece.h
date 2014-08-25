@@ -11,6 +11,10 @@
 #include <QDir>
 #include <QFile>
 
+#include <OsmAndCore.h>
+#include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/Map/IMapStylesCollection.h>
+
 #include <OsmAndCoreTools.h>
 
 namespace OsmAndTools
@@ -30,10 +34,22 @@ namespace OsmAndTools
         {
             Configuration();
 
+            std::shared_ptr<OsmAnd::IObfsCollection> obfsCollection;
+            std::shared_ptr<OsmAnd::IMapStylesCollection> stylesCollection;
+            QString styleName;
             unsigned int outputImageWidth;
             unsigned int outputImageHeight;
-            ImageFormat outputImageFormat;
             QString outputImageFilename;
+            ImageFormat outputImageFormat;
+            OsmAnd::PointI target31;
+            float zoom;
+            float azimuth;
+            float elevationAngle;
+            float fov;
+            unsigned int referenceTileSize;
+            float displayDensityFactor;
+            QString locale;
+            bool verbose;
 
             static bool parseFromCommandLineArguments(
                 const QStringList& commandLineArgs,

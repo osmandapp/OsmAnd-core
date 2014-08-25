@@ -126,7 +126,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 
     if (fillEntireArea)
     {
-        assert(foundation != MapFoundationType::Undefined);
+        //assert(foundation != MapFoundationType::Undefined);
 
         const auto& encDecRules = owner->environment->dummyMapSection->encodingDecodingRules;
         const std::shared_ptr<Model::BinaryMapObject> bgMapObject(new Model::BinaryMapObject(owner->environment->dummyMapSection, nullptr));

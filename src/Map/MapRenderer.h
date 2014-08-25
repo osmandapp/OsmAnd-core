@@ -143,6 +143,7 @@ namespace OsmAnd
         QMutex _gpuWorkerThreadPausedMutex;
         QWaitCondition _gpuWorkerThreadPaused;
         void gpuWorkerThreadProcedure();
+        void processGpuWorker();
 
         // General:
         void invalidateFrame();
@@ -167,6 +168,9 @@ namespace OsmAnd
         virtual bool isRenderingInitialized() const;
         const std::unique_ptr<GPUAPI> gpuAPI;
         const MapRendererSetupOptions& setupOptions;
+        bool hasGpuWorkerThread() const;
+        bool isInGpuWorkerThread() const;
+        bool isInRenderThread() const;
 
         // Configuration-related:
         const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
