@@ -1,0 +1,87 @@
+diff -rupN upstream.original/src/glew.c upstream.patched/src/glew.c
+--- upstream.original/src/glew.c	2014-08-11 17:14:56.000000000 +0300
++++ upstream.patched/src/glew.c	2014-08-25 10:39:43.649261800 +0300
+@@ -306,12 +306,28 @@ static GLboolean _glewSearchExtension (c
+ {
+   const GLubyte* p;
+   GLuint len = _glewStrLen((const GLubyte*)name);
+-  p = start;
+-  while (p < end)
++  if (GLEW_VERSION_3_0 && end == NULL)
+   {
+-    GLuint n = _glewStrCLen(p, ' ');
+-    if (len == n && _glewStrSame((const GLubyte*)name, p, n)) return GL_TRUE;
+-    p += n+1;
++    // glGetStringi should have been initialized by now
++    const GLint extensionsCount = (GLint)start;
++
++    GLint extensionsIndex;
++    for (extensionsIndex = 0; extensionsIndex < extensionsCount; extensionsIndex++)
++    {
++        p = glGetStringi(GL_EXTENSIONS, extensionsIndex);
++        GLuint n = _glewStrLen(p);
++        if (len == n && _glewStrSame((const GLubyte*)name, p, n)) return GL_TRUE;
++    }
++  }
++  else
++  {
++    p = start;
++    while (p < end)
++    {
++      GLuint n = _glewStrCLen(p, ' ');
++      if (len == n && _glewStrSame((const GLubyte*)name, p, n)) return GL_TRUE;
++      p += n+1;
++    }
+   }
+   return GL_FALSE;
+ }
+@@ -10055,10 +10071,20 @@ GLboolean GLEWAPIENTRY glewGetExtension
+ {    
+   const GLubyte* start;
+   const GLubyte* end;
+-  start = (const GLubyte*)glGetString(GL_EXTENSIONS);
+-  if (start == 0)
+-    return GL_FALSE;
+-  end = start + _glewStrLen(start);
++  if (GLEW_VERSION_3_0)
++  {
++    GLint extensionsCount = 0;
++    glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount);
++    start = (const GLubyte*)extensionsCount;
++    end = NULL;
++  }
++  else
++  {
++    start = (const GLubyte*)glGetString(GL_EXTENSIONS);
++    if (start == 0)
++      return GL_FALSE;
++    end = start + _glewStrLen(start);
++  }
+   return _glewSearchExtension(name, start, end);
+ }
+ 
+@@ -10116,10 +10142,20 @@ GLenum GLEWAPIENTRY glewContextInit (GLE
+   }
+ 
+   /* query opengl extensions string */
+-  extStart = glGetString(GL_EXTENSIONS);
+-  if (extStart == 0)
+-    extStart = (const GLubyte*)"";
+-  extEnd = extStart + _glewStrLen(extStart);
++  if (GLEW_VERSION_3_0)
++  {
++    GLint extensionsCount = 0;
++    glGetIntegerv(GL_NUM_EXTENSIONS, &extensionsCount);
++    extStart = (const GLubyte*)extensionsCount;
++    extEnd = NULL;
++  }
++  else
++  {
++    extStart = glGetString(GL_EXTENSIONS);
++    if (extStart == 0)
++      extStart = (const GLubyte*)"";
++    extEnd = extStart + _glewStrLen(extStart);
++  }
+ 
+   /* initialize extensions */
+ #ifdef GL_VERSION_1_2
