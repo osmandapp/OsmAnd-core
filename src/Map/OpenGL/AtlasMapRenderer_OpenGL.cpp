@@ -60,8 +60,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
     if (!ok)
         return false;
 
-    //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     GL_CHECK_RESULT;
 
     gpuAPI->glClearDepth_wrapper(1.0f);
