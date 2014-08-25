@@ -13,6 +13,7 @@
 #include <GL/glew.h>
 #if defined(OSMAND_TARGET_OS_macosx)
 #   include <OpenGL/gl.h>
+#   include <OpenGL/OpenGL.h>
 #   include <OpenGL/CGLTypes.h>
 #   include <OpenGL/CGLCurrent.h>
 #elif defined(OSMAND_TARGET_OS_windows)
@@ -564,22 +565,39 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Silence OpenGL errors here, it's inside GLEW, so it's not ours
     (void)glGetError();
 #elif defined(OSMAND_TARGET_OS_macosx)
+    bool coreProfile = false;
+
     // First select pixel format using attributes
+    CGLPixelFormatObj pixelFormat;
+    GLint matchingPixelFormats;
     const CGLPixelFormatAttribute pixelFormatAttrins[] = {
-        kCGLPFAPBuffer,
         kCGLPFAAccelerated,
         kCGLPFAColorSize, (CGLPixelFormatAttribute)24,
         kCGLPFAAlphaSize, (CGLPixelFormatAttribute)8,
         kCGLPFADepthSize, (CGLPixelFormatAttribute)16,
+        kCGLPFAOpenGLProfile, (CGLPixelFormatAttribute)(coreProfile ? kCGLOGLPVersion_3_2_Core : kCGLOGLPVersion_Legacy),
         (CGLPixelFormatAttribute)0
     };
-    CGLPixelFormatObj pixelFormat;
-    GLint matchingPixelFormats;
-    auto cglError = CGLChoosePixelFormat(attributes, &pixelFormat, &matchingPixelFormats);
+    auto cglError = CGLChoosePixelFormat(pixelFormatAttrins, &pixelFormat, &matchingPixelFormats);
     if (cglError != kCGLNoError)
     {
-        output << xT("Failed find proper pixel format: ") << CGLErrorString(cglError) << std::endl;
-        return false;
+        // Failed to find Core profile, fallback to any
+        coreProfile = false;
+
+        const CGLPixelFormatAttribute pixelFormatAttrins[] = {
+            kCGLPFAAccelerated,
+            kCGLPFAPBuffer,
+            kCGLPFAColorSize, (CGLPixelFormatAttribute)24,
+            kCGLPFAAlphaSize, (CGLPixelFormatAttribute)8,
+            kCGLPFADepthSize, (CGLPixelFormatAttribute)16,
+            (CGLPixelFormatAttribute)0
+        };
+        cglError = CGLChoosePixelFormat(pixelFormatAttrins, &pixelFormat, &matchingPixelFormats);
+        if (cglError != kCGLNoError)
+        {
+            output << xT("Failed find proper pixel format: ") << CGLErrorString(cglError) << std::endl;
+            return false;
+        }
     }
 
     // Create context
@@ -592,12 +610,12 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Failed to create windowless context: ") << CGLErrorString(cglError) << std::endl;
         return false;
     }
+    CGLDestroyPixelFormat(pixelFormat);
 
     // Activate context
     cglError = CGLSetCurrentContext(windowlessContext);
     if (cglError != kCGLNoError)
     {
-        CGLDestroyPixelFormat(pixelFormat);
         CGLDestroyContext(windowlessContext);
 
         output << xT("Failed to activate windowless context: ") << CGLErrorString(cglError) << std::endl;
@@ -607,15 +625,58 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Initialize GLEW
     if (glewInit() != GLEW_NO_ERROR)
     {
-        p_glXDestroyPbuffer(xDisplay, pbuffer);
-        glXDestroyContext(xDisplay, windowlessContext);
-        XCloseDisplay(xDisplay);
+        CGLSetCurrentContext(NULL);
+        CGLDestroyContext(windowlessContext);
 
         output << xT("Failed to initialize GLEW") << std::endl;
         return false;
     }
     // Silence OpenGL errors here, it's inside GLEW, so it's not ours
     (void)glGetError();
+
+    // Create PBuffer or Framebuffer, depending on profile
+    CGLPBufferObj pbuffer;
+    if (coreProfile)
+    {
+
+    }
+    else
+    {
+        cglError = CGLCreatePBuffer(configuration.outputImageWidth, configuration.outputImageHeight, GL_TEXTURE_2D, GL_RGBA, 0, &pbuffer);
+        if (cglError != kCGLNoError)
+        {
+            CGLSetCurrentContext(NULL);
+            CGLDestroyContext(windowlessContext);
+
+            output << xT("Failed to create PBuffer: ") << CGLErrorString(cglError) << std::endl;
+            return false;
+        }
+
+        // Get virtual screen
+        GLint virtualScreen = 0;
+        cglError = CGLGetVirtualScreen(windowlessContext, &virtualScreen);
+        if (cglError != kCGLNoError)
+        {
+            CGLReleasePBuffer(pbuffer);
+            CGLSetCurrentContext(NULL);
+            CGLDestroyContext(windowlessContext);
+
+            output << xT("Failed to get virtual screen: ") << CGLErrorString(cglError) << std::endl;
+            return false;
+        }
+
+        // Attach PBuffer to context
+        cglError = CGLSetPBuffer(windowlessContext, pbuffer, 0, 0, virtualScreen);
+        if (cglError != kCGLNoError)
+        {
+            CGLReleasePBuffer(pbuffer);
+            CGLSetCurrentContext(NULL);
+            CGLDestroyContext(windowlessContext);
+
+            output << xT("Failed to attach PBuffer: ") << CGLErrorString(cglError) << std::endl;
+            return false;
+        }
+    }
 #else
     output << xT("Operating system not supported") << std::endl;
     return false;
@@ -682,6 +743,14 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     glXDestroyContext(xDisplay, windowlessContext);
     XCloseDisplay(xDisplay);
 #elif defined(OSMAND_TARGET_OS_macosx)
+    if (coreProfile)
+    {
+
+    }
+    else
+    {
+        CGLReleasePBuffer(pbuffer);
+    }
     CGLSetCurrentContext(NULL);
     CGLDestroyContext(windowlessContext);
 #endif
