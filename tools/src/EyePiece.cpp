@@ -1096,6 +1096,18 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto value = arg.mid(strlen("-styleName="));
             outConfiguration.styleName = value;
         }
+        else if (arg.startsWith(QLatin1String("-styleSetting:")))
+        {
+            const auto settingValue = arg.mid(strlen("-styleSetting:"));
+            const auto settingKeyValue = settingValue.split(QLatin1Char('='));
+            if (settingKeyValue.size() != 2)
+            {
+                outError = QString("'{0}' can not be parsed as style settings key and value").arg(settingValue);
+                return false;
+            }
+
+            outConfiguration.styleSettings[settingKeyValue[0]] = settingKeyValue[1];
+        }
         else if (arg.startsWith(QLatin1String("-outputImageWidth=")))
         {
             const auto value = arg.mid(strlen("-outputImageWidth="));

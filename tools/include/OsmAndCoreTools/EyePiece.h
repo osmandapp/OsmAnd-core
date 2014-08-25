@@ -37,6 +37,7 @@ namespace OsmAndTools
             std::shared_ptr<OsmAnd::IObfsCollection> obfsCollection;
             std::shared_ptr<OsmAnd::IMapStylesCollection> stylesCollection;
             QString styleName;
+            QHash< QString, QString > styleSettings;
             unsigned int outputImageWidth;
             unsigned int outputImageHeight;
             QString outputImageFilename;
