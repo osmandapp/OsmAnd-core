@@ -2,6 +2,19 @@
 
 #include <iomanip>
 
+#include <OsmAndCore.h>
+#include <OsmAndCore/ObfsCollection.h>
+#include <OsmAndCore/Utilities.h>
+#include <OsmAndCore/Map/IMapRenderer.h>
+#include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
+#include <OsmAndCore/Map/MapStylesCollection.h>
+#include <OsmAndCore/Map/MapPresentationEnvironment.h>
+#include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/BinaryMapDataProvider.h>
+#include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
+#include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
+#include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider_Software.h>
+
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #if defined(OSMAND_TARGET_OS_windows)
 #   define WIN32_LEAN_AND_MEAN
@@ -31,19 +44,6 @@
 #include <SkBitmap.h>
 #include <SkImageEncoder.h>
 #include <OsmAndCore/restore_internal_warnings.h>
-
-#include <OsmAndCore.h>
-#include <OsmAndCore/ObfsCollection.h>
-#include <OsmAndCore/Utilities.h>
-#include <OsmAndCore/Map/IMapRenderer.h>
-#include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
-#include <OsmAndCore/Map/MapStylesCollection.h>
-#include <OsmAndCore/Map/MapPresentationEnvironment.h>
-#include <OsmAndCore/Map/Primitiviser.h>
-#include <OsmAndCore/Map/BinaryMapDataProvider.h>
-#include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
-#include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
-#include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider_Software.h>
 
 OsmAndTools::EyePiece::EyePiece(const Configuration& configuration_)
     : configuration(configuration_)
