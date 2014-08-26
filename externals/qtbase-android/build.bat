@@ -111,8 +111,21 @@ if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%" (
 )
 
 set ANDROID_TARGET_ARCH=%targetArch%
-if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%ANDROID_TARGET_ARCH%" (
-	echo Architecture '%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%ANDROID_TARGET_ARCH%' does not exist
+set targetArchIncludePath=""
+if "%targetArch%"=="armeabi" (
+	set targetArchIncludePath=arm
+)
+if "%targetArch%"=="armeabi-v7a" (
+	set targetArchIncludePath=arm
+)
+if "%targetArch%"=="x86" (
+	set targetArchIncludePath=x86
+)
+if "%targetArch%"=="mips" (
+	set targetArchIncludePath=mips
+)
+if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%targetArchIncludePath%" (
+	echo Architecture headers '%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%targetArchIncludePath%' does not exist
 	exit /B 1
 )
 
