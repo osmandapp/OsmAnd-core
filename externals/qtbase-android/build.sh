@@ -7,53 +7,46 @@ if [ -z "$BASH_VERSION" ]; then
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-OSMAND_ARCHITECTURES_SET=($*)
+# Verify input
+targetOS=$1
+compiler=$2
+targetArch=$3
+if [[ "$targetOS" != "android" ]]; then
+	echo "'android' is the only supported target, while '${targetOS}' was specified"
+	exit 1
+fi
+if [[ "$compiler" != "gcc" ]]; then
+	echo "'gcc' is the only supported compilers, while '${compiler}' was specified"
+	exit 1
+fi
+if [[ "$targetArch" != "armeabi" ]] && [[ "$targetArch" != "armeabi-v7a" ]] && [[ "$targetArch" != "x86" ]] && [[ "$targetArch" != "mips" ]]; then
+	echo "'armeabi', 'armeabi-v7a', 'x86', 'mips' are the only supported target architectures, while '${targetArch}' was specified"
+	exit 1
+fi
+echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
 
+# Verify environment
 if [[ -z "$ANDROID_SDK" ]]; then
 	echo "ANDROID_SDK is not set"
 	exit 1
 fi
-if [ ! -d "$ANDROID_SDK" ]; then
-	echo "ANDROID_SDK is set incorrectly"
+if [[ ! -d "$ANDROID_SDK" ]]; then
+	echo "ANDROID_SDK '${ANDROID_SDK}' is set incorrectly"
 	exit 1
 fi
+export ANDROID_SDK_ROOT=$ANDROID_SDK
+
 if [[ -z "$ANDROID_NDK" ]]; then
 	echo "ANDROID_NDK is not set"
 	exit 1
 fi
-if [ ! -d "$ANDROID_NDK" ]; then
-	echo "ANDROID_NDK is set incorrectly"
+if [[ ! -d "$ANDROID_NDK" ]]; then
+	echo "ANDROID_NDK '${ANDROID_NDK}' is set incorrectly"
 	exit 1
 fi
-
-QTBASE_CONFIGURATION=$(echo "
-	-xplatform android-g++ $ANDROID_NDK_TOOLCHAIN
-	-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite
-	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
-	-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
-	-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
-	-v
-" | tr '\n' ' ')
-
-export ANDROID_SDK_ROOT=$ANDROID_SDK
 export ANDROID_NDK_ROOT=$ANDROID_NDK
-pushd $ANDROID_NDK
-if ls toolchains/*-4.8 &> /dev/null; then
-	export ANDROID_NDK_TOOLCHAIN_VERSION=4.8
-elif ls toolchains/*-4.7 &> /dev/null; then
-	export ANDROID_NDK_TOOLCHAIN_VERSION=4.7
-fi
-popd
-if [ -n "$ANDROID_NDK_TOOLCHAIN_VERSION" ]; then
-	echo "Using $ANDROID_NDK_TOOLCHAIN_VERSION toolchain version"
-	ANDROID_NDK_TOOLCHAIN="-android-toolchain-version $ANDROID_NDK_TOOLCHAIN_VERSION"
-else
-	echo "Using auto-detected toolchain version"
-	ANDROID_NDK_TOOLCHAIN=""
-fi
 
 if [[ "$(uname -a)" =~ Linux ]]; then
-	MAKE=make
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/linux-x86_64" ]; then
 		export ANDROID_NDK_HOST=linux-x86_64
 	elif [ -d "$ANDROID_NDK/prebuilt/linux-x86" ]; then
@@ -66,7 +59,6 @@ if [[ "$(uname -a)" =~ Linux ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	fi
 elif [[ "$(uname -a)" =~ Darwin ]]; then
-	MAKE=make
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/darwin-x86_64" ]; then
 		export ANDROID_NDK_HOST=darwin-x86_64
 	elif [ -d "$ANDROID_NDK/prebuilt/darwin-x86" ]; then
@@ -78,42 +70,71 @@ elif [[ "$(uname -a)" =~ Darwin ]]; then
 	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
-elif [[ "$(uname -a)" =~ Cygwin ]]; then
-	echo "Building for Android under Cygwin is not supported, run build.sh from MinGW"
-	exit 1
-elif [[ "$(uname -a)" =~ MINGW ]]; then
-	MAKE=mingw32-make
-	QTBASE_CONFIGURATION="-platform win32-g++ $QTBASE_CONFIGURATION"
-	if [ -d "$ANDROID_NDK/prebuilt/windows-x86_64" ]; then
-		export ANDROID_NDK_HOST=windows-x86_64
-	elif [ -d "$ANDROID_NDK/prebuilt/windows-x86" ]; then
-		export ANDROID_NDK_HOST=windows-x86
-	else
-		export ANDROID_NDK_HOST=windows
-	fi
-
-	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
-		OSMAND_BUILD_CPU_CORES_NUM=$NUMBER_OF_PROCESSORS
-	fi
 else
-	echo "'$(uname -a)' is not recognized"
+	echo "'$(uname -a)' host is not supported"
+	exit 1
+fi
+if [[ -z "$ANDROID_SDK" ]]; then
+	echo "ANDROID_NDK '${ANDROID_NDK}' contains no valid host prebuilt tools"
+	exit 1
+fi
+echo "Using ANDROID_NDK_HOST '${ANDROID_NDK_HOST}'"
+
+export ANDROID_NDK_PLATFORM=android-9
+if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
+	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
 	exit 1
 fi
 
-# Function: makeFlavor(name, arch, platform, configuration)
+export ANDROID_TARGET_ARCH=$targetArch
+if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${ANDROID_TARGET_ARCH}" ]]; then
+	echo "Architecture '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${ANDROID_TARGET_ARCH}' does not exist"
+	exit 1
+fi
+
+if [[ "$compiler" == "gcc" ]]; then
+	export ANDROID_NDK_TOOLCHAIN_VERSION=4.9
+fi
+
+TOOLCHAIN_PATH=""
+if [[ "$targetArch"=="armeabi" ]]; then
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+elif [[ "$targetArch"=="armeabi-v7a" ]]; then
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+elif [[ "$targetArch"=="x86" ]]; then
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/x86-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+elif [[ "$targetArch"=="mips" ]]; then
+	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/mipsel-linux-android-${ANDROID_NDK_TOOLCHAIN_VERSION}"
+fi
+if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
+	echo "Toolchain at '$TOOLCHAIN_PATH' not found"
+	exit 1
+fi
+
+# Prepare configuration
+QTBASE_CONFIGURATION=$(echo "
+	-release -opensource -confirm-license -c++11 -no-accessibility -qt-sql-sqlite
+	-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+	-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+	-no-opengl -no-evdev
+	-v
+" | tr '\n' ' ')
+if [[ "$compiler"=="gcc" ]]; then
+	QTBASE_CONFIGURATION="-xplatform android-g++ ${QTBASE_CONFIGURATION}"
+fi
+
+# Function: makeFlavor(type)
 makeFlavor()
 {
-	local name=$1
-	local arch=$2
-	local platform=$3
-	local configuration=$4
-	
-	local path="$SRCLOC/upstream.patched.$name"
+	local type=$1
+
+	local name="${compiler}-${targetArch}.${type}"
+	local path="$SRCLOC/upstream.patched.${targetOS}.${name}"
 	
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
-		(cd "$path" && ./configure -android-ndk-platform android-$platform -android-arch $arch $configuration)
+		(cd "$path" && ./configure $QTBASE_CONFIGURATION -$type)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-android' for '$name', aborting..."
@@ -132,18 +153,5 @@ makeFlavor()
 	fi
 }
 
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv5 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "gcc-armeabi.static" "armeabi" "8" "$QTBASE_CONFIGURATION"
-fi
-
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ arm ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7 ]] || [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ armv7-neon ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "gcc-armeabi-v7a.static" "armeabi-v7a" "8" "$QTBASE_CONFIGURATION"
-fi
-
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ x86 ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "gcc-x86.static" "x86" "9" "$QTBASE_CONFIGURATION"
-fi
-
-if [[ ${OSMAND_ARCHITECTURES_SET[*]} =~ mips ]] || [[ -z "$OSMAND_ARCHITECTURES_SET" ]]; then
-	makeFlavor "gcc-mips.static" "mips" "9" "$QTBASE_CONFIGURATION"
-fi
+makeFlavor "shared"
+makeFlavor "static"

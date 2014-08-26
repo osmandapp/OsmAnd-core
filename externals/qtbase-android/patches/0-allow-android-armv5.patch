@@ -1,0 +1,12 @@
+--- upstream.original/src/corelib/arch/qatomic_armv5.h	2014-08-26 10:14:29.626713200 +0300
++++ upstream.patched/src/corelib/arch/qatomic_armv5.h	2014-08-26 14:12:30.764221500 +0300
+@@ -69,9 +69,6 @@ QT_END_NAMESPACE
+ #ifdef QT_NO_ARM_EABI
+ # error "Sorry, ARM without EABI is no longer supported"
+ #endif
+-#ifndef Q_OS_LINUX
+-# error "Qt is misconfigured: this ARMv5 implementation is only possible on Linux"
+-#endif
+ 
+ template <int size> struct QBasicAtomicOps: QGenericAtomicOps<QBasicAtomicOps<size> >
+ {
