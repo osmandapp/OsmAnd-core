@@ -542,7 +542,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         // Create windowless context
-        windowlessContext = glXCreateNewContext(xDisplay, framebufferConfiguration, GLX_RGBA_TYPE, 0, True);
+        windowlessContext = p_glXCreateNewContext(xDisplay, framebufferConfiguration, GLX_RGBA_TYPE, 0, True);
     }
     else
     {
