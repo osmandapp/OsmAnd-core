@@ -530,6 +530,18 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     GLXContext windowlessContext = nullptr;
     if (configuration.useLegacyContext)
     {
+        // Check that needed API is present
+        const auto p_glXCreateNewContext = (PFNGLXCREATENEWCONTEXTPROC)glXGetProcAddress((const GLubyte *)"glXCreateNewContext");
+        if (p_glXCreateNewContext == nullptr)
+        {
+            p_glXDestroyPbuffer(xDisplay, pbuffer);
+            XCloseDisplay(xDisplay);
+
+            output << xT("glXCreateNewContext has to be supported") << std::endl;
+            return false;
+        }
+
+        // Create windowless context
         windowlessContext = glXCreateNewContext(xDisplay, framebufferConfiguration, GLX_RGBA_TYPE, 0, True);
     }
     else
