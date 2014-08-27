@@ -76,15 +76,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 #endif
 {
     if (configuration.outputImageWidth == 0)
-    {
-        output << xT("Output image width can not be 0") << std::endl;
         return false;
-    }
     if (configuration.outputImageHeight == 0)
-    {
-        output << xT("Output image width can not be 0") << std::endl;
         return false;
-    }
 
 #if defined(OSMAND_TARGET_OS_windows)
     // On windows, to create a windowless OpenGL context, a window is needed. Nonsense, totally.
@@ -802,6 +796,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             mapStyle,
             configuration.displayDensityFactor,
             configuration.locale));
+        mapPresentationEnvironment->setSettings(configuration.styleSettings);
         const std::shared_ptr<OsmAnd::Primitiviser> primitivizer(new OsmAnd::Primitiviser(
             mapPresentationEnvironment));
         const std::shared_ptr<OsmAnd::BinaryMapDataProvider> binaryMapDataProvider(new OsmAnd::BinaryMapDataProvider(
@@ -1290,6 +1285,23 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         {
             outConfiguration.verbose = true;
         }
+    }
+
+    // Validate
+    if (outConfiguration.styleName.isEmpty())
+    {
+        outError = QLatin1String("'styleName' can not be empty");
+        return false;
+    }
+    if (outConfiguration.outputImageWidth == 0)
+    {
+        outError = QLatin1String("'outputImageWidth' can not be 0");
+        return false;
+    }
+    if (outConfiguration.outputImageHeight == 0)
+    {
+        outError = QLatin1String("'outputImageHeight' can not be 0");
+        return false;
     }
 
     return true;
