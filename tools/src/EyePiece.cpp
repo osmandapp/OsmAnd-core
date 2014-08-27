@@ -900,7 +900,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
             // Check if map renderer finished processing
             if (mapRenderer->isIdle())
+            {
+                if (configuration.verbose)
+                    mapRenderer->dumpResourcesInfo();
                 break;
+            }
         }
 
         // Wait until everything is ready on GPU

@@ -690,6 +690,7 @@ bool OsmAnd::MapRenderer::isIdle() const
     isNotIdle = isNotIdle || (_resources->_resourcesRequestTasksCounter.loadAcquire() > 0);
     isNotIdle = isNotIdle || _resources->collectionsSnapshotsInvalidated();
     isNotIdle = isNotIdle || (_frameInvalidatesCounter.loadAcquire() > 0);
+    isNotIdle = isNotIdle || !_resources->allResourcesAreUploaded();
 
     return !isNotIdle;
 }

@@ -66,7 +66,7 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     {
         auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
         resources.reserve(RasterMapLayersCount);
-        while(resources.size() < RasterMapLayersCount)
+        while (resources.size() < RasterMapLayersCount)
             resources.push_back(qMove(std::shared_ptr<MapRendererTiledResourcesCollection>()));
     }
 
@@ -81,9 +81,9 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
 OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
 {
     // Check all resources are released
-    for(auto& resourcesCollections : _storageByType)
+    for (auto& resourcesCollections : _storageByType)
     {
-        for(const auto& resourcesCollection : constOf(resourcesCollections))
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
         {
             if (!resourcesCollection)
                 continue;
@@ -189,7 +189,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 
         // Clean-up and unbind gone providers and their resources
         auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
-        while(itBindedProvider.hasNext())
+        while (itBindedProvider.hasNext())
         {
             itBindedProvider.next();
 
@@ -235,7 +235,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 
         // Clean-up and unbind gone providers and their resources
         auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
-        while(itBindedProvider.hasNext())
+        while (itBindedProvider.hasNext())
         {
             itBindedProvider.next();
 
@@ -259,7 +259,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 
         // Create new binding and storage
         auto rasterLayerIdx = 0;
-        for(auto itProvider = iteratorOf(constOf(state.rasterLayerProviders)); itProvider; ++itProvider, rasterLayerIdx++)
+        for (auto itProvider = iteratorOf(constOf(state.rasterLayerProviders)); itProvider; ++itProvider, rasterLayerIdx++)
         {
             const auto& provider = *itProvider;
 
@@ -297,7 +297,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 
         // Clean-up and unbind gone providers and their resources
         auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
-        while(itBindedProvider.hasNext())
+        while (itBindedProvider.hasNext())
         {
             itBindedProvider.next();
 
@@ -317,7 +317,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         }
 
         // Create new binding and storage
-        for(const auto& provider : constOf(state.symbolProviders))
+        for (const auto& provider : constOf(state.symbolProviders))
         {
             // If binding already exists, skip creation
             if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapDataProvider>(provider)))
@@ -360,7 +360,7 @@ bool OsmAnd::MapRendererResourcesManager::obtainProviderFor(MapRendererBaseResou
     assert(resourcesRef != nullptr);
 
     const auto& bindings = _bindings[static_cast<int>(resourcesRef->type)];
-    for(const auto& bindingEntry : rangeOf(constOf(bindings.collectionsToProviders)))
+    for (const auto& bindingEntry : rangeOf(constOf(bindings.collectionsToProviders)))
     {
         if (bindingEntry.key().get() != resourcesRef)
             continue;
@@ -433,7 +433,7 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
     // Capture worker thread ID
     _workerThreadId = QThread::currentThreadId();
 
-    while(_workerThreadIsAlive)
+    while (_workerThreadIsAlive)
     {
         // Local copy of active zone
         QSet<TileId> activeTiles;
@@ -460,9 +460,9 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
 
 void OsmAnd::MapRendererResourcesManager::requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
 {
-    for(const auto& resourcesCollections : constOf(_storageByType))
+    for (const auto& resourcesCollections : constOf(_storageByType))
     {
-        for(const auto& resourcesCollection : constOf(resourcesCollections))
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
         {
             if (!resourcesCollection)
                 continue;
@@ -493,7 +493,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(const std:
             {
                 if (resourceType == MapRendererResourceType::RasterBitmapTile)
                     return new MapRendererRasterBitmapTileResource(this, collection, tileId, zoom);
-                else if(resourceType == MapRendererResourceType::ElevationDataTile)
+                else if (resourceType == MapRendererResourceType::ElevationDataTile)
                     return new MapRendererElevationDataTileResource(this, collection, tileId, zoom);
                 else if (resourceType == MapRendererResourceType::Symbols)
                     return new MapRendererTiledSymbolsResource(this, collection, tileId, zoom);
@@ -672,7 +672,7 @@ bool OsmAnd::MapRendererResourcesManager::validateResources()
 
     unsigned int invalidatedResourcesTypesMask = _invalidatedResourcesTypesMask.fetchAndStoreOrdered(0);
     uint32_t typeIndex = 0;
-    while(invalidatedResourcesTypesMask != 0 && typeIndex < MapRendererResourceTypesCount)
+    while (invalidatedResourcesTypesMask != 0 && typeIndex < MapRendererResourceTypesCount)
     {
         if (invalidatedResourcesTypesMask & 0x1)
         {
@@ -696,7 +696,7 @@ bool OsmAnd::MapRendererResourcesManager::validateResourcesOfType(const MapRende
     renderer->onValidateResourcesOfType(type);
 
     bool atLeastOneMarked = false;
-    for(const auto& resourcesCollection : constOf(resourcesCollections))
+    for (const auto& resourcesCollection : constOf(resourcesCollections))
     {
         if (!bindings.collectionsToProviders.contains(resourcesCollection))
             continue;
@@ -979,9 +979,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
     }
 
     // Use aggressive cache cleaning: remove all resources that are not needed
-    for(const auto& resourcesCollections : constOf(_storageByType))
+    for (const auto& resourcesCollections : constOf(_storageByType))
     {
-        for(const auto& resourcesCollection : constOf(resourcesCollections))
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
         {
             // Skip empty entries
             if (!resourcesCollection)
@@ -1212,49 +1212,49 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(const std
                         entry.get(),
                         static_cast<int>(state));
                 }
-                
+
                 containedUnprocessableResources = true;
                 return false;
             });
 
-            // If there are unprocessable resources and upload/upload is required
-            if (containedUnprocessableResources && needsResourcesUploadOrUnload)
+        // If there are unprocessable resources and upload/upload is required
+        if (containedUnprocessableResources && needsResourcesUploadOrUnload)
+        {
+            if (renderer->hasGpuWorkerThread())
             {
-                if (renderer->hasGpuWorkerThread())
+                // This method should not be called from GPU worker thread
+                assert(!renderer->isInGpuWorkerThread());
+
+                QWaitCondition gpuResourcesSyncStageExecutedOnceCondition;
+                QMutex gpuResourcesSyncStageExecutedOnceMutex;
+
+                // Dispatcher always runs after GPU resources sync stage
+                renderer->getGpuThreadDispatcher().invokeAsync(
+                    [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
+                ()
                 {
-                    // This method should not be called from GPU worker thread
-                    assert(!renderer->isInGpuWorkerThread());
+                    QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+                    gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
+                });
 
-                    QWaitCondition gpuResourcesSyncStageExecutedOnceCondition;
-                    QMutex gpuResourcesSyncStageExecutedOnceMutex;
+                requestResourcesUploadOrUnload();
+                needsResourcesUploadOrUnload = false;
 
-                    // Dispatcher always runs after GPU resources sync stage
-                    renderer->getGpuThreadDispatcher().invokeAsync(
-                        [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
-                        ()
-                        {
-                            QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
-                            gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
-                        });
-
-                    requestResourcesUploadOrUnload();
-                    needsResourcesUploadOrUnload = false;
-
-                    // Wait up to 250ms for GPU resources sync stage to complete
-                    {
-                        QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
-                        gpuResourcesSyncStageExecutedOnceCondition.wait(&gpuResourcesSyncStageExecutedOnceMutex, 250);
-                    }
-                }
-                else
+                // Wait up to 250ms for GPU resources sync stage to complete
                 {
-                    // If there's no GPU worker thread, this method has to be called from render thread
-                    assert(renderer->isInRenderThread());
-
-                    renderer->processGpuWorker();
+                    QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+                    gpuResourcesSyncStageExecutedOnceCondition.wait(&gpuResourcesSyncStageExecutedOnceMutex, 250);
                 }
             }
-    } while(containedUnprocessableResources);
+            else
+            {
+                // If there's no GPU worker thread, this method has to be called from render thread
+                assert(renderer->isInRenderThread());
+
+                renderer->processGpuWorker();
+            }
+        }
+    } while (containedUnprocessableResources);
 
     // Perform final request to upload or unload resources
     if (needsResourcesUploadOrUnload)
@@ -1278,9 +1278,9 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
 void OsmAnd::MapRendererResourcesManager::releaseAllResources()
 {
     // Release all resources
-    for(const auto& resourcesCollections : _storageByType)
+    for (const auto& resourcesCollections : _storageByType)
     {
-        for(const auto& resourcesCollection : constOf(resourcesCollections))
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
         {
             if (!resourcesCollection)
                 continue;
@@ -1292,7 +1292,7 @@ void OsmAnd::MapRendererResourcesManager::releaseAllResources()
     _pendingRemovalResourcesCollections.clear();
 
     // Release all bindings
-    for(auto resourceType = 0; resourceType < MapRendererResourceTypesCount; resourceType++)
+    for (auto resourceType = 0; resourceType < MapRendererResourceTypesCount; resourceType++)
     {
         auto& bindings = _bindings[resourceType];
 
@@ -1370,6 +1370,38 @@ std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRender
     return getCollection(type, ofProvider)->getCollectionSnapshot();
 }
 
+bool OsmAnd::MapRendererResourcesManager::allResourcesAreUploaded() const
+{
+    QReadLocker scopedLocker(&_resourcesStoragesLock);
+
+    bool atLeastOneNotUploaded = false;
+
+    for (const auto& resourcesCollections : constOf(_storageByType))
+    {
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (!resourcesCollection)
+                continue;
+
+            resourcesCollection->obtainResources(nullptr,
+                [&atLeastOneNotUploaded]
+                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
+                {
+                    if (entry->getState() != MapRendererResourceState::Uploaded)
+                    {
+                        atLeastOneNotUploaded = true;
+                        cancel = true;
+                        return false;
+                    }
+
+                    return false;
+                });
+        }
+    }
+
+    return !atLeastOneNotUploaded;
+}
+
 void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
 {
     QMap<MapRendererResourceState, QString> resourceStateMap;
@@ -1393,7 +1425,7 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     dump += QLatin1String("--------------------------------------------------------------------------------\n");
 
     dump += QLatin1String("[Tiled] Elevation data:\n");
-    for(const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)]))
+    for (const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)]))
     {
         if (!resources_)
             continue;
@@ -1414,7 +1446,7 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     }
 
     dump += QLatin1String("[Tiled] Raster map:\n");
-    for(const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)]))
+    for (const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)]))
     {
         if (!resources_)
             continue;
@@ -1435,7 +1467,7 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     }
 
     dump += QLatin1String("[Tiled] Symbols:\n");
-    for(const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::Symbols)]))
+    for (const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::Symbols)]))
     {
         if (!resources_)
             continue;
