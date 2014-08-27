@@ -87,16 +87,16 @@ if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
 fi
 
 export ANDROID_TARGET_ARCH=$targetArch
-targetArchIncludePath=""
+targetArchFamily=""
 if [[ "$targetArch"=="armeabi" ]] || [[ "$targetArch"=="armeabi-v7a" ]]; then
-	targetArchIncludeSuffix="arm"
+	targetArchFamily="arm"
 elif [[ "$targetArch"=="x86" ]]; then
-	targetArchIncludeSuffix="x86"
+	targetArchFamily="x86"
 elif [[ "$targetArch"=="mips" ]]; then
-	targetArchIncludeSuffix="mips"
+	targetArchFamily="mips"
 fi
-if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchIncludeSuffix}" ]]; then
-	echo "Architecture headers '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchIncludeSuffix}' does not exist"
+if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}" ]]; then
+	echo "Architecture headers '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}' does not exist"
 	exit 1
 fi
 
