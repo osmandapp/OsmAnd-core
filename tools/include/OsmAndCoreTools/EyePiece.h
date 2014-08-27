@@ -51,6 +51,9 @@ namespace OsmAndTools
             float displayDensityFactor;
             QString locale;
             bool verbose;
+#if defined(OSMAND_TARGET_OS_linux)
+            bool useLegacyContext;
+#endif
 
             static bool parseFromCommandLineArguments(
                 const QStringList& commandLineArgs,

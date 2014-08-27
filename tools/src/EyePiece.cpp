@@ -527,26 +527,34 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         return false;
     }
     
-    // Check that needed API is present
-    //NOTE: according to https://www.opengl.org/registry/specs/ARB/glx_create_context.txt if GLX_ARB_create_context is present,
-    //NOTE: it's safe to use this method. But, on several particular configurations, glXCreateContextAttribsARB returns proper address
-    //NOTE: and GLX_ARB_create_context is present, but actual call glXCreateContextAttribsARB crashes.
-    //NOTE: Probably this means that GLX supports this extension, but underlying graphics driver has no clue about it.
-    const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
-    if (p_glXCreateContextAttribsARB == nullptr ||
-        !glxClientExtensions.contains(QLatin1String("GLX_ARB_create_context")))
+    GLXContext windowlessContext = nullptr;
+    if (configuration.useLegacyContext)
     {
-        p_glXDestroyPbuffer(xDisplay, pbuffer);
-        XCloseDisplay(xDisplay);
-
-        output << xT("GLX_ARB_create_context/glXCreateContextAttribsARB has to be supported") << std::endl;
-        return false;
+        windowlessContext = glXCreateNewContext(xDisplay, framebufferConfiguration, GLX_RGBA_TYPE, 0, True);
     }
+    else
+    {
+        // Check that needed API is present
+        //NOTE: according to https://www.opengl.org/registry/specs/ARB/glx_create_context.txt if GLX_ARB_create_context is present,
+        //NOTE: it's safe to use this method. But, on several particular configurations, glXCreateContextAttribsARB returns proper address
+        //NOTE: and GLX_ARB_create_context is present, but actual call glXCreateContextAttribsARB crashes.
+        //NOTE: Probably this means that GLX supports this extension, but underlying graphics driver has no clue about it.
+        const auto p_glXCreateContextAttribsARB = (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddress((const GLubyte *)"glXCreateContextAttribsARB");
+        if (p_glXCreateContextAttribsARB == nullptr ||
+            !glxClientExtensions.contains(QLatin1String("GLX_ARB_create_context")))
+        {
+            p_glXDestroyPbuffer(xDisplay, pbuffer);
+            XCloseDisplay(xDisplay);
 
-    // Create windowless context
-    const int windowlessContextAttribs[] = {
-        None };
-    const auto windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfiguration, nullptr, True, windowlessContextAttribs);
+            output << xT("GLX_ARB_create_context/glXCreateContextAttribsARB has to be supported") << std::endl;
+            return false;
+        }
+
+        // Create windowless context
+        const int windowlessContextAttribs[] = {
+            None };
+        windowlessContext = p_glXCreateContextAttribsARB(xDisplay, framebufferConfiguration, nullptr, True, windowlessContextAttribs);
+    }
     if (windowlessContext == nullptr)
     {
         p_glXDestroyPbuffer(xDisplay, pbuffer);
@@ -1013,6 +1021,9 @@ OsmAndTools::EyePiece::Configuration::Configuration()
     , displayDensityFactor(1.0f)
     , locale(QLatin1String("en"))
     , verbose(false)
+#if defined(OSMAND_TARGET_OS_linux)
+    , useLegacyContext(false)
+#endif
 {
 }
 
@@ -1285,6 +1296,12 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         {
             outConfiguration.verbose = true;
         }
+#if defined(OSMAND_TARGET_OS_linux)
+        else if (arg == QLatin1String("-useLegacyContext"))
+        {
+            outConfiguration.useLegacyContext = true;
+        }
+#endif
     }
 
     // Validate
