@@ -6,6 +6,10 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SRCLOC/../../../build/utils/functions.sh"
+
+# Cleanup environment
+cleanupEnvironment
 
 # Verify input
 targetOS=$1
