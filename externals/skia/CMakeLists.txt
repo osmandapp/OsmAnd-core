@@ -227,6 +227,36 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 		${PTHREAD_LIBRARY}
 		${FONTCONFIG_LIBRARY}
 	)
+elseif (CMAKE_TARGET_OS STREQUAL "android")
+	file(GLOB src_gpu_gl_android "upstream.patched/src/gpu/gl/android/*")
+	set(target_specific_sources "${target_specific_sources}"
+#		"upstream.patched/src/fonts/SkFontMgr_fontconfig.cpp"
+		"upstream.patched/src/ports/SkDebug_android.cpp"
+		"upstream.patched/src/ports/SkDiscardableMemory_none.cpp"
+		"upstream.patched/src/ports/SkFontConfigInterface_android.cpp"
+		"upstream.patched/src/ports/SkFontConfigParser_android.cpp"
+		#"upstream.patched/src/ports/SkFontHost_fontconfig.cpp"
+		"upstream.patched/src/ports/SkFontHost_FreeType_common.cpp"
+		"upstream.patched/src/ports/SkFontHost_FreeType.cpp"
+		#"upstream.patched/src/ports/SkFontHost_linux.cpp"
+		"upstream.patched/src/ports/SkOSFile_posix.cpp"
+		"upstream.patched/src/ports/SkTime_Unix.cpp"
+		"upstream.patched/src/ports/SkTLS_pthread.cpp"
+		"upstream.patched/src/utils/SkThreadUtils_pthread_linux.cpp"
+		${src_gpu_gl_android}
+	)
+	set(target_specific_definitions_public ${target_specific_definitions_public}
+		-DSK_BUILD_FOR_ANDROID
+		-DANDROID_LARGE_MEMORY_DEVICE
+	)
+	set(target_specific_dependencies ${target_specific_dependencies}
+		freetype2_static
+	)
+	find_library(PTHREAD_LIBRARY pthread)
+	set(target_specific_libraries_public ${target_specific_libraries_public}
+#		freetype2_static
+		${PTHREAD_LIBRARY}
+	)
 endif()
 
 file(GLOB src_core "upstream.patched/src/core/*")
