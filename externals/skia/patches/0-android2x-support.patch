@@ -1,10 +1,8 @@
-diff --git a/src/ports/SkFontConfigParser_android.cpp b/src/ports/SkFontConfigParser_android.cpp
-index 38a6ee6..cc7f32b 100644
---- a/src/ports/SkFontConfigParser_android.cpp
-+++ b/src/ports/SkFontConfigParser_android.cpp
-@@ -267,6 +267,91 @@ void SkFontConfigParser::GetFontFamilies(SkTDArray<FontFamily*> &fontFamilies) {
+--- upstream.original/src/ports/SkFontConfigParser_android.cpp	2014-08-21 13:23:43.261726000 +0300
++++ upstream.patched/src/ports/SkFontConfigParser_android.cpp	2014-08-28 15:06:44.016233000 +0300
+@@ -267,6 +267,89 @@ void SkFontConfigParser::GetFontFamilies
          fallbackFonts[i]->fIsFallbackFont = true;
-         fontFamilies.push_back() = fallbackFonts[i];
+         *fontFamilies.append() = fallbackFonts[i];
      }
 +
 +    //OSMAND{
@@ -65,27 +63,25 @@ index 38a6ee6..cc7f32b 100644
 +            // Marker that we're in the beginning of a new family
 +            if (rec[i].fNames != NULL) {
 +                if(newFontFamily != NULL)
-+                    fontFamilies.push_back() = newFontFamily;
++                    *fontFamilies.append() = newFontFamily;
 +                newFontFamily = new FontFamily();
 +                newFontFamily->order = -1;
 +            }
 +
 +            // Append file name
-+            FontFileInfo* newFileInfo = new FontFileInfo();
-+            newFileInfo->fFileName = rec[i].fFileName;
-+            newFontFamily->fFontFiles.push_back() = newFileInfo;
++            newFontFamily->fFontFiles.push_back().fFileName = rec[i].fFileName;
 +
 +            // Append names
 +            if(rec[i].fNames != NULL) {
 +                const char* const* names = rec[i].fNames;
 +                while (*names) {
-+                    newFontFamily->fNames.push_back() = *names;
++                    newFontFamily->fNames.push_back() = SkString(*names);
 +                    names += 1;
 +                }
 +            }
 +        }
 +        if(newFontFamily != NULL)
-+            fontFamilies.push_back() = newFontFamily;
++            *fontFamilies.append() = newFontFamily;
 +    }
 +    //===============================================================================
 +    // End of addition
