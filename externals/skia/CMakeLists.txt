@@ -254,7 +254,6 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
 		freetype2_static
-		pthread
 	)
 endif()
 
