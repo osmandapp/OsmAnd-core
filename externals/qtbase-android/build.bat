@@ -109,6 +109,7 @@ if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%" (
 	echo Platform '%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%' does not exist
 	exit /B 1
 )
+echo Using ANDROID_NDK_PLATFORM '%ANDROID_NDK_PLATFORM%'
 
 set ANDROID_TARGET_ARCH=%targetArch%
 set targetArchFamily=""
@@ -128,11 +129,13 @@ if not exist "%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%targetArchFam
 	echo Architecture headers '%ANDROID_NDK%\platforms\%ANDROID_NDK_PLATFORM%\arch-%targetArchFamily%' does not exist
 	exit /B 1
 )
+echo Using ANDROID_TARGET_ARCH '%ANDROID_TARGET_ARCH%'
 
 set ANDROID_NDK_TOOLCHAIN_VERSION=0
 if "%compiler%"=="gcc" (
 	set ANDROID_NDK_TOOLCHAIN_VERSION=4.9
 )
+echo Using ANDROID_NDK_TOOLCHAIN_VERSION '%ANDROID_NDK_TOOLCHAIN_VERSION%'
 
 set TOOLCHAIN_PATH=""
 if "%targetArch%"=="armeabi" (
@@ -151,6 +154,7 @@ if not exist "%TOOLCHAIN_PATH%" (
 	echo Toolchain at '%TOOLCHAIN_PATH%' not found
 	exit /B 1
 )
+echo Using toolchain '%TOOLCHAIN_PATH%'
 
 REM Prepare configuration
 set QTBASE_CONFIGURATION=^
@@ -175,10 +179,16 @@ if not "%EXPERIMENTAL_USE_MSVC%"=="0" (
 )
 
 REM Check if we have a build directory (shared)
-if not exist "%~dp0upstream.patched.android.%compiler%-%targetArch%.shared" (
-	mkdir "%~dp0upstream.patched.android.%compiler%-%targetArch%.shared"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.android.%compiler%-%targetArch%.shared" /E /Q
-	(pushd %~dp0upstream.patched.android.%compiler%-%targetArch%.shared && (%SHELL_EXECUTE_COMMAND% "%CONFIGURE_SCRIPT% -shared %QTBASE_CONFIGURATION%" & popd))
+set "SHARED_BUILD_PATH=%~dp0upstream.patched.android.%compiler%-%targetArch%.shared"
+if not exist "%SHARED_BUILD_PATH%" (
+	mkdir "%SHARED_BUILD_PATH%"
+	xcopy "%~dp0upstream.patched" "%SHARED_BUILD_PATH%" /E /Q
+	if "%EXPERIMENTAL_USE_MSVC%"=="0" (
+		pushd %SHARED_BUILD_PATH% && (%SHELL_EXECUTE_COMMAND% "%CONFIGURE_SCRIPT% -shared %QTBASE_CONFIGURATION% -prefix %SHARED_BUILD_PATH:\=/%" & popd)
+	)
+	if not "%EXPERIMENTAL_USE_MSVC%"=="0" (
+		pushd %SHARED_BUILD_PATH% && (%SHELL_EXECUTE_COMMAND% "%CONFIGURE_SCRIPT% -shared %QTBASE_CONFIGURATION% -prefix %SHARED_BUILD_PATH%" & popd)
+	)
 	if %ERRORLEVEL% neq 0 (
 		echo Configure failed with %ERRORLEVEL%
 		exit /B %ERRORLEVEL%
@@ -186,17 +196,23 @@ if not exist "%~dp0upstream.patched.android.%compiler%-%targetArch%.shared" (
 )
 
 REM Perform build (shared)
-(pushd %~dp0upstream.patched.android.%compiler%-%targetArch%.shared && (cmd /C "%MAKE_TOOL%" & popd))
+pushd %SHARED_BUILD_PATH% && (%SHELL_EXECUTE_COMMAND% "%MAKE_TOOL%" & popd)
 if %ERRORLEVEL% neq 0 (
 	echo Build failed with %ERRORLEVEL%
 	exit /B %ERRORLEVEL%
 )
 
 REM Check if we have a build directory (static)
-if not exist "%~dp0upstream.patched.android.%compiler%-%targetArch%.static" (
-	mkdir "%~dp0upstream.patched.android.%compiler%-%targetArch%.static"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.android.%compiler%-%targetArch%.static" /E /Q
-	(pushd %~dp0upstream.patched.android.%compiler%-%targetArch%.static && (%SHELL_EXECUTE_COMMAND% "%CONFIGURE_SCRIPT% -static %QTBASE_CONFIGURATION%" & popd))
+set "STATIC_BUILD_PATH=%~dp0upstream.patched.android.%compiler%-%targetArch%.static"
+if not exist "%STATIC_BUILD_PATH%" (
+	mkdir "%STATIC_BUILD_PATH%"
+	xcopy "%~dp0upstream.patched" "%STATIC_BUILD_PATH%" /E /Q
+	if "%EXPERIMENTAL_USE_MSVC%"=="0" (
+		pushd %STATIC_BUILD_PATH% && (%SHELL_EXECUTE_COMMAND% "%CONFIGURE_SCRIPT% -static %QTBASE_CONFIGURATION% -prefix %STATIC_BUILD_PATH:\=/%" & popd)
+	)
+	if not "%EXPERIMENTAL_USE_MSVC%"=="0" (
+		pushd %STATIC_BUILD_PATH% && (%SHELL_EXECUTE_COMMAND% "%CONFIGURE_SCRIPT% -static %QTBASE_CONFIGURATION% -prefix %STATIC_BUILD_PATH%" & popd)
+	)
 	if %ERRORLEVEL% neq 0 (
 		echo Configure failed with %ERRORLEVEL%
 		exit /B %ERRORLEVEL%
@@ -204,7 +220,7 @@ if not exist "%~dp0upstream.patched.android.%compiler%-%targetArch%.static" (
 )
 
 REM Perform build (static)
-(pushd %~dp0upstream.patched.android.%compiler%-%targetArch%.static && (cmd /C "%MAKE_TOOL%" & popd))
+pushd %STATIC_BUILD_PATH% && (%SHELL_EXECUTE_COMMAND% "%MAKE_TOOL%" & popd)
 if %ERRORLEVEL% neq 0 (
 	echo Build failed with %ERRORLEVEL%
 	exit /B %ERRORLEVEL%

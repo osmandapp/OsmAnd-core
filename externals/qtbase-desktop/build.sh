@@ -23,7 +23,7 @@ makeFlavor()
 	# Configure
 	if [ ! -d "$path" ]; then
 		cp -rpf "$SRCLOC/upstream.patched" "$path"
-		(cd "$path" && ./configure -xplatform $platform $configuration)
+		(cd "$path" && ./configure -xplatform $platform $configuration -prefix $path)
 		retcode=$?
 		if [ $retcode -ne 0 ]; then
 			echo "Failed to configure 'qtbase-desktop' for '$name', aborting..."

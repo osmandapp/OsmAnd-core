@@ -87,10 +87,11 @@ for /f "tokens=9 delims= " %%l in ('cl 2^>^&1') do (
 echo Building for msvc-%envArch%
 
 REM Check if we have a build directory (shared)
-if not exist "%~dp0upstream.patched.windows.msvc-%envArch%.shared" (
-	mkdir "%~dp0upstream.patched.windows.msvc-%envArch%.shared"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.msvc-%envArch%.shared" /E /Q
-	(pushd %~dp0upstream.patched.windows.msvc-%envArch%.shared && (cmd /C "configure.bat -shared %QTBASE_CONFIGURATION%" & popd))
+set "SHARED_BUILD_PATH=%~dp0upstream.patched.windows.msvc-%envArch%.shared"
+if not exist "%SHARED_BUILD_PATH%" (
+	mkdir "%SHARED_BUILD_PATH%"
+	xcopy "%~dp0upstream.patched" "%SHARED_BUILD_PATH%" /E /Q
+	pushd %SHARED_BUILD_PATH% && (cmd /C "configure.bat -shared %QTBASE_CONFIGURATION% -prefix %SHARED_BUILD_PATH%" & popd)
 	if %ERRORLEVEL% neq 0 (
 		echo Configure failed with %ERRORLEVEL%
 		exit /B %ERRORLEVEL%
@@ -98,17 +99,18 @@ if not exist "%~dp0upstream.patched.windows.msvc-%envArch%.shared" (
 )
 
 REM Perform build (shared)
-(pushd %~dp0upstream.patched.windows.msvc-%envArch%.shared && (cmd /C "nmake" & popd))
+pushd %SHARED_BUILD_PATH% && (cmd /C "nmake" & popd)
 if %ERRORLEVEL% neq 0 (
 	echo Build failed with %ERRORLEVEL%
 	exit /B %ERRORLEVEL%
 )
 
 REM Check if we have a build directory (static)
-if not exist "%~dp0upstream.patched.windows.msvc-%envArch%.static" (
-	mkdir "%~dp0upstream.patched.windows.msvc-%envArch%.static"
-	xcopy "%~dp0upstream.patched" "%~dp0upstream.patched.windows.msvc-%envArch%.static" /E /Q
-	(pushd %~dp0upstream.patched.windows.msvc-%envArch%.static && (cmd /C "configure.bat -static %QTBASE_CONFIGURATION%" & popd))
+set "STATIC_BUILD_PATH=%~dp0upstream.patched.windows.msvc-%envArch%.static"
+if not exist "%STATIC_BUILD_PATH%" (
+	mkdir "%STATIC_BUILD_PATH%"
+	xcopy "%~dp0upstream.patched" "%STATIC_BUILD_PATH%" /E /Q
+	pushd %STATIC_BUILD_PATH% && (cmd /C "configure.bat -static %QTBASE_CONFIGURATION% -prefix %STATIC_BUILD_PATH%" & popd)
 	if %ERRORLEVEL% neq 0 (
 		echo Configure failed with %ERRORLEVEL%
 		exit /B %ERRORLEVEL%
@@ -116,7 +118,7 @@ if not exist "%~dp0upstream.patched.windows.msvc-%envArch%.static" (
 )
 
 REM Perform build (static)
-(pushd %~dp0upstream.patched.windows.msvc-%envArch%.static && (cmd /C "nmake" & popd))
+pushd %STATIC_BUILD_PATH% && (cmd /C "nmake" & popd)
 if %ERRORLEVEL% neq 0 (
 	echo Build failed with %ERRORLEVEL%
 	exit /B %ERRORLEVEL%
