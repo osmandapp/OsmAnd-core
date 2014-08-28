@@ -1,7 +1,9 @@
 project(OsmAndCoreJNI)
 
-find_package(Java REQUIRED)
-find_package(JNI REQUIRED)
+if (NOT CMAKE_TARGET_OS STREQUAL "android")
+	find_package(Java REQUIRED)
+	find_package(JNI REQUIRED)
+endif()
 
 set(target_specific_private_includes "")
 set(target_specific_public_libraries "")
@@ -43,12 +45,19 @@ target_compile_definitions(OsmAndCoreJNI
 		-DOSMAND_JNI_EXPORTS
 		-DOSMAND_SWIG
 )
-target_include_directories(OsmAndCoreJNI
-	PRIVATE
-		${JNI_INCLUDE_DIRS}
-		${JAVA_INCLUDE_PATH}
-		${target_specific_private_includes}
-)
+if (CMAKE_TARGET_OS STREQUAL "android")
+	target_include_directories(OsmAndCoreJNI
+		PRIVATE
+			${target_specific_private_includes}
+	)
+else()
+	target_include_directories(OsmAndCoreJNI
+		PRIVATE
+			${JNI_INCLUDE_DIRS}
+			${JAVA_INCLUDE_PATH}
+			${target_specific_private_includes}
+	)
+endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_dependencies(OsmAndCoreJNI
