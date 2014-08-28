@@ -168,7 +168,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     }
 
     // Wait for future referenced shared groups
-    for (auto& futureGroup : constOf(futureReferencedSharedGroupsResources))
+    for (auto& futureGroup : futureReferencedSharedGroupsResources)
     {
         auto groupResources = futureGroup.get();
 
