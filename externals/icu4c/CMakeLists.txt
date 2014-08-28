@@ -28,6 +28,10 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 			-D_CRT_NONSTDC_NO_WARNINGS
 		)
 	endif()
+elseif (CMAKE_TARGET_OS STREQUAL "android")
+	set(target_specific_private_definitions ${target_specific_private_definitions}
+		-DU_HAVE_NL_LANGINFO_CODESET=0
+	)
 endif()
 
 target_compile_definitions(icu4c_static
