@@ -22,7 +22,10 @@ else()
 	include(CheckCXXSourceCompiles) 
 	
 	check_include_file("pthread.h" CPL_MULTIPROC_PTHREAD)
-	check_symbol_exists("PTHREAD_MUTEX_RECURSIVE" "pthread.h" PTHREAD_MUTEX_RECURSIVE)
+	check_symbol_exists("PTHREAD_MUTEX_RECURSIVE" "pthread.h" HAVE_PTHREAD_MUTEX_RECURSIVE)
+	if (NOT HAVE_PTHREAD_MUTEX_RECURSIVE)
+		set(CPL_MULTIPROC_PTHREAD OFF)
+	endif()
 	unset(GDAL_PREFIX)
 	check_include_file("assert.h" HAVE_ASSERT_H)
 	check_function_exists("atoll" HAVE_ATOLL)
@@ -183,11 +186,6 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		)
 	endif()
 else()
-	if (CMAKE_TARGET_OS STREQUAL "android")
-		set(target_specific_private_definitions ${target_specific_private_definitions}
-			-DCPL_MULTIPROC_STUB
-		)
-	endif()
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/port/cpl_vsil_unix_stdio_64.cpp"
 	)

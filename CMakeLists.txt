@@ -128,6 +128,15 @@ if (CMAKE_TARGET_OS STREQUAL "ios" OR
 		${headers_opengles2}
 		${sources_opengles2}
 	)
+
+	if (CMAKE_TARGET_OS STREQUAL "android")
+		find_library(EGL_LIBRARY EGL)
+		find_library(GLESv2_LIBRARY GLESv2)
+		set(target_specific_public_libraries ${target_specific_public_libraries}
+			${EGL_LIBRARY}
+			${GLESv2_LIBRARY}
+		)
+	endif()
 endif()
 
 file(GLOB_RECURSE includes "include/*.h*")
