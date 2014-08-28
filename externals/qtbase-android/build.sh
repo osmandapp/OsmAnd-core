@@ -110,9 +110,7 @@ fi
 echo "Using ANDROID_NDK_TOOLCHAIN_VERSION '${ANDROID_NDK_TOOLCHAIN_VERSION}'"
 
 TOOLCHAIN_PATH=""
-if [[ "$targetArch"=="armeabi" ]]; then
-	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
-elif [[ "$targetArch"=="armeabi-v7a" ]]; then
+if [[ "$targetArch"=="armeabi" ]] || [[ "$targetArch"=="armeabi-v7a" ]]; then
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/arm-linux-androideabi-${ANDROID_NDK_TOOLCHAIN_VERSION}"
 elif [[ "$targetArch"=="x86" ]]; then
 	TOOLCHAIN_PATH="${ANDROID_NDK}/toolchains/x86-${ANDROID_NDK_TOOLCHAIN_VERSION}"
