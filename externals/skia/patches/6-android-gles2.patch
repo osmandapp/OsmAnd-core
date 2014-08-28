@@ -18,7 +18,7 @@ index 312299a..5a33bfc 100644
      functions->fBindBuffer = glBindBuffer;
      functions->fBindTexture = glBindTexture;
 -    functions->fBindVertexArray = glBindVertexArrayOES;
-+    if (extensions.has("GL_OES_vertex_array_object")) {
++    if (extensions->has("GL_OES_vertex_array_object")) {
 +#if GL_OES_vertex_array_object
 +        functions->fBindVertexArray = glBindVertexArrayOES;
 +#else
@@ -33,7 +33,7 @@ index 312299a..5a33bfc 100644
      functions->fDeleteShader = glDeleteShader;
      functions->fDeleteTextures = glDeleteTextures;
 -    functions->fDeleteVertexArrays = glDeleteVertexArraysOES;
-+    if (extensions.has("GL_OES_vertex_array_object")) {
++    if (extensions->has("GL_OES_vertex_array_object")) {
 +#if GL_OES_vertex_array_object
 +        functions->fDeleteVertexArrays = glDeleteVertexArraysOES;
 +#else
@@ -48,7 +48,7 @@ index 312299a..5a33bfc 100644
      functions->fGenerateMipmap = glGenerateMipmap;
      functions->fGenTextures = glGenTextures;
 -    functions->fGenVertexArrays = glGenVertexArraysOES;
-+    if (extensions.has("GL_OES_vertex_array_object")) {
++    if (extensions->has("GL_OES_vertex_array_object")) {
 +#if GL_OES_vertex_array_object
 +        functions->fGenVertexArrays = glGenVertexArraysOES;
 +#else
@@ -62,7 +62,7 @@ index 312299a..5a33bfc 100644
          functions->fTexStorage2D = (GrGLTexStorage2DProc) eglGetProcAddress("glTexStorage2D");
  #endif
      } else {
-+        if (extensions.has("GL_EXT_texture_storage")) {
++        if (extensions->has("GL_EXT_texture_storage")) {
  #if GL_EXT_texture_storage
 -        functions->fTexStorage2D = glTexStorage2DEXT;
 +            functions->fTexStorage2D = glTexStorage2DEXT;
@@ -73,7 +73,7 @@ index 312299a..5a33bfc 100644
 +        }
      }
  
-+    if (extensions.has("GL_EXT_discard_framebuffer")) {
++    if (extensions->has("GL_EXT_discard_framebuffer")) {
  #if GL_EXT_discard_framebuffer
 -    functions->fDiscardFramebuffer = glDiscardFramebufferEXT;
 +        functions->fDiscardFramebuffer = glDiscardFramebufferEXT;
