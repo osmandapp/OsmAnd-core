@@ -8,41 +8,45 @@ local TOOLCHAIN_VERSION = [ os.environ ANDROID_NDK_TOOLCHAIN_VERSION ] ;
 
 using gcc : android
 :
-$(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-g++
+$(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/mipsel-linux-android-g++
 :
-<archiver>$(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/arm-linux-androideabi-ar
+<archiver>$(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST)/bin/mipsel-linux-android-ar
 <compileflags>-fexceptions
 <compileflags>-frtti
 #<compileflags>-Wall
 <compileflags>-fvisibility=hidden
 <compileflags>-fvisibility-inlines-hidden
 <compileflags>-Wno-psabi
-# Configuration taken from $(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/setup.mk
+# Configuration taken from $(NDK)/toolchains/mipsel-linux-android-$(TOOLCHAIN_VERSION)/setup.mk
 <compileflags>-fpic
+<compileflags>-fno-strict-aliasing
+<compileflags>-finline-functions
 <compileflags>-ffunction-sections
 <compileflags>-funwind-tables
-<compileflags>-fstack-protector
+<compileflags>-fmessage-length=0
+<compileflags>-fno-inline-functions-called-once
+<compileflags>-fgcse-after-reload
+<compileflags>-frerun-cse-after-loop
+<compileflags>-frename-registers
 <compileflags>-no-canonical-prefixes
 <compileflags>-std=gnu++0x
 <compileflags>-Wa,--noexecstack
 <compileflags>-DANDROID
 <compileflags>-D__ANDROID__
-<compileflags>-isystem$(NDK)/platforms/$(NDK_PLATFORM)/arch-arm/usr/include
+<compileflags>-isystem$(NDK)/platforms/$(NDK_PLATFORM)/arch-mips/usr/include
 <compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/include
-<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/armeabi/include
+<compileflags>-isystem$(NDK)/sources/cxx-stl/gnu-libstdc++/$(TOOLCHAIN_VERSION)/libs/mips/include
 <linkflags>-no-canonical-prefixes
-# 'Release/ARM' section
+# 'Release/MIPS' section
 <compileflags>-O2
 <compileflags>-g
 <compileflags>-DNDEBUG
 <compileflags>-fomit-frame-pointer
-<compileflags>-fstrict-aliasing
 <compileflags>-funswitch-loops
 <compileflags>-finline-limit=300
-# 'ARMv5' section
-<compileflags>-march=armv5te
-<compileflags>-mtune=xscale
-<compileflags>-msoft-float
 # Various
+<architecture>mips
 <cxxflags>-D_REENTRANT
 ;
+
+option.set keep-going : false ; 

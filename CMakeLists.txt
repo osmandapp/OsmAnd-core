@@ -175,6 +175,7 @@ set(merged_link_libs_public
 	icu4c_static
 	archive_static
 	glm_headers_only
+	boost_static_precompiled
 	${target_specific_public_libraries}
 )
 

@@ -42,6 +42,9 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/libarchive" "core/externals/liba
 # External: glm
 add_subdirectory("${OSMAND_ROOT}/core/externals/glm" "core/externals/glm")
 
+# External: boost
+add_subdirectory("${OSMAND_ROOT}/core/externals/boost" "core/externals/boost")
+
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core")
 

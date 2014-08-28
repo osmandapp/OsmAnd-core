@@ -39,13 +39,14 @@ $(NDK)/toolchains/arm-linux-androideabi-$(TOOLCHAIN_VERSION)/prebuilt/$(NDK_HOST
 <compileflags>-fstrict-aliasing
 <compileflags>-funswitch-loops
 <compileflags>-finline-limit=300
-# 'ARMv7a-neon' section
+# 'ARMv7a' section
 <compileflags>-march=armv7-a
 <compileflags>-mfloat-abi=softfp
-<compileflags>-mfpu=neon
+<compileflags>-mfpu=vfpv3-d16
 <linkflags>-march=armv7-a
 <linkflags>-Wl,--fix-cortex-a8
 # Various
-<architecture>armv7a
 <cxxflags>-D_REENTRANT
 ;
+
+option.set keep-going : false ; 

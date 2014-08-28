@@ -6,7 +6,7 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source "$SRCLOC/../functions.sh"
+source "$SRCLOC/../../../build/utils/functions.sh"
 
-configureExternalFromTarArchive "$SRCLOC" "http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.bz2/download"
-patchExternal "$SRCLOC"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.bz2/download"
+patchUpstream "$SRCLOC"
