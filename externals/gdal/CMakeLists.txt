@@ -183,6 +183,11 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		)
 	endif()
 else()
+	if (CMAKE_TARGET_OS STREQUAL "android")
+		set(target_specific_private_definitions ${target_specific_private_definitions}
+			-DCPL_MULTIPROC_STUB
+		)
+	endif()
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/port/cpl_vsil_unix_stdio_64.cpp"
 	)
