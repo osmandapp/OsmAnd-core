@@ -4,7 +4,7 @@ index 38a6ee6..cc7f32b 100644
 +++ b/src/ports/SkFontConfigParser_android.cpp
 @@ -267,6 +267,91 @@ void SkFontConfigParser::GetFontFamilies(SkTDArray<FontFamily*> &fontFamilies) {
          fallbackFonts[i]->fIsFallbackFont = true;
-         *fontFamilies.append() = fallbackFonts[i];
+         fontFamilies.push_back() = fallbackFonts[i];
      }
 +
 +    //OSMAND{
@@ -65,7 +65,7 @@ index 38a6ee6..cc7f32b 100644
 +            // Marker that we're in the beginning of a new family
 +            if (rec[i].fNames != NULL) {
 +                if(newFontFamily != NULL)
-+                    *fontFamilies.append() = newFontFamily;
++                    fontFamilies.push_back() = newFontFamily;
 +                newFontFamily = new FontFamily();
 +                newFontFamily->order = -1;
 +            }
@@ -73,19 +73,19 @@ index 38a6ee6..cc7f32b 100644
 +            // Append file name
 +            FontFileInfo* newFileInfo = new FontFileInfo();
 +            newFileInfo->fFileName = rec[i].fFileName;
-+            *(newFontFamily->fFontFiles.append()) = newFileInfo;
++            newFontFamily->fFontFiles.push_back() = newFileInfo;
 +
 +            // Append names
 +            if(rec[i].fNames != NULL) {
 +                const char* const* names = rec[i].fNames;
 +                while (*names) {
-+                    *(newFontFamily->fNames.append()) = *names;
++                    newFontFamily->fNames.push_back() = *names;
 +                    names += 1;
 +                }
 +            }
 +        }
 +        if(newFontFamily != NULL)
-+            *fontFamilies.append() = newFontFamily;
++            fontFamilies.push_back() = newFontFamily;
 +    }
 +    //===============================================================================
 +    // End of addition
