@@ -10,11 +10,11 @@ target_include_directories(boost_static_precompiled
 )
 
 if (CMAKE_TARGET_OS STREQUAL "android")
-	set(libs_dir "upstream.patched.${CMAKE_TARGET_OS}.${CMAKE_COMPILER_FAMILY}-${CMAKE_TARGET_CPU_ARCH}.static")
+	set(libs_dir "${CMAKE_CURRENT_LIST_DIR}/upstream.patched.${CMAKE_TARGET_OS}.${CMAKE_COMPILER_FAMILY}-${CMAKE_TARGET_CPU_ARCH}.static/stage/lib")
 	target_link_libraries(boost_static_precompiled
 		INTERFACE
-			"${libs_dir}/stage/lib/libboost_atomic-gcc-mt-1_56.a"
-			"${libs_dir}/stage/lib/libboost_system-gcc-mt-1_56.a"
-			"${libs_dir}/stage/lib/libboost_thread-gcc-mt-1_56.a"
+			"${libs_dir}/libboost_atomic-gcc-mt-1_56.a"
+			"${libs_dir}/libboost_system-gcc-mt-1_56.a"
+			"${libs_dir}/libboost_thread-gcc-mt-1_56.a"
 	)
 endif()
