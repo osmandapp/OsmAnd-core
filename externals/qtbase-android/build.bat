@@ -1,5 +1,12 @@
 @echo off
 
+setlocal EnableDelayedExpansion
+set SRCLOC=%~dp0
+call "%SRCLOC%..\..\..\build\utils\functions.cmd"
+
+REM Cleanup environment
+call :cleanupEnvironment
+
 REM Get and verify arguments
 set targetOS=%1
 set compiler=%2
@@ -34,8 +41,6 @@ if not "%validArch%"=="1" (
 	exit /B 1
 )
 echo Going to build embedded Qt for %targetOS%/%compiler%/%targetArch%
-
-setlocal EnableDelayedExpansion
 
 REM ---EXPERIMENTAL---
 set EXPERIMENTAL_USE_MSVC=0

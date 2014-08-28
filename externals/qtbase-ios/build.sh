@@ -7,6 +7,10 @@ if [ -z "$BASH_VERSION" ]; then
 fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Cleanup environment
+cleanupEnvironment
+
+# Verify input
 targetOS=$1
 compiler=$2
 targetArch=$3
