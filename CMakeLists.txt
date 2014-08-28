@@ -11,22 +11,43 @@ set(target_specific_dependencies "")
 
 # Target specific
 if (CMAKE_TARGET_OS STREQUAL "linux")
+	find_library(dl_LIBRARY dl)
+	find_library(rt_LIBRARY rt)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		dl
-		rt
+		${dl_LIBRARY}
+		${rt_LIBRARY}
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "macosx")
-	find_library(CORESERVICES_LIBRARY CoreServices)
-	find_library(SYSTEMCONFIGURATION_LIBRARY SystemConfiguration)
-	find_library(CFNETWORK_LIBRARY CFNetwork)
-	find_library(SECURITY_LIBRARY Security)
-	find_library(ZLIB_LIBRARY z)
+	find_library(objc_LIBRARY objc)
+	find_library(Cocoa_LIBRARY Cocoa)
+	find_library(CoreServices_LIBRARY CoreServices)
+	find_library(SystemConfiguration_LIBRARY SystemConfiguration)
+	find_library(CFNetwork_LIBRARY CFNetwork)
+	find_library(Security_LIBRARY Security)
+	find_library(z_LIBRARY z)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		"${CORESERVICES_LIBRARY}/CoreServices"
-		"${SYSTEMCONFIGURATION_LIBRARY}/SystemConfiguration"
-		"${CFNETWORK_LIBRARY}/CFNetwork"
-		"${SECURITY_LIBRARY}/Security"
-		${ZLIB_LIBRARY}
+		"${Cocoa_LIBRARY}/Cocoa"
+		"${CoreServices_LIBRARY}/CoreServices"
+		"${SystemConfiguration_LIBRARY}/SystemConfiguration"
+		"${CFNetwork_LIBRARY}/CFNetwork"
+		"${Security_LIBRARY}/Security"
+		${z_LIBRARY}
+		${objc_LIBRARY}
+	)
+elseif (CMAKE_TARGET_OS STREQUAL "android")
+	find_library(dl_LIBRARY dl)
+	find_library(gnustl_shared_LIBRARY gnustl_shared)
+	find_library(log_LIBRARY log)
+	find_library(c_LIBRARY c)
+	find_library(gcc_LIBRARY gcc)
+	find_library(m_LIBRARY m)
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		${gnustl_shared_LIBRARY}
+		${log_LIBRARY}
+		${c_LIBRARY}
+		${gcc_LIBRARY}
+		${m_LIBRARY}
+		${dl_LIBRARY}
 	)
 endif()
 
@@ -315,12 +336,6 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARIES}
 		)
-		if (CMAKE_TARGET_OS STREQUAL "macosx")
-			target_link_libraries(OsmAndCore_shared
-				LINK_PUBLIC
-					objc
-			)
-		endif()
 	else()
 		target_link_libraries(OsmAndCore_shared
 			LINK_PUBLIC
@@ -422,12 +437,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Core_STATIC_LIBRARIES}
 		)
-		if (CMAKE_TARGET_OS STREQUAL "macosx")
-			target_link_libraries(OsmAndCore_static
-				LINK_PUBLIC
-					objc
-			)
-		endif()
 	else()
 		target_link_libraries(OsmAndCore_static
 			LINK_PUBLIC
