@@ -252,10 +252,9 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_dependencies ${target_specific_dependencies}
 		freetype2_static
 	)
-	find_library(PTHREAD_LIBRARY pthread)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
-#		freetype2_static
-		${PTHREAD_LIBRARY}
+		freetype2_static
+		pthread
 	)
 endif()
 
