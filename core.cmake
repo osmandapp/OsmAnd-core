@@ -7,7 +7,8 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/libpng" "core/externals/libpng")
 # External : expat
 add_subdirectory("${OSMAND_ROOT}/core/externals/expat" "core/externals/expat")
 
-if(CMAKE_TARGET_OS STREQUAL "linux")
+if (CMAKE_TARGET_OS STREQUAL "linux"
+	CMAKE_TARGET_OS STREQUAL "android")
 	# External : freetype2
 	add_subdirectory("${OSMAND_ROOT}/core/externals/freetype" "core/externals/freetype")
 endif()
