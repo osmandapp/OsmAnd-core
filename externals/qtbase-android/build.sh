@@ -35,6 +35,7 @@ if [[ ! -d "$ANDROID_SDK" ]]; then
 	exit 1
 fi
 export ANDROID_SDK_ROOT=$ANDROID_SDK
+echo "Using ANDROID_SDK '${ANDROID_SDK}'"
 
 if [[ -z "$ANDROID_NDK" ]]; then
 	echo "ANDROID_NDK is not set"
@@ -45,6 +46,7 @@ if [[ ! -d "$ANDROID_NDK" ]]; then
 	exit 1
 fi
 export ANDROID_NDK_ROOT=$ANDROID_NDK
+echo "Using ANDROID_NDK '${ANDROID_NDK}'"
 
 if [[ "$(uname -a)" =~ Linux ]]; then
 	if [[ "$(uname -m)" == x86_64 ]] && [ -d "$ANDROID_NDK/prebuilt/linux-x86_64" ]; then
@@ -85,6 +87,7 @@ if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}" ]]; then
 	echo "Platform '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}' does not exist"
 	exit 1
 fi
+echo "Using ANDROID_NDK_PLATFORM '${ANDROID_NDK_PLATFORM}'"
 
 export ANDROID_TARGET_ARCH=$targetArch
 targetArchFamily=""
@@ -99,10 +102,12 @@ if [[ ! -d "${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFa
 	echo "Architecture headers '${ANDROID_NDK}/platforms/${ANDROID_NDK_PLATFORM}/arch-${targetArchFamily}' does not exist"
 	exit 1
 fi
+echo "Using ANDROID_TARGET_ARCH '${ANDROID_TARGET_ARCH}'"
 
 if [[ "$compiler" == "gcc" ]]; then
 	export ANDROID_NDK_TOOLCHAIN_VERSION=4.9
 fi
+echo "Using ANDROID_NDK_TOOLCHAIN_VERSION '${ANDROID_NDK_TOOLCHAIN_VERSION}'"
 
 TOOLCHAIN_PATH=""
 if [[ "$targetArch"=="armeabi" ]]; then
@@ -118,6 +123,7 @@ if [[ ! -d "$TOOLCHAIN_PATH" ]]; then
 	echo "Toolchain at '$TOOLCHAIN_PATH' not found"
 	exit 1
 fi
+echo "Using toolchain '${TOOLCHAIN_PATH}'"
 
 # Prepare configuration
 QTBASE_CONFIGURATION=$(echo "
