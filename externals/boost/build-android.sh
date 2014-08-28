@@ -112,9 +112,6 @@ STATIC_BUILD_PATH="$SRCLOC/upstream.patched.${targetOS}.${compiler}-${targetArch
 if [ ! -d "$STATIC_BUILD_PATH" ]; then
 	cp -rpf "$SRCLOC/upstream.patched" "$STATIC_BUILD_PATH"
 
-	echo "Using '${targetOS}.${compiler}-${targetArch}.jam'"
-	cat "$SRCLOC/targets/${targetOS}.${compiler}-${targetArch}.jam" > "$STATIC_BUILD_PATH/project-config.jam"
-
 	(cd "$STATIC_BUILD_PATH" && \
 		./bootstrap.sh)
 	retcode=$?
@@ -123,6 +120,9 @@ if [ ! -d "$STATIC_BUILD_PATH" ]; then
 		rm -rf "$path"
 		exit $retcode
 	fi
+	
+	echo "Using '${targetOS}.${compiler}-${targetArch}.jam'"
+	cat "$SRCLOC/targets/${targetOS}.${compiler}-${targetArch}.jam" > "$STATIC_BUILD_PATH/project-config.jam"
 fi
 (cd "$STATIC_BUILD_PATH" && \
 	./b2 $BOOST_CONFIGURATION -j $OSMAND_BUILD_CPU_CORES_NUM)

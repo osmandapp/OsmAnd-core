@@ -300,9 +300,9 @@ namespace OsmAnd
             inline bool test(const BBox& bbox_, const bool strict, const Acceptor acceptor) const
             {
                 if (bbox_.type == BBoxType::AABB)
-                    test(bbox_.asAABB, strict, acceptor);
+                    return test(bbox_.asAABB, strict, acceptor);
                 else /* if (bbox_.type == BBoxType::OOBB) */
-                    test(bbox_.asOOBB, strict, acceptor);
+                    return test(bbox_.asOOBB, strict, acceptor);
             }
 
             inline void select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor) const

@@ -118,14 +118,14 @@ if not exist "%STATIC_BUILD_PATH%" (
 	mkdir "%STATIC_BUILD_PATH%"
 	xcopy "%~dp0upstream.patched" "%STATIC_BUILD_PATH%" /E /Q
 	
-	echo Using '%targetOS%.%compiler%-%targetArch%.jam'
-	copy "%~dp0targets\%targetOS%.%compiler%-%targetArch%.jam" "%STATIC_BUILD_PATH%\project-config.jam" /Y
-	
 	pushd %STATIC_BUILD_PATH% && (cmd /C "bootstrap.bat" & popd)
 	if %ERRORLEVEL% neq 0 (
 		echo Configure failed with %ERRORLEVEL%
 		exit /B %ERRORLEVEL%
 	)
+	
+	echo Using '%targetOS%.%compiler%-%targetArch%.jam'
+	copy "%~dp0targets\%targetOS%.%compiler%-%targetArch%.jam" "%STATIC_BUILD_PATH%\project-config.jam" /Y
 )
 
 REM Perform build (static)
