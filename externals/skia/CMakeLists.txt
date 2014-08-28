@@ -242,7 +242,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
-		"upstream.patched/src/utils/SkThreadUtils_pthread_linux.cpp"
+		"upstream.patched/src/utils/SkThreadUtils_pthread_other.cpp"
 		${src_gpu_gl_android}
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
