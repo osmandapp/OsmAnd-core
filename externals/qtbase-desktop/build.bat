@@ -2,10 +2,9 @@
 
 setlocal EnableDelayedExpansion
 set SRCLOC=%~dp0
-call "%SRCLOC%..\..\..\build\utils\functions.cmd"
 
 REM Cleanup environment
-call :cleanupEnvironment
+call "%SRCLOC%..\..\..\build\utils\functions.cmd" :cleanupEnvironment
 
 REM Get and verify arguments
 set targetOS=%1
