@@ -60,20 +60,8 @@
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
 #   define GL_GET_RESULT \
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
-#   define GL_CHECK_PRESENT(funcName)                                                                           \
-        {                                                                                                       \
-            static bool __checked_presence_of_##funcName = std::is_function<decltype(funcName)>::value;         \
-            if (!__checked_presence_of_##funcName)                                                              \
-            {                                                                                                   \
-                if (funcName == nullptr)                                                                        \
-                {                                                                                               \
-                    LogPrintf(LogSeverityLevel::Error, "Missing '" #funcName "()'!");                           \
-                    LogFlush();                                                                                 \
-                    std::terminate();                                                                           \
-                }                                                                                               \
-                __checked_presence_of_##funcName = true;                                                        \
-            }                                                                                                   \
-        }
+#   define GL_CHECK_PRESENT(x) \
+        const static OsmAnd::GPUAPI_OpenGL::glPresenseChecker<decltype(x)> glPresenseChecker_##x(&x, #x)
 #   define GL_PUSH_GROUP_MARKER(title) \
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->pushDebugGroupMarker((title))
 #   define GL_POP_GROUP_MARKER \
@@ -125,6 +113,45 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL);
     public:
+        template <typename T, typename Enable = void>
+        struct glPresenseChecker
+        {
+            static_assert(std::true_type::value, "What are you doing?");
+        };
+
+        template <typename T>
+        struct glPresenseChecker<T, typename std::enable_if< std::is_pointer<T>::value >::type> Q_DECL_FINAL
+        {
+            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
+
+            glPresenseChecker(
+                T* const pointerToFunctionPointer,
+                const char* const functionName)
+            {
+                if ((*pointerToFunctionPointer) != nullptr)
+                    return;
+
+                LogPrintf(LogSeverityLevel::Error, "Function '%s()' was not loaded!", functionName);
+                LogFlush();
+                std::terminate();
+            }
+        };
+
+        template <typename T>
+        struct glPresenseChecker<T, typename std::enable_if< std::is_function<T>::value >::type> Q_DECL_FINAL
+        {
+            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
+
+            glPresenseChecker(
+                T* const function,
+                const char* const functionName)
+            {
+                // Nothing to do here, function is always present
+                Q_UNUSED(function);
+                Q_UNUSED(functionName);
+            }
+        };
+
         class ProgramVariablesLookupContext
         {
             Q_DISABLE_COPY_AND_MOVE(ProgramVariablesLookupContext);
