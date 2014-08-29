@@ -73,12 +73,10 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 else()
 	add_dependencies(OsmAndCoreJNI
 		OsmAndCore_shared
-		OsmAndCoreTools_shared
 	)
 	target_link_libraries(OsmAndCoreJNI
 		LINK_PUBLIC
 			OsmAndCore_shared
-			OsmAndCoreTools_shared
 			${target_specific_public_libraries}
 	)
 endif()
