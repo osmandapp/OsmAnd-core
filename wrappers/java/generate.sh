@@ -19,6 +19,10 @@ mkdir -p "$SRCLOC/gen/cpp"
 
 if [[ -z "$SWIG" ]]; then
 	SWIG=`which swig`
+else
+	if [[ "$(uname -a)" =~ Cygwin ]]; then
+		SWIG=$(cygpath -u "$SWIG")
+	fi
 fi
 
 $SWIG \
