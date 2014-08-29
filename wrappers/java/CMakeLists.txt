@@ -62,12 +62,10 @@ endif()
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 	add_dependencies(OsmAndCoreJNI
 		OsmAndCore_static
-		OsmAndCoreTools_static
 	)
 	target_link_libraries(OsmAndCoreJNI
 		LINK_PUBLIC
 			OsmAndCore_static
-			OsmAndCoreTools_static
 			${target_specific_public_libraries}
 	)
 else()
