@@ -231,15 +231,12 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 elseif (CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB src_gpu_gl_android "upstream.patched/src/gpu/gl/android/*")
 	set(target_specific_sources "${target_specific_sources}"
-#		"upstream.patched/src/fonts/SkFontMgr_fontconfig.cpp"
 		"upstream.patched/src/ports/SkDebug_android.cpp"
 		"upstream.patched/src/ports/SkDiscardableMemory_none.cpp"
 		"upstream.patched/src/ports/SkFontConfigInterface_android.cpp"
 		"upstream.patched/src/ports/SkFontConfigParser_android.cpp"
-		#"upstream.patched/src/ports/SkFontHost_fontconfig.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType_common.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType.cpp"
-		#"upstream.patched/src/ports/SkFontHost_linux.cpp"
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
@@ -252,6 +249,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	)
 	set(target_specific_dependencies ${target_specific_dependencies}
 		freetype2_static
+		android_cpufeatures
 	)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
 		freetype2_static
