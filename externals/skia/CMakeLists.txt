@@ -100,6 +100,26 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 				COMPILE_FLAGS "-no-integrated-as")
 	else()
 		set_source_files_properties(
+			"upstream.patched/src/opts/memset.arm.S"
+			"upstream.patched/src/opts/memset16_neon.S"
+			"upstream.patched/src/opts/memset32_neon.S"
+			"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
+			"upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
+			"upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
+			"upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
+			"upstream.patched/src/opts/SkBlitMask_opts_arm_neon.cpp"
+			"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
+			"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
+			"upstream.patched/src/opts/SkBlurImage_opts_arm.cpp"
+			"upstream.patched/src/opts/SkBlurImage_opts_neon.cpp"
+			"upstream.patched/src/opts/SkMorphology_opts_arm.cpp"
+			"upstream.patched/src/opts/SkMorphology_opts_neon.cpp"
+			"upstream.patched/src/opts/SkUtils_opts_arm.cpp"
+			"upstream.patched/src/opts/SkXfermode_opts_arm.cpp"
+			"upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
+			PROPERTIES
+				COMPILE_FLAGS "-fomit-frame-pointer")
+		set_source_files_properties(
 			"upstream.patched/src/opts/memset16_neon.S"
 			"upstream.patched/src/opts/memset32_neon.S"
 			"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
