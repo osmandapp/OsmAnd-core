@@ -92,6 +92,19 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 			"upstream.patched/src/opts/memset.arm.S"
 			PROPERTIES
 				COMPILE_FLAGS "-no-integrated-as")
+	elseif (CMAKE_TARGET_OS STREQUAL "android")
+		set_source_files_properties(
+			"upstream.patched/src/opts/memset16_neon.S"
+			"upstream.patched/src/opts/memset32_neon.S"
+			"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
+			"upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
+			"upstream.patched/src/opts/SkBlitMask_opts_arm_neon.cpp"
+			"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
+			"upstream.patched/src/opts/SkBlurImage_opts_neon.cpp"
+			"upstream.patched/src/opts/SkMorphology_opts_neon.cpp"
+			"upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
+			PROPERTIES
+				COMPILE_FLAGS "-mfloat-abi=softfp -mfpu=neon")
 	endif()
 endif()
 if (NOT used_arch_specific_sources)
