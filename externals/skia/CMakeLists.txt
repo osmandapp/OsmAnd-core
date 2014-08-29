@@ -61,6 +61,12 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 endif()
 if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
+
+	# SKIA should be build with ARM instruction set instead of Thumb
+	set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -marm")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -marm")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -marm")
+
 	if (NOT CMAKE_TARGET_OS STREQUAL "ios")
 		set(target_specific_definitions_public ${target_specific_definitions_public}
 			-D__ARM_HAVE_OPTIONAL_NEON_SUPPORT
@@ -92,7 +98,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 			"upstream.patched/src/opts/memset.arm.S"
 			PROPERTIES
 				COMPILE_FLAGS "-no-integrated-as")
-	elseif (CMAKE_TARGET_OS STREQUAL "android")
+	else()
 		set_source_files_properties(
 			"upstream.patched/src/opts/memset16_neon.S"
 			"upstream.patched/src/opts/memset32_neon.S"
@@ -104,7 +110,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 			"upstream.patched/src/opts/SkMorphology_opts_neon.cpp"
 			"upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
 			PROPERTIES
-				COMPILE_FLAGS "-mfloat-abi=softfp -mfpu=neon")
+				COMPILE_FLAGS "-mfloat-abi=softfp -mfpu=neon -fomit-frame-pointer")
 	endif()
 endif()
 if (NOT used_arch_specific_sources)
