@@ -133,8 +133,9 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		-D_CRT_SECURE_NO_WARNINGS
 		-DGR_GL_FUNCTION_TYPE=__stdcall
 	)
+	find_library(Usp10_LIBRARY Usp10)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
-		Usp10
+		${Usp10_LIBRARY}
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
@@ -254,6 +255,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
 		freetype2_static
+		android_cpufeatures
 	)
 endif()
 
