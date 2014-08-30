@@ -487,6 +487,9 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			if (updatePaint(req, paint, 2, 0, rc)) {
 				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			}
+			if (updatePaint(req, paint, 3, 0, rc)) {
+				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+			}
 			if (oneway && !drawOnlyShadow) {
 				drawOneWayPaints(rc, cv, &path, oneway);
 			}
