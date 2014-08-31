@@ -406,7 +406,7 @@ namespace OsmAnd
                     promisedEntryPtr = *itPromisedResourceEntry;
                 promisedResources.erase(itPromisedResourceEntry);
             }
-            _promisedResourceEntriesStorage.erase(promisedEntryPtr);
+            _promisedResourceEntriesStorage.remove(promisedEntryPtr);
 
             if (promisedEntryPtr->refCounter <= 0)
                 return;
