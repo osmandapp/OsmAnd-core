@@ -15,6 +15,15 @@ if [[ "$BUILD_TYPE" != "debug" ]] && [[ "$BUILD_TYPE" != "release" ]]; then
 fi
 echo "Build type: $BUILD_TYPE"
 
+if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
+	if [[ "$(uname -a)" =~ Linux ]]; then
+		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
+	elif [[ "$(uname -a)" =~ Darwin ]]; then
+		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
+	fi
+fi
+echo "$OSMAND_BUILD_CPU_CORES_NUM build threads"
+
 buildArch()
 {
 	local arch=$1
@@ -34,7 +43,7 @@ buildArch()
 		echo -e "\tFound baked in '$bakedDir"
 	fi
 	
-	(cd "$bakedDir" && make OsmAndCoreJNI)
+	(cd "$bakedDir" && make -j$OSMAND_BUILD_CPU_CORES_NUM OsmAndCoreJNI)
 	if [ $retcode -ne 0 ]; then
 		echo "Failed to build ($retcode), aborting..."
 		rm -rf "$bakedDir"

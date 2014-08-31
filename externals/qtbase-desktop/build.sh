@@ -11,6 +11,15 @@ source "$SRCLOC/../../../build/utils/functions.sh"
 # Cleanup environment
 cleanupEnvironment
 
+if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
+	if [[ "$(uname -a)" =~ Linux ]]; then
+		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
+	elif [[ "$(uname -a)" =~ Darwin ]]; then
+		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
+	fi
+fi
+echo "$OSMAND_BUILD_CPU_CORES_NUM build threads"
+
 targetOS=$1
 compiler=$2
 targetArch=$3
@@ -66,10 +75,6 @@ if [[ "$targetOS" == "linux" ]]; then
 		-v
 	" | tr '\n' ' ')
 
-	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
-		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
-	fi
-	
 	if [[ "$compiler" == "gcc" ]]; then
 		if [[ "$targetArch" == "i686" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
@@ -105,10 +110,6 @@ elif [[ "$targetOS" == "macosx" ]]; then
 		-v
 	" | tr '\n' ' ')
 
-	if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
-		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
-	fi
-	
 	if [[ "$compiler" == "clang" ]]; then
 		if [[ "$targetArch" == "i386" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
