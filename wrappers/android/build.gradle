@@ -18,13 +18,13 @@ apply plugin: 'android-library'
 android {
     sourceSets.main {
         manifest.srcFile "AndroidManifest.xml"
-        jniLibs.srcDirs = ["libs"]
+        jniLibs.srcDirs = ["./native-libs"]
         jni.srcDirs = []
-        java.srcDirs = ["src", "../java/gen/java"]
+        java.srcDirs = ["src", "./gen/java"]
     }
 
     compileSdkVersion 19
-    buildToolsVersion "19.0.3"
+    buildToolsVersion "20"
 
     defaultConfig {
         minSdkVersion 9
@@ -39,33 +39,33 @@ android {
 // Java sources generation task
 import org.apache.tools.ant.taskdefs.condition.Os
 task swigGenerate(type: Exec) {
-    description "Generate SWIG sources"
+    description "Generate SWIG Java interface"
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh")
+        commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh")+" "+projectDir
     } else {
-        commandLine "sh", file("../java/generate.sh")
+        commandLine "sh", file("../java/generate.sh")+" "+projectDir
     }
 }
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn << swigGenerate
 }
 
-// NDK build task
+// OsmAndCore JNI build task
 import org.apache.tools.ant.taskdefs.condition.Os
-task ndkBuild(type: Exec) {
-    description "NDK build"
+task jniBuild(type: Exec) {
+    description "JNI build"
 
     dependsOn swigGenerate
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "bash --login "+file("build.sh")
+        commandLine file("build.cmd"), "release"
     } else {
-        commandLine "sh", file("build.sh")
+        commandLine "sh", file("build.sh"), "release"
     }
 }
 tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << ndkBuild
+    compileTask -> compileTask.dependsOn << jniBuild
 }
 
 dependencies {
