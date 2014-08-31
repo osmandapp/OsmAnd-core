@@ -1,5 +1,7 @@
 %module(directors="1") OsmAndCore
-%nspace;
+
+// Namespaces are useless at this point
+//%nspace;
 
 %{
 #include <OsmAndCore.h>
