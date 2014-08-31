@@ -42,9 +42,9 @@ task swigGenerate(type: Exec) {
     description "Generate SWIG Java interface"
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh")+" "+projectDir.getAbsolutePath()
+        commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()
     } else {
-        commandLine "sh", file("../java/generate.sh")+" "+projectDir.getAbsolutePath()
+        commandLine "sh", file("../java/generate.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()
     }
 }
 tasks.withType(JavaCompile) {
@@ -59,9 +59,9 @@ task jniBuild(type: Exec) {
     dependsOn swigGenerate
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine file("build.cmd"), "release"
+        commandLine file("build.cmd").getAbsolutePath(), "release"
     } else {
-        commandLine "sh", file("build.sh"), "release"
+        commandLine "sh", file("build.sh").getAbsolutePath(), "release"
     }
 }
 tasks.withType(JavaCompile) {
