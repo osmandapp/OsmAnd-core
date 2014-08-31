@@ -18,6 +18,9 @@ if not "%validBuildType%"=="1" (
 )
 echo Build type: %BUILD_TYPE%
 
+call "%VS120COMNTOOLS%\VCVarsQueryRegistry.bat"
+call "%VCINSTALLDIR%\vcvarsall.bat" x86
+
 set "arch=armeabi"
 call :buildArch
 if %ERRORLEVEL% neq 0 (
