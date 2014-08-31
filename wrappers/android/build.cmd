@@ -64,12 +64,12 @@ if exist "%BAKED_DIR%" (
 if not exist "%BAKED_DIR%" (
 	"%PROJECTS_ROOT%\build\%arch%-android-gcc.cmd" %BUILD_TYPE%
 	if %ERRORLEVEL% neq 0 (
-		echo Faield to bake %ERRORLEVEL%
+		echo Failed to bake %ERRORLEVEL%
 		exit /B %ERRORLEVEL%
 	)
 )
 
-pushd "%BAKED_DIR%" && (cmd /C "nmake" & popd)
+pushd "%BAKED_DIR%" && (cmd /C "nmake OsmAndCoreJNI" & popd)
 
 endlocal
 goto :EOF
