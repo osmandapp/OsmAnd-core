@@ -28,6 +28,10 @@ else
 		SWIG=$(cygpath -u "$SWIG")
 	fi
 fi
+if [[ -z "$SWIG" ]]; then
+	echo "SWIG not found in path and was not specified by environment variable SWIG"
+	exit 1
+fi
 echo "Using '$SWIG' as swig"
 
 # Actually perform generation

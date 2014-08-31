@@ -8,7 +8,7 @@ macro(add_generate_swig_target TARGET_NAME)
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			COMMENT "Generating wrapper sources in '${CMAKE_CURRENT_BINARY_DIR}' using '${CMAKE_CURRENT_LIST_DIR}/generate.sh'...")
 	else()
-		add_custom_command(${TARGET_NAME} "${CMAKE_CURRENT_LIST_DIR}/generate.sh" "${CMAKE_CURRENT_BINARY_DIR}"
+		add_custom_target(${TARGET_NAME} "${CMAKE_CURRENT_LIST_DIR}/generate.sh" "${CMAKE_CURRENT_BINARY_DIR}"
 			DEPENDS
 				"${CMAKE_CURRENT_LIST_DIR}/generate.sh"
 				"${ARGN}"

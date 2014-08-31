@@ -323,7 +323,7 @@ namespace OsmAnd
                 promisedResources.erase(itPromisedResourceEntry);
             }
 
-            _promisedResourceEntriesStorage.erase(promisedEntryPtr);
+            _promisedResourceEntriesStorage.remove(promisedEntryPtr);
             promisedEntryPtr->promise.set_exception(proper::make_exception_ptr(std::runtime_error("Promise was broken")));
         }
 
@@ -353,7 +353,7 @@ namespace OsmAnd
                     promisedEntryPtr = *itPromisedResourceEntry;
                 promisedResources.erase(itPromisedResourceEntry);
             }
-            _promisedResourceEntriesStorage.erase(promisedEntryPtr);
+            _promisedResourceEntriesStorage.remove(promisedEntryPtr);
 
             if (promisedEntryPtr->refCounter <= 0)
                 return;
