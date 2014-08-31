@@ -44,7 +44,7 @@ task swigGenerate(type: Exec) {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()
     } else {
-        commandLine "sh", file("../java/generate.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()
+        commandLine "sh", file("../java/generate.sh").getAbsolutePath(), projectDir.getAbsolutePath()
     }
 }
 tasks.withType(JavaCompile) {
