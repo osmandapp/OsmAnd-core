@@ -1,44 +1,43 @@
-project(OsmAndCoreJNI)
+project(OsmAndCore_JavaWrapper)
 
 if (NOT CMAKE_TARGET_OS STREQUAL "android")
 	find_package(Java REQUIRED)
 	find_package(JNI REQUIRED)
 endif()
 
+# Custom target to generate files with SWIG
+file(GLOB core_swig "${OSMAND_ROOT}/core/*.swig")
+file(GLOB_RECURSE core_swig_subfiles "${OSMAND_ROOT}/core/swig/*")
+add_generate_swig_target(OsmAndCore_swig_java
+	${core_swig}
+	${core_swig_subfiles})
+set(swig_generated_cpp
+	"${CMAKE_CURRENT_BINARY_DIR}/gen/cpp/swig.cpp"
+)
+set_source_files_properties(${swig_generated_cpp} GENERATED)
+set(swig_generated_java
+	"@${CMAKE_CURRENT_BINARY_DIR}/gen/java.list"
+)
+set_source_files_properties(${swig_generated_java} GENERATED)
+
+# JAR with all generated Java classes:
+add_custom_target(OsmAndCore_wrapper_jar
+	${Java_JAR_EXECUTABLE}
+		-cf "${CMAKE_CURRENT_BINARY_DIR}/OsmAndCore_wrapper.jar"
+		${swig_generated_java}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMENT "Packing 'OsmAndCore_wrapper.jar'...")
+add_dependencies(OsmAndCore_wrapper_jar
+	OsmAndCore_swig_java
+)
+
+# Native library:
 set(target_specific_private_includes "")
 set(target_specific_public_libraries "")
 
-file(GLOB_RECURSE core_includes "${OSMAND_ROOT}/core/include/*.h*")
-file(GLOB core_swig "${OSMAND_ROOT}/core/*.swig")
-file(GLOB_RECURSE core_swig_subfiles "${OSMAND_ROOT}/core/swig/*")
-
-set(OsmAndCoreJNI_generated_cpp
-	"${CMAKE_CURRENT_LIST_DIR}/gen/cpp/swig.cpp"
-)
-if (CMAKE_HOST_WIN32 AND NOT CYGWIN)
-	add_custom_command(OUTPUT ${OsmAndCoreJNI_generated_cpp}
-		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/generate.sh"
-		DEPENDS
-			"${CMAKE_CURRENT_LIST_DIR}/generate.sh"
-			${core_includes}
-			${core_swig}
-			${core_swig_subfiles}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-		COMMENT "Generating sources...")
-else()
-	add_custom_command(OUTPUT ${OsmAndCoreJNI_generated_cpp}
-		COMMAND "${CMAKE_CURRENT_LIST_DIR}/generate.sh"
-		DEPENDS
-			"${CMAKE_CURRENT_LIST_DIR}/generate.sh"
-			${core_includes}
-			${core_swig}
-			${core_swig_subfiles}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-		COMMENT "Generating sources...")
-endif()
-
+# OsmAndCore JNI-only library
 add_library(OsmAndCoreJNI SHARED
-	${OsmAndCoreJNI_generated_cpp}
+	${swig_generated_cpp}
 )
 target_compile_definitions(OsmAndCoreJNI
 	PRIVATE
@@ -58,33 +57,44 @@ else()
 			${target_specific_private_includes}
 	)
 endif()
+add_dependencies(OsmAndCoreJNI
+	OsmAndCore_shared
+	OsmAndCore_swig_java
+)
+target_link_libraries(OsmAndCoreJNI
+	LINK_PUBLIC
+		OsmAndCore_shared
+		${target_specific_public_libraries}
+)
 
-if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
-	add_dependencies(OsmAndCoreJNI
-		OsmAndCore_static
-	)
-	target_link_libraries(OsmAndCoreJNI
-		LINK_PUBLIC
-			OsmAndCore_static
-			${target_specific_public_libraries}
+# OsmAndCore+JNI library
+add_library(OsmAndCoreWithJNI SHARED
+	${swig_generated_cpp}
+)
+target_compile_definitions(OsmAndCoreWithJNI
+	PRIVATE
+		-DOSMAND_JNI_EXPORTS
+		-DOSMAND_SWIG
+)
+if (CMAKE_TARGET_OS STREQUAL "android")
+	target_include_directories(OsmAndCoreWithJNI
+		PRIVATE
+			${target_specific_private_includes}
 	)
 else()
-	add_dependencies(OsmAndCoreJNI
-		OsmAndCore_shared
-	)
-	target_link_libraries(OsmAndCoreJNI
-		LINK_PUBLIC
-			OsmAndCore_shared
-			${target_specific_public_libraries}
+	target_include_directories(OsmAndCoreWithJNI
+		PRIVATE
+			${JNI_INCLUDE_DIRS}
+			${JAVA_INCLUDE_PATH}
+			${target_specific_private_includes}
 	)
 endif()
-
-file(GLOB_RECURSE OsmAndCoreJNI_generated_java "${CMAKE_CURRENT_LIST_DIR}/gen/java/*")
-include(UseJava)
-set(CMAKE_JAVA_TARGET_VERSION 1.6.0)
-add_jar(OsmAndCore_java
-	${OsmAndCoreJNI_generated_java}
+add_dependencies(OsmAndCoreWithJNI
+	OsmAndCore_static
+	OsmAndCore_swig_java
 )
-add_dependencies(OsmAndCore_java
-	OsmAndCoreJNI
+target_link_libraries(OsmAndCoreWithJNI
+	LINK_PUBLIC
+		OsmAndCore_static
+		${target_specific_public_libraries}
 )

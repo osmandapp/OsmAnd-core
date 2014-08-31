@@ -172,9 +172,10 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		-D_CRT_SECURE_NO_WARNINGS
 		-DGR_GL_FUNCTION_TYPE=__stdcall
 	)
-	find_library(Usp10_LIBRARY Usp10)
+	# This doesn't work for some reason
+	#find_library(Usp10_LIBRARY Usp10)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
-		${Usp10_LIBRARY}
+		Usp10
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}

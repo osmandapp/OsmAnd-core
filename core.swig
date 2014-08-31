@@ -1,4 +1,5 @@
 %module(directors="1") OsmAndCore
+%nspace;
 
 %{
 #include <OsmAndCore.h>
