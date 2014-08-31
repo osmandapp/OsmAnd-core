@@ -138,12 +138,25 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
         rCap = req->props()->R_CAP__1;
         rPathEff = req->props()->R_PATH_EFFECT__1;
     }
-    else
+    else if (ind == 2)
     {
         rColor = req->props()->R_COLOR_3;
         rStrokeW = req->props()->R_STROKE_WIDTH_3;
         rCap = req->props()->R_CAP_3;
         rPathEff = req->props()->R_PATH_EFFECT_3;
+    }
+    else if (ind == 3)
+    {
+        rColor = req->props()->R_COLOR_4;
+        rStrokeW = req->props()->R_STROKE_WIDTH_4;
+        rCap = req->props()->R_CAP_4;
+        rPathEff = req->props()->R_PATH_EFFECT_4;
+    } else 
+    {
+    	rColor = req->props()->R_COLOR_4;
+        rStrokeW = req->props()->R_STROKE_WIDTH_4;
+        rCap = req->props()->R_CAP_4;
+        rPathEff = req->props()->R_PATH_EFFECT_4;
     }
 
     if (area)
