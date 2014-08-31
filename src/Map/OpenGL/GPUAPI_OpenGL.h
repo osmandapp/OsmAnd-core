@@ -54,6 +54,7 @@
 #include "CommonTypes.h"
 #include "SmartPOD.h"
 #include "GPUAPI.h"
+#include "Logging.h"
 
 #if OSMAND_DEBUG
 #   define GL_CHECK_RESULT \

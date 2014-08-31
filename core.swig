@@ -3,10 +3,18 @@
 %{
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/ResourcesManager.h>
+#include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/Data/DataTypes.h>
+#include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/IMapStylesCollection.h>
+#include <OsmAndCore/Map/MapStyle.h>
+#include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
+#include <OsmAndCore/Map/MapStylePreset.h>
 
-// To omit 'OsmAnd::' prefixes inside namespace itself, use that namespace
+// To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
 using namespace OsmAnd;
 %}
 

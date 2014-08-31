@@ -24,6 +24,7 @@ else
 		SWIG=$(cygpath -u "$SWIG")
 	fi
 fi
+echo "Using '$SWIG' as swig"
 
 $SWIG \
 	-java \
