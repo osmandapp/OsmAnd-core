@@ -42,9 +42,9 @@ task swigGenerate(type: Exec) {
     description "Generate SWIG Java interface"
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh")+" "+projectDir
+        commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh")+" "+projectDir.getAbsolutePath()
     } else {
-        commandLine "sh", file("../java/generate.sh")+" "+projectDir
+        commandLine "sh", file("../java/generate.sh")+" "+projectDir.getAbsolutePath()
     }
 }
 tasks.withType(JavaCompile) {
