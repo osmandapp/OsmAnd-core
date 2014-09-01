@@ -3,7 +3,7 @@ buildscript {
 		mavenCentral()
 	}
 	dependencies {
-		classpath 'com.android.tools.build:gradle:0.8.+'
+		classpath 'com.android.tools.build:gradle:0.12.2'
 	}
 }
 
@@ -38,7 +38,7 @@ android {
 
 // Java sources generation task
 import org.apache.tools.ant.taskdefs.condition.Os
-task swigGenerate(type: Exec) {
+task swigGenerateJava(type: Exec) {
 	description "Generate SWIG Java interface"
 
 	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -48,7 +48,7 @@ task swigGenerate(type: Exec) {
 	}
 }
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << swigGenerate
+	compileTask -> compileTask.dependsOn << swigGenerateJava
 }
 
 // OsmAndCore JNI build task

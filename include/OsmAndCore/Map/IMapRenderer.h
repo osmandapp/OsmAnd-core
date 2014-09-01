@@ -99,7 +99,11 @@ namespace OsmAnd
         virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
 
-        OSMAND_CALLABLE(StateChangeObserver, void, IMapRenderer* mapRenderer, const MapRendererStateChange thisChange, const uint32_t allChanges);
+        OSMAND_CALLABLE(StateChangeObserver,
+            void,
+            const IMapRenderer* const mapRenderer,
+            const MapRendererStateChange thisChange,
+            const uint32_t allChanges);
         const ObservableAs<StateChangeObserver> stateChangeObservable;
 
         //NOTE: screen points origin from top-left

@@ -4,6 +4,7 @@ import android.opengl.GLSurfaceView;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -13,14 +14,26 @@ import javax.microedition.khronos.opengles.GL10;
 import net.osmand.core.jni.*;
 
 public class MainActivity extends ActionBarActivity {
-    private MapStyles _mapStyles;
+    private static final String TAG = "OsmAndCoreSample";
+
+    private IMapStylesCollection _mapStylesCollection;
     private MapStyle _mapStyle;
     private ObfsCollection _obfsCollection;
+    private MapPresentationEnvironment _mapPresentationEnvironment;
+    private Primitiviser _primitiviser;
+    private BinaryMapDataProvider _binaryMapDataProvider;
+    private BinaryMapPrimitivesProvider _binaryMapPrimitivesProvider;
+    private BinaryMapStaticSymbolsProvider _binaryMapStaticSymbolsProvider;
+    private BinaryMapRasterBitmapTileProvider _binaryMapRasterBitmapTileProvider;
     private IMapRenderer _mapRenderer;
 
     static {
         System.loadLibrary("gnustl_shared");
-        System.loadLibrary("OsmAndCore_android");
+        System.loadLibrary("Qt5Core");
+        System.loadLibrary("Qt5Network");
+        System.loadLibrary("Qt5Sql");
+        System.loadLibrary("OsmAndCore_shared");
+        System.loadLibrary("OsmAndCore_JNI");
     }
 
     @Override
@@ -28,26 +41,51 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Log.i(TAG, "Initializing core...");
         OsmAndCore.InitializeCore();
 
-        _mapStyles = new MapStyles();
-        _mapStyle = _mapStyles.getStyle("default");
+        Log.i(TAG, "Going to resolve default embedded style...");
+        _mapStylesCollection = new MapStylesCollection();
+        _mapStyle = _mapStylesCollection->getStyle("default");
+        if (_mapStyle == null)
+        {
+            Log.e(TAG, "Failed to resolve style 'default'");
+            System.exit(0);
+        }
 
+        Log.i(TAG, "Going to prepare OBFs collection");
         _obfsCollection = new ObfsCollection();
         _obfsCollection.watchDirectory(Environment.getExternalStorageState() + "/osmand", true);
 
-        IMapRenderer test = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGL3);
-        _mapRenderer = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2);
-        /*
-        renderer = OsmAnd::createAtlasMapRenderer_OpenGL3();
-        if(!renderer)
-        {
-            std::cout << "No supported renderer" << std::endl;
-            OsmAnd::ReleaseCore();
-            return EXIT_FAILURE;
-        }
-        */
+        Log.i(TAG, "Going to prepare all resources for renderer");
+        _mapPresentationEnvironment = new MapPresentationEnvironment(
+                _mapStyle,
+                1.0, //TODO: Here should be DPI
+                "en"); //TODO: here should be current locale
+        //mapPresentationEnvironment->setSettings(configuration.styleSettings);
+        _primitiviser = new Primitiviser(
+                _mapPresentationEnvironment);
+        _binaryMapDataProvider = new BinaryMapDataProvider(
+                _obfsCollection);
+        _binaryMapPrimitivesProvider = new BinaryMapPrimitivesProvider(
+                _binaryMapDataProvider,
+                _primitiviser,
+                256);
+        _binaryMapStaticSymbolsProvider = new BinaryMapStaticSymbolsProvider(
+                _binaryMapPrimitivesProvider,
+                256);
+        _binaryMapRasterBitmapTileProvider = new BinaryMapRasterBitmapTileProvider_Software(
+                _binaryMapPrimitivesProvider);
 
+        Log.i(TAG, "Going to create renderer");
+        _mapRenderer = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2);
+        if (_mapRenderer == null)
+        {
+            Log.e(TAG, "Failed to create map renderer 'AtlasMapRenderer_OpenGLES2'");
+            System.exit(0);
+        }
+
+        MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
         /*
         OsmAnd::MapRendererSetupOptions rendererSetup;
         rendererSetup.frameUpdateRequestCallback = []()
@@ -105,7 +143,7 @@ public class MainActivity extends ActionBarActivity {
         _glSurfaceView.setEGLConfigChooser(true);
         //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
         _glSurfaceView.setRenderer(new Renderer());
-        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     private GLSurfaceView _glSurfaceView;
@@ -116,40 +154,72 @@ public class MainActivity extends ActionBarActivity {
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
-            _mapRenderer.setViewport(new AreaI(0, 0, height, width));
+            /*_mapRenderer.setViewport(new AreaI(0, 0, height, width));
             _mapRenderer.setWindowSize(new PointI(width, height));
 
             if (!_mapRenderer.getIsRenderingInitialized())
-                _mapRenderer.initializeRendering();
+                _mapRenderer.initializeRendering();*/
         }
 
         public void onDrawFrame(GL10 gl) {
-            if (_mapRenderer.prepareFrame())
+            /*if (_mapRenderer.prepareFrame())
                 _mapRenderer.renderFrame();
-            _mapRenderer.processRendering();
+            _mapRenderer.processRendering();*/
         }
     }
 
     @Override
     protected void onDestroy() {
-        if (_obfsCollection != null) {
-            _obfsCollection.delete();
-            _obfsCollection = null;
+        if (_mapStylesCollection != null) {
+            _mapStylesCollection.delete();
+            _mapStylesCollection = null;
         }
 
         if (_mapStyle != null) {
             _mapStyle.delete();
             _mapStyle = null;
         }
-        if (_mapStyles != null) {
-            _mapStyles.delete();
-            _mapStyles = null;
+
+        if (_obfsCollection != null) {
+            _obfsCollection.delete();
+            _obfsCollection = null;
         }
 
+        if (_mapPresentationEnvironment != null) {
+            _mapPresentationEnvironment.delete();
+            _mapPresentationEnvironment = null;
+        }
+
+        if (_primitiviser != null) {
+            _primitiviser.delete();
+            _primitiviser = null;
+        }
+
+        if (_binaryMapDataProvider != null) {
+            _binaryMapDataProvider.delete();
+            _binaryMapDataProvider = null;
+        }
+
+        if (_binaryMapPrimitivesProvider != null) {
+            _binaryMapPrimitivesProvider.delete();
+            _binaryMapPrimitivesProvider = null;
+        }
+
+        if (_binaryMapStaticSymbolsProvider != null) {
+            _binaryMapStaticSymbolsProvider.delete();
+            _binaryMapStaticSymbolsProvider = null;
+        }
+
+        if (_binaryMapRasterBitmapTileProvider != null) {
+            _binaryMapRasterBitmapTileProvider.delete();
+            _binaryMapRasterBitmapTileProvider = null;
+        }
+
+        /*
         if (_mapRenderer != null) {
             _mapRenderer.delete();
             _mapRenderer = null;
-        }
+        }*/
 
         OsmAndCore.ReleaseCore();
 
