@@ -1,73 +1,132 @@
 buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:0.8.+'
-    }
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'com.android.tools.build:gradle:0.8.+'
+	}
 }
 
 allprojects {
-    repositories {
-        mavenCentral()
-    }
+	repositories {
+		mavenCentral()
+	}
 }
 
 apply plugin: 'android-library'
 
 android {
-    sourceSets.main {
-        manifest.srcFile "AndroidManifest.xml"
-        jniLibs.srcDirs = ["./native-libs"]
-        jni.srcDirs = []
-        java.srcDirs = ["src", "./gen/java"]
-    }
+	sourceSets.main {
+		manifest.srcFile "AndroidManifest.xml"
+		jniLibs.srcDirs = ["./jniLibs"]
+		jni.srcDirs = []
+		java.srcDirs = ["src", "./gen/java"]
+	}
 
-    compileSdkVersion 19
-    buildToolsVersion "20"
+	compileSdkVersion 19
+	buildToolsVersion "20"
 
-    defaultConfig {
-        minSdkVersion 9
-        targetSdkVersion 19
-    }
+	defaultConfig {
+		minSdkVersion 9
+		targetSdkVersion 19
+	}
 
-    lintOptions {
-        abortOnError false
-    }
+	lintOptions {
+		abortOnError false
+	}
 }
 
 // Java sources generation task
 import org.apache.tools.ant.taskdefs.condition.Os
 task swigGenerate(type: Exec) {
-    description "Generate SWIG Java interface"
+	description "Generate SWIG Java interface"
 
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()
-    } else {
-        commandLine "sh", file("../java/generate.sh").getAbsolutePath(), projectDir.getAbsolutePath()
-    }
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+		commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()
+	} else {
+		commandLine "sh", file("../java/generate.sh").getAbsolutePath(), projectDir.getAbsolutePath()
+	}
 }
 tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << swigGenerate
+	compileTask -> compileTask.dependsOn << swigGenerate
 }
 
 // OsmAndCore JNI build task
 import org.apache.tools.ant.taskdefs.condition.Os
-task jniBuild(type: Exec) {
-    description "JNI build"
+task buildOsmAndCore(type: Exec) {
+	description "Build OsmAndCore"
 
-    dependsOn swigGenerate
-
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine file("build.cmd").getAbsolutePath(), "release"
-    } else {
-        commandLine "sh", file("build.sh").getAbsolutePath(), "release"
-    }
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+		commandLine file("build.cmd").getAbsolutePath(), "release"
+	} else {
+		commandLine "sh", file("build.sh").getAbsolutePath(), "release"
+	}
 }
 tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << jniBuild
+	compileTask -> compileTask.dependsOn << buildOsmAndCore
+}
+
+// NDK libraries copy task
+task copyNdkSharedLibs(type: Copy) {
+	description "Copy NDK shared libraries"
+
+	from("$System.env.ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs") {
+		include "armeabi/libgnustl_shared.so"
+		include "armeabi-v7a/libgnustl_shared.so"
+		include "mips/libgnustl_shared.so"
+		include "x86/libgnustl_shared.so"
+	}
+
+	into "./jniLibs"
+	includeEmptyDirs = false
+}
+tasks.withType(JavaCompile) {
+	compileTask -> compileTask.dependsOn << copyNdkSharedLibs
+}
+
+// OsmAnd libraries copy task
+task copyOsmAndSharedLibs(type: Copy) {
+	description "Copy OsmAnd shared libraries"
+
+	dependsOn buildOsmAndCore
+
+	from("../../../binaries/android") {
+		include "gcc-*/Release/libOsmAndCore_shared.so"
+		include "gcc-*/Release/libOsmAndCoreJNI.so"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*gcc-(.*)\/Release\/(.*)/, '$1/$2')
+		}
+	}
+
+	into "./jniLibs"
+	includeEmptyDirs = false
+}
+tasks.withType(JavaCompile) {
+	compileTask -> compileTask.dependsOn << copyOsmAndSharedLibs
+}
+
+// Qt libraries copy task
+task copyQtSharedLibs(type: Copy) {
+	description "Copy Qt shared libraries"
+
+	dependsOn buildOsmAndCore
+
+	from("../../externals/qtbase-android") {
+		include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"
+		include "upstream.patched.android.gcc-*.shared/lib/libQt5Network.so"
+		include "upstream.patched.android.gcc-*.shared/lib/libQt5Sql.so"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
+		}
+	}
+
+	into "./jniLibs"
+	includeEmptyDirs = false
+}
+tasks.withType(JavaCompile) {
+	compileTask -> compileTask.dependsOn << copyQtSharedLibs
 }
 
 dependencies {
-    compile fileTree(dir: "libs", include: ["*.jar"])
+	compile fileTree(dir: "libs", include: ["*.jar"])
 }
