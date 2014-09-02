@@ -974,7 +974,10 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                 imageEncoder.reset(CreateJPEGImageEncoder());
                 break;
         }
-        imageEncoder->encodeFile(configuration.outputImageFilename.toLocal8Bit(), filledOutputBitmap, 100);
+        if (!imageEncoder->encodeFile(configuration.outputImageFilename.toLocal8Bit(), filledOutputBitmap, 100))
+        {
+            output << xT("Failed to save image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+        }
     }
 
 #if defined(OSMAND_TARGET_OS_windows)
