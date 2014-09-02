@@ -14,6 +14,45 @@ import javax.microedition.khronos.opengles.GL10;
 import net.osmand.core.jni.*;
 
 public class MainActivity extends ActionBarActivity {
+    static {
+        try {
+            System.loadLibrary("gnustl_shared");
+        }
+        catch( UnsatisfiedLinkError e ) {
+            System.err.println("Failed to load 'gnustl_shared':" + e);
+        }
+        try {
+            System.loadLibrary("Qt5Core");
+        }
+        catch( UnsatisfiedLinkError e ) {
+            System.err.println("Failed to load 'Qt5Core':" + e);
+        }
+        try {
+            System.loadLibrary("Qt5Network");
+        }
+        catch( UnsatisfiedLinkError e ) {
+            System.err.println("Failed to load 'Qt5Network':" + e);
+        }
+        try {
+            System.loadLibrary("Qt5Sql");
+        }
+        catch( UnsatisfiedLinkError e ) {
+            System.err.println("Failed to load 'Qt5Sql':" + e);
+        }
+        try {
+            System.loadLibrary("OsmAndCore_shared");
+        }
+        catch( UnsatisfiedLinkError e ) {
+            System.err.println("Failed to load 'OsmAndCore_shared':" + e);
+        }
+        try {
+            System.loadLibrary("OsmAndCore_JNI");
+        }
+        catch( UnsatisfiedLinkError e ) {
+            System.err.println("Failed to load 'OsmAndCore_JNI':" + e);
+        }
+    }
+
     private static final String TAG = "OsmAndCoreSample";
 
     private IMapStylesCollection _mapStylesCollection;
@@ -26,15 +65,6 @@ public class MainActivity extends ActionBarActivity {
     private BinaryMapStaticSymbolsProvider _binaryMapStaticSymbolsProvider;
     private BinaryMapRasterBitmapTileProvider _binaryMapRasterBitmapTileProvider;
     private IMapRenderer _mapRenderer;
-
-    static {
-        System.loadLibrary("gnustl_shared");
-        System.loadLibrary("Qt5Core");
-        System.loadLibrary("Qt5Network");
-        System.loadLibrary("Qt5Sql");
-        System.loadLibrary("OsmAndCore_shared");
-        System.loadLibrary("OsmAndCore_JNI");
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -666,31 +666,149 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     return true;
 }
 
+#define OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS 1
+#if !defined(OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS)
+#   define OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS 0
+#endif // !defined(OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS)
+
 bool OsmAnd::MapRenderer::isIdle() const
 {
     bool isNotIdle = false;
 
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    QString notIdleReason;
+    bool skipOtherNotIdleReasons = false;
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || _resources->updatesPresent();
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("_resources->updatesPresent()");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     {
         QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
 
         isNotIdle = isNotIdle || !_pendingPublishMapSymbols.isEmpty();
     }
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("!_pendingPublishMapSymbols.isEmpty()");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     {
         QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
         
         isNotIdle = isNotIdle || !_pendingUnpublishMapSymbols.isEmpty();
     }
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("!_pendingUnpublishMapSymbols.isEmpty()");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || (_resourcesGpuSyncRequestsCounter.loadAcquire() > 0);
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("(_resourcesGpuSyncRequestsCounter.loadAcquire() > 0)");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || (_renderThreadDispatcher.queueSize() > 0);
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("(_renderThreadDispatcher.queueSize() > 0)");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || (_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0);
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("(_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0)");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || (_currentConfigurationInvalidatedMask.loadAcquire() != 0);
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("(_currentConfigurationInvalidatedMask.loadAcquire() != 0)");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || (_requestedStateUpdatedMask.loadAcquire() != 0);
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("(_requestedStateUpdatedMask.loadAcquire() != 0)");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || (_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0);
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("(_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0)");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || (_resources->_resourcesRequestTasksCounter.loadAcquire() > 0);
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("(_resources->_resourcesRequestTasksCounter.loadAcquire() > 0)");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || _resources->collectionsSnapshotsInvalidated();
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("_resources->collectionsSnapshotsInvalidated()");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || (_frameInvalidatesCounter.loadAcquire() > 0);
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("(_frameInvalidatesCounter.loadAcquire() > 0)");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
     isNotIdle = isNotIdle || !_resources->allResourcesAreUploaded();
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (!skipOtherNotIdleReasons && isNotIdle)
+    {
+        notIdleReason = QLatin1String("!_resources->allResourcesAreUploaded()");
+        skipOtherNotIdleReasons = true;
+    }
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+
+#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
+    if (isNotIdle)
+        LogPrintf(LogSeverityLevel::Debug, "OsmAnd::MapRenderer::isIdle(): not idle due to '%s' check", qPrintable(notIdleReason));
+#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
 
     return !isNotIdle;
 }

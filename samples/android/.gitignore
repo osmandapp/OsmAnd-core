@@ -8,3 +8,6 @@
 
 # MacOSX
 .DS_Store
+
+# Output files
+/build
