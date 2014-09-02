@@ -1,4 +1,10 @@
+# Android Studio
+/.idea
+*.iml
+
+# Gradle
 .gradle
 /local.properties
-/.idea/workspace.xml
+
+# MacOSX
 .DS_Store
