@@ -15,8 +15,6 @@
 
 namespace OsmAnd
 {
-
-#if !defined(SWIG)
     class IObservable
     {
         Q_DISABLE_COPY_AND_MOVE(IObservable);
@@ -32,6 +30,7 @@ namespace OsmAnd
         }
     };
 
+#if !defined(SWIG)
     template<typename... ARGS>
     class Observable : public IObservable
     {
@@ -232,10 +231,8 @@ namespace OsmAnd
 
     // Just a stub for SWIG
     template<typename T>
-    struct ObservableAs
+    struct ObservableAs : public IObservable
     {
-        typedef const void* Tag;
-
         ObservableAs();
         virtual ~ObservableAs();
 
