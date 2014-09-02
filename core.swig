@@ -29,6 +29,7 @@
 #include <OsmAndCore/Map/MapStylesPresetsCollection.h>
 #include <OsmAndCore/Map/MapStylePreset.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
+#include <OsmAndCore/Map/MapRendererTypes.h>
 #include <OsmAndCore/Map/MapRendererState.h>
 #include <OsmAndCore/Map/MapRendererSetupOptions.h>
 #include <OsmAndCore/Map/MapRendererConfiguration.h>
@@ -190,6 +191,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapStyleValue.h>
 %include <OsmAndCore/Map/MapStylePreset.h>
 %include <OsmAndCore/Map/MapPresentationEnvironment.h>
+%include <OsmAndCore/Map/MapRendererTypes.h>
 %include <OsmAndCore/Map/MapRendererState.h>
 %include <OsmAndCore/Map/MapRendererSetupOptions.h>
 %include <OsmAndCore/Map/MapRendererConfiguration.h>

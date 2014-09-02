@@ -13,14 +13,14 @@ allprojects {
 	}
 }
 
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 
 android {
 	sourceSets.main {
 		manifest.srcFile "AndroidManifest.xml"
+		java.srcDirs = ["src", "./gen/java"]
 		jniLibs.srcDirs = ["./jniLibs"]
 		jni.srcDirs = []
-		java.srcDirs = ["src", "./gen/java"]
 	}
 
 	compileSdkVersion 19
@@ -29,6 +29,11 @@ android {
 	defaultConfig {
 		minSdkVersion 9
 		targetSdkVersion 19
+	}
+
+	buildTypes {
+		release {
+		}
 	}
 
 	lintOptions {

@@ -46,7 +46,7 @@ public class MainActivity extends ActionBarActivity {
 
         Log.i(TAG, "Going to resolve default embedded style...");
         _mapStylesCollection = new MapStylesCollection();
-        _mapStyle = _mapStylesCollection->getStyle("default");
+        _mapStyle = _mapStylesCollection.getBakedStyle("default");
         if (_mapStyle == null)
         {
             Log.e(TAG, "Failed to resolve style 'default'");
@@ -55,12 +55,12 @@ public class MainActivity extends ActionBarActivity {
 
         Log.i(TAG, "Going to prepare OBFs collection");
         _obfsCollection = new ObfsCollection();
-        _obfsCollection.watchDirectory(Environment.getExternalStorageState() + "/osmand", true);
+        _obfsCollection.addDirectory(Environment.getExternalStorageState() + "/osmand", true);
 
         Log.i(TAG, "Going to prepare all resources for renderer");
         _mapPresentationEnvironment = new MapPresentationEnvironment(
                 _mapStyle,
-                1.0, //TODO: Here should be DPI
+                1.0f, //TODO: Here should be DPI
                 "en"); //TODO: here should be current locale
         //mapPresentationEnvironment->setSettings(configuration.styleSettings);
         _primitiviser = new Primitiviser(
@@ -87,7 +87,6 @@ public class MainActivity extends ActionBarActivity {
 
         MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
         /*
-        OsmAnd::MapRendererSetupOptions rendererSetup;
         rendererSetup.frameUpdateRequestCallback = []()
         {
             //QMutexLocker scopedLocker(&glutWasInitializedFlagMutex);
@@ -95,7 +94,6 @@ public class MainActivity extends ActionBarActivity {
             if(glutWasInitialized)
                 glutPostRedisplay();
         };
-        rendererSetup.displayDensityFactor = density;
         rendererSetup.gpuWorkerThread.enabled = useGpuWorker;
         if(rendererSetup.gpuWorkerThread.enabled)
         {
@@ -119,7 +117,9 @@ public class MainActivity extends ActionBarActivity {
             };
             #endif
         }
-        renderer->setup(rendererSetup);
+        */
+        _mapRenderer.setup(rendererSetupOptions);
+        /*
         viewport.top = 0;
         viewport.left = 0;
         viewport.bottom = 600;
@@ -136,7 +136,7 @@ public class MainActivity extends ActionBarActivity {
             1102430866,
             704978668));
         _mapRenderer.setZoom(10.0f);
-        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, OnlineMapRasterTileProvider.createMapnikProvider());
+        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, OnlineTileSources.getBuiltIn().createProviderFor("Mapnik (OsmAnd)"));
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         _glSurfaceView.setEGLContextClientVersion(2);
@@ -215,11 +215,10 @@ public class MainActivity extends ActionBarActivity {
             _binaryMapRasterBitmapTileProvider = null;
         }
 
-        /*
         if (_mapRenderer != null) {
             _mapRenderer.delete();
             _mapRenderer = null;
-        }*/
+        }
 
         OsmAndCore.ReleaseCore();
 

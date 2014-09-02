@@ -30,7 +30,7 @@ android {
 
 repositories {
     flatDir {
-        dirs "../../../wrappers/android/build/libs"
+        dirs "../../../wrappers/android/build/outputs/aar"
     }
 }
 
