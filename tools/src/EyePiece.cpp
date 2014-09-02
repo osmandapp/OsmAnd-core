@@ -807,7 +807,19 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         std::shared_ptr<const OsmAnd::MapStyle> mapStyle;
         if (!configuration.stylesCollection->obtainBakedStyle(configuration.styleName, mapStyle))
         {
-            output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "'" << std::endl;
+            output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "' from collection:" << std::endl;
+            for (const auto& style : OsmAnd::constOf(configuration.stylesCollection->getCollection()))
+            {
+                if (style->isMetadataLoaded())
+                {
+                    if (style->isStandalone())
+                        output << "\t" << QStringToStlString(style->name) << std::endl;
+                    else
+                        output << "\t" << QStringToStlString(style->name) << "::" << QStringToStlString(style->parentName) << std::endl;
+                }
+                else
+                    output << "\t[missing metadata]" << std::endl;
+            }
             break;
         }
 
@@ -1318,6 +1330,11 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.useLegacyContext = true;
         }
 #endif
+        else
+        {
+            outError = QString("'{0}' unrecognized argument").arg(arg);
+            return false;
+        }
     }
 
     // Validate
