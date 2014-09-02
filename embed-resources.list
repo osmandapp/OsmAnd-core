@@ -294,6 +294,7 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_emergency_fire_hydrant.png:map/map_icons/emergency_fire_hydrant.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_emergency_phone.png:map/map_icons/emergency_phone.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_entertainment.png:map/map_icons/entertainment.png
+/resources/rendering_styles/style-icons/drawable-mdpi/mm_entrance_exit.png:map/map_icons/entrance_exit.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_finance.png:map/map_icons/finance.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_food_shop.png:map/map_icons/food_shop.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_for_tourists.png:map/map_icons/for_tourists.png
@@ -308,7 +309,6 @@
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_highway_bus_stop_round_small.png:map/map_icons/highway_bus_stop_round_small.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_highway_bus_stop_round_small_night.png:map/map_icons/highway_bus_stop_round_small_night.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_highway_bus_stop_small.png:map/map_icons/highway_bus_stop_small.png
-/resources/rendering_styles/style-icons/drawable-mdpi/mm_highway_crossing.png:map/map_icons/highway_crossing.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_highway_crossing2.png:map/map_icons/highway_crossing2.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_highway_ford.png:map/map_icons/highway_ford.png
 /resources/rendering_styles/style-icons/drawable-mdpi/mm_highway_gate.png:map/map_icons/highway_gate.png
