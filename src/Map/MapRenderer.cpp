@@ -801,7 +801,7 @@ bool OsmAnd::MapRenderer::isIdle() const
 #if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
     if (!skipOtherNotIdleReasons && isNotIdle)
     {
-        notIdleReason = QLatin1String("!_resources->allResourcesAreUploaded()");
+        notIdleReason = QLatin1String("!_resources->eachResourceIsUploadedOrUnavailable()");
         skipOtherNotIdleReasons = true;
         shouldDumpResources = true;
     }
