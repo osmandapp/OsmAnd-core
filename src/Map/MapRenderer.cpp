@@ -678,6 +678,7 @@ bool OsmAnd::MapRenderer::isIdle() const
 #if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
     QString notIdleReason;
     bool skipOtherNotIdleReasons = false;
+    bool shouldDumpResources = false;
 #endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
 
     isNotIdle = isNotIdle || _resources->updatesPresent();
@@ -802,6 +803,7 @@ bool OsmAnd::MapRenderer::isIdle() const
     {
         notIdleReason = QLatin1String("!_resources->allResourcesAreUploaded()");
         skipOtherNotIdleReasons = true;
+        shouldDumpResources = true;
     }
 #endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
 
@@ -810,6 +812,8 @@ bool OsmAnd::MapRenderer::isIdle() const
         LogPrintf(LogSeverityLevel::Debug, "OsmAnd::MapRenderer::isIdle(): not idle due to '%s' check", qPrintable(notIdleReason));
     else
         LogPrintf(LogSeverityLevel::Debug, "OsmAnd::MapRenderer::isIdle(): is idle");
+    if (shouldDumpResources)
+        dumpResourcesInfo();
 #endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
 
     return !isNotIdle;
