@@ -40,12 +40,15 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
 
+#if !defined(SWIG)
+        //NOTE: For some reason, produces 'SWIGTYPE_p_std__shared_ptrT_OsmAnd__MapSymbolsGroup_const_t'
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<TiledMapSymbolsData>& outTiledData,
             const FilterCallback filterCallback = nullptr,
             const IQueryController* const queryController = nullptr);
+#endif // !defined(SWIG)
     };
 
     class OSMAND_CORE_API BinaryMapStaticSymbolsTile : public TiledMapSymbolsData

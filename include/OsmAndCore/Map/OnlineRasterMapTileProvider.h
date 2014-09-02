@@ -32,8 +32,11 @@ namespace OsmAnd
         const QString name;
         const QString pathSuffix;
         const QString urlPattern;
+#if !defined(SWIG)
+        //NOTE: This stuff breaks swig due to conflict with get*();
         const ZoomLevel minZoom;
         const ZoomLevel maxZoom;
+#endif // !defined(SWIG)
         const uint32_t maxConcurrentDownloads;
         const uint32_t providerTileSize;
         const AlphaChannelData alphaChannelData;

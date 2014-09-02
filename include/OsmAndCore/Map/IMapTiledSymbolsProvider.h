@@ -9,7 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
 
 namespace OsmAnd
@@ -21,10 +21,13 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(IMapTiledSymbolsProvider);
 
     public:
+#if !defined(SWIG)
+        //NOTE: For some reason, produces 'SWIGTYPE_p_std__shared_ptrT_OsmAnd__MapSymbolsGroup_const_t'
         OSMAND_CALLABLE(FilterCallback,
             bool,
             const IMapTiledSymbolsProvider* const provider,
             const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup);
+#endif // !defined(SWIG)
 
     private:
     protected:
@@ -38,12 +41,14 @@ namespace OsmAnd
             std::shared_ptr<MapTiledData>& outTiledData,
             const IQueryController* const queryController = nullptr);
 
+# if !defined(SWIG)
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<TiledMapSymbolsData>& outTiledData,
             const FilterCallback filterCallback = nullptr,
             const IQueryController* const queryController = nullptr) = 0;
+#endif // !defined(SWIG)
     };
 
     class OSMAND_CORE_API TiledMapSymbolsData : public MapTiledData
