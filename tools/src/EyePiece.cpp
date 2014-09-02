@@ -985,19 +985,31 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         else
         {
             QFile imageFile(configuration.outputImageFilename);
-            if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+
+            // Just in case try to create entire path
+            auto containingDirectory = QFileInfo(imageFile).absoluteDir();
+            containingDirectory.mkpath(QLatin1String("."));
+            if (!QFileInfo(containingDirectory.absolutePath()).isWritable())
             {
-                output << xT("Failed to open destination file '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+                output << xT("'") << QStringToStlString(containingDirectory.absolutePath()) << xT("' is not writable") << std::endl;
                 success = false;
             }
             else
             {
-                if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size()) != imageData->size())
+                if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
                 {
-                    output << xT("Failed to write image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+                    output << xT("Failed to open destination file '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
                     success = false;
                 }
-                imageFile.close();
+                else
+                {
+                    if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size()) != imageData->size())
+                    {
+                        output << xT("Failed to write image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+                        success = false;
+                    }
+                    imageFile.close();
+                }
             }
 
             imageData->unref();
