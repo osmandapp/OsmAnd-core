@@ -17,13 +17,28 @@ namespace OsmAnd
 {
 
 #if !defined(SWIG)
+    class IObservable
+    {
+        Q_DISABLE_COPY_AND_MOVE(IObservable);
+
+    public:
+        typedef const void* Tag;
+
+        IObservable()
+        {
+        }
+        virtual ~IObservable()
+        {
+        }
+    };
+
     template<typename... ARGS>
-    class Observable
+    class Observable : public IObservable
     {
         Q_DISABLE_COPY_AND_MOVE(Observable);
     public:
         typedef std::function<void (ARGS...)> Handler;
-        typedef const void* Tag;
+        typedef IObservable::Tag Tag;
 
     private:
         mutable QReadWriteLock _observersLock;
@@ -54,7 +69,7 @@ namespace OsmAnd
         Observable()
         {
         }
-        ~Observable()
+        virtual ~Observable()
         {
         }
 
@@ -114,6 +129,8 @@ namespace OsmAnd
     template<typename RETURN_TYPE, typename... ARGS>
     class ObservableAs<RETURN_TYPE(*)(ARGS...)> : public Observable< ARGS... >
     {
+        static_assert(std::is_same<RETURN_TYPE, void>::value, "RETURN_TYPE has to be 'void'");
+
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     public:
         typedef typename Observable< ARGS... >::Tag Tag;
@@ -124,7 +141,7 @@ namespace OsmAnd
         ObservableAs()
         {
         }
-        ~ObservableAs()
+        virtual ~ObservableAs()
         {
         }
     };
@@ -133,6 +150,8 @@ namespace OsmAnd
     template<typename CLASS, typename RETURN_TYPE, typename... ARGS>
     class ObservableAs<RETURN_TYPE(CLASS::*)(ARGS...)> : public Observable< ARGS... >
     {
+        static_assert(std::is_same<RETURN_TYPE, void>::value, "RETURN_TYPE has to be 'void'");
+
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     public:
         typedef typename Observable< ARGS... >::Tag Tag;
@@ -143,7 +162,7 @@ namespace OsmAnd
         ObservableAs()
         {
         }
-        ~ObservableAs()
+        virtual ~ObservableAs()
         {
         }
     };
@@ -152,6 +171,8 @@ namespace OsmAnd
     template<typename CLASS, typename RETURN_TYPE, typename... ARGS>
     class ObservableAs<RETURN_TYPE(CLASS::*)(ARGS...) const> : public Observable< ARGS... >
     {
+        static_assert(std::is_same<RETURN_TYPE, void>::value, "RETURN_TYPE has to be 'void'");
+
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     public:
         typedef typename Observable< ARGS... >::Tag Tag;
@@ -162,7 +183,7 @@ namespace OsmAnd
         ObservableAs()
         {
         }
-        ~ObservableAs()
+        virtual ~ObservableAs()
         {
         }
     };
@@ -171,6 +192,8 @@ namespace OsmAnd
     template<typename CLASS, typename RETURN_TYPE>
     class ObservableAs<RETURN_TYPE(CLASS::*)> : public Observable<>
     {
+        static_assert(std::is_same<RETURN_TYPE, void>::value, "RETURN_TYPE has to be 'void'");
+
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
     public:
         typedef typename Observable<>::Tag Tag;
@@ -181,7 +204,7 @@ namespace OsmAnd
         ObservableAs()
         {
         }
-        ~ObservableAs()
+        virtual ~ObservableAs()
         {
         }
     };
@@ -200,7 +223,7 @@ namespace OsmAnd
         ObservableAs()
         {
         }
-        ~ObservableAs()
+        virtual ~ObservableAs()
         {
         }
     };
@@ -214,7 +237,7 @@ namespace OsmAnd
         typedef const void* Tag;
 
         ObservableAs();
-        ~ObservableAs();
+        virtual ~ObservableAs();
 
         bool detach(const Tag tag) const;
     };

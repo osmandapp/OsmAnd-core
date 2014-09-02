@@ -44,6 +44,41 @@
 #define _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS(count) _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS_HELPER1(count)
 
 #if !defined(SWIG)
+#   define OSMAND_OBSERVER_CALLABLE(name, ...)                                                                                  \
+        typedef std::function< void ( __VA_ARGS__ )> name;                                                                      \
+                                                                                                                                \
+        struct I##name                                                                                                          \
+        {                                                                                                                       \
+            I##name()                                                                                                           \
+            {                                                                                                                   \
+            }                                                                                                                   \
+                                                                                                                                \
+            virtual ~I##name()                                                                                                  \
+            {                                                                                                                   \
+            }                                                                                                                   \
+                                                                                                                                \
+            virtual void operator()(__VA_ARGS__) const = 0;                                                                     \
+                                                                                                                                \
+            operator name() const                                                                                               \
+            {                                                                                                                   \
+                return getBinding();                                                                                            \
+            }                                                                                                                   \
+                                                                                                                                \
+            name getBinding() const                                                                                             \
+            {                                                                                                                   \
+                return (name)std::bind(&I##name::operator(), this                                                               \
+                    _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                                    \
+            }                                                                                                                   \
+                                                                                                                                \
+            /* This is a required workaround, since specifying ObservableAs<> kills compiler here */                            \
+            template<typename OBSERVABLE_T>                                                                                     \
+            bool attachTo(                                                                                                      \
+                const OBSERVABLE_T& observable,                                                                                 \
+                const IObservable::Tag tag)                                                                                     \
+            {                                                                                                                   \
+                return observable.attach(tag, getBinding());                                                                    \
+            }                                                                                                                   \
+        }
 #   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
         typedef std::function< return_type ( __VA_ARGS__ )> name;                                                               \
                                                                                                                                 \
@@ -69,17 +104,21 @@
                 return (name)std::bind(&I##name::operator(), this                                                               \
                     _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                                    \
             }                                                                                                                   \
-                                                                                                                                \
-            /* This is a required workaround, since specifying ObservableAs<> kills compiler here */                            \
-            template<typename OBSERVABLE_T>                                                                                     \
-            bool attachTo(                                                                                                      \
-                const OBSERVABLE_T& observable,                                                                                 \
-                const typename OBSERVABLE_T::Tag tag)                                                                           \
-            {                                                                                                                   \
-                return observable.attach(tag, getBinding());                                                                    \
-            }                                                                                                                   \
         }
 #else
+#   define OSMAND_OBSERVER_CALLABLE(name, ...)                                                                                  \
+        %feature("director") I##name;                                                                                           \
+        %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
+        struct I##name                                                                                                          \
+        {                                                                                                                       \
+            I##name();                                                                                                          \
+            virtual ~I##name();                                                                                                 \
+                                                                                                                                \
+            virtual void operator()( __VA_ARGS__ ) const = 0;                                                                   \
+                                                                                                                                \
+            bool attachTo(const ObservableAs<I##name>& observable, const ObservableAs<I##name>::Tag tag);                       \
+        };                                                                                                                      \
+        typedef I##name name
 #   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
         %feature("director") I##name;                                                                                           \
         %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
@@ -89,8 +128,6 @@
             virtual ~I##name();                                                                                                 \
                                                                                                                                 \
             virtual return_type operator()( __VA_ARGS__ ) const = 0;                                                            \
-                                                                                                                                \
-            bool attachTo(const ObservableAs<I##name>& observable, const ObservableAs<I##name>::Tag tag);                       \
         };                                                                                                                      \
         typedef I##name name
 #endif

@@ -49,7 +49,8 @@ namespace OsmAnd
         virtual bool pauseGpuWorkerThread() = 0;
         virtual bool resumeGpuWorkerThread() = 0;
 
-        OSMAND_CALLABLE(FramePreparedObserver, void, IMapRenderer* mapRenderer);
+        OSMAND_OBSERVER_CALLABLE(FramePreparedObserver,
+            IMapRenderer* mapRenderer);
         const ObservableAs<IMapRenderer::FramePreparedObserver> framePreparedObservable;
 
         virtual void reloadEverything() = 0;
@@ -99,11 +100,10 @@ namespace OsmAnd
         virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
         virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
 
-        OSMAND_CALLABLE(StateChangeObserver,
-            void,
+        OSMAND_OBSERVER_CALLABLE(StateChangeObserver,
             const IMapRenderer* const mapRenderer,
             const MapRendererStateChange thisChange,
-            const MapRendererStateChanges allChanges);
+            /*const*/ MapRendererStateChanges allChanges);//NOTE: this 'const' breaks swig
         const ObservableAs<IMapRenderer::StateChangeObserver> stateChangeObservable;
 
         //NOTE: screen points origin from top-left

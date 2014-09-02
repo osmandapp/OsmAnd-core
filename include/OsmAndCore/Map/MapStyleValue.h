@@ -18,7 +18,7 @@ namespace OsmAnd
     class MapStyleValueDefinition;
     class MapStyleRule;
 
-    struct OSMAND_CORE_API MapStyleValue
+    struct OSMAND_CORE_API MapStyleValue Q_DECL_FINAL
     {
         MapStyleValue();
 
@@ -53,6 +53,6 @@ namespace OsmAnd
             } asComplex;
         };
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_STYLE_VALUE_H_)

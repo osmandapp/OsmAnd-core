@@ -13,9 +13,12 @@
 #include <OsmAndCore/Data/DataTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyle.h>
+#include <OsmAndCore/Map/MapStyleValue.h>
 #include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
 #include <OsmAndCore/Map/MapStylePreset.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
@@ -61,6 +64,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResourcesManager::ResourceInRepository)
 	%shared_ptr(OsmAnd::ResourcesManager::InstalledResource)
 	%shared_ptr(OsmAnd::ResourcesManager::UnmanagedResource)
+	%shared_ptr(OsmAnd::MapSymbol)
+	%shared_ptr(OsmAnd::MapSymbolsGroup)
 	%shared_ptr(OsmAnd::IMapStylesCollection)
 	%shared_ptr(OsmAnd::MapStylesCollection)
 	%shared_ptr(OsmAnd::IMapStylesPresetsCollection)
@@ -77,6 +82,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IMapTiledSymbolsProvider)
 	%shared_ptr(OsmAnd::IMapKeyedDataProvider)
 	%shared_ptr(OsmAnd::IMapKeyedSymbolsProvider)
+	%shared_ptr(OsmAnd::Primitiviser)
 	%shared_ptr(OsmAnd::BinaryMapDataProvider)
 	%shared_ptr(OsmAnd::BinaryMapPrimitivesProvider)
 	%shared_ptr(OsmAnd::BinaryMapStaticSymbolsProvider)
@@ -113,10 +119,13 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/DataTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Map/MapTypes.h>
+%include <OsmAndCore/Map/MapSymbol.h>
+%include <OsmAndCore/Map/MapSymbolsGroup.h>
 %include <OsmAndCore/Map/IMapStylesCollection.h>
 %include <OsmAndCore/Map/MapStylesCollection.h>
 %include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
 %include <OsmAndCore/Map/MapStyle.h>
+%include <OsmAndCore/Map/MapStyleValue.h>
 %include <OsmAndCore/Map/MapStylePreset.h>
 %include <OsmAndCore/Map/MapPresentationEnvironment.h>
 %include <OsmAndCore/Map/MapRendererState.h>

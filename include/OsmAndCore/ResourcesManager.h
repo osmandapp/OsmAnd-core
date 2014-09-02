@@ -274,15 +274,13 @@ namespace OsmAnd
         bool updateFromRepository(const QString& id, const QString& filePath);
 
         // Observables
-        OSMAND_CALLABLE(LocalResourcesChanged,
-            void,
+        OSMAND_OBSERVER_CALLABLE(LocalResourcesChanged,
             const ResourcesManager* const resourcesManager,
             const QList< QString >& added,
             const QList< QString >& removed,
             const QList< QString >& updated);
         const ObservableAs<ResourcesManager::LocalResourcesChanged> localResourcesChangeObservable;
-        OSMAND_CALLABLE(RepositoryUpdated,
-            void,
+        OSMAND_OBSERVER_CALLABLE(RepositoryUpdated,
             const ResourcesManager* const resourcesManager);
         const ObservableAs<ResourcesManager::RepositoryUpdated> repositoryUpdateObservable;
 
