@@ -797,7 +797,7 @@ bool OsmAnd::MapRenderer::isIdle() const
     }
 #endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
 
-    isNotIdle = isNotIdle || !_resources->allResourcesAreUploaded();
+    isNotIdle = isNotIdle || !_resources->eachResourceIsUploadedOrUnavailable();
 #if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
     if (!skipOtherNotIdleReasons && isNotIdle)
     {

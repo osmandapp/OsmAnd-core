@@ -1370,6 +1370,39 @@ std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRender
     return getCollection(type, ofProvider)->getCollectionSnapshot();
 }
 
+bool OsmAnd::MapRendererResourcesManager::eachResourceIsUploadedOrUnavailable() const
+{
+    QReadLocker scopedLocker(&_resourcesStoragesLock);
+
+    bool atLeastOneNotUploadedOrUnavailable = false;
+
+    for (const auto& resourcesCollections : constOf(_storageByType))
+    {
+        for (const auto& resourcesCollection : constOf(resourcesCollections))
+        {
+            if (!resourcesCollection)
+                continue;
+
+            resourcesCollection->obtainResources(nullptr,
+                [&atLeastOneNotUploadedOrUnavailable]
+                (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
+                {
+                    const auto resourceState = entry->getState();
+                    if (resourceState != MapRendererResourceState::Uploaded && resourceState != MapRendererResourceState::Unavailable)
+                    {
+                        atLeastOneNotUploadedOrUnavailable = true;
+                        cancel = true;
+                        return false;
+                    }
+
+                    return false;
+                });
+        }
+    }
+
+    return !atLeastOneNotUploadedOrUnavailable;
+}
+
 bool OsmAnd::MapRendererResourcesManager::allResourcesAreUploaded() const
 {
     QReadLocker scopedLocker(&_resourcesStoragesLock);

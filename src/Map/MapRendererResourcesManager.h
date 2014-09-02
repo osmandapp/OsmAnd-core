@@ -185,6 +185,7 @@ namespace OsmAnd
         std::shared_ptr<const IMapRendererResourcesCollection> getCollectionSnapshot(
             const MapRendererResourceType type,
             const std::shared_ptr<IMapDataProvider>& ofProvider) const;
+        bool eachResourceIsUploadedOrUnavailable() const;
         bool allResourcesAreUploaded() const;
         void dumpResourcesInfo() const;
 
