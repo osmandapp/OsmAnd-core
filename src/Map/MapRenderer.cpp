@@ -812,8 +812,10 @@ bool OsmAnd::MapRenderer::isIdle() const
         LogPrintf(LogSeverityLevel::Debug, "OsmAnd::MapRenderer::isIdle(): not idle due to '%s' check", qPrintable(notIdleReason));
     else
         LogPrintf(LogSeverityLevel::Debug, "OsmAnd::MapRenderer::isIdle(): is idle");
+#   if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS > 1
     if (shouldDumpResources)
         dumpResourcesInfo();
+#   endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS > 1
 #endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
 
     return !isNotIdle;
