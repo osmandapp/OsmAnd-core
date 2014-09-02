@@ -50,7 +50,7 @@ namespace OsmAnd
         virtual bool resumeGpuWorkerThread() = 0;
 
         OSMAND_CALLABLE(FramePreparedObserver, void, IMapRenderer* mapRenderer);
-        const ObservableAs<FramePreparedObserver> framePreparedObservable;
+        const ObservableAs<IMapRenderer::FramePreparedObserver> framePreparedObservable;
 
         virtual void reloadEverything() = 0;
 
@@ -103,8 +103,8 @@ namespace OsmAnd
             void,
             const IMapRenderer* const mapRenderer,
             const MapRendererStateChange thisChange,
-            const uint32_t allChanges);
-        const ObservableAs<StateChangeObserver> stateChangeObservable;
+            const MapRendererStateChanges allChanges);
+        const ObservableAs<IMapRenderer::StateChangeObserver> stateChangeObservable;
 
         //NOTE: screen points origin from top-left
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const = 0;

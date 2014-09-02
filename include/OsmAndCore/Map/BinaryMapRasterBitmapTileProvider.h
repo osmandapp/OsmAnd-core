@@ -48,8 +48,8 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<MapTiledData>& outTiledData,
-            BinaryMapRasterBitmapTileProvider_Metrics::Metric_obtainData* const metric = nullptr,
-            const IQueryController* const queryController = nullptr);
+            BinaryMapRasterBitmapTileProvider_Metrics::Metric_obtainData* const metric,
+            const IQueryController* const queryController);
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;

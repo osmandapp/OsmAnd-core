@@ -90,7 +90,8 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
         tileId,
         zoom,
         dataTile_,
-        metric ? &metric->obtainBinaryMapDataMetric : nullptr);
+        metric ? &metric->obtainBinaryMapDataMetric : nullptr,
+        nullptr);
     if (!dataTile_)
     {
         outTiledData.reset();

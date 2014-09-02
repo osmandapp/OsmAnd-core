@@ -10,6 +10,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/Map/MapTypes.h>
 #include <OsmAndCore/Map/MapRendererTypes.h>
 
@@ -21,23 +22,24 @@ namespace OsmAnd
     class IMapRenderer;
     class MapRenderer;
 
-    enum class MapRendererStateChange : uint32_t
+    enum class MapRendererStateChange
     {
-        RasterLayers_Providers = 1 << 0,
-        RasterLayers_Opacity = 1 << 1,
-        ElevationData_Provider = 1 << 2,
-        ElevationData_ScaleFactor = 1 << 3,
-        Symbols_Providers = 1 << 4,
-        WindowSize = 1 << 5,
-        Viewport = 1 << 6,
-        FieldOfView = 1 << 7,
-        SkyColor = 1 << 8,
-        FogParameters = 1 << 9,
-        Azimuth = 1 << 10,
-        ElevationAngle = 1 << 11,
-        Target = 1 << 12,
-        Zoom = 1 << 13,
+        RasterLayers_Providers = 0,
+        RasterLayers_Opacity,
+        ElevationData_Provider,
+        ElevationData_ScaleFactor,
+        Symbols_Providers,
+        WindowSize,
+        Viewport,
+        FieldOfView,
+        SkyColor,
+        FogParameters,
+        Azimuth,
+        ElevationAngle,
+        Target,
+        Zoom,
     };
+    typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
 
     struct OSMAND_CORE_API MapRendererState Q_DECL_FINAL
     {

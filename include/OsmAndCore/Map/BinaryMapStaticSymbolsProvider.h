@@ -41,8 +41,9 @@ namespace OsmAnd
         virtual ZoomLevel getMaxZoom() const;
 
         virtual bool obtainData(
-            const TileId tileId, const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            const TileId tileId,
+            const ZoomLevel zoom,
+            std::shared_ptr<TiledMapSymbolsData>& outTiledData,
             const FilterCallback filterCallback = nullptr,
             const IQueryController* const queryController = nullptr);
     };

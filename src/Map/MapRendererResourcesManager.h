@@ -159,7 +159,7 @@ namespace OsmAnd
             const AlphaChannelData alphaChannelData) const;
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
-        void updateBindings(const MapRendererState& state, const uint32_t updatedMask);
+        void updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);
         void updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,

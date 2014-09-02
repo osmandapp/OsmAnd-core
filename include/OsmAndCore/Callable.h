@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
+#include <OsmAndCore/Observable.h>
 
 //NOTE: Even for __COUNT_VA_ARGS__() it will give 1
 #define __COUNT_VA_ARGS__N(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, N, ...) N
@@ -56,6 +57,8 @@
             {                                                                                                                   \
             }                                                                                                                   \
                                                                                                                                 \
+            virtual return_type operator()(__VA_ARGS__) const = 0;                                                              \
+                                                                                                                                \
             operator name() const                                                                                               \
             {                                                                                                                   \
                 return getBinding();                                                                                            \
@@ -63,35 +66,33 @@
                                                                                                                                 \
             name getBinding() const                                                                                             \
             {                                                                                                                   \
-                return (name)std::bind(&I##name::method, this                                                                   \
+                return (name)std::bind(&I##name::operator(), this                                                               \
                     _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                                    \
             }                                                                                                                   \
                                                                                                                                 \
-            virtual return_type method( __VA_ARGS__ ) const = 0;                                                                \
+            /* This is a required workaround, since specifying ObservableAs<> kills compiler here */                            \
+            template<typename OBSERVABLE_T>                                                                                     \
+            bool attachTo(                                                                                                      \
+                const OBSERVABLE_T& observable,                                                                                 \
+                const typename OBSERVABLE_T::Tag tag)                                                                           \
+            {                                                                                                                   \
+                return observable.attach(tag, getBinding());                                                                    \
+            }                                                                                                                   \
         }
 #else
 #   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
-        typedef std::function< return_type ( __VA_ARGS__ )> name;                                                               \
-                                                                                                                                \
         %feature("director") I##name;                                                                                           \
+        %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
         struct I##name                                                                                                          \
         {                                                                                                                       \
-            I##name()                                                                                                           \
-            {                                                                                                                   \
-            }                                                                                                                   \
+            I##name();                                                                                                          \
+            virtual ~I##name();                                                                                                 \
                                                                                                                                 \
-            virtual ~I##name()                                                                                                  \
-            {                                                                                                                   \
-            }                                                                                                                   \
+            virtual return_type operator()( __VA_ARGS__ ) const = 0;                                                            \
                                                                                                                                 \
-            name getBinding() const                                                                                             \
-            {                                                                                                                   \
-                return (name)std::bind(&I##name::method, this                                                                   \
-                    _OSMAND_CALLABLE_UNRWAP_PLACEHOLDERS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                                    \
-            }                                                                                                                   \
-                                                                                                                                \
-            virtual return_type method( __VA_ARGS__ ) const = 0;                                                                \
-        }
+            bool attachTo(const ObservableAs<I##name>& observable, const ObservableAs<I##name>::Tag tag);                       \
+        };                                                                                                                      \
+        typedef I##name name
 #endif
 
 #endif // !defined(_OSMAND_CORE_CALLABLE_H_)

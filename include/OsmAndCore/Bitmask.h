@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_BITMASK_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <type_traits>
 
 #include <OsmAndCore/QtExtensions.h>
 
@@ -12,6 +13,8 @@ namespace OsmAnd
     template<typename FLAGS_ENUM, typename STORAGE = unsigned int>
     class Bitmask Q_DECL_FINAL
     {
+        static_assert(std::is_integral<STORAGE>::value, "STORAGE has to be integral type");
+
     public:
         typedef Bitmask<FLAGS_ENUM, STORAGE> BitmaskT;
 
@@ -38,6 +41,7 @@ namespace OsmAnd
         {
         }
 
+#if !defined(SWIG)
         inline bool operator==(const BitmaskT& r) const
         {
             return (_storage == r._storage);
@@ -67,6 +71,7 @@ namespace OsmAnd
         {
             return _storage;
         }
+#endif // !defined(SWIG)
 
         inline bool isSet(const FLAGS_ENUM flag) const
         {
@@ -75,10 +80,12 @@ namespace OsmAnd
             return (_storage & (1u << static_cast<unsigned int>(flag))) != 0;
         }
 
+#if !defined(SWIG)
         inline bool operator&(const FLAGS_ENUM flag) const
         {
             return isSet(flag);
         }
+#endif // !defined(SWIG)
 
         inline BitmaskT& set(const FLAGS_ENUM flag)
         {
@@ -89,6 +96,7 @@ namespace OsmAnd
             return *this;
         }
 
+#if !defined(SWIG)
         inline BitmaskT operator|(const FLAGS_ENUM flag) const
         {
             return BitmaskT(*this).set(flag);
@@ -98,6 +106,7 @@ namespace OsmAnd
         {
             return set(flag);
         }
+#endif // !defined(SWIG)
 
         inline BitmaskT& unset(const FLAGS_ENUM flag)
         {

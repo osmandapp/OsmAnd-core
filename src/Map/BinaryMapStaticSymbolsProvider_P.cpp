@@ -31,7 +31,7 @@ OsmAnd::BinaryMapStaticSymbolsProvider_P::~BinaryMapStaticSymbolsProvider_P()
 bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<MapTiledData>& outTiledData,
+    std::shared_ptr<TiledMapSymbolsData>& outTiledData,
     const FilterCallback filterCallback,
     const IQueryController* const queryController)
 {

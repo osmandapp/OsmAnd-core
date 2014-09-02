@@ -14,6 +14,8 @@
 
 namespace OsmAnd
 {
+    class TiledMapSymbolsData;
+
     class OSMAND_CORE_API IMapTiledSymbolsProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapTiledSymbolsProvider);
@@ -37,8 +39,9 @@ namespace OsmAnd
             const IQueryController* const queryController = nullptr);
 
         virtual bool obtainData(
-            const TileId tileId, const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            const TileId tileId,
+            const ZoomLevel zoom,
+            std::shared_ptr<TiledMapSymbolsData>& outTiledData,
             const FilterCallback filterCallback = nullptr,
             const IQueryController* const queryController = nullptr) = 0;
     };

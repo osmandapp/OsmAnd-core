@@ -172,11 +172,11 @@ void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std
     }
 }
 
-void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const uint32_t updatedMask)
+void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask)
 {
     bool wasLocked = false;
 
-    if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::ElevationData_Provider))
+    if (updatedMask.isSet(MapRendererStateChange::ElevationData_Provider))
     {
         if (!wasLocked)
         {
@@ -222,7 +222,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             resources.push_back(qMove(newResourcesCollection));
         }
     }
-    if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::RasterLayers_Providers))
+    if (updatedMask.isSet(MapRendererStateChange::RasterLayers_Providers))
     {
         if (!wasLocked)
         {
@@ -284,7 +284,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             resources[rasterLayerIdx] = newResourcesCollection;
         }
     }
-    if (updatedMask & static_cast<uint32_t>(MapRendererStateChange::Symbols_Providers))
+    if (updatedMask.isSet(MapRendererStateChange::Symbols_Providers))
     {
         if (!wasLocked)
         {

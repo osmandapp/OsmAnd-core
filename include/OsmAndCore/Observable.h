@@ -8,13 +8,15 @@
 #include <QHash>
 #include <QReadWriteLock>
 #include <QThreadPool>
+#include <QRunnable>
 #include <OsmAndCore/QtCommon.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/QRunnableFunctor.h>
 
 namespace OsmAnd
 {
+
+#if !defined(SWIG)
     template<typename... ARGS>
     class Observable
     {
@@ -26,6 +28,28 @@ namespace OsmAnd
     private:
         mutable QReadWriteLock _observersLock;
         mutable QHash<Tag, Handler> _observers;
+
+        struct NotifyRunnable : public QRunnable
+        {
+            Q_DISABLE_COPY_AND_MOVE(NotifyRunnable);
+
+            typedef std::function<void()> NotifyFunctor;
+            const NotifyFunctor notifyFunctor;
+
+            NotifyRunnable(const NotifyFunctor notifyFunctor_)
+                : notifyFunctor(notifyFunctor_)
+            {
+            }
+
+            virtual ~NotifyRunnable()
+            {
+            }
+
+            virtual void run()
+            {
+                notifyFunctor();
+            }
+        };
     public:
         Observable()
         {
@@ -73,11 +97,10 @@ namespace OsmAnd
                 observers = detachedOf(_observers);
             }
 
-            QThreadPool::globalInstance()->start(new QRunnableFunctor(
+            QThreadPool::globalInstance()->start(new NotifyRunnable(
                 [=]
-                (const QRunnableFunctor* const runnable)
+                ()
                 {
-                    Q_UNUSED(runnable);
                     for(const auto& handler : constOf(observers))
                         handler(args...);
                 }));
@@ -92,6 +115,9 @@ namespace OsmAnd
     class ObservableAs<RETURN_TYPE(*)(ARGS...)> : public Observable< ARGS... >
     {
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+    public:
+        typedef typename Observable< ARGS... >::Tag Tag;
+
     private:
     protected:
     public:
@@ -108,6 +134,9 @@ namespace OsmAnd
     class ObservableAs<RETURN_TYPE(CLASS::*)(ARGS...)> : public Observable< ARGS... >
     {
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+    public:
+        typedef typename Observable< ARGS... >::Tag Tag;
+
     private:
     protected:
     public:
@@ -124,6 +153,9 @@ namespace OsmAnd
     class ObservableAs<RETURN_TYPE(CLASS::*)(ARGS...) const> : public Observable< ARGS... >
     {
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+    public:
+        typedef typename Observable< ARGS... >::Tag Tag;
+
     private:
     protected:
     public:
@@ -140,6 +172,9 @@ namespace OsmAnd
     class ObservableAs<RETURN_TYPE(CLASS::*)> : public Observable<>
     {
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+    public:
+        typedef typename Observable<>::Tag Tag;
+
     private:
     protected:
     public:
@@ -156,6 +191,9 @@ namespace OsmAnd
     class ObservableAs : public ObservableAs< decltype(&F::operator()) >
     {
         Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+    public:
+        typedef typename ObservableAs< decltype(&F::operator()) >::Tag Tag;
+
     private:
     protected:
     public:
@@ -166,6 +204,23 @@ namespace OsmAnd
         {
         }
     };
+
+#else
+
+    // Just a stub for SWIG
+    template<typename T>
+    struct ObservableAs
+    {
+        typedef const void* Tag;
+
+        ObservableAs();
+        ~ObservableAs();
+
+        bool detach(const Tag tag) const;
+    };
+
+#endif
+
 }
 
 #endif // !defined(_OSMAND_CORE_OBSERVABLE_H_)

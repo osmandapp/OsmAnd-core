@@ -58,7 +58,7 @@ namespace OsmAnd
         const ObservableAs<CollectionChanged> collectionChangeObservable;
 
         OSMAND_CALLABLE(FavoriteLocationChanged, void, const IFavoriteLocationsCollection* const collection, const std::shared_ptr<const IFavoriteLocation> favoriteLocation);
-        const ObservableAs<FavoriteLocationChanged> favoriteLocationChangeObservable;
+        const ObservableAs<IFavoriteLocationsCollection::FavoriteLocationChanged> favoriteLocationChangeObservable;
     };
 }
 

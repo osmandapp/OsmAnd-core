@@ -58,7 +58,7 @@ bool OsmAnd::BinaryMapRasterBitmapTileProvider_Software_P::obtainData(
 
     // Obtain offline map primitives tile
     std::shared_ptr<MapTiledData> primitivesTile_;
-    owner->primitivesProvider->obtainData(tileId, zoom, primitivesTile_, metric ? &metric->obtainBinaryMapPrimitivesMetric : nullptr);
+    owner->primitivesProvider->obtainData(tileId, zoom, primitivesTile_, metric ? &metric->obtainBinaryMapPrimitivesMetric : nullptr, nullptr);
     if (!primitivesTile_)
     {
         outTiledData.reset();

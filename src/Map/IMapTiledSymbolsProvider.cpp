@@ -15,7 +15,11 @@ bool OsmAnd::IMapTiledSymbolsProvider::obtainData(
     std::shared_ptr<MapTiledData>& outTiledData,
     const IQueryController* const queryController /*= nullptr*/)
 {
-    return obtainData(tileId, zoom, outTiledData, nullptr, queryController);
+    std::shared_ptr<TiledMapSymbolsData> tiledMapSymbolsData;
+    const auto result = obtainData(tileId, zoom, tiledMapSymbolsData, nullptr, queryController);
+    outTiledData = tiledMapSymbolsData;
+
+    return result;
 }
 
 OsmAnd::TiledMapSymbolsData::TiledMapSymbolsData(const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups_, const TileId tileId_, const ZoomLevel zoom_)

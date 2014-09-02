@@ -190,10 +190,10 @@ bool OsmAnd::MapRenderer::updateCurrentConfiguration(const unsigned int currentC
 
 void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateChange change)
 {
-    const unsigned int mask = _requestedStateUpdatedMask.fetchAndOrOrdered(static_cast<uint32_t>(change)) | static_cast<uint32_t>(change);
+    const unsigned int newChangesMask = _requestedStateUpdatedMask.fetchAndOrOrdered(static_cast<uint32_t>(change)) | static_cast<uint32_t>(change);
 
     // Notify all observers
-    stateChangeObservable.postNotify(this, change, mask);
+    stateChangeObservable.postNotify(this, change, MapRendererStateChanges(newChangesMask));
 
     // Since our current state is invalid, frame is also invalidated
     invalidateFrame();

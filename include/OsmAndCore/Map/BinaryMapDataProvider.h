@@ -51,7 +51,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             std::shared_ptr<MapTiledData>& outTiledData,
             BinaryMapDataProvider_Metrics::Metric_obtainData* const metric,
-            const IQueryController* const queryController = nullptr);
+            const IQueryController* const queryController);
     };
 
     class BinaryMapDataTile_P;

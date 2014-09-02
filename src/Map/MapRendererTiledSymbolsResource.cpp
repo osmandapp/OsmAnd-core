@@ -62,8 +62,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     QList< std::shared_ptr<SharedGroupResources> > referencedSharedGroupsResources;
     QList< proper::shared_future< std::shared_ptr<SharedGroupResources> > > futureReferencedSharedGroupsResources;
     QSet< uint64_t > loadedSharedGroups;
-    std::shared_ptr<MapTiledData> tile_;
-    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile_,
+    std::shared_ptr<TiledMapSymbolsData> tile;
+    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile,
         [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
         (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup_) -> bool
         {
@@ -101,7 +101,6 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
         });
     if (!requestSucceeded)
         return false;
-    const auto tile = std::static_pointer_cast<TiledMapSymbolsData>(tile_);
 
     // Store data
     _sourceData = tile;
