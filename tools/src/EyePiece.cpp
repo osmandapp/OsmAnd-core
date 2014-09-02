@@ -1075,7 +1075,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto value = arg.mid(strlen("-obfsPath="));
             if (!QDir(value).exists())
             {
-                outError = QString("'{0}' path does not exist").arg(value);
+                outError = QString("'%1' path does not exist").arg(value);
                 return false;
             }
 
@@ -1086,7 +1086,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto value = arg.mid(strlen("-obfsRecursivePath="));
             if (!QDir(value).exists())
             {
-                outError = QString("'{0}' path does not exist").arg(value);
+                outError = QString("'%1' path does not exist").arg(value);
                 return false;
             }
 
@@ -1097,7 +1097,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto value = arg.mid(strlen("-obfFile="));
             if (!QFile(value).exists())
             {
-                outError = QString("'{0}' file does not exist").arg(value);
+                outError = QString("'%1' file does not exist").arg(value);
                 return false;
             }
 
@@ -1108,7 +1108,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto value = arg.mid(strlen("-stylesPath="));
             if (!QDir(value).exists())
             {
-                outError = QString("'{0}' path does not exist").arg(value);
+                outError = QString("'%1' path does not exist").arg(value);
                 return false;
             }
 
@@ -1122,7 +1122,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto value = arg.mid(strlen("-stylesRecursivePath="));
             if (!QDir(value).exists())
             {
-                outError = QString("'{0}' path does not exist").arg(value);
+                outError = QString("'%1' path does not exist").arg(value);
                 return false;
             }
 
@@ -1142,7 +1142,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto settingKeyValue = settingValue.split(QLatin1Char('='));
             if (settingKeyValue.size() != 2)
             {
-                outError = QString("'{0}' can not be parsed as style settings key and value").arg(settingValue);
+                outError = QString("'%1' can not be parsed as style settings key and value").arg(settingValue);
                 return false;
             }
 
@@ -1155,7 +1155,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.outputImageWidth = value.toUInt(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as output image width").arg(value);
+                outError = QString("'%1' can not be parsed as output image width").arg(value);
                 return false;
             }
         }
@@ -1166,7 +1166,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.outputImageHeight = value.toUInt(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as output image height").arg(value);
+                outError = QString("'%1' can not be parsed as output image height").arg(value);
                 return false;
             }
         }
@@ -1183,7 +1183,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 outConfiguration.outputImageFormat = ImageFormat::JPEG;
             else
             {
-                outError = QString("'{0}' can not be parsed as output image format").arg(value);
+                outError = QString("'%1' can not be parsed as output image format").arg(value);
                 return false;
             }
         }
@@ -1193,7 +1193,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto latLonValues = value.split(QLatin1Char(';'));
             if (latLonValues.size() != 2)
             {
-                outError = QString("'{0}' can not be parsed as latitude and longitude").arg(value);
+                outError = QString("'%1' can not be parsed as latitude and longitude").arg(value);
                 return false;
             }
 
@@ -1202,7 +1202,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             latLon.latitude = latLonValues[0].toDouble(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as latitude").arg(latLonValues[0]);
+                outError = QString("'%1' can not be parsed as latitude").arg(latLonValues[0]);
                 return false;
             }
 
@@ -1210,7 +1210,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             latLon.longitude = latLonValues[1].toDouble(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as longitude").arg(latLonValues[1]);
+                outError = QString("'%1' can not be parsed as longitude").arg(latLonValues[1]);
                 return false;
             }
 
@@ -1222,7 +1222,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             const auto target31Values = value.split(QLatin1Char(';'));
             if (target31Values.size() != 2)
             {
-                outError = QString("'{0}' can not be parsed as target31 point").arg(value);
+                outError = QString("'%1' can not be parsed as target31 point").arg(value);
                 return false;
             }
 
@@ -1230,7 +1230,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.target31.x = target31Values[0].toInt(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as target31.x").arg(target31Values[0]);
+                outError = QString("'%1' can not be parsed as target31.x").arg(target31Values[0]);
                 return false;
             }
 
@@ -1238,7 +1238,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.target31.y = target31Values[1].toInt(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as target31.y").arg(target31Values[1]);
+                outError = QString("'%1' can not be parsed as target31.y").arg(target31Values[1]);
                 return false;
             }
         }
@@ -1250,7 +1250,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.zoom = value.toFloat(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as zoom").arg(value);
+                outError = QString("'%1' can not be parsed as zoom").arg(value);
                 return false;
             }
         }
@@ -1262,7 +1262,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.azimuth = value.toFloat(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as azimuth").arg(value);
+                outError = QString("'%1' can not be parsed as azimuth").arg(value);
                 return false;
             }
         }
@@ -1274,7 +1274,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.elevationAngle = value.toFloat(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as elevation angle").arg(value);
+                outError = QString("'%1' can not be parsed as elevation angle").arg(value);
                 return false;
             }
         }
@@ -1286,7 +1286,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.fov = value.toFloat(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as field-of-view angle").arg(value);
+                outError = QString("'%1' can not be parsed as field-of-view angle").arg(value);
                 return false;
             }
         }
@@ -1298,7 +1298,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.referenceTileSize = value.toUInt(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as reference tile size in pixels").arg(value);
+                outError = QString("'%1' can not be parsed as reference tile size in pixels").arg(value);
                 return false;
             }
         }
@@ -1310,7 +1310,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             outConfiguration.displayDensityFactor = value.toFloat(&ok);
             if (!ok)
             {
-                outError = QString("'{0}' can not be parsed as display density factor").arg(value);
+                outError = QString("'%1' can not be parsed as display density factor").arg(value);
                 return false;
             }
         }
@@ -1332,7 +1332,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
 #endif
         else
         {
-            outError = QString("'{0}' unrecognized argument").arg(arg);
+            outError = QString("Unrecognized argument: '%1'").arg(arg);
             return false;
         }
     }
