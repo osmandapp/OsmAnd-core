@@ -9,6 +9,7 @@
 #include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/ResourcesManager.h>
 #include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/ObfsCollection.h>
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/IExternalResourcesProvider.h>
 #include <OsmAndCore/Data/DataTypes.h>
@@ -68,6 +69,7 @@ using namespace OsmAnd;
 %include <stdint.i>
 %include <std_shared_ptr.i>
 	%shared_ptr(OsmAnd::IObfsCollection)
+	%shared_ptr(OsmAnd::ObfsCollection)
 	%shared_ptr(OsmAnd::ObfDataInterface)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource::Metadata)
@@ -167,6 +169,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Bitmask.h>
 	%template(MapRendererStateChanges) OsmAnd::Bitmask<OsmAnd::MapRendererStateChange, unsigned int>;
 %include <OsmAndCore/IObfsCollection.h>
+%include <OsmAndCore/ObfsCollection.h>
 %include <OsmAndCore/ObfDataInterface.h>
 %include <OsmAndCore/ResourcesManager.h>
 %include <OsmAndCore/IExternalResourcesProvider.h>
