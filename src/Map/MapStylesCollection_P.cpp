@@ -40,7 +40,8 @@ bool OsmAnd::MapStylesCollection_P::registerEmbeddedStyle(const QString& resourc
         return false;
 
     assert(!_styles.contains(style->name));
-    _styles.insert(style->name, style);
+    assert(style->name.endsWith(QLatin1String(".render.xml")));
+    _styles.insert(style->name.toLower(), style);
     _order.push_back(style);
 
     return true;
@@ -54,9 +55,12 @@ bool OsmAnd::MapStylesCollection_P::registerStyle(const QString& filePath)
     if (!style->loadMetadata())
         return false;
 
-    if (_styles.contains(style->name))
+    auto styleName = style->name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+    if (_styles.contains(styleName))
         return false;
-    _styles.insert(style->name, style);
+    _styles.insert(styleName, style);
     _order.push_back(style);
 
     return true;

@@ -823,6 +823,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                 else
                     output << "\t[missing metadata]" << std::endl;
             }
+
+            success = false;
             break;
         }
 
