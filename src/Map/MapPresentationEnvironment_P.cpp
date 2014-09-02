@@ -79,7 +79,10 @@ void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QSt
         std::shared_ptr<const MapStyleValueDefinition> inputValueDef;
         if (!owner->style->resolveValueDefinition(name, inputValueDef))
         {
-            LogPrintf(LogSeverityLevel::Warning, "Setting of '%s' to '%s' impossible: failed to resolve input value definition failed with such name");
+            LogPrintf(LogSeverityLevel::Warning,
+                "Setting of '%s' to '%s' impossible: failed to resolve input value definition failed with such name",
+                qPrintable(name),
+                qPrintable(value));
             continue;
         }
 
@@ -87,7 +90,10 @@ void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QSt
         MapStyleValue parsedValue;
         if (!owner->style->_p->parseValue(inputValueDef, value, parsedValue))
         {
-            LogPrintf(LogSeverityLevel::Warning, "Setting of '%s' to '%s' impossible: failed to parse value");
+            LogPrintf(LogSeverityLevel::Warning,
+                "Setting of '%s' to '%s' impossible: failed to parse value",
+                qPrintable(name),
+                qPrintable(value));
             continue;
         }
 

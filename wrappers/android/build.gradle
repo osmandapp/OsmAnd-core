@@ -139,7 +139,7 @@ task copyQtJarLibs(type: Copy) {
 	dependsOn buildOsmAndCore
 
 	from("../../externals/qtbase-android") {
-		include "upstream.patched.android.gcc-*.shared/jar/*-bundled.so"
+		include "upstream.patched.android.gcc-*.shared/jar/*-bundled.jar"
 		eachFile { fileCopyDetails ->
 			fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-.*\.shared\/jar\/(.*)/, '$1')
 		}

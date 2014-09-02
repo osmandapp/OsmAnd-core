@@ -811,18 +811,25 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         std::shared_ptr<const OsmAnd::MapStyle> mapStyle;
         if (!configuration.stylesCollection->obtainBakedStyle(configuration.styleName, mapStyle))
         {
-            output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "' from collection:" << std::endl;
-            for (const auto& style : configuration.stylesCollection->getCollection())
+            if (configuration.verbose)
             {
-                if (style->isMetadataLoaded())
+                output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "' from collection:" << std::endl;
+                for (const auto& style : configuration.stylesCollection->getCollection())
                 {
-                    if (style->isStandalone())
-                        output << "\t" << QStringToStlString(style->name) << std::endl;
+                    if (style->isMetadataLoaded())
+                    {
+                        if (style->isStandalone())
+                            output << "\t" << QStringToStlString(style->name) << std::endl;
+                        else
+                            output << "\t" << QStringToStlString(style->name) << "::" << QStringToStlString(style->parentName) << std::endl;
+                    }
                     else
-                        output << "\t" << QStringToStlString(style->name) << "::" << QStringToStlString(style->parentName) << std::endl;
+                        output << "\t[missing metadata]" << std::endl;
                 }
-                else
-                    output << "\t[missing metadata]" << std::endl;
+            }
+            else
+            {
+                output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "' from collection:" << std::endl;
             }
 
             success = false;
