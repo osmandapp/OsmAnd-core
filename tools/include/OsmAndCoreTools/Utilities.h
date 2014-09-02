@@ -11,7 +11,7 @@ namespace OsmAndTools
     struct OSMAND_CORE_API Utilities Q_DECL_FINAL
     {
         static QString resolvePath(const QString& input);
-        static QString purifyArgument(const QString& input);
+        static QString purifyArgumentValue(const QString& input);
     };
 }
 
