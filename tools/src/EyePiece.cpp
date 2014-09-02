@@ -43,6 +43,7 @@
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <SkBitmap.h>
 #include <SkImageEncoder.h>
+#include <SkData.h>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCoreTools.h>
@@ -974,10 +975,32 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
                 imageEncoder.reset(CreateJPEGImageEncoder());
                 break;
         }
-        if (!imageEncoder->encodeFile(configuration.outputImageFilename.toLocal8Bit(), filledOutputBitmap, 100))
+
+        const auto imageData = imageEncoder->encodeData(filledOutputBitmap, 100);
+        if (!imageData)
         {
-            output << xT("Failed to save image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+            output << xT("Failed to encode image") << std::endl;
             success = false;
+        }
+        else
+        {
+            QFile imageFile(configuration.outputImageFilename);
+            if (!imageFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            {
+                output << xT("Failed to open destination file '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+                success = false;
+            }
+            else
+            {
+                if (imageFile.write(reinterpret_cast<const char*>(imageData->bytes()), imageData->size()) != imageData->size())
+                {
+                    output << xT("Failed to write image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+                    success = false;
+                }
+                imageFile.close();
+            }
+
+            imageData->unref();
         }
     }
 
