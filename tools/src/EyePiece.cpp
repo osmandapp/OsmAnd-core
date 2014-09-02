@@ -977,6 +977,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         if (!imageEncoder->encodeFile(configuration.outputImageFilename.toLocal8Bit(), filledOutputBitmap, 100))
         {
             output << xT("Failed to save image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'") << std::endl;
+            success = false;
         }
     }
 
