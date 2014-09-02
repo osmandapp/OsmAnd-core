@@ -45,6 +45,9 @@
 #include <SkImageEncoder.h>
 #include <OsmAndCore/restore_internal_warnings.h>
 
+#include <OsmAndCoreTools.h>
+#include <OsmAndCoreTools/Utilities.h>
+
 OsmAndTools::EyePiece::EyePiece(const Configuration& configuration_)
     : configuration(configuration_)
 {
@@ -1072,7 +1075,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
     {
         if (arg.startsWith(QLatin1String("-obfsPath=")))
         {
-            const auto value = arg.mid(strlen("-obfsPath="));
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-obfsPath=")));
             if (!QDir(value).exists())
             {
                 outError = QString("'%1' path does not exist").arg(value);
@@ -1083,7 +1086,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-obfsRecursivePath=")))
         {
-            const auto value = arg.mid(strlen("-obfsRecursivePath="));
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-obfsRecursivePath=")));
             if (!QDir(value).exists())
             {
                 outError = QString("'%1' path does not exist").arg(value);
@@ -1094,7 +1097,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-obfFile=")))
         {
-            const auto value = arg.mid(strlen("-obfFile="));
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-obfFile=")));
             if (!QFile(value).exists())
             {
                 outError = QString("'%1' file does not exist").arg(value);
@@ -1105,7 +1108,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-stylesPath=")))
         {
-            const auto value = arg.mid(strlen("-stylesPath="));
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-stylesPath=")));
             if (!QDir(value).exists())
             {
                 outError = QString("'%1' path does not exist").arg(value);
@@ -1119,7 +1122,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-stylesRecursivePath=")))
         {
-            const auto value = arg.mid(strlen("-stylesRecursivePath="));
+            const auto value = Utilities::resolvePath(arg.mid(strlen("-stylesRecursivePath=")));
             if (!QDir(value).exists())
             {
                 outError = QString("'%1' path does not exist").arg(value);
@@ -1133,7 +1136,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-styleName=")))
         {
-            const auto value = arg.mid(strlen("-styleName="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-styleName=")));
             outConfiguration.styleName = value;
         }
         else if (arg.startsWith(QLatin1String("-styleSetting:")))
@@ -1146,11 +1149,11 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
                 return false;
             }
 
-            outConfiguration.styleSettings[settingKeyValue[0]] = settingKeyValue[1];
+            outConfiguration.styleSettings[settingKeyValue[0]] = Utilities::purifyArgumentValue(settingKeyValue[1]);
         }
         else if (arg.startsWith(QLatin1String("-outputImageWidth=")))
         {
-            const auto value = arg.mid(strlen("-outputImageWidth="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputImageWidth=")));
             bool ok = false;
             outConfiguration.outputImageWidth = value.toUInt(&ok);
             if (!ok)
@@ -1161,7 +1164,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-outputImageHeight=")))
         {
-            const auto value = arg.mid(strlen("-outputImageHeight="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputImageHeight=")));
             bool ok = false;
             outConfiguration.outputImageHeight = value.toUInt(&ok);
             if (!ok)
@@ -1172,11 +1175,11 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-outputImageFilename=")))
         {
-            outConfiguration.outputImageFilename = arg.mid(strlen("-outputImageFilename="));
+            outConfiguration.outputImageFilename = Utilities::resolvePath(arg.mid(strlen("-outputImageFilename=")));
         }
         else if (arg.startsWith(QLatin1String("-outputImageFormat=")))
         {
-            const auto value = arg.mid(strlen("-outputImageFormat="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-outputImageFormat=")));
             if (value.compare(QLatin1String("png"), Qt::CaseInsensitive) == 0)
                 outConfiguration.outputImageFormat = ImageFormat::PNG;
             else if (value.compare(QLatin1String("jpeg"), Qt::CaseInsensitive) == 0 || value.compare(QLatin1String("jpg"), Qt::CaseInsensitive) == 0)
@@ -1189,7 +1192,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-latLon=")))
         {
-            const auto value = arg.mid(strlen("-latLon="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-latLon=")));
             const auto latLonValues = value.split(QLatin1Char(';'));
             if (latLonValues.size() != 2)
             {
@@ -1218,7 +1221,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-target31=")))
         {
-            const auto value = arg.mid(strlen("-target31="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-target31=")));
             const auto target31Values = value.split(QLatin1Char(';'));
             if (target31Values.size() != 2)
             {
@@ -1244,7 +1247,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-zoom=")))
         {
-            const auto value = arg.mid(strlen("-zoom="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-zoom=")));
 
             bool ok = false;
             outConfiguration.zoom = value.toFloat(&ok);
@@ -1256,7 +1259,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-azimuth=")))
         {
-            const auto value = arg.mid(strlen("-azimuth="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-azimuth=")));
 
             bool ok = false;
             outConfiguration.azimuth = value.toFloat(&ok);
@@ -1268,7 +1271,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-elevationAngle=")))
         {
-            const auto value = arg.mid(strlen("-elevationAngle="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-elevationAngle=")));
 
             bool ok = false;
             outConfiguration.elevationAngle = value.toFloat(&ok);
@@ -1280,7 +1283,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-fov=")))
         {
-            const auto value = arg.mid(strlen("-fov="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-fov=")));
 
             bool ok = false;
             outConfiguration.fov = value.toFloat(&ok);
@@ -1292,7 +1295,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-referenceTileSize=")))
         {
-            const auto value = arg.mid(strlen("-referenceTileSize="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-referenceTileSize=")));
 
             bool ok = false;
             outConfiguration.referenceTileSize = value.toUInt(&ok);
@@ -1304,7 +1307,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-displayDensityFactor=")))
         {
-            const auto value = arg.mid(strlen("-displayDensityFactor="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-displayDensityFactor=")));
 
             bool ok = false;
             outConfiguration.displayDensityFactor = value.toFloat(&ok);
@@ -1316,7 +1319,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
         }
         else if (arg.startsWith(QLatin1String("-locale=")))
         {
-            const auto value = arg.mid(strlen("-locale="));
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-locale=")));
 
             outConfiguration.locale = value;
         }
