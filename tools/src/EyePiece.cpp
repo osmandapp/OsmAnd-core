@@ -808,7 +808,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         if (!configuration.stylesCollection->obtainBakedStyle(configuration.styleName, mapStyle))
         {
             output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "' from collection:" << std::endl;
-            for (const auto& style : OsmAnd::constOf(configuration.stylesCollection->getCollection()))
+            for (const auto& style : configuration.stylesCollection->getCollection())
             {
                 if (style->isMetadataLoaded())
                 {
