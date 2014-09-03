@@ -122,6 +122,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
+        rendererSetupOptions.setGpuWorkerThreadEnabled(false);
         /*
         rendererSetup.frameUpdateRequestCallback = []()
         {
@@ -155,14 +156,6 @@ public class MainActivity extends ActionBarActivity {
         }
         */
         _mapRenderer.setup(rendererSetupOptions);
-        /*
-        viewport.top = 0;
-        viewport.left = 0;
-        viewport.bottom = 600;
-        viewport.right = 800;
-        renderer->setWindowSize(OsmAnd::PointI(800, 600));
-        renderer->setViewport(viewport);
-        */
 
         _mapRenderer.setAzimuth(0.0f);
         _mapRenderer.setElevationAngle(35.0f);
@@ -172,14 +165,18 @@ public class MainActivity extends ActionBarActivity {
             1102430866,
             704978668));
         _mapRenderer.setZoom(10.0f);
-        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, OnlineTileSources.getBuiltIn().createProviderFor("Mapnik (OsmAnd)"));
+        IMapRasterBitmapTileProvider mapnik = OnlineTileSources.getBuiltIn().createProviderFor("Mapnik (OsmAnd)");
+        if (mapnik == null)
+            Log.e(TAG, "Failed to create mapnik");
+        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, mapnik);
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         _glSurfaceView.setEGLContextClientVersion(2);
         _glSurfaceView.setEGLConfigChooser(true);
         //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
         _glSurfaceView.setRenderer(new Renderer());
-        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        //_glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
     }
 
     private GLSurfaceView _glSurfaceView;
@@ -190,17 +187,21 @@ public class MainActivity extends ActionBarActivity {
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
-            /*_mapRenderer.setViewport(new AreaI(0, 0, height, width));
+            _mapRenderer.setViewport(new AreaI(0, 0, height, width));
             _mapRenderer.setWindowSize(new PointI(width, height));
 
-            if (!_mapRenderer.getIsRenderingInitialized())
-                _mapRenderer.initializeRendering();*/
+            if (!_mapRenderer.isRenderingInitialized())
+            {
+                if (!_mapRenderer.initializeRendering())
+                    Log.e(TAG, "Failed to initialize rendering");
+            }
         }
 
         public void onDrawFrame(GL10 gl) {
-            /*if (_mapRenderer.prepareFrame())
+            _mapRenderer.update();
+
+            if (_mapRenderer.prepareFrame())
                 _mapRenderer.renderFrame();
-            _mapRenderer.processRendering();*/
         }
     }
 

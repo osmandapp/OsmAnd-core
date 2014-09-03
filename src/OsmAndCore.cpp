@@ -42,14 +42,24 @@ const char* _dummyArgs[] = { "osmand.core" };
 std::shared_ptr<QCoreApplication> _qCoreApplication;
 QMutex _qCoreApplicationThreadMutex;
 QWaitCondition _qCoreApplicationThreadWaitCondition;
-class QCoreApplicationThread : public QThread
+struct QCoreApplicationThread : public QThread
 {
+    QCoreApplicationThread()
+        : wasInitialized(false)
+    {
+    }
+
+    volatile bool wasInitialized;
+
     void run()
     {
         _qCoreApplication.reset(new QCoreApplication(_dummyArgc, const_cast<char**>(&_dummyArgs[0])));
         OsmAnd::initializeInAppThread();
         {
             QMutexLocker scopedLocker(&_qCoreApplicationThreadMutex);
+
+            wasInitialized = true;
+
             _qCoreApplicationThreadWaitCondition.wakeAll();
         }
         QCoreApplication::exec();
@@ -67,6 +77,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 
     if (!QCoreApplication::instance())
     {
+        LogPrintf(LogSeverityLevel::Info,
+            "OsmAnd Core is initialized standalone, so going to create 'application' thread");
         _qCoreApplicationThread.reset(new QCoreApplicationThread());
         gMainThread = _qCoreApplicationThread.get();
         _qCoreApplicationThread->start();
@@ -74,11 +86,14 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
         // Wait until global initialization will pass in that thread
         {
             QMutexLocker scopeLock(&_qCoreApplicationThreadMutex);
-            REPEAT_UNTIL(_qCoreApplicationThreadWaitCondition.wait(&_qCoreApplicationThreadMutex));
+            while (!_qCoreApplicationThread->wasInitialized)
+                REPEAT_UNTIL(_qCoreApplicationThreadWaitCondition.wait(&_qCoreApplicationThreadMutex));
         }
     }
     else
     {
+        LogPrintf(LogSeverityLevel::Info,
+            "OsmAnd Core is initialized inside a Qt application, so assuming that got called from application thread");
         gMainThread = QThread::currentThread();
         initializeInAppThread();
     }
