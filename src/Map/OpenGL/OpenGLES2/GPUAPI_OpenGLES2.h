@@ -38,6 +38,8 @@ namespace OsmAnd
         bool _isSupported_APPLE_texture_max_level;
         bool _isSupported_OES_vertex_array_object;
         bool _isSupported_OES_rgb8_rgba8;
+        bool _isSupported_ARM_rgba8;
+        bool _isSupported_EXT_texture;
         bool _isSupported_OES_texture_float;
         bool _isSupported_EXT_texture_rg;
         bool _isSupported_EXT_shader_texture_lod;
@@ -48,8 +50,10 @@ namespace OsmAnd
     protected:
         virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const;
         virtual TextureFormat getTextureSizedFormat_float() const;
+        virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const;
 
         virtual SourceFormat getSourceFormat_float() const;
+        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const;
 
         virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
         virtual void glPopGroupMarkerEXT_wrapper();
@@ -69,6 +73,8 @@ namespace OsmAnd
         const bool& isSupported_APPLE_texture_max_level;
         const bool& isSupported_OES_vertex_array_object;
         const bool& isSupported_OES_rgb8_rgba8;
+        const bool& isSupported_ARM_rgba8;
+        const bool& isSupported_EXT_texture;
         const bool& isSupported_OES_texture_float;
         const bool& isSupported_EXT_texture_rg;
         const bool& isSupported_EXT_shader_texture_lod;

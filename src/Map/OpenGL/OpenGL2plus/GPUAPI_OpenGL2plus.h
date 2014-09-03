@@ -42,8 +42,10 @@ namespace OsmAnd
     protected:
         virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const;
         virtual TextureFormat getTextureSizedFormat_float() const;
+        virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const;
 
         virtual SourceFormat getSourceFormat_float() const;
+        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const;
 
         virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
         virtual void glPopGroupMarkerEXT_wrapper();

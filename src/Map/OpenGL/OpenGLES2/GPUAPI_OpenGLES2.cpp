@@ -36,6 +36,10 @@
 #   endif
 #endif //!GL_RGB565_OES
 
+#ifndef GL_RGBA8_EXT
+#   define GL_RGBA8_EXT                                                 0x8058
+#endif //!GL_RGBA8_EXT
+
 #ifndef GL_R8_EXT
 #   define GL_R8_EXT                                                    0x8229
 #endif //!GL_R8_EXT
@@ -76,11 +80,23 @@ OsmAnd::GPUAPI_OpenGLES2::PFNGLPUSHGROUPMARKEREXTPROC OsmAnd::GPUAPI_OpenGLES2::
 #endif //!OSMAND_TARGET_OS_ios
 
 OsmAnd::GPUAPI_OpenGLES2::GPUAPI_OpenGLES2()
-    : isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
+    : _isSupported_EXT_unpack_subimage(false)
+    , _isSupported_EXT_texture_storage(false)
+    , _isSupported_APPLE_texture_max_level(false)
+    , _isSupported_OES_vertex_array_object(false)
+    , _isSupported_OES_rgb8_rgba8(false)
+    , _isSupported_ARM_rgba8(false)
+    , _isSupported_EXT_texture(false)
+    , _isSupported_OES_texture_float(false)
+    , _isSupported_EXT_texture_rg(false)
+    , _isSupported_EXT_shader_texture_lod(false)
+    , isSupported_EXT_unpack_subimage(_isSupported_EXT_unpack_subimage)
     , isSupported_EXT_texture_storage(_isSupported_EXT_texture_storage)
     , isSupported_APPLE_texture_max_level(_isSupported_APPLE_texture_max_level)
     , isSupported_OES_vertex_array_object(_isSupported_OES_vertex_array_object)
     , isSupported_OES_rgb8_rgba8(_isSupported_OES_rgb8_rgba8)
+    , isSupported_ARM_rgba8(_isSupported_ARM_rgba8)
+    , isSupported_EXT_texture(_isSupported_EXT_texture)
     , isSupported_OES_texture_float(_isSupported_OES_texture_float)
     , isSupported_EXT_texture_rg(_isSupported_EXT_texture_rg)
     , isSupported_EXT_shader_texture_lod(_isSupported_EXT_shader_texture_lod)
@@ -188,20 +204,10 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     _isSupported_vertex_array_object = _isSupported_OES_vertex_array_object;
 
     _isSupported_OES_rgb8_rgba8 = extensions.contains("GL_OES_rgb8_rgba8");
-    if (!isSupported_OES_rgb8_rgba8)
-    {
-        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_rgb8_rgba8' extension");
-        return false;
-    }
-
+    _isSupported_ARM_rgba8 = extensions.contains("GL_ARM_rgba8");
+    _isSupported_EXT_texture = extensions.contains("GL_EXT_texture");
     _isSupported_texture_float = _isSupported_OES_texture_float = extensions.contains("GL_OES_texture_float");
-    if (!isSupported_OES_texture_float)
-    {
-        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_texture_float' extension");
-        return false;
-    }
-
-    _isSupported_EXT_shader_texture_lod = _isSupported_textureLod = extensions.contains("GL_EXT_shader_texture_lod");
+    _isSupported_textureLod = _isSupported_EXT_shader_texture_lod = extensions.contains("GL_EXT_shader_texture_lod");
     _isSupported_texture_rg = _isSupported_EXT_texture_rg = extensions.contains("GL_EXT_texture_rg");
     _isSupported_EXT_unpack_subimage = extensions.contains("GL_EXT_unpack_subimage");
     _isSupported_texture_storage = _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
@@ -277,7 +283,10 @@ OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureSize
     switch (skBitmapConfig)
     {
         case SkBitmap::Config::kARGB_8888_Config:
-            textureFormat = GL_RGBA8_OES;
+            if (isSupported_ARM_rgba8 || isSupported_OES_rgb8_rgba8)
+                textureFormat = GL_RGBA8_OES;
+            else if (isSupported_EXT_texture)
+                textureFormat = GL_RGBA8_EXT;
             break;
 
         case SkBitmap::Config::kARGB_4444_Config:
@@ -293,7 +302,6 @@ OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureSize
             return static_cast<TextureFormat>(GL_INVALID_ENUM);
     }
 
-    assert(textureFormat != GL_INVALID_ENUM);
     return static_cast<TextureFormat>(textureFormat);
 }
 
@@ -305,11 +313,15 @@ OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureSize
         textureFormat = GL_R32F_EXT;
     else if (isSupported_texture_rg)
         textureFormat = GL_R8_EXT;
-    else
+    else if (isSupported_EXT_texture || isSupported_EXT_texture_storage)
         textureFormat = GL_LUMINANCE8_EXT;
 
-    assert(textureFormat != GL_INVALID_ENUM);
     return static_cast<TextureFormat>(textureFormat);
+}
+
+bool OsmAnd::GPUAPI_OpenGLES2::isValidTextureSizedFormat(const TextureFormat textureFormat) const
+{
+    return (static_cast<GLenum>(textureFormat) != GL_INVALID_ENUM);
 }
 
 OsmAnd::GPUAPI_OpenGLES2::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat_float() const
@@ -329,6 +341,13 @@ OsmAnd::GPUAPI_OpenGLES2::SourceFormat OsmAnd::GPUAPI_OpenGLES2::getSourceFormat
         sourceFormat.type = GL_UNSIGNED_BYTE;
 
     return sourceFormat;
+}
+
+bool OsmAnd::GPUAPI_OpenGLES2::isValidSourceFormat(const SourceFormat sourceFormat) const
+{
+    return
+        sourceFormat.format != GL_INVALID_ENUM &&
+        sourceFormat.type != GL_INVALID_ENUM;
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format)

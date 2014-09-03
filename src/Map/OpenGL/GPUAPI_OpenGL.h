@@ -227,9 +227,11 @@ namespace OsmAnd
         virtual TextureFormat getTextureFormat(const SkBitmap::Config skBitmapConfig) const;
         virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const = 0;
         virtual TextureFormat getTextureSizedFormat_float() const = 0;
+        virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const = 0;
 
         virtual SourceFormat getSourceFormat(const SkBitmap::Config skBitmapConfig) const;
         virtual SourceFormat getSourceFormat_float() const = 0;
+        virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const = 0;
 
         virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) = 0;
         virtual void glBindVertexArray_wrapper(GLuint array) = 0;

@@ -753,8 +753,12 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(con
         assert(isSupported_vertexShaderTextureLookup);
 
         if (isSupported_texture_storage)
-            return getTextureSizedFormat_float();
-        
+        {
+            const auto floatTextureSizedFormat = getTextureSizedFormat_float();
+            if (isValidTextureSizedFormat(floatTextureSizedFormat))
+                return floatTextureSizedFormat;
+        }
+
         // The only supported format
         const GLenum format = GL_LUMINANCE;
         const GLenum type = GL_UNSIGNED_BYTE;
@@ -777,7 +781,11 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(con
 {
     // If current device supports glTexStorage2D, lets use sized format
     if (isSupported_texture_storage)
-        return getTextureSizedFormat(skBitmapConfig);
+    {
+        const auto textureSizedFormat = getTextureSizedFormat(skBitmapConfig);
+        if (isValidTextureSizedFormat(textureSizedFormat))
+            return textureSizedFormat;
+    }
 
     // But if glTexStorage2D is not supported, we need to fallback to pixel type and format specification
     GLenum format = GL_INVALID_ENUM;

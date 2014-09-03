@@ -349,7 +349,6 @@ OsmAnd::GPUAPI_OpenGL2plus::TextureFormat OsmAnd::GPUAPI_OpenGL2plus::getTexture
             return static_cast<TextureFormat>(GL_INVALID_ENUM);
     }
 
-    assert(textureFormat != GL_INVALID_ENUM);
     return static_cast<TextureFormat>(textureFormat);
 }
 
@@ -364,8 +363,12 @@ OsmAnd::GPUAPI_OpenGL2plus::TextureFormat OsmAnd::GPUAPI_OpenGL2plus::getTexture
     else
         textureFormat = GL_LUMINANCE8_EXT; //NOTE: only available in GL_EXT_texture
 
-    assert(textureFormat != GL_INVALID_ENUM);
     return static_cast<TextureFormat>(textureFormat);
+}
+
+bool OsmAnd::GPUAPI_OpenGL2plus::isValidTextureSizedFormat(const TextureFormat textureFormat) const
+{
+    return (static_cast<GLenum>(textureFormat) != GL_INVALID_ENUM);
 }
 
 OsmAnd::GPUAPI_OpenGL2plus::SourceFormat OsmAnd::GPUAPI_OpenGL2plus::getSourceFormat_float() const
@@ -385,6 +388,13 @@ OsmAnd::GPUAPI_OpenGL2plus::SourceFormat OsmAnd::GPUAPI_OpenGL2plus::getSourceFo
         sourceFormat.type = GL_UNSIGNED_BYTE;
 
     return sourceFormat;
+}
+
+bool OsmAnd::GPUAPI_OpenGL2plus::isValidSourceFormat(const SourceFormat sourceFormat) const
+{
+    return
+        sourceFormat.format != GL_INVALID_ENUM &&
+        sourceFormat.type != GL_INVALID_ENUM;
 }
 
 void OsmAnd::GPUAPI_OpenGL2plus::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format)
