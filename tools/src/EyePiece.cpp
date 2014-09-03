@@ -4,6 +4,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/ObfsCollection.h>
+#include <OsmAndCore/Stopwatch.h>
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
@@ -950,7 +951,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         // Repeat processing and rendering until everything is complete
         if (configuration.verbose)
             output << xT("Rendering frames...") << std::endl;
-        for (;;)
+        OsmAnd::Stopwatch renderingStopwatch(true);
+        int framesCounter = 0;
+        for (;; framesCounter++)
         {
             // Update must be performed before each frame
             if (!mapRenderer->update())
@@ -972,12 +975,11 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
             // Check if map renderer finished processing
             if (mapRenderer->isIdle())
-            {
-                if (configuration.verbose)
-                    mapRenderer->dumpResourcesInfo();
                 break;
-            }
         }
+        const auto timeElapsedOnRendering = renderingStopwatch.elapsed();
+        if (configuration.verbose)
+            output << xT("Rendered ") << framesCounter << xT(" frames in ") << timeElapsedOnRendering << xT("s") << std::endl;
 
         // Wait until everything is ready on GPU
         if (configuration.verbose)
