@@ -1367,6 +1367,9 @@ std::shared_ptr<const OsmAnd::IMapRendererResourcesCollection> OsmAnd::MapRender
     const MapRendererResourceType type,
     const std::shared_ptr<IMapDataProvider>& ofProvider) const
 {
+    const auto collection = getCollection(type, ofProvider);
+    if (!collection)
+        return nullptr;
     return getCollection(type, ofProvider)->getCollectionSnapshot();
 }
 

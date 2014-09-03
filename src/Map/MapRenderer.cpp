@@ -190,7 +190,8 @@ bool OsmAnd::MapRenderer::updateCurrentConfiguration(const unsigned int currentC
 
 void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateChange change)
 {
-    const unsigned int newChangesMask = _requestedStateUpdatedMask.fetchAndOrOrdered(static_cast<uint32_t>(change)) | static_cast<uint32_t>(change);
+    const auto changeMask = (1u << static_cast<uint32_t>(change));
+    const unsigned int newChangesMask = _requestedStateUpdatedMask.fetchAndOrOrdered(changeMask) | changeMask;
 
     // Notify all observers
     stateChangeObservable.postNotify(this, change, MapRendererStateChanges(newChangesMask));

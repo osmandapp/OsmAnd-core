@@ -180,6 +180,10 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in fragment shader %d", _maxFragmentUniformVectors);
 
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &_maxVertexAttribs);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal vertex attributes %d", maxFragmentUniformComponents);
+
     _isSupported_OES_vertex_array_object = extensions.contains("GL_OES_vertex_array_object");
     _isSupported_vertex_array_object = _isSupported_OES_vertex_array_object;
 

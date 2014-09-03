@@ -173,11 +173,13 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
 
     GLint maxVertexUniformComponents;
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &maxVertexUniformComponents);
+    GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in vertex shader %d", maxVertexUniformComponents);
     _maxVertexUniformVectors = maxVertexUniformComponents / 4; // Workaround for AMD/ATI (see above)
 
     GLint maxFragmentUniformComponents;
     glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &maxFragmentUniformComponents);
+    GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal parameters in fragment shader %d", maxFragmentUniformComponents);
     _maxFragmentUniformVectors = maxFragmentUniformComponents / 4; // Workaround for AMD/ATI (see above)
 
@@ -188,6 +190,10 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
         GL_CHECK_RESULT;
         LogPrintf(LogSeverityLevel::Info, "OpenGL maximal defined parameters %d", maxUniformLocations);
     }
+
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &_maxVertexAttribs);
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal vertex attributes %d", maxFragmentUniformComponents);
 
     // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+), or if GL_ARB_shader_texture_lod is available
     _isSupported_textureLod = (glslVersion >= 130) || extensions.contains(QLatin1String("GL_ARB_shader_texture_lod"));

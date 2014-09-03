@@ -12,6 +12,7 @@
 #include <QStringList>
 #include <QString>
 #include <QVector>
+#include <QHash>
 #include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
@@ -178,6 +179,27 @@ namespace OsmAnd
 
         bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+
+        GLuint _vaoSimulationLastUnusedId;
+        struct SimulatedVAO
+        {
+            GLname bindedArrayBuffer;
+            GLname bindedElementArrayBuffer;
+
+            struct VertexAttrib
+            {
+                GLname arrayBufferBinding;
+                GLint arraySize;
+                GLsizei arrayStride;
+                GLenum arrayType;
+                GLboolean arrayIsNormalized;
+                GLboolean arrayIsInteger;
+                GLvoid* arrayPointer;
+            };
+            QHash<GLuint, VertexAttrib> vertexAttribs;
+        };
+        QHash<GLname, SimulatedVAO> _vaoSimulationObjects;
+        GLname _lastUsedSimulatedVAOObject;
     protected:
         unsigned int _glVersion;
         unsigned int _glslVersion;
@@ -195,6 +217,7 @@ namespace OsmAnd
         bool _isSupported_vertex_array_object;
         GLint _maxVertexUniformVectors;
         GLint _maxFragmentUniformVectors;
+        GLint _maxVertexAttribs;
         
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU);
 
@@ -231,6 +254,7 @@ namespace OsmAnd
         const bool& isSupported_vertex_array_object;
         const GLint& maxVertexUniformVectors;
         const GLint& maxFragmentUniformVectors;
+        const GLint& maxVertexAttribs;
         
         virtual GLenum validateResult() = 0;
 

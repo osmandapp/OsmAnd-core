@@ -342,6 +342,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
     {
         if (!currentState.rasterLayerProviders[layerId])
             continue;
+        if (!getResources().getCollectionSnapshot(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]))
+            continue;
 
         activeRasterTileProvidersCount++;
     }
@@ -558,11 +560,14 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
         {
             if (!currentState.rasterLayerProviders[layerId])
                 continue;
-            layerLinearIdx++;
-
+            
             // Get resources collection
             const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]);
             const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+
+            if (!resourcesCollection_ || !resourcesCollection)
+                continue;
+            layerLinearIdx++;
 
             const auto& perTile_vs = tileProgram.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = tileProgram.fs.param.rasterTileLayers[layerLinearIdx];

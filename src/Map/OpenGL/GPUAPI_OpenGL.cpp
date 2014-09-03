@@ -19,6 +19,7 @@
 #include "VectorMapSymbol.h"
 #include "Logging.h"
 #include "Utilities.h"
+#include "QKeyValueIterator.h"
 
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
@@ -31,7 +32,8 @@
 #endif
 
 OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
-    : _glVersion(0)
+    : _vaoSimulationLastUnusedId(1)
+    , _glVersion(0)
     , _glslVersion(0)
     , _maxTextureSize(0)
     , _isSupported_vertexShaderTextureLookup(false)
@@ -43,6 +45,7 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _isSupported_vertex_array_object(false)
     , _maxVertexUniformVectors(-1)
     , _maxFragmentUniformVectors(-1)
+    , _maxVertexAttribs(-1)
     , glVersion(_glVersion)
     , glslVersion(_glslVersion)
     , extensions(_extensions)
@@ -58,6 +61,7 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , isSupported_vertex_array_object(_isSupported_vertex_array_object)
     , maxVertexUniformVectors(_maxVertexUniformVectors)
     , maxFragmentUniformVectors(_maxFragmentUniformVectors)
+    , maxVertexAttribs(_maxVertexAttribs)
 {
 }
 
@@ -891,7 +895,18 @@ OsmAnd::GLname OsmAnd::GPUAPI_OpenGL::allocateUninitializedVAO()
         return vao;
     }
 
-    return GLname();
+    // Otherwise simulate VAO
+    GLname vao;
+
+    // Check if out-of-free-ids
+    if (_vaoSimulationLastUnusedId == std::numeric_limits<GLuint>::max())
+    {
+        assert(false);
+        return vao;
+    }
+    *vao = (_vaoSimulationLastUnusedId++);
+
+    return vao;
 }
 
 void OsmAnd::GPUAPI_OpenGL::initializeVAO(const GLname vao)
@@ -904,7 +919,64 @@ void OsmAnd::GPUAPI_OpenGL::initializeVAO(const GLname vao)
         return;
     }
 
-    return;
+    // In case VAO simulation is used, capture all vertex attributes and binded buffers
+    GL_CHECK_PRESENT(glGetVertexAttribiv);
+
+    SimulatedVAO simulatedVAO;
+
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, reinterpret_cast<GLint*>(&simulatedVAO.bindedArrayBuffer));
+    GL_CHECK_RESULT;
+
+    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, reinterpret_cast<GLint*>(&simulatedVAO.bindedElementArrayBuffer));
+    GL_CHECK_RESULT;
+
+    for (GLuint vertexAttribIndex = 0; vertexAttribIndex < maxVertexAttribs; vertexAttribIndex++)
+    {
+        // Check if vertex attribute is enabled
+        GLint vertexAttribEnabled = 0;
+        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &vertexAttribEnabled);
+        GL_CHECK_RESULT;
+        if (vertexAttribEnabled == GL_FALSE)
+            continue;
+
+        SimulatedVAO::VertexAttrib vertexAttrib;
+
+        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, reinterpret_cast<GLint*>(&vertexAttrib.arrayBufferBinding));
+        GL_CHECK_RESULT;
+
+        vertexAttrib.arraySize = 4;
+        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_SIZE, reinterpret_cast<GLint*>(&vertexAttrib.arraySize));
+        GL_CHECK_RESULT;
+
+        vertexAttrib.arrayStride = 0;
+        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_STRIDE, reinterpret_cast<GLint*>(&vertexAttrib.arrayStride));
+        GL_CHECK_RESULT;
+
+        vertexAttrib.arrayType = GL_FLOAT;
+        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_TYPE, reinterpret_cast<GLint*>(&vertexAttrib.arrayType));
+        GL_CHECK_RESULT;
+
+        vertexAttrib.arrayIsNormalized = GL_FALSE;
+        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, reinterpret_cast<GLint*>(&vertexAttrib.arrayIsNormalized));
+        GL_CHECK_RESULT;
+
+        vertexAttrib.arrayIsInteger = GL_FALSE;
+        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_INTEGER, reinterpret_cast<GLint*>(&vertexAttrib.arrayIsInteger));
+        GL_CHECK_RESULT;
+
+        vertexAttrib.arrayIsInteger = GL_FALSE;
+        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_INTEGER, reinterpret_cast<GLint*>(&vertexAttrib.arrayIsInteger));
+        GL_CHECK_RESULT;
+
+        vertexAttrib.arrayPointer = nullptr;
+        glGetVertexAttribPointerv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_POINTER, &vertexAttrib.arrayPointer);
+        GL_CHECK_RESULT;
+
+        simulatedVAO.vertexAttribs.insert(vertexAttribIndex, qMove(vertexAttrib));
+    }
+
+    assert(!_vaoSimulationObjects.contains(vao));
+    _vaoSimulationObjects.insert(vao, simulatedVAO);
 }
 
 void OsmAnd::GPUAPI_OpenGL::useVAO(const GLname vao)
@@ -917,7 +989,47 @@ void OsmAnd::GPUAPI_OpenGL::useVAO(const GLname vao)
         return;
     }
 
-    return;
+    // In case VAO simulation is used, apply all settings from specified simulated VAO
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
+    assert(_vaoSimulationObjects.contains(vao));
+    const auto& simulatedVAO = constOf(_vaoSimulationObjects)[vao];
+
+    glBindBuffer(GL_ARRAY_BUFFER, simulatedVAO.bindedArrayBuffer);
+    GL_CHECK_RESULT;
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, simulatedVAO.bindedElementArrayBuffer);
+    GL_CHECK_RESULT;
+
+    for (GLuint vertexAttribIndex = 0; vertexAttribIndex < maxVertexAttribs; vertexAttribIndex++)
+    {
+        const auto itVertexAttrib = simulatedVAO.vertexAttribs.constFind(vertexAttribIndex);
+        if (itVertexAttrib == simulatedVAO.vertexAttribs.cend())
+        {
+            // Disable vertex attrib if no settings captured
+            glDisableVertexAttribArray(vertexAttribIndex);
+            GL_CHECK_RESULT;
+
+            continue;
+        }
+        const auto& vertexAttrib = *itVertexAttrib;
+
+        // Apply captured settings
+        glEnableVertexAttribArray(vertexAttribIndex);
+        GL_CHECK_RESULT;
+
+        glVertexAttribPointer(vertexAttribIndex,
+            vertexAttrib.arraySize,
+            vertexAttrib.arrayType,
+            vertexAttrib.arrayIsNormalized,
+            vertexAttrib.arrayStride,
+            vertexAttrib.arrayPointer);
+        GL_CHECK_RESULT;
+    }
+
+    _lastUsedSimulatedVAOObject = vao;
 }
 
 void OsmAnd::GPUAPI_OpenGL::unuseVAO()
@@ -930,7 +1042,29 @@ void OsmAnd::GPUAPI_OpenGL::unuseVAO()
         return;
     }
 
-    return;
+    // In case VAO simulation is used, reset all settings from specified simulated VAO
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
+
+    if (!_lastUsedSimulatedVAOObject)
+        return;
+    assert(_vaoSimulationObjects.contains(_lastUsedSimulatedVAOObject));
+    const auto& simulatedVAO = constOf(_vaoSimulationObjects)[_lastUsedSimulatedVAOObject];
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    for (const auto itVertexAttribEntry : rangeOf(constOf(simulatedVAO.vertexAttribs)))
+    {
+        const auto vertexAttribIndex = itVertexAttribEntry.key();
+        
+        glDisableVertexAttribArray(vertexAttribIndex);
+        GL_CHECK_RESULT;
+    }
+
+    _lastUsedSimulatedVAOObject.reset();
 }
 
 void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao)
@@ -943,7 +1077,11 @@ void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao)
         return;
     }
 
-    return;
+    // In case VAO simulation is used, remove captured state from stored simulated VAO objects
+    assert(_lastUsedSimulatedVAOObject != vao);
+    assert(_vaoSimulationObjects.contains(vao));
+
+    _vaoSimulationObjects.remove(vao);
 }
 
 OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::ProgramVariablesLookupContext(GPUAPI_OpenGL* gpuAPI_, GLuint program_)
