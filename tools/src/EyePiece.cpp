@@ -802,12 +802,20 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     output << xT("Operating system not supported") << std::endl;
     return false;
 #endif
+    if (configuration.verbose)
+        output << xT("Prepared OpenGL context") << std::endl;
 
     bool success = true;
+
+    if (configuration.verbose)
+        output << xT("Initializing OsmAndCore...") << std::endl;
     OsmAnd::InitializeCore();
+
     for (;;)
     {
         // Find style
+        if (configuration.verbose)
+            output << xT("Resolving style '") << QStringToStlString(configuration.styleName) << xT("'...") << std::endl;
         std::shared_ptr<const OsmAnd::MapStyle> mapStyle;
         if (!configuration.stylesCollection->obtainBakedStyle(configuration.styleName, mapStyle))
         {
@@ -837,26 +845,55 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         // Prepare all resources for renderer
+        if (configuration.verbose)
+        {
+            output
+                << xT("Initializing map presentation environment with display density ")
+                << configuration.displayDensityFactor
+                << xT(" and locale '")
+                << QStringToStlString(configuration.locale)
+                << xT("'...") << std::endl;
+        }
         const std::shared_ptr<OsmAnd::MapPresentationEnvironment> mapPresentationEnvironment(new OsmAnd::MapPresentationEnvironment(
             mapStyle,
             configuration.displayDensityFactor,
             configuration.locale));
+
+        if (configuration.verbose)
+            output << xT("Applying extra style settings to map presentation environment...") << std::endl;
         mapPresentationEnvironment->setSettings(configuration.styleSettings);
-        const std::shared_ptr<OsmAnd::Primitiviser> primitivizer(new OsmAnd::Primitiviser(
+
+        if (configuration.verbose)
+            output << xT("Creating primitiviser...") << std::endl;
+        const std::shared_ptr<OsmAnd::Primitiviser> primitiviser(new OsmAnd::Primitiviser(
             mapPresentationEnvironment));
+
+        if (configuration.verbose)
+            output << xT("Creating binary map data provider...") << std::endl;
         const std::shared_ptr<OsmAnd::BinaryMapDataProvider> binaryMapDataProvider(new OsmAnd::BinaryMapDataProvider(
             configuration.obfsCollection));
+
+        if (configuration.verbose)
+            output << xT("Creating binary map primitives provider...") << std::endl;
         const std::shared_ptr<OsmAnd::BinaryMapPrimitivesProvider> binaryMapPrimitivesProvider(new OsmAnd::BinaryMapPrimitivesProvider(
             binaryMapDataProvider,
-            primitivizer,
+            primitiviser,
             configuration.referenceTileSize));
+
+        if (configuration.verbose)
+            output << xT("Creating binary map static symbol provider...") << std::endl;
         const std::shared_ptr<OsmAnd::BinaryMapStaticSymbolsProvider> binaryMapStaticSymbolProvider(new OsmAnd::BinaryMapStaticSymbolsProvider(
             binaryMapPrimitivesProvider,
             configuration.referenceTileSize));
+
+        if (configuration.verbose)
+            output << xT("Creating binary map raster tile provider...") << std::endl;
         const std::shared_ptr<OsmAnd::BinaryMapRasterBitmapTileProvider_Software> binaryMapRasterTileProvider(new OsmAnd::BinaryMapRasterBitmapTileProvider_Software(
             binaryMapPrimitivesProvider));
         
         // Create renderer
+        if (configuration.verbose)
+            output << xT("Creating OpenGL 2.0+ atlas map renderer...") << std::endl;
         const auto mapRenderer = OsmAnd::createMapRenderer(OsmAnd::MapRendererClass::AtlasMapRenderer_OpenGL2plus);
         if (!mapRenderer)
         {
@@ -867,6 +904,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         // Setup renderer
+        if (configuration.verbose)
+            output << xT("Setting-up map renderer...") << std::endl;
         OsmAnd::MapRendererSetupOptions mapRendererSetupOptions;
         mapRendererSetupOptions.gpuWorkerThreadEnabled = false;
         if (!mapRenderer->setup(mapRendererSetupOptions))
@@ -878,6 +917,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         // Apply configuration to map renderer
+        if (configuration.verbose)
+            output << xT("Setting map renderer configuration and state...") << std::endl;
         const auto mapRendererConfiguration = std::static_pointer_cast<OsmAnd::AtlasMapRendererConfiguration>(mapRenderer->getConfiguration());
         mapRendererConfiguration->referenceTileSizeOnScreenInPixels = configuration.referenceTileSize;
         mapRenderer->setConfiguration(mapRendererConfiguration);
@@ -890,10 +931,14 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         mapRenderer->setFieldOfView(configuration.fov);
 
         // Add providers
+        if (configuration.verbose)
+            output << xT("Adding providers to map renderer...") << std::endl;
         mapRenderer->addSymbolProvider(binaryMapStaticSymbolProvider);
         mapRenderer->setRasterLayerProvider(OsmAnd::RasterMapLayerId::BaseLayer, binaryMapRasterTileProvider);
         
         // Initialize rendering
+        if (configuration.verbose)
+            output << xT("Initializing rendering...") << std::endl;
         if(!mapRenderer->initializeRendering())
         {
             output << xT("Failed to initialize rendering") << std::endl;
@@ -903,6 +948,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         // Repeat processing and rendering until everything is complete
+        if (configuration.verbose)
+            output << xT("Rendering frames...") << std::endl;
         for (;;)
         {
             // Update must be performed before each frame
@@ -933,10 +980,14 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
 
         // Wait until everything is ready on GPU
+        if (configuration.verbose)
+            output << xT("Waiting for GPU to complete all stuff requested...") << std::endl;
         glFinish();
         glVerifyResult(output);
 
         // Release rendering
+        if (configuration.verbose)
+            output << xT("Releasing rendering...") << std::endl;
         if (!mapRenderer->releaseRendering())
         {
             output << xT("Failed to release rendering") << std::endl;
@@ -947,9 +998,14 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
         break;
     }
+
+    if (configuration.verbose)
+        output << xT("Releasing OsmAndCore...") << std::endl;
     OsmAnd::ReleaseCore();
 
     // Read image from render-target
+    if (configuration.verbose)
+        output << xT("Reading result image from GPU...") << std::endl;
     SkBitmap outputBitmap;
     outputBitmap.setConfig(SkBitmap::kARGB_8888_Config, configuration.outputImageWidth, configuration.outputImageHeight);
     outputBitmap.allocPixels();
@@ -971,6 +1027,9 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     // Save bitmap to image (if required)
     if (!configuration.outputImageFilename.isEmpty())
     {
+        if (configuration.verbose)
+            output << xT("Saving image to '") << QStringToStlString(configuration.outputImageFilename) << xT("'...") << std::endl;
+
         std::unique_ptr<SkImageEncoder> imageEncoder;
         switch (configuration.outputImageFormat)
         {
@@ -1023,6 +1082,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         }
     }
 
+    if (configuration.verbose)
+        output << xT("Going to release OpenGL context...") << std::endl;
 #if defined(OSMAND_TARGET_OS_windows)
     // Finally release the PBuffer
     wglMakeCurrent(NULL, NULL);

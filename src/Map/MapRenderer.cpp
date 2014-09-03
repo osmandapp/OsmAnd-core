@@ -666,7 +666,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     return true;
 }
 
-#define OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS 1
+#define OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS 0
 #if !defined(OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS)
 #   define OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS 0
 #endif // !defined(OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS)

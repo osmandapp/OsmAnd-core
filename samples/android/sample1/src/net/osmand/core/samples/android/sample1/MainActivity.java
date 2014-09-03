@@ -20,36 +20,42 @@ public class MainActivity extends ActionBarActivity {
         }
         catch( UnsatisfiedLinkError e ) {
             System.err.println("Failed to load 'gnustl_shared':" + e);
+            System.exit(0);
         }
         try {
             System.loadLibrary("Qt5Core");
         }
         catch( UnsatisfiedLinkError e ) {
             System.err.println("Failed to load 'Qt5Core':" + e);
+            System.exit(0);
         }
         try {
             System.loadLibrary("Qt5Network");
         }
         catch( UnsatisfiedLinkError e ) {
             System.err.println("Failed to load 'Qt5Network':" + e);
+            System.exit(0);
         }
         try {
             System.loadLibrary("Qt5Sql");
         }
         catch( UnsatisfiedLinkError e ) {
             System.err.println("Failed to load 'Qt5Sql':" + e);
+            System.exit(0);
         }
         try {
             System.loadLibrary("OsmAndCore_shared");
         }
         catch( UnsatisfiedLinkError e ) {
             System.err.println("Failed to load 'OsmAndCore_shared':" + e);
+            System.exit(0);
         }
         try {
-            System.loadLibrary("OsmAndCore_JNI");
+            System.loadLibrary("OsmAndCoreJNI");
         }
         catch( UnsatisfiedLinkError e ) {
-            System.err.println("Failed to load 'OsmAndCore_JNI':" + e);
+            System.err.println("Failed to load 'OsmAndCoreJNI':" + e);
+            System.exit(0);
         }
     }
 
