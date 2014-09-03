@@ -255,7 +255,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         // Link everything into program object
         GLuint shaders[] = { vsId, fsId };
         tileProgram.id = getGPUAPI()->linkProgram(2, shaders);
-        assert(tileProgram.id);
+        assert(tileProgram.id.isValid());
 
         const auto& lookup = gpuAPI->obtainVariablesLookupContext(tileProgram.id);
         lookup->lookupLocation(tileProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -690,7 +690,7 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::release()
     {
         auto& tileProgram = _tileProgramVariations[variationId];
 
-        if (tileProgram.id)
+        if (tileProgram.id.isValid())
         {
             glDeleteProgram(tileProgram.id);
             GL_CHECK_RESULT;
@@ -874,20 +874,20 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::releaseTilePatch()
 
     for(auto& tilePatchVAO : _tilePatchVAOs)
     {
-        if (tilePatchVAO)
+        if (tilePatchVAO.isValid())
         {
             gpuAPI->releaseVAO(tilePatchVAO);
             tilePatchVAO.reset();
         }
     }
 
-    if (_tilePatchIBO)
+    if (_tilePatchIBO.isValid())
     {
         glDeleteBuffers(1, &_tilePatchIBO);
         GL_CHECK_RESULT;
         _tilePatchIBO.reset();
     }
-    if (_tilePatchVBO)
+    if (_tilePatchVBO.isValid())
     {
         glDeleteBuffers(1, &_tilePatchVBO);
         GL_CHECK_RESULT;

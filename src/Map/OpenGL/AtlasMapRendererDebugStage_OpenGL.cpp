@@ -113,7 +113,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programRect2D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programRect2D.id);
+    assert(_programRect2D.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programRect2D.id);
     lookup->lookupLocation(_programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -229,26 +229,26 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_vaoRect2D)
+    if (_vaoRect2D.isValid())
     {
         gpuAPI->releaseVAO(_vaoRect2D);
         _vaoRect2D.reset();
     }
 
-    if (_iboRect2D)
+    if (_iboRect2D.isValid())
     {
         glDeleteBuffers(1, &_iboRect2D);
         GL_CHECK_RESULT;
         _iboRect2D.reset();
     }
-    if (_vboRect2D)
+    if (_vboRect2D.isValid())
     {
         glDeleteBuffers(1, &_vboRect2D);
         GL_CHECK_RESULT;
         _vboRect2D.reset();
     }
 
-    if (_programRect2D.id)
+    if (_programRect2D.id.isValid())
     {
         glDeleteProgram(_programRect2D.id);
         GL_CHECK_RESULT;
@@ -310,7 +310,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programLine2D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programLine2D.id);
+    assert(_programLine2D.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine2D.id);
     lookup->lookupLocation(_programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -428,26 +428,26 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_vaoLine2D)
+    if (_vaoLine2D.isValid())
     {
         gpuAPI->releaseVAO(_vaoLine2D);
         _vaoLine2D.reset();
     }
     
-    if (_iboLine2D)
+    if (_iboLine2D.isValid())
     {
         glDeleteBuffers(1, &_iboLine2D);
         GL_CHECK_RESULT;
         _iboLine2D.reset();
     }
-    if (_vboLine2D)
+    if (_vboLine2D.isValid())
     {
         glDeleteBuffers(1, &_vboLine2D);
         GL_CHECK_RESULT;
         _vboLine2D.reset();
     }
     
-    if (_programLine2D.id)
+    if (_programLine2D.id.isValid())
     {
         glDeleteProgram(_programLine2D.id);
         GL_CHECK_RESULT;
@@ -507,7 +507,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programLine3D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programLine3D.id);
+    assert(_programLine3D.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine3D.id);
     lookup->lookupLocation(_programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -625,26 +625,26 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_vaoLine3D)
+    if (_vaoLine3D.isValid())
     {
         gpuAPI->releaseVAO(_vaoLine3D);
         _vaoLine3D.reset();
     }
     
-    if (_iboLine3D)
+    if (_iboLine3D.isValid())
     {
         glDeleteBuffers(1, &_iboLine3D);
         GL_CHECK_RESULT;
         _iboLine3D.reset();
     }
-    if (_vboLine3D)
+    if (_vboLine3D.isValid())
     {
         glDeleteBuffers(1, &_vboLine3D);
         GL_CHECK_RESULT;
         _vboLine3D.reset();
     }
     
-    if (_programLine3D.id)
+    if (_programLine3D.id.isValid())
     {
         glDeleteProgram(_programLine3D.id);
         GL_CHECK_RESULT;
@@ -713,7 +713,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programQuad3D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programQuad3D.id);
+    assert(_programQuad3D.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programQuad3D.id);
     lookup->lookupLocation(_programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -834,26 +834,26 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_vaoQuad3D)
+    if (_vaoQuad3D.isValid())
     {
         gpuAPI->releaseVAO(_vaoQuad3D);
         _vaoQuad3D.reset();
     }
     
-    if (_iboQuad3D)
+    if (_iboQuad3D.isValid())
     {
         glDeleteBuffers(1, &_iboQuad3D);
         GL_CHECK_RESULT;
         _iboQuad3D.reset();
     }
-    if (_vboQuad3D)
+    if (_vboQuad3D.isValid())
     {
         glDeleteBuffers(1, &_vboQuad3D);
         GL_CHECK_RESULT;
         _vboQuad3D.reset();
     }
     
-    if (_programQuad3D.id)
+    if (_programQuad3D.id.isValid())
     {
         glDeleteProgram(_programQuad3D.id);
         GL_CHECK_RESULT;

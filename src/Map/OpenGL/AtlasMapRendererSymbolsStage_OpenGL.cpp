@@ -270,7 +270,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_billboardRasterProgram.id);
+    assert(_billboardRasterProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id);
     lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -454,26 +454,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_billboardRasterSymbolVAO)
+    if (_billboardRasterSymbolVAO.isValid())
     {
         gpuAPI->releaseVAO(_billboardRasterSymbolVAO);
         _billboardRasterSymbolVAO.reset();
     }
 
-    if (_billboardRasterSymbolIBO)
+    if (_billboardRasterSymbolIBO.isValid())
     {
         glDeleteBuffers(1, &_billboardRasterSymbolIBO);
         GL_CHECK_RESULT;
         _billboardRasterSymbolIBO.reset();
     }
-    if (_billboardRasterSymbolVBO)
+    if (_billboardRasterSymbolVBO.isValid())
     {
         glDeleteBuffers(1, &_billboardRasterSymbolVBO);
         GL_CHECK_RESULT;
         _billboardRasterSymbolVBO.reset();
     }
     
-    if (_billboardRasterProgram.id)
+    if (_billboardRasterProgram.id.isValid())
     {
         glDeleteProgram(_billboardRasterProgram.id);
         GL_CHECK_RESULT;
@@ -581,7 +581,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onPath2dProgram.id);
+    assert(_onPath2dProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath2dProgram.id);
     lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -800,7 +800,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onPath3dProgram.id);
+    assert(_onPath3dProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath3dProgram.id);
     lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -1180,26 +1180,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_onPathSymbol2dVAO)
+    if (_onPathSymbol2dVAO.isValid())
     {
         gpuAPI->releaseVAO(_onPathSymbol2dVAO);
         _onPathSymbol2dVAO.reset();
     }
 
-    if (_onPathSymbol2dIBO)
+    if (_onPathSymbol2dIBO.isValid())
     {
         glDeleteBuffers(1, &_onPathSymbol2dIBO);
         GL_CHECK_RESULT;
         _onPathSymbol2dIBO.reset();
     }
-    if (_onPathSymbol2dVBO)
+    if (_onPathSymbol2dVBO.isValid())
     {
         glDeleteBuffers(1, &_onPathSymbol2dVBO);
         GL_CHECK_RESULT;
         _onPathSymbol2dVBO.reset();
     }
     
-    if (_onPath2dProgram.id)
+    if (_onPath2dProgram.id.isValid())
     {
         glDeleteProgram(_onPath2dProgram.id);
         GL_CHECK_RESULT;
@@ -1214,26 +1214,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_onPathSymbol3dVAO)
+    if (_onPathSymbol3dVAO.isValid())
     {
         gpuAPI->releaseVAO(_onPathSymbol3dVAO);
         _onPathSymbol3dVAO.reset();
     }
 
-    if (_onPathSymbol3dIBO)
+    if (_onPathSymbol3dIBO.isValid())
     {
         glDeleteBuffers(1, &_onPathSymbol3dIBO);
         GL_CHECK_RESULT;
         _onPathSymbol3dIBO.reset();
     }
-    if (_onPathSymbol3dVBO)
+    if (_onPathSymbol3dVBO.isValid())
     {
         glDeleteBuffers(1, &_onPathSymbol3dVBO);
         GL_CHECK_RESULT;
         _onPathSymbol3dVBO.reset();
     }
 
-    if (_onPath3dProgram.id)
+    if (_onPath3dProgram.id.isValid())
     {
         glDeleteProgram(_onPath3dProgram.id);
         GL_CHECK_RESULT;
@@ -1321,7 +1321,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onSurfaceRasterProgram.id);
+    assert(_onSurfaceRasterProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceRasterProgram.id);
     lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -1492,26 +1492,26 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_onSurfaceRasterSymbolVAO)
+    if (_onSurfaceRasterSymbolVAO.isValid())
     {
         gpuAPI->releaseVAO(_onSurfaceRasterSymbolVAO);
         _onSurfaceRasterSymbolVAO.reset();
     }
     
-    if (_onSurfaceRasterSymbolIBO)
+    if (_onSurfaceRasterSymbolIBO.isValid())
     {
         glDeleteBuffers(1, &_onSurfaceRasterSymbolIBO);
         GL_CHECK_RESULT;
         _onSurfaceRasterSymbolIBO.reset();
     }
-    if (_onSurfaceRasterSymbolVBO)
+    if (_onSurfaceRasterSymbolVBO.isValid())
     {
         glDeleteBuffers(1, &_onSurfaceRasterSymbolVBO);
         GL_CHECK_RESULT;
         _onSurfaceRasterSymbolVBO.reset();
     }
     
-    if (_onSurfaceRasterProgram.id)
+    if (_onSurfaceRasterProgram.id.isValid())
     {
         glDeleteProgram(_onSurfaceRasterProgram.id);
         GL_CHECK_RESULT;
@@ -1582,7 +1582,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _onSurfaceVectorProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onSurfaceVectorProgram.id);
+    assert(_onSurfaceVectorProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceVectorProgram.id);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -1752,7 +1752,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
 
     GL_CHECK_PRESENT(glDeleteProgram);
 
-    if (_onSurfaceVectorProgram.id)
+    if (_onSurfaceVectorProgram.id.isValid())
     {
         glDeleteProgram(_onSurfaceVectorProgram.id);
         GL_CHECK_RESULT;

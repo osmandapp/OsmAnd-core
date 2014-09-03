@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_GPU_API_OPENGL3_H_
-#define _OSMAND_CORE_GPU_API_OPENGL3_H_
+#ifndef _OSMAND_CORE_GPU_API_OPENGL2_PLUS_H_
+#define _OSMAND_CORE_GPU_API_OPENGL2_PLUS_H_
 
 #include "stdlib_common.h"
 #include <array>
@@ -94,4 +94,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_GPU_API_OPENGL3_H_)
+#endif // !defined(_OSMAND_CORE_GPU_API_OPENGL2_PLUS_H_)

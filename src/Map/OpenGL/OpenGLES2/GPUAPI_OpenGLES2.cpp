@@ -198,7 +198,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
 
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &_maxVertexAttribs);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal vertex attributes %d", maxFragmentUniformComponents);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal vertex attributes %d", _maxVertexAttribs);
 
     _isSupported_OES_vertex_array_object = extensions.contains("GL_OES_vertex_array_object");
     _isSupported_vertex_array_object = _isSupported_OES_vertex_array_object;

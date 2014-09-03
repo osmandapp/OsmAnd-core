@@ -102,7 +102,7 @@ namespace OsmAnd
             return *this;
         }
 
-        inline operator bool() const
+        inline bool isValid() const
         {
             return this->value != DEFAULT_VALUE;
         }
@@ -193,7 +193,6 @@ namespace OsmAnd
                 GLsizei arrayStride;
                 GLenum arrayType;
                 GLboolean arrayIsNormalized;
-                GLboolean arrayIsInteger;
                 GLvoid* arrayPointer;
             };
             QHash<GLuint, VertexAttrib> vertexAttribs;

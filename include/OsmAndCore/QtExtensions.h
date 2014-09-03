@@ -73,6 +73,7 @@ inline uint qHash(const OsmAnd::SmartPOD<T, DEFAULT_VALUE>& value, uint seed) Q_
 {
     return ::qHash(static_cast<T>(value), seed);
 }
+
 #endif // !defined(SWIG)
 
 #endif // !defined(_OSMAND_CORE_QT_EXTENSIONS_H_)

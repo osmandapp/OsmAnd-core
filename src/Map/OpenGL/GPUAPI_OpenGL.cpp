@@ -968,14 +968,6 @@ void OsmAnd::GPUAPI_OpenGL::initializeVAO(const GLname vao)
         glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, reinterpret_cast<GLint*>(&vertexAttrib.arrayIsNormalized));
         GL_CHECK_RESULT;
 
-        vertexAttrib.arrayIsInteger = GL_FALSE;
-        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_INTEGER, reinterpret_cast<GLint*>(&vertexAttrib.arrayIsInteger));
-        GL_CHECK_RESULT;
-
-        vertexAttrib.arrayIsInteger = GL_FALSE;
-        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_INTEGER, reinterpret_cast<GLint*>(&vertexAttrib.arrayIsInteger));
-        GL_CHECK_RESULT;
-
         vertexAttrib.arrayPointer = nullptr;
         glGetVertexAttribPointerv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_POINTER, &vertexAttrib.arrayPointer);
         GL_CHECK_RESULT;
@@ -1053,7 +1045,7 @@ void OsmAnd::GPUAPI_OpenGL::unuseVAO()
     // In case VAO simulation is used, reset all settings from specified simulated VAO
     GL_CHECK_PRESENT(glDisableVertexAttribArray);
 
-    if (!_lastUsedSimulatedVAOObject)
+    if (!_lastUsedSimulatedVAOObject.isValid())
         return;
     assert(_vaoSimulationObjects.contains(_lastUsedSimulatedVAOObject));
     const auto& simulatedVAO = constOf(_vaoSimulationObjects)[_lastUsedSimulatedVAOObject];

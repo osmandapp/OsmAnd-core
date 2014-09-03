@@ -70,7 +70,7 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     // Link everything into program object
     const GLuint shaders[] = { vsId, fsId };
     _program.id = gpuAPI->linkProgram(2, shaders);
-    assert(_program.id);
+    assert(_program.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_program.id);
     lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
@@ -180,26 +180,26 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
 
     GL_CHECK_PRESENT(glDeleteBuffers);
 
-    if (_skyplaneVAO)
+    if (_skyplaneVAO.isValid())
     {
         gpuAPI->releaseVAO(_skyplaneVAO);
         _skyplaneVAO.reset();
     }
 
-    if (_skyplaneIBO)
+    if (_skyplaneIBO.isValid())
     {
         glDeleteBuffers(1, &_skyplaneIBO);
         GL_CHECK_RESULT;
         _skyplaneIBO.reset();
     }
-    if (_skyplaneVBO)
+    if (_skyplaneVBO.isValid())
     {
         glDeleteBuffers(1, &_skyplaneVBO);
         GL_CHECK_RESULT;
         _skyplaneVBO.reset();
     }
 
-    if (_program.id)
+    if (_program.id.isValid())
     {
         glDeleteProgram(_program.id);
         GL_CHECK_RESULT;

@@ -9,6 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.opengles.GL10;
 
 import net.osmand.core.jni.*;
@@ -180,8 +181,11 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private GLSurfaceView _glSurfaceView;
+    private EGLContext _gpuWorkerThreadContext;
 
     private class Renderer implements GLSurfaceView.Renderer {
+
+
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             //TODO: create second context
         }

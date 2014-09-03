@@ -193,7 +193,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
 
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &_maxVertexAttribs);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal vertex attributes %d", maxFragmentUniformComponents);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal vertex attributes %d", _maxVertexAttribs);
 
     // textureLod() is supported by GLSL 1.30+ specification (which is supported by OpenGL 3.0+), or if GL_ARB_shader_texture_lod is available
     _isSupported_textureLod = (glslVersion >= 130) || extensions.contains(QLatin1String("GL_ARB_shader_texture_lod"));
@@ -208,7 +208,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     _isSupported_vertex_array_object = (glVersion >= 30 || isSupported_ARB_vertex_array_object || isSupported_APPLE_vertex_array_object);
     //////////////////////////////////////////////////////////////////////////
     //NOTE: for testing
-    _isSupported_vertex_array_object = false;
+    //_isSupported_vertex_array_object = false;
     //////////////////////////////////////////////////////////////////////////
 
     // glTexStorage2D is supported in OpenGL 4.2+ or if GL_ARB_texture_storage is available
