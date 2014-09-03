@@ -220,7 +220,6 @@ namespace OsmAnd
             int& lastUsedProgram);
         void releaseOnSurfaceRaster();
 
-        GLname _onSurfaceVectorSymbolVAO;
         struct OnSurfaceVectorProgram {
             GLname id;
 

@@ -140,11 +140,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     };
     const auto indicesCount = 6;
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_vaoRect2D);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_vaoRect2D);
-    GL_CHECK_RESULT;
+    _vaoRect2D = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_vboRect2D);
@@ -166,7 +162,10 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->initializeVAO(_vaoRect2D);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -182,8 +181,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glDrawElements);
 
-    gpuAPI->glBindVertexArray_wrapper(_vaoRect2D);
-    GL_CHECK_RESULT;
+    gpuAPI->useVAO(_vaoRect2D);
 
     // Activate program
     glUseProgram(_programRect2D.id);
@@ -221,9 +219,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
     glUseProgram(0);
     GL_CHECK_RESULT;
 
-    // Deselect VAO
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
+    gpuAPI->unuseVAO();
 }
 
 void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
@@ -232,6 +228,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
 
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
+
+    if (_vaoRect2D)
+    {
+        gpuAPI->releaseVAO(_vaoRect2D);
+        _vaoRect2D.reset();
+    }
 
     if (_iboRect2D)
     {
@@ -245,12 +247,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
         GL_CHECK_RESULT;
         _vboRect2D.reset();
     }
-    if (_vaoRect2D)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoRect2D);
-        GL_CHECK_RESULT;
-        _vaoRect2D.reset();
-    }
+
     if (_programRect2D.id)
     {
         glDeleteProgram(_programRect2D.id);
@@ -337,11 +334,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     };
     const auto indicesCount = 2;
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_vaoLine2D);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_vaoLine2D);
-    GL_CHECK_RESULT;
+    _vaoLine2D = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_vboLine2D);
@@ -363,7 +356,10 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->initializeVAO(_vaoLine2D);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -379,8 +375,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glDrawElements);
 
-    gpuAPI->glBindVertexArray_wrapper(_vaoLine2D);
-    GL_CHECK_RESULT;
+    gpuAPI->useVAO(_vaoLine2D);
 
     // Activate program
     glUseProgram(_programLine2D.id);
@@ -423,9 +418,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
     glUseProgram(0);
     GL_CHECK_RESULT;
 
-    // Deselect VAO
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
+    gpuAPI->unuseVAO();
 }
 
 void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
@@ -435,6 +428,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
+    if (_vaoLine2D)
+    {
+        gpuAPI->releaseVAO(_vaoLine2D);
+        _vaoLine2D.reset();
+    }
+    
     if (_iboLine2D)
     {
         glDeleteBuffers(1, &_iboLine2D);
@@ -447,12 +446,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
         GL_CHECK_RESULT;
         _vboLine2D.reset();
     }
-    if (_vaoLine2D)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoLine2D);
-        GL_CHECK_RESULT;
-        _vaoLine2D.reset();
-    }
+    
     if (_programLine2D.id)
     {
         glDeleteProgram(_programLine2D.id);
@@ -537,11 +531,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     };
     const auto indicesCount = 2;
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_vaoLine3D);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_vaoLine3D);
-    GL_CHECK_RESULT;
+    _vaoLine3D = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_vboLine3D);
@@ -563,7 +553,10 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->initializeVAO(_vaoLine3D);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -579,8 +572,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glDrawElements);
 
-    gpuAPI->glBindVertexArray_wrapper(_vaoLine3D);
-    GL_CHECK_RESULT;
+    gpuAPI->useVAO(_vaoLine3D);
 
     // Activate program
     glUseProgram(_programLine3D.id);
@@ -623,9 +615,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     glUseProgram(0);
     GL_CHECK_RESULT;
 
-    // Deselect VAO
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
+    gpuAPI->unuseVAO();
 }
 
 void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
@@ -635,6 +625,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
+    if (_vaoLine3D)
+    {
+        gpuAPI->releaseVAO(_vaoLine3D);
+        _vaoLine3D.reset();
+    }
+    
     if (_iboLine3D)
     {
         glDeleteBuffers(1, &_iboLine3D);
@@ -647,12 +643,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
         GL_CHECK_RESULT;
         _vboLine3D.reset();
     }
-    if (_vaoLine3D)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoLine3D);
-        GL_CHECK_RESULT;
-        _vaoLine3D.reset();
-    }
+    
     if (_programLine3D.id)
     {
         glDeleteProgram(_programLine3D.id);
@@ -751,11 +742,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     };
     const auto indicesCount = 6;
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_vaoQuad3D);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_vaoQuad3D);
-    GL_CHECK_RESULT;
+    _vaoQuad3D = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_vboQuad3D);
@@ -777,7 +764,10 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->initializeVAO(_vaoQuad3D);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -793,9 +783,8 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glDrawElements);
 
-    gpuAPI->glBindVertexArray_wrapper(_vaoQuad3D);
-    GL_CHECK_RESULT;
-
+    gpuAPI->useVAO(_vaoQuad3D);
+    
     // Activate program
     glUseProgram(_programQuad3D.id);
     GL_CHECK_RESULT;
@@ -835,9 +824,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     glUseProgram(0);
     GL_CHECK_RESULT;
 
-    // Deselect VAO
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
+    gpuAPI->unuseVAO();
 }
 
 void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
@@ -847,6 +834,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
+    if (_vaoQuad3D)
+    {
+        gpuAPI->releaseVAO(_vaoQuad3D);
+        _vaoQuad3D.reset();
+    }
+    
     if (_iboQuad3D)
     {
         glDeleteBuffers(1, &_iboQuad3D);
@@ -859,12 +852,7 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
         GL_CHECK_RESULT;
         _vboQuad3D.reset();
     }
-    if (_vaoQuad3D)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_vaoQuad3D);
-        GL_CHECK_RESULT;
-        _vaoQuad3D.reset();
-    }
+    
     if (_programQuad3D.id)
     {
         glDeleteProgram(_programQuad3D.id);

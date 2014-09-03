@@ -199,11 +199,11 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     _isSupported_samplerObjects = (glVersion >= 33) || _isSupported_ARB_sampler_objects;
     _isSupported_ARB_vertex_array_object = extensions.contains(QLatin1String("GL_ARB_vertex_array_object"));
     _isSupported_APPLE_vertex_array_object = extensions.contains(QLatin1String("GL_APPLE_vertex_array_object"));
-    if (glVersion < 30 && !isSupported_ARB_vertex_array_object && !isSupported_APPLE_vertex_array_object)
-    {
-        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_ARB_vertex_array_object' or 'GL_APPLE_vertex_array_object' extension and OpenGL version is less than 3.0");
-        return false;
-    }
+    _isSupported_vertex_array_object = (glVersion >= 30 || isSupported_ARB_vertex_array_object || isSupported_APPLE_vertex_array_object);
+    //////////////////////////////////////////////////////////////////////////
+    //NOTE: for testing
+    _isSupported_vertex_array_object = false;
+    //////////////////////////////////////////////////////////////////////////
 
     // glTexStorage2D is supported in OpenGL 4.2+ or if GL_ARB_texture_storage is available
     // https://www.opengl.org/sdk/docs/man/html/glTexStorage2D.xhtml

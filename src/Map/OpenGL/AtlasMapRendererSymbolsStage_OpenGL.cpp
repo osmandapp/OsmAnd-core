@@ -84,9 +84,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     glUseProgram(0);
     GL_CHECK_RESULT;
 
-    // Deselect VAO
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
+    gpuAPI->unuseVAO();
 
     GL_POP_GROUP_MARKER;
 }
@@ -318,11 +316,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     };
     const auto indicesCount = 6;
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_billboardRasterSymbolVAO);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_billboardRasterSymbolVAO);
-    GL_CHECK_RESULT;
+    _billboardRasterSymbolVAO = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_billboardRasterSymbolVBO);
@@ -348,7 +342,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->initializeVAO(_billboardRasterSymbolVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -373,8 +370,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         GL_CHECK_RESULT;
 
         // Set symbol VAO
-        gpuAPI->glBindVertexArray_wrapper(_billboardRasterSymbolVAO);
-        GL_CHECK_RESULT;
+        gpuAPI->useVAO(_billboardRasterSymbolVAO);
 
         // Activate program
         glUseProgram(_billboardRasterProgram.id);
@@ -458,6 +454,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
+    if (_billboardRasterSymbolVAO)
+    {
+        gpuAPI->releaseVAO(_billboardRasterSymbolVAO);
+        _billboardRasterSymbolVAO.reset();
+    }
+
     if (_billboardRasterSymbolIBO)
     {
         glDeleteBuffers(1, &_billboardRasterSymbolIBO);
@@ -470,13 +472,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
         GL_CHECK_RESULT;
         _billboardRasterSymbolVBO.reset();
     }
-    if (_billboardRasterSymbolVAO)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_billboardRasterSymbolVAO);
-        GL_CHECK_RESULT;
-        _billboardRasterSymbolVAO.reset();
-    }
-
+    
     if (_billboardRasterProgram.id)
     {
         glDeleteProgram(_billboardRasterProgram.id);
@@ -671,11 +667,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         *(pIndex++) = glyphIdx * 4 + 3;
     }
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_onPathSymbol2dVAO);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_onPathSymbol2dVAO);
-    GL_CHECK_RESULT;
+    _onPathSymbol2dVAO = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_onPathSymbol2dVBO);
@@ -706,7 +698,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(GLushort), indices.constData(), GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->initializeVAO(_onPathSymbol2dVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -891,11 +886,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         *(pIndex++) = glyphIdx * 4 + 3;
     }
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_onPathSymbol3dVAO);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_onPathSymbol3dVAO);
-    GL_CHECK_RESULT;
+    _onPathSymbol3dVAO = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_onPathSymbol3dVBO);
@@ -926,7 +917,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(GLushort), indices.constData(), GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->initializeVAO(_onPathSymbol3dVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -951,8 +945,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         GL_CHECK_RESULT;
 
         // Set symbol VAO
-        gpuAPI->glBindVertexArray_wrapper(_onPathSymbol2dVAO);
-        GL_CHECK_RESULT;
+        gpuAPI->useVAO(_onPathSymbol2dVAO);
 
         // Activate program
         glUseProgram(_onPath2dProgram.id);
@@ -1073,8 +1066,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         GL_CHECK_RESULT;
 
         // Set symbol VAO
-        gpuAPI->glBindVertexArray_wrapper(_onPathSymbol3dVAO);
-        GL_CHECK_RESULT;
+        gpuAPI->useVAO(_onPathSymbol3dVAO);
 
         // Activate program
         glUseProgram(_onPath3dProgram.id);
@@ -1188,6 +1180,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
+    if (_onPathSymbol2dVAO)
+    {
+        gpuAPI->releaseVAO(_onPathSymbol2dVAO);
+        _onPathSymbol2dVAO.reset();
+    }
+
     if (_onPathSymbol2dIBO)
     {
         glDeleteBuffers(1, &_onPathSymbol2dIBO);
@@ -1200,13 +1198,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
         GL_CHECK_RESULT;
         _onPathSymbol2dVBO.reset();
     }
-    if (_onPathSymbol2dVAO)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_onPathSymbol2dVAO);
-        GL_CHECK_RESULT;
-        _onPathSymbol2dVAO.reset();
-    }
-
+    
     if (_onPath2dProgram.id)
     {
         glDeleteProgram(_onPath2dProgram.id);
@@ -1222,6 +1214,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
+    if (_onPathSymbol3dVAO)
+    {
+        gpuAPI->releaseVAO(_onPathSymbol3dVAO);
+        _onPathSymbol3dVAO.reset();
+    }
+
     if (_onPathSymbol3dIBO)
     {
         glDeleteBuffers(1, &_onPathSymbol3dIBO);
@@ -1233,12 +1231,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
         glDeleteBuffers(1, &_onPathSymbol3dVBO);
         GL_CHECK_RESULT;
         _onPathSymbol3dVBO.reset();
-    }
-    if (_onPathSymbol3dVAO)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_onPathSymbol3dVAO);
-        GL_CHECK_RESULT;
-        _onPathSymbol3dVAO.reset();
     }
 
     if (_onPath3dProgram.id)
@@ -1373,11 +1365,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     };
     const auto indicesCount = 6;
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_onSurfaceRasterSymbolVAO);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_onSurfaceRasterSymbolVAO);
-    GL_CHECK_RESULT;
+    _onSurfaceRasterSymbolVAO = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_onSurfaceRasterSymbolVBO);
@@ -1403,7 +1391,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    gpuAPI->initializeVAO(_onSurfaceRasterSymbolVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -1428,9 +1419,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         GL_CHECK_RESULT;
 
         // Set symbol VAO
-        gpuAPI->glBindVertexArray_wrapper(_onSurfaceRasterSymbolVAO);
-        GL_CHECK_RESULT;
-
+        gpuAPI->useVAO(_onSurfaceRasterSymbolVAO);
+        
         // Activate program
         glUseProgram(_onSurfaceRasterProgram.id);
         GL_CHECK_RESULT;
@@ -1502,6 +1492,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
     GL_CHECK_PRESENT(glDeleteBuffers);
     GL_CHECK_PRESENT(glDeleteProgram);
 
+    if (_onSurfaceRasterSymbolVAO)
+    {
+        gpuAPI->releaseVAO(_onSurfaceRasterSymbolVAO);
+        _onSurfaceRasterSymbolVAO.reset();
+    }
+    
     if (_onSurfaceRasterSymbolIBO)
     {
         glDeleteBuffers(1, &_onSurfaceRasterSymbolIBO);
@@ -1514,13 +1510,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
         GL_CHECK_RESULT;
         _onSurfaceRasterSymbolVBO.reset();
     }
-    if (_onSurfaceRasterSymbolVAO)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_onSurfaceRasterSymbolVAO);
-        GL_CHECK_RESULT;
-        _onSurfaceRasterSymbolVAO.reset();
-    }
-
+    
     if (_onSurfaceRasterProgram.id)
     {
         glDeleteProgram(_onSurfaceRasterProgram.id);
@@ -1600,15 +1590,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
     lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GLShaderVariableType::Uniform);
-
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_onSurfaceVectorSymbolVAO);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_onSurfaceVectorSymbolVAO);
-    GL_CHECK_RESULT;
-
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
@@ -1635,6 +1616,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         glUseProgram(_onSurfaceVectorProgram.id);
         GL_CHECK_RESULT;
 
+        // Just in case un-use any possibly used VAO
+        gpuAPI->unuseVAO();
+
         lastUsedProgram = _onSurfaceVectorProgram.id;
 
         GL_POP_GROUP_MARKER;
@@ -1643,10 +1627,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) on-surface vector]")
         .arg(QString().sprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->getDebugTitle()));
-
-    // Activate proper VAO
-    gpuAPI->glBindVertexArray_wrapper(_onSurfaceVectorSymbolVAO);
-    GL_CHECK_RESULT;
 
     // Activate vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->vertexBuffer->refInGPU)));
@@ -1762,8 +1742,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
 }
@@ -1773,13 +1751,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteProgram);
-
-    if (_onSurfaceVectorSymbolVAO)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_onSurfaceVectorSymbolVAO);
-        GL_CHECK_RESULT;
-        _onSurfaceVectorSymbolVAO.reset();
-    }
 
     if (_onSurfaceVectorProgram.id)
     {

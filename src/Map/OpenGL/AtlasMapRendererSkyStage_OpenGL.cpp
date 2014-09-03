@@ -96,11 +96,7 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     };
     const auto indicesCount = 6;
 
-    // Create Vertex Array Object
-    gpuAPI->glGenVertexArrays_wrapper(1, &_skyplaneVAO);
-    GL_CHECK_RESULT;
-    gpuAPI->glBindVertexArray_wrapper(_skyplaneVAO);
-    GL_CHECK_RESULT;
+    _skyplaneVAO = gpuAPI->allocateUninitializedVAO();
 
     // Create vertex buffer and associate it with VAO
     glGenBuffers(1, &_skyplaneVBO);
@@ -122,7 +118,11 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesCount * sizeof(GLushort), indices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
-    gpuAPI->glBindVertexArray_wrapper(0);
+    // Unbind buffers
+    gpuAPI->initializeVAO(_skyplaneVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 }
 
@@ -140,9 +140,7 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::render()
     GL_CHECK_PRESENT(glUniform3f);
     GL_CHECK_PRESENT(glDrawElements);
 
-    // Set sky plane VAO
-    gpuAPI->glBindVertexArray_wrapper(_skyplaneVAO);
-    GL_CHECK_RESULT;
+    gpuAPI->useVAO(_skyplaneVAO);
 
     // Activate program
     glUseProgram(_program.id);
@@ -171,9 +169,7 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::render()
     glUseProgram(0);
     GL_CHECK_RESULT;
 
-    // Deselect VAO
-    gpuAPI->glBindVertexArray_wrapper(0);
-    GL_CHECK_RESULT;
+    gpuAPI->unuseVAO();
 
     GL_POP_GROUP_MARKER;
 }
@@ -183,6 +179,12 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
     const auto gpuAPI = getGPUAPI();
 
     GL_CHECK_PRESENT(glDeleteBuffers);
+
+    if (_skyplaneVAO)
+    {
+        gpuAPI->releaseVAO(_skyplaneVAO);
+        _skyplaneVAO.reset();
+    }
 
     if (_skyplaneIBO)
     {
@@ -195,12 +197,6 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
         glDeleteBuffers(1, &_skyplaneVBO);
         GL_CHECK_RESULT;
         _skyplaneVBO.reset();
-    }
-    if (_skyplaneVAO)
-    {
-        gpuAPI->glDeleteVertexArrays_wrapper(1, &_skyplaneVAO);
-        GL_CHECK_RESULT;
-        _skyplaneVAO.reset();
     }
 
     if (_program.id)

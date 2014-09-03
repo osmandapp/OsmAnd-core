@@ -192,6 +192,7 @@ namespace OsmAnd
         bool _isSupported_texture_storage;
         bool _isSupported_texture_float;
         bool _isSupported_texture_rg;
+        bool _isSupported_vertex_array_object;
         GLint _maxVertexUniformVectors;
         GLint _maxFragmentUniformVectors;
         
@@ -206,6 +207,10 @@ namespace OsmAnd
 
         virtual SourceFormat getSourceFormat(const SkBitmap::Config skBitmapConfig) const;
         virtual SourceFormat getSourceFormat_float() const = 0;
+
+        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) = 0;
+        virtual void glBindVertexArray_wrapper(GLuint array) = 0;
+        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays) = 0;
     public:
         GPUAPI_OpenGL();
         virtual ~GPUAPI_OpenGL();
@@ -223,6 +228,7 @@ namespace OsmAnd
         const bool& isSupported_texture_storage;
         const bool& isSupported_texture_float;
         const bool& isSupported_texture_rg;
+        const bool& isSupported_vertex_array_object;
         const GLint& maxVertexUniformVectors;
         const GLint& maxFragmentUniformVectors;
         
@@ -242,9 +248,11 @@ namespace OsmAnd
             const SourceFormat sourceFormat) = 0;
         virtual void setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount) = 0;
 
-        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays) = 0;
-        virtual void glBindVertexArray_wrapper(GLuint array) = 0;
-        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays) = 0;
+        GLname allocateUninitializedVAO();
+        void initializeVAO(const GLname vao);
+        void useVAO(const GLname vao);
+        void unuseVAO();
+        void releaseVAO(const GLname vao);
 
         virtual void preprocessVertexShader(QString& code) = 0;
         virtual void preprocessFragmentShader(QString& code) = 0;

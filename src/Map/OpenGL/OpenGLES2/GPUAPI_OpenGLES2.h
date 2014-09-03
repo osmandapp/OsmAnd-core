@@ -45,14 +45,18 @@ namespace OsmAnd
         void preprocessShader(QString& code, const QString& extraHeader = QString());
 
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
-
-        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
-        virtual void glPopGroupMarkerEXT_wrapper();
     protected:
         virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const;
         virtual TextureFormat getTextureSizedFormat_float() const;
 
         virtual SourceFormat getSourceFormat_float() const;
+
+        virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker);
+        virtual void glPopGroupMarkerEXT_wrapper();
+
+        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays);
+        virtual void glBindVertexArray_wrapper(GLuint array);
+        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays);
     public:
         GPUAPI_OpenGLES2();
         virtual ~GPUAPI_OpenGLES2();
@@ -77,10 +81,6 @@ namespace OsmAnd
             const GLvoid *data, GLsizei dataRowLengthInElements, GLsizei elementSize,
             const SourceFormat sourceFormat);
         virtual void setMipMapLevelsLimit(GLenum target, const uint32_t mipmapLevelsCount);
-
-        virtual void glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays);
-        virtual void glBindVertexArray_wrapper(GLuint array);
-        virtual void glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays);
 
         virtual void preprocessVertexShader(QString& code);
         virtual void preprocessFragmentShader(QString& code);

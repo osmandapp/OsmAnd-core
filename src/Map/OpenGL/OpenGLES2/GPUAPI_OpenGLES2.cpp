@@ -181,11 +181,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal 4-component parameters in fragment shader %d", _maxFragmentUniformVectors);
 
     _isSupported_OES_vertex_array_object = extensions.contains("GL_OES_vertex_array_object");
-    if (!isSupported_OES_vertex_array_object)
-    {
-        LogPrintf(LogSeverityLevel::Error, "This device does not support required 'GL_OES_vertex_array_object' extension");
-        return false;
-    }
+    _isSupported_vertex_array_object = _isSupported_OES_vertex_array_object;
 
     _isSupported_OES_rgb8_rgba8 = extensions.contains("GL_OES_rgb8_rgba8");
     if (!isSupported_OES_rgb8_rgba8)
@@ -419,6 +415,8 @@ void OsmAnd::GPUAPI_OpenGLES2::setMipMapLevelsLimit(GLenum target, const uint32_
 
 void OsmAnd::GPUAPI_OpenGLES2::glGenVertexArrays_wrapper(GLsizei n, GLuint* arrays)
 {
+    assert(isSupported_vertex_array_object);
+
     GL_CHECK_PRESENT(glGenVertexArraysOES);
 
     glGenVertexArraysOES(n, arrays);
@@ -426,6 +424,8 @@ void OsmAnd::GPUAPI_OpenGLES2::glGenVertexArrays_wrapper(GLsizei n, GLuint* arra
 
 void OsmAnd::GPUAPI_OpenGLES2::glBindVertexArray_wrapper(GLuint array)
 {
+    assert(isSupported_vertex_array_object);
+
     GL_CHECK_PRESENT(glBindVertexArrayOES);
 
     glBindVertexArrayOES(array);
@@ -433,6 +433,8 @@ void OsmAnd::GPUAPI_OpenGLES2::glBindVertexArray_wrapper(GLuint array)
 
 void OsmAnd::GPUAPI_OpenGLES2::glDeleteVertexArrays_wrapper(GLsizei n, const GLuint* arrays)
 {
+    assert(isSupported_vertex_array_object);
+
     GL_CHECK_PRESENT(glDeleteVertexArraysOES);
 
     glDeleteVertexArraysOES(n, arrays);

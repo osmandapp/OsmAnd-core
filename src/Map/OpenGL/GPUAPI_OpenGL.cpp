@@ -40,6 +40,7 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _isSupported_texture_storage(false)
     , _isSupported_texture_float(false)
     , _isSupported_texture_rg(false)
+    , _isSupported_vertex_array_object(false)
     , _maxVertexUniformVectors(-1)
     , _maxFragmentUniformVectors(-1)
     , glVersion(_glVersion)
@@ -54,6 +55,7 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , isSupported_texture_storage(_isSupported_texture_storage)
     , isSupported_texture_float(_isSupported_texture_float)
     , isSupported_texture_rg(_isSupported_texture_rg)
+    , isSupported_vertex_array_object(_isSupported_vertex_array_object)
     , maxVertexUniformVectors(_maxVertexUniformVectors)
     , maxFragmentUniformVectors(_maxFragmentUniformVectors)
 {
@@ -873,6 +875,75 @@ void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(GLenum target, GLsizei levels, GLs
     GL_CHECK_RESULT;
 
     delete[] dummyBuffer;
+}
+
+OsmAnd::GLname OsmAnd::GPUAPI_OpenGL::allocateUninitializedVAO()
+{
+    if (isSupported_vertex_array_object)
+    {
+        GLname vao;
+
+        glGenVertexArrays_wrapper(1, &vao);
+        GL_CHECK_RESULT;
+        glBindVertexArray_wrapper(vao);
+        GL_CHECK_RESULT;
+
+        return vao;
+    }
+
+    return GLname();
+}
+
+void OsmAnd::GPUAPI_OpenGL::initializeVAO(const GLname vao)
+{
+    if (isSupported_vertex_array_object)
+    {
+        glBindVertexArray_wrapper(0);
+        GL_CHECK_RESULT;
+
+        return;
+    }
+
+    return;
+}
+
+void OsmAnd::GPUAPI_OpenGL::useVAO(const GLname vao)
+{
+    if (isSupported_vertex_array_object)
+    {
+        glBindVertexArray_wrapper(vao);
+        GL_CHECK_RESULT;
+
+        return;
+    }
+
+    return;
+}
+
+void OsmAnd::GPUAPI_OpenGL::unuseVAO()
+{
+    if (isSupported_vertex_array_object)
+    {
+        glBindVertexArray_wrapper(0);
+        GL_CHECK_RESULT;
+
+        return;
+    }
+
+    return;
+}
+
+void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao)
+{
+    if (isSupported_vertex_array_object)
+    {
+        glDeleteVertexArrays_wrapper(1, &vao);
+        GL_CHECK_RESULT;
+
+        return;
+    }
+
+    return;
 }
 
 OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::ProgramVariablesLookupContext(GPUAPI_OpenGL* gpuAPI_, GLuint program_)
