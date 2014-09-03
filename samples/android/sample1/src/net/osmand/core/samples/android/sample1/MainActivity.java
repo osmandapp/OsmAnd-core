@@ -1,15 +1,21 @@
 package net.osmand.core.samples.android.sample1;
 
+import android.content.Context;
+import android.opengl.EGL14;
 import android.opengl.GLSurfaceView;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 
+import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
+import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
 import net.osmand.core.jni.*;
@@ -62,6 +68,9 @@ public class MainActivity extends ActionBarActivity {
 
     private static final String TAG = "OsmAndCoreSample";
 
+    private float _displayDensityFactor;
+    private int _referenceTileSize;
+    private int _rasterTileSize;
     private IMapStylesCollection _mapStylesCollection;
     private MapStyle _mapStyle;
     private ObfsCollection _obfsCollection;
@@ -78,6 +87,16 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Get device display density factor
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        _displayDensityFactor = displayMetrics.densityDpi / 100.0f;
+        _referenceTileSize = (int)(256 * _displayDensityFactor);
+        _rasterTileSize = Integer.highestOneBit(_referenceTileSize - 1) * 2;
+        Log.i(TAG, "displayDensityFactor = " + _displayDensityFactor);
+        Log.i(TAG, "referenceTileSize = " + _referenceTileSize);
+        Log.i(TAG, "rasterTileSize = " + _rasterTileSize);
+
         Log.i(TAG, "Initializing core...");
         OsmAndCore.InitializeCore();
 
@@ -92,12 +111,13 @@ public class MainActivity extends ActionBarActivity {
 
         Log.i(TAG, "Going to prepare OBFs collection");
         _obfsCollection = new ObfsCollection();
-        _obfsCollection.addDirectory(Environment.getExternalStorageState() + "/osmand", true);
+        Log.i(TAG, "Will load OBFs from " + Environment.getExternalStorageDirectory() + "/osmand");
+        _obfsCollection.addDirectory(Environment.getExternalStorageDirectory() + "/osmand", false);
 
         Log.i(TAG, "Going to prepare all resources for renderer");
         _mapPresentationEnvironment = new MapPresentationEnvironment(
                 _mapStyle,
-                1.0f, //TODO: Here should be DPI
+                _displayDensityFactor,
                 "en"); //TODO: here should be current locale
         //mapPresentationEnvironment->setSettings(configuration.styleSettings);
         _primitiviser = new Primitiviser(
@@ -107,10 +127,10 @@ public class MainActivity extends ActionBarActivity {
         _binaryMapPrimitivesProvider = new BinaryMapPrimitivesProvider(
                 _binaryMapDataProvider,
                 _primitiviser,
-                256);
+                _rasterTileSize);
         _binaryMapStaticSymbolsProvider = new BinaryMapStaticSymbolsProvider(
                 _binaryMapPrimitivesProvider,
-                256);
+                _rasterTileSize);
         _binaryMapRasterBitmapTileProvider = new BinaryMapRasterBitmapTileProvider_Software(
                 _binaryMapPrimitivesProvider);
 
@@ -122,41 +142,9 @@ public class MainActivity extends ActionBarActivity {
             System.exit(0);
         }
 
-        MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
-        rendererSetupOptions.setGpuWorkerThreadEnabled(false);
-        /*
-        rendererSetup.frameUpdateRequestCallback = []()
-        {
-            //QMutexLocker scopedLocker(&glutWasInitializedFlagMutex);
-
-            if(glutWasInitialized)
-                glutPostRedisplay();
-        };
-        rendererSetup.gpuWorkerThread.enabled = useGpuWorker;
-        if(rendererSetup.gpuWorkerThread.enabled)
-        {
-            #if defined(WIN32)
-            const auto currentDC = wglGetCurrentDC();
-            const auto currentContext = wglGetCurrentContext();
-            const auto workerContext = wglCreateContext(currentDC);
-
-            rendererSetup.gpuWorkerThread.enabled = (wglShareLists(currentContext, workerContext) == TRUE);
-            assert(currentContext == wglGetCurrentContext());
-
-            rendererSetup.gpuWorkerThread.prologue = [currentDC, workerContext]()
-            {
-                const auto result = (wglMakeCurrent(currentDC, workerContext) == TRUE);
-                verifyOpenGL();
-            };
-
-            rendererSetup.gpuWorkerThread.epilogue = []()
-            {
-                glFinish();
-            };
-            #endif
-        }
-        */
-        _mapRenderer.setup(rendererSetupOptions);
+        AtlasMapRendererConfiguration atlasRendererConfiguration = AtlasMapRendererConfiguration.upcastFrom(_mapRenderer.getConfiguration());
+        atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
+        //_mapRenderer.setConfiguration(atlasRendererConfiguration);//TODO: crashes Fatal signal 11 (SIGSEGV) at 0x00000040 (code=1), thread 6799 (android.sample1)
 
         _mapRenderer.setAzimuth(0.0f);
         _mapRenderer.setElevationAngle(35.0f);
@@ -166,28 +154,100 @@ public class MainActivity extends ActionBarActivity {
             1102430866,
             704978668));
         _mapRenderer.setZoom(10.0f);
+        /*
         IMapRasterBitmapTileProvider mapnik = OnlineTileSources.getBuiltIn().createProviderFor("Mapnik (OsmAnd)");
         if (mapnik == null)
             Log.e(TAG, "Failed to create mapnik");
-        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, mapnik);
+        */
+        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, _binaryMapRasterBitmapTileProvider);
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
-        _glSurfaceView.setEGLContextClientVersion(2);
-        _glSurfaceView.setEGLConfigChooser(true);
         //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
+        _glSurfaceView.setEGLConfigChooser(true);
+        _glSurfaceView.setEGLContextClientVersion(2);
+        _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
         _glSurfaceView.setRenderer(new Renderer());
         //_glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
     }
 
     private GLSurfaceView _glSurfaceView;
-    private EGLContext _gpuWorkerThreadContext;
+
+    private class RenderRequestCallback extends MapRendererSetupOptions.IFrameUpdateRequestCallback {
+        public void method() {
+            _glSurfaceView.requestRender();
+        }
+    }
+
+    private class GpuWorkerThreadPrologue extends MapRendererSetupOptions.IGpuWorkerThreadPrologue {
+        public GpuWorkerThreadPrologue(EGL10 egl, EGLDisplay eglDisplay, EGLContext context) {
+            _egl = egl;
+            _eglDisplay = eglDisplay;
+            _context = context;
+        }
+
+        private final EGL10 _egl;
+        private final EGLDisplay _eglDisplay;
+        private final EGLContext _context;
+
+        public void method() {
+            if (!_egl.eglMakeCurrent(_eglDisplay, null, null, _context))
+                Log.e(TAG, "Failed to set GPU worker context active");
+        }
+    }
+
+    private class GpuWorkerThreadEpilogue extends MapRendererSetupOptions.IGpuWorkerThreadEpilogue {
+        public GpuWorkerThreadEpilogue(EGL10 egl, EGLDisplay eglDisplay, EGLContext context) {
+            _egl = egl;
+            _eglDisplay = eglDisplay;
+            _context = context;
+        }
+
+        private final EGL10 _egl;
+        private final EGLDisplay _eglDisplay;
+        private final EGLContext _context;
+
+        public void method() {
+            if (!_egl.eglWaitGL())
+                Log.e(TAG, "Failed to wait for GPU worker context");
+        }
+    }
+
+    private class EGLContextFactory implements GLSurfaceView.EGLContextFactory {
+        private EGLContext _gpuWorkerContext;
+
+        public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
+            final int[] contextAttribList = {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
+            EGLContext mainContext = egl.eglCreateContext(display, eglConfig, EGL10.EGL_NO_CONTEXT, contextAttribList);
+            _gpuWorkerContext = egl.eglCreateContext(
+                    egl.eglGetCurrentDisplay(),
+                    eglConfig,
+                    mainContext,
+                    contextAttribList);
+            if (_gpuWorkerContext == null)
+                Log.e(TAG, "Failed to create GPU worker context");
+
+            MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
+            rendererSetupOptions.setGpuWorkerThreadEnabled(false);
+            /*
+            rendererSetupOptions.setGpuWorkerThreadEnabled(true);
+            rendererSetupOptions.setGpuWorkerThreadPrologue(new GpuWorkerThreadPrologue(egl, display, _gpuWorkerContext)); //TODO: will crash
+            rendererSetupOptions.setGpuWorkerThreadEpilogue(new GpuWorkerThreadEpilogue(egl, display, _gpuWorkerContext));
+            rendererSetupOptions.setFrameUpdateRequestCallback(new RenderRequestCallback());
+            */
+            _mapRenderer.setup(rendererSetupOptions);
+
+            return mainContext;
+        }
+
+        public void destroyContext(EGL10 egl, EGLDisplay display, EGLContext context) {
+            egl.eglDestroyContext(display, _gpuWorkerContext);
+            egl.eglDestroyContext(display, context);
+        }
+    }
 
     private class Renderer implements GLSurfaceView.Renderer {
-
-
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            //TODO: create second context
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {

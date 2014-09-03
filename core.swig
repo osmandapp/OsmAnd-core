@@ -151,6 +151,7 @@ using namespace OsmAnd;
 
 %include <swig/OsmAndCore_Stubs.h>
 %include <OsmAndCore.h>
+%include <OsmAndCore/Common.h>
 %include <OsmAndCore/QuickAccessors.h>
 %include <OsmAndCore/Observable.h>
 %include <OsmAndCore/Callable.h>

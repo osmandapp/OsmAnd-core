@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Common.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapRendererConfiguration.h>
 
@@ -20,6 +21,8 @@ namespace OsmAnd
 
         virtual void copyTo(MapRendererConfiguration& other) const;
         virtual std::shared_ptr<MapRendererConfiguration> createCopy() const;
+
+        SWIG_DECLARE_UPCAST_POINTER(AtlasMapRendererConfiguration, MapRendererConfiguration);
     };
 }
 
