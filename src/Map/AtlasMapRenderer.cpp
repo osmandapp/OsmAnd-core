@@ -127,8 +127,11 @@ void OsmAnd::AtlasMapRenderer::invalidateCurrentConfiguration(const uint32_t cha
     bool invalidateSymbols = false;
     invalidateSymbols = invalidateSymbols || (changesMask & enumToBit(ConfigurationChange::ReferenceTileSize)) != 0;
 
-    if (invalidateSymbols)
-        getResources().invalidateResourcesOfType(MapRendererResourceType::Symbols);
+    if (isRenderingInitialized)
+    {
+        if (invalidateSymbols)
+            getResources().invalidateResourcesOfType(MapRendererResourceType::Symbols);
+    }
 
     MapRenderer::invalidateCurrentConfiguration(changesMask);
 }
