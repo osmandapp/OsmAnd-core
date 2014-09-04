@@ -158,15 +158,15 @@ using namespace OsmAnd;
 %include <OsmAndCore/Callable.h>
 %include <OsmAndCore/CommonTypes.h>
 	%template(PointI) OsmAnd::Point<int32_t>;
-	%template(PointI64) OsmAnd::Point<int64_t>;
+//	%template(PointI64) OsmAnd::Point<int64_t>;
 	%template(PointF) OsmAnd::Point<float>;
 	%template(PointD) OsmAnd::Point<double>;
 	%template(AreaI) OsmAnd::Area<int32_t>;
-	%template(AreaI64) OsmAnd::Area<int64_t>;
+//	%template(AreaI64) OsmAnd::Area<int64_t>;
 	%template(AreaF) OsmAnd::Area<float>;
 	%template(AreaD) OsmAnd::Area<double>;
 	%template(OOBBI) OsmAnd::OOBB<int32_t>;
-	%template(OOBBI64) OsmAnd::OOBB<int64_t>;
+//	%template(OOBBI64) OsmAnd::OOBB<int64_t>;
 	%template(OOBBF) OsmAnd::OOBB<float>;
 	%template(OOBBD) OsmAnd::OOBB<double>;
 %include <OsmAndCore/Bitmask.h>

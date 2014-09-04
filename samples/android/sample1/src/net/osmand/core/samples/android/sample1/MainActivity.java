@@ -175,6 +175,75 @@ public class MainActivity extends ActionBarActivity {
 
     private GLSurfaceView _glSurfaceView;
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        _glSurfaceView.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        _glSurfaceView.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (_mapStylesCollection != null) {
+            _mapStylesCollection.delete();
+            _mapStylesCollection = null;
+        }
+
+        if (_mapStyle != null) {
+            _mapStyle.delete();
+            _mapStyle = null;
+        }
+
+        if (_obfsCollection != null) {
+            _obfsCollection.delete();
+            _obfsCollection = null;
+        }
+
+        if (_mapPresentationEnvironment != null) {
+            _mapPresentationEnvironment.delete();
+            _mapPresentationEnvironment = null;
+        }
+
+        if (_primitiviser != null) {
+            _primitiviser.delete();
+            _primitiviser = null;
+        }
+
+        if (_binaryMapDataProvider != null) {
+            _binaryMapDataProvider.delete();
+            _binaryMapDataProvider = null;
+        }
+
+        if (_binaryMapPrimitivesProvider != null) {
+            _binaryMapPrimitivesProvider.delete();
+            _binaryMapPrimitivesProvider = null;
+        }
+
+        if (_binaryMapStaticSymbolsProvider != null) {
+            _binaryMapStaticSymbolsProvider.delete();
+            _binaryMapStaticSymbolsProvider = null;
+        }
+
+        if (_binaryMapRasterBitmapTileProvider != null) {
+            _binaryMapRasterBitmapTileProvider.delete();
+            _binaryMapRasterBitmapTileProvider = null;
+        }
+
+        if (_mapRenderer != null) {
+            _mapRenderer.delete();
+            _mapRenderer = null;
+        }
+
+        OsmAndCore.ReleaseCore();
+
+        super.onDestroy();
+    }
+
     private class RenderRequestCallback extends MapRendererSetupOptions.IFrameUpdateRequestCallback {
         @Override
         public void method(IMapRenderer mapRenderer) {
@@ -272,63 +341,6 @@ public class MainActivity extends ActionBarActivity {
             if (_mapRenderer.prepareFrame())
                 _mapRenderer.renderFrame();
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (_mapStylesCollection != null) {
-            _mapStylesCollection.delete();
-            _mapStylesCollection = null;
-        }
-
-        if (_mapStyle != null) {
-            _mapStyle.delete();
-            _mapStyle = null;
-        }
-
-        if (_obfsCollection != null) {
-            _obfsCollection.delete();
-            _obfsCollection = null;
-        }
-
-        if (_mapPresentationEnvironment != null) {
-            _mapPresentationEnvironment.delete();
-            _mapPresentationEnvironment = null;
-        }
-
-        if (_primitiviser != null) {
-            _primitiviser.delete();
-            _primitiviser = null;
-        }
-
-        if (_binaryMapDataProvider != null) {
-            _binaryMapDataProvider.delete();
-            _binaryMapDataProvider = null;
-        }
-
-        if (_binaryMapPrimitivesProvider != null) {
-            _binaryMapPrimitivesProvider.delete();
-            _binaryMapPrimitivesProvider = null;
-        }
-
-        if (_binaryMapStaticSymbolsProvider != null) {
-            _binaryMapStaticSymbolsProvider.delete();
-            _binaryMapStaticSymbolsProvider = null;
-        }
-
-        if (_binaryMapRasterBitmapTileProvider != null) {
-            _binaryMapRasterBitmapTileProvider.delete();
-            _binaryMapRasterBitmapTileProvider = null;
-        }
-
-        if (_mapRenderer != null) {
-            _mapRenderer.delete();
-            _mapRenderer = null;
-        }
-
-        OsmAndCore.ReleaseCore();
-
-        super.onDestroy();
     }
 
     @Override
