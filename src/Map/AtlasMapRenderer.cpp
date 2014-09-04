@@ -122,18 +122,15 @@ uint32_t OsmAnd::AtlasMapRenderer::getConfigurationChangeMask(
     return mask;
 }
 
-void OsmAnd::AtlasMapRenderer::invalidateCurrentConfiguration(const uint32_t changesMask)
+void OsmAnd::AtlasMapRenderer::validateConfigurationChange(const ConfigurationChange& change)
 {
     bool invalidateSymbols = false;
-    invalidateSymbols = invalidateSymbols || (changesMask & enumToBit(ConfigurationChange::ReferenceTileSize)) != 0;
+    invalidateSymbols = invalidateSymbols || (change == ConfigurationChange::ReferenceTileSize);
 
-    if (isRenderingInitialized)
-    {
-        if (invalidateSymbols)
-            getResources().invalidateResourcesOfType(MapRendererResourceType::Symbols);
-    }
+    if (invalidateSymbols)
+        getResources().invalidateResourcesOfType(MapRendererResourceType::Symbols);
 
-    MapRenderer::invalidateCurrentConfiguration(changesMask);
+    MapRenderer::validateConfigurationChange(change);
 }
 
 bool OsmAnd::AtlasMapRenderer::preInitializeRendering()

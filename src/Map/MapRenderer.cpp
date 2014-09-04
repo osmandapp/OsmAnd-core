@@ -150,27 +150,6 @@ uint32_t OsmAnd::MapRenderer::getConfigurationChangeMask(
 
 void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t changesMask)
 {
-    bool invalidateRasterTextures = false;
-    invalidateRasterTextures = invalidateRasterTextures || (changesMask & enumToBit(ConfigurationChange::ColorDepthForcing)) != 0;
-    invalidateRasterTextures = invalidateRasterTextures || (changesMask & enumToBit(ConfigurationChange::PaletteTexturesUsage)) != 0;
-
-    bool invalidateElevationData = false;
-    invalidateElevationData = invalidateElevationData || (changesMask & enumToBit(ConfigurationChange::ElevationDataResolution)) != 0;
-
-    bool invalidateSymbols = false;
-    invalidateSymbols = invalidateSymbols || (changesMask & enumToBit(ConfigurationChange::ColorDepthForcing)) != 0;
-
-    // Invalidate resources only in case rendering was initialized
-    if (isRenderingInitialized)
-    {
-        if (invalidateRasterTextures)
-            getResources().invalidateResourcesOfType(MapRendererResourceType::RasterBitmapTile);
-        if (invalidateElevationData)
-            getResources().invalidateResourcesOfType(MapRendererResourceType::ElevationDataTile);
-        if (invalidateSymbols)
-            getResources().invalidateResourcesOfType(MapRendererResourceType::Symbols);
-    }
-    
     // Since our current configuration is invalid, frame is also invalidated
     _currentConfigurationInvalidatedMask.fetchAndOrOrdered(changesMask);
 
@@ -208,7 +187,22 @@ void OsmAnd::MapRenderer::notifyRequestedStateWasUpdated(const MapRendererStateC
 
 void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange& change)
 {
-    // Empty stub
+    bool invalidateRasterTextures = false;
+    invalidateRasterTextures = invalidateRasterTextures || (change == ConfigurationChange::ColorDepthForcing);
+    invalidateRasterTextures = invalidateRasterTextures || (change == ConfigurationChange::PaletteTexturesUsage);
+
+    bool invalidateElevationData = false;
+    invalidateElevationData = invalidateElevationData || (change == ConfigurationChange::ElevationDataResolution);
+
+    bool invalidateSymbols = false;
+    invalidateSymbols = invalidateSymbols || (change == ConfigurationChange::ColorDepthForcing);
+
+    if (invalidateRasterTextures)
+        getResources().invalidateResourcesOfType(MapRendererResourceType::RasterBitmapTile);
+    if (invalidateElevationData)
+        getResources().invalidateResourcesOfType(MapRendererResourceType::ElevationDataTile);
+    if (invalidateSymbols)
+        getResources().invalidateResourcesOfType(MapRendererResourceType::Symbols);
 }
 
 bool OsmAnd::MapRenderer::updateInternalState(
