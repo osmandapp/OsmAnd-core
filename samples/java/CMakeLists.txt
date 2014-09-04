@@ -8,7 +8,7 @@ include(UseJava)
 
 add_jar(OsmAndCore_JavaSample1
         SOURCES
-			"src/sample1.java"
+			"src/Sample1.java"
         INCLUDE_JARS
 			"${CMAKE_JAVA_TARGET_OUTPUT_DIR}/OsmAndCore_wrapper.jar"
 			${JOGL_JAR_LIBRARIES}
