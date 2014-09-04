@@ -81,6 +81,9 @@ public class MainActivity extends ActionBarActivity {
     private BinaryMapStaticSymbolsProvider _binaryMapStaticSymbolsProvider;
     private BinaryMapRasterBitmapTileProvider _binaryMapRasterBitmapTileProvider;
     private IMapRenderer _mapRenderer;
+    private GpuWorkerThreadPrologue _gpuWorkerThreadPrologue;
+    private GpuWorkerThreadEpilogue _gpuWorkerThreadEpilogue;
+    private RenderRequestCallback _renderRequestCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,7 +147,7 @@ public class MainActivity extends ActionBarActivity {
 
         AtlasMapRendererConfiguration atlasRendererConfiguration = AtlasMapRendererConfiguration.upcastFrom(_mapRenderer.getConfiguration());
         atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
-        _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.downcastTo(atlasRendererConfiguration));
+        _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.Casts.downcastTo_MapRendererConfiguration(atlasRendererConfiguration));
 
         _mapRenderer.setAzimuth(0.0f);
         _mapRenderer.setElevationAngle(35.0f);
@@ -173,7 +176,8 @@ public class MainActivity extends ActionBarActivity {
     private GLSurfaceView _glSurfaceView;
 
     private class RenderRequestCallback extends MapRendererSetupOptions.IFrameUpdateRequestCallback {
-        public void method() {
+        @Override
+        public void method(IMapRenderer mapRenderer) {
             _glSurfaceView.requestRender();
         }
     }
@@ -189,7 +193,8 @@ public class MainActivity extends ActionBarActivity {
         private final EGLDisplay _eglDisplay;
         private final EGLContext _context;
 
-        public void method() {
+        @Override
+        public void method(IMapRenderer mapRenderer) {
             if (!_egl.eglMakeCurrent(_eglDisplay, null, null, _context))
                 Log.e(TAG, "Failed to set GPU worker context active");
         }
@@ -206,7 +211,8 @@ public class MainActivity extends ActionBarActivity {
         private final EGLDisplay _eglDisplay;
         private final EGLContext _context;
 
-        public void method() {
+        @Override
+        public void method(IMapRenderer mapRenderer) {
             if (!_egl.eglWaitGL())
                 Log.e(TAG, "Failed to wait for GPU worker context");
         }
@@ -228,9 +234,12 @@ public class MainActivity extends ActionBarActivity {
 
             MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
             rendererSetupOptions.setGpuWorkerThreadEnabled(true);
-            rendererSetupOptions.setGpuWorkerThreadPrologue(new GpuWorkerThreadPrologue(egl, display, _gpuWorkerContext));
-            rendererSetupOptions.setGpuWorkerThreadEpilogue(new GpuWorkerThreadEpilogue(egl, display, _gpuWorkerContext));
-            rendererSetupOptions.setFrameUpdateRequestCallback(new RenderRequestCallback());
+            _gpuWorkerThreadPrologue = new GpuWorkerThreadPrologue(egl, display, _gpuWorkerContext);
+            rendererSetupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
+            _gpuWorkerThreadEpilogue = new GpuWorkerThreadEpilogue(egl, display, _gpuWorkerContext);
+            rendererSetupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
+            _renderRequestCallback = new RenderRequestCallback();
+            rendererSetupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
             _mapRenderer.setup(rendererSetupOptions);
 
             return mainContext;
