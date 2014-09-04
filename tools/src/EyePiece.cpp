@@ -85,6 +85,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     if (configuration.outputImageHeight == 0)
         return false;
 
+    OsmAnd::Stopwatch rasterizationStopwatch(true);
 #if defined(OSMAND_TARGET_OS_windows)
     // On windows, to create a windowless OpenGL context, a window is needed. Nonsense, totally.
     const auto hInstance = GetModuleHandle(NULL);
@@ -1120,6 +1121,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     CGLSetCurrentContext(NULL);
     CGLDestroyContext(windowlessContext);
 #endif
+    if (configuration.verbose)
+        output << xT("Rasterization took ") << rasterizationStopwatch.elapsed() << xT("s") << std::endl;
 
     return success;
 }
