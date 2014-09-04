@@ -22,10 +22,11 @@ set_source_files_properties(${swig_generated_java} GENERATED)
 
 # JAR with all generated Java classes:
 add_custom_target(OsmAndCore_wrapper_jar
-	${Java_JAR_EXECUTABLE}
-		-cf "${CMAKE_JAVA_TARGET_OUTPUT_DIR}/OsmAndCore_wrapper.jar"
-		${swig_generated_java}
-	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gen/java"
+	"${Java_JAR_EXECUTABLE}"
+		-cf "OsmAndCore_wrapper.jar"
+		-C "${CMAKE_CURRENT_BINARY_DIR}/gen/java"
+		.
+	WORKING_DIRECTORY "${CMAKE_JAVA_TARGET_OUTPUT_DIR}"
 	COMMENT "Packing 'OsmAndCore_wrapper.jar'...")
 add_dependencies(OsmAndCore_wrapper_jar
 	OsmAndCore_swig_java

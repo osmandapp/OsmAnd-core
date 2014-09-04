@@ -1,7 +1,14 @@
 #ifndef _OSMAND_CORE_COMMON_SWIG_H_
 #define _OSMAND_CORE_COMMON_SWIG_H_
 
-#if defined(SWIG) || defined(OSMAND_SWIG)
+#if defined(SWIG)
+#   define SWIG_CASTS(thisClass, parentClass)                                                                                   \
+        struct Casts                                                                                                            \
+        {                                                                                                                       \
+            static std::shared_ptr<thisClass> upcastFrom(const std::shared_ptr<parentClass>& input);                            \
+            static std::shared_ptr<parentClass> downcastTo_##parentClass(const std::shared_ptr<thisClass>& input);              \
+        }
+#elif defined(OSMAND_SWIG)
 #   define SWIG_CASTS(thisClass, parentClass)                                                                                   \
         struct Casts                                                                                                            \
         {                                                                                                                       \
