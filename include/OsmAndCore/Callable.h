@@ -107,6 +107,8 @@
         }
 #else
 #   define OSMAND_OBSERVER_CALLABLE(name, ...)                                                                                  \
+        struct name;                                                                                                            \
+                                                                                                                                \
         %feature("director") I##name;                                                                                           \
         %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
         struct I##name                                                                                                          \
@@ -117,9 +119,12 @@
             virtual void operator()( __VA_ARGS__ ) const = 0;                                                                   \
                                                                                                                                 \
             bool attachTo(const ObservableAs<I##name>& observable, const ObservableAs<I##name>::Tag tag);                       \
-        };                                                                                                                      \
-        typedef I##name name
+                                                                                                                                \
+            name getBinding() const;                                                                                            \
+        };
 #   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
+        struct name;                                                                                                            \
+                                                                                                                                \
         %feature("director") I##name;                                                                                           \
         %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
         struct I##name                                                                                                          \
@@ -128,8 +133,9 @@
             virtual ~I##name();                                                                                                 \
                                                                                                                                 \
             virtual return_type operator()( __VA_ARGS__ ) const = 0;                                                            \
-        };                                                                                                                      \
-        typedef I##name name
+                                                                                                                                \
+            name getBinding() const;                                                                                            \
+        };
 #endif
 
 #endif // !defined(_OSMAND_CORE_CALLABLE_H_)

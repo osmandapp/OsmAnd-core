@@ -15,7 +15,9 @@ add_jar(OsmAndCore_JavaSample1
 			${JOGL_JARRED_NATIVE_LIBRARIES}
 			${GLUEGEN_JAR_LIBRARIES}
 			${GLUEGEN_JARRED_NATIVE_LIBRARIES}
-        ENTRY_POINT "net/osmand/core/samples/Sample1")
+        ENTRY_POINT "net/osmand/core/samples/Sample1"
+		OUTPUT_DIR
+			"${CMAKE_JAVA_TARGET_OUTPUT_DIR}")
 add_dependencies(OsmAndCore_JavaSample1
 	OsmAndCoreWithJNI
 	OsmAndCoreJNI
