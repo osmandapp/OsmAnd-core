@@ -56,6 +56,26 @@ public class Sample1 implements GLEventListener {
     frame.setSize(800, 600);
     frame.setLayout(new java.awt.BorderLayout());    
 
+    frame.validate();
+    frame.setVisible(true);
+  }
+
+  private float _displayDensityFactor;
+  private int _referenceTileSize;
+  private int _rasterTileSize;
+  private IMapStylesCollection _mapStylesCollection;
+  private MapStyle _mapStyle;
+  private ObfsCollection _obfsCollection;
+  private MapPresentationEnvironment _mapPresentationEnvironment;
+  private Primitiviser _primitiviser;
+  private BinaryMapDataProvider _binaryMapDataProvider;
+  private BinaryMapPrimitivesProvider _binaryMapPrimitivesProvider;
+  private BinaryMapStaticSymbolsProvider _binaryMapStaticSymbolsProvider;
+  private BinaryMapRasterBitmapTileProvider _binaryMapRasterBitmapTileProvider;
+  private IMapRenderer _mapRenderer;
+
+  @Override
+  public void init(GLAutoDrawable drawable) {
     OsmAndCore.InitializeCore();
 
     _displayDensityFactor = 1.0f;
@@ -96,9 +116,9 @@ public class Sample1 implements GLEventListener {
       System.exit(0);
     }
 
-    AtlasMapRendererConfiguration atlasRendererConfiguration = AtlasMapRendererConfiguration.upcastFrom(_mapRenderer.getConfiguration());
+    AtlasMapRendererConfiguration atlasRendererConfiguration = AtlasMapRendererConfiguration.Casts.upcastFrom(_mapRenderer.getConfiguration());
     atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
-    _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.downcastTo(atlasRendererConfiguration));
+    _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.Casts.downcastTo_MapRendererConfiguration(atlasRendererConfiguration));
 
     _mapRenderer.setAzimuth(0.0f);
     _mapRenderer.setElevationAngle(35.0f);
@@ -114,27 +134,6 @@ public class Sample1 implements GLEventListener {
       Log.e(TAG, "Failed to create mapnik");
     */
     _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, _binaryMapRasterBitmapTileProvider);
-
-    frame.validate();
-    frame.setVisible(true);
-  }
-
-  private float _displayDensityFactor;
-  private int _referenceTileSize;
-  private int _rasterTileSize;
-  private IMapStylesCollection _mapStylesCollection;
-  private MapStyle _mapStyle;
-  private ObfsCollection _obfsCollection;
-  private MapPresentationEnvironment _mapPresentationEnvironment;
-  private Primitiviser _primitiviser;
-  private BinaryMapDataProvider _binaryMapDataProvider;
-  private BinaryMapPrimitivesProvider _binaryMapPrimitivesProvider;
-  private BinaryMapStaticSymbolsProvider _binaryMapStaticSymbolsProvider;
-  private BinaryMapRasterBitmapTileProvider _binaryMapRasterBitmapTileProvider;
-  private IMapRenderer _mapRenderer;
-
-  @Override
-  public void init(GLAutoDrawable drawable) {
   }
 
   @Override

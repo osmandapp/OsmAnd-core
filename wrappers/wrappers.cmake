@@ -22,10 +22,9 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "macosx" OR
 	CMAKE_TARGET_OS STREQUAL "windows" OR
 	CMAKE_TARGET_OS STREQUAL "android")
+	set(CMAKE_JAVA_TARGET_OUTPUT_DIR "${OSMAND_OUTPUT_ROOT}")
 	add_subdirectory("${OSMAND_ROOT}/core/wrappers/java" "core/wrappers/java")
-endif()
-if (CMAKE_TARGET_OS STREQUAL "linux" OR
-	CMAKE_TARGET_OS STREQUAL "macosx" OR
-	CMAKE_TARGET_OS STREQUAL "windows")
-	add_subdirectory("${OSMAND_ROOT}/core/samples/java" "core/samples/java")
+	if (NOT CMAKE_TARGET_OS STREQUAL "android")
+		add_subdirectory("${OSMAND_ROOT}/core/samples/java" "core/samples/java")
+	endif()
 endif()

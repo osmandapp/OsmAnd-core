@@ -10,7 +10,7 @@ add_jar(OsmAndCore_JavaSample1
         SOURCES
 			"src/sample1.java"
         INCLUDE_JARS
-			"${CMAKE_CURRENT_BINARY_DIR}/OsmAndCore_wrapper.jar"
+			"${CMAKE_JAVA_TARGET_OUTPUT_DIR}/OsmAndCore_wrapper.jar"
 			${JOGL_JAR_LIBRARIES}
 			${JOGL_JARRED_NATIVE_LIBRARIES}
 			${GLUEGEN_JAR_LIBRARIES}
