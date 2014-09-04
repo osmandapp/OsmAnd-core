@@ -130,7 +130,7 @@ void OsmAnd::AtlasMapRenderer::validateConfigurationChange(const ConfigurationCh
     if (invalidateSymbols)
         getResources().invalidateResourcesOfType(MapRendererResourceType::Symbols);
 
-    MapRenderer::validateConfigurationChange(change);
+    MapRenderer::validateConfigurationChange(static_cast<MapRenderer::ConfigurationChange>(change));
 }
 
 bool OsmAnd::AtlasMapRenderer::preInitializeRendering()

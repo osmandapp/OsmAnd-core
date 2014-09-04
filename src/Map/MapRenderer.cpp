@@ -153,7 +153,7 @@ void OsmAnd::MapRenderer::invalidateCurrentConfiguration(const uint32_t changesM
     // Since our current configuration is invalid, frame is also invalidated
     _currentConfigurationInvalidatedMask.fetchAndOrOrdered(changesMask);
 
-    if (isRenderingInitialized)
+    if (isRenderingInitialized())
         invalidateFrame();
 }
 
