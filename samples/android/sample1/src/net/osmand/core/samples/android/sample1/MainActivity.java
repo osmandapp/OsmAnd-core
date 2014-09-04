@@ -292,9 +292,11 @@ public class MainActivity extends ActionBarActivity {
 
         public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
             final int[] contextAttribList = {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
+            Log.i(TAG, "Creating main context...");
             EGLContext mainContext = egl.eglCreateContext(display, eglConfig, EGL10.EGL_NO_CONTEXT, contextAttribList);
+            Log.i(TAG, "Creating GPU worker context...");
             _gpuWorkerContext = egl.eglCreateContext(
-                    egl.eglGetCurrentDisplay(),
+                    display,
                     eglConfig,
                     mainContext,
                     contextAttribList);
