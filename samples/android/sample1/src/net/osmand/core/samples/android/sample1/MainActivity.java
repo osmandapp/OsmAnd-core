@@ -144,7 +144,7 @@ public class MainActivity extends ActionBarActivity {
 
         AtlasMapRendererConfiguration atlasRendererConfiguration = AtlasMapRendererConfiguration.upcastFrom(_mapRenderer.getConfiguration());
         atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
-        //_mapRenderer.setConfiguration(atlasRendererConfiguration);//TODO: crashes Fatal signal 11 (SIGSEGV) at 0x00000040 (code=1), thread 6799 (android.sample1)
+        _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.downcastTo(atlasRendererConfiguration));
 
         _mapRenderer.setAzimuth(0.0f);
         _mapRenderer.setElevationAngle(35.0f);
@@ -167,8 +167,7 @@ public class MainActivity extends ActionBarActivity {
         _glSurfaceView.setEGLContextClientVersion(2);
         _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
         _glSurfaceView.setRenderer(new Renderer());
-        //_glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
 
     private GLSurfaceView _glSurfaceView;
@@ -228,13 +227,10 @@ public class MainActivity extends ActionBarActivity {
                 Log.e(TAG, "Failed to create GPU worker context");
 
             MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
-            rendererSetupOptions.setGpuWorkerThreadEnabled(false);
-            /*
             rendererSetupOptions.setGpuWorkerThreadEnabled(true);
-            rendererSetupOptions.setGpuWorkerThreadPrologue(new GpuWorkerThreadPrologue(egl, display, _gpuWorkerContext)); //TODO: will crash
+            rendererSetupOptions.setGpuWorkerThreadPrologue(new GpuWorkerThreadPrologue(egl, display, _gpuWorkerContext));
             rendererSetupOptions.setGpuWorkerThreadEpilogue(new GpuWorkerThreadEpilogue(egl, display, _gpuWorkerContext));
             rendererSetupOptions.setFrameUpdateRequestCallback(new RenderRequestCallback());
-            */
             _mapRenderer.setup(rendererSetupOptions);
 
             return mainContext;

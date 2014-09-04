@@ -1,0 +1,13 @@
+project(jogl)
+
+prepare_upstream()
+
+set(JOGL_JAR_LIBRARIES "${CMAKE_CURRENT_LIST_DIR}/upstream.patched/jar/jogl-all.jar" PARENT_SCOPE)
+file(GLOB JOGL_JARRED_NATIVE_LIBRARIES "${CMAKE_CURRENT_LIST_DIR}/upstream.patched/jar/jogl-natives-*.jar")
+set(JOGL_JARRED_NATIVE_LIBRARIES "${JOGL_JARRED_NATIVE_LIBRARIES}" PARENT_SCOPE)
+
+set(GLUEGEN_JAR_LIBRARIES "${CMAKE_CURRENT_LIST_DIR}/upstream.patched/jar/gluegen-rt.jar" PARENT_SCOPE)
+file(GLOB GLUEGEN_JARRED_NATIVE_LIBRARIES "${CMAKE_CURRENT_LIST_DIR}/upstream.patched/jar/gluegen-rt-*.jar")
+set(GLUEGEN_JARRED_NATIVE_LIBRARIES "${GLUEGEN_JARRED_NATIVE_LIBRARIES}" PARENT_SCOPE)
+
+add_library(jogl_dummy INTERFACE)

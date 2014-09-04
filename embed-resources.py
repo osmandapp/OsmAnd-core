@@ -84,9 +84,14 @@ class OsmAndCoreResourcesPacker(object):
 if __name__=='__main__':
     # Get root directory of entire project
     rootDir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+    print("OsmAnd root: %s" % (rootDir));
     
-    # Output filename
-    embeddedFilename = rootDir + "/core/gen/EmbeddedResources_bundle.cpp";
+    # Output filename (in current working directory)
+    workingDir = os.getcwd();
+    if len(sys.argv) >= 2:
+        workingDir = sys.argv[1];
+    print("Working in: %s" % (workingDir));
+    embeddedFilename = workingDir + "/gen/EmbeddedResources_bundle.cpp";
 
     # Embedded resources
     with open(rootDir + "/core/embed-resources.list", "r") as embedResourcesListFile:

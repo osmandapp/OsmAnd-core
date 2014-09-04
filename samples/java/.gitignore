@@ -1,0 +1,2 @@
+# Ignore all externals upstream files
+/externals/**/upstream.*

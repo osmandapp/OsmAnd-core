@@ -1,6 +1,9 @@
 #include "OnlineRasterMapTileProvider.h"
 #include "OnlineRasterMapTileProvider_P.h"
 
+#include "QtExtensions.h"
+#include <QStandardPaths>
+
 OsmAnd::OnlineRasterMapTileProvider::OnlineRasterMapTileProvider(
     const QString& name_,
     const QString& urlPattern_,
@@ -21,7 +24,7 @@ OsmAnd::OnlineRasterMapTileProvider::OnlineRasterMapTileProvider(
     , providerTileSize(providerTileSize_)
     , alphaChannelData(alphaChannelData_)
 {
-    _p->_localCachePath = QDir(QDir::temp().absoluteFilePath(pathSuffix));
+    _p->_localCachePath = QDir(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(pathSuffix));
 }
 
 OsmAnd::OnlineRasterMapTileProvider::~OnlineRasterMapTileProvider()

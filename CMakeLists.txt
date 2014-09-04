@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 95
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 96
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -232,27 +232,27 @@ foreach(OsmAndCore_resourceEntry IN LISTS OsmAndCore_resources_list)
 	list(APPEND OsmAndCore_resources "${OSMAND_ROOT}${_OsmAndCore_resourceEntry}")
 endforeach(OsmAndCore_resourceEntry)
 set(OsmAndCore_resources_bundle
-	"${CMAKE_CURRENT_LIST_DIR}/gen/EmbeddedResources_bundle.cpp"
+	"${CMAKE_CURRENT_BINARY_DIR}/gen/EmbeddedResources_bundle.cpp"
 )
 if (CMAKE_HOST_WIN32 AND NOT CYGWIN)
 	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
-		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh" "${CMAKE_CURRENT_BINARY_DIR}"
 		DEPENDS
 			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
 			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
 			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
 			${OsmAndCore_resources}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Embedding resources...")
 else()
 	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
-		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
+		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh" "${CMAKE_CURRENT_BINARY_DIR}"
 		DEPENDS
 			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
 			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
 			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
 			${OsmAndCore_resources}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Embedding resources...")
 endif()
 set(merged_sources ${merged_sources}

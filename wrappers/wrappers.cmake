@@ -18,11 +18,14 @@ macro(add_generate_swig_target TARGET_NAME)
 endmacro()
 
 # Java
-if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET AND	(
-	CMAKE_TARGET_OS STREQUAL "linux" OR
+if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	CMAKE_TARGET_OS STREQUAL "macosx" OR
-	CMAKE_TARGET_OS STREQUAL "windows"
-	OR CMAKE_TARGET_OS STREQUAL "android"))
-	# JNI wrapper is only valid on platforms where Java exists
+	CMAKE_TARGET_OS STREQUAL "windows" OR
+	CMAKE_TARGET_OS STREQUAL "android")
 	add_subdirectory("${OSMAND_ROOT}/core/wrappers/java" "core/wrappers/java")
+endif()
+if (CMAKE_TARGET_OS STREQUAL "linux" OR
+	CMAKE_TARGET_OS STREQUAL "macosx" OR
+	CMAKE_TARGET_OS STREQUAL "windows")
+	add_subdirectory("${OSMAND_ROOT}/core/samples/java" "core/samples/java")
 endif()

@@ -16,9 +16,3 @@
 # XCode
 *.pbxuser
 xcuserdata
-
-# Qt moc'ed files
-/moc
-
-# Generated files
-/gen

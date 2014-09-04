@@ -22,24 +22,6 @@
 #define REPEAT_UNTIL(exp) \
     for(;!(exp);)
 
-
-#if defined(SWIG)
-#   define SWIG_DECLARE_UPCAST_POINTER(thisClass, parentClass)                                                                      \
-        static std::shared_ptr<thisClass> upcastFrom(const std::shared_ptr<parentClass>& input);
-#elif defined(OSMAND_SWIG)
-#   define SWIG_DECLARE_UPCAST_POINTER(thisClass, parentClass)                                                                      \
-        static std::shared_ptr<thisClass> upcastFrom(const std::shared_ptr<parentClass>& input)                                     \
-        {                                                                                                                           \
-            return std::dynamic_pointer_cast< thisClass >(input);                                                                   \
-        }                                                                                                                           \
-        static std::shared_ptr<const thisClass> upcastFrom(const std::shared_ptr<const parentClass>& input)                         \
-        {                                                                                                                           \
-            return std::dynamic_pointer_cast< const thisClass >(input);                                                             \
-        }
-#else
-#   define SWIG_DECLARE_UPCAST_POINTER(thisClass, parentClass)
-#endif
-
 namespace OsmAnd
 {
     template<typename T>
