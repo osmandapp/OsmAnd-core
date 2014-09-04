@@ -145,7 +145,7 @@ public class MainActivity extends ActionBarActivity {
             System.exit(0);
         }
 
-        AtlasMapRendererConfiguration atlasRendererConfiguration = AtlasMapRendererConfiguration.upcastFrom(_mapRenderer.getConfiguration());
+        AtlasMapRendererConfiguration atlasRendererConfiguration = AtlasMapRendererConfiguration.Casts.upcastFrom(_mapRenderer.getConfiguration());
         atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
         _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.Casts.downcastTo_MapRendererConfiguration(atlasRendererConfiguration));
 
