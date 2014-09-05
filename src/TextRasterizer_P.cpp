@@ -153,11 +153,13 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer_P::rasterize(
     float* const outLineSpacing) const
 {
     std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    rasterize(*bitmap, text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace, outLineSpacing);
+    const bool ok = rasterize(*bitmap, text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace, outLineSpacing);
+    if (!ok)
+        return nullptr;
     return bitmap;
 }
 
-void OsmAnd::TextRasterizer_P::rasterize(
+bool OsmAnd::TextRasterizer_P::rasterize(
     SkBitmap& targetBitmap,
     const QString& text_,
     const Style& style,
@@ -332,8 +334,12 @@ void OsmAnd::TextRasterizer_P::rasterize(
     // Check if bitmap size was successfully calculated
     if (bitmapWidth <= 0 || bitmapHeight <= 0)
     {
-        LogPrintf(LogSeverityLevel::Error, "Failed to rasterize text '%s'", qPrintable(text));
-        return;
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to rasterize text '%s': resulting bitmap size %dx%d is invalid",
+            qPrintable(text),
+            bitmapWidth,
+            bitmapHeight);
+        return false;
     }
 
     // Create a bitmap that will be hold entire symbol (if target is empty)
@@ -381,4 +387,6 @@ void OsmAnd::TextRasterizer_P::rasterize(
     }
 
     canvas.flush();
+
+    return true;
 }

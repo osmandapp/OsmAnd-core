@@ -16,6 +16,7 @@ import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
+import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
 import net.osmand.core.jni.*;
@@ -252,21 +253,23 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private class GpuWorkerThreadPrologue extends MapRendererSetupOptions.IGpuWorkerThreadPrologue {
-        public GpuWorkerThreadPrologue(EGL10 egl, EGLDisplay eglDisplay, EGLContext context) {
+        public GpuWorkerThreadPrologue(EGL10 egl, EGLDisplay eglDisplay, EGLContext context, EGLSurface surface) {
             _egl = egl;
             _eglDisplay = eglDisplay;
             _context = context;
+            _eglSurface = surface;
         }
 
         private final EGL10 _egl;
         private final EGLDisplay _eglDisplay;
         private final EGLContext _context;
+        private final EGLSurface _eglSurface;
 
         @Override
         public void method(IMapRenderer mapRenderer) {
             try {
-                if (!_egl.eglMakeCurrent(_eglDisplay, null, null, _context))
-                    Log.e(TAG, "Failed to set GPU worker context active");
+                if (!_egl.eglMakeCurrent(_eglDisplay, _eglSurface, _eglSurface, _context))
+                    Log.e(TAG, "Failed to set GPU worker context active: " + _egl.eglGetError());
             } catch (Exception e) {
                 Log.e(TAG, "Failed to set GPU worker context active", e);
             }
@@ -284,7 +287,7 @@ public class MainActivity extends ActionBarActivity {
         public void method(IMapRenderer mapRenderer) {
             try {
                 if (!_egl.eglWaitGL())
-                    Log.e(TAG, "Failed to wait for GPU worker context");
+                    Log.e(TAG, "Failed to wait for GPU worker context: " + _egl.eglGetError());
             } catch (Exception e) {
                 Log.e(TAG, "Failed to wait for GPU worker context", e);
             }
@@ -293,10 +296,15 @@ public class MainActivity extends ActionBarActivity {
 
     private class EGLContextFactory implements GLSurfaceView.EGLContextFactory {
         private EGLContext _gpuWorkerContext;
+        private EGLSurface _gpuWorkerFakeSurface;
 
         public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
+            final String eglExtensions = egl.eglQueryString(display, EGL10.EGL_EXTENSIONS);
+            Log.i(TAG, "EGL extensions: " + eglExtensions);
+
             Log.i(TAG, "Creating main context...");
             final int[] contextAttribList = {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
+
             EGLContext mainContext = null;
             try {
                 mainContext = egl.eglCreateContext(display, eglConfig, EGL10.EGL_NO_CONTEXT, contextAttribList);
@@ -304,9 +312,10 @@ public class MainActivity extends ActionBarActivity {
                 Log.e(TAG, "Failed to create main context", e);
             }
             if (mainContext == null) {
-                Log.e(TAG, "Failed to create main context");
+                Log.e(TAG, "Failed to create main context: " + egl.eglGetError());
                 System.exit(0);
             }
+
             Log.i(TAG, "Creating GPU worker context...");
             try {
                 _gpuWorkerContext = egl.eglCreateContext(
@@ -318,12 +327,22 @@ public class MainActivity extends ActionBarActivity {
                 Log.e(TAG, "Failed to create GPU worker context", e);
             }
             if (_gpuWorkerContext == null)
-                Log.e(TAG, "Failed to create GPU worker context");
+                Log.e(TAG, "Failed to create GPU worker context: " + egl.eglGetError());
+
+            Log.i(TAG, "Creating GPU worker fake surface...");
+            try {
+                final int[] surfaceAttribList = { EGL14.EGL_NONE };
+                _gpuWorkerFakeSurface = egl.eglCreatePbufferSurface(display, eglConfig, surfaceAttribList);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to create GPU worker fake surface", e);
+            }
+            if (_gpuWorkerFakeSurface == null)
+                Log.e(TAG, "Failed to create GPU worker fake surface: " + egl.eglGetError());
 
             MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
-            if (_gpuWorkerContext != null) {
+            if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
                 rendererSetupOptions.setGpuWorkerThreadEnabled(true);
-                _gpuWorkerThreadPrologue = new GpuWorkerThreadPrologue(egl, display, _gpuWorkerContext);
+                _gpuWorkerThreadPrologue = new GpuWorkerThreadPrologue(egl, display, _gpuWorkerContext, _gpuWorkerFakeSurface);
                 rendererSetupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
                 _gpuWorkerThreadEpilogue = new GpuWorkerThreadEpilogue(egl);
                 rendererSetupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
@@ -338,8 +357,17 @@ public class MainActivity extends ActionBarActivity {
         }
 
         public void destroyContext(EGL10 egl, EGLDisplay display, EGLContext context) {
-            egl.eglDestroyContext(display, _gpuWorkerContext);
             egl.eglDestroyContext(display, context);
+
+            if (_gpuWorkerContext != null) {
+                egl.eglDestroyContext(display, _gpuWorkerContext);
+                _gpuWorkerContext = null;
+            }
+
+            if (_gpuWorkerFakeSurface != null) {
+                egl.eglDestroySurface(display, _gpuWorkerFakeSurface);
+                _gpuWorkerFakeSurface = null;
+            }
         }
     }
 

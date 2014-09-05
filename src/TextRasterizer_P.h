@@ -69,7 +69,7 @@ namespace OsmAnd
             float* const outExtraBottomSpace,
             float* const outLineSpacing) const;
 
-        void rasterize(
+        bool rasterize(
             SkBitmap& targetBitmap,
             const QString& text,
             const Style& style,
