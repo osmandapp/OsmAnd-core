@@ -68,6 +68,53 @@ void OsmAnd::TextRasterizer_P::clearFontsCache()
     _fontTypefacesCache.clear();
 }
 
+#if defined(CMAKE_TARGET_OS_android)
+// Defined in SkFontHost_FreeType.cpp
+bool find_name_and_attributes(
+    SkStream* stream,
+    SkString* name,
+    SkTypeface::Style* style,
+    bool* isFixedWidth);
+
+namespace OsmAnd
+{
+    // Based on SkFontHost_linux.cpp
+    class SkTypeface_StreamOnAndroidWorkaround : public SkTypeface_FreeType
+    {
+    public:
+        SkTypeface_StreamOnAndroidWorkaround(Style style, SkStream* stream, bool isFixedPitch, const SkString familyName)
+            : INHERITED(style, SkTypefaceCache::NewFontID(), isFixedPitch)
+            , fStream(SkRef(stream))
+            , fFamilyName(familyName)
+        {
+        }
+
+        virtual ~SkTypeface_StreamOnAndroidWorkaround()
+        {
+        }
+    protected:
+        virtual void onGetFontDescriptor(SkFontDescriptor* desc, bool* isLocal) const SK_OVERRIDE
+        {
+            desc->setFamilyName(fFamilyName.c_str());
+            desc->setFontFileName(nullptr);
+            *isLocal = true;
+        }
+
+        virtual SkStream* onOpenStream(int* ttcIndex) const SK_OVERRIDE
+        {
+            *ttcIndex = 0;
+            return fStream->duplicate();
+        }
+
+    private:
+        SkAutoTUnref<SkStream> fStream;
+        SkString fFamilyName;
+
+        typedef SkTypeface_FreeType INHERITED;
+    };
+}
+#endif
+
 SkTypeface* OsmAnd::TextRasterizer_P::getTypefaceForFontResource(const QString& fontResource) const
 {
     QMutexLocker scopedLocker(&_fontTypefacesCacheMutex);
@@ -89,7 +136,20 @@ SkTypeface* OsmAnd::TextRasterizer_P::getTypefaceForFontResource(const QString& 
 
     // Load typeface from font data
     const auto fontDataStream = new SkMemoryStream(fontData.constData(), fontData.length(), true);
+#if defined(CMAKE_TARGET_OS_android)
+    //WORKAROUND: Right now SKIA on Android lost ability to load custom fonts, since it doesn't provide SkFontMgr.
+    //WORKAROUND: But it still loads system fonts internally, so just write direct code
+
+    SkTypeface::Style typefaceStyle;
+    bool typefaceIsFixedWidth = false;
+    SkString typefaceName;
+    const auto isValidTypeface = find_name_and_attributes(fontDataStream, &typefaceName, &typefaceStyle, &typefaceIsFixedWidth);
+    SkTypeface* typeface = nullptr;
+    if (isValidTypeface)
+        typeface = SkNEW_ARGS(SkTypeface_StreamOnAndroidWorkaround, (typefaceStyle, fontDataStream, typefaceIsFixedWidth, typefaceName));
+#else
     const auto typeface = SkTypeface::CreateFromStream(fontDataStream);
+#endif
     fontDataStream->unref();
     if (!typeface)
     {
