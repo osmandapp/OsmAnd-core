@@ -6,6 +6,8 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.awt.GLCanvas;
 
+import com.jogamp.opengl.util.Animator;
+
 import net.osmand.core.jni.*;
 
 public class Sample1 implements GLEventListener {
@@ -64,6 +66,11 @@ public class Sample1 implements GLEventListener {
       } 
     }
 
+    final Animator animator = new Animator();
+
+    GLCanvas canvas = new GLCanvas();
+    final Sample1 sample1 = new Sample1(canvas);
+
     Frame frame = new Frame("OsmAnd Core API samples for Java");
     frame.setSize(800, 600);
     frame.setLayout(new java.awt.BorderLayout());
@@ -73,20 +80,22 @@ public class Sample1 implements GLEventListener {
         new Thread(new Runnable() {
           @Override
           public void run() {
+            animator.stop();
+            OsmAndCore.ReleaseCore();
             System.exit(0);
           }
         }).start();
       }
     });
 
-    GLCanvas canvas = new GLCanvas();
-    final Sample1 sample1 = new Sample1(canvas);
+    animator.add(canvas);
     canvas.addGLEventListener(sample1);
 
     frame.add(canvas, java.awt.BorderLayout.CENTER);
 
     frame.validate();
     frame.setVisible(true);
+    animator.start();
   }
 
   private Sample1(final GLCanvas canvas) {
@@ -122,6 +131,8 @@ public class Sample1 implements GLEventListener {
     _mapStyle = _mapStylesCollection.getBakedStyle("default");
     if (_mapStyle == null) {
       System.err.println("Failed to resolve style 'default'");
+      release();
+      OsmAndCore.ReleaseCore();
       System.exit(0);
     }
 
@@ -149,6 +160,8 @@ public class Sample1 implements GLEventListener {
     _mapRenderer = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGL2plus);
     if (_mapRenderer == null) {
       System.err.println("Failed to create map renderer 'AtlasMapRenderer_OpenGL2plus'");
+      release();
+      OsmAndCore.ReleaseCore();
       System.exit(0);
     }
 
@@ -162,10 +175,10 @@ public class Sample1 implements GLEventListener {
     atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
     _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.Casts.downcastTo_MapRendererConfiguration(atlasRendererConfiguration));
 
+    _mapRenderer.addSymbolProvider(_binaryMapStaticSymbolsProvider);
     _mapRenderer.setAzimuth(0.0f);
     _mapRenderer.setElevationAngle(35.0f);
 
-    // Amsterdam via Mapnik
     _mapRenderer.setTarget(new PointI(
       1102430866,
       704978668));
@@ -198,6 +211,8 @@ public class Sample1 implements GLEventListener {
 
   @Override
   public void display(GLAutoDrawable drawable) {
+    if (_mapRenderer == null || !_mapRenderer.isRenderingInitialized())
+        return;
     _mapRenderer.update();
 
     if (_mapRenderer.prepareFrame())
@@ -206,6 +221,12 @@ public class Sample1 implements GLEventListener {
 
   @Override
   public void dispose(GLAutoDrawable drawable) {
+    if (_mapRenderer != null && _mapRenderer.isRenderingInitialized())
+        _mapRenderer.releaseRendering();
+    release();
+  }
+
+  public void release() {
     if (_mapStylesCollection != null) {
       _mapStylesCollection.delete();
       _mapStylesCollection = null;
@@ -255,7 +276,5 @@ public class Sample1 implements GLEventListener {
       _mapRenderer.delete();
       _mapRenderer = null;
     }
-
-    OsmAndCore.ReleaseCore();
   }
 }
