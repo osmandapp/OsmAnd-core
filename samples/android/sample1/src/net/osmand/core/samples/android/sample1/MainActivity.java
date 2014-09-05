@@ -94,7 +94,7 @@ public class MainActivity extends ActionBarActivity {
         // Get device display density factor
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        _displayDensityFactor = displayMetrics.densityDpi / 100.0f;
+        _displayDensityFactor = displayMetrics.densityDpi / 160.0f;
         _referenceTileSize = (int)(256 * _displayDensityFactor);
         _rasterTileSize = Integer.highestOneBit(_referenceTileSize - 1) * 2;
         Log.i(TAG, "displayDensityFactor = " + _displayDensityFactor);
@@ -167,7 +167,6 @@ public class MainActivity extends ActionBarActivity {
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
-        _glSurfaceView.setEGLConfigChooser(true);
         _glSurfaceView.setEGLContextClientVersion(2);
         _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
         _glSurfaceView.setRenderer(new Renderer());
