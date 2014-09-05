@@ -301,6 +301,8 @@ public class MainActivity extends ActionBarActivity {
         public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
             final String eglExtensions = egl.eglQueryString(display, EGL10.EGL_EXTENSIONS);
             Log.i(TAG, "EGL extensions: " + eglExtensions);
+            final String eglVersion = egl.eglQueryString(display, EGL10.EGL_VERSION);
+            Log.i(TAG, "EGL version: " + eglVersion);
 
             Log.i(TAG, "Creating main context...");
             final int[] contextAttribList = {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
@@ -311,8 +313,9 @@ public class MainActivity extends ActionBarActivity {
             } catch (Exception e) {
                 Log.e(TAG, "Failed to create main context", e);
             }
-            if (mainContext == null) {
+            if (mainContext == null || mainContext == EGL10.EGL_NO_CONTEXT) {
                 Log.e(TAG, "Failed to create main context: " + egl.eglGetError());
+                mainContext = null;
                 System.exit(0);
             }
 
@@ -326,18 +329,27 @@ public class MainActivity extends ActionBarActivity {
             } catch (Exception e) {
                 Log.e(TAG, "Failed to create GPU worker context", e);
             }
-            if (_gpuWorkerContext == null)
+            if (_gpuWorkerContext == null || _gpuWorkerContext == EGL10.EGL_NO_CONTEXT)
+            {
                 Log.e(TAG, "Failed to create GPU worker context: " + egl.eglGetError());
-
-            Log.i(TAG, "Creating GPU worker fake surface...");
-            try {
-                final int[] surfaceAttribList = { EGL14.EGL_NONE };
-                _gpuWorkerFakeSurface = egl.eglCreatePbufferSurface(display, eglConfig, surfaceAttribList);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to create GPU worker fake surface", e);
+                _gpuWorkerContext = null;
             }
-            if (_gpuWorkerFakeSurface == null)
-                Log.e(TAG, "Failed to create GPU worker fake surface: " + egl.eglGetError());
+
+            if (_gpuWorkerContext != null)
+            {
+                Log.i(TAG, "Creating GPU worker fake surface...");
+                try {
+                    final int[] surfaceAttribList = { EGL14.EGL_NONE };
+                    _gpuWorkerFakeSurface = egl.eglCreatePbufferSurface(display, eglConfig, surfaceAttribList);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to create GPU worker fake surface", e);
+                }
+                if (_gpuWorkerFakeSurface == null || _gpuWorkerFakeSurface == EGL10.EGL_NO_SURFACE)
+                {
+                    Log.e(TAG, "Failed to create GPU worker fake surface: " + egl.eglGetError());
+                    _gpuWorkerFakeSurface = null;
+                }
+            }
 
             MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
             if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
