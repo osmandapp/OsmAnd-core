@@ -68,7 +68,12 @@ void OsmAnd::TextRasterizer_P::clearFontsCache()
     _fontTypefacesCache.clear();
 }
 
-#if defined(CMAKE_TARGET_OS_android)
+#if defined(OSMAND_TARGET_OS_android)
+#include <SkString.h>
+#include <SkTypefaceCache.h>
+#include <SkFontDescriptor.h>
+#include <SkFontHost_FreeType_common.h>
+
 // Defined in SkFontHost_FreeType.cpp
 bool find_name_and_attributes(
     SkStream* stream,
@@ -83,19 +88,20 @@ namespace OsmAnd
     {
     public:
         SkTypeface_StreamOnAndroidWorkaround(Style style, SkStream* stream, bool isFixedPitch, const SkString familyName)
-            : INHERITED(style, SkTypefaceCache::NewFontID(), isFixedPitch)
-            , fStream(SkRef(stream))
-            , fFamilyName(familyName)
+            : SkTypeface_FreeType(style, SkTypefaceCache::NewFontID(), isFixedPitch)
+            , _stream(SkRef(stream))
+            , _familyName(familyName)
         {
         }
 
         virtual ~SkTypeface_StreamOnAndroidWorkaround()
         {
         }
+
     protected:
         virtual void onGetFontDescriptor(SkFontDescriptor* desc, bool* isLocal) const SK_OVERRIDE
         {
-            desc->setFamilyName(fFamilyName.c_str());
+            desc->setFamilyName(_familyName.c_str());
             desc->setFontFileName(nullptr);
             *isLocal = true;
         }
@@ -103,17 +109,15 @@ namespace OsmAnd
         virtual SkStream* onOpenStream(int* ttcIndex) const SK_OVERRIDE
         {
             *ttcIndex = 0;
-            return fStream->duplicate();
+            return _stream->duplicate();
         }
 
     private:
-        SkAutoTUnref<SkStream> fStream;
-        SkString fFamilyName;
-
-        typedef SkTypeface_FreeType INHERITED;
+        SkAutoTUnref<SkStream> _stream;
+        SkString _familyName;
     };
 }
-#endif
+#endif // defined(OSMAND_TARGET_OS_android)
 
 SkTypeface* OsmAnd::TextRasterizer_P::getTypefaceForFontResource(const QString& fontResource) const
 {
@@ -136,7 +140,7 @@ SkTypeface* OsmAnd::TextRasterizer_P::getTypefaceForFontResource(const QString& 
 
     // Load typeface from font data
     const auto fontDataStream = new SkMemoryStream(fontData.constData(), fontData.length(), true);
-#if defined(CMAKE_TARGET_OS_android)
+#if defined(OSMAND_TARGET_OS_android)
     //WORKAROUND: Right now SKIA on Android lost ability to load custom fonts, since it doesn't provide SkFontMgr.
     //WORKAROUND: But it still loads system fonts internally, so just write direct code
 
@@ -147,7 +151,7 @@ SkTypeface* OsmAnd::TextRasterizer_P::getTypefaceForFontResource(const QString& 
     SkTypeface* typeface = nullptr;
     if (isValidTypeface)
         typeface = SkNEW_ARGS(SkTypeface_StreamOnAndroidWorkaround, (typefaceStyle, fontDataStream, typefaceIsFixedWidth, typefaceName));
-#else
+#else // if !defined(OSMAND_TARGET_OS_android)
     const auto typeface = SkTypeface::CreateFromStream(fontDataStream);
 #endif
     fontDataStream->unref();

@@ -270,6 +270,10 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB src_gpu_gl_android "upstream.patched/src/gpu/gl/android/*")
+	# For the workaround in TextRasterizer_P.cpp
+	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
+		"upstream.patched/src/ports"
+	)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_android.cpp"
 		"upstream.patched/src/ports/SkDiscardableMemory_none.cpp"
