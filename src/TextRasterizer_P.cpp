@@ -80,14 +80,24 @@ SkTypeface* OsmAnd::TextRasterizer_P::getTypefaceForFontResource(const QString& 
     // Load raw data from resource
     const auto fontData = EmbeddedResources::decompressResource(fontResource);
     if (fontData.isNull())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to load font data for '%s'",
+            qPrintable(fontResource));
         return nullptr;
+    }
 
     // Load typeface from font data
     const auto fontDataStream = new SkMemoryStream(fontData.constData(), fontData.length(), true);
     const auto typeface = SkTypeface::CreateFromStream(fontDataStream);
     fontDataStream->unref();
     if (!typeface)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to load SkTypeface from '%s'",
+            qPrintable(fontResource));
         return nullptr;
+    }
 
     _fontTypefacesCache.insert(fontResource, typeface);
 
