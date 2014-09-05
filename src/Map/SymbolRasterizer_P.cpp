@@ -106,6 +106,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     &symbolExtraTopSpace,
                     &symbolExtraBottomSpace,
                     &lineSpacing);
+                if (!rasterizedText)
+                    continue;
 
 #if OSMAND_DUMP_SYMBOLS
                 {
