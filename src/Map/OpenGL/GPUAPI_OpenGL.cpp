@@ -127,6 +127,8 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     GL_CHECK_PRESENT(glGetProgramiv);
     GL_CHECK_PRESENT(glGetProgramInfoLog);
     GL_CHECK_PRESENT(glDeleteProgram);
+    GL_CHECK_PRESENT(glGetActiveAttrib);
+    GL_CHECK_PRESENT(glGetActiveUniform);
 
     GLuint program = 0;
 
@@ -179,16 +181,77 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
         return 0;
     }
 
-    // Show some info
-    GLint attributesCount;
+    GLint attributesCount = 0;
     glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributesCount);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d input variable(s)", program, attributesCount);
+    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d input variable(s):", program, attributesCount);
 
-    GLint uniformsCount;
+    GLint attributeNameMaxLength = 0;
+    glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &attributeNameMaxLength);
+    GL_CHECK_RESULT;
+
+    const auto attributeName = new char[attributeNameMaxLength];
+    for (int attributeIdx = 0; attributeIdx < attributesCount; attributeIdx++)
+    {
+        GLint attributeSize = 0;
+        GLenum attributeType = GL_INVALID_ENUM;
+        memset(attributeName, 0, attributeNameMaxLength);
+        glGetActiveAttrib(program, attributeIdx, attributeNameMaxLength, NULL, &attributeSize, &attributeType, attributeName);
+        GL_CHECK_RESULT;
+
+        if (attributeSize > 1)
+        {
+            LogPrintf(LogSeverityLevel::Info,
+                "\tInput %d: %s <Size: %d>",
+                attributeIdx,
+                attributeName,
+                attributeSize);
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Info,
+                "\tInput %d: %s",
+                attributeIdx,
+                attributeName);
+        }
+    }
+    delete[] attributeName;
+
+    GLint uniformsCount = 0;
     glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformsCount);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d parameter variable(s)", program, uniformsCount);
+    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d parameter variable(s):", program, uniformsCount);
+
+    GLint uniformNameMaxLength = 0;
+    glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &uniformNameMaxLength);
+    GL_CHECK_RESULT;
+
+    const auto uniformName = new char[uniformNameMaxLength];
+    for (int uniformIdx = 0; uniformIdx < uniformsCount; uniformIdx++)
+    {
+        GLint uniformSize = 0;
+        GLenum uniformType = GL_INVALID_ENUM;
+        memset(uniformName, 0, uniformNameMaxLength);
+        glGetActiveUniform(program, uniformIdx, uniformNameMaxLength, NULL, &uniformSize, &uniformType, uniformName);
+        GL_CHECK_RESULT;
+
+        if (uniformSize > 1)
+        {
+            LogPrintf(LogSeverityLevel::Info,
+                "\tUniform %d: %s <Size: %d>",
+                uniformIdx,
+                uniformName,
+                uniformSize);
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Info,
+                "\tUniform %d: %s",
+                uniformIdx,
+                uniformName);
+        }
+    }
+    delete[] uniformName;
 
     return program;
 }

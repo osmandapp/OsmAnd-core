@@ -92,6 +92,11 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
     _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
     LogPrintf(LogSeverityLevel::Info, "OpenGL version %d [%s]", _glVersion, glVersionString);
+    if (_glVersion < 20)
+    {
+        LogPrintf(LogSeverityLevel::Info, "This OpenGL version is not supported");
+        return false;
+    }
     //////////////////////////////////////////////////////////////////////////
     //NOTE: For testing, limit GL version to 2.0
     //_glVersion = 20;

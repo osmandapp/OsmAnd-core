@@ -153,7 +153,12 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     QRegExp glVersionRegExp(QLatin1String("(\\d+).(\\d+)"));
     glVersionRegExp.indexIn(QString(QLatin1String(reinterpret_cast<const char*>(glVersionString))));
     _glVersion = glVersionRegExp.cap(1).toUInt() * 10 + glVersionRegExp.cap(2).toUInt();
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 version %d [%s]", _glVersion, glVersionString);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES version %d [%s]", _glVersion, glVersionString);
+    if (_glVersion < 20)
+    {
+        LogPrintf(LogSeverityLevel::Info, "This OpenGLES version is not supported");
+        return false;
+    }
 
     const auto glslVersionString = glGetString(GL_SHADING_LANGUAGE_VERSION); // Format: "OpenGL<space>ES<space>GLSL<space>ES<space><version number><space><vendor-specific information>"
     GL_CHECK_RESULT;
