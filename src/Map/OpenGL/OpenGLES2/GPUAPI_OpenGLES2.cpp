@@ -146,7 +146,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::isShaderPrecisionFormatSupported(GLenum shaderTyp
 {
     GL_CHECK_PRESENT(glGetShaderPrecisionFormat);
 
-    GLint range = { 0, 0 };
+    GLint range[] = { 0, 0 };
     GLint precision = 0;
     glGetShaderPrecisionFormat(shaderType, precisionType, range, &precision);
     GL_CHECK_RESULT;
