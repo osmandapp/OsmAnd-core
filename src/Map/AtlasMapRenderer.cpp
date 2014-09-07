@@ -135,8 +135,7 @@ void OsmAnd::AtlasMapRenderer::validateConfigurationChange(const ConfigurationCh
 
 bool OsmAnd::AtlasMapRenderer::preInitializeRendering()
 {
-    bool ok = MapRenderer::preInitializeRendering();
-    if (!ok)
+    if (!MapRenderer::preInitializeRendering())
         return false;
 
     _skyStage.reset(createSkyStage());
@@ -164,47 +163,57 @@ bool OsmAnd::AtlasMapRenderer::doInitializeRendering()
     if (!ok)
         return false;
 
-    _skyStage->initialize();
-    _rasterMapStage->initialize();
-    _symbolsStage->initialize();
-    _debugStage->initialize();
+    if (!_skyStage->initialize())
+        ok = false;
 
-    return true;
+    if (!_rasterMapStage->initialize())
+        ok = false;
+
+    if (!_symbolsStage->initialize())
+        ok = false;
+
+    if (!_debugStage->initialize())
+        ok = false;
+
+    return ok;
 }
 
 bool OsmAnd::AtlasMapRenderer::doReleaseRendering()
 {
-    bool ok;
+    bool ok = true;
 
     if (_skyStage)
     {
-        _skyStage->release();
+        if (!_skyStage->release())
+            ok = false;
         _skyStage.reset();
     }
 
     if (_rasterMapStage)
     {
-        _rasterMapStage->release();
+        if (!_rasterMapStage->release())
+            ok = false;
         _rasterMapStage.reset();
     }
 
     if (_symbolsStage)
     {
-        _symbolsStage->release();
+        if (!_symbolsStage->release())
+            ok = false;
         _symbolsStage.reset();
     }
 
     if (_debugStage)
     {
-        _debugStage->release();
+        if (!_debugStage->release())
+            ok = false;
         _debugStage.reset();
     }
 
-    ok = MapRenderer::doReleaseRendering();
-    if (!ok)
-        return false;
+    if (!MapRenderer::doReleaseRendering())
+        ok = false;
 
-    return true;
+    return ok;
 }
 
 QList< std::shared_ptr<const OsmAnd::MapSymbol> > OsmAnd::AtlasMapRenderer::getSymbolsAt(const PointI& screenPoint) const

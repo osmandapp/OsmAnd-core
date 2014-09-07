@@ -168,8 +168,8 @@ namespace OsmAnd
         public:
             virtual ~ProgramVariablesLookupContext();
 
-            virtual void lookupLocation(GLint& location, const QString& name, const GlslVariableType& type);
-            void lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type);
+            virtual bool lookupLocation(GLint& location, const QString& name, const GlslVariableType& type);
+            bool lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type);
 
         friend class OsmAnd::GPUAPI_OpenGL;
         };
@@ -305,7 +305,7 @@ namespace OsmAnd
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock) = 0;
 
         virtual std::shared_ptr<ProgramVariablesLookupContext> obtainVariablesLookupContext(const GLuint& program);
-        virtual void findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
+        virtual bool findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
 
         virtual bool uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);

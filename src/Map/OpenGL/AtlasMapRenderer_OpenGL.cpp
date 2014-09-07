@@ -71,6 +71,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
 {
+    bool ok = true;
+
     GL_PUSH_GROUP_MARKER(QLatin1String("OsmAndCore"));
 
     GL_CHECK_PRESENT(glViewport);
@@ -105,14 +107,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     GL_CHECK_RESULT;
 
     // Render the sky
-    _skyStage->render();
+    if (!_skyStage->render())
+        ok = false;
 
     // Change depth test function prior to raster map stage and further stages
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
     // Raster map stage is rendered without blending, since it's done in fragment shader
-    _rasterMapStage->render();
+    if (!_rasterMapStage->render())
+        ok = false;
 
     // Turn on blending since now objects with transparency are going to be rendered
     // Blend function is controlled by each symbol on it's own
@@ -123,7 +127,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     //NOTE: Currently map symbols are incompatible with height-maps
     glDepthMask(GL_FALSE);
     GL_CHECK_RESULT;
-    _symbolsStage->render();
+    if (!_symbolsStage->render())
+        ok = false;
     glDepthMask(GL_TRUE);
     GL_CHECK_RESULT;
 
@@ -136,7 +141,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
         GL_CHECK_RESULT;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         GL_CHECK_RESULT;
-        _debugStage->render();
+        if (!_debugStage->render())
+            ok = false;
         glEnable(GL_DEPTH_TEST);
         GL_CHECK_RESULT;
     }
@@ -147,7 +153,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
 
     GL_POP_GROUP_MARKER;
 
-    return true;
+    return ok;
 }
 
 void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendererResourceType type)

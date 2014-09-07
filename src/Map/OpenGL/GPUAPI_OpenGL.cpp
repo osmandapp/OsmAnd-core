@@ -634,7 +634,7 @@ std::shared_ptr<OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext> OsmAnd::GP
     return std::shared_ptr<ProgramVariablesLookupContext>(new ProgramVariablesLookupContext(this, program));
 }
 
-void OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type)
+bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type)
 {
     GL_CHECK_PRESENT(glGetAttribLocation);
     GL_CHECK_PRESENT(glGetUniformLocation);
@@ -644,9 +644,18 @@ void OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& l
     else if (type == GlslVariableType::Uniform)
         location = glGetUniformLocation(program, qPrintable(name));
     GL_CHECK_RESULT;
+
     if (location == -1)
-        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d", qPrintable(name), type == GlslVariableType::In ? "In" : "Uniform", program);
-    assert(location != -1);
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Variable '%s' (%s) was not found in GLSL program %d",
+           qPrintable(name),
+           type == GlslVariableType::In ? "In" : "Uniform",
+           program);
+        return false;
+    }
+
+    return true;
 }
 
 bool OsmAnd::GPUAPI_OpenGL::uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
@@ -1530,7 +1539,7 @@ OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::~ProgramVariablesLookupCon
 {
 }
 
-void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint& location, const QString& name, const GlslVariableType& type)
+bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint& location, const QString& name, const GlslVariableType& type)
 {
     auto& variablesByName = _variablesByName[type];
     const auto itPreviousLocation = variablesByName.constFind(name);
@@ -1542,10 +1551,11 @@ void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
             type == GlslVariableType::In ? "In" : "Uniform",
             program,
             *itPreviousLocation);
-        assert(true);
+        return false;
     }
 
-    gpuAPI->findVariableLocation(program, location, name, type);
+    if (!gpuAPI->findVariableLocation(program, location, name, type))
+        return false;
 
     auto& variablesByLocation = _variablesByLocation[type];
     const auto itOtherName = variablesByLocation.constFind(location);
@@ -1557,11 +1567,13 @@ void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
             type == GlslVariableType::In ? "In" : "Uniform",
             program,
             qPrintable(*itOtherName));
-        assert(true);
+        return false;
     }
+
+    return true;
 }
 
-void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type)
+bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type)
 {
-    lookupLocation(*location, name, type);
+    return lookupLocation(*location, name, type);
 }

@@ -17,7 +17,7 @@ OsmAnd::AtlasMapRendererSkyStage_OpenGL::~AtlasMapRendererSkyStage_OpenGL()
 {
 }
 
-void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
+bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -48,8 +48,13 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     auto preprocessedVertexShader = vertexShader;
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSkyStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -64,19 +69,32 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSkyStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     const GLuint shaders[] = { vsId, fsId };
     _program.id = gpuAPI->linkProgram(2, shaders);
-    assert(_program.id.isValid());
+    if (!_program.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererSkyStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_program.id);
-    lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_program.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
-    lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GlslVariableType::Uniform);
-    lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_program.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
     // Vertex data (x,y)
     float vertices[4][2] =
@@ -124,9 +142,11 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSkyStage_OpenGL::render()
+bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render()
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -172,9 +192,11 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::render()
     gpuAPI->unuseVAO();
 
     GL_POP_GROUP_MARKER;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -205,4 +227,6 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
         GL_CHECK_RESULT;
         _program = Program();
     }
+
+    return true;
 }

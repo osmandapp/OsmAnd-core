@@ -86,9 +86,9 @@ namespace OsmAnd
         AtlasMapRendererRasterMapStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererRasterMapStage_OpenGL();
 
-        virtual void initialize();
-        virtual void render();
-        virtual void release();
+        virtual bool initialize();
+        virtual bool render();
+        virtual bool release();
         virtual void recreateTile();
     };
 }

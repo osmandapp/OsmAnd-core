@@ -25,35 +25,42 @@ OsmAnd::AtlasMapRendererDebugStage_OpenGL::~AtlasMapRendererDebugStage_OpenGL()
 {
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initialize()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initialize()
 {
-    initializeRects2D();
-    initializeLines2D();
-    initializeLines3D();
-    initializeQuads3D();
+    bool ok = true;
+    ok = ok && initializeRects2D();
+    ok = ok && initializeLines2D();
+    ok = ok && initializeLines3D();
+    ok = ok && initializeQuads3D();
+    return ok;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::render()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render()
 {
     GL_PUSH_GROUP_MARKER(QLatin1String("debug"));
 
-    renderRects2D();
-    renderLines2D();
-    renderLines3D();
-    renderQuads3D();
+    bool ok = true;
+    ok = ok && renderRects2D();
+    ok = ok && renderLines2D();
+    ok = ok && renderLines3D();
+    ok = ok && renderQuads3D();
 
     GL_POP_GROUP_MARKER;
+
+    return ok;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release()
 {
-    releaseRects2D();
-    releaseLines2D();
-    releaseLines3D();
-    releaseQuads3D();
+    bool ok = true;
+    ok = ok && releaseRects2D();
+    ok = ok && releaseLines2D();
+    ok = ok && releaseLines3D();
+    ok = ok && releaseQuads3D();
+    return ok;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -92,7 +99,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -108,19 +120,32 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programRect2D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programRect2D.id.isValid());
+    if (!_programRect2D.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programRect2D.id);
-    lookup->lookupLocation(_programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programRect2D.vs.param.rect, "param_vs_rect", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programRect2D.vs.param.angle, "param_vs_angle", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programRect2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programRect2D.vs.param.rect, "param_vs_rect", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programRect2D.vs.param.angle, "param_vs_angle", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programRect2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
     // Vertex data (x,y)
     float vertices[4][2] =
@@ -167,9 +192,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -220,9 +247,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
     GL_CHECK_RESULT;
 
     gpuAPI->unuseVAO();
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -254,9 +283,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
         GL_CHECK_RESULT;
         _programRect2D = ProgramRect2D();
     }
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -289,7 +320,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -305,19 +341,32 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programLine2D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programLine2D.id.isValid());
+    if (!_programLine2D.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine2D.id);
-    lookup->lookupLocation(_programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_programLine2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programLine2D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programLine2D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programLine2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_programLine2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine2D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine2D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
     // Vertex data (x,y)
     float vertices[2][2] =
@@ -361,9 +410,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -419,9 +470,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
     GL_CHECK_RESULT;
 
     gpuAPI->unuseVAO();
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -453,9 +506,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
         GL_CHECK_RESULT;
         _programLine2D = ProgramLine2D();
     }
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -486,7 +541,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -502,19 +562,32 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programLine3D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programLine3D.id.isValid());
+    if (!_programLine3D.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine3D.id);
-    lookup->lookupLocation(_programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_programLine3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programLine3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programLine3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programLine3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_programLine3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programLine3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
     // Vertex data (x,y)
     float vertices[2][2] =
@@ -558,9 +631,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -616,9 +691,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     GL_CHECK_RESULT;
 
     gpuAPI->unuseVAO();
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -650,9 +727,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
         GL_CHECK_RESULT;
         _programLine3D = ProgramLine3D();
     }
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -692,7 +771,12 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -708,21 +792,34 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _programQuad3D.id = gpuAPI->linkProgram(2, shaders);
-    assert(_programQuad3D.id.isValid());
+    if (!_programQuad3D.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererDebugStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programQuad3D.id);
-    lookup->lookupLocation(_programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_programQuad3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.vs.param.v2, "param_vs_v2", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.vs.param.v3, "param_vs_v3", GlslVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v2, "param_vs_v2", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v3, "param_vs_v3", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_programQuad3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
     // Vertex data (x,y,z,w)
     float vertices[4][4] =
@@ -769,9 +866,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -825,9 +924,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     GL_CHECK_RESULT;
 
     gpuAPI->unuseVAO();
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -859,4 +960,6 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
         GL_CHECK_RESULT;
         _programQuad3D = ProgramQuad3D();
     }
+
+    return true;
 }

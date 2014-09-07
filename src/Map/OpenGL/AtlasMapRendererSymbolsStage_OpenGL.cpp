@@ -27,16 +27,20 @@ OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::~AtlasMapRendererSymbolsStage_OpenG
 {
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
 {
-    initializeBillboardRaster();
-    initializeOnPath();
-    initializeOnSurfaceRaster();
-    initializeOnSurfaceVector();
+    bool ok = true;
+    ok = ok && initializeBillboardRaster();
+    ok = ok && initializeOnPath();
+    ok = ok && initializeOnSurfaceRaster();
+    ok = ok && initializeOnSurfaceVector();
+    return ok;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
 {
+    bool ok = true;
+
     GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
 
     GL_CHECK_PRESENT(glUseProgram);
@@ -56,19 +60,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     {
         if (const auto& renderable = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderable_))
         {
-            renderBillboardSymbol(
+            ok = ok && renderBillboardSymbol(
                 renderable,
                 lastUsedProgram);
         }
         else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderable_))
         {
-            renderOnPathSymbol(
+            ok = ok && renderOnPathSymbol(
                 renderable,
                 lastUsedProgram);
         }
         else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderable_))
         {
-            renderOnSurfaceSymbol(
+            ok = ok && renderOnSurfaceSymbol(
                 renderable,
                 lastUsedProgram);
         }
@@ -87,15 +91,17 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     gpuAPI->unuseVAO();
 
     GL_POP_GROUP_MARKER;
+
+    return ok;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
     const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
     int& lastUsedProgram)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
-        renderBillboardRasterSymbol(
+        return renderBillboardRasterSymbol(
             renderable,
             lastUsedProgram);
     }
@@ -108,62 +114,60 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
     lastUsedProgram,
     distanceFromCamera);
     }*/
-    else
-    {
-        assert(false);
-    }
+
+    return false;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
     int& lastUsedProgram)
 {
     // Draw the glyphs
     if (renderable->is2D)
     {
-        renderOnPath2dSymbol(
+        return renderOnPath2dSymbol(
             renderable,
             lastUsedProgram);
     }
     else
     {
-        renderOnPath3dSymbol(
+        return renderOnPath3dSymbol(
             renderable,
             lastUsedProgram);
     }
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
     int& lastUsedProgram)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
-        renderOnSurfaceRasterSymbol(
+        return renderOnSurfaceRasterSymbol(
             renderable,
             lastUsedProgram);
     }
     else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
     {
-        renderOnSurfaceVectorSymbol(
+        return renderOnSurfaceVectorSymbol(
             renderable,
             lastUsedProgram);
     }
-    else
-    {
-        assert(false);
-    }
+
+    return false;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release()
 {
-    releaseBillboardRaster();
-    releaseOnPath();
-    releaseOnSurfaceRaster();
-    releaseOnSurfaceVector();
+    bool ok = true;
+    ok = ok && releaseBillboardRaster();
+    ok = ok && releaseOnPath();
+    ok = ok && releaseOnSurfaceRaster();
+    ok = ok && releaseOnSurfaceVector();
+    return ok;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -242,7 +246,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -265,25 +274,38 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_billboardRasterProgram.id.isValid());
+    if (!_billboardRasterProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id);
-    lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GlslVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GlslVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_billboardRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
 #pragma pack(push, 1)
     struct Vertex
@@ -347,9 +369,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
     int& lastUsedProgram)
 {
@@ -445,9 +469,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -479,15 +505,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
         GL_CHECK_RESULT;
         _billboardRasterProgram = BillboardRasterSymbolProgram();
     }
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath()
 {
-    initializeOnPath2D();
-    initializeOnPath3D();
+    bool ok = true;
+    ok = ok && initializeOnPath2D();
+    ok = ok && initializeOnPath3D();
+    return ok;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -553,7 +583,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -576,20 +611,31 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onPath2dProgram.id.isValid());
+    if (!_onPath2dProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath2dProgram.id);
-    lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
-    lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
     auto& glyphs = _onPath2dProgram.vs.param.glyphs;
     glyphs.resize(_onPathSymbol2dMaxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
@@ -598,14 +644,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         const auto glyphStructPrefix =
             QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
 
-        lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GlslVariableType::Uniform);
-        lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GlslVariableType::Uniform);
-        lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GlslVariableType::Uniform);
-        lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
-        lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
     }
-    lookup->lookupLocation(_onPath2dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onPath2dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
 #pragma pack(push, 1)
     struct Vertex
@@ -703,9 +751,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -772,7 +822,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -795,20 +850,31 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onPath3dProgram.id.isValid());
+    if (!_onPath3dProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath3dProgram.id);
-    lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
-    lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
     auto& glyphs = _onPath3dProgram.vs.param.glyphs;
     glyphs.resize(_onPathSymbol3dMaxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
@@ -817,14 +883,16 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         const auto glyphStructPrefix =
             QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
 
-        lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GlslVariableType::Uniform);
-        lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GlslVariableType::Uniform);
-        lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GlslVariableType::Uniform);
-        lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
-        lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
     }
-    lookup->lookupLocation(_onPath3dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onPath3dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
 #pragma pack(push, 1)
     struct Vertex
@@ -922,9 +990,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
     int& lastUsedProgram)
 {
@@ -1043,9 +1113,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     }
 
     GL_POP_GROUP_MARKER;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
     int& lastUsedProgram)
 {
@@ -1165,15 +1237,19 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     }
 
     GL_POP_GROUP_MARKER;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath()
 {
-    releaseOnPath3D();
-    releaseOnPath2D();
+    bool ok = true;
+    ok = ok && releaseOnPath3D();
+    ok = ok && releaseOnPath2D();
+    return ok;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1205,9 +1281,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
         GL_CHECK_RESULT;
         _onPath2dProgram = OnPathSymbol2dProgram();
     }
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1219,6 +1297,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
         gpuAPI->releaseVAO(_onPathSymbol3dVAO);
         _onPathSymbol3dVAO.reset();
     }
+
 
     if (_onPathSymbol3dIBO.isValid())
     {
@@ -1239,9 +1318,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
         GL_CHECK_RESULT;
         _onPath3dProgram = OnPathSymbol3dProgram();
     }
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1293,7 +1374,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -1316,23 +1402,36 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onSurfaceRasterProgram.id.isValid());
+    if (!_onSurfaceRasterProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceRasterProgram.id);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.direction, "param_vs_direction", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.direction, "param_vs_direction", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1396,9 +1495,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_RESULT;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
     int& lastUsedProgram)
 {
@@ -1483,9 +1584,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1517,9 +1620,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
         GL_CHECK_RESULT;
         _onSurfaceRasterProgram = OnSurfaceSymbolProgram();
     }
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1558,7 +1663,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    assert(vsId != 0);
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+        return false;
+    }
 
     // Compile fragment shader
     const QString fragmentShader = QLatin1String(
@@ -1577,22 +1687,37 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
     gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    assert(fsId != 0);
+    if (fsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+        return false;
+    }
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     _onSurfaceVectorProgram.id = gpuAPI->linkProgram(2, shaders);
-    assert(_onSurfaceVectorProgram.id.isValid());
+    if (!_onSurfaceVectorProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+        return false;
+    }
 
+    bool ok = true;
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceVectorProgram.id);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
+    if (!ok)
+        return false;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
     int& lastUsedProgram)
 {
@@ -1744,9 +1869,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     GL_CHECK_RESULT;
 
     GL_POP_GROUP_MARKER;
+
+    return true;
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1758,4 +1885,6 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
         GL_CHECK_RESULT;
         _onSurfaceVectorProgram = OnSurfaceVectorProgram();
     }
+
+    return true;
 }

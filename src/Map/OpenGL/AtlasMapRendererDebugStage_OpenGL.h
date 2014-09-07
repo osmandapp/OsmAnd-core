@@ -48,9 +48,9 @@ namespace OsmAnd
                 } param;
             } fs;
         } _programRect2D;
-        void initializeRects2D();
-        void renderRects2D();
-        void releaseRects2D();
+        bool initializeRects2D();
+        bool renderRects2D();
+        bool releaseRects2D();
 
         GLname _vaoLine2D;
         GLname _vboLine2D;
@@ -81,9 +81,9 @@ namespace OsmAnd
                 } param;
             } fs;
         } _programLine2D;
-        void initializeLines2D();
-        void renderLines2D();
-        void releaseLines2D();
+        bool initializeLines2D();
+        bool renderLines2D();
+        bool releaseLines2D();
 
         GLname _vaoLine3D;
         GLname _vboLine3D;
@@ -114,9 +114,9 @@ namespace OsmAnd
                 } param;
             } fs;
         } _programLine3D;
-        void initializeLines3D();
-        void renderLines3D();
-        void releaseLines3D();
+        bool initializeLines3D();
+        bool renderLines3D();
+        bool releaseLines3D();
 
         GLname _vaoQuad3D;
         GLname _vboQuad3D;
@@ -149,16 +149,16 @@ namespace OsmAnd
                 } param;
             } fs;
         } _programQuad3D;
-        void initializeQuads3D();
-        void renderQuads3D();
-        void releaseQuads3D();
+        bool initializeQuads3D();
+        bool renderQuads3D();
+        bool releaseQuads3D();
     public:
         AtlasMapRendererDebugStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererDebugStage_OpenGL();
 
-        virtual void initialize();
-        virtual void render();
-        virtual void release();
+        virtual bool initialize();
+        virtual bool render();
+        virtual bool release();
     };
 }
 

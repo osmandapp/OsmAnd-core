@@ -63,8 +63,9 @@ public class Sample1 implements GLEventListener {
       catch( UnsatisfiedLinkError e ) {
         System.err.println("Failed to load OsmAndCoreWithJNI:" + e);
         System.exit(0);
-      } 
+      }
     }
+    _coreResourcesEmbeddedBundle = new CoreResourcesEmbeddedBundle("OsmAndCore_ResourcesBundle_shared");
 
     final Animator animator = new Animator();
 
@@ -102,6 +103,8 @@ public class Sample1 implements GLEventListener {
     _canvas = canvas;
   }
 
+  private static CoreResourcesEmbeddedBundle _coreResourcesEmbeddedBundle;
+
   private GLCanvas _canvas;
 
   private float _displayDensityFactor;
@@ -121,7 +124,7 @@ public class Sample1 implements GLEventListener {
 
   @Override
   public void init(GLAutoDrawable drawable) {
-    OsmAndCore.InitializeCore();
+    OsmAndCore.InitializeCore(_coreResourcesEmbeddedBundle);
 
     _displayDensityFactor = 1.0f;
     _referenceTileSize = 256;

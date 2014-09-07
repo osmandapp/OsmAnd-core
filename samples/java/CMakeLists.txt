@@ -1,4 +1,4 @@
-# External : z
+# External : jogl
 add_subdirectory("${OSMAND_ROOT}/core/samples/java/externals/jogl" "core/samples/java/externals/jogl")
 
 project(OsmAndCore_JavaSamples)
@@ -23,4 +23,5 @@ add_dependencies(OsmAndCore_JavaSample1
 	OsmAndCoreJNI
 	OsmAndCore_wrapper_jar
 	jogl_dummy
+	OsmAndCore_ResourcesBundle_shared
 )

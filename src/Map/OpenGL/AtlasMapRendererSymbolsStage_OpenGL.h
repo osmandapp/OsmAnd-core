@@ -18,7 +18,7 @@ namespace OsmAnd
     {
     private:
     protected:
-        void renderBillboardSymbol(
+        bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
             int& lastUsedProgram);
 
@@ -61,17 +61,17 @@ namespace OsmAnd
                 } param;
             } fs;
         } _billboardRasterProgram;
-        void initializeBillboardRaster();
-        void renderBillboardRasterSymbol(
+        bool initializeBillboardRaster();
+        bool renderBillboardRasterSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
             int& lastUsedProgram);
-        void releaseBillboardRaster();
+        bool releaseBillboardRaster();
 
-        void initializeOnPath();
-        void renderOnPathSymbol(
+        bool initializeOnPath();
+        bool renderOnPathSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             int& lastUsedProgram);
-        void releaseOnPath();
+        bool releaseOnPath();
 
         struct Glyph
         {
@@ -121,11 +121,11 @@ namespace OsmAnd
             } fs;
         } _onPath2dProgram;
         GLint _onPathSymbol2dMaxGlyphsPerDrawCall;
-        void initializeOnPath2D();
-        void renderOnPath2dSymbol(
+        bool initializeOnPath2D();
+        bool renderOnPath2dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             int& lastUsedProgram);
-        void releaseOnPath2D();
+        bool releaseOnPath2D();
 
         GLname _onPathSymbol3dVAO;
         GLname _onPathSymbol3dVBO;
@@ -167,13 +167,13 @@ namespace OsmAnd
             } fs;
         } _onPath3dProgram;
         GLint _onPathSymbol3dMaxGlyphsPerDrawCall;
-        void initializeOnPath3D();
-        void renderOnPath3dSymbol(
+        bool initializeOnPath3D();
+        bool renderOnPath3dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             int& lastUsedProgram);
-        void releaseOnPath3D();
+        bool releaseOnPath3D();
 
-        void renderOnSurfaceSymbol(
+        bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             int& lastUsedProgram);
 
@@ -214,11 +214,11 @@ namespace OsmAnd
                 } param;
             } fs;
         } _onSurfaceRasterProgram;
-        void initializeOnSurfaceRaster();
-        void renderOnSurfaceRasterSymbol(
+        bool initializeOnSurfaceRaster();
+        bool renderOnSurfaceRasterSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             int& lastUsedProgram);
-        void releaseOnSurfaceRaster();
+        bool releaseOnSurfaceRaster();
 
         struct OnSurfaceVectorProgram {
             GLname id;
@@ -250,18 +250,18 @@ namespace OsmAnd
                 } param;
             } fs;
         } _onSurfaceVectorProgram;
-        void initializeOnSurfaceVector();
-        void renderOnSurfaceVectorSymbol(
+        bool initializeOnSurfaceVector();
+        bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             int& lastUsedProgram);
-        void releaseOnSurfaceVector();
+        bool releaseOnSurfaceVector();
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSymbolsStage_OpenGL();
 
-        virtual void initialize();
-        virtual void render();
-        virtual void release();
+        virtual bool initialize();
+        virtual bool render();
+        virtual bool release();
     };
 }
 

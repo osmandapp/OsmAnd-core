@@ -39,9 +39,9 @@ namespace OsmAnd
         QReadWriteLock& publishedMapSymbolsByOrderLock;
         const MapRenderer::PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
 
-        virtual void initialize() = 0;
-        virtual void render() = 0;
-        virtual void release() = 0;
+        virtual bool initialize() = 0;
+        virtual bool render() = 0;
+        virtual bool release() = 0;
     };
 }
 

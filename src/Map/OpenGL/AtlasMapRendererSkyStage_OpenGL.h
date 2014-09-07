@@ -53,9 +53,9 @@ namespace OsmAnd
         AtlasMapRendererSkyStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSkyStage_OpenGL();
 
-        virtual void initialize();
-        virtual void render();
-        virtual void release();
+        virtual bool initialize();
+        virtual bool render();
+        virtual bool release();
     };
 }
 
