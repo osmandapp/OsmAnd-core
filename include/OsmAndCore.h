@@ -47,6 +47,8 @@
 #   define OSMAND_DEBUG 0
 #endif
 
+#include <memory>
+
 #include <OsmAndCore/QtExtensions.h>
 #include <QtGlobal>
 
@@ -66,11 +68,12 @@
 #   endif
 #endif
 
-#include <memory>
-
 namespace OsmAnd
 {
-    OSMAND_CORE_API void OSMAND_CORE_CALL InitializeCore();
+    class ICoreResourcesProvider;
+
+    OSMAND_CORE_API void OSMAND_CORE_CALL InitializeCore(const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider);
+    OSMAND_CORE_API const std::shared_ptr<const ICoreResourcesProvider>& OSMAND_CORE_CALL getCoreResourcesProvider();
     OSMAND_CORE_API void OSMAND_CORE_CALL ReleaseCore();
 }
 

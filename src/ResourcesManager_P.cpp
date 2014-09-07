@@ -10,7 +10,7 @@
 #include <QBuffer>
 
 #include "OsmAndCore_private.h"
-#include "EmbeddedResources.h"
+#include "CoreResourcesEmbeddedBundle.h"
 #include "ObfReader.h"
 #include "ArchiveReader.h"
 #include "ObfDataInterface.h"
@@ -90,7 +90,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     bool ok;
 
     // Built-in map style
-    auto defaultMapStyleContent = EmbeddedResources::decompressResource(
+    auto defaultMapStyleContent = getCoreResourcesProvider()->getResource(
         QLatin1String("map/styles/default.render.xml"));
     std::shared_ptr<MapStyle> defaultMapStyle(new MapStyle(
         mapStylesCollection.get(),
@@ -106,7 +106,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
 
     // Built-in presets for "default" map style
     std::shared_ptr<MapStylesPresetsCollection> defaultMapStylesPresets(new MapStylesPresetsCollection());
-    defaultMapStylesPresets->loadFrom(EmbeddedResources::decompressResource(
+    defaultMapStylesPresets->loadFrom(getCoreResourcesProvider()->getResource(
         QLatin1String("map/presets/default.map_styles_presets.xml")));
     std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinResource(
         QLatin1String("default.map_styles_presets.xml"),

@@ -6,7 +6,7 @@
 
 #include "MapStyle.h"
 #include "MapStyle_P.h"
-#include "EmbeddedResources.h"
+#include "CoreResourcesEmbeddedBundle.h"
 #include "QKeyValueIterator.h"
 
 OsmAnd::MapStylesCollection_P::MapStylesCollection_P(MapStylesCollection* owner_)
@@ -29,9 +29,9 @@ bool OsmAnd::MapStylesCollection_P::registerEmbeddedStyle(const QString& resourc
 {
     QWriteLocker scopedLocker(&_stylesLock);
 
-    assert(EmbeddedResources::containsResource(resourceName));
+    assert(getCoreResourcesProvider()->containsResource(resourceName));
 
-    auto styleContent = EmbeddedResources::decompressResource(resourceName);
+    auto styleContent = getCoreResourcesProvider()->getResource(resourceName);
     std::shared_ptr<MapStyle> style(new MapStyle(
         owner.get(),
         QFileInfo(resourceName).fileName(),

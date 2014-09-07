@@ -2,13 +2,13 @@
 #include "MapPresentationEnvironment_P.h"
 
 #include "MapStyleValue.h"
-#include "IExternalResourcesProvider.h"
+#include "ICoreResourcesProvider.h"
 
 OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     const std::shared_ptr<const MapStyle>& style_,
     const float displayDensityFactor_ /*= 1.0f*/,
     const QString& localeLanguageId_ /*= QLatin1String("en")*/,
-    const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider_ /*= nullptr*/)
+    const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/)
     : _p(new MapPresentationEnvironment_P(this))
     , styleBuiltinValueDefs(MapStyle::getBuiltinValueDefinitions())
     , style(style_)

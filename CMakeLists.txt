@@ -224,44 +224,11 @@ else()
 	find_package(Qt5Sql REQUIRED)
 endif()
 
-include("${CMAKE_CURRENT_LIST_DIR}/embed-resources.stamp")
-file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/embed-resources.list" OsmAndCore_resources_list)
-set(OsmAndCore_resources)
-foreach(OsmAndCore_resourceEntry IN LISTS OsmAndCore_resources_list)
-	string(REGEX REPLACE ":.+" "" _OsmAndCore_resourceEntry ${OsmAndCore_resourceEntry})
-	list(APPEND OsmAndCore_resources "${OSMAND_ROOT}${_OsmAndCore_resourceEntry}")
-endforeach(OsmAndCore_resourceEntry)
-set(OsmAndCore_resources_bundle
-	"${CMAKE_CURRENT_BINARY_DIR}/gen/EmbeddedResources_bundle.cpp"
-)
-if (CMAKE_HOST_WIN32 AND NOT CYGWIN)
-	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
-		COMMAND bash ARGS --login "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh" "${CMAKE_CURRENT_BINARY_DIR}"
-		DEPENDS
-			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
-			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
-			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
-			${OsmAndCore_resources}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMENT "Embedding resources...")
-else()
-	add_custom_command(OUTPUT ${OsmAndCore_resources_bundle}
-		COMMAND "${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh" "${CMAKE_CURRENT_BINARY_DIR}"
-		DEPENDS
-			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.list"
-			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.sh"
-			"${CMAKE_CURRENT_LIST_DIR}/embed-resources.py"
-			${OsmAndCore_resources}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMENT "Embedding resources...")
-endif()
-set(merged_sources ${merged_sources}
-	${OsmAndCore_resources_bundle}
-)
-
 if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
-	add_library(OsmAndCore_shared SHARED ${merged_sources})
-	add_dependencies(OsmAndCore_shared ${merged_dependencies})
+	add_library(OsmAndCore_shared SHARED
+		${merged_sources})
+	add_dependencies(OsmAndCore_shared
+		${merged_dependencies})
 	target_compile_definitions(OsmAndCore_shared
 		PRIVATE
 			-DOSMAND_CORE_INTERNAL
@@ -361,13 +328,15 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
-	add_library(OsmAndCore_static STATIC ${merged_sources})
-	add_dependencies(OsmAndCore_static ${merged_dependencies})
+	add_library(OsmAndCore_static STATIC
+		${merged_sources})
+	add_dependencies(OsmAndCore_static
+		${merged_dependencies})
 	target_compile_definitions(OsmAndCore_static
 		PRIVATE
+			-DOSMAND_CORE_INTERNAL		
 			${merged_compile_definitions_private}
 		PUBLIC
-			-DOSMAND_CORE_INTERNAL
 			-DOSMAND_CORE_STATIC
 			${merged_compile_definitions_public}
 	)

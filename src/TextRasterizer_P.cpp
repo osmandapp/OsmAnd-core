@@ -8,7 +8,7 @@
 #include "restore_internal_warnings.h"
 
 #include "ICU.h"
-#include "EmbeddedResources.h"
+#include "CoreResourcesEmbeddedBundle.h"
 
 OsmAnd::TextRasterizer_P::TextRasterizer_P(TextRasterizer* const owner_)
     : owner(owner_)
@@ -129,7 +129,7 @@ SkTypeface* OsmAnd::TextRasterizer_P::getTypefaceForFontResource(const QString& 
         return *citTypeface;
 
     // Load raw data from resource
-    const auto fontData = EmbeddedResources::decompressResource(fontResource);
+    const auto fontData = getCoreResourcesProvider()->getResource(fontResource);
     if (fontData.isNull())
     {
         LogPrintf(LogSeverityLevel::Error,

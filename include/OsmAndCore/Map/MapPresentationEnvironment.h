@@ -12,7 +12,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/IExternalResourcesProvider.h>
+#include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/Map/MapStyle.h>
 
 class SkBitmap;
@@ -36,7 +36,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapStyle>& style,
             const float displayDensityFactor = 1.0f,
             const QString& localeLanguageId = QLatin1String("en"),
-            const std::shared_ptr<const IExternalResourcesProvider>& externalResourcesProvider = nullptr);
+            const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider = nullptr);
         virtual ~MapPresentationEnvironment();
 
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
@@ -44,7 +44,7 @@ namespace OsmAnd
         const std::shared_ptr<const MapStyle> style;
         const float displayDensityFactor;
         const QString localeLanguageId;
-        const std::shared_ptr<const IExternalResourcesProvider> externalResourcesProvider;
+        const std::shared_ptr<const ICoreResourcesProvider> externalResourcesProvider;
 
         const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;
 

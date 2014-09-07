@@ -19,7 +19,7 @@
 #include "MapStyleValueDefinition.h"
 #include "MapStyleValue.h"
 #include "MapStyleConfigurableInputValue.h"
-#include "EmbeddedResources.h"
+#include "CoreResourcesEmbeddedBundle.h"
 #include "Logging.h"
 #include "QKeyValueIterator.h"
 #include "Utilities.h"

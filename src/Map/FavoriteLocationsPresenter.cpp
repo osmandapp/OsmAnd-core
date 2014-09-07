@@ -1,7 +1,7 @@
 #include "FavoriteLocationsPresenter.h"
 #include "FavoriteLocationsPresenter_P.h"
 
-#include "EmbeddedResources.h"
+#include "CoreResourcesEmbeddedBundle.h"
 
 OsmAnd::FavoriteLocationsPresenter::FavoriteLocationsPresenter(
     const std::shared_ptr<const IFavoriteLocationsCollection>& collection_,
@@ -22,7 +22,7 @@ OsmAnd::FavoriteLocationsPresenter::~FavoriteLocationsPresenter()
 std::shared_ptr<const SkBitmap> OsmAnd::FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconBitmap()
 {
     static const std::shared_ptr<const SkBitmap> defaultFavoriteLocationPinIconBitmap(
-        EmbeddedResources::getBitmapResource(QLatin1String("map/stubs/favorite_location_pin_icon.png")));
+        getCoreResourcesProvider()->getResourceAsBitmap(QLatin1String("map/stubs/favorite_location_pin_icon.png")));
     return defaultFavoriteLocationPinIconBitmap;
 }
 

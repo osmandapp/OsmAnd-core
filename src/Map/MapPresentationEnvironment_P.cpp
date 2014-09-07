@@ -16,8 +16,8 @@
 #include "MapStyleValueDefinition.h"
 #include "MapStyleValue.h"
 #include "ObfMapSectionInfo.h"
-#include "EmbeddedResources.h"
-#include "IExternalResourcesProvider.h"
+#include "CoreResourcesEmbeddedBundle.h"
+#include "ICoreResourcesProvider.h"
 #include "QKeyValueIterator.h"
 #include "Utilities.h"
 #include "Logging.h"
@@ -242,13 +242,13 @@ QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QStr
     if (static_cast<bool>(owner->externalResourcesProvider))
     {
         bool ok = false;
-        const auto resource = owner->externalResourcesProvider->getResource(name, &ok);
+        const auto resource = owner->externalResourcesProvider->getResource(name, owner->displayDensityFactor, &ok);
         if (ok)
             return resource;
     }
 
-    // Otherwise obtain from embedded
-    return EmbeddedResources::decompressResource(name);
+    // Otherwise obtain from global
+    return getCoreResourcesProvider()->getResource(name, owner->displayDensityFactor);
 }
 
 OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getDefaultBackgroundColor(const ZoomLevel zoom) const

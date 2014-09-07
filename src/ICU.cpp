@@ -18,7 +18,7 @@
 #include <unicode/brkiter.h>
 #include "restore_internal_warnings.h"
 
-#include "EmbeddedResources.h"
+#include "CoreResourcesEmbeddedBundle.h"
 #include "Logging.h"
 
 std::unique_ptr<QByteArray> g_IcuData;
@@ -30,7 +30,8 @@ void OsmAnd::ICU::initialize()
 {
     // Initialize ICU
     UErrorCode icuError = U_ZERO_ERROR;
-    g_IcuData = qMove(std::unique_ptr<QByteArray>(new QByteArray(EmbeddedResources::decompressResource(QLatin1String("icu4c/icu-data-l.dat")))));
+    g_IcuData = qMove(std::unique_ptr<QByteArray>(new QByteArray(
+        getCoreResourcesProvider()->getResource(QLatin1String("misc/icu4c/icu-data-l.dat")))));
     udata_setCommonData(g_IcuData->constData(), &icuError);
     if (U_FAILURE(icuError))
     {

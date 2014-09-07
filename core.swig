@@ -11,7 +11,8 @@
 #include <OsmAndCore/IObfsCollection.h>
 #include <OsmAndCore/ObfsCollection.h>
 #include <OsmAndCore/ObfDataInterface.h>
-#include <OsmAndCore/IExternalResourcesProvider.h>
+#include <OsmAndCore/ICoreResourcesProvider.h>
+#include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
 #include <OsmAndCore/Data/DataTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
@@ -83,7 +84,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResourcesManager::MapStyleMetadata)
 	%shared_ptr(OsmAnd::ResourcesManager::MapStylesPresetsMetadata)
 	%shared_ptr(OsmAnd::ResourcesManager::OnlineTileSourcesMetadata)
-	%shared_ptr(OsmAnd::IExternalResourcesProvider)
+	%shared_ptr(OsmAnd::ICoreResourcesProvider)
+	%shared_ptr(OsmAnd::CoreResourcesEmbeddedBundle)
 	%shared_ptr(OsmAnd::ObfFile)
 	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::MapSymbolsGroup)
@@ -175,7 +177,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/ObfsCollection.h>
 %include <OsmAndCore/ObfDataInterface.h>
 %include <OsmAndCore/ResourcesManager.h>
-%include <OsmAndCore/IExternalResourcesProvider.h>
+%include <OsmAndCore/ICoreResourcesProvider.h>
+%include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
 %include <OsmAndCore/Data/DataTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>

@@ -20,7 +20,7 @@
 #include "IMapTiledSymbolsProvider.h"
 #include "IMapKeyedSymbolsProvider.h"
 #include "BinaryMapObject.h"
-#include "EmbeddedResources.h"
+#include "CoreResourcesEmbeddedBundle.h"
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
 #include "QCachingIterator.h"
@@ -111,7 +111,7 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
 {
     // Upload stubs
     {
-        const auto bitmap = EmbeddedResources::getBitmapResource(QLatin1String("map/stubs/processing_tile.png"));
+        const auto bitmap = getCoreResourcesProvider()->getResourceAsBitmap(QLatin1String("map/stubs/processing_tile.png"));
         if (!bitmap)
             return false;
         else
@@ -122,7 +122,7 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
         }
     }
     {
-        const auto bitmap = EmbeddedResources::getBitmapResource(QLatin1String("map/stubs/unavailable_tile.png"));
+        const auto bitmap = getCoreResourcesProvider()->getResourceAsBitmap(QLatin1String("map/stubs/unavailable_tile.png"));
         if (!bitmap)
             return false;
         else

@@ -29,12 +29,30 @@
 #include "TextRasterizer_private.h"
 #include "MapSymbolIntersectionClassesRegistry_private.h"
 
+#if defined(OSMAND_TARGET_OS_)
+#   error CMAKE_TARGET_OS defined incorrectly
+#endif // defined(OSMAND_TARGET_OS_)
+
+#if defined(OSMAND_TARGET_CPU_ARCH_)
+#   error CMAKE_TARGET_CPU_ARCH defined incorrectly
+#endif // defined(OSMAND_TARGET_CPU_ARCH_)
+
+#if defined(OSMAND_TARGET_CPU_ARCH_FAMILY_)
+#   error CMAKE_TARGET_CPU_ARCH_FAMILY defined incorrectly
+#endif // defined(OSMAND_TARGET_CPU_ARCH_FAMILY_)
+
+#if defined(OSMAND_COMPILER_FAMILY_)
+#   error CMAKE_COMPILER_FAMILY defined incorrectly
+#endif // defined(OSMAND_COMPILER_FAMILY_)
+
 namespace OsmAnd
 {
     void initializeInAppThread();
     void releaseInAppThread();
     QThread* gMainThread;
     std::shared_ptr<QObject> gMainThreadRootObject;
+
+    std::shared_ptr<const ICoreResourcesProvider> gCoreResourcesProvider;
 }
 
 int _dummyArgc = 1;
@@ -69,8 +87,11 @@ struct QCoreApplicationThread : public QThread
 };
 std::shared_ptr<QCoreApplicationThread> _qCoreApplicationThread;
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
+OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider)
 {
+    assert(coreResourcesProvider);
+    gCoreResourcesProvider = coreResourcesProvider;
+
     Logger::get()->addLogSink(std::shared_ptr<ILogSink>(new DefaultLogSink()));
 
     InflateExplicitReferences();
@@ -115,6 +136,11 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore()
 
     // MapSymbol intersection classes registry
     MapSymbolIntersectionClassesRegistry_initializeGlobalInstance();
+}
+
+OSMAND_CORE_API const std::shared_ptr<const OsmAnd::ICoreResourcesProvider>& OSMAND_CORE_CALL OsmAnd::getCoreResourcesProvider()
+{
+    return gCoreResourcesProvider;
 }
 
 OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
