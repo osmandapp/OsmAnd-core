@@ -100,6 +100,8 @@ OsmAnd::GPUAPI_OpenGLES2::GPUAPI_OpenGLES2()
     , isSupported_OES_texture_float(_isSupported_OES_texture_float)
     , isSupported_EXT_texture_rg(_isSupported_EXT_texture_rg)
     , isSupported_EXT_shader_texture_lod(_isSupported_EXT_shader_texture_lod)
+    , supportedVertexShaderPrecisionFormats(_supportedVertexShaderPrecisionFormats)
+    , supportedFragmentShaderPrecisionFormats(_supportedFragmentShaderPrecisionFormats)
 {
 }
 
@@ -140,6 +142,21 @@ GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
     return result;
 }
 
+bool OsmAnd::GPUAPI_OpenGLES2::isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType) const
+{
+    GL_CHECK_PRESENT(glGetShaderPrecisionFormat);
+
+    GLint range = { 0, 0 };
+    GLint precision = 0;
+    glGetShaderPrecisionFormat(shaderType, precisionType, range, &precision);
+    GL_CHECK_RESULT;
+
+    if (range[0] == 0 && range[1] == 0)
+        return false;
+
+    return true;
+}
+
 bool OsmAnd::GPUAPI_OpenGLES2::initialize()
 {
     bool ok;
@@ -176,6 +193,14 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     _extensions = extensionsString.split(QRegExp("\\s+"), QString::SkipEmptyParts);
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 extensions: %s", qPrintable(extensions.join(' ')));
+
+    GLboolean shaderCompilerPresent = GL_FALSE;
+    glGetBooleanv(GL_SHADER_COMPILER, &shaderCompilerPresent);
+    if (shaderCompilerPresent == GL_FALSE)
+    {
+        LogPrintf(LogSeverityLevel::Error, "OpenGLES2 shader compiler not supported");
+        return false;
+    }
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, reinterpret_cast<GLint*>(&_maxTextureSize));
     GL_CHECK_RESULT;
@@ -219,6 +244,67 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     _isSupported_APPLE_texture_max_level = extensions.contains("GL_APPLE_texture_max_level");
     _isSupported_texturesNPOT = extensions.contains("GL_OES_texture_npot");
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
+
+    if (isShaderPrecisionFormatSupported(GL_VERTEX_SHADER, GL_LOW_FLOAT))
+        _supportedVertexShaderPrecisionFormats.insert(GL_LOW_FLOAT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 vertex shader does not support 'GL_LOW_FLOAT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_VERTEX_SHADER, GL_MEDIUM_FLOAT))
+        _supportedVertexShaderPrecisionFormats.insert(GL_MEDIUM_FLOAT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 vertex shader does not support 'GL_MEDIUM_FLOAT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_VERTEX_SHADER, GL_HIGH_FLOAT))
+        _supportedVertexShaderPrecisionFormats.insert(GL_HIGH_FLOAT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 vertex shader does not support 'GL_HIGH_FLOAT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_VERTEX_SHADER, GL_LOW_INT))
+        _supportedVertexShaderPrecisionFormats.insert(GL_LOW_INT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 vertex shader does not support 'GL_LOW_INT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_VERTEX_SHADER, GL_MEDIUM_INT))
+        _supportedVertexShaderPrecisionFormats.insert(GL_MEDIUM_INT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 vertex shader does not support 'GL_MEDIUM_INT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_VERTEX_SHADER, GL_HIGH_INT))
+        _supportedVertexShaderPrecisionFormats.insert(GL_HIGH_INT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 vertex shader does not support 'GL_HIGH_INT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_FRAGMENT_SHADER, GL_LOW_FLOAT))
+        _supportedFragmentShaderPrecisionFormats.insert(GL_LOW_FLOAT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 fragment shader does not support 'GL_LOW_FLOAT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_FRAGMENT_SHADER, GL_MEDIUM_FLOAT))
+        _supportedFragmentShaderPrecisionFormats.insert(GL_MEDIUM_FLOAT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 fragment shader does not support 'GL_MEDIUM_FLOAT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT))
+        _supportedFragmentShaderPrecisionFormats.insert(GL_HIGH_FLOAT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 fragment shader does not support 'GL_HIGH_FLOAT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_FRAGMENT_SHADER, GL_LOW_INT))
+        _supportedFragmentShaderPrecisionFormats.insert(GL_LOW_INT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 fragment shader does not support 'GL_LOW_INT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_FRAGMENT_SHADER, GL_MEDIUM_INT))
+        _supportedFragmentShaderPrecisionFormats.insert(GL_MEDIUM_INT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 fragment shader does not support 'GL_MEDIUM_INT' precision format");
+
+    if (isShaderPrecisionFormatSupported(GL_FRAGMENT_SHADER, GL_HIGH_INT))
+        _supportedFragmentShaderPrecisionFormats.insert(GL_HIGH_INT);
+    else
+        LogPrintf(LogSeverityLevel::Info, "OpenGLES2 fragment shader does not support 'GL_HIGH_INT' precision format");
+
 #if !defined(OSMAND_TARGET_OS_ios)
     if (_isSupported_EXT_debug_marker && !glPopGroupMarkerEXT)
     {

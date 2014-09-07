@@ -7,6 +7,7 @@
 #include "QtExtensions.h"
 #include <QString>
 #include <QHash>
+#include <QSet>
 
 #include <glm/glm.hpp>
 
@@ -43,10 +44,14 @@ namespace OsmAnd
         bool _isSupported_OES_texture_float;
         bool _isSupported_EXT_texture_rg;
         bool _isSupported_EXT_shader_texture_lod;
+        QSet<GLenum> _supportedVertexShaderPrecisionFormats;
+        QSet<GLenum> _supportedFragmentShaderPrecisionFormats;
 
         void preprocessShader(QString& code, const QString& extraHeader = QString());
 
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
+
+        bool isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType) const;
     protected:
         virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const;
         virtual TextureFormat getTextureSizedFormat_float() const;
@@ -78,6 +83,9 @@ namespace OsmAnd
         const bool& isSupported_OES_texture_float;
         const bool& isSupported_EXT_texture_rg;
         const bool& isSupported_EXT_shader_texture_lod;
+
+        const QSet<GLenum>& supportedVertexShaderPrecisionFormats;
+        const QSet<GLenum>& supportedFragmentShaderPrecisionFormats;
 
         virtual GLenum validateResult();
 
