@@ -618,18 +618,8 @@ namespace OsmAnd
             return result;
         }
 
-        inline static QByteArray readEntireFile(const QString& filename)
-        {
-            QFile file(filename);
-            if (!file.open(QIODevice::ReadOnly))
-                return QByteArray();
-
-            const auto data = file.readAll();
-
-            file.close();
-
-            return data;
-        }
+        static QByteArray readEntireFile(const QString& filename);
+        static QByteArray readPartOfFile(const QString& filename, const size_t offset, const size_t length);
     private:
         Utilities();
         ~Utilities();
