@@ -6,6 +6,7 @@
 #include <OsmAndCore/ObfsCollection.h>
 #include <OsmAndCore/Stopwatch.h>
 #include <OsmAndCore/Utilities.h>
+#include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
@@ -811,7 +812,13 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
     if (configuration.verbose)
         output << xT("Initializing OsmAndCore...") << std::endl;
-    OsmAnd::InitializeCore();
+    std::shared_ptr<OsmAnd::CoreResourcesEmbeddedBundle> coreResourcesEmbeddedBundle;
+#if defined(OSMAND_CORE_STATIC)
+    coreResourcesEmbeddedBundle.reset(new OsmAnd::CoreResourcesEmbeddedBundle());
+#else
+    coreResourcesEmbeddedBundle.reset(new OsmAnd::CoreResourcesEmbeddedBundle(QLatin1String("OsmAndCore_ResourcesBundle_shared")));
+#endif // defined(OSMAND_CORE_STATIC)
+    OsmAnd::InitializeCore(coreResourcesEmbeddedBundle);
 
     for (;;)
     {
