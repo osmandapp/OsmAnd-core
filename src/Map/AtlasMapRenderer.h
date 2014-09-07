@@ -47,7 +47,7 @@ namespace OsmAnd
         virtual uint32_t getConfigurationChangeMask(
             const std::shared_ptr<const MapRendererConfiguration>& current,
             const std::shared_ptr<const MapRendererConfiguration>& updated) const;
-        virtual void validateConfigurationChange(const ConfigurationChange& change);
+        virtual void validateConfigurationChange(const MapRenderer::ConfigurationChange& change);
 
         // State-related:
         virtual bool updateInternalState(

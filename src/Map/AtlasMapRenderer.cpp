@@ -122,8 +122,10 @@ uint32_t OsmAnd::AtlasMapRenderer::getConfigurationChangeMask(
     return mask;
 }
 
-void OsmAnd::AtlasMapRenderer::validateConfigurationChange(const ConfigurationChange& change)
+void OsmAnd::AtlasMapRenderer::validateConfigurationChange(const MapRenderer::ConfigurationChange& change_)
 {
+    const auto change = static_cast<ConfigurationChange>(change_);
+
     bool invalidateSymbols = false;
     invalidateSymbols = invalidateSymbols || (change == ConfigurationChange::ReferenceTileSize);
 
