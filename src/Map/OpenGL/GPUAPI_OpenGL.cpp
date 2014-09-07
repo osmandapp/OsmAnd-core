@@ -23,7 +23,7 @@
 
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
-#if OSMAND_DEBUG
+#if OSMAND_DEBUG || defined(OSMAND_TARGET_OS_android)
 #   define GL_CHECK_RESULT validateResult()
 #   define GL_GET_RESULT validateResult()
 #else
