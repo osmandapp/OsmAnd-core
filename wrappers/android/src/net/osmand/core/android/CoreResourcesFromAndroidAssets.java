@@ -1,6 +1,7 @@
 package net.osmand.core.android;
 
-import java.util.String;
+import java.lang.String;
+import java.io.IOException;
 import java.util.HashMap;
 
 import android.content.Context;
@@ -43,6 +44,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
                 final AssetFileDescriptor assetFd = assetManager.openFd(fullFilename);
                 Log.d("CoreResourcesFromAndroidAssets", fullFilename + " is a resource");
                 assetFd.close();
+            } catch(IOException e) {
             }
             return;
         }
