@@ -35,7 +35,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
     }
 
     private void collectBundledResourcesFrom(final HashMap<String, ResourceEntry> resourcesCollection, final AssetManager assetManager, final String path) {
-        final subdirectories = assetManager.list(path);
+        final String[] subdirectories = assetManager.list(path);
 
         // If listing returned nothing, it means that path refers to a file (or nothing was found)
         if (subdirectories.length == 0) {
