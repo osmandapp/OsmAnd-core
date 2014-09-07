@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 
-import net.osmand.core.jni.ICoreResourcesProvider;
+import net.osmand.core.jni.*;
 
 public class CoreResourcesFromAndroid_LegacyOsmAndCompatible extends ICoreResourcesProvider {
     public CoreResourcesFromAndroid_LegacyOsmAndCompatible(final Context context) {
