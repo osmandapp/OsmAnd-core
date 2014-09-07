@@ -142,7 +142,7 @@ GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
     return result;
 }
 
-bool OsmAnd::GPUAPI_OpenGLES2::isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType) const
+bool OsmAnd::GPUAPI_OpenGLES2::isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType)
 {
     GL_CHECK_PRESENT(glGetShaderPrecisionFormat);
 

@@ -51,7 +51,7 @@ namespace OsmAnd
 
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
 
-        bool isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType) const;
+        bool isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType);
     protected:
         virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const;
         virtual TextureFormat getTextureSizedFormat_float() const;
