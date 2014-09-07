@@ -81,7 +81,7 @@ namespace OsmAnd
     class RasterMapSymbol;
     class VectorMapSymbol;
 
-    enum class GLShaderVariableType
+    enum class GlslVariableType
     {
         In,
         Uniform
@@ -161,15 +161,15 @@ namespace OsmAnd
             GPUAPI_OpenGL* const gpuAPI;
             const GLuint program;
 
-            QMap< GLShaderVariableType, QMap<QString, GLint> > _variablesByName;
-            QMap< GLShaderVariableType, QMap<GLint, QString> > _variablesByLocation;
+            QMap< GlslVariableType, QMap<QString, GLint> > _variablesByName;
+            QMap< GlslVariableType, QMap<GLint, QString> > _variablesByLocation;
         protected:
             ProgramVariablesLookupContext(GPUAPI_OpenGL* gpuAPI, GLuint program);
         public:
             virtual ~ProgramVariablesLookupContext();
 
-            virtual void lookupLocation(GLint& location, const QString& name, const GLShaderVariableType& type);
-            void lookupLocation(GLlocation& location, const QString& name, const GLShaderVariableType& type);
+            virtual void lookupLocation(GLint& location, const QString& name, const GlslVariableType& type);
+            void lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type);
 
         friend class OsmAnd::GPUAPI_OpenGL;
         };
@@ -199,6 +199,8 @@ namespace OsmAnd
         };
         QHash<GLname, SimulatedVAO> _vaoSimulationObjects;
         GLname _lastUsedSimulatedVAOObject;
+
+        static QString decodeGlslVariableDataType(const GLenum dataType);
     protected:
         unsigned int _glVersion;
         unsigned int _glslVersion;
@@ -303,7 +305,7 @@ namespace OsmAnd
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock) = 0;
 
         virtual std::shared_ptr<ProgramVariablesLookupContext> obtainVariablesLookupContext(const GLuint& program);
-        virtual void findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GLShaderVariableType& type);
+        virtual void findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
 
         virtual bool uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);

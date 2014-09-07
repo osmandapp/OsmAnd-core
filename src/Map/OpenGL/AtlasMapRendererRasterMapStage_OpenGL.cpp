@@ -258,32 +258,32 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         assert(tileProgram.id.isValid());
 
         const auto& lookup = gpuAPI->obtainVariablesLookupContext(tileProgram.id);
-        lookup->lookupLocation(tileProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-        lookup->lookupLocation(tileProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
+        lookup->lookupLocation(tileProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+        lookup->lookupLocation(tileProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
         if (!gpuAPI->isSupported_vertexShaderTextureLookup)
         {
-            lookup->lookupLocation(tileProgram.vs.in.vertexElevation, "in_vs_vertexElevation", GLShaderVariableType::In);
+            lookup->lookupLocation(tileProgram.vs.in.vertexElevation, "in_vs_vertexElevation", GlslVariableType::In);
         }
-        lookup->lookupLocation(tileProgram.vs.param.mProjectionView, "param_vs_mProjectionView", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(tileProgram.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(tileProgram.vs.param.mProjectionView, "param_vs_mProjectionView", GlslVariableType::Uniform);
+        lookup->lookupLocation(tileProgram.vs.param.targetInTilePosN, "param_vs_targetInTilePosN", GlslVariableType::Uniform);
         if (gpuAPI->isSupported_textureLod)
         {
-            lookup->lookupLocation(tileProgram.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GLShaderVariableType::Uniform);
-            lookup->lookupLocation(tileProgram.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GLShaderVariableType::Uniform);
-            lookup->lookupLocation(tileProgram.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GLShaderVariableType::Uniform);
-            lookup->lookupLocation(tileProgram.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GLShaderVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.distanceFromCameraToTarget, "param_vs_distanceFromCameraToTarget", GlslVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.cameraElevationAngleN, "param_vs_cameraElevationAngleN", GlslVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.groundCameraPosition, "param_vs_groundCameraPosition", GlslVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.scaleToRetainProjectedSize, "param_vs_scaleToRetainProjectedSize", GlslVariableType::Uniform);
         }
-        lookup->lookupLocation(tileProgram.vs.param.tileCoordsOffset, "param_vs_tileCoordsOffset", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(tileProgram.vs.param.elevationData_k, "param_vs_elevationData_k", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(tileProgram.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(tileProgram.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(tileProgram.vs.param.tileCoordsOffset, "param_vs_tileCoordsOffset", GlslVariableType::Uniform);
+        lookup->lookupLocation(tileProgram.vs.param.elevationData_k, "param_vs_elevationData_k", GlslVariableType::Uniform);
+        lookup->lookupLocation(tileProgram.vs.param.elevationData_upperMetersPerUnit, "param_vs_elevationData_upperMetersPerUnit", GlslVariableType::Uniform);
+        lookup->lookupLocation(tileProgram.vs.param.elevationData_lowerMetersPerUnit, "param_vs_elevationData_lowerMetersPerUnit", GlslVariableType::Uniform);
         if (gpuAPI->isSupported_vertexShaderTextureLookup)
         {
-            lookup->lookupLocation(tileProgram.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", GLShaderVariableType::Uniform);
-            lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.tileSizeN, "param_vs_elevationTileLayer.tileSizeN", GLShaderVariableType::Uniform);
-            lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.tilePaddingN, "param_vs_elevationTileLayer.tilePaddingN", GLShaderVariableType::Uniform);
-            lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.slotsPerSide, "param_vs_elevationTileLayer.slotsPerSide", GLShaderVariableType::Uniform);
-            lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.slotIndex, "param_vs_elevationTileLayer.slotIndex", GLShaderVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.elevationData_sampler, "param_vs_elevationData_sampler", GlslVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.tileSizeN, "param_vs_elevationTileLayer.tileSizeN", GlslVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.tilePaddingN, "param_vs_elevationTileLayer.tilePaddingN", GlslVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.slotsPerSide, "param_vs_elevationTileLayer.slotsPerSide", GlslVariableType::Uniform);
+            lookup->lookupLocation(tileProgram.vs.param.elevationTileLayer.slotIndex, "param_vs_elevationTileLayer.slotIndex", GlslVariableType::Uniform);
         }
         for(auto layerId = 0u; layerId < maxActiveMapLayers; layerId++)
         {
@@ -294,10 +294,10 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
                     .replace(QLatin1String("%layerId%"), QString::number(layerId));
                 auto& layerStruct = tileProgram.vs.param.rasterTileLayers[layerId];
 
-                lookup->lookupLocation(layerStruct.tileSizeN, layerStructName + ".tileSizeN", GLShaderVariableType::Uniform);
-                lookup->lookupLocation(layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", GLShaderVariableType::Uniform);
-                lookup->lookupLocation(layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GLShaderVariableType::Uniform);
-                lookup->lookupLocation(layerStruct.slotIndex, layerStructName + ".slotIndex", GLShaderVariableType::Uniform);
+                lookup->lookupLocation(layerStruct.tileSizeN, layerStructName + ".tileSizeN", GlslVariableType::Uniform);
+                lookup->lookupLocation(layerStruct.tilePaddingN, layerStructName + ".tilePaddingN", GlslVariableType::Uniform);
+                lookup->lookupLocation(layerStruct.slotsPerSide, layerStructName + ".slotsPerSide", GlslVariableType::Uniform);
+                lookup->lookupLocation(layerStruct.slotIndex, layerStructName + ".slotIndex", GlslVariableType::Uniform);
             }
 
             // Fragment shader
@@ -307,8 +307,8 @@ void OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
                     .replace(QLatin1String("%layerId%"), QString::number(layerId));
                 auto& layerStruct = tileProgram.fs.param.rasterTileLayers[layerId];
 
-                lookup->lookupLocation(layerStruct.k, layerStructName + ".k", GLShaderVariableType::Uniform);
-                lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GLShaderVariableType::Uniform);
+                lookup->lookupLocation(layerStruct.k, layerStructName + ".k", GlslVariableType::Uniform);
+                lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GlslVariableType::Uniform);
             }
         }
     }

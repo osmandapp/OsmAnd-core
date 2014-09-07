@@ -116,11 +116,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     assert(_programRect2D.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programRect2D.id);
-    lookup->lookupLocation(_programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programRect2D.vs.param.rect, "param_vs_rect", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programRect2D.vs.param.angle, "param_vs_angle", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programRect2D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programRect2D.vs.param.rect, "param_vs_rect", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programRect2D.vs.param.angle, "param_vs_angle", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programRect2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
 
     // Vertex data (x,y)
     float vertices[4][2] =
@@ -313,11 +313,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     assert(_programLine2D.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine2D.id);
-    lookup->lookupLocation(_programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_programLine2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programLine2D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programLine2D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programLine2D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_programLine2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programLine2D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programLine2D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programLine2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
 
     // Vertex data (x,y)
     float vertices[2][2] =
@@ -510,11 +510,11 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     assert(_programLine3D.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine3D.id);
-    lookup->lookupLocation(_programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_programLine3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programLine3D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programLine3D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programLine3D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_programLine3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programLine3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programLine3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programLine3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
 
     // Vertex data (x,y)
     float vertices[2][2] =
@@ -716,13 +716,13 @@ void OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     assert(_programQuad3D.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programQuad3D.id);
-    lookup->lookupLocation(_programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_programQuad3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.vs.param.v0, "param_vs_v0", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.vs.param.v1, "param_vs_v1", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.vs.param.v2, "param_vs_v2", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.vs.param.v3, "param_vs_v3", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_programQuad3D.fs.param.color, "param_fs_color", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_programQuad3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.param.v2, "param_vs_v2", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.vs.param.v3, "param_vs_v3", GlslVariableType::Uniform);
+    lookup->lookupLocation(_programQuad3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
 
     // Vertex data (x,y,z,w)
     float vertices[4][4] =

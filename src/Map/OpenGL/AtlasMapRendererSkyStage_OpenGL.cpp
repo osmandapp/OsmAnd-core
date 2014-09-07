@@ -73,10 +73,10 @@ void OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     assert(_program.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_program.id);
-    lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_program.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_program.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
+    lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GlslVariableType::Uniform);
+    lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GlslVariableType::Uniform);
 
     // Vertex data (x,y)
     float vertices[4][2] =

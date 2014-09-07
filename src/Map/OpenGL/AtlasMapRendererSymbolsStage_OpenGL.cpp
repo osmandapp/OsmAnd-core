@@ -273,17 +273,17 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     assert(_billboardRasterProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id);
-    lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_billboardRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.viewport, "param_vs_viewport", GlslVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.vs.param.onScreenOffset, "param_vs_onScreenOffset", GlslVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    lookup->lookupLocation(_billboardRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -584,12 +584,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     assert(_onPath2dProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath2dProgram.id);
-    lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
+    lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
     auto& glyphs = _onPath2dProgram.vs.param.glyphs;
     glyphs.resize(_onPathSymbol2dMaxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
@@ -598,14 +598,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         const auto glyphStructPrefix =
             QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
 
-        lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GlslVariableType::Uniform);
+        lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GlslVariableType::Uniform);
+        lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GlslVariableType::Uniform);
+        lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
+        lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
     }
-    lookup->lookupLocation(_onPath2dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPath2dProgram.fs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onPath2dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -803,12 +803,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     assert(_onPath3dProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath3dProgram.id);
-    lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
+    lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
     auto& glyphs = _onPath3dProgram.vs.param.glyphs;
     glyphs.resize(_onPathSymbol3dMaxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
@@ -817,14 +817,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         const auto glyphStructPrefix =
             QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
 
-        lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GLShaderVariableType::Uniform);
-        lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GLShaderVariableType::Uniform);
+        lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GlslVariableType::Uniform);
+        lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GlslVariableType::Uniform);
+        lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GlslVariableType::Uniform);
+        lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
+        lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
     }
-    lookup->lookupLocation(_onPath3dProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onPath3dProgram.fs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onPath3dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1324,15 +1324,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     assert(_onSurfaceRasterProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceRasterProgram.id);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GLShaderVariableType::In);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.direction, "param_vs_direction", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolOffsetFromTarget, "param_vs_symbolOffsetFromTarget", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.direction, "param_vs_direction", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.symbolSize, "param_vs_symbolSize", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1585,11 +1585,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     assert(_onSurfaceVectorProgram.id.isValid());
 
     const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceVectorProgram.id);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GLShaderVariableType::In);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GLShaderVariableType::In);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GLShaderVariableType::Uniform);
-    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GLShaderVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
+    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
+    lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(

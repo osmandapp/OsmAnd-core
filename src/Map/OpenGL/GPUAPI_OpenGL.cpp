@@ -82,6 +82,12 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
 
     shader = glCreateShader(shaderType);
     GL_CHECK_RESULT;
+    if (shader == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to allocate GLSL shader");
+        return shader;
+    }
 
     const GLint sourceLen = static_cast<GLint>(strlen(source));
     glShaderSource(shader, 1, &source, &sourceLen);
@@ -106,8 +112,17 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
             glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
             GL_CHECK_RESULT;
             assert(logLen + 1 == logBufferLen);
-            LogPrintf(LogSeverityLevel::Error, "Failed to compile GLSL shader:\n%s\nSources:\n%s", log, source);
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile GLSL shader:\n%s\nSources:\n%s",
+                log,
+                source);
             free(log);
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to compile GLSL shader from source:\n%s",
+                source);
         }
 
         glDeleteShader(shader);
@@ -134,6 +149,12 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
 
     program = glCreateProgram();
     GL_CHECK_RESULT;
+    if (program == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to allocate GLSL program");
+        return program;
+    }
 
     for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
     {
@@ -171,8 +192,15 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
             glGetProgramInfoLog(program, logBufferLen, &logLen, log);
             GL_CHECK_RESULT;
             assert(logLen + 1 == logBufferLen);
-            LogPrintf(LogSeverityLevel::Error, "Failed to link GLSL program:\n%s", log);
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to link GLSL program:\n%s",
+                log);
             free(log);
+        }
+        else
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to link GLSL program");
         }
 
         glDeleteProgram(program);
@@ -202,16 +230,18 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
         if (attributeSize > 1)
         {
             LogPrintf(LogSeverityLevel::Info,
-                "\tInput %d: %s <Size: %d>",
+                "\tInput %d: %20s %-20s <Size: %d>",
                 attributeIdx,
+                qPrintable(decodeGlslVariableDataType(attributeType)),
                 attributeName,
                 attributeSize);
         }
         else
         {
             LogPrintf(LogSeverityLevel::Info,
-                "\tInput %d: %s",
+                "\tInput %d: %20s %-20s",
                 attributeIdx,
+                qPrintable(decodeGlslVariableDataType(attributeType)),
                 attributeName);
         }
     }
@@ -238,16 +268,18 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
         if (uniformSize > 1)
         {
             LogPrintf(LogSeverityLevel::Info,
-                "\tUniform %d: %s <Size: %d>",
+                "\tUniform %d: %20s %-20s <Size: %d>",
                 uniformIdx,
+                qPrintable(decodeGlslVariableDataType(uniformType)),
                 uniformName,
                 uniformSize);
         }
         else
         {
             LogPrintf(LogSeverityLevel::Info,
-                "\tUniform %d: %s",
+                "\tUniform %d: %20s %-20s",
                 uniformIdx,
+                qPrintable(decodeGlslVariableDataType(uniformType)),
                 uniformName);
         }
     }
@@ -256,23 +288,364 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     return program;
 }
 
+QString OsmAnd::GPUAPI_OpenGL::decodeGlslVariableDataType(const GLenum dataType)
+{
+    struct GlslDataTypeEntry
+    {
+        GLenum dataType;
+        QString name;
+    };
+
+    static const GlslDataTypeEntry glslDataTypes[] =
+    {
+        { GL_INVALID_ENUM, QLatin1String("invalid") },
+#if defined(GL_FLOAT)
+        { GL_FLOAT, QLatin1String("float") },
+#endif // defined(GL_FLOAT)
+#if defined(GL_FLOAT_VEC2)
+        { GL_FLOAT_VEC2, QLatin1String("vec2") },
+#endif // defined(GL_FLOAT_VEC2)
+#if defined(GL_FLOAT_VEC3)
+        { GL_FLOAT_VEC3, QLatin1String("vec3") },
+#endif // defined(GL_FLOAT_VEC3)
+#if defined(GL_FLOAT_VEC4)
+        { GL_FLOAT_VEC4, QLatin1String("vec4") },
+#endif // defined(GL_FLOAT_VEC4)
+#if defined(GL_DOUBLE)
+        { GL_DOUBLE, QLatin1String("double") },
+#endif // defined(GL_DOUBLE)
+#if defined(GL_DOUBLE_VEC2)
+        { GL_DOUBLE_VEC2, QLatin1String("dvec2") },
+#endif // defined(GL_DOUBLE_VEC2)
+#if defined(GL_DOUBLE_VEC3)
+        { GL_DOUBLE_VEC3, QLatin1String("dvec3") },
+#endif // defined(GL_DOUBLE_VEC3)
+#if defined(GL_DOUBLE_VEC4)
+        { GL_DOUBLE_VEC4, QLatin1String("dvec4") },
+#endif // defined(GL_DOUBLE_VEC4)
+#if defined(GL_INT)
+        { GL_INT, QLatin1String("int") },
+#endif // defined(GL_INT)
+#if defined(GL_INT_VEC2)
+        { GL_INT_VEC2, QLatin1String("ivec2") },
+#endif // defined(GL_INT_VEC2)
+#if defined(GL_INT_VEC3)
+        { GL_INT_VEC3, QLatin1String("ivec3") },
+#endif // defined(GL_INT_VEC3)
+#if defined(GL_INT_VEC4)
+        { GL_INT_VEC4, QLatin1String("ivec4") },
+#endif // defined(GL_INT_VEC4)
+#if defined(GL_UNSIGNED_INT)
+        { GL_UNSIGNED_INT, QLatin1String("unsigned int") },
+#endif // defined(GL_UNSIGNED_INT)
+#if defined(GL_UNSIGNED_INT_VEC2)
+        { GL_UNSIGNED_INT_VEC2, QLatin1String("uvec2") },
+#endif // defined(GL_UNSIGNED_INT_VEC2)
+#if defined(GL_UNSIGNED_INT_VEC3)
+        { GL_UNSIGNED_INT_VEC3, QLatin1String("uvec3") },
+#endif // defined(GL_UNSIGNED_INT_VEC3)
+#if defined(GL_UNSIGNED_INT_VEC4)
+        { GL_UNSIGNED_INT_VEC4, QLatin1String("uvec4") },
+#endif // defined(GL_UNSIGNED_INT_VEC4)
+#if defined(GL_BOOL)
+        { GL_BOOL, QLatin1String("bool") },
+#endif // defined(GL_BOOL)
+#if defined(GL_BOOL_VEC2)
+        { GL_BOOL_VEC2, QLatin1String("bvec2") },
+#endif // defined(GL_BOOL_VEC2)
+#if defined(GL_BOOL_VEC3)
+        { GL_BOOL_VEC3, QLatin1String("bvec3") },
+#endif // defined(GL_BOOL_VEC3)
+#if defined(GL_BOOL_VEC4)
+        { GL_BOOL_VEC4, QLatin1String("bvec4") },
+#endif // defined(GL_BOOL_VEC4)
+#if defined(GL_FLOAT_MAT2)
+        { GL_FLOAT_MAT2, QLatin1String("mat2") },
+#endif // defined(GL_FLOAT_MAT2)
+#if defined(GL_FLOAT_MAT3)
+        { GL_FLOAT_MAT3, QLatin1String("mat3") },
+#endif // defined(GL_FLOAT_MAT3)
+#if defined(GL_FLOAT_MAT4)
+        { GL_FLOAT_MAT4, QLatin1String("mat4") },
+#endif // defined(GL_FLOAT_MAT4)
+#if defined(GL_FLOAT_MAT2x3)
+        { GL_FLOAT_MAT2x3, QLatin1String("mat2x3") },
+#endif // defined(GL_FLOAT_MAT2x3)
+#if defined(GL_FLOAT_MAT2x4)
+        { GL_FLOAT_MAT2x4, QLatin1String("mat2x4") },
+#endif // defined(GL_FLOAT_MAT2x4)
+#if defined(GL_FLOAT_MAT3x2)
+        { GL_FLOAT_MAT3x2, QLatin1String("mat3x2") },
+#endif // defined(GL_FLOAT_MAT3x2)
+#if defined(GL_FLOAT_MAT3x4)
+        { GL_FLOAT_MAT3x4, QLatin1String("mat3x4") },
+#endif // defined(GL_FLOAT_MAT3x4)
+#if defined(GL_FLOAT_MAT4x2)
+        { GL_FLOAT_MAT4x2, QLatin1String("mat4x2") },
+#endif // defined(GL_FLOAT_MAT4x2)
+#if defined(GL_FLOAT_MAT4x3)
+        { GL_FLOAT_MAT4x3, QLatin1String("mat4x3") },
+#endif // defined(GL_FLOAT_MAT4x3)
+#if defined(GL_DOUBLE_MAT2)
+        { GL_DOUBLE_MAT2, QLatin1String("dmat2") },
+#endif // defined(GL_DOUBLE_MAT2)
+#if defined(GL_DOUBLE_MAT3)
+        { GL_DOUBLE_MAT3, QLatin1String("dmat3") },
+#endif // defined(GL_DOUBLE_MAT3)
+#if defined(GL_DOUBLE_MAT4)
+        { GL_DOUBLE_MAT4, QLatin1String("dmat4") },
+#endif // defined(GL_DOUBLE_MAT4)
+#if defined(GL_DOUBLE_MAT2x3)
+        { GL_DOUBLE_MAT2x3, QLatin1String("dmat2x3") },
+#endif // defined(GL_DOUBLE_MAT2x3)
+#if defined(GL_DOUBLE_MAT2x4)
+        { GL_DOUBLE_MAT2x4, QLatin1String("dmat2x4") },
+#endif // defined(GL_DOUBLE_MAT2x4)
+#if defined(GL_DOUBLE_MAT3x2)
+        { GL_DOUBLE_MAT3x2, QLatin1String("dmat3x2") },
+#endif // defined(GL_DOUBLE_MAT3x2)
+#if defined(GL_DOUBLE_MAT3x4)
+        { GL_DOUBLE_MAT3x4, QLatin1String("dmat3x4") },
+#endif // defined(GL_DOUBLE_MAT3x4)
+#if defined(GL_DOUBLE_MAT4x2)
+        { GL_DOUBLE_MAT4x2, QLatin1String("dmat4x2") },
+#endif // defined(GL_DOUBLE_MAT4x2)
+#if defined(GL_DOUBLE_MAT4x3)
+        { GL_DOUBLE_MAT4x3, QLatin1String("dmat4x3") },
+#endif // defined(GL_DOUBLE_MAT4x3)
+#if defined(GL_SAMPLER_1D)
+        { GL_SAMPLER_1D, QLatin1String("sampler1D") },
+#endif // defined(GL_SAMPLER_1D)
+#if defined(GL_SAMPLER_2D)
+        { GL_SAMPLER_2D, QLatin1String("sampler2D") },
+#endif // defined(GL_SAMPLER_2D)
+#if defined(GL_SAMPLER_3D)
+        { GL_SAMPLER_3D, QLatin1String("sampler3D") },
+#endif // defined(GL_SAMPLER_3D)
+#if defined(GL_SAMPLER_CUBE)
+        { GL_SAMPLER_CUBE, QLatin1String("samplerCube") },
+#endif // defined(GL_SAMPLER_CUBE)
+#if defined(GL_SAMPLER_1D_SHADOW)
+        { GL_SAMPLER_1D_SHADOW, QLatin1String("sampler1DShadow") },
+#endif // defined(GL_SAMPLER_1D_SHADOW)
+#if defined(GL_SAMPLER_2D_SHADOW)
+        { GL_SAMPLER_2D_SHADOW, QLatin1String("sampler2DShadow") },
+#endif // defined(GL_SAMPLER_2D_SHADOW)
+#if defined(GL_SAMPLER_1D_ARRAY)
+        { GL_SAMPLER_1D_ARRAY, QLatin1String("sampler1DArray") },
+#endif // defined(GL_SAMPLER_1D_ARRAY)
+#if defined(GL_SAMPLER_2D_ARRAY)
+        { GL_SAMPLER_2D_ARRAY, QLatin1String("sampler2DArray") },
+#endif // defined(GL_SAMPLER_2D_ARRAY)
+#if defined(GL_SAMPLER_1D_ARRAY_SHADOW)
+        { GL_SAMPLER_1D_ARRAY_SHADOW, QLatin1String("sampler1DArrayShadow") },
+#endif // defined(GL_SAMPLER_1D_ARRAY_SHADOW)
+#if defined(GL_SAMPLER_2D_ARRAY_SHADOW)
+        { GL_SAMPLER_2D_ARRAY_SHADOW, QLatin1String("sampler2DArrayShadow") },
+#endif // defined(GL_SAMPLER_2D_ARRAY_SHADOW)
+#if defined(GL_SAMPLER_2D_MULTISAMPLE)
+        { GL_SAMPLER_2D_MULTISAMPLE, QLatin1String("sampler2DMS") },
+#endif // defined(GL_SAMPLER_2D_MULTISAMPLE)
+#if defined(GL_SAMPLER_2D_MULTISAMPLE_ARRAY)
+        { GL_SAMPLER_2D_MULTISAMPLE_ARRAY, QLatin1String("sampler2DMSArray") },
+#endif // defined(GL_SAMPLER_2D_MULTISAMPLE_ARRAY)
+#if defined(GL_SAMPLER_CUBE_SHADOW)
+        { GL_SAMPLER_CUBE_SHADOW, QLatin1String("samplerCubeShadow") },
+#endif // defined(GL_SAMPLER_CUBE_SHADOW)
+#if defined(GL_SAMPLER_BUFFER)
+        { GL_SAMPLER_BUFFER, QLatin1String("samplerBuffer") },
+#endif // defined(GL_SAMPLER_BUFFER)
+#if defined(GL_SAMPLER_2D_RECT)
+        { GL_SAMPLER_2D_RECT, QLatin1String("sampler2DRect") },
+#endif // defined(GL_SAMPLER_2D_RECT)
+#if defined(GL_SAMPLER_2D_RECT_SHADOW)
+        { GL_SAMPLER_2D_RECT_SHADOW, QLatin1String("sampler2DRectShadow") },
+#endif // defined(GL_SAMPLER_2D_RECT_SHADOW)
+#if defined(GL_INT_SAMPLER_1D)
+        { GL_INT_SAMPLER_1D, QLatin1String("isampler1D") },
+#endif // defined(GL_INT_SAMPLER_1D)
+#if defined(GL_INT_SAMPLER_2D)
+        { GL_INT_SAMPLER_2D, QLatin1String("isampler2D") },
+#endif // defined(GL_INT_SAMPLER_2D)
+#if defined(GL_INT_SAMPLER_3D)
+        { GL_INT_SAMPLER_3D, QLatin1String("isampler3D") },
+#endif // defined(GL_INT_SAMPLER_3D)
+#if defined(GL_INT_SAMPLER_CUBE)
+        { GL_INT_SAMPLER_CUBE, QLatin1String("isamplerCube") },
+#endif // defined(GL_INT_SAMPLER_CUBE)
+#if defined(GL_INT_SAMPLER_1D_ARRAY)
+        { GL_INT_SAMPLER_1D_ARRAY, QLatin1String("isampler1DArray") },
+#endif // defined(GL_INT_SAMPLER_1D_ARRAY)
+#if defined(GL_INT_SAMPLER_2D_ARRAY)
+        { GL_INT_SAMPLER_2D_ARRAY, QLatin1String("isampler2DArray") },
+#endif // defined(GL_INT_SAMPLER_2D_ARRAY)
+#if defined(GL_INT_SAMPLER_2D_MULTISAMPLE)
+        { GL_INT_SAMPLER_2D_MULTISAMPLE, QLatin1String("isampler2DMS") },
+#endif // defined(GL_INT_SAMPLER_2D_MULTISAMPLE)
+#if defined(GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY)
+        { GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY, QLatin1String("isampler2DMSArray") },
+#endif // defined(GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY)
+#if defined(GL_INT_SAMPLER_BUFFER)
+        { GL_INT_SAMPLER_BUFFER, QLatin1String("isamplerBuffer") },
+#endif // defined(GL_INT_SAMPLER_BUFFER)
+#if defined(GL_INT_SAMPLER_2D_RECT)
+        { GL_INT_SAMPLER_2D_RECT, QLatin1String("isampler2DRect") },
+#endif // defined(GL_INT_SAMPLER_2D_RECT)
+#if defined(GL_UNSIGNED_INT_SAMPLER_1D)
+        { GL_UNSIGNED_INT_SAMPLER_1D, QLatin1String("usampler1D") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_1D)
+#if defined(GL_UNSIGNED_INT_SAMPLER_2D)
+        { GL_UNSIGNED_INT_SAMPLER_2D, QLatin1String("usampler2D") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_2D)
+#if defined(GL_UNSIGNED_INT_SAMPLER_3D)
+        { GL_UNSIGNED_INT_SAMPLER_3D, QLatin1String("usampler3D") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_3D)
+#if defined(GL_UNSIGNED_INT_SAMPLER_CUBE)
+        { GL_UNSIGNED_INT_SAMPLER_CUBE, QLatin1String("usamplerCube") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_CUBE)
+#if defined(GL_UNSIGNED_INT_SAMPLER_1D_ARRAY)
+        { GL_UNSIGNED_INT_SAMPLER_1D_ARRAY, QLatin1String("usampler2DArray") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_1D_ARRAY)
+#if defined(GL_UNSIGNED_INT_SAMPLER_2D_ARRAY)
+        { GL_UNSIGNED_INT_SAMPLER_2D_ARRAY, QLatin1String("usampler2DArray") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_2D_ARRAY)
+#if defined(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE)
+        { GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE, QLatin1String("usampler2DMS") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE)
+#if defined(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY)
+        { GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY, QLatin1String("usampler2DMSArray") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY)
+#if defined(GL_UNSIGNED_INT_SAMPLER_BUFFER)
+        { GL_UNSIGNED_INT_SAMPLER_BUFFER, QLatin1String("usamplerBuffer") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_BUFFER)
+#if defined(GL_UNSIGNED_INT_SAMPLER_2D_RECT)
+        { GL_UNSIGNED_INT_SAMPLER_2D_RECT, QLatin1String("usampler2DRect") },
+#endif // defined(GL_UNSIGNED_INT_SAMPLER_2D_RECT)
+#if defined(GL_IMAGE_1D)
+        { GL_IMAGE_1D, QLatin1String("image1D") },
+#endif // defined(GL_IMAGE_1D)
+#if defined(GL_IMAGE_2D)
+        { GL_IMAGE_2D, QLatin1String("image2D") },
+#endif // defined(GL_IMAGE_2D)
+#if defined(GL_IMAGE_3D)
+        { GL_IMAGE_3D, QLatin1String("image3D") },
+#endif // defined(GL_IMAGE_3D)
+#if defined(GL_IMAGE_2D_RECT)
+        { GL_IMAGE_2D_RECT, QLatin1String("image2DRect") },
+#endif // defined(GL_IMAGE_2D_RECT)
+#if defined(GL_IMAGE_CUBE)
+        { GL_IMAGE_CUBE, QLatin1String("imageCube") },
+#endif // defined(GL_IMAGE_CUBE)
+#if defined(GL_IMAGE_BUFFER)
+        { GL_IMAGE_BUFFER, QLatin1String("imageBuffer") },
+#endif // defined(GL_IMAGE_BUFFER)
+#if defined(GL_IMAGE_1D_ARRAY)
+        { GL_IMAGE_1D_ARRAY, QLatin1String("image1DArray") },
+#endif // defined(GL_IMAGE_1D_ARRAY)
+#if defined(GL_IMAGE_2D_ARRAY)
+        { GL_IMAGE_2D_ARRAY, QLatin1String("image2DArray") },
+#endif // defined(GL_IMAGE_2D_ARRAY)
+#if defined(GL_IMAGE_2D_MULTISAMPLE)
+        { GL_IMAGE_2D_MULTISAMPLE, QLatin1String("image2DMS") },
+#endif // defined(GL_IMAGE_2D_MULTISAMPLE)
+#if defined(GL_IMAGE_2D_MULTISAMPLE_ARRAY)
+        { GL_IMAGE_2D_MULTISAMPLE_ARRAY, QLatin1String("image2DMSArray") },
+#endif // defined(GL_IMAGE_2D_MULTISAMPLE_ARRAY)
+#if defined(GL_INT_IMAGE_1D)
+        { GL_INT_IMAGE_1D, QLatin1String("iimage1D") },
+#endif // defined(GL_INT_IMAGE_1D)
+#if defined(GL_INT_IMAGE_2D)
+        { GL_INT_IMAGE_2D, QLatin1String("iimage2D") },
+#endif // defined(GL_INT_IMAGE_2D)
+#if defined(GL_INT_IMAGE_3D)
+        { GL_INT_IMAGE_3D, QLatin1String("iimage3D") },
+#endif // defined(GL_INT_IMAGE_3D)
+#if defined(GL_INT_IMAGE_2D_RECT)
+        { GL_INT_IMAGE_2D_RECT, QLatin1String("iimage2DRect") },
+#endif // defined(GL_INT_IMAGE_2D_RECT)
+#if defined(GL_INT_IMAGE_CUBE)
+        { GL_INT_IMAGE_CUBE, QLatin1String("iimageCube") },
+#endif // defined(GL_INT_IMAGE_CUBE)
+#if defined(GL_INT_IMAGE_BUFFER)
+        { GL_INT_IMAGE_BUFFER, QLatin1String("iimageBuffer") },
+#endif // defined(GL_INT_IMAGE_BUFFER)
+#if defined(GL_INT_IMAGE_1D_ARRAY)
+        { GL_INT_IMAGE_1D_ARRAY, QLatin1String("iimage1DArray") },
+#endif // defined(GL_INT_IMAGE_1D_ARRAY)
+#if defined(GL_INT_IMAGE_2D_ARRAY)
+        { GL_INT_IMAGE_2D_ARRAY, QLatin1String("iimage2DArray") },
+#endif // defined(GL_INT_IMAGE_2D_ARRAY)
+#if defined(GL_INT_IMAGE_2D_MULTISAMPLE)
+        { GL_INT_IMAGE_2D_MULTISAMPLE, QLatin1String("iimage2DMS") },
+#endif // defined(GL_INT_IMAGE_2D_MULTISAMPLE)
+#if defined(GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY)
+        { GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY, QLatin1String("iimage2DMSArray") },
+#endif // defined(GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY)
+#if defined(GL_UNSIGNED_INT_IMAGE_1D)
+        { GL_UNSIGNED_INT_IMAGE_1D, QLatin1String("uimage1D") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_1D)
+#if defined(GL_UNSIGNED_INT_IMAGE_2D)
+        { GL_UNSIGNED_INT_IMAGE_2D, QLatin1String("uimage2D") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_2D)
+#if defined(GL_UNSIGNED_INT_IMAGE_3D)
+        { GL_UNSIGNED_INT_IMAGE_3D, QLatin1String("uimage3D") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_3D)
+#if defined(GL_UNSIGNED_INT_IMAGE_2D_RECT)
+        { GL_UNSIGNED_INT_IMAGE_2D_RECT, QLatin1String("uimage2DRect") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_2D_RECT)
+#if defined(GL_UNSIGNED_INT_IMAGE_CUBE)
+        { GL_UNSIGNED_INT_IMAGE_CUBE, QLatin1String("uimageCube") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_CUBE)
+#if defined(GL_UNSIGNED_INT_IMAGE_BUFFER)
+        { GL_UNSIGNED_INT_IMAGE_BUFFER, QLatin1String("uimageBuffer") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_BUFFER)
+#if defined(GL_UNSIGNED_INT_IMAGE_1D_ARRAY)
+        { GL_UNSIGNED_INT_IMAGE_1D_ARRAY, QLatin1String("uimage1DArray") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_1D_ARRAY)
+#if defined(GL_UNSIGNED_INT_IMAGE_2D_ARRAY)
+        { GL_UNSIGNED_INT_IMAGE_2D_ARRAY, QLatin1String("uimage2DArray") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_2D_ARRAY)
+#if defined(GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE)
+        { GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE, QLatin1String("uimage2DMS") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE)
+#if defined(GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY)
+        { GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY, QLatin1String("uimage2DMSArray") },
+#endif // defined(GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY)
+#if defined(GL_UNSIGNED_INT_ATOMIC_COUNTER)
+        { GL_UNSIGNED_INT_ATOMIC_COUNTER, QLatin1String("atomic_uint") },
+#endif // defined(GL_UNSIGNED_INT_ATOMIC_COUNTER)
+    };
+    const auto glslDataTypesCount = sizeof(glslDataTypes) / sizeof(GlslDataTypeEntry);
+
+    for (auto glslDataTypeIdx = 0u; glslDataTypeIdx < glslDataTypesCount; glslDataTypeIdx++)
+    {
+        const auto& glslDataType = glslDataTypes[glslDataTypeIdx];
+        if (glslDataType.dataType != dataType)
+            continue;
+
+        return glslDataType.name;
+    }
+
+    return QString(QLatin1String("unknown-%d")).arg(dataType);
+}
+
 std::shared_ptr<OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext> OsmAnd::GPUAPI_OpenGL::obtainVariablesLookupContext(const GLuint& program)
 {
     return std::shared_ptr<ProgramVariablesLookupContext>(new ProgramVariablesLookupContext(this, program));
 }
 
-void OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GLShaderVariableType& type)
+void OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type)
 {
     GL_CHECK_PRESENT(glGetAttribLocation);
     GL_CHECK_PRESENT(glGetUniformLocation);
 
-    if (type == GLShaderVariableType::In)
+    if (type == GlslVariableType::In)
         location = glGetAttribLocation(program, qPrintable(name));
-    else if (type == GLShaderVariableType::Uniform)
+    else if (type == GlslVariableType::Uniform)
         location = glGetUniformLocation(program, qPrintable(name));
     GL_CHECK_RESULT;
     if (location == -1)
-        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d", qPrintable(name), type == GLShaderVariableType::In ? "In" : "Uniform", program);
+        LogPrintf(LogSeverityLevel::Error, "Variable '%s' (%s) was not found in GLSL program %d", qPrintable(name), type == GlslVariableType::In ? "In" : "Uniform", program);
     assert(location != -1);
 }
 
@@ -1157,7 +1530,7 @@ OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::~ProgramVariablesLookupCon
 {
 }
 
-void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint& location, const QString& name, const GLShaderVariableType& type)
+void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint& location, const QString& name, const GlslVariableType& type)
 {
     auto& variablesByName = _variablesByName[type];
     const auto itPreviousLocation = variablesByName.constFind(name);
@@ -1166,7 +1539,7 @@ void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
         LogPrintf(LogSeverityLevel::Error,
             "Variable '%s' (%s) was already located in program %d at %d",
             qPrintable(name),
-            type == GLShaderVariableType::In ? "In" : "Uniform",
+            type == GlslVariableType::In ? "In" : "Uniform",
             program,
             *itPreviousLocation);
         assert(true);
@@ -1181,14 +1554,14 @@ void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
         LogPrintf(LogSeverityLevel::Error,
             "Variable '%s' (%s) in program %d was shares same location at other variable '%s'",
             qPrintable(name),
-            type == GLShaderVariableType::In ? "In" : "Uniform",
+            type == GlslVariableType::In ? "In" : "Uniform",
             program,
             qPrintable(*itOtherName));
         assert(true);
     }
 }
 
-void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLlocation& location, const QString& name, const GLShaderVariableType& type)
+void OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type)
 {
     lookupLocation(*location, name, type);
 }
