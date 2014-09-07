@@ -58,17 +58,15 @@
 using namespace OsmAnd;
 %}
 
-/*
-%include <cpointer.i>
+%include <enums.swg>
+%include <typemaps.i>
+%include <stdint.i>
+	%include <cpointer.i>
 	%pointer_class(bool, BoolPtr);
 	%pointer_class(int, IntPtr);
 	%pointer_class(unsigned int, UIntPtr);
 	%pointer_class(float, FloatPtr);
 	%pointer_class(double, DoublePtr);
-*/
-%include <enums.swg>
-%include <typemaps.i>
-%include <stdint.i>
 %include <std_shared_ptr.i>
 	%shared_ptr(OsmAnd::IObfsCollection)
 	%shared_ptr(OsmAnd::ObfsCollection)
