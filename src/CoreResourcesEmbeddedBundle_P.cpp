@@ -1,6 +1,10 @@
 #include "CoreResourcesEmbeddedBundle_P.h"
 #include "CoreResourcesEmbeddedBundle.h"
 
+#if !defined(OSMAND_TARGET_OS_windows)
+#   include <dlfcn.h>
+#endif // !defined(OSMAND_TARGET_OS_windows)
+
 #include <QRegularExpression>
 #include <QStringList>
 #include "QtCommon.h"
