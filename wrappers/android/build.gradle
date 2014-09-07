@@ -37,6 +37,11 @@ android {
 		}
 	}
 
+	aaptOptions {
+		// Don't compress any embedded resources
+		noCompress 'png', 'xml', 'dat', 'ttf'
+	}
+
 	lintOptions {
 		abortOnError false
 	}
