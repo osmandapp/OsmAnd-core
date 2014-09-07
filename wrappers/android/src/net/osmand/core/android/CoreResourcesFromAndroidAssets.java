@@ -53,12 +53,20 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
     }
 
     @Override
-    public SWIGTYPE_p_QByteArray getResource(String name, float displayDensityFactor, SWIGTYPE_p_bool ok) {
+    public SWIGTYPE_p_QByteArray getResource(String name, float displayDensityFactor, SWIGTYPE_p_bool ok_) {
+        final BoolPtr ok = BoolPtr.frompointer(ok_);
+        if (ok != null)
+            ok.assign(false);
+
         return null;
     }
 
     @Override
-    public SWIGTYPE_p_QByteArray getResource(String name, SWIGTYPE_p_bool ok) {
+    public SWIGTYPE_p_QByteArray getResource(String name, SWIGTYPE_p_bool ok_) {
+        final BoolPtr ok = BoolPtr.frompointer(ok_);
+        if (ok != null)
+            ok.assign(false);
+
         return null;
     }
 
