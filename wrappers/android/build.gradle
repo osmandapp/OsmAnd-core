@@ -21,6 +21,7 @@ android {
 		java.srcDirs = ["src", "./gen/java"]
 		jniLibs.srcDirs = ["./jniLibs"]
 		jni.srcDirs = []
+		assets.srcDirs = ['assets']
 	}
 
 	compileSdkVersion 19
@@ -150,6 +151,121 @@ task copyQtJarLibs(type: Copy) {
 }
 tasks.withType(JavaCompile) {
 	compileTask -> compileTask.dependsOn << copyQtJarLibs
+}
+
+// OsmAnd resources copy task
+task copyOsmAndResources(type: Copy) {
+	description "Copy OsmAnd resources"
+
+	// Map styles and related:
+	from("../../../resources/rendering_styles") {
+		include "default.render.xml"
+		include "default.map_styles_presets.xml"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "map/styles/" + fileCopyDetails.path
+		}
+	}
+
+	// Map icons (Android mdpi == 1.0 ddf):
+	from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
+		include "h_*shield*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=1.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_(.*shield.*)\.png/, '$1.png')
+		}
+	}
+	from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
+		include "h_*.png"
+		exclude "h_*shield*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=1.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+		}
+	}
+	from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
+		include "mm_*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=1.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+		}
+	}
+
+	// Map icons (Android hdpi == 1.5 ddf):
+	from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
+		include "h_*shield*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=1.5]/map/shields/" + fileCopyDetails.path.replaceAll(/h_(.*shield.*)\.png/, '$1.png')
+		}
+	}
+	from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
+		include "h_*.png"
+		exclude "h_*shield*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=1.5]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+		}
+	}
+	from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
+		include "mm_*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=1.5]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+		}
+	}
+
+	// Map icons (Android xhdpi == 2.0 ddf):
+	from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
+		include "h_*shield*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=2.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_(.*shield.*)\.png/, '$1.png')
+		}
+	}
+	from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
+		include "h_*.png"
+		exclude "h_*shield*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=2.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+		}
+	}
+	from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
+		include "mm_*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "[ddf=2.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+		}
+	}
+
+	// Misc map resources:
+	from("../../../resources/rendering_styles/stubs") {
+		include "**/*.png"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "map/stubs/" + fileCopyDetails.path
+		}
+	}
+
+	// Routing:
+	from("../../../resources/routing") {
+		include "routing.xml"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "routing/" + fileCopyDetails.path
+		}
+	}
+
+	// Fonts:
+	from("../../../resources/rendering_styles/fonts") {
+		include "**/*.ttf"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "map/fonts/" + fileCopyDetails.path
+		}
+	}
+
+	// Misc resources
+	from("../../../resources/misc/icu4c") {
+		include "*.dat"
+		eachFile { fileCopyDetails ->
+			fileCopyDetails.path = "misc/icu4c/" + fileCopyDetails.path.replaceAll(/icudt\d+([lb])\.dat/, 'icu-data-$1.dat')
+		}
+	}
+
+	into "./assets/OsmAndCore_ResourcesBundle"
+	includeEmptyDirs = false
+}
+tasks.withType(JavaCompile) {
+	compileTask -> compileTask.dependsOn << copyOsmAndResources
 }
 
 dependencies {

@@ -16,6 +16,7 @@
 #include <QFile>
 #include <QVector>
 #include <QSet>
+#include <QByteArray>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -617,6 +618,18 @@ namespace OsmAnd
             return result;
         }
 
+        inline static QByteArray readEntireFile(const QString& filename)
+        {
+            QFile file(filename);
+            if (!file.open(QIODevice::ReadOnly))
+                return QByteArray();
+
+            const auto data = file.readAll();
+
+            file.close();
+
+            return data;
+        }
     private:
         Utilities();
         ~Utilities();
