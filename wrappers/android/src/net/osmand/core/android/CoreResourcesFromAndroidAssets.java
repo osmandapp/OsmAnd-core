@@ -39,7 +39,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
 
         // If listing returned nothing, it means that path refers to a file (or nothing was found)
         if (subdirectories.length == 0) {
-            final String fullFilename = path + "/" + subdirName;
+            final String fullFilename = path;
             try {
                 final AssetFileDescriptor assetFd = assetManager.openFd(fullFilename);
                 Log.d("CoreResourcesFromAndroidAssets", fullFilename + " is a resource");
