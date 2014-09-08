@@ -343,6 +343,7 @@ namespace OsmAnd
             return diff;
         }
         
+#if !defined(SWIG)
         inline static AreaI64 boundingBox31FromAreaInMeters(const double radiusInMeters, const PointI center31)
         {
             const auto x31r = metersToX31(radiusInMeters);
@@ -350,6 +351,7 @@ namespace OsmAnd
 
             return AreaI64::fromCenterAndSize(center31.x, center31.y, x31r * 2, y31r * 2);
         }
+#endif // !defined(SWIG)
 
         inline static AreaI tileBoundingBox31(const TileId tileId, const ZoomLevel zoom)
         {
@@ -496,6 +498,7 @@ namespace OsmAnd
             return output;
         }
 
+#if !defined(SWIG)
         inline static PointI normalizeCoordinates(const PointI64& input, const ZoomLevel zoom)
         {
             PointI64 output = input;
@@ -517,6 +520,7 @@ namespace OsmAnd
 
             return PointI(static_cast<int32_t>(output.x), static_cast<int32_t>(output.y));
         }
+#endif // !defined(SWIG)
 
         enum class CHCode : uint8_t
         {
