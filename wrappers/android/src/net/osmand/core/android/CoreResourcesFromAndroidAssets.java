@@ -14,6 +14,8 @@ import net.osmand.core.jni.*;
 
 // This class provides reverse mapping from 'embed-resources.list' to files&folders scheme used by OsmAndCore_android.aar package
 public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
+    private static final String TAG = "CoreResourcesFromAndroidAssets";
+
     public CoreResourcesFromAndroidAssets(final Context context) {
         _context = context;
 
@@ -40,7 +42,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
         try {
             assetManager.list(path);
         } catch(IOException e) {
-            Log.e("Failed to list '" + path + "'", e);
+            Log.e(TAG, "Failed to list '" + path + "'", e);
             return;
         }
 
@@ -49,7 +51,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
             final String fullFilename = path;
             try {
                 final AssetFileDescriptor assetFd = assetManager.openFd(fullFilename);
-                Log.d("CoreResourcesFromAndroidAssets", fullFilename + " is a resource");
+                Log.d(TAG, "'" + fullFilename + "' is a resource");
                 assetFd.close();
             } catch(IOException e) {
             }
