@@ -40,7 +40,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
     private void collectBundledResourcesFrom(final HashMap<String, ResourceEntry> resourcesCollection, final AssetManager assetManager, final String path) {
         String[] subdirectories;
         try {
-            assetManager.list(path);
+            subdirectories = assetManager.list(path);
         } catch(IOException e) {
             Log.e(TAG, "Failed to list '" + path + "'", e);
             return;
