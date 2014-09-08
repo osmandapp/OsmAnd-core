@@ -88,6 +88,7 @@ if (CMAKE_TARGET_OS STREQUAL "android")
 else()
 	target_include_directories(OsmAndCoreWithJNI
 		PRIVATE
+			"${OSMAND_ROOT}/core/swig"
 			${JNI_INCLUDE_DIRS}
 			${JAVA_INCLUDE_PATH}
 			${target_specific_private_includes}
