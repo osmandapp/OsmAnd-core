@@ -4,7 +4,7 @@
 //%nspace;
 
 %{
-#include <swig/SwigUtilities.h>
+#include "SwigUtilities.h"
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Bitmask.h>
