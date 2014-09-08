@@ -105,7 +105,7 @@ public class MainActivity extends ActionBarActivity {
         Log.i(TAG, "rasterTileSize = " + _rasterTileSize);
 
         Log.i(TAG, "Initializing core...");
-        _coreResources = new CoreResourcesFromAndroidAssets(getContext());
+        _coreResources = new CoreResourcesFromAndroidAssets(this);
         OsmAndCore.InitializeCore(_coreResources);
 
         Log.i(TAG, "Going to resolve default embedded style...");
