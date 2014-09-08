@@ -113,7 +113,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
             GL_CHECK_RESULT;
             assert(logLen + 1 == logBufferLen);
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile GLSL shader:\n%s\nSources:\n%s",
+                "Failed to compile GLSL shader:\n%s\nSources:\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
                 log,
                 source);
             free(log);
@@ -121,7 +121,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile GLSL shader from source (0x%08x):\n%s",
+                "Failed to compile GLSL shader from source (0x%08x):\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
                 compilationResult,
                 source);
         }
