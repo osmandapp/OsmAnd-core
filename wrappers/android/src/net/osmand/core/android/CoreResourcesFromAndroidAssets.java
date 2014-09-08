@@ -39,7 +39,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
         String[] subdirectories;
         try {
             assetManager.list(path);
-        catch(IOException e) {
+        } catch(IOException e) {
             Log.e("Failed to list '" + path + "'", e);
             return;
         }
