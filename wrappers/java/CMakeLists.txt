@@ -48,6 +48,7 @@ target_compile_definitions(OsmAndCoreJNI
 if (CMAKE_TARGET_OS STREQUAL "android")
 	target_include_directories(OsmAndCoreJNI
 		PRIVATE
+			"${OSMAND_ROOT}/core/swig"
 			${target_specific_private_includes}
 	)
 else()
@@ -55,6 +56,7 @@ else()
 		PRIVATE
 			${JNI_INCLUDE_DIRS}
 			${JAVA_INCLUDE_PATH}
+			"${OSMAND_ROOT}/core/swig"
 			${target_specific_private_includes}
 	)
 endif()
@@ -80,6 +82,7 @@ target_compile_definitions(OsmAndCoreWithJNI
 if (CMAKE_TARGET_OS STREQUAL "android")
 	target_include_directories(OsmAndCoreWithJNI
 		PRIVATE
+			"${OSMAND_ROOT}/core/swig"
 			${target_specific_private_includes}
 	)
 else()
