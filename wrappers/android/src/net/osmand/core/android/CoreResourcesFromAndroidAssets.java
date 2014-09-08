@@ -161,7 +161,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
         ResourceData resourceData = resourceDataEntry.getValue();
         Log.d(TAG, "Using ddf=" + resourceDataEntry.getKey() + " while looking for " + displayDensityFactor + " of '" + name + "'");
 
-        final SWIGTYPE_p_QByteArray data = Utilities.readPartOfFile(
+        final SWIGTYPE_p_QByteArray data = SwigUtilities.readPartOfFile(
             _bundleFilename,
             resourceData.offset,
             resourceData.size);
@@ -196,7 +196,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
             return SwigUtilities.emptyQByteArray();
         }
 
-        final SWIGTYPE_p_QByteArray data = Utilities.readPartOfFile(
+        final SWIGTYPE_p_QByteArray data = SwigUtilities.readPartOfFile(
             _bundleFilename,
             resourceEntry.defaultVariant.offset,
             resourceEntry.defaultVariant.size);
