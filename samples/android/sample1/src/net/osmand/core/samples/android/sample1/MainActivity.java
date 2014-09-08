@@ -20,6 +20,7 @@ import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
 
 import net.osmand.core.jni.*;
+import net.osmand.core.android.*;
 
 public class MainActivity extends ActionBarActivity {
     static {
@@ -69,6 +70,8 @@ public class MainActivity extends ActionBarActivity {
 
     private static final String TAG = "OsmAndCoreSample";
 
+    private CoreResourcesFromAndroidAssets _coreResources;
+
     private float _displayDensityFactor;
     private int _referenceTileSize;
     private int _rasterTileSize;
@@ -102,7 +105,8 @@ public class MainActivity extends ActionBarActivity {
         Log.i(TAG, "rasterTileSize = " + _rasterTileSize);
 
         Log.i(TAG, "Initializing core...");
-        OsmAndCore.InitializeCore(new CoreResourcesFromAndroidAssets(getContext()));
+        _coreResources = new CoreResourcesFromAndroidAssets(getContext());
+        OsmAndCore.InitializeCore(_coreResources);
 
         Log.i(TAG, "Going to resolve default embedded style...");
         _mapStylesCollection = new MapStylesCollection();
