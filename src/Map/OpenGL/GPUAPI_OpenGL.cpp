@@ -94,7 +94,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
     GL_CHECK_RESULT;
 
     glCompileShader(shader);
-    GL_CHECK_RESULT;
+    const auto compilationResult = GL_CHECK_RESULT;
 
     // Check if compiled
     GLint didCompile;
@@ -121,7 +121,8 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile GLSL shader from source:\n%s",
+                "Failed to compile GLSL shader from source (0x%08x):\n%s",
+                compilationResult,
                 source);
         }
 
@@ -163,7 +164,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     }
 
     glLinkProgram(program);
-    GL_CHECK_RESULT;
+    const auto linkingResult = GL_CHECK_RESULT;
 
     for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
     {
@@ -200,7 +201,8 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to link GLSL program");
+                "Failed to link GLSL program (0x%08x)",
+                linkingResult);
         }
 
         glDeleteProgram(program);
