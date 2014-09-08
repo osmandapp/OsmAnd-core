@@ -617,9 +617,6 @@ namespace OsmAnd
 
             return result;
         }
-
-        static QByteArray readEntireFile(const QString& filename);
-        static QByteArray readPartOfFile(const QString& filename, const size_t offset, const size_t length);
     private:
         Utilities();
         ~Utilities();

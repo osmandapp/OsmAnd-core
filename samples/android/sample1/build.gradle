@@ -10,11 +10,18 @@ android {
         versionCode 1
         versionName "1.0"
     }
+
     lintOptions {
         abortOnError false
     }
-	
-	sourceSets {
+
+    // This is from OsmAndCore_android.aar - for some reason it's not inherited
+    aaptOptions {
+        // Don't compress any embedded resources
+        noCompress "ttf", "xml", "dat", "png"
+    }
+
+    sourceSets {
         main {
             manifest.srcFile "AndroidManifest.xml"
             jni.srcDirs = []

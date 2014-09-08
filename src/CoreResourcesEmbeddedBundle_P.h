@@ -35,9 +35,10 @@ namespace OsmAnd
 #endif
         LibraryHandle _bundleLibrary;
         bool _bundleLibraryNeedsClose;
+        void unloadLibrary();
 
         void* loadSymbol(const char* const symbolName);
-        void loadResources();
+        bool loadResources();
 
         struct ResourceData
         {
@@ -58,8 +59,11 @@ namespace OsmAnd
         };
         QHash<QString, ResourceEntry> _resources;
     protected:
+        CoreResourcesEmbeddedBundle_P(CoreResourcesEmbeddedBundle* const owner);
+
+        bool loadFromCurrentExecutable();
+        bool loadFromLibrary(const QString& libraryNameOrFilename);
     public:
-        CoreResourcesEmbeddedBundle_P(CoreResourcesEmbeddedBundle* const owner, const QString& bundleLibraryName = QString::null);
         ~CoreResourcesEmbeddedBundle_P();
 
         ImplementationInterface<CoreResourcesEmbeddedBundle> owner;
@@ -77,6 +81,8 @@ namespace OsmAnd
             const float displayDensityFactor) const;
         bool containsResource(
             const QString& name) const;
+
+    friend class OsmAnd::CoreResourcesEmbeddedBundle;
     };
 }
 

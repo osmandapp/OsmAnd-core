@@ -21,7 +21,7 @@ android {
 		java.srcDirs = ["src", "./gen/java"]
 		jniLibs.srcDirs = ["./jniLibs"]
 		jni.srcDirs = []
-		assets.srcDirs = ['assets']
+		assets.srcDirs = ["assets"]
 	}
 
 	compileSdkVersion 19
@@ -37,9 +37,10 @@ android {
 		}
 	}
 
+	// Seems this has no effect at all, since not propagated. So should be inserted in host application
 	aaptOptions {
 		// Don't compress any embedded resources
-		noCompress 'png', 'xml', 'dat', 'ttf'
+		noCompress "ttf", "xml", "dat", "png"
 	}
 
 	lintOptions {
@@ -271,6 +272,22 @@ task copyOsmAndResources(type: Copy) {
 }
 tasks.withType(JavaCompile) {
 	compileTask -> compileTask.dependsOn << copyOsmAndResources
+}
+
+// OsmAnd resources indexing task
+task indexOsmAndResources << {
+	description "Index OsmAnd resources"
+
+	def resources = fileTree("./assets/OsmAndCore_ResourcesBundle") {
+		include "**/*.*"
+	}.collect { relativePath(it).replace('\\', '/').replaceAll("assets/OsmAndCore_ResourcesBundle/", "") }
+
+	def indexFile = new File("./assets/OsmAndCore_ResourcesBundle.index")
+	indexFile.text = resources.join('\n')
+}
+indexOsmAndResources.dependsOn << copyOsmAndResources
+tasks.withType(JavaCompile) {
+	compileTask -> compileTask.dependsOn << indexOsmAndResources
 }
 
 dependencies {

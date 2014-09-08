@@ -24,9 +24,8 @@ namespace OsmAnd
     private:
         PrivateImplementation<CoreResourcesEmbeddedBundle_P> _p;
     protected:
-    public:
         CoreResourcesEmbeddedBundle();
-        CoreResourcesEmbeddedBundle(const QString& bundleLibraryName);
+    public:
         virtual ~CoreResourcesEmbeddedBundle();
 
         virtual QByteArray getResource(
@@ -42,6 +41,9 @@ namespace OsmAnd
             const float displayDensityFactor) const;
         virtual bool containsResource(
             const QString& name) const;
+
+        static std::shared_ptr<const CoreResourcesEmbeddedBundle> loadFromCurrentExecutable();
+        static std::shared_ptr<const CoreResourcesEmbeddedBundle> loadFromLibrary(const QString& libraryNameOrFilename);
     };
 }
 

@@ -65,7 +65,7 @@ public class Sample1 implements GLEventListener {
         System.exit(0);
       }
     }
-    _coreResourcesEmbeddedBundle = new CoreResourcesEmbeddedBundle("OsmAndCore_ResourcesBundle_shared");
+    _coreResourcesEmbeddedBundle = CoreResourcesEmbeddedBundle.loadFromLibrary("OsmAndCore_ResourcesBundle_shared");
 
     final Animator animator = new Animator();
 

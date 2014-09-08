@@ -13,38 +13,78 @@
 #include "QKeyValueIterator.h"
 
 OsmAnd::CoreResourcesEmbeddedBundle_P::CoreResourcesEmbeddedBundle_P(
-    CoreResourcesEmbeddedBundle* const owner_,
-    const QString& bundleLibraryName /*= QString::null*/)
+    CoreResourcesEmbeddedBundle* const owner_)
     : owner(owner_)
 {
-#if defined(OSMAND_TARGET_OS_windows)
-    if (bundleLibraryName.isNull())
-    {
-        _bundleLibraryNeedsClose = false;
-        _bundleLibrary = GetModuleHandleA(NULL);
-    }
-    else
-    {
-        _bundleLibraryNeedsClose = true;
-        _bundleLibrary = LoadLibraryA(qPrintable(bundleLibraryName));
-    }
-#else
-    _bundleLibraryNeedsClose = true;
-    _bundleLibrary = dlopen(bundleLibraryName.isNull() ? NULL : qPrintable(bundleLibraryName), RTLD_NOW | RTLD_GLOBAL);
-#endif
-    assert(_bundleLibrary != nullptr);
-
-    loadResources();
 }
 
 OsmAnd::CoreResourcesEmbeddedBundle_P::~CoreResourcesEmbeddedBundle_P()
 {
+    unloadLibrary();
+}
+
+bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadFromCurrentExecutable()
+{
+#if defined(OSMAND_TARGET_OS_windows)
+    _bundleLibraryNeedsClose = false;
+    _bundleLibrary = GetModuleHandleA(NULL);
+    if (_bundleLibrary == NULL)
+        return false;
+#else
+    _bundleLibraryNeedsClose = true;
+    _bundleLibrary = dlopen(NULL, RTLD_NOW | RTLD_GLOBAL);
+    if (_bundleLibrary == NULL)
+        return false;
+#endif
+
+    if (!loadResources())
+    {
+        unloadLibrary();
+        return false;
+    }
+
+    return true;
+}
+
+bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadFromLibrary(const QString& libraryNameOrFilename)
+{
+#if defined(OSMAND_TARGET_OS_windows)
+    _bundleLibraryNeedsClose = true;
+    _bundleLibrary = LoadLibraryA(qPrintable(libraryNameOrFilename));
+    if (_bundleLibrary == NULL)
+        return false;
+#else
+    _bundleLibraryNeedsClose = true;
+    _bundleLibrary = dlopen(qPrintable(libraryNameOrFilename), RTLD_NOW | RTLD_GLOBAL);
+    if (_bundleLibrary == NULL)
+        return false;
+#endif
+
+    if (!loadResources())
+    {
+        unloadLibrary();
+        return false;
+    }
+
+    return true;
+}
+
+void OsmAnd::CoreResourcesEmbeddedBundle_P::unloadLibrary()
+{
     if (_bundleLibraryNeedsClose)
     {
 #if defined(OSMAND_TARGET_OS_windows)
-        CloseHandle(_bundleLibrary);
+        if (_bundleLibrary != NULL)
+        {
+            CloseHandle(_bundleLibrary);
+            _bundleLibrary = NULL;
+        }
 #else
-        dlclose(_bundleLibrary);
+        if (_bundleLibrary != NULL)
+        {
+            dlclose(_bundleLibrary);
+            _bundleLibrary = NULL;
+        }
 #endif
     }
 }
@@ -59,9 +99,9 @@ void* OsmAnd::CoreResourcesEmbeddedBundle_P::loadSymbol(const char* const symbol
 #endif
 
     return symbolPtr;
-}
+    }
 
-void OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
+bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
 {
 #if defined(OSMAND_TARGET_OS_windows)
     typedef const void* (*GetPointerFunctionPtr)();
@@ -76,7 +116,8 @@ void OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
 
     // Find out what number of resources there is in the bundle
     const auto pGetResourcesCount = reinterpret_cast<GetPointerFunctionPtr>(loadSymbol("__get____CoreResourcesEmbeddedBundle__ResourcesCount"));
-    assert(pGetResourcesCount != nullptr);
+    if (pGetResourcesCount == nullptr)
+        return false;
     const auto resourcesCount = *reinterpret_cast<const uint32_t*>(pGetResourcesCount());
 
     for (auto resourceIdx = 0u; resourceIdx < resourcesCount; resourceIdx++)
@@ -85,17 +126,20 @@ void OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
 
         const auto pGetResourceName = reinterpret_cast<GetPointerFunctionPtr>(loadSymbol(
             QString(QLatin1String("__get____CoreResourcesEmbeddedBundle__ResourceName_%1")).arg(resourceIdx).toLatin1()));
-        assert(pGetResourceName != nullptr);
+        if (pGetResourceName == nullptr)
+            return false;
         const auto resourceName = reinterpret_cast<const char*>(pGetResourceName());
 
         const auto pGetResourceSize = reinterpret_cast<GetPointerFunctionPtr>(loadSymbol(
             QString(QLatin1String("__get____CoreResourcesEmbeddedBundle__ResourceSize_%1")).arg(resourceIdx).toLatin1()));
-        assert(pGetResourceSize != nullptr);
+        if (pGetResourceSize == nullptr)
+            return false;
         resourceData.size = *reinterpret_cast<const size_t*>(pGetResourceSize());
 
         const auto pGetResourceData = reinterpret_cast<GetPointerFunctionPtr>(loadSymbol(
             QString(QLatin1String("__get____CoreResourcesEmbeddedBundle__ResourceData_%1")).arg(resourceIdx).toLatin1()));
-        assert(pGetResourceData != nullptr);
+        if (pGetResourceData == nullptr)
+            return false;
         resourceData.data = reinterpret_cast<const uint8_t*>(pGetResourceData());
 
         // Process resource name
@@ -113,7 +157,7 @@ void OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
         }
 
         // Get resource entry for this resource
-        auto& resourceEntry = _resources[pureResourceName];        
+        auto& resourceEntry = _resources[pureResourceName];
         if (qualifiers.isEmpty())
         {
             resourceEntry.defaultVariant = resourceData;
@@ -123,7 +167,7 @@ void OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
             for (const auto& qualifier : constOf(qualifiers))
             {
                 const auto qualifierComponents = qualifier.trimmed().split(QLatin1Char('='), QString::SkipEmptyParts);
-                
+
                 bool ok = false;
                 if (qualifierComponents.size() == 2 && qualifierComponents.first() == QLatin1String("ddf"))
                 {
@@ -145,6 +189,8 @@ void OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
             }
         }
     }
+
+    return true;
 }
 
 QByteArray OsmAnd::CoreResourcesEmbeddedBundle_P::getResource(const QString& name, const float displayDensityFactor, bool* ok /*= nullptr*/) const

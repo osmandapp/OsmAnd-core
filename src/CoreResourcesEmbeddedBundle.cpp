@@ -13,11 +13,6 @@ OsmAnd::CoreResourcesEmbeddedBundle::CoreResourcesEmbeddedBundle()
 {
 }
 
-OsmAnd::CoreResourcesEmbeddedBundle::CoreResourcesEmbeddedBundle(const QString& bundleLibraryName)
-    : _p(new CoreResourcesEmbeddedBundle_P(this, bundleLibraryName))
-{
-}
-
 OsmAnd::CoreResourcesEmbeddedBundle::~CoreResourcesEmbeddedBundle()
 {
 }
@@ -40,4 +35,20 @@ bool OsmAnd::CoreResourcesEmbeddedBundle::containsResource(const QString& name, 
 bool OsmAnd::CoreResourcesEmbeddedBundle::containsResource(const QString& name) const
 {
     return _p->containsResource(name);
+}
+
+std::shared_ptr<const OsmAnd::CoreResourcesEmbeddedBundle> OsmAnd::CoreResourcesEmbeddedBundle::loadFromCurrentExecutable()
+{
+    const std::shared_ptr<CoreResourcesEmbeddedBundle> bundle(new CoreResourcesEmbeddedBundle());
+    if (!bundle->_p->loadFromCurrentExecutable())
+        return nullptr;
+    return bundle;
+}
+
+std::shared_ptr<const OsmAnd::CoreResourcesEmbeddedBundle> OsmAnd::CoreResourcesEmbeddedBundle::loadFromLibrary(const QString& libraryNameOrFilename)
+{
+    const std::shared_ptr<CoreResourcesEmbeddedBundle> bundle(new CoreResourcesEmbeddedBundle());
+    if (!bundle->_p->loadFromLibrary(libraryNameOrFilename))
+        return nullptr;
+    return bundle;
 }

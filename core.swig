@@ -4,6 +4,7 @@
 //%nspace;
 
 %{
+#include <swig/SwigUtilities.h>
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Bitmask.h>
@@ -13,6 +14,7 @@
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
+#include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/Data/DataTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
@@ -150,6 +152,7 @@ using namespace OsmAnd;
 %include <swig/QVector.i>
 
 %include <swig/OsmAndCore_Stubs.h>
+%include <swig/SwigUtilities.h>
 %include <OsmAndCore.h>
 %include <OsmAndCore/Common.h>
 %include <OsmAndCore/CommonSWIG.h>
@@ -177,6 +180,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/ResourcesManager.h>
 %include <OsmAndCore/ICoreResourcesProvider.h>
 %include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
+%include <OsmAndCore/Utilities.h>
 %include <OsmAndCore/Data/DataTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>

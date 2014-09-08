@@ -1,6 +1,5 @@
 package net.osmand.core.samples.android.sample1;
 
-import android.content.Context;
 import android.opengl.EGL14;
 import android.opengl.GLSurfaceView;
 import android.os.Environment;
@@ -10,7 +9,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.WindowManager;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -105,7 +103,7 @@ public class MainActivity extends ActionBarActivity {
         Log.i(TAG, "rasterTileSize = " + _rasterTileSize);
 
         Log.i(TAG, "Initializing core...");
-        _coreResources = new CoreResourcesFromAndroidAssets(this);
+        _coreResources = CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this);
         OsmAndCore.InitializeCore(_coreResources);
 
         Log.i(TAG, "Going to resolve default embedded style...");
@@ -159,8 +157,8 @@ public class MainActivity extends ActionBarActivity {
         _mapRenderer.setElevationAngle(35.0f);
 
         _mapRenderer.setTarget(new PointI(
-            1102430866,
-            704978668));
+                1102430866,
+                704978668));
         _mapRenderer.setZoom(10.0f);
         /*
         IMapRasterBitmapTileProvider mapnik = OnlineTileSources.getBuiltIn().createProviderFor("Mapnik (OsmAnd)");

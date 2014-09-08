@@ -16,12 +16,12 @@ public class CoreResourcesFromAndroid_LegacyOsmAndCompatible extends ICoreResour
 
     @Override
     public SWIGTYPE_p_QByteArray getResource(String name, float displayDensityFactor, SWIGTYPE_p_bool ok) {
-        return null;
+        return SwigUtilities.emptyQByteArray();
     }
 
     @Override
     public SWIGTYPE_p_QByteArray getResource(String name, SWIGTYPE_p_bool ok) {
-        return null;
+        return SwigUtilities.emptyQByteArray();
     }
 
     @Override
