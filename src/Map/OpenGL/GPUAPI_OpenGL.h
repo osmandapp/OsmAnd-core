@@ -62,6 +62,8 @@
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
 #   define GL_GET_RESULT \
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
+#   define GL_GET_AND_CHECK_RESULT \
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
 #   define GL_CHECK_PRESENT(x) \
         const static OsmAnd::GPUAPI_OpenGL::glPresenseChecker<decltype(x)> glPresenseChecker_##x(&x, #x)
 #   define GL_PUSH_GROUP_MARKER(title) \
@@ -71,6 +73,7 @@
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
+#   define GL_GET_AND_CHECK_RESULT glGetError()
 #   define GL_CHECK_PRESENT(x)
 #   define GL_PUSH_GROUP_MARKER(title)
 #   define GL_POP_GROUP_MARKER

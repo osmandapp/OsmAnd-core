@@ -23,12 +23,15 @@
 
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
+#undef GL_GET_AND_CHECK_RESULT
 #if OSMAND_DEBUG || defined(OSMAND_TARGET_OS_android)
 #   define GL_CHECK_RESULT validateResult()
 #   define GL_GET_RESULT validateResult()
+#   define GL_GET_AND_CHECK_RESULT validateResult()
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
+#   define GL_GET_AND_CHECK_RESULT glGetError()
 #endif
 
 OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
@@ -94,13 +97,13 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
     GL_CHECK_RESULT;
 
     glCompileShader(shader);
-    const auto compilationResult = GL_CHECK_RESULT;
+    const auto compilationResult = GL_GET_AND_CHECK_RESULT;
 
     // Check if compiled
     GLint didCompile;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &didCompile);
     GL_CHECK_RESULT;
-    if (didCompile != GL_TRUE)
+    if (didCompile == GL_FALSE)
     {
         GLint logBufferLen = 0;
         GLsizei logLen = 0;
@@ -121,8 +124,9 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile GLSL shader from source (0x%08x):\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
+                "Failed to compile GLSL shader from source (0x%08x, 0x%08x):\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
                 compilationResult,
+                didCompile,
                 source);
         }
 
@@ -164,7 +168,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     }
 
     glLinkProgram(program);
-    const auto linkingResult = GL_CHECK_RESULT;
+    const auto linkingResult = GL_GET_AND_CHECK_RESULT;
 
     for (auto shaderIdx = 0u; shaderIdx < shadersCount; shaderIdx++)
     {
@@ -181,7 +185,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     GLint linkSuccessful;
     glGetProgramiv(program, GL_LINK_STATUS, &linkSuccessful);
     GL_CHECK_RESULT;
-    if (linkSuccessful != GL_TRUE)
+    if (linkSuccessful == GL_FALSE)
     {
         GLint logBufferLen = 0;
         GLsizei logLen = 0;
@@ -201,8 +205,9 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to link GLSL program (0x%08x)",
-                linkingResult);
+                "Failed to link GLSL program (0x%08x, 0x%08x)",
+                linkingResult,
+                linkSuccessful);
         }
 
         glDeleteProgram(program);

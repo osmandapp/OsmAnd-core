@@ -20,12 +20,15 @@
 
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
+#undef GL_GET_AND_CHECK_RESULT
 #if OSMAND_DEBUG
 #   define GL_CHECK_RESULT validateResult()
 #   define GL_GET_RESULT validateResult()
+#   define GL_GET_AND_CHECK_RESULT validateResult()
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
+#   define GL_GET_AND_CHECK_RESULT glGetError()
 #endif
 
 OsmAnd::GPUAPI_OpenGL2plus::GPUAPI_OpenGL2plus()
