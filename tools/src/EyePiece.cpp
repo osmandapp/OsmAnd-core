@@ -812,7 +812,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
     if (configuration.verbose)
         output << xT("Initializing OsmAndCore...") << std::endl;
-    std::shared_ptr<OsmAnd::CoreResourcesEmbeddedBundle> coreResourcesEmbeddedBundle;
+    std::shared_ptr<const OsmAnd::CoreResourcesEmbeddedBundle> coreResourcesEmbeddedBundle;
 #if defined(OSMAND_CORE_STATIC)
     coreResourcesEmbeddedBundle = OsmAnd::CoreResourcesEmbeddedBundle::loadFromCurrentExecutable();
 #else
