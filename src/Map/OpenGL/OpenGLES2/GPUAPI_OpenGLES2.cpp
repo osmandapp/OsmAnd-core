@@ -611,6 +611,8 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
         "                                                                                                                   ""\n"
         // Fragment shader output declaration
         "#define FRAGMENT_COLOR_OUTPUT gl_FragColor                                                                         ""\n"
+        "                                                                                                                   ""\n"
+        "precision highp sampler2D;                                                                                         ""\n"
         "                                                                                                                   ""\n");
 
     preprocessShader(code, shaderSource);
