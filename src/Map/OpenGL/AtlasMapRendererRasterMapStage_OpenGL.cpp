@@ -62,7 +62,7 @@ bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         "uniform float param_vs_elevationData_upperMetersPerUnit;                                                           ""\n"
         "uniform float param_vs_elevationData_lowerMetersPerUnit;                                                           ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "    uniform sampler2D param_vs_elevationData_sampler;                                                              ""\n"
+        "    uniform highp sampler2D param_vs_elevationData_sampler;                                                        ""\n"
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer-in-tile data

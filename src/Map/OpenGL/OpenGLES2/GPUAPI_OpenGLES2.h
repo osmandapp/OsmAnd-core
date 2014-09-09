@@ -47,7 +47,7 @@ namespace OsmAnd
         QSet<GLenum> _supportedVertexShaderPrecisionFormats;
         QSet<GLenum> _supportedFragmentShaderPrecisionFormats;
 
-        void preprocessShader(QString& code, const QString& extraHeader = QString());
+        void preprocessShader(QString& code);
 
         QHash<GLenum, SamplerType> _textureBlocksSamplers;
 

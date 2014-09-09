@@ -557,14 +557,14 @@ void OsmAnd::GPUAPI_OpenGLES2::glDeleteVertexArrays_wrapper(GLsizei n, const GLu
     glDeleteVertexArraysOES(n, arrays);
 }
 
-void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code, const QString& extraHeader /*= QString()*/)
+void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code)
 {
     const auto& shaderHeader = QString::fromLatin1(
         // Declare version of GLSL used
         "#version 100                                                                                                       ""\n"
         "                                                                                                                   ""\n");
 
-    const auto& shaderSource = QString::fromLatin1(
+    const auto& shaderAdditionalPrologue = QString::fromLatin1(
         // General definitions
         "#define INPUT attribute                                                                                            ""\n"
         "#define PARAM_OUTPUT varying                                                                                       ""\n"
@@ -581,30 +581,26 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code, const QString& ex
         "#define SAMPLE_TEXTURE_2D_LOD texture2DLodEXT                                                                      ""\n"
         "                                                                                                                   ""\n");
 
-    auto shaderSourcePreprocessed = shaderSource;
-    shaderSourcePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
-    shaderSourcePreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
+    auto shaderAdditionalProloguePreprocessed = shaderAdditionalPrologue;
+    shaderAdditionalProloguePreprocessed.replace("%VertexTextureFetchSupported%", QString::number(isSupported_vertexShaderTextureLookup ? 1 : 0));
+    shaderAdditionalProloguePreprocessed.replace("%TextureLodSupported%", QString::number(isSupported_textureLod ? 1 : 0));
 
-    code.prepend(shaderSourcePreprocessed);
-    code.prepend(extraHeader);
+    code.prepend(shaderAdditionalProloguePreprocessed);
     code.prepend(shaderHeader);
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::preprocessVertexShader(QString& code)
 {
-    const auto& shaderSource = QString::fromLatin1(
-        "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "    precision highp sampler2D;                                                                                     ""\n"
-        "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
+    const auto& vertexShaderAdditionalPrologue = QString::fromLatin1(
         "                                                                                                                   ""\n");
 
-    code.prepend(shaderSource);
+    code.prepend(vertexShaderAdditionalPrologue);
     preprocessShader(code);
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
 {
-    const auto& shaderSource = QString::fromLatin1(
+    const auto& fragmentShaderAdditionalPrologue = QString::fromLatin1(
         // Make some extensions required
         "#ifdef GL_EXT_shader_texture_lod                                                                                   ""\n"
         "#extension GL_EXT_shader_texture_lod : require                                                                     ""\n"
@@ -612,11 +608,9 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
         "                                                                                                                   ""\n"
         // Fragment shader output declaration
         "#define FRAGMENT_COLOR_OUTPUT gl_FragColor                                                                         ""\n"
-        "                                                                                                                   ""\n"
-        "precision highp sampler2D;                                                                                         ""\n"
         "                                                                                                                   ""\n");
 
-    code.prepend(shaderSource);
+    code.prepend(fragmentShaderAdditionalPrologue);
     preprocessShader(code);
 }
 

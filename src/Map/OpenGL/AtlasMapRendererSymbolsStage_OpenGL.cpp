@@ -192,7 +192,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         "uniform vec4 param_vs_viewport; // x, y, width, height                                                             ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-symbol data
-        "uniform highp vec2 param_vs_symbolOffsetFromTarget;                                                                ""\n"
+        "uniform vec2 param_vs_symbolOffsetFromTarget;                                                                      ""\n"
         "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
         "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
         "uniform ivec2 param_vs_onScreenOffset;                                                                             ""\n"
@@ -1348,7 +1348,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
         "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-symbol data
-        "uniform highp vec2 param_vs_symbolOffsetFromTarget;                                                                ""\n"
+        "uniform vec2 param_vs_symbolOffsetFromTarget;                                                                      ""\n"
         "uniform float param_vs_direction;                                                                                  ""\n"
         "uniform ivec2 param_vs_symbolSize;                                                                                 ""\n"
         "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
