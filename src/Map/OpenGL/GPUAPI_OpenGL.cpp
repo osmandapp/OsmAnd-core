@@ -1636,6 +1636,7 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
             //WORKAROUND: 1. 'array_var[10]member_var' instead of 'array_var[10].member_var' - this happens e.g. on '1.8.GOOGLENEXUS.ED945322@2112805'
             {
                 const QRegExp regExp(QLatin1String("^") + QRegularExpression::escape(name).replace("\\.", "\\.?") + QLatin1String("$"));
+                LogPrintf(LogSeverityLevel::Debug, "'%s'", qPrintable(regExp.pattern()));
                 for (const auto& variable : constOf(variablesMap))
                 {
                     if (variable.type != type || !regExp.exactMatch(variable.name))
@@ -1655,6 +1656,7 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
             //WORKAROUND: 2. 'struct[0].member[0]' instead of 'struct.member'
             {
                 const QRegExp regExp(QLatin1String("^") + QRegularExpression::escape(name).replace("\\.", "(?:\\[0\\])?\\.") + QLatin1String("(?:\\[0\\])?$"));
+                LogPrintf(LogSeverityLevel::Debug, "'%s'", qPrintable(regExp.pattern()));
                 for (const auto& variable : constOf(variablesMap))
                 {
                     if (variable.type != type || !regExp.exactMatch(variable.name))
@@ -1671,6 +1673,8 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
                 }
             }
         }
+        else
+            LogPrintf(LogSeverityLevel::Debug, "WUT WUT");
 
         LogPrintf(LogSeverityLevel::Error,
             "Variable '%s' (%s) was not found in GLSL program %d",
