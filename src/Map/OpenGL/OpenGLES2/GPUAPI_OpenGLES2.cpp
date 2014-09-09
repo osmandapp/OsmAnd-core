@@ -314,7 +314,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glPopGroupMarkerEXT = reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(eglGetProcAddress("glPopGroupMarkerEXT"));
         if (glPopGroupMarkerEXT == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Warning, "EXT_debug_marker is present, but glPopGroupMarkerEXT() was not found. This extension will be disabled");
+            LogPrintf(LogSeverityLevel::Warning, "Seems like buggy driver. EXT_debug_marker is present, but glPopGroupMarkerEXT() was not found. This extension will be disabled");
             _isSupported_EXT_debug_marker = false;
         }
     }
@@ -323,7 +323,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glPushGroupMarkerEXT = reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(eglGetProcAddress("glPushGroupMarkerEXT"));
         if (glPushGroupMarkerEXT == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Warning, "EXT_debug_marker is present, but glPushGroupMarkerEXT() was not found. This extension will be disabled");
+            LogPrintf(LogSeverityLevel::Warning, "Seems like buggy driver. EXT_debug_marker is present, but glPushGroupMarkerEXT() was not found. This extension will be disabled");
             _isSupported_EXT_debug_marker = false;
         }
     }
@@ -332,7 +332,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glTexStorage2DEXT = reinterpret_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
         if (glTexStorage2DEXT == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Warning, "EXT_texture_storage is present, but glTexStorage2DEXT() was not found. This extension will be disabled");
+            LogPrintf(LogSeverityLevel::Warning, "Seems like buggy driver. EXT_texture_storage is present, but glTexStorage2DEXT() was not found. This extension will be disabled");
             _isSupported_EXT_texture_storage = false;
         }
     }
@@ -341,7 +341,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glBindVertexArrayOES = reinterpret_cast<PFNGLBINDVERTEXARRAYOESPROC>(eglGetProcAddress("glBindVertexArrayOES"));
         if (glBindVertexArrayOES == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Warning, "OES_vertex_array_object is present, but glBindVertexArrayOES() was not found. This extension will be disabled");
+            LogPrintf(LogSeverityLevel::Warning, "Seems like buggy driver. OES_vertex_array_object is present, but glBindVertexArrayOES() was not found. This extension will be disabled");
             _isSupported_OES_vertex_array_object = false;
         }
     }
@@ -350,7 +350,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glDeleteVertexArraysOES = reinterpret_cast<PFNGLDELETEVERTEXARRAYSOESPROC>(eglGetProcAddress("glDeleteVertexArraysOES"));
         if (glDeleteVertexArraysOES == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Warning, "OES_vertex_array_object is present, but glDeleteVertexArraysOES() was not found. This extension will be disabled");
+            LogPrintf(LogSeverityLevel::Warning, "Seems like buggy driver. OES_vertex_array_object is present, but glDeleteVertexArraysOES() was not found. This extension will be disabled");
             _isSupported_OES_vertex_array_object = false;
         }
     }
@@ -359,7 +359,7 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glGenVertexArraysOES = reinterpret_cast<PFNGLGENVERTEXARRAYSOESPROC>(eglGetProcAddress("glGenVertexArraysOES"));
         if (glGenVertexArraysOES == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Warning, "OES_vertex_array_object is present, but glGenVertexArraysOES() was not found. This extension will be disabled");
+            LogPrintf(LogSeverityLevel::Warning, "Seems like buggy driver. OES_vertex_array_object is present, but glGenVertexArraysOES() was not found. This extension will be disabled");
             _isSupported_OES_vertex_array_object = false;
         }
     }
