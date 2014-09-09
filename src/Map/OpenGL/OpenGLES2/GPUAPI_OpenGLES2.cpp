@@ -570,10 +570,6 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code)
         "#define PARAM_OUTPUT varying                                                                                       ""\n"
         "#define PARAM_INPUT varying                                                                                        ""\n"
         "                                                                                                                   ""\n"
-        // Set default precisions (this should be the default, but never trust mobile drivers)
-        "precision highp float;                                                                                             ""\n"
-        "precision highp int;                                                                                               ""\n"
-        "                                                                                                                   ""\n"
         // Features definitions
         "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
         "#define TEXTURE_LOD_SUPPORTED %TextureLodSupported%                                                                ""\n"
@@ -592,6 +588,9 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code)
 void OsmAnd::GPUAPI_OpenGLES2::preprocessVertexShader(QString& code)
 {
     const auto& vertexShaderAdditionalPrologue = QString::fromLatin1(
+        // Set default precisions (this should be the default, but never trust mobile drivers)
+        "precision highp float;                                                                                             ""\n"
+        "precision highp int;                                                                                               ""\n"
         "                                                                                                                   ""\n");
 
     code.prepend(vertexShaderAdditionalPrologue);
@@ -608,9 +607,28 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
         "                                                                                                                   ""\n"
         // Fragment shader output declaration
         "#define FRAGMENT_COLOR_OUTPUT gl_FragColor                                                                         ""\n"
+        "                                                                                                                   ""\n"
+        // It have been reported that GL_FRAGMENT_PRECISION_HIGH may not be defined in some cases
+        "#ifndef GL_FRAGMENT_PRECISION_HIGH                                                                                 ""\n"
+        "#if %HighPrecisionSupported%                                                                                       ""\n"
+        "#define GL_FRAGMENT_PRECISION_HIGH 1                                                                               ""\n"
+        "#endif                                                                                                             ""\n"
+        "#endif                                                                                                             ""\n"
+        "                                                                                                                   ""\n"
+        // Set default precisions (this should be the default, but never trust mobile drivers)
+        "#ifdef GL_FRAGMENT_PRECISION_HIGH                                                                                  ""\n"
+        "precision highp float;                                                                                             ""\n"
+        "precision highp int;                                                                                               ""\n"
+        "#else                                                                                                              ""\n"
+        "precision highp float;                                                                                             ""\n"
+        "precision highp int;                                                                                               ""\n"
         "                                                                                                                   ""\n");
 
-    code.prepend(fragmentShaderAdditionalPrologue);
+    auto fragmentShaderAdditionalProloguePreprocessed = fragmentShaderAdditionalPrologue;
+    fragmentShaderAdditionalProloguePreprocessed.replace("%HighPrecisionSupported%", QString::number(
+        supportedFragmentShaderPrecisionFormats.contains(GL_HIGH_FLOAT) && supportedFragmentShaderPrecisionFormats.contains(GL_HIGH_INT) ? 1 : 0));
+
+    code.prepend(fragmentShaderAdditionalProloguePreprocessed);
     preprocessShader(code);
 }
 

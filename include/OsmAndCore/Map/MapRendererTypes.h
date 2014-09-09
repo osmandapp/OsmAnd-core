@@ -16,8 +16,6 @@ namespace OsmAnd
         BaseLayer,
         Overlay0,
         Overlay1,
-        Overlay2,
-        Overlay3,
 
         __LAST,
     };
