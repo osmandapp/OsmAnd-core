@@ -239,11 +239,11 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     _isSupported_OES_rgb8_rgba8 = extensions.contains("GL_OES_rgb8_rgba8");
     _isSupported_ARM_rgba8 = extensions.contains("GL_ARM_rgba8");
     _isSupported_EXT_texture = extensions.contains("GL_EXT_texture");
-    _isSupported_texture_float = _isSupported_OES_texture_float = extensions.contains("GL_OES_texture_float");
-    _isSupported_textureLod = _isSupported_EXT_shader_texture_lod = extensions.contains("GL_EXT_shader_texture_lod");
-    _isSupported_texture_rg = _isSupported_EXT_texture_rg = extensions.contains("GL_EXT_texture_rg");
+    _isSupported_OES_texture_float = extensions.contains("GL_OES_texture_float");
+    _isSupported_EXT_shader_texture_lod = extensions.contains("GL_EXT_shader_texture_lod");
+    _isSupported_EXT_texture_rg = extensions.contains("GL_EXT_texture_rg");
     _isSupported_EXT_unpack_subimage = extensions.contains("GL_EXT_unpack_subimage");
-    _isSupported_texture_storage = _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
+    _isSupported_EXT_texture_storage = extensions.contains("GL_EXT_texture_storage");
     _isSupported_APPLE_texture_max_level = extensions.contains("GL_APPLE_texture_max_level");
     _isSupported_texturesNPOT = extensions.contains("GL_OES_texture_npot");
     _isSupported_EXT_debug_marker = extensions.contains("GL_EXT_debug_marker");
@@ -314,8 +314,8 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glPopGroupMarkerEXT = reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(eglGetProcAddress("glPopGroupMarkerEXT"));
         if (glPopGroupMarkerEXT == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Error, "EXT_debug_marker is present, but glPopGroupMarkerEXT() was not found");
-            return false;
+            LogPrintf(LogSeverityLevel::Warning, "EXT_debug_marker is present, but glPopGroupMarkerEXT() was not found. This extension will be disabled");
+            _isSupported_EXT_debug_marker = false;
         }
     }
     if (_isSupported_EXT_debug_marker && !glPushGroupMarkerEXT)
@@ -323,8 +323,8 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glPushGroupMarkerEXT = reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(eglGetProcAddress("glPushGroupMarkerEXT"));
         if (glPushGroupMarkerEXT == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Error, "EXT_debug_marker is present, but glPushGroupMarkerEXT() was not found");
-            return false;
+            LogPrintf(LogSeverityLevel::Warning, "EXT_debug_marker is present, but glPushGroupMarkerEXT() was not found. This extension will be disabled");
+            _isSupported_EXT_debug_marker = false;
         }
     }
     if (_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
@@ -332,8 +332,8 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glTexStorage2DEXT = reinterpret_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
         if (glTexStorage2DEXT == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Error, "EXT_texture_storage is present, but glTexStorage2DEXT() was not found");
-            return false;
+            LogPrintf(LogSeverityLevel::Warning, "EXT_texture_storage is present, but glTexStorage2DEXT() was not found. This extension will be disabled");
+            _isSupported_EXT_texture_storage = false;
         }
     }
     if (_isSupported_OES_vertex_array_object && !glBindVertexArrayOES)
@@ -341,8 +341,8 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glBindVertexArrayOES = reinterpret_cast<PFNGLBINDVERTEXARRAYOESPROC>(eglGetProcAddress("glBindVertexArrayOES"));
         if (glBindVertexArrayOES == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Error, "OES_vertex_array_object is present, but glBindVertexArrayOES() was not found");
-            return false;
+            LogPrintf(LogSeverityLevel::Warning, "OES_vertex_array_object is present, but glBindVertexArrayOES() was not found. This extension will be disabled");
+            _isSupported_OES_vertex_array_object = false;
         }
     }
     if (_isSupported_OES_vertex_array_object && !glDeleteVertexArraysOES)
@@ -350,8 +350,8 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glDeleteVertexArraysOES = reinterpret_cast<PFNGLDELETEVERTEXARRAYSOESPROC>(eglGetProcAddress("glDeleteVertexArraysOES"));
         if (glDeleteVertexArraysOES == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Error, "OES_vertex_array_object is present, but glDeleteVertexArraysOES() was not found");
-            return false;
+            LogPrintf(LogSeverityLevel::Warning, "OES_vertex_array_object is present, but glDeleteVertexArraysOES() was not found. This extension will be disabled");
+            _isSupported_OES_vertex_array_object = false;
         }
     }
     if (_isSupported_OES_vertex_array_object && !glGenVertexArraysOES)
@@ -359,8 +359,8 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
         glGenVertexArraysOES = reinterpret_cast<PFNGLGENVERTEXARRAYSOESPROC>(eglGetProcAddress("glGenVertexArraysOES"));
         if (glGenVertexArraysOES == nullptr)
         {
-            LogPrintf(LogSeverityLevel::Error, "OES_vertex_array_object is present, but glGenVertexArraysOES() was not found");
-            return false;
+            LogPrintf(LogSeverityLevel::Warning, "OES_vertex_array_object is present, but glGenVertexArraysOES() was not found. This extension will be disabled");
+            _isSupported_OES_vertex_array_object = false;
         }
     }
 #endif // !OSMAND_TARGET_OS_ios
@@ -376,6 +376,11 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     }
     _isSupported_8bitPaletteRGBA8 = extensions.contains("GL_OES_compressed_paletted_texture") || compressedFormats.contains(GL_PALETTE8_RGBA8_OES);
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 8-bit palette RGBA8 textures: %s", isSupported_8bitPaletteRGBA8 ? "supported" : "not supported");
+
+    _isSupported_texture_float = _isSupported_OES_texture_float;
+    _isSupported_textureLod = _isSupported_EXT_shader_texture_lod;
+    _isSupported_texture_rg = _isSupported_EXT_texture_rg;
+    _isSupported_texture_storage = _isSupported_EXT_texture_storage;
 
     glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
     GL_CHECK_RESULT;
