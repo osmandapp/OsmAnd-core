@@ -531,13 +531,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     const auto alreadyOccupiedUniforms =
         4 /*param_vs_mPerspectiveProjectionView*/ +
         1 /*param_vs_glyphHeight*/ +
-        1 /*param_vs_zDistanceFromCamera*/ +
-        //NOTE: Seems that this also counts input and output variables (on some implementations), so add them also
-        1 /*in_vs_vertexPosition*/ +
-        1 /*in_vs_glyphIndex*/ +
-        1 /*in_vs_vertexTexCoords*/ +
-        1 /*v2f_texCoords*/;
-    _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
+        1 /*param_vs_zDistanceFromCamera*/;
+    _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms - 13) / 5;
     LogPrintf(LogSeverityLevel::Info,
         "This device is capable of rendering %d glyphs of a on-path-2D symbol at a time",
         _onPathSymbol2dMaxGlyphsPerDrawCall);
@@ -782,13 +777,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     const auto alreadyOccupiedUniforms =
         4 /*param_vs_mPerspectiveProjectionView*/ +
         1 /*param_vs_glyphHeight*/ +
-        1 /*param_vs_zDistanceFromCamera*/ +
-        //NOTE: Seems that this also counts input and output variables (on some implementations), so add them also
-        1 /*in_vs_vertexPosition*/ +
-        1 /*in_vs_glyphIndex*/ +
-        1 /*in_vs_vertexTexCoords*/ +
-        1 /*v2f_texCoords*/;
-    _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
+        1 /*param_vs_zDistanceFromCamera*/;
+    _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms - 13) / 5;
     LogPrintf(LogSeverityLevel::Info,
         "This device is capable of rendering %d glyphs of a on-path-3D symbol at a time",
         _onPathSymbol3dMaxGlyphsPerDrawCall);
