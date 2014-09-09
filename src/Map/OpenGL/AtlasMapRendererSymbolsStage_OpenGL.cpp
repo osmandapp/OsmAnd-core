@@ -538,6 +538,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         1 /*in_vs_vertexTexCoords*/ +
         1 /*v2f_texCoords*/;
     _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
+    LogPrintf(LogSeverityLevel::Info,
+        "This device is capable of rendering %d glyphs of a on-path-2D symbol at a time",
+        _onPathSymbol2dMaxGlyphsPerDrawCall);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -786,6 +789,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         1 /*in_vs_vertexTexCoords*/ +
         1 /*v2f_texCoords*/;
     _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
+    LogPrintf(LogSeverityLevel::Info,
+        "This device is capable of rendering %d glyphs of a on-path-3D symbol at a time",
+        _onPathSymbol3dMaxGlyphsPerDrawCall);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
