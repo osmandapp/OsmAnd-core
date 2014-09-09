@@ -242,13 +242,15 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
         if (logBufferSizeWorkaround)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to link GLSL program (driver is buggy so errors log may be incomplete):\n%s",
+                "Failed to link GLSL program %d (driver is buggy so errors log may be incomplete):\n%s",
+                program,
                 logBuffer);
         }
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to link GLSL program:\n%s",
+                "Failed to link GLSL program %d:\n%s",
+                program,
                 logBuffer);
         }
 
