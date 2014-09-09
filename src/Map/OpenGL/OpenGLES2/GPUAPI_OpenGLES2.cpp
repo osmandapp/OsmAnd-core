@@ -622,6 +622,7 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
         "#else                                                                                                              ""\n"
         "precision highp float;                                                                                             ""\n"
         "precision highp int;                                                                                               ""\n"
+        "#endif                                                                                                             ""\n"
         "                                                                                                                   ""\n");
 
     auto fragmentShaderAdditionalProloguePreprocessed = fragmentShaderAdditionalPrologue;

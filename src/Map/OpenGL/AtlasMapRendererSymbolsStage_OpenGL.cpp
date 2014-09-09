@@ -529,7 +529,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
     _onPathSymbol2dMaxGlyphsPerDrawCall =
-        (gpuAPI->maxVertexUniformVectors - 4 /*param_vs_mOrthographicProjection*/ - 4 /*param_vs_glyphHeight*/ - 4 /*param_vs_distanceFromCamera*/ ) / 5;
+        (gpuAPI->maxVertexUniformVectors - 4 /*param_vs_mOrthographicProjection*/ - 1 /*param_vs_glyphHeight*/ - 1 /*param_vs_distanceFromCamera*/ ) / 5;
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -769,7 +769,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     GL_CHECK_PRESENT(glVertexAttribPointer);
 
     _onPathSymbol3dMaxGlyphsPerDrawCall =
-        (gpuAPI->maxVertexUniformVectors - 4 /*param_vs_mPerspectiveProjectionView*/ - 4 /*param_vs_glyphHeight*/ - 4 /*param_vs_zDistanceFromCamera*/) / 5;
+        (gpuAPI->maxVertexUniformVectors - 4 /*param_vs_mPerspectiveProjectionView*/ - 1 /*param_vs_glyphHeight*/ - 1 /*param_vs_zDistanceFromCamera*/) / 5;
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
