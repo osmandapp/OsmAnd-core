@@ -532,7 +532,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         4 /*param_vs_mPerspectiveProjectionView*/ +
         1 /*param_vs_glyphHeight*/ +
         1 /*param_vs_zDistanceFromCamera*/;
-    _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms - 200) / 5;
+    _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms/* - 200*/) / 5;
     LogPrintf(LogSeverityLevel::Info,
         "This device is capable of rendering %d glyphs of a on-path-2D symbol at a time",
         _onPathSymbol2dMaxGlyphsPerDrawCall);
@@ -778,7 +778,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         4 /*param_vs_mPerspectiveProjectionView*/ +
         1 /*param_vs_glyphHeight*/ +
         1 /*param_vs_zDistanceFromCamera*/;
-    _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms - 200) / 5;
+    _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms/* - 200*/) / 5;
     LogPrintf(LogSeverityLevel::Info,
         "This device is capable of rendering %d glyphs of a on-path-3D symbol at a time",
         _onPathSymbol3dMaxGlyphsPerDrawCall);
