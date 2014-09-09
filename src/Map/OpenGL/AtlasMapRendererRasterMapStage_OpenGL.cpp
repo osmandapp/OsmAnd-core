@@ -264,7 +264,8 @@ bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
 
         // Link everything into program object
         GLuint shaders[] = { vsId, fsId };
-        tileProgram.id = getGPUAPI()->linkProgram(2, shaders);
+        QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+        tileProgram.id = getGPUAPI()->linkProgram(2, shaders, true, &variablesMap);
         if (!tileProgram.id.isValid())
         {
             LogPrintf(LogSeverityLevel::Error,
@@ -273,7 +274,7 @@ bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         }
 
         bool ok = true;
-        const auto& lookup = gpuAPI->obtainVariablesLookupContext(tileProgram.id);
+        const auto& lookup = gpuAPI->obtainVariablesLookupContext(tileProgram.id, variablesMap);
         ok = ok && lookup->lookupLocation(tileProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
         ok = ok && lookup->lookupLocation(tileProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
         if (!gpuAPI->isSupported_vertexShaderTextureLookup)

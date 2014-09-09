@@ -157,19 +157,31 @@ namespace OsmAnd
             }
         };
 
+        struct GlslProgramVariable
+        {
+            GlslVariableType type;
+            QString name;
+            GLenum dataType;
+            GLsizei size;
+        };
+
         class ProgramVariablesLookupContext
         {
             Q_DISABLE_COPY_AND_MOVE(ProgramVariablesLookupContext);
         private:
-            GPUAPI_OpenGL* const gpuAPI;
-            const GLuint program;
-
             QMap< GlslVariableType, QMap<QString, GLint> > _variablesByName;
             QMap< GlslVariableType, QMap<GLint, QString> > _variablesByLocation;
         protected:
-            ProgramVariablesLookupContext(GPUAPI_OpenGL* gpuAPI, GLuint program);
+            ProgramVariablesLookupContext(
+                GPUAPI_OpenGL* const gpuAPI,
+                const GLuint program,
+                const QHash<QString, GlslProgramVariable>& variablesMap);
         public:
             virtual ~ProgramVariablesLookupContext();
+
+            GPUAPI_OpenGL* const gpuAPI;
+            const GLuint program;
+            const QHash<QString, GlslProgramVariable> variablesMap;
 
             virtual bool lookupLocation(GLint& location, const QString& name, const GlslVariableType& type);
             bool lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type);
@@ -265,7 +277,11 @@ namespace OsmAnd
         virtual GLenum validateResult() = 0;
 
         virtual GLuint compileShader(GLenum shaderType, const char* source);
-        virtual GLuint linkProgram(GLuint shadersCount, const GLuint* shaders, const bool autoReleaseShaders = true);
+        virtual GLuint linkProgram(
+            GLuint shadersCount,
+            const GLuint* shaders,
+            const bool autoReleaseShaders = true,
+            QHash<QString, GlslProgramVariable>* outVariablesMap = nullptr);
 
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile);
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
@@ -307,7 +323,9 @@ namespace OsmAnd
         virtual void setTextureBlockSampler(const GLenum textureBlock, const SamplerType samplerType) = 0;
         virtual void applyTextureBlockToTexture(const GLenum texture, const GLenum textureBlock) = 0;
 
-        virtual std::shared_ptr<ProgramVariablesLookupContext> obtainVariablesLookupContext(const GLuint& program);
+        virtual std::shared_ptr<ProgramVariablesLookupContext> obtainVariablesLookupContext(
+            const GLuint& program,
+            const QHash<QString, GlslProgramVariable>& variablesMap);
         virtual bool findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
 
         virtual bool uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);

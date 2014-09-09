@@ -79,7 +79,8 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
 
     // Link everything into program object
     const GLuint shaders[] = { vsId, fsId };
-    _program.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _program.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_program.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -88,7 +89,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_program.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_program.id, variablesMap);
     ok = ok && lookup->lookupLocation(_program.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_program.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GlslVariableType::Uniform);

@@ -4,6 +4,8 @@
 
 #include "QtExtensions.h"
 #include <QtMath>
+#include <QRegularExpression>
+#include <QRegExp>
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
@@ -157,7 +159,11 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
     return shader;
 }
 
-GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* shaders, const bool autoReleaseShaders /*= true*/)
+GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
+    GLuint shadersCount,
+    const GLuint* shaders,
+    const bool autoReleaseShaders /*= true*/,
+    QHash<QString, GlslProgramVariable>* outVariablesMap /*= nullptr*/)
 {
     GL_CHECK_PRESENT(glCreateProgram);
     GL_CHECK_PRESENT(glAttachShader);
@@ -254,6 +260,9 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
         return 0;
     }
 
+    if (outVariablesMap)
+        outVariablesMap->clear();
+
     GLint attributesCount = 0;
     glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributesCount);
     GL_CHECK_RESULT;
@@ -288,6 +297,12 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
                 attributeIdx,
                 qPrintable(decodeGlslVariableDataType(attributeType)),
                 attributeName);
+        }
+
+        if (outVariablesMap)
+        {
+            const QString name = QLatin1String(attributeName);
+            outVariablesMap->insert(name, { GlslVariableType::In, name, attributeType, attributeSize });
         }
     }
     delete[] attributeName;
@@ -326,6 +341,12 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
                 uniformIdx,
                 qPrintable(decodeGlslVariableDataType(uniformType)),
                 uniformName);
+        }
+
+        if (outVariablesMap)
+        {
+            const QString name = QLatin1String(attributeName);
+            outVariablesMap->insert(name, { GlslVariableType::In, name, uniformType, uniformSize });
         }
     }
     delete[] uniformName;
@@ -674,9 +695,11 @@ QString OsmAnd::GPUAPI_OpenGL::decodeGlslVariableDataType(const GLenum dataType)
     return QString(QLatin1String("unknown-%d")).arg(dataType);
 }
 
-std::shared_ptr<OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext> OsmAnd::GPUAPI_OpenGL::obtainVariablesLookupContext(const GLuint& program)
+std::shared_ptr<OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext> OsmAnd::GPUAPI_OpenGL::obtainVariablesLookupContext(
+    const GLuint& program,
+    const QHash<QString, GlslProgramVariable>& variablesMap)
 {
-    return std::shared_ptr<ProgramVariablesLookupContext>(new ProgramVariablesLookupContext(this, program));
+    return std::shared_ptr<ProgramVariablesLookupContext>(new ProgramVariablesLookupContext(this, program, variablesMap));
 }
 
 bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type)
@@ -684,22 +707,17 @@ bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& l
     GL_CHECK_PRESENT(glGetAttribLocation);
     GL_CHECK_PRESENT(glGetUniformLocation);
 
+    GLint resolvedLocation = -1;
     if (type == GlslVariableType::In)
-        location = glGetAttribLocation(program, qPrintable(name));
+        resolvedLocation = glGetAttribLocation(program, qPrintable(name));
     else if (type == GlslVariableType::Uniform)
-        location = glGetUniformLocation(program, qPrintable(name));
+        resolvedLocation = glGetUniformLocation(program, qPrintable(name));
     GL_CHECK_RESULT;
 
-    if (location == -1)
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Variable '%s' (%s) was not found in GLSL program %d",
-            qPrintable(name),
-            type == GlslVariableType::In ? "In" : "Uniform",
-            program);
+    if (resolvedLocation == -1)
         return false;
-    }
 
+    location = resolvedLocation;
     return true;
 }
 
@@ -1574,9 +1592,13 @@ void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao)
     _vaoSimulationObjects.remove(vao);
 }
 
-OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::ProgramVariablesLookupContext(GPUAPI_OpenGL* gpuAPI_, GLuint program_)
+OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::ProgramVariablesLookupContext(
+    GPUAPI_OpenGL* const gpuAPI_,
+    const GLuint program_,
+    const QHash<QString, GlslProgramVariable>& variablesMap_)
     : gpuAPI(gpuAPI_)
     , program(program_)
+    , variablesMap(variablesMap_)
 {
 }
 
@@ -1591,7 +1613,7 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
     if (itPreviousLocation != variablesByName.constEnd())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Variable '%s' (%s) was already located in program %d at %d",
+            "Variable '%s' (%s) was already located in program %d at location %d",
             qPrintable(name),
             type == GlslVariableType::In ? "In" : "Uniform",
             program,
@@ -1600,7 +1622,63 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
     }
 
     if (!gpuAPI->findVariableLocation(program, location, name, type))
+    {
+        // In case the variable was not found in the program, this does not necessarily mean that it's not there.
+        //WORKAROUND: Some drivers have naming differences with specification:
+        // - nVidia (some old drivers)
+        // - PowerVR SGX on Android
+
+        // So, before failing completely, perform smart "proper" name resolving
+        if (!variablesMap.isEmpty())
+        {
+            // So try to find misspelled variable name by driver
+
+            //WORKAROUND: 1. 'array_var[10]member_var' instead of 'array_var[10].member_var' - this happens e.g. on '1.8.GOOGLENEXUS.ED945322@2112805'
+            {
+                const QRegExp regExp(QLatin1String("^") + QRegularExpression::escape(name).replace("\\.", "\\.?") + QLatin1String("$"));
+                for (const auto& variable : constOf(variablesMap))
+                {
+                    if (variable.type != type || !regExp.exactMatch(variable.name))
+                        continue;
+
+                    LogPrintf(LogSeverityLevel::Warning,
+                        "Seems like buggy driver. Trying to use '%s' instead of '%s' as variable name (%s)",
+                        qPrintable(variable.name),
+                        qPrintable(name),
+                        type == GlslVariableType::In ? "In" : "Uniform");
+
+                    if (lookupLocation(location, variable.name, type))
+                        return true;
+                }
+            }
+
+            //WORKAROUND: 2. 'struct[0].member[0]' instead of 'struct.member'
+            {
+                const QRegExp regExp(QLatin1String("^") + QRegularExpression::escape(name).replace("\\.", "(?:\\[0\\])?\\.") + QLatin1String("(?:\\[0\\])?$"));
+                for (const auto& variable : constOf(variablesMap))
+                {
+                    if (variable.type != type || !regExp.exactMatch(variable.name))
+                        continue;
+
+                    LogPrintf(LogSeverityLevel::Warning,
+                        "Seems like buggy driver. Trying to use '%s' instead of '%s' as variable name (%s)",
+                        qPrintable(variable.name),
+                        qPrintable(name),
+                        type == GlslVariableType::In ? "In" : "Uniform");
+
+                    if (lookupLocation(location, variable.name, type))
+                        return true;
+                }
+            }
+        }
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Variable '%s' (%s) was not found in GLSL program %d",
+            qPrintable(name),
+            type == GlslVariableType::In ? "In" : "Uniform",
+            program);
         return false;
+    }
 
     auto& variablesByLocation = _variablesByLocation[type];
     const auto itOtherName = variablesByLocation.constFind(location);

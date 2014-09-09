@@ -129,7 +129,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _programRect2D.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _programRect2D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_programRect2D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -138,7 +139,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programRect2D.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programRect2D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programRect2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_programRect2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programRect2D.vs.param.rect, "param_vs_rect", GlslVariableType::Uniform);
@@ -350,7 +351,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _programLine2D.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _programLine2D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_programLine2D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -359,7 +361,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine2D.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine2D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programLine2D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_programLine2D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine2D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
@@ -571,7 +573,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _programLine3D.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _programLine3D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_programLine3D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -580,7 +583,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine3D.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programLine3D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programLine3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_programLine3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);
@@ -801,7 +804,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _programQuad3D.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _programQuad3D.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_programQuad3D.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -810,7 +814,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programQuad3D.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_programQuad3D.id, variablesMap);
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.mProjectionViewModel, "param_vs_mProjectionViewModel", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v0, "param_vs_v0", GlslVariableType::Uniform);

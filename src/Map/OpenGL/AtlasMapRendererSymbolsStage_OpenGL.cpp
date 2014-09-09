@@ -283,7 +283,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _billboardRasterProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_billboardRasterProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -292,7 +293,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_billboardRasterProgram.id, variablesMap);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
@@ -620,7 +621,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_onPath2dProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -629,7 +631,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath2dProgram.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath2dProgram.id, variablesMap);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
@@ -859,7 +861,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_onPath3dProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -868,7 +871,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath3dProgram.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath3dProgram.id, variablesMap);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
@@ -1411,7 +1414,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _onSurfaceRasterProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_onSurfaceRasterProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1420,7 +1424,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceRasterProgram.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceRasterProgram.id, variablesMap);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
@@ -1696,7 +1700,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
-    _onSurfaceVectorProgram.id = gpuAPI->linkProgram(2, shaders);
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _onSurfaceVectorProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
     if (!_onSurfaceVectorProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1705,7 +1710,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceVectorProgram.id);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onSurfaceVectorProgram.id, variablesMap);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.in.vertexColor, "in_vs_vertexColor", GlslVariableType::In);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.mModelViewProjection, "param_vs_mModelViewProjection", GlslVariableType::Uniform);
