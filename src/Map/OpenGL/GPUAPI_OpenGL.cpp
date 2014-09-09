@@ -103,32 +103,51 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
     GLint didCompile;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &didCompile);
     GL_CHECK_RESULT;
-    if (didCompile == GL_FALSE)
+    if (didCompile == GL_FALSE || didCompile != GL_TRUE) // This check looks odd, but some drivers just don't deserve any trust
     {
-        GLint logBufferLen = 0;
-        GLsizei logLen = 0;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferLen);
+        GLint logBufferSize = 0;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferSize);
         GL_CHECK_RESULT;
-        if (logBufferLen > 1)
+
+        //WORKAROUND: Some drivers report incorrect length of the log
+        //  - Qualcomm Adreno https://developer.qualcomm.com/forum/qdevnet-forums/mobile-technologies/mobile-gaming-graphics-optimization-adreno/26795
+        bool logBufferSizeWorkaround = false;
+        if (logBufferSize <= 0)
         {
-            GLchar* log = (GLchar*)malloc(logBufferLen);
-            glGetShaderInfoLog(shader, logBufferLen, &logLen, log);
-            GL_CHECK_RESULT;
-            assert(logLen + 1 == logBufferLen);
+            logBufferSize = 4096;
+            logBufferSizeWorkaround = true;
+        }
+
+        const auto logBuffer = new GLchar[logBufferSize];
+        memset(logBuffer, 0, sizeof(GLchar) * logBufferSize);
+
+        GLsizei actualLogLength = 0;
+        glGetShaderInfoLog(shader, logBufferSize, &actualLogLength, logBuffer);
+        GL_CHECK_RESULT;
+
+        //WORKAROUND: Sometimes compilation fails without a reason, but at least report glGetError() value
+        if (logBuffer[0] == '\0')
+        {
+            sprintf(logBuffer, "Driver haven't reported compilation failure reason, last result code was 0x%08x", compilationResult);
+            logBufferSizeWorkaround = false;
+        }
+
+        if (logBufferSizeWorkaround)
+        {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile GLSL shader:\n%s\nSources:\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
-                log,
+                "Failed to compile GLSL shader (driver is buggy so errors log may be incomplete):\n%s\nSource:\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
+                logBuffer,
                 source);
-            free(log);
         }
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile GLSL shader from source (0x%08x, 0x%08x):\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
-                compilationResult,
-                didCompile,
+                "Failed to compile GLSL shader:\n%s\nSource:\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
+                logBuffer,
                 source);
         }
+
+        delete[] logBuffer;
 
         glDeleteShader(shader);
         shader = 0;
@@ -187,28 +206,47 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(GLuint shadersCount, const GLuint* sha
     GL_CHECK_RESULT;
     if (linkSuccessful == GL_FALSE)
     {
-        GLint logBufferLen = 0;
-        GLsizei logLen = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logBufferLen);
+        GLint logBufferSize = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logBufferSize);
         GL_CHECK_RESULT;
-        if (logBufferLen > 1)
+
+        //WORKAROUND: Some drivers report incorrect length of the log
+        //  - Qualcomm Adreno https://developer.qualcomm.com/forum/qdevnet-forums/mobile-technologies/mobile-gaming-graphics-optimization-adreno/26795
+        bool logBufferSizeWorkaround = false;
+        if (logBufferSize <= 0)
         {
-            GLchar* log = (GLchar*)malloc(logBufferLen);
-            glGetProgramInfoLog(program, logBufferLen, &logLen, log);
-            GL_CHECK_RESULT;
-            assert(logLen + 1 == logBufferLen);
+            logBufferSize = 4096;
+            logBufferSizeWorkaround = true;
+        }
+
+        const auto logBuffer = new GLchar[logBufferSize];
+        memset(logBuffer, 0, sizeof(GLchar) * logBufferSize);
+
+        GLsizei actualLogLength = 0;
+        glGetProgramInfoLog(program, logBufferSize, &actualLogLength, logBuffer);
+        GL_CHECK_RESULT;
+
+        //WORKAROUND: Sometimes compilation fails without a reason, but at least report glGetError() value
+        if (logBuffer[0] == '\0')
+        {
+            sprintf(logBuffer, "Driver haven't reported linking failure reason, last result code was 0x%08x", linkingResult);
+            logBufferSizeWorkaround = false;
+        }
+
+        if (logBufferSizeWorkaround)
+        {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to link GLSL program:\n%s",
-                log);
-            free(log);
+                "Failed to link GLSL program (driver is buggy so errors log may be incomplete):\n%s",
+                logBuffer);
         }
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to link GLSL program (0x%08x, 0x%08x)",
-                linkingResult,
-                linkSuccessful);
+                "Failed to link GLSL program:\n%s",
+                logBuffer);
         }
+
+        delete[] logBuffer;
 
         glDeleteProgram(program);
         GL_CHECK_RESULT;
@@ -656,9 +694,9 @@ bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& l
     {
         LogPrintf(LogSeverityLevel::Error,
             "Variable '%s' (%s) was not found in GLSL program %d",
-           qPrintable(name),
-           type == GlslVariableType::In ? "In" : "Uniform",
-           program);
+            qPrintable(name),
+            type == GlslVariableType::In ? "In" : "Uniform",
+            program);
         return false;
     }
 
@@ -1501,7 +1539,7 @@ void OsmAnd::GPUAPI_OpenGL::unuseVAO()
         return;
     assert(_vaoSimulationObjects.contains(_lastUsedSimulatedVAOObject));
     const auto& simulatedVAO = constOf(_vaoSimulationObjects)[_lastUsedSimulatedVAOObject];
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     GL_CHECK_RESULT;
 
@@ -1511,7 +1549,7 @@ void OsmAnd::GPUAPI_OpenGL::unuseVAO()
     for (const auto itVertexAttribEntry : rangeOf(constOf(simulatedVAO.vertexAttribs)))
     {
         const auto vertexAttribIndex = itVertexAttribEntry.key();
-        
+
         glDisableVertexAttribArray(vertexAttribIndex);
         GL_CHECK_RESULT;
     }
