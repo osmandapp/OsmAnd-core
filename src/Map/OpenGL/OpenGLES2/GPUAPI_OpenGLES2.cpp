@@ -598,7 +598,8 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessVertexShader(QString& code)
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n");
 
-    preprocessShader(code, shaderSource);
+    code.prepend(shaderSource);
+    preprocessShader(code);
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
@@ -615,7 +616,8 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
         "precision highp sampler2D;                                                                                         ""\n"
         "                                                                                                                   ""\n");
 
-    preprocessShader(code, shaderSource);
+    code.prepend(shaderSource);
+    preprocessShader(code);
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::optimizeVertexShader(QString& code)
