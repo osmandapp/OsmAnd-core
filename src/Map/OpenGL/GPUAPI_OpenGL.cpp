@@ -1640,8 +1640,6 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
                 const QRegExp regExp(QLatin1String("^") + QRegExp::escape(name).replace("\\.", "\\.?") + QLatin1String("$"));
                 for (const auto& variable : constOf(variablesMap))
                 {
-                    LogPrintf(LogSeverityLevel::Debug, "Testing '%s' for '%s'", qPrintable(variable.name), qPrintable(name));
-
                     if (variable.type != type || !regExp.exactMatch(variable.name))
                         continue;
 
@@ -1661,8 +1659,6 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
                 const QRegExp regExp(QLatin1String("^") + QRegExp::escape(name).replace("\\.", "(?:\\[0\\])?\\.") + QLatin1String("(?:\\[0\\])?$"));
                 for (const auto& variable : constOf(variablesMap))
                 {
-                    LogPrintf(LogSeverityLevel::Debug, "Testing '%s' against '%s'", qPrintable(variable.name), qPrintable(regExp.pattern()));
-
                     if (variable.type != type || !regExp.exactMatch(variable.name))
                         continue;
 

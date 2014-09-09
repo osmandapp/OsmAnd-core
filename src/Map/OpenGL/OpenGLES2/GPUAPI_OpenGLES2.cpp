@@ -312,32 +312,56 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     if (_isSupported_EXT_debug_marker && !glPopGroupMarkerEXT)
     {
         glPopGroupMarkerEXT = reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(eglGetProcAddress("glPopGroupMarkerEXT"));
-        assert(glPopGroupMarkerEXT);
+        if (glPopGroupMarkerEXT == nullptr)
+        {
+            LogPrintf(LogSeverityLevel::Error, "EXT_debug_marker is present, but glPopGroupMarkerEXT() was not found");
+            return false;
+        }
     }
     if (_isSupported_EXT_debug_marker && !glPushGroupMarkerEXT)
     {
         glPushGroupMarkerEXT = reinterpret_cast<PFNGLPUSHGROUPMARKEREXTPROC>(eglGetProcAddress("glPushGroupMarkerEXT"));
-        assert(glPushGroupMarkerEXT);
+        if (glPushGroupMarkerEXT == nullptr)
+        {
+            LogPrintf(LogSeverityLevel::Error, "EXT_debug_marker is present, but glPushGroupMarkerEXT() was not found");
+            return false;
+        }
     }
     if (_isSupported_EXT_texture_storage && !glTexStorage2DEXT)
     {
         glTexStorage2DEXT = reinterpret_cast<P_glTexStorage2DEXT_PROC>(eglGetProcAddress("glTexStorage2DEXT"));
-        assert(glTexStorage2DEXT);
+        if (glTexStorage2DEXT == nullptr)
+        {
+            LogPrintf(LogSeverityLevel::Error, "EXT_texture_storage is present, but glTexStorage2DEXT() was not found");
+            return false;
+        }
     }
     if (_isSupported_OES_vertex_array_object && !glBindVertexArrayOES)
     {
         glBindVertexArrayOES = reinterpret_cast<PFNGLBINDVERTEXARRAYOESPROC>(eglGetProcAddress("glBindVertexArrayOES"));
-        assert(glBindVertexArrayOES);
+        if (glBindVertexArrayOES == nullptr)
+        {
+            LogPrintf(LogSeverityLevel::Error, "OES_vertex_array_object is present, but glBindVertexArrayOES() was not found");
+            return false;
+        }
     }
     if (_isSupported_OES_vertex_array_object && !glDeleteVertexArraysOES)
     {
         glDeleteVertexArraysOES = reinterpret_cast<PFNGLDELETEVERTEXARRAYSOESPROC>(eglGetProcAddress("glDeleteVertexArraysOES"));
-        assert(glDeleteVertexArraysOES);
+        if (glDeleteVertexArraysOES == nullptr)
+        {
+            LogPrintf(LogSeverityLevel::Error, "OES_vertex_array_object is present, but glDeleteVertexArraysOES() was not found");
+            return false;
+        }
     }
     if (_isSupported_OES_vertex_array_object && !glGenVertexArraysOES)
     {
         glGenVertexArraysOES = reinterpret_cast<PFNGLGENVERTEXARRAYSOESPROC>(eglGetProcAddress("glGenVertexArraysOES"));
-        assert(glGenVertexArraysOES);
+        if (glGenVertexArraysOES == nullptr)
+        {
+            LogPrintf(LogSeverityLevel::Error, "OES_vertex_array_object is present, but glGenVertexArraysOES() was not found");
+            return false;
+        }
     }
 #endif // !OSMAND_TARGET_OS_ios
 
