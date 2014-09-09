@@ -306,7 +306,9 @@ public class MainActivity extends ActionBarActivity {
             Log.i(TAG, "EGL version: " + eglVersion);
 
             Log.i(TAG, "Creating main context...");
-            final int[] contextAttribList = {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE };
+            final int[] contextAttribList = {
+                    EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
+                    EGL10.EGL_NONE };
 
             EGLContext mainContext = null;
             try {
@@ -340,7 +342,10 @@ public class MainActivity extends ActionBarActivity {
             {
                 Log.i(TAG, "Creating GPU worker fake surface...");
                 try {
-                    final int[] surfaceAttribList = { EGL14.EGL_NONE };
+                    final int[] surfaceAttribList = {
+                            EGL10.EGL_WIDTH, 1,
+                            EGL10.EGL_HEIGHT, 1,
+                            EGL10.EGL_NONE };
                     _gpuWorkerFakeSurface = egl.eglCreatePbufferSurface(display, eglConfig, surfaceAttribList);
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to create GPU worker fake surface", e);
