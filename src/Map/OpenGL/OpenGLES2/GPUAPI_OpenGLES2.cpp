@@ -570,10 +570,9 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code, const QString& ex
         "#define PARAM_OUTPUT varying                                                                                       ""\n"
         "#define PARAM_INPUT varying                                                                                        ""\n"
         "                                                                                                                   ""\n"
-        // Set default precisions
+        // Set default precisions (this should be the default, but never trust mobile drivers)
         "precision highp float;                                                                                             ""\n"
         "precision highp int;                                                                                               ""\n"
-        "precision highp sampler2D;                                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Features definitions
         "#define VERTEX_TEXTURE_FETCH_SUPPORTED %VertexTextureFetchSupported%                                               ""\n"
@@ -593,7 +592,13 @@ void OsmAnd::GPUAPI_OpenGLES2::preprocessShader(QString& code, const QString& ex
 
 void OsmAnd::GPUAPI_OpenGLES2::preprocessVertexShader(QString& code)
 {
-    preprocessShader(code);
+    const auto& shaderSource = QString::fromLatin1(
+        "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
+        "    precision highp sampler2D;                                                                                     ""\n"
+        "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
+        "                                                                                                                   ""\n");
+
+    preprocessShader(code, shaderSource);
 }
 
 void OsmAnd::GPUAPI_OpenGLES2::preprocessFragmentShader(QString& code)
