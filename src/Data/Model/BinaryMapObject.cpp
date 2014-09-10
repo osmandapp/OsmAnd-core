@@ -6,15 +6,13 @@
 #include "ObfMapSectionInfo.h"
 
 OsmAnd::Model::BinaryMapObject::BinaryMapObject(const std::shared_ptr<const ObfMapSectionInfo>& section_, const std::shared_ptr<const ObfMapSectionLevel>& level_)
-    : _foundation(MapFoundationType::Undefined)
-    , section(section_)
+    : section(section_)
     , level(level_)
     , isArea(_isArea)
     , points31(_points31)
     , innerPolygonsPoints31(_innerPolygonsPoints31)
     , typesRuleIds(_typesRuleIds)
     , extraTypesRuleIds(_extraTypesRuleIds)
-    , foundation(_foundation)
     , captions(_captions)
     , captionsOrder(_captionsOrder)
     , bbox31(_bbox31)

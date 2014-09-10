@@ -1020,6 +1020,13 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 {
     bool ok;
 
+    //////////////////////////////////////////////////////////////////////////
+    //if ((mapObject->id >> 1) == 7374044u)
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     const auto constructedGroup = new PrimitivesGroup(mapObject);
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
@@ -1076,7 +1083,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             continue;
         }
 
-        int shadowLevel;
+        int shadowLevel = 0;
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_LEVEL, shadowLevel);
 
         if (objectType == PrimitiveType::Polygon)
@@ -1433,6 +1440,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
         // (using shared cache is only allowed for non-generated MapObjects),
         // then symbols group can be shared
         const auto canBeShared = (primitivesGroup->sourceObject->section != env->dummyMapSection);
+
+        //////////////////////////////////////////////////////////////////////////
+        //if ((primitivesGroup->sourceObject->id >> 1) == 7374044u)
+        //{
+        //    int i = 5;
+        //}
+        //////////////////////////////////////////////////////////////////////////
 
         if (pSharedSymbolGroups && canBeShared)
         {

@@ -32,7 +32,6 @@ namespace OsmAnd
         protected:
             BinaryMapObject(const std::shared_ptr<const ObfMapSectionInfo>& section, const std::shared_ptr<const ObfMapSectionLevel>& level);
 
-            MapFoundationType _foundation;
             bool _isArea;
             QVector< PointI > _points31;
             QList< QVector< PointI > > _innerPolygonsPoints31;
@@ -52,7 +51,6 @@ namespace OsmAnd
             const QList< QVector< PointI > >& innerPolygonsPoints31;
             const QVector< uint32_t >& typesRuleIds;
             const QVector< uint32_t >& extraTypesRuleIds;
-            const MapFoundationType& foundation;
             const QHash<uint32_t, QString>& captions;
             const QList<uint32_t>& captionsOrder;
             const AreaI& bbox31;

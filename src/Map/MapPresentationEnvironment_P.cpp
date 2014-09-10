@@ -168,7 +168,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(const QString& name, st
     auto itIcon = _mapIcons.constFind(name);
     if (itIcon == _mapIcons.cend())
     {
-        const auto bitmapPath = QString::fromLatin1("map/map_icons/%1.png").arg(name);
+        const auto bitmapPath = QString::fromLatin1("map/icons/%1.png").arg(name);
 
         // Get data from embedded resources
         auto data = obtainResourceByName(bitmapPath);
@@ -238,17 +238,26 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(const QString& name,
 
 QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QString& name) const
 {
+    bool ok = false;
+
     // Try to obtain from external resources first
     if (static_cast<bool>(owner->externalResourcesProvider))
     {
-        bool ok = false;
         const auto resource = owner->externalResourcesProvider->getResource(name, owner->displayDensityFactor, &ok);
         if (ok)
             return resource;
     }
 
     // Otherwise obtain from global
-    return getCoreResourcesProvider()->getResource(name, owner->displayDensityFactor);
+    const auto resource = getCoreResourcesProvider()->getResource(name, owner->displayDensityFactor, &ok);
+    if (!ok)
+    {
+        LogPrintf(LogSeverityLevel::Warning,
+            "Resource '%s' (requested by MapPresentationEnvironment) was not found",
+            qPrintable(name));
+        return QByteArray();
+    }
+    return resource;
 }
 
 OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getDefaultBackgroundColor(const ZoomLevel zoom) const

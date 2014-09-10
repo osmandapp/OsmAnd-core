@@ -447,6 +447,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                         caption = mapObjectsCaptionsTable[stringId];
                     }
 
+                    //////////////////////////////////////////////////////////////////////////
+                    //if ((mapObject->id >> 1) == 7374044u)
+                    //{
+                    //    int i = 5;
+                    //}
+                    //////////////////////////////////////////////////////////////////////////
+
                     if (!visitor || visitor(mapObject))
                     {
                         if (resultOut)
@@ -502,12 +509,18 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 // Make unique map object identifier
                 mapObject->_id = Model::BinaryMapObject::getUniqueId(mapObject->_id, section);
 
+                //////////////////////////////////////////////////////////////////////////
+                //if ((mapObject->id >> 1) == 7374044u)
+                //{
+                //    int i = 5;
+                //}
+                //////////////////////////////////////////////////////////////////////////
+
                 // Check if map object is desired
                 if (filterById && !filterById(section, mapObject->id, mapObject->bbox31, mapObject->level->minZoom, mapObject->level->maxZoom))
                     break;
 
                 // Save object
-                mapObject->_foundation = tree->_foundation;
                 intermediateResult.push_back(qMove(mapObject));
 
                 break;

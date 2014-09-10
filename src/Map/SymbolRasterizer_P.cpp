@@ -59,6 +59,13 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const auto& mapObject = symbolGroupEntry.key();
         const auto& symbolsGroup = symbolGroupEntry.value();
 
+        //////////////////////////////////////////////////////////////////////////
+        //if ((mapObject->id >> 1) == 7374044u)
+        //{
+        //    int i = 5;
+        //}
+        //////////////////////////////////////////////////////////////////////////
+
         // Apply filter, if it's present
         if (filter && !filter(mapObject))
             continue;
