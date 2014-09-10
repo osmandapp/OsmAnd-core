@@ -121,10 +121,14 @@ public class Sample1 implements GLEventListener {
   private BinaryMapRasterBitmapTileProvider _binaryMapRasterBitmapTileProvider;
   private IMapRenderer _mapRenderer;
   private RenderRequestCallback _renderRequestCallback;
+  private QIODeviceLogSink _fileLogSink;
 
   @Override
   public void init(GLAutoDrawable drawable) {
     OsmAndCore.InitializeCore(_coreResourcesEmbeddedBundle);
+
+    _fileLogSink = QIODeviceLogSink.createFileLogSink("d:/OpenSource/OsmAnd/osmandcore.log");
+    Logger.get().addLogSink(_fileLogSink);
 
     _displayDensityFactor = 1.0f;
     _referenceTileSize = 256;

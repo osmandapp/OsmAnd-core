@@ -24,6 +24,8 @@ namespace OsmAnd
 
         virtual void log(const LogSeverityLevel level, const char* format, va_list args);
         virtual void flush();
+
+        static std::shared_ptr<QIODeviceLogSink> createFileLogSink(const QString& fileName);
     };
 }
 

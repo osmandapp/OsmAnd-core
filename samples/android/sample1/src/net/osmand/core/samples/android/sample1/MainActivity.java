@@ -86,6 +86,7 @@ public class MainActivity extends ActionBarActivity {
     private GpuWorkerThreadPrologue _gpuWorkerThreadPrologue;
     private GpuWorkerThreadEpilogue _gpuWorkerThreadEpilogue;
     private RenderRequestCallback _renderRequestCallback;
+    private QIODeviceLogSink _fileLogSink;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +106,9 @@ public class MainActivity extends ActionBarActivity {
         Log.i(TAG, "Initializing core...");
         _coreResources = CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this);
         OsmAndCore.InitializeCore(_coreResources);
+
+        _fileLogSink = QIODeviceLogSink.createFileLogSink(Environment.getExternalStorageDirectory() + "/osmandcore.log");
+        Logger.get().addLogSink(_fileLogSink);
 
         Log.i(TAG, "Going to resolve default embedded style...");
         _mapStylesCollection = new MapStylesCollection();

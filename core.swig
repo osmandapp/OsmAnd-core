@@ -14,6 +14,10 @@
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
+#include <OsmAndCore/Logging.h>
+#include <OsmAndCore/ILogSink.h>
+#include <OsmAndCore/DefaultLogSink.h>
+#include <OsmAndCore/QIODeviceLogSink.h>
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/Data/DataTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
@@ -86,6 +90,9 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResourcesManager::OnlineTileSourcesMetadata)
 	%shared_ptr(OsmAnd::ICoreResourcesProvider)
 	%shared_ptr(OsmAnd::CoreResourcesEmbeddedBundle)
+	%shared_ptr(OsmAnd::ILogSink)
+	%shared_ptr(OsmAnd::DefaultLogSink)
+	%shared_ptr(OsmAnd::QIODeviceLogSink)
 	%shared_ptr(OsmAnd::ObfFile)
 	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::MapSymbolsGroup)
@@ -180,6 +187,10 @@ using namespace OsmAnd;
 %include <OsmAndCore/ResourcesManager.h>
 %include <OsmAndCore/ICoreResourcesProvider.h>
 %include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
+%include <OsmAndCore/Logging.h>
+%include <OsmAndCore/ILogSink.h>
+%include <OsmAndCore/DefaultLogSink.h>
+%include <OsmAndCore/QIODeviceLogSink.h>
 %include <OsmAndCore/Utilities.h>
 %include <OsmAndCore/Data/DataTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
