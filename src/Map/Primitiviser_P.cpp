@@ -53,19 +53,21 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
         if (controller && controller->isAborted())
             break;
 
-        if (zoom < static_cast<ZoomLevel>(BasemapZoom) && !mapObject->section->isBasemap)
+        const auto& mapObjectSection = mapObject->section;
+        const auto isFromBasemap = mapObjectSection->isBasemap;
+        if (zoom < static_cast<ZoomLevel>(BasemapZoom) && !isFromBasemap)
             continue;
 
-        if (mapObject->containsType(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId))
+        if (mapObject->containsType(mapObjectSection->encodingDecodingRules->naturalCoastline_encodingRuleId))
         {
-            if (mapObject->section->isBasemap)
+            if (isFromBasemap)
                 basemapCoastlineObjects.push_back(mapObject);
             else
                 detailedmapCoastlineObjects.push_back(mapObject);
         }
         else
         {
-            if (mapObject->section->isBasemap)
+            if (isFromBasemap)
                 basemapMapObjects.push_back(mapObject);
             else
                 detailedmapMapObjects.push_back(mapObject);
@@ -126,8 +128,6 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 
     if (fillEntireArea)
     {
-        //assert(foundation != MapFoundationType::Undefined);
-
         const auto& encDecRules = owner->environment->dummyMapSection->encodingDecodingRules;
         const std::shared_ptr<Model::BinaryMapObject> bgMapObject(new Model::BinaryMapObject(owner->environment->dummyMapSection, nullptr));
         bgMapObject->_isArea = true;
@@ -140,8 +140,15 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
             bgMapObject->_typesRuleIds.push_back(encDecRules->naturalCoastline_encodingRuleId);
         else if (foundation == MapFoundationType::FullLand || foundation == MapFoundationType::Mixed)
             bgMapObject->_typesRuleIds.push_back(encDecRules->naturalLand_encodingRuleId);
-        else
+        else // if (foundation == MapFoundationType::Undefined)
         {
+            LogPrintf(LogSeverityLevel::Warning, "Area [%d, %d, %d, %d]@%d has undefined foundation type",
+                area31.top(),
+                area31.left(),
+                area31.bottom(),
+                area31.right(),
+                zoom);
+
             bgMapObject->_isArea = false;
             bgMapObject->_typesRuleIds.push_back(encDecRules->naturalCoastlineBroken_encodingRuleId);
         }
@@ -253,7 +260,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     {
         if (coastline->points31.size() < 2)
         {
-            OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+            LogPrintf(LogSeverityLevel::Warning,
                 "Map object #%" PRIu64 " (%" PRIi64 ") is primitivised as coastline, but has %d vertices",
                 coastline->id >> 1, static_cast<int64_t>(coastline->id) / 2,
                 coastline->points31.size());
@@ -327,7 +334,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
 
     if (!coastlinePolylines.isEmpty())
     {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Invalid polylines found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
+        LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Invalid polylines found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
             primitivisedArea->area31.top(),
             primitivisedArea->area31.left(),
             primitivisedArea->area31.bottom(),
@@ -393,7 +400,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
 
     if (fullWaterObjects == 0u && !coastlineCrossesBounds)
     {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Isolated islands found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
+        LogPrintf(LogSeverityLevel::Warning, "Isolated islands found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
             primitivisedArea->area31.top(),
             primitivisedArea->area31.left(),
             primitivisedArea->area31.bottom(),
@@ -1077,7 +1084,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             // Perform checks on data
             if (mapObject->points31.size() <= 2)
             {
-                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                LogPrintf(LogSeverityLevel::Warning,
                     "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but has only %d point(s)",
                     mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
                     mapObject->points31.size());
@@ -1085,14 +1092,14 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             }
             if (!mapObject->isClosedFigure())
             {
-                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                LogPrintf(LogSeverityLevel::Warning,
                     "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but isn't closed",
                     mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
                 continue;
             }
             if (!mapObject->isClosedFigure(true))
             {
-                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                LogPrintf(LogSeverityLevel::Warning,
                     "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but isn't closed (inner)",
                     mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
                 continue;
@@ -1202,7 +1209,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             // Perform checks on data
             if (mapObject->points31.size() < 2)
             {
-                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                LogPrintf(LogSeverityLevel::Warning,
                     "Map object #%" PRIu64 " (%" PRIi64 ") is processed as polyline, but has %d point(s)",
                     mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
                     mapObject->_points31.size());
@@ -1255,7 +1262,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             // Perform checks on data
             if (mapObject->points31.size() < 1)
             {
-                OsmAnd::LogPrintf(LogSeverityLevel::Warning,
+                LogPrintf(LogSeverityLevel::Warning,
                     "Map object #%" PRIu64 " (%" PRIi64 ") is processed as point, but has no point",
                     mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
                 continue;

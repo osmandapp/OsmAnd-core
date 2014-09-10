@@ -103,7 +103,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     QList< proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > > futureReferencedMapObjects;
     QList< std::shared_ptr<const Model::BinaryMapObject> > loadedMapObjects;
     QSet< uint64_t > loadedSharedMapObjects;
-    MapFoundationType tileFoundation;
+    auto tileFoundation = MapFoundationType::Undefined;
     dataInterface->loadMapObjects(
         &loadedMapObjects,
         &tileFoundation,

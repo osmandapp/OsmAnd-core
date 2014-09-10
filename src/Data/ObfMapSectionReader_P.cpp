@@ -196,7 +196,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<const ObfMapSectionLevel>& level,
-    QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >& trees)
+    QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >& trees)
 {
     auto cis = reader._codedInputStream.get();
     for (;;)
@@ -212,7 +212,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                std::shared_ptr<ObfMapSectionLevelTreeNode> levelTree(new ObfMapSectionLevelTreeNode(level));
+                const std::shared_ptr<ObfMapSectionLevelTreeNode> levelTree(new ObfMapSectionLevelTreeNode(level));
                 levelTree->_offset = offset;
                 levelTree->_length = length;
                 readTreeNode(reader, section, level->area31, levelTree);
@@ -290,6 +290,9 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 cis->ReadVarint32(&value);
 
                 treeNode->_foundation = (value != 0) ? MapFoundationType::FullWater : MapFoundationType::FullLand;
+                assert(
+                    (treeNode->_foundation != MapFoundationType::FullWater) ||
+                    (treeNode->_foundation == MapFoundationType::FullWater && section->isBasemap));
 
                 break;
             }
@@ -311,16 +314,16 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
 void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
-    MapFoundationType& foundation,
-    QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
+    const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
+    MapFoundationType& outChildrenFoundation,
+    QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     auto cis = reader._codedInputStream.get();
 
-    foundation = MapFoundationType::Undefined;
+    outChildrenFoundation = MapFoundationType::Undefined;
 
     for (;;)
     {
@@ -367,26 +370,26 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 if (nodesWithData && childNode->_dataOffset > 0)
                     nodesWithData->push_back(childNode);
 
-                auto childrenFoundation = MapFoundationType::Undefined;
+                auto subchildrenFoundation = MapFoundationType::Undefined;
                 if (childNode->_childrenInnerOffset > 0)
                 {
                     cis->Seek(offset);
                     oldLimit = cis->PushLimit(length);
 
                     cis->Skip(childNode->_childrenInnerOffset);
-                    readTreeNodeChildren(reader, section, childNode, childrenFoundation, nodesWithData, bbox31, controller, metric);
+                    readTreeNodeChildren(reader, section, childNode, subchildrenFoundation, nodesWithData, bbox31, controller, metric);
                     assert(cis->BytesUntilLimit() == 0);
 
                     cis->PopLimit(oldLimit);
                 }
 
-                const auto foundationToMerge = (childrenFoundation != MapFoundationType::Undefined) ? childrenFoundation : childNode->_foundation;
+                const auto foundationToMerge = (subchildrenFoundation != MapFoundationType::Undefined) ? subchildrenFoundation : childNode->_foundation;
                 if (foundationToMerge != MapFoundationType::Undefined)
                 {
-                    if (foundation == MapFoundationType::Undefined)
-                        foundation = foundationToMerge;
-                    else if (foundation != foundationToMerge)
-                        foundation = MapFoundationType::Mixed;
+                    if (outChildrenFoundation == MapFoundationType::Undefined)
+                        outChildrenFoundation = foundationToMerge;
+                    else if (outChildrenFoundation != foundationToMerge)
+                        outChildrenFoundation = MapFoundationType::Mixed;
                 }
 
                 break;
@@ -401,7 +404,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
 void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const std::shared_ptr<ObfMapSectionLevelTreeNode>& tree,
+    const std::shared_ptr<const ObfMapSectionLevelTreeNode>& tree,
     QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
     const AreaI* bbox31,
     const FilterMapObjectsByIdFunction filterById,
@@ -537,7 +540,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     uint64_t baseId,
-    const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
+    const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
     std::shared_ptr<OsmAnd::Model::BinaryMapObject>& mapObject,
     const AreaI* bbox31,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
@@ -810,7 +813,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     ZoomLevel zoom,
     const AreaI* bbox31,
     QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
-    MapFoundationType* foundationOut,
+    MapFoundationType* outBBoxOrSectionFoundation,
     const FilterMapObjectsByIdFunction filterById,
     const VisitorFunction visitor,
     DataBlocksCache* cache,
@@ -839,17 +842,17 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
     ObfMapSectionReader_Metrics::Metric_loadMapObjects localMetric;
 
-    auto foundation = MapFoundationType::Undefined;
-    if (foundationOut)
-        *foundationOut = foundation;
+    auto bboxOrSectionFoundation = MapFoundationType::Undefined;
+    if (outBBoxOrSectionFoundation)
+        *outBBoxOrSectionFoundation = bboxOrSectionFoundation;
     QList< std::shared_ptr<const DataBlock> > danglingReferencedCacheEntries;
-    for (const auto& mapLevel : constOf(section->_levels))
+    for (const auto& mapLevel : constOf(section->levels))
     {
         // Update metric
         if (metric)
             metric->visitedLevels++;
 
-        if (mapLevel->_minZoom > zoom || mapLevel->_maxZoom < zoom)
+        if (mapLevel->minZoom > zoom || mapLevel->maxZoom < zoom)
             continue;
 
         if (bbox31)
@@ -857,9 +860,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             const Stopwatch bboxLevelCheckStopwatch(metric != nullptr);
 
             const auto shouldSkip =
-                !bbox31->contains(mapLevel->_area31) &&
-                !mapLevel->_area31.contains(*bbox31) &&
-                !bbox31->intersects(mapLevel->_area31);
+                !bbox31->contains(mapLevel->area31) &&
+                !mapLevel->area31.contains(*bbox31) &&
+                !bbox31->intersects(mapLevel->area31);
 
             if (metric)
                 metric->elapsedTimeForLevelsBbox += bboxLevelCheckStopwatch.elapsed();
@@ -872,7 +875,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         if (metric)
             metric->acceptedLevels++;
 
-        // If there are no tree nodes in map level, it means they are not loaded
+        // If there are no tree nodes in map level, it means they are not loaded.
+        // Since loading may be called from multiple threads, loading of root nodes needs synchronization
         {
             QMutexLocker scopedLocker(&mapLevel->_p->_rootNodesMutex);
 
@@ -882,16 +886,19 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 auto oldLimit = cis->PushLimit(mapLevel->_length);
 
                 cis->Skip(mapLevel->_boxesInnerOffset);
-                mapLevel->_p->_rootNodes.reset(new ObfMapSectionLevel_P::RootNodes());
-                readMapLevelTreeNodes(reader, section, mapLevel, mapLevel->_p->_rootNodes->nodes);
+
+                const std::shared_ptr< QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > rootNodes(
+                    new QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >());
+                readMapLevelTreeNodes(reader, section, mapLevel, *rootNodes);
+                mapLevel->_p->_rootNodes = rootNodes;
 
                 cis->PopLimit(oldLimit);
             }
         }
 
         // Collect tree nodes with data
-        QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > treeNodesWithData;
-        for (const auto& rootNode : constOf(mapLevel->_p->_rootNodes->nodes))
+        QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > treeNodesWithData;
+        for (const auto& rootNode : constOf(*mapLevel->_p->_rootNodes))
         {
             // Update metric
             if (metric)
@@ -921,33 +928,33 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             if (rootNode->_dataOffset > 0)
                 treeNodesWithData.push_back(rootNode);
 
-            auto childrenFoundation = MapFoundationType::Undefined;
+            auto rootSubnodesFoundation = MapFoundationType::Undefined;
             if (rootNode->_childrenInnerOffset > 0)
             {
                 cis->Seek(rootNode->_offset);
                 auto oldLimit = cis->PushLimit(rootNode->_length);
 
                 cis->Skip(rootNode->_childrenInnerOffset);
-                readTreeNodeChildren(reader, section, rootNode, childrenFoundation, &treeNodesWithData, bbox31, controller, metric);
+                readTreeNodeChildren(reader, section, rootNode, rootSubnodesFoundation, &treeNodesWithData, bbox31, controller, metric);
                 assert(cis->BytesUntilLimit() == 0);
 
                 cis->PopLimit(oldLimit);
             }
 
-            const auto foundationToMerge = (childrenFoundation != MapFoundationType::Undefined) ? childrenFoundation : rootNode->_foundation;
+            const auto foundationToMerge = (rootSubnodesFoundation != MapFoundationType::Undefined) ? rootSubnodesFoundation : rootNode->_foundation;
             if (foundationToMerge != MapFoundationType::Undefined)
             {
-                if (foundation == MapFoundationType::Undefined)
-                    foundation = foundationToMerge;
-                else if (foundation != foundationToMerge)
-                    foundation = MapFoundationType::Mixed;
+                if (bboxOrSectionFoundation == MapFoundationType::Undefined)
+                    bboxOrSectionFoundation = foundationToMerge;
+                else if (bboxOrSectionFoundation != foundationToMerge)
+                    bboxOrSectionFoundation = MapFoundationType::Mixed;
             }
         }
 
         // Sort blocks by data offset to force forward-only seeking
         qSort(treeNodesWithData.begin(), treeNodesWithData.end(),
             []
-            (const std::shared_ptr<ObfMapSectionLevelTreeNode>& l, const std::shared_ptr<ObfMapSectionLevelTreeNode>& r) -> bool
+            (const std::shared_ptr<const ObfMapSectionLevelTreeNode>& l, const std::shared_ptr<const ObfMapSectionLevelTreeNode>& r) -> bool
             {
                 return l->_dataOffset < r->_dataOffset;
             });
@@ -1110,8 +1117,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         danglingReferencedCacheEntries.clear();
     }
 
-    if (foundationOut)
-        *foundationOut = foundation;
+    if (outBBoxOrSectionFoundation)
+        *outBBoxOrSectionFoundation = bboxOrSectionFoundation;
 
     // In case cache was used, and metric was requested, some values must be taken from different parts
     if (cache && metric)

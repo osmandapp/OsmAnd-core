@@ -53,11 +53,7 @@ namespace OsmAnd
         ImplementationInterface<ObfMapSectionLevel> owner;
 
         mutable QMutex _rootNodesMutex;
-        struct RootNodes
-        {
-            QList< std::shared_ptr<ObfMapSectionLevelTreeNode> > nodes;
-        };
-        mutable std::shared_ptr<RootNodes> _rootNodes;
+        mutable std::shared_ptr< const QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > _rootNodes;
     public:
         virtual ~ObfMapSectionLevel_P();
 

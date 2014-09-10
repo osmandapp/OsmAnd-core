@@ -50,7 +50,7 @@ bool OsmAnd::ObfDataInterface::loadBasemapPresenceFlag(bool& outBasemapPresent, 
 
 bool OsmAnd::ObfDataInterface::loadMapObjects(
     QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
-    MapFoundationType* foundationOut,
+    MapFoundationType* outFoundation,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
     const FilterMapObjectsByIdFunction filterById /*= nullptr*/,
@@ -59,8 +59,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     const IQueryController* const controller /*= nullptr*/,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
 {
-    if (foundationOut)
-        *foundationOut = MapFoundationType::Undefined;
+    auto mergedFoundation = MapFoundationType::Undefined;
 
     // Iterate through all OBF readers
     for (const auto& obfReader : constOf(obfReaders))
@@ -78,21 +77,32 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 return false;
 
             // Read objects from each map section
+            auto foundationToMerge = MapFoundationType::Undefined;
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 obfReader,
                 mapSection,
                 zoom,
                 bbox31,
                 resultOut,
-                foundationOut,
+                &foundationToMerge,
                 filterById,
                 nullptr,
                 cache,
                 outReferencedCacheEntries,
                 controller,
                 metric);
+            if (foundationToMerge != MapFoundationType::Undefined)
+            {
+                if (mergedFoundation == MapFoundationType::Undefined)
+                    mergedFoundation = foundationToMerge;
+                else if (mergedFoundation != foundationToMerge)
+                    mergedFoundation = MapFoundationType::Mixed;
+            }
         }
     }
+
+    if (outFoundation)
+        *outFoundation = mergedFoundation;
 
     return true;
 }

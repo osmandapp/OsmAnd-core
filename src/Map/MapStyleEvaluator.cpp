@@ -82,30 +82,30 @@ void OsmAnd::MapStyleEvaluator::dump( bool input /*= true*/, bool output /*= tru
         if ((valueDef->valueClass == MapStyleValueClass::Input && input) || (valueDef->valueClass == MapStyleValueClass::Output && output))
         {
             auto strType = valueDef->valueClass == MapStyleValueClass::Input ? ">" : "<";
-            OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s%s%s = ", qPrintable(prefix), strType, qPrintable(valueDef->name));
+            LogPrintf(LogSeverityLevel::Debug, "%s%s%s = ", qPrintable(prefix), strType, qPrintable(valueDef->name));
 
             switch(valueDef->dataType)
             {
             case MapStyleValueDataType::Boolean:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", value.asSimple.asUInt == 1 ? "true" : "false");
+                LogPrintf(LogSeverityLevel::Debug, "%s", value.asSimple.asUInt == 1 ? "true" : "false");
                 break;
             case MapStyleValueDataType::Integer:
                 if (value.isComplex)
-                    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%d:%d", value.asComplex.asInt.dip, value.asComplex.asInt.px);
+                    LogPrintf(LogSeverityLevel::Debug, "%d:%d", value.asComplex.asInt.dip, value.asComplex.asInt.px);
                 else
-                    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%d", value.asSimple.asInt);
+                    LogPrintf(LogSeverityLevel::Debug, "%d", value.asSimple.asInt);
                 break;
             case MapStyleValueDataType::Float:
                 if (value.isComplex)
-                    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f:%f", value.asComplex.asFloat.dip, value.asComplex.asFloat.px);
+                    LogPrintf(LogSeverityLevel::Debug, "%f:%f", value.asComplex.asFloat.dip, value.asComplex.asFloat.px);
                 else
-                    OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%f", value.asSimple.asFloat);
+                    LogPrintf(LogSeverityLevel::Debug, "%f", value.asSimple.asFloat);
                 break;
             case MapStyleValueDataType::String:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "%s", qPrintable(style->_p->lookupStringValue(value.asSimple.asUInt)));
+                LogPrintf(LogSeverityLevel::Debug, "%s", qPrintable(style->_p->lookupStringValue(value.asSimple.asUInt)));
                 break;
             case MapStyleValueDataType::Color:
-                OsmAnd::LogPrintf(LogSeverityLevel::Debug, "#%s", qPrintable(QString::number(value.asSimple.asUInt, 16)));
+                LogPrintf(LogSeverityLevel::Debug, "#%s", qPrintable(QString::number(value.asSimple.asUInt, 16)));
                 break;
             }
         }

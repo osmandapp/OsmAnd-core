@@ -69,7 +69,7 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const ObfMapSectionLevel>& level,
-            QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >& nodes);
+            QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >& nodes);
 
         static void readTreeNode(
             const ObfReader_P& reader,
@@ -80,9 +80,9 @@ namespace OsmAnd
         static void readTreeNodeChildren(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
-            const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
-            MapFoundationType& foundation,
-            QList< std::shared_ptr<ObfMapSectionLevelTreeNode> >* nodesWithData,
+            const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
+            MapFoundationType& outChildrenFoundation,
+            QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
             const AreaI* bbox31,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
@@ -90,7 +90,7 @@ namespace OsmAnd
         static void readMapObjectsBlock(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
-            const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
+            const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
             const AreaI* bbox31,
             const FilterMapObjectsByIdFunction filterById,
@@ -108,7 +108,7 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             uint64_t baseId,
-            const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode,
+            const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             std::shared_ptr<OsmAnd::Model::BinaryMapObject>& mapObjectOut,
             const AreaI* bbox31,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
@@ -125,7 +125,7 @@ namespace OsmAnd
             ZoomLevel zoom,
             const AreaI* bbox31,
             QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
-            MapFoundationType* foundationOut,
+            MapFoundationType* outBBoxOrSectionFoundation,
             const FilterMapObjectsByIdFunction filterById,
             const VisitorFunction visitor,
             DataBlocksCache* cache,

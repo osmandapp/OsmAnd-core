@@ -57,7 +57,7 @@
 #include "GPUAPI.h"
 #include "Logging.h"
 
-#if OSMAND_DEBUG || defined(OSMAND_TARGET_OS_android)
+#if OSMAND_DEBUG
 #   define GL_CHECK_RESULT \
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
 #   define GL_GET_RESULT \

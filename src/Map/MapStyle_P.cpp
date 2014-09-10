@@ -473,7 +473,7 @@ bool OsmAnd::MapStyle_P::parse(QXmlStreamReader& xmlReader)
 
                 if (stack.isEmpty())
                 {
-                    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Group filter without parent");
+                    LogPrintf(LogSeverityLevel::Error, "Group filter without parent");
                     return false;
                 }
 
@@ -674,14 +674,14 @@ bool OsmAnd::MapStyle_P::registerRule(MapStyleRulesetType type, const std::share
     MapStyleValue tagData;
     if (!rule->getAttribute(_builtinValueDefs->INPUT_TAG, tagData))
     {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
+        LogPrintf(LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
         return false;
     }
 
     MapStyleValue valueData;
     if (!rule->getAttribute(_builtinValueDefs->INPUT_VALUE, valueData))
     {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
+        LogPrintf(LogSeverityLevel::Error, "Attribute tag should be specified for root filter");
         return false;
     }
 

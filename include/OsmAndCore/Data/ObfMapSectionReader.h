@@ -82,7 +82,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
             QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut = nullptr,
-            MapFoundationType* foundationOut = nullptr,
+            MapFoundationType* outBBoxOrSectionFoundation = nullptr,
             const FilterMapObjectsByIdFunction filterById = nullptr,
             const VisitorFunction visitor = nullptr,
             DataBlocksCache* cache = nullptr,
