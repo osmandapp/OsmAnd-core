@@ -90,6 +90,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResourcesManager::OnlineTileSourcesMetadata)
 	%shared_ptr(OsmAnd::ICoreResourcesProvider)
 	%shared_ptr(OsmAnd::CoreResourcesEmbeddedBundle)
+	%shared_ptr(OsmAnd::Logger)
 	%shared_ptr(OsmAnd::ILogSink)
 	%shared_ptr(OsmAnd::DefaultLogSink)
 	%shared_ptr(OsmAnd::QIODeviceLogSink)
