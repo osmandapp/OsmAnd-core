@@ -26,7 +26,7 @@ const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;
 const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuWordBreakIterator = nullptr;
 
-void OsmAnd::ICU::initialize()
+bool OsmAnd::ICU::initialize()
 {
     // Initialize ICU
     UErrorCode icuError = U_ZERO_ERROR;
@@ -36,29 +36,40 @@ void OsmAnd::ICU::initialize()
     if (U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU data: %d", icuError);
-        return;
+        return false;
     }
     u_init(&icuError);
     if (U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "Failed to initialize ICU: %d", icuError);
-        return;
+        return false;
     }
 
     // Allocate resources:
     g_pIcuAnyToLatinTransliterator = Transliterator::createInstance(UnicodeString("Any-Latin/BGN"), UTRANS_FORWARD, icuError);
     if (U_FAILURE(icuError))
+    {
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU Any-to-Latin transliterator: %d", icuError);
+        return false;
+    }
 
     icuError = U_ZERO_ERROR;
     g_pIcuAccentsAndDiacriticsConverter = Transliterator::createInstance(UnicodeString("NFD; [:Mn:] Remove; NFC"), UTRANS_FORWARD, icuError);
     if (U_FAILURE(icuError))
+    {
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU accents&diacritics converter: %d", icuError);
+        return false;
+    }
 
     icuError = U_ZERO_ERROR;
     g_pIcuWordBreakIterator = BreakIterator::createWordInstance(Locale::getRoot(), icuError);
     if (U_FAILURE(icuError))
+    {
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU word break iterator: %d", icuError);
+        return false;
+    }
+
+    return true;
 }
 
 void OsmAnd::ICU::release()

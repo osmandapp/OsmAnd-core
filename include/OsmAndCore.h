@@ -72,7 +72,7 @@ namespace OsmAnd
 {
     class ICoreResourcesProvider;
 
-    OSMAND_CORE_API void OSMAND_CORE_CALL InitializeCore(const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider);
+    OSMAND_CORE_API bool OSMAND_CORE_CALL InitializeCore(const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider);
     OSMAND_CORE_API const std::shared_ptr<const ICoreResourcesProvider>& OSMAND_CORE_CALL getCoreResourcesProvider();
     OSMAND_CORE_API void OSMAND_CORE_CALL ReleaseCore();
 }

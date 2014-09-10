@@ -82,6 +82,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
     GL_CHECK_PRESENT(glGetShaderiv);
     GL_CHECK_PRESENT(glGetShaderInfoLog);
     GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     GLuint shader;
 

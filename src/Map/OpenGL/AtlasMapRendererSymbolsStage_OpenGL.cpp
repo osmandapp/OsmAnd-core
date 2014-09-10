@@ -18,8 +18,8 @@
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
     : AtlasMapRendererSymbolsStage(renderer_)
     , AtlasMapRendererStageHelper_OpenGL(this)
-    , _onPathSymbol2dMaxGlyphsPerDrawCall(-1)
-    , _onPathSymbol3dMaxGlyphsPerDrawCall(-1)
+    , _onPathSymbol2dMaxGlyphsPerDrawCall(0)
+    , _onPathSymbol3dMaxGlyphsPerDrawCall(0)
 {
 }
 
@@ -176,6 +176,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -276,6 +278,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
         return false;
@@ -306,7 +311,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_billboardRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_billboardRasterProgram.id);
+        GL_CHECK_RESULT;
+        _billboardRasterProgram.id.reset();
+
         return false;
+    }
 
 #pragma pack(push, 1)
     struct Vertex
@@ -532,137 +543,41 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
         4 /*param_vs_mPerspectiveProjectionView*/ +
         1 /*param_vs_glyphHeight*/ +
         1 /*param_vs_zDistanceFromCamera*/;
-    _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms/* - 200*/) / 5;
-    LogPrintf(LogSeverityLevel::Info,
-        "This device is capable of rendering %d glyphs of a on-path-2D symbol at a time",
-        _onPathSymbol2dMaxGlyphsPerDrawCall);
-
-    // Compile vertex shader
-    const QString vertexShader = QLatin1String(
-        // Input data
-        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
-        "INPUT float in_vs_glyphIndex;                                                                                      ""\n"
-        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
-        "                                                                                                                   ""\n"
-        // Output data to next shader stages
-        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-symbol data
-        "uniform float param_vs_glyphHeight;                                                                                ""\n"
-        "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: per-glyph data
-        "struct Glyph                                                                                                       ""\n"
-        "{                                                                                                                  ""\n"
-        "    vec2 anchorPoint;                                                                                              ""\n"
-        "    float width;                                                                                                   ""\n"
-        "    float angle;                                                                                                   ""\n"
-        "    float widthOfPreviousN;                                                                                        ""\n"
-        "    float widthN;                                                                                                  ""\n"
-        "};                                                                                                                 ""\n"
-        "uniform Glyph param_vs_glyphs[%MaxGlyphsPerDrawCall%];                                                             ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
-        "                                                                                                                   ""\n"
-        // Get on-screen vertex coordinates
-        "    float cos_a = cos(glyph.angle);                                                                                ""\n"
-        "    float sin_a = sin(glyph.angle);                                                                                ""\n"
-        "    vec2 p;                                                                                                        ""\n"
-        "    p.x = in_vs_vertexPosition.x * glyph.width;                                                                    ""\n"
-        "    p.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    v.x = glyph.anchorPoint.x + (p.x*cos_a - p.y*sin_a);                                                           ""\n"
-        "    v.y = glyph.anchorPoint.y + (p.x*sin_a + p.y*cos_a);                                                           ""\n"
-        "    v.z = -param_vs_distanceFromCamera;                                                                            ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "    gl_Position = param_vs_mOrthographicProjection * v;                                                            ""\n"
-        "                                                                                                                   ""\n"
-        // Prepare texture coordinates
-        "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
-        "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(_onPathSymbol2dMaxGlyphsPerDrawCall));
-    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
-    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
-    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
-    if (vsId == 0)
+    _onPathSymbol2dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
+    if (initializeOnPath2DProgram(_onPathSymbol2dMaxGlyphsPerDrawCall))
     {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
-        return false;
+        LogPrintf(LogSeverityLevel::Info,
+            "This device is capable of rendering %d glyphs of a on-path-2D symbol at a time",
+            _onPathSymbol2dMaxGlyphsPerDrawCall);
     }
-
-    // Compile fragment shader
-    const QString fragmentShader = QLatin1String(
-        // Input data
-        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
-        "                                                                                                                   ""\n"
-        // Parameters: common data
-        // Parameters: per-symbol data
-        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
-        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
-        "                                                                                                                   ""\n"
-        "void main()                                                                                                        ""\n"
-        "{                                                                                                                  ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
-        "        param_fs_sampler,                                                                                          ""\n"
-        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
-        "}                                                                                                                  ""\n");
-    auto preprocessedFragmentShader = fragmentShader;
-    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
-    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
-    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
-    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
-    if (fsId == 0)
+    else
     {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
-        return false;
-    }
+        bool initializedProgram = false;
+        if (_onPathSymbol2dMaxGlyphsPerDrawCall > 1)
+        {
+            for (auto testMaxGlyphsPerDrawCall = _onPathSymbol2dMaxGlyphsPerDrawCall - 1; testMaxGlyphsPerDrawCall >= 1; testMaxGlyphsPerDrawCall--)
+            {
+                if (!initializeOnPath2DProgram(testMaxGlyphsPerDrawCall))
+                    continue;
 
-    // Link everything into program object
-    GLuint shaders[] = { vsId, fsId };
-    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
-    if (!_onPath2dProgram.id.isValid())
-    {
-        LogPrintf(LogSeverityLevel::Error,
-            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
-        return false;
+                LogPrintf(LogSeverityLevel::Warning,
+                    "Seems like buggy driver. This device should be capable of rendering %d glyphs of a on-path-2D symbol at a time, but only %d glyphs variant compiles",
+                    _onPathSymbol2dMaxGlyphsPerDrawCall,
+                    testMaxGlyphsPerDrawCall);
+                _onPathSymbol2dMaxGlyphsPerDrawCall = testMaxGlyphsPerDrawCall;
+                initializedProgram = true;
+                break;
+            }
+        }
+        
+        if (!initializedProgram)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Seems like buggy driver. This device should be capable of rendering %d glyphs of a on-path-2D symbol at a time, but it fails to compile program even for 1",
+                _onPathSymbol2dMaxGlyphsPerDrawCall);
+            return false;
+        }
     }
-
-    bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath2dProgram.id, variablesMap);
-    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
-    auto& glyphs = _onPath2dProgram.vs.param.glyphs;
-    glyphs.resize(_onPathSymbol2dMaxGlyphsPerDrawCall);
-    int glyphStructIndex = 0;
-    for (auto& glyph : glyphs)
-    {
-        const auto glyphStructPrefix =
-            QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
-
-        ok = ok && lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GlslVariableType::Uniform);
-        ok = ok && lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GlslVariableType::Uniform);
-        ok = ok && lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GlslVariableType::Uniform);
-        ok = ok && lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
-        ok = ok && lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
-    }
-    ok = ok && lookup->lookupLocation(_onPath2dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onPath2dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
-    if (!ok)
-        return false;
 
 #pragma pack(push, 1)
     struct Vertex
@@ -764,24 +679,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(const unsigned int maxGlyphsPerDrawCall)
 {
     const auto gpuAPI = getGPUAPI();
 
-    GL_CHECK_PRESENT(glGenBuffers);
-    GL_CHECK_PRESENT(glBindBuffer);
-    GL_CHECK_PRESENT(glBufferData);
-    GL_CHECK_PRESENT(glEnableVertexAttribArray);
-    GL_CHECK_PRESENT(glVertexAttribPointer);
-
-    const auto alreadyOccupiedUniforms =
-        4 /*param_vs_mPerspectiveProjectionView*/ +
-        1 /*param_vs_glyphHeight*/ +
-        1 /*param_vs_zDistanceFromCamera*/;
-    _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms/* - 200*/) / 5;
-    LogPrintf(LogSeverityLevel::Info,
-        "This device is capable of rendering %d glyphs of a on-path-3D symbol at a time",
-        _onPathSymbol3dMaxGlyphsPerDrawCall);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -794,11 +697,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
         "                                                                                                                   ""\n"
         // Parameters: common data
-        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+        "uniform mat4 param_vs_mOrthographicProjection;                                                                     ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-symbol data
         "uniform float param_vs_glyphHeight;                                                                                ""\n"
-        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
+        "uniform float param_vs_distanceFromCamera;                                                                         ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-glyph data
         "struct Glyph                                                                                                       ""\n"
@@ -823,18 +726,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         "    p.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
         "    vec4 v;                                                                                                        ""\n"
         "    v.x = glyph.anchorPoint.x + (p.x*cos_a - p.y*sin_a);                                                           ""\n"
-        "    v.y = 0.0;                                                                                                     ""\n"
-        "    v.z = glyph.anchorPoint.y + (p.x*sin_a + p.y*cos_a);                                                           ""\n"
+        "    v.y = glyph.anchorPoint.y + (p.x*sin_a + p.y*cos_a);                                                           ""\n"
+        "    v.z = -param_vs_distanceFromCamera;                                                                            ""\n"
         "    v.w = 1.0;                                                                                                     ""\n"
-        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
-        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
+        "    gl_Position = param_vs_mOrthographicProjection * v;                                                            ""\n"
         "                                                                                                                   ""\n"
         // Prepare texture coordinates
         "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
         "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
         "}                                                                                                                  ""\n");
     auto preprocessedVertexShader = vertexShader;
-    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(_onPathSymbol3dMaxGlyphsPerDrawCall));
+    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(maxGlyphsPerDrawCall));
     gpuAPI->preprocessVertexShader(preprocessedVertexShader);
     gpuAPI->optimizeVertexShader(preprocessedVertexShader);
     const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
@@ -868,6 +770,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
         return false;
@@ -876,8 +781,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     // Link everything into program object
     GLuint shaders[] = { vsId, fsId };
     QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
-    _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
-    if (!_onPath3dProgram.id.isValid())
+    _onPath2dProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    if (!_onPath2dProgram.id.isValid())
     {
         LogPrintf(LogSeverityLevel::Error,
             "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
@@ -885,15 +790,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     }
 
     bool ok = true;
-    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath3dProgram.id, variablesMap);
-    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
-    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
-    auto& glyphs = _onPath3dProgram.vs.param.glyphs;
-    glyphs.resize(_onPathSymbol3dMaxGlyphsPerDrawCall);
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath2dProgram.id, variablesMap);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.mOrthographicProjection, "param_vs_mOrthographicProjection", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.vs.param.distanceFromCamera, "param_vs_distanceFromCamera", GlslVariableType::Uniform);
+    auto& glyphs = _onPath2dProgram.vs.param.glyphs;
+    glyphs.resize(maxGlyphsPerDrawCall);
     int glyphStructIndex = 0;
     for (auto& glyph : glyphs)
     {
@@ -906,10 +811,69 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
         ok = ok && lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
     }
-    ok = ok && lookup->lookupLocation(_onPath3dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
-    ok = ok && lookup->lookupLocation(_onPath3dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath2dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_onPath2dProgram.id);
+        GL_CHECK_RESULT;
+        _onPath2dProgram.id.reset();
+
         return false;
+    }
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glGenBuffers);
+    GL_CHECK_PRESENT(glBindBuffer);
+    GL_CHECK_PRESENT(glBufferData);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+
+    const auto alreadyOccupiedUniforms =
+        4 /*param_vs_mPerspectiveProjectionView*/ +
+        1 /*param_vs_glyphHeight*/ +
+        1 /*param_vs_zDistanceFromCamera*/;
+    _onPathSymbol3dMaxGlyphsPerDrawCall = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / 5;
+    if (initializeOnPath3DProgram(_onPathSymbol3dMaxGlyphsPerDrawCall))
+    {
+        LogPrintf(LogSeverityLevel::Info,
+            "This device is capable of rendering %d glyphs of a on-path-3D symbol at a time",
+            _onPathSymbol3dMaxGlyphsPerDrawCall);
+    }
+    else
+    {
+        bool initializedProgram = false;
+        if (_onPathSymbol3dMaxGlyphsPerDrawCall > 1)
+        {
+            for (auto testMaxGlyphsPerDrawCall = _onPathSymbol3dMaxGlyphsPerDrawCall - 1; testMaxGlyphsPerDrawCall >= 1; testMaxGlyphsPerDrawCall--)
+            {
+                if (!initializeOnPath3DProgram(testMaxGlyphsPerDrawCall))
+                    continue;
+
+                LogPrintf(LogSeverityLevel::Warning,
+                    "Seems like buggy driver. This device should be capable of rendering %d glyphs of a on-path-3D symbol at a time, but only %d glyphs variant compiles",
+                    _onPathSymbol3dMaxGlyphsPerDrawCall,
+                    testMaxGlyphsPerDrawCall);
+                _onPathSymbol3dMaxGlyphsPerDrawCall = testMaxGlyphsPerDrawCall;
+                initializedProgram = true;
+                break;
+            }
+        }
+
+        if (!initializedProgram)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Seems like buggy driver. This device should be capable of rendering %d glyphs of a on-path-3D symbol at a time, but it fails to compile program even for 1",
+                _onPathSymbol3dMaxGlyphsPerDrawCall);
+            return false;
+        }
+    }
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1011,6 +975,153 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3D()
     return true;
 }
 
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(const unsigned int maxGlyphsPerDrawCall)
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
+    // Compile vertex shader
+    const QString vertexShader = QLatin1String(
+        // Input data
+        "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
+        "INPUT float in_vs_glyphIndex;                                                                                      ""\n"
+        "INPUT vec2 in_vs_vertexTexCoords;                                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Output data to next shader stages
+        "PARAM_OUTPUT vec2 v2f_texCoords;                                                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform mat4 param_vs_mPerspectiveProjectionView;                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-symbol data
+        "uniform float param_vs_glyphHeight;                                                                                ""\n"
+        "uniform float param_vs_zDistanceFromCamera;                                                                        ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: per-glyph data
+        "struct Glyph                                                                                                       ""\n"
+        "{                                                                                                                  ""\n"
+        "    vec2 anchorPoint;                                                                                              ""\n"
+        "    float width;                                                                                                   ""\n"
+        "    float angle;                                                                                                   ""\n"
+        "    float widthOfPreviousN;                                                                                        ""\n"
+        "    float widthN;                                                                                                  ""\n"
+        "};                                                                                                                 ""\n"
+        "uniform Glyph param_vs_glyphs[%MaxGlyphsPerDrawCall%];                                                             ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
+        "                                                                                                                   ""\n"
+        // Get on-screen vertex coordinates
+        "    float cos_a = cos(glyph.angle);                                                                                ""\n"
+        "    float sin_a = sin(glyph.angle);                                                                                ""\n"
+        "    vec2 p;                                                                                                        ""\n"
+        "    p.x = in_vs_vertexPosition.x * glyph.width;                                                                    ""\n"
+        "    p.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
+        "    vec4 v;                                                                                                        ""\n"
+        "    v.x = glyph.anchorPoint.x + (p.x*cos_a - p.y*sin_a);                                                           ""\n"
+        "    v.y = 0.0;                                                                                                     ""\n"
+        "    v.z = glyph.anchorPoint.y + (p.x*sin_a + p.y*cos_a);                                                           ""\n"
+        "    v.w = 1.0;                                                                                                     ""\n"
+        "    gl_Position = param_vs_mPerspectiveProjectionView * v;                                                         ""\n"
+        "    gl_Position.z = param_vs_zDistanceFromCamera;                                                                  ""\n"
+        "                                                                                                                   ""\n"
+        // Prepare texture coordinates
+        "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
+        "    v2f_texCoords.t = in_vs_vertexTexCoords.t; // Height is compatible as-is                                       ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedVertexShader = vertexShader;
+    preprocessedVertexShader.replace("%MaxGlyphsPerDrawCall%", QString::number(maxGlyphsPerDrawCall));
+    gpuAPI->preprocessVertexShader(preprocessedVertexShader);
+    gpuAPI->optimizeVertexShader(preprocessedVertexShader);
+    const auto vsId = gpuAPI->compileShader(GL_VERTEX_SHADER, qPrintable(preprocessedVertexShader));
+    if (vsId == 0)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL vertex shader");
+        return false;
+    }
+
+    // Compile fragment shader
+    const QString fragmentShader = QLatin1String(
+        // Input data
+        "PARAM_INPUT vec2 v2f_texCoords;                                                                                    ""\n"
+        "                                                                                                                   ""\n"
+        // Parameters: common data
+        // Parameters: per-symbol data
+        "uniform lowp sampler2D param_fs_sampler;                                                                           ""\n"
+        "uniform lowp vec4 param_fs_modulationColor;                                                                        ""\n"
+        "                                                                                                                   ""\n"
+        "void main()                                                                                                        ""\n"
+        "{                                                                                                                  ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = SAMPLE_TEXTURE_2D(                                                                     ""\n"
+        "        param_fs_sampler,                                                                                          ""\n"
+        "        v2f_texCoords) * param_fs_modulationColor;                                                                 ""\n"
+        "}                                                                                                                  ""\n");
+    auto preprocessedFragmentShader = fragmentShader;
+    QString preprocessedFragmentShader_UnrolledPerLayerProcessingCode;
+    gpuAPI->preprocessFragmentShader(preprocessedFragmentShader);
+    gpuAPI->optimizeFragmentShader(preprocessedFragmentShader);
+    const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
+    if (fsId == 0)
+    {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
+        return false;
+    }
+
+    // Link everything into program object
+    GLuint shaders[] = { vsId, fsId };
+    QHash< QString, GPUAPI_OpenGL::GlslProgramVariable > variablesMap;
+    _onPath3dProgram.id = gpuAPI->linkProgram(2, shaders, true, &variablesMap);
+    if (!_onPath3dProgram.id.isValid())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to link AtlasMapRendererSymbolsStage_OpenGL program");
+        return false;
+    }
+
+    bool ok = true;
+    const auto& lookup = gpuAPI->obtainVariablesLookupContext(_onPath3dProgram.id, variablesMap);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexPosition, "in_vs_vertexPosition", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.glyphIndex, "in_vs_glyphIndex", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.in.vertexTexCoords, "in_vs_vertexTexCoords", GlslVariableType::In);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.mPerspectiveProjectionView, "param_vs_mPerspectiveProjectionView", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.glyphHeight, "param_vs_glyphHeight", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
+    auto& glyphs = _onPath3dProgram.vs.param.glyphs;
+    glyphs.resize(maxGlyphsPerDrawCall);
+    int glyphStructIndex = 0;
+    for (auto& glyph : glyphs)
+    {
+        const auto glyphStructPrefix =
+            QString::fromLatin1("param_vs_glyphs[%glyphIndex%]").replace(QLatin1String("%glyphIndex%"), QString::number(glyphStructIndex++));
+
+        ok = ok && lookup->lookupLocation(glyph.anchorPoint, glyphStructPrefix + ".anchorPoint", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.width, glyphStructPrefix + ".width", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.angle, glyphStructPrefix + ".angle", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.widthOfPreviousN, glyphStructPrefix + ".widthOfPreviousN", GlslVariableType::Uniform);
+        ok = ok && lookup->lookupLocation(glyph.widthN, glyphStructPrefix + ".widthN", GlslVariableType::Uniform);
+    }
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
+    ok = ok && lookup->lookupLocation(_onPath3dProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
+    if (!ok)
+    {
+        glDeleteProgram(_onPath3dProgram.id);
+        GL_CHECK_RESULT;
+        _onPath3dProgram.id.reset();
+
+        return false;
+    }
+
+    return true;
+}
+
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
     int& lastUsedProgram)
@@ -1084,7 +1195,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
 
     // Draw chains of glyphs
     const auto glyphsCount = renderable->glyphsPlacement.size();
-    int glyphsDrawn = 0;
+    unsigned int glyphsDrawn = 0;
     auto pGlyph = renderable->glyphsPlacement.constData();
     const auto pFirstGlyphVS = _onPath2dProgram.vs.param.glyphs.constData();
     float widthOfPreviousN = 0.0f;
@@ -1348,6 +1459,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -1421,6 +1534,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
         return false;
@@ -1449,7 +1565,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.sampler, "param_fs_sampler", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceRasterProgram.fs.param.modulationColor, "param_fs_modulationColor", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_onSurfaceRasterProgram.id);
+        GL_CHECK_RESULT;
+        _onSurfaceRasterProgram.id.reset();
+
         return false;
+    }
 
 #pragma pack(push, 1)
     struct Vertex
@@ -1646,6 +1768,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 {
     const auto gpuAPI = getGPUAPI();
 
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
         // Input data
@@ -1707,6 +1832,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSymbolsStage_OpenGL fragment shader");
         return false;
@@ -1731,7 +1859,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.zDistanceFromCamera, "param_vs_zDistanceFromCamera", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_onSurfaceVectorProgram.vs.param.modulationColor, "param_vs_modulationColor", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_onSurfaceVectorProgram.id);
+        GL_CHECK_RESULT;
+        _onSurfaceVectorProgram.id.reset();
+
         return false;
+    }
 
     return true;
 }

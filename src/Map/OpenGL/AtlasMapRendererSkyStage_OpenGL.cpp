@@ -26,6 +26,8 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -72,6 +74,9 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererSkyStage_OpenGL fragment shader");
         return false;
@@ -95,7 +100,13 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::initialize()
     ok = ok && lookup->lookupLocation(_program.vs.param.planeSize, "param_vs_planeSize", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_program.fs.param.skyColor, "param_fs_skyColor", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_program.id);
+        GL_CHECK_RESULT;
+        _program.id.reset();
+
         return false;
+    }
 
     // Vertex data (x,y)
     float vertices[4][2] =

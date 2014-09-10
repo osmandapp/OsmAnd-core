@@ -11,7 +11,7 @@ namespace OsmAnd
 {
     namespace ICU
     {
-        void initialize();
+        bool initialize();
         void release();
     }
 }

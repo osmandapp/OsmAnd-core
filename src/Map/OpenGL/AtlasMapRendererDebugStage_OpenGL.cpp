@@ -69,6 +69,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -122,6 +124,9 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
         return false;
@@ -146,7 +151,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeRects2D()
     ok = ok && lookup->lookupLocation(_programRect2D.vs.param.angle, "param_vs_angle", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programRect2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_programRect2D.id);
+        GL_CHECK_RESULT;
+        _programRect2D.id.reset();
+
         return false;
+    }
 
     // Vertex data (x,y)
     float vertices[4][2] =
@@ -297,6 +308,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -344,6 +357,9 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
         return false;
@@ -368,7 +384,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines2D()
     ok = ok && lookup->lookupLocation(_programLine2D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine2D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_programLine2D.id);
+        GL_CHECK_RESULT;
+        _programLine2D.id.reset();
+
         return false;
+    }
 
     // Vertex data (x,y)
     float vertices[2][2] =
@@ -521,6 +543,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -566,6 +590,9 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
         return false;
@@ -590,7 +617,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeLines3D()
     ok = ok && lookup->lookupLocation(_programLine3D.vs.param.v1, "param_vs_v1", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programLine3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_programLine3D.id);
+        GL_CHECK_RESULT;
+        _programLine3D.id.reset();
+
         return false;
+    }
 
     // Vertex data (x,y)
     float vertices[2][2] =
@@ -743,6 +776,8 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     GL_CHECK_PRESENT(glBufferData);
     GL_CHECK_PRESENT(glEnableVertexAttribArray);
     GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
 
     // Compile vertex shader
     const QString vertexShader = QLatin1String(
@@ -797,6 +832,9 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
     if (fsId == 0)
     {
+        glDeleteShader(vsId);
+        GL_CHECK_RESULT;
+
         LogPrintf(LogSeverityLevel::Error,
             "Failed to compile AtlasMapRendererDebugStage_OpenGL fragment shader");
         return false;
@@ -823,7 +861,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initializeQuads3D()
     ok = ok && lookup->lookupLocation(_programQuad3D.vs.param.v3, "param_vs_v3", GlslVariableType::Uniform);
     ok = ok && lookup->lookupLocation(_programQuad3D.fs.param.color, "param_fs_color", GlslVariableType::Uniform);
     if (!ok)
+    {
+        glDeleteProgram(_programQuad3D.id);
+        GL_CHECK_RESULT;
+        _programQuad3D.id.reset();
+
         return false;
+    }
 
     // Vertex data (x,y,z,w)
     float vertices[4][4] =

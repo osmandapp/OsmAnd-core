@@ -32,6 +32,9 @@ bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
 {
     const auto gpuAPI = getGPUAPI();
 
+    GL_CHECK_PRESENT(glDeleteShader);
+    GL_CHECK_PRESENT(glDeleteProgram);
+
     const auto& vertexShader = QString::fromLatin1(
         // Input data
         "INPUT vec2 in_vs_vertexPosition;                                                                                   ""\n"
@@ -257,6 +260,15 @@ bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
         const auto fsId = gpuAPI->compileShader(GL_FRAGMENT_SHADER, qPrintable(preprocessedFragmentShader));
         if (fsId == 0)
         {
+            glDeleteShader(vsId);
+            GL_CHECK_RESULT;
+            for (auto prevVariationId = 0u; prevVariationId < variationId; prevVariationId++)
+            {
+                glDeleteProgram(_tileProgramVariations[prevVariationId].id);
+                GL_CHECK_RESULT;
+                _tileProgramVariations[prevVariationId].id.reset();
+            }
+            
             LogPrintf(LogSeverityLevel::Error,
                 "Failed to compile AtlasMapRendererRasterMapStage_OpenGL fragment shader");
             return false;
@@ -329,7 +341,16 @@ bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
             }
         }
         if (!ok)
+        {
+            for (auto prevVariationId = 0u; prevVariationId <= variationId; prevVariationId++)
+            {
+                glDeleteProgram(_tileProgramVariations[prevVariationId].id);
+                GL_CHECK_RESULT;
+                _tileProgramVariations[prevVariationId].id.reset();
+            }
+
             return false;
+        }
     }
 
     createTilePatch();

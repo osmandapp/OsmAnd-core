@@ -120,8 +120,9 @@ namespace OsmAnd
                 } param;
             } fs;
         } _onPath2dProgram;
-        GLint _onPathSymbol2dMaxGlyphsPerDrawCall;
+        unsigned int _onPathSymbol2dMaxGlyphsPerDrawCall;
         bool initializeOnPath2D();
+        bool initializeOnPath2DProgram(const unsigned int maxGlyphsPerDrawCall);
         bool renderOnPath2dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             int& lastUsedProgram);
@@ -166,8 +167,9 @@ namespace OsmAnd
                 } param;
             } fs;
         } _onPath3dProgram;
-        GLint _onPathSymbol3dMaxGlyphsPerDrawCall;
+        unsigned int _onPathSymbol3dMaxGlyphsPerDrawCall;
         bool initializeOnPath3D();
+        bool initializeOnPath3DProgram(const unsigned int maxGlyphsPerDrawCall);
         bool renderOnPath3dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             int& lastUsedProgram);

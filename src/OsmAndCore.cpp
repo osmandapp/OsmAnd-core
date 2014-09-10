@@ -2,6 +2,7 @@
 
 #include "stdlib_common.h"
 #include <memory>
+#include <cstdio>
 
 #include "QtExtensions.h"
 #include <QCoreApplication>
@@ -87,9 +88,15 @@ struct QCoreApplicationThread : public QThread
 };
 std::shared_ptr<QCoreApplicationThread> _qCoreApplicationThread;
 
-OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider)
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider)
 {
-    assert(coreResourcesProvider);
+    if (!coreResourcesProvider)
+    {
+        std::cerr << "OsmAnd core needs non-null core resources provider!" << std::endl;
+        std::terminate();
+        return false;
+    }
+    
     gCoreResourcesProvider = coreResourcesProvider;
 
     Logger::get()->addLogSink(std::shared_ptr<ILogSink>(new DefaultLogSink()));
@@ -126,7 +133,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
     SkGraphics::PurgeFontCache(); // This will initialize global glyph cache, since it fails to initialize concurrently
 
     // ICU
-    ICU::initialize();
+    if (!ICU::initialize())
+        return false;
 
     // Qt
     (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
@@ -136,6 +144,8 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
 
     // MapSymbol intersection classes registry
     MapSymbolIntersectionClassesRegistry_initializeGlobalInstance();
+
+    return true;
 }
 
 OSMAND_CORE_API const std::shared_ptr<const OsmAnd::ICoreResourcesProvider>& OSMAND_CORE_CALL OsmAnd::getCoreResourcesProvider()
