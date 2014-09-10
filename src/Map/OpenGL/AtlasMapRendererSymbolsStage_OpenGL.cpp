@@ -1319,7 +1319,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
 
     // Draw chains of glyphs
     const auto glyphsCount = renderable->glyphsPlacement.size();
-    int glyphsDrawn = 0;
+    unsigned int glyphsDrawn = 0;
     auto pGlyph = renderable->glyphsPlacement.constData();
     const auto pFirstGlyphVS = _onPath3dProgram.vs.param.glyphs.constData();
     float widthOfPreviousN = 0.0f;
