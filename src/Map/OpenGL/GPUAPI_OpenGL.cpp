@@ -26,7 +26,7 @@
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
 #undef GL_GET_AND_CHECK_RESULT
-#if OSMAND_DEBUG
+#if OSMAND_GPU_DEBUG
 #   define GL_CHECK_RESULT validateResult()
 #   define GL_GET_RESULT validateResult()
 #   define GL_GET_AND_CHECK_RESULT validateResult()

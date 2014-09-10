@@ -49,6 +49,9 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		${m_LIBRARY}
 		${dl_LIBRARY}
 	)
+	set(target_specific_private_definitions ${target_specific_private_definitions}
+		-DOSMAND_GPU_DEBUG=1
+	)
 endif()
 
 if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")

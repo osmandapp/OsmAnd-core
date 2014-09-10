@@ -57,7 +57,11 @@
 #include "GPUAPI.h"
 #include "Logging.h"
 
-#if OSMAND_DEBUG
+#if !defined(OSMAND_GPU_DEBUG)
+#   define OSMAND_GPU_DEBUG OSMAND_DEBUG
+#endif // !defined(OSMAND_GPU_DEBUG)
+
+#if OSMAND_GPU_DEBUG
 #   define GL_CHECK_RESULT \
         static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
 #   define GL_GET_RESULT \
