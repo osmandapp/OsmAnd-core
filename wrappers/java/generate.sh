@@ -8,7 +8,6 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Prepare output folders
-REAL_SRCLOC=`readlink -f $SRCLOC`
 OUTPUTDIR=$1
 if [ -z "$OUTPUTDIR" ]; then
 	OUTPUTDIR="$(pwd)"
@@ -40,10 +39,10 @@ $SWIG \
 	-package net.osmand.core.jni \
 	-outdir "$OUTPUTDIR/gen/java/net/osmand/core/jni" \
 	-o "$OUTPUTDIR/gen/cpp/swig.cpp" \
-	-I"$REAL_SRCLOC/../../include" \
+	-I"$SRCLOC/../../include" \
 	-c++ \
 	-v \
-	"$REAL_SRCLOC/../../core.swig"
+	"$SRCLOC/../../core.swig"
 
 # Collect output files
 FIND_CMD="$(which find)"
