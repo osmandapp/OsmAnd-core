@@ -382,6 +382,13 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     assert(primitive->sourceObject->isClosedFigure());
     assert(primitive->sourceObject->isClosedFigure(true));
 
+    //////////////////////////////////////////////////////////////////////////
+    if ((primitive->sourceObject->id >> 1) == 25829290u)
+    {
+        int i = 5;
+    }
+    //////////////////////////////////////////////////////////////////////////
+
     SkPaint paint = _defaultPaint;
     if (!updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, true))
         return;

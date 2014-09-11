@@ -1,7 +1,11 @@
 #include "MapStyleEvaluator_P.h"
 #include "MapStyleEvaluator.h"
 
+#include "stdlib_common.h"
 #include <cassert>
+
+#include "QtExtensions.h"
+#include "QtCommon.h"
 
 #include "MapStyle.h"
 #include "MapStyle_P.h"
@@ -12,6 +16,7 @@
 #include "MapStyleRule_P.h"
 #include "BinaryMapObject.h"
 #include "QKeyValueIterator.h"
+#include "Logging.h"
 
 OsmAnd::MapStyleEvaluator_P::MapStyleEvaluator_P(MapStyleEvaluator* owner_)
     : owner(owner_)
@@ -23,24 +28,97 @@ OsmAnd::MapStyleEvaluator_P::~MapStyleEvaluator_P()
 {
 }
 
-bool OsmAnd::MapStyleEvaluator_P::evaluate(
-    const std::shared_ptr<const Model::BinaryMapObject>& mapObject, const MapStyleRulesetType ruleset,
-    MapStyleEvaluationResult* const outResultStorage,
-    bool evaluateChildren)
+void OsmAnd::MapStyleEvaluator_P::setBooleanValue(const int valueDefId, const bool value)
 {
-    const auto tagKey = _inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt;
-    const auto valueKey = _inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt;
+    auto& entry = _inputValues[valueDefId];
+
+    entry.asInt = value ? 1 : 0;
+}
+
+void OsmAnd::MapStyleEvaluator_P::setIntegerValue(const int valueDefId, const int value)
+{
+    auto& entry = _inputValues[valueDefId];
+
+    entry.asInt = value;
+}
+
+void OsmAnd::MapStyleEvaluator_P::setIntegerValue(const int valueDefId, const unsigned int value)
+{
+    auto& entry = _inputValues[valueDefId];
+
+    entry.asUInt = value;
+}
+
+void OsmAnd::MapStyleEvaluator_P::setFloatValue(const int valueDefId, const float value)
+{
+    auto& entry = _inputValues[valueDefId];
+
+    entry.asFloat = value;
+}
+
+void OsmAnd::MapStyleEvaluator_P::setStringValue(const int valueDefId, const QString& value)
+{
+    auto& entry = _inputValues[valueDefId];
+
+    const auto ok = owner->style->_p->lookupStringId(value, entry.asUInt);
+    if (!ok)
+    {
+        LogPrintf(LogSeverityLevel::Warning,
+            "Map style input string '%s' was not resolved in lookup table",
+            qPrintable(value));
+        entry.asUInt = std::numeric_limits<uint32_t>::max();
+    }
+}
+
+bool OsmAnd::MapStyleEvaluator_P::evaluate(
+    const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
+    const MapStyleRulesetType ruleset,
+    MapStyleEvaluationResult* const outResultStorage,
+    bool evaluateChildren,
+    std::shared_ptr<const MapStyleNode>* outMatchedRule) const
+{
     const auto& rules = owner->style->_p->obtainRulesRef(ruleset);
 
-    auto evaluationResult = evaluate(mapObject, rules, tagKey, valueKey, outResultStorage, evaluateChildren);
-    if (evaluationResult)
-        return true;
+    const auto citTagKey = _inputValues.constFind(_builtinValueDefs->id_INPUT_TAG);
+    const auto citValueKey = _inputValues.constFind(_builtinValueDefs->id_INPUT_VALUE);
+    const auto citEnd = _inputValues.cend();
 
-    evaluationResult = evaluate(mapObject, rules, tagKey, 0, outResultStorage, evaluateChildren);
-    if (evaluationResult)
-        return true;
+    if (citTagKey != citEnd && citValueKey != citEnd)
+    {
+        const auto evaluationResult = evaluate(
+            mapObject,
+            rules,
+            citTagKey->asUInt,
+            citValueKey->asUInt,
+            outResultStorage,
+            evaluateChildren,
+            outMatchedRule);
+        if (evaluationResult)
+            return true;
+    }
 
-    evaluationResult = evaluate(mapObject, rules, 0, 0, outResultStorage, evaluateChildren);
+    if (citTagKey != citEnd)
+    {
+        const auto evaluationResult = evaluate(
+            mapObject,
+            rules,
+            citTagKey->asUInt,
+            0,
+            outResultStorage,
+            evaluateChildren,
+            outMatchedRule);
+        if (evaluationResult)
+            return true;
+    }
+
+    const auto evaluationResult = evaluate(
+        mapObject,
+        rules,
+        0u,
+        0u,
+        outResultStorage,
+        evaluateChildren,
+        outMatchedRule);
     if (evaluationResult)
         return true;
 
@@ -48,47 +126,73 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 }
 
 bool OsmAnd::MapStyleEvaluator_P::evaluate(
-    const std::shared_ptr<const MapStyleRule>& singleRule,
+    const std::shared_ptr<const MapStyleNode>& singleRule,
     MapStyleEvaluationResult* const outResultStorage,
-    bool evaluateChildren)
+    bool evaluateChildren) const
 {
-    return evaluate(nullptr, singleRule, outResultStorage, evaluateChildren);
+    return evaluate(nullptr, singleRule, _inputValues, outResultStorage, evaluateChildren);
 }
 
 bool OsmAnd::MapStyleEvaluator_P::evaluate(
     const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-    const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& rules,
+    const QMap< uint64_t, std::shared_ptr<const MapStyleNode> >& rules,
     const uint32_t tagKey, const uint32_t valueKey,
     MapStyleEvaluationResult* const outResultStorage,
-    bool evaluateChildren)
+    bool evaluateChildren,
+    std::shared_ptr<const MapStyleNode>* outMatchedRule) const
 {
-    _inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt = tagKey;
-    _inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt = valueKey;
+    auto inputValues = detachedOf(_inputValues);
+    inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt = tagKey;
+    inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt = valueKey;
 
     const auto ruleId = MapStyle_P::encodeRuleId(tagKey, valueKey);
-    auto itRule = rules.constFind(ruleId);
-    if (itRule == rules.cend())
+    const auto citRule = rules.constFind(ruleId);
+    if (citRule == rules.cend())
         return false;
 
-    return evaluate(mapObject.get(), *itRule, outResultStorage, evaluateChildren);
+    const auto result = evaluate(mapObject.get(), *citRule, inputValues, outResultStorage, evaluateChildren);
+    if (result && outMatchedRule)
+        *outMatchedRule = *citRule;
+    return result;
 }
 
 bool OsmAnd::MapStyleEvaluator_P::evaluate(
-    const Model::BinaryMapObject* const mapObject, const std::shared_ptr<const MapStyleRule>& rule,
+    const Model::BinaryMapObject* const mapObject,
+    const std::shared_ptr<const MapStyleNode>& rule,
+    const InputValuesDictionary& inputValues,
     MapStyleEvaluationResult* const outResultStorage,
-    bool evaluateChildren)
+    bool evaluateChildren) const
 {
+    //////////////////////////////////////////////////////////////////////////
+    if (mapObject && ((mapObject->id >> 1) == 25829290u))
+    {
+        int i = 5;
+    }
+    //////////////////////////////////////////////////////////////////////////
+
     // Check all values of a rule until all are checked.
+    const auto citInputValuesEnd = inputValues.cend();
     for (const auto& ruleValueEntry : rangeOf(constOf(rule->_p->_values)))
     {
         const auto& valueDef = ruleValueEntry.key();
 
-        // Test only input values, the ones that start with INPUT_*
+        // Test only input values
         if (valueDef->valueClass != MapStyleValueClass::Input)
             continue;
 
         const auto& ruleValue = ruleValueEntry.value();
-        const auto& inputValue = _inputValues[valueDef->id];
+        const auto citInputValue = inputValues.constFind(valueDef->id);
+        InputValue inputValue;
+        if (citInputValue == citInputValuesEnd)
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Input '%s' was not defined, will use default value",
+                qPrintable(valueDef->name));
+        }
+        else
+        {
+            inputValue = *citInputValue;
+        }
 
         bool evaluationResult = false;
         if (valueDef->id == _builtinValueDefs->id_INPUT_MINZOOM)
@@ -184,18 +288,24 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         }
     }
 
-    if (evaluateChildren)
-    {
-        for (const auto& child : constOf(rule->_p->_ifElseChildren))
-        {
-            const auto evaluationResult = evaluate(mapObject, child, outResultStorage, true);
-            if (evaluationResult)
-                break;
-        }
+    // In case evaluation of children is not requested, stop processing
+    if (!evaluateChildren)
+        return true;
 
-        for (const auto& child : constOf(rule->_p->_ifChildren))
-            evaluate(mapObject, child, outResultStorage, true);
+    bool atLeastOneIfElseWasPositive = false;
+    for (const auto& child : constOf(rule->_p->_ifElseChildren))
+    {
+        const auto evaluationResult = evaluate(mapObject, child, inputValues, outResultStorage, true);
+        if (evaluationResult)
+        {
+            atLeastOneIfElseWasPositive = true;
+            break;
+        }
+                
     }
 
-    return true;
+    for (const auto& child : constOf(rule->_p->_ifChildren))
+        evaluate(mapObject, child, inputValues, outResultStorage, true);
+
+    return atLeastOneIfElseWasPositive;
 }

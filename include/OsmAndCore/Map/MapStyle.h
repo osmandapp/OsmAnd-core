@@ -18,21 +18,17 @@ namespace OsmAnd
 {
     class IMapStylesCollection;
     class MapStyleEvaluator;
-    class MapStyleEvaluator_P;
-    class MapPresentationEnvironment_P;
-
     class MapStyleValueDefinition;
-    class MapStyleRule;
 
-    enum class MapStyleRulesetType : uint32_t
+    enum class MapStyleRuleset
     {
-        Invalid = 0,
+        Invalid = -1,
 
-        Point = 1,
-        Polyline = 2,
-        Polygon = 3,
-        Text = 4,
-        Order = 5,
+        Point,
+        Polyline,
+        Polygon,
+        Text,
+        Order,
     };
 
     class MapStyle_P;
@@ -44,7 +40,7 @@ namespace OsmAnd
     protected:
     public:
         MapStyle(
-            /*const std::shared_ptr<const IMapStylesCollection>&*/const IMapStylesCollection* const collection,
+            const std::shared_ptr<const IMapStylesCollection>& const collection,
             const QString& name,
             const std::shared_ptr<QIODevice>& source);
         MapStyle(
@@ -81,7 +77,7 @@ namespace OsmAnd
     friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleEvaluator_P;
-    friend class OsmAnd::MapStyleRule;
+    friend class OsmAnd::MapStyleNode;
     friend class OsmAnd::MapPresentationEnvironment_P;
     };
 }

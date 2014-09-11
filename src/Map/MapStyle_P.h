@@ -20,7 +20,7 @@ namespace OsmAnd
 {
     class MapStylesCollection_P;
     class MapStyleValueDefinition;
-    class MapStyleRule;
+    class MapStyleNode;
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
 
@@ -70,14 +70,14 @@ namespace OsmAnd
         bool mergeInheritedRules(MapStyleRulesetType type);
         bool mergeInheritedAttributes();
 
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _pointRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _lineRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _polygonRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _textRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> > _orderRules;
-        QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type);
+        QMap< uint64_t, std::shared_ptr<const MapStyleRule> > _pointRules;
+        QMap< uint64_t, std::shared_ptr<const MapStyleRule> > _lineRules;
+        QMap< uint64_t, std::shared_ptr<const MapStyleRule> > _polygonRules;
+        QMap< uint64_t, std::shared_ptr<const MapStyleRule> > _textRules;
+        QMap< uint64_t, std::shared_ptr<const MapStyleRule> > _orderRules;
+        QMap< uint64_t, std::shared_ptr<const MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type);
 
-        std::shared_ptr<MapStyleRule> createTagValueRootWrapperRule(uint64_t id, const std::shared_ptr<MapStyleRule>& rule);
+        std::shared_ptr<const MapStyleRule> createTagValueRootWrapperRule(uint64_t id, const std::shared_ptr<const MapStyleRule>& rule);
 
         uint32_t _stringsIdBase;
         QList< QString > _stringsLUT;
@@ -95,7 +95,7 @@ namespace OsmAnd
 
         static uint64_t encodeRuleId(uint32_t tag, uint32_t value);
 
-        const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type) const;
+        const QMap< uint64_t, std::shared_ptr<const MapStyleRule> >& obtainRulesRef(MapStyleRulesetType type) const;
 
         uint32_t getTagStringId(uint64_t ruleId) const;
         uint32_t getValueStringId(uint64_t ruleId) const;
@@ -128,7 +128,7 @@ namespace OsmAnd
     friend class OsmAnd::MapStyle;
     friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleEvaluator_P;
-    friend class OsmAnd::MapStyleRule;
+    friend class OsmAnd::MapStyleNode;
     friend class OsmAnd::MapStylesCollection_P;
     };
 }

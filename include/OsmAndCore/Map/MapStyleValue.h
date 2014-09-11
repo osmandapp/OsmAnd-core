@@ -16,7 +16,7 @@ namespace OsmAnd
     class MapStyleEvaluator_P;
 
     class MapStyleValueDefinition;
-    class MapStyleRule;
+    class MapStyleNode;
 
     struct OSMAND_CORE_API MapStyleValue Q_DECL_FINAL
     {

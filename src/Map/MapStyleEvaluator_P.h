@@ -13,14 +13,14 @@
 
 namespace OsmAnd
 {
-    class MapStyleRule;
+    class MapStyleNode;
     struct MapStyleEvaluationResult;
     class MapStyleBuiltinValueDefinitions;
     namespace Model
     {
         class BinaryMapObject;
     }
-    
+
     class MapStyleEvaluator;
     class MapStyleEvaluator_P Q_DECL_FINAL
     {
@@ -37,37 +37,49 @@ namespace OsmAnd
             uint32_t asUInt;
         };
     private:
-    protected:
-        MapStyleEvaluator_P(MapStyleEvaluator* owner);
-
-        ImplementationInterface<MapStyleEvaluator> owner;
-
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
 
-        QMap<int, InputValue> _inputValues;
+        typedef QHash<int, InputValue> InputValuesDictionary;
+        InputValuesDictionary _inputValues;
 
         bool evaluate(
             const Model::BinaryMapObject* const mapObject,
-            const std::shared_ptr<const MapStyleRule>& singleRule,
+            const std::shared_ptr<const MapStyleRule>& rule,
+            const InputValuesDictionary& inputValues,
             MapStyleEvaluationResult* const outResultStorage,
-            bool evaluateChildren);
+            bool evaluateChildren) const;
+
         bool evaluate(
             const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-            const QMap< uint64_t, std::shared_ptr<MapStyleRule> >& rules,
-            const uint32_t tagKey, const uint32_t valueKey,
+            const QMap< uint64_t, std::shared_ptr<const MapStyleRule> >& rules,
+            const uint32_t tagKey,
+            const uint32_t valueKey,
             MapStyleEvaluationResult* const outResultStorage,
-            bool evaluateChildren);
+            bool evaluateChildren,
+            std::shared_ptr<const MapStyleRule>* outMatchedRule) const;
+    protected:
+        MapStyleEvaluator_P(MapStyleEvaluator* owner);
     public:
         ~MapStyleEvaluator_P();
 
+        ImplementationInterface<MapStyleEvaluator> owner;
+
+        void setBooleanValue(const int valueDefId, const bool value);
+        void setIntegerValue(const int valueDefId, const int value);
+        void setIntegerValue(const int valueDefId, const unsigned int value);
+        void setFloatValue(const int valueDefId, const float value);
+        void setStringValue(const int valueDefId, const QString& value);
+
         bool evaluate(
-            const std::shared_ptr<const Model::BinaryMapObject>& mapObject, const MapStyleRulesetType ruleset,
+            const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
+            const MapStyleRulesetType ruleset,
             MapStyleEvaluationResult* const outResultStorage,
-            bool evaluateChildren);
+            bool evaluateChildren,
+            std::shared_ptr<const MapStyleRule>* outMatchedRule) const;
         bool evaluate(
             const std::shared_ptr<const MapStyleRule>& singleRule,
             MapStyleEvaluationResult* const outResultStorage,
-            bool evaluateChildren);
+            bool evaluateChildren) const;
 
     friend class OsmAnd::MapStyleEvaluator;
     };

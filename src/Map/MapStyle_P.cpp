@@ -128,16 +128,7 @@ bool OsmAnd::MapStyle_P::load()
 
     // In case this is a standalone style, prepare it with preregistered values
     if (isStandalone)
-    {
         registerString(QString());
-
-        registerValue(new MapStyleConfigurableInputValue(
-            MapStyleValueDataType::Boolean,
-            QLatin1String("nightMode"),
-            QString(),
-            QString(),
-            QStringList()));
-    }
 
     // Parse this style itself
     if (!parse())
@@ -166,7 +157,7 @@ bool OsmAnd::MapStyle_P::resolveValueDefinition(const QString& name, std::shared
     return _parent->resolveValueDefinition(name, outDefinition);
 }
 
-bool OsmAnd::MapStyle_P::resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const
+bool OsmAnd::MapStyle_P::resolveAttribute(const QString& name, std::shared_ptr<const MapStyleNode>& outAttribute) const
 {
     auto itAttribute = _attributes.constFind(name);
     if (itAttribute != _attributes.cend())
@@ -278,13 +269,13 @@ bool OsmAnd::MapStyle_P::parse(QXmlStreamReader& xmlReader)
 
     struct Rule : public Lexeme
     {
-        Rule(std::shared_ptr<MapStyleRule> rule_, MapStyle_P* style_)
+        Rule(std::shared_ptr<MapStyleNode> rule_, MapStyle_P* style_)
             : Lexeme(Lexeme::Rule, style_)
             , rule(rule_)
         {
         }
 
-        const std::shared_ptr<MapStyleRule> rule;
+        const std::shared_ptr<MapStyleNode> rule;
     };
 
     struct Group : public Lexeme
@@ -295,10 +286,10 @@ bool OsmAnd::MapStyle_P::parse(QXmlStreamReader& xmlReader)
         }
 
         QHash< QString, QString > attributes;
-        QList< std::shared_ptr<MapStyleRule> > children;
+        QList< std::shared_ptr<MapStyleNode> > children;
         QList< std::shared_ptr<Lexeme> > subgroups;
 
-        void addGroupFilter(const std::shared_ptr<MapStyleRule>& rule)
+        void addGroupFilter(const std::shared_ptr<MapStyleNode>& rule)
         {
             for (const auto& child : constOf(children))
                 child->_p->_ifChildren.push_back(rule);
@@ -408,7 +399,7 @@ bool OsmAnd::MapStyle_P::parse(QXmlStreamReader& xmlReader)
 
                 auto name = obtainValue(attribs.value(QLatin1String("name")).toString());
 
-                std::shared_ptr<MapStyleRule> attribute(new MapStyleRule(owner, QHash< QString, QString >()));
+                std::shared_ptr<MapStyleNode> attribute(new MapStyleNode(owner, QHash< QString, QString >()));
                 _attributes.insert(name, attribute);
 
                 std::shared_ptr<Lexeme> selector(new Rule(attribute, this));
@@ -434,7 +425,7 @@ bool OsmAnd::MapStyle_P::parse(QXmlStreamReader& xmlReader)
                     ruleAttributes.insert(qMove(tag), qMove(value));
                 }
 
-                const std::shared_ptr<MapStyleRule> rule(new MapStyleRule(owner, ruleAttributes));
+                const std::shared_ptr<MapStyleNode> rule(new MapStyleNode(owner, ruleAttributes));
 
                 if (!stack.isEmpty())
                 {
@@ -469,7 +460,7 @@ bool OsmAnd::MapStyle_P::parse(QXmlStreamReader& xmlReader)
                     attributes.insert(qMove(tag), qMove(value));
                 }
 
-                std::shared_ptr<MapStyleRule> rule(new MapStyleRule(owner, attributes));
+                std::shared_ptr<MapStyleNode> rule(new MapStyleNode(owner, attributes));
 
                 if (stack.isEmpty())
                 {
@@ -627,7 +618,7 @@ QString OsmAnd::MapStyle_P::obtainValue(const QString& input)
     return output;
 }
 
-QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obtainRulesRef(MapStyleRulesetType type)
+QMap< uint64_t, std::shared_ptr<const OsmAnd::MapStyleNode> >& OsmAnd::MapStyle_P::obtainRulesRef(MapStyleRulesetType type)
 {
     switch (type)
     {
@@ -645,10 +636,10 @@ QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obt
         assert(false);
     }
 
-    return *(QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >*)(nullptr);
+    return *(QMap< uint64_t, std::shared_ptr<const OsmAnd::MapStyleNode> >*)(nullptr);
 }
 
-const QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_P::obtainRulesRef(MapStyleRulesetType type) const
+const QMap< uint64_t, std::shared_ptr<const OsmAnd::MapStyleNode> >& OsmAnd::MapStyle_P::obtainRulesRef(MapStyleRulesetType type) const
 {
     switch (type)
     {
@@ -666,10 +657,10 @@ const QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >& OsmAnd::MapStyle_
         assert(false);
     }
 
-    return *(QMap< uint64_t, std::shared_ptr<OsmAnd::MapStyleRule> >*)(nullptr);
+    return *(QMap< uint64_t, std::shared_ptr<const MapStyleNode> >*)(nullptr);
 }
 
-bool OsmAnd::MapStyle_P::registerRule(MapStyleRulesetType type, const std::shared_ptr<MapStyleRule>& rule)
+bool OsmAnd::MapStyle_P::registerRule(MapStyleRulesetType type, const std::shared_ptr<MapStyleNode>& rule)
 {
     MapStyleValue tagData;
     if (!rule->getAttribute(_builtinValueDefs->INPUT_TAG, tagData))
@@ -689,11 +680,11 @@ bool OsmAnd::MapStyle_P::registerRule(MapStyleRulesetType type, const std::share
 
     auto insertedRule = rule;
     auto& ruleset = obtainRulesRef(type);
-    auto itPrevious = ruleset.constFind(id);
-    if (itPrevious != ruleset.cend())
+    const auto citPrevious = ruleset.constFind(id);
+    if (citPrevious != ruleset.cend())
     {
         // all root rules should have at least tag/value
-        insertedRule = createTagValueRootWrapperRule(id, *itPrevious);
+        insertedRule = std::const_pointer_cast<MapStyleNode>(createTagValueRootWrapperRule(id, *citPrevious));
         insertedRule->_p->_ifElseChildren.push_back(rule);
     }
 
@@ -702,7 +693,7 @@ bool OsmAnd::MapStyle_P::registerRule(MapStyleRulesetType type, const std::share
     return true;
 }
 
-std::shared_ptr<OsmAnd::MapStyleRule> OsmAnd::MapStyle_P::createTagValueRootWrapperRule(uint64_t id, const std::shared_ptr<MapStyleRule>& rule)
+std::shared_ptr<const OsmAnd::MapStyleNode> OsmAnd::MapStyle_P::createTagValueRootWrapperRule(uint64_t id, const std::shared_ptr<const MapStyleNode>& rule)
 {
     if (rule->_p->_values.size() <= 2)
         return rule;
@@ -710,7 +701,7 @@ std::shared_ptr<OsmAnd::MapStyleRule> OsmAnd::MapStyle_P::createTagValueRootWrap
     QHash< QString, QString > attributes;
     attributes.insert(QLatin1String("tag"), getTagString(id));
     attributes.insert(QLatin1String("value"), getValueString(id));
-    std::shared_ptr<MapStyleRule> newRule(new MapStyleRule(owner, attributes));
+    const std::shared_ptr<MapStyleNode> newRule(new MapStyleNode(owner, attributes));
     newRule->_p->_ifElseChildren.push_back(rule);
     return newRule;
 }
@@ -826,7 +817,7 @@ bool OsmAnd::MapStyle_P::mergeInheritedRules(MapStyleRulesetType type)
         if (itLocalRule != rules.cend())
         {
             toInsert = createTagValueRootWrapperRule(parentRuleEntry.key(), *itLocalRule);
-            toInsert->_p->_ifElseChildren.push_back(parentRuleEntry.value());
+            std::const_pointer_cast<MapStyleNode>(toInsert)->_p->_ifElseChildren.push_back(parentRuleEntry.value());
         }
 
         rules.insert(parentRuleEntry.key(), toInsert);

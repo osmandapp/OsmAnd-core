@@ -11,9 +11,9 @@
 #include "Logging.h"
 #include "Utilities.h"
 
-OsmAnd::MapStyleRule::MapStyleRule(MapStyle* const owner_, const QHash< QString, QString >& attributes)
+OsmAnd::MapStyleNode::MapStyleRule(MapStyle* const style_, const QHash< QString, QString >& attributes)
     : _p(new MapStyleRule_P(this))
-    , owner(owner_)
+    , style(style_)
 {
     _p->_values.reserve(attributes.size());
     _p->_resolvedValueDefinitions.reserve(attributes.size());
@@ -55,11 +55,11 @@ OsmAnd::MapStyleRule::MapStyleRule(MapStyle* const owner_, const QHash< QString,
     }
 }
 
-OsmAnd::MapStyleRule::~MapStyleRule()
+OsmAnd::MapStyleNode::~MapStyleRule()
 {
 }
 
-bool OsmAnd::MapStyleRule::getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& value) const
+bool OsmAnd::MapStyleNode::getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& value) const
 {
     auto itValue = _p->_values.constFind(key);
     if (itValue == _p->_values.cend())
@@ -69,7 +69,7 @@ bool OsmAnd::MapStyleRule::getAttribute(const std::shared_ptr<const MapStyleValu
     return true;
 }
 
-void OsmAnd::MapStyleRule::dump(const QString& prefix /*= QString::null*/) const
+void OsmAnd::MapStyleNode::dump(const QString& prefix /*= QString::null*/) const
 {
     auto newPrefix = prefix + QLatin1String("\t");
 

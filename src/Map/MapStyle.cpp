@@ -72,7 +72,7 @@ bool OsmAnd::MapStyle::resolveValueDefinition(const QString& name, std::shared_p
     return _p->resolveValueDefinition(name, outDefinition);
 }
 
-bool OsmAnd::MapStyle::resolveAttribute(const QString& name, std::shared_ptr<const MapStyleRule>& outAttribute) const
+bool OsmAnd::MapStyle::resolveAttribute(const QString& name, std::shared_ptr<const MapStyleNode>& outAttribute) const
 {
     return _p->resolveAttribute(name, outAttribute);
 }

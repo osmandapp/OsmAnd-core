@@ -14,33 +14,35 @@
 namespace OsmAnd
 {
     class MapStyle;
-    class MapStyle_P;
     class MapStyleEvaluator;
-    class MapStyleEvaluator_P;
     class MapStyleValueDefinition;
     struct MapStyleValue;
 
     class MapStyleRule_P;
-    class OSMAND_CORE_API MapStyleRule
+    class OSMAND_CORE_API MapStyleNode Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(MapStyleRule);
+
+    public:
+        enum class RuleType
+        {
+
+        };
+
     private:
         PrivateImplementation<MapStyleRule_P> _p;
     protected:
-        MapStyleRule(MapStyle* const owner, const QHash< QString, QString >& attributes);
-
-        bool getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& value) const;
+        MapStyleRule(MapStyle* const style, const QHash< QString, QString >& attributes);
     public:
         virtual ~MapStyleRule();
 
-        const MapStyle* const owner;
+        const MapStyle* const style;
 
+        bool getAttribute(const std::shared_ptr<const MapStyleValueDefinition>& key, MapStyleValue& outValue) const;
         void dump(const QString& prefix = QString::null) const;
 
     friend class OsmAnd::MapStyle;
-    friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleEvaluator;
-    friend class OsmAnd::MapStyleEvaluator_P;
     };
 }
 

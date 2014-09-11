@@ -15,13 +15,13 @@ namespace OsmAnd
     {
         class BinaryMapObject;
     }
-    class MapStyleRule;
+    class MapStyleRuleNode;
     class MapStyleValueDefinition;
     struct MapStyleValue;
     struct MapStyleEvaluationResult;
 
     class MapStyleEvaluator_P;
-    class OSMAND_CORE_API MapStyleEvaluator
+    class OSMAND_CORE_API MapStyleEvaluator Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(MapStyleEvaluator);
     private:
@@ -41,15 +41,15 @@ namespace OsmAnd
         void setStringValue(const int valueDefId, const QString& value);
 
         bool evaluate(
-            const std::shared_ptr<const Model::BinaryMapObject>& mapObject, const MapStyleRulesetType ruleset,
+            const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
+            const MapStyleRulesetType ruleset,
             MapStyleEvaluationResult* const outResultStorage = nullptr,
-            bool evaluateChildren = true);
+            bool evaluateChildren = true,
+            std::shared_ptr<const MapStyleRuleNode>* outMatchedRuleNode = nullptr) const;
         bool evaluate(
             const std::shared_ptr<const MapStyleRule>& singleRule,
             MapStyleEvaluationResult* const outResultStorage = nullptr,
-            bool evaluateChildren = true);
-
-        void dump(bool input = true, bool output = true, const QString& prefix = QString::null) const;
+            bool evaluateChildren = true) const;
     };
 }
 

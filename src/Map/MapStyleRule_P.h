@@ -19,7 +19,7 @@ namespace OsmAnd
     class MapStyleEvaluator_P;
     class MapStyleValueDefinition;
 
-    class MapStyleRule;
+    class MapStyleNode;
     class MapStyleRule_P Q_DECL_FINAL
     {
     private:
@@ -31,12 +31,12 @@ namespace OsmAnd
         QHash< QString, std::shared_ptr<const MapStyleValueDefinition> > _resolvedValueDefinitions;
 
         QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _values;
-        QList< std::shared_ptr<MapStyleRule> > _ifElseChildren;
-        QList< std::shared_ptr<MapStyleRule> > _ifChildren;
+        QList< std::shared_ptr<const MapStyleRule> > _ifElseChildren;
+        QList< std::shared_ptr<const MapStyleRule> > _ifChildren;
     public:
         virtual ~MapStyleRule_P();
 
-    friend class OsmAnd::MapStyleRule;
+    friend class OsmAnd::MapStyleNode;
     friend class OsmAnd::MapStyle_P;
     friend class OsmAnd::MapStyleEvaluator;
     friend class OsmAnd::MapStyleEvaluator_P;

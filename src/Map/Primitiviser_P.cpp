@@ -11,6 +11,7 @@
 #include "ICU.h"
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
+#include "MapStyleRule.h"
 #include "ObfMapSectionInfo.h"
 #include "BinaryMapObject.h"
 #include "Stopwatch.h"
@@ -1021,10 +1022,10 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     bool ok;
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 7374044u)
-    //{
-    //    int i = 5;
-    //}
+    if ((mapObject->id >> 1) == 25829290u)
+    {
+        int i = 5;
+    }
     //////////////////////////////////////////////////////////////////////////
 
     const auto constructedGroup = new PrimitivesGroup(mapObject);
@@ -1120,7 +1121,18 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
             // Evaluate style for this primitive to check if it passes
             evaluationResult.clear();
-            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
+            //////////////////////////////////////////////////////////////////////////
+            std::shared_ptr<const MapStyleNode> rule;
+            //////////////////////////////////////////////////////////////////////////
+            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult, true, &rule);
+            //////////////////////////////////////////////////////////////////////////
+            if ((mapObject->id >> 1) == 25829290u)
+            {
+                int i = 5;
+                if (rule)
+                    rule->dump();
+            }
+            //////////////////////////////////////////////////////////////////////////
 
             if (metric)
             {
@@ -1442,7 +1454,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
         const auto canBeShared = (primitivesGroup->sourceObject->section != env->dummyMapSection);
 
         //////////////////////////////////////////////////////////////////////////
-        //if ((primitivesGroup->sourceObject->id >> 1) == 7374044u)
+        //if ((primitivesGroup->sourceObject->id >> 1) == 25829290u)
         //{
         //    int i = 5;
         //}

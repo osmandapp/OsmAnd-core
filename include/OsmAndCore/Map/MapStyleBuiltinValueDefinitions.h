@@ -38,6 +38,6 @@ namespace OsmAnd
     private:
         int _footerDummy;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_MAP_STYLE_BUILTIN_VALUE_DEFINITIONS_H_)
