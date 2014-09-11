@@ -82,6 +82,30 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 			OsmAndCore_shared
 			${target_specific_public_libraries}
 	)
+
+	if (TARGET OsmAndCore_shared_standalone)
+		add_library(OsmAndCoreTools_shared_standalone SHARED ${merged_sources})
+		add_dependencies(OsmAndCoreTools_shared_standalone
+			OsmAndCore_shared_standalone
+			${target_specific_dependencies})
+		target_compile_definitions(OsmAndCoreTools_shared_standalone
+			PRIVATE
+				-DOSMAND_CORE_TOOLS_EXPORTS
+				${target_specific_public_definitions}
+		)
+		target_include_directories(OsmAndCoreTools_shared_standalone
+			PRIVATE
+				"${OSMAND_ROOT}/core/tools/include/OsmAndCoreTools"
+			PUBLIC
+				"${OSMAND_ROOT}/core/tools/include"
+				${target_specific_public_includes}
+		)
+		target_link_libraries(OsmAndCoreTools_shared_standalone
+			LINK_PUBLIC
+				OsmAndCore_shared_standalone
+				${target_specific_public_libraries}
+		)
+	endif()
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
@@ -106,4 +130,28 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET)
 			OsmAndCore_static
 			${target_specific_public_libraries}
 	)
+
+	if (TARGET OsmAndCore_static_standalone)
+		add_library(OsmAndCoreTools_static_standalone STATIC ${merged_sources})
+		add_dependencies(OsmAndCoreTools_static_standalone
+			OsmAndCore_static_standalone
+			${target_specific_dependencies})
+		target_compile_definitions(OsmAndCoreTools_static_standalone
+			PUBLIC
+				-DOSMAND_CORE_TOOLS_STATIC
+				${target_specific_public_definitions}
+		)
+		target_include_directories(OsmAndCoreTools_static_standalone
+			PRIVATE
+				"${OSMAND_ROOT}/core/tools/include/OsmAndCoreTools"
+			PUBLIC
+				"${OSMAND_ROOT}/core/tools/include"
+				${target_specific_public_includes}
+		)
+		target_link_libraries(OsmAndCoreTools_static_standalone
+			LINK_PUBLIC
+				OsmAndCore_static_standalone
+				${target_specific_public_libraries}
+		)
+	endif()
 endif()

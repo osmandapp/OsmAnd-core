@@ -72,7 +72,7 @@ if not exist "%BAKED_DIR%" (
 	)
 )
 
-pushd "%BAKED_DIR%" && (cmd /C "nmake OsmAndCoreJNI" & popd)
+pushd "%BAKED_DIR%" && (cmd /C "nmake OsmAndCoreWithJNI" & popd)
 
 endlocal
 goto :EOF

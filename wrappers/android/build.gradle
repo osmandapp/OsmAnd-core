@@ -103,8 +103,7 @@ task copyOsmAndSharedLibs(type: Copy) {
 	dependsOn buildOsmAndCore
 
 	from("../../../binaries/android") {
-		include "gcc-*/Release/libOsmAndCore_shared.so"
-		include "gcc-*/Release/libOsmAndCoreJNI.so"
+		include "gcc-*/Release/libOsmAndCoreWithJNI.so"
 		eachFile { fileCopyDetails ->
 			fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*gcc-(.*)\/Release\/(.*)/, '$1/$2')
 		}

@@ -13,35 +13,35 @@ import net.osmand.core.jni.*;
 public class Sample1 implements GLEventListener {
   private final static boolean LOAD_STATIC = true;
   public static void main(String[] args) {
+    try {
+      System.loadLibrary("gnustl_shared");
+    }
+    catch( UnsatisfiedLinkError e ) {
+      System.err.println("Failed to load gnustl_shared:" + e);
+      System.exit(0);
+    }
+    try {
+      System.loadLibrary("Qt5Core");
+    }
+    catch( UnsatisfiedLinkError e ) {
+      System.err.println("Failed to load Qt5Core:" + e);
+      System.exit(0);
+    }
+    try {
+      System.loadLibrary("Qt5Network");
+    }
+    catch( UnsatisfiedLinkError e ) {
+      System.err.println("Failed to load Qt5Network:" + e);
+      System.exit(0);
+    }
+    try {
+      System.loadLibrary("Qt5Sql");
+    }
+    catch( UnsatisfiedLinkError e ) {
+      System.err.println("Failed to load Qt5Sql:" + e);
+      System.exit(0);
+    }
     if (!LOAD_STATIC) {
-      try {
-        System.loadLibrary("gnustl_shared");
-      }
-      catch( UnsatisfiedLinkError e ) {
-        System.err.println("Failed to load gnustl_shared:" + e);
-        System.exit(0);
-      }
-      try {
-        System.loadLibrary("Qt5Core");
-      }
-      catch( UnsatisfiedLinkError e ) {
-        System.err.println("Failed to load Qt5Core:" + e);
-        System.exit(0);
-      }
-      try {
-        System.loadLibrary("Qt5Network");
-      }
-      catch( UnsatisfiedLinkError e ) {
-        System.err.println("Failed to load Qt5Network:" + e);
-        System.exit(0);
-      }
-      try {
-        System.loadLibrary("Qt5Sql");
-      }
-      catch( UnsatisfiedLinkError e ) {
-        System.err.println("Failed to load Qt5Sql:" + e);
-        System.exit(0);
-      }
       try {
         System.loadLibrary("OsmAndCore_shared");
       }

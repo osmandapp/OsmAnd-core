@@ -103,3 +103,39 @@ target_link_libraries(OsmAndCoreWithJNI
 		OsmAndCore_static
 		${target_specific_public_libraries}
 )
+
+if (TARGET OsmAndCore_static_standalone)
+	# OsmAndCore+JNI (standalone) library
+	add_library(OsmAndCoreWithJNI_standalone SHARED
+		${swig_generated_cpp}
+	)
+	target_compile_definitions(OsmAndCoreWithJNI_standalone
+		PRIVATE
+			-DOSMAND_JNI_EXPORTS
+			-DOSMAND_SWIG
+	)
+	if (CMAKE_TARGET_OS STREQUAL "android")
+		target_include_directories(OsmAndCoreWithJNI_standalone
+			PRIVATE
+				"${OSMAND_ROOT}/core/swig"
+				${target_specific_private_includes}
+		)
+	else()
+		target_include_directories(OsmAndCoreWithJNI_standalone
+			PRIVATE
+				"${OSMAND_ROOT}/core/swig"
+				${JNI_INCLUDE_DIRS}
+				${JAVA_INCLUDE_PATH}
+				${target_specific_private_includes}
+		)
+	endif()
+	add_dependencies(OsmAndCoreWithJNI_standalone
+		OsmAndCore_static_standalone
+		OsmAndCore_swig_java
+	)
+	target_link_libraries(OsmAndCoreWithJNI_standalone
+		LINK_PUBLIC
+			OsmAndCore_static_standalone
+			${target_specific_public_libraries}
+	)
+endif()

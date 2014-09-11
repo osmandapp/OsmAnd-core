@@ -43,7 +43,7 @@ buildArch()
 		echo -e "\tFound baked in '$bakedDir"
 	fi
 	
-	(cd "$bakedDir" && make -j$OSMAND_BUILD_CPU_CORES_NUM OsmAndCoreJNI)
+	(cd "$bakedDir" && make -j$OSMAND_BUILD_CPU_CORES_NUM OsmAndCoreWithJNI)
 	if [[ $retcode -ne 0 ]]; then
 		echo "Failed to build ($retcode), aborting..."
 		rm -rf "$bakedDir"

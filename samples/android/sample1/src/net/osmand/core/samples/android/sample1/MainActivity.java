@@ -51,17 +51,10 @@ public class MainActivity extends ActionBarActivity {
             System.exit(0);
         }
         try {
-            System.loadLibrary("OsmAndCore_shared");
+            System.loadLibrary("OsmAndCoreWithJNI");
         }
         catch( UnsatisfiedLinkError e ) {
-            System.err.println("Failed to load 'OsmAndCore_shared':" + e);
-            System.exit(0);
-        }
-        try {
-            System.loadLibrary("OsmAndCoreJNI");
-        }
-        catch( UnsatisfiedLinkError e ) {
-            System.err.println("Failed to load 'OsmAndCoreJNI':" + e);
+            System.err.println("Failed to load 'OsmAndCoreWithJNI':" + e);
             System.exit(0);
         }
     }
