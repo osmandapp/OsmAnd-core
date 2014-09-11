@@ -41,9 +41,11 @@ namespace OsmAnd
         void removeLogSink(const std::shared_ptr<ILogSink>& logSink);
         void removeAllLogSinks();
 
+#if !defined(SWIG)
         void log(const LogSeverityLevel level, const char* format, va_list args);
         void log(const LogSeverityLevel level, const char* format, ...);
         void flush();
+#endif // !defined(SWIG)
 
         static const std::shared_ptr<Logger>& get();
     };
