@@ -19,7 +19,9 @@ namespace OsmAnd
         DefaultLogSink();
         virtual ~DefaultLogSink();
 
+#if !defined(SWIG)
         virtual void log(const LogSeverityLevel level, const char* format, va_list args);
+#endif // !defined(SWIG)
         virtual void flush();
     };
 }
