@@ -44,8 +44,8 @@ namespace OsmAnd
 #if !defined(SWIG)
         void log(const LogSeverityLevel level, const char* format, va_list args);
         void log(const LogSeverityLevel level, const char* format, ...);
-        void flush();
 #endif // !defined(SWIG)
+        void flush();
 
         static const std::shared_ptr<Logger>& get();
     };
