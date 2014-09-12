@@ -20,7 +20,9 @@ namespace OsmAnd
     public:
         virtual ~ILogSink();
 
+#if !defined(SWIG)
         virtual void log(const LogSeverityLevel level, const char* format, va_list args) = 0;
+#endif // !defined(SWIG)
         virtual void flush() = 0;
     };
 }

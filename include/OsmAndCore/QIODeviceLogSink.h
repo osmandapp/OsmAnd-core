@@ -22,7 +22,9 @@ namespace OsmAnd
         QIODeviceLogSink(const std::shared_ptr<QIODevice>& outputDevice, const bool autoClose = true);
         virtual ~QIODeviceLogSink();
 
+#if !defined(SWIG)
         virtual void log(const LogSeverityLevel level, const char* format, va_list args);
+#endif // !defined(SWIG)
         virtual void flush();
 
         static std::shared_ptr<QIODeviceLogSink> createFileLogSink(const QString& fileName);

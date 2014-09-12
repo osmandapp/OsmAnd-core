@@ -100,7 +100,7 @@ public class MainActivity extends ActionBarActivity {
         _coreResources = CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this);
         OsmAndCore.InitializeCore(_coreResources);
 
-        _fileLogSink = QIODeviceLogSink.createFileLogSink(Environment.getExternalStorageDirectory() + "/osmandcore.log");
+        _fileLogSink = QIODeviceLogSink.createFileLogSink(Environment.getExternalStorageDirectory() + "/osmand/osmandcore.log");
         Logger.get().addLogSink(_fileLogSink);
 
         Log.i(TAG, "Going to resolve default embedded style...");

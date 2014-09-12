@@ -27,7 +27,9 @@ namespace OsmAnd
         FunctorLogSink(const WriteCallback writeFunctor, const FlushCallback flushFunctor);
         virtual ~FunctorLogSink();
 
+#if !defined(SWIG)
         virtual void log(const LogSeverityLevel level, const char* format, va_list args);
+#endif // !defined(SWIG)
         virtual void flush();
     };
 }
