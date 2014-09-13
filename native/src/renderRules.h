@@ -159,8 +159,9 @@ public:
 	std::vector<float> floatProperties;
 	std::vector<RenderingRule*> ifElseChildren;
 	std::vector<RenderingRule*> ifChildren;
+	bool isGroup;
 
-	RenderingRule(map<string, string>& attrs, RenderingRulesStorage* storage);
+	RenderingRule(map<string, string>& attrs, bool isGroup, RenderingRulesStorage* storage);
 	void printDebugRenderingRule(string indent, RenderingRulesStorage * st);
 private :
 	inline int getPropertyIndex(string property) {
@@ -172,6 +173,7 @@ private :
 		}
 		return -1;
 	}
+
 public :
 	string getStringPropertyValue(string property, RenderingRulesStorage* storage);
 
@@ -451,7 +453,7 @@ public:
 
 	RenderingRule* getRule(int state, int itag, int ivalue);
 
-	void registerGlobalRule(RenderingRule* rr, int state);
+	void registerGlobalRule(RenderingRule* rr, int state, int key);
 
 	int registerString(string d) {
 		int res;
@@ -520,6 +522,8 @@ private :
 
 	bool searchInternal(int state, int tagKey, int valueKey, bool loadOutput);
 	bool visitRule(RenderingRule* rule, bool loadOutput);
+	void loadOutputProperties(RenderingRule* rule);
+	bool checkInputProperties(RenderingRule* rule);
 public:
 	RenderingRulesStorage* storage;
 
