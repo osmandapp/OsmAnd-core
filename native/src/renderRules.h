@@ -522,7 +522,7 @@ private :
 
 	bool searchInternal(int state, int tagKey, int valueKey, bool loadOutput);
 	bool visitRule(RenderingRule* rule, bool loadOutput);
-	void loadOutputProperties(RenderingRule* rule);
+	void loadOutputProperties(RenderingRule* rule, bool override);
 	bool checkInputProperties(RenderingRule* rule);
 public:
 	RenderingRulesStorage* storage;

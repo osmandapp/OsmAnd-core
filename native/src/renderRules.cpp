@@ -594,17 +594,18 @@ bool RenderingRuleSearchRequest::checkInputProperties(RenderingRule* rule) {
 	return true;
 }
 
-void RenderingRuleSearchRequest::loadOutputProperties(RenderingRule* rule) {
+void RenderingRuleSearchRequest::loadOutputProperties(RenderingRule* rule, bool override) {
 	std::vector<RenderingRuleProperty*> properties = rule->properties;
 		for (int i = 0; i < rule->properties.size(); i++) {
 		RenderingRuleProperty* rp = properties[i];
 		if (rp != NULL && !rp->input) {
-			searchResult = true;
-			if (rp->isFloat()) {
-				fvalues[rp->id] = rule->floatProperties[i];
-				values[rp->id] = rule->intProperties[i];
-			} else {
-				values[rp->id] = rule->intProperties[i];
+			if(override || !isSpecified(rp)) {
+				if (rp->isFloat()) {
+					fvalues[rp->id] = rule->floatProperties[i];
+					values[rp->id] = rule->intProperties[i];
+				} else {
+					values[rp->id] = rule->intProperties[i];
+				}
 			}
 		}
 	}
@@ -621,7 +622,7 @@ bool RenderingRuleSearchRequest::visitRule(RenderingRule* rule, bool loadOutput)
 	}
 	// accept it
     if(!rule->isGroup) {
-			loadOutputProperties(rule);
+		loadOutputProperties(rule, true);
 	}
 	size_t j;
 	match = false;
@@ -633,7 +634,7 @@ bool RenderingRuleSearchRequest::visitRule(RenderingRule* rule, bool loadOutput)
 	}
 	if (match || !rule->isGroup) {
 		if (rule->isGroup) {
-			loadOutputProperties(rule);
+			loadOutputProperties(rule, false);
 		}
 		for (j = 0; j < rule->ifChildren.size(); j++) {
 			visitRule(rule->ifChildren.at(j), loadOutput);
