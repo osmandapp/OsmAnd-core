@@ -250,12 +250,11 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAttributes()
 {
     QHash<StringId, std::shared_ptr<Attribute> > attributes;
 
-    // Process styles chain in reverse order, top-most parent is the last element
+    // Process styles chain in direct order to ensure "overridden" <case> elements are processed first
     auto citUnresolvedMapStyle = iteratorOf(owner->unresolvedMapStylesChain);
-    citUnresolvedMapStyle.toBack();
-    while (citUnresolvedMapStyle.hasPrevious())
+    while (citUnresolvedMapStyle.hasNext())
     {
-        const auto& unresolvedMapStyle = citUnresolvedMapStyle.previous();
+        const auto& unresolvedMapStyle = citUnresolvedMapStyle.next();
 
         for (const auto& unresolvedAttribute : constOf(unresolvedMapStyle->attributes))
         {
