@@ -137,6 +137,7 @@ namespace OsmAnd
         class MapStylesCollectionProxy : public IMapStylesCollection
         {
         private:
+            std::shared_ptr<UnresolvedMapStyle> getEditableStyleByName(const QString& name) const;
         protected:
             MapStylesCollectionProxy(ResourcesManager_P* owner);
         public:
@@ -144,9 +145,9 @@ namespace OsmAnd
 
             ResourcesManager_P* const owner;
 
-            virtual QList< std::shared_ptr<const MapStyle> > getCollection() const;
-            virtual std::shared_ptr<const MapStyle> getAsIsStyle(const QString& name) const;
-            virtual bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
+            virtual QList< std::shared_ptr<const UnresolvedMapStyle> > getCollection() const;
+            virtual std::shared_ptr<const UnresolvedMapStyle> getStyleByName(const QString& name) const;
+            virtual std::shared_ptr<const ResolvedMapStyle> getResolvedStyleByName(const QString& name) const;
 
         friend class OsmAnd::ResourcesManager_P;
         };

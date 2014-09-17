@@ -15,7 +15,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
-#include "MapTypes.h"
+#include "MapCommonTypes.h"
 
 namespace OsmAnd
 {

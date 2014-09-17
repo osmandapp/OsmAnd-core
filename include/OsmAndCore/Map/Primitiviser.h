@@ -13,7 +13,7 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/IQueryController.h>
 #include <OsmAndCore/SharedResourcesContainer.h>
-#include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapStyleEvaluationResult.h>
 #include <OsmAndCore/Map/Primitiviser_Metrics.h>
 

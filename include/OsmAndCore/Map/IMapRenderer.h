@@ -11,8 +11,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Observable.h>
-#include <OsmAndCore/Map/MapTypes.h>
-#include <OsmAndCore/Map/MapRendererTypes.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapRendererState.h>
 #include <OsmAndCore/Map/MapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapRendererSetupOptions.h>

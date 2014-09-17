@@ -9,7 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 
 namespace OsmAnd
 {

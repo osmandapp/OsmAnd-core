@@ -161,10 +161,10 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
         ResourceData resourceData = resourceDataEntry.getValue();
         Log.d(TAG, "Using ddf=" + resourceDataEntry.getKey() + " while looking for " + displayDensityFactor + " of '" + name + "'");
 
-        final SWIGTYPE_p_QByteArray data = SwigUtilities.readPartOfFile(
+        final SWIGTYPE_p_QByteArray data = SwigUtilities.qDecompress(SwigUtilities.readPartOfFile(
             _bundleFilename,
             resourceData.offset,
-            resourceData.size);
+            resourceData.size));
         if (data == null) {
             Log.e(TAG, "Failed to load data of '" + name + "'");
             if (ok != null)
@@ -196,10 +196,10 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
             return SwigUtilities.emptyQByteArray();
         }
 
-        final SWIGTYPE_p_QByteArray data = SwigUtilities.readPartOfFile(
+        final SWIGTYPE_p_QByteArray data = SwigUtilities.qDecompress(SwigUtilities.readPartOfFile(
             _bundleFilename,
             resourceEntry.defaultVariant.offset,
-            resourceEntry.defaultVariant.size);
+            resourceEntry.defaultVariant.size));
         if (data == null) {
             Log.e(TAG, "Failed to load data of '" + name + "'");
             if (ok != null)

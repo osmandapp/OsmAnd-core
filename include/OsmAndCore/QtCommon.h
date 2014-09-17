@@ -16,6 +16,8 @@
 #include <QVector>
 #include <OsmAndCore/restore_internal_warnings.h>
 
+#include <OsmAndCore.h>
+
 namespace OsmAnd
 {
     template<typename KEY, typename VALUE>
@@ -89,7 +91,10 @@ namespace OsmAnd
     }
 
     template<typename T>
-    auto detachedOf(const T& input) -> typename std::enable_if<std::is_same<decltype(input.detach()), void()>::value && !std::is_same<decltype(std::begin(input)), void()>::value, T>::type
+    auto detachedOf(const T& input)
+        -> typename std::enable_if <
+            std::is_same<decltype(input.detach()), void()>::value && !std::is_same<decltype(std::begin(input)), void()>::value,
+            T > ::type
     {
         auto copy = input;
         copy.detach();
@@ -110,6 +115,100 @@ namespace OsmAnd
     Q_DECL_CONSTEXPR T detachedOf(const T& input)
     {
         return input;
+    }
+
+    template<typename KEY, typename VALUE>
+    unsigned int mergeNonExistent(QHash<KEY, VALUE>& inOutHash, const QHash<KEY, VALUE>& hashToMerge)
+    {
+        unsigned int entriesMerged = 0;
+
+        auto itEntryToMerge = iteratorOf(hashToMerge);
+        while (itEntryToMerge.hasNext())
+        {
+            const auto& entryToMerge = itEntryToMerge.next();
+            const auto entryKey = entryToMerge.key();
+            const auto entryValue = entryToMerge.value();
+
+            if (inOutHash.contains(entryKey))
+                continue;
+
+            inOutHash.insert(entryKey, entryValue);
+            entriesMerged++;
+        }
+
+        return entriesMerged;
+    }
+
+    template<typename KEY, typename VALUE>
+    unsigned int mergeNonExistent(QMap<KEY, VALUE>& inOutHash, const QMap<KEY, VALUE>& hashToMerge)
+    {
+        unsigned int entriesMerged = 0;
+
+        auto itEntryToMerge = iteratorOf(hashToMerge);
+        while (itEntryToMerge.hasNext())
+        {
+            const auto& entryToMerge = itEntryToMerge.next();
+            const auto entryKey = entryToMerge.key();
+            const auto entryValue = entryToMerge.value();
+
+            if (inOutHash.contains(entryKey))
+                continue;
+
+            inOutHash.insert(entryKey, entryValue);
+            entriesMerged++;
+        }
+
+        return entriesMerged;
+    }
+
+    template<typename KEY, typename VALUE>
+    unsigned int mergeOverwriting(QHash<KEY, VALUE>& inOutHash, const QHash<KEY, VALUE>& hashToMerge)
+    {
+        auto itEntryToMerge = iteratorOf(hashToMerge);
+        while (itEntryToMerge.hasNext())
+        {
+            const auto& entryToMerge = itEntryToMerge.next();
+            const auto entryKey = entryToMerge.key();
+            const auto entryValue = entryToMerge.value();
+
+            inOutHash.insert(entryKey, entryValue);
+        }
+
+        return hashToMerge.size();
+    }
+
+    template<typename KEY, typename VALUE>
+    unsigned int mergeOverwriting(QMap<KEY, VALUE>& inOutHash, const QMap<KEY, VALUE>& hashToMerge)
+    {
+        auto itEntryToMerge = iteratorOf(hashToMerge);
+        while (itEntryToMerge.hasNext())
+        {
+            const auto& entryToMerge = itEntryToMerge.next();
+            const auto entryKey = entryToMerge.key();
+            const auto entryValue = entryToMerge.value();
+
+            inOutHash.insert(entryKey, entryValue);
+        }
+
+        return hashToMerge.size();
+    }
+
+    template<typename KEY_OUT, typename VALUE_OUT, typename KEY_IN, typename VALUE_IN>
+    QHash<KEY_OUT, VALUE_OUT> copyAs(const QHash<KEY_IN, VALUE_IN>& input)
+    {
+        QHash<KEY_OUT, VALUE_OUT> copy;
+        for (const auto& inputEntry : rangeOf(input))
+            copy.insertMulti(inputEntry.key(), inputEntry.value());
+        return copy;
+    }
+
+    template<typename KEY_OUT, typename VALUE_OUT, typename KEY_IN, typename VALUE_IN>
+    QMap<KEY_OUT, VALUE_OUT> copyAs(const QMap<KEY_IN, VALUE_IN>& input)
+    {
+        QMap<KEY_OUT, VALUE_OUT> copy;
+        for (const auto& inputEntry : rangeOf(input))
+            copy.insertMulti(inputEntry.key(), inputEntry.value());
+        return copy;
     }
 }
 

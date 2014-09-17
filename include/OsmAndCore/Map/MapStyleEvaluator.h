@@ -7,7 +7,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/Map/MapStyle.h>
+#include <OsmAndCore/Map/ResolvedMapStyle.h>
 
 namespace OsmAnd
 {
@@ -15,9 +15,6 @@ namespace OsmAnd
     {
         class BinaryMapObject;
     }
-    class MapStyleRuleNode;
-    class MapStyleValueDefinition;
-    struct MapStyleValue;
     struct MapStyleEvaluationResult;
 
     class MapStyleEvaluator_P;
@@ -28,28 +25,25 @@ namespace OsmAnd
         PrivateImplementation<MapStyleEvaluator_P> _p;
     protected:
     public:
-        MapStyleEvaluator(const std::shared_ptr<const MapStyle>& style, const float displayDensityFactor);
+        MapStyleEvaluator(const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle, const float displayDensityFactor);
         virtual ~MapStyleEvaluator();
 
-        const std::shared_ptr<const MapStyle> style;
+        const std::shared_ptr<const ResolvedMapStyle> resolvedStyle;
         const float displayDensityFactor;
 
-        void setBooleanValue(const int valueDefId, const bool value);
-        void setIntegerValue(const int valueDefId, const int value);
-        void setIntegerValue(const int valueDefId, const unsigned int value);
-        void setFloatValue(const int valueDefId, const float value);
-        void setStringValue(const int valueDefId, const QString& value);
+        void setBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const bool value);
+        void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const int value);
+        void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const unsigned int value);
+        void setFloatValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const float value);
+        void setStringValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const QString& value);
 
         bool evaluate(
             const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-            const MapStyleRulesetType ruleset,
-            MapStyleEvaluationResult* const outResultStorage = nullptr,
-            bool evaluateChildren = true,
-            std::shared_ptr<const MapStyleRuleNode>* outMatchedRuleNode = nullptr) const;
+            const MapStyleRulesetType rulesetType,
+            MapStyleEvaluationResult* const outResultStorage = nullptr) const;
         bool evaluate(
-            const std::shared_ptr<const MapStyleRule>& singleRule,
-            MapStyleEvaluationResult* const outResultStorage = nullptr,
-            bool evaluateChildren = true) const;
+            const std::shared_ptr<const ResolvedMapStyle::Attribute>& attribute,
+            MapStyleEvaluationResult* const outResultStorage = nullptr) const;
     };
 }
 

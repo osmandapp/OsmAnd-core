@@ -7,20 +7,14 @@
 #include <QString>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 
 namespace OsmAnd
 {
-    class MapStylesCollection;
-    class MapStylesCollection_P;
-    class MapStyleEvaluator;
-    class MapStyleEvaluator_P;
-
-    class MapStyleValueDefinition;
-    class MapStyleNode;
-
     struct OSMAND_CORE_API MapStyleValue Q_DECL_FINAL
     {
         MapStyleValue();
+        ~MapStyleValue();
 
         bool isComplex;
 
@@ -51,6 +45,15 @@ namespace OsmAnd
                 ComplexData<int32_t> asInt;
                 ComplexData<uint32_t> asUInt;
             } asComplex;
+        };
+
+        static bool parse(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleValue& outValue);
+
+        static inline MapStyleValue fromSimpleUInt(const uint32_t value)
+        {
+            MapStyleValue mapStyleValue;
+            mapStyleValue.asSimple.asUInt = value;
+            return mapStyleValue;
         };
     };
 }

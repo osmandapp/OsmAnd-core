@@ -19,24 +19,22 @@
 #include <OsmAndCore/DefaultLogSink.h>
 #include <OsmAndCore/QIODeviceLogSink.h>
 #include <OsmAndCore/Utilities.h>
-#include <OsmAndCore/Data/DataTypes.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
-#include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 #include <OsmAndCore/Map/MapStyle.h>
-#include <OsmAndCore/Map/MapStyleRule.h>
 #include <OsmAndCore/Map/MapStyleValueDefinition.h>
 #include <OsmAndCore/Map/MapStyleValue.h>
 #include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
 #include <OsmAndCore/Map/MapStylesPresetsCollection.h>
 #include <OsmAndCore/Map/MapStylePreset.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
-#include <OsmAndCore/Map/MapRendererTypes.h>
 #include <OsmAndCore/Map/MapRendererState.h>
 #include <OsmAndCore/Map/MapRendererSetupOptions.h>
 #include <OsmAndCore/Map/MapRendererConfiguration.h>
@@ -104,7 +102,6 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapStylesPresetsCollection)
 	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions)
 	%shared_ptr(OsmAnd::MapStyle)
-	%shared_ptr(OsmAnd::MapStyleRule)
 	%shared_ptr(OsmAnd::MapStyleValueDefinition)
 	%shared_ptr(OsmAnd::MapStyleValue)
 	%shared_ptr(OsmAnd::MapStylePreset)
@@ -193,10 +190,10 @@ using namespace OsmAnd;
 %include <OsmAndCore/DefaultLogSink.h>
 %include <OsmAndCore/QIODeviceLogSink.h>
 %include <OsmAndCore/Utilities.h>
-%include <OsmAndCore/Data/DataTypes.h>
+%include <OsmAndCore/Data/DataCommonTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>
-%include <OsmAndCore/Map/MapTypes.h>
+%include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
 %include <OsmAndCore/Map/IMapStylesCollection.h>
@@ -205,12 +202,10 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapStylesPresetsCollection.h>
 %include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 %include <OsmAndCore/Map/MapStyle.h>
-%include <OsmAndCore/Map/MapStyleRule.h>
 %include <OsmAndCore/Map/MapStyleValueDefinition.h>
 %include <OsmAndCore/Map/MapStyleValue.h>
 %include <OsmAndCore/Map/MapStylePreset.h>
 %include <OsmAndCore/Map/MapPresentationEnvironment.h>
-%include <OsmAndCore/Map/MapRendererTypes.h>
 %include <OsmAndCore/Map/MapRendererState.h>
 %include <OsmAndCore/Map/MapRendererSetupOptions.h>
 %include <OsmAndCore/Map/MapRendererConfiguration.h>

@@ -279,7 +279,7 @@ OsmAnd::ResourcesManager::ObfMetadata::~ObfMetadata()
 {
 }
 
-OsmAnd::ResourcesManager::MapStyleMetadata::MapStyleMetadata(const std::shared_ptr<MapStyle>& mapStyle_)
+OsmAnd::ResourcesManager::MapStyleMetadata::MapStyleMetadata(const std::shared_ptr<UnresolvedMapStyle>& mapStyle_)
     : mapStyle(mapStyle_)
 {
 }

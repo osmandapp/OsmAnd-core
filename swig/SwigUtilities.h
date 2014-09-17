@@ -59,6 +59,11 @@ namespace OsmAnd
             return QByteArray();
         }
 
+        inline static QByteArray qDecompress(const QByteArray& compressedData)
+        {
+            return qUncompress(compressedData);
+        }
+
     private:
         SwigUtilities();
         ~SwigUtilities();

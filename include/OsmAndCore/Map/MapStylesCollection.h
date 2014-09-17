@@ -4,7 +4,9 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -23,11 +25,11 @@ namespace OsmAnd
         MapStylesCollection();
         virtual ~MapStylesCollection();
 
-        bool registerStyle(const QString& filePath);
+        bool addStyleFromFile(const QString& filePath);
 
-        virtual QList< std::shared_ptr<const MapStyle> > getCollection() const;
-        virtual std::shared_ptr<const MapStyle> getAsIsStyle(const QString& name) const;
-        virtual bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
+        virtual QList< std::shared_ptr<const UnresolvedMapStyle> > getCollection() const;
+        virtual std::shared_ptr<const UnresolvedMapStyle> getStyleByName(const QString& name) const;
+        virtual std::shared_ptr<const ResolvedMapStyle> getResolvedStyleByName(const QString& name) const;
     };
 }
 

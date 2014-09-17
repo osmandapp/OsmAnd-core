@@ -1,17 +1,16 @@
 #include "MapPresentationEnvironment.h"
 #include "MapPresentationEnvironment_P.h"
 
-#include "MapStyleValue.h"
-#include "ICoreResourcesProvider.h"
+#include "MapStyleBuiltinValueDefinitions.h"
 
 OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
-    const std::shared_ptr<const MapStyle>& style_,
+    const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle_,
     const float displayDensityFactor_ /*= 1.0f*/,
     const QString& localeLanguageId_ /*= QLatin1String("en")*/,
     const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/)
     : _p(new MapPresentationEnvironment_P(this))
-    , styleBuiltinValueDefs(MapStyle::getBuiltinValueDefinitions())
-    , style(style_)
+    , styleBuiltinValueDefs(MapStyleBuiltinValueDefinitions::get())
+    , resolvedStyle(resolvedStyle_)
     , displayDensityFactor(displayDensityFactor_)
     , localeLanguageId(localeLanguageId_)
     , externalResourcesProvider(externalResourcesProvider_)
@@ -24,12 +23,12 @@ OsmAnd::MapPresentationEnvironment::~MapPresentationEnvironment()
 {
 }
 
-QHash< std::shared_ptr<const OsmAnd::MapStyleValueDefinition>, OsmAnd::MapStyleValue > OsmAnd::MapPresentationEnvironment::getSettings() const
+QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleValue > OsmAnd::MapPresentationEnvironment::getSettings() const
 {
     return _p->getSettings();
 }
 
-void OsmAnd::MapPresentationEnvironment::setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings)
+void OsmAnd::MapPresentationEnvironment::setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue >& newSettings)
 {
     _p->setSettings(newSettings);
 }

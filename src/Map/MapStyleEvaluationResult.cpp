@@ -42,7 +42,7 @@ OsmAnd::MapStyleEvaluationResult& OsmAnd::MapStyleEvaluationResult::operator=(Ma
 }
 #endif // Q_COMPILER_RVALUE_REFS
 
-bool OsmAnd::MapStyleEvaluationResult::getBooleanValue(const int valueDefId, bool& value) const
+bool OsmAnd::MapStyleEvaluationResult::getBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, bool& value) const
 {
     const auto itValue = values.constFind(valueDefId);
     if (itValue == values.cend())
@@ -52,7 +52,7 @@ bool OsmAnd::MapStyleEvaluationResult::getBooleanValue(const int valueDefId, boo
     return true;
 }
 
-bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const int valueDefId, int& value) const
+bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, int& value) const
 {
     const auto itValue = values.constFind(valueDefId);
     if (itValue == values.cend())
@@ -62,7 +62,7 @@ bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const int valueDefId, int
     return true;
 }
 
-bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const int valueDefId, unsigned int& value) const
+bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, unsigned int& value) const
 {
     const auto itValue = values.constFind(valueDefId);
     if (itValue == values.cend())
@@ -72,7 +72,7 @@ bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(const int valueDefId, uns
     return true;
 }
 
-bool OsmAnd::MapStyleEvaluationResult::getFloatValue(const int valueDefId, float& value) const
+bool OsmAnd::MapStyleEvaluationResult::getFloatValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, float& value) const
 {
     const auto itValue = values.constFind(valueDefId);
     if (itValue == values.cend())
@@ -82,7 +82,7 @@ bool OsmAnd::MapStyleEvaluationResult::getFloatValue(const int valueDefId, float
     return true;
 }
 
-bool OsmAnd::MapStyleEvaluationResult::getStringValue(const int valueDefId, QString& value) const
+bool OsmAnd::MapStyleEvaluationResult::getStringValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, QString& value) const
 {
     const auto itValue = values.constFind(valueDefId);
     if (itValue == values.cend())

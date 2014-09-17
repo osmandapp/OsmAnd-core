@@ -4,40 +4,47 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QString>
 #include <QHash>
 #include <QList>
 #include <QReadWriteLock>
+#include <QMutex>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 
 namespace OsmAnd
 {
-    class MapStyle;
+    class UnresolvedMapStyle;
+    class ResolvedMapStyle;
 
     class MapStylesCollection;
     class MapStylesCollection_P Q_DECL_FINAL
     {
     private:
-    protected:
-        MapStylesCollection_P(MapStylesCollection* owner);
-
-        QList< std::shared_ptr<MapStyle> > _order;
-        QHash< QString, std::shared_ptr<MapStyle> > _styles;
+        QHash< QString, std::shared_ptr<UnresolvedMapStyle> > _styles;
         mutable QReadWriteLock _stylesLock;
 
-        bool registerEmbeddedStyle(const QString& resourceName);
+        std::shared_ptr<UnresolvedMapStyle> getEditableStyleByName_noSync(const QString& name) const;
+
+        mutable QHash< QString, std::shared_ptr<const ResolvedMapStyle> > _resolvedStyles;
+        mutable QMutex _resolvedStylesLock;
+
+        bool addStyleFromCoreResource(const QString& resourceName);
+    protected:
+        MapStylesCollection_P(MapStylesCollection* owner);
     public:
         virtual ~MapStylesCollection_P();
 
         ImplementationInterface<MapStylesCollection> owner;
 
-        bool registerStyle(const QString& filePath);
+        bool addStyleFromFile(const QString& filePath);
 
-        QList< std::shared_ptr<const MapStyle> > getCollection() const;
-        std::shared_ptr<const MapStyle> getAsIsStyle(const QString& name) const;
-        bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const;
+        QList< std::shared_ptr<const UnresolvedMapStyle> > getCollection() const;
+        std::shared_ptr<const UnresolvedMapStyle> getStyleByName(const QString& name) const;
+        virtual std::shared_ptr<const ResolvedMapStyle> getResolvedStyleByName(const QString& name) const;
 
     friend class OsmAnd::MapStylesCollection;
     };

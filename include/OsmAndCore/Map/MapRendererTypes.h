@@ -9,19 +9,7 @@
 
 namespace OsmAnd
 {
-    enum class RasterMapLayerId
-    {
-        Invalid = -1,
 
-        BaseLayer,
-        Overlay0,
-        Overlay1,
-
-        __LAST,
-    };
-    enum {
-        RasterMapLayersCount = static_cast<unsigned>(RasterMapLayerId::__LAST)
-    };
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_RENDERER_TYPES_H_)

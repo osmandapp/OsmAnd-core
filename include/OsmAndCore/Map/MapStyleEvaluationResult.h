@@ -11,12 +11,12 @@
 #include <QHash>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Common.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
+#include <OsmAndCore/Map/ResolvedMapStyle.h>
 
 namespace OsmAnd
 {
-    class MapStyleEvaluator;
-    class MapStyleEvaluator_P;
-
     struct OSMAND_CORE_API MapStyleEvaluationResult Q_DECL_FINAL
     {
         MapStyleEvaluationResult();
@@ -31,23 +31,20 @@ namespace OsmAnd
         MapStyleEvaluationResult& operator=(MapStyleEvaluationResult&& that);
 #endif // Q_COMPILER_RVALUE_REFS
 
-        QHash<int, QVariant> values;
+        QHash<ResolvedMapStyle::ValueDefinitionId, QVariant> values;
     
-        bool getBooleanValue(const int valueDefId, bool& value) const;
-        bool getIntegerValue(const int valueDefId, int& value) const;
-        bool getIntegerValue(const int valueDefId, unsigned int& value) const;
-        bool getFloatValue(const int valueDefId, float& value) const;
-        bool getStringValue(const int valueDefId, QString& value) const;
+        bool getBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, bool& value) const;
+        bool getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, int& value) const;
+        bool getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, unsigned int& value) const;
+        bool getFloatValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, float& value) const;
+        bool getStringValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, QString& value) const;
 
         void clear();
         bool isEmpty() const;
 
-        typedef std::pair<int, QVariant> PackedResultEntry;
+        typedef std::pair<ResolvedMapStyle::ValueDefinitionId, QVariant> PackedResultEntry;
         typedef QList<PackedResultEntry> PackedResult;
         void pack(PackedResult& packedResult);
-
-    friend class OsmAnd::MapStyleEvaluator;
-    friend class OsmAnd::MapStyleEvaluator_P;
     };
 }
 

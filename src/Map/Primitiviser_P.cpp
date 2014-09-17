@@ -11,7 +11,7 @@
 #include "ICU.h"
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
-#include "MapStyleRule.h"
+#include "MapStyleBuiltinValueDefinitions.h"
 #include "ObfMapSectionInfo.h"
 #include "BinaryMapObject.h"
 #include "Stopwatch.h"
@@ -899,25 +899,25 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
     const auto zoom = primitivisedArea->zoom;
 
     // Initialize shared settings for order evaluation
-    MapStyleEvaluator orderEvaluator(env->style, env->displayDensityFactor);
+    MapStyleEvaluator orderEvaluator(env->resolvedStyle, env->displayDensityFactor);
     env->applyTo(orderEvaluator);
     orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
     // Initialize shared settings for polygon evaluation
-    MapStyleEvaluator polygonEvaluator(env->style, env->displayDensityFactor);
+    MapStyleEvaluator polygonEvaluator(env->resolvedStyle, env->displayDensityFactor);
     env->applyTo(polygonEvaluator);
     polygonEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     polygonEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
     // Initialize shared settings for polyline evaluation
-    MapStyleEvaluator polylineEvaluator(env->style, env->displayDensityFactor);
+    MapStyleEvaluator polylineEvaluator(env->resolvedStyle, env->displayDensityFactor);
     env->applyTo(polylineEvaluator);
     polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
     // Initialize shared settings for point evaluation
-    MapStyleEvaluator pointEvaluator(env->style, env->displayDensityFactor);
+    MapStyleEvaluator pointEvaluator(env->resolvedStyle, env->displayDensityFactor);
     env->applyTo(pointEvaluator);
     pointEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     pointEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
@@ -1121,16 +1121,11 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
             // Evaluate style for this primitive to check if it passes
             evaluationResult.clear();
-            //////////////////////////////////////////////////////////////////////////
-            std::shared_ptr<const MapStyleNode> rule;
-            //////////////////////////////////////////////////////////////////////////
-            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult, true, &rule);
+            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
             //////////////////////////////////////////////////////////////////////////
             if ((mapObject->id >> 1) == 25829290u)
             {
                 int i = 5;
-                if (rule)
-                    rule->dump();
             }
             //////////////////////////////////////////////////////////////////////////
 
@@ -1716,7 +1711,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
     const auto typeRuleId = mapObject->_typesRuleIds[primitive->typeRuleIdIndex];
     const auto& decodedType = encDecRules->decodingRules[typeRuleId];
 
-    MapStyleEvaluator textEvaluator(env->style, env->displayDensityFactor);
+    MapStyleEvaluator textEvaluator(env->resolvedStyle, env->displayDensityFactor);
     env->applyTo(textEvaluator);
 
     // Get captions and their order

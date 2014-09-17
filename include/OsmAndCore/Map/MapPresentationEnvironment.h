@@ -13,7 +13,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
-#include <OsmAndCore/Map/MapStyle.h>
+#include <OsmAndCore/Map/ResolvedMapStyle.h>
 
 class SkBitmap;
 
@@ -21,6 +21,7 @@ namespace OsmAnd
 {
     class MapStyleEvaluator;
     class MapStyleValueDefinition;
+    class MapStyleBuiltinValueDefinitions;
     struct MapStyleValue;
     class ObfMapSectionInfo;
 
@@ -33,7 +34,7 @@ namespace OsmAnd
     protected:
     public:
         MapPresentationEnvironment(
-            const std::shared_ptr<const MapStyle>& style,
+            const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle,
             const float displayDensityFactor = 1.0f,
             const QString& localeLanguageId = QLatin1String("en"),
             const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider = nullptr);
@@ -41,15 +42,15 @@ namespace OsmAnd
 
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
 
-        const std::shared_ptr<const MapStyle> style;
+        const std::shared_ptr<const ResolvedMapStyle> resolvedStyle;
         const float displayDensityFactor;
         const QString localeLanguageId;
         const std::shared_ptr<const ICoreResourcesProvider> externalResourcesProvider;
 
         const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;
 
-        QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
-        void setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
+        QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue > getSettings() const;
+        void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;

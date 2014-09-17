@@ -18,7 +18,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
-#include "MapTypes.h"
+#include "MapCommonTypes.h"
 #include "Primitiviser.h"
 #include "MapRasterizer_Metrics.h"
 

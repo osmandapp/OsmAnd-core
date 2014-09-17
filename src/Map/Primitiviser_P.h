@@ -10,7 +10,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "IQueryController.h"
-#include "MapTypes.h"
+#include "MapCommonTypes.h"
 #include "MapPresentationEnvironment.h"
 #include "Primitiviser.h"
 

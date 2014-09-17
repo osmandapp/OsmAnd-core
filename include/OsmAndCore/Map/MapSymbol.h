@@ -12,7 +12,7 @@ class SkBitmap;
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>
-#include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 
 namespace OsmAnd
 {

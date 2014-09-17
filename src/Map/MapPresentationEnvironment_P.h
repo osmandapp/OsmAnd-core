@@ -17,15 +17,15 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
-#include "MapStyle.h"
-#include "MapStyleRule.h"
+#include "ResolvedMapStyle.h"
+#include "MapStyleValue.h"
 #include "MapRasterizer.h"
 
 class SkBitmap;
 
 namespace OsmAnd
 {
-    class MapStyle;
+    class UnresolvedMapStyle;
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
 
@@ -39,20 +39,23 @@ namespace OsmAnd
         void initialize();
 
         mutable QMutex _settingsChangeMutex;
-        QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > _settings;
+        QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleValue > _settings;
 
-        ColorARGB _defaultBgColor;
-        double _polygonMinSizeToDisplay;
-        unsigned int _roadDensityZoomTile;
-        unsigned int _roadsDensityLimitPerTile;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultColorAttribute;
+        ColorARGB _defaultColor;
+
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _shadowRenderingAttribute;
         int _shadowRenderingMode;
         ColorARGB _shadowRenderingColor;
 
-        std::shared_ptr<const MapStyleRule> _attributeRule_defaultColor;
-        std::shared_ptr<const MapStyleRule> _attributeRule_shadowRendering;
-        std::shared_ptr<const MapStyleRule> _attributeRule_polygonMinSizeToDisplay;
-        std::shared_ptr<const MapStyleRule> _attributeRule_roadDensityZoomTile;
-        std::shared_ptr<const MapStyleRule> _attributeRule_roadsDensityLimitPerTile;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _polygonMinSizeToDisplayAttribute;
+        double _polygonMinSizeToDisplay;
+
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _roadDensityZoomTileAttribute;
+        unsigned int _roadDensityZoomTile;
+
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _roadsDensityLimitPerTileAttribute;
+        unsigned int _roadsDensityLimitPerTile;
 
         mutable QMutex _shadersBitmapsMutex;
         mutable QHash< QString, std::shared_ptr<SkBitmap> > _shadersBitmaps;
@@ -74,8 +77,8 @@ namespace OsmAnd
 
         const std::shared_ptr<const ObfMapSectionInfo> dummyMapSection;
 
-        QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue > getSettings() const;
-        void setSettings(const QHash< std::shared_ptr<const MapStyleValueDefinition>, MapStyleValue >& newSettings);
+        QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue > getSettings() const;
+        void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;

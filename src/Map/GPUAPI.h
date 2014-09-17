@@ -15,7 +15,7 @@
 #include "OsmAndCore.h"
 #include "Common.h"
 #include "CommonTypes.h"
-#include "MapTypes.h"
+#include "MapCommonTypes.h"
 
 class SkBitmap;
 

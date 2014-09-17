@@ -15,7 +15,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
-#include "MapTypes.h"
+#include "MapCommonTypes.h"
 #include "Concurrent.h"
 #include "IMapRenderer.h"
 #include "GPUAPI.h"

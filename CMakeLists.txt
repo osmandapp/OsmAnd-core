@@ -303,16 +303,16 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 	if (OSMAND_OWN_SHIPPED_QT)
 		target_include_directories(OsmAndCore_static
 			PUBLIC
-				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include"
-				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtCore"
-				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtNetwork"
-				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include/QtSql"
+				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include"
+				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtCore"
+				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtNetwork"
+				"${OSMAND_OWN_SHIPPED_QT_SHARED}/include/QtSql"
 		)
 		target_link_libraries(OsmAndCore_static
 			LINK_PUBLIC
-				${Qt5Sql_STATIC_LIBRARIES}
-				${Qt5Network_STATIC_LIBRARIES}
-				${Qt5Core_STATIC_LIBRARIES}
+				${Qt5Sql_SHARED_LIBRARIES}
+				${Qt5Network_SHARED_LIBRARIES}
+				${Qt5Core_SHARED_LIBRARIES}
 		)
 	else()
 		target_link_libraries(OsmAndCore_static

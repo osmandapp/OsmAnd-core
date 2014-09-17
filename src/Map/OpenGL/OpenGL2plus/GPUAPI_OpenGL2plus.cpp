@@ -12,7 +12,7 @@
 #include <SkBitmap.h>
 #include "restore_internal_warnings.h"
 
-#include "MapRendererTypes.h"
+#include "MapCommonTypes.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"

@@ -18,7 +18,7 @@
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 #include "MapAnimator.h"
-#include "MapTypes.h"
+#include "MapCommonTypes.h"
 
 namespace OsmAnd
 {

@@ -13,8 +13,8 @@
 
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/SmartPOD.h>
-#include <OsmAndCore/Data/DataTypes.h>
-#include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 
 #include <QTypeInfo>
 #if !defined(SWIG)

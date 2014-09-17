@@ -10,22 +10,22 @@ OsmAnd::MapStylesCollection::~MapStylesCollection()
 {
 }
 
-bool OsmAnd::MapStylesCollection::registerStyle( const QString& filePath )
+bool OsmAnd::MapStylesCollection::addStyleFromFile(const QString& filePath)
 {
-    return _p->registerStyle(filePath);
+    return _p->addStyleFromFile(filePath);
 }
 
-QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection::getCollection() const
+QList< std::shared_ptr<const OsmAnd::UnresolvedMapStyle> > OsmAnd::MapStylesCollection::getCollection() const
 {
     return _p->getCollection();
 }
 
-std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::MapStylesCollection::getAsIsStyle(const QString& name) const
+std::shared_ptr<const OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection::getStyleByName(const QString& name) const
 {
-    return _p->getAsIsStyle(name);
+    return _p->getStyleByName(name);
 }
 
-bool OsmAnd::MapStylesCollection::obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const
+std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::MapStylesCollection::getResolvedStyleByName(const QString& name) const
 {
-    return _p->obtainBakedStyle(name, outStyle);
+    return _p->getResolvedStyleByName(name);
 }

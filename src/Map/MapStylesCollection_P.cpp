@@ -1,23 +1,25 @@
 #include "MapStylesCollection_P.h"
 #include "MapStylesCollection.h"
 
+#include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QBuffer>
 #include <QFileInfo>
+#include "restore_internal_warnings.h"
+#include "QtCommon.h"
 
-#include "MapStyle.h"
-#include "MapStyle_P.h"
+#include "UnresolvedMapStyle.h"
+#include "ResolvedMapStyle.h"
 #include "CoreResourcesEmbeddedBundle.h"
 #include "QKeyValueIterator.h"
+#include "Logging.h"
 
 OsmAnd::MapStylesCollection_P::MapStylesCollection_P(MapStylesCollection* owner_)
     : owner(owner_)
     , _stylesLock(QReadWriteLock::Recursive)
 {
     bool ok = true;
-
-    // Register all embedded styles
-    ok = registerEmbeddedStyle(QLatin1String("map/styles/default.render.xml")) || ok;
-
+    ok = ok && addStyleFromCoreResource(QLatin1String("map/styles/default.render.xml"));
     assert(ok);
 }
 
@@ -25,33 +27,44 @@ OsmAnd::MapStylesCollection_P::~MapStylesCollection_P()
 {
 }
 
-bool OsmAnd::MapStylesCollection_P::registerEmbeddedStyle(const QString& resourceName)
+std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P::getEditableStyleByName_noSync(const QString& name) const
+{
+    auto styleName = name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+
+    const auto citStyle = _styles.constFind(styleName);
+    if (citStyle == _styles.cend())
+        return nullptr;
+    return *citStyle;
+}
+
+bool OsmAnd::MapStylesCollection_P::addStyleFromCoreResource(const QString& resourceName)
 {
     QWriteLocker scopedLocker(&_stylesLock);
 
     assert(getCoreResourcesProvider()->containsResource(resourceName));
-
     auto styleContent = getCoreResourcesProvider()->getResource(resourceName);
-    std::shared_ptr<MapStyle> style(new MapStyle(
-        owner.get(),
-        QFileInfo(resourceName).fileName(),
-        std::shared_ptr<QIODevice>(new QBuffer(&styleContent))));
-    if (!style->loadMetadata() || !style->load())
+
+    std::shared_ptr<UnresolvedMapStyle> style(new UnresolvedMapStyle(
+        std::shared_ptr<QIODevice>(new QBuffer(&styleContent)),
+        QFileInfo(resourceName).fileName()));
+    if (!style->loadMetadata())
         return false;
 
-    assert(!_styles.contains(style->name));
-    assert(style->name.endsWith(QLatin1String(".render.xml")));
-    _styles.insert(style->name.toLower(), style);
-    _order.push_back(style);
+    auto styleName = style->name.toLower();
+    assert(styleName.endsWith(QLatin1String(".render.xml")));
+    assert(!_styles.contains(styleName));
+    _styles.insert(styleName, style);
 
     return true;
 }
 
-bool OsmAnd::MapStylesCollection_P::registerStyle(const QString& filePath)
+bool OsmAnd::MapStylesCollection_P::addStyleFromFile(const QString& filePath)
 {
     QWriteLocker scopedLocker(&_stylesLock);
 
-    std::shared_ptr<MapStyle> style(new MapStyle(owner.get(), filePath));
+    std::shared_ptr<UnresolvedMapStyle> style(new UnresolvedMapStyle(filePath));
     if (!style->loadMetadata())
         return false;
 
@@ -61,48 +74,88 @@ bool OsmAnd::MapStylesCollection_P::registerStyle(const QString& filePath)
     if (_styles.contains(styleName))
         return false;
     _styles.insert(styleName, style);
-    _order.push_back(style);
 
     return true;
 }
 
-QList< std::shared_ptr<const OsmAnd::MapStyle> > OsmAnd::MapStylesCollection_P::getCollection() const
+QList< std::shared_ptr<const OsmAnd::UnresolvedMapStyle> > OsmAnd::MapStylesCollection_P::getCollection() const
 {
     QReadLocker scopedLocker(&_stylesLock);
 
-    QList< std::shared_ptr<const MapStyle> > result;
-    for(const auto& mapStyle : constOf(_order))
-        result.push_back(mapStyle);
-
-    return result;
+    return copyAs< QList< std::shared_ptr<const UnresolvedMapStyle> > >(_styles.values());
 }
 
-std::shared_ptr<const OsmAnd::MapStyle> OsmAnd::MapStylesCollection_P::getAsIsStyle(const QString& name) const
+std::shared_ptr<const OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P::getStyleByName(const QString& name) const
 {
     QReadLocker scopedLocker(&_stylesLock);
 
-    const auto citStyle = _styles.constFind(name);
-    if (citStyle == _styles.cend())
-        return nullptr;
-    return *citStyle;
-}
-
-bool OsmAnd::MapStylesCollection_P::obtainBakedStyle(const QString& styleName_, std::shared_ptr<const MapStyle>& outStyle) const
-{
-    QReadLocker scopedLocker(&_stylesLock);
-
-    auto styleName = styleName_.toLower();
+    auto styleName = name.toLower();
     if (!styleName.endsWith(QLatin1String(".render.xml")))
         styleName.append(QLatin1String(".render.xml"));
 
     const auto citStyle = _styles.constFind(styleName);
     if (citStyle == _styles.cend())
-        return false;
-    const auto& style = *citStyle;
+        return nullptr;
+    return *citStyle;
+}
 
-    if (!style->load())
-        return false;
+std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::MapStylesCollection_P::getResolvedStyleByName(const QString& name) const
+{
+    QMutexLocker scopedLocker(&_resolvedStylesLock);
 
-    outStyle = style;
-    return true;
+    auto styleName = name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+
+    // Check if such style was already resolved
+    auto& resolvedStyle = _resolvedStyles[styleName];
+    if (resolvedStyle)
+        return resolvedStyle;
+
+    // Get style inheritance chain
+    QList< std::shared_ptr<UnresolvedMapStyle> > stylesChain;
+    {
+        QReadLocker scopedLocker(&_stylesLock);
+
+        auto style = getEditableStyleByName_noSync(name);
+        while (style)
+        {
+            stylesChain.push_back(style);
+
+            // In case this is root-style, do nothing
+            if (style->isStandalone())
+                break;
+
+            // Otherwise, obtain next parent
+            const auto parentStyle = getEditableStyleByName_noSync(style->parentName);
+            if (!parentStyle)
+            {
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to resolve style '%s': parent-in-chain '%s' was not found",
+                    qPrintable(name),
+                    qPrintable(style->parentName));
+                return nullptr;
+            }
+            style = parentStyle;
+        }
+    }
+
+    // From top-most parent to style, load it
+    auto itStyle = iteratorOf(stylesChain);
+    itStyle.toBack();
+    while (itStyle.hasPrevious())
+    {
+        const auto& style = itStyle.previous();
+
+        if (!style->load())
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to resolve style '%s': parent-in-chain '%s' failed to load",
+                qPrintable(name),
+                qPrintable(style->name));
+            return nullptr;
+        }
+    }
+
+    return ResolvedMapStyle::resolveMapStylesChain(copyAs< QList< std::shared_ptr<const UnresolvedMapStyle> > >(stylesChain));;
 }

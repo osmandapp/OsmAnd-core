@@ -9,7 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/BinaryMapDataProvider_Metrics.h>
 #include <OsmAndCore/Map/Primitiviser_Metrics.h>
 

@@ -9,9 +9,9 @@
 #include <QSet>
 
 #include "CommonTypes.h"
-#include "DataTypes.h"
+#include "DataCommonTypes.h"
 #include "ObfMapSectionInfo_P.h"
-#include "MapTypes.h"
+#include "MapCommonTypes.h"
 
 namespace OsmAnd
 {

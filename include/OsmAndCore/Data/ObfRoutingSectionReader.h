@@ -11,7 +11,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/SharedResourcesContainer.h>
-#include <OsmAndCore/Data/DataTypes.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
 
 namespace OsmAnd
 {

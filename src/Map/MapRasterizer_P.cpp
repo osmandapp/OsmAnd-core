@@ -16,6 +16,7 @@
 
 #include "MapPresentationEnvironment.h"
 #include "MapStyleEvaluationResult.h"
+#include "MapStyleBuiltinValueDefinitions.h"
 #include "Primitiviser.h"
 #include "BinaryMapObject.h"
 #include "ObfMapSectionInfo.h"

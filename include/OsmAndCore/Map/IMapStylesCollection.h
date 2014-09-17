@@ -4,14 +4,17 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
 #include <QList>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 
 namespace OsmAnd
 {
-    class MapStyle;
+    class UnresolvedMapStyle;
+    class ResolvedMapStyle;
 
     class OSMAND_CORE_API IMapStylesCollection
     {
@@ -22,17 +25,9 @@ namespace OsmAnd
     public:
         virtual ~IMapStylesCollection();
 
-        virtual QList< std::shared_ptr<const MapStyle> > getCollection() const = 0;
-        virtual std::shared_ptr<const MapStyle> getAsIsStyle(const QString& name) const = 0;
-        virtual bool obtainBakedStyle(const QString& name, std::shared_ptr<const MapStyle>& outStyle) const = 0;
-
-        inline std::shared_ptr<const MapStyle> getBakedStyle(const QString& name) const
-        {
-            std::shared_ptr<const MapStyle> style;
-            if (!obtainBakedStyle(name, style))
-                return nullptr;
-            return style;
-        }
+        virtual QList< std::shared_ptr<const UnresolvedMapStyle> > getCollection() const = 0;
+        virtual std::shared_ptr<const UnresolvedMapStyle> getStyleByName(const QString& name) const = 0;
+        virtual std::shared_ptr<const ResolvedMapStyle> getResolvedStyleByName(const QString& name) const = 0;
     };
 }
 

@@ -9,7 +9,7 @@
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
-#include "MapStyle.h"
+#include "ResolvedMapStyle.h"
 
 namespace OsmAnd
 {
@@ -28,35 +28,38 @@ namespace OsmAnd
         union InputValue
         {
             inline InputValue()
+                : asUInt(0u)
             {
-                asUInt = 0;
             }
 
             float asFloat;
             int32_t asInt;
             uint32_t asUInt;
         };
+
     private:
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
 
-        typedef QHash<int, InputValue> InputValuesDictionary;
+        typedef QHash<ResolvedMapStyle::ValueDefinitionId, InputValue> InputValuesDictionary;
         InputValuesDictionary _inputValues;
 
         bool evaluate(
             const Model::BinaryMapObject* const mapObject,
-            const std::shared_ptr<const MapStyleRule>& rule,
+            const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
             const InputValuesDictionary& inputValues,
-            MapStyleEvaluationResult* const outResultStorage,
-            bool evaluateChildren) const;
+            MapStyleEvaluationResult* const outResultStorage) const;
 
         bool evaluate(
             const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-            const QMap< uint64_t, std::shared_ptr<const MapStyleRule> >& rules,
-            const uint32_t tagKey,
-            const uint32_t valueKey,
-            MapStyleEvaluationResult* const outResultStorage,
-            bool evaluateChildren,
-            std::shared_ptr<const MapStyleRule>* outMatchedRule) const;
+            const QHash< ResolvedMapStyle::TagValueId, std::shared_ptr<const ResolvedMapStyle::Rule> >& ruleset,
+            const ResolvedMapStyle::StringId tagStringId,
+            const ResolvedMapStyle::StringId valueStringId,
+            MapStyleEvaluationResult* const outResultStorage) const;
+
+        void fillResultFromRuleNode(
+            const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
+            MapStyleEvaluationResult& outResultStorage,
+            const bool allowOverride) const;
     protected:
         MapStyleEvaluator_P(MapStyleEvaluator* owner);
     public:
@@ -64,22 +67,19 @@ namespace OsmAnd
 
         ImplementationInterface<MapStyleEvaluator> owner;
 
-        void setBooleanValue(const int valueDefId, const bool value);
-        void setIntegerValue(const int valueDefId, const int value);
-        void setIntegerValue(const int valueDefId, const unsigned int value);
-        void setFloatValue(const int valueDefId, const float value);
-        void setStringValue(const int valueDefId, const QString& value);
+        void setBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const bool value);
+        void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const int value);
+        void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const unsigned int value);
+        void setFloatValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const float value);
+        void setStringValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const QString& value);
 
         bool evaluate(
             const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-            const MapStyleRulesetType ruleset,
-            MapStyleEvaluationResult* const outResultStorage,
-            bool evaluateChildren,
-            std::shared_ptr<const MapStyleRule>* outMatchedRule) const;
+            const MapStyleRulesetType rulesetType,
+            MapStyleEvaluationResult* const outResultStorage) const;
         bool evaluate(
-            const std::shared_ptr<const MapStyleRule>& singleRule,
-            MapStyleEvaluationResult* const outResultStorage,
-            bool evaluateChildren) const;
+            const std::shared_ptr<const ResolvedMapStyle::Attribute>& attribute,
+            MapStyleEvaluationResult* const outResultStorage) const;
 
     friend class OsmAnd::MapStyleEvaluator;
     };

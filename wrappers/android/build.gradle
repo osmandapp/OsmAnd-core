@@ -39,8 +39,8 @@ android {
 
 	// Seems this has no effect at all, since not propagated. So should be inserted in host application
 	aaptOptions {
-		// Don't compress any embedded resources
-		noCompress "ttf", "xml", "dat", "png"
+		// Don't compress any resources
+		noCompress "qz"
 	}
 
 	lintOptions {
@@ -305,8 +305,20 @@ task copyOsmAndResources(type: Copy) {
 	into "./assets/OsmAndCore_ResourcesBundle"
 	includeEmptyDirs = false
 }
+import org.apache.tools.ant.taskdefs.condition.Os
+task packOsmAndResources(type: Exec) {
+	description "Pack OsmAnd resources"
+
+	dependsOn copyOsmAndResources
+
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+		commandLine "cmd", "/c", "bash --login "+file("./pack-resources.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()+"/assets/OsmAndCore_ResourcesBundle"
+	} else {
+		commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath()+"/assets/OsmAndCore_ResourcesBundle"
+	}
+}
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << copyOsmAndResources
+	compileTask -> compileTask.dependsOn << packOsmAndResources
 }
 
 // OsmAnd resources indexing task

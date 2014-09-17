@@ -1,13 +1,15 @@
 #ifndef _OSMAND_CORE_COMMON_H_
 #define _OSMAND_CORE_COMMON_H_
 
-#include <cassert>
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
 #include <iostream>
 #include <algorithm>
+#include <iterator>
+#include <type_traits>
 
 #include <OsmAndCore/QtExtraDefinitions.h>
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/QtCommon.h>
 
 #if defined(TEXT) && defined(_T)
 #   define xT(x) _T(x)
@@ -47,11 +49,14 @@ namespace OsmAnd
     };
 
     template<typename T_OUT, typename T_IN>
-    T_OUT copyAs(const T_IN& input)
+    auto copyAs(const T_IN& input)
+        -> typename std::enable_if<
+            std::is_same< typename std::iterator_traits< decltype(std::begin(input)) >::value_type, typename T_IN::value_type>::value,
+            T_OUT >::type
     {
         T_OUT copy;
         std::transform(
-            input.begin(), input.end(),
+            std::begin(input), std::end(input),
             std::back_inserter(copy),
             static_caster<typename T_IN::value_type, typename T_OUT::value_type>());
         return copy;

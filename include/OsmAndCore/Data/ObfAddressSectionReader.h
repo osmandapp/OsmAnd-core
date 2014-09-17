@@ -10,7 +10,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Data/DataTypes.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
 
 namespace OsmAnd
 {

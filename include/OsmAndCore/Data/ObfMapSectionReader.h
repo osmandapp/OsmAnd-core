@@ -11,8 +11,8 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/SharedByZoomResourcesContainer.h>
-#include <OsmAndCore/Data/DataTypes.h>
-#include <OsmAndCore/Map/MapTypes.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
+#include <OsmAndCore/Map/MapCommonTypes.h>
 
 namespace OsmAnd
 {

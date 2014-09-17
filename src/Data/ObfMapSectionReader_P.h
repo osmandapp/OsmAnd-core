@@ -13,7 +13,7 @@
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
-#include "MapTypes.h"
+#include "MapCommonTypes.h"
 #include "ObfMapSectionReader.h"
 
 namespace OsmAnd
