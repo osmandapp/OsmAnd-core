@@ -990,7 +990,10 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             output << xT("Rendered ") << framesCounter << xT(" frames in ") << timeElapsedOnRendering << xT("s") << std::endl;
 
         if (!mapRenderer->isIdle())
-            output << xT("WARNING: Rendering was interrupted since it took to long (more than 10 minutes). Probably it's stuck:") << std::endl;
+        {
+            output << xT("ERROR: Rendering was interrupted since it took to long (more than 10 minutes). Probably it's stuck: ") << QStringToStlString(mapRenderer->getNotIdleReason()) << std::endl;
+            success = false;
+        }
 
         // Wait until everything is ready on GPU
         if (configuration.verbose)

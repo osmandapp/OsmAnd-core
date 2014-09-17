@@ -265,6 +265,7 @@ namespace OsmAnd
         virtual bool releaseRendering();
 
         virtual bool isIdle() const;
+        virtual QString getNotIdleReason() const;
 
         virtual bool pauseGpuWorkerThread();
         virtual bool resumeGpuWorkerThread();

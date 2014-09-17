@@ -667,159 +667,82 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     return true;
 }
 
-#define OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS 0
-#if !defined(OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS)
-#   define OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS 0
-#endif // !defined(OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS)
-
 bool OsmAnd::MapRenderer::isIdle() const
 {
     bool isNotIdle = false;
 
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    QString notIdleReason;
-    bool skipOtherNotIdleReasons = false;
-    bool shouldDumpResources = false;
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || _resources->updatesPresent();
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("_resources->updatesPresent()");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     {
         QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
 
         isNotIdle = isNotIdle || !_pendingPublishMapSymbols.isEmpty();
     }
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("!_pendingPublishMapSymbols.isEmpty()");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     {
         QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
         
         isNotIdle = isNotIdle || !_pendingUnpublishMapSymbols.isEmpty();
     }
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("!_pendingUnpublishMapSymbols.isEmpty()");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || (_resourcesGpuSyncRequestsCounter.loadAcquire() > 0);
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("(_resourcesGpuSyncRequestsCounter.loadAcquire() > 0)");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || (_renderThreadDispatcher.queueSize() > 0);
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("(_renderThreadDispatcher.queueSize() > 0)");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || (_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0);
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("(_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0)");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || (_currentConfigurationInvalidatedMask.loadAcquire() != 0);
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("(_currentConfigurationInvalidatedMask.loadAcquire() != 0)");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || (_requestedStateUpdatedMask.loadAcquire() != 0);
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("(_requestedStateUpdatedMask.loadAcquire() != 0)");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || (_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0);
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("(_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0)");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || (_resources->_resourcesRequestTasksCounter.loadAcquire() > 0);
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("(_resources->_resourcesRequestTasksCounter.loadAcquire() > 0)");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || _resources->collectionsSnapshotsInvalidated();
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("_resources->collectionsSnapshotsInvalidated()");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || (_frameInvalidatesCounter.loadAcquire() > 0);
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("(_frameInvalidatesCounter.loadAcquire() > 0)");
-        skipOtherNotIdleReasons = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
     isNotIdle = isNotIdle || !_resources->eachResourceIsUploadedOrUnavailable();
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (!skipOtherNotIdleReasons && isNotIdle)
-    {
-        notIdleReason = QLatin1String("!_resources->eachResourceIsUploadedOrUnavailable()");
-        skipOtherNotIdleReasons = true;
-        shouldDumpResources = true;
-    }
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-
-#if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
-    if (isNotIdle)
-        LogPrintf(LogSeverityLevel::Debug, "OsmAnd::MapRenderer::isIdle(): not idle due to '%s' check", qPrintable(notIdleReason));
-    else
-        LogPrintf(LogSeverityLevel::Debug, "OsmAnd::MapRenderer::isIdle(): is idle");
-#   if OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS > 1
-    if (shouldDumpResources)
-        dumpResourcesInfo();
-#   endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS > 1
-#endif // OSMAND_LOG_MAP_RENDERER_IDLE_CHECKS
 
     return !isNotIdle;
+}
+
+QString OsmAnd::MapRenderer::getNotIdleReason() const
+{
+    QStringList notIdleReasons;
+    bool shouldDumpResources = false;
+
+    if (_resources->updatesPresent())
+        notIdleReasons += QLatin1String("_resources->updatesPresent()");
+    {
+        QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
+
+        if (!_pendingPublishMapSymbols.isEmpty())
+            notIdleReasons += QLatin1String("!_pendingPublishMapSymbols.isEmpty()");
+    }
+    {
+        QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
+
+        if (!_pendingUnpublishMapSymbols.isEmpty())
+            notIdleReasons += QLatin1String("!_pendingUnpublishMapSymbols.isEmpty()");
+    }
+    if ((_resourcesGpuSyncRequestsCounter.loadAcquire() > 0))
+        notIdleReasons += QLatin1String("(_resourcesGpuSyncRequestsCounter.loadAcquire() > 0)");
+    if (_renderThreadDispatcher.queueSize() > 0)
+        notIdleReasons += QLatin1String("(_renderThreadDispatcher.queueSize() > 0)");
+    if (_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0)
+        notIdleReasons += QLatin1String("(_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0)");
+    if (_currentConfigurationInvalidatedMask.loadAcquire() != 0)
+        notIdleReasons += QLatin1String("(_currentConfigurationInvalidatedMask.loadAcquire() != 0)");
+    if (_requestedStateUpdatedMask.loadAcquire() != 0)
+        notIdleReasons += QLatin1String("(_requestedStateUpdatedMask.loadAcquire() != 0)");
+    if (_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0)
+        notIdleReasons += QLatin1String("(_resources->_invalidatedResourcesTypesMask.loadAcquire() != 0)");
+    if (_resources->_resourcesRequestTasksCounter.loadAcquire() > 0)
+        notIdleReasons += QLatin1String("(_resources->_resourcesRequestTasksCounter.loadAcquire() > 0)");
+    if (_resources->collectionsSnapshotsInvalidated())
+        notIdleReasons += QLatin1String("_resources->collectionsSnapshotsInvalidated()");
+    if (_frameInvalidatesCounter.loadAcquire() > 0)
+        notIdleReasons += QLatin1String("(_frameInvalidatesCounter.loadAcquire() > 0)");
+    if (!_resources->eachResourceIsUploadedOrUnavailable())
+    {
+        notIdleReasons += QLatin1String("!_resources->eachResourceIsUploadedOrUnavailable()");
+        shouldDumpResources = true;
+    }
+
+    if (shouldDumpResources)
+        dumpResourcesInfo();
+
+    return notIdleReasons.join(QLatin1String("; "));
 }
 
 bool OsmAnd::MapRenderer::pauseGpuWorkerThread()
