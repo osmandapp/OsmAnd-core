@@ -175,6 +175,14 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             return false;
     }
 
+    // In case rule sets "disable", stop processing
+    const auto citDisabledValue = ruleNode->values.constFind(_builtinValueDefs->id_OUTPUT_DISABLE);
+    if (citDisabledValue != ruleNode->values.cend())
+    {
+        if (citDisabledValue->asSimple.asUInt != 0)
+            return false;
+    }
+
     if (outResultStorage && ruleNode->oneOfConditionalSubnodes.isEmpty())
         fillResultFromRuleNode(ruleNode, *outResultStorage, true);
 
