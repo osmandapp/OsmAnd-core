@@ -825,8 +825,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         // Find style
         if (configuration.verbose)
             output << xT("Resolving style '") << QStringToStlString(configuration.styleName) << xT("'...") << std::endl;
-        std::shared_ptr<const OsmAnd::MapStyle> mapStyle;
-        if (!configuration.stylesCollection->obtainBakedStyle(configuration.styleName, mapStyle))
+        const auto mapStyle = configuration.stylesCollection->getResolvedStyleByName(configuration.styleName);
+        if (!mapStyle)
         {
             if (configuration.verbose)
             {
@@ -982,12 +982,15 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             glVerifyResult(output);
 
             // Check if map renderer finished processing
-            if (mapRenderer->isIdle())
+            if (mapRenderer->isIdle() || renderingStopwatch.elapsed() > (10 * 60 /* 10 minutes */))
                 break;
         }
         const auto timeElapsedOnRendering = renderingStopwatch.elapsed();
         if (configuration.verbose)
             output << xT("Rendered ") << framesCounter << xT(" frames in ") << timeElapsedOnRendering << xT("s") << std::endl;
+
+        if (!mapRenderer->isIdle())
+            output << xT("WARNING: Rendering was interrupted since it took to long (more than 10 minutes). Probably it's stuck:") << std::endl;
 
         // Wait until everything is ready on GPU
         if (configuration.verbose)
@@ -1239,7 +1242,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             QFileInfoList styleFilesList;
             OsmAnd::Utilities::findFiles(QDir(value), QStringList() << QLatin1String("*.render.xml"), styleFilesList, false);
             for (const auto& styleFile : styleFilesList)
-                stylesCollection->registerStyle(styleFile.absoluteFilePath());
+                stylesCollection->addStyleFromFile(styleFile.absoluteFilePath());
         }
         else if (arg.startsWith(QLatin1String("-stylesRecursivePath=")))
         {
@@ -1253,7 +1256,7 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             QFileInfoList styleFilesList;
             OsmAnd::Utilities::findFiles(QDir(value), QStringList() << QLatin1String("*.render.xml"), styleFilesList, true);
             for (const auto& styleFile : styleFilesList)
-                stylesCollection->registerStyle(styleFile.absoluteFilePath());
+                stylesCollection->addStyleFromFile(styleFile.absoluteFilePath());
         }
         else if (arg.startsWith(QLatin1String("-styleName=")))
         {
