@@ -809,17 +809,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         output << xT("Prepared OpenGL context") << std::endl;
 
     bool success = true;
-
-    if (configuration.verbose)
-        output << xT("Initializing OsmAndCore...") << std::endl;
-    std::shared_ptr<const OsmAnd::CoreResourcesEmbeddedBundle> coreResourcesEmbeddedBundle;
-#if defined(OSMAND_CORE_STATIC)
-    coreResourcesEmbeddedBundle = OsmAnd::CoreResourcesEmbeddedBundle::loadFromCurrentExecutable();
-#else
-    coreResourcesEmbeddedBundle = OsmAnd::CoreResourcesEmbeddedBundle::loadFromLibrary(QLatin1String("OsmAndCore_ResourcesBundle_shared"));
-#endif // defined(OSMAND_CORE_STATIC)
-    OsmAnd::InitializeCore(coreResourcesEmbeddedBundle);
-
     for (;;)
     {
         // Find style
@@ -1014,10 +1003,6 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
         break;
     }
-
-    if (configuration.verbose)
-        output << xT("Releasing OsmAndCore...") << std::endl;
-    OsmAnd::ReleaseCore();
 
     // Read image from render-target
     if (configuration.verbose)
