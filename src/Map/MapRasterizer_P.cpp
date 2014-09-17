@@ -364,13 +364,15 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
     // do not check shadow color here
     if (primitivizedArea->shadowRenderingMode == 1 && valueSetSelector == PaintValuesSet::Set_0)
     {
-        SkColor shadowColor;
+        SkColor shadowColor = SK_ColorTRANSPARENT;
         ok = evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
-        int shadowRadius;
+
+        int shadowRadius = 0;
         evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
-        if (!ok || shadowColor == 0)
+
+        if (!ok || shadowColor == SK_ColorTRANSPARENT)
             shadowColor = primitivizedArea->shadowRenderingColor;
-        if (shadowColor == 0)
+        if (shadowColor == SK_ColorTRANSPARENT)
             shadowRadius = 0;
 
         if (shadowRadius > 0)
@@ -581,12 +583,16 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
 
             if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
                 canvas.drawPath(path, paint);
+
             canvas.drawPath(path, paint);
 
             if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
                 canvas.drawPath(path, paint);
 
             if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_3, false))
+                canvas.drawPath(path, paint);
+
+            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_4, false))
                 canvas.drawPath(path, paint);
             
             if (oneway && !drawOnlyShadow)

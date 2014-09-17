@@ -1083,15 +1083,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
             }
 
             // Special case: tested symbol intersects any other symbol with at least 1 any class
-            if (symbolIntersectsWithAnyClass && !otherSymbol->intersectedByClasses.isEmpty())
+            if (symbolIntersectsWithAnyClass && !otherSymbol->intersectsWithClasses.isEmpty())
                 return true;
 
             // Special case: other symbol intersects tested symbol with at least 1 any class (which is true already)
-            if (otherSymbol->intersectedByClasses.contains(anyIntersectionClass))
+            if (otherSymbol->intersectsWithClasses.contains(anyIntersectionClass))
                 return true;
 
             // General case:
-            const auto commonIntersectionClasses = symbolIntersectsWithClasses & otherSymbol->intersectedByClasses;
+            const auto commonIntersectionClasses = symbolIntersectsWithClasses & otherSymbol->intersectsWithClasses;
             const auto hasCommonIntersectionClasses = !commonIntersectionClasses.isEmpty();
             return hasCommonIntersectionClasses;
         });
@@ -1159,7 +1159,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::addToIntersections(
     const std::shared_ptr<const RenderableSymbol>& renderable,
     IntersectionsQuadTree& intersections) const
 {
-    if (renderable->mapSymbol->intersectedByClasses.isEmpty())
+    if (renderable->mapSymbol->intersectsWithClasses.isEmpty())
         return true;
     
     if (Q_UNLIKELY(debugSettings->allSymbolsTransparentForIntersectionLookup))

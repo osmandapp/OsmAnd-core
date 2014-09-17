@@ -13,13 +13,12 @@ class SkBitmap;
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/MemoryCommon.h>
 
 namespace OsmAnd
 {
-#if defined(SWIG)
-    %feature("director") ICoreResourcesProvider;
-#endif // defined(SWIG)
+    SWIG_DIRECTOR(ICoreResourcesProvider);
     class OSMAND_CORE_API ICoreResourcesProvider
     {
         Q_DISABLE_COPY_AND_MOVE(ICoreResourcesProvider);

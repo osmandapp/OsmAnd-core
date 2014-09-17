@@ -7,6 +7,7 @@
 #include <QtGlobal>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
@@ -15,6 +16,7 @@ class SkBitmap;
 
 namespace OsmAnd
 {
+    SWIG_DIRECTOR(IMapRasterBitmapTileProvider);
     class OSMAND_CORE_API IMapRasterBitmapTileProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapRasterBitmapTileProvider);

@@ -8,6 +8,8 @@
 #include <QByteArray>
 #include <QFile>
 
+#include <SkBitmap.h>
+
 namespace OsmAnd
 {
     struct SwigUtilities
@@ -62,6 +64,23 @@ namespace OsmAnd
         inline static QByteArray qDecompress(const QByteArray& compressedData)
         {
             return qUncompress(compressedData);
+        }
+
+        inline static std::shared_ptr<const SkBitmap> createSkBitmapARGB888With(
+            const unsigned int width,
+            const unsigned int height,
+            const uint8_t* const pBuffer,
+            const size_t bufferSize)
+        {
+            const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
+
+            bitmap->setConfig(SkBitmap::kARGB_8888_Config, width, height);
+            bitmap->allocPixels();
+            if (bitmap->getSize() < bufferSize)
+                return nullptr;
+            memcpy(bitmap->getPixels(), pBuffer, bufferSize);
+
+            return bitmap;
         }
 
     private:

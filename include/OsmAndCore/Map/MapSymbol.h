@@ -46,7 +46,6 @@ namespace OsmAnd
         int order;
         ContentClass contentClass;
         QSet<MapSymbolIntersectionClassId> intersectsWithClasses;
-        QSet<MapSymbolIntersectionClassId> intersectedByClasses;
 
         bool isHidden;
         FColorARGB modulationColor;

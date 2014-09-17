@@ -1,6 +1,7 @@
 #ifndef _OSMAND_CORE_COMMON_SWIG_H_
 #define _OSMAND_CORE_COMMON_SWIG_H_
 
+// SWIG_CASTS
 #if defined(SWIG)
 #   define SWIG_CASTS(thisClass, parentClass)                                                                                   \
         struct Casts                                                                                                            \
@@ -31,6 +32,12 @@
         }
 #else
 #   define SWIG_CASTS(thisClass, parentClass)
+#endif
+
+#if defined(SWIG)
+#   define SWIG_DIRECTOR(name) %feature("director") name;
+#else
+#   define SWIG_DIRECTOR(name)
 #endif
 
 #endif // !defined(_OSMAND_CORE_COMMON_SWIG_H_)

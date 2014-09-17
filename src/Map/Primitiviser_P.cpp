@@ -1882,12 +1882,6 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
 
         evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
-        QString intersectedBy;
-        ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTED_BY, intersectedBy);
-        if (!ok)
-            intersectedBy = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
-        text->intersectedBy = intersectedBy.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
-
         QString intersectsWith;
         ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
         if (!ok)
@@ -1937,12 +1931,6 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
     ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_INTERSECTION_SIZE, icon->intersectionSize);
     if (!ok)
         icon->intersectionSize = -1.0f; // < 0 means 'Determined by it's real size'
-
-    QString intersectedBy;
-    ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTED_BY, intersectedBy);
-    if (!ok)
-        intersectedBy = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
-    icon->intersectedBy = intersectedBy.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
     QString intersectsWith;
     ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);

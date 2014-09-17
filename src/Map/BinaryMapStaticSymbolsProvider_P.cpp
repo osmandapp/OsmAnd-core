@@ -124,10 +124,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     {
                         billboardRasterSymbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectsWithClass));
                     }
-                    for (const auto& intersectedByClass : constOf(rasterizedSpriteSymbol->primitiveSymbol->intersectedBy))
-                    {
-                        billboardRasterSymbol->intersectedByClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectedByClass));
-                    }
                 }
                 symbol.reset(billboardRasterSymbol);
             }
@@ -148,10 +144,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 for (const auto& intersectsWithClass : constOf(rasterizedOnPathSymbol->primitiveSymbol->intersectsWith))
                 {
                     onPathSymbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectsWithClass));
-                }
-                for (const auto& intersectedByClass : constOf(rasterizedOnPathSymbol->primitiveSymbol->intersectedBy))
-                {
-                    onPathSymbol->intersectedByClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectedByClass));
                 }
                 symbol.reset(onPathSymbol);
             }

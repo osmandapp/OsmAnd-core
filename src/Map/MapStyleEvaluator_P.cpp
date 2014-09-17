@@ -179,9 +179,9 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         fillResultFromRuleNode(ruleNode, *outResultStorage, true);
 
     bool atLeastOneConditionalMatched = false;
-    for (const auto& child : constOf(ruleNode->oneOfConditionalSubnodes))
+    for (const auto& oneOfConditionalSubnode : constOf(ruleNode->oneOfConditionalSubnodes))
     {
-        const auto evaluationResult = evaluate(mapObject, child, inputValues, outResultStorage);
+        const auto evaluationResult = evaluate(mapObject, oneOfConditionalSubnode, inputValues, outResultStorage);
         if (evaluationResult)
         {
             atLeastOneConditionalMatched = true;
@@ -194,8 +194,8 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         if (outResultStorage && atLeastOneConditionalMatched)
             fillResultFromRuleNode(ruleNode, *outResultStorage, false);
 
-        for (const auto& child : constOf(ruleNode->applySubnodes))
-            evaluate(mapObject, child, inputValues, outResultStorage);
+        for (const auto& applySubnode : constOf(ruleNode->applySubnodes))
+            evaluate(mapObject, applySubnode, inputValues, outResultStorage);
 
         return true;
     }

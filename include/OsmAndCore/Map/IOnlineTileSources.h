@@ -10,6 +10,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
@@ -18,6 +19,7 @@ namespace OsmAnd
 {
     class OnlineRasterMapTileProvider;
 
+    SWIG_DIRECTOR(IOnlineTileSources);
     class OSMAND_CORE_API IOnlineTileSources
     {
     public:
