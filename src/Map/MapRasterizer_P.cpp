@@ -314,11 +314,11 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
 
         QString cap;
         ok = evalResult.getStringValue(valueDefId_cap, cap);
-        if (!ok || cap.isEmpty() || cap == QLatin1String("BUTT"))
+        if (!ok || cap.isEmpty() || cap.compare(QLatin1String("BUTT"), Qt::CaseInsensitive) == 0)
             paint.setStrokeCap(SkPaint::kButt_Cap);
-        else if (cap == QLatin1String("ROUND"))
+        else if (cap.compare(QLatin1String("ROUND"), Qt::CaseInsensitive) == 0)
             paint.setStrokeCap(SkPaint::kRound_Cap);
-        else if (cap == QLatin1String("SQUARE"))
+        else if (cap.compare(QLatin1String("SQUARE"), Qt::CaseInsensitive) == 0)
             paint.setStrokeCap(SkPaint::kSquare_Cap);
         else
             paint.setStrokeCap(SkPaint::kButt_Cap);
@@ -339,9 +339,9 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         }
     }
 
-    SkColor color;
-    ok = evalResult.getIntegerValue(valueDefId_color, color);
-    paint.setColor(ok ? color : SK_ColorWHITE);
+    SkColor color = SK_ColorTRANSPARENT;
+    evalResult.getIntegerValue(valueDefId_color, color);
+    paint.setColor(color);
 
     if (valueSetSelector == PaintValuesSet::Set_0)
     {
