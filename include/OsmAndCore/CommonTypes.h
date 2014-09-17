@@ -16,6 +16,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Common.h>
 #include <OsmAndCore/QuickAccessors.h>
 
 namespace OsmAnd

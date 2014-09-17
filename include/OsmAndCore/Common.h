@@ -9,7 +9,6 @@
 
 #include <OsmAndCore/QtExtraDefinitions.h>
 #include <OsmAndCore/QtExtensions.h>
-#include <OsmAndCore/QtCommon.h>
 
 #if defined(TEXT) && defined(_T)
 #   define xT(x) _T(x)

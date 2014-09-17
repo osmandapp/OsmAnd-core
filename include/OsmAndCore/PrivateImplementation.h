@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/QtExtraDefinitions.h>
 #include <QtGlobal>
 
 namespace OsmAnd
