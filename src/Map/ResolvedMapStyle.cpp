@@ -53,7 +53,7 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResolvedMapStyle::resolv
     const std::shared_ptr<ResolvedMapStyle> resolvedStyle(new ResolvedMapStyle(unresolvedMapStylesChain));
 
     if (!resolvedStyle->_p->resolve())
-        return false;
+        return nullptr;
 
     return resolvedStyle;
 }
