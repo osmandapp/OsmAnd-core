@@ -42,6 +42,11 @@ OsmAnd::MapStyleEvaluationResult& OsmAnd::MapStyleEvaluationResult::operator=(Ma
 }
 #endif // Q_COMPILER_RVALUE_REFS
 
+bool OsmAnd::MapStyleEvaluationResult::contains(const ResolvedMapStyle::ValueDefinitionId valueDefId) const
+{
+    return values.contains(valueDefId);
+}
+
 bool OsmAnd::MapStyleEvaluationResult::getBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, bool& value) const
 {
     const auto itValue = values.constFind(valueDefId);

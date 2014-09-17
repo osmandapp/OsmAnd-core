@@ -280,10 +280,19 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_3;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_3;
             break;
+        case PaintValuesSet::Set_4:
+            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_4;
+            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_4;
+            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_4;
+            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_4;
+            break;
     }
 
     if (isArea)
     {
+        if (!evalResult.contains(valueDefId_color) && !evalResult.contains(env->styleBuiltinValueDefs->id_OUTPUT_SHADER))
+            return false;
+
         paint.setColorFilter(nullptr);
         paint.setShader(nullptr);
         paint.setLooper(nullptr);

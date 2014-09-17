@@ -32,6 +32,8 @@ namespace OsmAnd
 #endif // Q_COMPILER_RVALUE_REFS
 
         QHash<ResolvedMapStyle::ValueDefinitionId, QVariant> values;
+
+        bool contains(const ResolvedMapStyle::ValueDefinitionId valueDefId) const;
     
         bool getBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, bool& value) const;
         bool getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, int& value) const;
