@@ -6,12 +6,8 @@
 
 typedef OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex_CitiesType _ObfAddressBlockType;
 static_assert(
-    _ObfAddressBlockType::OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesOrTowns == static_cast<int>(OsmAnd::ObfAddressBlockType::CitiesOrTowns),
-    "OsmAnd::ObfAddressBlockType must match OBF::OsmAndAddressIndex_CitiesIndex_CitiesType");
-static_assert(
-    _ObfAddressBlockType::OsmAndAddressIndex_CitiesIndex_CitiesType_Postcodes == static_cast<int>(OsmAnd::ObfAddressBlockType::Postcodes),
-    "OsmAnd::ObfAddressBlockType must match OBF::OsmAndAddressIndex_CitiesIndex_CitiesType");
-static_assert(
+    _ObfAddressBlockType::OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesOrTowns == static_cast<int>(OsmAnd::ObfAddressBlockType::CitiesOrTowns) &&
+    _ObfAddressBlockType::OsmAndAddressIndex_CitiesIndex_CitiesType_Postcodes == static_cast<int>(OsmAnd::ObfAddressBlockType::Postcodes) &&
     _ObfAddressBlockType::OsmAndAddressIndex_CitiesIndex_CitiesType_Villages == static_cast<int>(OsmAnd::ObfAddressBlockType::Villages),
     "OsmAnd::ObfAddressBlockType must match OBF::OsmAndAddressIndex_CitiesIndex_CitiesType");
 

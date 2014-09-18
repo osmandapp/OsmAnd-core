@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_QT_EXTENSIONS_H_
 
 #include <memory>
+#include <type_traits>
 
 #if !defined(SWIG)
 #   if defined(QGLOBAL_H)
@@ -36,44 +37,71 @@ Q_DECLARE_TYPEINFO(OsmAnd::FColorARGB, Q_PRIMITIVE_TYPE | Q_MOVABLE_TYPE);
 #endif // !defined(SWIG)
 
 #if !defined(SWIG)
-inline uint qHash(const OsmAnd::TileId value, uint seed = 0) Q_DECL_NOTHROW;
+template<typename T>
+inline typename std::enable_if< std::is_same<decltype(value.qHash()), uint(uint)>::value, uint>::type qHash(
+    const T& value) Q_DECL_NOTHROW;
 
 template<typename T>
-inline uint qHash(const std::shared_ptr<T>& value, uint seed = 0) Q_DECL_NOTHROW;
+inline typename std::enable_if< std::is_same<decltype(value.operator uint64_t()), uint64_t()>::value, uint>::type qHash(
+    const T& value) Q_DECL_NOTHROW;
 
-inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed = 0) Q_DECL_NOTHROW;
+template<typename T>
+inline typename std::enable_if< std::is_same<decltype(value.operator int64_t()), int64_t()>::value, uint>::type qHash(
+    const T& value) Q_DECL_NOTHROW;
+
+template<typename T>
+inline uint qHash(const std::shared_ptr<T>& value) Q_DECL_NOTHROW;
+
+template<typename T>
+inline typename std::enable_if< std::is_enum<T>::value && !std::is_convertible<T, int>::value, uint>::type qHash(
+    const T value) Q_DECL_NOTHROW;
+
+template<typename T, T DEFAULT_VALUE>
+inline uint qHash(const OsmAnd::SmartPOD<T, DEFAULT_VALUE>& value) Q_DECL_NOTHROW;
 #endif // !defined(SWIG)
 
 #include <QHash>
 
 #if !defined(SWIG)
-inline uint qHash(const OsmAnd::TileId value, uint seed) Q_DECL_NOTHROW
+template<typename T>
+inline typename std::enable_if< std::is_same<decltype(value.qHash()), uint()>::value, uint>::type qHash(
+    const T& value) Q_DECL_NOTHROW
 {
-    return ::qHash(value.id, seed);
+    return value.qHash();
 }
 
 template<typename T>
-inline uint qHash(const std::shared_ptr<T>& value, uint seed) Q_DECL_NOTHROW
+inline typename std::enable_if< std::is_same<decltype(value.operator uint64_t()), uint64_t()>::value, uint>::type qHash(
+    const T& value) Q_DECL_NOTHROW
 {
-    return ::qHash(value.get(), seed);
+    return ::qHash(static_cast<uint64_t>(value));
 }
 
-inline uint qHash(const OsmAnd::ObfAddressBlockType value, uint seed) Q_DECL_NOTHROW
+template<typename T>
+inline typename std::enable_if< std::is_same<decltype(value.operator int64_t()), int64_t()>::value, uint>::type qHash(
+    const T& value) Q_DECL_NOTHROW
 {
-    return ::qHash(static_cast<int>(value), seed);
+    return ::qHash(static_cast<int64_t>(value));
 }
 
-inline uint qHash(const OsmAnd::ObfMapSectionDataBlockId value, uint seed) Q_DECL_NOTHROW
+template<typename T>
+inline uint qHash(const std::shared_ptr<T>& value) Q_DECL_NOTHROW
 {
-    return ::qHash(value.id, seed);
+    return ::qHash(value.get());
+}
+
+template<typename T>
+inline typename std::enable_if< std::is_enum<T>::value && !std::is_convertible<T, int>::value, uint>::type qHash(
+    const T value) Q_DECL_NOTHROW
+{
+    return ::qHash(static_cast<typename std::underlying_type<T>::type>(value));
 }
 
 template<typename T, T DEFAULT_VALUE>
-inline uint qHash(const OsmAnd::SmartPOD<T, DEFAULT_VALUE>& value, uint seed) Q_DECL_NOTHROW
+inline uint qHash(const OsmAnd::SmartPOD<T, DEFAULT_VALUE>& value) Q_DECL_NOTHROW
 {
-    return ::qHash(static_cast<T>(value), seed);
+    return ::qHash(static_cast<T>(value));
 }
-
 #endif // !defined(SWIG)
 
 #endif // !defined(_OSMAND_CORE_QT_EXTENSIONS_H_)

@@ -65,6 +65,57 @@ namespace OsmAnd
     enum : unsigned int {
         RasterMapLayersCount = static_cast<unsigned int>(RasterMapLayerId::__LAST)
     };
+
+    union TagValueId
+    {
+        uint64_t id;
+#if !defined(SWIG)
+        struct {
+            int32_t tagId;
+            int32_t valueId;
+        };
+#else
+        // Fake unwrap for SWIG
+        int32_t tagId, valueId;
+#endif // !defined(SWIG)
+
+#if !defined(SWIG)
+        inline operator uint64_t() const
+        {
+            return id;
+        }
+
+        inline TagValueId& operator=(const uint64_t& that)
+        {
+            id = that;
+            return *this;
+        }
+
+        inline bool operator==(const TagValueId& that)
+        {
+            return this->id == that.id;
+        }
+
+        inline bool operator!=(const TagValueId& that)
+        {
+            return this->id != that.id;
+        }
+
+        inline bool operator==(const uint64_t& that)
+        {
+            return this->id == that;
+        }
+
+        inline bool operator!=(const uint64_t& that)
+        {
+            return this->id != that;
+        }
+#endif // !defined(SWIG)
+    };
+
+#if !defined(SWIG)
+    static_assert(sizeof(TagValueId) == 8, "TagValueId must be 8 bytes in size");
+#endif // !defined(SWIG)
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_COMMON_TYPES_H_)

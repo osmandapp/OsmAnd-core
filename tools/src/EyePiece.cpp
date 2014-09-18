@@ -1,6 +1,9 @@
 #include "EyePiece.h"
 
+#include <OsmAndCore/stdlib_common.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <iomanip>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/ObfsCollection.h>
@@ -949,7 +952,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         if (configuration.verbose)
             output << xT("Rendering frames...") << std::endl;
         OsmAnd::Stopwatch renderingStopwatch(true);
-        int framesCounter = 0;
+        auto framesCounter = 0u;
+        bool wasInterrupted = false;
         for (;; framesCounter++)
         {
             // Update must be performed before each frame
@@ -971,16 +975,22 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             glVerifyResult(output);
 
             // Check if map renderer finished processing
-            if (mapRenderer->isIdle() || renderingStopwatch.elapsed() > (10 * 60 /* 10 minutes */))
+            if (mapRenderer->isIdle())
                 break;
+
+            if (renderingStopwatch.elapsed() > (10 * 60 /* 10 minutes */))
+            {
+                wasInterrupted = true;
+                break;
+            }
         }
         const auto timeElapsedOnRendering = renderingStopwatch.elapsed();
         if (configuration.verbose)
             output << xT("Rendered ") << framesCounter << xT(" frames in ") << timeElapsedOnRendering << xT("s") << std::endl;
 
-        if (!mapRenderer->isIdle())
+        if (wasInterrupted)
         {
-            output << xT("ERROR: Rendering was interrupted since it took to long (more than 10 minutes). Probably it's stuck: ") << QStringToStlString(mapRenderer->getNotIdleReason()) << std::endl;
+            output << xT("ERROR: Rendering was interrupted since it took too long (more than 10 minutes). Probably it's stuck: ") << QStringToStlString(mapRenderer->getNotIdleReason()) << std::endl;
             success = false;
         }
 

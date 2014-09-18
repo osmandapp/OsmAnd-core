@@ -97,9 +97,15 @@ void* OsmAnd::CoreResourcesEmbeddedBundle_P::loadSymbol(const char* const symbol
 #else
     symbolPtr = dlsym(_bundleLibrary, symbolName);
 #endif
+    if (!symbolPtr)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to find '%s' when loading CoreResourcesEmbeddedBundle",
+            symbolName);
+    }
 
     return symbolPtr;
-    }
+}
 
 bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
 {

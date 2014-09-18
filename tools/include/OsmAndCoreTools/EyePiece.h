@@ -1,15 +1,19 @@
 #ifndef _OSMAND_CORE_TOOLS_EYEPIECE_H_
 #define _OSMAND_CORE_TOOLS_EYEPIECE_H_
 
-#include <memory>
+#include <OsmAndCore/stdlib_common.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <iostream>
 #include <sstream>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
 #include <QStringList>
 #include <QDir>
 #include <QFile>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/IObfsCollection.h>
