@@ -108,7 +108,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     }
 
     // In case there was a basemap present, Undefined is Land
-    if (mergedFoundation == MapFoundationType::Undefined && basemapPresent)
+    if (mergedFoundation == MapFoundationType::Undefined && !basemapPresent)
         mergedFoundation = MapFoundationType::FullLand;
 
     if (outFoundation)
