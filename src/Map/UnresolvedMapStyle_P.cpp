@@ -9,7 +9,6 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <QStringList>
 #include <QByteArray>
-#include <QBuffer>
 #include <QFileInfo>
 #include <QStack>
 #include "restore_internal_warnings.h"

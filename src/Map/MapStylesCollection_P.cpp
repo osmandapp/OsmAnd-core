@@ -44,10 +44,12 @@ bool OsmAnd::MapStylesCollection_P::addStyleFromCoreResource(const QString& reso
     QWriteLocker scopedLocker(&_stylesLock);
 
     assert(getCoreResourcesProvider()->containsResource(resourceName));
-    auto styleContent = getCoreResourcesProvider()->getResource(resourceName);
+    const auto styleContent = getCoreResourcesProvider()->getResource(resourceName);
+    const std::shared_ptr<QBuffer> styleContentBuffer(new QBuffer());
+    styleContentBuffer->setData(styleContent);
 
     std::shared_ptr<UnresolvedMapStyle> style(new UnresolvedMapStyle(
-        std::shared_ptr<QIODevice>(new QBuffer(&styleContent)),
+        styleContentBuffer,
         QFileInfo(resourceName).fileName()));
     if (!style->loadMetadata())
         return false;

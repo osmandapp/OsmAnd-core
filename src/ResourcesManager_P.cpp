@@ -91,10 +91,12 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     bool ok;
 
     // Built-in map style
-    auto defaultMapStyleContent = getCoreResourcesProvider()->getResource(
+    const auto defaultMapStyleContent = getCoreResourcesProvider()->getResource(
         QLatin1String("map/styles/default.render.xml"));
+    const std::shared_ptr<QBuffer> defaultMapStyleContentBuffer(new QBuffer());
+    defaultMapStyleContentBuffer->setData(defaultMapStyleContent);
     std::shared_ptr<UnresolvedMapStyle> defaultMapStyle(new UnresolvedMapStyle(
-        std::shared_ptr<QIODevice>(new QBuffer(&defaultMapStyleContent)),
+        defaultMapStyleContentBuffer,
         QLatin1String("default")));
     ok = defaultMapStyle->loadMetadata() && defaultMapStyle->load();
     assert(ok);
@@ -105,7 +107,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     _builtinResources.insert(defaultMapStyleResource->id, defaultMapStyleResource);
 
     // Built-in presets for "default" map style
-    std::shared_ptr<MapStylesPresetsCollection> defaultMapStylesPresets(new MapStylesPresetsCollection());
+    const std::shared_ptr<MapStylesPresetsCollection> defaultMapStylesPresets(new MapStylesPresetsCollection());
     defaultMapStylesPresets->loadFrom(getCoreResourcesProvider()->getResource(
         QLatin1String("map/presets/default.map_styles_presets.xml")));
     std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinResource(
@@ -115,7 +117,7 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
     _builtinResources.insert(defaultMapStylesPresetsResource->id, defaultMapStylesPresetsResource);
 
     // Built-in online tile sources
-    std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinResource(
+    const std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinResource(
         QLatin1String("default.online_tile_sources.xml"),
         ResourceType::OnlineTileSources,
         std::shared_ptr<const Resource::Metadata>(new OnlineTileSourcesMetadata(OnlineTileSources::getBuiltIn()))));
