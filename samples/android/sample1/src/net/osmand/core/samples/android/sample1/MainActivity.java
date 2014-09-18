@@ -67,7 +67,7 @@ public class MainActivity extends ActionBarActivity {
     private int _referenceTileSize;
     private int _rasterTileSize;
     private IMapStylesCollection _mapStylesCollection;
-    private MapStyle _mapStyle;
+    private ResolvedMapStyle _mapStyle;
     private ObfsCollection _obfsCollection;
     private MapPresentationEnvironment _mapPresentationEnvironment;
     private Primitiviser _primitiviser;
@@ -105,7 +105,7 @@ public class MainActivity extends ActionBarActivity {
 
         Log.i(TAG, "Going to resolve default embedded style...");
         _mapStylesCollection = new MapStylesCollection();
-        _mapStyle = _mapStylesCollection.getBakedStyle("default");
+        _mapStyle = _mapStylesCollection.getResolvedStyleByName("default");
         if (_mapStyle == null)
         {
             Log.e(TAG, "Failed to resolve style 'default'");
