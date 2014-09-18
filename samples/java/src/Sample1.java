@@ -111,7 +111,7 @@ public class Sample1 implements GLEventListener {
   private int _referenceTileSize;
   private int _rasterTileSize;
   private IMapStylesCollection _mapStylesCollection;
-  private MapStyle _mapStyle;
+  private ResolvedMapStyle _mapStyle;
   private ObfsCollection _obfsCollection;
   private MapPresentationEnvironment _mapPresentationEnvironment;
   private Primitiviser _primitiviser;
@@ -127,7 +127,7 @@ public class Sample1 implements GLEventListener {
   public void init(GLAutoDrawable drawable) {
     OsmAndCore.InitializeCore(_coreResourcesEmbeddedBundle);
 
-    _fileLogSink = QIODeviceLogSink.createFileLogSink("d:/OpenSource/OsmAnd/osmandcore.log");
+    _fileLogSink = QIODeviceLogSink.createFileLogSink("osmandcore.log");
     Logger.get().addLogSink(_fileLogSink);
 
     _displayDensityFactor = 1.0f;
@@ -135,7 +135,7 @@ public class Sample1 implements GLEventListener {
     _rasterTileSize = 256;
 
     _mapStylesCollection = new MapStylesCollection();
-    _mapStyle = _mapStylesCollection.getBakedStyle("default");
+    _mapStyle = _mapStylesCollection.getResolvedStyleByName("default");
     if (_mapStyle == null) {
       System.err.println("Failed to resolve style 'default'");
       release();
@@ -144,7 +144,7 @@ public class Sample1 implements GLEventListener {
     }
 
     _obfsCollection = new ObfsCollection();
-    _obfsCollection.addDirectory("d:/OpenSource/OsmAnd/data", false);
+    _obfsCollection.addDirectory("data", false);
 
     _mapPresentationEnvironment = new MapPresentationEnvironment(
       _mapStyle,

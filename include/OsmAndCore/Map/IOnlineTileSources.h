@@ -19,7 +19,6 @@ namespace OsmAnd
 {
     class OnlineRasterMapTileProvider;
 
-    SWIG_DIRECTOR(IOnlineTileSources);
     class OSMAND_CORE_API IOnlineTileSources
     {
     public:
