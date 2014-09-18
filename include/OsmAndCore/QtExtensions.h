@@ -38,23 +38,23 @@ Q_DECLARE_TYPEINFO(OsmAnd::FColorARGB, Q_PRIMITIVE_TYPE | Q_MOVABLE_TYPE);
 
 #if !defined(SWIG)
 template<typename T>
-inline typename std::enable_if< std::is_same<decltype(value.qHash()), uint(uint)>::value, uint>::type qHash(
-    const T& value) Q_DECL_NOTHROW;
+inline auto qHash(
+    const T& value) Q_DECL_NOTHROW -> typename std::enable_if< std::is_same<decltype(value.qHash()), uint(uint)>::value, uint>::type;
 
 template<typename T>
-inline typename std::enable_if< std::is_same<decltype(value.operator uint64_t()), uint64_t()>::value, uint>::type qHash(
-    const T& value) Q_DECL_NOTHROW;
+inline auto qHash(
+    const T& value) Q_DECL_NOTHROW -> typename std::enable_if< std::is_same<decltype(value.operator uint64_t()), uint64_t()>::value, uint>::type;
 
 template<typename T>
-inline typename std::enable_if< std::is_same<decltype(value.operator int64_t()), int64_t()>::value, uint>::type qHash(
-    const T& value) Q_DECL_NOTHROW;
+inline auto qHash(
+    const T& value) Q_DECL_NOTHROW -> typename std::enable_if< std::is_same<decltype(value.operator int64_t()), int64_t()>::value, uint>::type;
 
 template<typename T>
 inline uint qHash(const std::shared_ptr<T>& value) Q_DECL_NOTHROW;
 
 template<typename T>
-inline typename std::enable_if< std::is_enum<T>::value && !std::is_convertible<T, int>::value, uint>::type qHash(
-    const T value) Q_DECL_NOTHROW;
+inline auto qHash(
+    const T value) Q_DECL_NOTHROW -> typename std::enable_if< std::is_enum<T>::value && !std::is_convertible<T, int>::value, uint>::type;
 
 template<typename T, T DEFAULT_VALUE>
 inline uint qHash(const OsmAnd::SmartPOD<T, DEFAULT_VALUE>& value) Q_DECL_NOTHROW;
@@ -64,22 +64,22 @@ inline uint qHash(const OsmAnd::SmartPOD<T, DEFAULT_VALUE>& value) Q_DECL_NOTHRO
 
 #if !defined(SWIG)
 template<typename T>
-inline typename std::enable_if< std::is_same<decltype(value.qHash()), uint()>::value, uint>::type qHash(
-    const T& value) Q_DECL_NOTHROW
+inline auto qHash(
+    const T& value) Q_DECL_NOTHROW -> typename std::enable_if< std::is_same<decltype(value.qHash()), uint()>::value, uint>::type
 {
     return value.qHash();
 }
 
 template<typename T>
-inline typename std::enable_if< std::is_same<decltype(value.operator uint64_t()), uint64_t()>::value, uint>::type qHash(
-    const T& value) Q_DECL_NOTHROW
+inline auto qHash(
+    const T& value) Q_DECL_NOTHROW -> typename std::enable_if< std::is_same<decltype(value.operator uint64_t()), uint64_t()>::value, uint>::type
 {
     return ::qHash(static_cast<uint64_t>(value));
 }
 
 template<typename T>
-inline typename std::enable_if< std::is_same<decltype(value.operator int64_t()), int64_t()>::value, uint>::type qHash(
-    const T& value) Q_DECL_NOTHROW
+inline auto qHash(
+    const T& value) Q_DECL_NOTHROW -> typename std::enable_if< std::is_same<decltype(value.operator int64_t()), int64_t()>::value, uint>::type
 {
     return ::qHash(static_cast<int64_t>(value));
 }
@@ -91,8 +91,8 @@ inline uint qHash(const std::shared_ptr<T>& value) Q_DECL_NOTHROW
 }
 
 template<typename T>
-inline typename std::enable_if< std::is_enum<T>::value && !std::is_convertible<T, int>::value, uint>::type qHash(
-    const T value) Q_DECL_NOTHROW
+inline auto qHash(
+    const T value) Q_DECL_NOTHROW -> typename std::enable_if< std::is_enum<T>::value && !std::is_convertible<T, int>::value, uint>::type
 {
     return ::qHash(static_cast<typename std::underlying_type<T>::type>(value));
 }
