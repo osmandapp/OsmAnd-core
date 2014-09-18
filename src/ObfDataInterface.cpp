@@ -62,14 +62,20 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     auto mergedFoundation = MapFoundationType::Undefined;
 
     // Iterate through all OBF readers
+    bool basemapPresent = false;
     for (const auto& obfReader : constOf(obfReaders))
     {
         // Check if request is aborted
         if (controller && controller->isAborted())
             return false;
 
-        // Iterate over all map sections of each OBF reader
         const auto& obfInfo = obfReader->obtainInfo();
+
+        // Check if there's a basemap present
+        if (obfInfo->isBasemap)
+            basemapPresent = true;
+
+        // Iterate over all map sections of each OBF reader
         for (const auto& mapSection : constOf(obfInfo->mapSections))
         {
             // Check if request is aborted
@@ -100,6 +106,10 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
             }
         }
     }
+
+    // In case there was a basemap present, Undefined is Land
+    if (mergedFoundation == MapFoundationType::Undefined && basemapPresent)
+        mergedFoundation = MapFoundationType::FullLand;
 
     if (outFoundation)
         *outFoundation = mergedFoundation;
