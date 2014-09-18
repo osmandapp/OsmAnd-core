@@ -82,7 +82,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt = tagStringId;
     inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt = valueStringId;
 
-    const auto ruleId = ResolvedMapStyle::composeTagValueId(tagStringId, valueStringId);
+    const auto ruleId = TagValueId::compose(tagStringId, valueStringId);
     const auto citRule = ruleset.constFind(ruleId);
     if (citRule == ruleset.cend())
         return false;

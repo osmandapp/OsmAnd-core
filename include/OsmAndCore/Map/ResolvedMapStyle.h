@@ -144,11 +144,6 @@ namespace OsmAnd
         QString getStringById(const StringId id) const;
 
         static std::shared_ptr<const ResolvedMapStyle> resolveMapStylesChain(const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain);
-
-        static inline TagValueId composeTagValueId(const StringId tagId, const StringId valueId)
-        {
-            return (static_cast<uint64_t>(tagId) << 32) | static_cast<uint64_t>(valueId);
-        }
     };
 }
 

@@ -308,7 +308,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
 
                     const auto valueId = resolveStringIdInLUT(value);
 
-                    const auto tagValueId = ResolvedMapStyle::composeTagValueId(tagId, valueId);
+                    const auto tagValueId = TagValueId::compose(tagId, valueId);
                     auto& topLevelRule = ruleset[tagValueId];
                     
                     // Create top-level rule if not yet created

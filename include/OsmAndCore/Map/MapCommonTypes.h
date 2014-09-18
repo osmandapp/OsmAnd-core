@@ -111,6 +111,14 @@ namespace OsmAnd
             return this->id != that;
         }
 #endif // !defined(SWIG)
+
+        static inline TagValueId compose(const int32_t tagId, const int32_t valueId)
+        {
+            TagValueId result;
+            result.tagId = tagId;
+            result.valueId = valueId;
+            return result;
+        }
     };
 
 #if !defined(SWIG)
