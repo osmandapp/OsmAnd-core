@@ -281,7 +281,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
 
     for (auto rulesetTypeIdx = 0u; rulesetTypeIdx < MapStyleRulesetTypesCount; rulesetTypeIdx++)
     {
-        QHash<uint64_t, std::shared_ptr<Rule> > ruleset;
+        QHash<TagValueId, std::shared_ptr<Rule> > ruleset;
 
         // Process styles chain in direct order. This will allow to process overriding correctly
         auto citUnresolvedMapStyle = iteratorOf(owner->unresolvedMapStylesChain);
@@ -333,7 +333,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
                 }
             }
 
-            _rulesets[rulesetTypeIdx] = copyAs< uint64_t, std::shared_ptr<const Rule> >(ruleset);
+            _rulesets[rulesetTypeIdx] = copyAs< TagValueId, std::shared_ptr<const Rule> >(ruleset);
         }
     }
 
@@ -398,7 +398,7 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Attribute> OsmAnd::ResolvedMap
     return _attributes[nameId];
 }
 
-const QHash< OsmAnd::ResolvedMapStyle_P::TagValueId, std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Rule> >
+const QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Rule> >
 OsmAnd::ResolvedMapStyle_P::getRuleset(
     const MapStyleRulesetType rulesetType) const
 {

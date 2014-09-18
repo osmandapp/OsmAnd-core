@@ -27,7 +27,6 @@ namespace OsmAnd
     public:
         typedef ResolvedMapStyle::StringId StringId;
         typedef ResolvedMapStyle::ValueDefinitionId ValueDefinitionId;
-        typedef ResolvedMapStyle::TagValueId TagValueId;
         typedef ResolvedMapStyle::RuleNode RuleNode;
         typedef ResolvedMapStyle::BaseRule BaseRule;
         typedef ResolvedMapStyle::Rule Rule;

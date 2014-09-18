@@ -28,7 +28,6 @@ namespace OsmAnd
         };
 
         typedef int ValueDefinitionId;
-        typedef uint64_t TagValueId;
 
         class OSMAND_CORE_API RuleNode Q_DECL_FINAL
         {

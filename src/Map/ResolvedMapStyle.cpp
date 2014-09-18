@@ -36,7 +36,7 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle::Attribute> OsmAnd::ResolvedMapSt
     return _p->getAttribute(name);
 }
 
-const QHash< OsmAnd::ResolvedMapStyle::TagValueId, std::shared_ptr<const OsmAnd::ResolvedMapStyle::Rule> >
+const QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::ResolvedMapStyle::Rule> >
 OsmAnd::ResolvedMapStyle::getRuleset(
     const MapStyleRulesetType rulesetType) const
 {

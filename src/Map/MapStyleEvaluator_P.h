@@ -51,7 +51,7 @@ namespace OsmAnd
 
         bool evaluate(
             const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
-            const QHash< ResolvedMapStyle::TagValueId, std::shared_ptr<const ResolvedMapStyle::Rule> >& ruleset,
+            const QHash< TagValueId, std::shared_ptr<const ResolvedMapStyle::Rule> >& ruleset,
             const ResolvedMapStyle::StringId tagStringId,
             const ResolvedMapStyle::StringId valueStringId,
             MapStyleEvaluationResult* const outResultStorage) const;
