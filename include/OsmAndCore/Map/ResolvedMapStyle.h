@@ -143,6 +143,8 @@ namespace OsmAnd
 
         QString getStringById(const StringId id) const;
 
+        QString dump(const QString& prefix = QString()) const;
+
         static std::shared_ptr<const ResolvedMapStyle> resolveMapStylesChain(const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain);
     };
 }

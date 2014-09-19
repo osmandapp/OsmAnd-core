@@ -97,3 +97,32 @@ bool OsmAnd::MapStyleValue::parse(const QString& input, const MapStyleValueDataT
             return false;
     }
 }
+
+QString OsmAnd::MapStyleValue::toString(const MapStyleValueDataType dataType) const
+{
+    switch (dataType)
+    {
+        case MapStyleValueDataType::Boolean:
+            return QString(QLatin1String("boolean(%1)")).arg((asSimple.asUInt == 0) ? QLatin1String("false") : QLatin1String("true"));
+
+        case MapStyleValueDataType::Integer:
+            if (isComplex)
+                return QString(QLatin1String("integer(%1dp:%2px)")).arg(QString::number(asComplex.asInt.dip)).arg(QString::number(asComplex.asInt.px));
+            else
+                return QString(QLatin1String("integer(%1)")).arg(QString::number(asSimple.asInt));
+
+        case MapStyleValueDataType::Float:
+            if (isComplex)
+                return QString(QLatin1String("float(%1dp:%2px)")).arg(QString::number(asComplex.asFloat.dip)).arg(QString::number(asComplex.asFloat.px));
+            else
+                return QString(QLatin1String("float(%1)")).arg(QString::number(asSimple.asFloat));
+
+        case MapStyleValueDataType::String:
+            return QString(QLatin1String("string(#%1)")).arg(QString::number(asSimple.asInt));
+
+        case MapStyleValueDataType::Color:
+            return QString(QLatin1String("color(#%1)")).arg(QString::number(ColorARGB(asSimple.asUInt).argb, 16).right(6));
+    }
+
+    return QString::null;
+}

@@ -48,6 +48,11 @@ QString OsmAnd::ResolvedMapStyle::getStringById(const StringId id) const
     return _p->getStringById(id);
 }
 
+QString OsmAnd::ResolvedMapStyle::dump(const QString& prefix /*= QString()*/) const
+{
+    return _p->dump(prefix);
+}
+
 std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResolvedMapStyle::resolveMapStylesChain(const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain)
 {
     const std::shared_ptr<ResolvedMapStyle> resolvedStyle(new ResolvedMapStyle(unresolvedMapStylesChain));

@@ -1286,6 +1286,11 @@ namespace OsmAnd
         }
 #endif // !defined(SWIG)
 
+        explicit inline ColorARGB(const uint32_t argb_)
+            : argb(argb_)
+        {
+        }
+
         inline ColorARGB(const uint8_t a_, const uint8_t r_, const uint8_t g_, const uint8_t b_)
             : b(b_)
             , g(g_)

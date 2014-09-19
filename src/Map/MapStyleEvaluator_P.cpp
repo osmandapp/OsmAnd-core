@@ -196,19 +196,16 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             break;
         }
     }
+    if (!atLeastOneConditionalMatched && !ruleNode->oneOfConditionalSubnodes.isEmpty())
+        return false;
 
-    if (atLeastOneConditionalMatched || ruleNode->oneOfConditionalSubnodes.isEmpty())
-    {
-        if (outResultStorage && atLeastOneConditionalMatched)
-            fillResultFromRuleNode(ruleNode, *outResultStorage, false);
+    if (outResultStorage && atLeastOneConditionalMatched)
+        fillResultFromRuleNode(ruleNode, *outResultStorage, false);
 
-        for (const auto& applySubnode : constOf(ruleNode->applySubnodes))
-            evaluate(mapObject, applySubnode, inputValues, outResultStorage);
+    for (const auto& applySubnode : constOf(ruleNode->applySubnodes))
+        evaluate(mapObject, applySubnode, inputValues, outResultStorage);
 
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 void OsmAnd::MapStyleEvaluator_P::fillResultFromRuleNode(
@@ -236,7 +233,7 @@ void OsmAnd::MapStyleEvaluator_P::fillResultFromRuleNode(
         {
             case MapStyleValueDataType::Boolean:
                 assert(!ruleValue.isComplex);
-                resultValue = (ruleValue.asSimple.asUInt == 1);
+                resultValue = (ruleValue.asSimple.asUInt != 0);
                 break;
             case MapStyleValueDataType::Integer:
                 resultValue =

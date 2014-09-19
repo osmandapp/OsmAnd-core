@@ -55,6 +55,8 @@ namespace OsmAnd
             mapStyleValue.asSimple.asUInt = value;
             return mapStyleValue;
         };
+
+        QString toString(const MapStyleValueDataType dataType) const;
     };
 }
 

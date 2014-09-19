@@ -1022,10 +1022,10 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     bool ok;
 
     //////////////////////////////////////////////////////////////////////////
-    if ((mapObject->id >> 1) == 25829290u)
-    {
-        int i = 5;
-    }
+    //if ((mapObject->id >> 1) == 25829290u)
+    //{
+    //    int i = 5;
+    //}
     //////////////////////////////////////////////////////////////////////////
 
     const auto constructedGroup = new PrimitivesGroup(mapObject);
@@ -1123,10 +1123,10 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             evaluationResult.clear();
             ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
             //////////////////////////////////////////////////////////////////////////
-            if ((mapObject->id >> 1) == 25829290u)
-            {
-                int i = 5;
-            }
+            //if ((mapObject->id >> 1) == 25829290u)
+            //{
+            //    int i = 5;
+            //}
             //////////////////////////////////////////////////////////////////////////
 
             if (metric)

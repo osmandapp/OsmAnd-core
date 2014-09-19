@@ -78,6 +78,13 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     {
         const auto& mapObject = rasterizedGroup->mapObject;
 
+        //////////////////////////////////////////////////////////////////////////
+        //if ((mapObject->id >> 1) == 7381701u)
+        //{
+        //    int i = 5;
+        //}
+        //////////////////////////////////////////////////////////////////////////
+
         // Get preallocated group
         const auto citPreallocatedGroup = preallocatedSymbolsGroups.constFind(mapObject->id);
         assert(citPreallocatedGroup != preallocatedSymbolsGroups.cend());
@@ -168,12 +175,10 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         if (hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard)
         {
             //////////////////////////////////////////////////////////////////////////
-            /*
-            if ((mapObject->id >> 1) == 30657101)
+            if ((mapObject->id >> 1) == 7381701u)
             {
                 int i = 5;
             }
-            */
             //////////////////////////////////////////////////////////////////////////
 
             // Compose list of symbols to compute pin-points for
