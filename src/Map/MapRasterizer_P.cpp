@@ -175,7 +175,7 @@ void OsmAnd::MapRasterizer_P::rasterize(
         else
         {
             // Since destination area is not specified, erase whole canvas with specified color
-            canvas.clear(primitivizedArea->defaultBackgroundColor);
+            canvas.clear(primitivizedArea->defaultBackgroundColor.toSkColor());
         }
     }
 
@@ -371,7 +371,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
 
         if (!ok || shadowColor == SK_ColorTRANSPARENT)
-            shadowColor = primitivizedArea->shadowRenderingColor;
+            shadowColor = primitivizedArea->shadowRenderingColor.toSkColor();
         if (shadowColor == SK_ColorTRANSPARENT)
             shadowRadius = 0;
 
@@ -499,7 +499,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
 
     ColorARGB shadowColor;
     ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor.argb);
-    if (!ok || shadowColor == 0)
+    if (!ok || shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
         shadowColor = primitivizedArea->shadowRenderingColor;
 
     int shadowRadius;
@@ -614,7 +614,7 @@ void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
     {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        paint.setLooper(SkBlurDrawLooper::Create(shadowRadius, 0, 0, shadowColor))->unref();
+        paint.setLooper(SkBlurDrawLooper::Create(shadowRadius, 0, 0, shadowColor.toSkColor()))->unref();
         canvas.drawPath(path, paint);
     }
 
@@ -624,7 +624,7 @@ void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
         paint.setLooper(nullptr);
         paint.setStrokeWidth(paint.getStrokeWidth() + shadowRadius * 2);
         //		paint->setColor(0xffbababa);
-        paint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor, SkXfermode::kSrcIn_Mode))->unref();
+        paint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor.toSkColor(), SkXfermode::kSrcIn_Mode))->unref();
         //		paint->setColor(shadowColor);
         canvas.drawPath(path, paint);
     }
