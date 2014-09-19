@@ -727,6 +727,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
         "{                                                                                                                  ""\n"
         "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
         "    vec2 anchorPoint = glyph.anchorPoint;                                                                          ""\n"
+        "    float cos_a = cos(glyph.angle);                                                                                ""\n"
+        "    float sin_a = sin(glyph.angle);                                                                                ""\n"
+        "                                                                                                                   ""\n"
+        // Pixel-perfect rendering is available when angle is 0, 90, 180 or 270 degrees, what will produce
+        // cos_a 0, 1 or -1
+        //"    if (abs(cos_a - int(cos_a)) < 0.0001)                                                                          ""\n"
+        //"    {                                                                                                              ""\n"
+        //"        anchorPoint.x = floor(anchorPoint.x) + mod(glyph.width, 2.0) * 0.5;                                        ""\n"
+        //"        anchorPoint.y = floor(anchorPoint.y) + mod(param_vs_glyphHeight, 2.0) * 0.5;                               ""\n"
+        //"    }                                                                                                              ""\n"
         "                                                                                                                   ""\n"
         // Get on-screen glyph point offset
         "    vec2 glyphPoint;                                                                                               ""\n"
@@ -734,13 +744,21 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
         "    glyphPoint.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                  ""\n"
         "                                                                                                                   ""\n"
         // Get on-screen vertex coordinates
-        "    float cos_a = cos(glyph.angle);                                                                                ""\n"
-        "    float sin_a = sin(glyph.angle);                                                                                ""\n"
         "    vec4 vertexOnScreen;                                                                                           ""\n"
         "    vertexOnScreen.x = anchorPoint.x + (glyphPoint.x*cos_a - glyphPoint.y*sin_a);                                  ""\n"
         "    vertexOnScreen.y = anchorPoint.y + (glyphPoint.x*sin_a + glyphPoint.y*cos_a);                                  ""\n"
         "    vertexOnScreen.z = -param_vs_distanceFromCamera;                                                               ""\n"
         "    vertexOnScreen.w = 1.0;                                                                                        ""\n"
+        "                                                                                                                   ""\n"
+        // Pixel-perfect rendering is available when angle is 0, 90, 180 or 270 degrees, what will produce
+        // cos_a 0, 1 or -1
+        //"    if (abs(cos_a - int(cos_a)) < 0.0001)                                                                          ""\n"
+        //"    {                                                                                                              ""\n"
+        //"        vertexOnScreen.x = floor(vertexOnScreen.x + 0.5);                                                          ""\n"
+        //"        vertexOnScreen.y = floor(vertexOnScreen.y + 0.5);                                                          ""\n"
+        //"    }                                                                                                              ""\n"
+        "                                                                                                                   ""\n"
+        // Project vertex
         "    gl_Position = param_vs_mOrthographicProjection * vertexOnScreen;                                               ""\n"
         "                                                                                                                   ""\n"
         // Prepare texture coordinates
