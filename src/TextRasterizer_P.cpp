@@ -255,7 +255,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     // Configure paint for text
     configurePaintForText(paint, text, style.bold, style.italic);
     paint.setTextSize(style.size);
-    paint.setColor(style.color);
+    paint.setColor(style.color.toSkColor());
 
     // Get line spacing
     SkPaint::FontMetrics fontMetrics;
@@ -287,7 +287,7 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         // Configure paint for halo
         haloPaint = paint;
         haloPaint.setStyle(SkPaint::kStroke_Style);
-        haloPaint.setColor(style.haloColor);
+        haloPaint.setColor(style.haloColor.toSkColor());
         haloPaint.setStrokeWidth(style.haloRadius);
         
         // Get line spacing

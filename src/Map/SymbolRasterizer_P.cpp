@@ -91,7 +91,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     env->obtainTextShield(textSymbol->shieldResourceName, style.backgroundBitmap);
                 style
                     .setBold(textSymbol->isBold)
-                    .setColor(textSymbol->color)
+                    .setColor(textSymbol->color.toSkColor())
                     .setSize(textSymbol->size);
 
                 if (textSymbol->shadowRadius > 0)

@@ -163,7 +163,7 @@ void OsmAnd::MapRasterizer_P::rasterize(
         {
             // If destination area is specified, fill only it with background
             SkPaint bgPaint;
-            bgPaint.setColor(primitivizedArea->defaultBackgroundColor);
+            bgPaint.setColor(primitivizedArea->defaultBackgroundColor.toSkColor());
             bgPaint.setStyle(SkPaint::kFill_Style);
             canvas.drawRectCoords(
                 pDestinationArea->top(),
