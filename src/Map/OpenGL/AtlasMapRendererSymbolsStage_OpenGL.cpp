@@ -225,12 +225,21 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         // symbolLocationOnScreen.xy now contains correct coordinates in viewport,
         // which can be used in orthographic projection (if it was configured to match viewport).
         //
+        // To provide pixel-perfect rendering of billboard raster symbols:
+        // symbolLocationOnScreen.(x|y) has to be rounded and +0.5 in case param_vs_symbolSize.(x|y) is even
+        // symbolLocationOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
+        "    symbolLocationOnScreen.x = floor(symbolLocationOnScreen.x) + mod(param_vs_symbolSize.x, 2.0) * 0.5;            ""\n"
+        "    symbolLocationOnScreen.y = floor(symbolLocationOnScreen.y) + mod(param_vs_symbolSize.y, 2.0) * 0.5;            ""\n"
+        //
         // So it's possible to calculate current vertex location:
         // Initially, get location of current vertex in screen coordinates
         "    vec2 vertexOnScreen;                                                                                           ""\n"
         "    vertexOnScreen.x = in_vs_vertexPosition.x * float(param_vs_symbolSize.x);                                      ""\n"
         "    vertexOnScreen.y = in_vs_vertexPosition.y * float(param_vs_symbolSize.y);                                      ""\n"
         "    vertexOnScreen = vertexOnScreen + symbolLocationOnScreen.xy;                                                   ""\n"
+        "                                                                                                                   ""\n"
+        // To provide pixel-perfect result, vertexOnScreen needs to be rounded
+        "    vertexOnScreen = floor(vertexOnScreen + vec2(0.5, 0.5));                                                       ""\n"
         "                                                                                                                   ""\n"
         // There's no need to perform unprojection into orthographic world space, just multiply these coordinates by
         // orthographic projection matrix (View and Model being identity)
