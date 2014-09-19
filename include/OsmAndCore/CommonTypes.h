@@ -1338,7 +1338,7 @@ namespace OsmAnd
             return FColorARGB(a / 255.0f, r / 255.0f, g / 255.0f, b / 255.0f);
         }
 
-        inline operator SkColor() const
+        inline SkColor toSkColor() const
         {
             return SkColorSetARGB(a, r, g, b);
         }
@@ -1436,7 +1436,7 @@ namespace OsmAnd
             return FColorRGB(r / 255.0f, g / 255.0f, b / 255.0f);
         }
 
-        inline operator SkColor() const
+        inline SkColor toSkColor() const
         {
             return SkColorSetRGB(r, g, b);
         }
