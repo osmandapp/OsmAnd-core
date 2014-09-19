@@ -230,7 +230,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         // symbolLocationOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
         "    symbolLocationOnScreen.x = floor(symbolLocationOnScreen.x) + mod(param_vs_symbolSize.x, 2.0) * 0.5;            ""\n"
         "    symbolLocationOnScreen.y = floor(symbolLocationOnScreen.y) + mod(param_vs_symbolSize.y, 2.0) * 0.5;            ""\n"
-        //
+        "                                                                                                                   ""\n"
         // So it's possible to calculate current vertex location:
         // Initially, get location of current vertex in screen coordinates
         "    vec2 vertexOnScreen;                                                                                           ""\n"
@@ -726,19 +726,22 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath2DProgram(cons
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
         "    Glyph glyph = param_vs_glyphs[int(in_vs_glyphIndex)];                                                          ""\n"
+        "    vec2 anchorPoint = glyph.anchorPoint;                                                                          ""\n"
+        "                                                                                                                   ""\n"
+        // Get on-screen glyph point offset
+        "    vec2 glyphPoint;                                                                                               ""\n"
+        "    glyphPoint.x = in_vs_vertexPosition.x * glyph.width;                                                           ""\n"
+        "    glyphPoint.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                  ""\n"
         "                                                                                                                   ""\n"
         // Get on-screen vertex coordinates
         "    float cos_a = cos(glyph.angle);                                                                                ""\n"
         "    float sin_a = sin(glyph.angle);                                                                                ""\n"
-        "    vec2 p;                                                                                                        ""\n"
-        "    p.x = in_vs_vertexPosition.x * glyph.width;                                                                    ""\n"
-        "    p.y = in_vs_vertexPosition.y * param_vs_glyphHeight;                                                           ""\n"
-        "    vec4 v;                                                                                                        ""\n"
-        "    v.x = glyph.anchorPoint.x + (p.x*cos_a - p.y*sin_a);                                                           ""\n"
-        "    v.y = glyph.anchorPoint.y + (p.x*sin_a + p.y*cos_a);                                                           ""\n"
-        "    v.z = -param_vs_distanceFromCamera;                                                                            ""\n"
-        "    v.w = 1.0;                                                                                                     ""\n"
-        "    gl_Position = param_vs_mOrthographicProjection * v;                                                            ""\n"
+        "    vec4 vertexOnScreen;                                                                                           ""\n"
+        "    vertexOnScreen.x = anchorPoint.x + (glyphPoint.x*cos_a - glyphPoint.y*sin_a);                                  ""\n"
+        "    vertexOnScreen.y = anchorPoint.y + (glyphPoint.x*sin_a + glyphPoint.y*cos_a);                                  ""\n"
+        "    vertexOnScreen.z = -param_vs_distanceFromCamera;                                                               ""\n"
+        "    vertexOnScreen.w = 1.0;                                                                                        ""\n"
+        "    gl_Position = param_vs_mOrthographicProjection * vertexOnScreen;                                               ""\n"
         "                                                                                                                   ""\n"
         // Prepare texture coordinates
         "    v2f_texCoords.s = glyph.widthOfPreviousN + in_vs_vertexTexCoords.s*glyph.widthN;                               ""\n"
