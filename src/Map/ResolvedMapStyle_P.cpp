@@ -543,76 +543,98 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
     QString dump;
     const auto builtinValueDefs = MapStyleBuiltinValueDefinitions::get();
 
-    dump += prefix + QLatin1String("local testPassed = true;\n");
+    bool hasInputValueTests = false;
+    bool hasDisable = false;
     for (const auto& ruleValueEntry : rangeOf(constOf(ruleNode->values)))
     {
         const auto valueDefId = ruleValueEntry.key();
         const auto& valueDef = getValueDefinitionById(valueDefId);
 
-        // Test only input values
-        if (valueDef->valueClass != MapStyleValueDefinition::Class::Input)
-            continue;
+        if (valueDef->valueClass == MapStyleValueDefinition::Class::Input)
+            hasInputValueTests = true;
+        else if (valueDef->valueClass == MapStyleValueDefinition::Class::Output && valueDef->name == QLatin1String("disable"))
+            hasDisable = true;
 
-        const auto& ruleValue = ruleValueEntry.value();
-
-        //bool evaluationResult = false;
-        if (valueDefId == builtinValueDefs->id_INPUT_MINZOOM)
-        {
-            dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 <= %2);\n"))
-                .arg(QString::number(ruleValue.asSimple.asInt))
-                .arg(valueDef->name);
-        }
-        else if (valueDefId == builtinValueDefs->id_INPUT_MAXZOOM)
-        {
-            dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 >= %2);\n"))
-                .arg(QString::number(ruleValue.asSimple.asInt))
-                .arg(valueDef->name);
-        }
-        else if (valueDefId == builtinValueDefs->id_INPUT_ADDITIONAL)
-        {
-            dump += prefix + QString(QLatin1String("if (testPassed and inputMapObject) testPassed = (inputMapObject contains %1);\n"))
-                .arg(getStringById(ruleValue.asSimple.asUInt));
-        }
-        else if (valueDefId == builtinValueDefs->id_INPUT_TEST)
-        {
-            dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == 1);\n"))
-                .arg(valueDef->name);
-        }
-        else if (valueDef->dataType == MapStyleValueDataType::Float)
-        {
-            dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == %2);\n"))
-                .arg(QString::number(ruleValue.asSimple.asFloat))
-                .arg(valueDef->name);
-        }
-        else if (valueDef->dataType == MapStyleValueDataType::Integer)
-        {
-            dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == %2);\n"))
-                .arg(QString::number(ruleValue.asSimple.asInt))
-                .arg(valueDef->name);
-        }
-        else if (valueDef->dataType == MapStyleValueDataType::Boolean)
-        {
-            dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1%2);\n"))
-                .arg((ruleValue.asSimple.asInt != 0) ? QString() : QString(QLatin1String("not ")))
-                .arg(valueDef->name);
-        }
-        else if (valueDef->dataType == MapStyleValueDataType::String)
-        {
-            dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (\"%1\" == %2);\n"))
-                .arg(getStringById(ruleValue.asSimple.asInt))
-                .arg(valueDef->name);
-        }
-        else
-        {
-            dump += prefix + QString(QLatin1String("// Unknown condition with '%1'\n"))
-                .arg(valueDef->name);
-        }
+        if (hasInputValueTests && hasDisable)
+            break;
     }
-    dump += prefix + QLatin1String("if (not testPassed) reject;\n");
-    dump += prefix + QLatin1String("\n");
 
-    dump += prefix + QLatin1String("if (disable) reject;\n");
-    dump += prefix + QLatin1String("\n");
+    if (hasInputValueTests)
+    {
+        dump += prefix + QLatin1String("local testPassed = true;\n");
+        for (const auto& ruleValueEntry : rangeOf(constOf(ruleNode->values)))
+        {
+            const auto valueDefId = ruleValueEntry.key();
+            const auto& valueDef = getValueDefinitionById(valueDefId);
+
+            // Test only input values
+            if (valueDef->valueClass != MapStyleValueDefinition::Class::Input)
+                continue;
+
+            const auto& ruleValue = ruleValueEntry.value();
+
+            //bool evaluationResult = false;
+            if (valueDefId == builtinValueDefs->id_INPUT_MINZOOM)
+            {
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 <= %2);\n"))
+                    .arg(QString::number(ruleValue.asSimple.asInt))
+                    .arg(valueDef->name);
+            }
+            else if (valueDefId == builtinValueDefs->id_INPUT_MAXZOOM)
+            {
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 >= %2);\n"))
+                    .arg(QString::number(ruleValue.asSimple.asInt))
+                    .arg(valueDef->name);
+            }
+            else if (valueDefId == builtinValueDefs->id_INPUT_ADDITIONAL)
+            {
+                dump += prefix + QString(QLatin1String("if (testPassed and inputMapObject) testPassed = (inputMapObject contains %1);\n"))
+                    .arg(getStringById(ruleValue.asSimple.asUInt));
+            }
+            else if (valueDefId == builtinValueDefs->id_INPUT_TEST)
+            {
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == 1);\n"))
+                    .arg(valueDef->name);
+            }
+            else if (valueDef->dataType == MapStyleValueDataType::Float)
+            {
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == %2);\n"))
+                    .arg(QString::number(ruleValue.asSimple.asFloat))
+                    .arg(valueDef->name);
+            }
+            else if (valueDef->dataType == MapStyleValueDataType::Integer)
+            {
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == %2);\n"))
+                    .arg(QString::number(ruleValue.asSimple.asInt))
+                    .arg(valueDef->name);
+            }
+            else if (valueDef->dataType == MapStyleValueDataType::Boolean)
+            {
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1%2);\n"))
+                    .arg((ruleValue.asSimple.asInt != 0) ? QString() : QString(QLatin1String("not ")))
+                    .arg(valueDef->name);
+            }
+            else if (valueDef->dataType == MapStyleValueDataType::String)
+            {
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (\"%1\" == %2);\n"))
+                    .arg(getStringById(ruleValue.asSimple.asInt))
+                    .arg(valueDef->name);
+            }
+            else
+            {
+                dump += prefix + QString(QLatin1String("// Unknown condition with '%1'\n"))
+                    .arg(valueDef->name);
+            }
+        }
+        dump += prefix + QLatin1String("if (not testPassed) reject;\n");
+        dump += prefix + QLatin1String("\n");
+    }
+
+    if (hasDisable)
+    {
+        dump += prefix + QLatin1String("if (disable) reject;\n");
+        dump += prefix + QLatin1String("\n");
+    }
 
     if (ruleNode->oneOfConditionalSubnodes.isEmpty())
         dump += dumpRuleNodeOutputValues(ruleNode, prefix, true);
