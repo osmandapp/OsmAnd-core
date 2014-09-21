@@ -228,8 +228,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
         // To provide pixel-perfect rendering of billboard raster symbols:
         // symbolLocationOnScreen.(x|y) has to be rounded and +0.5 in case param_vs_symbolSize.(x|y) is even
         // symbolLocationOnScreen.(x|y) has to be rounded in case param_vs_symbolSize.(x|y) is odd
-        "    symbolLocationOnScreen.x = floor(symbolLocationOnScreen.x) + mod(param_vs_symbolSize.x, 2.0) * 0.5;            ""\n"
-        "    symbolLocationOnScreen.y = floor(symbolLocationOnScreen.y) + mod(param_vs_symbolSize.y, 2.0) * 0.5;            ""\n"
+        "    symbolLocationOnScreen.x = floor(symbolLocationOnScreen.x) + mod(float(param_vs_symbolSize.x), 2.0) * 0.5;     ""\n"
+        "    symbolLocationOnScreen.y = floor(symbolLocationOnScreen.y) + mod(float(param_vs_symbolSize.y), 2.0) * 0.5;     ""\n"
         "                                                                                                                   ""\n"
         // So it's possible to calculate current vertex location:
         // Initially, get location of current vertex in screen coordinates
