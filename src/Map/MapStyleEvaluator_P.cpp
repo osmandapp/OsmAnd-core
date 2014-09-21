@@ -62,10 +62,10 @@ void OsmAnd::MapStyleEvaluator_P::setStringValue(const int valueDefId, const QSt
         //LogPrintf(LogSeverityLevel::Warning,
         //    "Map style input string '%s' was not resolved in lookup table",
         //    qPrintable(value));
+        _inputValues[valueDefId].asUInt = std::numeric_limits<uint32_t>::max();
         return;
     }
 
-    // Set value only in case it was resolved successfully
     auto& entry = _inputValues[valueDefId];
     entry.asUInt = parsedValue.asSimple.asUInt;
 }
@@ -202,16 +202,8 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 
         const auto citInputValue = inputValues.constFind(valueDefId);
         InputValue inputValue;
-        if (citInputValue == citInputValuesEnd)
-        {
-            //LogPrintf(LogSeverityLevel::Warning,
-            //    "Input '%s' was not defined, will use default value (empty string or 0, depending on type)",
-            //    qPrintable(valueDef->name));
-        }
-        else
-        {
+        if (citInputValue != citInputValuesEnd)
             inputValue = *citInputValue;
-        }
 
         bool evaluationResult = false;
         if (valueDefId == _builtinValueDefs->id_INPUT_MINZOOM)
