@@ -1022,7 +1022,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     bool ok;
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 266877135u)
+    //if ((mapObject->id >> 1) == 95692962u)
     //{
     //    int i = 5;
     //}
@@ -1131,7 +1131,11 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
                 continue;
             }
-            const auto adjustedZOrder = zOrder + (1.0 / polygonArea31);
+            auto adjustedZOrder = zOrder;
+            if (mapObject->section != env->dummyMapSection)
+                zOrder += (1.0 / polygonArea31);
+            else
+                zOrder = 0;
 
             const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 

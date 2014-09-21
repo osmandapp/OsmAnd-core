@@ -395,7 +395,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     assert(primitive->sourceObject->isClosedFigure(true));
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 9223372032559775170u)
+    //if ((primitive->sourceObject->id >> 1) == 95692962u)
     //{
     //    int i = 5;
     //}
@@ -440,7 +440,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     }
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 9223372032559775170u)
+    //if ((primitive->sourceObject->id >> 1) == 95692962u)
     //{
     //    int i = 5;
     //}
@@ -462,6 +462,13 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
             return;
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    //if ((primitive->sourceObject->id >> 1) == 95692962u)
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     if (!primitive->sourceObject->innerPolygonsPoints31.isEmpty())
     {
         path.setFillType(SkPath::kEvenOdd_FillType);
@@ -482,8 +489,8 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     }
 
     canvas.drawPath(path, paint);
-    if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
-        canvas.drawPath(path, paint);
+    /*if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
+        canvas.drawPath(path, paint);*/
 }
 
 void OsmAnd::MapRasterizer_P::rasterizePolyline(
