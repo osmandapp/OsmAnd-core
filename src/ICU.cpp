@@ -24,7 +24,7 @@
 std::unique_ptr<QByteArray> g_IcuData;
 const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;
 const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
-const BreakIterator* g_pIcuWordBreakIterator = nullptr;
+const BreakIterator* g_pIcuLineBreakIterator = nullptr;
 
 bool OsmAnd::ICU::initialize()
 {
@@ -61,11 +61,12 @@ bool OsmAnd::ICU::initialize()
         return false;
     }
 
+    // "Line-break Boundary" is best for breaking text into lines when wrapping text
     icuError = U_ZERO_ERROR;
-    g_pIcuWordBreakIterator = BreakIterator::createWordInstance(Locale::getRoot(), icuError);
+    g_pIcuLineBreakIterator = BreakIterator::createLineInstance(Locale::getRoot(), icuError);
     if (U_FAILURE(icuError))
     {
-        LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU word break iterator: %d", icuError);
+        LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU line break iterator: %d", icuError);
         return false;
     }
 
@@ -82,8 +83,8 @@ void OsmAnd::ICU::release()
     delete g_pIcuAnyToLatinTransliterator;
     g_pIcuAnyToLatinTransliterator = nullptr;
 
-    delete g_pIcuWordBreakIterator;
-    g_pIcuWordBreakIterator = nullptr;
+    delete g_pIcuLineBreakIterator;
+    g_pIcuLineBreakIterator = nullptr;
 
     g_IcuData.reset();
 
@@ -201,7 +202,7 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
     bool ok = true;
 
     // Create break iterator
-    const auto pBreakIterator = g_pIcuWordBreakIterator->clone();
+    const auto pBreakIterator = g_pIcuLineBreakIterator->clone();
     if (pBreakIterator == nullptr || U_FAILURE(icuError))
     {
         LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
@@ -234,10 +235,10 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
             lookAheadCursor++;
         }
 
-        // Now locate last legal word-break at or before the look-ahead cursor
+        // Now locate last legal line-break at or before the look-ahead cursor
         const auto lastBreak = pBreakIterator->preceding(lookAheadCursor + 1);
 
-        // If last legal word-break wasn't found since current cursor, perform a hard-break
+        // If last legal line-break wasn't found since current cursor, perform a hard-break
         if (lastBreak <= cursor)
         {
             result.push_back(lookAheadCursor);
@@ -245,7 +246,7 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
             continue;
         }
 
-        // Otherwise a legal word-break was found, so move there and find next valuable character
+        // Otherwise a legal line-break was found, so move there and find next valuable character
         // and place line start there
         cursor = lastBreak;
         while(cursor < input.length())
@@ -257,8 +258,8 @@ OSMAND_CORE_API QVector<int> OSMAND_CORE_CALL OsmAnd::ICU::getTextWrapping(const
         }
         result.push_back(cursor);
     }
-    if (result.isEmpty())
-        result.push_back(0);
+    if (result.isEmpty() || result.first() != 0)
+        result.prepend(0);
 
     if (pBreakIterator != nullptr)
         delete pBreakIterator;

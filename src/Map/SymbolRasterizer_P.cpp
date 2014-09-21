@@ -60,10 +60,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const auto& symbolsGroup = symbolGroupEntry.value();
 
         //////////////////////////////////////////////////////////////////////////
-        //if ((mapObject->id >> 1) == 7374044u)
+        //if ((mapObject->id >> 1) == 1923648339u)
         //{
         //    int i = 5;
         //}
+        //else
+        //    continue;
         //////////////////////////////////////////////////////////////////////////
 
         // Apply filter, if it's present
