@@ -210,7 +210,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
         {
             if (xmlReader.isStartElement())
             {
-                const std::shared_ptr<RuleNode> newSwitchNode(new RuleNode());
+                const std::shared_ptr<RuleNode> newSwitchNode(new RuleNode(true));
 
                 const auto& attribs = xmlReader.attributes();
                 for (const auto& xmlAttrib : constOf(attribs))
@@ -252,7 +252,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
         {
             if (xmlReader.isStartElement())
             {
-                const std::shared_ptr<RuleNode> newCaseNode(new RuleNode());
+                const std::shared_ptr<RuleNode> newCaseNode(new RuleNode(false));
 
                 const auto& attribs = xmlReader.attributes();
                 for (const auto& xmlAttrib : constOf(attribs))
@@ -301,7 +301,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
         {
             if (xmlReader.isStartElement())
             {
-                const std::shared_ptr<RuleNode> newApplyNode(new RuleNode());
+                const std::shared_ptr<RuleNode> newApplyNode(new RuleNode(false));
 
                 const auto& attribs = xmlReader.attributes();
                 for (const auto& xmlAttrib : constOf(attribs))

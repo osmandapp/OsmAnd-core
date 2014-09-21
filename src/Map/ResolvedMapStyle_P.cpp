@@ -193,7 +193,8 @@ bool OsmAnd::ResolvedMapStyle_P::collectConstants()
 std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P::resolveRuleNode(
     const std::shared_ptr<const UnresolvedMapStyle::RuleNode>& unresolvedRuleNode)
 {
-    const std::shared_ptr<RuleNode> resolvedRuleNode(new RuleNode());
+    const std::shared_ptr<RuleNode> resolvedRuleNode(new RuleNode(
+        unresolvedRuleNode->applyOnlyIfOneOfConditionalsAccepted));
 
     // Resolve values
     for (const auto& itUnresolvedValueEntry : rangeOf(constOf(unresolvedRuleNode->values)))
@@ -705,7 +706,7 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
         dump += prefix + QLatin1String("\n");
     }
 
-    if (ruleNode->oneOfConditionalSubnodes.isEmpty())
+    if (!ruleNode->applyOnlyIfOneOfConditionalsAccepted)
         dump += dumpRuleNodeOutputValues(ruleNode, prefix, true);
 
     if (!ruleNode->oneOfConditionalSubnodes.isEmpty())
@@ -717,14 +718,17 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
             dump += dumpRuleNode(oneOfConditionalSubnode, false, prefix + QLatin1String("\t"));
             dump += prefix + QLatin1String("\tatLeastOneConditionalMatched = true;\n");
         }
-        if (rejectSupported)
-            dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched) reject;\n");
-        else
-            dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched) exit;\n");
+        if (ruleNode->applyOnlyIfOneOfConditionalsAccepted)
+        {
+            if (rejectSupported)
+                dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched) reject;\n");
+            else
+                dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched) exit;\n");
+        }
         dump += prefix + QLatin1String("\n");
     }
 
-    if (!ruleNode->oneOfConditionalSubnodes.isEmpty())
+    if (ruleNode->applyOnlyIfOneOfConditionalsAccepted)
         dump += dumpRuleNodeOutputValues(ruleNode, prefix, false);
     
     if (!ruleNode->applySubnodes.isEmpty())

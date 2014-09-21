@@ -88,7 +88,8 @@ OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue:
     return value;
 }
 
-OsmAnd::ResolvedMapStyle::RuleNode::RuleNode()
+OsmAnd::ResolvedMapStyle::RuleNode::RuleNode(const bool applyOnlyIfOneOfConditionalsAccepted_)
+    : applyOnlyIfOneOfConditionalsAccepted(applyOnlyIfOneOfConditionalsAccepted_)
 {
 }
 
@@ -96,8 +97,8 @@ OsmAnd::ResolvedMapStyle::RuleNode::~RuleNode()
 {
 }
 
-OsmAnd::ResolvedMapStyle::BaseRule::BaseRule()
-    : rootNode(new RuleNode())
+OsmAnd::ResolvedMapStyle::BaseRule::BaseRule(RuleNode* const ruleNode_)
+    : rootNode(ruleNode_)
 {
 }
 
@@ -106,7 +107,8 @@ OsmAnd::ResolvedMapStyle::BaseRule::~BaseRule()
 }
 
 OsmAnd::ResolvedMapStyle::Rule::Rule(const MapStyleRulesetType rulesetType_)
-    : rulesetType(rulesetType_)
+    : BaseRule(new RuleNode(true))
+    , rulesetType(rulesetType_)
 {
 }
 
@@ -115,7 +117,8 @@ OsmAnd::ResolvedMapStyle::Rule::~Rule()
 }
 
 OsmAnd::ResolvedMapStyle::Attribute::Attribute(const StringId nameId_)
-    : nameId(nameId_)
+    : BaseRule(new RuleNode(false))
+    , nameId(nameId_)
 {
 }
 

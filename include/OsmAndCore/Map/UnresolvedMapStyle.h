@@ -31,8 +31,10 @@ namespace OsmAnd
         private:
         protected:
         public:
-            RuleNode();
+            RuleNode(const bool applyOnlyIfOneOfConditionalsAccepted);
             ~RuleNode();
+
+            const bool applyOnlyIfOneOfConditionalsAccepted;
 
             QHash<QString, QString> values;
             QList< std::shared_ptr<RuleNode> > oneOfConditionalSubnodes;
@@ -45,7 +47,7 @@ namespace OsmAnd
 
         private:
         protected:
-            BaseRule();
+            BaseRule(RuleNode* const ruleNode);
         public:
             virtual ~BaseRule();
 

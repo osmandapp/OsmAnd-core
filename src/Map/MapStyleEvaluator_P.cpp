@@ -284,7 +284,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             return false;
     }
 
-    if (outResultStorage && ruleNode->oneOfConditionalSubnodes.isEmpty())
+    if (outResultStorage && !ruleNode->applyOnlyIfOneOfConditionalsAccepted)
         fillResultFromRuleNode(ruleNode, *outResultStorage, true);
 
     bool atLeastOneConditionalMatched = false;
@@ -297,10 +297,10 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             break;
         }
     }
-    if (!atLeastOneConditionalMatched && !ruleNode->oneOfConditionalSubnodes.isEmpty())
+    if (!atLeastOneConditionalMatched && ruleNode->applyOnlyIfOneOfConditionalsAccepted)
         return false;
 
-    if (outResultStorage && atLeastOneConditionalMatched)
+    if (outResultStorage && ruleNode->applyOnlyIfOneOfConditionalsAccepted)
         fillResultFromRuleNode(ruleNode, *outResultStorage, false);
 
     for (const auto& applySubnode : constOf(ruleNode->applySubnodes))
@@ -389,6 +389,13 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     const MapStyleRulesetType rulesetType,
     MapStyleEvaluationResult* const outResultStorage) const
 {
+    //////////////////////////////////////////////////////////////////////////
+    //if ((mapObject->id >> 1) == 46199641u)
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     const auto& ruleset = owner->resolvedStyle->getRuleset(rulesetType);
 
     const auto citTagKey = _inputValues.constFind(_builtinValueDefs->id_INPUT_TAG);

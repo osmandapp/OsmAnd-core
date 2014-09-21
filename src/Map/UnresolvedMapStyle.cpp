@@ -23,8 +23,8 @@ OsmAnd::UnresolvedMapStyle::UnresolvedMapStyle(const std::shared_ptr<QIODevice>&
 
 OsmAnd::UnresolvedMapStyle::UnresolvedMapStyle(const QString& fileName_, const QString& name_)
     : UnresolvedMapStyle(
-        std::shared_ptr<QIODevice>(new QFile(fileName_)),
-        name_.isNull() ? QFileInfo(fileName_).fileName().remove(QLatin1String(".render.xml")) : name_)
+    std::shared_ptr<QIODevice>(new QFile(fileName_)),
+    name_.isNull() ? QFileInfo(fileName_).fileName().remove(QLatin1String(".render.xml")) : name_)
 {
 }
 
@@ -57,7 +57,8 @@ bool OsmAnd::UnresolvedMapStyle::load()
     return _p->load();
 }
 
-OsmAnd::UnresolvedMapStyle::RuleNode::RuleNode()
+OsmAnd::UnresolvedMapStyle::RuleNode::RuleNode(const bool applyOnlyIfOneOfConditionalsAccepted_)
+    : applyOnlyIfOneOfConditionalsAccepted(applyOnlyIfOneOfConditionalsAccepted_)
 {
 }
 
@@ -65,8 +66,8 @@ OsmAnd::UnresolvedMapStyle::RuleNode::~RuleNode()
 {
 }
 
-OsmAnd::UnresolvedMapStyle::BaseRule::BaseRule()
-    : rootNode(new RuleNode())
+OsmAnd::UnresolvedMapStyle::BaseRule::BaseRule(RuleNode* const ruleNode_)
+    : rootNode(ruleNode_)
 {
 }
 
@@ -75,7 +76,8 @@ OsmAnd::UnresolvedMapStyle::BaseRule::~BaseRule()
 }
 
 OsmAnd::UnresolvedMapStyle::Rule::Rule(const MapStyleRulesetType rulesetType_)
-    : rulesetType(rulesetType_)
+    : BaseRule(new RuleNode(true))
+    , rulesetType(rulesetType_)
 {
 }
 
@@ -84,7 +86,8 @@ OsmAnd::UnresolvedMapStyle::Rule::~Rule()
 }
 
 OsmAnd::UnresolvedMapStyle::Attribute::Attribute(const QString& name_)
-    : name(name_)
+    : BaseRule(new RuleNode(false))
+    , name(name_)
 {
 }
 
