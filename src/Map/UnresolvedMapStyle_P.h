@@ -16,7 +16,7 @@
 
 #include "OsmAndCore.h"
 #include "UnresolvedMapStyle.h"
-#include "MapStyleValue.h"
+#include "MapStyleConstantValue.h"
 
 namespace OsmAnd
 {

@@ -18,10 +18,11 @@ DECLARE_BUILTIN_VALUEDEF(INPUT_NAME_TAG, Input, String, "nameTag", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_DISABLE, Output, Boolean, "disable", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_NAME_TAG2, Output, String, "nameTag2", false)
 
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_INT_VALUE, Output, Integer, "attrIntValue", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_BOOL_VALUE, Output, Boolean, "attrBoolValue", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_COLOR_VALUE, Output, Color, "attrColorValue", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_INT_VALUE, Output, Integer, "attrIntValue", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_FLOAT_VALUE, Output, Float, "attrFloatValue", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_STRING_VALUE, Output, String, "attrStringValue", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_COLOR_VALUE, Output, Color, "attrColorValue", false)
 
 // order - no sense to make it float
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ORDER, Output, Integer, "order", false)

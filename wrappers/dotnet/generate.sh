@@ -50,4 +50,4 @@ if [[ "$(uname -a)" =~ Cygwin ]]; then
 	PRINT_CMD="-print0 | xargs -0 cygpath -w"
 fi
 (cd "${OUTPUTDIR}/gen/cpp" && eval "$FIND_CMD . -type f $PRINT_CMD" > "$OUTPUTDIR/gen/cpp.list")
-(cd "${OUTPUTDIR}/gen/charp" && eval "$FIND_CMD . -type f $PRINT_CMD" > "$OUTPUTDIR/gen/charp.list")
+(cd "${OUTPUTDIR}/gen/csharp" && eval "$FIND_CMD . -type f $PRINT_CMD" > "$OUTPUTDIR/gen/csharp.list")

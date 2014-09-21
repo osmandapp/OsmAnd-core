@@ -9,11 +9,11 @@
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
+#include "MapStyleConstantValue.h"
 #include "ResolvedMapStyle.h"
 
 namespace OsmAnd
 {
-    class MapStyleNode;
     struct MapStyleEvaluationResult;
     class MapStyleBuiltinValueDefinitions;
     namespace Model
@@ -43,11 +43,19 @@ namespace OsmAnd
         typedef QHash<ResolvedMapStyle::ValueDefinitionId, InputValue> InputValuesDictionary;
         InputValuesDictionary _inputValues;
 
+        typedef QHash<ResolvedMapStyle::ValueDefinitionId, ResolvedMapStyle::ResolvedValue> IntermediateEvaluationResult;
+
+        MapStyleConstantValue evaluateConstantValue(
+            const Model::BinaryMapObject* const mapObject,
+            const MapStyleValueDataType dataType,
+            const ResolvedMapStyle::ResolvedValue& resolvedValue,
+            const InputValuesDictionary& inputValues) const;
+
         bool evaluate(
             const Model::BinaryMapObject* const mapObject,
             const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
             const InputValuesDictionary& inputValues,
-            MapStyleEvaluationResult* const outResultStorage) const;
+            IntermediateEvaluationResult* const outResultStorage) const;
 
         bool evaluate(
             const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
@@ -58,8 +66,14 @@ namespace OsmAnd
 
         void fillResultFromRuleNode(
             const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
-            MapStyleEvaluationResult& outResultStorage,
+            IntermediateEvaluationResult& outResultStorage,
             const bool allowOverride) const;
+
+        void postprocessEvaluationResult(
+            const Model::BinaryMapObject* const mapObject,
+            const InputValuesDictionary& inputValues,
+            const IntermediateEvaluationResult& intermediateResult,
+            MapStyleEvaluationResult& outResultStorage) const;
     protected:
         MapStyleEvaluator_P(MapStyleEvaluator* owner);
     public:

@@ -14,7 +14,7 @@
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
 #include "MapStyleValueDefinition.h"
-#include "MapStyleValue.h"
+#include "MapStyleConstantValue.h"
 #include "MapStyleBuiltinValueDefinitions.h"
 #include "ObfMapSectionInfo.h"
 #include "CoreResourcesEmbeddedBundle.h"
@@ -52,12 +52,12 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
     _roadsDensityLimitPerTile = 0;
 }
 
-QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleValue > OsmAnd::MapPresentationEnvironment_P::getSettings() const
+QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue > OsmAnd::MapPresentationEnvironment_P::getSettings() const
 {
     return _settings;
 }
 
-void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue >& newSettings)
+void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings)
 {
     QMutexLocker scopedLocker(&_settingsChangeMutex);
 
@@ -66,7 +66,7 @@ void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< OsmAnd::Reso
 
 void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QString >& newSettings)
 {
-    QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleValue > resolvedSettings;
+    QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > resolvedSettings;
     resolvedSettings.reserve(newSettings.size());
 
     for (const auto& itSetting : rangeOf(newSettings))
@@ -87,7 +87,7 @@ void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QSt
         }
 
         // Parse value
-        MapStyleValue parsedValue;
+        MapStyleConstantValue parsedValue;
         if (!owner->resolvedStyle->parseValue(value, valueDef, parsedValue))
         {
             LogPrintf(LogSeverityLevel::Warning,

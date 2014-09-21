@@ -16,7 +16,7 @@
 
 #include "IMapStylesCollection.h"
 #include "MapStyleValueDefinition.h"
-#include "MapStyleValue.h"
+#include "MapStyleConstantValue.h"
 #include "CoreResourcesEmbeddedBundle.h"
 #include "Logging.h"
 #include "QKeyValueIterator.h"

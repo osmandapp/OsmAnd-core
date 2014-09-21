@@ -1,19 +1,19 @@
-#include "MapStyleValue.h"
+#include "MapStyleConstantValue.h"
 
 #include "Utilities.h"
 
-OsmAnd::MapStyleValue::MapStyleValue()
+OsmAnd::MapStyleConstantValue::MapStyleConstantValue()
     : isComplex(false)
 {
     asSimple.asUInt64 = 0;
 }
 
-OsmAnd::MapStyleValue::~MapStyleValue()
+OsmAnd::MapStyleConstantValue::~MapStyleConstantValue()
 {
 
 }
 
-bool OsmAnd::MapStyleValue::parse(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleValue& output)
+bool OsmAnd::MapStyleConstantValue::parse(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleConstantValue& output)
 {
     switch (dataType)
     {
@@ -98,7 +98,7 @@ bool OsmAnd::MapStyleValue::parse(const QString& input, const MapStyleValueDataT
     }
 }
 
-QString OsmAnd::MapStyleValue::toString(const MapStyleValueDataType dataType) const
+QString OsmAnd::MapStyleConstantValue::toString(const MapStyleValueDataType dataType) const
 {
     switch (dataType)
     {

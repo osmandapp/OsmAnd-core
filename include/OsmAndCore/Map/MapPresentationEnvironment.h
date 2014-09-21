@@ -22,7 +22,7 @@ namespace OsmAnd
     class MapStyleEvaluator;
     class MapStyleValueDefinition;
     class MapStyleBuiltinValueDefinitions;
-    struct MapStyleValue;
+    struct MapStyleConstantValue;
     class ObfMapSectionInfo;
 
     class MapPresentationEnvironment_P;
@@ -49,8 +49,8 @@ namespace OsmAnd
 
         const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;
 
-        QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue > getSettings() const;
-        void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue >& newSettings);
+        QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
+        void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;

@@ -27,7 +27,7 @@
 #include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
-#include <OsmAndCore/Map/MapStyleValue.h>
+#include <OsmAndCore/Map/MapStyleConstantValue.h>
 #include <OsmAndCore/Map/MapStyleValueDefinition.h>
 #include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 #include <OsmAndCore/Map/ResolvedMapStyle.h>
@@ -100,7 +100,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapStylesCollection)
 	%shared_ptr(OsmAnd::IMapStylesPresetsCollection)
 	%shared_ptr(OsmAnd::MapStylesPresetsCollection)
-	%shared_ptr(OsmAnd::MapStyleValue)
+	%shared_ptr(OsmAnd::MapStyleConstantValue)
 	%shared_ptr(OsmAnd::MapStyleValueDefinition)
 	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions)
 	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions::MapStyleBuiltinValueDefinition)
@@ -201,7 +201,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapStylesCollection.h>
 %include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
 %include <OsmAndCore/Map/MapStylesPresetsCollection.h>
-%include <OsmAndCore/Map/MapStyleValue.h>
+%include <OsmAndCore/Map/MapStyleConstantValue.h>
 %include <OsmAndCore/Map/MapStyleValueDefinition.h>
 %include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 %include <OsmAndCore/Map/ResolvedMapStyle.h>

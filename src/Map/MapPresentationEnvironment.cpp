@@ -23,12 +23,12 @@ OsmAnd::MapPresentationEnvironment::~MapPresentationEnvironment()
 {
 }
 
-QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleValue > OsmAnd::MapPresentationEnvironment::getSettings() const
+QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue > OsmAnd::MapPresentationEnvironment::getSettings() const
 {
     return _p->getSettings();
 }
 
-void OsmAnd::MapPresentationEnvironment::setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue >& newSettings)
+void OsmAnd::MapPresentationEnvironment::setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings)
 {
     _p->setSettings(newSettings);
 }

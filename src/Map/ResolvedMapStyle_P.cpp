@@ -38,7 +38,6 @@ OsmAnd::ResolvedMapStyle_P::StringId OsmAnd::ResolvedMapStyle_P::resolveStringId
     return *citStringId;
 }
 
-
 bool OsmAnd::ResolvedMapStyle_P::resolveStringIdInLUT(const QString& value, StringId& outId) const
 {
     const auto citStringId = _stringsBackwardLUT.constFind(value);
@@ -49,22 +48,52 @@ bool OsmAnd::ResolvedMapStyle_P::resolveStringIdInLUT(const QString& value, Stri
     return true;
 }
 
-bool OsmAnd::ResolvedMapStyle_P::parseValue(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleValue& outValue)
+bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(
+    const QString& input,
+    const MapStyleValueDataType dataType,
+    const bool isComplex,
+    MapStyleConstantValue& outValue) const
 {
     if (input.startsWith(QLatin1Char('$')))
     {
         const auto constantName = input.mid(1);
-        const auto citConstantValue = _constants.constFind(constantName);
-        if (citConstantValue == _constants.cend())
+        QString constantValue;
+        if (!resolveConstant(constantName, constantValue))
         {
             LogPrintf(LogSeverityLevel::Error,
                 "Constant '%s' not defined",
                 qPrintable(constantName));
             return false;
         }
-        const auto& constantValue = *citConstantValue;
 
-        return parseValue(constantValue, dataType, isComplex, outValue);
+        return parseConstantValue(constantValue, dataType, isComplex, outValue);
+    }
+
+    if (dataType == MapStyleValueDataType::String)
+        return resolveStringIdInLUT(input, outValue.asSimple.asUInt);
+
+    return MapStyleConstantValue::parse(input, dataType, isComplex, outValue);
+}
+
+bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(
+    const QString& input,
+    const MapStyleValueDataType dataType,
+    const bool isComplex,
+    MapStyleConstantValue& outValue)
+{
+    if (input.startsWith(QLatin1Char('$')))
+    {
+        const auto constantName = input.mid(1);
+        QString constantValue;
+        if (!resolveConstant(constantName, constantValue))
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Constant '%s' not defined",
+                qPrintable(constantName));
+            return false;
+        }
+
+        return parseConstantValue(constantValue, dataType, isComplex, outValue);
     }
 
     if (dataType == MapStyleValueDataType::String)
@@ -73,31 +102,63 @@ bool OsmAnd::ResolvedMapStyle_P::parseValue(const QString& input, const MapStyle
         return true;
     }
 
-    return MapStyleValue::parse(input, dataType, isComplex, outValue);
+    return MapStyleConstantValue::parse(input, dataType, isComplex, outValue);
 }
 
-bool OsmAnd::ResolvedMapStyle_P::parseValue(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleValue& outValue) const
+bool OsmAnd::ResolvedMapStyle_P::resolveValue(
+    const QString& input,
+    const MapStyleValueDataType dataType,
+    const bool isComplex,
+    ResolvedValue& outValue)
 {
     if (input.startsWith(QLatin1Char('$')))
     {
-        const auto constantName = input.mid(1);
-        const auto citConstantValue = _constants.constFind(constantName);
-        if (citConstantValue == _constants.cend())
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Constant '%s' not defined",
-                qPrintable(constantName));
-            return false;
-        }
-        const auto& constantValue = *citConstantValue;
+        const auto constantOrAttributeName = input.mid(1);
 
-        return parseValue(constantValue, dataType, isComplex, outValue);
+        // Try to resolve as constant
+        QString constantValue;
+        if (resolveConstant(constantOrAttributeName, constantValue))
+        {
+            if (parseConstantValue(constantValue, dataType, isComplex, outValue.asConstantValue))
+                return true;
+        }
+
+        // Try as attribute
+        StringId attributeNameId = 0u;
+        if (resolveStringIdInLUT(constantOrAttributeName, attributeNameId))
+        {
+            const auto citAttribute = _attributes.constFind(attributeNameId);
+            if (citAttribute != _attributes.cend())
+            {
+                outValue.isDynamic = true;
+                outValue.asDynamicValue.attribute = *citAttribute;
+                return true;
+            }
+        }
+
+        LogPrintf(LogSeverityLevel::Error,
+            "'%s' was not defined nor as constant nor as attribute",
+            qPrintable(constantOrAttributeName));
+        return false;
     }
 
-    if (dataType == MapStyleValueDataType::String)
-        return resolveStringIdInLUT(input, outValue.asSimple.asUInt);
+    if (parseConstantValue(input, dataType, isComplex, outValue.asConstantValue))
+    {
+        outValue.isDynamic = false;
+        return true;
+    }
 
-    return MapStyleValue::parse(input, dataType, isComplex, outValue);
+    return false;
+}
+
+bool OsmAnd::ResolvedMapStyle_P::resolveConstant(const QString& name, QString& value) const
+{
+    const auto citConstantValue = _constants.constFind(name);
+    if (citConstantValue == _constants.cend())
+        return false;
+
+    value = *citConstantValue;
+    return true;
 }
 
 void OsmAnd::ResolvedMapStyle_P::registerBuiltinValueDefinitions()
@@ -152,18 +213,18 @@ std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P
             continue;
         }
 
-        // Try to parse value
-        MapStyleValue parsedValue;
-        if (!parseValue(value, valueDef->dataType, valueDef->isComplex, parsedValue))
+        // Try to resolve value
+        ResolvedValue resolvedValue;
+        if (!resolveValue(value, valueDef->dataType, valueDef->isComplex, resolvedValue))
         {
             LogPrintf(LogSeverityLevel::Warning,
-                "Ignoring value for '%s' since '%s' can not be parsed correctly",
+                "Ignoring value for '%s' since '%s' can not be resolved",
                 qPrintable(name),
                 qPrintable(value));
             continue;
         }
 
-        resolvedRuleNode->values[valueDefId] = parsedValue;
+        resolvedRuleNode->values[valueDefId] = resolvedValue;
     }
 
     // <switch>/<case> subnodes
@@ -207,11 +268,11 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveParameters()
                 continue;
 
             // Resolve possible values
-            QList<MapStyleValue> resolvedPossibleValues;
+            QList<MapStyleConstantValue> resolvedPossibleValues;
             for (const auto& possibleValue : constOf(unresolvedParameter->possibleValues))
             {
-                MapStyleValue resolvedPossibleValue;
-                if (!parseValue(possibleValue, unresolvedParameter->dataType, false, resolvedPossibleValue))
+                MapStyleConstantValue resolvedPossibleValue;
+                if (!parseConstantValue(possibleValue, unresolvedParameter->dataType, false, resolvedPossibleValue))
                 {
                     LogPrintf(LogSeverityLevel::Error,
                         "Failed to parse '%s' as possible value for '%s' (%s)",
@@ -316,8 +377,10 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
                     {
                         topLevelRule.reset(new Rule(static_cast<MapStyleRulesetType>(rulesetTypeIdx)));
 
-                        topLevelRule->rootNode->values[builtinValueDefs->id_INPUT_TAG] = MapStyleValue::fromSimpleUInt(tagId);
-                        topLevelRule->rootNode->values[builtinValueDefs->id_INPUT_VALUE] = MapStyleValue::fromSimpleUInt(valueId);
+                        topLevelRule->rootNode->values[builtinValueDefs->id_INPUT_TAG] =
+                            ResolvedValue::fromConstantValue(MapStyleConstantValue::fromSimpleUInt(tagId));
+                        topLevelRule->rootNode->values[builtinValueDefs->id_INPUT_VALUE] =
+                            ResolvedValue::fromConstantValue(MapStyleConstantValue::fromSimpleUInt(valueId));
                     }
 
                     const auto resolvedRuleNode = resolveRuleNode(unresolvedRule->rootNode);
@@ -377,16 +440,16 @@ std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle_
     return _valuesDefinitions[id];
 }
 
-bool OsmAnd::ResolvedMapStyle_P::parseValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleValue& outParsedValue) const
+bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleConstantValue& outParsedValue) const
 {
     if (valueDefintionId < 0 || valueDefintionId >= _valuesDefinitions.size())
         return false;
-    return parseValue(input, _valuesDefinitions[valueDefintionId], outParsedValue);
+    return parseConstantValue(input, _valuesDefinitions[valueDefintionId], outParsedValue);
 }
 
-bool OsmAnd::ResolvedMapStyle_P::parseValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleValue& outParsedValue) const
+bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleConstantValue& outParsedValue) const
 {
-    return parseValue(input, valueDefintion->dataType, valueDefintion->isComplex, outParsedValue);
+    return parseConstantValue(input, valueDefintion->dataType, valueDefintion->isComplex, outParsedValue);
 }
 
 std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Attribute> OsmAnd::ResolvedMapStyle_P::getAttribute(const QString& name) const
@@ -459,7 +522,7 @@ QString OsmAnd::ResolvedMapStyle_P::dump(const QString& prefix) const
         {
             QStringList decodedPossibleValues;
             for (const auto possibleValue : constOf(parameter->possibleValues))
-                decodedPossibleValues.append(decodeMapStyleValue(possibleValue, parameter->dataType));
+                decodedPossibleValues.append(dumpConstantValue(possibleValue, parameter->dataType));
 
             dump += prefix + QString(QLatin1String("param %1 %2 = (%3); // %4 (%5) \n"))
                 .arg(decodeMapValueDataType(parameter->dataType))
@@ -476,7 +539,7 @@ QString OsmAnd::ResolvedMapStyle_P::dump(const QString& prefix) const
     for (const auto& attribute : constOf(_attributes))
     {
         dump += prefix + QString(QLatin1String("attribute %1:\n")).arg(getStringById(attribute->nameId));
-        dump += dumpRuleNode(attribute->rootNode, prefix + QLatin1String("\t"));
+        dump += dumpRuleNode(attribute->rootNode, false, prefix + QLatin1String("\t"));
     }
     dump += prefix + QLatin1String("\n");
 
@@ -487,7 +550,7 @@ QString OsmAnd::ResolvedMapStyle_P::dump(const QString& prefix) const
         dump += prefix + QString(QLatin1String("order %1 = %2:\n"))
             .arg(getStringById(ruleEntry.key().tagId))
             .arg(getStringById(ruleEntry.key().valueId));
-        dump += dumpRuleNode(ruleEntry.value()->rootNode, prefix + QLatin1String("\t"));
+        dump += dumpRuleNode(ruleEntry.value()->rootNode, true, prefix + QLatin1String("\t"));
     }
     dump += prefix + QLatin1String("\n");
 
@@ -498,7 +561,7 @@ QString OsmAnd::ResolvedMapStyle_P::dump(const QString& prefix) const
         dump += prefix + QString(QLatin1String("point %1 = %2:\n"))
             .arg(getStringById(ruleEntry.key().tagId))
             .arg(getStringById(ruleEntry.key().valueId));
-        dump += dumpRuleNode(ruleEntry.value()->rootNode, prefix + QLatin1String("\t"));
+        dump += dumpRuleNode(ruleEntry.value()->rootNode, true, prefix + QLatin1String("\t"));
     }
     dump += prefix + QLatin1String("\n");
 
@@ -509,7 +572,7 @@ QString OsmAnd::ResolvedMapStyle_P::dump(const QString& prefix) const
         dump += prefix + QString(QLatin1String("polyline %1 = %2:\n"))
             .arg(getStringById(ruleEntry.key().tagId))
             .arg(getStringById(ruleEntry.key().valueId));
-        dump += dumpRuleNode(ruleEntry.value()->rootNode, prefix + QLatin1String("\t"));
+        dump += dumpRuleNode(ruleEntry.value()->rootNode, true, prefix + QLatin1String("\t"));
     }
     dump += prefix + QLatin1String("\n");
 
@@ -520,7 +583,7 @@ QString OsmAnd::ResolvedMapStyle_P::dump(const QString& prefix) const
         dump += prefix + QString(QLatin1String("polygon %1 = %2:\n"))
             .arg(getStringById(ruleEntry.key().tagId))
             .arg(getStringById(ruleEntry.key().valueId));
-        dump += dumpRuleNode(ruleEntry.value()->rootNode, prefix + QLatin1String("\t"));
+        dump += dumpRuleNode(ruleEntry.value()->rootNode, true, prefix + QLatin1String("\t"));
     }
     dump += prefix + QLatin1String("\n");
 
@@ -531,14 +594,14 @@ QString OsmAnd::ResolvedMapStyle_P::dump(const QString& prefix) const
         dump += prefix + QString(QLatin1String("text %1 = %2:\n"))
             .arg(getStringById(ruleEntry.key().tagId))
             .arg(getStringById(ruleEntry.key().valueId));
-        dump += dumpRuleNode(ruleEntry.value()->rootNode, prefix + QLatin1String("\t"));
+        dump += dumpRuleNode(ruleEntry.value()->rootNode, true, prefix + QLatin1String("\t"));
     }
     dump += prefix + QLatin1String("\n");
 
     return dump;
 }
 
-QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const RuleNode>& ruleNode, const QString& prefix) const
+QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const RuleNode>& ruleNode, const bool rejectSupported, const QString& prefix) const
 {
     QString dump;
     const auto builtinValueDefs = MapStyleBuiltinValueDefinitions::get();
@@ -571,25 +634,25 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
             if (valueDef->valueClass != MapStyleValueDefinition::Class::Input)
                 continue;
 
-            const auto& ruleValue = ruleValueEntry.value();
+            const auto& resolvedRuleValue = ruleValueEntry.value();
 
             //bool evaluationResult = false;
             if (valueDefId == builtinValueDefs->id_INPUT_MINZOOM)
             {
                 dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 <= %2);\n"))
-                    .arg(QString::number(ruleValue.asSimple.asInt))
+                    .arg(dumpResolvedValue(resolvedRuleValue, MapStyleValueDataType::Integer))
                     .arg(valueDef->name);
             }
             else if (valueDefId == builtinValueDefs->id_INPUT_MAXZOOM)
             {
                 dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 >= %2);\n"))
-                    .arg(QString::number(ruleValue.asSimple.asInt))
+                    .arg(dumpResolvedValue(resolvedRuleValue, MapStyleValueDataType::Integer))
                     .arg(valueDef->name);
             }
             else if (valueDefId == builtinValueDefs->id_INPUT_ADDITIONAL)
             {
                 dump += prefix + QString(QLatin1String("if (testPassed and inputMapObject) testPassed = (inputMapObject contains %1);\n"))
-                    .arg(getStringById(ruleValue.asSimple.asUInt));
+                    .arg(dumpResolvedValue(resolvedRuleValue, MapStyleValueDataType::String));
             }
             else if (valueDefId == builtinValueDefs->id_INPUT_TEST)
             {
@@ -599,25 +662,25 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
             else if (valueDef->dataType == MapStyleValueDataType::Float)
             {
                 dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == %2);\n"))
-                    .arg(QString::number(ruleValue.asSimple.asFloat))
+                    .arg(dumpResolvedValue(resolvedRuleValue, MapStyleValueDataType::Float))
                     .arg(valueDef->name);
             }
             else if (valueDef->dataType == MapStyleValueDataType::Integer)
             {
                 dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == %2);\n"))
-                    .arg(QString::number(ruleValue.asSimple.asInt))
+                    .arg(dumpResolvedValue(resolvedRuleValue, MapStyleValueDataType::Integer))
                     .arg(valueDef->name);
             }
             else if (valueDef->dataType == MapStyleValueDataType::Boolean)
             {
-                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1%2);\n"))
-                    .arg((ruleValue.asSimple.asInt != 0) ? QString() : QString(QLatin1String("not ")))
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == %2);\n"))
+                    .arg(dumpResolvedValue(resolvedRuleValue, MapStyleValueDataType::Boolean))
                     .arg(valueDef->name);
             }
             else if (valueDef->dataType == MapStyleValueDataType::String)
             {
-                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (\"%1\" == %2);\n"))
-                    .arg(getStringById(ruleValue.asSimple.asInt))
+                dump += prefix + QString(QLatin1String("if (testPassed) testPassed = (%1 == %2);\n"))
+                    .arg(dumpResolvedValue(resolvedRuleValue, MapStyleValueDataType::String))
                     .arg(valueDef->name);
             }
             else
@@ -626,13 +689,19 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
                     .arg(valueDef->name);
             }
         }
-        dump += prefix + QLatin1String("if (not testPassed) reject;\n");
+        if (rejectSupported)
+            dump += prefix + QLatin1String("if (not testPassed) reject;\n");
+        else
+            dump += prefix + QLatin1String("if (not testPassed) exit;\n");
         dump += prefix + QLatin1String("\n");
     }
 
     if (hasDisable)
     {
-        dump += prefix + QLatin1String("if (disable) reject;\n");
+        if (rejectSupported)
+            dump += prefix + QLatin1String("if (disable) reject;\n");
+        else
+            dump += prefix + QLatin1String("if (disable) exit;\n");
         dump += prefix + QLatin1String("\n");
     }
 
@@ -645,10 +714,13 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
         for (const auto& oneOfConditionalSubnode : constOf(ruleNode->oneOfConditionalSubnodes))
         {
             dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched):\n");
-            dump += dumpRuleNode(oneOfConditionalSubnode, prefix + QLatin1String("\t"));
+            dump += dumpRuleNode(oneOfConditionalSubnode, false, prefix + QLatin1String("\t"));
             dump += prefix + QLatin1String("\tatLeastOneConditionalMatched = true;\n");
         }
-        dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched) reject;\n");
+        if (rejectSupported)
+            dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched) reject;\n");
+        else
+            dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched) exit;\n");
         dump += prefix + QLatin1String("\n");
     }
 
@@ -660,7 +732,7 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
         for (const auto& applySubnode : constOf(ruleNode->applySubnodes))
         {
             dump += prefix + QLatin1String("apply:\n");
-            dump += dumpRuleNode(applySubnode, prefix + QLatin1String("\t"));
+            dump += dumpRuleNode(applySubnode, false, prefix + QLatin1String("\t"));
         }
         dump += prefix + QLatin1String("\n");
     }
@@ -685,18 +757,48 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNodeOutputValues(
         if (valueDef->valueClass != MapStyleValueDefinition::Class::Output)
             continue;
 
-        const auto& ruleValue = ruleValueEntry.value();
+        const auto& resolvedRuleValue = ruleValueEntry.value();
 
         dump += prefix + QString(QLatin1String("%1 %2 = %3;\n"))
             .arg(allowOverride ? QLatin1String("setOrOverride") : QLatin1String("setIfNotSet"))
             .arg(valueDef->name)
-            .arg(decodeMapStyleValue(ruleValue, valueDef->dataType));
+            .arg(dumpResolvedValue(resolvedRuleValue, valueDef->dataType));
     }
 
     return dump;
 }
 
-QString OsmAnd::ResolvedMapStyle_P::decodeMapStyleValue(const MapStyleValue& value, const MapStyleValueDataType dataType) const
+QString OsmAnd::ResolvedMapStyle_P::dumpResolvedValue(const ResolvedValue& value, const MapStyleValueDataType dataType) const
+{
+    if (value.isDynamic)
+    {
+        const auto attributeName = QString(QLatin1String("attribute $%1")).arg(getStringById(value.asDynamicValue.attribute->nameId));
+
+        switch (dataType)
+        {
+            case MapStyleValueDataType::Boolean:
+                return QString(QLatin1String("boolean(%1)")).arg(attributeName);
+
+            case MapStyleValueDataType::Integer:
+                return QString(QLatin1String("integer(%1)")).arg(attributeName);
+
+            case MapStyleValueDataType::Float:
+                return QString(QLatin1String("float(%1)")).arg(attributeName);
+
+            case MapStyleValueDataType::String:
+                return QString(QLatin1String("string(%1)")).arg(attributeName);
+
+            case MapStyleValueDataType::Color:
+                return QString(QLatin1String("color(%1)")).arg(attributeName);
+        }
+
+        return QString::null;
+    }
+
+    return dumpConstantValue(value.asConstantValue, dataType);
+}
+
+QString OsmAnd::ResolvedMapStyle_P::dumpConstantValue(const MapStyleConstantValue& value, const MapStyleValueDataType dataType) const
 {
     if (dataType == MapStyleValueDataType::String)
         return QString(QLatin1String("string(\"%1\")")).arg(getStringById(value.asSimple.asInt));

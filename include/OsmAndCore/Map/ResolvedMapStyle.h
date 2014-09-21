@@ -12,7 +12,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/UnresolvedMapStyle.h>
-#include <OsmAndCore/Map/MapStyleValue.h>
+#include <OsmAndCore/Map/MapStyleConstantValue.h>
 #include <OsmAndCore/Map/MapStyleValueDefinition.h>
 
 namespace OsmAnd
@@ -28,6 +28,24 @@ namespace OsmAnd
         };
 
         typedef int ValueDefinitionId;
+        
+        class Attribute;
+
+        struct OSMAND_CORE_API ResolvedValue Q_DECL_FINAL
+        {
+            ResolvedValue();
+            ~ResolvedValue();
+
+            bool isDynamic;
+            
+            MapStyleConstantValue asConstantValue;
+            struct {
+                std::shared_ptr<const Attribute> attribute;
+            } asDynamicValue;
+
+            static ResolvedValue fromConstantValue(const MapStyleConstantValue& input);
+            static ResolvedValue fromAttribute(const std::shared_ptr<const Attribute>& attribute);
+        };
 
         class OSMAND_CORE_API RuleNode Q_DECL_FINAL
         {
@@ -39,7 +57,7 @@ namespace OsmAnd
             RuleNode();
             ~RuleNode();
 
-            QHash<ValueDefinitionId, MapStyleValue> values;
+            QHash<ValueDefinitionId, ResolvedValue> values;
             QList< std::shared_ptr<RuleNode> > oneOfConditionalSubnodes;
             QList< std::shared_ptr<RuleNode> > applySubnodes;
         };
@@ -95,14 +113,14 @@ namespace OsmAnd
                 const QString& description,
                 const unsigned int nameId,
                 const MapStyleValueDataType dataType,
-                const QList<MapStyleValue>& possibleValues);
+                const QList<MapStyleConstantValue>& possibleValues);
             ~Parameter();
 
             QString title;
             QString description;
             unsigned int nameId;
             MapStyleValueDataType dataType;
-            QList<MapStyleValue> possibleValues;
+            QList<MapStyleConstantValue> possibleValues;
         };
 
         class OSMAND_CORE_API ParameterValueDefinition : public MapStyleValueDefinition
@@ -134,8 +152,8 @@ namespace OsmAnd
         ValueDefinitionId getValueDefinitionIdByName(const QString& name) const;
         std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(const ValueDefinitionId id) const;
 
-        bool parseValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleValue& outParsedValue) const;
-        bool parseValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleValue& outParsedValue) const;
+        bool parseValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleConstantValue& outParsedValue) const;
+        bool parseValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleConstantValue& outParsedValue) const;
 
         std::shared_ptr<const Attribute> getAttribute(const QString& name) const;
 

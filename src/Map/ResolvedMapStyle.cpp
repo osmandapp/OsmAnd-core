@@ -21,14 +21,14 @@ std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle:
     return _p->getValueDefinitionById(id);
 }
 
-bool OsmAnd::ResolvedMapStyle::parseValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleValue& outParsedValue) const
+bool OsmAnd::ResolvedMapStyle::parseValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleConstantValue& outParsedValue) const
 {
-    return _p->parseValue(input, valueDefintionId, outParsedValue);
+    return _p->parseConstantValue(input, valueDefintionId, outParsedValue);
 }
 
-bool OsmAnd::ResolvedMapStyle::parseValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleValue& outParsedValue) const
+bool OsmAnd::ResolvedMapStyle::parseValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleConstantValue& outParsedValue) const
 {
-    return _p->parseValue(input, valueDefintion, outParsedValue);
+    return _p->parseConstantValue(input, valueDefintion, outParsedValue);
 }
 
 std::shared_ptr<const OsmAnd::ResolvedMapStyle::Attribute> OsmAnd::ResolvedMapStyle::getAttribute(const QString& name) const
@@ -61,6 +61,31 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResolvedMapStyle::resolv
         return nullptr;
 
     return resolvedStyle;
+}
+
+OsmAnd::ResolvedMapStyle::ResolvedValue::ResolvedValue()
+    : isDynamic(false)
+{
+}
+
+OsmAnd::ResolvedMapStyle::ResolvedValue::~ResolvedValue()
+{
+}
+
+OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue::fromConstantValue(const MapStyleConstantValue& input)
+{
+    ResolvedValue value;
+    value.isDynamic = false;
+    value.asConstantValue = input;
+    return value;
+}
+
+OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue::fromAttribute(const std::shared_ptr<const Attribute>& attribute)
+{
+    ResolvedValue value;
+    value.isDynamic = true;
+    value.asDynamicValue.attribute = attribute;
+    return value;
 }
 
 OsmAnd::ResolvedMapStyle::RuleNode::RuleNode()
@@ -103,7 +128,7 @@ OsmAnd::ResolvedMapStyle::Parameter::Parameter(
     const QString& description_,
     const unsigned int nameId_,
     const MapStyleValueDataType dataType_,
-    const QList<MapStyleValue>& possibleValues_)
+    const QList<MapStyleConstantValue>& possibleValues_)
     : title(title_)
     , description(description_)
     , nameId(nameId_)

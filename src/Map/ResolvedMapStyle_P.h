@@ -27,6 +27,7 @@ namespace OsmAnd
     public:
         typedef ResolvedMapStyle::StringId StringId;
         typedef ResolvedMapStyle::ValueDefinitionId ValueDefinitionId;
+        typedef ResolvedMapStyle::ResolvedValue ResolvedValue;
         typedef ResolvedMapStyle::RuleNode RuleNode;
         typedef ResolvedMapStyle::BaseRule BaseRule;
         typedef ResolvedMapStyle::Rule Rule;
@@ -45,20 +46,45 @@ namespace OsmAnd
         QHash< QString, ValueDefinitionId > _valuesDefinitionsIndicesByName;
         void registerBuiltinValueDefinitions();
 
-        bool parseValue(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleValue& outValue);
-        bool parseValue(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleValue& outValue) const;
+        bool parseConstantValue(
+            const QString& input,
+            const MapStyleValueDataType dataType,
+            const bool isComplex,
+            MapStyleConstantValue& outValue) const;
+
+        bool parseConstantValue(
+            const QString& input,
+            const MapStyleValueDataType dataType,
+            const bool isComplex,
+            MapStyleConstantValue& outValue);
+        
+        bool resolveConstant(const QString& name, QString& value) const;
         bool collectConstants();
-        std::shared_ptr<RuleNode> resolveRuleNode(const std::shared_ptr<const UnresolvedMapStyle::RuleNode>& unresolvedRuleNode);
+        bool resolveValue(
+            const QString& input,
+            const MapStyleValueDataType dataType,
+            const bool isComplex,
+            ResolvedValue& outValue);
+        std::shared_ptr<RuleNode> resolveRuleNode(
+            const std::shared_ptr<const UnresolvedMapStyle::RuleNode>& unresolvedRuleNode);
         bool mergeAndResolveParameters();
         bool mergeAndResolveAttributes();
         bool mergeAndResolveRulesets();
 
-        QString dumpRuleNode(const std::shared_ptr<const RuleNode>& ruleNode, const QString& prefix) const;
+        QString dumpRuleNode(
+            const std::shared_ptr<const RuleNode>& ruleNode,
+            const bool rejectSupported,
+            const QString& prefix) const;
         QString dumpRuleNodeOutputValues(
             const std::shared_ptr<const RuleNode>& ruleNode,
             const QString& prefix,
             const bool allowOverride) const;
-        QString decodeMapStyleValue(const MapStyleValue& value, const MapStyleValueDataType dataType) const;
+        QString dumpResolvedValue(
+            const ResolvedValue& value,
+            const MapStyleValueDataType dataType) const;
+        QString dumpConstantValue(
+            const MapStyleConstantValue& value,
+            const MapStyleValueDataType dataType) const;
     protected:
         ResolvedMapStyle_P(ResolvedMapStyle* const owner);
 
@@ -76,8 +102,14 @@ namespace OsmAnd
         ValueDefinitionId getValueDefinitionIdByName(const QString& name) const;
         std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(const ValueDefinitionId id) const;
 
-        bool parseValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleValue& outParsedValue) const;
-        bool parseValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleValue& outParsedValue) const;
+        bool parseConstantValue(
+            const QString& input,
+            const ValueDefinitionId valueDefintionId,
+            MapStyleConstantValue& outParsedValue) const;
+        bool parseConstantValue(
+            const QString& input,
+            const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion,
+            MapStyleConstantValue& outParsedValue) const;
 
         std::shared_ptr<const Attribute> getAttribute(const QString& name) const;
 

@@ -18,7 +18,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "ResolvedMapStyle.h"
-#include "MapStyleValue.h"
+#include "MapStyleConstantValue.h"
 #include "MapRasterizer.h"
 
 class SkBitmap;
@@ -39,7 +39,7 @@ namespace OsmAnd
         void initialize();
 
         mutable QMutex _settingsChangeMutex;
-        QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleValue > _settings;
+        QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > _settings;
 
         std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultColorAttribute;
         ColorARGB _defaultColor;
@@ -77,8 +77,8 @@ namespace OsmAnd
 
         const std::shared_ptr<const ObfMapSectionInfo> dummyMapSection;
 
-        QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue > getSettings() const;
-        void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleValue >& newSettings);
+        QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
+        void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;
