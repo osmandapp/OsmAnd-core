@@ -1022,7 +1022,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     bool ok;
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 1937897178u)
+    //if ((mapObject->id >> 1) == 266877135u)
     //{
     //    int i = 5;
     //}
@@ -1113,36 +1113,12 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                 continue;
             }
 
-            const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
-
-            // Setup mapObject-specific input data
-            polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-            polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-
-            // Evaluate style for this primitive to check if it passes
-            evaluationResult.clear();
-            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
             //////////////////////////////////////////////////////////////////////////
-            //if ((mapObject->id >> 1) == 25829290u)
+            //if ((mapObject->id >> 1) == 266877135u)
             //{
             //    int i = 5;
             //}
             //////////////////////////////////////////////////////////////////////////
-
-            if (metric)
-            {
-                metric->elapsedTimeForPolygonEvaluation += polygonEvaluationStopwatch.elapsed();
-                metric->polygonEvaluations++;
-            }
-
-            // If evaluation failed, skip
-            if (!ok)
-            {
-                if (metric)
-                    metric->polygonRejects++;
-
-                continue;
-            }
 
             // Check size of polygon
             const auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
@@ -1155,31 +1131,57 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
                 continue;
             }
+            const auto adjustedZOrder = zOrder + (1.0 / polygonArea31);
 
-            // Create new primitive
-            const std::shared_ptr<Primitive> primitive(new Primitive(
-                group,
-                objectType,
-                typeRuleIdIndex,
-                qMove(evaluationResult)));
-            primitive->zOrder = zOrder + (1.0 / polygonArea31);
+            const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
-            // Accept this primitive
-            constructedGroup->polygons.push_back(qMove(primitive));
+            // Setup mapObject-specific input data (for Polygon)
+            polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+            polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
-            // Update metric
+            // Evaluate style for this primitive to check if it passes (for Polygon)
+            evaluationResult.clear();
+            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
+
             if (metric)
-                metric->polygonPrimitives++;
+            {
+                metric->elapsedTimeForPolygonEvaluation += polygonEvaluationStopwatch.elapsed();
+                metric->polygonEvaluations++;
+            }
+
+            // Add as polygon if accepted as polygon
+            if (ok)
+            {
+                // Create new primitive
+                const std::shared_ptr<Primitive> primitive(new Primitive(
+                    group,
+                    objectType,
+                    typeRuleIdIndex,
+                    qMove(evaluationResult)));
+                primitive->zOrder = adjustedZOrder;
+
+                // Accept this primitive
+                constructedGroup->polygons.push_back(qMove(primitive));
+
+                // Update metric
+                if (metric)
+                    metric->polygonPrimitives++;
+            }
+            else
+            {
+                if (metric)
+                    metric->polygonRejects++;
+            }
 
             const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
-            // Setup mapObject-specific input data
+            // Setup mapObject-specific input data (for Point)
             pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
             pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
             // Evaluate Point rules
             evaluationResult.clear();
-            ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
+            const auto hasIcon = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
 
             // Update metric
             if (metric)
@@ -1188,12 +1190,14 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                 metric->pointEvaluations++;
             }
 
-            // Accept also point primitive only if typeIndex == 0 and (there is text or icon)
-            if (typeRuleIdIndex == 0 && (!mapObject->captions.isEmpty() || ok))
+            // Create point primitive only in case:
+            //  - there's text and currently processing first tag=value pair
+            //  - there's icon
+            if ((typeRuleIdIndex == 0 && !mapObject->captions.isEmpty()) || hasIcon)
             {
                 // Duplicate primitive as point
                 std::shared_ptr<Primitive> pointPrimitive;
-                if (ok)
+                if (hasIcon)
                 {
                     // Point evaluation is a bit special, it's success only indicates that point has an icon
                     pointPrimitive.reset(new Primitive(
@@ -1209,7 +1213,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                         PrimitiveType::Point,
                         typeRuleIdIndex));
                 }
-                pointPrimitive->zOrder = primitive->zOrder;
+                pointPrimitive->zOrder = adjustedZOrder;
 
                 constructedGroup->points.push_back(qMove(pointPrimitive));
 
@@ -1299,8 +1303,11 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                 metric->pointEvaluations++;
             }
 
-            // Skip is possible if (typeIndex != 0 and it's not icon) or (there is no text and no icon)
-            if ((typeRuleIdIndex != 0 && !hasIcon) || (mapObject->captions.isEmpty() && !hasIcon))
+            // Create point primitive only in case:
+            //  - there's text and currently processing first tag=value pair
+            //  - there's icon
+            const auto hasContent = (typeRuleIdIndex == 0 && !mapObject->captions.isEmpty()) || hasIcon;
+            if (!hasContent)
             {
                 if (metric)
                     metric->pointRejects++;

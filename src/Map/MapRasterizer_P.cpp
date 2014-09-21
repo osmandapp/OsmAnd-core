@@ -352,11 +352,11 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             SkBitmapProcShader* shaderObj = nullptr;
             if (obtainBitmapShader(env, shader, shaderObj) && shaderObj)
             {
-                paint.setShader(static_cast<SkShader*>(shaderObj));
-                shaderObj->unref();
-
+                // SKIA requires non-transparent color
                 if (paint.getColor() == SK_ColorTRANSPARENT)
                     paint.setColor(SK_ColorWHITE);
+
+                paint.setShader(static_cast<SkShader*>(shaderObj))->unref();
             }
         }
     }
@@ -395,7 +395,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     assert(primitive->sourceObject->isClosedFigure(true));
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 25829290u)
+    //if ((primitive->sourceObject->id >> 1) == 9223372032559775170u)
     //{
     //    int i = 5;
     //}
@@ -438,6 +438,13 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         else
             path.lineTo(vertex.x, vertex.y);
     }
+
+    //////////////////////////////////////////////////////////////////////////
+    //if ((primitive->sourceObject->id >> 1) == 9223372032559775170u)
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
 
     if (!containsAtLeastOnePoint)
     {
@@ -689,7 +696,7 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
     auto itPathEffects = _pathEffects.constFind(encodedPathEffect);
     if (itPathEffects == _pathEffects.cend())
     {
-        const auto& strIntervals = encodedPathEffect.split('_', QString::SkipEmptyParts);
+        const auto& strIntervals = encodedPathEffect.split(QLatin1Char('_'), QString::SkipEmptyParts);
         const auto intervalsCount = strIntervals.size();
 
         const auto intervals = new SkScalar[intervalsCount];
@@ -698,14 +705,14 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
         {
             float computedValue = 0.0f;
 
-            if (!strInterval.contains(':'))
+            if (!strInterval.contains(QLatin1Char(':')))
             {
                 computedValue = strInterval.toFloat()*owner->mapPresentationEnvironment->displayDensityFactor;
             }
             else
             {
-                // 'dip:px' format
-                const auto& complexValue = strInterval.split(':', QString::KeepEmptyParts);
+                // "dip:px" format
+                const auto& complexValue = strInterval.split(QLatin1Char(':'), QString::KeepEmptyParts);
 
                 computedValue = complexValue[0].toFloat()*owner->mapPresentationEnvironment->displayDensityFactor + complexValue[1].toFloat();
             }

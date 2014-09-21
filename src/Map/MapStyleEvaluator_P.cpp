@@ -382,7 +382,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     MapStyleEvaluationResult* const outResultStorage) const
 {
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 1937897178u)
+    //if ((mapObject->id >> 1) == 266877135u)
     //{
     //    int i = 5;
     //}
