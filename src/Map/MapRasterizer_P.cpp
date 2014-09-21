@@ -489,8 +489,8 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     }
 
     canvas.drawPath(path, paint);
-    /*if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
-        canvas.drawPath(path, paint);*/
+    if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
+        canvas.drawPath(path, paint);
 }
 
 void OsmAnd::MapRasterizer_P::rasterizePolyline(

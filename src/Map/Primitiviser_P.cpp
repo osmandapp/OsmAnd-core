@@ -1131,11 +1131,11 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
                 continue;
             }
-            auto adjustedZOrder = zOrder;
+            double adjustedZOrder = zOrder;
             if (mapObject->section != env->dummyMapSection)
-                zOrder += (1.0 / polygonArea31);
+                adjustedZOrder += (1.0 / polygonArea31);
             else
-                zOrder = 0;
+                adjustedZOrder = 0;
 
             const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
