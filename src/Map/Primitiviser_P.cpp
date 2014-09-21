@@ -1022,7 +1022,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     bool ok;
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 46199641u)
+    //if ((mapObject->id >> 1) == 1937897178u)
     //{
     //    int i = 5;
     //}
@@ -1290,7 +1290,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
             // Evaluate Point rules
             evaluationResult.clear();
-            ok = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
+            const bool hasIcon = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
 
             // Update metric
             if (metric)
@@ -1299,8 +1299,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                 metric->pointEvaluations++;
             }
 
-            // Skip is possible if typeIndex != 0 or (there is no text and no icon)
-            if (typeRuleIdIndex != 0 || (mapObject->captions.isEmpty() && !ok))
+            // Skip is possible if (typeIndex != 0 and it's not icon) or (there is no text and no icon)
+            if ((typeRuleIdIndex != 0 && !hasIcon) || (mapObject->captions.isEmpty() && !hasIcon))
             {
                 if (metric)
                     metric->pointRejects++;
@@ -1310,7 +1310,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
             // Create new primitive
             std::shared_ptr<Primitive> primitive;
-            if (ok)
+            if (hasIcon)
             {
                 // Point evaluation is a bit special, it's success only indicates that point has an icon
                 primitive.reset(new Primitive(
@@ -1449,7 +1449,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitivesSymbols(
         const auto canBeShared = (primitivesGroup->sourceObject->section != env->dummyMapSection);
 
         //////////////////////////////////////////////////////////////////////////
-        //if ((primitivesGroup->sourceObject->id >> 1) == 25829290u)
+        //if ((primitivesGroup->sourceObject->id >> 1) == 1937897178u)
         //{
         //    int i = 5;
         //}
@@ -1559,8 +1559,6 @@ void OsmAnd::Primitiviser_P::collectSymbolsFromPrimitives(
         }
         else if (type == PrimitivesType::Points)
         {
-            assert(primitive->typeRuleIdIndex == 0);
-
             obtainSymbolsFromPoint(env, primitivisedArea, primitive, qMove(evaluationResult), outSymbols);
         }
     }
@@ -1643,6 +1641,13 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
 #endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols)
 {
+    //////////////////////////////////////////////////////////////////////////
+    //if ((primitive->sourceObject->id >> 1) == 1937897178u)
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     const auto& points31 = primitive->sourceObject->points31;
 
     assert(points31.size() > 0);
@@ -1679,14 +1684,17 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
         qMove(evaluationResult),
         outSymbols);
 
-    // Obtain texts for this symbol
-    obtainPrimitiveTexts(
-        env,
-        primitivisedArea,
-        primitive,
-        center,
-        qMove(evaluationResult),
-        outSymbols);
+    // Obtain texts for this symbol (only in case it's first tag)
+    if (primitive->typeRuleIdIndex == 0)
+    {
+        obtainPrimitiveTexts(
+            env,
+            primitivisedArea,
+            primitive,
+            center,
+            qMove(evaluationResult),
+            outSymbols);
+    }
 }
 
 void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(

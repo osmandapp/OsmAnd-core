@@ -146,16 +146,16 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     const ResolvedMapStyle::StringId valueStringId,
     MapStyleEvaluationResult* const outResultStorage) const
 {
-    // Create copy of input values to change "tag" and "value" attributes
-    auto inputValues = detachedOf(_inputValues);
-    inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt = tagStringId;
-    inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt = valueStringId;
-
     const auto ruleId = TagValueId::compose(tagStringId, valueStringId);
     const auto citRule = ruleset.constFind(ruleId);
     if (citRule == ruleset.cend())
         return false;
     const auto& rule = *citRule;
+
+    // Create copy of input values to change "tag" and "value" attributes
+    auto inputValues = detachedOf(_inputValues);
+    inputValues[_builtinValueDefs->id_INPUT_TAG].asUInt = tagStringId;
+    inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt = valueStringId;
 
     IntermediateEvaluationResult intermediateEvaluationResult;
     IntermediateEvaluationResult* const pIntermediateEvaluationResult = outResultStorage ? &intermediateEvaluationResult : nullptr;
@@ -390,7 +390,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     MapStyleEvaluationResult* const outResultStorage) const
 {
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 46199641u)
+    //if ((mapObject->id >> 1) == 1937897178u)
     //{
     //    int i = 5;
     //}

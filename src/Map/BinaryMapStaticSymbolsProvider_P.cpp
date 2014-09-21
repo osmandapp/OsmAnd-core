@@ -175,10 +175,10 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         if (hasAtLeastOneOnPath || hasAtLeastOneAlongPathBillboard)
         {
             //////////////////////////////////////////////////////////////////////////
-            if ((mapObject->id >> 1) == 7381701u)
-            {
-                int i = 5;
-            }
+            //if ((mapObject->id >> 1) == 7381701u)
+            //{
+            //    int i = 5;
+            //}
             //////////////////////////////////////////////////////////////////////////
 
             // Compose list of symbols to compute pin-points for
