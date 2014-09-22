@@ -399,7 +399,6 @@ struct RoutingContext {
 		timeToLoad.Pause();
 	}
 
-	void reregisterRouteDataObject(SHARED_PTR<RouteDataObject> o, int segmentStart, uint32_t x, uint32_t y);
 
 	void loadTileData(int x31, int y31, int zoomAround, vector<SHARED_PTR<RouteDataObject> >& dataObjects ) {
 		int t = config->zoomToLoad - zoomAround;
