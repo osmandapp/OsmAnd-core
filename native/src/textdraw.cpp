@@ -521,7 +521,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 		paintText.setColor(textDrawInfo->textColor);
 		// align center y
 		paintText.getFontMetrics(&fm);
-		textDrawInfo->centerY += (-fm.fAscent);
+		textDrawInfo->centerY += ((-fm.fAscent)) ;
+		
 
 		// calculate if there is intersection
 		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon);
@@ -554,8 +555,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 						float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 						float left = textDrawInfo->centerX - ico->width() / 2 * coef; 
 								- 0.5f;
-						float top = textDrawInfo->centerY - ico->height() / 2  * coef
-								- rc->getDensityValue(4.5f);
+						float top = textDrawInfo->centerY - ico->height() / 2 * coef  
+								- fm.fDescent;								
 						// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
 						SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
 						 		ico->height() * coef);
