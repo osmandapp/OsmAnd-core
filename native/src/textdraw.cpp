@@ -556,7 +556,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 						float left = textDrawInfo->centerX - ico->width() / 2 * coef; 
 								- 0.5f;
 						float top = textDrawInfo->centerY - ico->height() / 2 * coef  
-								- fm.fDescent;								
+								- fm.fDescent - 0.5f; 								
 						// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
 						SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
 						 		ico->height() * coef);
