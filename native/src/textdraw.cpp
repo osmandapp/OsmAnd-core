@@ -514,7 +514,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
         globalFontRegistry.updateTypeface(&paintText, 
 			textDrawInfo->text, textDrawInfo->bold, false, sDefaultTypeface); //textDrawInfo->italic
    		// sest text size before finding intersection (it is used there)
-		float textSize = textDrawInfo->textSize;
+		float textSize = textDrawInfo->textSize  * rc->getTextScale() ;
 		paintText.setTextSize(textSize);
 		
 		//paintText.setFakeBoldText(textDrawInfo->bold);

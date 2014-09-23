@@ -473,6 +473,7 @@ jfieldID jfield_RenderingContext_pointInsideCount = NULL;
 jfieldID jfield_RenderingContext_visible = NULL;
 jfieldID jfield_RenderingContext_allObjects = NULL;
 jfieldID jfield_RenderingContext_density = NULL;
+jfieldID jfield_RenderingContext_textScale = NULL;
 jfieldID jfield_RenderingContext_screenDensityRatio = NULL;
 jfieldID jfield_RenderingContext_shadowRenderingMode = NULL;
 jfieldID jfield_RenderingContext_shadowRenderingColor = NULL;
@@ -609,6 +610,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RenderingContext_visible = getFid(env,  jclass_RenderingContext, "visible", "I" );
 	jfield_RenderingContext_allObjects = getFid(env,  jclass_RenderingContext, "allObjects", "I" );
 	jfield_RenderingContext_density = getFid(env,  jclass_RenderingContext, "density", "F" );
+	jfield_RenderingContext_textScale = getFid(env,  jclass_RenderingContext, "textScale", "F" );
 	jfield_RenderingContext_screenDensityRatio = getFid(env,  jclass_RenderingContext, "screenDensityRatio", "F" );	
 	jfield_RenderingContext_shadowRenderingMode = getFid(env,  jclass_RenderingContext, "shadowRenderingMode", "I" );
 	jfield_RenderingContext_shadowRenderingColor = getFid(env,  jclass_RenderingContext, "shadowRenderingColor", "I" );
@@ -666,6 +668,7 @@ void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext*
 	rc->setTileDivisor(env->GetDoubleField( jrc, jfield_RenderingContext_tileDivisor ));
 	rc->setRotate(env->GetFloatField( jrc, jfield_RenderingContext_rotate ));
 	rc->setDensityScale(env->GetFloatField( jrc, jfield_RenderingContext_density ));
+	rc->setTextScale(env->GetFloatField( jrc, jfield_RenderingContext_textScale ));
 	rc->setScreenDensityRatio(env->GetFloatField( jrc, jfield_RenderingContext_screenDensityRatio ));
 	
 	jstring jpref = (jstring) env->GetObjectField(jrc, jfield_RenderingContext_preferredLocale);

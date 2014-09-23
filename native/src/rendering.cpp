@@ -635,7 +635,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	xText /= length;
 	yText /= length;
 	if(!containsPoint){
-		// fast check for polygons
+			// fast check for polygons
 		if(((bounds & 3) != 3) || ((bounds >> 2) != 3) ) {
 			return;
 		}
@@ -756,10 +756,11 @@ bool iconOrder(IconDrawInfo text1, IconDrawInfo text2) {
 }
 
 SkRect makeRect(RenderingContext* rc,  IconDrawInfo& icon, SkBitmap* ico) {
-	float left = icon.x -  ico->width() / 2 * rc->getScreenDensityRatio();
-	float top = icon.y - ico->height() / 2 * rc->getScreenDensityRatio(); 
-	SkRect r = SkRect::MakeXYWH(left, top, ico->width() * rc->getScreenDensityRatio(),
-			ico->height()* rc->getScreenDensityRatio() );
+	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
+	float left = icon.x -  ico->width() / 2 * coef;
+	float top = icon.y - ico->height() / 2 * coef; 
+	SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
+			ico->height() * coef );
 	return r;
 }
 
@@ -774,6 +775,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 	p.setStyle(SkPaint::kStroke_Style);
 	p.setFilterBitmap(true);
 	vector<SkRect> searchText;
+	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 	for(;ji< rc->iconsToDraw.size(); ji++)
 	{
 		IconDrawInfo icon = rc->iconsToDraw.at(ji);
@@ -784,15 +786,15 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			SkRect r = makeRect(rc, icon, ico);
 			float vwidth = icon.iconSize >= 0 ? icon.iconSize : ico->width();
 			float vheight = icon.iconSize >= 0 ? icon.iconSize : ico->height();
-			float vleft = icon.x -  vwidth / 2 * rc->getScreenDensityRatio();
-			float vtop = icon.y - vheight / 2 * rc->getScreenDensityRatio(); 
+			float vleft = icon.x -  vwidth / 2 * coef;
+			float vtop = icon.y - vheight / 2 * coef; 
 						
 			bool intersects = false;
 			SkRect bbox = SkRect::MakeXYWH(0, 0, 0, 0);
 			if(vwidth > 0 && vheight > 0)  
 			{
-				bbox = SkRect::MakeXYWH(vleft, vtop, vwidth * rc->getScreenDensityRatio(),
-						vheight* rc->getScreenDensityRatio() );
+				bbox = SkRect::MakeXYWH(vleft, vtop, vwidth * coef,
+						vheight* coef );
 				boundsIntersect.query_in_box(bbox, searchText);
 			
 				for (uint32_t i = 0; i < searchText.size(); i++) {

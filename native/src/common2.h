@@ -102,6 +102,7 @@ private :
 	std::string preferredLocale;
 	float density;
 	float screenDensityRatio;
+	float textScale;
 
 	double leftX;
 	double topY;
@@ -156,7 +157,7 @@ public :
 
 public:
 	RenderingContext() : preferredLocale(""), density(1), screenDensityRatio(1),
-			//leftX, topY, width, height
+			textScale(1), //leftX, topY, width, height
 			defaultColor(0xfff1eee8), zoom(15), rotate(0),
 			shadowRenderingMode(2), shadowRenderingColor(0xff969696), // defaultIconsDir
 			pointCount(0), pointInsideCount(0), visible(0), allObjects(0), lastRenderedKey(0),
@@ -266,6 +267,14 @@ public:
 
 	float getDensityValue(float val, int pxValues) {
 		return val * density + pxValues;
+	}
+
+	void setTextScale(float v) {
+		textScale = v;
+	}
+
+	float getTextScale() {
+		return textScale;
 	}
 
 	void setPreferredLocale(std::string pref){
