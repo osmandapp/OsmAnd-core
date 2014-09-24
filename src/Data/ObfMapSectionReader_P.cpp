@@ -758,7 +758,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 if (!mapObject)
                     mapObject.reset(new OsmAnd::Model::BinaryMapObject(section, treeNode->level));
 
-                auto& typesRuleIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber ? mapObject->_extraTypesRuleIds : mapObject->_typesRuleIds);
+                auto& typesRuleIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber)
+                    ? mapObject->_extraTypesRuleIds
+                    : mapObject->_typesRuleIds;
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);

@@ -4,6 +4,7 @@
 #include "stdlib_common.h"
 #include <proper/future.h>
 #include <set>
+#include <algorithm>
 
 #include "QtExtensions.h"
 #include "QtCommon.h"
@@ -1022,7 +1023,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     bool ok;
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 95692962u)
+    //if ((mapObject->id >> 1) == 9223372034707225298u)
     //{
     //    int i = 5;
     //}
@@ -1194,10 +1195,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                 metric->pointEvaluations++;
             }
 
-            // Create point primitive only in case:
-            //  - there's text and currently processing first tag=value pair
-            //  - there's icon
-            if ((typeRuleIdIndex == 0 && !mapObject->captions.isEmpty()) || hasIcon)
+            // Create point primitive only in case polygon has any content
+            if (!mapObject->captions.isEmpty() || hasIcon)
             {
                 // Duplicate primitive as point
                 std::shared_ptr<Primitive> pointPrimitive;
@@ -1307,11 +1306,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                 metric->pointEvaluations++;
             }
 
-            // Create point primitive only in case:
-            //  - there's text and currently processing first tag=value pair
-            //  - there's icon
-            const auto hasContent = (typeRuleIdIndex == 0 && !mapObject->captions.isEmpty()) || hasIcon;
-            if (!hasContent)
+            // Create point primitive only in case polygon has any content
+            if (mapObject->captions.isEmpty() && !hasIcon)
             {
                 if (metric)
                     metric->pointRejects++;
@@ -1653,7 +1649,7 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
     SymbolsCollection& outSymbols)
 {
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 1937897178u)
+    //if ((primitive->sourceObject->id >> 1) == 9223372034707225298u)
     //{
     //    int i = 5;
     //}
@@ -1687,15 +1683,27 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
         center = Utilities::normalizeCoordinates(center_, ZoomLevel31);
     }
 
-    // Obtain icon for this symbol
-    obtainPrimitiveIcon(
-        env,
-        primitive,
-        center,
-        qMove(evaluationResult),
-        outSymbols);
+    // Obtain icon for this symbol (only if there's no icon yet)
+    const auto alreadyContainsIcon = std::find_if(outSymbols.cbegin(), outSymbols.cend(),
+        []
+        (const std::shared_ptr<const Symbol>& symbol) -> bool
+        {
+            if (std::dynamic_pointer_cast<const IconSymbol>(symbol))
+                return true;
+            return false;
+        }) != outSymbols.cend();
+    if (!alreadyContainsIcon)
+    {
+        obtainPrimitiveIcon(
+            env,
+            primitive,
+            center,
+            qMove(evaluationResult),
+            outSymbols);
+    }
 
-    // Obtain texts for this symbol (only in case it's first tag)
+    // Obtain texts for this symbol
+    //HACK: (only in case it's first tag)
     if (primitive->typeRuleIdIndex == 0)
     {
         obtainPrimitiveTexts(
@@ -1926,6 +1934,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
 #endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols)
 {
+    //////////////////////////////////////////////////////////////////////////
+    //if ((primitive->sourceObject->id >> 1) == 9223372034707225298u)
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     if (primitive->evaluationResult.isEmpty())
         return;
 
@@ -1959,5 +1974,6 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
         intersectsWith = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
     icon->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
-    outSymbols.push_back(qMove(icon));
+    // Icons are always first
+    outSymbols.prepend(qMove(icon));
 }

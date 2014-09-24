@@ -15,10 +15,6 @@
 #include <gdal.h>
 #include "restore_internal_warnings.h"
 
-#include "ignore_warnings_on_external_includes.h"
-#include <SkGraphics.h>
-#include "restore_internal_warnings.h"
-
 #include "Common.h"
 #include "Logging.h"
 #include "DefaultLogSink.h"
@@ -26,6 +22,7 @@
 #include "ExplicitReferences.h"
 #include "QMainThreadTaskHost.h"
 #include "QMainThreadTaskEvent.h"
+#include "SKIA_private.h"
 #include "ICU_private.h"
 #include "TextRasterizer_private.h"
 #include "MapSymbolIntersectionClassesRegistry_private.h"
@@ -94,7 +91,6 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
     {
         std::cerr << "OsmAnd core requires non-null core resources provider!" << std::endl;
         std::terminate();
-        return false;
     }
     
     gCoreResourcesProvider = coreResourcesProvider;
@@ -130,7 +126,8 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
     GDALAllRegister();
 
     // SKIA
-    SkGraphics::PurgeFontCache(); // This will initialize global glyph cache, since it fails to initialize concurrently
+    if (!SKIA::initialize())
+        return false;
 
     // ICU
     if (!ICU::initialize())
@@ -174,6 +171,9 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
 
     // ICU
     ICU::release();
+
+    // SKIA
+    SKIA::release();
 
     Logger::get()->flush();
     Logger::get()->removeAllLogSinks();

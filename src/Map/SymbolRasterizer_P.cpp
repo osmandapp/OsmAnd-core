@@ -60,7 +60,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const auto& symbolsGroup = symbolGroupEntry.value();
 
         //////////////////////////////////////////////////////////////////////////
-        //if ((mapObject->id >> 1) == 1937897178u)
+        //if ((mapObject->id >> 1) == 9223372034707225298u)
         //{
         //    int i = 5;
         //}

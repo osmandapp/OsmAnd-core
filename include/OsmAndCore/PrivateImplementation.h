@@ -28,6 +28,11 @@ namespace OsmAnd
         {
         }
 
+        PrivateImplementation(const std::shared_ptr<NonConstPIMPL>& pimplInstance)
+            : _pimplInstance(pimplInstance)
+        {
+        }
+
         ~PrivateImplementation()
         {
         }
@@ -57,6 +62,11 @@ namespace OsmAnd
             return _pimplInstance;
         }
 
+        inline std::shared_ptr<NonConstPIMPL> shared_ptr()
+        {
+            return _pimplInstance;
+        }
+
         inline ConstPIMPL* operator->() const
         {
             return const_cast<ConstPIMPL*>(_pimplInstance.get());
@@ -78,6 +88,11 @@ namespace OsmAnd
         }
 
         inline operator std::shared_ptr<ConstPIMPL>() const
+        {
+            return _pimplInstance;
+        }
+
+        inline std::shared_ptr<ConstPIMPL> shared_ptr() const
         {
             return _pimplInstance;
         }

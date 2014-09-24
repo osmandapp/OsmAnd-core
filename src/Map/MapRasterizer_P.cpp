@@ -395,7 +395,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     assert(primitive->sourceObject->isClosedFigure(true));
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 95692962u)
+    //if ((primitive->sourceObject->id >> 1) == 9223372032559801460u)
     //{
     //    int i = 5;
     //}
@@ -440,7 +440,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     }
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 95692962u)
+    //if ((primitive->sourceObject->id >> 1) == 9223372032559801460u)
     //{
     //    int i = 5;
     //}
@@ -748,7 +748,13 @@ bool OsmAnd::MapRasterizer_P::obtainBitmapShader(const std::shared_ptr<const Map
 {
     std::shared_ptr<const SkBitmap> bitmap;
     if (!env->obtainShaderBitmap(name, bitmap))
+    {
+        LogPrintf(LogSeverityLevel::Warning,
+            "Failed to get '%s' bitmap shader",
+            qPrintable(name));
+
         return false;
+    }
 
     outShader = new SkBitmapProcShader(*bitmap, SkShader::kRepeat_TileMode, SkShader::kRepeat_TileMode);
     return true;

@@ -142,29 +142,34 @@ if (CMAKE_TARGET_OS STREQUAL "ios" OR
 	endif()
 endif()
 
-file(GLOB_RECURSE includes "include/*.h*")
-file(GLOB headers "src/*.h*")
-file(GLOB headers_data "src/Data/*.h*")
-file(GLOB headers_data_model "src/Data/Model/*.h*")
-#file(GLOB headers_routing "src/Routing/*.h*")
-file(GLOB headers_map "src/Map/*.h*")
-file(GLOB sources "src/*.c*")
-file(GLOB sources_data "src/Data/*.c*")
-file(GLOB sources_data_model "src/Data/Model/*.c*")
-#file(GLOB sources_routing "src/Routing/*.c*")
-file(GLOB sources_map "src/Map/*.c*")
+file(GLOB includes
+	"include/proper/*.h*"
+	"include/*.h*"
+	"include/OsmAndCore/*.h*"
+	"include/OsmAndCore/Data/*.h*"
+	"include/OsmAndCore/Data/Model/*.h*"
+	"include/OsmAndCore/Map/*.h*"
+	#"include/OsmAndCore/Routing/*.h*"
+	"include/OsmAndCore/Search/*.h*")
+file(GLOB headers
+	"src/*.h*"
+	"src/Data/*.h*"
+	"src/Data/Model/*.h*"
+	"src/Map/*.h*"
+	#"src/Routing/*.h*"
+	"src/Search/*.h*")
+file(GLOB sources
+	"src/*.c*"
+	"src/Data/*.c*"
+	"src/Data/Model/*.c*"
+	"src/Map/*.c*"
+	#"src/Routing/*.c*"
+	"src/Search/*.c*")
 
 set(merged_sources
-	${headers}
 	${includes}
-	${headers_data}
-	${headers_data_model}
-	#${headers_routing}
-	${headers_map}
+	${headers}
 	${sources}
-	${sources_data}
-	${sources_data_model}
-	#${sources_routing}
 	${sources_map}
 	${target_specific_sources}
 	"protos/OBF.pb.h"
@@ -190,11 +195,13 @@ set(merged_include_dirs_private
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Data/Model"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Routing"
 	"${OSMAND_ROOT}/core/include/OsmAndCore/Map"
+	"${OSMAND_ROOT}/core/include/OsmAndCore/Search"
 	"${OSMAND_ROOT}/core/src"
 	"${OSMAND_ROOT}/core/src/Data"
 	"${OSMAND_ROOT}/core/src/Data/Model"
 	"${OSMAND_ROOT}/core/src/Routing"
 	"${OSMAND_ROOT}/core/src/Map"
+	"${OSMAND_ROOT}/core/src/Search"
 	"${OSMAND_ROOT}/core/protos"
 )
 set(merged_include_dirs_public
