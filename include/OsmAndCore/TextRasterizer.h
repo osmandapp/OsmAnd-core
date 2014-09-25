@@ -31,6 +31,7 @@ namespace OsmAnd
                 , bold(false)
                 , italic(false)
                 , haloRadius(0)
+                , textAlignment(TextAlignment::Center)
             {
             }
 
@@ -94,6 +95,20 @@ namespace OsmAnd
             inline Style& setBackgroundBitmap(const std::shared_ptr<const SkBitmap>& newBackgroundBitmap)
             {
                 backgroundBitmap = newBackgroundBitmap;
+
+                return *this;
+            }
+
+            enum class TextAlignment
+            {
+                Left,
+                Center,
+                Right
+            };
+            TextAlignment textAlignment;
+            inline Style& setTextAlignment(const TextAlignment newTextAlignment)
+            {
+                textAlignment = newTextAlignment;
 
                 return *this;
             }

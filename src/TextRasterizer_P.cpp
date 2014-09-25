@@ -419,14 +419,25 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     auto fontMaxBottom = fontMetrics.fBottom;
 
     // Measure text
+    SkScalar maxLineWidthInPixels = 0;
     QVector<SkRect> linesBounds(linesCount);
-    auto itLineBounds = linesBounds.begin();
+    auto pLineBounds = linesBounds.data();
     for (const auto& lineRef : constOf(lineRefs))
-        paint.measureText(lineRef.constData(), lineRef.length()*sizeof(QChar), &*(itLineBounds++));
+    {
+        auto& lineBounds = *(pLineBounds++);
+
+        paint.measureText(lineRef.constData(), lineRef.length()*sizeof(QChar), &lineBounds);
+
+        const auto lineWidthInPixels = lineBounds.width();
+        if (lineWidthInPixels > maxLineWidthInPixels)
+            maxLineWidthInPixels = lineWidthInPixels;
+    }
 
     // Measure glyphs
     if (outGlyphWidths)
     {
+        // This is supported only for one-line text
+        assert(lineRefs.size() == 1);
         const auto& lineRef = lineRefs.first();
 
         const auto glyphsCount = paint.countText(lineRef.constData(), lineRef.length()*sizeof(QChar));
@@ -453,14 +464,20 @@ bool OsmAnd::TextRasterizer_P::rasterize(
         fontMaxBottom = qMax(fontMaxBottom, shadowFontMetrics.fBottom);
 
         // Measure text shadow bounds
-        auto itLineBounds = linesBounds.begin();
+        auto pLineBounds = linesBounds.data();
         for (const auto& lineRef : constOf(lineRefs))
         {
+            auto& lineBounds = *(pLineBounds++);
+
             SkRect lineShadowBounds;
             haloPaint.measureText(lineRef.constData(), lineRef.length()*sizeof(QChar), &lineShadowBounds);
 
+            const auto shadowLineWidthInPixels = lineShadowBounds.width();
+            if (shadowLineWidthInPixels > maxLineWidthInPixels)
+                maxLineWidthInPixels = shadowLineWidthInPixels;
+
             // Combine shadow bounds with text bounds
-            (itLineBounds++)->join(lineShadowBounds);
+            lineBounds.join(lineShadowBounds);
         }
 
         // Measure glyphs, since halo is larger than text itself
@@ -485,6 +502,28 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     // Shift first glyph width
     if (outGlyphWidths && !outGlyphWidths->isEmpty())
         outGlyphWidths->first() += -linesBounds.first().left();
+
+    // Compute alignment offsets and apply them
+    for (auto& lineBounds : linesBounds)
+    {
+        const auto widthDelta = maxLineWidthInPixels - lineBounds.width();
+
+        switch (style.textAlignment)
+        {
+            case Style::TextAlignment::Center:
+                lineBounds.offset(-widthDelta / 2.0f, 0);
+                break;
+
+            case Style::TextAlignment::Right:
+                lineBounds.offset(-widthDelta, 0);
+                break;
+
+            case Style::TextAlignment::Left:
+            default:
+                // Do nothing here
+                break;
+        }
+    }
 
     // Normalize line bounds (move origin top bottom-left corner of bitmap)
     QVector<SkRect> linesNormalizedBounds(linesCount);
@@ -592,10 +631,10 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     // Rasterize text halo first (if enabled)
     if (style.haloRadius > 0)
     {
-        auto itLineShadowNormalizedBounds = linesNormalizedBounds.cbegin();
+        auto pLineShadowNormalizedBounds = linesNormalizedBounds.constData();
         for (const auto& lineRef : constOf(lineRefs))
         {
-            const auto& lineShadowNormalizedBounds = *(itLineShadowNormalizedBounds++);
+            const auto& lineShadowNormalizedBounds = *(pLineShadowNormalizedBounds++);
             canvas.drawText(
                 lineRef.constData(), lineRef.length()*sizeof(QChar),
                 lineShadowNormalizedBounds.left(), lineShadowNormalizedBounds.top(),
@@ -604,10 +643,10 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     }
 
     // Rasterize text itself
-    auto citLineNormalizedBounds = linesNormalizedBounds.cbegin();
+    auto pLineNormalizedBounds = linesNormalizedBounds.constData();
     for (const auto& lineRef : constOf(lineRefs))
     {
-        const auto& lineNormalizedBounds = *(citLineNormalizedBounds++);
+        const auto& lineNormalizedBounds = *(pLineNormalizedBounds++);
         canvas.drawText(
             lineRef.constData(), lineRef.length()*sizeof(QChar),
             lineNormalizedBounds.left(), lineNormalizedBounds.top(),
