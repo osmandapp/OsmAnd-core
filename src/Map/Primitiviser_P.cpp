@@ -1022,21 +1022,32 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 {
     bool ok;
 
+    const auto constructedGroup = new PrimitivesGroup(mapObject);
+    std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
+
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 9223372034707225298u)
+    //if ((mapObject->id >> 1) == 9223371929479601886)
     //{
     //    int i = 5;
     //}
+    //else
+    //    return group;
     //////////////////////////////////////////////////////////////////////////
-
-    const auto constructedGroup = new PrimitivesGroup(mapObject);
-    std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
     uint32_t typeRuleIdIndex = 0;
     const auto& decRules = mapObject->section->encodingDecodingRules->decodingRules;
     for (auto itTypeRuleId = cachingIteratorOf(constOf(mapObject->typesRuleIds)); itTypeRuleId; ++itTypeRuleId, typeRuleIdIndex++)
     {
         const auto& decodedType = decRules[*itTypeRuleId];
+
+        //////////////////////////////////////////////////////////////////////////
+        //if ((mapObject->id >> 1) == 9223371929479601886)
+        //{
+        //    if (decodedType.tag != QLatin1String("building"))
+        //        continue;
+        //    int i = 5;
+        //}
+        //////////////////////////////////////////////////////////////////////////
 
         const Stopwatch orderEvaluationStopwatch(metric != nullptr);
 
@@ -1369,6 +1380,8 @@ void OsmAnd::Primitiviser_P::sortAndFilterPrimitives(
             {
                 if (l->typeRuleIdIndex == r->typeRuleIdIndex)
                     return l->sourceObject->points31.size() < r->sourceObject->points31.size();
+                if (l->type == PrimitiveType::Polygon)
+                    return l->typeRuleIdIndex > r->typeRuleIdIndex;
                 return l->typeRuleIdIndex < r->typeRuleIdIndex;
             }
             return l->zOrder < r->zOrder;

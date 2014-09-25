@@ -21,6 +21,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Bitmask.h>
 
 namespace OsmAnd
 {
@@ -524,27 +525,28 @@ namespace OsmAnd
 
         enum class CHCode : uint8_t
         {
-            Inside = 0, // 0000
-            Left = 1,   // 0001
-            Right = 2,  // 0010
-            Bottom = 4, // 0100
-            Top = 8,    // 1000
+            Left = 0,
+            Right,
+            Bottom,
+            Top,
         };
+        typedef Bitmask<CHCode> CHValue;
 
-        inline static uint8_t computeCohenSutherlandCode(const PointI& p, const AreaI& box)
+        template<typename T>
+        inline static CHValue computeCohenSutherlandValue(const Point<T>& p, const Area<T>& box)
         {
-            uint8_t res = static_cast<uint8_t>(CHCode::Inside);
+            CHValue value;
 
             if (p.x < box.left())           // to the left of clip box
-                res |= static_cast<uint8_t>(CHCode::Left);
+                value |= CHCode::Left;
             else if (p.x > box.right())     // to the right of clip box
-                res |= static_cast<uint8_t>(CHCode::Right);
+                value |= CHCode::Right;
             if (p.y < box.top())            // above the clip box
-                res |= static_cast<uint8_t>(CHCode::Bottom);
+                value |= CHCode::Bottom;
             else if (p.y > box.bottom())    // below the clip box
-                res |= static_cast<uint8_t>(CHCode::Top);
+                value |= CHCode::Top;
 
-            return res;
+            return value;
         }
 
         static bool extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot);

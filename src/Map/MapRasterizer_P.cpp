@@ -410,7 +410,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     bool containsAtLeastOnePoint = false;
     int pointIdx = 0;
     PointF vertex;
-    int bounds = 0;
+    Utilities::CHValue prevChValue;
     QVector< PointI > outerPoints;
     const auto pointsCount = points31.size();
     auto pPoint = points31.constData();
@@ -426,10 +426,16 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
                 containsAtLeastOnePoint = true;
             else
                 outerPoints.push_back(point);
-            bounds |= (point.x < area31.left() ? 1 : 0);
-            bounds |= (point.x > area31.right() ? 2 : 0);
-            bounds |= (point.y < area31.top() ? 4 : 0);
-            bounds |= (point.y > area31.bottom() ? 8 : 0);
+
+            const auto chValue = Utilities::computeCohenSutherlandValue(point, area31);
+            if (Q_LIKELY(pointIdx > 0))
+            {
+                // Check if line crosses area (reject only if points are on the same side)
+                const auto intersectedChValue = prevChValue & chValue;
+                if (static_cast<unsigned int>(intersectedChValue) != 0)
+                    containsAtLeastOnePoint = true;
+            }
+            prevChValue = chValue;
         }
 
         // Plot vertex
@@ -448,11 +454,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
 
     if (!containsAtLeastOnePoint)
     {
-        // fast check for polygons
-        if ((bounds & 3) != 3 || (bounds >> 2) != 3)
-            return;
-
-        // 
+        // Check area is inside polygon
         bool ok = true;
         ok = ok || containsHelper(outerPoints, area31.topLeft);
         ok = ok || containsHelper(outerPoints, area31.bottomRight);

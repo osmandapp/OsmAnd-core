@@ -116,6 +116,25 @@ namespace OsmAnd
 
             return *this;
         }
+
+        inline BitmaskT& unite(const BitmaskT& otherMask)
+        {
+            _storage |= otherMask._storage;
+
+            return *this;
+        }
+
+#if !defined(SWIG)
+        inline BitmaskT operator+(const BitmaskT& otherMask) const
+        {
+            return BitmaskT(*this).unite(otherMask);
+        }
+
+        inline BitmaskT& operator+=(const BitmaskT& otherMask)
+        {
+            return unite(otherMask);
+        }
+#endif // !defined(SWIG)
     };
 }
 
