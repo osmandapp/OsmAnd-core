@@ -25,37 +25,158 @@ void OsmAnd::TextRasterizer_P::initialize()
     _defaultPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
     static_assert(sizeof(QChar) == 2, "If QChar is not 2 bytes, then encoding is not kUTF16_TextEncoding");
 
-    // Fonts register (in priority order):
+    // Compose fonts register (in priority order)
+
+    // OpenSans
     _fontsRegistry.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Regular.ttf"), false, false });
     _fontsRegistry.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Italic.ttf"), false, true });
     _fontsRegistry.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-Semibold.ttf"), true, false });
     _fontsRegistry.push_back({ QLatin1String("map/fonts/OpenSans/OpenSans-SemiboldItalic.ttf"), true, true });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansEthiopic-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansEthiopic-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansArabic.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansHebrew-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansHebrew-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansThai-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansThai-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansArmenian.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansGeorgian.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansDevanagari-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansDevanagari-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansTamil-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansTamil-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansMalayalam.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansMalayalam-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansBengali-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansBengali-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansTelugu-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansTelugu-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansKannada-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansKannada-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansKhmer-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansKhmer-Bold.ttf"), true, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansLao-Regular.ttf"), false, false });
-    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoSansLao-Bold.ttf"), true, false });
+
+    // Noto Kufi Arabic
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoKufi/NotoKufiArabic-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoKufi/NotoKufiArabic-Bold.ttf"), true, false });
+
+    // Noto Naskh Arabic
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoNaskh/NotoNaskhArabic-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/NotoNaskh/NotoNaskhArabic-Bold.ttf"), true, false });
+
+    // NotoSans family, all fonts support regular and italic
+    const char* const notoSans[] =
+    {
+        "Thai",
+        "Devanagari",
+        "Tamil",
+        "Malayalam",
+        "Bengali",
+        "Telugu",
+        "Kannada",
+        "Khmer",
+        "Lao",
+        "Armenian",
+        "Cham",
+        "Ethiopic",
+        "Georgian",
+        "Gujarati",
+        "Gurmukhi",
+        "Hebrew"
+    };
+    for (unsigned int scriptIdx = 0u; scriptIdx < sizeof(notoSans) / sizeof(notoSans[0]); scriptIdx++)
+    {
+        _fontsRegistry.push_back({
+            QString(QLatin1String("map/fonts/NotoSans/NotoSans%1-Regular.ttf")).arg(QLatin1String(notoSans[scriptIdx])),
+            false,
+            false });
+        _fontsRegistry.push_back({
+            QString(QLatin1String("map/fonts/NotoSans/NotoSans%1-Bold.ttf")).arg(QLatin1String(notoSans[scriptIdx])),
+            true,
+            false });
+    }
+
+    // NotoSans extra
+    const char* const notoSansExtra[] =
+    {
+        "Myanmar",
+        "Sinhala"
+    };
+    for (unsigned int scriptIdx = 0u; scriptIdx < sizeof(notoSansExtra) / sizeof(notoSansExtra[0]); scriptIdx++)
+    {
+        _fontsRegistry.push_back({
+            QString(QLatin1String("map/fonts/NotoSans-extra/NotoSans%1-Regular.ttf")).arg(QLatin1String(notoSansExtra[scriptIdx])),
+            false,
+            false });
+            _fontsRegistry.push_back({
+                QString(QLatin1String("map/fonts/NotoSans-extra/NotoSans%1-Bold.ttf")).arg(QLatin1String(notoSansExtra[scriptIdx])),
+                true,
+                false });
+    }
+
+    // NotoSans extra (regular only)
+    const char* const notoSansExtraRegular[] =
+    {
+        "Avestan",
+        "Balinese",
+        "Bamum",
+        "Batak",
+        "Brahmi",
+        "Buginese",
+        "Buhid",
+        "CanadianAboriginal",
+        "Carian",
+        "Cherokee",
+        "Coptic",
+        "Cuneiform",
+        "Cypriot",
+        "Deseret",
+        "EgyptianHieroglyphs",
+        "Glagolitic",
+        "Gothic",
+        "Hanunoo",
+        "ImperialAramaic",
+        "InscriptionalPahlavi",
+        "InscriptionalParthian",
+        "Javanese",
+        "Kaithi",
+        "KayahLi",
+        "Kharoshthi",
+        "Lepcha",
+        "Limbu",
+        "LinearB",
+        "Lisu",
+        "Lycian",
+        "Lydian",
+        "Mandaic",
+        "MeeteiMayek",
+        "Mongolian",
+        "NKo",
+        "NewTaiLue",
+        "Ogham",
+        "OlChiki",
+        "OldItalic",
+        "OldPersian",
+        "OldSouthArabian",
+        "OldTurkic",
+        "Osmanya",
+        "PhagsPa",
+        "Phoenician",
+        "Rejang",
+        "Runic",
+        "Samaritan",
+        "Saurashtra",
+        "Shavian",
+        "Sundanese",
+        "SylotiNagri",
+        "SyriacEastern",
+        "SyriacEstrangela",
+        "SyriacWestern",
+        "Tagalog",
+        "Tagbanwa",
+        "TaiLe",
+        "TaiTham",
+        "TaiViet",
+        "Tifinagh",
+        "Ugaritic",
+        "Vai",
+        "Yi"
+    };
+    for (unsigned int scriptIdx = 0u; scriptIdx < sizeof(notoSansExtraRegular) / sizeof(notoSansExtraRegular[0]); scriptIdx++)
+    {
+        _fontsRegistry.push_back({
+            QString(QLatin1String("map/fonts/NotoSans-extra/NotoSans%1-Regular.ttf")).arg(QLatin1String(notoSansExtraRegular[scriptIdx])),
+            false,
+            false });
+    }
+
+    // Tinos (from the Noto pack)
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/Tinos/Tinos-Regular.ttf"), false, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/Tinos/Tinos-Italic.ttf"), false, true });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/Tinos/Tinos-Bold.ttf"), true, false });
+    _fontsRegistry.push_back({ QLatin1String("map/fonts/Tinos/Tinos-BoldItalic.ttf"), true, true });
+
+    // DroidSans
     _fontsRegistry.push_back({ QLatin1String("map/fonts/DroidSansFallback.ttf"), false, false });
+
+    // Misc
     _fontsRegistry.push_back({ QLatin1String("map/fonts/MTLmr3m.ttf"), false, false });
 }
 
@@ -201,6 +322,39 @@ void OsmAnd::TextRasterizer_P::configurePaintForText(SkPaint& paint, const QStri
     // If there's no best match, fallback to default typeface
     if (bestMatchTypeface == nullptr)
     {
+#if OSMAND_DEBUG && 0
+        LogPrintf(LogSeverityLevel::Warning,
+            "No embedded font found that contains all glyphs of \"%s\":",
+            qPrintable(text));
+        for (const auto unicodeChar : constOf(text))
+        {
+            QStringList matchingFonts;
+
+            SkPaint textCoverageTestPaint;
+            textCoverageTestPaint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+            for (const auto& entry : constOf(_fontsRegistry))
+            {
+                // Get typeface for this entry
+                const auto typeface = getTypefaceForFontResource(entry.resource);
+                if (!typeface)
+                    continue;
+
+                // Check if this typeface covers provided text
+                textCoverageTestPaint.setTypeface(typeface);
+                if (!textCoverageTestPaint.containsText(&unicodeChar, sizeof(QChar)))
+                    continue;
+
+                matchingFonts.push_back(QFileInfo(entry.resource).fileName());
+            }
+
+            LogPrintf(LogSeverityLevel::Warning,
+                "\tU+%04X : %s",
+                unicodeChar.unicode(),
+                qPrintable(matchingFonts.isEmpty() ? QString(QLatin1String("missing!")) : matchingFonts.join(QLatin1String("; "))));
+        }
+
+#endif // OSMAND_DEBUG
+
         paint.setTypeface(nullptr);
 
         // Adjust to handle bold text
