@@ -7,6 +7,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
 #include <QReadWriteLock>
+#include <QThread>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -98,7 +99,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_lock);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->insert(%s, %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->insert(%s, %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 resourcePtr.get());
@@ -124,7 +126,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_lock);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->insert(%s, %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->insert(%s, %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 resourcePtr.get());
@@ -146,7 +149,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_lock);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->insertAndReference(%s, %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->insertAndReference(%s, %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 resourcePtr.get());
@@ -166,7 +170,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_lock);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainReference(%s)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->obtainReference(%s)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)));
 #endif
@@ -216,7 +221,8 @@ namespace OsmAnd
             assert(availableResourceEntry->resourcePtr == resourcePtr);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->releaseReference(%s, %p): %" PRIu64 " -> %" PRIu64 "",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->releaseReference(%s, %p): %" PRIu64 " -> %" PRIu64 "",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 resourcePtr.get(),
@@ -246,7 +252,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_lock);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->makePromise(%s)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->makePromise(%s)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)));
 #endif
@@ -265,7 +272,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&_lock);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->breakPromise(%s)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->breakPromise(%s)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)));
 #endif
@@ -308,7 +316,8 @@ namespace OsmAnd
             _promisedResources.erase(itPromisedResourceEntry);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->fulfilPromise(%s, %p): %" PRIu64 "",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->fulfilPromise(%s, %p): %" PRIu64 "",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 resourcePtr.get(),
@@ -343,7 +352,8 @@ namespace OsmAnd
             _promisedResources.erase(itPromisedResourceEntry);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->fulfilPromise(%s, %p): %" PRIu64 "",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->fulfilPromise(%s, %p): %" PRIu64 "",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 resourcePtr.get(),
@@ -380,7 +390,8 @@ namespace OsmAnd
             _promisedResources.erase(itPromisedResourceEntry);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->fulfilPromiseAndReference(%s, %p): %" PRIu64 " -> %" PRIu64 "",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->fulfilPromiseAndReference(%s, %p): %" PRIu64 " -> %" PRIu64 "",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 resourcePtr.get(),
@@ -405,7 +416,8 @@ namespace OsmAnd
             if (itPromisedResourceEntry == _promisedResources.cend())
             {
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-                LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainFutureReference(%s)",
+                LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->obtainFutureReference(%s)",
+                    QThread::currentThreadId(),
                     this,
                     qPrintable(QString::fromLatin1("%1").arg(key)));
 #endif
@@ -415,7 +427,8 @@ namespace OsmAnd
             const auto& promisedResourceEntry = *itPromisedResourceEntry;
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainFutureReference(%s): %" PRIu64 " -> %" PRIu64 "",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->obtainFutureReference(%s): %" PRIu64 " -> %" PRIu64 "",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 static_cast<uint64_t>(promisedResourceEntry->refCounter),
@@ -440,7 +453,8 @@ namespace OsmAnd
             if (itPromisedResourceEntry == _promisedResources.cend())
             {
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-                LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->releaseFutureReference(%s)",
+                LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->releaseFutureReference(%s)",
+                    QThread::currentThreadId(),
                     this,
                     qPrintable(QString::fromLatin1("%1").arg(key)));
 #endif
@@ -451,7 +465,8 @@ namespace OsmAnd
             assert(promisedResourceEntry->refCounter > 0);
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->releaseFutureReference(%s): %" PRIu64 " -> %" PRIu64 "",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->releaseFutureReference(%s): %" PRIu64 " -> %" PRIu64 "",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 static_cast<uint64_t>(promisedResourceEntry->refCounter),
@@ -473,7 +488,8 @@ namespace OsmAnd
                 const auto& availableResourceEntry = *itAvailableResourceEntry;
 
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-                LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): reference %" PRIu64 " -> %" PRIu64 "",
+                LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): reference %" PRIu64 " -> %" PRIu64 "",
+                    QThread::currentThreadId(),
                     this,
                     qPrintable(QString::fromLatin1("%1").arg(key)),
                     static_cast<uint64_t>(availableResourceEntry->refCounter),
@@ -490,7 +506,8 @@ namespace OsmAnd
             if (futureReferenceAvailable)
             {
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-                LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): future reference",
+                LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): future reference",
+                    QThread::currentThreadId(),
                     this,
                     qPrintable(QString::fromLatin1("%1").arg(key)));
 #endif
@@ -499,7 +516,8 @@ namespace OsmAnd
             }
             
 #if OSMAND_LOG_SHARED_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): promise",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s): promise",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)));
 #endif

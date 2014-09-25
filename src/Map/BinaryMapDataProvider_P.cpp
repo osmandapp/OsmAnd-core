@@ -102,17 +102,25 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     QList< std::shared_ptr<const Model::BinaryMapObject> > referencedMapObjects;
     QList< proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > > futureReferencedMapObjects;
     QList< std::shared_ptr<const Model::BinaryMapObject> > loadedMapObjects;
-    QSet< uint64_t > loadedSharedMapObjects;
+    QHash< uint64_t, SmartPOD<unsigned int, 0u>  > allLoadedMapObjects;
+    QHash< uint64_t, SmartPOD<unsigned int, 0u> > loadedSharedMapObjects;
+    QHash< uint64_t, SmartPOD<unsigned int, 0u> > loadedNonSharedMapObjects;
     auto tileFoundation = MapFoundationType::Undefined;
     dataInterface->loadMapObjects(
         &loadedMapObjects,
         &tileFoundation,
         zoom,
         &tileBBox31,
-        [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, tileBBox31, metric]
+        [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, &loadedNonSharedMapObjects, &allLoadedMapObjects, tileBBox31, metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {
             const Stopwatch objectsFilteringStopwatch(metric != nullptr);
+
+            // Check if this object was not loaded before
+            unsigned int& totalLoadCount = allLoadedMapObjects[id];
+            if (totalLoadCount > 0u)
+                return false;
+            totalLoadCount++;
 
             // This map object may be shared only in case it crosses bounds of a tile
             const auto canNotBeShared = tileBBox31.contains(bbox);
@@ -123,6 +131,12 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
                 if (metric)
                     metric->elapsedTimeForObjectsFiltering += objectsFilteringStopwatch.elapsed();
 
+                unsigned int& loadCount = loadedNonSharedMapObjects[id];
+                if (loadCount > 0u)
+                    return false;
+                loadCount++;
+                totalLoadCount++;
+
                 return true;
             }
 
@@ -130,7 +144,13 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
             // being present in shared mapObjects storage, or be reserved there
             std::shared_ptr<const Model::BinaryMapObject> sharedMapObjectReference;
             proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > futureSharedMapObjectReference;
-            if (_sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(id, zoom, Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel), sharedMapObjectReference, futureSharedMapObjectReference))
+            const auto existsOrWillBeInFuture = _sharedMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(
+                id,
+                zoom,
+                Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel),
+                sharedMapObjectReference,
+                futureSharedMapObjectReference);
+            if (existsOrWillBeInFuture)
             {
                 if (sharedMapObjectReference)
                 {
@@ -148,8 +168,13 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
                 return false;
             }
 
-            // This map object was reserved, and is going to be shared, but needs to be loaded
-            loadedSharedMapObjects.insert(id);
+            // This map object was reserved, and is going to be shared, but needs to be loaded (and it was promised)
+            unsigned int& loadCount = loadedSharedMapObjects[id];
+            if (loadCount > 0u)
+                return false;
+            loadCount += 1;
+            totalLoadCount++;
+
             return true;
         },
         _dataBlocksCache.get(),
@@ -160,14 +185,16 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     // Process loaded-and-shared map objects
     for (auto& mapObject : loadedMapObjects)
     {
-        // Check if this map object is shared
-        if (!loadedSharedMapObjects.contains(mapObject->id))
+        const auto id = mapObject->id;
+
+        // Check if this map object is shared (since only shared produce promises)
+        if (!loadedSharedMapObjects.contains(id))
             continue;
 
         // Add unique map object under lock to all zoom levels, for which this map object is valid
         assert(mapObject->level);
         _sharedMapObjects.fulfilPromiseAndReference(
-            mapObject->id,
+            id,
             Utilities::enumerateZoomLevels(mapObject->level->minZoom, mapObject->level->maxZoom),
             mapObject);
     }

@@ -8,6 +8,7 @@
 #include <QHash>
 #include <QSet>
 #include <QReadWriteLock>
+#include <QThread>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -94,7 +95,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->insert(%s, [%s], %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->insert(%s, [%s], %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 qPrintable(Utilities::stringifyZoomLevels(levels)),
@@ -127,7 +129,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->insert(%s, [%s], %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->insert(%s, [%s], %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 qPrintable(Utilities::stringifyZoomLevels(levels)),
@@ -156,7 +159,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->insertAndReference(%s, [%s], %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->insertAndReference(%s, [%s], %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 qPrintable(Utilities::stringifyZoomLevels(levels)),
@@ -183,7 +187,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->obtainReference(%s, [%d],...)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->obtainReference(%s, [%d],...)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 level);
@@ -226,7 +231,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->releaseReference(%s, [%d], %p, ...)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->releaseReference(%s, [%d], %p, ...)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 level,
@@ -276,7 +282,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->makePromise(%s, [%s])",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->makePromise(%s, [%s])",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 qPrintable(Utilities::stringifyZoomLevels(levels)));
@@ -302,7 +309,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->breakPromise(%s, [%s])",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->breakPromise(%s, [%s])",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 qPrintable(Utilities::stringifyZoomLevels(levels)));
@@ -332,7 +340,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->fulfilPromise(%s, [%s], %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->fulfilPromise(%s, [%s], %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 qPrintable(Utilities::stringifyZoomLevels(levels)),
@@ -385,7 +394,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->fulfilPromise(%s, [%s], %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->fulfilPromise(%s, [%s], %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 qPrintable(Utilities::stringifyZoomLevels(levels)),
@@ -434,7 +444,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->fulfilPromiseAndReference(%s, [%s], %p)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->fulfilPromiseAndReference(%s, [%s], %p)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 qPrintable(Utilities::stringifyZoomLevels(levels)),
@@ -478,7 +489,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->obtainFutureReference(%s, [%d], ...)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->obtainFutureReference(%s, [%d], ...)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 level);
@@ -505,7 +517,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->releaseFutureReference(%s, [%d])",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->releaseFutureReference(%s, [%d])",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 level);
@@ -532,7 +545,8 @@ namespace OsmAnd
             QWriteLocker scopedLocker(&this->_lock);
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-            LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s, [%d], [%s], ...)",
+            LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s, [%d], [%s], ...)",
+                QThread::currentThreadId(),
                 this,
                 qPrintable(QString::fromLatin1("%1").arg(key)),
                 level,
@@ -551,7 +565,8 @@ namespace OsmAnd
                 outResourcePtr = availableResourceEntry->resourcePtr;
 
 #if OSMAND_LOG_SHARED_BY_ZOOM_RESOURCES_CONTAINER_CHANGE
-                LogPrintf(LogSeverityLevel::Debug, "SharedByZoomResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s, [%d], [%s], ...) = true, found %p",
+                LogPrintf(LogSeverityLevel::Debug, "[thread:%p] SharedByZoomResourcesContainer(%p)->obtainReferenceOrFutureReferenceOrMakePromise(%s, [%d], [%s], ...) = true, found %p",
+                    QThread::currentThreadId(),
                     this,
                     qPrintable(QString::fromLatin1("%1").arg(key)),
                     level,
