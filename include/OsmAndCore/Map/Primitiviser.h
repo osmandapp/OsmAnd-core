@@ -95,7 +95,8 @@ namespace OsmAnd
             const uint32_t typeRuleIdIndex;
             const MapStyleEvaluationResult evaluationResult;
 
-            double zOrder;
+            int zOrder;
+            int64_t doubledArea;
 
         friend class OsmAnd::Primitiviser;
         friend class OsmAnd::Primitiviser_P;

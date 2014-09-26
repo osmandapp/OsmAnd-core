@@ -44,7 +44,8 @@ OsmAnd::Primitiviser::Primitive::Primitive(
     , sourceObject(group_->sourceObject)
     , type(type_)
     , typeRuleIdIndex(typeRuleIdIndex_)
-    , zOrder(0.0)
+    , zOrder(0)
+    , doubledArea(-1)
 {
 }
 
@@ -58,7 +59,8 @@ OsmAnd::Primitiviser::Primitive::Primitive(
     , type(type_)
     , typeRuleIdIndex(typeRuleIdIndex_)
     , evaluationResult(evaluationResult_)
-    , zOrder(0.0)
+    , zOrder(0)
+    , doubledArea(-1)
 {
 }
 
@@ -73,7 +75,8 @@ OsmAnd::Primitiviser::Primitive::Primitive(
     , type(type_)
     , typeRuleIdIndex(typeRuleIdIndex_)
     , evaluationResult(qMove(evaluationResult_))
-    , zOrder(0.0)
+    , zOrder(0)
+    , doubledArea(-1)
 {
 }
 #endif // Q_COMPILER_RVALUE_REFS

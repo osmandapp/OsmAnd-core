@@ -241,9 +241,10 @@ namespace OsmAnd
             return angle;
         }
 
-        inline static double polygonArea(const QVector<PointI>& points)
+#if !defined(SWIG)
+        inline static int64_t doubledPolygonArea(const QVector<PointI>& points)
         {
-            double area = 0.0;
+            int64_t area = 0.0;
 
             assert(points.first() == points.last());
 
@@ -251,11 +252,19 @@ namespace OsmAnd
             auto p1 = p0 + 1;
             for (auto idx = 1, count = points.size(); idx < count; idx++, p0++, p1++)
             {
-                area += static_cast<double>(p0->x) * static_cast<double>(p1->y) - static_cast<double>(p1->x) * static_cast<double>(p0->y);
+                area +=
+                    static_cast<int64_t>(p0->x) * static_cast<int64_t>(p1->y) -
+                    static_cast<int64_t>(p1->x) * static_cast<int64_t>(p0->y);
             }
-            area = qAbs(area) * 0.5;
+            area = qAbs(area);
 
             return area;
+        }
+#endif // !defined(SWIG)
+
+        inline static double polygonArea(const QVector<PointI>& points)
+        {
+            return static_cast<double>(doubledPolygonArea(points))* 0.5;
         }
 
         inline static bool rayIntersectX(const PointF& v0_, const PointF& v1_, float mY, float& mX)

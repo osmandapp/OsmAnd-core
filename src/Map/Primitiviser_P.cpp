@@ -1026,7 +1026,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 9223371929479601886)
+    //if ((mapObject->id >> 1) == 9223371946659592355 ||
+    //    (mapObject->id >> 1) == 9223371946659583021)
     //{
     //    int i = 5;
     //}
@@ -1047,6 +1048,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         //        continue;
         //    int i = 5;
         //}
+        //if (decodedType.value != QLatin1String("pedestrian"))
+        //    continue;
         //////////////////////////////////////////////////////////////////////////
 
         const Stopwatch orderEvaluationStopwatch(metric != nullptr);
@@ -1087,7 +1090,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
         }
         const auto objectType = static_cast<PrimitiveType>(objectType_);
 
-        int zOrder;
+        int zOrder = -1;
         if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) || zOrder < 0)
         {
             if (metric)
@@ -1133,7 +1136,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             //////////////////////////////////////////////////////////////////////////
 
             // Check size of polygon
-            const auto polygonArea31 = Utilities::polygonArea(mapObject->points31);
+            const auto doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
+            const auto polygonArea31 = static_cast<double>(doubledPolygonArea31) * 0.5;
             const auto polygonAreaInPixels = polygonArea31 / (primitivisedArea->scale31ToPixelDivisor.x * primitivisedArea->scale31ToPixelDivisor.y);
             const auto polygonAreaInAbstractPixels = polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
             if (polygonAreaInAbstractPixels <= primitivisedArea->polygonAreaMinimalThreshold)
@@ -1143,11 +1147,6 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
                 continue;
             }
-            double adjustedZOrder = zOrder;
-            if (mapObject->section != env->dummyMapSection)
-                adjustedZOrder += (1.0 / polygonArea31);
-            else
-                adjustedZOrder = 0;
 
             const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
@@ -1174,7 +1173,10 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                     objectType,
                     typeRuleIdIndex,
                     qMove(evaluationResult)));
-                primitive->zOrder = adjustedZOrder;
+                primitive->zOrder = (mapObject->section == env->dummyMapSection)
+                    ? 0
+                    : zOrder;
+                primitive->doubledArea = doubledPolygonArea31;
 
                 // Accept this primitive
                 constructedGroup->polygons.push_back(qMove(primitive));
@@ -1227,7 +1229,10 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
                         PrimitiveType::Point,
                         typeRuleIdIndex));
                 }
-                pointPrimitive->zOrder = adjustedZOrder;
+                pointPrimitive->zOrder = (mapObject->section == env->dummyMapSection)
+                    ? 0
+                    : zOrder;
+                pointPrimitive->doubledArea = doubledPolygonArea31;
 
                 constructedGroup->points.push_back(qMove(pointPrimitive));
 
@@ -1376,15 +1381,33 @@ void OsmAnd::Primitiviser_P::sortAndFilterPrimitives(
         []
         (const std::shared_ptr<const Primitive>& l, const std::shared_ptr<const Primitive>& r) -> bool
         {
-            if (qFuzzyCompare(l->zOrder, r->zOrder))
+            // Sort by zOrder first
+            if (l->zOrder != r->zOrder)
+                return l->zOrder < r->zOrder;
+
+            // Then sort by area
+            if (l->doubledArea != r->doubledArea)
+                return l->doubledArea > r->doubledArea;
+
+            // Then sort by tag=value ordering
+            if (l->typeRuleIdIndex != r->typeRuleIdIndex)
             {
-                if (l->typeRuleIdIndex == r->typeRuleIdIndex)
-                    return l->sourceObject->points31.size() < r->sourceObject->points31.size();
                 if (l->type == PrimitiveType::Polygon)
                     return l->typeRuleIdIndex > r->typeRuleIdIndex;
                 return l->typeRuleIdIndex < r->typeRuleIdIndex;
             }
-            return l->zOrder < r->zOrder;
+
+            // Then sort by number of points
+            const auto lPointsCount = l->sourceObject->points31.size();
+            const auto rPointsCount = r->sourceObject->points31.size();
+            if (lPointsCount != rPointsCount)
+                return lPointsCount < rPointsCount;
+
+            // Finally sort by map object ID
+            const auto lId = l->sourceObject->id;
+            const auto rId = r->sourceObject->id;
+            assert(lId != rId);
+            return lId < rId;
         };
 
     qSort(primitivisedArea->polygons.begin(), primitivisedArea->polygons.end(), privitivesSort);
