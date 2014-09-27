@@ -29,6 +29,28 @@ namespace OsmAnd
     class OSMAND_CORE_API MapPresentationEnvironment
     {
         Q_DISABLE_COPY_AND_MOVE(MapPresentationEnvironment);
+    public:
+        enum class LanguagePreference
+        {
+            // "name" only
+            NativeOnly,
+
+            // "name:$locale" or "name"
+            LocalizedOrNative,
+
+            // "name" and "name:$locale"
+            NativeAndLocalized,
+
+            // "name" and ( "name:$locale" or transliterate("name") )
+            NativeAndLocalizedOrTransliterated,
+
+            // "name:$locale" and "name"
+            LocalizedAndNative,
+
+            // ( "name:$locale" or transliterate("name") ) and "name"
+            LocalizedOrTransliteratedAndNative
+        };
+
     private:
         PrivateImplementation<MapPresentationEnvironment_P> _p;
     protected:
@@ -37,6 +59,7 @@ namespace OsmAnd
             const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle,
             const float displayDensityFactor = 1.0f,
             const QString& localeLanguageId = QLatin1String("en"),
+            const LanguagePreference languagePreference = LanguagePreference::LocalizedOrNative,
             const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider = nullptr);
         virtual ~MapPresentationEnvironment();
 
@@ -45,6 +68,7 @@ namespace OsmAnd
         const std::shared_ptr<const ResolvedMapStyle> resolvedStyle;
         const float displayDensityFactor;
         const QString localeLanguageId;
+        const LanguagePreference languagePreference;
         const std::shared_ptr<const ICoreResourcesProvider> externalResourcesProvider;
 
         const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;

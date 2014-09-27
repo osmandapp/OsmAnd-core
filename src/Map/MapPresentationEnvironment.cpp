@@ -7,12 +7,14 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle_,
     const float displayDensityFactor_ /*= 1.0f*/,
     const QString& localeLanguageId_ /*= QLatin1String("en")*/,
+    const LanguagePreference languagePreference_ /*= LanguagePreference::LocalizedOrNative*/,
     const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/)
     : _p(new MapPresentationEnvironment_P(this))
     , styleBuiltinValueDefs(MapStyleBuiltinValueDefinitions::get())
     , resolvedStyle(resolvedStyle_)
     , displayDensityFactor(displayDensityFactor_)
     , localeLanguageId(localeLanguageId_)
+    , languagePreference(languagePreference_)
     , externalResourcesProvider(externalResourcesProvider_)
     , dummyMapSection(_p->dummyMapSection)
 {

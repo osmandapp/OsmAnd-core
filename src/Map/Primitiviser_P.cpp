@@ -1796,6 +1796,9 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             ? citCaptionsEnd
             : captions.constFind(encDecRules->name_encodingRuleId);
         auto hasNativeName = (citNativeName != citCaptionsEnd);
+        auto nativeNameOrder = hasNativeName
+            ? captionsOrder.indexOf(citNativeName.key())
+            : -1;
 
         // Look for localized name
         const auto citLocalizedNameRuleId = encDecRules->localizedName_encodingRuleIds.constFind(env->localeLanguageId);
@@ -1806,37 +1809,125 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             ? citCaptionsEnd
             : captions.constFind(localizedNameRuleId);
         auto hasLocalizedName = (citLocalizedName != citCaptionsEnd);
+        auto localizedNameOrder = hasLocalizedName
+            ? captionsOrder.indexOf(citLocalizedName.key())
+            : -1;
 
-        // Post-process names-only captions
+        // According to presentation settings, adjust set of captions
+        switch (env->languagePreference)
+        {
+            case MapPresentationEnvironment::LanguagePreference::NativeOnly:
+            {
+                // Remove localized name if such exists
+                if (hasLocalizedName)
+                {
+                    captions.remove(localizedNameRuleId);
+                    captionsOrder.removeOne(localizedNameRuleId);
+                    hasLocalizedName = false;
+                    localizedNameOrder = -1;
+                }
+                break;
+            }
+
+            case MapPresentationEnvironment::LanguagePreference::LocalizedOrNative:
+            {
+                // Only one should be shown, thus remove native if localized exist
+                if (hasLocalizedName && hasNativeName)
+                {
+                    captions.remove(encDecRules->name_encodingRuleId);
+                    captionsOrder.removeOne(encDecRules->name_encodingRuleId);
+                    hasNativeName = false;
+                    nativeNameOrder = -1;
+                }
+                break;
+            }
+
+            case MapPresentationEnvironment::LanguagePreference::NativeAndLocalized:
+            {
+                // Both should be shown if available, and in correct order
+                if (hasNativeName && hasLocalizedName && localizedNameOrder < nativeNameOrder)
+                {
+                    captionsOrder.swap(localizedNameOrder, nativeNameOrder);
+                    qSwap(localizedNameOrder, nativeNameOrder);
+                }
+                break;
+            }
+
+            case MapPresentationEnvironment::LanguagePreference::NativeAndLocalizedOrTransliterated:
+            {
+                // Both should be present, so add transliterated in case localized is missing, and in correct order
+                if (hasNativeName && hasLocalizedName && localizedNameOrder < nativeNameOrder)
+                {
+                    captionsOrder.swap(localizedNameOrder, nativeNameOrder);
+                    qSwap(localizedNameOrder, nativeNameOrder);
+                }
+                else if (hasNativeName && !hasLocalizedName)
+                {
+                    const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
+
+                    captions.insert(localizedNameRuleId, latinNameValue);
+                    localizedNameOrder = captionsOrder.indexOf(encDecRules->name_encodingRuleId) + 1;
+                    captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
+                    hasLocalizedName = true;
+                }
+                break;
+            }
+
+            case MapPresentationEnvironment::LanguagePreference::LocalizedAndNative:
+            {
+                // Both should be shown if available, and in correct order
+                if (hasLocalizedName && hasNativeName && nativeNameOrder < localizedNameOrder)
+                {
+                    captionsOrder.swap(nativeNameOrder, localizedNameOrder);
+                    qSwap(nativeNameOrder, localizedNameOrder);
+                }
+                break;
+            }
+
+            case MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliteratedAndNative:
+            {
+                // Both should be present, so add transliterated in case localized is missing, and in correct order
+                if (hasLocalizedName && hasNativeName && nativeNameOrder < localizedNameOrder)
+                {
+                    captionsOrder.swap(nativeNameOrder, localizedNameOrder);
+                    qSwap(nativeNameOrder, localizedNameOrder);
+                }
+                else if (!hasLocalizedName && hasNativeName)
+                {
+                    const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
+
+                    captions.insert(localizedNameRuleId, latinNameValue);
+                    localizedNameOrder = captionsOrder.indexOf(encDecRules->name_encodingRuleId);
+                    captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
+                    hasLocalizedName = true;
+                }
+                break;
+            }
+
+            default:
+                assert(false);
+                return;
+        }
+
+        // In case both languages are present, but they are equal (without accents and diacritics)
         if (hasNativeName && hasLocalizedName)
         {
-            const auto& nativeNameValue = citNativeName.value();
-            const auto& localizedNameValue = citLocalizedName.value();
+            const auto pureNativeName = ICU::stripAccentsAndDiacritics(citNativeName.value());
+            const auto pureLocalizedName = ICU::stripAccentsAndDiacritics(citLocalizedName.value());
 
-            // If mapObject has both native and localized names and they are equal - prefer native
-            if (nativeNameValue.compare(localizedNameValue, Qt::CaseInsensitive) == 0)
+            if (nativeNameOrder < localizedNameOrder)
             {
                 captions.remove(localizedNameRuleId);
                 captionsOrder.removeOne(localizedNameRuleId);
                 hasLocalizedName = false;
+                localizedNameOrder = -1;
             }
-        }
-        else if (hasNativeName && !hasLocalizedName)
-        {
-            const auto& nativeNameValue = citNativeName.value();
-
-            // If mapObject has native name, but doesn't have localized name - create such (as a Latin)
-            const auto latinNameValue = ICU::transliterateToLatin(nativeNameValue);
-
-            // If transliterated name differs from native name, add it to captions as 'localized' name
-            if (nativeNameValue.compare(latinNameValue, Qt::CaseInsensitive) != 0)
+            else // if (localizedNameOrder < nativeNameOrder)
             {
-                captions.insert(localizedNameRuleId, latinNameValue);
-                // 'Localized' name should go after native name, according to following content from 'rendering_types.xml':
-                // <type tag="name" additional="text" order="40"/>
-                // <type tag="name:*" additional="text" order="45" />
-                captionsOrder.insert(captionsOrder.indexOf(encDecRules->name_encodingRuleId) + 1, localizedNameRuleId);
-                hasLocalizedName = true;
+                captions.remove(encDecRules->name_encodingRuleId);
+                captionsOrder.removeOne(encDecRules->name_encodingRuleId);
+                hasNativeName = false;
+                nativeNameOrder = -1;
             }
         }
     }
@@ -1884,13 +1975,10 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
 
         // Determine language of this text
         auto languageId = LanguageId::Invariant;
-        if (hasLocalizedName && hasNativeName)
-        {
-            if (captionRuleId == encDecRules->name_encodingRuleId)
-                languageId = LanguageId::Native;
-            else if (captionRuleId == localizedNameRuleId)
-                languageId = LanguageId::Localized;
-        }
+        if (hasNativeName && captionRuleId == encDecRules->name_encodingRuleId)
+            languageId = LanguageId::Native;
+        else if (hasLocalizedName && captionRuleId == localizedNameRuleId)
+            languageId = LanguageId::Localized;
 
         // Create primitive
         const std::shared_ptr<TextSymbol> text(new TextSymbol(primitive));

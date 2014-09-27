@@ -302,3 +302,34 @@ OSMAND_CORE_API QStringList OSMAND_CORE_CALL OsmAnd::ICU::wrapText(const QString
     result.push_back(input.mid(lastStartIndex));
     return result;
 }
+
+OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripAccentsAndDiacritics(const QString& input)
+{
+    QString output;
+    UErrorCode icuError = U_ZERO_ERROR;
+    bool ok = true;
+
+    const auto pIcuAccentsAndDiacriticsConverter = g_pIcuAccentsAndDiacriticsConverter->clone();
+    if (pIcuAccentsAndDiacriticsConverter == nullptr || U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
+        if (pIcuAccentsAndDiacriticsConverter != nullptr)
+            delete pIcuAccentsAndDiacriticsConverter;
+        return input;
+    }
+
+    // Remove accents and diacritics
+    UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
+    pIcuAccentsAndDiacriticsConverter->transliterate(icuString);
+    output = qMove(QString(reinterpret_cast<const QChar*>(icuString.getBuffer()), icuString.length()));
+
+    if (pIcuAccentsAndDiacriticsConverter != nullptr)
+        delete pIcuAccentsAndDiacriticsConverter;
+
+    if (!ok)
+    {
+        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
+        return input;
+    }
+    return output;
+}
