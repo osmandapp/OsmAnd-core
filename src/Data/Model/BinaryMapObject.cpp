@@ -25,7 +25,7 @@ OsmAnd::Model::BinaryMapObject::~BinaryMapObject()
 
 int OsmAnd::Model::BinaryMapObject::getSimpleLayerValue() const
 {
-    for(const auto& typeRuleId : constOf(_extraTypesRuleIds))
+    for (const auto& typeRuleId : constOf(_extraTypesRuleIds))
     {
         if (section->encodingDecodingRules->positiveLayers_encodingRuleIds.contains(typeRuleId))
             return 1;
@@ -42,7 +42,7 @@ bool OsmAnd::Model::BinaryMapObject::isClosedFigure(bool checkInner /*= false*/)
 {
     if (checkInner)
     {
-        for(const auto& polygon : constOf(_innerPolygonsPoints31))
+        for (const auto& polygon : constOf(_innerPolygonsPoints31))
         {
             if (polygon.isEmpty())
                 continue;
@@ -61,17 +61,17 @@ bool OsmAnd::Model::BinaryMapObject::containsType(const uint32_t typeRuleId, boo
     return (checkAdditional ? _extraTypesRuleIds : _typesRuleIds).contains(typeRuleId);
 }
 
-bool OsmAnd::Model::BinaryMapObject::containsTypeSlow( const QString& tag, const QString& value, bool checkAdditional /*= false*/ ) const
+bool OsmAnd::Model::BinaryMapObject::containsTypeSlow(const QString& tag, const QString& value, bool checkAdditional /*= false*/) const
 {
     const auto typeRuleId = section->encodingDecodingRules->encodingRuleIds[tag][value];
 
     return (checkAdditional ? _extraTypesRuleIds : _typesRuleIds).contains(typeRuleId);
 }
 
-bool OsmAnd::Model::BinaryMapObject::intersects( const AreaI& area ) const
+bool OsmAnd::Model::BinaryMapObject::intersects(const AreaI& area) const
 {
     // Check if any of the object points is inside area
-    for(const auto& point : constOf(_points31))
+    for (const auto& point : constOf(_points31))
     {
         if (area.contains(point))
             return true;
@@ -105,12 +105,12 @@ QString OsmAnd::Model::BinaryMapObject::getNameInLanguage(const QString& lang) c
     return *citName;
 }
 
-uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId( const std::shared_ptr<const BinaryMapObject>& mapObject )
+uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId(const std::shared_ptr<const BinaryMapObject>& mapObject)
 {
     return getUniqueId(mapObject->id, mapObject->section);
 }
 
-uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId( const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section )
+uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId(const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section)
 {
     uint64_t uniqueId = id;
 
@@ -118,11 +118,11 @@ uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId( const uint64_t id, const s
     {
         // IDs < 0 are guaranteed to be unique only inside own section
         const int64_t realId = -static_cast<int64_t>(uniqueId);
-        assert((realId >> 32) == 0);
+        assert((realId >> 48) == 0);
         assert(section);
         assert((section->runtimeGeneratedId >> 16) == 0);
 
-        uniqueId = (static_cast<int64_t>(section->runtimeGeneratedId) << 32) | realId;
+        uniqueId = (static_cast<int64_t>(section->runtimeGeneratedId) << 48) | realId;
         uniqueId = static_cast<uint64_t>(-static_cast<int64_t>(uniqueId));
     }
 

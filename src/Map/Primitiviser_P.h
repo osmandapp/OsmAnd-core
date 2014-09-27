@@ -63,7 +63,8 @@ namespace OsmAnd
             const QList< std::shared_ptr<const Model::BinaryMapObject> >& coastlines,
             QList< std::shared_ptr<const Model::BinaryMapObject> >& outVectorized,
             bool abortIfBrokenCoastlinesExist,
-            bool includeBrokenCoastlines);
+            bool includeBrokenCoastlines,
+            uint64_t& dummySectionObjectsLastUnusedId);
 
         static bool buildCoastlinePolygonSegment(
             const std::shared_ptr<const MapPresentationEnvironment>& env,
@@ -89,8 +90,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapPresentationEnvironment>& env,
             const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
             QList< QVector< PointI > >& coastlinePolylines,
-            QList< QVector< PointI > >& coastlinePolygons,
-            uint64_t osmId);
+            QList< QVector< PointI > >& coastlinePolygons);
 
         static bool isClockwiseCoastlinePolygon(const QVector< PointI > & polygon);
 

@@ -42,7 +42,13 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 {
     const Stopwatch totalStopwatch(metric != nullptr);
 
-    const std::shared_ptr<PrimitivisedArea> primitivisedArea(new PrimitivisedArea(area31, sizeInPixels, zoom, cache, owner->environment));
+    uint64_t dummySectionObjectsLastUnusedId = 0;
+    const std::shared_ptr<PrimitivisedArea> primitivisedArea(new PrimitivisedArea(
+        area31,
+        sizeInPixels,
+        zoom,
+        cache,
+        owner->environment));
     applyEnvironment(owner->environment, primitivisedArea);
     
     const Stopwatch objectsSortingStopwatch(metric != nullptr);
@@ -95,7 +101,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
             detailedmapCoastlineObjects,
             polygonizedCoastlineObjects,
             !basemapCoastlineObjects.isEmpty(),
-            true);
+            true,
+            dummySectionObjectsLastUnusedId);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
         addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= static_cast<ZoomLevel>(BasemapZoom);
     }
@@ -111,7 +118,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
             basemapCoastlineObjects,
             polygonizedCoastlineObjects,
             false,
-            true);
+            true,
+            dummySectionObjectsLastUnusedId);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
     }
 
@@ -132,12 +140,14 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     {
         const auto& encDecRules = owner->environment->dummyMapSection->encodingDecodingRules;
         const std::shared_ptr<Model::BinaryMapObject> bgMapObject(new Model::BinaryMapObject(owner->environment->dummyMapSection, nullptr));
+        bgMapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, owner->environment->dummyMapSection);
         bgMapObject->_isArea = true;
         bgMapObject->_points31.push_back(qMove(PointI(area31.left(), area31.top())));
         bgMapObject->_points31.push_back(qMove(PointI(area31.right(), area31.top())));
         bgMapObject->_points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
         bgMapObject->_points31.push_back(qMove(PointI(area31.left(), area31.bottom())));
         bgMapObject->_points31.push_back(bgMapObject->_points31.first());
+        bgMapObject->_bbox31 = area31;
         if (foundation == MapFoundationType::FullWater)
             bgMapObject->_typesRuleIds.push_back(encDecRules->naturalCoastline_encodingRuleId);
         else if (foundation == MapFoundationType::FullLand || foundation == MapFoundationType::Mixed)
@@ -158,6 +168,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 
         assert(bgMapObject->isClosedFigure());
         polygonizedCoastlineObjects.push_back(qMove(bgMapObject));
+        assert(bgMapObject->_id != std::numeric_limits<uint64_t>::max());
     }
 
     // Obtain primitives
@@ -243,7 +254,8 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     const QList< std::shared_ptr<const Model::BinaryMapObject> >& coastlines,
     QList< std::shared_ptr<const Model::BinaryMapObject> >& outVectorized,
     bool abortIfBrokenCoastlinesExist,
-    bool includeBrokenCoastlines)
+    bool includeBrokenCoastlines,
+    uint64_t& dummySectionObjectsLastUnusedId)
 {
     QList< QVector< PointI > > closedPolygons;
     QList< QVector< PointI > > coastlinePolylines; // Broken == not closed in this case
@@ -256,7 +268,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     alignedArea31.bottom() &= ~((1u << 5) - 1);
     alignedArea31.right() &= ~((1u << 5) - 1);
 
-    uint64_t osmId = 0;
+    uint64_t id = 0;
     QVector< PointI > linePoints31;
     for (const auto& coastline : constOf(coastlines))
     {
@@ -269,7 +281,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
             continue;
         }
 
-        osmId = coastline->id >> 1;
+        id = coastline->id;
         linePoints31.clear();
         auto itPoint = coastline->points31.cbegin();
         auto pp = *itPoint;
@@ -302,10 +314,18 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     if (closedPolygons.isEmpty() && coastlinePolylines.isEmpty())
         return false;
 
+    // Remove section prefix if such exists
+    if (static_cast<int64_t>(id) < 0)
+    {
+        id = (-static_cast<int64_t>(id));
+        id = ((id << 16) >> 16);
+    }
+
     // Draw coastlines
     for (const auto& polyline : constOf(coastlinePolylines))
     {
         const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
+        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_isArea = false;
         mapObject->_points31 = polyline;
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
@@ -323,10 +343,11 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
         mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
         mapObject->_points31.push_back(qMove(PointI(area31.left(), area31.bottom())));
         mapObject->_points31.push_back(mapObject->_points31.first());
-        convertCoastlinePolylinesToPolygons(env, primitivisedArea, coastlinePolylines, mapObject->_innerPolygonsPoints31, osmId);
+        mapObject->_bbox31 = area31;
+        convertCoastlinePolylinesToPolygons(env, primitivisedArea, coastlinePolylines, mapObject->_innerPolygonsPoints31);
 
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
-        mapObject->_id = osmId;
+        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_isArea = true;
 
         assert(mapObject->isClosedFigure());
@@ -349,6 +370,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
         for (const auto& polygon : constOf(coastlinePolylines))
         {
             const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
+            mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
             mapObject->_isArea = false;
             mapObject->_points31 = polygon;
             mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
@@ -361,6 +383,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     for (const auto& polygon : constOf(closedPolygons))
     {
         const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
+        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_isArea = false;
         mapObject->_points31 = polygon;
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
@@ -393,7 +416,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
             mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalLand_encodingRuleId);
             fullLandObjects++;
         }
-        mapObject->_id = osmId;
+        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_isArea = true;
 
         assert(mapObject->isClosedFigure());
@@ -411,14 +434,16 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
 
         // Add complete water tile
         const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
+        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_points31.push_back(qMove(PointI(area31.left(), area31.top())));
         mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.top())));
         mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
         mapObject->_points31.push_back(qMove(PointI(area31.left(), area31.bottom())));
         mapObject->_points31.push_back(mapObject->_points31.first());
+        mapObject->_bbox31 = area31;
 
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
-        mapObject->_id = osmId;
+        mapObject->_id = Model::BinaryMapObject::getUniqueId((id << 1) + 1, env->dummyMapSection);
         mapObject->_isArea = true;
 
         assert(mapObject->isClosedFigure());
@@ -644,8 +669,7 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
     QList< QVector< PointI > >& coastlinePolylines,
-    QList< QVector< PointI > >& coastlinePolygons,
-    uint64_t osmId)
+    QList< QVector< PointI > >& coastlinePolygons)
 {
     // Align area to 32: this fixes coastlines and specifically Antarctica
     auto alignedArea31 = primitivisedArea->area31;
@@ -1389,8 +1413,8 @@ void OsmAnd::Primitiviser_P::sortAndFilterPrimitives(
             if (l->doubledArea != r->doubledArea)
                 return l->doubledArea > r->doubledArea;
 
-            // Then sort by tag=value ordering
-            if (l->typeRuleIdIndex != r->typeRuleIdIndex)
+            // Then sort by tag=value ordering (this is possible only inside same object)
+            if (l->typeRuleIdIndex != r->typeRuleIdIndex && l->sourceObject == r->sourceObject)
             {
                 if (l->type == PrimitiveType::Polygon)
                     return l->typeRuleIdIndex > r->typeRuleIdIndex;
