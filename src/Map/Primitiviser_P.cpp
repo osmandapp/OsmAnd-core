@@ -1915,19 +1915,23 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             const auto pureNativeName = ICU::stripAccentsAndDiacritics(citNativeName.value());
             const auto pureLocalizedName = ICU::stripAccentsAndDiacritics(citLocalizedName.value());
 
-            if (nativeNameOrder < localizedNameOrder)
+            if (pureNativeName.compare(pureLocalizedName, Qt::CaseInsensitive) == 0)
             {
-                captions.remove(localizedNameRuleId);
-                captionsOrder.removeOne(localizedNameRuleId);
-                hasLocalizedName = false;
-                localizedNameOrder = -1;
-            }
-            else // if (localizedNameOrder < nativeNameOrder)
-            {
-                captions.remove(encDecRules->name_encodingRuleId);
-                captionsOrder.removeOne(encDecRules->name_encodingRuleId);
-                hasNativeName = false;
-                nativeNameOrder = -1;
+                // Keep first one
+                if (nativeNameOrder < localizedNameOrder)
+                {
+                    captions.remove(localizedNameRuleId);
+                    captionsOrder.removeOne(localizedNameRuleId);
+                    hasLocalizedName = false;
+                    localizedNameOrder = -1;
+                }
+                else // if (localizedNameOrder < nativeNameOrder)
+                {
+                    captions.remove(encDecRules->name_encodingRuleId);
+                    captionsOrder.removeOne(encDecRules->name_encodingRuleId);
+                    hasNativeName = false;
+                    nativeNameOrder = -1;
+                }
             }
         }
     }
