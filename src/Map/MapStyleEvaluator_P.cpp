@@ -78,8 +78,14 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
 {
     if (resolvedValue.isDynamic)
     {
+        bool wasDisabled = false;
         IntermediateEvaluationResult tempEvaluationResult;
-        evaluate(mapObject, resolvedValue.asDynamicValue.attribute->rootNode, inputValues, &tempEvaluationResult);
+        evaluate(
+            mapObject,
+            resolvedValue.asDynamicValue.attribute->rootNode,
+            inputValues,
+            wasDisabled,
+            &tempEvaluationResult);
 
         ResolvedMapStyle::ResolvedValue evaluatedValue;
         switch (dataType)
@@ -160,8 +166,14 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     IntermediateEvaluationResult intermediateEvaluationResult;
     IntermediateEvaluationResult* const pIntermediateEvaluationResult = outResultStorage ? &intermediateEvaluationResult : nullptr;
 
-    const auto success = evaluate(mapObject.get(), rule->rootNode, inputValues, pIntermediateEvaluationResult);
-    if (!success)
+    bool wasDisabled = false;
+    const auto success = evaluate(
+        mapObject.get(),
+        rule->rootNode,
+        inputValues,
+        wasDisabled,
+        pIntermediateEvaluationResult);
+    if (!success || wasDisabled)
         return false;
 
     if (outResultStorage)
@@ -180,6 +192,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     const Model::BinaryMapObject* const mapObject,
     const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
     const InputValuesDictionary& inputValues,
+    bool& outDisabled,
     IntermediateEvaluationResult* const outResultStorage) const
 {
     const auto citInputValuesEnd = inputValues.cend();
@@ -273,7 +286,10 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 
         assert(!disableValue.isComplex);
         if (disableValue.asSimple.asUInt != 0)
+        {
+            outDisabled = true;
             return false;
+        }
     }
 
     if (outResultStorage && !ruleNode->applyOnlyIfOneOfConditionalsAccepted)
@@ -282,7 +298,13 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     bool atLeastOneConditionalMatched = false;
     for (const auto& oneOfConditionalSubnode : constOf(ruleNode->oneOfConditionalSubnodes))
     {
-        const auto evaluationResult = evaluate(mapObject, oneOfConditionalSubnode, inputValues, outResultStorage);
+        const auto evaluationResult = evaluate(
+            mapObject,
+            oneOfConditionalSubnode,
+            inputValues,
+            outDisabled,
+            outResultStorage);
+
         if (evaluationResult)
         {
             atLeastOneConditionalMatched = true;
@@ -296,7 +318,10 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         fillResultFromRuleNode(ruleNode, *outResultStorage, false);
 
     for (const auto& applySubnode : constOf(ruleNode->applySubnodes))
-        evaluate(mapObject, applySubnode, inputValues, outResultStorage);
+        evaluate(mapObject, applySubnode, inputValues, outDisabled, outResultStorage);
+
+    if (outDisabled)
+        return false;
 
     return true;
 }
@@ -437,12 +462,14 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     IntermediateEvaluationResult intermediateEvaluationResult;
     IntermediateEvaluationResult* const pIntermediateEvaluationResult = outResultStorage ? &intermediateEvaluationResult : nullptr;
 
+    bool wasDisabled = false;
     const auto success = evaluate(
         nullptr,
         attribute->rootNode,
         _inputValues,
+        wasDisabled,
         pIntermediateEvaluationResult);
-    if (!success)
+    if (!success || wasDisabled)
         return false;
 
     if (outResultStorage)

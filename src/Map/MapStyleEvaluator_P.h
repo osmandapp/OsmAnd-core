@@ -55,6 +55,7 @@ namespace OsmAnd
             const Model::BinaryMapObject* const mapObject,
             const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
             const InputValuesDictionary& inputValues,
+            bool& outDisabled,
             IntermediateEvaluationResult* const outResultStorage) const;
 
         bool evaluate(

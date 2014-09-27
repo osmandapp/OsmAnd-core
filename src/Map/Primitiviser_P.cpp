@@ -1685,10 +1685,12 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
     SymbolsCollection& outSymbols)
 {
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 9223372034707225298u)
+    //if ((primitive->sourceObject->id >> 1) == 293776712u)
     //{
     //    int i = 5;
     //}
+    //else
+    //    return;
     //////////////////////////////////////////////////////////////////////////
 
     const auto& points31 = primitive->sourceObject->points31;
