@@ -79,7 +79,7 @@ public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
             long size;
             long offset;
             try {
-                final AssetFileDescriptor resourceFd = assetManager.openFd("OsmAndCore_ResourcesBundle/" + resourceInBundle);
+                final AssetFileDescriptor resourceFd = assetManager.openFd("OsmAndCore_ResourcesBundle/" + resourceInBundle + ".qz");
                 declaredSize = resourceFd.getDeclaredLength();
                 size = resourceFd.getLength();
                 offset = resourceFd.getStartOffset();
