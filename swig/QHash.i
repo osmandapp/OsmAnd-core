@@ -27,7 +27,7 @@ template<class K, class T> class QHash {
 		const T& get(const K& key) throw (std::out_of_range) {
 			QHash<K,T >::iterator i = self->find(key);
 			if (i != self->end())
-				return i->second;
+				return i.value();
 			else
 				throw std::out_of_range("key not found");
 		}
