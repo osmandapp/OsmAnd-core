@@ -99,6 +99,13 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
     }
     const auto dataTile = std::static_pointer_cast<BinaryMapDataTile>(dataTile_);
 
+    //////////////////////////////////////////////////////////////////////////
+    //if (zoom == ZoomLevel12 && tileId.x == 2105 && tileId.y == 1346)
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     // Get primitivised area
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
     const auto primitivisedArea = owner->primitiviser->primitivise(

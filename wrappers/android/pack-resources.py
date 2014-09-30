@@ -34,7 +34,7 @@ class OsmAndCoreResourcesPacker(object):
                 packedSize = len(packedContent)
 
                 with open(filepath + ".qz", "wb") as compressedFile:
-                    compressedFile.write(struct.pack('i', originalSize))
+                    compressedFile.write(struct.pack(">i", originalSize))
                     compressedFile.write(packedContent)
 
                 os.remove(filepath)
