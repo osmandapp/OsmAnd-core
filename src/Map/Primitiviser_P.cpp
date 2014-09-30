@@ -1709,7 +1709,7 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
     SymbolsCollection& outSymbols)
 {
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 293776712u)
+    //if ((primitive->sourceObject->id >> 1) == 9223090561878064380u)
     //{
     //    int i = 5;
     //}
@@ -1792,6 +1792,15 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
 {
     const auto& mapObject = primitive->sourceObject;
 
+    //////////////////////////////////////////////////////////////////////////
+    //if ((primitive->sourceObject->id >> 1) == 9223090561878064380u)
+    //{
+    //    int i = 5;
+    //}
+    //else
+    //    return;
+    //////////////////////////////////////////////////////////////////////////
+
     // Text symbols can only be obtained from captions
     if (mapObject->captions.isEmpty())
         return;
@@ -1819,7 +1828,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             (encDecRules->name_encodingRuleId == std::numeric_limits<uint32_t>::max())
             ? citCaptionsEnd
             : captions.constFind(encDecRules->name_encodingRuleId);
-        auto hasNativeName = (citNativeName != citCaptionsEnd);
+        hasNativeName = (citNativeName != citCaptionsEnd);
         auto nativeNameOrder = hasNativeName
             ? captionsOrder.indexOf(citNativeName.key())
             : -1;
@@ -1832,7 +1841,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
             ? citCaptionsEnd
             : captions.constFind(localizedNameRuleId);
-        auto hasLocalizedName = (citLocalizedName != citCaptionsEnd);
+        hasLocalizedName = (citLocalizedName != citCaptionsEnd);
         auto localizedNameOrder = hasLocalizedName
             ? captionsOrder.indexOf(citLocalizedName.key())
             : -1;
@@ -2023,9 +2032,9 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
                 text->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
         }
         
+        // By default, text order is treated as 100
+        text->order = 100;
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
-        if (!ok)
-            continue;
         //NOTE: a magic shifting of text order. This is needed to keep text more important than anything else
         text->order += 100000;
 
