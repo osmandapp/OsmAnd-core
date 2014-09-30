@@ -124,7 +124,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     if (rasterizedSpriteSymbol->intersectionSize.x > 0)
                         billboardRasterSymbol->margin.x = rasterizedSpriteSymbol->intersectionSize.x - billboardRasterSymbol->size.x;
                     if (rasterizedSpriteSymbol->intersectionSize.y > 0)
-                        billboardRasterSymbol->margin.y = rasterizedSpriteSymbol->intersectionSize.y + billboardRasterSymbol->size.y;
+                        billboardRasterSymbol->margin.y = rasterizedSpriteSymbol->intersectionSize.y - billboardRasterSymbol->size.y;
 
                     // Collect intersection classes
                     for (const auto& intersectsWithClass : constOf(rasterizedSpriteSymbol->primitiveSymbol->intersectsWith))
