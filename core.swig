@@ -157,6 +157,11 @@ using namespace OsmAnd;
 %include <swig/QList.i>
 	%template(QStringList) QList<QString>;
 %include <swig/QVector.i>
+%include <std_map.i>
+%include <swig/QHash.i>
+%include <swig/QMap.i>
+	%template(QStringStringHash) QHash<QString, QString>;
+	%template(QStringStringMap) QMap<QString, QString>;
 
 %include <swig/OsmAndCore_Stubs.h>
 %include <swig/SwigUtilities.h>
