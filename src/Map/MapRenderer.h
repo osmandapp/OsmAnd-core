@@ -70,6 +70,10 @@ namespace OsmAnd
 
                 if (!lWithId && rWithId)
                     return false;
+
+                // Control should never reach this line
+                assert(false);
+                return (l < r);
             }
         };
 
