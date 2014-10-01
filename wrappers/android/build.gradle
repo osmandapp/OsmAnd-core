@@ -210,13 +210,15 @@ task copyOsmAndResources(type: Copy) {
 	// Map icons (Android mdpi == 1.0 ddf):
 	from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
 		include "h_*shield*.png"
+		include "h_*osmc*.png"
 		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=1.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_(.*shield.*)\.png/, '$1.png')
+			fileCopyDetails.path = "[ddf=1.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
 		}
 	}
 	from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
 		include "h_*.png"
 		exclude "h_*shield*.png"
+		exclude "h_*osmc*.png"
 		eachFile { fileCopyDetails ->
 			fileCopyDetails.path = "[ddf=1.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
 		}
@@ -231,13 +233,15 @@ task copyOsmAndResources(type: Copy) {
 	// Map icons (Android hdpi == 1.5 ddf):
 	from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
 		include "h_*shield*.png"
+		include "h_*osmc*.png"
 		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=1.5]/map/shields/" + fileCopyDetails.path.replaceAll(/h_(.*shield.*)\.png/, '$1.png')
+			fileCopyDetails.path = "[ddf=1.5]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
 		}
 	}
 	from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
 		include "h_*.png"
 		exclude "h_*shield*.png"
+		exclude "h_*osmc*.png"
 		eachFile { fileCopyDetails ->
 			fileCopyDetails.path = "[ddf=1.5]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
 		}
@@ -252,13 +256,15 @@ task copyOsmAndResources(type: Copy) {
 	// Map icons (Android xhdpi == 2.0 ddf):
 	from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
 		include "h_*shield*.png"
+		include "h_*osmc*.png"
 		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=2.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_(.*shield.*)\.png/, '$1.png')
+			fileCopyDetails.path = "[ddf=2.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
 		}
 	}
 	from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
 		include "h_*.png"
 		exclude "h_*shield*.png"
+		exclude "h_*osmc*.png"
 		eachFile { fileCopyDetails ->
 			fileCopyDetails.path = "[ddf=2.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
 		}
