@@ -252,70 +252,44 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         }
     }
 
-    // Remove those plotted symbols that do not conform to presentation rules
-    auto itPlottedSymbolsGroupInstancesEntry = mutableIteratorOf(plottedSymbolsMapByGroupAndInstance);
-    while (itPlottedSymbolsGroupInstancesEntry.hasNext())
+    if (Q_LIKELY(!debugSettings->skipSymbolsPresentationModeCheck))
     {
-        const auto& plottedSymbolsGroupInstancesEntry = itPlottedSymbolsGroupInstancesEntry.next();
-        const auto& mapSymbolsGroup = plottedSymbolsGroupInstancesEntry.key();
-        auto& plottedSymbolsGroupInstances = plottedSymbolsGroupInstancesEntry.value();
-
-        if (!mapSymbolsGroup)
+        // Remove those plotted symbols that do not conform to presentation rules
+        auto itPlottedSymbolsGroupInstancesEntry = mutableIteratorOf(plottedSymbolsMapByGroupAndInstance);
+        while (itPlottedSymbolsGroupInstancesEntry.hasNext())
         {
-            plottedSymbolsGroupInstances.discard(this, plottedSymbols, outIntersections);
-            itPlottedSymbolsGroupInstancesEntry.remove();
-            continue;
-        }
+            const auto& plottedSymbolsGroupInstancesEntry = itPlottedSymbolsGroupInstancesEntry.next();
+            const auto& mapSymbolsGroup = plottedSymbolsGroupInstancesEntry.key();
+            auto& plottedSymbolsGroupInstances = plottedSymbolsGroupInstancesEntry.value();
 
-        // Each instance of group is treated as separated group
-        {
-            auto itPlottedSymbolsGroupInstanceEntry = mutableIteratorOf(plottedSymbolsGroupInstances.instancesRefs);
-            while (itPlottedSymbolsGroupInstanceEntry.hasNext())
+            if (!mapSymbolsGroup)
             {
-                const auto& plottedSymbolsGroupInstanceEntry = itPlottedSymbolsGroupInstanceEntry.next();
-                const auto& mapSymbolsGroupInstance = plottedSymbolsGroupInstanceEntry.key();
-                auto& plottedSymbolsGroupInstance = plottedSymbolsGroupInstanceEntry.value();
+                plottedSymbolsGroupInstances.discard(this, plottedSymbols, outIntersections);
+                itPlottedSymbolsGroupInstancesEntry.remove();
+                continue;
+            }
 
-                // Just skip all rules
-                if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnything)
-                    continue;
-
-                // Rule: show all symbols or no symbols
-                if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing)
+            // Each instance of group is treated as separated group
+            {
+                auto itPlottedSymbolsGroupInstanceEntry = mutableIteratorOf(plottedSymbolsGroupInstances.instancesRefs);
+                while (itPlottedSymbolsGroupInstanceEntry.hasNext())
                 {
-                    const auto symbolsCount = mapSymbolsGroupInstance
-                        ? mapSymbolsGroupInstance->symbols.size()
-                        : mapSymbolsGroup->symbols.size();
+                    const auto& plottedSymbolsGroupInstanceEntry = itPlottedSymbolsGroupInstanceEntry.next();
+                    const auto& mapSymbolsGroupInstance = plottedSymbolsGroupInstanceEntry.key();
+                    auto& plottedSymbolsGroupInstance = plottedSymbolsGroupInstanceEntry.value();
 
-                    if (symbolsCount != plottedSymbolsGroupInstance.symbolsRefs.size())
-                    {
-                        // Discard entire group instance
-                        plottedSymbolsGroupInstance.discard(this, plottedSymbols, outIntersections);
-                        itPlottedSymbolsGroupInstanceEntry.remove();
+                    // Just skip all rules
+                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnything)
                         continue;
-                    }
-                }
 
-                // Rule: if there's icon, icon must always be visible. Otherwise discard entire group
-                if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown)
-                {
-                    const auto symbolWithIconContentClass = mapSymbolsGroupInstance
-                        ? mapSymbolsGroupInstance->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon)
-                        : mapSymbolsGroup->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon);
-
-                    if (symbolWithIconContentClass)
+                    // Rule: show all symbols or no symbols
+                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing)
                     {
-                        bool iconPlotted = false;
-                        for (const auto& plottedGroupSymbol : constOf(plottedSymbolsGroupInstance.symbolsRefs))
-                        {
-                            if (plottedGroupSymbol.renderable->mapSymbol == symbolWithIconContentClass)
-                            {
-                                iconPlotted = true;
-                                break;
-                            }
-                        }
+                        const auto symbolsCount = mapSymbolsGroupInstance
+                            ? mapSymbolsGroupInstance->symbols.size()
+                            : mapSymbolsGroup->symbols.size();
 
-                        if (!iconPlotted)
+                        if (symbolsCount != plottedSymbolsGroupInstance.symbolsRefs.size())
                         {
                             // Discard entire group instance
                             plottedSymbolsGroupInstance.discard(this, plottedSymbols, outIntersections);
@@ -323,40 +297,69 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             continue;
                         }
                     }
-                }
 
-                // Rule: if at least one caption was not shown, discard all other captions
-                if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions)
-                {
-                    const auto captionsCount = mapSymbolsGroupInstance
-                        ? mapSymbolsGroupInstance->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption)
-                        : mapSymbolsGroup->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption);
-
-                    if (captionsCount > 0)
+                    // Rule: if there's icon, icon must always be visible. Otherwise discard entire group
+                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowNoneIfIconIsNotShown)
                     {
-                        unsigned int captionsPlotted = 0;
-                        for (const auto& plottedGroupSymbol : constOf(plottedSymbolsGroupInstance.symbolsRefs))
-                        {
-                            if (plottedGroupSymbol.renderable->mapSymbol->contentClass == MapSymbol::ContentClass::Caption)
-                                captionsPlotted++;
-                        }
+                        const auto symbolWithIconContentClass = mapSymbolsGroupInstance
+                            ? mapSymbolsGroupInstance->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon)
+                            : mapSymbolsGroup->getFirstSymbolWithContentClass(MapSymbol::ContentClass::Icon);
 
-                        if (captionsCount != captionsPlotted)
+                        if (symbolWithIconContentClass)
                         {
-                            // Discard all captions since at least one was not shown
-                            plottedSymbolsGroupInstance.discardAllOf(MapSymbol::ContentClass::Caption, this, plottedSymbols, outIntersections);
-                            if (plottedSymbolsGroupInstance.symbolsRefs.isEmpty())
+                            bool iconPlotted = false;
+                            for (const auto& plottedGroupSymbol : constOf(plottedSymbolsGroupInstance.symbolsRefs))
+                            {
+                                if (plottedGroupSymbol.renderable->mapSymbol == symbolWithIconContentClass)
+                                {
+                                    iconPlotted = true;
+                                    break;
+                                }
+                            }
+
+                            if (!iconPlotted)
+                            {
+                                // Discard entire group instance
+                                plottedSymbolsGroupInstance.discard(this, plottedSymbols, outIntersections);
                                 itPlottedSymbolsGroupInstanceEntry.remove();
-                            continue;
+                                continue;
+                            }
+                        }
+                    }
+
+                    // Rule: if at least one caption was not shown, discard all other captions
+                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAllCaptionsOrNoCaptions)
+                    {
+                        const auto captionsCount = mapSymbolsGroupInstance
+                            ? mapSymbolsGroupInstance->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption)
+                            : mapSymbolsGroup->numberOfSymbolsWithContentClass(MapSymbol::ContentClass::Caption);
+
+                        if (captionsCount > 0)
+                        {
+                            unsigned int captionsPlotted = 0;
+                            for (const auto& plottedGroupSymbol : constOf(plottedSymbolsGroupInstance.symbolsRefs))
+                            {
+                                if (plottedGroupSymbol.renderable->mapSymbol->contentClass == MapSymbol::ContentClass::Caption)
+                                    captionsPlotted++;
+                            }
+
+                            if (captionsCount != captionsPlotted)
+                            {
+                                // Discard all captions since at least one was not shown
+                                plottedSymbolsGroupInstance.discardAllOf(MapSymbol::ContentClass::Caption, this, plottedSymbols, outIntersections);
+                                if (plottedSymbolsGroupInstance.symbolsRefs.isEmpty())
+                                    itPlottedSymbolsGroupInstanceEntry.remove();
+                                continue;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // In case all instances of group was removed, erase the group
-        if (plottedSymbolsGroupInstances.instancesRefs.isEmpty())
-            itPlottedSymbolsGroupInstancesEntry.remove();
+            // In case all instances of group was removed, erase the group
+            if (plottedSymbolsGroupInstances.instancesRefs.isEmpty())
+                itPlottedSymbolsGroupInstancesEntry.remove();
+        }
     }
 
     // Publish the result

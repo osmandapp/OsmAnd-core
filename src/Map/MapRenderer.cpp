@@ -18,6 +18,7 @@
 #include "GPUAPI.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "QKeyValueIterator.h"
 
 //#define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 1
 #ifndef OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
@@ -905,6 +906,10 @@ void OsmAnd::MapRenderer::publishMapSymbol(
     const std::shared_ptr<const MapSymbol>& symbol,
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
+    // Ensure that this symbol belongs to specified group
+    assert(symbolGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(symbol)));
+    assert(symbol->groupPtr == symbolGroup.get());
+
     // First try to publish directly
     if (_publishedMapSymbolsByOrderLock.tryLockForWrite())
     {
@@ -934,7 +939,13 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
     const std::shared_ptr<const MapSymbol>& symbol,
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    auto& publishedMapSymbolsByGroup = _publishedMapSymbolsByOrder[symbol->order][symbolGroup];
+    // Ensure that this symbol belongs to specified group
+    assert(symbolGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(symbol)));
+    assert(symbol->groupPtr == symbolGroup.get());
+    assert(validatePublishedMapSymbolsIntegrity());
+
+    auto& publishedMapSymbols = _publishedMapSymbolsByOrder[symbol->order];
+    auto& publishedMapSymbolsByGroup = publishedMapSymbols[symbolGroup];
     auto& symbolReferencedResources = publishedMapSymbolsByGroup[symbol];
     if (symbolReferencedResources.isEmpty())
         _publishedMapSymbolsCount.fetchAndAddOrdered(1);
@@ -953,6 +964,8 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
         _publishedMapSymbolsCount.load(),
         symbolReferencedResources.size());
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+
+    assert(validatePublishedMapSymbolsIntegrity());
 }
 
 void OsmAnd::MapRenderer::unpublishMapSymbol(
@@ -960,6 +973,10 @@ void OsmAnd::MapRenderer::unpublishMapSymbol(
     const std::shared_ptr<const MapSymbol>& symbol,
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
+    // Ensure that this symbol belongs to specified group
+    assert(symbolGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(symbol)));
+    assert(symbol->groupPtr == symbolGroup.get());
+
     // First try to publish directly
     if (_publishedMapSymbolsByOrderLock.tryLockForWrite())
     {
@@ -993,6 +1010,11 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
     const std::shared_ptr<MapRendererBaseResource>& resource,
     const bool mayFail)
 {
+    // Ensure that this symbol belongs to specified group
+    assert(symbolGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(symbol)));
+    assert(symbol->groupPtr == symbolGroup.get());
+    assert(validatePublishedMapSymbolsIntegrity());
+
     const auto itPublishedMapSymbolsByGroup = _publishedMapSymbolsByOrder.find(symbol->order);
     if (itPublishedMapSymbolsByGroup == _publishedMapSymbolsByOrder.end())
     {
@@ -1099,6 +1121,8 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
         symbolReferencedResourcesSize);
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
 
+    assert(validatePublishedMapSymbolsIntegrity());
+
     return true;
 }
 
@@ -1140,6 +1164,42 @@ bool OsmAnd::MapRenderer::processPendingMapSymbols()
     }
 
     return true;
+}
+
+bool OsmAnd::MapRenderer::validatePublishedMapSymbolsIntegrity()
+{
+    bool integrityValid = true;
+
+    for (const auto& publishedMapSymbolsEntry : rangeOf(constOf(publishedMapSymbolsByOrder)))
+    {
+        const auto order = publishedMapSymbolsEntry.key();
+        const auto& publishedMapSymbols = publishedMapSymbolsEntry.value();
+
+        for (const auto& publishedMapSymbolsEntry : constOf(publishedMapSymbols))
+        {
+            const auto& mapSymbolsGroup = publishedMapSymbolsEntry.first;
+            const auto& publishedMapSymbolsFromGroup = publishedMapSymbolsEntry.second;
+
+            // Check that all published map symbols belong to specified group
+            for (const auto& publishedMapSymbolEntry : rangeOf(constOf(publishedMapSymbolsFromGroup)))
+            {
+                const auto& publishedMapSymbol = publishedMapSymbolEntry.key();
+
+                bool validated = true;
+
+                if (publishedMapSymbol->groupPtr != mapSymbolsGroup.get())
+                    validated = false;
+
+                if (!mapSymbolsGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(publishedMapSymbol)))
+                    validated = false;
+
+                if (!validated)
+                    integrityValid = false;
+            }
+        }
+    }
+
+    return integrityValid;
 }
 
 unsigned int OsmAnd::MapRenderer::getSymbolsCount() const

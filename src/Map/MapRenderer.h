@@ -39,32 +39,37 @@ namespace OsmAnd
 
     public:
         // Map symbols groups comparator:
-        // - If ID is available, sort by ID in ascending order
+        // - If ID is available, sort by ID in ascending order in case IDs differ. Otherwise sort by pointer
         // - If ID is unavailable, sort by pointer
-        // - If ID vs no-ID is sorted, no-ID is always goes after
+        // - If ID vs no-ID is sorted, no-ID is always goes "greater" than ID
         struct MapSymbolsGroupsComparator
         {
             bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const
             {
+                //return std::less< std::shared_ptr<const MapSymbolsGroup> >().operator()(l, r);
+
                 const auto lWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(l);
                 const auto rWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(r);
 
                 if (lWithId && rWithId)
                 {
-                    return lWithId->getId() < rWithId->getId();
+                    const auto lId = lWithId->getId();
+                    const auto rId = rWithId->getId();
+
+                    if (lId != rId)
+                        return (lWithId->getId() < rWithId->getId());
+
+                    return (l < r);
                 }
-                else if (!lWithId && !rWithId)
-                {
-                    return l.get() < r.get();
-                }
-                else if (lWithId && !rWithId)
-                {
+
+                if (!lWithId && !rWithId)
+                    return (l < r);
+
+                if (lWithId && !rWithId)
                     return true;
-                }
-                else /* if (!lWithId && rWithId) */
-                {
+
+                if (!lWithId && rWithId)
                     return false;
-                }
             }
         };
 
@@ -132,6 +137,7 @@ namespace OsmAnd
             const std::shared_ptr<MapRendererBaseResource>& resource,
             const bool mayFail);
         bool processPendingMapSymbols();
+        bool validatePublishedMapSymbolsIntegrity();
         
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
@@ -218,7 +224,7 @@ namespace OsmAnd
             const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
 
         // Symbols-related:
-        QReadWriteLock& publishedMapSymbolsByOrderLock;
+        mutable QReadWriteLock& publishedMapSymbolsByOrderLock;
         const PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
 
         // General:

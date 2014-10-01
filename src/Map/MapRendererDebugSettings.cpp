@@ -11,6 +11,7 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck(false)
     , showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck(false)
     , showSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck(false)
+    , skipSymbolsPresentationModeCheck(false)
     , showSymbolsBBoxesRejectedByPresentationMode(false)
     , showOnPathSymbolsRenderablesPaths(false)
     , showOnPath2dSymbolGlyphDetails(false)
@@ -37,6 +38,7 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck = skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck;
     other.showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck = showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
     other.showSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck = showSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck;
+    other.skipSymbolsPresentationModeCheck = skipSymbolsPresentationModeCheck;
     other.showSymbolsBBoxesRejectedByPresentationMode = showSymbolsBBoxesRejectedByPresentationMode;
     other.showOnPathSymbolsRenderablesPaths = showOnPathSymbolsRenderablesPaths;
     other.showOnPath2dSymbolGlyphDetails = showOnPath2dSymbolGlyphDetails;
