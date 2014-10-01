@@ -42,12 +42,11 @@ namespace OsmAnd
         // - If ID is available, sort by ID in ascending order in case IDs differ. Otherwise sort by pointer
         // - If ID is unavailable, sort by pointer
         // - If ID vs no-ID is sorted, no-ID is always goes "greater" than ID
+        //NOTE: Symbol ordering should take into account ordering of primitives actually (in cases that apply)
         struct MapSymbolsGroupsComparator
         {
             bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const
             {
-                //return std::less< std::shared_ptr<const MapSymbolsGroup> >().operator()(l, r);
-
                 const auto lWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(l);
                 const auto rWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(r);
 
