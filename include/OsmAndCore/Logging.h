@@ -37,7 +37,7 @@ namespace OsmAnd
         virtual ~Logger();
 
         QSet< std::shared_ptr<ILogSink> > getCurrentLogSinks() const;
-        void addLogSink(const std::shared_ptr<ILogSink>& logSink);
+        bool addLogSink(const std::shared_ptr<ILogSink>& logSink);
         void removeLogSink(const std::shared_ptr<ILogSink>& logSink);
         void removeAllLogSinks();
 

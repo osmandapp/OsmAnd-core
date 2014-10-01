@@ -21,11 +21,16 @@ QSet< std::shared_ptr<OsmAnd::ILogSink> > OsmAnd::Logger::getCurrentLogSinks() c
     return detachedOf(_sinks);
 }
 
-void OsmAnd::Logger::addLogSink(const std::shared_ptr<ILogSink>& logSink)
+bool OsmAnd::Logger::addLogSink(const std::shared_ptr<ILogSink>& logSink)
 {
     QWriteLocker scopedLocker(&_sinksLock);
 
+    if (!logSink)
+        return false;
+
     _sinks.insert(logSink);
+
+    return true;
 }
 
 void OsmAnd::Logger::removeLogSink(const std::shared_ptr<ILogSink>& logSink)
