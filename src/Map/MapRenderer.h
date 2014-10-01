@@ -224,7 +224,7 @@ namespace OsmAnd
             const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
 
         // Symbols-related:
-        mutable QReadWriteLock& publishedMapSymbolsByOrderLock;
+        QReadWriteLock& publishedMapSymbolsByOrderLock;
         const PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
 
         // General:

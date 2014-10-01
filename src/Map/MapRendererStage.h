@@ -36,7 +36,7 @@ namespace OsmAnd
         const MapRendererState& currentState;
         const MapRendererInternalState& internalState;
         const std::shared_ptr<const MapRendererDebugSettings>& debugSettings;
-        mutable QReadWriteLock& publishedMapSymbolsByOrderLock;
+        QReadWriteLock& publishedMapSymbolsByOrderLock;
         const MapRenderer::PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
 
         virtual bool initialize() = 0;
