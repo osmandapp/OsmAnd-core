@@ -2,6 +2,71 @@ project(protobuf)
 
 prepare_upstream()
 
+if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+	configure_file("config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/config.h" COPYONLY)
+else()
+	include(CheckIncludeFile)
+	include(CheckIncludeFiles)
+
+	check_include_file("hash_map" _HAVE_HASH_MAP)
+	if (_HAVE_HASH_MAP)
+		set(HAVE_HASH_MAP ON)
+		set(HASH_MAP_CLASS "hash_map")
+		set(HASH_MAP_H "<hash_map>")
+		set(HASH_NAMESPACE "std")
+	endif ()
+	
+	check_include_file("unordered_map" _HAVE_UNORDERED_MAP)
+	if (_HAVE_UNORDERED_MAP)
+		set(HAVE_HASH_MAP ON)
+		set(HASH_MAP_CLASS "unordered_map")
+		set(HASH_MAP_H "<unordered_map>")
+		set(HASH_NAMESPACE "std")
+	endif ()
+	
+	check_include_file("hash_set" _HAVE_HASH_SET)
+	if (_HAVE_HASH_SET)
+		set(HAVE_HASH_SET ON)
+		set(HASH_SET_CLASS "hash_set")
+		set(HASH_SET_H "<hash_set>")
+		set(HASH_NAMESPACE "std")
+	endif ()
+	
+	check_include_file("unordered_set" _HAVE_UNORDERED_SET)
+	if (_HAVE_UNORDERED_SET)
+		set(HAVE_HASH_SET ON)
+		set(HASH_SET_CLASS "unordered_set")
+		set(HASH_SET_H "<unordered_set>")
+		set(HASH_NAMESPACE "std")
+	endif ()
+
+	check_include_file("dlfcn.h" HAVE_DLFCN_H)
+	check_include_file("fcntl.h" HAVE_FCNTL_H)
+	check_function_exists("ftruncate" HAVE_FTRUNCATE)
+	check_include_file("inttypes.h" HAVE_INTTYPES_H)
+	check_include_file("limits.h" HAVE_LIMITS_H)
+	check_include_file("memory.h" HAVE_MEMORY_H)
+	check_function_exists("memset" HAVE_MEMSET)
+	check_function_exists("mkdir" HAVE_MKDIR)
+	check_include_file("pthread.h" HAVE_PTHREAD)
+	check_include_file("stdint.h" HAVE_STDINT_H)
+	check_include_file("stdlib.h" HAVE_STDLIB_H)
+	check_function_exists("strchr" HAVE_STRCHR)
+	check_function_exists("strerror" HAVE_STRERROR)
+	check_include_file("strings.h" HAVE_STRINGS_H)
+	check_include_file("string.h" HAVE_STRING_H)
+	check_function_exists("strtol" HAVE_STRTOL)
+	check_include_file("sys/stat.h" HAVE_SYS_STAT_H)
+	check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
+	check_include_file("unistd.h" HAVE_UNISTD_H)
+	set(HAVE_ZLIB ON)
+	unset(PTHREAD_CREATE_JOINABLE)
+	check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
+	set(_POSIX_SOURCE ON)
+
+	configure_file("config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+endif()
+
 add_library(protobuf_static STATIC
 	"upstream.patched/src/google/protobuf/extension_set.cc"
 	"upstream.patched/src/google/protobuf/generated_message_util.cc"
@@ -32,8 +97,7 @@ target_compile_definitions(protobuf_static
 		${target_specific_private_definitions}
 )
 target_include_directories(protobuf_static
-	PRIVATE
-		"."
 	PUBLIC
 		"upstream.patched/src"
+		"${CMAKE_CURRENT_BINARY_DIR}"
 )

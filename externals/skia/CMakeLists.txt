@@ -157,15 +157,30 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/fonts/SkFontMgr_indirect.cpp"
 		"upstream.patched/src/ports/SkDebug_win.cpp"
-		"upstream.patched/src/ports/SkFontHost_win_dw.cpp"
-		"upstream.patched/src/ports/SkFontMgr_default_dw.cpp"
 		"upstream.patched/src/ports/SkOSFile_win.cpp"
-		"upstream.patched/src/ports/SkRemotableFontMgr_win_dw.cpp"
 		"upstream.patched/src/ports/SkTime_win.cpp"
 		"upstream.patched/src/ports/SkTLS_win.cpp"
 		${src_utils_win}
 		${src_gpu_gl_win}
 	)
+	
+	include(CheckTypeSize)
+	set(CMAKE_EXTRA_INCLUDE_FILES "dwrite.h")
+	check_type_size("class IDWriteFontFileEnumerator" SIZEOF_IDWriteFontFileEnumerator)
+	if (SIZEOF_IDWriteFontFileEnumerator)
+		set(target_specific_sources "${target_specific_sources}"
+			"upstream.patched/src/ports/SkFontHost_win_dw.cpp"
+			"upstream.patched/src/ports/SkFontMgr_default_dw.cpp"
+			"upstream.patched/src/ports/SkRemotableFontMgr_win_dw.cpp"
+		)
+	else()
+		set(target_specific_sources "${target_specific_sources}"
+			"upstream.patched/src/ports/SkFontHost_win.cpp"
+			"upstream.patched/src/ports/SkFontMgr_default_gdi.cpp"
+		)
+	endif()
+	unset(CMAKE_EXTRA_INCLUDE_FILES)
+	
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_WIN32
 		-DSK_FONTHOST_USES_FONTMGR
@@ -381,6 +396,7 @@ add_dependencies(skia_static
 target_compile_definitions(skia_static
 	PRIVATE
 	PUBLIC
+	    -DSK_RELEASE
 		${target_specific_definitions_public}
 )
 target_include_directories(skia_static

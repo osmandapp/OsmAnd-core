@@ -18,10 +18,10 @@ targetArch=$3
 if [[ "$targetOS" == "android" ]]; then
 	source "$SRCLOC/build-android.sh"
 	exit $?
-elif [[ "$targetOS" == "windows" ]] || [[ "$targetOS" == "linux" ]] || [[ "$targetOS" == "macosx" ]] || [[ "$targetOS" == "ios" ]]; then
+elif [[ "$targetOS" == "windows" ]] || [[ "$targetOS" == "cygwin" ]] || [[ "$targetOS" == "linux" ]] || [[ "$targetOS" == "macosx" ]] || [[ "$targetOS" == "ios" ]]; then
 	echo "Building Boost for '${targetOS}' is not needed"
 	exit 0
 else
-	echo "'windows', 'linux', 'macosx', 'ios', 'android' are the only supported targets, while '${targetOS}' was specified"
+	echo "'windows', 'cygwin', 'linux', 'macosx', 'ios', 'android' are the only supported targets, while '${targetOS}' was specified"
 	exit 1
 fi

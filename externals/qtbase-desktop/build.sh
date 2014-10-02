@@ -12,13 +12,15 @@ source "$SRCLOC/../../../build/utils/functions.sh"
 cleanupEnvironment
 
 if [[ -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
-	if [[ "$(uname -a)" =~ Linux ]]; then
+	if [[ "$(uname -a)" =~ Linux ]] || [[ "$(uname -a)" =~ CYGWIN ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`nproc`
 	elif [[ "$(uname -a)" =~ Darwin ]]; then
 		OSMAND_BUILD_CPU_CORES_NUM=`sysctl hw.ncpu | awk '{print $2}'`
 	fi
 fi
-echo "$OSMAND_BUILD_CPU_CORES_NUM build threads"
+if [[ ! -z "$OSMAND_BUILD_CPU_CORES_NUM" ]]; then
+	echo "Going to use ${OSMAND_BUILD_CPU_CORES_NUM} build threads"
+fi
 
 targetOS=$1
 compiler=$2
@@ -123,6 +125,28 @@ elif [[ "$targetOS" == "macosx" ]]; then
 		fi
 	else
 		echo "Only 'clang' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
+		exit 1
+	fi
+elif [[ "$targetOS" == "cygwin" ]]; then
+	# cygwin-g++ mkspec does not specify C++ standard to allow -c++11 usage
+	QTBASE_CONFIGURATION=$(echo "
+		-release -opensource -confirm-license -largefile -no-accessibility -qt-sql-sqlite
+		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
+		-v
+	" | tr '\n' ' ')
+
+	if [[ "$compiler" == "gcc" ]]; then
+		if [[ "$targetArch" == "i686" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
+			makeStaticAndSharedFlavor "cygwin.gcc-i686" "cygwin-g++" "$QTBASE_CONFIGURATION"
+		else
+			echo "Only is supported target architecture for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
+			exit 1
+		fi
+	else
+		echo "Only 'gcc' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
 		exit 1
 	fi
 else

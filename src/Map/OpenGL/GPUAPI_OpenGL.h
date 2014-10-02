@@ -125,6 +125,12 @@ namespace OsmAnd
         template <typename T, typename Enable = void>
         struct glPresenseChecker
         {
+            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
+
+            glPresenseChecker(
+                    T* const unknownStuff,
+                    const char* const functionName);
+
             static_assert(std::true_type::value, "What are you doing?");
         };
 

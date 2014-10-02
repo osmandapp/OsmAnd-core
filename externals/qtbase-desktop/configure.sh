@@ -13,6 +13,8 @@ cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.origina
 cp -rpf "$SRCLOC/upstream.original/mkspecs/macx-clang" "$SRCLOC/upstream.original/mkspecs/macx-clang-libc++-64"
 cp -rpf "$SRCLOC/upstream.original/mkspecs/linux-clang" "$SRCLOC/upstream.original/mkspecs/linux-clang-32"
 cp -rpf "$SRCLOC/upstream.original/mkspecs/linux-clang" "$SRCLOC/upstream.original/mkspecs/linux-clang-64"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/win32-g++" "$SRCLOC/upstream.original/mkspecs/win32-g++-32"
+cp -rpf "$SRCLOC/upstream.original/mkspecs/win32-g++" "$SRCLOC/upstream.original/mkspecs/win32-g++-64"
 patchUpstream "$SRCLOC"
 
 # Check if tools are present

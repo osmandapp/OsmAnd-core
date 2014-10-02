@@ -111,20 +111,20 @@ namespace OsmAnd
                 observers = detachedOf(_observers);
             }
 
-#if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 9))
+#if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 9)) && !defined(__clang__)
             //WORKAROUND: Ugly workaround for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=41933
-            const std::function<void ()> workaroudHandler = std::bind(
-                [=]
-                (ARGS&&... wrappedArgs)
+            const auto runnableFunction =
+                [observers]
+                (ARGS... wrappedArgs) -> void
                 {
                     for (const auto& handler : constOf(observers))
                         handler(wrappedArgs...);
-                },
-                std::forward<ARGS>(args)...);
+                };
+            const std::function<void ()> workaroudHandler = std::bind(runnableFunction, args...);
             QThreadPool::globalInstance()->start(new NotifyRunnable(workaroudHandler));
 #else
             QThreadPool::globalInstance()->start(new NotifyRunnable(
-                [=]
+                [observers, args...]
                 ()
                 {
                     for(const auto& handler : constOf(observers))

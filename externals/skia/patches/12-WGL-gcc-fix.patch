@@ -1,0 +1,13 @@
+diff --git a/src/utils/win/SkWGL_win.cpp b/src/utils/win/SkWGL_win.cpp
+index 3b1966d..aa2749d 100644
+--- a/src/utils/win/SkWGL_win.cpp
++++ b/src/utils/win/SkWGL_win.cpp
+@@ -200,7 +200,7 @@ void destroy_dummy_window(HWND dummy) {
+ }
+ 
+ #define GET_PROC(NAME, SUFFIX) f##NAME = \
+-                     (##NAME##Proc) wglGetProcAddress("wgl" #NAME #SUFFIX)
++                     ( NAME##Proc ) wglGetProcAddress("wgl" #NAME #SUFFIX)
+ 
+ SkWGLExtensions::SkWGLExtensions()
+     : fGetExtensionsString(NULL)
