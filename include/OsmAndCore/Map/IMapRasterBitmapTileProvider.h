@@ -16,7 +16,7 @@ class SkBitmap;
 
 namespace OsmAnd
 {
-    //SWIG_DIRECTOR(IMapRasterBitmapTileProvider);
+    SWIG_DIRECTOR(IMapRasterBitmapTileProvider);
     class OSMAND_CORE_API IMapRasterBitmapTileProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapRasterBitmapTileProvider);
