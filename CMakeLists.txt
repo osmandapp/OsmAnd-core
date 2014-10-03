@@ -52,6 +52,16 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_private_definitions ${target_specific_private_definitions}
 		-DOSMAND_GPU_DEBUG=1
 	)
+elseif (CMAKE_TARGET_OS STREQUAL "windows")
+	set(target_specific_public_libraries ${target_specific_public_libraries}
+		Ws2_32
+	)
+	
+	if (CMAKE_COMPILER_FAMILY STREQUAL "gcc")
+		set(target_specific_public_libraries ${target_specific_public_libraries}
+			msvcr110
+		)
+	endif()
 endif()
 
 if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
@@ -254,10 +264,6 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 		PUBLIC
 			${merged_include_dirs_public}
 	)
-	target_link_libraries(OsmAndCore_shared
-		LINK_PUBLIC
-			${merged_link_libs_public}
-	)
 	if (OSMAND_OWN_SHIPPED_QT)
 		target_include_directories(OsmAndCore_shared
 			PUBLIC
@@ -280,6 +286,10 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				Qt5::Core
 		)
 	endif()
+	target_link_libraries(OsmAndCore_shared
+		LINK_PUBLIC
+			${merged_link_libs_public}
+	)
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
@@ -303,10 +313,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 		PUBLIC
 			${merged_include_dirs_public}
 	)
-	target_link_libraries(OsmAndCore_static
-		LINK_PUBLIC
-			${merged_link_libs_public}
-	)
 	if (OSMAND_OWN_SHIPPED_QT)
 		target_include_directories(OsmAndCore_static
 			PUBLIC
@@ -329,6 +335,10 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 				Qt5::Core
 		)
 	endif()
+	target_link_libraries(OsmAndCore_static
+		LINK_PUBLIC
+			${merged_link_libs_public}
+	)
 endif()
 
 if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
@@ -354,10 +364,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 			PUBLIC
 				${merged_include_dirs_public}
 		)
-		target_link_libraries(OsmAndCore_shared_standalone
-			LINK_PUBLIC
-				${merged_link_libs_public}
-		)
 		target_include_directories(OsmAndCore_shared_standalone
 			PUBLIC
 				"${OSMAND_OWN_SHIPPED_QT_STATIC}/include"
@@ -370,6 +376,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 				${Qt5Sql_STATIC_LIBRARIES}
 				${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Core_STATIC_LIBRARIES}
+				${merged_link_libs_public}
 		)
 	endif()
 
@@ -392,10 +399,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 		PUBLIC
 			${merged_include_dirs_public}
 	)
-	target_link_libraries(OsmAndCore_static_standalone
-		LINK_PUBLIC
-			${merged_link_libs_public}
-	)
 	target_include_directories(OsmAndCore_static_standalone
 		PUBLIC
 			"${OSMAND_OWN_SHIPPED_QT_STATIC}/include"
@@ -408,5 +411,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 			${Qt5Sql_STATIC_LIBRARIES}
 			${Qt5Network_STATIC_LIBRARIES}
 			${Qt5Core_STATIC_LIBRARIES}
+			${merged_link_libs_public}
 	)
 endif()

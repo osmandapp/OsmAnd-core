@@ -183,6 +183,11 @@ else()
 	unset(VSI_NEED_LARGEFILE64_SOURCE)
 	
 	set(CMAKE_EXTRA_INCLUDE_FILES "sys/stat.h")
+	set(CMAKE_REQUIRED_DEFINITIONS
+		-D__USE_LARGEFILE64=1
+		-D_LARGEFILE_SOURCE=1
+		-D_LARGEFILE64_SOURCE=1)
+	
 	set(_STAT_IS_64 0)
 	check_function_exists("stat64" HAVE_STAT64)
 	check_function_exists("_stat64" HAVE__STAT64)
@@ -199,11 +204,7 @@ else()
 	elseif (HAVE__STAT)
 		set(VSI_STAT64 "_stat")
 	endif()
-	unset(CMAKE_EXTRA_INCLUDE_FILES)
-	
-	set(CMAKE_EXTRA_INCLUDE_FILES
-		"sys/types.h"
-		"sys/stat.h")
+
 	set(_STAT_STRUCT_IS_64 0)
 	check_type_size("struct stat64" SIZEOF_STAT64)
 	check_type_size("struct _stat64" SIZEOF__STAT64)
@@ -224,10 +225,15 @@ else()
 	elseif (SIZEOF_STAT)
 		set(VSI_STAT64_T "stat")
 	endif()
+	
+	unset(CMAKE_REQUIRED_DEFINITIONS)
 	unset(CMAKE_EXTRA_INCLUDE_FILES)
 	
 	if ((VSI_STAT64 AND NOT VSI_STAT64_T) OR (NOT VSI_STAT64 AND VSI_STAT64_T))
 		message(FATAL_ERROR "Inconsistent configuration of VSI_STAT64 (${VSI_STAT64}) and VSI_STAT64_T (${VSI_STAT64_T})")
+	endif()
+	if (NOT _STAT_IS_64 EQUAL _STAT_STRUCT_IS_64)
+		message(FATAL_ERROR "Inconsistent 32-bit vs 64-bit configuration of VSI_STAT64 (${VSI_STAT64}) and VSI_STAT64_T (${VSI_STAT64_T})")
 	endif()
 	
 	test_big_endian(WORDS_BIGENDIAN)
