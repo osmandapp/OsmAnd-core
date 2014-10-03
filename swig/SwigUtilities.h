@@ -57,9 +57,9 @@ namespace OsmAnd
         }
 
 #ifdef SWIG
-        %apply (char *BYTE, size_t LENGTH) { (const uint8_t* const pBuffer, const size_t bufferSize) }
+        %apply (char *BYTE, size_t LENGTH) { (const char* const pBuffer, const size_t bufferSize) }
 #endif // SWIG
-        inline static QByteArray createQByteArrayAsCopyOf(const uint8_t* const pBuffer, const size_t bufferSize)
+        inline static QByteArray createQByteArrayAsCopyOf(const char* const pBuffer, const size_t bufferSize)
         {
             return QByteArray(reinterpret_cast<const char*>(pBuffer), bufferSize);
         }
@@ -75,12 +75,12 @@ namespace OsmAnd
         }
 
 #ifdef SWIG
-        %apply (char *BYTE, size_t LENGTH) { (const uint8_t* const pBuffer, const size_t bufferSize) }
+        %apply (char *BYTE, size_t LENGTH) { (const char* const pBuffer, const size_t bufferSize) }
 #endif // SWIG
         inline static std::shared_ptr<const SkBitmap> createSkBitmapARGB888With(
             const unsigned int width,
             const unsigned int height,
-            const uint8_t* const pBuffer,
+            const char* const pBuffer,
             const size_t bufferSize)
         {
             const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
