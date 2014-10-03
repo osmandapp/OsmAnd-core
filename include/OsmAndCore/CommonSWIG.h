@@ -40,4 +40,10 @@
 #   define SWIG_DIRECTOR(name)
 #endif
 
+#if defined(SWIG)
+#   define SWIG_OMIT(x)
+#else
+#   define SWIG_OMIT(x) x
+#endif
+
 #endif // !defined(_OSMAND_CORE_COMMON_SWIG_H_)
