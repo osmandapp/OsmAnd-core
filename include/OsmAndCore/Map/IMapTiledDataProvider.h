@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
 #include <OsmAndCore/IQueryController.h>
