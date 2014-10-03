@@ -20,11 +20,17 @@ else()
 	include(TestBigEndian)
 	include(CheckCSourceCompiles) 
 	include(CheckCXXSourceCompiles) 
-	
-	check_include_file("pthread.h" CPL_MULTIPROC_PTHREAD)
-	check_symbol_exists("PTHREAD_MUTEX_RECURSIVE" "pthread.h" HAVE_PTHREAD_MUTEX_RECURSIVE)
-	if (NOT HAVE_PTHREAD_MUTEX_RECURSIVE)
-		set(CPL_MULTIPROC_PTHREAD OFF)
+
+	if (NOT CMAKE_TARGET_OS STREQUAL "windows")
+		check_include_file("pthread.h" HAVE_PTHREAD_H)
+		check_symbol_exists("PTHREAD_MUTEX_RECURSIVE" "pthread.h" _HAVE_PTHREAD_MUTEX_RECURSIVE)
+		if (HAVE_PTHREAD_H AND _HAVE_PTHREAD_MUTEX_RECURSIVE)
+			set(CPL_MULTIPROC_PTHREAD ON)
+			set(HAVE_PTHREAD_MUTEX_RECURSIVE ON)
+		endif()
+	else()
+		unset(HAVE_PTHREAD_H)
+		unset(HAVE_PTHREAD_MUTEX_RECURSIVE)
 	endif()
 	unset(GDAL_PREFIX)
 	check_include_file("assert.h" HAVE_ASSERT_H)
@@ -310,6 +316,7 @@ add_library(gdal_static STATIC
 	"upstream.patched/port/cpl_string.cpp"
 	"upstream.patched/port/cpl_strtod.cpp"
 	"upstream.patched/port/cpl_time.cpp"
+	"upstream.patched/port/cpl_virtualmem.cpp"
 	"upstream.patched/port/cpl_vsi_mem.cpp"
 	"upstream.patched/port/cpl_vsil.cpp"
 	"upstream.patched/port/cpl_vsil_abstract_archive.cpp"
