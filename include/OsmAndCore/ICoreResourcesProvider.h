@@ -18,7 +18,6 @@ class SkBitmap;
 
 namespace OsmAnd
 {
-    SWIG_DIRECTOR(ICoreResourcesProvider);
     class OSMAND_CORE_API ICoreResourcesProvider
     {
         Q_DISABLE_COPY_AND_MOVE(ICoreResourcesProvider);
@@ -48,6 +47,8 @@ namespace OsmAnd
         virtual bool containsResource(
             const QString& name) const = 0;
     };
+
+    SWIG_EMIT_DIRECTOR_FOR(ICoreResourcesProvider);
 }
 
 #endif // !defined(_OSMAND_CORE_I_CORE_RESOURCES_PROVIDER_H_)

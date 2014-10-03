@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/Observable.h>
 
 //NOTE: Even for __COUNT_VA_ARGS__() it will give 1
@@ -109,7 +110,7 @@
 #   define OSMAND_OBSERVER_CALLABLE(name, ...)                                                                                  \
         struct name;                                                                                                            \
                                                                                                                                 \
-        %feature("director") I##name;                                                                                           \
+        SWIG_MARK_AS_DIRECTOR(I##name;)                                                                                         \
         %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
         struct I##name                                                                                                          \
         {                                                                                                                       \
@@ -125,7 +126,7 @@
 #   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
         struct name;                                                                                                            \
                                                                                                                                 \
-        %feature("director") I##name;                                                                                           \
+        SWIG_MARK_AS_DIRECTOR(I##name;)                                                                                         \
         %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
         struct I##name                                                                                                          \
         {                                                                                                                       \

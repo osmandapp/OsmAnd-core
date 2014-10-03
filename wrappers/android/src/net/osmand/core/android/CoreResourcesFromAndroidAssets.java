@@ -27,7 +27,7 @@ import android.util.Log;
 import net.osmand.core.jni.*;
 
 // This class provides reverse mapping from 'embed-resources.list' to files&folders scheme used by OsmAndCore_android.aar package
-public class CoreResourcesFromAndroidAssets extends ICoreResourcesProvider {
+public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProvider {
     private static final String TAG = "CoreResourcesFromAndroidAssets";
 
     private CoreResourcesFromAndroidAssets(final Context context) {

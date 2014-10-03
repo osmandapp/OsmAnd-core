@@ -7,8 +7,8 @@
 #include <QtGlobal>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
 
@@ -16,7 +16,6 @@ class SkBitmap;
 
 namespace OsmAnd
 {
-    SWIG_DIRECTOR(IMapRasterBitmapTileProvider);
     class OSMAND_CORE_API IMapRasterBitmapTileProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapRasterBitmapTileProvider);
@@ -29,6 +28,8 @@ namespace OsmAnd
         virtual uint32_t getTileSize() const = 0;
         virtual float getTileDensityFactor() const = 0;
     };
+	
+    SWIG_EMIT_DIRECTOR_FOR(IMapRasterBitmapTileProvider);
 
     class OSMAND_CORE_API RasterBitmapTile : public MapTiledData
     {
