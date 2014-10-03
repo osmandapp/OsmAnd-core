@@ -38,6 +38,7 @@ $SWIG \
 	-namespace net.osmand.core.dotnet \
 	-outdir "$OUTPUTDIR/gen/csharp" \
 	-o "$OUTPUTDIR/gen/cpp/swig.cpp" \
+	-DSWIG_CSHARP \
 	-I"$SRCLOC/../../include" \
 	-c++ \
 	-v \

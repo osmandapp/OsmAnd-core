@@ -56,6 +56,14 @@ namespace OsmAnd
             return data;
         }
 
+#ifdef SWIG
+        %apply (char *BYTE, size_t LENGTH) { (const uint8_t* const pBuffer, const size_t bufferSize) }
+#endif // SWIG
+        inline static QByteArray createQByteArrayAsCopyOf(const uint8_t* const pBuffer, const size_t bufferSize)
+        {
+            return QByteArray(reinterpret_cast<const char*>(pBuffer), bufferSize);
+        }
+
         inline static QByteArray emptyQByteArray()
         {
             return QByteArray();
@@ -66,6 +74,9 @@ namespace OsmAnd
             return qUncompress(compressedData);
         }
 
+#ifdef SWIG
+        %apply (char *BYTE, size_t LENGTH) { (const uint8_t* const pBuffer, const size_t bufferSize) }
+#endif // SWIG
         inline static std::shared_ptr<const SkBitmap> createSkBitmapARGB888With(
             const unsigned int width,
             const unsigned int height,

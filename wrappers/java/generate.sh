@@ -39,6 +39,7 @@ $SWIG \
 	-package net.osmand.core.jni \
 	-outdir "$OUTPUTDIR/gen/java/net/osmand/core/jni" \
 	-o "$OUTPUTDIR/gen/cpp/swig.cpp" \
+	-DSWIG_JAVA \
 	-I"$SRCLOC/../../include" \
 	-c++ \
 	-v \

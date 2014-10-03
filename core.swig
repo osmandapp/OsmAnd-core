@@ -64,8 +64,10 @@ using namespace OsmAnd;
 
 %include <enums.swg>
 %include <typemaps.i>
+%include <carrays.i>
+%include <various.i>
 %include <stdint.i>
-	%include <cpointer.i>
+%include <cpointer.i>
 	%pointer_class(bool, BoolPtr);
 	%pointer_class(int, IntPtr);
 	%pointer_class(unsigned int, UIntPtr);
@@ -162,6 +164,9 @@ using namespace OsmAnd;
 %include <swig/QMap.i>
 	%template(QStringStringHash) QHash<QString, QString>;
 	%template(QStringStringMap) QMap<QString, QString>;
+#ifdef SWIG_JAVA
+	%include <swig/java/byteArrays.i>
+#endif
 
 %include <swig/OsmAndCore_Stubs.h>
 %include <swig/SwigUtilities.h>
