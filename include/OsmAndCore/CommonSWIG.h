@@ -35,7 +35,7 @@
 #endif
 
 #if defined(SWIG)
-#   define SWIG_MARK_AS_DIRECTOR(name) %feature("director") name;
+#   define SWIG_MARK_AS_DIRECTOR(name) %feature("director") name
 #else
 #   define SWIG_MARK_AS_DIRECTOR(name)
 #endif
@@ -49,6 +49,10 @@
 #if defined(SWIG) || defined(OSMAND_SWIG)
 #   define SWIG_EMIT_DIRECTOR_FOR(name)                                                                                         \
         SWIG_MARK_AS_DIRECTOR(interface_##name);                                                                                \
+        namespace std                                                                                                           \
+        {                                                                                                                       \
+            using namespace ::std;                                                                                              \
+        }                                                                                                                       \
         class interface_##name : public name                                                                                    \
         {                                                                                                                       \
         private:                                                                                                                \
@@ -57,7 +61,6 @@
             interface_##name()                                                                                                  \
             {                                                                                                                   \
             }                                                                                                                   \
-                                                                                                                                \
             virtual ~interface_##name()                                                                                         \
             {                                                                                                                   \
             }                                                                                                                   \

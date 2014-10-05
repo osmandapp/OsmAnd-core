@@ -110,7 +110,7 @@
 #   define OSMAND_OBSERVER_CALLABLE(name, ...)                                                                                  \
         struct name;                                                                                                            \
                                                                                                                                 \
-        SWIG_MARK_AS_DIRECTOR(I##name;)                                                                                         \
+        SWIG_MARK_AS_DIRECTOR(I##name);                                                                                         \
         %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
         struct I##name                                                                                                          \
         {                                                                                                                       \
@@ -126,7 +126,7 @@
 #   define OSMAND_CALLABLE(name, return_type, ...)                                                                              \
         struct name;                                                                                                            \
                                                                                                                                 \
-        SWIG_MARK_AS_DIRECTOR(I##name;)                                                                                         \
+        SWIG_MARK_AS_DIRECTOR(I##name);                                                                                         \
         %rename(method) I##name::operator()(__VA_ARGS__) const;                                                                 \
         struct I##name                                                                                                          \
         {                                                                                                                       \
