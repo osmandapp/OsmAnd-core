@@ -10,9 +10,9 @@ OsmAnd::MapStylesCollection::~MapStylesCollection()
 {
 }
 
-bool OsmAnd::MapStylesCollection::addStyleFromFile(const QString& filePath)
+bool OsmAnd::MapStylesCollection::addStyleFromFile(const QString& filePath, const bool doNotReplace /*= false*/)
 {
-    return _p->addStyleFromFile(filePath);
+    return _p->addStyleFromFile(filePath, doNotReplace);
 }
 
 QList< std::shared_ptr<const OsmAnd::UnresolvedMapStyle> > OsmAnd::MapStylesCollection::getCollection() const

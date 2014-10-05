@@ -62,7 +62,7 @@ bool OsmAnd::MapStylesCollection_P::addStyleFromCoreResource(const QString& reso
     return true;
 }
 
-bool OsmAnd::MapStylesCollection_P::addStyleFromFile(const QString& filePath)
+bool OsmAnd::MapStylesCollection_P::addStyleFromFile(const QString& filePath, const bool doNotReplace)
 {
     QWriteLocker scopedLocker(&_stylesLock);
 
@@ -73,7 +73,7 @@ bool OsmAnd::MapStylesCollection_P::addStyleFromFile(const QString& filePath)
     auto styleName = style->name.toLower();
     if (!styleName.endsWith(QLatin1String(".render.xml")))
         styleName.append(QLatin1String(".render.xml"));
-    if (_styles.contains(styleName))
+    if (doNotReplace && _styles.contains(styleName))
         return false;
     _styles.insert(styleName, style);
 
