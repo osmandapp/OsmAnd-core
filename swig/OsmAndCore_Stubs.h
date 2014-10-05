@@ -4,3 +4,4 @@
 #define Q_DISABLE_COPY_AND_MOVE(x) %nocopyctor x;
 #define Q_DISABLE_MOVE(x) %nocopyctor x;
 #define Q_DISABLE_COPY(x) %nocopyctor x;
+#define std ::std

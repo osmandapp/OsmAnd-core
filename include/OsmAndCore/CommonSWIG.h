@@ -41,12 +41,6 @@
 #endif
 
 #if defined(SWIG)
-#   define SWIG_USE_WITH_SHARED_PTR(name) %shared_ptr(name);
-#else
-#   define SWIG_USE_WITH_SHARED_PTR(name)
-#endif        
-
-#if defined(SWIG)
 #   define SWIG_OMIT(x)
 #else
 #   define SWIG_OMIT(x) x
@@ -54,7 +48,6 @@
 
 #if defined(SWIG) || defined(OSMAND_SWIG)
 #   define SWIG_EMIT_DIRECTOR_FOR(name)                                                                                         \
-        SWIG_USE_WITH_SHARED_PTR(interface_##name);                                                                             \
         SWIG_MARK_AS_DIRECTOR(interface_##name);                                                                                \
         class interface_##name : public name                                                                                    \
         {                                                                                                                       \
