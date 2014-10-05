@@ -49,10 +49,6 @@
 #if defined(SWIG) || defined(OSMAND_SWIG)
 #   define SWIG_EMIT_DIRECTOR_FOR(name)                                                                                         \
         SWIG_MARK_AS_DIRECTOR(interface_##name);                                                                                \
-        namespace std                                                                                                           \
-        {                                                                                                                       \
-            using namespace ::std;                                                                                              \
-        }                                                                                                                       \
         class interface_##name : public name                                                                                    \
         {                                                                                                                       \
         private:                                                                                                                \
