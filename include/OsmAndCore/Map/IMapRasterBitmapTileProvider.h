@@ -29,7 +29,7 @@ namespace OsmAnd
         virtual float getTileDensityFactor() const = 0;
     };
 	
-    SWIG_EMIT_DIRECTOR_FOR(IMapRasterBitmapTileProvider);
+    //SWIG_EMIT_DIRECTOR_FOR(IMapRasterBitmapTileProvider);
 
     class OSMAND_CORE_API RasterBitmapTile : public MapTiledData
     {
