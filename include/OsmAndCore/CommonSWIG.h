@@ -15,7 +15,7 @@
         {                                                                                                                       \
             static std::shared_ptr<thisClass> upcastFrom(const std::shared_ptr<parentClass>& input);                            \
             static std::shared_ptr<parentClass> downcastTo_##parentClass(const std::shared_ptr<thisClass>& input);              \
-        }
+        };
 #elif defined(OSMAND_SWIG)
 #   define SWIG_CASTS(thisClass, parentClass)                                                                                   \
         struct Casts                                                                                                            \
@@ -36,7 +36,7 @@
             {                                                                                                                   \
                 return std::static_pointer_cast< const parentClass >(input);                                                    \
             }                                                                                                                   \
-        }
+        };
 #else
 #   define SWIG_CASTS(thisClass, parentClass)
 #endif
@@ -215,20 +215,6 @@
 #   define SWIG_EMIT_DIRECTOR_VOID_METHOD_NO_ARGS(name)
 #   define SWIG_EMIT_DIRECTOR_VOID_CONST_METHOD_NO_ARGS(name)
 #   define SWIG_EMIT_DIRECTOR_END(name)
-#endif
-
-// SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN
-#if defined(SWIG)
-#   define SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN(type)                                                                          \
-        inline void referenceAssign(const std::shared_ptr< type >& input, std::shared_ptr< type >& output);
-#elif defined(OSMAND_SWIG)
-#   define SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN(type)                                                                          \
-        inline void referenceAssign(const std::shared_ptr< type >& input, std::shared_ptr< type >& output)                      \
-        {                                                                                                                       \
-            output = input;                                                                                                     \
-        }
-#else
-#   define SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN(type)
 #endif
 
 #endif // !defined(_OSMAND_CORE_COMMON_SWIG_H_)

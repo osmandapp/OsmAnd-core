@@ -4,7 +4,6 @@
 //%nspace;
 
 %{
-#include "SwigUtilities.h"
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Bitmask.h>
@@ -57,6 +56,7 @@
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapTileProvider.h>
+#include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
 using namespace OsmAnd;
@@ -161,8 +161,8 @@ using namespace OsmAnd;
 %include <swig/QVector.i>
 %include <std_map.i>
 %include <swig/QHash.i>
-%include <swig/QMap.i>
 	%template(QStringStringHash) QHash<QString, QString>;
+%include <swig/QMap.i>
 	%template(QStringStringMap) QMap<QString, QString>;
 #ifdef SWIG_JAVA
 	%include <swig/java/byteArrays.i>

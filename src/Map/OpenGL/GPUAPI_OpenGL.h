@@ -129,7 +129,12 @@ namespace OsmAnd
 
             glPresenseChecker(
                     T* const unknownStuff,
-                    const char* const functionName);
+                    const char* const functionName)
+            {
+                LogPrintf(LogSeverityLevel::Error, "'%s' is not function or function pointer!", functionName);
+                LogFlush();
+                std::terminate();
+            }
 
             static_assert(std::true_type::value, "What are you doing?");
         };
