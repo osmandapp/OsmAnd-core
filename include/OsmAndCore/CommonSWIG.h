@@ -41,6 +41,7 @@
 #   define SWIG_CASTS(thisClass, parentClass)
 #endif
 
+// SWIG_MARK_AS_DIRECTOR
 #if defined(SWIG)
 #   define SWIG_MARK_AS_DIRECTOR(name) %feature("director") name
 #else
@@ -53,6 +54,7 @@
 #   define SWIG_OMIT(x) x
 #endif
 
+// Directors
 #if defined(SWIG)
 #   define SWIG_EMIT_DIRECTOR_BEGIN(name)                                                                                       \
         SWIG_MARK_AS_DIRECTOR(interface_##name);                                                                                \
@@ -68,7 +70,7 @@
 #   define SWIG_EMIT_DIRECTOR_CONST_METHOD(return_type, name, ...)                                                              \
             virtual return_type name( __VA_ARGS__ ) const = 0;
 #   define SWIG_EMIT_DIRECTOR_END(name)                                                                                         \
-            std::shared_ptr< ##name > instantiateProxy();                                                                       \
+            std::shared_ptr< name > instantiateProxy();                                                                         \
         };
 #elif defined(OSMAND_SWIG)
 #   define SWIG_EMIT_DIRECTOR_BEGIN(name)                                                                                       \
@@ -162,6 +164,20 @@
 #   define SWIG_EMIT_DIRECTOR_METHOD(return_type, name, ...)
 #   define SWIG_EMIT_DIRECTOR_CONST_METHOD(return_type, name, ...)
 #   define SWIG_EMIT_DIRECTOR_END(name)
-#endif   
+#endif
+
+// SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN
+#if defined(SWIG)
+#   define SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN(type)                                                                          \
+        inline void referenceAssign(const std::shared_ptr< type >& input, std::shared_ptr< type >& output);
+#elif defined(OSMAND_SWIG)
+#   define SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN(type)                                                                          \
+        inline void referenceAssign(const std::shared_ptr< type >& input, std::shared_ptr< type >& output)                      \
+        {                                                                                                                       \
+            output = input;                                                                                                     \
+        }
+#else
+#   define SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN(type)
+#endif
 
 #endif // !defined(_OSMAND_CORE_COMMON_SWIG_H_)

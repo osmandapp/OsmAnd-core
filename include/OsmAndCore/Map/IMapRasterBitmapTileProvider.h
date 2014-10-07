@@ -43,6 +43,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             std::shared_ptr<MapTiledData>& outTiledData,
             const IQueryController* const queryController);
+        SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN(MapTiledData);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
             uint32_t,
             getTileSize);

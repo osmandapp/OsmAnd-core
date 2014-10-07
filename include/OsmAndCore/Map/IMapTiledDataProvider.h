@@ -29,7 +29,7 @@ namespace OsmAnd
         virtual ZoomLevel getMaxZoom() const = 0;
 
         virtual bool obtainData(
-            SWIG_OMIT(const) TileId tileId,
+            const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<MapTiledData>& outTiledData,
             const IQueryController* const queryController = nullptr) = 0;
