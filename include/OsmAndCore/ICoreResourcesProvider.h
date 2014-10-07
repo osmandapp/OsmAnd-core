@@ -59,16 +59,7 @@ namespace OsmAnd
             QByteArray,
             getResource,
             const QString& name,
-            const float displayDensityFactor);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD(
-            QByteArray,
-            getResource,
-            const QString& name,
             bool* ok);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD(
-            QByteArray,
-            getResource,
-            const QString& name);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
             bool,
             containsResource,

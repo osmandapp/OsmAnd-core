@@ -98,7 +98,7 @@ public class MainActivity extends ActionBarActivity {
 
         Log.i(TAG, "Initializing core...");
         _coreResources = CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this);
-        OsmAndCore.InitializeCore(_coreResources);
+        OsmAndCore.InitializeCore(_coreResources.instantiateProxy());
 
         _fileLogSink = QIODeviceLogSink.createFileLogSink(Environment.getExternalStorageDirectory() + "/osmand/osmandcore.log");
         Logger.get().addLogSink(_fileLogSink);
