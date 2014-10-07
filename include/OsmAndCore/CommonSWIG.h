@@ -210,6 +210,10 @@
 #   define SWIG_EMIT_DIRECTOR_CONST_METHOD(return_type, name, ...)
 #   define SWIG_EMIT_DIRECTOR_VOID_METHOD(name, ...)
 #   define SWIG_EMIT_DIRECTOR_VOID_CONST_METHOD(name, ...)
+#   define SWIG_EMIT_DIRECTOR_METHOD_NO_ARGS(return_type, name)
+#   define SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(return_type, name)
+#   define SWIG_EMIT_DIRECTOR_VOID_METHOD_NO_ARGS(name)
+#   define SWIG_EMIT_DIRECTOR_VOID_CONST_METHOD_NO_ARGS(name)
 #   define SWIG_EMIT_DIRECTOR_END(name)
 #endif
 
