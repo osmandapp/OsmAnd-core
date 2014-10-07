@@ -68,7 +68,7 @@
 #   define SWIG_EMIT_DIRECTOR_CONST_METHOD(return_type, name, ...)                                                              \
             virtual return_type name( __VA_ARGS__ ) const = 0;
 #   define SWIG_EMIT_DIRECTOR_END(name)                                                                                         \
-            std::shared_ptr< ##name > instantiateProxy() const;                                                                 \
+            std::shared_ptr< ##name > instantiateProxy();                                                                       \
         };
 #elif defined(OSMAND_SWIG)
 #   define SWIG_EMIT_DIRECTOR_BEGIN(name)                                                                                       \
@@ -152,7 +152,7 @@
                 return _instance->name(_SWIG_DIRECTOR_METHOD_PASS_ARGUMENTS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                 \
             }
 #   define SWIG_EMIT_DIRECTOR_END(name)                                                                                         \
-            std::shared_ptr< name > instantiateProxy() const                                                                    \
+            std::shared_ptr< name > instantiateProxy()                                                                          \
             {                                                                                                                   \
                 return std::shared_ptr< name >( new interface_##name(this) );                                                   \
             }                                                                                                                   \
