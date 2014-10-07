@@ -150,9 +150,9 @@
                 return _instance->name(_SWIG_DIRECTOR_METHOD_PASS_ARGUMENTS( __COUNT_VA_ARGS__(__VA_ARGS__) ));                 \
             }
 #   define SWIG_EMIT_DIRECTOR_END(name)                                                                                         \
-            std::shared_ptr< ##name > instantiateProxy() const;                                                                 \
+            std::shared_ptr< name > instantiateProxy() const;                                                                   \
             {                                                                                                                   \
-                return std::shared_ptr< ##name >( new interface_##name(this) );                                                 \
+                return std::shared_ptr< name >( new interface_##name(this) );                                                   \
             }                                                                                                                   \
         };
 #else
