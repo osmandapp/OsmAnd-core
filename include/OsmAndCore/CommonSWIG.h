@@ -70,7 +70,7 @@
         };
 #elif defined(OSMAND_SWIG)
 #   define SWIG_EMIT_DIRECTOR_BEGIN(name)                                                                                       \
-        class interface_##name : public ##name                                                                                  \
+        class interface_##name : public name                                                                                    \
         {                                                                                                                       \
         private:                                                                                                                \
             interface_##name* const _instance;                                                                                  \
