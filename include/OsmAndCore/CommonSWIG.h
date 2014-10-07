@@ -1,6 +1,8 @@
 #ifndef _OSMAND_CORE_COMMON_SWIG_H_
 #define _OSMAND_CORE_COMMON_SWIG_H_
 
+#include <OsmAndCore/stdlib_common.h>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
 
