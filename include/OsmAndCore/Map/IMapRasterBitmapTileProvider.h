@@ -29,13 +29,13 @@ namespace OsmAnd
         virtual float getTileDensityFactor() const = 0;
     };
 	
-    SWIG_EMIT_DIRECTOR_BEGIN(IMapRasterBitmapTileProvider);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            ZoomLevel,
-            getMinZoom);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            ZoomLevel,
-            getMaxZoom);
+//    SWIG_EMIT_DIRECTOR_BEGIN(IMapRasterBitmapTileProvider);
+//        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+//            ZoomLevel,
+//            getMinZoom);
+//        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+//            ZoomLevel,
+//            getMaxZoom);
 //NOTE: This won't work due to directors+shared_ptr are not supported. To summarize: it's currently impossible to use any %shared_ptr-marked type in a director declaration
 //        SWIG_EMIT_DIRECTOR_METHOD(
 //            bool,
@@ -44,13 +44,13 @@ namespace OsmAnd
 //            const ZoomLevel zoom,
 //            std::shared_ptr<MapTiledData>& outTiledData,
 //            const IQueryController* const queryController);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            uint32_t,
-            getTileSize);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
-            float,
-            getTileDensityFactor);
-    SWIG_EMIT_DIRECTOR_END(IMapRasterBitmapTileProvider);
+//        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+//            uint32_t,
+//            getTileSize);
+//        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+//            float,
+//            getTileDensityFactor);
+//    SWIG_EMIT_DIRECTOR_END(IMapRasterBitmapTileProvider);
 
     class OSMAND_CORE_API RasterBitmapTile : public MapTiledData
     {
