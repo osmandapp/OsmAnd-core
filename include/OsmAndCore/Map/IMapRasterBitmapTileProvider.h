@@ -30,10 +30,10 @@ namespace OsmAnd
     };
 	
     SWIG_EMIT_DIRECTOR_BEGIN(IMapRasterBitmapTileProvider);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             ZoomLevel,
             getMinZoom);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             ZoomLevel,
             getMaxZoom);
         SWIG_EMIT_DIRECTOR_METHOD(
@@ -44,10 +44,10 @@ namespace OsmAnd
             std::shared_ptr<MapTiledData>& outTiledData,
             const IQueryController* const queryController);
         SWIG_EMIT_SHARED_PTR_REFERENCE_ASSIGN(MapTiledData);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             uint32_t,
             getTileSize);
-        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             float,
             getTileDensityFactor);
     SWIG_EMIT_DIRECTOR_END(IMapRasterBitmapTileProvider);
