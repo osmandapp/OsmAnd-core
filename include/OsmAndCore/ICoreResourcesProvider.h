@@ -18,8 +18,7 @@ class SkBitmap;
 
 namespace OsmAnd
 {
-	SWIG_MARK_AS_DIRECTOR(ICoreResourcesProvider);
-    class OSMAND_CORE_API ICoreResourcesProvider
+	class OSMAND_CORE_API ICoreResourcesProvider
     {
         Q_DISABLE_COPY_AND_MOVE(ICoreResourcesProvider);
 
@@ -49,7 +48,28 @@ namespace OsmAnd
             const QString& name) const = 0;
     };
 
-    //SWIG_EMIT_DIRECTOR_FOR(ICoreResourcesProvider);
+    SWIG_EMIT_DIRECTOR_BEGIN(ICoreResourcesProvider);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            QByteArray,
+            getResource,
+            const QString& name,
+            const float displayDensityFactor,
+            bool* ok = nullptr);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            QByteArray,
+            getResource,
+            const QString& name,
+            bool* ok = nullptr);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            bool,
+            containsResource,
+            const QString& name,
+            const float displayDensityFactor);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            bool,
+            containsResource,
+            const QString& name);
+    SWIG_EMIT_DIRECTOR_END(ICoreResourcesProvider);
 }
 
 #endif // !defined(_OSMAND_CORE_I_CORE_RESOURCES_PROVIDER_H_)
