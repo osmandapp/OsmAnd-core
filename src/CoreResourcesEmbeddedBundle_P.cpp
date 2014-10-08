@@ -29,12 +29,20 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadFromCurrentExecutable()
     _bundleLibraryNeedsClose = false;
     _bundleLibrary = GetModuleHandleA(NULL);
     if (_bundleLibrary == NULL)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to open main program executable as library");
         return false;
+    }
 #else
     _bundleLibraryNeedsClose = true;
     _bundleLibrary = dlopen(NULL, RTLD_NOW | RTLD_GLOBAL);
     if (_bundleLibrary == NULL)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to open main program executable as library");
         return false;
+    }
 #endif
 
     if (!loadResources())
@@ -52,12 +60,20 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadFromLibrary(const QString& libra
     _bundleLibraryNeedsClose = true;
     _bundleLibrary = LoadLibraryA(qPrintable(libraryNameOrFilename));
     if (_bundleLibrary == NULL)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to load library from '%s'", qPrintable(libraryNameOrFilename));
         return false;
+    }
 #else
     _bundleLibraryNeedsClose = true;
     _bundleLibrary = dlopen(qPrintable(libraryNameOrFilename), RTLD_NOW | RTLD_GLOBAL);
     if (_bundleLibrary == NULL)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to load library from '%s'", qPrintable(libraryNameOrFilename));
         return false;
+    }
 #endif
 
     if (!loadResources())
@@ -109,11 +125,7 @@ void* OsmAnd::CoreResourcesEmbeddedBundle_P::loadSymbol(const char* const symbol
 
 bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadResources()
 {
-#if defined(OSMAND_TARGET_OS_windows)
     typedef const void* (*GetPointerFunctionPtr)();
-#else
-    typedef const void* (*GetPointerFunctionPtr)();
-#endif
     typedef const char* NamePtr;
     typedef const uint8_t* DataPtr;
 

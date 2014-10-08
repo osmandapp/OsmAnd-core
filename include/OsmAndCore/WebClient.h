@@ -60,16 +60,13 @@ namespace OsmAnd
     protected:
     public:
         WebClient(
-            const QString& userAgent = QString::null,
+            const QString& userAgent = QLatin1String("OsmAnd Core"),
             const unsigned int concurrentRequestsLimit = 1,
             const unsigned int retriesLimit = 1,
             const bool followRedirects = true);
         virtual ~WebClient();
 
         // "User-Agent" setting:
-        static const QString BuiltinUserAgent;
-        static QString getDefaultUserAgent();
-        static void setDefaultUserAgent(const QString& userAgent);
         QString getUserAgent() const;
         void setUserAgent(const QString& userAgent);
 

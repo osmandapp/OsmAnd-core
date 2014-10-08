@@ -18,7 +18,7 @@ OsmAnd::WebClient_P::WebClient_P(
     const unsigned int retriesLimit_,
     const bool followRedirects_)
     : owner(owner_)
-    , _userAgent(userAgent_.isNull() ? getDefaultUserAgent() : detachedOf(userAgent_))
+    , _userAgent(userAgent_)
     , _retriesLimit(retriesLimit_)
     , _followRedirects(followRedirects_ ? 1 : 0)
 {
@@ -29,23 +29,6 @@ OsmAnd::WebClient_P::~WebClient_P()
 {
     _threadPool.clear();
     REPEAT_UNTIL(_threadPool.waitForDone());
-}
-
-QReadWriteLock OsmAnd::WebClient_P::_defaultUserAgentLock;
-QString OsmAnd::WebClient_P::_defaultUserAgent(OsmAnd::WebClient::BuiltinUserAgent);
-
-QString OsmAnd::WebClient_P::getDefaultUserAgent()
-{
-    QReadLocker scopedLocker(&_defaultUserAgentLock);
-
-    return detachedOf(_defaultUserAgent);
-}
-
-void OsmAnd::WebClient_P::setDefaultUserAgent(const QString& userAgent)
-{
-    QWriteLocker scopedLocker(&_defaultUserAgentLock);
-
-    _defaultUserAgent = detachedOf(userAgent);
 }
 
 QString OsmAnd::WebClient_P::getUserAgent() const

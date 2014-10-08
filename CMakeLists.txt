@@ -56,12 +56,6 @@ elseif (CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		Ws2_32
 	)
-	
-	if (CMAKE_COMPILER_FAMILY STREQUAL "gcc")
-		set(target_specific_public_libraries ${target_specific_public_libraries}
-			msvcr110
-		)
-	endif()
 endif()
 
 if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")

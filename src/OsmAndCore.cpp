@@ -90,7 +90,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
     if (!coreResourcesProvider)
     {
         std::cerr << "OsmAnd core requires non-null core resources provider!" << std::endl;
-        std::terminate();
+        return false;
     }
     
     gCoreResourcesProvider = coreResourcesProvider;

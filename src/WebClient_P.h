@@ -39,8 +39,6 @@ namespace OsmAnd
             const unsigned int retriesLimit,
             const bool followRedirects);
 
-        static QReadWriteLock _defaultUserAgentLock;
-        static QString _defaultUserAgent;
         mutable QReadWriteLock _userAgentLock;
         QString _userAgent;
 
@@ -98,8 +96,6 @@ namespace OsmAnd
         ImplementationInterface<WebClient> owner;
 
         // "User-Agent" setting:
-        static QString getDefaultUserAgent();
-        static void setDefaultUserAgent(const QString& userAgent);
         QString getUserAgent() const;
         void setUserAgent(const QString& userAgent);
 

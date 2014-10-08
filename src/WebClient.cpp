@@ -2,7 +2,7 @@
 #include "WebClient_P.h"
 
 OsmAnd::WebClient::WebClient(
-    const QString& userAgent /*= QString::null*/,
+    const QString& userAgent /*= QLatin1String("OsmAnd Core")*/,
     const unsigned int concurrentRequestsLimit /*= 1*/,
     const unsigned int retriesLimit /*= 1*/,
     const bool followRedirects /*= true*/)
@@ -12,18 +12,6 @@ OsmAnd::WebClient::WebClient(
 
 OsmAnd::WebClient::~WebClient()
 {
-}
-
-const QString OsmAnd::WebClient::BuiltinUserAgent(QLatin1String("OsmAnd Core"));
-
-QString OsmAnd::WebClient::getDefaultUserAgent()
-{
-    return WebClient_P::getDefaultUserAgent();
-}
-
-void OsmAnd::WebClient::setDefaultUserAgent(const QString& userAgent)
-{
-    WebClient_P::setDefaultUserAgent(userAgent);
 }
 
 QString OsmAnd::WebClient::getUserAgent() const

@@ -30,17 +30,10 @@ if "%targetArch%"=="i686" (
 	set validArch=1
 )
 if "%targetArch%"=="amd64" (
-	if "%compiler%"=="msvc" (
-		set validArch=1
-	)
+	set validArch=1
 )
 if not "%validArch%"=="1" (
-	if "%compiler%"=="msvc" (
-		echo 'i686' and 'amd64' are the only supported target architectures, while '%targetArch%' was specified
-	)
-	if "%compiler%"=="gcc" (
-		echo 'i686' is the only supported target architectures, while '%targetArch%' was specified
-	)
+	echo 'i686' and 'amd64' are the only supported target architectures, while '%targetArch%' was specified
 	exit /B 1
 )
 echo Going to build embedded Qt for %targetOS%/%compiler%/%targetArch%
