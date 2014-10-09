@@ -1050,8 +1050,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 9223371946659592355 ||
-    //    (mapObject->id >> 1) == 9223371946659583021)
+    //if ((mapObject->id >> 1) == 192124575u)
     //{
     //    int i = 5;
     //}
@@ -1793,7 +1792,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
     const auto& mapObject = primitive->sourceObject;
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 9223090561878064380u)
+    //if ((primitive->sourceObject->id >> 1) == 189600735u)
     //{
     //    int i = 5;
     //}
@@ -1979,7 +1978,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         if (caption.isEmpty())
             continue;
 
-        // Skip captions that are names but not of 'native' or 'localized' language
+        // Skip captions that are from 'name[:*]'-tags but not of 'native' or 'localized' language
         if (captionRuleId != encDecRules->name_encodingRuleId &&
             captionRuleId != localizedNameRuleId &&
             encDecRules->namesRuleId.contains(captionRuleId))
@@ -1994,7 +1993,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, primitivisedArea->zoom);
         textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
 
-        // Get tag of rule, in case caption is not a name
+        // Get tag of rule, in case caption is not from a 'name[:*]'-tag
         QString captionRuleTag;
         if (captionRuleId != encDecRules->name_encodingRuleId && captionRuleId != localizedNameRuleId)
             captionRuleTag = encDecRules->decodingRules[captionRuleId].tag;

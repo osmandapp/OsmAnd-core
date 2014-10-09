@@ -7,8 +7,6 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
-#include <SkDashPathEffect.h>
-#include <SkBitmapProcShader.h>
 #include <SkError.h>
 #include <SkBitmapDevice.h>
 #include "restore_internal_warnings.h"
@@ -60,7 +58,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const auto& symbolsGroup = symbolGroupEntry.value();
 
         //////////////////////////////////////////////////////////////////////////
-        //if ((mapObject->id >> 1) == 9223372034707225298u)
+        //if ((mapObject->id >> 1) == 189600735u)
         //{
         //    int i = 5;
         //}

@@ -79,7 +79,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
         const auto& mapObject = rasterizedGroup->mapObject;
 
         //////////////////////////////////////////////////////////////////////////
-        //if ((mapObject->id >> 1) == 7381701u)
+        //if ((mapObject->id >> 1) == 189600735u)
         //{
         //    int i = 5;
         //}

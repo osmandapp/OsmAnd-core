@@ -32,6 +32,11 @@
 #   define OSMAND_LOG_RESOURCE_STATE_CHANGE 0
 #endif // !defined(OSMAND_LOG_RESOURCE_STATE_CHANGE)
 
+//#define OSMAND_SINGLE_RESOURCES_WORKER 1
+#ifndef OSMAND_SINGLE_RESOURCES_WORKER
+#   define OSMAND_SINGLE_RESOURCES_WORKER 0
+#endif // !defined(OSMAND_SINGLE_RESOURCES_WORKER)
+
 #if OSMAND_LOG_RESOURCE_STATE_CHANGE
 #   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)                                                                          \
     if (const auto tiledResource = std::dynamic_pointer_cast<const BaseTiledResource>(resource))                                            \
@@ -59,6 +64,9 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     , processingTileStub(_processingTileStub)
     , unavailableTileStub(_unavailableTileStub)
 {
+#if OSMAND_SINGLE_RESOURCES_WORKER
+    _resourcesRequestWorkersPool.setMaxThreadCount(1);
+#endif //OSMAND_SINGLE_RESOURCES_WORKER
 #if OSMAND_DEBUG
     LogPrintf(LogSeverityLevel::Info, "Map renderer will use max %d worker thread(s) to process requests", _resourcesRequestWorkersPool.maxThreadCount());
 #endif

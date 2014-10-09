@@ -4,8 +4,6 @@
 #include <limits>
 
 #include "ignore_warnings_on_external_includes.h"
-#include <SkDashPathEffect.h>
-#include <SkBitmapProcShader.h>
 #include <SkImageDecoder.h>
 #include <SkStream.h>
 #include "restore_internal_warnings.h"
@@ -243,6 +241,13 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(const QString& name,
 QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QString& name) const
 {
     bool ok = false;
+
+    //////////////////////////////////////////////////////////////////////////
+    //if (name.contains(QLatin1String("/osmc_")))
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
 
     // Try to obtain from external resources first
     if (static_cast<bool>(owner->externalResourcesProvider))
