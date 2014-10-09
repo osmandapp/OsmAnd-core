@@ -5,6 +5,7 @@ prepare_upstream()
 if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 	configure_file("config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/config.h" COPYONLY)
 else()
+	save_and_set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_FLAGS}")
 	include(CheckIncludeFile)
 	include(CheckIncludeFiles)
 	include(CheckFunctionExists)
@@ -401,6 +402,8 @@ else()
 	endif()
 
 	configure_file("config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
+	
+	restore(CMAKE_REQUIRED_FLAGS)
 endif()
 
 set(target_specific_sources "")

@@ -5,6 +5,7 @@ prepare_upstream()
 if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 	configure_file("config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/config.h" COPYONLY)
 else()
+	save_and_set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_FLAGS}")
 	include(CheckIncludeFile)
 	include(CheckIncludeFiles)
 
@@ -63,6 +64,8 @@ else()
 	unset(PTHREAD_CREATE_JOINABLE)
 	check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
 	set(_POSIX_SOURCE ON)
+	
+	restore(CMAKE_REQUIRED_FLAGS)
 
 	configure_file("config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/config.h")
 endif()

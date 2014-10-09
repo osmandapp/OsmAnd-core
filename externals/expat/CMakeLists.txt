@@ -5,6 +5,8 @@ prepare_upstream()
 if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 	configure_file("expat_config.h.ios" "${CMAKE_CURRENT_BINARY_DIR}/expat_config.h" COPYONLY)
 else()
+	save_and_set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_C_FLAGS}")
+
 	# Modified content from 'ConfigureChecks.cmake':
 	include(CheckIncludeFile)
 	include(CheckIncludeFiles)
@@ -48,6 +50,9 @@ else()
 		set(SIZE_T "unsigned")
 	endif(HAVE_SYS_TYPES_H)
 	# End of modified content from 'ConfigureChecks.cmake'
+	
+	restore(CMAKE_REQUIRED_FLAGS)
+	
 	configure_file("expat_config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/expat_config.h")
 endif()
 
