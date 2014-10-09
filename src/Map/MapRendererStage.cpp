@@ -23,3 +23,8 @@ const OsmAnd::MapRendererResourcesManager& OsmAnd::MapRendererStage::getResource
 {
     return renderer->getResources();
 }
+
+void OsmAnd::MapRendererStage::invalidateFrame()
+{
+    renderer->invalidateFrame();
+}

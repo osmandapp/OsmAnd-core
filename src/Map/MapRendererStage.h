@@ -22,6 +22,8 @@ namespace OsmAnd
     class MapRendererStage
     {
         Q_DISABLE_COPY_AND_MOVE(MapRendererStage);
+    protected:
+        void invalidateFrame();
     public:
         MapRendererStage(MapRenderer* const renderer);
         virtual ~MapRendererStage();

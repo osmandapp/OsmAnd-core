@@ -41,7 +41,12 @@ OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage()
 void OsmAnd::AtlasMapRendererSymbolsStage::prepare()
 {
     IntersectionsQuadTree intersections;
-    obtainRenderableSymbols(renderableSymbols, intersections);
+    if (!obtainRenderableSymbols(renderableSymbols, intersections))
+    {
+        // In case obtain failed due to lock, schedule another frame
+        invalidateFrame();
+        return;
+    }
 
     {
         QWriteLocker scopedLocker(&_lastPreparedIntersectionsLock);
@@ -71,11 +76,12 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
 #   define OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE 0
 #endif // !defined(OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE)
 
-void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
+bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
     IntersectionsQuadTree& outIntersections) const
 {
-    QReadLocker scopedLocker(&publishedMapSymbolsByOrderLock);
+    if (!publishedMapSymbolsByOrderLock.tryLockForRead())
+        return false;
 
     typedef QLinkedList< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
     PlottedSymbols plottedSymbols;
@@ -372,6 +378,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
         outRenderableSymbols.push_back(qMove(plottedSymbol));
     }
+
+    publishedMapSymbolsByOrderLock.unlock();
+    return true;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(

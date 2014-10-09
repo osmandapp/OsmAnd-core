@@ -27,11 +27,10 @@
 #include "IMapTiledDataProvider.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "MapSymbol.h"
-#include "BinaryMapObject.h"
-#include "QuadTree.h"
 #include "Logging.h"
+#include "Stopwatch.h"
 #include "Utilities.h"
+
 #include "OpenGL/Utilities_OpenGL.h"
 
 const float OsmAnd::AtlasMapRenderer_OpenGL::_zNear = 0.1f;

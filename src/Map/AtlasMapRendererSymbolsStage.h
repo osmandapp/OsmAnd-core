@@ -107,7 +107,7 @@ namespace OsmAnd
             QVector< GlyphPlacement > glyphsPlacement;
         };
     private:
-        void obtainRenderableSymbols(
+        bool obtainRenderableSymbols(
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             IntersectionsQuadTree& outIntersections) const;
 
