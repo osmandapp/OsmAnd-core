@@ -53,13 +53,10 @@ if "%compiler%"=="msvc" (
 		-nomake examples -nomake tools -no-vcproj -no-native-gestures
 	set MAKE_CMD=nmake
 
-	REM Initialize VisualC variables
-	call "%VS120COMNTOOLS%\VCVarsQueryRegistry.bat"
-
 	REM Build for x86
 	if "%targetArch%"=="i686" (
 		setlocal
-		call "%VCINSTALLDIR%\vcvarsall.bat" x86
+		call :msvc_env x86
 		call :build
 		if %ERRORLEVEL% neq 0 (
 			echo Build failed with %ERRORLEVEL%
@@ -71,7 +68,7 @@ if "%compiler%"=="msvc" (
 	REM Build for amd64
 	if "%targetArch%"=="amd64" (
 		setlocal
-		call "%VCINSTALLDIR%\vcvarsall.bat" x86_amd64
+		call :msvc_env x86_amd64
 		call :build
 		if %ERRORLEVEL% neq 0 (
 			echo Build failed with %ERRORLEVEL%
@@ -133,6 +130,15 @@ if "%compiler%"=="gcc" (
 REM Quit from script
 endlocal
 exit /B
+
+REM >>> 'msvc_env' function
+:msvc_env
+
+call "%VS120COMNTOOLS%\VCVarsQueryRegistry.bat"
+call "%VCINSTALLDIR%\vcvarsall.bat" %1
+
+exit /B
+REM <<< 'msvc_env' function
 
 REM >>> 'build' function
 :build
