@@ -165,8 +165,11 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 	)
 	
 	include(CheckTypeSize)
-	set(CMAKE_EXTRA_INCLUDE_FILES "dwrite.h")
-	check_type_size("class IDWriteFontFileEnumerator" SIZEOF_IDWriteFontFileEnumerator)
+	set(CMAKE_EXTRA_INCLUDE_FILES
+		"windows.h"
+		"dwrite.h")
+	check_type_size("class IDWriteFontFileEnumerator" SIZEOF_IDWriteFontFileEnumerator
+		LANGUAGE CXX)
 	if (SIZEOF_IDWriteFontFileEnumerator)
 		set(target_specific_sources "${target_specific_sources}"
 			"upstream.patched/src/ports/SkFontHost_win_dw.cpp"
