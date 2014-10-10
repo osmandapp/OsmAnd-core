@@ -241,9 +241,9 @@ namespace OsmAnd
         virtual bool doPrepareFrame();
         virtual bool postPrepareFrame();
 
-        virtual bool preRenderFrame();
-        virtual bool doRenderFrame() = 0;
-        virtual bool postRenderFrame();
+        virtual bool preRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric);
+        virtual bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric) = 0;
+        virtual bool postRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric);
 
         virtual bool preReleaseRendering();
         virtual bool doReleaseRendering();

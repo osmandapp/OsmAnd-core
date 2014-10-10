@@ -6,7 +6,7 @@ QString OsmAnd::BinaryMapPrimitivesProvider_Metrics::Metric_obtainData::toString
 
     output += obtainBinaryMapDataMetric.toString(prefix + QLatin1String("obtainBinaryMapDataMetric:")) + QLatin1String("\n");
     output += primitiviseMetric.toString(prefix + QLatin1String("primitiviseMetric:")) + QLatin1String("\n");
-    output += prefix + QString(QLatin1String("elapsedTime = %1s")).arg(elapsedTime);
+    OsmAnd__BinaryMapPrimitivesProvider_Metrics__Metric_obtainData__FIELDS(PRINT_METRIC_FIELD);
 
     return output;
 }

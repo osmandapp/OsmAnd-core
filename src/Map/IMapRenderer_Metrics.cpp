@@ -4,9 +4,7 @@ QString OsmAnd::IMapRenderer_Metrics::Metric_update::toString(const QString& pre
 {
     QString output;
 
-    output += prefix + QString(QLatin1String("elapsedTime = %1s\n")).arg(elapsedTime);
-    output += prefix + QString(QLatin1String("elapsedTimeForUpdatesProcessing = %1s\n")).arg(elapsedTimeForUpdatesProcessing);
-    output += prefix + QString(QLatin1String("elapsedTimeForRenderThreadDispatcher = %1s")).arg(elapsedTimeForRenderThreadDispatcher);
+    OsmAnd__IMapRenderer_Metrics__Metric_update__FIELDS(PRINT_METRIC_FIELD);
 
     return output;
 }
@@ -15,7 +13,7 @@ QString OsmAnd::IMapRenderer_Metrics::Metric_prepareFrame::toString(const QStrin
 {
     QString output;
 
-    output += prefix + QString(QLatin1String("elapsedTime = %1s")).arg(elapsedTime);
+    OsmAnd__IMapRenderer_Metrics__Metric_prepareFrame__FIELDS(PRINT_METRIC_FIELD);
 
     return output;
 }
@@ -24,7 +22,7 @@ QString OsmAnd::IMapRenderer_Metrics::Metric_renderFrame::toString(const QString
 {
     QString output;
 
-    output += prefix + QString(QLatin1String("elapsedTime = %1s")).arg(elapsedTime);
+    OsmAnd__IMapRenderer_Metrics__Metric_renderFrame__FIELDS(PRINT_METRIC_FIELD);
 
     return output;
 }

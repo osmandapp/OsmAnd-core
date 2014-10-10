@@ -18,6 +18,7 @@
 #include <SkBitmap.h>
 #include "restore_internal_warnings.h"
 
+#include "AtlasMapRenderer_Metrics.h"
 #include "AtlasMapRendererConfiguration.h"
 #include "AtlasMapRendererSkyStage_OpenGL.h"
 #include "AtlasMapRendererRasterMapStage_OpenGL.h"
@@ -68,9 +69,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
     return true;
 }
 
-bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
+bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
     bool ok = true;
+
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
     GL_PUSH_GROUP_MARKER(QLatin1String("OsmAndCore"));
 
@@ -106,16 +109,22 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
     GL_CHECK_RESULT;
 
     // Render the sky
-    if (!_skyStage->render())
+    Stopwatch skyStageStopwatch(metric != nullptr);
+    if (!_skyStage->render(metric))
         ok = false;
+    if (metric)
+        metric->elapsedTimeForSkyStage = skyStageStopwatch.elapsed();
 
     // Change depth test function prior to raster map stage and further stages
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
     // Raster map stage is rendered without blending, since it's done in fragment shader
-    if (!_rasterMapStage->render())
+    Stopwatch rasterMapStageStopwatch(metric != nullptr);
+    if (!_rasterMapStage->render(metric))
         ok = false;
+    if (metric)
+        metric->elapsedTimeForRasterMapStage = rasterMapStageStopwatch.elapsed();
 
     // Turn on blending since now objects with transparency are going to be rendered
     // Blend function is controlled by each symbol on it's own
@@ -124,27 +133,33 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame()
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     //NOTE: Currently map symbols are incompatible with height-maps
+    Stopwatch symbolsStageStopwatch(metric != nullptr);
     glDepthMask(GL_FALSE);
     GL_CHECK_RESULT;
-    if (!_symbolsStage->render())
+    if (!_symbolsStage->render(metric))
         ok = false;
     glDepthMask(GL_TRUE);
     GL_CHECK_RESULT;
+    if (metric)
+        metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
 
     //TODO: render special fog object some day
 
     // Render debug stage
+    Stopwatch debugStageStopwatch(metric != nullptr);
     if (currentDebugSettings->debugStageEnabled)
     {
         glDisable(GL_DEPTH_TEST);
         GL_CHECK_RESULT;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         GL_CHECK_RESULT;
-        if (!_debugStage->render())
+        if (!_debugStage->render(metric))
             ok = false;
         glEnable(GL_DEPTH_TEST);
         GL_CHECK_RESULT;
     }
+    if (metric)
+        metric->elapsedTimeForDebugStage = debugStageStopwatch.elapsed();
 
     // Turn off blending
     glDisable(GL_BLEND);

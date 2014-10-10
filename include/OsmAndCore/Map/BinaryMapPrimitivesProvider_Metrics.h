@@ -8,8 +8,7 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapCommonTypes.h>
+#include <OsmAndCore/Metrics.h>
 #include <OsmAndCore/Map/BinaryMapDataProvider_Metrics.h>
 #include <OsmAndCore/Map/Primitiviser_Metrics.h>
 
@@ -17,6 +16,9 @@ namespace OsmAnd
 {
     namespace BinaryMapPrimitivesProvider_Metrics
     {
+#define OsmAnd__BinaryMapPrimitivesProvider_Metrics__Metric_obtainData__FIELDS(FIELD_ACTION)    \
+        /* Total elapsed time */                                                                \
+        FIELD_ACTION(float, elapsedTime, "s");
         struct OSMAND_CORE_API Metric_obtainData
         {
             inline Metric_obtainData()
@@ -24,9 +26,13 @@ namespace OsmAnd
                 reset();
             }
 
+            virtual ~Metric_obtainData()
+            {
+            }
+
             inline void reset()
             {
-                memset(this, 0, sizeof(Metric_obtainData));
+                OsmAnd__BinaryMapPrimitivesProvider_Metrics__Metric_obtainData__FIELDS(RESET_METRIC_FIELD);
                 obtainBinaryMapDataMetric.reset();
                 primitiviseMetric.reset();
             }
@@ -37,10 +43,9 @@ namespace OsmAnd
             // Metrics from Primitiviser
             Primitiviser_Metrics::Metric_primitivise primitiviseMetric;
 
-            // Time spent totally
-            float elapsedTime;
+            OsmAnd__BinaryMapPrimitivesProvider_Metrics__Metric_obtainData__FIELDS(EMIT_METRIC_FIELD);
 
-            QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const QString& prefix = QString::null) const;
         };
     }
 }

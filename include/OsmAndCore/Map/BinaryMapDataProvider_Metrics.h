@@ -8,13 +8,34 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Metrics.h>
 #include <OsmAndCore/Data/ObfMapSectionReader_Metrics.h>
 
 namespace OsmAnd
 {
     namespace BinaryMapDataProvider_Metrics
     {
+#define OsmAnd__BinaryMapDataProvider_Metrics__Metric_obtainData__FIELDS(FIELD_ACTION)          \
+        /* Elapsed time on obtaining OBF interface */                                           \
+        FIELD_ACTION(float, elapsedTimeForObtainingObfInterface, "s");                          \
+                                                                                                \
+        /* Elapsed time on filtering BinaryMapObjects by their ID to skip loaded ones */        \
+        FIELD_ACTION(float, elapsedTimeForObjectsFiltering, "s");                               \
+                                                                                                \
+        /* Elapsed time on read */                                                              \
+        FIELD_ACTION(float, elapsedTimeForRead, "s");                                           \
+                                                                                                \
+        /* Elapsed time (total) */                                                              \
+        FIELD_ACTION(float, elapsedTime, "s");                                                  \
+                                                                                                \
+        /* Total number of obtained objects */                                                  \
+        FIELD_ACTION(unsigned int, objectsCount, "");                                           \
+                                                                                                \
+        /* Number of obtained unique objects */                                                 \
+        FIELD_ACTION(unsigned int, uniqueObjectsCount, "");                                     \
+                                                                                                \
+        /* Number of obtained shared objects */                                                 \
+        FIELD_ACTION(unsigned int, sharedObjectsCount, "");
         struct OSMAND_CORE_API Metric_obtainData
         {
             inline Metric_obtainData()
@@ -22,37 +43,22 @@ namespace OsmAnd
                 reset();
             }
 
+            virtual ~Metric_obtainData()
+            {
+            }
+
             inline void reset()
             {
-                memset(this, 0, sizeof(Metric_obtainData));
+                OsmAnd__BinaryMapDataProvider_Metrics__Metric_obtainData__FIELDS(RESET_METRIC_FIELD);
                 loadMapObjectsMetric.reset();
             }
 
             // Metric from ObfMapSectionReader
             ObfMapSectionReader_Metrics::Metric_loadMapObjects loadMapObjectsMetric;
 
-            // Elapsed time on obtaining OBF interface
-            float elapsedTimeForObtainingObfInterface;
+            OsmAnd__BinaryMapDataProvider_Metrics__Metric_obtainData__FIELDS(EMIT_METRIC_FIELD);
 
-            // Elapsed time on filtering BinaryMapObjects by their ID to skip loaded ones
-            float elapsedTimeForObjectsFiltering;
-
-            // Elapsed time on read
-            float elapsedTimeForRead;
-
-            // Elapsed time (total)
-            float elapsedTime;
-
-            // Total number of obtained objects
-            unsigned int objectsCount;
-
-            // Number of obtained unique objects
-            unsigned int uniqueObjectsCount;
-
-            // Number of obtained shared objects
-            unsigned int sharedObjectsCount;
-
-            QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const QString& prefix = QString::null) const;
         };
     }
 }

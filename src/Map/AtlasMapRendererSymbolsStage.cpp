@@ -15,6 +15,7 @@
 
 #include "OsmAndCore.h"
 #include "AtlasMapRenderer.h"
+#include "AtlasMapRenderer_Metrics.h"
 #include "AtlasMapRendererDebugStage.h"
 #include "MapSymbol.h"
 #include "VectorMapSymbol.h"
@@ -28,6 +29,7 @@
 #include "QKeyValueIterator.h"
 #include "ObjectWithId.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
+#include "Stopwatch.h"
 
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
@@ -38,13 +40,19 @@ OsmAnd::AtlasMapRendererSymbolsStage::~AtlasMapRendererSymbolsStage()
 {
 }
 
-void OsmAnd::AtlasMapRendererSymbolsStage::prepare()
+void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
+    Stopwatch stopwatch(metric != nullptr);
+
     IntersectionsQuadTree intersections;
     if (!obtainRenderableSymbols(renderableSymbols, intersections))
     {
         // In case obtain failed due to lock, schedule another frame
         invalidateFrame();
+
+        if (metric)
+            metric->elapsedTimeForPreparingSymbols = stopwatch.elapsed();
+
         return;
     }
 
@@ -52,6 +60,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare()
         QWriteLocker scopedLocker(&_lastPreparedIntersectionsLock);
         _lastPreparedIntersections = qMove(intersections);
     }
+
+    if (metric)
+        metric->elapsedTimeForPreparingSymbols = stopwatch.elapsed();
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(

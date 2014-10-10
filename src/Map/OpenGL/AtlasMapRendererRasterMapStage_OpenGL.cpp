@@ -12,6 +12,7 @@
 #include "restore_internal_warnings.h"
 
 #include "AtlasMapRenderer_OpenGL.h"
+#include "AtlasMapRenderer_Metrics.h"
 #include "IMapTiledDataProvider.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "IMapElevationDataProvider.h"
@@ -358,8 +359,10 @@ bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::initialize()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render()
+bool OsmAnd::AtlasMapRendererRasterMapStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+
     const auto gpuAPI = getGPUAPI();
     const auto& currentConfiguration = getCurrentConfiguration();
     const auto& internalState = getInternalState();

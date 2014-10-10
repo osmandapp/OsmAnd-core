@@ -87,7 +87,7 @@ namespace OsmAnd
         virtual ~AtlasMapRendererRasterMapStage_OpenGL();
 
         virtual bool initialize();
-        virtual bool render();
+        virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
         virtual bool release();
         virtual void recreateTile();
     };

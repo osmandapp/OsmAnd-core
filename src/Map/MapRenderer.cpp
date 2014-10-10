@@ -27,7 +27,7 @@
 #   define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 0
 #endif // !defined(OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE)
 
-#define OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY 1
+//#define OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY 1
 #ifndef OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
 #   define OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY 0
 #endif // !defined(OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY)
@@ -568,9 +568,9 @@ bool OsmAnd::MapRenderer::renderFrame(IMapRenderer_Metrics::Metric_renderFrame* 
 
     Stopwatch totalStopwatch(metric != nullptr);
 
-    ok = ok && preRenderFrame();
-    ok = ok && doRenderFrame();
-    ok = ok && postRenderFrame();
+    ok = ok && preRenderFrame(metric);
+    ok = ok && doRenderFrame(metric);
+    ok = ok && postRenderFrame(metric);
 
     if (metric)
         metric->elapsedTime = totalStopwatch.elapsed();
@@ -578,7 +578,7 @@ bool OsmAnd::MapRenderer::renderFrame(IMapRenderer_Metrics::Metric_renderFrame* 
     return ok;
 }
 
-bool OsmAnd::MapRenderer::preRenderFrame()
+bool OsmAnd::MapRenderer::preRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
     if (!_isRenderingInitialized)
         return false;
@@ -589,7 +589,7 @@ bool OsmAnd::MapRenderer::preRenderFrame()
     return true;
 }
 
-bool OsmAnd::MapRenderer::postRenderFrame()
+bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric)
 {
     // Decrement "frame-invalidates" counter by amount of processed "frame-invalidates"
     _frameInvalidatesCounter.fetchAndAddOrdered(-_frameInvalidatesToBeProcessed);

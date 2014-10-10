@@ -8,12 +8,58 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Metrics.h>
 
 namespace OsmAnd
 {
     namespace ObfRoutingSectionReader_Metrics
     {
+#define OsmAnd__ObfRoutingSectionReader_Metrics__Metric_loadRoads__FIELDS(FIELD_ACTION)             \
+        /* Number of visited tree nodes */                                                          \
+        FIELD_ACTION(unsigned int, visitedNodes, "");                                               \
+                                                                                                    \
+        /* Number of accepted tree nodes */                                                         \
+        FIELD_ACTION(unsigned int, acceptedNodes, "");                                              \
+                                                                                                    \
+        /* Elapsed time to check nodes bboxes (in seconds) */                                       \
+        FIELD_ACTION(float, elapsedTimeForNodesBbox, "s");                                          \
+                                                                                                    \
+        /* Elapsed time for tree nodes (in seconds) */                                              \
+        FIELD_ACTION(float, elapsedTimeForNodes, "s");                                              \
+                                                                                                    \
+        /* Number of RoadsBlock processed (read + referenced) */                                    \
+        FIELD_ACTION(unsigned int, roadsBlocksProcessed, "");                                       \
+                                                                                                    \
+        /* Number of RoadsBlock read */                                                             \
+        FIELD_ACTION(unsigned int, roadsBlocksRead, "");                                            \
+                                                                                                    \
+        /* Number of RoadsBlock referenced */                                                       \
+        FIELD_ACTION(unsigned int, roadsBlocksReferenced, "");                                      \
+                                                                                                    \
+        /* Number of visited Roads */                                                               \
+        FIELD_ACTION(unsigned int, visitedRoads, "");                                               \
+                                                                                                    \
+        /* Number of accepted Roads (before filtering) */                                           \
+        FIELD_ACTION(unsigned int, acceptedRoads, "");                                              \
+                                                                                                    \
+        /* Elapsed time for Roads blocks (in seconds) */                                            \
+        FIELD_ACTION(float, elapsedTimeForRoadsBlocks, "s");                                        \
+                                                                                                    \
+        /* Elapsed time for only-visited Roads (in seconds) */                                      \
+        FIELD_ACTION(float, elapsedTimeForOnlyVisitedRoads, "s");                                   \
+                                                                                                    \
+        /* Elapsed time for only-accepted MapObjects (in seconds) */                                \
+        FIELD_ACTION(float, elapsedTimeForOnlyAcceptedRoads, "s");                                  \
+                                                                                                    \
+        /* Elapsed time for processing Roads BBoxes (in seconds) */                                 \
+        FIELD_ACTION(float, elapsedTimeForRoadsBbox, "s");                                          \
+                                                                                                    \
+        /* Elapsed time for processing skipped Road points (in seconds) */                          \
+        FIELD_ACTION(float, elapsedTimeForSkippedRoadsPoints, "s");                                 \
+                                                                                                    \
+        /* Elapsed time for processing not-skipped Road points (in seconds) */                      \
+        FIELD_ACTION(float, elapsedTimeForNotSkippedRoadsPoints, "s");
+
         struct OSMAND_CORE_API Metric_loadRoads
         {
             inline Metric_loadRoads()
@@ -21,57 +67,18 @@ namespace OsmAnd
                 reset();
             }
 
-            inline void reset()
+            virtual ~Metric_loadRoads()
             {
-                memset(this, 0, sizeof(Metric_loadRoads));
             }
 
-            // Number of visited tree nodes
-            unsigned int visitedNodes;
+            inline void reset()
+            {
+                OsmAnd__ObfRoutingSectionReader_Metrics__Metric_loadRoads__FIELDS(RESET_METRIC_FIELD);
+            }
 
-            // Number of accepted tree nodes
-            unsigned int acceptedNodes;
+            OsmAnd__ObfRoutingSectionReader_Metrics__Metric_loadRoads__FIELDS(EMIT_METRIC_FIELD);
 
-            // Elapsed time to check nodes bboxes (in seconds)
-            float elapsedTimeForNodesBbox;
-
-            // Elapsed time for tree nodes (in seconds)
-            float elapsedTimeForNodes;
-
-            // Number of RoadsBlock processed (read + referenced)
-            unsigned int roadsBlocksProcessed;
-
-            // Number of RoadsBlock read
-            unsigned int roadsBlocksRead;
-
-            // Number of RoadsBlock referenced
-            unsigned int roadsBlocksReferenced;
-
-            // Number of visited Roads
-            unsigned int visitedRoads;
-
-            // Number of accepted Roads (before filtering)
-            unsigned int acceptedRoads;
-
-            // Elapsed time for Roads blocks (in seconds)
-            float elapsedTimeForRoadsBlocks;
-
-            // Elapsed time for only-visited Roads (in seconds)
-            float elapsedTimeForOnlyVisitedRoads;
-
-            // Elapsed time for only-accepted MapObjects (in seconds)
-            float elapsedTimeForOnlyAcceptedRoads;
-
-            // Elapsed time for processing Roads BBoxes (in seconds)
-            float elapsedTimeForRoadsBbox;
-
-            // Elapsed time for processing skipped Road points (in seconds)
-            float elapsedTimeForSkippedRoadsPoints;
-
-            // Elapsed time for processing not-skipped Road points (in seconds)
-            float elapsedTimeForNotSkippedRoadsPoints;
-
-            QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const QString& prefix = QString::null) const;
         };
     }
 }

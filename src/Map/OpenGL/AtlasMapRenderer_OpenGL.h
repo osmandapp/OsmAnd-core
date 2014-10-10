@@ -48,7 +48,7 @@ namespace OsmAnd
 
         // Customization points:
         virtual bool doInitializeRendering();
-        virtual bool doRenderFrame();
+        virtual bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric);
 
         GPUAPI_OpenGL* getGPUAPI() const;
 

@@ -274,7 +274,7 @@ namespace OsmAnd
     protected:
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 
-        void prepare();
+        void prepare(AtlasMapRenderer_Metrics::Metric_renderFrame* const metric);
     public:
         AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererSymbolsStage();

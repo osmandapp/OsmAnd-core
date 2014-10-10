@@ -14,6 +14,8 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "AtlasMapRenderer_OpenGL.h"
+#include "AtlasMapRenderer_Metrics.h"
+#include "Stopwatch.h"
 
 OsmAnd::AtlasMapRendererDebugStage_OpenGL::AtlasMapRendererDebugStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
     : AtlasMapRendererDebugStage(renderer_)
@@ -35,15 +37,33 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::initialize()
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
-    GL_PUSH_GROUP_MARKER(QLatin1String("debug"));
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
 
     bool ok = true;
+
+    GL_PUSH_GROUP_MARKER(QLatin1String("debug"));
+
+    Stopwatch rects2dStopwatch(metric != nullptr);
     ok = ok && renderRects2D();
+    if (metric)
+        metric->elapsedTimeForDebugRects2D = rects2dStopwatch.elapsed();
+
+    Stopwatch lines2dStopwatch(metric != nullptr);
     ok = ok && renderLines2D();
+    if (metric)
+        metric->elapsedTimeForDebugLines2D = lines2dStopwatch.elapsed();
+
+    Stopwatch lines3dStopwatch(metric != nullptr);
     ok = ok && renderLines3D();
+    if (metric)
+        metric->elapsedTimeForDebugLines3D = lines3dStopwatch.elapsed();
+
+    Stopwatch quads3dStopwatch(metric != nullptr);
     ok = ok && renderQuads3D();
+    if (metric)
+        metric->elapsedTimeForDebugQuad3D = quads3dStopwatch.elapsed();
 
     GL_POP_GROUP_MARKER;
 

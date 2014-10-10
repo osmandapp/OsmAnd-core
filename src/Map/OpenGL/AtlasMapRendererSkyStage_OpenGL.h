@@ -54,7 +54,7 @@ namespace OsmAnd
         virtual ~AtlasMapRendererSkyStage_OpenGL();
 
         virtual bool initialize();
-        virtual bool render();
+        virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
         virtual bool release();
     };
 }

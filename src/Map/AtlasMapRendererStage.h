@@ -14,6 +14,10 @@
 namespace OsmAnd
 {
     class AtlasMapRenderer;
+    namespace AtlasMapRenderer_Metrics
+    {
+        struct Metric_renderFrame;
+    }
 
     class AtlasMapRendererStage
         : public MapRendererStage

@@ -8,7 +8,7 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Metrics.h>
 #include <OsmAndCore/Map/BinaryMapPrimitivesProvider_Metrics.h>
 #include <OsmAndCore/Map/MapRasterizer_Metrics.h>
 
@@ -16,6 +16,9 @@ namespace OsmAnd
 {
     namespace BinaryMapRasterBitmapTileProvider_Metrics
     {
+#define OsmAnd__BinaryMapRasterBitmapTileProvider_Metrics__Metric_obtainData__FIELDS(FIELD_ACTION)      \
+        /* Total elapsed time */                                                                        \
+        FIELD_ACTION(float, elapsedTime, "s");
         struct OSMAND_CORE_API Metric_obtainData
         {
             inline Metric_obtainData()
@@ -23,9 +26,13 @@ namespace OsmAnd
                 reset();
             }
 
+            virtual ~Metric_obtainData()
+            {
+            }
+
             inline void reset()
             {
-                memset(this, 0, sizeof(Metric_obtainData));
+                OsmAnd__BinaryMapRasterBitmapTileProvider_Metrics__Metric_obtainData__FIELDS(RESET_METRIC_FIELD);
                 obtainBinaryMapPrimitivesMetric.reset();
             }
 
@@ -35,10 +42,9 @@ namespace OsmAnd
             // Metrics from MapRasterizer
             MapRasterizer_Metrics::Metric_rasterize rasterizeMetric;
 
-            // Total elapsed time
-            float elapsedTime;
+            OsmAnd__BinaryMapRasterBitmapTileProvider_Metrics__Metric_obtainData__FIELDS(EMIT_METRIC_FIELD);
 
-            QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const QString& prefix = QString::null) const;
         };
     }
 }

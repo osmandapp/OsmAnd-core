@@ -8,13 +8,73 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapCommonTypes.h>
+#include <OsmAndCore/Metrics.h>
 
 namespace OsmAnd
 {
     namespace ObfMapSectionReader_Metrics
     {
+#define OsmAnd__ObfMapSectionReader_Metrics__Metric_loadMapObjects__FIELDS(FIELD_ACTION)        \
+        /* Number of visited levels */                                                          \
+        FIELD_ACTION(unsigned int, visitedLevels, "");                                          \
+                                                                                                \
+        /* Number of accepted levels */                                                         \
+        FIELD_ACTION(unsigned int, acceptedLevels, "");                                         \
+                                                                                                \
+        /* Elapsed time to check levels bboxes (in seconds) */                                  \
+        FIELD_ACTION(float, elapsedTimeForLevelsBbox, "s");                                     \
+                                                                                                \
+        /* Number of visited tree nodes */                                                      \
+        FIELD_ACTION(unsigned int, visitedNodes, "");                                           \
+                                                                                                \
+        /* Number of accepted tree nodes */                                                     \
+        FIELD_ACTION(unsigned int, acceptedNodes, "");                                          \
+                                                                                                \
+        /* Elapsed time to check nodes bboxes (in seconds) */                                   \
+        FIELD_ACTION(float, elapsedTimeForNodesBbox, "s");                                      \
+                                                                                                \
+        /* Elapsed time for tree nodes (in seconds) */                                          \
+        FIELD_ACTION(float, elapsedTimeForNodes, "s");                                          \
+                                                                                                \
+        /* Number of MapObjectBlock processed (read + referenced) */                            \
+        FIELD_ACTION(unsigned int, mapObjectsBlocksProcessed, "");                              \
+                                                                                                \
+        /* Number of MapObjectBlock read */                                                     \
+        FIELD_ACTION(unsigned int, mapObjectsBlocksRead, "");                                   \
+                                                                                                \
+        /* Number of MapObjectBlock referenced */                                               \
+        FIELD_ACTION(unsigned int, mapObjectsBlocksReferenced, "");                             \
+                                                                                                \
+        /* Number of visited MapObjects */                                                      \
+        FIELD_ACTION(unsigned int, visitedMapObjects, "");                                      \
+                                                                                                \
+        /* Number of accepted MapObjects (before filtering) */                                  \
+        FIELD_ACTION(unsigned int, acceptedMapObjects, "");                                     \
+                                                                                                \
+        /* Elapsed time for MapObjects (in seconds) */                                          \
+        FIELD_ACTION(float, elapsedTimeForMapObjectsBlocks, "s");                               \
+                                                                                                \
+        /* Elapsed time for only-visited MapObjects (in seconds) */                             \
+        FIELD_ACTION(float, elapsedTimeForOnlyVisitedMapObjects, "s");                          \
+                                                                                                \
+        /* Elapsed time for only-accepted MapObjects (in seconds) */                            \
+        FIELD_ACTION(float, elapsedTimeForOnlyAcceptedMapObjects, "s");                         \
+                                                                                                \
+        /* Elapsed time for processing MapObjects BBoxes (in seconds) */                        \
+        FIELD_ACTION(float, elapsedTimeForMapObjectsBbox, "s");                                 \
+                                                                                                \
+        /* Elapsed time for processing skipped MapObject points (in seconds) */                 \
+        FIELD_ACTION(float, elapsedTimeForSkippedMapObjectsPoints, "s");                        \
+                                                                                                \
+        /* Number of points read from MapObjects that were skipped */                           \
+        FIELD_ACTION(unsigned int, skippedMapObjectsPoints, "");                                \
+                                                                                                \
+        /* Elapsed time for processing not-skipped MapObject points (in seconds) */             \
+        FIELD_ACTION(float, elapsedTimeForNotSkippedMapObjectsPoints, "s");                     \
+                                                                                                \
+        /* Number of points read from MapObjects that were not skipped */                       \
+        FIELD_ACTION(unsigned int, notSkippedMapObjectsPoints, "");
+
         struct OSMAND_CORE_API Metric_loadMapObjects
         {
             inline Metric_loadMapObjects()
@@ -22,72 +82,18 @@ namespace OsmAnd
                 reset();
             }
 
-            inline void reset()
+            virtual ~Metric_loadMapObjects()
             {
-                memset(this, 0, sizeof(Metric_loadMapObjects));
             }
 
-            // Number of visited levels
-            unsigned int visitedLevels;
+            inline void reset()
+            {
+                OsmAnd__ObfMapSectionReader_Metrics__Metric_loadMapObjects__FIELDS(RESET_METRIC_FIELD);
+            }
 
-            // Number of accepted levels
-            unsigned int acceptedLevels;
+            OsmAnd__ObfMapSectionReader_Metrics__Metric_loadMapObjects__FIELDS(EMIT_METRIC_FIELD);
 
-            // Elapsed time to check levels bboxes (in seconds)
-            float elapsedTimeForLevelsBbox;
-
-            // Number of visited tree nodes
-            unsigned int visitedNodes;
-
-            // Number of accepted tree nodes
-            unsigned int acceptedNodes;
-
-            // Elapsed time to check nodes bboxes (in seconds)
-            float elapsedTimeForNodesBbox;
-
-            // Elapsed time for tree nodes (in seconds)
-            float elapsedTimeForNodes;
-
-            // Number of MapObjectBlock processed (read + referenced)
-            unsigned int mapObjectsBlocksProcessed;
-
-            // Number of MapObjectBlock read
-            unsigned int mapObjectsBlocksRead;
-
-            // Number of MapObjectBlock referenced
-            unsigned int mapObjectsBlocksReferenced;
-
-            // Number of visited MapObjects
-            unsigned int visitedMapObjects;
-
-            // Number of accepted MapObjects (before filtering)
-            unsigned int acceptedMapObjects;
-
-            // Elapsed time for MapObjects (in seconds)
-            float elapsedTimeForMapObjectsBlocks;
-
-            // Elapsed time for only-visited MapObjects (in seconds)
-            float elapsedTimeForOnlyVisitedMapObjects;
-
-            // Elapsed time for only-accepted MapObjects (in seconds)
-            float elapsedTimeForOnlyAcceptedMapObjects;
-
-            // Elapsed time for processing MapObjects BBoxes (in seconds)
-            float elapsedTimeForMapObjectsBbox;
-
-            // Elapsed time for processing skipped MapObject points (in seconds)
-            float elapsedTimeForSkippedMapObjectsPoints;
-
-            // Number of points read from MapObjects that were skipped
-            unsigned int skippedMapObjectsPoints;
-
-            // Elapsed time for processing not-skipped MapObject points (in seconds)
-            float elapsedTimeForNotSkippedMapObjectsPoints;
-
-            // Number of points read from MapObjects that were not skipped
-            unsigned int notSkippedMapObjectsPoints;
-
-            QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const QString& prefix = QString::null) const;
         };
     }
 }

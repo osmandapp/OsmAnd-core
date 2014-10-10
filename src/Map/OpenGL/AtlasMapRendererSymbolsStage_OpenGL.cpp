@@ -6,6 +6,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "AtlasMapRenderer_OpenGL.h"
+#include "AtlasMapRenderer_Metrics.h"
 #include "MapSymbol.h"
 #include "VectorMapSymbol.h"
 #include "BillboardVectorMapSymbol.h"
@@ -14,6 +15,7 @@
 #include "BillboardRasterMapSymbol.h"
 #include "OnSurfaceRasterMapSymbol.h"
 #include "MapSymbolsGroup.h"
+#include "Stopwatch.h"
 
 OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
     : AtlasMapRendererSymbolsStage(renderer_)
@@ -37,8 +39,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initialize()
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+
     bool ok = true;
 
     GL_PUSH_GROUP_MARKER(QLatin1String("symbols"));
@@ -53,28 +57,46 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render()
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
 
-    prepare();
+    prepare(metric);
 
     int lastUsedProgram = -1;
     for (const auto& renderable_ : constOf(renderableSymbols))
     {
         if (const auto& renderable = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderable_))
         {
+            Stopwatch renderBillboardSymbolStopwatch(metric != nullptr);
             ok = ok && renderBillboardSymbol(
                 renderable,
                 lastUsedProgram);
+            if (metric)
+            {
+                metric->elapsedTimeForBillboardSymbolsRendering += renderBillboardSymbolStopwatch.elapsed();
+                metric->billboardSymbolsRendered += 1;
+            }
         }
         else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnPathSymbol>(renderable_))
         {
+            Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
             ok = ok && renderOnPathSymbol(
                 renderable,
                 lastUsedProgram);
+            if (metric)
+            {
+                metric->elapsedTimeForOnPathSymbolsRendering += renderOnPathSymbolStopwatch.elapsed();
+                metric->onPathSymbolsRendered += 1;
+            }
         }
         else if (const auto& renderable = std::dynamic_pointer_cast<const RenderableOnSurfaceSymbol>(renderable_))
         {
+            Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
             ok = ok && renderOnSurfaceSymbol(
                 renderable,
                 lastUsedProgram);
+            if (metric)
+            {
+                metric->elapsedTimeForOnSurfaceSymbolsRendering += renderOnSurfaceSymbolStopwatch.elapsed();
+                metric->onSurfaceSymbolsRendered += 1;
+            }
         }
     }
 

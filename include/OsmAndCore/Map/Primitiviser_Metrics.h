@@ -8,13 +8,95 @@
 #include <QString>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Metrics.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapCommonTypes.h>
 
 namespace OsmAnd
 {
     namespace Primitiviser_Metrics
     {
+#define OsmAnd__Primitiviser_Metrics__Metric_primitivise__FIELDS(FIELD_ACTION)              \
+        /* Time spent on objects sorting (seconds) */                                       \
+        FIELD_ACTION(float, elapsedTimeForSortingObjects, "s");                             \
+                                                                                            \
+        /* Time spent on polygonizing coastlines (seconds) */                               \
+        FIELD_ACTION(float, elapsedTimeForPolygonizingCoastlines, "s");                     \
+                                                                                            \
+        /* Number of polygonized coastlines */                                              \
+        FIELD_ACTION(unsigned int, polygonizedCoastlines, "");                              \
+                                                                                            \
+        /* Time spent on obtaining primitives (from detailedmap) */                         \
+        FIELD_ACTION(float, elapsedTimeForObtainingPrimitivesFromDetailedmap, "s");         \
+                                                                                            \
+        /* Time spent on obtaining primitives (from basemap) */                             \
+        FIELD_ACTION(float, elapsedTimeForObtainingPrimitivesFromBasemap, "s");             \
+                                                                                            \
+        /* Time spent on obtaining primitives (from coastlines) */                          \
+        FIELD_ACTION(float, elapsedTimeForObtainingPrimitivesFromCoastlines, "s");          \
+                                                                                            \
+        /* Time spent on obtaining all primitives groups */                                 \
+        FIELD_ACTION(float, elapsedTimeForObtainingPrimitivesGroups, "s");                  \
+                                                                                            \
+        /* Time spent on waiting for future shared primitives groups (for all) */           \
+        FIELD_ACTION(float, elapsedTimeForFutureSharedPrimitivesGroups, "s");               \
+                                                                                            \
+        /* Time spent on Order rules evaluation */                                          \
+        FIELD_ACTION(float, elapsedTimeForOrderEvaluation, "s");                            \
+                                                                                            \
+        /* Number of order evaluations */                                                   \
+        FIELD_ACTION(unsigned int, orderEvaluations, "");                                   \
+                                                                                            \
+        /* Number of order rejects */                                                       \
+        FIELD_ACTION(unsigned int, orderRejects, "");                                       \
+                                                                                            \
+        /* Time spent on Polygon rules evaluation */                                        \
+        FIELD_ACTION(float, elapsedTimeForPolygonEvaluation, "s");                          \
+                                                                                            \
+        /* Number of polygon evaluations */                                                 \
+        FIELD_ACTION(unsigned int, polygonEvaluations, "");                                 \
+                                                                                            \
+        /* Number of polygon rejectes */                                                    \
+        FIELD_ACTION(unsigned int, polygonRejects, "");                                     \
+                                                                                            \
+        /* Number of polygons that were rejected by their size (area) */                    \
+        FIELD_ACTION(unsigned int, polygonsRejectedByArea, "");                             \
+                                                                                            \
+        /* Number of obtained polygon primitives */                                         \
+        FIELD_ACTION(unsigned int, polygonPrimitives, "");                                  \
+                                                                                            \
+        /* Time spent on Polyline rules evaluation */                                       \
+        FIELD_ACTION(float, elapsedTimeForPolylineEvaluation, "s");                         \
+                                                                                            \
+        /* Number of polyline evaluations */                                                \
+        FIELD_ACTION(unsigned int, polylineEvaluations, "");                                \
+                                                                                            \
+        /* Number of polyline evaluations */                                                \
+        FIELD_ACTION(unsigned int, polylineRejects, "");                                    \
+                                                                                            \
+        /* Number of obtained polyline primitives */                                        \
+        FIELD_ACTION(unsigned int, polylinePrimitives, "");                                 \
+                                                                                            \
+        /* Time spent on Point rules evaluation */                                          \
+        FIELD_ACTION(float, elapsedTimeForPointEvaluation, "s");                            \
+                                                                                            \
+        /* Number of point evaluations */                                                   \
+        FIELD_ACTION(unsigned int, pointEvaluations, "");                                   \
+                                                                                            \
+        /* Number of point evaluations */                                                   \
+        FIELD_ACTION(unsigned int, pointRejects, "");                                       \
+                                                                                            \
+        /* Number of obtained point primitives */                                           \
+        FIELD_ACTION(unsigned int, pointPrimitives, "");                                    \
+                                                                                            \
+        /* Time spent on sorting and filtering primitives */                                \
+        FIELD_ACTION(float, elapsedTimeForSortingAndFilteringPrimitives, "s");              \
+                                                                                            \
+        /* Time spent on obtaining primitives symbols */                                    \
+        FIELD_ACTION(float, elapsedTimeForObtainingPrimitivesSymbols, "s");                 \
+                                                                                            \
+        /* Time spent totally */                                                            \
+        FIELD_ACTION(float, elapsedTime, "s");
+
         struct OSMAND_CORE_API Metric_primitivise
         {
             inline Metric_primitivise()
@@ -22,93 +104,18 @@ namespace OsmAnd
                 reset();
             }
 
-            inline void reset()
+            virtual ~Metric_primitivise()
             {
-                memset(this, 0, sizeof(Metric_primitivise));
             }
 
-            // Time spent on objects sorting (seconds)
-            float elapsedTimeForSortingObjects;
+            inline void reset()
+            {
+                OsmAnd__Primitiviser_Metrics__Metric_primitivise__FIELDS(RESET_METRIC_FIELD);
+            }
 
-            // Time spent on polygonizing coastlines (seconds)
-            float elapsedTimeForPolygonizingCoastlines;
+            OsmAnd__Primitiviser_Metrics__Metric_primitivise__FIELDS(EMIT_METRIC_FIELD);
 
-            // Number of polygonized coastlines
-            unsigned int polygonizedCoastlines;
-
-            // Time spent on obtaining primitives (from detailedmap)
-            float elapsedTimeForObtainingPrimitivesFromDetailedmap;
-
-            // Time spent on obtaining primitives (from basemap)
-            float elapsedTimeForObtainingPrimitivesFromBasemap;
-
-            // Time spent on obtaining primitives (from coastlines)
-            float elapsedTimeForObtainingPrimitivesFromCoastlines;
-
-            // Time spent on obtaining all primitives groups
-            float elapsedTimeForObtainingPrimitivesGroups;
-
-            // Time spent on waiting for future shared primitives groups (for all)
-            float elapsedTimeForFutureSharedPrimitivesGroups;
-
-            // Time spent on Order rules evaluation
-            float elapsedTimeForOrderEvaluation;
-
-            // Number of order evaluations
-            unsigned int orderEvaluations;
-
-            // Number of order rejects
-            unsigned int orderRejects;
-
-            // Time spent on Polygon rules evaluation
-            float elapsedTimeForPolygonEvaluation;
-
-            // Number of polygon evaluations
-            unsigned int polygonEvaluations;
-
-            // Number of polygon rejectes
-            unsigned int polygonRejects;
-
-            // Number of polygons that were rejected by their size (area)
-            unsigned int polygonsRejectedByArea;
-
-            // Number of obtained polygon primitives
-            unsigned int polygonPrimitives;
-
-            // Time spent on Polyline rules evaluation
-            float elapsedTimeForPolylineEvaluation;
-
-            // Number of polyline evaluations
-            unsigned int polylineEvaluations;
-
-            // Number of polyline evaluations
-            unsigned int polylineRejects;
-
-            // Number of obtained polyline primitives
-            unsigned int polylinePrimitives;
-
-            // Time spent on Point rules evaluation
-            float elapsedTimeForPointEvaluation;
-
-            // Number of point evaluations
-            unsigned int pointEvaluations;
-
-            // Number of point evaluations
-            unsigned int pointRejects;
-
-            // Number of obtained point primitives
-            unsigned int pointPrimitives;
-
-            // Time spent on sorting and filtering primitives
-            float elapsedTimeForSortingAndFilteringPrimitives;
-
-            // Time spent on obtaining primitives symbols
-            float elapsedTimeForObtainingPrimitivesSymbols;
-
-            // Time spent totally
-            float elapsedTime;
-
-            QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const QString& prefix = QString::null) const;
         };
     }
 }

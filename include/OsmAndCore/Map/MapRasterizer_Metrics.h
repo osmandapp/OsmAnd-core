@@ -8,13 +8,15 @@
 #include <QString>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapCommonTypes.h>
+#include <OsmAndCore/Metrics.h>
 
 namespace OsmAnd
 {
     namespace MapRasterizer_Metrics
     {
+#define OsmAnd__MapRasterizer_Metrics__Metric_rasterize__FIELDS(FIELD_ACTION)       \
+        /* Total elapsed time */                                                    \
+        FIELD_ACTION(float, elapsedTime, "s");
         struct OSMAND_CORE_API Metric_rasterize
         {
             inline Metric_rasterize()
@@ -22,15 +24,18 @@ namespace OsmAnd
                 reset();
             }
 
-            inline void reset()
+            virtual ~Metric_rasterize()
             {
-                memset(this, 0, sizeof(Metric_rasterize));
             }
 
-            // Total elapsed time
-            float elapsedTime;
+            inline void reset()
+            {
+                OsmAnd__MapRasterizer_Metrics__Metric_rasterize__FIELDS(RESET_METRIC_FIELD);
+            }
 
-            QString toString(const QString& prefix = QString::null) const;
+            OsmAnd__MapRasterizer_Metrics__Metric_rasterize__FIELDS(EMIT_METRIC_FIELD);
+
+            virtual QString toString(const QString& prefix = QString::null) const;
         };
     }
 }
