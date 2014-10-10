@@ -15,7 +15,7 @@ namespace OsmAnd
 {
     namespace BinaryMapDataProvider_Metrics
     {
-        struct Metric_obtainData
+        struct OSMAND_CORE_API Metric_obtainData
         {
             inline Metric_obtainData()
             {

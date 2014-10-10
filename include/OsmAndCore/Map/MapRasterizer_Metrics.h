@@ -15,7 +15,7 @@ namespace OsmAnd
 {
     namespace MapRasterizer_Metrics
     {
-        struct Metric_rasterize
+        struct OSMAND_CORE_API Metric_rasterize
         {
             inline Metric_rasterize()
             {

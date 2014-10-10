@@ -14,7 +14,7 @@ namespace OsmAnd
 {
     namespace ObfRoutingSectionReader_Metrics
     {
-        struct Metric_loadRoads
+        struct OSMAND_CORE_API Metric_loadRoads
         {
             inline Metric_loadRoads()
             {

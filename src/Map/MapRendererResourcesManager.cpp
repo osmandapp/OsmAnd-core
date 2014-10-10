@@ -431,6 +431,16 @@ void OsmAnd::MapRendererResourcesManager::unpublishMapSymbol(
     renderer->unpublishMapSymbol(symbolGroup, symbol, resource);
 }
 
+void OsmAnd::MapRendererResourcesManager::batchPublishMapSymbols(const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToPublish)
+{
+    renderer->batchPublishMapSymbols(mapSymbolsToPublish);
+}
+
+void OsmAnd::MapRendererResourcesManager::batchUnpublishMapSymbols(const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnublish)
+{
+    renderer->batchUnpublishMapSymbols(mapSymbolsToUnublish);
+}
+
 void OsmAnd::MapRendererResourcesManager::notifyNewResourceAvailableForDrawing()
 {
     renderer->invalidateFrame();

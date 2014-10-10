@@ -187,13 +187,19 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 
     // Register all obtained symbols
     const auto& self = shared_from_this();
+    QList< PublishOrUnpublishMapSymbol > mapSymbolsToPublish;
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
         const auto& symbolsGroup = groupResources->group;
         auto& publishedMapSymbols = _publishedMapSymbolsByGroup[symbolsGroup];
+        mapSymbolsToPublish.reserve(mapSymbolsToPublish.size() + symbolsGroup->symbols.size());
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
-            resourcesManager->publishMapSymbol(symbolsGroup, mapSymbol, self);
+            PublishOrUnpublishMapSymbol mapSymbolToPublish = {
+                symbolsGroup,
+                std::static_pointer_cast<const MapSymbol>(mapSymbol),
+                self };
+            mapSymbolsToPublish.push_back(mapSymbolToPublish);
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
@@ -201,12 +207,18 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     {
         const auto& symbolsGroup = groupResources->group;
         auto& publishedMapSymbols = _publishedMapSymbolsByGroup[symbolsGroup];
+        mapSymbolsToPublish.reserve(mapSymbolsToPublish.size() + symbolsGroup->symbols.size());
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
-            resourcesManager->publishMapSymbol(symbolsGroup, mapSymbol, self);
+            PublishOrUnpublishMapSymbol mapSymbolToPublish = {
+                symbolsGroup,
+                std::static_pointer_cast<const MapSymbol>(mapSymbol),
+                self };
+            mapSymbolsToPublish.push_back(mapSymbolToPublish);
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
+    resourcesManager->batchPublishMapSymbols(mapSymbolsToPublish);
 
     // Since there's a copy of references to map symbols groups and symbols themselves,
     // it's safe to consume all the data here
@@ -446,13 +458,22 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     const auto& self = shared_from_this();
 
     // Unregister all registered map symbols
+    QList< PublishOrUnpublishMapSymbol > mapSymbolsToUnpublish;
     for (const auto& publishedMapSymbolsEntry : rangeOf(constOf(_publishedMapSymbolsByGroup)))
     {
         const auto& symbolsGroup = publishedMapSymbolsEntry.key();
         const auto& mapSymbols = publishedMapSymbolsEntry.value();
-        for (const auto& mapSymbol : publishedMapSymbolsEntry.value())
-            resourcesManager->unpublishMapSymbol(symbolsGroup, mapSymbol, self);
+        mapSymbolsToUnpublish.reserve(mapSymbolsToUnpublish.size() + mapSymbols.size());
+        for (const auto& mapSymbol : constOf(mapSymbols))
+        {
+            PublishOrUnpublishMapSymbol mapSymbolToUnpublish = {
+                symbolsGroup,
+                mapSymbol,
+                self };
+            mapSymbolsToUnpublish.push_back(mapSymbolToUnpublish);
+        }
     }
+    resourcesManager->batchUnpublishMapSymbols(mapSymbolsToUnpublish);
     _publishedMapSymbolsByGroup.clear();
 
     // Remove quick references (if any left)

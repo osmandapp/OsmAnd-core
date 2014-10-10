@@ -16,6 +16,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
+#include "MapRendererTypes.h"
 #include "Concurrent.h"
 #include "IMapRenderer.h"
 #include "GPUAPI.h"
@@ -108,38 +109,18 @@ namespace OsmAnd
         QAtomicInt _resourcesGpuSyncRequestsCounter;
 
         // Symbols-related:
-        struct PendingPublishOrUnpublishMapSymbol
-        {
-            std::shared_ptr<const MapSymbolsGroup> symbolGroup;
-            std::shared_ptr<const MapSymbol> mapSymbol;
-            std::shared_ptr<MapRendererBaseResource> originResource;
-        };
-        mutable QReadWriteLock _pendingPublishMapSymbolsLock;
-        QList< PendingPublishOrUnpublishMapSymbol > _pendingPublishMapSymbols;
-        mutable QReadWriteLock _pendingUnpublishMapSymbolsLock;
-        QList< PendingPublishOrUnpublishMapSymbol > _pendingUnpublishMapSymbols;
         mutable QReadWriteLock _publishedMapSymbolsByOrderLock;
         PublishedMapSymbolsByOrder _publishedMapSymbolsByOrder;
         QHash< std::shared_ptr<const MapSymbolsGroup>, SmartPOD<unsigned int, 0> > _publishedMapSymbolsGroups;
         QAtomicInt _publishedMapSymbolsCount;
-        void publishMapSymbol(
-            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
-            const std::shared_ptr<const MapSymbol>& symbol,
-            const std::shared_ptr<MapRendererBaseResource>& resource);
         void doPublishMapSymbol(
             const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
-        void unpublishMapSymbol(
+        void doUnpublishMapSymbol(
             const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
-        bool doUnpublishMapSymbol(
-            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
-            const std::shared_ptr<const MapSymbol>& symbol,
-            const std::shared_ptr<MapRendererBaseResource>& resource,
-            const bool mayFail);
-        bool processPendingMapSymbols();
         bool validatePublishedMapSymbolsIntegrity();
         
         // GPU worker related:
@@ -229,6 +210,18 @@ namespace OsmAnd
         // Symbols-related:
         QReadWriteLock& publishedMapSymbolsByOrderLock;
         const PublishedMapSymbolsByOrder& publishedMapSymbolsByOrder;
+        void publishMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<MapRendererBaseResource>& resource);
+        void unpublishMapSymbol(
+            const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
+            const std::shared_ptr<const MapSymbol>& symbol,
+            const std::shared_ptr<MapRendererBaseResource>& resource);
+        void batchPublishMapSymbols(
+            const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToPublish);
+        void batchUnpublishMapSymbols(
+            const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnublish);
 
         // General:
 
@@ -240,9 +233,9 @@ namespace OsmAnd
         virtual bool doInitializeRendering();
         virtual bool postInitializeRendering();
 
-        virtual bool preUpdate();
-        virtual bool doUpdate();
-        virtual bool postUpdate();
+        virtual bool preUpdate(IMapRenderer_Metrics::Metric_update* const metric);
+        virtual bool doUpdate(IMapRenderer_Metrics::Metric_update* const metric);
+        virtual bool postUpdate(IMapRenderer_Metrics::Metric_update* const metric);
 
         virtual bool prePrepareFrame();
         virtual bool doPrepareFrame();
@@ -268,9 +261,9 @@ namespace OsmAnd
         virtual void setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate = false);
 
         virtual bool initializeRendering();
-        virtual bool update();
-        virtual bool prepareFrame();
-        virtual bool renderFrame();
+        virtual bool update(IMapRenderer_Metrics::Metric_update* const metric = nullptr) Q_DECL_FINAL;
+        virtual bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric = nullptr) Q_DECL_FINAL;
+        virtual bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric = nullptr) Q_DECL_FINAL;
         virtual bool releaseRendering();
 
         virtual bool isIdle() const;

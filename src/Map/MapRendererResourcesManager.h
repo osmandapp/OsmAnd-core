@@ -14,6 +14,7 @@
 #include <QWaitCondition>
 
 #include "OsmAndCore.h"
+#include "MapRendererTypes.h"
 #include "MapRendererState.h"
 #include "MapRendererResourceType.h"
 #include "MapRendererResourceState.h"
@@ -99,6 +100,10 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
+        void batchPublishMapSymbols(
+            const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToPublish);
+        void batchUnpublishMapSymbols(
+            const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnublish);
 
         // Invalidated resources:
         QAtomicInt _invalidatedResourcesTypesMask;

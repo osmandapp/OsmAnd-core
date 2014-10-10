@@ -21,6 +21,12 @@ namespace OsmAnd
 {
     class IMapDataProvider;
     class MapSymbol;
+    namespace IMapRenderer_Metrics
+    {
+        struct Metric_update;
+        struct Metric_prepareFrame;
+        struct Metric_renderFrame;
+    }
 
     class OSMAND_CORE_API IMapRenderer
     {
@@ -38,9 +44,9 @@ namespace OsmAnd
 
         virtual bool isRenderingInitialized() const = 0;
         virtual bool initializeRendering() = 0;
-        virtual bool update() = 0;
-        virtual bool prepareFrame() = 0;
-        virtual bool renderFrame() = 0;
+        virtual bool update(IMapRenderer_Metrics::Metric_update* const metric = nullptr) = 0;
+        virtual bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric = nullptr) = 0;
+        virtual bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric = nullptr) = 0;
         virtual bool releaseRendering() = 0;
 
         virtual bool isIdle() const = 0;

@@ -92,8 +92,17 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     // Register all obtained symbols
     _mapSymbolsGroup = _sourceData->symbolsGroup;
     const auto self = shared_from_this();
+    QList< PublishOrUnpublishMapSymbol > mapSymbolsToPublish;
+    mapSymbolsToPublish.reserve(_mapSymbolsGroup->symbols.size());
     for (const auto& symbol : constOf(_mapSymbolsGroup->symbols))
-        resourcesManager->publishMapSymbol(_mapSymbolsGroup, symbol, self);
+    {
+        PublishOrUnpublishMapSymbol mapSymbolToPublish = {
+            _mapSymbolsGroup,
+            std::static_pointer_cast<const MapSymbol>(symbol),
+            self };
+        mapSymbolsToPublish.push_back(mapSymbolToPublish);
+    }
+    resourcesManager->batchPublishMapSymbols(mapSymbolsToPublish);
 
     return true;
 }
@@ -162,8 +171,17 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
 {
     // Unregister all obtained symbols
     const auto self = shared_from_this();
+    QList< PublishOrUnpublishMapSymbol > mapSymbolsToUnpublish;
+    mapSymbolsToUnpublish.reserve(_mapSymbolsGroup->symbols.size());
     for (const auto& symbol : constOf(_mapSymbolsGroup->symbols))
-        resourcesManager->unpublishMapSymbol(_mapSymbolsGroup, symbol, self);
+    {
+        PublishOrUnpublishMapSymbol mapSymbolToUnpublish = {
+            _mapSymbolsGroup,
+            std::static_pointer_cast<const MapSymbol>(symbol),
+            self };
+        mapSymbolsToUnpublish.push_back(mapSymbolToUnpublish);
+    }
+    resourcesManager->batchUnpublishMapSymbols(mapSymbolsToUnpublish);
 
     _mapSymbolsGroup.reset();
     _sourceData.reset();

@@ -15,7 +15,7 @@ namespace OsmAnd
 {
     namespace ObfMapSectionReader_Metrics
     {
-        struct Metric_loadMapObjects
+        struct OSMAND_CORE_API Metric_loadMapObjects
         {
             inline Metric_loadMapObjects()
             {

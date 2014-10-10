@@ -10,6 +10,7 @@
 #include <SkBitmap.h>
 #include "restore_internal_warnings.h"
 
+#include "IMapRenderer_Metrics.h"
 #include "MapRendererInternalState.h"
 #include "MapRendererResourcesManager.h"
 #include "IMapRasterBitmapTileProvider.h"
@@ -18,12 +19,18 @@
 #include "GPUAPI.h"
 #include "Utilities.h"
 #include "Logging.h"
+#include "Stopwatch.h"
 #include "QKeyValueIterator.h"
 
 //#define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 1
 #ifndef OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
 #   define OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE 0
 #endif // !defined(OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE)
+
+#define OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY 1
+#ifndef OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
+#   define OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY 0
+#endif // !defined(OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY)
 
 OsmAnd::MapRenderer::MapRenderer(
     GPUAPI* const gpuAPI_,
@@ -384,78 +391,75 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer::update()
+bool OsmAnd::MapRenderer::update(IMapRenderer_Metrics::Metric_update* const metric /*= nullptr*/)
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
-    bool ok;
+    bool ok = true;
 
-    ok = preUpdate();
-    if (!ok)
-        return false;
+    Stopwatch totalStopwatch(metric != nullptr);
 
-    ok = doUpdate();
-    if (!ok)
-        return false;
+    ok = ok && preUpdate(metric);
+    ok = ok && doUpdate(metric);
+    ok = ok && postUpdate(metric);
 
-    ok = postUpdate();
-    if (!ok)
-        return false;
+    if (metric)
+        metric->elapsedTime = totalStopwatch.elapsed();
 
-    return true;
+    return ok;
 }
 
-bool OsmAnd::MapRenderer::preUpdate()
+bool OsmAnd::MapRenderer::preUpdate(IMapRenderer_Metrics::Metric_update* const metric)
 {
     // Check for resources updates
+    Stopwatch updatesStopwatch(metric != nullptr);
     if (_resources->checkForUpdatesAndApply())
         invalidateFrame();
-
-    // Check if published map symbols collection have changed
-    if (processPendingMapSymbols())
-        invalidateFrame();
+    if (metric)
+        metric->elapsedTimeForUpdatesProcessing = updatesStopwatch.elapsed();
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::doUpdate()
+bool OsmAnd::MapRenderer::doUpdate(IMapRenderer_Metrics::Metric_update* const metric)
 {
     // If GPU worker thread is not enabled, upload resource to GPU from render thread.
     if (!_gpuWorkerThread)
         processGpuWorker();
 
     // Process render thread dispatcher
+    Stopwatch renderThreadDispatcherStopwatch(metric != nullptr);
     _renderThreadDispatcher.runAll();
+    if (metric)
+        metric->elapsedTimeForRenderThreadDispatcher = renderThreadDispatcherStopwatch.elapsed();
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::postUpdate()
+bool OsmAnd::MapRenderer::postUpdate(IMapRenderer_Metrics::Metric_update* const metric)
 {
     return true;
 }
 
-bool OsmAnd::MapRenderer::prepareFrame()
+bool OsmAnd::MapRenderer::prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric /*= nullptr*/)
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
-    bool ok;
+    bool ok = true;
 
-    ok = prePrepareFrame();
-    if (!ok)
-        return false;
+    Stopwatch totalStopwatch(metric != nullptr);
 
-    ok = doPrepareFrame();
-    if (!ok)
-        return false;
+    ok = ok && prePrepareFrame();
+    ok = ok && doPrepareFrame();
+    ok = ok && postPrepareFrame();
 
-    ok = postPrepareFrame();
-    if (!ok)
-        return false;
+    if (metric)
+        metric->elapsedTime = totalStopwatch.elapsed();
 
-    framePreparedObservable.postNotify(this);
+    if (ok)
+        framePreparedObservable.postNotify(this);
 
-    return true;
+    return ok;
 }
 
 bool OsmAnd::MapRenderer::prePrepareFrame()
@@ -556,25 +560,22 @@ bool OsmAnd::MapRenderer::postPrepareFrame()
     return true;
 }
 
-bool OsmAnd::MapRenderer::renderFrame()
+bool OsmAnd::MapRenderer::renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric /*= nullptr*/)
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
-    bool ok;
+    bool ok = true;
 
-    ok = preRenderFrame();
-    if (!ok)
-        return false;
+    Stopwatch totalStopwatch(metric != nullptr);
 
-    ok = doRenderFrame();
-    if (!ok)
-        return false;
+    ok = ok && preRenderFrame();
+    ok = ok && doRenderFrame();
+    ok = ok && postRenderFrame();
 
-    ok = postRenderFrame();
-    if (!ok)
-        return false;
+    if (metric)
+        metric->elapsedTime = totalStopwatch.elapsed();
 
-    return true;
+    return ok;
 }
 
 bool OsmAnd::MapRenderer::preRenderFrame()
@@ -673,16 +674,6 @@ bool OsmAnd::MapRenderer::isIdle() const
     bool isNotIdle = false;
 
     isNotIdle = isNotIdle || _resources->updatesPresent();
-    {
-        QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
-
-        isNotIdle = isNotIdle || !_pendingPublishMapSymbols.isEmpty();
-    }
-    {
-        QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
-        
-        isNotIdle = isNotIdle || !_pendingUnpublishMapSymbols.isEmpty();
-    }
     isNotIdle = isNotIdle || (_resourcesGpuSyncRequestsCounter.loadAcquire() > 0);
     isNotIdle = isNotIdle || (_renderThreadDispatcher.queueSize() > 0);
     isNotIdle = isNotIdle || (_currentDebugSettingsInvalidatedCounter.loadAcquire() > 0);
@@ -704,18 +695,6 @@ QString OsmAnd::MapRenderer::getNotIdleReason() const
 
     if (_resources->updatesPresent())
         notIdleReasons += QLatin1String("_resources->updatesPresent()");
-    {
-        QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
-
-        if (!_pendingPublishMapSymbols.isEmpty())
-            notIdleReasons += QLatin1String("!_pendingPublishMapSymbols.isEmpty()");
-    }
-    {
-        QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
-
-        if (!_pendingUnpublishMapSymbols.isEmpty())
-            notIdleReasons += QLatin1String("!_pendingUnpublishMapSymbols.isEmpty()");
-    }
     if ((_resourcesGpuSyncRequestsCounter.loadAcquire() > 0))
         notIdleReasons += QLatin1String("(_resourcesGpuSyncRequestsCounter.loadAcquire() > 0)");
     if (_renderThreadDispatcher.queueSize() > 0)
@@ -906,32 +885,17 @@ void OsmAnd::MapRenderer::publishMapSymbol(
     const std::shared_ptr<const MapSymbol>& symbol,
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    // Ensure that this symbol belongs to specified group
-    assert(symbolGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(symbol)));
-    assert(symbol->groupPtr == symbolGroup.get());
+    QWriteLocker scopedLocker(&_publishedMapSymbolsByOrderLock);
 
-    // First try to publish directly
-    if (_publishedMapSymbolsByOrderLock.tryLockForWrite())
-    {
-        doPublishMapSymbol(symbolGroup, symbol, resource);
-        _publishedMapSymbolsByOrderLock.unlock();
-        return;
-    }
+    doPublishMapSymbol(symbolGroup, symbol, resource);
+}
 
-    // But if published map symbols are currently in use, put to pending in a blocking way
-    PendingPublishOrUnpublishMapSymbol pendingPublishMapSymbol = { symbolGroup, symbol, resource };
-    {
-        QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
-        _pendingPublishMapSymbols.push_back(qMove(pendingPublishMapSymbol));
-    }
+void OsmAnd::MapRenderer::batchPublishMapSymbols(const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToPublish)
+{
+    QWriteLocker scopedLocker(&_publishedMapSymbolsByOrderLock);
 
-#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
-    LogPrintf(LogSeverityLevel::Debug,
-        "Published (pending) map symbol %p (group %p) from %p",
-        symbol.get(),
-        symbolGroup.get(),
-        resource.get());
-#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    for (const auto& mapSymbolToPublish : constOf(mapSymbolsToPublish))
+        doPublishMapSymbol(mapSymbolToPublish.symbolGroup, mapSymbolToPublish.symbol, mapSymbolToPublish.resource);
 }
 
 void OsmAnd::MapRenderer::doPublishMapSymbol(
@@ -939,10 +903,12 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
     const std::shared_ptr<const MapSymbol>& symbol,
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
+#if OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
     // Ensure that this symbol belongs to specified group
     assert(symbolGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(symbol)));
     assert(symbol->groupPtr == symbolGroup.get());
     assert(validatePublishedMapSymbolsIntegrity());
+#endif // OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
 
     auto& publishedMapSymbols = _publishedMapSymbolsByOrder[symbol->order];
     auto& publishedMapSymbolsByGroup = publishedMapSymbols[symbolGroup];
@@ -965,7 +931,9 @@ void OsmAnd::MapRenderer::doPublishMapSymbol(
         symbolReferencedResources.size());
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
 
+#if OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
     assert(validatePublishedMapSymbolsIntegrity());
+#endif // OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
 }
 
 void OsmAnd::MapRenderer::unpublishMapSymbol(
@@ -973,120 +941,59 @@ void OsmAnd::MapRenderer::unpublishMapSymbol(
     const std::shared_ptr<const MapSymbol>& symbol,
     const std::shared_ptr<MapRendererBaseResource>& resource)
 {
-    // Ensure that this symbol belongs to specified group
-    assert(symbolGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(symbol)));
-    assert(symbol->groupPtr == symbolGroup.get());
+    QWriteLocker scopedLocker(&_publishedMapSymbolsByOrderLock);
 
-    // First try to publish directly
-    if (_publishedMapSymbolsByOrderLock.tryLockForWrite())
-    {
-        const bool unpublished = doUnpublishMapSymbol(symbolGroup, symbol, resource, true);
-        _publishedMapSymbolsByOrderLock.unlock();
-
-        // In case unpublish failed, this means that symbol is in pending to publish
-        if (unpublished)
-            return;
-    }
-
-    // But if published map symbols are currently in use, put to pending in a blocking way
-    PendingPublishOrUnpublishMapSymbol pendingUnpublishMapSymbol = { symbolGroup, symbol, resource };
-    {
-        QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
-        _pendingUnpublishMapSymbols.push_back(qMove(pendingUnpublishMapSymbol));
-    }
-
-#if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
-    LogPrintf(LogSeverityLevel::Debug,
-        "Unpublished (pending) map symbol %p (group %p) from %p",
-        symbol.get(),
-        symbolGroup.get(),
-        resource.get());
-#endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
+    doUnpublishMapSymbol(symbolGroup, symbol, resource);
 }
 
-bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
+void OsmAnd::MapRenderer::batchUnpublishMapSymbols(const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnpublish)
+{
+    QWriteLocker scopedLocker(&_publishedMapSymbolsByOrderLock);
+
+    for (const auto& mapSymbolToUnpublish : constOf(mapSymbolsToUnpublish))
+        doUnpublishMapSymbol(mapSymbolToUnpublish.symbolGroup, mapSymbolToUnpublish.symbol, mapSymbolToUnpublish.resource);
+}
+
+void OsmAnd::MapRenderer::doUnpublishMapSymbol(
     const std::shared_ptr<const MapSymbolsGroup>& symbolGroup,
     const std::shared_ptr<const MapSymbol>& symbol,
-    const std::shared_ptr<MapRendererBaseResource>& resource,
-    const bool mayFail)
+    const std::shared_ptr<MapRendererBaseResource>& resource)
 {
+#if OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
     // Ensure that this symbol belongs to specified group
     assert(symbolGroup->symbols.contains(std::const_pointer_cast<MapSymbol>(symbol)));
     assert(symbol->groupPtr == symbolGroup.get());
     assert(validatePublishedMapSymbolsIntegrity());
+#endif // OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
 
     const auto itPublishedMapSymbolsByGroup = _publishedMapSymbolsByOrder.find(symbol->order);
     if (itPublishedMapSymbolsByGroup == _publishedMapSymbolsByOrder.end())
     {
-        if (!mayFail)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #1!",
-                symbol.get(),
-                symbolGroup.get(),
-                resource.get());
-
-            assert(false);
-        }
-
-        // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
-        return false;
+        assert(false);
+        return;
     }
     auto& publishedMapSymbolsByGroup = *itPublishedMapSymbolsByGroup;
 
     const auto itPublishedMapSymbols = publishedMapSymbolsByGroup.find(symbolGroup);
     if (itPublishedMapSymbols == publishedMapSymbolsByGroup.end())
     {
-        if (!mayFail)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #2!",
-                symbol.get(),
-                symbolGroup.get(),
-                resource.get());
-
-            assert(false);
-        }
-
-        // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
-        return false;
+        assert(false);
+        return;
     }
     auto& publishedMapSymbols = itPublishedMapSymbols->second;
 
     const auto itSymbolReferencedResources = publishedMapSymbols.find(symbol);
     if (itSymbolReferencedResources == publishedMapSymbols.end())
     {
-        if (!mayFail)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #3!",
-                symbol.get(),
-                symbolGroup.get(),
-                resource.get());
-
-            assert(false);
-        }
-
-        // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
-        return false;
+        assert(false);
+        return;
     }
     auto& symbolReferencedResources = *itSymbolReferencedResources;
 
     if (!symbolReferencedResources.remove(resource))
     {
-        if (!mayFail)
-        {
-            LogPrintf(LogSeverityLevel::Error,
-                "Failed to unpublish map symbol %p (group %p) from %p. It's missing due to last reference was removed somewhere before #4!",
-                symbol.get(),
-                symbolGroup.get(),
-                resource.get());
-
-            assert(false);
-        }
-
-        // Otherwise it means that symbol unpublished while still haven't moved from "pending to published"
-        return false;
+        assert(false);
+        return;
     }
 #if OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
     const auto symbolReferencedResourcesSize = symbolReferencedResources.size();
@@ -1121,49 +1028,9 @@ bool OsmAnd::MapRenderer::doUnpublishMapSymbol(
         symbolReferencedResourcesSize);
 #endif // OSMAND_LOG_MAP_SYMBOLS_REGISTRATION_LIFECYCLE
 
+#if OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
     assert(validatePublishedMapSymbolsIntegrity());
-
-    return true;
-}
-
-bool OsmAnd::MapRenderer::processPendingMapSymbols()
-{
-    QList< PendingPublishOrUnpublishMapSymbol > pendingPublishMapSymbols;
-    {
-        QWriteLocker scopedLocker(&_pendingPublishMapSymbolsLock);
-        qSwap(pendingPublishMapSymbols, _pendingPublishMapSymbols);
-    }
-    QList< PendingPublishOrUnpublishMapSymbol > pendingUnpublishMapSymbols;
-    {
-        QWriteLocker scopedLocker(&_pendingUnpublishMapSymbolsLock);
-        qSwap(pendingUnpublishMapSymbols, _pendingUnpublishMapSymbols);
-    }
-
-    if (pendingPublishMapSymbols.isEmpty() && pendingUnpublishMapSymbols.isEmpty())
-        return false;
-    
-    {
-        QWriteLocker scopedLocker(&_publishedMapSymbolsByOrderLock);
-
-        for (const auto& entry : constOf(pendingPublishMapSymbols))
-        {
-            doPublishMapSymbol(
-                entry.symbolGroup,
-                entry.mapSymbol,
-                entry.originResource);
-        }
-
-        for (const auto& entry : constOf(pendingUnpublishMapSymbols))
-        {
-            doUnpublishMapSymbol(
-                entry.symbolGroup,
-                entry.mapSymbol,
-                entry.originResource,
-                false);
-        }
-    }
-
-    return true;
+#endif // OSMAND_VERIFY_PUBLISHED_MAP_SYMBOLS_INTEGRITY
 }
 
 bool OsmAnd::MapRenderer::validatePublishedMapSymbolsIntegrity()

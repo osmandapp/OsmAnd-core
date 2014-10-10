@@ -15,7 +15,7 @@ namespace OsmAnd
 {
     namespace Primitiviser_Metrics
     {
-        struct Metric_primitivise
+        struct OSMAND_CORE_API Metric_primitivise
         {
             inline Metric_primitivise()
             {

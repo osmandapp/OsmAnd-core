@@ -16,7 +16,7 @@ namespace OsmAnd
 {
     namespace BinaryMapRasterBitmapTileProvider_Metrics
     {
-        struct Metric_obtainData
+        struct OSMAND_CORE_API Metric_obtainData
         {
             inline Metric_obtainData()
             {
