@@ -18,10 +18,18 @@ macro(add_generate_swig_target TARGET_NAME)
 endmacro()
 
 # Java
-if (CMAKE_TARGET_OS STREQUAL "linux" OR
-	CMAKE_TARGET_OS STREQUAL "macosx" OR
-	CMAKE_TARGET_OS STREQUAL "windows" OR
-	CMAKE_TARGET_OS STREQUAL "android")
+set(OSMAND_JAVA_AVAILABLE OFF)
+if (CMAKE_TARGET_OS STREQUAL "android")
+	set(OSMAND_JAVA_AVAILABLE ON)
+else()
+	find_package(Java)
+	find_package(JNI)
+	
+	if (Java_FOUND AND JNI_FOUND)
+		set(OSMAND_JAVA_AVAILABLE ON)
+	endif ()
+endif()
+if (OSMAND_JAVA_AVAILABLE)
 	set(CMAKE_JAVA_TARGET_OUTPUT_DIR "${OSMAND_OUTPUT_ROOT}")
 	add_subdirectory("${OSMAND_ROOT}/core/wrappers/java" "core/wrappers/java")
 	if (NOT CMAKE_TARGET_OS STREQUAL "android")

@@ -54,6 +54,4 @@ add_subdirectory("${OSMAND_ROOT}/core" "core")
 include("${OSMAND_ROOT}/core/wrappers/wrappers.cmake")
 
 # OsmAnd Core Tools
-if(CMAKE_TARGET_OS STREQUAL "linux" OR CMAKE_TARGET_OS STREQUAL "macosx" OR CMAKE_TARGET_OS STREQUAL "windows")
-	add_subdirectory("${OSMAND_ROOT}/core/tools" "core/tools")
-endif()
+include("${OSMAND_ROOT}/core/tools/tools.cmake")

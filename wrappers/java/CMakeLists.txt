@@ -1,10 +1,5 @@
 project(OsmAndCore_JavaWrapper)
 
-if (NOT CMAKE_TARGET_OS STREQUAL "android")
-	find_package(Java REQUIRED)
-	find_package(JNI REQUIRED)
-endif()
-
 # Custom target to generate files with SWIG
 file(GLOB core_swig "${OSMAND_ROOT}/core/*.swig")
 file(GLOB_RECURSE core_swig_subfiles "${OSMAND_ROOT}/core/swig/*")
