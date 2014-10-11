@@ -161,10 +161,10 @@ elif [[ "$targetOS" == "windows" ]]; then
 	if [[ "$compiler" == "gcc" ]]; then
 		if [[ "$targetArch" == "i686" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "windows.gcc-i686" "win32-g++-32" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "windows.gcc-i686" "win32-g++-32" "-device-option CROSS_COMPILE=i686-w64-mingw32- $QTBASE_CONFIGURATION"
 		elif [[ "$targetArch" == "amd64" ]]; then
 			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-			makeStaticAndSharedFlavor "windows.gcc-amd64" "win32-g++-64" "$QTBASE_CONFIGURATION"
+			makeStaticAndSharedFlavor "windows.gcc-amd64" "win32-g++-64" "-device-option CROSS_COMPILE=x86_64-w64-mingw32- $QTBASE_CONFIGURATION"
 		else
 			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
 			exit 1
