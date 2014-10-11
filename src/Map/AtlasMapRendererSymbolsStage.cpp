@@ -30,6 +30,7 @@
 #include "ObjectWithId.h"
 #include "MapSymbolIntersectionClassesRegistry.h"
 #include "Stopwatch.h"
+#include "GlmExtensions.h"
 
 OsmAnd::AtlasMapRendererSymbolsStage::AtlasMapRendererSymbolsStage(AtlasMapRenderer* const renderer_)
     : AtlasMapRendererStage(renderer_)
@@ -557,10 +558,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
         : symbol->offset;
 
     // Calculate position in screen coordinates (same calculation as done in shader)
-    const auto symbolOnScreen = glm::project(
+    const auto symbolOnScreen = glm_extensions::fastProject(
         renderable->positionInWorld,
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
+        internalState.mPerspectiveProjectionView,
         internalState.glmViewport);
 
     // Get bounds in screen coordinates
@@ -942,10 +942,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             const auto pinPointInWorld = Utilities::convert31toFloat(
                 pinPointOnPath.point31 - currentState.target31,
                 currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
-            const auto pinPointOnScreen = glm::project(
+            const auto pinPointOnScreen = glm_extensions::fastProject(
                 glm::vec3(pinPointInWorld.x, 0.0f, pinPointInWorld.y),
-                internalState.mCameraView,
-                internalState.mPerspectiveProjection,
+                internalState.mPerspectiveProjectionView,
                 internalState.glmViewport).xy();
 
             {
@@ -1247,10 +1246,9 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::projectFromWorldToScree
 
     for (auto idx = 0u; idx < count; idx++)
     {
-        *(pPointOnScreen++) = glm::project(
+        *(pPointOnScreen++) = glm_extensions::fastProject(
             glm::vec3(pPointInWorld->x, 0.0f, pPointInWorld->y),
-            internalState.mCameraView,
-            internalState.mPerspectiveProjection,
+            internalState.mPerspectiveProjectionView,
             internalState.glmViewport).xy;
         pPointInWorld++;
     }
@@ -1815,24 +1813,20 @@ OsmAnd::OOBBF OsmAnd::AtlasMapRendererSymbolsStage::calculateOnPath3dOOBB(const 
 
     // Project points of OOBB in world to screen
     const PointF projectedRotatedBBoxInWorldP0(static_cast<glm::vec2>(
-        glm::project(glm::vec3(rotatedBBoxInWorld[0].x, 0.0f, rotatedBBoxInWorld[0].y),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
+        glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[0].x, 0.0f, rotatedBBoxInWorld[0].y),
+        internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy));
     const PointF projectedRotatedBBoxInWorldP1(static_cast<glm::vec2>(
-        glm::project(glm::vec3(rotatedBBoxInWorld[1].x, 0.0f, rotatedBBoxInWorld[1].y),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
+        glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[1].x, 0.0f, rotatedBBoxInWorld[1].y),
+        internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy));
     const PointF projectedRotatedBBoxInWorldP2(static_cast<glm::vec2>(
-        glm::project(glm::vec3(rotatedBBoxInWorld[2].x, 0.0f, rotatedBBoxInWorld[2].y),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
+        glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[2].x, 0.0f, rotatedBBoxInWorld[2].y),
+        internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy));
     const PointF projectedRotatedBBoxInWorldP3(static_cast<glm::vec2>(
-        glm::project(glm::vec3(rotatedBBoxInWorld[3].x, 0.0f, rotatedBBoxInWorld[3].y),
-        internalState.mCameraView,
-        internalState.mPerspectiveProjection,
+        glm_extensions::fastProject(glm::vec3(rotatedBBoxInWorld[3].x, 0.0f, rotatedBBoxInWorld[3].y),
+        internalState.mPerspectiveProjectionView,
         internalState.glmViewport).xy));
 #if OSMAND_DEBUG && 0
     {
