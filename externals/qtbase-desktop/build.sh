@@ -149,7 +149,31 @@ elif [[ "$targetOS" == "cygwin" ]]; then
 		echo "Only 'gcc' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
 		exit 1
 	fi
+elif [[ "$targetOS" == "windows" ]]; then
+	QTBASE_CONFIGURATION=$(echo "
+		-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
+		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
+		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
+		-v
+	" | tr '\n' ' ')
+
+	if [[ "$compiler" == "gcc" ]]; then
+		if [[ "$targetArch" == "i686" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
+			makeStaticAndSharedFlavor "windows.gcc-i686" "win32-g++-32" "$QTBASE_CONFIGURATION"
+		elif [[ "$targetArch" == "amd64" ]]; then
+			echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
+			makeStaticAndSharedFlavor "windows.gcc-amd64" "win32-g++-64" "$QTBASE_CONFIGURATION"
+		else
+			echo "Only 'i686' and 'amd64' are supported target architectures for '${compiler}' on '${targetOS}', while '${targetArch}' was specified"
+			exit 1
+		fi
+	else
+		echo "Only 'gcc' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
+		exit 1
+	fi
 else
-	echo "Only 'linux' and 'macosx' are supported targets, while '${targetOS}' was specified"
+	echo "Only 'linux', 'macosx', 'cygwin' and 'windows' are supported targets, while '${targetOS}' was specified"
 	exit 1
 fi
