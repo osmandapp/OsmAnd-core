@@ -209,17 +209,15 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture size %dx%d", _maxTextureSize, _maxTextureSize);
 
-    GLint maxTextureUnitsInFragmentShader;
-    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsInFragmentShader));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in fragment shader %d", maxTextureUnitsInFragmentShader);
-    assert(maxTextureUnitsInFragmentShader >= RasterMapLayersCount);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in fragment shader %d", _maxTextureUnitsInFragmentShader);
+    assert(_maxTextureUnitsInFragmentShader >= RasterMapLayersCount);
 
-    GLint maxTextureUnitsInVertexShader;
-    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
+    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsInVertexShader));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d", maxTextureUnitsInVertexShader);
-    _isSupported_vertexShaderTextureLookup = (maxTextureUnitsInVertexShader >= 1);
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d", _maxTextureUnitsInVertexShader);
+    _isSupported_vertexShaderTextureLookup = (_maxTextureUnitsInVertexShader >= 1);
 
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &_maxVertexUniformVectors);
     GL_CHECK_RESULT;

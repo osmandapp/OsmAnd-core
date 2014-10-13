@@ -238,6 +238,8 @@ namespace OsmAnd
         QVector<GLint> _compressedFormats;
 
         GLint _maxTextureSize;
+        GLint _maxTextureUnitsInVertexShader;
+        GLint _maxTextureUnitsInFragmentShader;
         bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
@@ -277,6 +279,8 @@ namespace OsmAnd
         const QVector<GLint>& compressedFormats;
 
         const GLint& maxTextureSize;
+        const GLint& maxTextureUnitsInVertexShader;
+        const GLint& maxTextureUnitsInFragmentShader;
         const bool& isSupported_vertexShaderTextureLookup;
         const bool& isSupported_textureLod;
         const bool& isSupported_texturesNPOT;

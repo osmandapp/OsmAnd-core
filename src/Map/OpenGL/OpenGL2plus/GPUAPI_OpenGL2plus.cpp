@@ -145,21 +145,19 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture size %dx%d", _maxTextureSize, _maxTextureSize);
 
-    GLint maxTextureUnitsInFragmentShader;
-    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInFragmentShader);
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsInFragmentShader));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d", maxTextureUnitsInFragmentShader);
-    assert(maxTextureUnitsInFragmentShader >= RasterMapLayersCount);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in fragment shader %d", _maxTextureUnitsInFragmentShader);
+    assert(_maxTextureUnitsInFragmentShader >= RasterMapLayersCount);
 
-    GLint maxTextureUnitsInVertexShader;
-    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &maxTextureUnitsInVertexShader);
+    glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsInVertexShader));
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d", maxTextureUnitsInVertexShader);
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units in vertex shader %d", _maxTextureUnitsInVertexShader);
     //////////////////////////////////////////////////////////////////////////
     //NOTE: for testing
     //maxTextureUnitsInVertexShader = 0;
     //////////////////////////////////////////////////////////////////////////
-    _isSupported_vertexShaderTextureLookup = (maxTextureUnitsInVertexShader >= 1);
+    _isSupported_vertexShaderTextureLookup = (_maxTextureUnitsInVertexShader >= 1);
 
     GLint maxTextureUnitsCombined;
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnitsCombined);
