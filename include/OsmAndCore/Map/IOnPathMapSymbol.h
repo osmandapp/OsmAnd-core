@@ -33,8 +33,10 @@ namespace OsmAnd
         virtual ~IOnPathMapSymbol();
         
         virtual QVector<PointI> getPath31() const = 0;
+        virtual std::shared_ptr< const QVector<PointI> > getPath31SharedRef() const = 0;
         virtual void setPath31(const QVector<PointI>& path31) = 0;
-
+        virtual void setPath31(const std::shared_ptr< const QVector<PointI> >& sharedPath31) = 0;
+        
         virtual PinPoint getPinPointOnPath() const = 0;
         virtual void setPinPointOnPath(const PinPoint& pinPoint) = 0;
     };

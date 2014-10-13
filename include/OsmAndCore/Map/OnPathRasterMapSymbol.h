@@ -30,11 +30,13 @@ namespace OsmAnd
         virtual ~OnPathRasterMapSymbol();
 
         QVector<float> glyphsWidth;
-        QVector<PointI> path31;
+        std::shared_ptr< const QVector<PointI> > shareablePath31;
         PinPoint pinPointOnPath;
 
         virtual QVector<PointI> getPath31() const;
+        virtual std::shared_ptr< const QVector<PointI> > getPath31SharedRef() const;
         virtual void setPath31(const QVector<PointI>& path31);
+        virtual void setPath31(const std::shared_ptr< const QVector<PointI> >& sharedPath31);
 
         virtual PinPoint getPinPointOnPath() const;
         virtual void setPinPointOnPath(const PinPoint& pinPoint);

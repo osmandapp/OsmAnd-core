@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_TOOLS_EYEPIECE_H_
-#define _OSMAND_CORE_TOOLS_EYEPIECE_H_
+#ifndef _OSMAND_CORE_TOOLS_STYLER_H_
+#define _OSMAND_CORE_TOOLS_STYLER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
@@ -13,6 +13,8 @@
 #include <QStringList>
 #include <QDir>
 #include <QFile>
+#include <QHash>
+#include <QSet>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -23,17 +25,11 @@
 
 namespace OsmAndTools
 {
-    class OSMAND_CORE_TOOLS_API EyePiece Q_DECL_FINAL
+    class OSMAND_CORE_TOOLS_API Styler Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(EyePiece);
+        Q_DISABLE_COPY_AND_MOVE(Styler);
 
     public:
-        enum class ImageFormat
-        {
-            PNG,
-            JPEG
-        };
-
         struct OSMAND_CORE_TOOLS_API Configuration Q_DECL_FINAL
         {
             Configuration();
@@ -42,22 +38,10 @@ namespace OsmAndTools
             std::shared_ptr<OsmAnd::IMapStylesCollection> stylesCollection;
             QString styleName;
             QHash< QString, QString > styleSettings;
-            unsigned int outputImageWidth;
-            unsigned int outputImageHeight;
-            QString outputImageFilename;
-            ImageFormat outputImageFormat;
-            OsmAnd::PointI target31;
-            float zoom;
-            float azimuth;
-            float elevationAngle;
-            float fov;
-            unsigned int referenceTileSize;
+            QSet< uint64_t > mapObjectsIds;
+            OsmAnd::ZoomLevel zoom;
             float displayDensityFactor;
-            QString locale;
             bool verbose;
-#if defined(OSMAND_TARGET_OS_linux)
-            bool useLegacyContext;
-#endif
 
             static bool parseFromCommandLineArguments(
                 const QStringList& commandLineArgs,
@@ -67,25 +51,19 @@ namespace OsmAndTools
 
     private:
 #if defined(_UNICODE) || defined(UNICODE)
-        bool glVerifyResult(std::wostream& output) const;
+        bool evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, std::wostream& output);
 #else
-        bool glVerifyResult(std::ostream& output) const;
-#endif
-        
-#if defined(_UNICODE) || defined(UNICODE)
-        bool rasterize(std::wostream& output);
-#else
-        bool rasterize(std::ostream& output);
+        bool evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, std::ostream& output);
 #endif
     protected:
     public:
-        EyePiece(const Configuration& configuration);
-        ~EyePiece();
+        Styler(const Configuration& configuration);
+        ~Styler();
 
         const Configuration configuration;
 
-        bool rasterize(QString *pLog = nullptr);
+        bool evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, QString *pLog = nullptr);
     };
 }
 
-#endif // !defined(_OSMAND_CORE_TOOLS_EYEPIECE_H_)
+#endif // !defined(_OSMAND_CORE_TOOLS_STYLER_H_)

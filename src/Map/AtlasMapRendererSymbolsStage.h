@@ -114,11 +114,22 @@ namespace OsmAnd
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         IntersectionsQuadTree _lastPreparedIntersections;
 
+        // Path calculations cache
+        struct ComputedPathData
+        {
+            QVector<glm::vec2> pathInWorld;
+            QVector<float> pathSegmentsLengthsInWorld;
+            QVector<glm::vec2> pathOnScreen;
+            QVector<float> pathSegmentsLengthsOnScreen;
+        };
+        typedef QHash< std::shared_ptr< const QVector<PointI> >, ComputedPathData > ComputedPathsDataCache;
+
         void obtainRenderablesFromSymbol(
             const std::shared_ptr<const MapSymbolsGroup>& mapSymbolGroup,
             const std::shared_ptr<const MapSymbol>& mapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+            ComputedPathsDataCache& computedPathsDataCache,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
 
         bool plotSymbol(
@@ -165,6 +176,7 @@ namespace OsmAnd
             const std::shared_ptr<const OnPathRasterMapSymbol>& onPathMapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+            ComputedPathsDataCache& computedPathsDataCache,
             QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
         bool plotOnPathSymbol(
             const std::shared_ptr<RenderableOnPathSymbol>& renderable,

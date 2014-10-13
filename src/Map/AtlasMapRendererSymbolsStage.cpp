@@ -164,6 +164,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // This means that map symbols with smaller order value are more important than map symbols with
     // larger order value.
     outIntersections = IntersectionsQuadTree(currentState.viewport, 8);
+    ComputedPathsDataCache computedPathsDataCache;
     for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
     {
         // Iterate over all groups in proper order (proper order is maintained during publishing)
@@ -215,7 +216,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     const auto& referencesOrigins = *citReferencesOrigins;
 
                     QList< std::shared_ptr<RenderableSymbol> > renderableSymbols;
-                    obtainRenderablesFromSymbol(mapSymbolsGroup, mapSymbol, nullptr, referencesOrigins, renderableSymbols);
+                    obtainRenderablesFromSymbol(
+                        mapSymbolsGroup,
+                        mapSymbol,
+                        nullptr,
+                        referencesOrigins,
+                        computedPathsDataCache,
+                        renderableSymbols);
 
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
@@ -251,7 +258,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                     const auto& additionalSymbolInstance = *citAdditionalSymbolInstance;
 
                     QList< std::shared_ptr<RenderableSymbol> > renderableSymbols;
-                    obtainRenderablesFromSymbol(mapSymbolsGroup, mapSymbol, additionalSymbolInstance, referencesOrigins, renderableSymbols);
+                    obtainRenderablesFromSymbol(
+                        mapSymbolsGroup,
+                        mapSymbol,
+                        additionalSymbolInstance,
+                        referencesOrigins,
+                        computedPathsDataCache,
+                        renderableSymbols);
 
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
@@ -400,6 +413,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
     const std::shared_ptr<const MapSymbol>& mapSymbol,
     const std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters>& instanceParameters_,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+    ComputedPathsDataCache& computedPathsDataCache,
     QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
 {
     if (mapSymbol->isHidden)
@@ -416,6 +430,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
             onPathMapSymbol,
             instanceParameters,
             referenceOrigins,
+            computedPathsDataCache,
             outRenderableSymbols);
     }
     else if (const auto onSurfaceMapSymbol = std::dynamic_pointer_cast<const IOnSurfaceMapSymbol>(mapSymbol))
@@ -686,19 +701,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     const std::shared_ptr<const OnPathRasterMapSymbol>& onPathMapSymbol,
     const std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>& instanceParameters,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
+    ComputedPathsDataCache& computedPathsDataCache,
     QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
 {
     const auto& internalState = getInternalState();
 
-    const auto& path31 = onPathMapSymbol->path31;
-    const auto pathSize = path31.size();
     const auto& pinPointOnPath =
         (instanceParameters && instanceParameters->overridesPinPointOnPath)
         ? instanceParameters->pinPointOnPath
         : onPathMapSymbol->pinPointOnPath;
 
     // Path must have at least 2 points and there must be at least one pin-point
-    if (Q_UNLIKELY(pathSize < 2))
+    if (Q_UNLIKELY(onPathMapSymbol->shareablePath31->size() < 2))
     {
         assert(false);
         return;
@@ -721,12 +735,23 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     if (!gpuResource)
         return;
 
-    // Processing pin-point needs path in world and path on screen, as well as lengths of all segments
-    //TODO: (actually, now it does not, so this should be optimized)
-    const auto pathInWorld = convertPoints31ToWorld(path31);
-    const auto pathSegmentsLengthsInWorld = computePathSegmentsLengths(pathInWorld);
-    const auto pathOnScreen = projectFromWorldToScreen(pathInWorld);
-    const auto pathSegmentsLengthsOnScreen = computePathSegmentsLengths(pathOnScreen);
+    // Processing pin-point needs path in world and path on screen, as well as lengths of all segments. This may have already been computed
+    auto itComputedPathData = computedPathsDataCache.find(onPathMapSymbol->shareablePath31);
+    if (itComputedPathData == computedPathsDataCache.end())
+    {
+        const auto& path31 = *onPathMapSymbol->shareablePath31;
+
+        ComputedPathData computedPathData;
+
+        //TODO: optimize by using lazy computation
+        computedPathData.pathInWorld = convertPoints31ToWorld(path31);
+        computedPathData.pathSegmentsLengthsInWorld = computePathSegmentsLengths(computedPathData.pathInWorld);
+        computedPathData.pathOnScreen = projectFromWorldToScreen(computedPathData.pathInWorld);
+        computedPathData.pathSegmentsLengthsOnScreen = computePathSegmentsLengths(computedPathData.pathOnScreen);
+
+        itComputedPathData = computedPathsDataCache.insert(onPathMapSymbol->shareablePath31, computedPathData);
+    }
+    const auto& computedPathData = *itComputedPathData;
      
     // Pin-point represents center of symbol
     const auto halfSizeInPixels = onPathMapSymbol->size.x / 2.0f;
@@ -739,7 +764,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     unsigned int startPathPointIndex2D = 0;
     float offsetFromStartPathPoint2D = 0.0f;
     fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
-        pathSegmentsLengthsOnScreen,
+        computedPathData.pathSegmentsLengthsOnScreen,
         pinPointOnPath.basePathPointIndex,
         pinPointOnPath.normalizedOffsetFromBasePathPoint,
         -halfSizeInPixels,
@@ -748,7 +773,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     unsigned int endPathPointIndex2D = 0;
     float offsetFromEndPathPoint2D = 0.0f;
     fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
-        pathSegmentsLengthsOnScreen,
+        computedPathData.pathSegmentsLengthsOnScreen,
         pinPointOnPath.basePathPointIndex,
         pinPointOnPath.normalizedOffsetFromBasePathPoint,
         halfSizeInPixels,
@@ -757,18 +782,18 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     if (fits)
     {
         exactStartPointOnScreen = computeExactPointFromOriginAndOffset(
-            pathOnScreen,
-            pathSegmentsLengthsOnScreen,
+            computedPathData.pathOnScreen,
+            computedPathData.pathSegmentsLengthsOnScreen,
             startPathPointIndex2D,
             offsetFromStartPathPoint2D);
         exactEndPointOnScreen = computeExactPointFromOriginAndOffset(
-            pathOnScreen,
-            pathSegmentsLengthsOnScreen,
+            computedPathData.pathOnScreen,
+            computedPathData.pathSegmentsLengthsOnScreen,
             endPathPointIndex2D,
             offsetFromEndPathPoint2D);
 
         is2D = pathRenderableAs2D(
-            pathOnScreen,
+            computedPathData.pathOnScreen,
             startPathPointIndex2D,
             exactStartPointOnScreen,
             endPathPointIndex2D,
@@ -789,14 +814,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
         fits = true;
         fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
-            pathSegmentsLengthsInWorld,
+            computedPathData.pathSegmentsLengthsInWorld,
             pinPointOnPath.basePathPointIndex,
             pinPointOnPath.normalizedOffsetFromBasePathPoint,
             -halfSizeInWorld,
             startPathPointIndex3D,
             offsetFromStartPathPoint3D);
         fits = fits && computePointIndexAndOffsetFromOriginAndOffset(
-            pathSegmentsLengthsInWorld,
+            computedPathData.pathSegmentsLengthsInWorld,
             pinPointOnPath.basePathPointIndex,
             pinPointOnPath.normalizedOffsetFromBasePathPoint,
             halfSizeInWorld,
@@ -806,13 +831,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         if (fits)
         {
             exactStartPointInWorld = computeExactPointFromOriginAndOffset(
-                pathInWorld,
-                pathSegmentsLengthsInWorld,
+                computedPathData.pathInWorld,
+                computedPathData.pathSegmentsLengthsInWorld,
                 startPathPointIndex3D,
                 offsetFromStartPathPoint3D);
             exactEndPointInWorld = computeExactPointFromOriginAndOffset(
-                pathInWorld,
-                pathSegmentsLengthsInWorld,
+                computedPathData.pathInWorld,
+                computedPathData.pathSegmentsLengthsInWorld,
                 endPathPointIndex3D,
                 offsetFromEndPathPoint3D);
         }
@@ -827,25 +852,25 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     {
         // Get 3D exact points from 2D
         exactStartPointInWorld = computeExactPointFromOriginAndNormalizedOffset(
-            pathInWorld,
+            computedPathData.pathInWorld,
             startPathPointIndex2D,
-            offsetFromStartPathPoint2D / pathSegmentsLengthsOnScreen[startPathPointIndex2D]);
+            offsetFromStartPathPoint2D / computedPathData.pathSegmentsLengthsOnScreen[startPathPointIndex2D]);
         exactEndPointInWorld = computeExactPointFromOriginAndNormalizedOffset(
-            pathInWorld,
+            computedPathData.pathInWorld,
             endPathPointIndex2D,
-            offsetFromEndPathPoint2D / pathSegmentsLengthsOnScreen[endPathPointIndex2D]);
+            offsetFromEndPathPoint2D / computedPathData.pathSegmentsLengthsOnScreen[endPathPointIndex2D]);
     }
     else
     {
         // Get 2D exact points from 3D
         exactStartPointOnScreen = computeExactPointFromOriginAndNormalizedOffset(
-            pathOnScreen,
+            computedPathData.pathOnScreen,
             startPathPointIndex3D,
-            offsetFromStartPathPoint3D / pathSegmentsLengthsInWorld[startPathPointIndex3D]);
+            offsetFromStartPathPoint3D / computedPathData.pathSegmentsLengthsInWorld[startPathPointIndex3D]);
         exactEndPointOnScreen = computeExactPointFromOriginAndNormalizedOffset(
-            pathOnScreen,
+            computedPathData.pathOnScreen,
             endPathPointIndex3D,
-            offsetFromEndPathPoint3D / pathSegmentsLengthsInWorld[endPathPointIndex3D]);
+            offsetFromEndPathPoint3D / computedPathData.pathSegmentsLengthsInWorld[endPathPointIndex3D]);
     }
 
     // Compute direction of subpath on screen and in world
@@ -853,13 +878,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     const auto subpathEndIndex = is2D ? endPathPointIndex2D : endPathPointIndex3D;
     assert(subpathEndIndex >= subpathStartIndex);
     const auto directionInWorld = computePathDirection(
-        pathInWorld,
+        computedPathData.pathInWorld,
         subpathStartIndex,
         exactStartPointInWorld,
         subpathEndIndex,
         exactEndPointInWorld);
     const auto directionOnScreen = computePathDirection(
-        pathOnScreen,
+        computedPathData.pathOnScreen,
         subpathStartIndex,
         exactStartPointOnScreen,
         subpathEndIndex,
@@ -874,7 +899,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     renderable->gpuResource = gpuResource;
     renderable->is2D = is2D;
     renderable->distanceToCamera = computeDistanceBetweenCameraToPath(
-        pathInWorld,
+        computedPathData.pathInWorld,
         subpathStartIndex,
         exactStartPointInWorld,
         subpathEndIndex,
@@ -883,8 +908,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     renderable->directionOnScreen = directionOnScreen;
     renderable->glyphsPlacement = computePlacementOfGlyphsOnPath(
         is2D,
-        is2D ? pathOnScreen : pathInWorld,
-        is2D ? pathSegmentsLengthsOnScreen : pathSegmentsLengthsInWorld,
+        is2D ? computedPathData.pathOnScreen : computedPathData.pathInWorld,
+        is2D ? computedPathData.pathSegmentsLengthsOnScreen : computedPathData.pathSegmentsLengthsInWorld,
         subpathStartIndex,
         is2D ? offsetFromStartPathPoint2D : offsetFromStartPathPoint3D,
         subpathEndIndex,
@@ -902,7 +927,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
             exactStartPointInWorld.x,
             0.0f,
             exactStartPointInWorld.y)));
-        auto pPointInWorld = pathInWorld.constData() + subpathStartIndex + 1;
+        auto pPointInWorld = computedPathData.pathInWorld.constData() + subpathStartIndex + 1;
         for (auto idx = subpathStartIndex + 1; idx <= subpathEndIndex; idx++)
         {
             const auto& pointInWorld = *(pPointInWorld++);
@@ -1503,7 +1528,7 @@ double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceBetweenCameraToPath(
     {
         const auto& pathPointInWorld = *(pPathPointInWorld++);
 
-        const auto& distance = glm::distance(
+        const auto distance = glm::distance(
             internalState.worldCameraPosition,
             glm::vec3(pathPointInWorld.x, 0.0f, pathPointInWorld.y));
         distanceToCamera += distance;
