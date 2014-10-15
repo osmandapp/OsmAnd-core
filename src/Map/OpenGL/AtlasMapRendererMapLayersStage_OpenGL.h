@@ -89,6 +89,8 @@ namespace OsmAnd
         QMap<unsigned int, RasterLayerTileProgram> _rasterLayerTilePrograms;
         bool initializeRasterLayers();
         bool initializeRasterLayersProgram(const unsigned int numberOfLayersInBatch, RasterLayerTileProgram& outRasterLayerTileProgram);
+        bool canRasterMapLayerBeBatched(const QVector<unsigned int>& batchedLayerIndices, const unsigned int layerIndex);
+        bool renderRasterLayers(const QVector<unsigned int>& batchedLayerIndices, int& lastUsedProgram);
         bool releaseRasterLayers();
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);

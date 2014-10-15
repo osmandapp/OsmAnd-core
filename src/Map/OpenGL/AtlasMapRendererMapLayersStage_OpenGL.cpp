@@ -39,370 +39,66 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initialize()
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
-    //const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
-
-    //const auto gpuAPI = getGPUAPI();
-    //const auto& currentConfiguration = getCurrentConfiguration();
-    //const auto& internalState = getInternalState();
-
-    //GL_CHECK_PRESENT(glUseProgram);
-    //GL_CHECK_PRESENT(glUniformMatrix4fv);
-    //GL_CHECK_PRESENT(glUniform1f);
-    //GL_CHECK_PRESENT(glUniform2f);
-    //GL_CHECK_PRESENT(glUniform3f);
-    //GL_CHECK_PRESENT(glUniform4f);
-    //GL_CHECK_PRESENT(glUniform1i);
-    //GL_CHECK_PRESENT(glUniform2i);
-    //GL_CHECK_PRESENT(glUniform2fv);
-    //GL_CHECK_PRESENT(glActiveTexture);
-    //GL_CHECK_PRESENT(glEnableVertexAttribArray);
-    //GL_CHECK_PRESENT(glVertexAttribPointer);
-    //GL_CHECK_PRESENT(glDisableVertexAttribArray);
-
-    //// Count active raster tile providers
-    //auto activeRasterTileProvidersCount = 0u;
-    //for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer); layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
-    //{
-    //    if (!currentState.rasterLayerProviders[layerId])
-    //        continue;
-    //    if (!getResources().getCollectionSnapshot(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]))
-    //        continue;
-
-    //    activeRasterTileProvidersCount++;
-    //}
-
-    //// If there is no active raster tile providers at all, or no base layer, do not perform anything
-    //if (activeRasterTileProvidersCount == 0 || !currentState.rasterLayerProviders[static_cast<int>(RasterMapLayerId::BaseLayer)])
-    //    return true;
-
-    //GL_PUSH_GROUP_MARKER(QLatin1String("tiles"));
-
-    //// Get proper program variation
-    //const auto& tileProgram = _tileProgramVariations[activeRasterTileProvidersCount - 1];
-
-    //// Set tile patch VAO
-    //gpuAPI->useVAO(_rasterTileVAOs[activeRasterTileProvidersCount - 1]);
-
-    //// Activate program
-    //glUseProgram(tileProgram.id);
-    //GL_CHECK_RESULT;
-
-    //// Set matrices
-    //glUniformMatrix4fv(tileProgram.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
-    //GL_CHECK_RESULT;
-
-    //// Set center offset
-    //glUniform2f(tileProgram.vs.param.targetInTilePosN, internalState.targetInTileOffsetN.x, internalState.targetInTileOffsetN.y);
-    //GL_CHECK_RESULT;
-
-    //if (gpuAPI->isSupported_textureLod)
-    //{
-    //    // Set distance from camera to target
-    //    glUniform1f(tileProgram.vs.param.distanceFromCameraToTarget, internalState.distanceFromCameraToTarget);
-    //    GL_CHECK_RESULT;
-
-    //    // Set normalized [0.0 .. 1.0] angle of camera elevation
-    //    glUniform1f(tileProgram.vs.param.cameraElevationAngleN, currentState.elevationAngle / 90.0f);
-    //    GL_CHECK_RESULT;
-
-    //    // Set position of camera in ground place
-    //    glUniform2fv(tileProgram.vs.param.groundCameraPosition, 1, glm::value_ptr(internalState.groundCameraPosition));
-    //    GL_CHECK_RESULT;
-
-    //    // Set scale to retain projected size
-    //    glUniform1f(tileProgram.vs.param.scaleToRetainProjectedSize, internalState.scaleToRetainProjectedSize);
-    //    GL_CHECK_RESULT;
-    //}
-
-    //// Configure samplers
-    //if (gpuAPI->isSupported_vertexShaderTextureLookup)
-    //{
-    //    glUniform1i(tileProgram.vs.param.elevationData_sampler, 0);
-    //    GL_CHECK_RESULT;
-
-    //    gpuAPI->setTextureBlockSampler(GL_TEXTURE0, GPUAPI_OpenGL::SamplerType::ElevationDataTile);
-    //}
-    //auto bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_Bilinear;
-    //if (gpuAPI->isSupported_textureLod)
-    //{
-    //    switch(currentConfiguration.texturesFilteringQuality)
-    //    {
-    //    case TextureFilteringQuality::Good:
-    //        bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_BilinearMipmap;
-    //        break;
-    //    case TextureFilteringQuality::Best:
-    //        bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_TrilinearMipmap;
-    //        break;
-    //    }
-    //}
-    //for(auto layerIdx = 0u, layerId = static_cast<unsigned int>(RasterMapLayerId::BaseLayer); layerIdx < activeRasterTileProvidersCount; layerIdx++, layerId++)
-    //{
-    //    const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerId;
-
-    //    glUniform1i(tileProgram.fs.param.rasterTileLayers[layerId].sampler, samplerIndex);
-    //    GL_CHECK_RESULT;
-
-    //    gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
-    //}
-
-    //// Check if we need to process elevation data
-    //const bool elevationDataEnabled = static_cast<bool>(currentState.elevationDataProvider);
-    //if (!elevationDataEnabled)
-    //{
-    //    // We have no elevation data provider, so we can not do anything
-    //    glUniform1f(tileProgram.vs.param.elevationData_scaleFactor, 0.0f);
-    //    GL_CHECK_RESULT;
-    //}
-    //bool elevationVertexAttribArrayEnabled = false;
-    //if (!gpuAPI->isSupported_vertexShaderTextureLookup)
-    //{
-    //    glDisableVertexAttribArray(*tileProgram.vs.in.vertexElevation);
-    //    GL_CHECK_RESULT;
-    //}
-
-    //// For each visible tile, render it
-    //for(const auto& tileId : constOf(internalState.visibleTiles))
-    //{
-    //    // Get normalized tile index
-    //    auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
-
-    //    GL_PUSH_GROUP_MARKER(QString("%1x%2@%3").arg(tileIdN.x).arg(tileIdN.y).arg(currentState.zoomBase));
-
-    //    // Set tile coordinates offset
-    //    glUniform2i(tileProgram.vs.param.tileCoordsOffset,
-    //        tileId.x - internalState.targetTileId.x,
-    //        tileId.y - internalState.targetTileId.y);
-    //    GL_CHECK_RESULT;
-
-    //    // Set elevation data
-    //    bool appliedElevationVertexAttribArray = false;
-    //    if (elevationDataEnabled)
-    //    {
-    //        const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::ElevationDataTile, currentState.elevationDataProvider);
-    //        const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
-
-    //        // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-    //        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
-    //        std::shared_ptr<MapRendererBaseTiledResource> resource_;
-    //        if (resourcesCollection->obtainResource(tileIdN, currentState.zoomBase, resource_))
-    //        {
-    //            const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
-
-    //            // Check state and obtain GPU resource
-    //            if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-    //            {
-    //                // Capture GPU resource
-    //                gpuResource = resource->resourceInGPU;
-
-    //                resource->setState(MapRendererResourceState::Uploaded);
-    //            }
-    //        }
-
-    //        if (!gpuResource)
-    //        {
-    //            // We have no elevation data, so we can not do anything
-    //            glUniform1f(tileProgram.vs.param.elevationData_scaleFactor, 0.0f);
-    //            GL_CHECK_RESULT;
-    //        }
-    //        else
-    //        {
-    //            glUniform1f(tileProgram.vs.param.elevationData_scaleFactor, currentState.elevationDataScaleFactor);
-    //            GL_CHECK_RESULT;
-
-    //            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, AtlasMapRenderer::TileSize3D);
-    //            glUniform1f(tileProgram.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
-    //            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, AtlasMapRenderer::TileSize3D);
-    //            glUniform1f(tileProgram.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
-
-    //            const auto& perTile_vs = tileProgram.vs.param.elevationDataLayer;
-
-    //            if (gpuAPI->isSupported_vertexShaderTextureLookup)
-    //            {
-    //                glActiveTexture(GL_TEXTURE0);
-    //                GL_CHECK_RESULT;
-
-    //                glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
-    //                GL_CHECK_RESULT;
-
-    //                gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
-
-    //                if (gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
-    //                {
-    //                    const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
-
-    //                    glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
-    //                    GL_CHECK_RESULT;
-    //                    glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
-    //                    GL_CHECK_RESULT;
-    //                    glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN);
-    //                    GL_CHECK_RESULT;
-    //                    glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
-    //                    GL_CHECK_RESULT;
-    //                }
-    //                else
-    //                {
-    //                    const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(gpuResource);
-
-    //                    glUniform1i(perTile_vs.slotIndex, 0);
-    //                    GL_CHECK_RESULT;
-    //                    glUniform1f(perTile_vs.tileSizeN, 1.0f);
-    //                    GL_CHECK_RESULT;
-    //                    glUniform1f(perTile_vs.tilePaddingN, texture->uHalfTexelSizeN);
-    //                    GL_CHECK_RESULT;
-    //                    glUniform1i(perTile_vs.slotsPerSide, 1);
-    //                    GL_CHECK_RESULT;
-    //                }
-    //            }
-    //            else
-    //            {
-    //                assert(gpuResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
-
-    //                const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(gpuResource);
-    //                assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
-
-    //                if (!elevationVertexAttribArrayEnabled)
-    //                {
-    //                    glEnableVertexAttribArray(*tileProgram.vs.in.vertexElevation);
-    //                    GL_CHECK_RESULT;
-
-    //                    elevationVertexAttribArrayEnabled = true;
-    //                }
-
-    //                glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
-    //                GL_CHECK_RESULT;
-
-    //                glVertexAttribPointer(*tileProgram.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
-    //                GL_CHECK_RESULT;
-    //                appliedElevationVertexAttribArray = true;
-    //            }
-    //        }
-    //    }
-
-    //    // We need to pass each layer of this tile to shader
-    //    for(int layerIdx = 0, layerId = static_cast<int>(RasterMapLayerId::BaseLayer), layerLinearIdx = -1; layerIdx < RasterMapLayersCount; layerIdx++, layerId++)
-    //    {
-    //        if (!currentState.rasterLayerProviders[layerId])
-    //            continue;
-    //        
-    //        // Get resources collection
-    //        const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::RasterBitmapTile, currentState.rasterLayerProviders[layerId]);
-    //        const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
-
-    //        if (!resourcesCollection_ || !resourcesCollection)
-    //            continue;
-    //        layerLinearIdx++;
-
-    //        const auto& perTile_vs = tileProgram.vs.param.rasterTileLayers[layerLinearIdx];
-    //        const auto& perTile_fs = tileProgram.fs.param.rasterTileLayers[layerLinearIdx];
-    //        const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
-
-    //        // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
-    //        std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
-    //        std::shared_ptr<MapRendererBaseTiledResource> resource_;
-    //        if (resourcesCollection->obtainResource(tileIdN, currentState.zoomBase, resource_))
-    //        {
-    //            const auto resource = std::static_pointer_cast<MapRendererRasterBitmapTileResource>(resource_);
-
-    //            // Check state and obtain GPU resource
-    //            if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
-    //            {
-    //                // Capture GPU resource
-    //                gpuResource = resource->resourceInGPU;
-
-    //                resource->setState(MapRendererResourceState::Uploaded);
-    //            }
-    //            else if (resource->getState() == MapRendererResourceState::Unavailable)
-    //                gpuResource = getResources().unavailableTileStub;
-    //            else
-    //                gpuResource = getResources().processingTileStub;
-    //        }
-    //        else
-    //        {
-    //            // No resource entry means that it's not yet processed
-    //            gpuResource = getResources().processingTileStub;
-    //        }
-
-    //        glUniform1f(perTile_fs.k, currentState.rasterLayerOpacity[layerId]);
-    //        GL_CHECK_RESULT;
-
-    //        glActiveTexture(GL_TEXTURE0 + samplerIndex);
-    //        GL_CHECK_RESULT;
-
-    //        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
-    //        GL_CHECK_RESULT;
-
-    //        gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
-
-    //        if (gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
-    //        {
-    //            const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
-
-    //            glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
-    //            GL_CHECK_RESULT;
-    //            glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
-    //            GL_CHECK_RESULT;
-    //            glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->tilePaddingN);
-    //            GL_CHECK_RESULT;
-    //            glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
-    //            GL_CHECK_RESULT;
-    //        }
-    //        else
-    //        {
-    //            glUniform1i(perTile_vs.slotIndex, 0);
-    //            GL_CHECK_RESULT;
-    //            glUniform1f(perTile_vs.tileSizeN, 1.0f);
-    //            GL_CHECK_RESULT;
-    //            glUniform1f(perTile_vs.tilePaddingN, 0.0f);
-    //            GL_CHECK_RESULT;
-    //            glUniform1i(perTile_vs.slotsPerSide, 1);
-    //            GL_CHECK_RESULT;
-    //        }
-    //    }
-
-    //    if (!appliedElevationVertexAttribArray && elevationVertexAttribArrayEnabled)
-    //    {
-    //        elevationVertexAttribArrayEnabled = false;
-
-    //        glDisableVertexAttribArray(*tileProgram.vs.in.vertexElevation);
-    //        GL_CHECK_RESULT;
-    //    }
-
-    //    glDrawElements(GL_TRIANGLES, _rasterTileIndicesCount, GL_UNSIGNED_SHORT, nullptr);
-    //    GL_CHECK_RESULT;
-
-    //    GL_POP_GROUP_MARKER;
-    //}
-
-    //// Disable textures
-    //for(int layerIdx = 0, count = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + activeRasterTileProvidersCount; layerIdx < count; layerIdx++)
-    //{
-    //    glActiveTexture(GL_TEXTURE0 + layerIdx);
-    //    GL_CHECK_RESULT;
-
-    //    glBindTexture(GL_TEXTURE_2D, 0);
-    //    GL_CHECK_RESULT;
-    //}
-
-    //// Unbind any binded buffer
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //GL_CHECK_RESULT;
-
-    //// Disable elevation vertex attrib array (if enabled)
-    //if (elevationVertexAttribArrayEnabled)
-    //{
-    //    glDisableVertexAttribArray(*tileProgram.vs.in.vertexElevation);
-    //    GL_CHECK_RESULT;
-    //}
-
-    //// Deactivate program
-    //glUseProgram(0);
-    //GL_CHECK_RESULT;
-
-    //gpuAPI->unuseVAO();
-
-    //GL_POP_GROUP_MARKER;
-
-    return true;
+    const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
+
+    bool ok = true;
+
+    GL_PUSH_GROUP_MARKER(QLatin1String("mapLayers"));
+
+    const auto gpuAPI = getGPUAPI();
+    const auto& internalState = getInternalState();
+
+    QVector<unsigned int> rasterMapLayersBatch;
+    rasterMapLayersBatch.reserve(_maxNumberOfRasterMapLayersInBatch);
+
+    int lastUsedProgram = -1;
+    const auto itMapLayersEnd = currentState.mapLayersProviders.cend();
+    for (auto itMapLayerEntry = currentState.mapLayersProviders.cbegin(); itMapLayerEntry != itMapLayersEnd; ++itMapLayerEntry)
+    {
+        const auto layerIndex = itMapLayerEntry.key();
+        const auto& provider = itMapLayerEntry.value();
+
+        // Check that resources exist for this provider
+        if (!getResources().getCollectionSnapshot(MapRendererResourceType::MapLayer, std::dynamic_pointer_cast<IMapDataProvider>(provider)))
+            continue;
+
+        if (const auto rasterMapLayerProvider = std::dynamic_pointer_cast<IMapRasterBitmapTileProvider>(provider))
+        {
+            if (!canRasterMapLayerBeBatched(rasterMapLayersBatch, layerIndex))
+            {
+                ok = ok && renderRasterLayers(rasterMapLayersBatch, lastUsedProgram);
+                rasterMapLayersBatch.clear();
+            }
+
+            rasterMapLayersBatch.push_back(layerIndex);
+        }
+        else
+        {
+            if (!canRasterMapLayerBeBatched(rasterMapLayersBatch, layerIndex))
+            {
+                ok = ok && renderRasterLayers(rasterMapLayersBatch, lastUsedProgram);
+                rasterMapLayersBatch.clear();
+            }
+
+            //TODO: process?
+        }
+    }
+
+    if (!rasterMapLayersBatch.isEmpty())
+    {
+        ok = ok && renderRasterLayers(rasterMapLayersBatch, lastUsedProgram);
+        rasterMapLayersBatch.clear();
+    }
+
+    // Deactivate program
+    glUseProgram(0);
+    GL_CHECK_RESULT;
+
+    gpuAPI->unuseVAO();
+
+    GL_POP_GROUP_MARKER;
+
+    return ok;
 }
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release()
@@ -812,6 +508,378 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     }
 
     return ok;
+}
+
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::canRasterMapLayerBeBatched(
+    const QVector<unsigned int>& batchedLayerIndices,
+    const unsigned int layerIndex)
+{
+    if (batchedLayerIndices.size() >= _maxNumberOfRasterMapLayersInBatch)
+        return false;
+
+    return true;
+}
+
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayers(
+    const QVector<unsigned int>& batchedLayerIndices,
+    int& lastUsedProgram)
+{
+    const auto gpuAPI = getGPUAPI();
+
+    GL_CHECK_PRESENT(glUseProgram);
+    GL_CHECK_PRESENT(glUniformMatrix4fv);
+    GL_CHECK_PRESENT(glUniform1f);
+    GL_CHECK_PRESENT(glUniform2f);
+    GL_CHECK_PRESENT(glUniform3f);
+    GL_CHECK_PRESENT(glUniform4f);
+    GL_CHECK_PRESENT(glUniform1i);
+    GL_CHECK_PRESENT(glUniform2i);
+    GL_CHECK_PRESENT(glUniform2fv);
+    GL_CHECK_PRESENT(glActiveTexture);
+    GL_CHECK_PRESENT(glEnableVertexAttribArray);
+    GL_CHECK_PRESENT(glVertexAttribPointer);
+    GL_CHECK_PRESENT(glDisableVertexAttribArray);
+
+    const auto& currentConfiguration = getCurrentConfiguration();
+    const auto& internalState = getInternalState();
+
+    const auto batchedLayersCount = batchedLayerIndices.size();
+    const auto& program = _rasterLayerTilePrograms[batchedLayersCount];
+    const auto& vao = _rasterTileVAOs[batchedLayersCount];
+    const bool elevationDataEnabled = static_cast<bool>(currentState.elevationDataProvider);
+
+    // Check if correct program is being used
+    if (lastUsedProgram != *program.id)
+    {
+        GL_PUSH_GROUP_MARKER(QString("use '%1-batched-raster-map-layers' program").arg(batchedLayersCount));
+
+        // Raster symbols use premultiplied alpha (due to SKIA)
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK_RESULT;
+
+        // Set symbol VAO
+        gpuAPI->useVAO(vao);
+
+        // Activate program
+        glUseProgram(program.id);
+        GL_CHECK_RESULT;
+
+        // Set matrices
+        glUniformMatrix4fv(program.vs.param.mProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Set center offset
+        glUniform2f(program.vs.param.targetInTilePosN, internalState.targetInTileOffsetN.x, internalState.targetInTileOffsetN.y);
+        GL_CHECK_RESULT;
+
+        if (gpuAPI->isSupported_textureLod)
+        {
+            // Set distance from camera to target
+            glUniform1f(program.vs.param.distanceFromCameraToTarget, internalState.distanceFromCameraToTarget);
+            GL_CHECK_RESULT;
+
+            // Set normalized [0.0 .. 1.0] angle of camera elevation
+            glUniform1f(program.vs.param.cameraElevationAngleN, currentState.elevationAngle / 90.0f);
+            GL_CHECK_RESULT;
+
+            // Set position of camera in ground place
+            glUniform2fv(program.vs.param.groundCameraPosition, 1, glm::value_ptr(internalState.groundCameraPosition));
+            GL_CHECK_RESULT;
+
+            // Set scale to retain projected size
+            glUniform1f(program.vs.param.scaleToRetainProjectedSize, internalState.scaleToRetainProjectedSize);
+            GL_CHECK_RESULT;
+        }
+
+        // Configure samplers
+        if (gpuAPI->isSupported_vertexShaderTextureLookup)
+        {
+            glUniform1i(program.vs.param.elevationData_sampler, 0);
+            GL_CHECK_RESULT;
+
+            gpuAPI->setTextureBlockSampler(GL_TEXTURE0, GPUAPI_OpenGL::SamplerType::ElevationDataTile);
+        }
+        auto bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_Bilinear;
+        if (gpuAPI->isSupported_textureLod)
+        {
+            switch(currentConfiguration.texturesFilteringQuality)
+            {
+            case TextureFilteringQuality::Good:
+                bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_BilinearMipmap;
+                break;
+            case TextureFilteringQuality::Best:
+                bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_TrilinearMipmap;
+                break;
+            }
+        }
+
+        for (auto layerLinearIdx = 0u; layerLinearIdx < batchedLayersCount; layerLinearIdx++)
+        {
+            const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
+
+            glUniform1i(program.fs.param.rasterTileLayers[layerLinearIdx].sampler, samplerIndex);
+            GL_CHECK_RESULT;
+
+            gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
+        }
+
+        // Check if we need to process elevation data
+        if (!elevationDataEnabled)
+        {
+            // We have no elevation data provider, so we can not do anything
+            glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
+            GL_CHECK_RESULT;
+        }
+
+        lastUsedProgram = program.id;
+
+        GL_POP_GROUP_MARKER;
+    }
+
+    GL_PUSH_GROUP_MARKER(QLatin1String("tiles"));
+
+    bool elevationVertexAttribArrayEnabled = false;
+    if (!gpuAPI->isSupported_vertexShaderTextureLookup)
+    {
+        glDisableVertexAttribArray(*program.vs.in.vertexElevation);
+        GL_CHECK_RESULT;
+    }
+
+    // For each visible tile, render it
+    for(const auto& tileId : constOf(internalState.visibleTiles))
+    {
+        // Get normalized tile index
+        auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
+
+        GL_PUSH_GROUP_MARKER(QString("%1x%2@%3").arg(tileIdN.x).arg(tileIdN.y).arg(currentState.zoomBase));
+
+        // Set tile coordinates offset
+        glUniform2i(program.vs.param.tileCoordsOffset,
+            tileId.x - internalState.targetTileId.x,
+            tileId.y - internalState.targetTileId.y);
+        GL_CHECK_RESULT;
+
+        // Set elevation data
+        bool appliedElevationVertexAttribArray = false;
+        if (elevationDataEnabled)
+        {
+            const auto& resourcesCollection_ = getResources().getCollectionSnapshot(MapRendererResourceType::ElevationData, currentState.elevationDataProvider);
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+
+            // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+            std::shared_ptr<MapRendererBaseTiledResource> resource_;
+            if (resourcesCollection->obtainResource(tileIdN, currentState.zoomBase, resource_))
+            {
+                const auto resource = std::static_pointer_cast<MapRendererElevationDataResource>(resource_);
+
+                // Check state and obtain GPU resource
+                if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+                {
+                    // Capture GPU resource
+                    gpuResource = resource->resourceInGPU;
+
+                    resource->setState(MapRendererResourceState::Uploaded);
+                }
+            }
+
+            if (!gpuResource)
+            {
+                // We have no elevation data, so we can not do anything
+                glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
+                GL_CHECK_RESULT;
+            }
+            else
+            {
+                glUniform1f(program.vs.param.elevationData_scaleFactor, currentState.elevationDataConfiguration.scaleFactor);
+                GL_CHECK_RESULT;
+
+                const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, AtlasMapRenderer::TileSize3D);
+                glUniform1f(program.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
+                const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, AtlasMapRenderer::TileSize3D);
+                glUniform1f(program.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
+
+                const auto& perTile_vs = program.vs.param.elevationDataLayer;
+
+                if (gpuAPI->isSupported_vertexShaderTextureLookup)
+                {
+                    glActiveTexture(GL_TEXTURE0);
+                    GL_CHECK_RESULT;
+
+                    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
+                    GL_CHECK_RESULT;
+
+                    gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
+
+                    if (gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+                    {
+                        const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
+
+                        glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
+                        GL_CHECK_RESULT;
+                    }
+                    else
+                    {
+                        const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(gpuResource);
+
+                        glUniform1i(perTile_vs.slotIndex, 0);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tileSizeN, 1.0f);
+                        GL_CHECK_RESULT;
+                        glUniform1f(perTile_vs.tilePaddingN, texture->uHalfTexelSizeN);
+                        GL_CHECK_RESULT;
+                        glUniform1i(perTile_vs.slotsPerSide, 1);
+                        GL_CHECK_RESULT;
+                    }
+                }
+                else
+                {
+                    assert(gpuResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
+
+                    const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(gpuResource);
+                    assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
+
+                    if (!elevationVertexAttribArrayEnabled)
+                    {
+                        glEnableVertexAttribArray(*program.vs.in.vertexElevation);
+                        GL_CHECK_RESULT;
+
+                        elevationVertexAttribArrayEnabled = true;
+                    }
+
+                    glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
+                    GL_CHECK_RESULT;
+
+                    glVertexAttribPointer(*program.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
+                    GL_CHECK_RESULT;
+                    appliedElevationVertexAttribArray = true;
+                }
+            }
+        }
+
+        // We need to pass each layer of this tile to shader
+        for (int layerLinearIdx = 0; layerLinearIdx < batchedLayersCount; layerLinearIdx++)
+        {
+            const auto layerIndex = batchedLayerIndices[layerLinearIdx];
+            const auto layerConfiguration = currentState.mapLayersConfigurations[layerIndex];
+
+            // Get resources collection
+            const auto& resourcesCollection_ = getResources().getCollectionSnapshot(
+                MapRendererResourceType::MapLayer,
+                std::dynamic_pointer_cast<IMapDataProvider>(currentState.mapLayersProviders[layerIndex]));
+            const auto& resourcesCollection = std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
+
+            const auto& perTile_vs = program.vs.param.rasterTileLayers[layerLinearIdx];
+            const auto& perTile_fs = program.fs.param.rasterTileLayers[layerLinearIdx];
+            const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
+
+            // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
+            std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
+            std::shared_ptr<MapRendererBaseTiledResource> resource_;
+            if (resourcesCollection->obtainResource(tileIdN, currentState.zoomBase, resource_))
+            {
+                const auto resource = std::static_pointer_cast<MapRendererRasterBitmapTileResource>(resource_);
+
+                // Check state and obtain GPU resource
+                if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))
+                {
+                    // Capture GPU resource
+                    gpuResource = resource->resourceInGPU;
+
+                    resource->setState(MapRendererResourceState::Uploaded);
+                }
+                else if (resource->getState() == MapRendererResourceState::Unavailable)
+                    gpuResource = getResources().unavailableTileStub;
+                else
+                    gpuResource = getResources().processingTileStub;
+            }
+            else
+            {
+                // No resource entry means that it's not yet processed
+                gpuResource = getResources().processingTileStub;
+            }
+
+            glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
+            GL_CHECK_RESULT;
+
+            glActiveTexture(GL_TEXTURE0 + samplerIndex);
+            GL_CHECK_RESULT;
+
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
+            GL_CHECK_RESULT;
+
+            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
+
+            if (gpuResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+            {
+                const auto tileOnAtlasTexture = std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(gpuResource);
+
+                glUniform1i(perTile_vs.slotIndex, tileOnAtlasTexture->slotIndex);
+                GL_CHECK_RESULT;
+                glUniform1f(perTile_vs.tileSizeN, tileOnAtlasTexture->atlasTexture->tileSizeN);
+                GL_CHECK_RESULT;
+                glUniform1f(perTile_vs.tilePaddingN, tileOnAtlasTexture->atlasTexture->tilePaddingN);
+                GL_CHECK_RESULT;
+                glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
+                GL_CHECK_RESULT;
+            }
+            else
+            {
+                glUniform1i(perTile_vs.slotIndex, 0);
+                GL_CHECK_RESULT;
+                glUniform1f(perTile_vs.tileSizeN, 1.0f);
+                GL_CHECK_RESULT;
+                glUniform1f(perTile_vs.tilePaddingN, 0.0f);
+                GL_CHECK_RESULT;
+                glUniform1i(perTile_vs.slotsPerSide, 1);
+                GL_CHECK_RESULT;
+            }
+        }
+
+        if (!appliedElevationVertexAttribArray && elevationVertexAttribArrayEnabled)
+        {
+            elevationVertexAttribArrayEnabled = false;
+
+            glDisableVertexAttribArray(*program.vs.in.vertexElevation);
+            GL_CHECK_RESULT;
+        }
+
+        glDrawElements(GL_TRIANGLES, _rasterTileIndicesCount, GL_UNSIGNED_SHORT, nullptr);
+        GL_CHECK_RESULT;
+
+        GL_POP_GROUP_MARKER;
+    }
+
+    // Disable textures
+    for(int layerLinearIdx = 0, count = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + batchedLayersCount; layerLinearIdx < count; layerLinearIdx++)
+    {
+        glActiveTexture(GL_TEXTURE0 + layerLinearIdx);
+        GL_CHECK_RESULT;
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
+    }
+
+    // Unbind any binded buffer
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_CHECK_RESULT;
+
+    // Disable elevation vertex attrib array (if enabled)
+    if (elevationVertexAttribArrayEnabled)
+    {
+        glDisableVertexAttribArray(*program.vs.in.vertexElevation);
+        GL_CHECK_RESULT;
+    }
+
+    GL_POP_GROUP_MARKER;
+
+    return true;
 }
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers()
