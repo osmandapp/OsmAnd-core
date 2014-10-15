@@ -211,7 +211,6 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsInFragmentShader));
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in fragment shader %d", _maxTextureUnitsInFragmentShader);
-    assert(_maxTextureUnitsInFragmentShader >= RasterMapLayersCount);
 
     glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsInVertexShader));
     GL_CHECK_RESULT;

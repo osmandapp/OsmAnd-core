@@ -92,6 +92,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
         // Create shareable path
         const std::shared_ptr< const QVector<PointI> > shareablePath31(new QVector<PointI>(mapObject->points31));
+        assert(mapObject->points31.size() >= 2);
 
         // Convert all symbols inside group
         bool hasAtLeastOneOnPath = false;
@@ -149,7 +150,6 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 onPathSymbol->languageId = rasterizedOnPathSymbol->languageId;
                 onPathSymbol->minDistance = rasterizedOnPathSymbol->minDistance;
                 onPathSymbol->shareablePath31 = shareablePath31;
-                assert(onPathSymbol->path31.size() >= 2);
                 onPathSymbol->glyphsWidth = rasterizedOnPathSymbol->glyphsWidth;
                 for (const auto& intersectsWithClass : constOf(rasterizedOnPathSymbol->primitiveSymbol->intersectsWith))
                 {

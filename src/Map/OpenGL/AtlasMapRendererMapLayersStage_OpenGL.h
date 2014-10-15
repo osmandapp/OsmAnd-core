@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include "QtExtensions.h"
+#include <QHash>
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -22,66 +23,72 @@ namespace OsmAnd
     private:
     protected:
         // Raster layers support:
+        unsigned int _maxNumberOfRasterMapLayersInBatch;
         GLsizei _rasterTileIndicesCount;
         GLname _rasterTileVBO;
         GLname _rasterTileIBO;
-        QList<GLname> _rasterTileVAOs;
+        QHash<unsigned int, GLname> _rasterTileVAOs;
         void initializeRasterTile();
         void releaseRasterTile();
+        struct RasterLayerTileProgram
+        {
+            GLname id;
 
-        //struct RasterLayerTileProgram {
-        //    GLname id;
+            struct {
+                // Input data
+                struct {
+                    GLlocation vertexPosition;
+                    GLlocation vertexTexCoords;
+                    GLlocation vertexElevation;
+                } in;
 
-        //    struct {
-        //        // Input data
-        //        struct {
-        //            GLlocation vertexPosition;
-        //            GLlocation vertexTexCoords;
-        //            GLlocation vertexElevation;
-        //        } in;
+                // Parameters
+                struct {
+                    // Common data
+                    GLlocation mProjectionView;
+                    GLlocation mapScale;
+                    GLlocation targetInTilePosN;
+                    GLlocation distanceFromCameraToTarget;
+                    GLlocation cameraElevationAngleN;
+                    GLlocation groundCameraPosition;
+                    GLlocation scaleToRetainProjectedSize;
 
-        //        // Parameters
-        //        struct {
-        //            // Common data
-        //            GLlocation mProjectionView;
-        //            GLlocation mapScale;
-        //            GLlocation targetInTilePosN;
-        //            GLlocation distanceFromCameraToTarget;
-        //            GLlocation cameraElevationAngleN;
-        //            GLlocation groundCameraPosition;
-        //            GLlocation scaleToRetainProjectedSize;
+                    // Per-tile data
+                    GLlocation tileCoordsOffset;
+                    GLlocation elevationData_scaleFactor;
+                    GLlocation elevationData_sampler;
+                    GLlocation elevationData_upperMetersPerUnit;
+                    GLlocation elevationData_lowerMetersPerUnit;
 
-        //            // Per-tile data
-        //            GLlocation tileCoordsOffset;
-        //            GLlocation elevationData_k;
-        //            GLlocation elevationData_sampler;
-        //            GLlocation elevationData_upperMetersPerUnit;
-        //            GLlocation elevationData_lowerMetersPerUnit;
+                    // Per-tile-per-layer data
+                    struct VsPerTilePerLayerParameters
+                    {
+                        GLlocation tileSizeN;
+                        GLlocation tilePaddingN;
+                        GLlocation slotsPerSide;
+                        GLlocation slotIndex;
+                    };
+                    VsPerTilePerLayerParameters elevationDataLayer;
+                    QVector<VsPerTilePerLayerParameters> rasterTileLayers;
+                } param;
+            } vs;
 
-        //            // Per-tile-per-layer data
-        //            struct PerTilePerLayerParameters
-        //            {
-        //                GLlocation tileSizeN;
-        //                GLlocation tilePaddingN;
-        //                GLlocation slotsPerSide;
-        //                GLlocation slotIndex;
-        //            };
-        //        } param;
-        //    } vs;
-
-        //    struct {
-        //        // Parameters
-        //        struct {
-        //            // Per-tile-per-layer data
-        //            struct
-        //            {
-        //                GLlocation k;
-        //                GLlocation sampler;
-        //            } rasterTileLayers[RasterMapLayersCount];
-        //        } param;
-        //    } fs;
-        //} _tileProgramVariations[RasterMapLayersCount];
+            struct {
+                // Parameters
+                struct {
+                    // Per-tile-per-layer data
+                    struct FsPerTilePerLayerParameters
+                    {
+                        GLlocation opacity;
+                        GLlocation sampler;
+                    };
+                    QVector<FsPerTilePerLayerParameters> rasterTileLayers;
+                } param;
+            } fs;
+        };
+        QMap<unsigned int, RasterLayerTileProgram> _rasterLayerTilePrograms;
         bool initializeRasterLayers();
+        bool initializeRasterLayersProgram(const unsigned int numberOfLayersInBatch, RasterLayerTileProgram& outRasterLayerTileProgram);
         bool releaseRasterLayers();
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
