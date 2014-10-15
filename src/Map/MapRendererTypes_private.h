@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_MAP_RENDERER_TYPES_H_
-#define _OSMAND_CORE_MAP_RENDERER_TYPES_H_
+#ifndef _OSMAND_CORE_MAP_RENDERER_TYPES_PRIVATE_H_
+#define _OSMAND_CORE_MAP_RENDERER_TYPES_PRIVATE_H_
 
 #include "stdlib_common.h"
 
@@ -21,4 +21,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_MAP_RENDERER_TYPES_H_)
+#endif // !defined(_OSMAND_CORE_MAP_RENDERER_TYPES_PRIVATE_H_)

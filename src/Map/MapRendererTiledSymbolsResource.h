@@ -24,7 +24,11 @@ namespace OsmAnd
     {
     private:
     protected:
-        MapRendererTiledSymbolsResource(MapRendererResourcesManager* owner, const TiledEntriesCollection<MapRendererBaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom);
+        MapRendererTiledSymbolsResource(
+            MapRendererResourcesManager* owner,
+            const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
+            const TileId tileId,
+            const ZoomLevel zoom);
 
         std::shared_ptr<TiledMapSymbolsData> _sourceData;
 

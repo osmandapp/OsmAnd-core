@@ -8,7 +8,7 @@ OsmAnd::MapRendererRasterBitmapTileResource::MapRendererRasterBitmapTileResource
     const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
     const TileId tileId_,
     const ZoomLevel zoom_)
-    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::RasterBitmapTile, collection_, tileId_, zoom_)
+    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::MapLayer, collection_, tileId_, zoom_)
     , resourceInGPU(_resourceInGPU)
 {
 }

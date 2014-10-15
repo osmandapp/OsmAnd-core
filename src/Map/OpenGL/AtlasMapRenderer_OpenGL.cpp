@@ -21,7 +21,7 @@
 #include "AtlasMapRenderer_Metrics.h"
 #include "AtlasMapRendererConfiguration.h"
 #include "AtlasMapRendererSkyStage_OpenGL.h"
-#include "AtlasMapRendererRasterMapStage_OpenGL.h"
+#include "AtlasMapRendererMapLayersStage_OpenGL.h"
 #include "AtlasMapRendererSymbolsStage_OpenGL.h"
 #include "AtlasMapRendererDebugStage_OpenGL.h"
 #include "IMapRenderer.h"
@@ -120,11 +120,11 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     GL_CHECK_RESULT;
 
     // Raster map stage is rendered without blending, since it's done in fragment shader
-    Stopwatch rasterMapStageStopwatch(metric != nullptr);
-    if (!_rasterMapStage->render(metric))
+    Stopwatch mapLayersStageStopwatch(metric != nullptr);
+    if (!_mapLayersStage->render(metric))
         ok = false;
     if (metric)
-        metric->elapsedTimeForRasterMapStage = rasterMapStageStopwatch.elapsed();
+        metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
 
     // Turn on blending since now objects with transparency are going to be rendered
     // Blend function is controlled by each symbol on it's own
@@ -174,10 +174,10 @@ void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendere
 {
     AtlasMapRenderer::onValidateResourcesOfType(type);
 
-    if (type == MapRendererResourceType::ElevationDataTile)
+    if (type == MapRendererResourceType::ElevationData)
     {
         // Recreate tile patch since elevation data influences density of tile patch
-        _rasterMapStage->recreateTile();
+        _mapLayersStage->updateRasterTile();
     }
 }
 
@@ -246,7 +246,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->pixelInWorldProjectionScale = (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor));
 
     // Recalculate perspective projection with obtained value
-    internalState->zSkyplane = state.fogDistance * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
+    internalState->zSkyplane = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
     internalState->zFar = glm::length(glm::vec3(
         internalState->projectionPlaneHalfWidth * (internalState->zSkyplane / _zNear),
         internalState->projectionPlaneHalfHeight * (internalState->zSkyplane / _zNear),
@@ -284,7 +284,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->mPerspectiveProjectionView = internalState->mPerspectiveProjection * internalState->mCameraView;
 
     // Correct fog distance
-    internalState->correctedFogDistance = state.fogDistance * internalState->scaleToRetainProjectedSize + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
+    internalState->correctedFogDistance = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
 
     // Calculate skyplane size
     float zSkyplaneK = internalState->zSkyplane / _zNear;
@@ -539,9 +539,9 @@ OsmAnd::AtlasMapRendererSkyStage* OsmAnd::AtlasMapRenderer_OpenGL::createSkyStag
     return new AtlasMapRendererSkyStage_OpenGL(this);
 }
 
-OsmAnd::AtlasMapRendererRasterMapStage* OsmAnd::AtlasMapRenderer_OpenGL::createRasterMapStage()
+OsmAnd::AtlasMapRendererMapLayersStage* OsmAnd::AtlasMapRenderer_OpenGL::createMapLayersStage()
 {
-    return new AtlasMapRendererRasterMapStage_OpenGL(this);
+    return new AtlasMapRendererMapLayersStage_OpenGL(this);
 }
 
 OsmAnd::AtlasMapRendererSymbolsStage* OsmAnd::AtlasMapRenderer_OpenGL::createSymbolsStage()

@@ -3,7 +3,7 @@
 #include "AtlasMapRendererConfiguration.h"
 #include "AtlasMapRendererInternalState.h"
 #include "AtlasMapRendererSkyStage.h"
-#include "AtlasMapRendererRasterMapStage.h"
+#include "AtlasMapRendererMapLayersStage.h"
 #include "AtlasMapRendererSymbolsStage.h"
 #include "AtlasMapRendererDebugStage.h"
 #include "Utilities.h"
@@ -14,7 +14,7 @@ OsmAnd::AtlasMapRenderer::AtlasMapRenderer(
     const std::unique_ptr<const MapRendererDebugSettings>& baseDebugSettings_)
     : MapRenderer(gpuAPI_, baseConfiguration_, baseDebugSettings_)
     , skyStage(_skyStage)
-    , rasterMapStage(_rasterMapStage)
+    , mapLayersStage(_mapLayersStage)
     , symbolsStage(_symbolsStage)
     , debugStage(_debugStage)
 {
@@ -144,8 +144,8 @@ bool OsmAnd::AtlasMapRenderer::preInitializeRendering()
     if (!_skyStage)
         return false;
 
-    _rasterMapStage.reset(createRasterMapStage());
-    if (!_rasterMapStage)
+    _mapLayersStage.reset(createMapLayersStage());
+    if (!_mapLayersStage)
         return false;
 
     _symbolsStage.reset(createSymbolsStage());
@@ -168,7 +168,7 @@ bool OsmAnd::AtlasMapRenderer::doInitializeRendering()
     if (!_skyStage->initialize())
         ok = false;
 
-    if (!_rasterMapStage->initialize())
+    if (!_mapLayersStage->initialize())
         ok = false;
 
     if (!_symbolsStage->initialize())
@@ -191,11 +191,11 @@ bool OsmAnd::AtlasMapRenderer::doReleaseRendering()
         _skyStage.reset();
     }
 
-    if (_rasterMapStage)
+    if (_mapLayersStage)
     {
-        if (!_rasterMapStage->release())
+        if (!_mapLayersStage->release())
             ok = false;
-        _rasterMapStage.reset();
+        _mapLayersStage.reset();
     }
 
     if (_symbolsStage)

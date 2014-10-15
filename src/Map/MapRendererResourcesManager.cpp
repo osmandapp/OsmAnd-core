@@ -11,9 +11,10 @@
 
 #include "MapRenderer.h"
 #include "IMapDataProvider.h"
-#include "IMapKeyedDataProvider.h"
-#include "IMapRasterBitmapTileProvider.h"
+#include "IMapLayerProvider.h"
+#include "IMapSymbolsProvider.h"
 #include "IMapElevationDataProvider.h"
+#include "IMapRasterBitmapTileProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
 #include "VectorMapSymbol.h"
@@ -32,10 +33,10 @@
 #   define OSMAND_LOG_RESOURCE_STATE_CHANGE 0
 #endif // !defined(OSMAND_LOG_RESOURCE_STATE_CHANGE)
 
-//#define OSMAND_SINGLE_RESOURCES_WORKER 1
-#ifndef OSMAND_SINGLE_RESOURCES_WORKER
-#   define OSMAND_SINGLE_RESOURCES_WORKER 0
-#endif // !defined(OSMAND_SINGLE_RESOURCES_WORKER)
+//#define OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER 1
+#ifndef OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
+#   define OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER 0
+#endif // !defined(OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER)
 
 #if OSMAND_LOG_RESOURCE_STATE_CHANGE
 #   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)                                                                          \
@@ -64,19 +65,12 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     , processingTileStub(_processingTileStub)
     , unavailableTileStub(_unavailableTileStub)
 {
-#if OSMAND_SINGLE_RESOURCES_WORKER
+#if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
     _resourcesRequestWorkersPool.setMaxThreadCount(1);
-#endif //OSMAND_SINGLE_RESOURCES_WORKER
+#endif //OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
 #if OSMAND_DEBUG
     LogPrintf(LogSeverityLevel::Info, "Map renderer will use max %d worker thread(s) to process requests", _resourcesRequestWorkersPool.maxThreadCount());
 #endif
-    // Raster resources collections are special, so preallocate them
-    {
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
-        resources.reserve(RasterMapLayersCount);
-        while (resources.size() < RasterMapLayersCount)
-            resources.push_back(qMove(std::shared_ptr<MapRendererTiledResourcesCollection>()));
-    }
 
     // Initialize default resources
     initializeDefaultResources();
@@ -192,8 +186,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             wasLocked = true;
         }
 
-        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)];
+        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::ElevationData)];
+        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationData)];
 
         // Clean-up and unbind gone providers and their resources
         auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
@@ -220,7 +214,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         if (state.elevationDataProvider && !bindings.providersToCollections.contains(state.elevationDataProvider))
         {
             // Create new resources collection
-            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(new MapRendererTiledResourcesCollection(MapRendererResourceType::ElevationDataTile));
+            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(
+                new MapRendererTiledResourcesCollection(MapRendererResourceType::ElevationData));
 
             // Add binding
             bindings.providersToCollections.insert(state.elevationDataProvider, newResourcesCollection);
@@ -230,7 +225,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             resources.push_back(qMove(newResourcesCollection));
         }
     }
-    if (updatedMask.isSet(MapRendererStateChange::RasterLayers_Providers))
+    if (updatedMask.isSet(MapRendererStateChange::MapLayers_Providers))
     {
         if (!wasLocked)
         {
@@ -238,8 +233,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
             wasLocked = true;
         }
 
-        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)];
+        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::MapLayer)];
+        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::MapLayer)];
 
         // Clean-up and unbind gone providers and their resources
         auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
@@ -247,12 +242,11 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         {
             itBindedProvider.next();
 
+            const auto provider = std::dynamic_pointer_cast<IMapLayerProvider>(itBindedProvider.key());
+
             // Skip binding if it's still active
-            if (std::find(state.rasterLayerProviders.cbegin(), state.rasterLayerProviders.cend(),
-                std::static_pointer_cast<IMapRasterBitmapTileProvider>(itBindedProvider.key())) != state.rasterLayerProviders.cend())
-            {
+            if (std::find(state.mapLayersProviders.cbegin(), state.mapLayersProviders.cend(), provider) != state.mapLayersProviders.cend())
                 continue;
-            }
 
             // Clean-up resources (deferred)
             _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
@@ -266,30 +260,24 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         }
 
         // Create new binding and storage
-        auto rasterLayerIdx = 0;
-        for (auto itProvider = iteratorOf(constOf(state.rasterLayerProviders)); itProvider; ++itProvider, rasterLayerIdx++)
+        for (const auto& provider_ : constOf(state.mapLayersProviders))
         {
-            const auto& provider = *itProvider;
-
-            // Skip empty providers
-            if (!provider)
-                continue;
+            const auto provider = std::dynamic_pointer_cast<IMapDataProvider>(provider_);
 
             // If binding already exists, skip creation
-            if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapDataProvider>(provider)))
+            if (bindings.providersToCollections.contains(provider))
                 continue;
 
             // Create new resources collection
-            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(new MapRendererTiledResourcesCollection(MapRendererResourceType::RasterBitmapTile));
+            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(
+                new MapRendererTiledResourcesCollection(MapRendererResourceType::MapLayer));
 
             // Add binding
-            bindings.providersToCollections.insert(*itProvider, newResourcesCollection);
-            bindings.collectionsToProviders.insert(newResourcesCollection, *itProvider);
+            bindings.providersToCollections.insert(provider, newResourcesCollection);
+            bindings.collectionsToProviders.insert(newResourcesCollection, provider);
 
             // Add resources collection
-            assert(rasterLayerIdx < resources.size());
-            assert(static_cast<bool>(resources[rasterLayerIdx]) == false);
-            resources[rasterLayerIdx] = newResourcesCollection;
+            resources.push_back(qMove(newResourcesCollection));
         }
     }
     if (updatedMask.isSet(MapRendererStateChange::Symbols_Providers))
@@ -309,8 +297,10 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         {
             itBindedProvider.next();
 
+            const auto provider = std::dynamic_pointer_cast<IMapSymbolsProvider>(itBindedProvider.key());
+
             // Skip binding if it's still active
-            if (state.symbolProviders.contains(itBindedProvider.key()))
+            if (state.symbolsProviders.contains(provider))
                 continue;
 
             // Clean-up resources (deferred)
@@ -325,15 +315,17 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         }
 
         // Create new binding and storage
-        for (const auto& provider : constOf(state.symbolProviders))
+        for (const auto& provider_ : constOf(state.symbolsProviders))
         {
+            const auto provider = std::dynamic_pointer_cast<IMapDataProvider>(provider_);
+
             // If binding already exists, skip creation
-            if (bindings.providersToCollections.contains(std::static_pointer_cast<IMapDataProvider>(provider)))
+            if (bindings.providersToCollections.contains(provider))
                 continue;
 
             // Create new resources collection
             const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
-                (std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider) != nullptr)
+                (std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider_) != nullptr)
                 ? static_cast<MapRendererBaseResourcesCollection*>(new MapRendererTiledSymbolsResourcesCollection())
                 : static_cast<MapRendererBaseResourcesCollection*>(new MapRendererKeyedResourcesCollection(MapRendererResourceType::Symbols)));
 
@@ -489,15 +481,18 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(const QSet<Tile
             if (!isDataSourceAvailableFor(resourcesCollection))
                 continue;
 
-            if (const auto resourcesCollection_ = std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
-                requestNeededTiledResources(resourcesCollection_, activeTiles, activeZoom);
-            else if (const auto resourcesCollection_ = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
-                requestNeededKeyedResources(resourcesCollection_);
+            if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
+                requestNeededTiledResources(tiledResourcesCollection, activeTiles, activeZoom);
+            else if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
+                requestNeededKeyedResources(keyedResourcesCollection);
         }
     }
 }
 
-void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection, const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
+void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
+    const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
+    const QSet<TileId>& activeTiles,
+    const ZoomLevel activeZoom)
 {
     for (const auto& activeTileId : constOf(activeTiles))
     {
@@ -509,10 +504,10 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(const std:
             [this, resourceType]
             (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom) -> MapRendererBaseTiledResource*
             {
-                if (resourceType == MapRendererResourceType::RasterBitmapTile)
+                if (resourceType == MapRendererResourceType::MapLayer)
                     return new MapRendererRasterBitmapTileResource(this, collection, tileId, zoom);
-                else if (resourceType == MapRendererResourceType::ElevationDataTile)
-                    return new MapRendererElevationDataTileResource(this, collection, tileId, zoom);
+                else if (resourceType == MapRendererResourceType::ElevationData)
+                    return new MapRendererElevationDataResource(this, collection, tileId, zoom);
                 else if (resourceType == MapRendererResourceType::Symbols)
                     return new MapRendererTiledSymbolsResource(this, collection, tileId, zoom);
                 else
@@ -1479,65 +1474,65 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
     dump += QLatin1String("--------------------------------------------------------------------------------\n");
 
     dump += QLatin1String("[Tiled] Elevation data:\n");
-    for (const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::ElevationDataTile)]))
+    for (const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::ElevationData)]))
     {
-        if (!resources_)
-            continue;
         const auto resources = std::dynamic_pointer_cast<const MapRendererTiledResourcesCollection>(resources_);
         if (!resources)
             continue;
-        resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel) -> bool
-        {
-            dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
-                arg(entry->tileId.x).
-                arg(entry->tileId.y).
-                arg(static_cast<int>(entry->zoom)).
-                arg(resourceStateMap[entry->getState()]);
+        resources->obtainEntries(nullptr,
+            [&dump, resourceStateMap]
+            (const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel) -> bool
+            {
+                dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
+                    arg(entry->tileId.x).
+                    arg(entry->tileId.y).
+                    arg(static_cast<int>(entry->zoom)).
+                    arg(resourceStateMap[entry->getState()]);
 
-            return false;
-        });
+                return false;
+            });
         dump += "\t----------------------------------------------------------------------------\n";
     }
 
-    dump += QLatin1String("[Tiled] Raster map:\n");
-    for (const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::RasterBitmapTile)]))
+    dump += QLatin1String("[Tiled] Map layer:\n");
+    for (const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::MapLayer)]))
     {
-        if (!resources_)
-            continue;
         const auto resources = std::dynamic_pointer_cast<const MapRendererTiledResourcesCollection>(resources_);
         if (!resources)
             continue;
-        resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel) -> bool
-        {
-            dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
-                arg(entry->tileId.x).
-                arg(entry->tileId.y).
-                arg(static_cast<int>(entry->zoom)).
-                arg(resourceStateMap[entry->getState()]);
+        resources->obtainEntries(nullptr,
+            [&dump, resourceStateMap]
+            (const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel) -> bool
+            {
+                dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
+                    arg(entry->tileId.x).
+                    arg(entry->tileId.y).
+                    arg(static_cast<int>(entry->zoom)).
+                    arg(resourceStateMap[entry->getState()]);
 
-            return false;
-        });
+                return false;
+            });
         dump += QLatin1String("\t----------------------------------------------------------------------------\n");
     }
 
     dump += QLatin1String("[Tiled] Symbols:\n");
     for (const auto& resources_ : constOf(_storageByType[static_cast<int>(MapRendererResourceType::Symbols)]))
     {
-        if (!resources_)
-            continue;
         const auto resources = std::dynamic_pointer_cast<const MapRendererTiledResourcesCollection>(resources_);
         if (!resources)
             continue;
-        resources->obtainEntries(nullptr, [&dump, resourceStateMap](const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel) -> bool
-        {
-            dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
-                arg(entry->tileId.x).
-                arg(entry->tileId.y).
-                arg(static_cast<int>(entry->zoom)).
-                arg(resourceStateMap[entry->getState()]);
+        resources->obtainEntries(nullptr,
+            [&dump, resourceStateMap]
+            (const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel) -> bool
+            {
+                dump += QString(QLatin1String("\t %1x%2@%3 state '%4'\n")).
+                    arg(entry->tileId.x).
+                    arg(entry->tileId.y).
+                    arg(static_cast<int>(entry->zoom)).
+                    arg(resourceStateMap[entry->getState()]);
 
-            return false;
-        });
+                return false;
+            });
         dump += QLatin1String("\t----------------------------------------------------------------------------\n");
     }
 

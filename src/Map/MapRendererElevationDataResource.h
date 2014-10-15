@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_MAP_RENDERER_ELEVATION_DATA_TILE_RESOURCE_H_
-#define _OSMAND_CORE_MAP_RENDERER_ELEVATION_DATA_TILE_RESOURCE_H_
+#ifndef _OSMAND_CORE_MAP_RENDERER_ELEVATION_DATA_RESOURCE_H_
+#define _OSMAND_CORE_MAP_RENDERER_ELEVATION_DATA_RESOURCE_H_
 
 #include "stdlib_common.h"
 
@@ -16,11 +16,11 @@ namespace OsmAnd
     class MapRendererResourcesManager;
     class ElevationDataTile;
 
-    class MapRendererElevationDataTileResource : public MapRendererBaseTiledResource
+    class MapRendererElevationDataResource : public MapRendererBaseTiledResource
     {
     private:
     protected:
-        MapRendererElevationDataTileResource(
+        MapRendererElevationDataResource(
             MapRendererResourcesManager* owner,
             const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
             const TileId tileId,
@@ -34,7 +34,7 @@ namespace OsmAnd
         virtual void unloadFromGPU();
         virtual void releaseData();
     public:
-        virtual ~MapRendererElevationDataTileResource();
+        virtual ~MapRendererElevationDataResource();
 
         const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU;
 
@@ -42,4 +42,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_MAP_RENDERER_ELEVATION_DATA_TILE_RESOURCE_H_)
+#endif // !defined(_OSMAND_CORE_MAP_RENDERER_ELEVATION_DATA_RESOURCE_H_)

@@ -7,32 +7,34 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QSet>
+#include <QMap>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
+#include <OsmAndCore/Map/MapRendererTypes.h>
 
 namespace OsmAnd
 {
-    class IMapDataProvider;
-    class IMapRasterBitmapTileProvider;
+    class IMapLayerProvider;
     class IMapElevationDataProvider;
+    class IMapSymbolsProvider;
     class IMapRenderer;
     class MapRenderer;
 
     enum class MapRendererStateChange
     {
-        RasterLayers_Providers = 0,
-        RasterLayers_Opacity,
+        MapLayers_Providers = 0,
+        MapLayers_Configuration,
         ElevationData_Provider,
-        ElevationData_ScaleFactor,
+        ElevationData_Configuration,
         Symbols_Providers,
         WindowSize,
         Viewport,
         FieldOfView,
         SkyColor,
-        FogParameters,
+        FogConfiguration,
         Azimuth,
         ElevationAngle,
         Target,
@@ -45,20 +47,16 @@ namespace OsmAnd
         MapRendererState();
         ~MapRendererState();
 
-        std::array< std::shared_ptr<IMapRasterBitmapTileProvider>, RasterMapLayersCount > rasterLayerProviders;
-        std::array< float, RasterMapLayersCount > rasterLayerOpacity;
+        QMap<unsigned int, std::shared_ptr<IMapLayerProvider> > mapLayersProviders;
+        QMap<unsigned int, MapLayerConfiguration > mapLayersConfigurations;
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
-        float elevationDataScaleFactor;
-        QSet< std::shared_ptr<IMapDataProvider> > symbolProviders;
+        ElevationDataConfiguration elevationDataConfiguration;
+        QSet< std::shared_ptr<IMapSymbolsProvider> > symbolsProviders;
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;
         FColorRGB skyColor;
-        FColorRGB fogColor;
-        float fogDistance;
-        float fogOriginFactor;
-        float fogHeightOriginFactor;
-        float fogDensity;
+        FogConfiguration fogConfiguration;
         float azimuth;
         float elevationAngle;
         PointI target31;

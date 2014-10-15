@@ -11,10 +11,13 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/IMapKeyedDataProvider.h>
+#include <OsmAndCore/Map/IMapSymbolsProvider.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API IMapKeyedSymbolsProvider : public IMapKeyedDataProvider
+    class OSMAND_CORE_API IMapKeyedSymbolsProvider
+        : public IMapKeyedDataProvider
+        , public IMapSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapKeyedSymbolsProvider);
     private:

@@ -81,6 +81,8 @@ namespace OsmAnd
         virtual std::shared_ptr<const IMapRendererResourcesCollection> getCollectionSnapshot() const;
         virtual std::shared_ptr<IMapRendererResourcesCollection> getCollectionSnapshot();
 
+        void requestNeededTiledResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
+
     friend class OsmAnd::MapRendererResourcesManager;
     };
 }

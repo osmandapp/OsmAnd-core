@@ -52,20 +52,6 @@ namespace OsmAnd
         Color,
     };
 
-    enum class RasterMapLayerId
-    {
-        Invalid = -1,
-
-        BaseLayer,
-        Overlay0,
-        Overlay1,
-
-        __LAST,
-    };
-    enum : unsigned int {
-        RasterMapLayersCount = static_cast<unsigned int>(RasterMapLayerId::__LAST)
-    };
-
     union TagValueId
     {
         uint64_t id;

@@ -11,12 +11,15 @@
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
+#include <OsmAndCore/Map/IMapLayerProvider.h>
 
 class SkBitmap;
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API IMapRasterBitmapTileProvider : public IMapTiledDataProvider
+    class OSMAND_CORE_API IMapRasterBitmapTileProvider
+        : public IMapTiledDataProvider
+        , public IMapLayerProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapRasterBitmapTileProvider);
     private:

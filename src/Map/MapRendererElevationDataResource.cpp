@@ -1,24 +1,24 @@
-#include "MapRendererElevationDataTileResource.h"
+#include "MapRendererElevationDataResource.h"
 
 #include "IMapElevationDataProvider.h"
 #include "MapRendererResourcesManager.h"
 
-OsmAnd::MapRendererElevationDataTileResource::MapRendererElevationDataTileResource(
+OsmAnd::MapRendererElevationDataResource::MapRendererElevationDataResource(
     MapRendererResourcesManager* owner_,
     const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
     const TileId tileId_,
     const ZoomLevel zoom_)
-    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::ElevationDataTile, collection_, tileId_, zoom_)
+    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::ElevationData, collection_, tileId_, zoom_)
     , resourceInGPU(_resourceInGPU)
 {
 }
 
-OsmAnd::MapRendererElevationDataTileResource::~MapRendererElevationDataTileResource()
+OsmAnd::MapRendererElevationDataResource::~MapRendererElevationDataResource()
 {
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererElevationDataTileResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+bool OsmAnd::MapRendererElevationDataResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
 {
     bool ok = false;
 
@@ -43,7 +43,7 @@ bool OsmAnd::MapRendererElevationDataTileResource::obtainData(bool& dataAvailabl
     return true;
 }
 
-bool OsmAnd::MapRendererElevationDataTileResource::uploadToGPU()
+bool OsmAnd::MapRendererElevationDataResource::uploadToGPU()
 {
     bool ok = resourcesManager->uploadTileToGPU(_sourceData, _resourceInGPU);
     if (!ok)
@@ -55,12 +55,12 @@ bool OsmAnd::MapRendererElevationDataTileResource::uploadToGPU()
     return true;
 }
 
-void OsmAnd::MapRendererElevationDataTileResource::unloadFromGPU()
+void OsmAnd::MapRendererElevationDataResource::unloadFromGPU()
 {
     _resourceInGPU.reset();
 }
 
-void OsmAnd::MapRendererElevationDataTileResource::releaseData()
+void OsmAnd::MapRendererElevationDataResource::releaseData()
 {
     _sourceData.reset();
 }

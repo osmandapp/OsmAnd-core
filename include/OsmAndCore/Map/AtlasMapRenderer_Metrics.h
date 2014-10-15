@@ -20,8 +20,8 @@ namespace OsmAnd
         /* Time elapsed for sky stage */                                                    \
         FIELD_ACTION(float, elapsedTimeForSkyStage, "s");                                   \
                                                                                             \
-        /* Time elapsed for raster map stage */                                             \
-        FIELD_ACTION(float, elapsedTimeForRasterMapStage, "s");                             \
+        /* Time elapsed for map layers stage */                                             \
+        FIELD_ACTION(float, elapsedTimeForMapLayersStage, "s");                             \
                                                                                             \
         /* Time elapsed for symbols stage */                                                \
         FIELD_ACTION(float, elapsedTimeForSymbolsStage, "s");                               \

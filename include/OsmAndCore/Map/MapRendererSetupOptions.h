@@ -28,6 +28,9 @@ namespace OsmAnd
         // This callback is called when frame needs update
         OSMAND_CALLABLE(FrameUpdateRequestCallback, void, const IMapRenderer* const mapRenderer);
         FrameUpdateRequestCallback frameUpdateRequestCallback;
+
+        // Limit maximal number of raster map layers drawn in batch. 0 means "maximal as limited by platform"
+        unsigned int maxNumberOfRasterMapLayersInBatch;
     };
 }
 

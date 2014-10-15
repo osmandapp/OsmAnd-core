@@ -14,7 +14,7 @@
 #include <QWaitCondition>
 
 #include "OsmAndCore.h"
-#include "MapRendererTypes.h"
+#include "MapRendererTypes_private.h"
 #include "MapRendererState.h"
 #include "MapRendererResourceType.h"
 #include "MapRendererResourceState.h"
@@ -25,7 +25,7 @@
 #include "MapRendererTiledResourcesCollection.h"
 #include "MapRendererKeyedResourcesCollection.h"
 #include "MapRendererRasterBitmapTileResource.h"
-#include "MapRendererElevationDataTileResource.h"
+#include "MapRendererElevationDataResource.h"
 #include "MapRendererTiledSymbolsResourcesCollection.h"
 #include "MapRendererTiledSymbolsResource.h"
 #include "MapRendererKeyedSymbolsResource.h"
@@ -202,7 +202,7 @@ namespace OsmAnd
     friend class OsmAnd::MapRendererTiledResourcesCollection;
     friend class OsmAnd::MapRendererKeyedResourcesCollection;
     friend class OsmAnd::MapRendererRasterBitmapTileResource;
-    friend class OsmAnd::MapRendererElevationDataTileResource;
+    friend class OsmAnd::MapRendererElevationDataResource;
     friend class OsmAnd::MapRendererTiledSymbolsResourcesCollection;
     friend class OsmAnd::MapRendererTiledSymbolsResource;
     friend class OsmAnd::MapRendererKeyedSymbolsResource;

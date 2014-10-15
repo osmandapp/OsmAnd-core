@@ -5,6 +5,7 @@ OsmAnd::MapRendererSetupOptions::MapRendererSetupOptions()
     , gpuWorkerThreadPrologue(nullptr)
     , gpuWorkerThreadEpilogue(nullptr)
     , frameUpdateRequestCallback(nullptr)
+    , maxNumberOfRasterMapLayersInBatch(0)
 {
 }
 

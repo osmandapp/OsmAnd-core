@@ -16,7 +16,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
-#include "MapRendererTypes.h"
+#include "MapRendererTypes_private.h"
 #include "Concurrent.h"
 #include "IMapRenderer.h"
 #include "GPUAPI.h"
@@ -166,7 +166,7 @@ namespace OsmAnd
         const std::shared_ptr<const MapRendererConfiguration>& currentConfiguration;
         enum class ConfigurationChange
         {
-            ColorDepthForcing = 0,
+            ColorDepthForcing,
             ElevationDataResolution,
             TexturesFilteringMode,
             PaletteTexturesUsage,
@@ -282,28 +282,28 @@ namespace OsmAnd
         Concurrent::Dispatcher& getRenderThreadDispatcher();
         Concurrent::Dispatcher& getGpuThreadDispatcher();
 
-        virtual void setRasterLayerProvider(const RasterMapLayerId layerId, const std::shared_ptr<IMapRasterBitmapTileProvider>& tileProvider, bool forcedUpdate = false);
-        virtual void resetRasterLayerProvider(const RasterMapLayerId layerId, bool forcedUpdate = false);
-        virtual void setRasterLayerOpacity(const RasterMapLayerId layerId, const float opacity, bool forcedUpdate = false);
-        virtual void setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& tileProvider, bool forcedUpdate = false);
-        virtual void resetElevationDataProvider(bool forcedUpdate = false);
-        virtual void setElevationDataScaleFactor(const float factor, bool forcedUpdate = false);
-        virtual void addSymbolProvider(const std::shared_ptr<IMapDataProvider>& provider, bool forcedUpdate = false);
-        virtual void removeSymbolProvider(const std::shared_ptr<IMapDataProvider>& provider, bool forcedUpdate = false);
-        virtual void removeAllSymbolProviders(bool forcedUpdate = false);
-        virtual void setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
-        virtual void setViewport(const AreaI& viewport, bool forcedUpdate = false);
-        virtual void setFieldOfView(const float fieldOfView, bool forcedUpdate = false);
-        virtual void setDistanceToFog(const float fogDistance, bool forcedUpdate = false);
-        virtual void setFogOriginFactor(const float factor, bool forcedUpdate = false);
-        virtual void setFogHeightOriginFactor(const float factor, bool forcedUpdate = false);
-        virtual void setFogDensity(const float fogDensity, bool forcedUpdate = false);
-        virtual void setFogColor(const FColorRGB& color, bool forcedUpdate = false);
-        virtual void setSkyColor(const FColorRGB& color, bool forcedUpdate = false);
-        virtual void setAzimuth(const float azimuth, bool forcedUpdate = false);
-        virtual void setElevationAngle(const float elevationAngle, bool forcedUpdate = false);
-        virtual void setTarget(const PointI& target31, bool forcedUpdate = false);
-        virtual void setZoom(const float zoom, bool forcedUpdate = false);
+        virtual bool setMapLayerProvider(const unsigned int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false);
+        virtual bool resetMapLayerProvider(const unsigned int layerIndex, bool forcedUpdate = false);
+        virtual bool setMapLayerConfiguration(const unsigned int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate = false);
+
+        virtual bool setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate = false);
+        virtual bool resetElevationDataProvider(bool forcedUpdate = false);
+        virtual bool setElevationDataConfiguration(const ElevationDataConfiguration& configuration, bool forcedUpdate = false);
+
+        virtual bool addSymbolsProvider(const std::shared_ptr<IMapSymbolsProvider>& provider, bool forcedUpdate = false);
+        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapSymbolsProvider>& provider, bool forcedUpdate = false);
+        virtual bool removeAllSymbolsProviders(bool forcedUpdate = false);
+        virtual bool setSymbolsProviders(const QSet< std::shared_ptr<IMapSymbolsProvider> >& providers, bool forcedUpdate = false);
+
+        virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
+        virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false);
+        virtual bool setFieldOfView(const float fieldOfView, bool forcedUpdate = false);
+        virtual bool setFogConfiguration(const FogConfiguration& configuration, bool forcedUpdate = false);
+        virtual bool setSkyColor(const FColorRGB& color, bool forcedUpdate = false);
+        virtual bool setAzimuth(const float azimuth, bool forcedUpdate = false);
+        virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false);
+        virtual bool setTarget(const PointI& target31, bool forcedUpdate = false);
+        virtual bool setZoom(const float zoom, bool forcedUpdate = false);
 
         virtual float getMinZoom() const;
         virtual float getMaxZoom() const;

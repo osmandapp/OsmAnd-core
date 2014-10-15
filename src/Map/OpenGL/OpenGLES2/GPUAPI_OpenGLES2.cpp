@@ -8,7 +8,6 @@
 
 #include <SkBitmap.h>
 
-#include "MapRendererTypes.h"
 #include "IMapRasterBitmapTileProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
