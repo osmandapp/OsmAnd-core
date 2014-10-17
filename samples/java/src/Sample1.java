@@ -182,7 +182,7 @@ public class Sample1 implements GLEventListener {
     atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
     _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.Casts.downcastTo_MapRendererConfiguration(atlasRendererConfiguration));
 
-    _mapRenderer.addSymbolProvider(_binaryMapStaticSymbolsProvider);
+    _mapRenderer.addSymbolsProvider(_binaryMapStaticSymbolsProvider);
     _mapRenderer.setAzimuth(0.0f);
     _mapRenderer.setElevationAngle(35.0f);
 
@@ -195,7 +195,7 @@ public class Sample1 implements GLEventListener {
     if (mapnik == null)
       Log.e(TAG, "Failed to create mapnik");
     */
-    _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, _binaryMapRasterLayerProvider);
+    _mapRenderer.setMapLayerProvider(0, _binaryMapRasterLayerProvider);
   }
 
   private class RenderRequestCallback extends MapRendererSetupOptions.IFrameUpdateRequestCallback {

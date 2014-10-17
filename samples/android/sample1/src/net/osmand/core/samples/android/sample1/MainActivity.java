@@ -149,7 +149,7 @@ public class MainActivity extends ActionBarActivity {
         atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
         _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.Casts.downcastTo_MapRendererConfiguration(atlasRendererConfiguration));
 
-        _mapRenderer.addSymbolProvider(_binaryMapStaticSymbolsProvider);
+        _mapRenderer.addSymbolsProvider(_binaryMapStaticSymbolsProvider);
         _mapRenderer.setAzimuth(0.0f);
         _mapRenderer.setElevationAngle(35.0f);
 
@@ -162,7 +162,7 @@ public class MainActivity extends ActionBarActivity {
         if (mapnik == null)
             Log.e(TAG, "Failed to create mapnik");
         */
-        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, _binaryMapRasterLayerProvider);
+        _mapRenderer.setMapLayerProvider(0, _binaryMapRasterLayerProvider);
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
