@@ -889,7 +889,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
         if (configuration.verbose)
             output << xT("Creating binary map raster tile provider...") << std::endl;
-        const std::shared_ptr<OsmAnd::BinaryMapRasterBitmapTileProvider_Software> binaryMapRasterTileProvider(new OsmAnd::BinaryMapRasterBitmapTileProvider_Software(
+        const std::shared_ptr<OsmAnd::BinaryMapRasterLayerProvider_Software> binaryMapRasterTileProvider(new OsmAnd::BinaryMapRasterLayerProvider_Software(
             binaryMapPrimitivesProvider));
         
         // Create renderer
@@ -934,8 +934,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         // Add providers
         if (configuration.verbose)
             output << xT("Adding providers to map renderer...") << std::endl;
-        mapRenderer->addSymbolProvider(binaryMapStaticSymbolProvider);
-        mapRenderer->setRasterLayerProvider(OsmAnd::RasterMapLayerId::BaseLayer, binaryMapRasterTileProvider);
+        mapRenderer->addSymbolsProvider(binaryMapStaticSymbolProvider);
+        mapRenderer->setMapLayerProvider(0, binaryMapRasterTileProvider);
         
         // Initialize rendering
         if (configuration.verbose)
