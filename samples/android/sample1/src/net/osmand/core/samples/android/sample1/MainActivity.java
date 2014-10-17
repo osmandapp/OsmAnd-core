@@ -74,7 +74,7 @@ public class MainActivity extends ActionBarActivity {
     private BinaryMapDataProvider _binaryMapDataProvider;
     private BinaryMapPrimitivesProvider _binaryMapPrimitivesProvider;
     private BinaryMapStaticSymbolsProvider _binaryMapStaticSymbolsProvider;
-    private BinaryMapRasterBitmapTileProvider _binaryMapRasterBitmapTileProvider;
+    private BinaryMapRasterLayerProvider _binaryMapRasterLayerProvider;
     private IMapRenderer _mapRenderer;
     private GpuWorkerThreadPrologue _gpuWorkerThreadPrologue;
     private GpuWorkerThreadEpilogue _gpuWorkerThreadEpilogue;
@@ -134,7 +134,7 @@ public class MainActivity extends ActionBarActivity {
         _binaryMapStaticSymbolsProvider = new BinaryMapStaticSymbolsProvider(
                 _binaryMapPrimitivesProvider,
                 _rasterTileSize);
-        _binaryMapRasterBitmapTileProvider = new BinaryMapRasterBitmapTileProvider_Software(
+        _binaryMapRasterLayerProvider = new BinaryMapRasterLayerProvider_Software(
                 _binaryMapPrimitivesProvider);
 
         Log.i(TAG, "Going to create renderer");
@@ -158,11 +158,11 @@ public class MainActivity extends ActionBarActivity {
                 704978668));
         _mapRenderer.setZoom(10.0f);
         /*
-        IMapRasterBitmapTileProvider mapnik = OnlineTileSources.getBuiltIn().createProviderFor("Mapnik (OsmAnd)");
+        IMapRasterLayerProvider mapnik = OnlineTileSources.getBuiltIn().createProviderFor("Mapnik (OsmAnd)");
         if (mapnik == null)
             Log.e(TAG, "Failed to create mapnik");
         */
-        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, _binaryMapRasterBitmapTileProvider);
+        _mapRenderer.setRasterLayerProvider(RasterMapLayerId.BaseLayer, _binaryMapRasterLayerProvider);
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
@@ -228,9 +228,9 @@ public class MainActivity extends ActionBarActivity {
             _binaryMapStaticSymbolsProvider = null;
         }
 
-        if (_binaryMapRasterBitmapTileProvider != null) {
-            _binaryMapRasterBitmapTileProvider.delete();
-            _binaryMapRasterBitmapTileProvider = null;
+        if (_binaryMapRasterLayerProvider != null) {
+            _binaryMapRasterLayerProvider.delete();
+            _binaryMapRasterLayerProvider = null;
         }
 
         if (_mapRenderer != null) {
