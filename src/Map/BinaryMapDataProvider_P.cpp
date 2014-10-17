@@ -29,7 +29,7 @@ OsmAnd::BinaryMapDataProvider_P::~BinaryMapDataProvider_P()
 bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<MapTiledData>& outTiledData,
+    std::shared_ptr<BinaryMapDataProvider::Data>& outTiledData,
     BinaryMapDataProvider_Metrics::Metric_obtainData* const metric_,
     const IQueryController* const queryController)
 {
@@ -102,22 +102,23 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     QList< std::shared_ptr<const Model::BinaryMapObject> > referencedMapObjects;
     QList< proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > > futureReferencedMapObjects;
     QList< std::shared_ptr<const Model::BinaryMapObject> > loadedMapObjects;
-    QHash< uint64_t, SmartPOD<unsigned int, 0u>  > allLoadedMapObjects;
-    QHash< uint64_t, SmartPOD<unsigned int, 0u> > loadedSharedMapObjects;
-    QHash< uint64_t, SmartPOD<unsigned int, 0u> > loadedNonSharedMapObjects;
+    QList< std::shared_ptr<const Model::BinaryMapObject> > loadedSharedMapObjects;
+    QHash< uint64_t, SmartPOD<unsigned int, 0u>  > allLoadedMapObjectsCounters;
+    QHash< uint64_t, SmartPOD<unsigned int, 0u> > loadedSharedMapObjectsCounters;
+    QHash< uint64_t, SmartPOD<unsigned int, 0u> > loadedNonSharedMapObjectsCounters;
     auto tileFoundation = MapFoundationType::Undefined;
     dataInterface->loadMapObjects(
         &loadedMapObjects,
         &tileFoundation,
         zoom,
         &tileBBox31,
-        [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjects, &loadedNonSharedMapObjects, &allLoadedMapObjects, tileBBox31, metric]
+        [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjectsCounters, &loadedNonSharedMapObjectsCounters, &allLoadedMapObjectsCounters, tileBBox31, metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {
             const Stopwatch objectsFilteringStopwatch(metric != nullptr);
 
             // Check if this object was not loaded before
-            unsigned int& totalLoadCount = allLoadedMapObjects[id];
+            unsigned int& totalLoadCount = allLoadedMapObjectsCounters[id];
             if (totalLoadCount > 0u)
                 return false;
             totalLoadCount++;
@@ -131,7 +132,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
                 if (metric)
                     metric->elapsedTimeForObjectsFiltering += objectsFilteringStopwatch.elapsed();
 
-                unsigned int& loadCount = loadedNonSharedMapObjects[id];
+                unsigned int& loadCount = loadedNonSharedMapObjectsCounters[id];
                 if (loadCount > 0u)
                     return false;
                 loadCount++;
@@ -169,7 +170,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
             }
 
             // This map object was reserved, and is going to be shared, but needs to be loaded (and it was promised)
-            unsigned int& loadCount = loadedSharedMapObjects[id];
+            unsigned int& loadCount = loadedSharedMapObjectsCounters[id];
             if (loadCount > 0u)
                 return false;
             loadCount += 1;
@@ -188,7 +189,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         const auto id = mapObject->id;
 
         // Check if this map object is shared (since only shared produce promises)
-        if (!loadedSharedMapObjects.contains(id))
+        if (!loadedSharedMapObjectsCounters.contains(id))
             continue;
 
         // Add unique map object under lock to all zoom levels, for which this map object is valid
@@ -197,6 +198,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
             id,
             Utilities::enumerateZoomLevels(mapObject->level->minZoom, mapObject->level->maxZoom),
             mapObject);
+        loadedSharedMapObjects.push_back(mapObject);
     }
 
     for (auto& futureMapObject : futureReferencedMapObjects)
@@ -210,19 +212,16 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         metric->elapsedTimeForRead += totalReadTimeStopwatch.elapsed();
 
     // Prepare data for the tile
-    const auto sharedMapObjectsCount = referencedMapObjects.size() + loadedSharedMapObjects.size();
+    const auto sharedMapObjectsCount = referencedMapObjects.size() + loadedSharedMapObjectsCounters.size();
     const auto allMapObjects = loadedMapObjects + referencedMapObjects;
 
     // Create tile
-    const std::shared_ptr<BinaryMapDataTile> newTile(new BinaryMapDataTile(
-        _dataBlocksCache,
-        referencedMapDataBlocks,
+    const std::shared_ptr<BinaryMapDataProvider::Data> newTile(new BinaryMapDataProvider::Data(
+        tileId,
+        zoom,
         tileFoundation,
         allMapObjects,
-        tileId,
-        zoom));
-    newTile->_p->_weakLink = _link->getWeak();
-    newTile->_p->_refEntry = tileEntry;
+        new RetainableCacheMetadata(zoom, _link, tileEntry, _dataBlocksCache, referencedMapDataBlocks, referencedMapObjects + loadedSharedMapObjects)));
 
     // Publish new tile
     outTiledData = newTile;
@@ -273,52 +272,6 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     return true;
 }
 
-OsmAnd::BinaryMapDataTile_P::BinaryMapDataTile_P(BinaryMapDataTile* owner_)
-    : owner(owner_)
-{
-}
-
-OsmAnd::BinaryMapDataTile_P::~BinaryMapDataTile_P()
-{
-}
-
-void OsmAnd::BinaryMapDataTile_P::cleanup()
-{
-    // Dereference DataBlocks from cache
-    if (const auto dataBlocksCache = owner->dataBlocksCache.lock())
-    {
-        for (auto& block : _referencedDataBlocks)
-            dataBlocksCache->releaseReference(block->id, owner->zoom, block);
-        _referencedDataBlocks.clear();
-    }
-
-    // Remove tile reference from collection. All checks here does not matter,
-    // since entry->tile reference is already expired (execution is already in destructor of OfflineMapDataTile!)
-    if (const auto entry = _refEntry.lock())
-    {
-        if (const auto link = entry->link.lock())
-            link->collection.removeEntry(entry->tileId, entry->zoom);
-    }
-
-    // Dereference shared map objects
-    if (const auto link = _weakLink.lock())
-    {
-        // Get bounding box that covers this tile
-        const auto tileBBox31 = Utilities::tileBoundingBox31(owner->tileId, owner->zoom);
-
-        for (auto& mapObject : _mapObjects)
-        {
-            // Skip all map objects that can not be shared
-            const auto canNotBeShared = tileBBox31.contains(mapObject->bbox31);
-            if (canNotBeShared)
-                continue;
-
-            link->_sharedMapObjects.releaseReference(mapObject->id, owner->zoom, mapObject);
-        }
-    }
-    _mapObjects.clear();
-}
-
 OsmAnd::BinaryMapDataProvider_P::DataBlocksCache::DataBlocksCache(const bool cacheTileInnerDataBlocks_)
     : cacheTileInnerDataBlocks(cacheTileInnerDataBlocks_)
 {
@@ -336,4 +289,47 @@ bool OsmAnd::BinaryMapDataProvider_P::DataBlocksCache::shouldCacheBlock(const Da
     if (queryArea31->contains(blockBBox31))
         return cacheTileInnerDataBlocks;
     return true;
+}
+
+OsmAnd::BinaryMapDataProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
+    const ZoomLevel zoom_,
+    const std::shared_ptr<Link>& link,
+    const std::shared_ptr<TileEntry>& tileEntry,
+    const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& dataBlocksCache,
+    const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks_,
+    const QList< std::shared_ptr<const Model::BinaryMapObject> >& referencedMapObjects_)
+    : zoom(zoom_)
+    , weakLink(link->getWeak())
+    , tileEntryWeakRef(tileEntry)
+    , dataBlocksCacheWeakRef(dataBlocksCache)
+    , referencedDataBlocks(referencedDataBlocks_)
+    , referencedMapObjects(referencedMapObjects_)
+{
+}
+
+OsmAnd::BinaryMapDataProvider_P::RetainableCacheMetadata::~RetainableCacheMetadata()
+{
+    // Dereference DataBlocks from cache
+    if (const auto dataBlocksCache = dataBlocksCacheWeakRef.lock())
+    {
+        for (auto& referencedDataBlock : referencedDataBlocks)
+            dataBlocksCache->releaseReference(referencedDataBlock->id, zoom, referencedDataBlock);
+        referencedDataBlocks.clear();
+    }
+
+    // Remove tile reference from collection. All checks here does not matter,
+    // since entry->tile reference is already expired (execution is already in destructor of OfflineMapDataTile!)
+    if (const auto tileEntry = tileEntryWeakRef.lock())
+    {
+        if (const auto link = tileEntry->link.lock())
+            link->collection.removeEntry(tileEntry->tileId, tileEntry->zoom);
+    }
+
+    // Dereference shared map objects
+    if (const auto link = weakLink.lock())
+    {
+        for (auto& referencedMapObject : referencedMapObjects)
+            link->_sharedMapObjects.releaseReference(referencedMapObject->id, zoom, referencedMapObject);
+    }
+    referencedMapObjects.clear();
 }

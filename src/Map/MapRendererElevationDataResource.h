@@ -10,6 +10,7 @@
 #include "MapRendererResourceState.h"
 #include "GPUAPI.h"
 #include "MapRendererBaseTiledResource.h"
+#include "IMapElevationDataProvider.h"
 
 namespace OsmAnd
 {
@@ -26,7 +27,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom);
 
-        std::shared_ptr<ElevationDataTile> _sourceData;
+        std::shared_ptr<IMapElevationDataProvider::Data> _sourceData;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);

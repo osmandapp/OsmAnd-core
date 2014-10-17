@@ -14,10 +14,10 @@
 #include "PrivateImplementation.h"
 #include "TileDB.h"
 #include "IMapElevationDataProvider.h"
+#include "HeightmapTileProvider.h"
 
 namespace OsmAnd
 {
-    class HeightmapTileProvider;
     class HeightmapTileProvider_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(HeightmapTileProvider_P);
@@ -41,7 +41,7 @@ namespace OsmAnd
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<HeightmapTileProvider::Data>& outTiledData,
             const IQueryController* const queryController);
 
     friend class OsmAnd::HeightmapTileProvider;

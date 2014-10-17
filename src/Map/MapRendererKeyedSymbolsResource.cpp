@@ -63,15 +63,15 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
     const auto provider = std::static_pointer_cast<IMapKeyedDataProvider>(provider_);
 
     // Obtain source data from provider
-    std::shared_ptr<MapKeyedData> sourceData_;
-    const auto requestSucceeded = provider->obtainData(key, sourceData_);
+    std::shared_ptr<IMapKeyedDataProvider::Data> keyedData;
+    const auto requestSucceeded = provider->obtainData(key, keyedData);
     if (!requestSucceeded)
         return false;
-    const auto sourceData = std::static_pointer_cast<KeyedMapSymbolsData>(sourceData_);
 
     // Store data
-    _sourceData = sourceData;
-    dataAvailable = static_cast<bool>(_sourceData);
+    dataAvailable = static_cast<bool>(keyedData);
+    if (dataAvailable)
+        _sourceData = std::static_pointer_cast<IMapKeyedSymbolsProvider::Data>(keyedData);
 
     // Process data
     if (!dataAvailable)
@@ -145,7 +145,8 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
     }
 
     // All resources have been uploaded to GPU successfully by this point
-    _sourceData->releaseConsumableContent();
+    _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
+    _sourceData.reset();
 
     for (const auto& entry : rangeOf(constOf(uploaded)))
     {
@@ -184,6 +185,8 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
     resourcesManager->batchUnpublishMapSymbols(mapSymbolsToUnpublish);
 
     _mapSymbolsGroup.reset();
+
+    _retainableCacheMetadata.reset();
     _sourceData.reset();
 }
 

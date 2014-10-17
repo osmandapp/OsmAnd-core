@@ -16,12 +16,12 @@
 #include "Common.h"
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
+#include "IMapTiledDataProvider.h"
 
 class SkBitmap;
 
 namespace OsmAnd
 {
-    class MapTiledData;
     class MapSymbol;
 
     class GPUAPI
@@ -270,7 +270,7 @@ namespace OsmAnd
         virtual bool initialize() = 0;
         virtual bool release() = 0;
 
-        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
+        virtual bool uploadTiledDataToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
 
         virtual void waitUntilUploadIsComplete() = 0;

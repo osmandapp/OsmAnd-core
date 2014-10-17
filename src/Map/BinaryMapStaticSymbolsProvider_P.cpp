@@ -31,16 +31,16 @@ OsmAnd::BinaryMapStaticSymbolsProvider_P::~BinaryMapStaticSymbolsProvider_P()
 bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<TiledMapSymbolsData>& outTiledData,
+    std::shared_ptr<BinaryMapStaticSymbolsProvider::Data>& outTiledData,
     const FilterCallback filterCallback,
     const IQueryController* const queryController)
 {
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
 
     // Obtain offline map primitives tile
-    std::shared_ptr<MapTiledData> primitivesTile_;
+    std::shared_ptr<IMapTiledDataProvider::Data> primitivesTile_;
     owner->primitivesProvider->obtainData(tileId, zoom, primitivesTile_);
-    const auto primitivesTile = std::static_pointer_cast<BinaryMapPrimitivesTile>(primitivesTile_);
+    const auto primitivesTile = std::static_pointer_cast<BinaryMapPrimitivesProvider::Data>(primitivesTile_);
 
     // If tile has nothing to be rasterized, mark that data is not available for it
     if (!primitivesTile_ || primitivesTile->primitivisedArea->isEmpty())
@@ -292,7 +292,12 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
     }
 
     // Create output tile
-    outTiledData.reset(new BinaryMapStaticSymbolsTile(primitivesTile, symbolsGroups, tileId, zoom));
+    outTiledData.reset(new BinaryMapStaticSymbolsProvider::Data(
+        tileId,
+        zoom,
+        symbolsGroups,
+        primitivesTile,
+        new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata)));
 
     return true;
 }
@@ -818,4 +823,14 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::computeSymbolPinPoint(
     }
 
     return false;
+}
+
+OsmAnd::BinaryMapStaticSymbolsProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
+    const std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata>& binaryMapPrimitivesRetainableCacheMetadata_)
+    : binaryMapPrimitivesRetainableCacheMetadata(binaryMapPrimitivesRetainableCacheMetadata_)
+{
+}
+
+OsmAnd::BinaryMapStaticSymbolsProvider_P::RetainableCacheMetadata::~RetainableCacheMetadata()
+{
 }

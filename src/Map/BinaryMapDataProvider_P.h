@@ -19,6 +19,7 @@
 #include "TiledEntriesCollection.h"
 #include "SharedByZoomResourcesContainer.h"
 #include "ObfMapSectionReader.h"
+#include "BinaryMapDataProvider.h"
 #include "BinaryMapDataProvider_Metrics.h"
 
 namespace OsmAnd
@@ -27,11 +28,7 @@ namespace OsmAnd
     {
         class BinaryMapObject;
     }
-    class BinaryMapDataTile;
-    class BinaryMapDataTile_P;
-    class RasterizerContext;
 
-    class BinaryMapDataProvider;
     class BinaryMapDataProvider_P Q_DECL_FINAL
     {
     private:
@@ -74,7 +71,7 @@ namespace OsmAnd
                 safeUnlink();
             }
 
-            std::weak_ptr<BinaryMapDataTile> _tile;
+            std::weak_ptr<BinaryMapDataProvider::Data> _tile;
 
             QReadWriteLock _loadedConditionLock;
             QWaitCondition _loadedCondition;
@@ -83,6 +80,25 @@ namespace OsmAnd
 
         typedef OsmAnd::Link<BinaryMapDataProvider_P*> Link;
         std::shared_ptr<Link> _link;
+
+        struct RetainableCacheMetadata : public IMapDataProvider::RetainableCacheMetadata
+        {
+            RetainableCacheMetadata(
+                const ZoomLevel zoom,
+                const std::shared_ptr<Link>& link,
+                const std::shared_ptr<TileEntry>& tileEntry,
+                const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& dataBlocksCache,
+                const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks,
+                const QList< std::shared_ptr<const Model::BinaryMapObject> >& referencedMapObjects);
+            virtual ~RetainableCacheMetadata();
+
+            ZoomLevel zoom;
+            Link::WeakEnd weakLink;
+            std::weak_ptr<TileEntry> tileEntryWeakRef;
+            std::weak_ptr<ObfMapSectionReader::DataBlocksCache> dataBlocksCacheWeakRef;
+            QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> > referencedDataBlocks;
+            QList< std::shared_ptr<const Model::BinaryMapObject> > referencedMapObjects;
+        };
     public:
         ~BinaryMapDataProvider_P();
 
@@ -91,36 +107,11 @@ namespace OsmAnd
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<BinaryMapDataProvider::Data>& outTiledData,
             BinaryMapDataProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
 
-        friend class OsmAnd::BinaryMapDataProvider;
-        friend class OsmAnd::BinaryMapDataTile_P;
-    };
-
-    class BinaryMapDataTile;
-    class BinaryMapDataTile_P Q_DECL_FINAL
-    {
-    private:
-    protected:
-        BinaryMapDataTile_P(BinaryMapDataTile* owner);
-
-        BinaryMapDataProvider_P::Link::WeakEnd _weakLink;
-        std::weak_ptr<BinaryMapDataProvider_P::TileEntry> _refEntry;
-
-        QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> > _referencedDataBlocks;
-
-        QList< std::shared_ptr<const Model::BinaryMapObject> > _mapObjects;
-
-        void cleanup();
-    public:
-        virtual ~BinaryMapDataTile_P();
-
-        ImplementationInterface<BinaryMapDataTile> owner;
-
-    friend class OsmAnd::BinaryMapDataTile;
-    friend class OsmAnd::BinaryMapDataProvider_P;
+    friend class OsmAnd::BinaryMapDataProvider;
     };
 }
 

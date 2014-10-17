@@ -22,6 +22,25 @@ namespace OsmAnd
     class OSMAND_CORE_API BinaryMapPrimitivesProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(BinaryMapPrimitivesProvider);
+    public:
+        class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        private:
+        protected:
+        public:
+            Data(
+                const TileId tileId,
+                const ZoomLevel zoom,
+                const std::shared_ptr<const BinaryMapDataProvider::Data>& binaryMapData,
+                const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+                const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+            virtual ~Data();
+
+            std::shared_ptr<const BinaryMapDataProvider::Data> binaryMapData;
+            std::shared_ptr<const Primitiviser::PrimitivisedArea> primitivisedArea;
+        };
+
     private:
         PrivateImplementation<BinaryMapPrimitivesProvider_P> _p;
     protected:
@@ -42,39 +61,15 @@ namespace OsmAnd
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
             const IQueryController* const queryController = nullptr);
 
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<Data>& outTiledData,
             BinaryMapPrimitivesProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
-    };
-
-    class BinaryMapPrimitivesTile_P;
-    class OSMAND_CORE_API BinaryMapPrimitivesTile : public MapTiledData
-    {
-        Q_DISABLE_COPY_AND_MOVE(BinaryMapPrimitivesTile);
-    private:
-        PrivateImplementation<BinaryMapPrimitivesTile_P> _p;
-    protected:
-        BinaryMapPrimitivesTile(
-            const std::shared_ptr<const BinaryMapDataTile> dataTile,
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea> primitivisedArea,
-            const TileId tileId,
-            const ZoomLevel zoom);
-    public:
-        virtual ~BinaryMapPrimitivesTile();
-
-        const std::shared_ptr<const BinaryMapDataTile> dataTile;
-        const std::shared_ptr<const Primitiviser::PrimitivisedArea> primitivisedArea;
-
-        virtual void releaseConsumableContent();
-
-    friend class OsmAnd::BinaryMapPrimitivesProvider;
-    friend class OsmAnd::BinaryMapPrimitivesProvider_P;
     };
 }
 

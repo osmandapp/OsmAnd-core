@@ -1,7 +1,6 @@
 #include "IMapKeyedDataProvider.h"
 
-OsmAnd::IMapKeyedDataProvider::IMapKeyedDataProvider(const DataType dataType_)
-    : IMapDataProvider(dataType_)
+OsmAnd::IMapKeyedDataProvider::IMapKeyedDataProvider()
 {
 }
 
@@ -9,12 +8,13 @@ OsmAnd::IMapKeyedDataProvider::~IMapKeyedDataProvider()
 {
 }
 
-OsmAnd::MapKeyedData::MapKeyedData(const DataType dataType_, const Key key_)
-    : MapData(dataType_)
+OsmAnd::IMapKeyedDataProvider::Data::Data(const Key key_, const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
+    : IMapDataProvider::Data(pRetainableCacheMetadata_)
     , key(key_)
 {
 }
 
-OsmAnd::MapKeyedData::~MapKeyedData()
+OsmAnd::IMapKeyedDataProvider::Data::~Data()
 {
+    release();
 }

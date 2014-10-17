@@ -204,8 +204,8 @@ namespace OsmAnd
         friend class OsmAnd::GPUAPI_OpenGL;
         };
     private:
-        bool uploadTileAsTextureToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
-        bool uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTiledDataAsTextureToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        bool uploadTiledDataAsArrayBufferToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
         bool uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         bool uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
@@ -302,9 +302,9 @@ namespace OsmAnd
             const bool autoReleaseShaders = true,
             QHash<QString, GlslProgramVariable>* outVariablesMap = nullptr);
 
-        virtual TextureFormat getTextureFormat(const std::shared_ptr< const MapTiledData >& tile);
+        virtual TextureFormat getTextureFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile);
         virtual TextureFormat getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
-        virtual SourceFormat getSourceFormat(const std::shared_ptr< const MapTiledData >& tile);
+        virtual SourceFormat getSourceFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile);
         virtual SourceFormat getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol);
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,
@@ -347,7 +347,7 @@ namespace OsmAnd
             const QHash<QString, GlslProgramVariable>& variablesMap);
         virtual bool findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type);
 
-        virtual bool uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
+        virtual bool uploadTiledDataToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
         virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU);
 
         virtual void waitUntilUploadIsComplete();

@@ -1,7 +1,6 @@
 #include "IMapDataProvider.h"
 
-OsmAnd::IMapDataProvider::IMapDataProvider(const DataType dataType_)
-    : dataType(dataType_)
+OsmAnd::IMapDataProvider::IMapDataProvider()
 {
 }
 
@@ -9,18 +8,23 @@ OsmAnd::IMapDataProvider::~IMapDataProvider()
 {
 }
 
-OsmAnd::MapData::MapData(const DataType dataType_)
-    : _consumableContentReleased(false)
-    , dataType(dataType_)
-    , consumableContentReleased(_consumableContentReleased)
+OsmAnd::IMapDataProvider::RetainableCacheMetadata::~RetainableCacheMetadata()
 {
 }
 
-OsmAnd::MapData::~MapData()
+OsmAnd::IMapDataProvider::Data::Data(const RetainableCacheMetadata* const pRetainableCacheMetadata /*= nullptr*/)
 {
 }
 
-void OsmAnd::MapData::releaseConsumableContent()
+OsmAnd::IMapDataProvider::Data::~Data()
 {
-    _consumableContentReleased = true;
+    release();
+}
+
+void OsmAnd::IMapDataProvider::Data::release()
+{
+    if (!retainableCacheMetadata)
+        return;
+
+    retainableCacheMetadata.reset();
 }

@@ -18,7 +18,7 @@
 #include <OsmAndCore/Map/BinaryMapDataProvider.h>
 #include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
 #include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
-#include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider_Software.h>
+#include <OsmAndCore/Map/BinaryMapRasterLayerProvider_Software.h>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #if defined(OSMAND_TARGET_OS_windows)

@@ -62,7 +62,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     QList< std::shared_ptr<SharedGroupResources> > referencedSharedGroupsResources;
     QList< proper::shared_future< std::shared_ptr<SharedGroupResources> > > futureReferencedSharedGroupsResources;
     QSet< uint64_t > loadedSharedGroups;
-    std::shared_ptr<TiledMapSymbolsData> tile;
+    std::shared_ptr<IMapTiledSymbolsProvider::Data> tile;
     const auto requestSucceeded = provider->obtainData(tileId, zoom, tile,
         [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
         (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup_) -> bool
@@ -222,7 +222,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 
     // Since there's a copy of references to map symbols groups and symbols themselves,
     // it's safe to consume all the data here
-    _sourceData->releaseConsumableContent();
+    _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
+    _sourceData.reset();
 
     return true;
 }
@@ -569,6 +570,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     }
     _referencedSharedGroupsResources.clear();
 
+    _retainableCacheMetadata.reset();
     _sourceData.reset();
 }
 

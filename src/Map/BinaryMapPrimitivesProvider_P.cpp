@@ -24,7 +24,7 @@ OsmAnd::BinaryMapPrimitivesProvider_P::~BinaryMapPrimitivesProvider_P()
 bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<MapTiledData>& outTiledData,
+    std::shared_ptr<BinaryMapPrimitivesProvider::Data>& outTiledData,
     BinaryMapPrimitivesProvider_Metrics::Metric_obtainData* const metric_,
     const IQueryController* const queryController)
 {
@@ -85,19 +85,18 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
         );
 
     // Obtain offline map data tile
-    std::shared_ptr<MapTiledData> dataTile_;
+    std::shared_ptr<BinaryMapDataProvider::Data> dataTile;
     owner->dataProvider->obtainData(
         tileId,
         zoom,
-        dataTile_,
+        dataTile,
         metric ? &metric->obtainBinaryMapDataMetric : nullptr,
         nullptr);
-    if (!dataTile_)
+    if (!dataTile)
     {
         outTiledData.reset();
         return true;
     }
-    const auto dataTile = std::static_pointer_cast<BinaryMapDataTile>(dataTile_);
 
     //////////////////////////////////////////////////////////////////////////
     //if (zoom == ZoomLevel12 && tileId.x == 2105 && tileId.y == 1346)
@@ -121,12 +120,12 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
         metric ? &metric->primitiviseMetric : nullptr);
 
     // Create tile
-    const std::shared_ptr<BinaryMapPrimitivesTile> newTile(new BinaryMapPrimitivesTile(
+    const std::shared_ptr<BinaryMapPrimitivesProvider::Data> newTile(new BinaryMapPrimitivesProvider::Data(
+        tileId,
+        zoom,
         dataTile,
         primitivisedArea,
-        tileId,
-        zoom));
-    newTile->_p->_refEntry = tileEntry;
+        new RetainableCacheMetadata(tileEntry, dataTile->retainableCacheMetadata)));
 
     // Publish new tile
     outTiledData = newTile;
@@ -172,22 +171,21 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
     return true;
 }
 
-OsmAnd::BinaryMapPrimitivesTile_P::BinaryMapPrimitivesTile_P(BinaryMapPrimitivesTile* owner_)
-    : owner(owner_)
+OsmAnd::BinaryMapPrimitivesProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
+    const std::shared_ptr<TileEntry>& tileEntry,
+    const std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata>& binaryMapRetainableCacheMetadata_)
+    : tileEntryWeakRef(tileEntry)
+    , binaryMapRetainableCacheMetadata(binaryMapRetainableCacheMetadata_)
 {
 }
 
-OsmAnd::BinaryMapPrimitivesTile_P::~BinaryMapPrimitivesTile_P()
-{
-}
-
-void OsmAnd::BinaryMapPrimitivesTile_P::cleanup()
+OsmAnd::BinaryMapPrimitivesProvider_P::RetainableCacheMetadata::~RetainableCacheMetadata()
 {
     // Remove tile reference from collection. All checks here does not matter,
     // since entry->tile reference is already expired (execution is already in destructor of OfflineMapDataTile!)
-    if (const auto entry = _refEntry.lock())
+    if (const auto tileEntry = tileEntryWeakRef.lock())
     {
-        if (const auto link = entry->link.lock())
-            link->collection.removeEntry(entry->tileId, entry->zoom);
+        if (const auto link = tileEntry->link.lock())
+            link->collection.removeEntry(tileEntry->tileId, tileEntry->zoom);
     }
 }

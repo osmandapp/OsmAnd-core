@@ -6,22 +6,36 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
-#include <OsmAndCore/IQueryController.h>
 
 namespace OsmAnd
 {
-    class MapTiledData;
+    class IQueryController;
 
-    // IMapTiledDataProvider describes minimal interface that providers with tile-based access must implement
     class OSMAND_CORE_API IMapTiledDataProvider : public IMapDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapTiledDataProvider);
+    public:
+        class OSMAND_CORE_API Data : public IMapDataProvider::Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        private:
+        protected:
+        public:
+            Data(
+                const TileId tileId,
+                const ZoomLevel zoom,
+                const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+            virtual ~Data();
+
+            TileId tileId;
+            ZoomLevel zoom;
+        };
+
     private:
     protected:
-        IMapTiledDataProvider(const DataType dataType);
+        IMapTiledDataProvider();
     public:
         virtual ~IMapTiledDataProvider();
 
@@ -31,21 +45,8 @@ namespace OsmAnd
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<Data>& outTiledData,
             const IQueryController* const queryController = nullptr) = 0;
-    };
-
-    class OSMAND_CORE_API MapTiledData : public MapData
-    {
-        Q_DISABLE_COPY_AND_MOVE(MapTiledData);
-    private:
-    protected:
-        MapTiledData(const DataType dataType, const TileId tileId, const ZoomLevel zoom);
-    public:
-        virtual ~MapTiledData();
-
-        const TileId tileId;
-        const ZoomLevel zoom;
     };
 }
 

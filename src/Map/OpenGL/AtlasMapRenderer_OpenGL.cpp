@@ -26,7 +26,7 @@
 #include "AtlasMapRendererDebugStage_OpenGL.h"
 #include "IMapRenderer.h"
 #include "IMapTiledDataProvider.h"
-#include "IMapRasterBitmapTileProvider.h"
+#include "IRasterMapLayerProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "Logging.h"
 #include "Stopwatch.h"

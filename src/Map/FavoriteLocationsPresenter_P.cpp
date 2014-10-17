@@ -22,7 +22,10 @@ QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::FavoriteLocationsPresenter_
     return _markersCollection->getProvidedDataKeys();
 }
 
-bool OsmAnd::FavoriteLocationsPresenter_P::obtainData(const IMapKeyedSymbolsProvider::Key key, std::shared_ptr<MapKeyedData>& outKeyedData, const IQueryController* const queryController)
+bool OsmAnd::FavoriteLocationsPresenter_P::obtainData(
+    const IMapKeyedDataProvider::Key key,
+    std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
+    const IQueryController* const queryController)
 {
     return _markersCollection->obtainData(key, outKeyedData, queryController);
 }

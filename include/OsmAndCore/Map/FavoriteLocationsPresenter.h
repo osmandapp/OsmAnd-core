@@ -37,10 +37,10 @@ namespace OsmAnd
 
         static std::shared_ptr<const SkBitmap> getDefaultFavoriteLocationPinIconBitmap();
 
-        virtual QList<Key> getProvidedDataKeys() const;
+        virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
         virtual bool obtainData(
-            const Key key,
-            std::shared_ptr<MapKeyedData>& outKeyedData,
+            const IMapKeyedDataProvider::Key key,
+            std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
             const IQueryController* const queryController = nullptr);
     };
 }

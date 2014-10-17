@@ -11,11 +11,10 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
+#include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
 
 namespace OsmAnd
 {
-    class BinaryMapPrimitivesProvider;
-    class BinaryMapPrimitivesTile;
     namespace Model
     {
         class BinaryMapObject;
@@ -25,6 +24,24 @@ namespace OsmAnd
     class OSMAND_CORE_API BinaryMapStaticSymbolsProvider : public IMapTiledSymbolsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(BinaryMapStaticSymbolsProvider);
+    public:
+        class OSMAND_CORE_API Data : public IMapTiledSymbolsProvider::Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        private:
+        protected:
+        public:
+            Data(
+                const TileId tileId,
+                const ZoomLevel zoom,
+                const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups,
+                const std::shared_ptr<const BinaryMapPrimitivesProvider::Data>& binaryMapPrimitivisedData,
+                const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+            virtual ~Data();
+
+            std::shared_ptr<const BinaryMapPrimitivesProvider::Data> binaryMapPrimitivisedData;
+        };
+
     private:
         PrivateImplementation<BinaryMapStaticSymbolsProvider_P> _p;
     protected:
@@ -45,27 +62,10 @@ namespace OsmAnd
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<TiledMapSymbolsData>& outTiledData,
+            std::shared_ptr<IMapTiledSymbolsProvider::Data>& outTiledData,
             const FilterCallback filterCallback = nullptr,
             const IQueryController* const queryController = nullptr);
 #endif // !defined(SWIG)
-    };
-
-    class OSMAND_CORE_API BinaryMapStaticSymbolsTile : public TiledMapSymbolsData
-    {
-    private:
-    protected:
-        BinaryMapStaticSymbolsTile(
-            const std::shared_ptr<const BinaryMapPrimitivesTile>& dataTile,
-            const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups,
-            const TileId tileId, const ZoomLevel zoom);
-    public:
-        virtual ~BinaryMapStaticSymbolsTile();
-
-        const std::shared_ptr<const BinaryMapPrimitivesTile> dataTile;
-
-    friend class OsmAnd::BinaryMapStaticSymbolsProvider;
-    friend class OsmAnd::BinaryMapStaticSymbolsProvider_P;
     };
 }
 

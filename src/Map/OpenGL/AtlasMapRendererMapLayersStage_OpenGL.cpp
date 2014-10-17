@@ -14,7 +14,7 @@
 #include "AtlasMapRenderer_OpenGL.h"
 #include "AtlasMapRenderer_Metrics.h"
 #include "IMapTiledDataProvider.h"
-#include "IMapRasterBitmapTileProvider.h"
+#include "IRasterMapLayerProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "Utilities.h"
 
@@ -62,7 +62,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
         if (!getResources().getCollectionSnapshot(MapRendererResourceType::MapLayer, std::dynamic_pointer_cast<IMapDataProvider>(provider)))
             continue;
 
-        if (const auto rasterMapLayerProvider = std::dynamic_pointer_cast<IMapRasterBitmapTileProvider>(provider))
+        if (const auto rasterMapLayerProvider = std::dynamic_pointer_cast<IRasterMapLayerProvider>(provider))
         {
             if (!canRasterMapLayerBeBatched(rasterMapLayersBatch, layerIndex))
             {
@@ -784,7 +784,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayers(
             std::shared_ptr<MapRendererBaseTiledResource> resource_;
             if (resourcesCollection->obtainResource(tileIdN, currentState.zoomBase, resource_))
             {
-                const auto resource = std::static_pointer_cast<MapRendererRasterBitmapTileResource>(resource_);
+                const auto resource = std::static_pointer_cast<MapRendererRasterMapLayerResource>(resource_);
 
                 // Check state and obtain GPU resource
                 if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::IsBeingUsed))

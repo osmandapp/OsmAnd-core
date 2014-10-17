@@ -37,8 +37,11 @@ OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider::getMaxZoom() const
 bool OsmAnd::HeightmapTileProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<MapTiledData>& outTiledData,
+    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
     const IQueryController* const queryController)
 {
-    return _p->obtainData(tileId, zoom, outTiledData, queryController);
+    std::shared_ptr<Data> tiledData;
+    const auto result = _p->obtainData(tileId, zoom, tiledData, queryController);
+    outTiledData = tiledData;
+    return result;
 }

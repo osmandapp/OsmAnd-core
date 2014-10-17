@@ -10,6 +10,7 @@
 #include "MapRendererResourceType.h"
 #include "MapRendererResourceState.h"
 #include "MapRendererBaseTiledResource.h"
+#include "IMapTiledSymbolsProvider.h"
 #include "GPUAPI.h"
 
 namespace OsmAnd
@@ -18,7 +19,6 @@ namespace OsmAnd
     class MapRendererTiledSymbolsResourcesCollection;
     class MapSymbol;
     class MapSymbolsGroup;
-    class TiledMapSymbolsData;
 
     class MapRendererTiledSymbolsResource : public MapRendererBaseTiledResource
     {
@@ -30,7 +30,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom);
 
-        std::shared_ptr<TiledMapSymbolsData> _sourceData;
+        std::shared_ptr<IMapTiledSymbolsProvider::Data> _sourceData;
 
         class GroupResources
         {

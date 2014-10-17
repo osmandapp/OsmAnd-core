@@ -24,7 +24,7 @@
 #include "MapRendererBaseResourcesCollection.h"
 #include "MapRendererTiledResourcesCollection.h"
 #include "MapRendererKeyedResourcesCollection.h"
-#include "MapRendererRasterBitmapTileResource.h"
+#include "MapRendererRasterMapLayerResource.h"
 #include "MapRendererElevationDataResource.h"
 #include "MapRendererTiledSymbolsResourcesCollection.h"
 #include "MapRendererTiledSymbolsResource.h"
@@ -157,7 +157,7 @@ namespace OsmAnd
         MapRendererResourcesManager(MapRenderer* const owner);
 
         // Resources management:
-        bool uploadTileToGPU(const std::shared_ptr<const MapTiledData>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
+        bool uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
         std::shared_ptr<const SkBitmap> adjustBitmapToConfiguration(
             const std::shared_ptr<const SkBitmap>& input,
@@ -201,7 +201,7 @@ namespace OsmAnd
     friend class OsmAnd::MapRendererBaseResourcesCollection;
     friend class OsmAnd::MapRendererTiledResourcesCollection;
     friend class OsmAnd::MapRendererKeyedResourcesCollection;
-    friend class OsmAnd::MapRendererRasterBitmapTileResource;
+    friend class OsmAnd::MapRendererRasterMapLayerResource;
     friend class OsmAnd::MapRendererElevationDataResource;
     friend class OsmAnd::MapRendererTiledSymbolsResourcesCollection;
     friend class OsmAnd::MapRendererTiledSymbolsResource;

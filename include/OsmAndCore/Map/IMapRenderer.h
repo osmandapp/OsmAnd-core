@@ -4,7 +4,6 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QSet>
 #include <QList>
 
 #include <OsmAndCore.h>
@@ -22,7 +21,9 @@
 namespace OsmAnd
 {
     class IMapLayerProvider;
-    class IMapSymbolsProvider;
+    class IMapElevationDataProvider;
+    class IMapTiledSymbolsProvider;
+    class IMapKeyedSymbolsProvider;
     class MapSymbol;
     namespace IMapRenderer_Metrics
     {
@@ -80,10 +81,11 @@ namespace OsmAnd
         virtual bool resetElevationDataProvider(bool forcedUpdate = false) = 0;
         virtual bool setElevationDataConfiguration(const ElevationDataConfiguration& configuration, bool forcedUpdate = false) = 0;
 
-        virtual bool addSymbolsProvider(const std::shared_ptr<IMapSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
-        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual bool addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool removeAllSymbolsProviders(bool forcedUpdate = false) = 0;
-        virtual bool setSymbolsProviders(const QSet< std::shared_ptr<IMapSymbolsProvider> >& providers, bool forcedUpdate = false) = 0;
 
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false) = 0;
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false) = 0;

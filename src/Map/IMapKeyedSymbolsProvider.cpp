@@ -1,7 +1,6 @@
 #include "IMapKeyedSymbolsProvider.h"
 
 OsmAnd::IMapKeyedSymbolsProvider::IMapKeyedSymbolsProvider()
-    : IMapKeyedDataProvider(DataType::Symbols)
 {
 }
 
@@ -9,19 +8,16 @@ OsmAnd::IMapKeyedSymbolsProvider::~IMapKeyedSymbolsProvider()
 {
 }
 
-OsmAnd::KeyedMapSymbolsData::KeyedMapSymbolsData(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup_, const Key key_)
-    : MapKeyedData(DataType::Symbols, key_)
+OsmAnd::IMapKeyedSymbolsProvider::Data::Data(
+    const Key key_,
+    const std::shared_ptr<MapSymbolsGroup>& symbolsGroup_,
+    const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
+    : IMapKeyedDataProvider::Data(key_, pRetainableCacheMetadata_)
     , symbolsGroup(symbolsGroup_)
 {
 }
 
-OsmAnd::KeyedMapSymbolsData::~KeyedMapSymbolsData()
+OsmAnd::IMapKeyedSymbolsProvider::Data::~Data()
 {
-}
-
-void OsmAnd::KeyedMapSymbolsData::releaseConsumableContent()
-{
-    symbolsGroup.reset();
-
-    MapKeyedData::releaseConsumableContent();
+    release();
 }

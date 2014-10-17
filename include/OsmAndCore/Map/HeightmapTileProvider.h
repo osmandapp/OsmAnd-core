@@ -36,7 +36,7 @@ namespace OsmAnd
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
             const IQueryController* const queryController = nullptr);
 
         static const QString defaultIndexFilename;

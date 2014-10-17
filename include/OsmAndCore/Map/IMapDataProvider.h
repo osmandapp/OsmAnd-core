@@ -9,55 +9,35 @@
 
 namespace OsmAnd
 {
-    // IMapDataProvider describes minimal interface that providers of any type of data must implement and support
     class OSMAND_CORE_API IMapDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapDataProvider);
-
     public:
-        enum class DataType
+        struct OSMAND_CORE_API RetainableCacheMetadata
         {
-            Unknown = -1,
+            virtual ~RetainableCacheMetadata() = 0;
+        };
 
-            // Static tiled data:
-            BinaryMapDataTile,
-            BinaryMapPrimitivesTile,
-            //FUTURE:VectorMapTile
-            RasterBitmapTile,
-            ElevationDataTile,
-            SymbolsTile,
+        class OSMAND_CORE_API Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        
+        private:
+        protected:
+            void release();
+        public:
+            Data(const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+            virtual ~Data();
 
-            // Dynamic keyed data:
-            Symbols,
+            // If data provider supports caching, it may need to store some metadata to maintain cache
+            std::shared_ptr<const RetainableCacheMetadata> retainableCacheMetadata;
         };
 
     private:
     protected:
-        IMapDataProvider(const DataType dataType);
+        IMapDataProvider();
     public:
         virtual ~IMapDataProvider();
-
-        const DataType dataType;
-    };
-
-    class OSMAND_CORE_API MapData
-    {
-        Q_DISABLE_COPY_AND_MOVE(MapData);
-
-    public:
-        typedef IMapDataProvider::DataType DataType;
-
-    private:
-        bool _consumableContentReleased;
-    protected:
-        MapData(const DataType dataType);
-    public:
-        virtual ~MapData();
-
-        const DataType dataType;
-
-        const bool& consumableContentReleased;
-        virtual void releaseConsumableContent() = 0;
     };
 }
 

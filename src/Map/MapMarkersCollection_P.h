@@ -13,7 +13,6 @@
 #include "PrivateImplementation.h"
 #include "CommonTypes.h"
 #include "IMapKeyedSymbolsProvider.h"
-#include "MapMarkersCollection.h"
 #include "MapMarker.h"
 #include "MapMarkerBuilder.h"
 
@@ -29,14 +28,12 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(MapMarkersCollection_P);
 
-    public:
-        typedef MapMarkersCollection::Key Key;
     private:
     protected:
         MapMarkersCollection_P(MapMarkersCollection* const owner);
 
         mutable QReadWriteLock _markersLock;
-        QHash< Key, std::shared_ptr<MapMarker> > _markers;
+        QHash< IMapKeyedSymbolsProvider::Key, std::shared_ptr<MapMarker> > _markers;
 
         bool addMarker(const std::shared_ptr<MapMarker>& marker);
     public:
@@ -48,10 +45,10 @@ namespace OsmAnd
         bool removeMarker(const std::shared_ptr<MapMarker>& marker);
         void removeAllMarkers();
 
-        QList<Key> getProvidedDataKeys() const;
+        QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
         bool obtainData(
-            const Key key,
-            std::shared_ptr<MapKeyedData>& outKeyedData,
+            const IMapKeyedSymbolsProvider::Key key,
+            std::shared_ptr<IMapKeyedSymbolsProvider::Data>& outKeyedData,
             const IQueryController* const queryController);
 
     friend class OsmAnd::MapMarkersCollection;

@@ -42,20 +42,21 @@
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
-#include <OsmAndCore/Map/IMapElevationDataProvider.h>
-#include <OsmAndCore/Map/IMapRasterBitmapTileProvider.h>
-#include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 #include <OsmAndCore/Map/IMapKeyedDataProvider.h>
+#include <OsmAndCore/Map/IMapElevationDataProvider.h>
+#include <OsmAndCore/Map/IMapLayerProvider.h>
+#include <OsmAndCore/Map/IRasterMapLayerProvider.h>
+#include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 #include <OsmAndCore/Map/Primitiviser.h>
 #include <OsmAndCore/Map/BinaryMapDataProvider.h>
 #include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
 #include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
-#include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider.h>
-#include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider_Software.h>
+#include <OsmAndCore/Map/BinaryMapRasterLayerProvider.h>
+#include <OsmAndCore/Map/BinaryMapRasterLayerProvider_Software.h>
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
-#include <OsmAndCore/Map/OnlineRasterMapTileProvider.h>
+#include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -116,19 +117,13 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IMapRenderer)
 	%shared_ptr(OsmAnd::AtlasMapRendererConfiguration)
 	%shared_ptr(OsmAnd::IMapDataProvider)
-	%shared_ptr(OsmAnd::MapData)
 	%shared_ptr(OsmAnd::IMapTiledDataProvider)
-	%shared_ptr(OsmAnd::MapTiledData)
-	%shared_ptr(OsmAnd::IMapElevationDataProvider)
-	%shared_ptr(OsmAnd::ElevationDataTile)
-	%shared_ptr(OsmAnd::IMapRasterBitmapTileProvider)
-	%shared_ptr(OsmAnd::RasterBitmapTile)
-	%shared_ptr(OsmAnd::IMapTiledSymbolsProvider)
-	%shared_ptr(OsmAnd::TiledMapSymbolsData)
 	%shared_ptr(OsmAnd::IMapKeyedDataProvider)
-	%shared_ptr(OsmAnd::MapKeyedData)
+	%shared_ptr(OsmAnd::IMapElevationDataProvider)
+	%shared_ptr(OsmAnd::IMapLayerProvider)
+	%shared_ptr(OsmAnd::IRasterMapLayerProvider)
+	%shared_ptr(OsmAnd::IMapTiledSymbolsProvider)
 	%shared_ptr(OsmAnd::IMapKeyedSymbolsProvider)
-	%shared_ptr(OsmAnd::KeyedMapSymbolsData)
 	%shared_ptr(OsmAnd::Primitiviser)
 	%shared_ptr(OsmAnd::Primitiviser::Cache)
 	%shared_ptr(OsmAnd::Primitiviser::Primitive)
@@ -139,18 +134,14 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::Primitiviser::IconSymbol)
 	%shared_ptr(OsmAnd::Primitiviser::PrimitivisedArea)
 	%shared_ptr(OsmAnd::BinaryMapDataProvider)
-	%shared_ptr(OsmAnd::BinaryMapDataTile)
 	%shared_ptr(OsmAnd::BinaryMapPrimitivesProvider)
-	%shared_ptr(OsmAnd::BinaryMapPrimitivesTile)
 	%shared_ptr(OsmAnd::BinaryMapStaticSymbolsProvider)
-	%shared_ptr(OsmAnd::BinaryMapStaticSymbolsTile)
-	%shared_ptr(OsmAnd::BinaryMapRasterBitmapTileProvider)
-	%shared_ptr(OsmAnd::BinaryMapRasterizedTile)
-	%shared_ptr(OsmAnd::BinaryMapRasterBitmapTileProvider_Software)
+	%shared_ptr(OsmAnd::BinaryMapRasterLayerProvider)
+	%shared_ptr(OsmAnd::BinaryMapRasterLayerProvider_Software)
 	%shared_ptr(OsmAnd::IOnlineTileSources)
 	%shared_ptr(OsmAnd::IOnlineTileSources::Source)
 	%shared_ptr(OsmAnd::OnlineTileSources)
-	%shared_ptr(OsmAnd::OnlineRasterMapTileProvider)
+	%shared_ptr(OsmAnd::OnlineRasterMapLayerProvider)
 %include <std_pair.i>
 %include <std_string.i>
 %include <swig/QString.i>
@@ -225,17 +216,18 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 %include <OsmAndCore/Map/IMapDataProvider.h>
 %include <OsmAndCore/Map/IMapTiledDataProvider.h>
-%include <OsmAndCore/Map/IMapElevationDataProvider.h>
-%include <OsmAndCore/Map/IMapRasterBitmapTileProvider.h>
-%include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 %include <OsmAndCore/Map/IMapKeyedDataProvider.h>
+%include <OsmAndCore/Map/IMapElevationDataProvider.h>
+%include <OsmAndCore/Map/IMapLayerProvider.h>
+%include <OsmAndCore/Map/IRasterMapLayerProvider.h>
+%include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 %include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 %include <OsmAndCore/Map/Primitiviser.h>
 %include <OsmAndCore/Map/BinaryMapDataProvider.h>
 %include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
 %include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
-%include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider.h>
-%include <OsmAndCore/Map/BinaryMapRasterBitmapTileProvider_Software.h>
+%include <OsmAndCore/Map/BinaryMapRasterLayerProvider.h>
+%include <OsmAndCore/Map/BinaryMapRasterLayerProvider_Software.h>
 %include <OsmAndCore/Map/IOnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineTileSources.h>
-%include <OsmAndCore/Map/OnlineRasterMapTileProvider.h>
+%include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>

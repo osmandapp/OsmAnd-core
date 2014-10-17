@@ -26,7 +26,7 @@ namespace OsmAnd
     protected:
         MapRendererKeyedSymbolsResource(MapRendererResourcesManager* owner, const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection, const Key key);
 
-        std::shared_ptr<KeyedMapSymbolsData> _sourceData;
+        std::shared_ptr<IMapKeyedSymbolsProvider::Data> _sourceData;
         std::shared_ptr<MapSymbolsGroup> _mapSymbolsGroup;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
 

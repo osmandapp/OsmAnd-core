@@ -11,35 +11,32 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/IMapKeyedDataProvider.h>
-#include <OsmAndCore/Map/IMapSymbolsProvider.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API IMapKeyedSymbolsProvider
-        : public IMapKeyedDataProvider
-        , public IMapSymbolsProvider
+    class OSMAND_CORE_API IMapKeyedSymbolsProvider : public IMapKeyedDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapKeyedSymbolsProvider);
+    public:
+        class OSMAND_CORE_API Data : public IMapKeyedDataProvider::Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        private:
+        protected:
+        public:
+            Data(
+                const Key key,
+                const std::shared_ptr<MapSymbolsGroup>& symbolsGroup,
+                const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+            virtual ~Data();
+
+            std::shared_ptr<MapSymbolsGroup> symbolsGroup;
+        };
     private:
     protected:
         IMapKeyedSymbolsProvider();
     public:
         virtual ~IMapKeyedSymbolsProvider();
-    };
-
-    class OSMAND_CORE_API KeyedMapSymbolsData : public MapKeyedData
-    {
-        Q_DISABLE_COPY_AND_MOVE(KeyedMapSymbolsData);
-
-    private:
-    protected:
-    public:
-        KeyedMapSymbolsData(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup, const Key key);
-        virtual ~KeyedMapSymbolsData();
-
-        std::shared_ptr<MapSymbolsGroup> symbolsGroup;
-
-        virtual void releaseConsumableContent();
     };
 }
 

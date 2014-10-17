@@ -6,10 +6,12 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/IMapTiledDataProvider.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API IMapLayerProvider
+    class OSMAND_CORE_API IMapLayerProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapLayerProvider);
     private:
@@ -17,9 +19,6 @@ namespace OsmAnd
         IMapLayerProvider();
     public:
         virtual ~IMapLayerProvider();
-
-        virtual ZoomLevel getMinZoom() const = 0;
-        virtual ZoomLevel getMaxZoom() const = 0;
     };
 }
 

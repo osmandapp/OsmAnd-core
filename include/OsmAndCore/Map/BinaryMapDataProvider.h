@@ -18,7 +18,6 @@
 namespace OsmAnd
 {
     class IObfsCollection;
-    class BinaryMapDataTile;
     namespace Model
     {
         class BinaryMapObject;
@@ -28,6 +27,25 @@ namespace OsmAnd
     class OSMAND_CORE_API BinaryMapDataProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(BinaryMapDataProvider);
+    public:
+        class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        private:
+        protected:
+        public:
+            Data(
+                const TileId tileId,
+                const ZoomLevel zoom,
+                const MapFoundationType tileFoundation,
+                const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects,
+                const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+            virtual ~Data();
+
+            MapFoundationType tileFoundation;
+            QList< std::shared_ptr<const Model::BinaryMapObject> > mapObjects;
+        };
+
     private:
         PrivateImplementation<BinaryMapDataProvider_P> _p;
     protected:
@@ -43,44 +61,15 @@ namespace OsmAnd
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
             const IQueryController* const queryController = nullptr);
 
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<Data>& outTiledData,
             BinaryMapDataProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
-    };
-
-    class BinaryMapDataTile_P;
-    class OSMAND_CORE_API BinaryMapDataTile : public MapTiledData
-    {
-        Q_DISABLE_COPY_AND_MOVE(BinaryMapDataTile);
-    private:
-        PrivateImplementation<BinaryMapDataTile_P> _p;
-    protected:
-        BinaryMapDataTile(
-            const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& dataBlocksCache,
-            const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks,
-            const MapFoundationType tileFoundation,
-            const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects,
-            const TileId tileId,
-            const ZoomLevel zoom);
-    public:
-        virtual ~BinaryMapDataTile();
-
-        const std::weak_ptr<ObfMapSectionReader::DataBlocksCache> dataBlocksCache;
-        const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks;
-
-        const MapFoundationType tileFoundation;
-        const QList< std::shared_ptr<const Model::BinaryMapObject> >& mapObjects;
-
-        virtual void releaseConsumableContent();
-
-    friend class OsmAnd::BinaryMapDataProvider;
-    friend class OsmAnd::BinaryMapDataProvider_P;
     };
 }
 

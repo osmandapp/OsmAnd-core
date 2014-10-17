@@ -18,6 +18,38 @@ namespace OsmAnd
         Postcodes = 2,
     };
 
+    union ObfObjectId
+    {
+        uint64_t id;
+
+#if !defined(SWIG)
+        inline operator uint64_t() const
+        {
+            return id;
+        }
+
+        inline bool operator==(const ObfObjectId& that)
+        {
+            return this->id == that.id;
+        }
+
+        inline bool operator!=(const ObfObjectId& that)
+        {
+            return this->id != that.id;
+        }
+
+        inline bool operator==(const uint64_t& that)
+        {
+            return this->id == that;
+        }
+
+        inline bool operator!=(const uint64_t& that)
+        {
+            return this->id != that;
+        }
+#endif // !defined(SWIG)
+    };
+
     union ObfMapSectionDataBlockId
     {
         uint64_t id;

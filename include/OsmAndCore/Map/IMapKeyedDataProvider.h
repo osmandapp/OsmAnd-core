@@ -7,14 +7,13 @@
 #include <QList>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/IQueryController.h>
+#include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
 
 namespace OsmAnd
 {
-    class MapKeyedData;
+    class IQueryController;
 
-    // IMapKeyedDataProvider describes minimal interface that providers with keyed-based access must implement
     class OSMAND_CORE_API IMapKeyedDataProvider : public IMapDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapKeyedDataProvider);
@@ -22,33 +21,29 @@ namespace OsmAnd
     public:
         typedef const void* Key;
 
+        class OSMAND_CORE_API Data : public IMapDataProvider::Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        private:
+        protected:
+        public:
+            Data(const Key key, const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+            virtual ~Data();
+
+            Key key;
+        };
+
     private:
     protected:
-        IMapKeyedDataProvider(const DataType dataType);
+        IMapKeyedDataProvider();
     public:
         virtual ~IMapKeyedDataProvider();
 
         virtual QList<Key> getProvidedDataKeys() const = 0;
         virtual bool obtainData(
             const Key key,
-            std::shared_ptr<MapKeyedData>& outKeyedData,
+            std::shared_ptr<Data>& outKeyedData,
             const IQueryController* const queryController = nullptr) = 0;
-    };
-
-    class OSMAND_CORE_API MapKeyedData : public MapData
-    {
-        Q_DISABLE_COPY_AND_MOVE(MapKeyedData);
-
-    public:
-        typedef IMapKeyedDataProvider::Key Key;
-
-    private:
-    protected:
-        MapKeyedData(const DataType dataType, const Key key);
-    public:
-        virtual ~MapKeyedData();
-
-        const Key key;
     };
 }
 

@@ -19,11 +19,14 @@ OsmAnd::BinaryMapStaticSymbolsProvider::~BinaryMapStaticSymbolsProvider()
 bool OsmAnd::BinaryMapStaticSymbolsProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<TiledMapSymbolsData>& outTiledData,
+    std::shared_ptr<IMapTiledSymbolsProvider::Data>& outTiledData,
     const FilterCallback filterCallback /*= nullptr*/,
     const IQueryController* const queryController /*= nullptr*/)
 {
-    return _p->obtainData(tileId, zoom, outTiledData, filterCallback, queryController);
+    std::shared_ptr<Data> tiledData;
+    const auto result = _p->obtainData(tileId, zoom, tiledData, filterCallback, queryController);
+    outTiledData = tiledData;
+    return result;
 }
 
 OsmAnd::ZoomLevel OsmAnd::BinaryMapStaticSymbolsProvider::getMinZoom() const
@@ -36,16 +39,18 @@ OsmAnd::ZoomLevel OsmAnd::BinaryMapStaticSymbolsProvider::getMaxZoom() const
     return primitivesProvider->getMaxZoom();
 }
 
-OsmAnd::BinaryMapStaticSymbolsTile::BinaryMapStaticSymbolsTile(
-    const std::shared_ptr<const BinaryMapPrimitivesTile>& dataTile_,
-    const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups_,
+OsmAnd::BinaryMapStaticSymbolsProvider::Data::Data(
     const TileId tileId_,
-    const ZoomLevel zoom_)
-    : TiledMapSymbolsData(symbolsGroups_, tileId_, zoom_)
-    , dataTile(dataTile_)
+    const ZoomLevel zoom_,
+    const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups_,
+    const std::shared_ptr<const BinaryMapPrimitivesProvider::Data>& binaryMapPrimitivisedData_,
+    const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
+    : IMapTiledSymbolsProvider::Data(tileId_, zoom_, symbolsGroups_, pRetainableCacheMetadata_)
+    , binaryMapPrimitivisedData(binaryMapPrimitivisedData_)
 {
 }
 
-OsmAnd::BinaryMapStaticSymbolsTile::~BinaryMapStaticSymbolsTile()
+OsmAnd::BinaryMapStaticSymbolsProvider::Data::~Data()
 {
+    release();
 }

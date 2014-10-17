@@ -13,7 +13,7 @@
 #include "restore_internal_warnings.h"
 
 #include "MapCommonTypes.h"
-#include "IMapRasterBitmapTileProvider.h"
+#include "IRasterMapLayerProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
 #include "Logging.h"

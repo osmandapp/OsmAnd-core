@@ -17,7 +17,7 @@
 
 namespace OsmAnd
 {
-    class OnlineRasterMapTileProvider;
+    class OnlineRasterMapLayerProvider;
 
     class OSMAND_CORE_API IOnlineTileSources
     {
@@ -45,7 +45,7 @@ namespace OsmAnd
         virtual QHash< QString, std::shared_ptr<const Source> > getCollection() const = 0;
         virtual std::shared_ptr<const Source> getSourceByName(const QString& sourceName) const = 0;
 
-        virtual std::shared_ptr<OnlineRasterMapTileProvider> createProviderFor(const QString& sourceName) const;
+        virtual std::shared_ptr<OnlineRasterMapLayerProvider> createProviderFor(const QString& sourceName) const;
     };
 }
 

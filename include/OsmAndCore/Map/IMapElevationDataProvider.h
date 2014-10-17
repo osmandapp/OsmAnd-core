@@ -14,37 +14,33 @@ namespace OsmAnd
     class OSMAND_CORE_API IMapElevationDataProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapElevationDataProvider);
+    public:
+        class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        private:
+        protected:
+        public:
+            Data(
+                const TileId tileId,
+                const ZoomLevel zoom,
+                const size_t rowLength,
+                const uint32_t size,
+                const float* const pRawData);
+            virtual ~Data();
+
+            const size_t rowLength;
+            const uint32_t size;
+            const float* pRawData;
+        };
+
     private:
     protected:
         IMapElevationDataProvider();
     public:
         virtual ~IMapElevationDataProvider();
 
-        virtual uint32_t getTileSize() const = 0;
-    };
-
-    class OSMAND_CORE_API ElevationDataTile : public MapTiledData
-    {
-        Q_DISABLE_COPY_AND_MOVE(ElevationDataTile);
-    public:
-        typedef const float* DataPtr;
-
-    private:
-    protected:
-    public:
-        ElevationDataTile(
-            const DataPtr data,
-            const size_t rowLength,
-            const uint32_t size,
-            const TileId tileId,
-            const ZoomLevel zoom);
-        virtual ~ElevationDataTile();
-
-        DataPtr data;
-        size_t rowLength;
-        uint32_t size;
-
-        virtual void releaseConsumableContent();
+        virtual unsigned int getTileSize() const = 0;
     };
 }
 

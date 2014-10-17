@@ -31,26 +31,28 @@ bool OsmAnd::MapRendererElevationDataResource::obtainData(bool& dataAvailable, c
     const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
 
     // Obtain tile from provider
-    std::shared_ptr<MapTiledData> tile;
+    std::shared_ptr<IMapTiledDataProvider::Data> tile;
     const auto requestSucceeded = provider->obtainData(tileId, zoom, tile, queryController);
     if (!requestSucceeded)
         return false;
+    dataAvailable = static_cast<bool>(tile);
 
     // Store data
-    _sourceData = std::static_pointer_cast<ElevationDataTile>(tile);
-    dataAvailable = static_cast<bool>(tile);
+    if (dataAvailable)
+        _sourceData = std::static_pointer_cast<IMapElevationDataProvider::Data>(tile);
 
     return true;
 }
 
 bool OsmAnd::MapRendererElevationDataResource::uploadToGPU()
 {
-    bool ok = resourcesManager->uploadTileToGPU(_sourceData, _resourceInGPU);
+    bool ok = resourcesManager->uploadTiledDataToGPU(_sourceData, _resourceInGPU);
     if (!ok)
         return false;
 
-    // Since content was uploaded to GPU, it's safe to release it
-    _sourceData->releaseConsumableContent();
+    // Since content was uploaded to GPU, it's safe to release it keeping retainable data
+    _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
+    _sourceData.reset();
 
     return true;
 }
@@ -62,5 +64,6 @@ void OsmAnd::MapRendererElevationDataResource::unloadFromGPU()
 
 void OsmAnd::MapRendererElevationDataResource::releaseData()
 {
+    _retainableCacheMetadata.reset();
     _sourceData.reset();
 }

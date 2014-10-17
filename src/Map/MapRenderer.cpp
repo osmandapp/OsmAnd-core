@@ -1216,36 +1216,72 @@ bool OsmAnd::MapRenderer::setElevationDataConfiguration(const ElevationDataConfi
     return true;
 }
 
-bool OsmAnd::MapRenderer::addSymbolsProvider(const std::shared_ptr<IMapSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     if (!provider)
         return false;
 
-    bool update = forcedUpdate || !_requestedState.symbolsProviders.contains(provider);
+    bool update = forcedUpdate || !_requestedState.tiledSymbolsProviders.contains(provider);
     if (!update)
         return false;
 
-    _requestedState.symbolsProviders.insert(provider);
+    _requestedState.tiledSymbolsProviders.insert(provider);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::removeSymbolsProvider(const std::shared_ptr<IMapSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!provider)
+        return false;
+
+    bool update = forcedUpdate || !_requestedState.keyedSymbolsProviders.contains(provider);
+    if (!update)
+        return false;
+
+    _requestedState.keyedSymbolsProviders.insert(provider);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     if (!provider)
         return false;
         
-    bool update = forcedUpdate || _requestedState.symbolsProviders.contains(provider);
+    bool update = forcedUpdate || _requestedState.tiledSymbolsProviders.contains(provider);
     if (!update)
         return false;
 
-    _requestedState.symbolsProviders.remove(provider);
+    _requestedState.tiledSymbolsProviders.remove(provider);
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (!provider)
+        return false;
+
+    bool update = forcedUpdate || _requestedState.keyedSymbolsProviders.contains(provider);
+    if (!update)
+        return false;
+
+    _requestedState.keyedSymbolsProviders.remove(provider);
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 
@@ -1256,26 +1292,12 @@ bool OsmAnd::MapRenderer::removeAllSymbolsProviders(bool forcedUpdate /*= false*
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    bool update = forcedUpdate || !_requestedState.symbolsProviders.isEmpty();
+    bool update = forcedUpdate || !_requestedState.tiledSymbolsProviders.isEmpty() || !_requestedState.keyedSymbolsProviders.isEmpty();
     if (!update)
         return false;
 
-    _requestedState.symbolsProviders.clear();
-
-    notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
-
-    return true;
-}
-
-bool OsmAnd::MapRenderer::setSymbolsProviders(const QSet< std::shared_ptr<IMapSymbolsProvider> >& providers, bool forcedUpdate /*= false*/)
-{
-    QMutexLocker scopedLocker(&_requestedStateMutex);
-
-    bool update = forcedUpdate || _requestedState.symbolsProviders != providers;
-    if (!update)
-        return false;
-
-    _requestedState.symbolsProviders.clear();
+    _requestedState.tiledSymbolsProviders.clear();
+    _requestedState.keyedSymbolsProviders.clear();
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Symbols_Providers);
 

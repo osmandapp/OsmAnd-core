@@ -9,17 +9,14 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Map/MapSymbolsGroup.h>
+#include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
-#include <OsmAndCore/Map/IMapSymbolsProvider.h>
 
 namespace OsmAnd
 {
-    class TiledMapSymbolsData;
+    class MapSymbolsGroup;
 
-    class OSMAND_CORE_API IMapTiledSymbolsProvider
-        : public IMapTiledDataProvider
-        , public IMapSymbolsProvider
+    class OSMAND_CORE_API IMapTiledSymbolsProvider : public IMapTiledDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapTiledSymbolsProvider);
 
@@ -32,6 +29,22 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup);
 #endif // !defined(SWIG)
 
+        class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
+        {
+            Q_DISABLE_COPY_AND_MOVE(Data);
+        private:
+        protected:
+        public:
+            Data(
+                const TileId tileId,
+                const ZoomLevel zoom,
+                const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups,
+                const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
+            virtual ~Data();
+
+            QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
+        };
+
     private:
     protected:
         IMapTiledSymbolsProvider();
@@ -41,29 +54,17 @@ namespace OsmAnd
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
             const IQueryController* const queryController = nullptr);
 
 # if !defined(SWIG)
         virtual bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<TiledMapSymbolsData>& outTiledData,
+            std::shared_ptr<Data>& outTiledData,
             const FilterCallback filterCallback = nullptr,
             const IQueryController* const queryController = nullptr) = 0;
 #endif // !defined(SWIG)
-    };
-
-    class OSMAND_CORE_API TiledMapSymbolsData : public MapTiledData
-    {
-    private:
-    protected:
-    public:
-        TiledMapSymbolsData(const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups, const TileId tileId, const ZoomLevel zoom);
-        virtual ~TiledMapSymbolsData();
-
-        QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
-        virtual void releaseConsumableContent();
     };
 }
 

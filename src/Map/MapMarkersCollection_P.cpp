@@ -23,7 +23,7 @@ bool OsmAnd::MapMarkersCollection_P::addMarker(const std::shared_ptr<MapMarker>&
 {
     QWriteLocker scopedLocker(&_markersLock);
 
-    const auto key = reinterpret_cast<Key>(marker.get());
+    const auto key = reinterpret_cast<IMapKeyedSymbolsProvider::Key>(marker.get());
     if (_markers.contains(key))
         return false;
 
@@ -36,7 +36,7 @@ bool OsmAnd::MapMarkersCollection_P::removeMarker(const std::shared_ptr<MapMarke
 {
     QWriteLocker scopedLocker(&_markersLock);
 
-    const bool removed = (_markers.remove(reinterpret_cast<Key>(marker.get())) > 0);
+    const bool removed = (_markers.remove(reinterpret_cast<IMapKeyedSymbolsProvider::Key>(marker.get())) > 0);
     return removed;
 }
 
@@ -47,14 +47,17 @@ void OsmAnd::MapMarkersCollection_P::removeAllMarkers()
     _markers.clear();
 }
 
-QList<OsmAnd::MapMarkersCollection_P::Key> OsmAnd::MapMarkersCollection_P::getProvidedDataKeys() const
+QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::MapMarkersCollection_P::getProvidedDataKeys() const
 {
     QReadLocker scopedLocker(&_markersLock);
 
     return _markers.keys();
 }
 
-bool OsmAnd::MapMarkersCollection_P::obtainData(const Key key, std::shared_ptr<MapKeyedData>& outKeyedData, const IQueryController* const queryController)
+bool OsmAnd::MapMarkersCollection_P::obtainData(
+    const IMapKeyedSymbolsProvider::Key key,
+    std::shared_ptr<IMapKeyedSymbolsProvider::Data>& outKeyedData,
+    const IQueryController* const queryController)
 {
     QReadLocker scopedLocker(&_markersLock);
 
@@ -63,7 +66,7 @@ bool OsmAnd::MapMarkersCollection_P::obtainData(const Key key, std::shared_ptr<M
         return false;
     auto& marker = *citMarker;
 
-    outKeyedData.reset(new KeyedMapSymbolsData(marker->createSymbolsGroup(), key));
+    outKeyedData.reset(new IMapKeyedSymbolsProvider::Data(key, marker->createSymbolsGroup()));
 
     return true;
 }

@@ -14,13 +14,13 @@
 #include "CommonTypes.h"
 #include "IMapKeyedSymbolsProvider.h"
 #include "MapMarkersCollection.h"
+#include "FavoriteLocationsPresenter.h"
 
 namespace OsmAnd
 {
     class IFavoriteLocation;
     class IFavoriteLocationsCollection;
 
-    class FavoriteLocationsPresenter;
     class FavoriteLocationsPresenter_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsPresenter_P);
@@ -45,8 +45,8 @@ namespace OsmAnd
 
         QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
         bool obtainData(
-            const IMapKeyedSymbolsProvider::Key key,
-            std::shared_ptr<MapKeyedData>& outKeyedData,
+            const IMapKeyedDataProvider::Key key,
+            std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
             const IQueryController* const queryController);
 
     friend class OsmAnd::FavoriteLocationsPresenter;

@@ -44,7 +44,7 @@ uint32_t OsmAnd::HeightmapTileProvider_P::getTileSize() const
 bool OsmAnd::HeightmapTileProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<MapTiledData>& outTiledData,
+    std::shared_ptr<HeightmapTileProvider::Data>& outTiledData,
     const IQueryController* const queryController)
 {
     // Obtain raw data from DB
@@ -106,7 +106,12 @@ bool OsmAnd::HeightmapTileProvider_P::obtainData(
                 }
                 else
                 {
-                    outTiledData.reset(new ElevationDataTile(buffer, sizeof(float)*tileSize, tileSize, tileId, zoom));
+                    outTiledData.reset(new IMapElevationDataProvider::Data(
+                        tileId,
+                        zoom,
+                        tileSize,
+                        sizeof(float)*tileSize,
+                        buffer));
                     success = true;
                 }
             }

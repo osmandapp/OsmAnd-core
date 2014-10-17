@@ -10,6 +10,7 @@
 #include "MapRendererResourceState.h"
 #include "Concurrent.h"
 #include "IQueryController.h"
+#include "IMapDataProvider.h"
 
 namespace OsmAnd
 {
@@ -25,6 +26,8 @@ namespace OsmAnd
         MapRendererBaseResource(MapRendererResourcesManager* owner, const MapRendererResourceType type);
 
         Concurrent::Task* _requestTask;
+
+        std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> _retainableCacheMetadata;
 
         void markAsJunk();
 

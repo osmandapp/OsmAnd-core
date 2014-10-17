@@ -14,7 +14,7 @@
 
 #include "IMapRenderer.h"
 #include "IMapTiledDataProvider.h"
-#include "IMapRasterBitmapTileProvider.h"
+#include "IRasterMapLayerProvider.h"
 #include "IMapElevationDataProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
@@ -732,22 +732,21 @@ bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& l
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTileToGPU(const std::shared_ptr< const MapTiledData >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
-    // Upload bitmap tiles
-    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
+    if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        return uploadTileAsTextureToGPU(tile, resourceInGPU);
+        return uploadTiledDataAsTextureToGPU(rasterMapLayerData, resourceInGPU);
     }
-    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
+    else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
         if (isSupported_vertexShaderTextureLookup)
         {
-            return uploadTileAsTextureToGPU(tile, resourceInGPU);
+            return uploadTiledDataAsTextureToGPU(tile, resourceInGPU);
         }
         else
         {
-            return uploadTileAsArrayBufferToGPU(tile, resourceInGPU);
+            return uploadTiledDataAsArrayBufferToGPU(tile, resourceInGPU);
         }
     }
 
@@ -818,7 +817,7 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
     return false;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< const MapTiledData >& tile_, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -832,11 +831,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     uint32_t tileSize = 0;
     size_t dataRowLength = 0;
     const void* tileData = nullptr;
-    if (tile_->dataType == MapTiledData::DataType::RasterBitmapTile)
+    if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        const auto tile = std::static_pointer_cast<const RasterBitmapTile>(tile_);
-
-        switch (tile->bitmap->config())
+        switch (rasterMapLayerData->bitmap->config())
         {
             case SkBitmap::Config::kARGB_8888_Config:
                 sourcePixelByteSize = 4;
@@ -853,21 +850,19 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
                 assert(false);
                 return false;
         }
-        tileSize = tile->bitmap->width();
-        dataRowLength = tile->bitmap->rowBytes();
-        tileData = tile->bitmap->getPixels();
+        tileSize = rasterMapLayerData->bitmap->width();
+        dataRowLength = rasterMapLayerData->bitmap->rowBytes();
+        tileData = rasterMapLayerData->bitmap->getPixels();
 
         // No need to generate mipmaps if textureLod is not supported
         mipmapGenerationSupported = isSupported_textureLod;
     }
-    else if (tile_->dataType == MapTiledData::DataType::ElevationDataTile)
+    else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
-        const auto tile = std::static_pointer_cast<const ElevationDataTile>(tile_);
-
         sourcePixelByteSize = 4;
-        tileSize = tile->size;
-        dataRowLength = tile->rowLength;
-        tileData = tile->data;
+        tileSize = elevationData->size;
+        dataRowLength = elevationData->rowLength;
+        tileData = elevationData->pRawData;
         mipmapGenerationSupported = false;
     }
     else
@@ -875,8 +870,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
         assert(false);
         return false;
     }
-    const auto textureFormat = getTextureFormat(tile_);
-    const auto sourceFormat = getSourceFormat(tile_);
+    const auto textureFormat = getTextureFormat(tile);
+    const auto sourceFormat = getSourceFormat(tile);
 
     // Calculate texture size. Tiles are always stored in square textures.
     // Also, since atlas-texture support for tiles was deprecated, only 1 tile per texture is allowed.
@@ -1065,18 +1060,18 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsTextureToGPU(const std::shared_ptr< cons
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< const MapTiledData >& tile_, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
-    if (tile_->dataType != MapTiledData::DataType::ElevationDataTile)
+    const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile);
+    if (!elevationData)
     {
         assert(false);
         return false;
     }
-    const auto tile = std::static_pointer_cast<const ElevationDataTile>(tile_);
 
     // Create array buffer
     GLuint buffer;
@@ -1088,9 +1083,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTileAsArrayBufferToGPU(const std::shared_ptr< 
     GL_CHECK_RESULT;
 
     // Upload data
-    const auto itemsCount = tile->size*tile->size;
-    assert(tile->size*sizeof(float) == tile->rowLength);
-    glBufferData(GL_ARRAY_BUFFER, itemsCount*sizeof(float), tile->data, GL_STATIC_DRAW);
+    const auto itemsCount = elevationData->size*elevationData->size;
+    assert(elevationData->size*sizeof(float) == elevationData->rowLength);
+    glBufferData(GL_ARRAY_BUFFER, itemsCount*sizeof(float), elevationData->pRawData, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it
@@ -1259,15 +1254,13 @@ void OsmAnd::GPUAPI_OpenGL::popDebugGroupMarker()
         glPopGroupMarkerEXT_wrapper();
 }
 
-OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const MapTiledData >& tile)
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile)
 {
-    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
+    if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
-
-        return getTextureFormat(bitmapTile->bitmap->config());
+        return getTextureFormat(rasterMapLayerData->bitmap->config());
     }
-    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
+    else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
         assert(isSupported_vertexShaderTextureLookup);
 
@@ -1338,14 +1331,13 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(con
     return (static_cast<TextureFormat>(format) << 16) | type;
 }
 
-OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const std::shared_ptr< const MapTiledData >& tile)
+OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile)
 {
-    if (tile->dataType == MapTiledData::DataType::RasterBitmapTile)
+    if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        const auto& bitmapTile = std::static_pointer_cast<const RasterBitmapTile>(tile);
-        return getSourceFormat(bitmapTile->bitmap->config());
+        return getSourceFormat(rasterMapLayerData->bitmap->config());
     }
-    else if (tile->dataType == MapTiledData::DataType::ElevationDataTile)
+    else if (const auto elevationData = std::dynamic_pointer_cast<const IMapElevationDataProvider::Data>(tile))
     {
         return getSourceFormat_float();
     }

@@ -290,10 +290,11 @@ namespace OsmAnd
         virtual bool resetElevationDataProvider(bool forcedUpdate = false);
         virtual bool setElevationDataConfiguration(const ElevationDataConfiguration& configuration, bool forcedUpdate = false);
 
-        virtual bool addSymbolsProvider(const std::shared_ptr<IMapSymbolsProvider>& provider, bool forcedUpdate = false);
-        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapSymbolsProvider>& provider, bool forcedUpdate = false);
+        virtual bool addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false);
+        virtual bool addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false);
+        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate = false);
+        virtual bool removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate = false);
         virtual bool removeAllSymbolsProviders(bool forcedUpdate = false);
-        virtual bool setSymbolsProviders(const QSet< std::shared_ptr<IMapSymbolsProvider> >& providers, bool forcedUpdate = false);
 
         virtual bool setWindowSize(const PointI& windowSize, bool forcedUpdate = false);
         virtual bool setViewport(const AreaI& viewport, bool forcedUpdate = false);

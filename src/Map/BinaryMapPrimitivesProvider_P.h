@@ -19,14 +19,11 @@
 #include "TiledEntriesCollection.h"
 #include "ObfMapSectionReader.h"
 #include "Primitiviser.h"
+#include "BinaryMapPrimitivesProvider.h"
 #include "BinaryMapPrimitivesProvider_Metrics.h"
 
 namespace OsmAnd
 {
-    class BinaryMapPrimitivesTile;
-    class BinaryMapPrimitivesTile_P;
-
-    class BinaryMapPrimitivesProvider;
     class BinaryMapPrimitivesProvider_P Q_DECL_FINAL
     {
     private:
@@ -53,7 +50,7 @@ namespace OsmAnd
                 safeUnlink();
             }
 
-            std::weak_ptr<BinaryMapPrimitivesTile> _tile;
+            std::weak_ptr<BinaryMapPrimitivesProvider::Data> _tile;
 
             QReadWriteLock _loadedConditionLock;
             QWaitCondition _loadedCondition;
@@ -61,6 +58,17 @@ namespace OsmAnd
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 
         const std::shared_ptr<Primitiviser::Cache> _primitiviserCache;
+
+        struct RetainableCacheMetadata : public IMapDataProvider::RetainableCacheMetadata
+        {
+            RetainableCacheMetadata(
+                const std::shared_ptr<TileEntry>& tileEntry,
+                const std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata>& binaryMapRetainableCacheMetadata);
+            virtual ~RetainableCacheMetadata();
+
+            std::weak_ptr<TileEntry> tileEntryWeakRef;
+            std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> binaryMapRetainableCacheMetadata;
+        };
     public:
         ~BinaryMapPrimitivesProvider_P();
 
@@ -69,31 +77,11 @@ namespace OsmAnd
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<MapTiledData>& outTiledData,
+            std::shared_ptr<BinaryMapPrimitivesProvider::Data>& outTiledData,
             BinaryMapPrimitivesProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
 
     friend class OsmAnd::BinaryMapPrimitivesProvider;
-    friend class OsmAnd::BinaryMapPrimitivesTile_P;
-    };
-
-    class BinaryMapPrimitivesTile;
-    class BinaryMapPrimitivesTile_P Q_DECL_FINAL
-    {
-    private:
-    protected:
-        BinaryMapPrimitivesTile_P(BinaryMapPrimitivesTile* owner);
-
-        std::weak_ptr<BinaryMapPrimitivesProvider_P::TileEntry> _refEntry;
-
-        void cleanup();
-    public:
-        virtual ~BinaryMapPrimitivesTile_P();
-
-        ImplementationInterface<BinaryMapPrimitivesTile> owner;
-
-    friend class OsmAnd::BinaryMapPrimitivesTile;
-    friend class OsmAnd::BinaryMapPrimitivesProvider_P;
     };
 }
 

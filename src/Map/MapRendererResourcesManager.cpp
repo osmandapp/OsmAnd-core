@@ -12,9 +12,8 @@
 #include "MapRenderer.h"
 #include "IMapDataProvider.h"
 #include "IMapLayerProvider.h"
-#include "IMapSymbolsProvider.h"
 #include "IMapElevationDataProvider.h"
-#include "IMapRasterBitmapTileProvider.h"
+#include "IRasterMapLayerProvider.h"
 #include "MapSymbol.h"
 #include "RasterMapSymbol.h"
 #include "VectorMapSymbol.h"
@@ -118,8 +117,13 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
             return false;
         else
         {
-            std::shared_ptr<const MapTiledData> bitmapTile(new RasterBitmapTile(bitmap, AlphaChannelData::Undefined, 1.0f, TileId(), InvalidZoom));
-            if (!uploadTileToGPU(bitmapTile, _processingTileStub))
+            std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
+                TileId(),
+                InvalidZoom,
+                AlphaChannelData::Undefined,
+                1.0f,
+                bitmap));
+            if (!uploadTiledDataToGPU(bitmapTile, _processingTileStub))
                 return false;
         }
     }
@@ -129,8 +133,13 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
             return false;
         else
         {
-            std::shared_ptr<const MapTiledData> bitmapTile(new RasterBitmapTile(bitmap, AlphaChannelData::Undefined, 1.0f, TileId(), InvalidZoom));
-            if (!uploadTileToGPU(bitmapTile, _unavailableTileStub))
+            std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
+                TileId(),
+                InvalidZoom,
+                AlphaChannelData::Undefined,
+                1.0f,
+                bitmap));
+            if (!uploadTiledDataToGPU(bitmapTile, _unavailableTileStub))
                 return false;
         }
     }
@@ -147,9 +156,9 @@ bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources()
     return true;
 }
 
-bool OsmAnd::MapRendererResourcesManager::uploadTileToGPU(const std::shared_ptr<const MapTiledData>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
-    return renderer->gpuAPI->uploadTileToGPU(mapTile, outResourceInGPU);
+    return renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU);
 }
 
 bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
@@ -297,11 +306,14 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         {
             itBindedProvider.next();
 
-            const auto provider = std::dynamic_pointer_cast<IMapSymbolsProvider>(itBindedProvider.key());
+            const auto provider = itBindedProvider.key();
 
             // Skip binding if it's still active
-            if (state.symbolsProviders.contains(provider))
+            if (state.tiledSymbolsProviders.contains(std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider)) ||
+                state.keyedSymbolsProviders.contains(std::dynamic_pointer_cast<IMapKeyedSymbolsProvider>(provider)))
+            {
                 continue;
+            }
 
             // Clean-up resources (deferred)
             _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
@@ -315,19 +327,32 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
         }
 
         // Create new binding and storage
-        for (const auto& provider_ : constOf(state.symbolsProviders))
+        for (const auto& provider : constOf(state.tiledSymbolsProviders))
         {
-            const auto provider = std::dynamic_pointer_cast<IMapDataProvider>(provider_);
-
             // If binding already exists, skip creation
             if (bindings.providersToCollections.contains(provider))
                 continue;
 
             // Create new resources collection
             const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
-                (std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider_) != nullptr)
-                ? static_cast<MapRendererBaseResourcesCollection*>(new MapRendererTiledSymbolsResourcesCollection())
-                : static_cast<MapRendererBaseResourcesCollection*>(new MapRendererKeyedResourcesCollection(MapRendererResourceType::Symbols)));
+                static_cast<MapRendererBaseResourcesCollection*>(new MapRendererTiledSymbolsResourcesCollection()));
+
+            // Add binding
+            bindings.providersToCollections.insert(provider, newResourcesCollection);
+            bindings.collectionsToProviders.insert(newResourcesCollection, provider);
+
+            // Add resources collection
+            resources.push_back(qMove(newResourcesCollection));
+        }
+        for (const auto& provider : constOf(state.keyedSymbolsProviders))
+        {
+            // If binding already exists, skip creation
+            if (bindings.providersToCollections.contains(provider))
+                continue;
+
+            // Create new resources collection
+            const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
+                static_cast<MapRendererBaseResourcesCollection*>(new MapRendererKeyedResourcesCollection(MapRendererResourceType::Symbols)));
 
             // Add binding
             bindings.providersToCollections.insert(provider, newResourcesCollection);
@@ -505,7 +530,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
             (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection, const TileId tileId, const ZoomLevel zoom) -> MapRendererBaseTiledResource*
             {
                 if (resourceType == MapRendererResourceType::MapLayer)
-                    return new MapRendererRasterBitmapTileResource(this, collection, tileId, zoom);
+                    return new MapRendererRasterMapLayerResource(this, collection, tileId, zoom);
                 else if (resourceType == MapRendererResourceType::ElevationData)
                     return new MapRendererElevationDataResource(this, collection, tileId, zoom);
                 else if (resourceType == MapRendererResourceType::Symbols)

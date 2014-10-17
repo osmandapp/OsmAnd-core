@@ -22,11 +22,8 @@
 
 namespace OsmAnd
 {
-    class BinaryMapPrimitivesTile;
     class MapSymbolsGroup;
-    class TiledMapSymbolsData;
 
-    class BinaryMapStaticSymbolsProvider;
     class BinaryMapStaticSymbolsProvider_P Q_DECL_FINAL
     {
     public:
@@ -84,13 +81,22 @@ namespace OsmAnd
         BinaryMapStaticSymbolsProvider_P(BinaryMapStaticSymbolsProvider* owner);
 
         ImplementationInterface<BinaryMapStaticSymbolsProvider> owner;
+
+        struct RetainableCacheMetadata : public IMapDataProvider::RetainableCacheMetadata
+        {
+            RetainableCacheMetadata(
+                const std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata>& binaryMapPrimitivesRetainableCacheMetadata);
+            virtual ~RetainableCacheMetadata();
+
+            std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> binaryMapPrimitivesRetainableCacheMetadata;
+        };
     public:
         virtual ~BinaryMapStaticSymbolsProvider_P();
 
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<TiledMapSymbolsData>& outTiledData,
+            std::shared_ptr<BinaryMapStaticSymbolsProvider::Data>& outTiledData,
             const FilterCallback filterCallback,
             const IQueryController* const queryController);
 

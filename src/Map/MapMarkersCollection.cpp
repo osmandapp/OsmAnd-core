@@ -37,12 +37,18 @@ OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMaxZoom() const
     return maxZoom;
 }
 
-QList<OsmAnd::MapMarkersCollection::Key> OsmAnd::MapMarkersCollection::getProvidedDataKeys() const
+QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::MapMarkersCollection::getProvidedDataKeys() const
 {
     return _p->getProvidedDataKeys();
 }
 
-bool OsmAnd::MapMarkersCollection::obtainData(const Key key, std::shared_ptr<MapKeyedData>& outKeyedData, const IQueryController* const queryController /*= nullptr*/)
+bool OsmAnd::MapMarkersCollection::obtainData(
+    const IMapKeyedDataProvider::Key key,
+    std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
+    const IQueryController* const queryController /*= nullptr*/)
 {
-    return _p->obtainData(key, outKeyedData, queryController);
+    std::shared_ptr<Data> keyedData;
+    const auto result = _p->obtainData(key, keyedData, queryController);
+    outKeyedData = keyedData;
+    return result;
 }

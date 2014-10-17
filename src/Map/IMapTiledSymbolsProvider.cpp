@@ -1,7 +1,6 @@
 #include "IMapTiledSymbolsProvider.h"
 
 OsmAnd::IMapTiledSymbolsProvider::IMapTiledSymbolsProvider()
-    : IMapTiledDataProvider(DataType::SymbolsTile)
 {
 }
 
@@ -12,29 +11,26 @@ OsmAnd::IMapTiledSymbolsProvider::~IMapTiledSymbolsProvider()
 bool OsmAnd::IMapTiledSymbolsProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<MapTiledData>& outTiledData,
+    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
     const IQueryController* const queryController /*= nullptr*/)
 {
-    std::shared_ptr<TiledMapSymbolsData> tiledMapSymbolsData;
-    const auto result = obtainData(tileId, zoom, tiledMapSymbolsData, nullptr, queryController);
-    outTiledData = tiledMapSymbolsData;
-
+    std::shared_ptr<Data> tiledData;
+    const auto result = obtainData(tileId, zoom, tiledData, nullptr, queryController);
+    outTiledData = tiledData;
     return result;
 }
 
-OsmAnd::TiledMapSymbolsData::TiledMapSymbolsData(const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups_, const TileId tileId_, const ZoomLevel zoom_)
-    : MapTiledData(DataType::SymbolsTile, tileId_, zoom_)
+OsmAnd::IMapTiledSymbolsProvider::Data::Data(
+    const TileId tileId_,
+    const ZoomLevel zoom_,
+    const QList< std::shared_ptr<MapSymbolsGroup> >& symbolsGroups_,
+    const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
+    : IMapTiledDataProvider::Data(tileId_, zoom_, pRetainableCacheMetadata_)
     , symbolsGroups(symbolsGroups_)
 {
 }
 
-OsmAnd::TiledMapSymbolsData::~TiledMapSymbolsData()
+OsmAnd::IMapTiledSymbolsProvider::Data::~Data()
 {
-}
-
-void OsmAnd::TiledMapSymbolsData::releaseConsumableContent()
-{
-    symbolsGroups.clear();
-
-    MapTiledData::releaseConsumableContent();
+    release();
 }
