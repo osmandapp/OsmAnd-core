@@ -544,6 +544,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayers(
     const auto& internalState = getInternalState();
 
     const auto batchedLayersCount = batchedLayerIndices.size();
+    const auto elevationDataSamplerIndex = gpuAPI->isSupported_vertexShaderTextureLookup ? batchedLayersCount : -1;
     const auto& program = _rasterLayerTilePrograms[batchedLayersCount];
     const auto& vao = _rasterTileVAOs[batchedLayersCount];
     const bool elevationDataEnabled = static_cast<bool>(currentState.elevationDataProvider);
@@ -592,13 +593,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayers(
         }
 
         // Configure samplers
-        if (gpuAPI->isSupported_vertexShaderTextureLookup)
-        {
-            glUniform1i(program.vs.param.elevationData_sampler, 0);
-            GL_CHECK_RESULT;
-
-            gpuAPI->setTextureBlockSampler(GL_TEXTURE0, GPUAPI_OpenGL::SamplerType::ElevationDataTile);
-        }
         auto bitmapTileSamplerType = GPUAPI_OpenGL::SamplerType::BitmapTile_Bilinear;
         if (gpuAPI->isSupported_textureLod)
         {
@@ -612,15 +606,21 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayers(
                 break;
             }
         }
-
         for (auto layerLinearIdx = 0u; layerLinearIdx < batchedLayersCount; layerLinearIdx++)
         {
-            const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
+            const auto samplerIndex = layerLinearIdx;
 
             glUniform1i(program.fs.param.rasterTileLayers[layerLinearIdx].sampler, samplerIndex);
             GL_CHECK_RESULT;
 
             gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
+        }
+        if (gpuAPI->isSupported_vertexShaderTextureLookup)
+        {
+            glUniform1i(program.vs.param.elevationData_sampler, elevationDataSamplerIndex);
+            GL_CHECK_RESULT;
+
+            gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + elevationDataSamplerIndex, GPUAPI_OpenGL::SamplerType::ElevationDataTile);
         }
 
         // Check if we need to process elevation data
@@ -703,7 +703,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayers(
 
                 if (gpuAPI->isSupported_vertexShaderTextureLookup)
                 {
-                    glActiveTexture(GL_TEXTURE0);
+                    glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
                     GL_CHECK_RESULT;
 
                     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
@@ -777,7 +777,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayers(
 
             const auto& perTile_vs = program.vs.param.rasterTileLayers[layerLinearIdx];
             const auto& perTile_fs = program.fs.param.rasterTileLayers[layerLinearIdx];
-            const auto samplerIndex = (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0) + layerLinearIdx;
+            const auto samplerIndex = layerLinearIdx;
 
             // Obtain tile entry by normalized tile coordinates, since tile may repeat several times
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
