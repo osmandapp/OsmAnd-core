@@ -349,12 +349,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
-        //////////////////////////////////////////////////////////////////////////
-        "    FRAGMENT_COLOR_OUTPUT.a = FRAGMENT_COLOR_OUTPUT.a * 0.01 + 0.85;                                                                            ""\n"
-        "    FRAGMENT_COLOR_OUTPUT.r = FRAGMENT_COLOR_OUTPUT.r * 0.01 + 0.85;                                                                            ""\n"
-        "    FRAGMENT_COLOR_OUTPUT.g = FRAGMENT_COLOR_OUTPUT.g * 0.01;                                                                            ""\n"
-        "    FRAGMENT_COLOR_OUTPUT.b = FRAGMENT_COLOR_OUTPUT.b * 0.01;                                                                            ""\n"
-        //////////////////////////////////////////////////////////////////////////
+#if 0
+        "    FRAGMENT_COLOR_OUTPUT.a = FRAGMENT_COLOR_OUTPUT.a * 0.01 + 0.85;                                               ""\n"
+        "    FRAGMENT_COLOR_OUTPUT.r = FRAGMENT_COLOR_OUTPUT.r * 0.01 + 0.85;                                               ""\n"
+        "    FRAGMENT_COLOR_OUTPUT.g = FRAGMENT_COLOR_OUTPUT.g * 0.01;                                                      ""\n"
+        "    FRAGMENT_COLOR_OUTPUT.b = FRAGMENT_COLOR_OUTPUT.b * 0.01;                                                      ""\n"
+#endif
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
@@ -365,7 +365,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D(                                                                  ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
-        "            v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                              ""\n"
+        "            v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                             ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         "        layerColor.a *= param_fs_rasterTileLayer_%rasterLayerIndex%.opacity;                                       ""\n"
