@@ -123,6 +123,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glEnable(GL_BLEND);
     GL_CHECK_RESULT;
 
+    //////////////////////////////////////////////////////////////////////////
+    glDisable(GL_CULL_FACE);
+    //////////////////////////////////////////////////////////////////////////
+
     // Raster map stage is rendered without blending, since it's done in fragment shader
     Stopwatch mapLayersStageStopwatch(metric != nullptr);
     if (!_mapLayersStage->render(metric))
