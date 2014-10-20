@@ -811,7 +811,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayers(
                 gpuResource = getResources().processingTileStub;
             }
 
-            glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
+            if (currentState.mapLayersProviders.firstKey() == layerIndex)
+                glUniform1f(perTile_fs.opacity, 1.0f);
+            else
+                glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
             GL_CHECK_RESULT;
 
             glActiveTexture(GL_TEXTURE0 + samplerIndex);

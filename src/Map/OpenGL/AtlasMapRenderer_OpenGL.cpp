@@ -97,7 +97,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     GL_CHECK_RESULT;
 
-    // Turn off blending for sky and map stages
+    // Turn off blending for sky
     glDisable(GL_BLEND);
     GL_CHECK_RESULT;
 
@@ -119,17 +119,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
+    // Turn on blending since now objects with transparency are going to be rendered
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
+
     // Raster map stage is rendered without blending, since it's done in fragment shader
     Stopwatch mapLayersStageStopwatch(metric != nullptr);
     if (!_mapLayersStage->render(metric))
         ok = false;
     if (metric)
         metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
-
-    // Turn on blending since now objects with transparency are going to be rendered
-    // Blend function is controlled by each symbol on it's own
-    glEnable(GL_BLEND);
-    GL_CHECK_RESULT;
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     //NOTE: Currently map symbols are incompatible with height-maps
