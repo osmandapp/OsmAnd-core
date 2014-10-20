@@ -318,6 +318,7 @@ public class MainActivity extends ActionBarActivity {
                 mainContext = null;
                 System.exit(0);
             }
+            Log.d(TAG, "OpenGLES main context = " + mainContext);
 
             Log.i(TAG, "Creating GPU worker context...");
             try {
@@ -334,6 +335,7 @@ public class MainActivity extends ActionBarActivity {
                 Log.e(TAG, "Failed to create GPU worker context: " + egl.eglGetError());
                 _gpuWorkerContext = null;
             }
+            Log.d(TAG, "OpenGLES GPU worker context = " + _gpuWorkerContext);
 
             if (_gpuWorkerContext != null)
             {
