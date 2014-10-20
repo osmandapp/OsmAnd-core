@@ -217,6 +217,9 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d", _maxTextureUnitsInVertexShader);
     _isSupported_vertexShaderTextureLookup = (_maxTextureUnitsInVertexShader >= 1);
+    //////////////////////////////////////////////////////////////////////////
+    _isSupported_vertexShaderTextureLookup = false;
+    //////////////////////////////////////////////////////////////////////////
 
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &_maxVertexUniformVectors);
     GL_CHECK_RESULT;
