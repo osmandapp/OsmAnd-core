@@ -166,6 +166,8 @@ public class MainActivity extends ActionBarActivity {
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
+        //_glSurfaceView.setEGLConfigChooser(true);
+        _glSurfaceView.setEGLConfigChooser(8, 8, 8, 8, 24, 0);
         _glSurfaceView.setEGLContextClientVersion(2);
         _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
         _glSurfaceView.setRenderer(new Renderer());
