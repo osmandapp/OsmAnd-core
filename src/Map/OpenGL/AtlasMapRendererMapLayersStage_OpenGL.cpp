@@ -349,12 +349,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
-#if 0
-        "    FRAGMENT_COLOR_OUTPUT.a = FRAGMENT_COLOR_OUTPUT.a * 0.01 + 0.85;                                               ""\n"
-        "    FRAGMENT_COLOR_OUTPUT.r = FRAGMENT_COLOR_OUTPUT.r * 0.01 + 0.85;                                               ""\n"
-        "    FRAGMENT_COLOR_OUTPUT.g = FRAGMENT_COLOR_OUTPUT.g * 0.01;                                                      ""\n"
-        "    FRAGMENT_COLOR_OUTPUT.b = FRAGMENT_COLOR_OUTPUT.b * 0.01;                                                      ""\n"
-#endif
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"

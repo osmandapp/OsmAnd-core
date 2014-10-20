@@ -412,6 +412,8 @@ public class MainActivity extends ActionBarActivity {
 
             if (_mapRenderer.prepareFrame())
                 _mapRenderer.renderFrame();
+
+            gl.glFlush();
         }
     }
 
