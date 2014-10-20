@@ -116,8 +116,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
         metric->elapsedTimeForSkyStage = skyStageStopwatch.elapsed();
 
     // Change depth test function prior to raster map stage and further stages
-    glDepthFunc(GL_LEQUAL);
-    GL_CHECK_RESULT;
+    /*glDepthFunc(GL_LEQUAL);
+    GL_CHECK_RESULT;*/
 
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
