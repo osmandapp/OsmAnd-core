@@ -359,7 +359,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#else // !TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "        lowp vec4 layerColor = SAMPLE_TEXTURE_2D(                                                                  ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.sampler,                                                   ""\n"
-        "            v2f_texCoordsPerLayer_%rasterLayerIndex%];                                                             ""\n"
+        "            v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                              ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         "        layerColor.a *= param_fs_rasterTileLayer_%rasterLayerIndex%.opacity;                                       ""\n"
