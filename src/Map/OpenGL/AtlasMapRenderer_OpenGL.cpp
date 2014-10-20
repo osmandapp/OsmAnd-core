@@ -104,10 +104,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
     // Turn on depth testing for sky stage (since with disabled depth test, write to depth buffer is blocked),
     // but since sky is on top of everything, accept all fragments
-    glEnable(GL_DEPTH_TEST);
+    /*glEnable(GL_DEPTH_TEST);
     GL_CHECK_RESULT;
     glDepthFunc(GL_ALWAYS);
-    GL_CHECK_RESULT;
+    GL_CHECK_RESULT;*/
 
     //// Render the sky
     //Stopwatch skyStageStopwatch(metric != nullptr);
@@ -127,6 +127,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     //////////////////////////////////////////////////////////////////////////
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     GL_CHECK_RESULT;
+    glDisable(GL_DEPTH_TEST);
     //////////////////////////////////////////////////////////////////////////
 
     // Raster map stage is rendered without blending, since it's done in fragment shader
