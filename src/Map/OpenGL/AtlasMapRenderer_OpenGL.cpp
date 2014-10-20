@@ -125,17 +125,19 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     //GL_CHECK_RESULT;
 
     //////////////////////////////////////////////////////////////////////////
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     GL_CHECK_RESULT;
     glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
     //////////////////////////////////////////////////////////////////////////
 
     // Raster map stage is rendered without blending, since it's done in fragment shader
-    Stopwatch mapLayersStageStopwatch(metric != nullptr);
+    /*Stopwatch mapLayersStageStopwatch(metric != nullptr);
     if (!_mapLayersStage->render(metric))
         ok = false;
     if (metric)
-        metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
+        metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();*/
 
     //// Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     ////NOTE: Currently map symbols are incompatible with height-maps
