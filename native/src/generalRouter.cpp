@@ -226,6 +226,9 @@ string GeneralRouter::getAttribute(string attribute) {
 
 bool GeneralRouter::acceptLine(SHARED_PTR<RouteDataObject> way) {
 	int res = getObjContext(RouteDataObjectAttribute::ACCESS).evaluateInt(way, 0);
+	if(impassableRoadIds.find(way->id) != impassableRoadIds.end()) {
+		return false;
+	}
 	return res >= 0;
 }
 

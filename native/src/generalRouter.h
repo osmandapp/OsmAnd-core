@@ -233,6 +233,7 @@ public:
 	double rightTurn;
 	double minDefaultSpeed ;
 	double maxDefaultSpeed ;
+	UNORDERED(set)<long> impassableRoadIds;
 
 	GeneralRouter() : _restrictionsAware(true), minDefaultSpeed(10), maxDefaultSpeed(10) {
 

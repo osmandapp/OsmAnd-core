@@ -427,6 +427,7 @@ jfieldID jfield_GeneralRouter_rightTurn = NULL;
 jfieldID jfield_GeneralRouter_minDefaultSpeed = NULL;
 jfieldID jfield_GeneralRouter_maxDefaultSpeed = NULL;
 jfieldID jfield_GeneralRouter_objectAttributes = NULL;
+jmethodID jmethod_GeneralRouter_getImpassableRoadIds = NULL;
 
 jclass jclass_RouteAttributeContext = NULL;
 jmethodID jmethod_RouteAttributeContext_getRules = NULL;
@@ -555,6 +556,8 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_GeneralRouter_maxDefaultSpeed = getFid(env, jclass_GeneralRouter, "maxDefaultSpeed", "F");
 	jfield_GeneralRouter_objectAttributes = getFid(env, jclass_GeneralRouter, "objectAttributes", 
 		"[Lnet/osmand/router/GeneralRouter$RouteAttributeContext;");
+	jmethod_GeneralRouter_getImpassableRoadIds = env->GetMethodID(jclass_GeneralRouter,
+				"getImpassableRoadIds", "()[J");
 
 	jclass_RouteAttributeContext = findClass(env, "net/osmand/router/GeneralRouter$RouteAttributeContext");	
 	jmethod_RouteAttributeContext_getRules = env->GetMethodID(jclass_RouteAttributeContext,
@@ -982,7 +985,16 @@ void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobjec
 		ienv->DeleteLocalRef(ctx);
 	}
 
+	jlongArray impassableRoadIds = (jlongArray) ienv->CallObjectMethod(router, jmethod_GeneralRouter_getImpassableRoadIds);
+	jlong* iRi = (jlong*)ienv->GetLongArrayElements(impassableRoadIds, NULL);	
+	for(int i = 0; i < ienv->GetArrayLength(impassableRoadIds); i++) {
+		rConfig.router.impassableRoadIds.insert(iRi[i]);
 
+	}
+	ienv->ReleaseLongArrayElements(impassableRoadIds, (jlong*)iRi, 0);
+
+
+	ienv->DeleteLocalRef(impassableRoadIds);
 	ienv->DeleteLocalRef(objectAttributes);
 	ienv->DeleteLocalRef(router);
 	ienv->DeleteLocalRef(rName);
