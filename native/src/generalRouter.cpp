@@ -283,22 +283,23 @@ bool GeneralRouter::restrictionsAware() {
 
 double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment> segment, int segmentEnd, 
 		SHARED_PTR<RouteSegment> prev, int prevSegmentEnd) {
-	if(prev->road->pointTypes.size() > (uint)prevSegmentEnd && prev->road->pointTypes[prevSegmentEnd].size() > 0){
-		RoutingIndex* reg = prev->getRoad()->region;
-		vector<uint32_t> pt = prev->road->pointTypes[prevSegmentEnd];
-		for (uint i = 0; i < pt.size(); i++) {
-			tag_value r = reg->decodingRules[pt[i]];
-			if ("highway" == r.first && "traffic_signals" == r.second) {
-				// traffic signals don't add turn info
-				return 0;
-			}
-		}
-	}
 	double ts = definePenaltyTransition(segment->getRoad());
 	double prevTs = definePenaltyTransition(prev->getRoad());
 	if(prevTs != ts) {
-			if(ts > prevTs) return (ts - prevTs);
+		if(ts > prevTs) return (ts - prevTs);
 	}
+	// if(prev->road->pointTypes.size() > (uint)prevSegmentEnd && prev->road->pointTypes[prevSegmentEnd].size() > 0){
+	// 	RoutingIndex* reg = prev->getRoad()->region;
+	// 	vector<uint32_t> pt = prev->road->pointTypes[prevSegmentEnd];
+	// 	for (uint i = 0; i < pt.size(); i++) {
+	// 		tag_value r = reg->decodingRules[pt[i]];
+	// 		if ("highway" == r.first && "traffic_signals" == r.second) {
+	// 			// traffic signals don't add turn info
+	// 			return 0;
+	// 		}
+	// 	}
+	// }
+	
 	
 	if(segment->getRoad()->roundabout() && !prev->getRoad()->roundabout()) {
 		double rt = roundaboutTurn;

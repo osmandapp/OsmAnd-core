@@ -194,7 +194,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		return true;
 	}
 	int len = p->path->countPoints();
-    SkPoint* points= new SkPoint[len];// NEVER DEALLOCATED!
+    SkPoint* points= new SkPoint[len];
 	p->path->getPoints(points, len);
 
 
@@ -234,6 +234,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		prevInside = inside;
 	}
 	if (textw >= roadLength) {
+		delete points;
 		return false;
 	}
 	int startInd = 0;
@@ -285,8 +286,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		}
 		p->centerX = cx;
 		p->centerY = cy;
-		p->pathRotate = atan2(py, px);
-		p->vOffset += p->textSize / 2 - 1;
+		p->pathRotate = atan2(py, px);		
 		p->hOffset = 0;
 	} else {
 		// shrink path to display more text
@@ -335,7 +335,6 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 
 		p->centerX = points[startInd].fX + scale * px + ox;
 		p->centerY = points[startInd].fY + scale * py + oy;
-		p->vOffset += p->textSize / 2 - 1;
 		p->hOffset = 0;
 
 		if (inverse) {
@@ -353,6 +352,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 			p->path = path;
 		}
 	}
+	delete points;
 	return true;
 }
 
@@ -523,7 +523,6 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 		paintText.getFontMetrics(&fm);
 		textDrawInfo->centerY += ((-fm.fAscent)) ;
 		
-
 		// calculate if there is intersection
 		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon);
 		if (!intersects) {
@@ -537,7 +536,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 					paintText.setStrokeWidth(2 + textDrawInfo->textShadow);
 					rc->nativeOperations.Pause();
 					cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-							textDrawInfo->vOffset, paintText);
+							textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent) , paintText);
 					rc->nativeOperations.Start();
 					// reset
 					paintText.setStyle(SkPaint::kFill_Style);
@@ -546,7 +545,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 				}
 				rc->nativeOperations.Pause();
 				cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-						textDrawInfo->vOffset, paintText);
+						textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent) , paintText);
 				rc->nativeOperations.Start();
 			} else {
 				if (textDrawInfo->shieldRes.length() > 0) {
