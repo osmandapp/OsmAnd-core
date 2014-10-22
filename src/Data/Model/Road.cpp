@@ -8,7 +8,6 @@
 
 OsmAnd::Model::Road::Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section_)
     : section(section_)
-    , id(_id)
     , captions(_captions)
     , captionsOrder(_captionsOrder)
     , bbox31(_bbox31)

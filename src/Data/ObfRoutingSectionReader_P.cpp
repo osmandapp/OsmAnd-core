@@ -350,9 +350,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                         if (stringId >= roadsCaptionsTable.size())
                         {
                             LogPrintf(LogSeverityLevel::Error,
-                                "Data mismatch: string #%d (road #%" PRIu64 " (%" PRIi64 ") not found in string table (size %d) in section '%s'",
+                                "Data mismatch: string #%d (road %s not found in string table (size %d) in section '%s'",
                                 stringId,
-                                road->id >> 1, static_cast<int64_t>(road->id) / 2,
+                                qPrintable(road->id.toString()),
                                 roadsCaptionsTable.size(), qPrintable(section->name));
                             caption = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
                             continue;
@@ -526,6 +526,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
     const auto cis = reader._codedInputStream.get();
+    const auto baseOffset = cis->CurrentPosition();
 
     for (;;)
     {
@@ -690,9 +691,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                 cis->ReadVarint32(&id);
                 internalId = id;
                 if (id < idsTable.size())
-                    road->_id = idsTable[id];
+                    road->_id = ObfObjectId::generateUniqueId(idsTable[id], baseOffset, section);
                 else
-                    road->_id = id;
+                    road->_id = ObfObjectId::generateUniqueId(id, baseOffset, section);
                 break;
             }
             case OBF::RouteData::kStringNamesFieldNumber:

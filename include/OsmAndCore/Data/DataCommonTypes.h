@@ -5,6 +5,7 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <QString>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -17,6 +18,8 @@ namespace OsmAnd
         Villages = 3,
         Postcodes = 2,
     };
+
+    class ObfSectionInfo;
 
     union ObfObjectId
     {
@@ -48,7 +51,41 @@ namespace OsmAnd
             return this->id != that;
         }
 #endif // !defined(SWIG)
+
+        inline static ObfObjectId invalidId()
+        {
+            ObfObjectId invalidId;
+            invalidId.id = std::numeric_limits<uint64_t>::max();
+            return invalidId;
+        }
+
+        inline bool isOsmId() const
+        {
+            return (static_cast<int64_t>(id) > 0);
+        }
+
+        inline int64_t getOsmId() const
+        {
+            if (!isOsmId())
+                return -1;
+            return static_cast<int64_t>(id >> 1);
+        }
+
+        QString toString() const;
+
+        static ObfObjectId generateUniqueId(
+            const uint64_t rawId,
+            const uint32_t offsetInObf,
+            const std::shared_ptr<const ObfSectionInfo>& obfSectionInfo);
+
+        static ObfObjectId generateUniqueId(
+            const uint32_t offsetInObf,
+            const std::shared_ptr<const ObfSectionInfo>& obfSectionInfo);
     };
+
+#if !defined(SWIG)
+    static_assert(sizeof(ObfObjectId) == 8, "ObfObjectId must be 8 bytes in size");
+#endif // !defined(SWIG)
 
     union ObfMapSectionDataBlockId
     {
@@ -90,7 +127,7 @@ namespace OsmAnd
     class ObfMapSectionInfo;
     typedef std::function < bool(
         const std::shared_ptr<const ObfMapSectionInfo>& section,
-        const uint64_t mapObjectId,
+        const ObfObjectId mapObjectId,
         const AreaI& bbox,
         const ZoomLevel firstZoomLevel,
         const ZoomLevel lasttZoomLevel) > FilterMapObjectsByIdFunction;
@@ -135,7 +172,7 @@ namespace OsmAnd
     class ObfRoutingSectionInfo;
     typedef std::function < bool(
         const std::shared_ptr<const ObfRoutingSectionInfo>& section,
-        const uint64_t roadId,
+        const ObfObjectId roadId,
         const AreaI& bbox) > FilterRoadsByIdFunction;
 
     enum class RoutingDataLevel

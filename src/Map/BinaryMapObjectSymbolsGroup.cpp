@@ -17,7 +17,7 @@ OsmAnd::BinaryMapObjectSymbolsGroup::~BinaryMapObjectSymbolsGroup()
 
 uint64_t OsmAnd::BinaryMapObjectSymbolsGroup::getId() const
 {
-    return id;
+    return id.id;
 }
 
 bool OsmAnd::BinaryMapObjectSymbolsGroup::isSharableById() const
@@ -27,7 +27,5 @@ bool OsmAnd::BinaryMapObjectSymbolsGroup::isSharableById() const
 
 QString OsmAnd::BinaryMapObjectSymbolsGroup::getDebugTitle() const
 {
-    if (static_cast<int64_t>(id) >= 0)
-        return QString(QLatin1String("OSM #%1")).arg(id >> 1);
-    return QString(QLatin1String("MO #%1")).arg(static_cast<int64_t>(id));
+    return id.toString();
 }

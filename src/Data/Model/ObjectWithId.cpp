@@ -1,7 +1,7 @@
 #include "ObjectWithId.h"
 
 OsmAnd::Model::ObjectWithId::ObjectWithId()
-    : _id(std::numeric_limits<uint64_t>::max())
+    : _id(ObfObjectId::invalidId())
     , id(_id)
 {
 }

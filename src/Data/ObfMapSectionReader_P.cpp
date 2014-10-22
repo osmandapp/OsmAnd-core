@@ -437,9 +437,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                         if (stringId >= mapObjectsCaptionsTable.size())
                         {
                             LogPrintf(LogSeverityLevel::Error,
-                                "Data mismatch: string #%d (map object #%" PRIu64 " (%" PRIi64 ") not found in string table (size %d) in section '%s'",
+                                "Data mismatch: string #%d (map object %s not found in string table (size %d) in section '%s'",
                                 stringId,
-                                mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                                qPrintable(mapObject->id.toString()),
                                 mapObjectsCaptionsTable.size(), qPrintable(section->name));
                             caption = QString::fromLatin1("#%1 NOT FOUND").arg(stringId);
                             continue;
@@ -506,9 +506,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     metric->acceptedMapObjects++;
                 }
 
-                // Make unique map object identifier
-                mapObject->_id = Model::BinaryMapObject::getUniqueId(mapObject->_id, section);
-
                 //////////////////////////////////////////////////////////////////////////
                 //if ((mapObject->id >> 1) == 7374044u)
                 //{
@@ -559,6 +556,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     auto cis = reader._codedInputStream.get();
+    const auto baseOffset = cis->CurrentPosition();
 
     for (;;)
     {
@@ -571,8 +569,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 if (mapObject && mapObject->points31.isEmpty())
                 {
                     LogPrintf(LogSeverityLevel::Warning,
-                        "Empty BinaryMapObject #%" PRIu64 "(%" PRIi64 ") detected in section '%s'",
-                        mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                        "Empty BinaryMapObject %s detected in section '%s'",
+                        qPrintable(mapObject->id.toString()),
                         qPrintable(section->name));
                     mapObject.reset();
                 }
@@ -811,7 +809,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             case OBF::MapData::kIdFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt64(cis);
-                mapObject->_id = d + baseId;
+                const auto rawId = static_cast<uint64_t>(d + baseId);
+                mapObject->_id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
 
                 break;
             }

@@ -49,7 +49,7 @@ namespace OsmAnd
         };
         const std::shared_ptr<ObfMapSectionReader::DataBlocksCache> _dataBlocksCache;
 
-        mutable SharedByZoomResourcesContainer<uint64_t, const Model::BinaryMapObject> _sharedMapObjects;
+        mutable SharedByZoomResourcesContainer<ObfObjectId, const Model::BinaryMapObject> _sharedMapObjects;
 
         enum class TileState
         {

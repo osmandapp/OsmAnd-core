@@ -103,9 +103,9 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
     QList< proper::shared_future< std::shared_ptr<const Model::BinaryMapObject> > > futureReferencedMapObjects;
     QList< std::shared_ptr<const Model::BinaryMapObject> > loadedMapObjects;
     QList< std::shared_ptr<const Model::BinaryMapObject> > loadedSharedMapObjects;
-    QHash< uint64_t, SmartPOD<unsigned int, 0u>  > allLoadedMapObjectsCounters;
-    QHash< uint64_t, SmartPOD<unsigned int, 0u> > loadedSharedMapObjectsCounters;
-    QHash< uint64_t, SmartPOD<unsigned int, 0u> > loadedNonSharedMapObjectsCounters;
+    QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > allLoadedMapObjectsCounters;
+    QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedSharedMapObjectsCounters;
+    QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedNonSharedMapObjectsCounters;
     auto tileFoundation = MapFoundationType::Undefined;
     dataInterface->loadMapObjects(
         &loadedMapObjects,
@@ -113,7 +113,7 @@ bool OsmAnd::BinaryMapDataProvider_P::obtainData(
         zoom,
         &tileBBox31,
         [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjectsCounters, &loadedNonSharedMapObjectsCounters, &allLoadedMapObjectsCounters, tileBBox31, metric]
-        (const std::shared_ptr<const ObfMapSectionInfo>& section, const uint64_t id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
+        (const std::shared_ptr<const ObfMapSectionInfo>& section, const ObfObjectId id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {
             const Stopwatch objectsFilteringStopwatch(metric != nullptr);
 

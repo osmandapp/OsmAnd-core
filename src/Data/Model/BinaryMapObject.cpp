@@ -104,27 +104,3 @@ QString OsmAnd::Model::BinaryMapObject::getNameInLanguage(const QString& lang) c
         return QString::null;
     return *citName;
 }
-
-uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId(const std::shared_ptr<const BinaryMapObject>& mapObject)
-{
-    return getUniqueId(mapObject->id, mapObject->section);
-}
-
-uint64_t OsmAnd::Model::BinaryMapObject::getUniqueId(const uint64_t id, const std::shared_ptr<const ObfMapSectionInfo>& section)
-{
-    uint64_t uniqueId = id;
-
-    if (static_cast<int64_t>(uniqueId) < 0)
-    {
-        // IDs < 0 are guaranteed to be unique only inside own section
-        const int64_t realId = -static_cast<int64_t>(uniqueId);
-        assert((realId >> 48) == 0);
-        assert(section);
-        assert((section->runtimeGeneratedId >> 16) == 0);
-
-        uniqueId = (static_cast<int64_t>(section->runtimeGeneratedId) << 48) | realId;
-        uniqueId = static_cast<uint64_t>(-static_cast<int64_t>(uniqueId));
-    }
-
-    return uniqueId;
-}

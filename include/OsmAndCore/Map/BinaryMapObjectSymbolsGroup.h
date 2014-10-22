@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IMapSymbolsGroupWithUniqueId.h>
 
@@ -33,7 +34,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const Model::BinaryMapObject> mapObject;
         
-        const uint64_t id;
+        const ObfObjectId id;
         virtual uint64_t getId() const;
 
         const bool sharableById;

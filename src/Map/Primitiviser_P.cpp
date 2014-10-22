@@ -140,7 +140,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     {
         const auto& encDecRules = owner->environment->dummyMapSection->encodingDecodingRules;
         const std::shared_ptr<Model::BinaryMapObject> bgMapObject(new Model::BinaryMapObject(owner->environment->dummyMapSection, nullptr));
-        bgMapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, owner->environment->dummyMapSection);
+        bgMapObject->_id = ObfObjectId::generateUniqueId(dummySectionObjectsLastUnusedId++, owner->environment->dummyMapSection);
         bgMapObject->_isArea = true;
         bgMapObject->_points31.push_back(qMove(PointI(area31.left(), area31.top())));
         bgMapObject->_points31.push_back(qMove(PointI(area31.right(), area31.top())));
@@ -268,20 +268,18 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     alignedArea31.bottom() &= ~((1u << 5) - 1);
     alignedArea31.right() &= ~((1u << 5) - 1);
 
-    uint64_t id = 0;
     QVector< PointI > linePoints31;
     for (const auto& coastline : constOf(coastlines))
     {
         if (coastline->points31.size() < 2)
         {
             LogPrintf(LogSeverityLevel::Warning,
-                "Map object #%" PRIu64 " (%" PRIi64 ") is primitivised as coastline, but has %d vertices",
-                coastline->id >> 1, static_cast<int64_t>(coastline->id) / 2,
+                "BinaryMapObject %s is primitivised as coastline, but has %d vertices",
+                qPrintable(coastline->id.toString()),
                 coastline->points31.size());
             continue;
         }
 
-        id = coastline->id;
         linePoints31.clear();
         auto itPoint = coastline->points31.cbegin();
         auto pp = *itPoint;
@@ -314,18 +312,11 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     if (closedPolygons.isEmpty() && coastlinePolylines.isEmpty())
         return false;
 
-    // Remove section prefix if such exists
-    if (static_cast<int64_t>(id) < 0)
-    {
-        id = (-static_cast<int64_t>(id));
-        id = ((id << 16) >> 16);
-    }
-
     // Draw coastlines
     for (const auto& polyline : constOf(coastlinePolylines))
     {
         const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
-        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
+        mapObject->_id = ObfObjectId::generateUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_isArea = false;
         mapObject->_points31 = polyline;
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
@@ -347,7 +338,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
         convertCoastlinePolylinesToPolygons(env, primitivisedArea, coastlinePolylines, mapObject->_innerPolygonsPoints31);
 
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
-        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
+        mapObject->_id = ObfObjectId::generateUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_isArea = true;
 
         assert(mapObject->isClosedFigure());
@@ -370,7 +361,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
         for (const auto& polygon : constOf(coastlinePolylines))
         {
             const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
-            mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
+            mapObject->_id = ObfObjectId::generateUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
             mapObject->_isArea = false;
             mapObject->_points31 = polygon;
             mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
@@ -383,7 +374,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     for (const auto& polygon : constOf(closedPolygons))
     {
         const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
-        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
+        mapObject->_id = ObfObjectId::generateUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_isArea = false;
         mapObject->_points31 = polygon;
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastlineLine_encodingRuleId);
@@ -416,7 +407,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
             mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalLand_encodingRuleId);
             fullLandObjects++;
         }
-        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
+        mapObject->_id = ObfObjectId::generateUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_isArea = true;
 
         assert(mapObject->isClosedFigure());
@@ -434,7 +425,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
 
         // Add complete water tile
         const std::shared_ptr<Model::BinaryMapObject> mapObject(new Model::BinaryMapObject(env->dummyMapSection, nullptr));
-        mapObject->_id = Model::BinaryMapObject::getUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
+        mapObject->_id = ObfObjectId::generateUniqueId(dummySectionObjectsLastUnusedId++, env->dummyMapSection);
         mapObject->_points31.push_back(qMove(PointI(area31.left(), area31.top())));
         mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.top())));
         mapObject->_points31.push_back(qMove(PointI(area31.right(), area31.bottom())));
@@ -443,7 +434,6 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
         mapObject->_bbox31 = area31;
 
         mapObject->_typesRuleIds.push_back(mapObject->section->encodingDecodingRules->naturalCoastline_encodingRuleId);
-        mapObject->_id = Model::BinaryMapObject::getUniqueId((id << 1) + 1, env->dummyMapSection);
         mapObject->_isArea = true;
 
         assert(mapObject->isClosedFigure());
@@ -1131,23 +1121,23 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             if (mapObject->points31.size() <= 2)
             {
                 LogPrintf(LogSeverityLevel::Warning,
-                    "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but has only %d point(s)",
-                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                    "BinaryMapObject %s primitive is processed as polygon, but has only %d point(s)",
+                    qPrintable(mapObject->id.toString()),
                     mapObject->points31.size());
                 continue;
             }
             if (!mapObject->isClosedFigure())
             {
                 LogPrintf(LogSeverityLevel::Warning,
-                    "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but isn't closed",
-                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
+                    "BinaryMapObject %s primitive is processed as polygon, but isn't closed",
+                    qPrintable(mapObject->id.toString()));
                 continue;
             }
             if (!mapObject->isClosedFigure(true))
             {
                 LogPrintf(LogSeverityLevel::Warning,
-                    "Map object #%" PRIu64 " (%" PRIi64 ") primitive is processed as polygon, but isn't closed (inner)",
-                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
+                    "BinaryMapObject %s primitive is processed as polygon, but isn't closed (inner)",
+                    qPrintable(mapObject->id.toString()));
                 continue;
             }
 
@@ -1270,8 +1260,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             if (mapObject->points31.size() < 2)
             {
                 LogPrintf(LogSeverityLevel::Warning,
-                    "Map object #%" PRIu64 " (%" PRIi64 ") is processed as polyline, but has %d point(s)",
-                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2,
+                    "BinaryMapObject %s is processed as polyline, but has %d point(s)",
+                    qPrintable(mapObject->id.toString()),
                     mapObject->_points31.size());
                 continue;
             }
@@ -1323,8 +1313,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
             if (mapObject->points31.size() < 1)
             {
                 LogPrintf(LogSeverityLevel::Warning,
-                    "Map object #%" PRIu64 " (%" PRIi64 ") is processed as point, but has no point",
-                    mapObject->id >> 1, static_cast<int64_t>(mapObject->id) / 2);
+                    "BinaryMapObject %s is processed as point, but has no point",
+                    qPrintable(mapObject->id.toString()));
                 continue;
             }
 

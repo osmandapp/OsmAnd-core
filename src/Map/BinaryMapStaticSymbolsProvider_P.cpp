@@ -52,7 +52,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
 
     // Rasterize symbols and create symbols groups
     QList< std::shared_ptr<const SymbolRasterizer::RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
-    QHash< uint64_t, std::shared_ptr<MapSymbolsGroup> > preallocatedSymbolsGroups;
+    QHash< ObfObjectId, std::shared_ptr<MapSymbolsGroup> > preallocatedSymbolsGroups;
     const auto rasterizationFilter =
         [this, tileBBox31, filterCallback, &preallocatedSymbolsGroups]
         (const std::shared_ptr<const Model::BinaryMapObject>& mapObject) -> bool
@@ -159,9 +159,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             }
             else
             {
-                LogPrintf(LogSeverityLevel::Error, "BinaryMapObject #%" PRIu64 " (%" PRIi64 ") produced unsupported symbol type",
-                    mapObject->id,
-                    static_cast<int64_t>(mapObject->id) / 2);
+                LogPrintf(LogSeverityLevel::Error, "BinaryMapObject %s produced unsupported symbol type",
+                    qPrintable(mapObject->id.toString()));
             }
 
             if (rasterizedSymbol->contentType == SymbolRasterizer::RasterizedSymbol::ContentType::Icon)
@@ -281,8 +280,7 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
             {
                 LogPrintf(LogSeverityLevel::Error,
                     "%s produced incompatible set of map symbols to compute presentation mode",
-                    qPrintable(group->getDebugTitle()),
-                    mapObject->id >> 1);
+                    qPrintable(group->getDebugTitle()));
                 group->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAnything;
             }
         }

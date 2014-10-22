@@ -6,6 +6,8 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
 
 namespace OsmAnd
 {
@@ -18,11 +20,11 @@ namespace OsmAnd
         protected:
             ObjectWithId();
 
-            uint64_t _id;
+            ObfObjectId _id;
         public:
             virtual ~ObjectWithId();
 
-            const uint64_t& id;
+            const ObfObjectId& id;
         };
     }
 }

@@ -12,6 +12,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Data/Model/ObjectWithId.h>
 
 namespace OsmAnd
 {
@@ -42,14 +43,13 @@ namespace OsmAnd
             OnlyStraightOn = 7,
         };
 
-        class OSMAND_CORE_API Road
+        class OSMAND_CORE_API Road Q_DECL_FINAL : public ObjectWithId
         {
             Q_DISABLE_COPY_AND_MOVE(Road);
         private:
         protected:
             const std::shared_ptr<const Road> _ref;
 
-            uint64_t _id;
             QHash<uint32_t, QString> _captions;
             QList<uint32_t> _captionsOrder;
             AreaI _bbox31;
@@ -65,7 +65,6 @@ namespace OsmAnd
 
             const std::shared_ptr<const ObfRoutingSectionInfo> section;
 
-            const uint64_t& id;
             const QHash<uint32_t, QString>& captions;
             const QList<uint32_t>& captionsOrder;
             const AreaI& bbox31;
