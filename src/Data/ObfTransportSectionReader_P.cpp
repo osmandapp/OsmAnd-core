@@ -20,7 +20,7 @@ OsmAnd::ObfTransportSectionReader_P::~ObfTransportSectionReader_P()
 
 void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const std::shared_ptr<ObfTransportSectionInfo>& section )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -69,7 +69,7 @@ void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const
 
 void OsmAnd::ObfTransportSectionReader_P::readTransportStopsBounds( const ObfReader_P& reader, const std::shared_ptr<ObfTransportSectionInfo>& section )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for(;;)
     {

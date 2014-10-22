@@ -332,7 +332,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
     QList<uint64_t> roadsIdsTable;
     QHash< uint32_t, std::shared_ptr<Model::Road> > resultsByInternalId;
 
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -444,7 +444,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockIdsTable(
     const ObfReader_P& reader,
     QList<uint64_t>& ids)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     uint64_t id = 0;
 
@@ -477,7 +477,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockRestrictions(
     uint32_t destinationInternalId;
     uint32_t restrictionType;
 
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     for (;;)
     {
         auto tag = cis->ReadTag();

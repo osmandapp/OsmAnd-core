@@ -24,7 +24,7 @@ OsmAnd::ObfPoiSectionReader_P::~ObfPoiSectionReader_P()
 
 void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::shared_ptr<ObfPoiSectionInfo>& section )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -57,7 +57,7 @@ void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::
 
 void OsmAnd::ObfPoiSectionReader_P::readBoundaries( const ObfReader_P& reader, const std::shared_ptr<ObfPoiSectionInfo>& section )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -89,7 +89,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QList< std::shared_ptr<const Model::AmenityCategory> >& categories )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -124,7 +124,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
 
 void OsmAnd::ObfPoiSectionReader_P::readCategory( const ObfReader_P& reader, const std::shared_ptr<Model::AmenityCategory>& category )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for(;;)
     {
@@ -154,7 +154,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadCategories(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QList< std::shared_ptr<const OsmAnd::Model::AmenityCategory> >& categories )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     cis->Seek(section->_offset);
     auto oldLimit = cis->PushLimit(section->_length);
     readCategories(reader, section, categories);
@@ -169,7 +169,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     std::function<bool (Model::Amenity::NCRefC)> visitor /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     cis->Seek(section->_offset);
     auto oldLimit = cis->PushLimit(section->_length);
     readAmenities(reader, section, desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller);
@@ -184,7 +184,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     std::function<bool (Model::Amenity::NCRefC)> visitor,
     const IQueryController* const controller)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     QList< std::shared_ptr<Tile> > tiles;
     for(;;)
     {
@@ -240,7 +240,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
     const IQueryController* const controller,
     QSet< uint64_t >* tilesToSkip)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     const auto zoomToSkip = zoom + zoomDepth;
     QSet< uint64_t > tilesToSkip_;
@@ -372,7 +372,7 @@ bool OsmAnd::ObfPoiSectionReader_P::checkTileCategories(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QSet<uint32_t>* desiredCategories )
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     for(;;)
     {
         auto tag = cis->ReadTag();
@@ -412,7 +412,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
     const IQueryController* const controller,
     QSet< uint64_t >* amenitiesToSkip)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     const auto zoomToSkip = zoom + zoomDepth;
     QSet< uint64_t > amenitiesToSkip_;
@@ -508,7 +508,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const AreaI* bbox31,
     const IQueryController* const controller)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     PointI point;
     uint32_t catId;
     uint32_t subId;

@@ -29,17 +29,17 @@ namespace OsmAnd
     private:
     protected:
         ObfMapSectionLevelTreeNode(const std::shared_ptr<const ObfMapSectionLevel>& level);
-
-        uint32_t _offset;
-        uint32_t _length;
-        uint32_t _childrenInnerOffset;
-        uint32_t _dataOffset;
-        MapFoundationType _foundation;
-        AreaI _area31;
     public:
         ~ObfMapSectionLevelTreeNode();
 
         const std::shared_ptr<const ObfMapSectionLevel> level;
+
+        uint32_t offset;
+        uint32_t length;
+        uint32_t dataOffset;
+        MapFoundationType foundation;
+        AreaI area31;
+        bool hasChildren;
 
     friend class OsmAnd::ObfMapSectionReader_P;
     };

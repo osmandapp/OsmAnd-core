@@ -107,7 +107,7 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
 
 bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& info_)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     std::shared_ptr<ObfInfo> info(new ObfInfo());
     bool loadedCorrectly = false;

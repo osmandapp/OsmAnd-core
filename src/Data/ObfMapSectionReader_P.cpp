@@ -31,7 +31,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
     const ObfReader_P& reader,
     const std::shared_ptr<ObfMapSectionInfo>& section)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for (;;)
     {
@@ -77,7 +77,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<ObfMapSectionLevel>& level)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for (;;)
     {
@@ -126,7 +126,7 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
     const ObfReader_P& reader,
     const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     uint32_t defaultId = 1;
     for (;;)
@@ -159,7 +159,7 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
     uint32_t defaultId,
     const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     gpb::uint32 ruleId = defaultId;
     gpb::uint32 ruleType = 0;
@@ -198,7 +198,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
     const std::shared_ptr<const ObfMapSectionLevel>& level,
     QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >& trees)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     for (;;)
     {
         gpb::uint32 tag = cis->ReadTag();
@@ -213,8 +213,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
                 const auto oldLimit = cis->PushLimit(length);
 
                 const std::shared_ptr<ObfMapSectionLevelTreeNode> levelTree(new ObfMapSectionLevelTreeNode(level));
-                levelTree->_offset = offset;
-                levelTree->_length = length;
+                levelTree->offset = offset;
+                levelTree->length = length;
                 readTreeNode(reader, section, level->area31, levelTree);
 
                 cis->PopLimit(oldLimit);
@@ -239,7 +239,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
     const AreaI& parentArea,
     const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     for (;;)
     {
@@ -252,35 +252,35 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
             case OBF::OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                treeNode->_area31.left() = d + parentArea.left();
+                treeNode->area31.left() = d + parentArea.left();
 
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kRightFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                treeNode->_area31.right() = d + parentArea.right();
+                treeNode->area31.right() = d + parentArea.right();
 
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                treeNode->_area31.top() = d + parentArea.top();
+                treeNode->area31.top() = d + parentArea.top();
 
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
-                treeNode->_area31.bottom() = d + parentArea.bottom();
+                treeNode->area31.bottom() = d + parentArea.bottom();
 
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
             {
                 const auto offset = ObfReaderUtilities::readBigEndianInt(cis);
-                treeNode->_dataOffset = offset + treeNode->_offset;
+                treeNode->dataOffset = offset + treeNode->offset;
 
                 break;
             }
@@ -289,20 +289,18 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
 
-                treeNode->_foundation = (value != 0) ? MapFoundationType::FullWater : MapFoundationType::FullLand;
+                treeNode->foundation = (value != 0) ? MapFoundationType::FullWater : MapFoundationType::FullLand;
                 assert(
-                    (treeNode->_foundation != MapFoundationType::FullWater) ||
-                    (treeNode->_foundation == MapFoundationType::FullWater && section->isBasemap));
+                    (treeNode->foundation != MapFoundationType::FullWater) ||
+                    (treeNode->foundation == MapFoundationType::FullWater && section->isBasemap));
 
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
             {
-                // Save children relative offset and skip their data
-                treeNode->_childrenInnerOffset = tagPos - treeNode->_offset;
-                cis->Skip(cis->BytesUntilLimit());
-
-                return;
+                treeNode->hasChildren = true;
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
             }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -321,7 +319,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     outChildrenFoundation = MapFoundationType::Undefined;
 
@@ -334,15 +332,17 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 return;
             case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
             {
-                auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                auto offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(length);
+                const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
 
-                std::shared_ptr<ObfMapSectionLevelTreeNode> childNode(new ObfMapSectionLevelTreeNode(treeNode->level));
-                childNode->_foundation = treeNode->_foundation;
-                childNode->_offset = offset;
-                childNode->_length = length;
-                readTreeNode(reader, section, treeNode->_area31, childNode);
+                const std::shared_ptr<ObfMapSectionLevelTreeNode> childNode(new ObfMapSectionLevelTreeNode(treeNode->level));
+                childNode->foundation = treeNode->foundation;
+                childNode->offset = offset;
+                childNode->length = length;
+                readTreeNode(reader, section, treeNode->area31, childNode);
+                assert(cis->BytesUntilLimit() == 0);
+                cis->PopLimit(oldLimit);
 
                 // Update metric
                 if (metric)
@@ -351,39 +351,33 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 if (bbox31)
                 {
                     const auto shouldSkip =
-                        !bbox31->contains(childNode->_area31) &&
-                        !childNode->_area31.contains(*bbox31) &&
-                        !bbox31->intersects(childNode->_area31);
+                        !bbox31->contains(childNode->area31) &&
+                        !childNode->area31.contains(*bbox31) &&
+                        !bbox31->intersects(childNode->area31);
                     if (shouldSkip)
-                    {
-                        cis->Skip(cis->BytesUntilLimit());
-                        cis->PopLimit(oldLimit);
                         break;
-                    }
                 }
-                cis->PopLimit(oldLimit);
 
                 // Update metric
                 if (metric)
                     metric->acceptedNodes++;
 
-                if (nodesWithData && childNode->_dataOffset > 0)
+                if (nodesWithData && childNode->dataOffset > 0)
                     nodesWithData->push_back(childNode);
 
                 auto subchildrenFoundation = MapFoundationType::Undefined;
-                if (childNode->_childrenInnerOffset > 0)
+                if (childNode->hasChildren)
                 {
-                    cis->Seek(offset);
-                    oldLimit = cis->PushLimit(length);
+                    cis->Seek(childNode->offset);
+                    const auto oldLimit = cis->PushLimit(length);
 
-                    cis->Skip(childNode->_childrenInnerOffset);
                     readTreeNodeChildren(reader, section, childNode, subchildrenFoundation, nodesWithData, bbox31, controller, metric);
+                    
                     assert(cis->BytesUntilLimit() == 0);
-
                     cis->PopLimit(oldLimit);
                 }
 
-                const auto foundationToMerge = (subchildrenFoundation != MapFoundationType::Undefined) ? subchildrenFoundation : childNode->_foundation;
+                const auto foundationToMerge = (subchildrenFoundation != MapFoundationType::Undefined) ? subchildrenFoundation : childNode->foundation;
                 if (foundationToMerge != MapFoundationType::Undefined)
                 {
                     if (outChildrenFoundation == MapFoundationType::Undefined)
@@ -412,7 +406,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     QList< std::shared_ptr<Model::BinaryMapObject> > intermediateResult;
     QStringList mapObjectsCaptionsTable;
@@ -555,7 +549,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const AreaI* bbox31,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
     const auto baseOffset = cis->CurrentPosition();
 
     for (;;)
@@ -587,8 +581,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 const auto oldLimit = cis->PushLimit(length);
 
                 PointI p;
-                p.x = treeNode->_area31.left() & MaskToRead;
-                p.y = treeNode->_area31.top() & MaskToRead;
+                p.x = treeNode->area31.left() & MaskToRead;
+                p.y = treeNode->area31.top() & MaskToRead;
 
                 AreaI objectBBox;
                 objectBBox.top() = objectBBox.left() = std::numeric_limits<int32_t>::max();
@@ -645,7 +639,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 {
                     // Fake that this object is inside bbox
                     shouldNotSkip = true;
-                    objectBBox = treeNode->_area31;
+                    objectBBox = treeNode->area31;
                 }
 
                 // Even if no vertex lays inside bbox, an edge
@@ -700,10 +694,10 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
                 mapObject->_points31 = qMove(points31);
                 mapObject->_bbox31 = objectBBox;
-                assert(treeNode->_area31.top() - mapObject->_bbox31.top() <= 32);
-                assert(treeNode->_area31.left() - mapObject->_bbox31.left() <= 32);
-                assert(mapObject->_bbox31.bottom() - treeNode->_area31.bottom() <= 1);
-                assert(mapObject->_bbox31.right() - treeNode->_area31.right() <= 1);
+                assert(treeNode->area31.top() - mapObject->_bbox31.top() <= 32);
+                assert(treeNode->area31.left() - mapObject->_bbox31.left() <= 32);
+                assert(mapObject->_bbox31.bottom() - treeNode->area31.bottom() <= 1);
+                assert(mapObject->_bbox31.right() - treeNode->area31.right() <= 1);
                 assert(mapObject->_bbox31.right() >= mapObject->_bbox31.left());
                 assert(mapObject->_bbox31.bottom() >= mapObject->_bbox31.top());
 
@@ -719,8 +713,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 auto oldLimit = cis->PushLimit(length);
 
                 PointI p;
-                p.x = treeNode->_area31.left() & MaskToRead;
-                p.y = treeNode->_area31.top() & MaskToRead;
+                p.x = treeNode->area31.left() & MaskToRead;
+                p.y = treeNode->area31.top() & MaskToRead;
 
                 // Preallocate memory
                 const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
@@ -835,7 +829,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    auto cis = reader._codedInputStream.get();
+    const auto cis = reader._codedInputStream.get();
 
     // Check if this map section has initialized rules
     {
@@ -923,9 +917,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 const Stopwatch bboxNodeCheckStopwatch(metric != nullptr);
 
                 const auto shouldSkip =
-                    !bbox31->contains(rootNode->_area31) &&
-                    !rootNode->_area31.contains(*bbox31) &&
-                    !bbox31->intersects(rootNode->_area31);
+                    !bbox31->contains(rootNode->area31) &&
+                    !rootNode->area31.contains(*bbox31) &&
+                    !bbox31->intersects(rootNode->area31);
 
                 // Update metric
                 if (metric)
@@ -939,23 +933,22 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             if (metric)
                 metric->acceptedNodes++;
 
-            if (rootNode->_dataOffset > 0)
+            if (rootNode->dataOffset > 0)
                 treeNodesWithData.push_back(rootNode);
 
             auto rootSubnodesFoundation = MapFoundationType::Undefined;
-            if (rootNode->_childrenInnerOffset > 0)
+            if (rootNode->hasChildren)
             {
-                cis->Seek(rootNode->_offset);
-                auto oldLimit = cis->PushLimit(rootNode->_length);
+                cis->Seek(rootNode->offset);
+                auto oldLimit = cis->PushLimit(rootNode->length);
 
-                cis->Skip(rootNode->_childrenInnerOffset);
                 readTreeNodeChildren(reader, section, rootNode, rootSubnodesFoundation, &treeNodesWithData, bbox31, controller, metric);
+                
                 assert(cis->BytesUntilLimit() == 0);
-
                 cis->PopLimit(oldLimit);
             }
 
-            const auto foundationToMerge = (rootSubnodesFoundation != MapFoundationType::Undefined) ? rootSubnodesFoundation : rootNode->_foundation;
+            const auto foundationToMerge = (rootSubnodesFoundation != MapFoundationType::Undefined) ? rootSubnodesFoundation : rootNode->foundation;
             if (foundationToMerge != MapFoundationType::Undefined)
             {
                 if (bboxOrSectionFoundation == MapFoundationType::Undefined)
@@ -970,7 +963,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             []
             (const std::shared_ptr<const ObfMapSectionLevelTreeNode>& l, const std::shared_ptr<const ObfMapSectionLevelTreeNode>& r) -> bool
             {
-                return l->_dataOffset < r->_dataOffset;
+                return l->dataOffset < r->dataOffset;
             });
 
         // Update metric
@@ -986,9 +979,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
             DataBlockId blockId;
             blockId.sectionRuntimeGeneratedId = section->runtimeGeneratedId;
-            blockId.offset = treeNode->_dataOffset;
+            blockId.offset = treeNode->dataOffset;
 
-            if (cache && cache->shouldCacheBlock(blockId, treeNode->_area31, bbox31))
+            if (cache && cache->shouldCacheBlock(blockId, treeNode->area31, bbox31))
             {
                 // In case cache is provided, read and cache
                 const auto levelZooms = Utilities::enumerateZoomLevels(treeNode->level->minZoom, treeNode->level->maxZoom);
@@ -1020,7 +1013,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     // Made a promise, so load entire block into temporary storage
                     QList< std::shared_ptr<const Model::BinaryMapObject> > mapObjects;
 
-                    cis->Seek(treeNode->_dataOffset);
+                    cis->Seek(treeNode->dataOffset);
 
                     gpb::uint32 length;
                     cis->ReadVarint32(&length);
@@ -1045,7 +1038,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         metric->mapObjectsBlocksRead++;
 
                     // Create a data block and share it
-                    dataBlock.reset(new DataBlock(blockId, treeNode->_area31, treeNode->_foundation, mapObjects));
+                    dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->foundation, mapObjects));
                     cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
                 }
 
@@ -1088,7 +1081,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             {
                 // In case there's no cache, simply read
 
-                cis->Seek(treeNode->_dataOffset);
+                cis->Seek(treeNode->dataOffset);
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
