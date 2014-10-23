@@ -128,11 +128,24 @@ RenderingRule* RenderingRulesStorage::getRule(int state, int itag, int ivalue) {
 }
 
 
-void RenderingRulesStorage::registerGlobalRule(RenderingRule* rr, int state, int key) {
+void RenderingRulesStorage::registerGlobalRule(RenderingRule* rr, int state, int nkey) {
 	// int tag = getDictionaryValue(tagS);
 	// int value = getDictionaryValue(valueS);
 	// 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter ");
 	// int key = (tag << SHIFT_TAG_VAL) + value;
+	int tag = rr->getIntPropertyValue(this->PROPS.R_TAG->attrName);
+	if (tag == -1) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter ");
+	}
+	int value = rr->getIntPropertyValue(this->PROPS.R_VALUE->attrName);
+	if (value == -1) {
+		// attrsMap.toString()
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter ");
+	}
+	int key = (tag << SHIFT_TAG_VAL) + value;
+	if( key != nkey) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attributes are different");	
+	}
 	RenderingRule* toInsert = rr;
 	RenderingRule* previous = tagValueGlobalRules[state][key];
 
