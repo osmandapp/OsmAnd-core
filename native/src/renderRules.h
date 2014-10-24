@@ -156,6 +156,7 @@ class RenderingRule
 public:
 	std::vector<RenderingRuleProperty*> properties;
 	std::vector<int> intProperties;
+	std::vector<RenderingRule*> attrRefs;
 	std::vector<float> floatProperties;
 	std::vector<RenderingRule*> ifElseChildren;
 	std::vector<RenderingRule*> ifChildren;

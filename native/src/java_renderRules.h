@@ -13,6 +13,7 @@ jmethodID List_get;
 
 jclass RenderingRuleClass;
 jfieldID RenderingRule_properties;
+jfieldID RenderingRule_attrRefs;
 jfieldID RenderingRule_isGroup;
 jfieldID RenderingRule_intProperties;
 jfieldID RenderingRule_floatProperties;
@@ -48,6 +49,7 @@ RenderingRule* createRenderingRule(JNIEnv* env, jobject rRule, RenderingRulesSto
 	jobject isGroup = env->GetObjectField(rRule, RenderingRule_isGroup);
 	RenderingRule* rule = new RenderingRule(empty, isGroup, st);
 	jobjectArray props = (jobjectArray) env->GetObjectField(rRule, RenderingRule_properties);
+	jobjectArray attrRefs = (jobjectArray) env->GetObjectField(rRule, RenderingRule_attrRefs);
 	jintArray intProps = (jintArray) env->GetObjectField(rRule, RenderingRule_intProperties);
 	jfloatArray floatProps = (jfloatArray) env->GetObjectField(rRule, RenderingRule_floatProperties);
 	jobject ifChildren = env->GetObjectField(rRule, RenderingRule_ifChildren);
@@ -85,6 +87,19 @@ RenderingRule* createRenderingRule(JNIEnv* env, jobject rRule, RenderingRulesSto
 		env->DeleteLocalRef(prop);
 	}
 	env->DeleteLocalRef(props);
+
+	if(attrRefs != NULL) {
+		for (jsize i = 0; i < sz; i++) {
+			jobject prop = env->GetObjectArrayElement(attrRefs, i);
+			if(prop == NULL) {				
+				rule->attrRefs.push_back(NULL);
+			} else {
+				rule->attrRefs.push_back(createRenderingRule(env, prop, st));
+				env->DeleteLocalRef(prop);
+			}
+		}
+		env->DeleteLocalRef(attrRefs);
+	}
 
 	if (ifChildren != NULL) {
 		sz = env->CallIntMethod(ifChildren, List_size);
@@ -258,6 +273,8 @@ void loadJniRenderingRules(JNIEnv* env) {
 	RenderingRuleClass = findClass(env, "net/osmand/render/RenderingRule");
 	RenderingRule_properties = env->GetFieldID(RenderingRuleClass, "properties",
 			"[Lnet/osmand/render/RenderingRuleProperty;");
+	RenderingRule_attrRefs  = env->GetFieldID(RenderingRuleClass, "attributesRef",
+			"[Lnet/osmand/render/RenderingRule;");
 	RenderingRule_isGroup = env->GetFieldID(RenderingRuleClass, "isGroup", "Z");
 	RenderingRule_intProperties = env->GetFieldID(RenderingRuleClass, "intProperties", "[I");
 	RenderingRule_floatProperties = env->GetFieldID(RenderingRuleClass, "floatProperties", "[F");

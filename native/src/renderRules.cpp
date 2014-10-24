@@ -129,32 +129,29 @@ RenderingRule* RenderingRulesStorage::getRule(int state, int itag, int ivalue) {
 
 
 void RenderingRulesStorage::registerGlobalRule(RenderingRule* rr, int state, int nkey) {
-	// int tag = getDictionaryValue(tagS);
-	// int value = getDictionaryValue(valueS);
+	// tag/value are not stored in rendering rule anymore
+	// int tag = rr->getIntPropertyValue(this->PROPS.R_TAG->attrName);
+	// if (tag == -1) {
 	// 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter ");
+	// }
+	// int value = rr->getIntPropertyValue(this->PROPS.R_VALUE->attrName);
+	// if (value == -1) {
+	// 	// attrsMap.toString()
+	// 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute value should be specified for root filter ");
+	// }
 	// int key = (tag << SHIFT_TAG_VAL) + value;
-	int tag = rr->getIntPropertyValue(this->PROPS.R_TAG->attrName);
-	if (tag == -1) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter ");
-	}
-	int value = rr->getIntPropertyValue(this->PROPS.R_VALUE->attrName);
-	if (value == -1) {
-		// attrsMap.toString()
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attribute tag should be specified for root filter ");
-	}
-	int key = (tag << SHIFT_TAG_VAL) + value;
-	if( key != nkey) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attributes are different");	
-	}
+	// if( key != nkey) {
+	// 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Attributes are different");	
+	// }
 	RenderingRule* toInsert = rr;
-	RenderingRule* previous = tagValueGlobalRules[state][key];
+	RenderingRule* previous = tagValueGlobalRules[state][nkey];
 
 	if (previous != NULL) {
 		// all root rules should have at least tag/value
-		toInsert = createTagValueRootWrapperRule(key, previous);
+		toInsert = createTagValueRootWrapperRule(nkey, previous);
 		toInsert->ifElseChildren.push_back(rr);
 	}
-	tagValueGlobalRules[state][key] = toInsert;
+	tagValueGlobalRules[state][nkey] = toInsert;
 }
 
 RenderingRule* RenderingRulesStorage::createTagValueRootWrapperRule(int tagValueKey, RenderingRule* previous) {
@@ -609,11 +606,20 @@ bool RenderingRuleSearchRequest::checkInputProperties(RenderingRule* rule) {
 
 void RenderingRuleSearchRequest::loadOutputProperties(RenderingRule* rule, bool override) {
 	std::vector<RenderingRuleProperty*> properties = rule->properties;
-		for (int i = 0; i < rule->properties.size(); i++) {
+	for (size_t i = 0; i < rule->properties.size(); i++) {
 		RenderingRuleProperty* rp = properties[i];
 		if (rp != NULL && !rp->input) {
 			if(override || !isSpecified(rp)) {
-				if (rp->isFloat()) {
+				if(rule->attrRefs.size() > i && rule->attrRefs[i] != NULL) {
+					RenderingRule* rr = rule->attrRefs[i];
+					visitRule(rr, true);
+					if(isSpecified(PROPS->R_ATTR_COLOR_VALUE)) {
+                       values[rp->id] = getIntPropertyValue(PROPS->R_ATTR_COLOR_VALUE);
+                    } else if(isSpecified(PROPS->R_ATTR_INT_VALUE)) {
+                       values[rp->id] = getIntPropertyValue(PROPS->R_ATTR_INT_VALUE);
+                       fvalues[rp->id] = getFloatPropertyValue(PROPS->R_ATTR_INT_VALUE);
+                    }
+                } else if(rp->isFloat()) {
 					fvalues[rp->id] = rule->floatProperties[i];
 					values[rp->id] = rule->intProperties[i];
 				} else {
@@ -630,7 +636,7 @@ bool RenderingRuleSearchRequest::visitRule(RenderingRule* rule, bool loadOutput)
 	if(!match) {
 		return false;
 	}
-	if (!loadOutput) {
+	if (!loadOutput && !rule->isGroup) {
 		return true;
 	}
 	// accept it
@@ -645,16 +651,16 @@ bool RenderingRuleSearchRequest::visitRule(RenderingRule* rule, bool loadOutput)
 			break;
 		}
 	}
-	if (match || !rule->isGroup) {
+	bool fit = match || !rule->isGroup;
+	if (fit && loadOutput ) {
 		if (rule->isGroup) {
 			loadOutputProperties(rule, false);
 		}
 		for (j = 0; j < rule->ifChildren.size(); j++) {
 			visitRule(rule->ifChildren.at(j), loadOutput);
 		}
-		return true;
 	}
-	return false;
+	return fit;
 
 }
 
