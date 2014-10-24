@@ -21,7 +21,7 @@ namespace OsmAnd
 
     class ObfSectionInfo;
 
-    union ObfObjectId
+    union OSMAND_CORE_API ObfObjectId
     {
         uint64_t id;
 
