@@ -44,9 +44,14 @@ jfieldID RenderingRuleSearchRequest_fvalues;
 jfieldID RenderingRuleSearchRequest_savedValues;
 jfieldID RenderingRuleSearchRequest_savedFvalues;
 
+jclass findGlobalClass(JNIEnv* env, string cl) 
+{
+	return (jclass)env->NewGlobalRef(findClass(env, cl.c_str()));
+}
+
 RenderingRule* createRenderingRule(JNIEnv* env, jobject rRule, RenderingRulesStorage* st) {
 	map<string,string> empty;
-	jobject isGroup = env->GetObjectField(rRule, RenderingRule_isGroup);
+	jboolean isGroup = env->GetBooleanField(rRule, RenderingRule_isGroup);
 	RenderingRule* rule = new RenderingRule(empty, isGroup, st);
 	jobjectArray props = (jobjectArray) env->GetObjectField(rRule, RenderingRule_properties);
 	jobjectArray attrRefs = (jobjectArray) env->GetObjectField(rRule, RenderingRule_attrRefs);
@@ -270,7 +275,7 @@ void initRenderingRuleSearchRequest(JNIEnv* env, RenderingRuleSearchRequest* r, 
 
 
 void loadJniRenderingRules(JNIEnv* env) {
-	RenderingRuleClass = findClass(env, "net/osmand/render/RenderingRule");
+	RenderingRuleClass = findGlobalClass(env, "net/osmand/render/RenderingRule");
 	RenderingRule_properties = env->GetFieldID(RenderingRuleClass, "properties",
 			"[Lnet/osmand/render/RenderingRuleProperty;");
 	RenderingRule_attrRefs  = env->GetFieldID(RenderingRuleClass, "attributesRef",
@@ -281,17 +286,17 @@ void loadJniRenderingRules(JNIEnv* env) {
 	RenderingRule_ifElseChildren = env->GetFieldID(RenderingRuleClass, "ifElseChildren", "Ljava/util/List;");
 	RenderingRule_ifChildren = env->GetFieldID(RenderingRuleClass, "ifChildren", "Ljava/util/List;");
 
-	RenderingRuleStoragePropertiesClass = findClass(env, "net/osmand/render/RenderingRuleStorageProperties");
+	RenderingRuleStoragePropertiesClass = findGlobalClass(env, "net/osmand/render/RenderingRuleStorageProperties");
 	RenderingRuleStorageProperties_rules = env->GetFieldID(RenderingRuleStoragePropertiesClass, "rules",
 			"Ljava/util/List;");
 
-	RenderingRulePropertyClass = findClass(env, "net/osmand/render/RenderingRuleProperty");
+	RenderingRulePropertyClass = findGlobalClass(env, "net/osmand/render/RenderingRuleProperty");
 	RenderingRuleProperty_type = env->GetFieldID(RenderingRulePropertyClass, "type", "I");
 	RenderingRuleProperty_input = env->GetFieldID(RenderingRulePropertyClass, "input", "Z");
 	RenderingRuleProperty_attrName = env->GetFieldID(RenderingRulePropertyClass, "attrName",
 			"Ljava/lang/String;");
 
-	RenderingRulesStorageClass = findClass(env, "net/osmand/render/RenderingRulesStorage");
+	RenderingRulesStorageClass = findGlobalClass(env, "net/osmand/render/RenderingRulesStorage");
 	RenderingRulesStorageClass_dictionary = env->GetFieldID(RenderingRulesStorageClass, "dictionary",
 			"Ljava/util/List;");
 	RenderingRulesStorage_PROPS = env->GetFieldID(RenderingRulesStorageClass, "PROPS",
@@ -305,11 +310,11 @@ void loadJniRenderingRules(JNIEnv* env) {
 	RenderingRulesStorage_getRenderingAttributeValues = env->GetMethodID(RenderingRulesStorageClass, "getRenderingAttributeValues",
 				"()[Lnet/osmand/render/RenderingRule;");
 
-	ListClass = findClass(env, "java/util/List");
+	ListClass = findGlobalClass(env, "java/util/List");
 	List_size = env->GetMethodID(ListClass, "size", "()I");
 	List_get = env->GetMethodID(ListClass, "get", "(I)Ljava/lang/Object;");
 
-	RenderingRuleSearchRequestClass = findClass(env, "net/osmand/render/RenderingRuleSearchRequest");
+	RenderingRuleSearchRequestClass = findGlobalClass(env, "net/osmand/render/RenderingRuleSearchRequest");
 	RenderingRuleSearchRequest_storage = env->GetFieldID(RenderingRuleSearchRequestClass, "storage",
 			"Lnet/osmand/render/RenderingRulesStorage;");
 	RenderingRuleSearchRequest_props = env->GetFieldID(RenderingRuleSearchRequestClass, "props",

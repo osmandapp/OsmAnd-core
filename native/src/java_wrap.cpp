@@ -21,6 +21,7 @@ jclass jclassIntArray ;
 jclass jclassString;
 jmethodID jmethod_Object_toString = NULL;
 
+
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
 	JNIEnv* globalJniEnv;
@@ -29,8 +30,8 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 	globalJVM = vm;
 	loadJniRenderingContext(globalJniEnv);
 	loadJniRenderingRules(globalJniEnv);
-	jclassIntArray = findClass(globalJniEnv, "[I");
-	jclassString = findClass(globalJniEnv, "java/lang/String");
+	jclassIntArray = findGlobalClass(globalJniEnv, "[I");
+	jclassString = findGlobalClass(globalJniEnv, "java/lang/String");
 
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "JNI_OnLoad completed");
 	
@@ -287,7 +288,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	delete bitmap;
 	//    deleteObjects(mapDataObjects);
 
-	jclass resultClass = findClass(ienv, "net/osmand/NativeLibrary$RenderingGenerationResult");
+	jclass resultClass = findGlobalClass(ienv, "net/osmand/NativeLibrary$RenderingGenerationResult");
 
 	jmethodID resultClassCtorId = ienv->GetMethodID(resultClass, "<init>", "(Ljava/nio/ByteBuffer;)V");
 
@@ -355,7 +356,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 	}
 	pushToJavaRenderingContext(ienv, renderingContext, &rc);
 
-	jclass resultClass = findClass(ienv, "net/osmand/NativeLibrary$RenderingGenerationResult");
+	jclass resultClass = findGlobalClass(ienv, "net/osmand/NativeLibrary$RenderingGenerationResult");
 
 	jmethodID resultClassCtorId = ienv->GetMethodID(resultClass, "<init>", "(Ljava/nio/ByteBuffer;)V");
 
@@ -520,8 +521,8 @@ jfieldID jfield_RouteSegmentResult_routingTime = NULL;
 
 void loadJniRenderingContext(JNIEnv* env)
 {
-	jclass_RouteSegmentResult = findClass(env, "net/osmand/router/RouteSegmentResult");
-	jclass_RouteSegmentResultAr = findClass(env, "[Lnet/osmand/router/RouteSegmentResult;");
+	jclass_RouteSegmentResult = findGlobalClass(env, "net/osmand/router/RouteSegmentResult");
+	jclass_RouteSegmentResultAr = findGlobalClass(env, "[Lnet/osmand/router/RouteSegmentResult;");
 	jmethod_RouteSegmentResult_ctor = env->GetMethodID(jclass_RouteSegmentResult,
 			"<init>", "(Lnet/osmand/binary/RouteDataObject;II)V");
 	jfield_RouteSegmentResult_routingTime = getFid(env, jclass_RouteSegmentResult, "routingTime",
@@ -529,7 +530,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RouteSegmentResult_preAttachedRoutes = getFid(env, jclass_RouteSegmentResult, "preAttachedRoutes",
 			"[[Lnet/osmand/router/RouteSegmentResult;");
 
-	jclass_RouteCalculationProgress = findClass(env, "net/osmand/router/RouteCalculationProgress");
+	jclass_RouteCalculationProgress = findGlobalClass(env, "net/osmand/router/RouteCalculationProgress");
 	jfield_RouteCalculationProgress_isCancelled  = getFid(env, jclass_RouteCalculationProgress, "isCancelled", "Z");
 	jfield_RouteCalculationProgress_segmentNotFound  = getFid(env, jclass_RouteCalculationProgress, "segmentNotFound", "I");
 	jfield_RouteCalculationProgress_distanceFromBegin  = getFid(env, jclass_RouteCalculationProgress, "distanceFromBegin", "F");
@@ -540,14 +541,14 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RouteCalculationProgress_visitedSegments  = getFid(env, jclass_RouteCalculationProgress, "visitedSegments", "I");
 	jfield_RouteCalculationProgress_loadedTiles  = getFid(env, jclass_RouteCalculationProgress, "loadedTiles", "I");
 
-	jclass_RoutingConfiguration = findClass(env, "net/osmand/router/RoutingConfiguration");
+	jclass_RoutingConfiguration = findGlobalClass(env, "net/osmand/router/RoutingConfiguration");
 	jfield_RoutingConfiguration_heuristicCoefficient = getFid(env, jclass_RoutingConfiguration, "heuristicCoefficient", "F");
 	jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES = getFid(env, jclass_RoutingConfiguration, "ZOOM_TO_LOAD_TILES", "I");
 	jfield_RoutingConfiguration_planRoadDirection = getFid(env, jclass_RoutingConfiguration, "planRoadDirection", "I");
 	jfield_RoutingConfiguration_routerName = getFid(env, jclass_RoutingConfiguration, "routerName", "Ljava/lang/String;");
 	jfield_RoutingConfiguration_router = getFid(env, jclass_RoutingConfiguration, "router", "Lnet/osmand/router/GeneralRouter;");
 
-	jclass_GeneralRouter = findClass(env, "net/osmand/router/GeneralRouter");
+	jclass_GeneralRouter = findGlobalClass(env, "net/osmand/router/GeneralRouter");
 	jfield_GeneralRouter_restrictionsAware = getFid(env, jclass_GeneralRouter, "restrictionsAware", "Z");
 	jfield_GeneralRouter_leftTurn = getFid(env, jclass_GeneralRouter, "leftTurn", "F");
 	jfield_GeneralRouter_roundaboutTurn = getFid(env, jclass_GeneralRouter, "roundaboutTurn", "F");
@@ -559,7 +560,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jmethod_GeneralRouter_getImpassableRoadIds = env->GetMethodID(jclass_GeneralRouter,
 				"getImpassableRoadIds", "()[J");
 
-	jclass_RouteAttributeContext = findClass(env, "net/osmand/router/GeneralRouter$RouteAttributeContext");	
+	jclass_RouteAttributeContext = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeContext");	
 	jmethod_RouteAttributeContext_getRules = env->GetMethodID(jclass_RouteAttributeContext,
 				"getRules", "()[Lnet/osmand/router/GeneralRouter$RouteAttributeEvalRule;");
 	jmethod_RouteAttributeContext_getParamKeys = env->GetMethodID(jclass_RouteAttributeContext,
@@ -567,7 +568,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jmethod_RouteAttributeContext_getParamValues = env->GetMethodID(jclass_RouteAttributeContext,
 				"getParamValues", "()[Ljava/lang/String;");
 
-	jclass_RouteAttributeEvalRule = findClass(env, "net/osmand/router/GeneralRouter$RouteAttributeEvalRule");
+	jclass_RouteAttributeEvalRule = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeEvalRule");
 	jfield_RouteAttributeEvalRule_selectValueDef = getFid(env, jclass_RouteAttributeEvalRule, "selectValueDef", "Ljava/lang/String;");
 	jfield_RouteAttributeEvalRule_selectType = getFid(env, jclass_RouteAttributeEvalRule, "selectType", "Ljava/lang/String;");
 
@@ -582,13 +583,13 @@ void loadJniRenderingContext(JNIEnv* env)
 	jmethod_RouteAttributeEvalRule_getExpressions = env->GetMethodID(jclass_RouteAttributeEvalRule,
 				"getExpressions", "()[Lnet/osmand/router/GeneralRouter$RouteAttributeExpression;");
 
-	jclass_RouteAttributeExpression = findClass(env, "net/osmand/router/GeneralRouter$RouteAttributeExpression");	
+	jclass_RouteAttributeExpression = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeExpression");	
     jfield_RouteAttributeExpression_values = getFid(env, jclass_RouteAttributeExpression, "values", "[Ljava/lang/String;");
    	jfield_RouteAttributeExpression_expressionType = getFid(env, jclass_RouteAttributeExpression, "expressionType", "I");
    	jfield_RouteAttributeExpression_valueType = getFid(env, jclass_RouteAttributeExpression, "valueType", "Ljava/lang/String;");
 	
 
-	jclass_PrecalculatedRouteDirection = findClass(env, "net/osmand/router/PrecalculatedRouteDirection");
+	jclass_PrecalculatedRouteDirection = findGlobalClass(env, "net/osmand/router/PrecalculatedRouteDirection");
 	jfield_PrecalculatedRouteDirection_tms = getFid(env, jclass_PrecalculatedRouteDirection, "tms", "[F");
 	jfield_PrecalculatedRouteDirection_pointsY = getFid(env, jclass_PrecalculatedRouteDirection, "pointsY", "[I");
 	jfield_PrecalculatedRouteDirection_pointsX = getFid(env, jclass_PrecalculatedRouteDirection, "pointsX", "[I");
@@ -598,7 +599,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_PrecalculatedRouteDirection_endFinishTime = getFid(env, jclass_PrecalculatedRouteDirection, "endFinishTime", "F");
 	jfield_PrecalculatedRouteDirection_startFinishTime = getFid(env, jclass_PrecalculatedRouteDirection, "startFinishTime", "F");
 
-	jclass_RenderingContext = findClass(env, "net/osmand/RenderingContext");
+	jclass_RenderingContext = findGlobalClass(env, "net/osmand/RenderingContext");
 	jfield_RenderingContext_interrupted = getFid(env, jclass_RenderingContext, "interrupted", "Z");
 	jfield_RenderingContext_leftX = getFid(env,  jclass_RenderingContext, "leftX", "D" );
 	jfield_RenderingContext_topY = getFid(env,  jclass_RenderingContext, "topY", "D" );
@@ -623,17 +624,17 @@ void loadJniRenderingContext(JNIEnv* env)
 	jmethod_RenderingContext_getIconRawData = env->GetMethodID(jclass_RenderingContext,
 				"getIconRawData", "(Ljava/lang/String;)[B");
 
-	jmethod_Object_toString = env->GetMethodID(findClass(env, "java/lang/Object", true),
+	jmethod_Object_toString = env->GetMethodID(findGlobalClass(env, "java/lang/Object"),
 					"toString", "()Ljava/lang/String;");
 
 
-	jclass_JUnidecode = findClass(env, "net/sf/junidecode/Junidecode");
+	jclass_JUnidecode = findGlobalClass(env, "net/sf/junidecode/Junidecode");
     jmethod_JUnidecode_unidecode = env->GetStaticMethodID(jclass_JUnidecode, "unidecode", "(Ljava/lang/String;)Ljava/lang/String;");
-    jclass_Reshaper = findClass(env, "net/osmand/Reshaper");
+    jclass_Reshaper = findGlobalClass(env, "net/osmand/Reshaper");
     jmethod_Reshaper_reshape = env->GetStaticMethodID(jclass_Reshaper, "reshape", "(Ljava/lang/String;)Ljava/lang/String;");
 
-    jclass_RouteDataObject = findClass(env, "net/osmand/binary/RouteDataObject");
-    jclass_NativeRouteSearchResult = findClass(env, "net/osmand/NativeLibrary$NativeRouteSearchResult");
+    jclass_RouteDataObject = findGlobalClass(env, "net/osmand/binary/RouteDataObject");
+    jclass_NativeRouteSearchResult = findGlobalClass(env, "net/osmand/NativeLibrary$NativeRouteSearchResult");
     jmethod_NativeRouteSearchResult_init = env->GetMethodID(jclass_NativeRouteSearchResult, "<init>", "(J[Lnet/osmand/binary/RouteDataObject;)V");
 
     jfield_RouteDataObject_types = getFid(env,  jclass_RouteDataObject, "types", "[I" );
@@ -645,11 +646,11 @@ void loadJniRenderingContext(JNIEnv* env)
     jmethod_RouteDataObject_init = env->GetMethodID(jclass_RouteDataObject, "<init>", "(Lnet/osmand/binary/BinaryMapRouteReaderAdapter$RouteRegion;[I[Ljava/lang/String;)V");
 
 
-    jclass_RouteRegion = findClass(env, "net/osmand/binary/BinaryMapRouteReaderAdapter$RouteRegion");
+    jclass_RouteRegion = findGlobalClass(env, "net/osmand/binary/BinaryMapRouteReaderAdapter$RouteRegion");
     jfield_RouteRegion_length= getFid(env,  jclass_RouteRegion, "length", "I" );
     jfield_RouteRegion_filePointer= getFid(env,  jclass_RouteRegion, "filePointer", "I" );
 
-    jclass_RouteSubregion = findClass(env, "net/osmand/binary/BinaryMapRouteReaderAdapter$RouteSubregion");
+    jclass_RouteSubregion = findGlobalClass(env, "net/osmand/binary/BinaryMapRouteReaderAdapter$RouteSubregion");
     jfield_RouteSubregion_length= getFid(env,  jclass_RouteSubregion, "length", "I" );
     jfield_RouteSubregion_filePointer= getFid(env,  jclass_RouteSubregion, "filePointer", "I" );
     jfield_RouteSubregion_left= getFid(env,  jclass_RouteSubregion, "left", "I" );
@@ -942,8 +943,8 @@ void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobjec
 	jstring rName = (jstring) ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_routerName);
 	rConfig.routerName = getString(ienv, rName);
 
-	jobject router = ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_router);
-
+	jobject lrouter = ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_router);
+	jobject router = ienv->NewGlobalRef(lrouter);
 	rConfig.router._restrictionsAware = ienv->GetBooleanField(router, jfield_GeneralRouter_restrictionsAware);
 	rConfig.router.leftTurn = ienv->GetFloatField(router, jfield_GeneralRouter_leftTurn);
 	rConfig.router.roundaboutTurn = ienv->GetFloatField(router, jfield_GeneralRouter_roundaboutTurn);
@@ -984,19 +985,19 @@ void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobjec
 
 		ienv->DeleteLocalRef(ctx);
 	}
-
 	jlongArray impassableRoadIds = (jlongArray) ienv->CallObjectMethod(router, jmethod_GeneralRouter_getImpassableRoadIds);
-	jlong* iRi = (jlong*)ienv->GetLongArrayElements(impassableRoadIds, NULL);	
-	for(int i = 0; i < ienv->GetArrayLength(impassableRoadIds); i++) {
-		rConfig.router.impassableRoadIds.insert(iRi[i]);
-
+	if(impassableRoadIds != NULL && ienv->GetArrayLength(impassableRoadIds) > 0) {
+		jlong* iRi = (jlong*)ienv->GetLongArrayElements(impassableRoadIds, NULL);		
+		for(int i = 0; i < ienv->GetArrayLength(impassableRoadIds); i++) {
+			rConfig.router.impassableRoadIds.insert(iRi[i]);
+		}
+		ienv->ReleaseLongArrayElements(impassableRoadIds, (jlong*)iRi, 0);
 	}
-	ienv->ReleaseLongArrayElements(impassableRoadIds, (jlong*)iRi, 0);
-
-
+	
 	ienv->DeleteLocalRef(impassableRoadIds);
 	ienv->DeleteLocalRef(objectAttributes);
-	ienv->DeleteLocalRef(router);
+	ienv->DeleteGlobalRef(router);
+	ienv->DeleteLocalRef(lrouter);	
 	ienv->DeleteLocalRef(rName);
 
 }
