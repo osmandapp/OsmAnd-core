@@ -18,6 +18,7 @@
 #include <OsmAndCore/DefaultLogSink.h>
 #include <OsmAndCore/QIODeviceLogSink.h>
 #include <OsmAndCore/Utilities.h>
+#include <OsmAndCore/WorldRegions.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
@@ -63,10 +64,14 @@
 using namespace OsmAnd;
 %}
 
-%include <enums.swg>
+#if defined(SWIG_JAVA) || defined(SWIG_CSHARP)
+	%include <enums.swg>
+#endif
 %include <typemaps.i>
 %include <carrays.i>
-%include <various.i>
+#if defined(SWIG_JAVA)
+	%include <various.i>
+#endif
 %include <stdint.i>
 %include <cpointer.i>
 	%pointer_class(bool, BoolPtr);
@@ -192,6 +197,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/DefaultLogSink.h>
 %include <OsmAndCore/QIODeviceLogSink.h>
 %include <OsmAndCore/Utilities.h>
+%include <OsmAndCore/WorldRegions.h>
 %include <OsmAndCore/Data/DataCommonTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>
