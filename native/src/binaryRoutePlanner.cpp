@@ -280,11 +280,53 @@ void initQueuesWithStartEnd(RoutingContext* ctx,  SHARED_PTR<RouteSegment> start
 		}
 }
 
+
+bool checkIfGraphIsEmpty(RoutingContext* ctx, bool allowDirection, 
+			SEGMENTS_QUEUE& graphSegments,  SHARED_PTR<RouteSegmentPoint> pnt,  VISITED_MAP& visited, string msg) {
+		if (allowDirection && graphSegments.size() == 0) {
+			if (pnt->others.size() > 0) {
+				vector<SHARED_PTR<RouteSegmentPoint> >::iterator pntIterator = pnt->others.begin();
+				while (pntIterator != pnt->others.end()) {
+					SHARED_PTR<RouteSegmentPoint> next = *pntIterator;
+					bool visitedAlready = false;
+					if (next->getSegmentStart() > 0 && visited.find(calculateRoutePointId(next, false)) != visited.end()) {
+						visitedAlready = true;
+					} else if (next->getSegmentStart() < next->getRoad()->getPointsLength() - 1
+							&& visited.find(calculateRoutePointId(next, true)) != visited.end()) {
+						visitedAlready = true;
+					}
+					pntIterator = pnt->others.erase(pntIterator);
+					if (!visitedAlready) {
+						float estimatedDistance = (float) h(ctx, ctx->startX, ctx->startY, ctx->targetX, ctx->targetY);
+						SHARED_PTR<RouteSegment> pos = RouteSegment::initRouteSegment(next, true);
+						SHARED_PTR<RouteSegment> neg = RouteSegment::initRouteSegment(next, false);
+						if (pos.get() != NULL) {
+							pos->distanceToEnd = estimatedDistance;
+							graphSegments.push(pos);
+						}
+						if (neg.get() != NULL) {
+							neg->distanceToEnd = estimatedDistance;
+							graphSegments.push(neg);
+						}
+						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Reiterate point with new start/destination ");						
+						printRoad("Reiterate point ", next);
+						break;
+					}
+				}
+				if (graphSegments.size() == 0) {
+					OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Route is not found to selected target point.");
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 /**
  * Calculate route between start.segmentEnd and end.segmentStart (using A* algorithm)
  * return list of segments
  */
-SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<RouteSegment> start, SHARED_PTR<RouteSegment> end, bool leftSideNavigation) {
+SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<RouteSegmentPoint> start, SHARED_PTR<RouteSegmentPoint> end, bool leftSideNavigation) {
 	// FIXME intermediate points
 	// measure time
 	ctx->visitedSegments = 0;
@@ -348,14 +390,14 @@ SHARED_PTR<RouteSegment> searchRouteInternal(RoutingContext* ctx, SHARED_PTR<Rou
 				break;
 			}
 		}
-		if(ctx->getPlanRoadDirection() <= 0 && graphReverseSegments.size() == 0){
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Route is not found to selected target point.");
+		if(checkIfGraphIsEmpty(ctx, ctx->getPlanRoadDirection() <= 0, graphReverseSegments, end, visitedOppositeSegments,
+					"Route is not found to selected target point.")) {
 			return finalSegment;
 		}
-		if(ctx->getPlanRoadDirection() >= 0 && graphDirectSegments.size() == 0){
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Route is not found from selected start point.");
+		if(checkIfGraphIsEmpty(ctx, ctx->getPlanRoadDirection() >= 0, graphDirectSegments, start, visitedDirectSegments,
+					"Route is not found from selected start point.")) {
 			return finalSegment;
-		}
+		}		
 		if (ctx->planRouteIn2Directions()) {
 			forwardSearch = !nonHeuristicSegmentsComparator(graphDirectSegments.top(), graphReverseSegments.top());
 			//if (graphDirectSegments.size() * 2 > graphReverseSegments.size()) {
@@ -702,37 +744,47 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 	return itself;
 }
 
+bool sortRoutePoints (const SHARED_PTR<RouteSegmentPoint>& i,const SHARED_PTR<RouteSegmentPoint>& j) { return (i->dist<j->dist); }
 
-SHARED_PTR<RouteSegment> findRouteSegment(int px, int py, RoutingContext* ctx) {
+SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* ctx) {
 	vector<SHARED_PTR<RouteDataObject> > dataObjects;
 	ctx->loadTileData(px, py, 17, dataObjects);
 	if (dataObjects.size() == 0) {
 		ctx->loadTileData(px, py, 15, dataObjects);
-	}
-	SHARED_PTR<RouteSegment> road;
-	double sdist = 0;
-	int foundx = 0;
-	int foundy = 0;
+	}	
+	
+	vector<SHARED_PTR<RouteSegmentPoint> > list ;
 	vector<SHARED_PTR<RouteDataObject> >::iterator it = dataObjects.begin();
 	for (; it!= dataObjects.end(); it++) {
 		SHARED_PTR<RouteDataObject> r = *it;
 		if (r->pointsX.size() > 1) {
+			SHARED_PTR<RouteSegmentPoint> road;
 			for (uint j = 1; j < r->pointsX.size(); j++) {
 				std::pair<int, int> p = getProjectionPoint(px, py, 
 						r->pointsX[j -1 ], r->pointsY[j-1], r->pointsX[j], r->pointsY[j]);
 				int prx = p.first;
 				int pry = p.second;
 				double currentsDist = squareDist31TileMetric(prx, pry, px, py);
-				if (road.get() == NULL || currentsDist < sdist) {
-					road = SHARED_PTR<RouteSegment>(new RouteSegment(r, j));
-					foundx = prx;
-					foundy = pry;
-					sdist = currentsDist;
+				if (road.get() == NULL || currentsDist < road->dist) {
+					road = SHARED_PTR<RouteSegmentPoint>(new RouteSegmentPoint(r, j));
+					road->preciseX = prx;
+					road->preciseY = pry;
+					road->dist = currentsDist;
 				}
 			}
-		}
+			if (road.get() != NULL) {
+				list.push_back(road);
+			}
+		}		
 	}	
-	return road;
+	sort(list.begin(), list.end(), sortRoutePoints);
+	if(list.size() > 0) {
+		SHARED_PTR<RouteSegmentPoint> ps = list[0];
+		list.erase(list.begin());
+		ps->others = list;
+		return ps;
+	}
+	return NULL;
 }
 
 bool combineTwoSegmentResult(RouteSegmentResult& toAdd, RouteSegmentResult& previous, bool reverse) {
@@ -886,7 +938,7 @@ vector<RouteSegmentResult> convertFinalSegmentToResults(RoutingContext* ctx, SHA
 }
 
 vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSideNavigation) {	
-	SHARED_PTR<RouteSegment> start = findRouteSegment(ctx->startX, ctx->startY, ctx);
+	SHARED_PTR<RouteSegmentPoint> start = findRouteSegment(ctx->startX, ctx->startY, ctx);
 	if(start.get() == NULL) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Start point was not found [Native]");
 		if(ctx->progress.get()) {
@@ -896,7 +948,7 @@ vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSid
 	} else {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Start point was found %lld [Native]", start->road->id);
 	}
-	SHARED_PTR<RouteSegment> end = findRouteSegment(ctx->targetX, ctx->targetY, ctx);
+	SHARED_PTR<RouteSegmentPoint> end = findRouteSegment(ctx->targetX, ctx->targetY, ctx);
 	if(end.get() == NULL) {
 		if(ctx->progress.get()) {
 			ctx->progress->setSegmentNotFound(1);

@@ -89,6 +89,18 @@ public :
 	~RouteSegment(){
 	}
 };
+struct RouteSegmentPoint : RouteSegment {
+	public:
+		RouteSegmentPoint(SHARED_PTR<RouteDataObject> road, int segmentStart) : 
+				RouteSegment(road, segmentStart) {					
+				}
+		~RouteSegmentPoint(){
+		}
+	 	double dist;
+		int preciseX;
+		int preciseY;
+		vector< SHARED_PTR<RouteSegmentPoint> > others;
+};
 
 struct RouteSegmentResult {
 	SHARED_PTR<RouteDataObject> object;
