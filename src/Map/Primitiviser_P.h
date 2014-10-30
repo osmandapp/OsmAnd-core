@@ -64,7 +64,7 @@ namespace OsmAnd
             QList< std::shared_ptr<const Model::BinaryMapObject> >& outVectorized,
             bool abortIfBrokenCoastlinesExist,
             bool includeBrokenCoastlines,
-            uint64_t& dummySectionObjectsLastUnusedId);
+            uint32_t& dummySectionObjectsLastUnusedId);
 
         static bool buildCoastlinePolygonSegment(
             const std::shared_ptr<const MapPresentationEnvironment>& env,

@@ -42,7 +42,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 {
     const Stopwatch totalStopwatch(metric != nullptr);
 
-    uint64_t dummySectionObjectsLastUnusedId = 0;
+    uint32_t dummySectionObjectsLastUnusedId = 0;
     const std::shared_ptr<PrimitivisedArea> primitivisedArea(new PrimitivisedArea(
         area31,
         sizeInPixels,
@@ -255,7 +255,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     QList< std::shared_ptr<const Model::BinaryMapObject> >& outVectorized,
     bool abortIfBrokenCoastlinesExist,
     bool includeBrokenCoastlines,
-    uint64_t& dummySectionObjectsLastUnusedId)
+    uint32_t& dummySectionObjectsLastUnusedId)
 {
     QList< QVector< PointI > > closedPolygons;
     QList< QVector< PointI > > coastlinePolylines; // Broken == not closed in this case
