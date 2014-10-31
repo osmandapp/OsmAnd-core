@@ -858,12 +858,12 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
         if (rootNode->dataOffset > 0)
             treeNodesWithData.push_back(rootNode);
 
-        if (rootNode->childrenRelativeOffset > 0)
+        if (rootNode->hasChildrenDataBoxes)
         {
             cis->Seek(rootNode->offset);
             auto oldLimit = cis->PushLimit(rootNode->length);
 
-            cis->Skip(rootNode->childrenRelativeOffset);
+            cis->Skip(rootNode->firstDataBoxInnerOffset);
             readLevelTreeNodeChildren(reader, rootNode, &treeNodesWithData, bbox31, controller, metric);
 
             assert(cis->BytesUntilLimit() == 0);
