@@ -14,7 +14,7 @@ OsmAnd::Primitiviser::~Primitiviser()
 {
 }
 
-std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitiviser::primitivise(
+std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitiviser::primitiviseWithCoastlines(
     const AreaI area31,
     const PointI sizeInPixels,
     const ZoomLevel zoom,
@@ -24,7 +24,17 @@ std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitivis
     const IQueryController* const controller /*= nullptr*/,
     Primitiviser_Metrics::Metric_primitivise* const metric /*= nullptr*/)
 {
-    return _p->primitivise(area31, sizeInPixels, zoom, foundation, objects, cache, controller, metric);
+    return _p->primitiviseWithCoastlines(area31, sizeInPixels, zoom, foundation, objects, cache, controller, metric);
+}
+
+std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitiviser::primitiviseWithoutCoastlines(
+    const ZoomLevel zoom,
+    const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+    const std::shared_ptr<Cache>& cache /*= nullptr*/,
+    const IQueryController* const controller /*= nullptr*/,
+    Primitiviser_Metrics::Metric_primitivise* const metric /*= nullptr*/)
+{
+    return _p->primitiviseWithoutCoastlines(zoom, objects, cache, controller, metric);
 }
 
 OsmAnd::Primitiviser::PrimitivesGroup::PrimitivesGroup(const std::shared_ptr<const Model::BinaryMapObject>& sourceObject_)

@@ -30,7 +30,7 @@ OsmAnd::Primitiviser_P::~Primitiviser_P()
 {
 }
 
-std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiviser_P::primitivise(
+std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiviser_P::primitiviseWithCoastlines(
     const AreaI area31,
     const PointI sizeInPixels,
     const ZoomLevel zoom,
@@ -174,7 +174,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     // Obtain primitives
     const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(BasemapZoom)) && detailedmapMapObjects.isEmpty() && detailedmapCoastlineObjects.isEmpty();
 
-    // Check if there is no data to render. Report, clean-up and exit
+    // Check if there is no data to primitivise. Report, clean-up and exit
     const auto mapObjectsCount =
         detailedmapMapObjects.size() +
         ((zoom <= static_cast<ZoomLevel>(BasemapZoom) || detailedDataMissing) ? basemapMapObjects.size() : 0) +
@@ -206,6 +206,107 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     obtainPrimitives(owner->environment, primitivisedArea, polygonizedCoastlineObjects, qMove(evaluationResult), cache, controller, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromCoastlines += obtainPrimitivesFromCoastlinesStopwatch.elapsed();
+
+    if (controller && controller->isAborted())
+        return nullptr;
+
+    // Sort and filter primitives
+    const Stopwatch sortAndFilterPrimitivesStopwatch(metric != nullptr);
+    sortAndFilterPrimitives(primitivisedArea);
+    if (metric)
+        metric->elapsedTimeForSortingAndFilteringPrimitives += sortAndFilterPrimitivesStopwatch.elapsed();
+
+    // Obtain symbols from primitives
+    const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
+    obtainPrimitivesSymbols(owner->environment, primitivisedArea, qMove(evaluationResult), cache, controller);
+    if (metric)
+        metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
+
+    // Cleanup if aborted
+    if (controller && controller->isAborted())
+        return nullptr;
+
+    if (metric)
+        metric->elapsedTime += totalStopwatch.elapsed();
+
+    return primitivisedArea;
+}
+
+std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiviser_P::primitiviseWithoutCoastlines(
+    const ZoomLevel zoom,
+    const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+    const std::shared_ptr<Cache>& cache,
+    const IQueryController* const controller,
+    Primitiviser_Metrics::Metric_primitivise* const metric)
+{
+    const Stopwatch totalStopwatch(metric != nullptr);
+
+    uint32_t dummySectionObjectsLastUnusedId = 0;
+    const std::shared_ptr<PrimitivisedArea> primitivisedArea(new PrimitivisedArea(
+        AreaI(),
+        PointI(),
+        zoom,
+        cache,
+        owner->environment));
+    applyEnvironment(owner->environment, primitivisedArea);
+
+    const Stopwatch objectsSortingStopwatch(metric != nullptr);
+
+    // Split input map objects
+    QList< std::shared_ptr<const Model::BinaryMapObject> > detailedmapMapObjects, basemapMapObjects;
+    for (const auto& mapObject : constOf(objects))
+    {
+        if (controller && controller->isAborted())
+            break;
+
+        const auto& mapObjectSection = mapObject->section;
+        const auto isFromBasemap = mapObjectSection->isBasemap;
+        if (zoom < static_cast<ZoomLevel>(BasemapZoom) && !isFromBasemap)
+            continue;
+
+        if (!mapObject->containsType(mapObjectSection->encodingDecodingRules->naturalCoastline_encodingRuleId))
+        {
+            if (isFromBasemap)
+                basemapMapObjects.push_back(mapObject);
+            else
+                detailedmapMapObjects.push_back(mapObject);
+        }
+    }
+    if (controller && controller->isAborted())
+        return nullptr;
+
+    if (metric)
+        metric->elapsedTimeForSortingObjects += objectsSortingStopwatch.elapsed();
+
+    // Obtain primitives
+    const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(BasemapZoom)) && detailedmapMapObjects.isEmpty();
+
+    // Check if there is no data to primitivise. Report, clean-up and exit
+    const auto mapObjectsCount =
+        detailedmapMapObjects.size() +
+        ((zoom <= static_cast<ZoomLevel>(BasemapZoom) || detailedDataMissing) ? basemapMapObjects.size() : 0);
+    if (mapObjectsCount == 0)
+    {
+        // Empty area
+        assert(primitivisedArea->isEmpty());
+        return primitivisedArea;
+    }
+
+    // Obtain primitives:
+    MapStyleEvaluationResult evaluationResult;
+
+    const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
+    obtainPrimitives(owner->environment, primitivisedArea, detailedmapMapObjects, qMove(evaluationResult), cache, controller, metric);
+    if (metric)
+        metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
+
+    if ((zoom <= static_cast<ZoomLevel>(BasemapZoom)) || detailedDataMissing)
+    {
+        const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
+        obtainPrimitives(owner->environment, primitivisedArea, basemapMapObjects, qMove(evaluationResult), cache, controller, metric);
+        if (metric)
+            metric->elapsedTimeForObtainingPrimitivesFromBasemap += obtainPrimitivesFromBasemapStopwatch.elapsed();
+    }
 
     if (controller && controller->isAborted())
         return nullptr;

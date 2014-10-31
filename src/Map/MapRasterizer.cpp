@@ -13,12 +13,12 @@ OsmAnd::MapRasterizer::~MapRasterizer()
 }
 
 void OsmAnd::MapRasterizer::rasterize(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     SkCanvas& canvas,
     const bool fillBackground /*= true*/,
     const AreaI* const destinationArea /*= nullptr*/,
     MapRasterizer_Metrics::Metric_rasterize* const metric /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    _p->rasterize(primitivizedArea, canvas, fillBackground, destinationArea, metric, controller);
+    _p->rasterize(primitivisedArea, canvas, fillBackground, destinationArea, metric, controller);
 }

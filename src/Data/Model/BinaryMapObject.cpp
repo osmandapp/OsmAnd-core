@@ -104,3 +104,16 @@ QString OsmAnd::Model::BinaryMapObject::getNameInLanguage(const QString& lang) c
         return QString::null;
     return *citName;
 }
+
+bool OsmAnd::Model::BinaryMapObject::obtainTagValueByTypeRuleIndex(const uint32_t typeRuleIndex, QString& outTag, QString& outValue) const
+{
+    if (typeRuleIndex >= typesRuleIds.size())
+        return false;
+
+    const auto typeRuleId = typesRuleIds[typeRuleIndex];
+    const auto rule = section->encodingDecodingRules->decodingRules[typeRuleId];
+    outTag = rule.tag;
+    outValue = rule.value;
+
+    return true;
+}

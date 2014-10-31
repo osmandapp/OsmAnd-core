@@ -107,7 +107,7 @@ bool OsmAnd::BinaryMapPrimitivesProvider_P::obtainData(
 
     // Get primitivised area
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
-    const auto primitivisedArea = owner->primitiviser->primitivise(
+    const auto primitivisedArea = owner->primitiviser->primitiviseWithCoastlines(
         tileBBox31,
         PointI(owner->tileSize, owner->tileSize),
         zoom,

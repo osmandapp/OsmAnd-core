@@ -19,7 +19,9 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/Data/Model/BinaryMapObject.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
+#include <OsmAndCore/Map/Primitiviser.h>
 
 #include <OsmAndCoreTools.h>
 
@@ -41,6 +43,8 @@ namespace OsmAndTools
             QSet< uint64_t > mapObjectsIds;
             OsmAnd::ZoomLevel zoom;
             float displayDensityFactor;
+            QString locale;
+            bool excludeCoastlines;
             bool verbose;
 
             static bool parseFromCommandLineArguments(
@@ -49,11 +53,13 @@ namespace OsmAndTools
                 QString& outError);
         };
 
+        typedef QHash< std::shared_ptr<const OsmAnd::Model::BinaryMapObject>, std::shared_ptr<const OsmAnd::Primitiviser::PrimitivesGroup> > EvaluatedMapObjects;
+
     private:
 #if defined(_UNICODE) || defined(UNICODE)
-        bool evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, std::wostream& output);
+        bool evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, std::wostream& output);
 #else
-        bool evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, std::ostream& output);
+        bool evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, std::ostream& output);
 #endif
     protected:
     public:
@@ -62,7 +68,7 @@ namespace OsmAndTools
 
         const Configuration configuration;
 
-        bool evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, QString *pLog = nullptr);
+        bool evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, QString *pLog = nullptr);
     };
 }
 

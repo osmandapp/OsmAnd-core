@@ -212,11 +212,18 @@ namespace OsmAnd
 
         ImplementationInterface<Primitiviser> owner;
 
-        std::shared_ptr<const PrimitivisedArea> primitivise(
+        std::shared_ptr<const PrimitivisedArea> primitiviseWithCoastlines(
             const AreaI area31,
             const PointI sizeInPixels,
             const ZoomLevel zoom,
             const MapFoundationType foundation,
+            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+            const std::shared_ptr<Cache>& cache,
+            const IQueryController* const controller,
+            Primitiviser_Metrics::Metric_primitivise* const metric);
+
+        std::shared_ptr<const PrimitivisedArea> primitiviseWithoutCoastlines(
+            const ZoomLevel zoom,
             const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
             const std::shared_ptr<Cache>& cache,
             const IQueryController* const controller,

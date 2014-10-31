@@ -42,14 +42,14 @@ OsmAnd::SymbolRasterizer_P::~SymbolRasterizer_P()
 }
 
 void OsmAnd::SymbolRasterizer_P::rasterize(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     std::function<bool (const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter,
     const IQueryController* const controller)
 {
-    const auto& env = primitivizedArea->mapPresentationEnvironment;
+    const auto& env = primitivisedArea->mapPresentationEnvironment;
 
-    for (const auto& symbolGroupEntry : rangeOf(constOf(primitivizedArea->symbolsGroups)))
+    for (const auto& symbolGroupEntry : rangeOf(constOf(primitivisedArea->symbolsGroups)))
     {
         if (controller && controller->isAborted())
             return;

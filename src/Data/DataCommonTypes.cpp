@@ -35,13 +35,15 @@ QString OsmAnd::ObfObjectId::toString() const
 {
     if (isOsmId())
     {
-        return QString(QLatin1String("OSM-%1 %2"))
+        return QString(QLatin1String("OSM-%1 %2 [%3]"))
             .arg((id & 0x1) ? "way" : "node")
-            .arg(id >> 1);
+            .arg(id >> 1)
+            .arg(id);
     }
 
     const auto rawId = static_cast<uint64_t>(-static_cast<int64_t>(id));
-    return QString(QLatin1String("OBF(%1):%2"))
+    return QString(QLatin1String("OBF(%1):%2 [%3]"))
         .arg(static_cast<uint32_t>(rawId >> 32))
-        .arg(static_cast<uint32_t>(rawId & 0xFFFFFFFF));
+        .arg(static_cast<uint32_t>(rawId & 0xFFFFFFFF))
+        .arg(id);
 }

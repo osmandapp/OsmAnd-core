@@ -66,6 +66,8 @@ namespace OsmAnd
             QString getNameInNativeLanguage() const;
             QString getNameInLanguage(const QString& lang) const;
 
+            bool obtainTagValueByTypeRuleIndex(const uint32_t typeRuleIndex, QString& outTag, QString& outValue) const;
+
         friend class OsmAnd::ObfMapSectionReader_P;
         friend class OsmAnd::Primitiviser_P;
         };

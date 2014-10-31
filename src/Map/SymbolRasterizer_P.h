@@ -47,7 +47,7 @@ namespace OsmAnd
         ImplementationInterface<SymbolRasterizer> owner;
 
         void rasterize(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             std::function<bool(const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter,
             const IQueryController* const controller);

@@ -147,7 +147,7 @@ void OsmAnd::MapRasterizer_P::initializeOneWayPaint(SkPaint& paint)
 }
 
 void OsmAnd::MapRasterizer_P::rasterize(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     SkCanvas& canvas,
     const bool fillBackground,
     const AreaI* const pDestinationArea,
@@ -163,7 +163,7 @@ void OsmAnd::MapRasterizer_P::rasterize(
         {
             // If destination area is specified, fill only it with background
             SkPaint bgPaint;
-            bgPaint.setColor(primitivizedArea->defaultBackgroundColor.toSkColor());
+            bgPaint.setColor(primitivisedArea->defaultBackgroundColor.toSkColor());
             bgPaint.setStyle(SkPaint::kFill_Style);
             canvas.drawRectCoords(
                 pDestinationArea->top(),
@@ -175,7 +175,7 @@ void OsmAnd::MapRasterizer_P::rasterize(
         else
         {
             // Since destination area is not specified, erase whole canvas with specified color
-            canvas.clear(primitivizedArea->defaultBackgroundColor.toSkColor());
+            canvas.clear(primitivisedArea->defaultBackgroundColor.toSkColor());
         }
     }
 
@@ -192,17 +192,17 @@ void OsmAnd::MapRasterizer_P::rasterize(
     }
 
     // Rasterize layers of map:
-    rasterizeMapPrimitives(primitivizedArea, canvas, primitivizedArea->polygons, PrimitivesType::Polygons, controller);
-    if (primitivizedArea->shadowRenderingMode > 1)
-        rasterizeMapPrimitives(primitivizedArea, canvas, primitivizedArea->polylines, PrimitivesType::Polylines_ShadowOnly, controller);
-    rasterizeMapPrimitives(primitivizedArea, canvas, primitivizedArea->polylines, PrimitivesType::Polylines, controller);
+    rasterizeMapPrimitives(primitivisedArea, canvas, primitivisedArea->polygons, PrimitivesType::Polygons, controller);
+    if (primitivisedArea->shadowRenderingMode > 1)
+        rasterizeMapPrimitives(primitivisedArea, canvas, primitivisedArea->polylines, PrimitivesType::Polylines_ShadowOnly, controller);
+    rasterizeMapPrimitives(primitivisedArea, canvas, primitivisedArea->polylines, PrimitivesType::Polylines, controller);
 
     if (metric)
         metric->elapsedTime += totalStopwatch.elapsed();
 }
 
 void OsmAnd::MapRasterizer_P::rasterizeMapPrimitives(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     SkCanvas& canvas,
     const Primitiviser::PrimitivesCollection& primitives,
     PrimitivesType type,
@@ -218,14 +218,14 @@ void OsmAnd::MapRasterizer_P::rasterizeMapPrimitives(
         if (type == PrimitivesType::Polygons)
         {
             rasterizePolygon(
-                primitivizedArea,
+                primitivisedArea,
                 canvas,
                 primitive);
         }
         else if (type == PrimitivesType::Polylines || type == PrimitivesType::Polylines_ShadowOnly)
         {
             rasterizePolyline(
-                primitivizedArea,
+                primitivisedArea,
                 canvas,
                 primitive,
                 (type == PrimitivesType::Polylines_ShadowOnly));
@@ -234,13 +234,13 @@ void OsmAnd::MapRasterizer_P::rasterizeMapPrimitives(
 }
 
 bool OsmAnd::MapRasterizer_P::updatePaint(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     SkPaint& paint,
     const MapStyleEvaluationResult& evalResult,
     const PaintValuesSet valueSetSelector,
     const bool isArea)
 {
-    const auto& env = primitivizedArea->mapPresentationEnvironment;
+    const auto& env = primitivisedArea->mapPresentationEnvironment;
 
     bool ok = true;
 
@@ -362,7 +362,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
     }
 
     // do not check shadow color here
-    if (primitivizedArea->shadowRenderingMode == 1 && valueSetSelector == PaintValuesSet::Set_0)
+    if (primitivisedArea->shadowRenderingMode == 1 && valueSetSelector == PaintValuesSet::Set_0)
     {
         SkColor shadowColor = SK_ColorTRANSPARENT;
         ok = evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
@@ -371,7 +371,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
 
         if (!ok || shadowColor == SK_ColorTRANSPARENT)
-            shadowColor = primitivizedArea->shadowRenderingColor.toSkColor();
+            shadowColor = primitivisedArea->shadowRenderingColor.toSkColor();
         if (shadowColor == SK_ColorTRANSPARENT)
             shadowRadius = 0;
 
@@ -383,12 +383,12 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
 }
 
 void OsmAnd::MapRasterizer_P::rasterizePolygon(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     SkCanvas& canvas,
     const std::shared_ptr<const Primitiviser::Primitive>& primitive)
 {
     const auto& points31 = primitive->sourceObject->points31;
-    const auto& area31 = primitivizedArea->area31;
+    const auto& area31 = primitivisedArea->area31;
 
     assert(points31.size() > 2);
     assert(primitive->sourceObject->isClosedFigure());
@@ -402,7 +402,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     //////////////////////////////////////////////////////////////////////////
 
     SkPaint paint = _defaultPaint;
-    if (!updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, true))
+    if (!updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, true))
         return;
 
     // Construct and test geometry against bbox area
@@ -417,7 +417,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
         const auto& point = *pPoint;
-        calculateVertex(primitivizedArea, point, vertex);
+        calculateVertex(primitivisedArea, point, vertex);
 
         // Hit-test
         if (!containsAtLeastOnePoint)
@@ -480,7 +480,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
             for (auto itVertex = cachingIteratorOf(constOf(polygon)); itVertex; ++itVertex, pointIdx++)
             {
                 const auto& point = *itVertex;
-                calculateVertex(primitivizedArea, point, vertex);
+                calculateVertex(primitivisedArea, point, vertex);
 
                 if (pointIdx == 0)
                     path.moveTo(vertex.x, vertex.y);
@@ -491,24 +491,24 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     }
 
     canvas.drawPath(path, paint);
-    if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
+    if (updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
         canvas.drawPath(path, paint);
 }
 
 void OsmAnd::MapRasterizer_P::rasterizePolyline(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     SkCanvas& canvas,
     const std::shared_ptr<const Primitiviser::Primitive>& primitive,
     bool drawOnlyShadow)
 {
     const auto& points31 = primitive->sourceObject->points31;
-    const auto& area31 = primitivizedArea->area31;
-    const auto& env = primitivizedArea->mapPresentationEnvironment;
+    const auto& area31 = primitivisedArea->area31;
+    const auto& env = primitivisedArea->mapPresentationEnvironment;
 
     assert(points31.size() >= 2);
 
     SkPaint paint = _defaultPaint;
-    if (!updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
+    if (!updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
         return;
 
     bool ok;
@@ -516,7 +516,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     ColorARGB shadowColor;
     ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor.argb);
     if (!ok || shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
-        shadowColor = primitivizedArea->shadowRenderingColor;
+        shadowColor = primitivisedArea->shadowRenderingColor;
 
     int shadowRadius;
     ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
@@ -527,7 +527,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const auto& encDecRules = primitive->sourceObject->section->encodingDecodingRules;
 
     int oneway = 0;
-    if (primitivizedArea->zoom >= ZoomLevel16 && typeRuleId == encDecRules->highway_encodingRuleId)
+    if (primitivisedArea->zoom >= ZoomLevel16 && typeRuleId == encDecRules->highway_encodingRuleId)
     {
         if (primitive->sourceObject->containsType(encDecRules->oneway_encodingRuleId, true))
             oneway = 1;
@@ -546,7 +546,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
         const auto& point = *pPoint;
-        calculateVertex(primitivizedArea, point, vertex);
+        calculateVertex(primitivisedArea, point, vertex);
 
         // Hit-test
         if (!intersect)
@@ -587,38 +587,38 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     {
         if (drawOnlyShadow)
         {
-            rasterizeLineShadow(primitivizedArea, canvas, path, paint, shadowColor, shadowRadius);
+            rasterizeLineShadow(primitivisedArea, canvas, path, paint, shadowColor, shadowRadius);
         }
         else
         {
-            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_minus2, false))
+            if (updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_minus2, false))
                 canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_minus1, false))
+            if (updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_minus1, false))
                 canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
+            if (updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
                 canvas.drawPath(path, paint);
 
             canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
+            if (updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
                 canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_3, false))
+            if (updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_3, false))
                 canvas.drawPath(path, paint);
 
-            if (updatePaint(primitivizedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_4, false))
+            if (updatePaint(primitivisedArea, paint, primitive->evaluationResult, PaintValuesSet::Set_4, false))
                 canvas.drawPath(path, paint);
             
             if (oneway && !drawOnlyShadow)
-                rasterizeLine_OneWay(primitivizedArea, canvas, path, oneway);
+                rasterizeLine_OneWay(primitivisedArea, canvas, path, oneway);
         }
     }
 }
 
 void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     SkCanvas& canvas,
     const SkPath& path,
     SkPaint& paint,
@@ -626,7 +626,7 @@ void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
     int shadowRadius)
 {
     // blurred shadows
-    if (primitivizedArea->shadowRenderingMode == 2 && shadowRadius > 0)
+    if (primitivisedArea->shadowRenderingMode == 2 && shadowRadius > 0)
     {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
@@ -635,7 +635,7 @@ void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
     }
 
     // option shadow = 3 with solid border
-    if (primitivizedArea->shadowRenderingMode == 3 && shadowRadius > 0)
+    if (primitivisedArea->shadowRenderingMode == 3 && shadowRadius > 0)
     {
         paint.setLooper(nullptr);
         paint.setStrokeWidth(paint.getStrokeWidth() + shadowRadius * 2);
@@ -647,7 +647,7 @@ void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
 }
 
 void OsmAnd::MapRasterizer_P::rasterizeLine_OneWay(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     SkCanvas& canvas,
     const SkPath& path,
     int oneway)
@@ -665,12 +665,12 @@ void OsmAnd::MapRasterizer_P::rasterizeLine_OneWay(
 }
 
 void OsmAnd::MapRasterizer_P::calculateVertex(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     const PointI& point31,
     PointF& vertex)
 {
-    vertex.x = static_cast<float>(point31.x - primitivizedArea->area31.left()) / primitivizedArea->scale31ToPixelDivisor.x;
-    vertex.y = static_cast<float>(point31.y - primitivizedArea->area31.top()) / primitivizedArea->scale31ToPixelDivisor.y;
+    vertex.x = static_cast<float>(point31.x - primitivisedArea->area31.left()) / primitivisedArea->scale31ToPixelDivisor.x;
+    vertex.y = static_cast<float>(point31.y - primitivisedArea->area31.top()) / primitivisedArea->scale31ToPixelDivisor.y;
 }
 
 bool OsmAnd::MapRasterizer_P::containsHelper(const QVector< PointI >& points, const PointI& otherPoint)

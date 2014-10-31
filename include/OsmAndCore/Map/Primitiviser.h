@@ -254,8 +254,8 @@ namespace OsmAnd
 
             bool isEmpty() const;
 
-            friend class OsmAnd::Primitiviser;
-            friend class OsmAnd::Primitiviser_P;
+        friend class OsmAnd::Primitiviser;
+        friend class OsmAnd::Primitiviser_P;
         };
     private:
         PrivateImplementation<Primitiviser_P> _p;
@@ -266,11 +266,18 @@ namespace OsmAnd
 
         const std::shared_ptr<const MapPresentationEnvironment> environment;
         
-        std::shared_ptr<const PrimitivisedArea> primitivise(
+        std::shared_ptr<const PrimitivisedArea> primitiviseWithCoastlines(
             const AreaI area31,
             const PointI sizeInPixels,
             const ZoomLevel zoom,
             const MapFoundationType foundation,
+            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+            const std::shared_ptr<Cache>& cache = nullptr,
+            const IQueryController* const controller = nullptr,
+            Primitiviser_Metrics::Metric_primitivise* const metric = nullptr);
+
+        std::shared_ptr<const PrimitivisedArea> primitiviseWithoutCoastlines(
+            const ZoomLevel zoom,
             const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
             const IQueryController* const controller = nullptr,

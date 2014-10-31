@@ -11,11 +11,14 @@
 #include <OsmAndCore/Utilities.h>
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
 #include <OsmAndCore/ObfDataInterface.h>
+#include <OsmAndCore/QKeyValueIterator.h>
+#include <OsmAndCore/Data/Model/BinaryMapObject.h>
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/MapStyleEvaluationResult.h>
 
 #include <OsmAndCoreTools.h>
 #include <OsmAndCoreTools/Utilities.h>
@@ -30,9 +33,9 @@ OsmAndTools::Styler::~Styler()
 }
 
 #if defined(_UNICODE) || defined(UNICODE)
-bool OsmAndTools::Styler::evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, std::wostream& output)
+bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, std::wostream& output)
 #else
-bool OsmAndTools::Styler::evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, std::ostream& output)
+bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, std::ostream& output)
 #endif
 {
     bool success = true;
@@ -77,45 +80,178 @@ bool OsmAndTools::Styler::evaluate(bool& outRejected, QHash<QString, QString>& o
             const uint64_t mapObjectId,
             const OsmAnd::AreaI& bbox,
             const OsmAnd::ZoomLevel firstZoomLevel,
-            const OsmAnd::ZoomLevel lasttZoomLevel) -> bool
+            const OsmAnd::ZoomLevel lastZoomLevel) -> bool
             {
                 return configuration.mapObjectsIds.contains(mapObjectId);
             };
         if (configuration.verbose)
-            output << xT("Going to load ") << configuration.mapObjectsIds.size() << xT(" map objects...") << std::endl;
+        {
+            if (configuration.mapObjectsIds.isEmpty())
+                output << xT("Going to load all available map objects...") << std::endl;
+            else
+                output << xT("Going to load ") << configuration.mapObjectsIds.size() << xT(" map objects...") << std::endl;
+        }
         const auto obfDataInterface = configuration.obfsCollection->obtainDataInterface();
         success = obfDataInterface->loadMapObjects(
             &mapObjects,
             nullptr,
             configuration.zoom,
             nullptr,
-            mapObjectsFilterById,
+            configuration.mapObjectsIds.isEmpty() ? OsmAnd::FilterMapObjectsByIdFunction() : mapObjectsFilterById,
             nullptr,
             nullptr,
             nullptr,
             nullptr);
         if (!success)
+        {
+            if (configuration.verbose)
+                output << xT("Failed to load map objects!") << std::endl;
             break;
+        }
+        if (configuration.verbose)
+            output << xT("Loaded ") << mapObjects.size() << xT(" map objects") << std::endl;
 
+        // Prepare all resources for map style evaluation
+        if (configuration.verbose)
+        {
+            output
+                << xT("Initializing map presentation environment with display density ")
+                << configuration.displayDensityFactor
+                << xT(" and locale '")
+                << QStringToStlString(configuration.locale)
+                << xT("'...") << std::endl;
+        }
+        const std::shared_ptr<OsmAnd::MapPresentationEnvironment> mapPresentationEnvironment(new OsmAnd::MapPresentationEnvironment(
+            mapStyle,
+            configuration.displayDensityFactor,
+            configuration.locale));
 
-        //// Prepare all resources for renderer
-        //if (configuration.verbose)
-        //{
-        //    output
-        //        << xT("Initializing map presentation environment with display density ")
-        //        << configuration.displayDensityFactor
-        //        << xT(" and locale '")
-        //        << QStringToStlString(configuration.locale)
-        //        << xT("'...") << std::endl;
-        //}
-        //const std::shared_ptr<OsmAnd::MapPresentationEnvironment> mapPresentationEnvironment(new OsmAnd::MapPresentationEnvironment(
-        //    mapStyle,
-        //    configuration.displayDensityFactor,
-        //    configuration.locale));
+        if (configuration.verbose)
+            output << xT("Applying extra style settings to map presentation environment...") << std::endl;
+        mapPresentationEnvironment->setSettings(configuration.styleSettings);
 
-        //if (configuration.verbose)
-        //    output << xT("Applying extra style settings to map presentation environment...") << std::endl;
-        //mapPresentationEnvironment->setSettings(configuration.styleSettings);
+        // Create primitiviser
+        const std::shared_ptr<OsmAnd::Primitiviser> primitiviser(new OsmAnd::Primitiviser(mapPresentationEnvironment));
+        if (configuration.verbose)
+            output << xT("Going to primitivise map objects ") << (configuration.excludeCoastlines ? xT("excluding") : xT("including")) << xT(" coastlines...") << std::endl;
+        const auto primitivisedArea = configuration.excludeCoastlines
+            ? primitiviser->primitiviseWithoutCoastlines(
+                configuration.zoom,
+                mapObjects)
+            : primitiviser->primitiviseWithCoastlines(
+                OsmAnd::AreaI(0, 0, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()),
+                OsmAnd::PointI(65536, 65536),
+                configuration.zoom,
+                OsmAnd::MapFoundationType::Mixed,
+                mapObjects);
+        if (configuration.verbose)
+            output << xT("Primitivised ") << primitivisedArea->primitivesGroups.size() << xT(" groups from ") << mapObjects.size() << xT(" map objects") << std::endl;
+
+        // Obtain evaluated values for each group and print it
+        for (const auto& primitivisedGroup : OsmAnd::constOf(primitivisedArea->primitivesGroups))
+        {
+            // Skip objects that were not requested
+            if (!configuration.mapObjectsIds.isEmpty() && configuration.mapObjectsIds.contains(primitivisedGroup->sourceObject->id))
+                continue;
+
+            outEvaluatedMapObjects[primitivisedGroup->sourceObject] = primitivisedGroup;
+
+            output << QStringToStlString(QString(80, QLatin1Char('-'))) << std::endl;
+            output << QStringToStlString(primitivisedGroup->sourceObject->id.toString()) << std::endl;
+
+            if (!primitivisedGroup->points.isEmpty())
+            {
+                output << primitivisedGroup->points.size() << xT(" point(s):") << std::endl;
+
+                unsigned int pointPrimitiveIndex = 0u;
+                for (const auto& pointPrimitive : OsmAnd::constOf(primitivisedGroup->points))
+                {
+                    output << xT("\tPoint #") << pointPrimitiveIndex << std::endl;
+                    QString ruleTag;
+                    QString ruleValue;
+                    const auto typeRuleResolved = primitivisedGroup->sourceObject->obtainTagValueByTypeRuleIndex(pointPrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    if (typeRuleResolved)
+                        output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
+                    else
+                        output << xT("\t\tTag/value: ") << pointPrimitive->typeRuleIdIndex << xT(" (failed to resolve)") << std::endl;
+                    output << xT("\t\tZ order: ") << pointPrimitive->zOrder << std::endl;
+                    output << xT("\t\tArea*2: ") << pointPrimitive->doubledArea << std::endl;
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(pointPrimitive->evaluationResult.values)))
+                    {
+                        const auto valueDefinitionId = evaluatedValueEntry.key();
+                        const auto value = evaluatedValueEntry.value();
+
+                        const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
+
+                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ") << QStringToStlString(value.toString()) << std::endl;
+                    }
+
+                    pointPrimitiveIndex++;
+                }
+            }
+
+            if (!primitivisedGroup->polylines.isEmpty())
+            {
+                output << primitivisedGroup->polylines.size() << xT(" polyline(s):") << std::endl;
+
+                unsigned int polylinePrimitiveIndex = 0u;
+                for (const auto& polylinePrimitive : OsmAnd::constOf(primitivisedGroup->polylines))
+                {
+                    output << xT("\tPolyline #") << polylinePrimitiveIndex << std::endl;
+                    QString ruleTag;
+                    QString ruleValue;
+                    const auto typeRuleResolved = primitivisedGroup->sourceObject->obtainTagValueByTypeRuleIndex(polylinePrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    if (typeRuleResolved)
+                        output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
+                    else
+                        output << xT("\t\tTag/value: ") << polylinePrimitive->typeRuleIdIndex << xT(" (failed to resolve)") << std::endl;
+                    output << xT("\t\tZ order: ") << polylinePrimitive->zOrder << std::endl;
+                    output << xT("\t\tArea*2: ") << polylinePrimitive->doubledArea << std::endl;
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polylinePrimitive->evaluationResult.values)))
+                    {
+                        const auto valueDefinitionId = evaluatedValueEntry.key();
+                        const auto value = evaluatedValueEntry.value();
+
+                        const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
+
+                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ") << QStringToStlString(value.toString()) << std::endl;
+                    }
+
+                    polylinePrimitiveIndex++;
+                }
+            }
+
+            if (!primitivisedGroup->polygons.isEmpty())
+            {
+                output << primitivisedGroup->polygons.size() << xT(" polygon(s):") << std::endl;
+
+                unsigned int polygonPrimitiveIndex = 0u;
+                for (const auto& polygonPrimitive : OsmAnd::constOf(primitivisedGroup->polygons))
+                {
+                    output << xT("\tPolygon #") << polygonPrimitiveIndex << std::endl;
+                    QString ruleTag;
+                    QString ruleValue;
+                    const auto typeRuleResolved = primitivisedGroup->sourceObject->obtainTagValueByTypeRuleIndex(polygonPrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    if (typeRuleResolved)
+                        output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
+                    else
+                        output << xT("\t\tTag/value: ") << polygonPrimitive->typeRuleIdIndex << xT(" (failed to resolve)") << std::endl;
+                    output << xT("\t\tZ order: ") << polygonPrimitive->zOrder << std::endl;
+                    output << xT("\t\tArea*2: ") << polygonPrimitive->doubledArea << std::endl;
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polygonPrimitive->evaluationResult.values)))
+                    {
+                        const auto valueDefinitionId = evaluatedValueEntry.key();
+                        const auto value = evaluatedValueEntry.value();
+
+                        const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
+
+                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ") << QStringToStlString(value.toString()) << std::endl;
+                    }
+
+                    polygonPrimitiveIndex++;
+                }
+            }
+        }
 
         break;
     }
@@ -123,18 +259,18 @@ bool OsmAndTools::Styler::evaluate(bool& outRejected, QHash<QString, QString>& o
     return success;
 }
 
-bool OsmAndTools::Styler::evaluate(bool& outRejected, QHash<QString, QString>& outEvaluatedValues, QString *pLog /*= nullptr*/)
+bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, QString *pLog /*= nullptr*/)
 {
     if (pLog != nullptr)
     {
 #if defined(_UNICODE) || defined(UNICODE)
         std::wostringstream output;
-        const bool success = evaluate(outRejected, outEvaluatedValues, output);
+        const bool success = evaluate(outEvaluatedMapObjects, output);
         *pLog = QString::fromStdWString(output.str());
         return success;
 #else
         std::ostringstream output;
-        const bool success = evaluate(outRejected, outEvaluatedValues, output);
+        const bool success = evaluate(outEvaluatedMapObjects, output);
         *pLog = QString::fromStdString(output.str());
         return success;
 #endif
@@ -142,9 +278,9 @@ bool OsmAndTools::Styler::evaluate(bool& outRejected, QHash<QString, QString>& o
     else
     {
 #if defined(_UNICODE) || defined(UNICODE)
-        return evaluate(outRejected, outEvaluatedValues, std::wcout);
+        return evaluate(outEvaluatedMapObjects, std::wcout);
 #else
-        return evaluate(outRejected, outEvaluatedValues, std::cout);
+        return evaluate(outEvaluatedMapObjects, std::cout);
 #endif
     }
 }
@@ -153,6 +289,8 @@ OsmAndTools::Styler::Configuration::Configuration()
     : styleName(QLatin1String("default"))
     , zoom(OsmAnd::ZoomLevel15)
     , displayDensityFactor(1.0f)
+    , locale(QLatin1String("en"))
+    , excludeCoastlines(false)
     , verbose(false)
 {
 }
@@ -293,9 +431,19 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
                 return false;
             }
         }
+        else if (arg.startsWith(QLatin1String("-locale=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-locale=")));
+
+            outConfiguration.locale = value;
+        }
         else if (arg == QLatin1String("-verbose"))
         {
             outConfiguration.verbose = true;
+        }
+        else if (arg == QLatin1String("-excludeCoastlines"))
+        {
+            outConfiguration.excludeCoastlines = true;
         }
         else
         {
@@ -308,11 +456,6 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
     if (outConfiguration.styleName.isEmpty())
     {
         outError = QLatin1String("'styleName' can not be empty");
-        return false;
-    }
-    if (outConfiguration.mapObjectsIds.isEmpty())
-    {
-        outError = QLatin1String("At least one 'mapObject' must be specified");
         return false;
     }
 

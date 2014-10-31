@@ -56,32 +56,32 @@ namespace OsmAnd
         };
 
         bool updatePaint(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkPaint& paint,
             const MapStyleEvaluationResult& evalResult,
             const PaintValuesSet valueSetSelector,
             const bool isArea);
 
         void rasterizeMapPrimitives(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkCanvas& canvas,
             const Primitiviser::PrimitivesCollection& primitives,
             const PrimitivesType type,
             const IQueryController* const controller);
 
         void rasterizePolygon(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkCanvas& canvas,
             const std::shared_ptr<const Primitiviser::Primitive>& primitive);
 
         void rasterizePolyline(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkCanvas& canvas,
             const std::shared_ptr<const Primitiviser::Primitive>& primitive,
             bool drawOnlyShadow);
 
         void rasterizeLineShadow(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkCanvas& canvas,
             const SkPath& path,
             SkPaint& paint,
@@ -89,13 +89,13 @@ namespace OsmAnd
             int shadowRadius);
 
         void rasterizeLine_OneWay(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkCanvas& canvas,
             const SkPath& path,
             int oneway);
 
         inline void calculateVertex(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             const PointI& point31,
             PointF& vertex);
 
@@ -121,7 +121,7 @@ namespace OsmAnd
         ImplementationInterface<MapRasterizer> owner;
 
         void rasterize(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkCanvas& canvas,
             const bool fillBackground,
             const AreaI* const destinationArea,

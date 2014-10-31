@@ -34,7 +34,7 @@ namespace OsmAnd
         const std::shared_ptr<const MapPresentationEnvironment> mapPresentationEnvironment;
 
         void rasterize(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivizedArea,
+            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkCanvas& canvas,
             const bool fillBackground = true,
             const AreaI* const destinationArea = nullptr,
