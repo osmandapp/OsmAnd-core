@@ -197,11 +197,20 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNode(
     const auto cis = reader._codedInputStream.get();
     const auto origin = cis->CurrentPosition();
 
+    uint64_t fieldsMask = 0u;
+    const auto safeToSkipFieldsMask =
+        (1ull << OBF::OsmAndRoutingIndex_RouteDataBox::kLeftFieldNumber) |
+        (1ull << OBF::OsmAndRoutingIndex_RouteDataBox::kRightFieldNumber) |
+        (1ull << OBF::OsmAndRoutingIndex_RouteDataBox::kTopFieldNumber) |
+        (1ull << OBF::OsmAndRoutingIndex_RouteDataBox::kBottomFieldNumber);
+    bool kBoxesFieldNumberProcessed = false;
+
     for (;;)
     {
-        const auto lastPos = cis->CurrentPosition();
+        const auto tagPos = cis->CurrentPosition();
         const auto tag = cis->ReadTag();
-        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        const auto tgn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
+        switch (tgn)
         {
             case 0:
                 return;
@@ -209,37 +218,57 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNode(
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 node->area31.left() = d + (parentNode ? parentNode->area31.left() : 0);
+
+                fieldsMask |= (1ull << tgn);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kRightFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 node->area31.right() = d + (parentNode ? parentNode->area31.right() : 0);
+
+                fieldsMask |= (1ull << tgn);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kTopFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 node->area31.top() = d + (parentNode ? parentNode->area31.top() : 0);
+
+                fieldsMask |= (1ull << tgn);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kBottomFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 node->area31.bottom() = d + (parentNode ? parentNode->area31.bottom() : 0);
+
+                fieldsMask |= (1ull << tgn);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kShiftToDataFieldNumber:
             {
                 node->dataOffset = origin + ObfReaderUtilities::readBigEndianInt(cis);
+
+                fieldsMask |= (1ull << tgn);
                 break;
             }
             case OBF::OsmAndRoutingIndex_RouteDataBox::kBoxesFieldNumber:
             {
-                // Save children relative offset and skip their data
-                node->childrenRelativeOffset = lastPos - origin;
-                cis->Skip(cis->BytesUntilLimit());
+                if (!kBoxesFieldNumberProcessed)
+                {
+                    node->hasChildrenDataBoxes = true;
+                    node->firstDataBoxInnerOffset = tagPos - node->offset;
+                    kBoxesFieldNumberProcessed = true;
 
+                    if (fieldsMask == safeToSkipFieldsMask)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        return;
+                    }
+                }
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                fieldsMask |= (1ull << tgn);
                 break;
             }
             default:
@@ -270,7 +299,6 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
             case OBF::OsmAndRoutingIndex_RouteDataBox::kBoxesFieldNumber:
             {
                 const std::shared_ptr<ObfRoutingSectionLevelTreeNode> childNode(new ObfRoutingSectionLevelTreeNode());
-
                 childNode->length = ObfReaderUtilities::readBigEndianInt(cis);
                 childNode->offset = cis->CurrentPosition();
 
@@ -303,12 +331,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
                 if (outNodesWithData && childNode->dataOffset > 0)
                     outNodesWithData->push_back(childNode);
 
-                if (childNode->childrenRelativeOffset > 0)
+                if (childNode->hasChildrenDataBoxes)
                 {
                     cis->Seek(childNode->offset);
                     const auto oldLimit = cis->PushLimit(childNode->length);
 
-                    cis->Skip(childNode->childrenRelativeOffset);
+                    cis->Skip(childNode->firstDataBoxInnerOffset);
                     readLevelTreeNodeChildren(reader, childNode, outNodesWithData, bbox31, controller, metric);
 
                     assert(cis->BytesUntilLimit() == 0);

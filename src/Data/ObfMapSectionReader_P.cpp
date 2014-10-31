@@ -614,7 +614,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     for (;;)
     {
         const auto tag = cis->ReadTag();
-        auto tgn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
+        const auto tgn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
         switch (tgn)
         {
             case 0:

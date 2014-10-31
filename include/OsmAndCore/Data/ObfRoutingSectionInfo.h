@@ -93,7 +93,8 @@ namespace OsmAnd
 
         AreaI area31;
 
-        uint32_t childrenRelativeOffset;
+        bool hasChildrenDataBoxes;
+        uint32_t firstDataBoxInnerOffset;
         uint32_t dataOffset;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;

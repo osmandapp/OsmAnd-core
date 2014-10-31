@@ -29,7 +29,8 @@ OsmAnd::ObfRoutingSectionLevel::~ObfRoutingSectionLevel()
 OsmAnd::ObfRoutingSectionLevelTreeNode::ObfRoutingSectionLevelTreeNode()
     : length(0)
     , offset(0)
-    , childrenRelativeOffset(0)
+    , hasChildrenDataBoxes(false)
+    , firstDataBoxInnerOffset(0)
     , dataOffset(0)
 {
 }
