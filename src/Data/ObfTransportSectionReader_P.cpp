@@ -24,7 +24,7 @@ void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const
 
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -40,7 +40,10 @@ void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const
                 section->_stopsLength = ObfReaderUtilities::readBigEndianInt(cis);
                 section->_stopsOffset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(section->_stopsLength);
+
                 readTransportStopsBounds(reader, section);
+
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -73,7 +76,7 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStopsBounds( const ObfRea
 
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:

@@ -113,7 +113,7 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
     bool loadedCorrectly = false;
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -137,6 +137,8 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
                 ObfMapSectionReader_P::read(reader, section);
 
                 info->_isBasemap = info->_isBasemap || section->isBasemap;
+
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
@@ -152,6 +154,7 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
 
                 ObfAddressSectionReader_P::read(reader, section);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
@@ -167,6 +170,7 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
 
                 ObfTransportSectionReader_P::read(reader, section);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
@@ -182,6 +186,7 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
 
                 ObfRoutingSectionReader_P::read(reader, section);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
@@ -197,6 +202,7 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
 
                 ObfPoiSectionReader_P::read(reader, section);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 

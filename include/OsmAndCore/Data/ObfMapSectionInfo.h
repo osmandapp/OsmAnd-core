@@ -29,23 +29,17 @@ namespace OsmAnd
         PrivateImplementation<ObfMapSectionLevel_P> _p;
     protected:
         ObfMapSectionLevel();
-
-        uint32_t _offset;
-        uint32_t _length;
-        ZoomLevel _minZoom;
-        ZoomLevel _maxZoom;
-        AreaI _area31;
-
-        uint32_t _boxesInnerOffset;
     public:
         virtual ~ObfMapSectionLevel();
 
-        const uint32_t& offset;
-        const uint32_t& length;
+        uint32_t offset;
+        uint32_t length;
 
-        const ZoomLevel& minZoom;
-        const ZoomLevel& maxZoom;
-        const AreaI& area31;
+        ZoomLevel minZoom;
+        ZoomLevel maxZoom;
+        AreaI area31;
+
+        uint32_t firstDataBoxInnerOffset;
 
     friend class OsmAnd::ObfMapSectionReader_P;
     };

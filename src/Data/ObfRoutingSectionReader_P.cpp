@@ -32,7 +32,7 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
 
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         auto tfn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
         switch (tfn)
         {
@@ -80,7 +80,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRules(
             {
                 const auto length = ObfReaderUtilities::readLength(cis);
                 const auto oldLimit = cis->PushLimit(length);
+
                 readRule(reader, rules, defaultRuleId++);
+
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
@@ -106,7 +108,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRule(
 
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
@@ -171,7 +173,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodes(
                 treeNode->offset = cis->CurrentPosition();
 
                 const auto oldLimit = cis->PushLimit(treeNode->length);
+
                 readLevelTreeNode(reader, treeNode, nullptr);
+
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
@@ -271,9 +275,11 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
                 childNode->offset = cis->CurrentPosition();
 
                 const auto oldLimit = cis->PushLimit(childNode->length);
+
                 readLevelTreeNode(reader, childNode, treeNode);
-                assert(cis->BytesUntilLimit() == 0);
                 assert(treeNode->area31.contains(childNode->area31));
+                
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 // Update metric
@@ -304,8 +310,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
 
                     cis->Skip(childNode->childrenRelativeOffset);
                     readLevelTreeNodeChildren(reader, childNode, outNodesWithData, bbox31, controller, metric);
-                    assert(cis->BytesUntilLimit() == 0);
 
+                    assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(oldLimit);
                 }
                 break;
@@ -373,7 +379,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
+
                 readRoadsBlockIdsTable(reader, roadsIdsTable);
+
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -386,7 +395,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 readRoad(reader, section, treeNode, bbox31, filterById, roadsIdsTable, internalId, road, metric);
+
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
@@ -420,7 +431,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 readRoadsBlockRestrictions(reader, resultsByInternalId, roadsIdsTable);
+
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -429,7 +443,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 ObfReaderUtilities::readStringTable(cis, roadsCaptionsTable);
+
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -450,7 +467,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockIdsTable(
 
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
@@ -480,7 +497,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockRestrictions(
     const auto cis = reader._codedInputStream.get();
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
@@ -530,7 +547,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
 
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
@@ -590,6 +607,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                         lastUnprocessedPointForBBox = pointsCount;
                     }
                 }
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 // Since reserved space may be larger than actual amount of data,
@@ -666,8 +684,10 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                         cis->ReadVarint32(&pointType);
                         pointTypes.push_back(pointType);
                     }
+                    assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(innerOldLimit);
                 }
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -682,6 +702,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     cis->ReadVarint32(&type);
                     road->_types.push_back(type);
                 }
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -711,6 +732,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     road->_captions.insert(stringTag, ObfReaderUtilities::encodeIntegerToString(stringId));
                     road->_captionsOrder.push_back(stringTag);
                 }
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -748,8 +770,8 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> decodingRules(new ObfRoutingSectionEncodingDecodingRules());
             readRules(reader, decodingRules);
             section->_p->_decodingRules = decodingRules;
-            assert(cis->BytesUntilLimit() == 0);
 
+            assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
     }
@@ -771,8 +793,8 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             std::shared_ptr<ObfRoutingSectionLevel> level(new ObfRoutingSectionLevel(dataLevel));
             readLevelTreeNodes(reader, level);
             container.level = level;
+            
             assert(cis->BytesUntilLimit() == 0);
-
             cis->PopLimit(oldLimit);
         }
     }
@@ -815,8 +837,8 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
 
             cis->Skip(rootNode->childrenRelativeOffset);
             readLevelTreeNodeChildren(reader, rootNode, &treeNodesWithData, bbox31, controller, metric);
-            assert(cis->BytesUntilLimit() == 0);
 
+            assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
     }
@@ -894,8 +916,8 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                     nullptr,
                     nullptr,
                     metric ? &localMetric : nullptr);
-                assert(cis->BytesUntilLimit() == 0);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 // Update metric
@@ -962,8 +984,8 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                 visitor,
                 controller,
                 metric);
+            
             assert(cis->BytesUntilLimit() == 0);
-
             cis->PopLimit(oldLimit);
 
             // Update metric

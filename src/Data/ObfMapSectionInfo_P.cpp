@@ -22,7 +22,8 @@ OsmAnd::ObfMapSectionLevelTreeNode::ObfMapSectionLevelTreeNode(const std::shared
     : level(level_)
     , dataOffset(0)
     , foundation(MapFoundationType::Undefined)
-    , hasChildren(false)
+    , hasChildrenDataBoxes(false)
+    , firstDataBoxInnerOffset(0)
 {
 }
 

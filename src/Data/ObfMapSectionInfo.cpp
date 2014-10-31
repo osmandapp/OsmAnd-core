@@ -30,11 +30,7 @@ OsmAnd::ObfMapSectionInfo::~ObfMapSectionInfo()
 
 OsmAnd::ObfMapSectionLevel::ObfMapSectionLevel()
     : _p(new ObfMapSectionLevel_P(this))
-    , offset(_offset)
-    , length(_length)
-    , minZoom(_minZoom)
-    , maxZoom(_maxZoom)
-    , area31(_area31)
+    , firstDataBoxInnerOffset(0)
 {
 }
 

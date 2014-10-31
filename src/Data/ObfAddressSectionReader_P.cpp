@@ -33,7 +33,7 @@ void OsmAnd::ObfAddressSectionReader_P::read( const ObfReader_P& reader, const s
 
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -79,7 +79,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressBlocksSectionHeader( const Ob
 
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -130,7 +130,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromAddressBlocksSection
         if (controller && controller->isAborted())
             break;
 
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -145,6 +145,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromAddressBlocksSection
                 std::shared_ptr<OsmAnd::Model::StreetGroup> streetGroup;
                 readStreetGroupHeader(reader, section, offset, streetGroup);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 if (streetGroup)
@@ -174,7 +175,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
     //    boolean englishNameMatched = false;
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -280,6 +281,8 @@ void OsmAnd::ObfAddressSectionReader_P::loadStreetsFromGroup(
     cis->ReadVarint32(&length);
     auto oldLimit = cis->PushLimit(length);
     readStreetsFromGroup(reader, group, resultOut, visitor, controller);
+
+    assert(cis->BytesUntilLimit() == 0);
     cis->PopLimit(oldLimit);
 }
 
@@ -296,7 +299,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
         if (controller && controller->isAborted())
             return;
 
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -311,6 +314,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
 
                 readStreet(reader, group, street);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 if (!visitor || visitor(street))
@@ -337,7 +341,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
 
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -393,6 +397,8 @@ void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
     cis->ReadVarint32(&length);
     auto oldLimit = cis->PushLimit(length);
     readBuildingsFromStreet(reader, street, resultOut, visitor, controller);
+
+    assert(cis->BytesUntilLimit() == 0);
     cis->PopLimit(oldLimit);
 }
 
@@ -409,7 +415,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
         if (controller && controller->isAborted())
             return;
 
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -432,6 +438,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
                 building->_offset = offset;
                 readBuilding(reader, street, building);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 if (!visitor || visitor(building))
@@ -456,7 +463,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
 
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -536,6 +543,8 @@ void OsmAnd::ObfAddressSectionReader_P::loadIntersectionsFromStreet(
     cis->ReadVarint32(&length);
     auto oldLimit = cis->PushLimit(length);
     readIntersectionsFromStreet(reader, street, resultOut, visitor, controller);
+
+    assert(cis->BytesUntilLimit() == 0);
     cis->PopLimit(oldLimit);
 }
 
@@ -552,7 +561,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
         if (controller && controller->isAborted())
             return;
 
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
@@ -566,6 +575,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
                 std::shared_ptr<Model::StreetIntersection> intersectedStreet(new Model::StreetIntersection());
                 readIntersectedStreet(reader, street, intersectedStreet);
                 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 if (!visitor || visitor(intersectedStreet))
@@ -598,7 +608,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectedStreet(
 
     for(;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:

@@ -39,7 +39,9 @@ namespace OsmAnd
         uint32_t dataOffset;
         MapFoundationType foundation;
         AreaI area31;
-        bool hasChildren;
+
+        bool hasChildrenDataBoxes;
+        uint32_t firstDataBoxInnerOffset;
 
     friend class OsmAnd::ObfMapSectionReader_P;
     };
@@ -50,12 +52,12 @@ namespace OsmAnd
     protected:
         ObfMapSectionLevel_P(ObfMapSectionLevel* owner);
 
-        ImplementationInterface<ObfMapSectionLevel> owner;
-
         mutable QMutex _rootNodesMutex;
         mutable std::shared_ptr< const QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > _rootNodes;
     public:
         virtual ~ObfMapSectionLevel_P();
+
+        ImplementationInterface<ObfMapSectionLevel> owner;
 
     friend class OsmAnd::ObfMapSectionLevel;
     friend class OsmAnd::ObfMapSectionReader_P;

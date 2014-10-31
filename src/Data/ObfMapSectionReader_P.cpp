@@ -35,7 +35,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
 
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
@@ -56,64 +56,15 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 auto oldLimit = cis->PushLimit(length);
 
                 const std::shared_ptr<ObfMapSectionLevel> levelRoot(new ObfMapSectionLevel());
-                levelRoot->_length = length;
-                levelRoot->_offset = offset;
+                levelRoot->length = length;
+                levelRoot->offset = offset;
                 readMapLevelHeader(reader, section, levelRoot);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 section->_levels.push_back(qMove(levelRoot));
                 break;
-            }
-            default:
-                ObfReaderUtilities::skipUnknownField(cis, tag);
-                break;
-        }
-    }
-}
-
-void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
-    const ObfReader_P& reader,
-    const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const std::shared_ptr<ObfMapSectionLevel>& level)
-{
-    const auto cis = reader._codedInputStream.get();
-
-    for (;;)
-    {
-        const auto tagPos = cis->CurrentPosition();
-        const auto tag = cis->ReadTag();
-        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
-        {
-            case 0:
-                return;
-            case OBF::OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_maxZoom));
-                break;
-            case OBF::OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_minZoom));
-                break;
-            case OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.left()));
-                break;
-            case OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.right()));
-                break;
-            case OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.top()));
-                break;
-            case OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->_area31.bottom()));
-                break;
-            case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
-            {
-                // Save boxes offset
-                level->_boxesInnerOffset = tagPos - level->_offset;
-
-                // Skip reading boxes and surely, following blocks
-                cis->Skip(cis->BytesUntilLimit());
-
-                return;
             }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -142,7 +93,10 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 readEncodingDecodingRule(reader, defaultId++, encodingDecodingRules);
+
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 break;
@@ -167,7 +121,7 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
     QString ruleValue;
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
@@ -184,6 +138,78 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
                 break;
             case OBF::OsmAndMapIndex_MapEncodingRule::kIdFieldNumber:
                 cis->ReadVarint32(&ruleId);
+                break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
+        }
+    }
+}
+
+void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfMapSectionInfo>& section,
+    const std::shared_ptr<ObfMapSectionLevel>& level)
+{
+    const auto cis = reader._codedInputStream.get();
+
+    uint64_t fieldsMask = 0u;
+    const auto safeToSkipFieldsMask =
+        (1ull << OBF::OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber) |
+        (1ull << OBF::OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber) |
+        (1ull << OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber) |
+        (1ull << OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber) |
+        (1ull << OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber) |
+        (1ull << OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber);
+    bool kBoxesFieldNumberProcessed = false;
+
+    for (;;)
+    {
+        const auto tagPos = cis->CurrentPosition();
+        const auto tag = cis->ReadTag();
+        const auto tfn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
+        switch (tfn)
+        {
+            case 0:
+                return;
+            case OBF::OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->maxZoom));
+                fieldsMask |= (1ull << tfn);
+                break;
+            case OBF::OsmAndMapIndex_MapRootLevel::kMinZoomFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->minZoom));
+                fieldsMask |= (1ull << tfn);
+                break;
+            case OBF::OsmAndMapIndex_MapRootLevel::kLeftFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->area31.left()));
+                fieldsMask |= (1ull << tfn);
+                break;
+            case OBF::OsmAndMapIndex_MapRootLevel::kRightFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->area31.right()));
+                fieldsMask |= (1ull << tfn);
+                break;
+            case OBF::OsmAndMapIndex_MapRootLevel::kTopFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->area31.top()));
+                fieldsMask |= (1ull << tfn);
+                break;
+            case OBF::OsmAndMapIndex_MapRootLevel::kBottomFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->area31.bottom()));
+                fieldsMask |= (1ull << tfn);
+                break;
+            case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
+                if (!kBoxesFieldNumberProcessed)
+                {
+                    level->firstDataBoxInnerOffset = tagPos - level->offset;
+                    kBoxesFieldNumberProcessed = true;
+
+                    if (fieldsMask == safeToSkipFieldsMask)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        return;
+                    }
+                }
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                fieldsMask |= (1ull << tfn);
                 break;
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -217,15 +243,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
                 levelTree->length = length;
                 readTreeNode(reader, section, level->area31, levelTree);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 trees.push_back(qMove(levelTree));
 
                 break;
             }
-            case OBF::OsmAndMapIndex_MapRootLevel::kBlocksFieldNumber:
-                cis->Skip(cis->BytesUntilLimit());
-                return;
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
@@ -241,11 +265,20 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
 {
     const auto cis = reader._codedInputStream.get();
 
+    uint64_t fieldsMask = 0u;
+    const auto safeToSkipFieldsMask =
+        (1ull << OBF::OsmAndMapIndex_MapDataBox::kLeftFieldNumber) |
+        (1ull << OBF::OsmAndMapIndex_MapDataBox::kRightFieldNumber) |
+        (1ull << OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber) |
+        (1ull << OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber);
+    bool kBoxesFieldNumberProcessed = false;
+
     for (;;)
     {
         const auto tagPos = cis->CurrentPosition();
-        auto tag = cis->ReadTag();
-        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        const auto tag = cis->ReadTag();
+        const auto tfn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
+        switch (tfn)
         {
             case 0:
                 return;
@@ -254,6 +287,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 treeNode->area31.left() = d + parentArea.left();
 
+                fieldsMask |= (1ull << tfn);
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kRightFieldNumber:
@@ -261,6 +295,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 treeNode->area31.right() = d + parentArea.right();
 
+                fieldsMask |= (1ull << tfn);
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kTopFieldNumber:
@@ -268,6 +303,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 treeNode->area31.top() = d + parentArea.top();
 
+                fieldsMask |= (1ull << tfn);
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kBottomFieldNumber:
@@ -275,6 +311,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 treeNode->area31.bottom() = d + parentArea.bottom();
 
+                fieldsMask |= (1ull << tfn);
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kShiftToMapDataFieldNumber:
@@ -282,6 +319,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 const auto offset = ObfReaderUtilities::readBigEndianInt(cis);
                 treeNode->dataOffset = offset + treeNode->offset;
 
+                fieldsMask |= (1ull << tfn);
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kOceanFieldNumber:
@@ -294,12 +332,25 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                     (treeNode->foundation != MapFoundationType::FullWater) ||
                     (treeNode->foundation == MapFoundationType::FullWater && section->isBasemap));
 
+                fieldsMask |= (1ull << tfn);
                 break;
             }
             case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
             {
-                treeNode->hasChildren = true;
+                if (!kBoxesFieldNumberProcessed)
+                {
+                    treeNode->hasChildrenDataBoxes = true;
+                    treeNode->firstDataBoxInnerOffset = tagPos - treeNode->offset;
+                    kBoxesFieldNumberProcessed = true;
+
+                    if (fieldsMask == safeToSkipFieldsMask)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        return;
+                    }
+                }
                 ObfReaderUtilities::skipUnknownField(cis, tag);
+                fieldsMask |= (1ull << tfn);
                 break;
             }
             default:
@@ -325,7 +376,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
 
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
@@ -341,6 +392,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 childNode->offset = offset;
                 childNode->length = length;
                 readTreeNode(reader, section, treeNode->area31, childNode);
+
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
@@ -366,11 +418,12 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     nodesWithData->push_back(childNode);
 
                 auto subchildrenFoundation = MapFoundationType::Undefined;
-                if (childNode->hasChildren)
+                if (childNode->hasChildrenDataBoxes)
                 {
                     cis->Seek(childNode->offset);
                     const auto oldLimit = cis->PushLimit(length);
 
+                    cis->Skip(childNode->firstDataBoxInnerOffset);
                     readTreeNodeChildren(reader, section, childNode, subchildrenFoundation, nodesWithData, bbox31, controller, metric);
                     
                     assert(cis->BytesUntilLimit() == 0);
@@ -416,7 +469,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
         if (controller && controller->isAborted())
             return;
 
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
@@ -475,7 +528,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 const Stopwatch readMapObjectStopwatch(metric != nullptr);
                 std::shared_ptr<OsmAnd::Model::BinaryMapObject> mapObject;
                 auto oldLimit = cis->PushLimit(length);
+                
                 readMapObject(reader, section, baseId, tree, mapObject, bbox31, metric);
+
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
@@ -524,10 +579,14 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 if (intermediateResult.isEmpty())
                 {
                     cis->Skip(cis->BytesUntilLimit());
+
+                    assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(oldLimit);
                     break;
                 }
+                
                 ObfReaderUtilities::readStringTable(cis, mapObjectsCaptionsTable);
+
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
@@ -554,7 +613,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
     for (;;)
     {
-        auto tag = cis->ReadTag();
+        const auto tag = cis->ReadTag();
         auto tgn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
         switch (tgn)
         {
@@ -627,6 +686,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     }
                 }
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 // Since reserved space may be larger than actual amount of data,
@@ -740,6 +800,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 // Shrink memory
                 polygon.resize(verticesCount);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 break;
@@ -772,6 +833,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 // Shrink preallocated space
                 typesRuleIds.squeeze();
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 break;
@@ -781,6 +843,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
+
                 while (cis->BytesUntilLimit() > 0)
                 {
                     bool ok;
@@ -795,6 +858,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     mapObject->_captions.insert(stringRuleId, qMove(ObfReaderUtilities::encodeIntegerToString(stringId)));
                     mapObject->_captionsOrder.push_back(stringRuleId);
                 }
+
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
@@ -844,6 +908,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             readEncodingDecodingRules(reader, encodingDecodingRules);
             section->_p->_encodingDecodingRules = encodingDecodingRules;
 
+            assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
     }
@@ -890,16 +955,16 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
             if (!mapLevel->_p->_rootNodes)
             {
-                cis->Seek(mapLevel->_offset);
-                auto oldLimit = cis->PushLimit(mapLevel->_length);
+                cis->Seek(mapLevel->offset);
+                auto oldLimit = cis->PushLimit(mapLevel->length);
 
-                cis->Skip(mapLevel->_boxesInnerOffset);
-
+                cis->Skip(mapLevel->firstDataBoxInnerOffset);
                 const std::shared_ptr< QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > rootNodes(
                     new QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >());
                 readMapLevelTreeNodes(reader, section, mapLevel, *rootNodes);
                 mapLevel->_p->_rootNodes = rootNodes;
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
             }
         }
@@ -937,11 +1002,12 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 treeNodesWithData.push_back(rootNode);
 
             auto rootSubnodesFoundation = MapFoundationType::Undefined;
-            if (rootNode->hasChildren)
+            if (rootNode->hasChildrenDataBoxes)
             {
                 cis->Seek(rootNode->offset);
                 auto oldLimit = cis->PushLimit(rootNode->length);
 
+                cis->Skip(rootNode->firstDataBoxInnerOffset);
                 readTreeNodeChildren(reader, section, rootNode, rootSubnodesFoundation, &treeNodesWithData, bbox31, controller, metric);
                 
                 assert(cis->BytesUntilLimit() == 0);
@@ -1029,8 +1095,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         nullptr,
                         nullptr,
                         metric ? &localMetric : nullptr);
-                    assert(cis->BytesUntilLimit() == 0);
 
+                    assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(oldLimit);
 
                     // Update metric
@@ -1097,8 +1163,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     visitor,
                     controller,
                     metric);
-                assert(cis->BytesUntilLimit() == 0);
 
+                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 // Update metric
