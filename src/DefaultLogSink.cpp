@@ -10,7 +10,7 @@ OsmAnd::DefaultLogSink::~DefaultLogSink()
 {
 }
 
-#if defined(ANDROID) || defined(__ANDROID__)
+#if defined(OSMAND_TARGET_OS_android)
 
 #include <android/log.h>
 
@@ -60,7 +60,10 @@ void OsmAnd::DefaultLogSink::flush()
     fflush(stdout);
 }
 
-#elif defined(WIN32)
+#elif defined(OSMAND_TARGET_OS_windows)
+
+#include <io.h>
+#include <fcntl.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -89,16 +92,45 @@ void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* forma
     }
     else
     {
-        if (level == LogSeverityLevel::Error)
-            printf("ERROR: ");
-        else if (level == LogSeverityLevel::Info)
-            printf("INFO: ");
-        else if (level == LogSeverityLevel::Warning)
-            printf("WARN: ");
+        //NOTE: This ugly stuff is needed just because Win32 has no _getmode or fcntl API.
+        const auto currentMode = _setmode(_fileno(stdout), _O_TEXT);
+        if (currentMode != -1)
+            _setmode(_fileno(stdout), currentMode);
+
+        if (currentMode == -1 || (currentMode & (_O_U16TEXT | _O_U8TEXT | _O_WTEXT)) == 0)
+        {
+            if (level == LogSeverityLevel::Error)
+                printf("ERROR: ");
+            else if (level == LogSeverityLevel::Info)
+                printf("INFO: ");
+            else if (level == LogSeverityLevel::Warning)
+                printf("WARN: ");
+            else
+                printf("DEBUG: ");
+
+            vprintf(format, args);
+
+            printf("\n");
+        }
         else
-            printf("DEBUG: ");
-        vprintf(format, args);
-        printf("\n");
+        {
+            if (level == LogSeverityLevel::Error)
+                wprintf(L"ERROR: ");
+            else if (level == LogSeverityLevel::Info)
+                wprintf(L"INFO: ");
+            else if (level == LogSeverityLevel::Warning)
+                wprintf(L"WARN: ");
+            else
+                wprintf(L"DEBUG: ");
+
+            int len = vsnprintf(nullptr, 0, format, args);
+            char* buffer = new char[len + 1];
+            vsnprintf(buffer, len, format, args);
+            buffer[len] = 0;
+            wprintf(L"%hs", buffer);
+
+            wprintf(L"\n");
+        }
     }
 }
 

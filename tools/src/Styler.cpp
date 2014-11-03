@@ -155,13 +155,13 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             const auto& encDecRules = mapObject->section->encodingDecodingRules;
 
             // Skip objects that were not requested
-            if (!configuration.mapObjectsIds.isEmpty() && configuration.mapObjectsIds.contains(mapObject->id))
+            if (!configuration.mapObjectsIds.isEmpty() && !configuration.mapObjectsIds.contains(mapObject->id))
                 continue;
 
-            outEvaluatedMapObjects[primitivisedGroup->sourceObject] = primitivisedGroup;
+            outEvaluatedMapObjects[mapObject] = primitivisedGroup;
 
             output << QStringToStlString(QString(80, QLatin1Char('-'))) << std::endl;
-            output << QStringToStlString(primitivisedGroup->sourceObject->id.toString()) << std::endl;
+            output << QStringToStlString(mapObject->id.toString()) << std::endl;
 
             for (const auto& typeRuleId : OsmAnd::constOf(mapObject->typesRuleIds))
             {
@@ -229,7 +229,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\tPoint #") << pointPrimitiveIndex << std::endl;
                     QString ruleTag;
                     QString ruleValue;
-                    const auto typeRuleResolved = primitivisedGroup->sourceObject->obtainTagValueByTypeRuleIndex(pointPrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(pointPrimitive->typeRuleIdIndex, ruleTag, ruleValue);
                     if (typeRuleResolved)
                         output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
                     else
@@ -243,7 +243,12 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
 
                         const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
 
-                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ") << QStringToStlString(value.toString()) << std::endl;
+                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ");
+                        if (valueDefinition->dataType == OsmAnd::MapStyleValueDataType::Color)
+                            output << QStringToStlString(OsmAnd::ColorARGB(value.toUInt()).toString());
+                        else
+                            output << QStringToStlString(value.toString());
+                        output << std::endl;
                     }
 
                     pointPrimitiveIndex++;
@@ -260,7 +265,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\tPolyline #") << polylinePrimitiveIndex << std::endl;
                     QString ruleTag;
                     QString ruleValue;
-                    const auto typeRuleResolved = primitivisedGroup->sourceObject->obtainTagValueByTypeRuleIndex(polylinePrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(polylinePrimitive->typeRuleIdIndex, ruleTag, ruleValue);
                     if (typeRuleResolved)
                         output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
                     else
@@ -274,7 +279,12 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
 
                         const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
 
-                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ") << QStringToStlString(value.toString()) << std::endl;
+                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ");
+                        if (valueDefinition->dataType == OsmAnd::MapStyleValueDataType::Color)
+                            output << QStringToStlString(OsmAnd::ColorARGB(value.toUInt()).toString());
+                        else
+                            output << QStringToStlString(value.toString());
+                        output << std::endl;
                     }
 
                     polylinePrimitiveIndex++;
@@ -291,7 +301,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\tPolygon #") << polygonPrimitiveIndex << std::endl;
                     QString ruleTag;
                     QString ruleValue;
-                    const auto typeRuleResolved = primitivisedGroup->sourceObject->obtainTagValueByTypeRuleIndex(polygonPrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(polygonPrimitive->typeRuleIdIndex, ruleTag, ruleValue);
                     if (typeRuleResolved)
                         output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
                     else
