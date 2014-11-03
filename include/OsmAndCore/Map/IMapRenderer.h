@@ -9,6 +9,9 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Color.h>
+#include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Observable.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>

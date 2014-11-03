@@ -6,6 +6,9 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Color.h>
+#include <OsmAndCore/LatLon.h>
 
 namespace OsmAnd
 {

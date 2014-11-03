@@ -12,6 +12,9 @@
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Observable.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Color.h>
+#include <OsmAndCore/LatLon.h>
 
 namespace OsmAnd
 {

@@ -11,6 +11,7 @@
 #include "PrivateImplementation.h"
 #include "Link.h"
 #include "CommonTypes.h"
+#include "Color.h"
 #include "IFavoriteLocation.h"
 
 namespace OsmAnd

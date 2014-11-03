@@ -10,6 +10,9 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Color.h>
+#include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Map/MapMarker.h>
 
 class SkBitmap;

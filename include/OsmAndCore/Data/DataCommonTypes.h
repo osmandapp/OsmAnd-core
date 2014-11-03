@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PointsAndAreas.h>
 
 namespace OsmAnd
 {

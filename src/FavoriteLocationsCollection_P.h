@@ -12,6 +12,9 @@
 #include "PrivateImplementation.h"
 #include "Link.h"
 #include "CommonTypes.h"
+#include "PointsAndAreas.h"
+#include "Color.h"
+#include "LatLon.h"
 
 namespace OsmAnd
 {

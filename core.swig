@@ -6,6 +6,9 @@
 %{
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Color.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/ResourcesManager.h>
 #include <OsmAndCore/IObfsCollection.h>
@@ -172,6 +175,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Observable.h>
 %include <OsmAndCore/Callable.h>
 %include <OsmAndCore/CommonTypes.h>
+%include <OsmAndCore/Color.h>
+%include <OsmAndCore/PointsAndAreas.h>
 	%template(PointI) OsmAnd::Point<int32_t>;
 //	%template(PointI64) OsmAnd::Point<int64_t>;
 	%template(PointF) OsmAnd::Point<float>;
@@ -184,6 +189,7 @@ using namespace OsmAnd;
 //	%template(OOBBI64) OsmAnd::OOBB<int64_t>;
 	%template(OOBBF) OsmAnd::OOBB<float>;
 	%template(OOBBD) OsmAnd::OOBB<double>;
+%include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Bitmask.h>
 	%template(MapRendererStateChanges) OsmAnd::Bitmask<OsmAnd::MapRendererStateChange, unsigned int>;
 %include <OsmAndCore/IObfsCollection.h>

@@ -176,7 +176,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 }
                 else
                 {
-                    output << xT("\tType: #") << typeRuleId << xT("(UNRESOLVED)") << std::endl;
+                    output << xT("\tType: #") << typeRuleId << xT(" (UNRESOLVED)") << std::endl;
                 }
             }
 
@@ -193,7 +193,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 }
                 else
                 {
-                    output << xT("\tExtra type: #") << typeRuleId << xT("(UNRESOLVED)") << std::endl;
+                    output << xT("\tExtra type: #") << typeRuleId << xT(" (UNRESOLVED)") << std::endl;
                 }
             }
 
@@ -305,10 +305,98 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
 
                         const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
 
-                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ") << QStringToStlString(value.toString()) << std::endl;
+                        output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ");
+                        if (valueDefinition->dataType == OsmAnd::MapStyleValueDataType::Color)
+                            output << QStringToStlString(OsmAnd::ColorARGB(value.toUInt()).toString());
+                        else
+                            output << QStringToStlString(value.toString());
+                        output << std::endl;
                     }
 
                     polygonPrimitiveIndex++;
+                }
+            }
+
+            const auto itSymbolsGroup = primitivisedArea->symbolsGroups.constFind(mapObject);
+            if (itSymbolsGroup != primitivisedArea->symbolsGroups.cend())
+            {
+                const auto& symbolsGroup = *itSymbolsGroup;
+
+                output << symbolsGroup->symbols.size() << xT(" symbol(s):") << std::endl;
+
+                unsigned int symbolIndex = 0u;
+                for (const auto& symbol : OsmAnd::constOf(symbolsGroup->symbols))
+                {
+                    const auto textSymbol = std::dynamic_pointer_cast<const OsmAnd::Primitiviser::TextSymbol>(symbol);
+                    const auto iconSymbol = std::dynamic_pointer_cast<const OsmAnd::Primitiviser::IconSymbol>(symbol);
+
+                    output << xT("\tSymbol #") << symbolIndex << std::endl;
+                    if (textSymbol)
+                        output << xT(" (text)");
+                    else if (iconSymbol)
+                        output << xT(" (icon)");
+                    output << std::endl;
+
+                    auto primitiveIndex = -1;
+                    if (primitiveIndex == -1)
+                    {
+                        primitiveIndex = primitivisedGroup->points.indexOf(symbol->primitive);
+                        if (primitiveIndex >= 0)
+                            output << xT("\t\tPrimitive: Point #") << primitiveIndex << std::endl;
+                    }
+                    if (primitiveIndex == -1)
+                    {
+                        primitiveIndex = primitivisedGroup->polylines.indexOf(symbol->primitive);
+                        if (primitiveIndex >= 0)
+                            output << xT("\t\tPrimitive: Polyline #") << primitiveIndex << std::endl;
+                    }
+                    if (primitiveIndex == -1)
+                    {
+                        primitiveIndex = primitivisedGroup->polygons.indexOf(symbol->primitive);
+                        if (primitiveIndex >= 0)
+                            output << xT("\t\tPrimitive: Polygon #") << primitiveIndex << std::endl;
+                    }
+
+                    output << xT("\t\tPosition31: ") << symbol->location31.x << xT("x") << symbol->location31.y << std::endl;
+                    output << xT("\t\tOrder: ") << symbol->order << std::endl;
+                    output << xT("\t\tDraw along path: ") << (symbol->drawAlongPath ? xT("yes") : xT("no")) << std::endl;
+                    output << xT("\t\tIntersects with: ") << QStringToStlString(QStringList(symbol->intersectsWith.toList()).join(QLatin1String(", "))) << std::endl;
+                    if (textSymbol)
+                    {
+                        output << xT("\t\tText: ") << QStringToStlString(textSymbol->value) << std::endl;
+                        output << xT("\t\tLanguage: ");
+                        switch (textSymbol->languageId)
+                        {
+                            case OsmAnd::LanguageId::Invariant:
+                                output << xT("invariant");
+                                break;
+                            case OsmAnd::LanguageId::Native:
+                                output << xT("native");
+                                break;
+                            case OsmAnd::LanguageId::Localized:
+                                output << xT("localized");
+                                break;
+                        }
+                        output << std::endl;
+                        output << xT("\t\tDraw text on path: ") << (textSymbol->drawOnPath ? xT("yes") : xT("no")) << std::endl;
+                        output << xT("\t\tText vertical offset: ") << textSymbol->verticalOffset << std::endl;
+                        output << xT("\t\tText color: ") << QStringToStlString(textSymbol->color.toString()) << std::endl;
+                        output << xT("\t\tText size: ") << textSymbol->size << std::endl;
+                        output << xT("\t\tText shadow radius: ") << textSymbol->shadowRadius << std::endl;
+                        output << xT("\t\tText shadow color: ") << QStringToStlString(textSymbol->shadowColor.toString()) << std::endl;
+                        output << xT("\t\tText wrap width: ") << textSymbol->wrapWidth << std::endl;
+                        output << xT("\t\tText is bold: ") << (textSymbol->isBold ? xT("yes") : xT("no")) << std::endl;
+                        output << xT("\t\tText minDistance: ") << textSymbol->minDistance.x << xT("x") << textSymbol->minDistance.y << std::endl;
+                        output << xT("\t\tShield resource name: ") << QStringToStlString(textSymbol->shieldResourceName) << std::endl;
+                    }
+                    else if (iconSymbol)
+                    {
+                        output << xT("\t\tIcon resource name: ") << QStringToStlString(iconSymbol->resourceName) << std::endl;
+                        output << xT("\t\tShield resource name: ") << QStringToStlString(iconSymbol->shieldResourceName) << std::endl;
+                        output << xT("\t\tIntersection size: ") << iconSymbol->intersectionSize << std::endl;
+                    }
+
+                    symbolIndex++;
                 }
             }
         }

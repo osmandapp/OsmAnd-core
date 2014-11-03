@@ -88,7 +88,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
 			writer.writeStartElement(QLatin1String("extensions"));
 
 			// <color>
-            const auto colorValue = QLatin1Char('#') + QString::number(static_cast<ColorARGB>(color).argb, 16).right(6);
+            const auto colorValue = color.toString();
 			writer.writeTextElement(QLatin1String("color"), colorValue);
 
             // <hidden>

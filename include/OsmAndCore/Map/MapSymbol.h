@@ -11,6 +11,8 @@ class SkBitmap;
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Color.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 

@@ -11,6 +11,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Color.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/Map/ResolvedMapStyle.h>
