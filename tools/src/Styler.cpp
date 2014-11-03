@@ -12,6 +12,7 @@
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/QKeyValueIterator.h>
+#include <OsmAndCore/Data/ObfMapSectionInfo.h>
 #include <OsmAndCore/Data/Model/BinaryMapObject.h>
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
@@ -150,14 +151,73 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         // Obtain evaluated values for each group and print it
         for (const auto& primitivisedGroup : OsmAnd::constOf(primitivisedArea->primitivesGroups))
         {
+            const auto& mapObject = primitivisedGroup->sourceObject;
+            const auto& encDecRules = mapObject->section->encodingDecodingRules;
+
             // Skip objects that were not requested
-            if (!configuration.mapObjectsIds.isEmpty() && configuration.mapObjectsIds.contains(primitivisedGroup->sourceObject->id))
+            if (!configuration.mapObjectsIds.isEmpty() && configuration.mapObjectsIds.contains(mapObject->id))
                 continue;
 
             outEvaluatedMapObjects[primitivisedGroup->sourceObject] = primitivisedGroup;
 
             output << QStringToStlString(QString(80, QLatin1Char('-'))) << std::endl;
             output << QStringToStlString(primitivisedGroup->sourceObject->id.toString()) << std::endl;
+
+            for (const auto& typeRuleId : OsmAnd::constOf(mapObject->typesRuleIds))
+            {
+                const auto& typeRule = encDecRules->decodingRules[typeRuleId];
+
+                const auto itTypeRule = encDecRules->decodingRules.constFind(typeRuleId);
+                if (itTypeRule != encDecRules->decodingRules.cend())
+                {
+                    const auto& typeRule = *itTypeRule;
+
+                    output << xT("\tType: ") << QStringToStlString(typeRule.tag) << xT(" = ") << QStringToStlString(typeRule.value) << std::endl;
+                }
+                else
+                {
+                    output << xT("\tType: #") << typeRuleId << xT("(UNRESOLVED)") << std::endl;
+                }
+            }
+
+            for (const auto& typeRuleId : OsmAnd::constOf(mapObject->extraTypesRuleIds))
+            {
+                const auto& typeRule = encDecRules->decodingRules[typeRuleId];
+
+                const auto itTypeRule = encDecRules->decodingRules.constFind(typeRuleId);
+                if (itTypeRule != encDecRules->decodingRules.cend())
+                {
+                    const auto& typeRule = *itTypeRule;
+
+                    output << xT("\tExtra type: ") << QStringToStlString(typeRule.tag) << xT(" = ") << QStringToStlString(typeRule.value) << std::endl;
+                }
+                else
+                {
+                    output << xT("\tExtra type: #") << typeRuleId << xT("(UNRESOLVED)") << std::endl;
+                }
+            }
+
+            for (const auto& captionTagId : OsmAnd::constOf(mapObject->captionsOrder))
+            {
+                const auto& captionValue = mapObject->captions[captionTagId];
+
+                if (encDecRules->name_encodingRuleId == captionTagId)
+                    output << xT("\tCaption: ") << QStringToStlString(captionValue) << std::endl;
+                else if (encDecRules->ref_encodingRuleId == captionTagId)
+                    output << xT("\tRef: ") << QStringToStlString(captionValue) << std::endl;
+                else
+                {
+                    const auto itCaptionTagAsLocalizedName = encDecRules->localizedName_decodingRules.constFind(captionTagId);
+                    const auto itCaptionTagRule = encDecRules->decodingRules.constFind(captionTagId);
+
+                    QString captionTag(QLatin1String("UNRESOLVED"));
+                    if (itCaptionTagAsLocalizedName != encDecRules->localizedName_decodingRules.cend())
+                        captionTag = *itCaptionTagAsLocalizedName;
+                    if (itCaptionTagRule != encDecRules->decodingRules.cend())
+                        captionTag = itCaptionTagRule->tag;
+                    output << xT("\tCaption [") << QStringToStlString(captionTag) << xT("]: ") << QStringToStlString(captionValue) << std::endl;
+                }
+            }
 
             if (!primitivisedGroup->points.isEmpty())
             {

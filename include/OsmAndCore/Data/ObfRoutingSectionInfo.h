@@ -39,6 +39,7 @@ namespace OsmAnd
         QHash< uint32_t, ObfRoutingSectionDecodingRule > decodingRules;
         uint32_t name_encodingRuleId;
         QHash< QString, uint32_t > localizedName_encodingRuleIds;
+        QHash< uint32_t, QString> localizedName_decodingRules;
         QSet< uint32_t > namesRuleId;
 
         void createRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);

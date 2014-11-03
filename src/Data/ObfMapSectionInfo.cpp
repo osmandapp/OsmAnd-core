@@ -83,6 +83,7 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createRule(const uint32_t ruleT
     {
         const QString languageId = ruleTag.mid(QLatin1String("name:").size());
         localizedName_encodingRuleIds.insert(languageId, ruleId);
+        localizedName_decodingRules.insert(ruleId, languageId);
         namesRuleId.insert(ruleId);
     }
     else if (QLatin1String("ref") == ruleTag)
