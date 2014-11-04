@@ -108,6 +108,8 @@ OsmAnd::Primitiviser::Symbol::Symbol(const std::shared_ptr<const Primitive>& pri
     : primitive(primitive_)
     , order(-1)
     , drawAlongPath(false)
+    , pathPaddingLeft(0.0f)
+    , pathPaddingRight(0.0f)
 {
 }
 

@@ -2172,6 +2172,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
         text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
+        float pathPadding = 0.0f;
+        ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
+        if (ok)
+            text->pathPaddingLeft = text->pathPaddingRight = pathPadding;
+        primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, text->pathPaddingLeft);
+        primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, text->pathPaddingRight);
+
         outSymbols.push_back(qMove(text));
     }
 }
@@ -2226,6 +2233,13 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveIcon(
     if (!ok)
         intersectsWith = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
     icon->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+
+    float pathPadding = 0.0f;
+    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
+    if (ok)
+        icon->pathPaddingLeft = icon->pathPaddingRight = pathPadding;
+    primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, icon->pathPaddingLeft);
+    primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, icon->pathPaddingRight);
 
     // Icons are always first
     outSymbols.prepend(qMove(icon));

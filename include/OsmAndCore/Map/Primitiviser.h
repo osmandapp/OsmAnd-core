@@ -140,6 +140,8 @@ namespace OsmAnd
             int order;
             bool drawAlongPath;
             QSet<QString> intersectsWith;
+            float pathPaddingLeft;
+            float pathPaddingRight;
 
         friend class OsmAnd::Primitiviser;
         friend class OsmAnd::Primitiviser_P;

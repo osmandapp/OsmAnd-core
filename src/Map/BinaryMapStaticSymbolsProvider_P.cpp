@@ -135,6 +135,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                         billboardRasterSymbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectsWithClass));
                     }
                 }
+                billboardRasterSymbol->pathPaddingLeft = rasterizedSpriteSymbol->pathPaddingLeft;
+                billboardRasterSymbol->pathPaddingRight = rasterizedSpriteSymbol->pathPaddingRight;
                 symbol.reset(billboardRasterSymbol);
             }
             else if (const auto rasterizedOnPathSymbol = std::dynamic_pointer_cast<const SymbolRasterizer::RasterizedOnPathSymbol>(rasterizedSymbol))
@@ -155,6 +157,8 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                 {
                     onPathSymbol->intersectsWithClasses.insert(mapSymbolIntersectionClassesRegistry.getOrRegisterClassIdByName(intersectsWithClass));
                 }
+                onPathSymbol->pathPaddingLeft = rasterizedOnPathSymbol->pathPaddingLeft;
+                onPathSymbol->pathPaddingRight = rasterizedOnPathSymbol->pathPaddingRight;
                 symbol.reset(onPathSymbol);
             }
             else
@@ -193,11 +197,17 @@ bool OsmAnd::BinaryMapStaticSymbolsProvider_P::obtainData(
                     // Get larger bbox, to take into account possible rotation
                     const auto maxSize = qMax(billboardSymbol->size.x, billboardSymbol->size.y);
                     const auto outerCircleRadius = 0.5f * static_cast<float>(qSqrt(2 * maxSize * maxSize));
-                    symbolsForComputation.push_back({ 0, 2.0f * outerCircleRadius, 0 });
+                    symbolsForComputation.push_back({
+                        billboardSymbol->pathPaddingLeft,
+                        2.0f * outerCircleRadius,
+                        billboardSymbol->pathPaddingRight });
                 }
                 else if (const auto onPathSymbol = std::dynamic_pointer_cast<OnPathRasterMapSymbol>(symbol))
                 {
-                    symbolsForComputation.push_back({ 0, static_cast<float>(onPathSymbol->size.x), 0 });
+                    symbolsForComputation.push_back({
+                        onPathSymbol->pathPaddingLeft,
+                        static_cast<float>(onPathSymbol->size.x),
+                        onPathSymbol->pathPaddingRight });
                 }
             }
 

@@ -31,6 +31,9 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", fa
 
 // Text&Icon properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, Output, String, "intersectsWith", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING, Output, Float, "pathPadding", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, Output, Float, "pathPaddingLeft", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, Output, Float, "pathPaddingRight", true)
 
 // Text properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth", true)

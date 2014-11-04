@@ -143,6 +143,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->languageId = textSymbol->languageId;
                     rasterizedSymbol->minDistance = textSymbol->minDistance;
                     rasterizedSymbol->glyphsWidth = glyphsWidth;
+                    rasterizedSymbol->pathPaddingLeft = textSymbol->pathPaddingLeft;
+                    rasterizedSymbol->pathPaddingRight = textSymbol->pathPaddingRight;
                     group->symbols.push_back(qMove(rasterizedSymbol));
                 }
                 else
@@ -177,6 +179,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->offset = textSymbol->drawAlongPath ? localOffset : totalOffset;
                     rasterizedSymbol->drawAlongPath = textSymbol->drawAlongPath;
                     rasterizedSymbol->intersectionSize = PointI(-1, -1);
+                    rasterizedSymbol->pathPaddingLeft = textSymbol->pathPaddingLeft;
+                    rasterizedSymbol->pathPaddingRight = textSymbol->pathPaddingRight;
                     group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                     // Next symbol should also take into account:
@@ -270,6 +274,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 rasterizedSymbol->offset = iconSymbol->drawAlongPath ? localOffset : totalOffset;
                 rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;
                 rasterizedSymbol->intersectionSize = PointI(iconSymbol->intersectionSize, iconSymbol->intersectionSize);
+                rasterizedSymbol->pathPaddingLeft = iconSymbol->pathPaddingLeft;
+                rasterizedSymbol->pathPaddingRight = iconSymbol->pathPaddingRight;
                 group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
 
                 // Next symbol should also take into account:

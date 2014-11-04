@@ -21,6 +21,11 @@
 #include <OsmAndCore/Map/Primitiviser.h>
 #include <OsmAndCore/Map/MapStyleEvaluationResult.h>
 
+#include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <QTextStream>
+#include <OsmAndCore/restore_internal_warnings.h>
+
 #include <OsmAndCoreTools.h>
 #include <OsmAndCoreTools/Utilities.h>
 
@@ -71,6 +76,18 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
 
             success = false;
             break;
+        }
+
+        // Dump style if asked to do so
+        if (!configuration.styleDumpFilename.isEmpty())
+        {
+            const auto dumpContent = mapStyle->dump();
+            QFile dumpFile(configuration.styleDumpFilename);
+            if (dumpFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+            {
+                QTextStream(&dumpFile) << dumpContent;
+                dumpFile.close();
+            }
         }
 
         // Load all map objects
@@ -340,7 +357,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     const auto textSymbol = std::dynamic_pointer_cast<const OsmAnd::Primitiviser::TextSymbol>(symbol);
                     const auto iconSymbol = std::dynamic_pointer_cast<const OsmAnd::Primitiviser::IconSymbol>(symbol);
 
-                    output << xT("\tSymbol #") << symbolIndex << std::endl;
+                    output << xT("\tSymbol #") << symbolIndex;
                     if (textSymbol)
                         output << xT(" (text)");
                     else if (iconSymbol)
@@ -602,6 +619,12 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
         else if (arg == QLatin1String("-excludeCoastlines"))
         {
             outConfiguration.excludeCoastlines = true;
+        }
+        else if (arg.startsWith(QLatin1String("-styleDump=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-styleDump=")));
+
+            outConfiguration.styleDumpFilename = value;
         }
         else
         {

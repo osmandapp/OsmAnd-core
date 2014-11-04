@@ -45,6 +45,7 @@ namespace OsmAndTools
             float displayDensityFactor;
             QString locale;
             bool excludeCoastlines;
+            QString styleDumpFilename;
             bool verbose;
 
             static bool parseFromCommandLineArguments(

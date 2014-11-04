@@ -32,6 +32,8 @@ namespace OsmAnd
         LanguageId languageId;
         PointI minDistance;
         PointI margin;
+        float pathPaddingLeft;
+        float pathPaddingRight;
     };
 }
 
