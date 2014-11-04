@@ -194,7 +194,7 @@ std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P
     const std::shared_ptr<const UnresolvedMapStyle::RuleNode>& unresolvedRuleNode)
 {
     const std::shared_ptr<RuleNode> resolvedRuleNode(new RuleNode(
-        unresolvedRuleNode->applyOnlyIfOneOfConditionalsAccepted));
+        unresolvedRuleNode->isSwitch));
 
     // Resolve values
     for (const auto& itUnresolvedValueEntry : rangeOf(constOf(unresolvedRuleNode->values)))
@@ -706,7 +706,7 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
         dump += prefix + QLatin1String("\n");
     }
 
-    if (!ruleNode->applyOnlyIfOneOfConditionalsAccepted)
+    if (!ruleNode->isSwitch)
         dump += dumpRuleNodeOutputValues(ruleNode, prefix, true);
 
     if (!ruleNode->oneOfConditionalSubnodes.isEmpty())
@@ -718,7 +718,7 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
             dump += dumpRuleNode(oneOfConditionalSubnode, false, prefix + QLatin1String("\t"));
             dump += prefix + QLatin1String("\tatLeastOneConditionalMatched = true;\n");
         }
-        if (ruleNode->applyOnlyIfOneOfConditionalsAccepted)
+        if (ruleNode->isSwitch)
         {
             if (rejectSupported)
                 dump += prefix + QLatin1String("if (not atLeastOneConditionalMatched) reject;\n");
@@ -728,7 +728,7 @@ QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const Rul
         dump += prefix + QLatin1String("\n");
     }
 
-    if (ruleNode->applyOnlyIfOneOfConditionalsAccepted)
+    if (ruleNode->isSwitch)
         dump += dumpRuleNodeOutputValues(ruleNode, prefix, false);
     
     if (!ruleNode->applySubnodes.isEmpty())

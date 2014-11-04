@@ -292,7 +292,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         }
     }
 
-    if (outResultStorage && !ruleNode->applyOnlyIfOneOfConditionalsAccepted)
+    if (outResultStorage && !ruleNode->isSwitch)
         fillResultFromRuleNode(ruleNode, *outResultStorage, true);
 
     bool atLeastOneConditionalMatched = false;
@@ -311,11 +311,14 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
             break;
         }
     }
-    if (!atLeastOneConditionalMatched && ruleNode->applyOnlyIfOneOfConditionalsAccepted)
+    if (!atLeastOneConditionalMatched && ruleNode->isSwitch)
         return false;
 
-    if (outResultStorage && ruleNode->applyOnlyIfOneOfConditionalsAccepted)
+    if (outResultStorage && ruleNode->isSwitch)
+    {
+        // Fill values from <switch> keeping values previously set by <case>
         fillResultFromRuleNode(ruleNode, *outResultStorage, false);
+    }
 
     for (const auto& applySubnode : constOf(ruleNode->applySubnodes))
         evaluate(mapObject, applySubnode, inputValues, outDisabled, outResultStorage);

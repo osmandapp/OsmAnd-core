@@ -88,8 +88,8 @@ OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue:
     return value;
 }
 
-OsmAnd::ResolvedMapStyle::RuleNode::RuleNode(const bool applyOnlyIfOneOfConditionalsAccepted_)
-    : applyOnlyIfOneOfConditionalsAccepted(applyOnlyIfOneOfConditionalsAccepted_)
+OsmAnd::ResolvedMapStyle::RuleNode::RuleNode(const bool isSwitch_)
+    : isSwitch(isSwitch_)
 {
 }
 

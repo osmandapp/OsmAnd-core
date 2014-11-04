@@ -182,8 +182,6 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
 
             for (const auto& typeRuleId : OsmAnd::constOf(mapObject->typesRuleIds))
             {
-                const auto& typeRule = encDecRules->decodingRules[typeRuleId];
-
                 const auto itTypeRule = encDecRules->decodingRules.constFind(typeRuleId);
                 if (itTypeRule != encDecRules->decodingRules.cend())
                 {
@@ -199,8 +197,6 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
 
             for (const auto& typeRuleId : OsmAnd::constOf(mapObject->extraTypesRuleIds))
             {
-                const auto& typeRule = encDecRules->decodingRules[typeRuleId];
-
                 const auto itTypeRule = encDecRules->decodingRules.constFind(typeRuleId);
                 if (itTypeRule != encDecRules->decodingRules.cend())
                 {
@@ -388,6 +384,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\t\tOrder: ") << symbol->order << std::endl;
                     output << xT("\t\tDraw along path: ") << (symbol->drawAlongPath ? xT("yes") : xT("no")) << std::endl;
                     output << xT("\t\tIntersects with: ") << QStringToStlString(QStringList(symbol->intersectsWith.toList()).join(QLatin1String(", "))) << std::endl;
+                    output << xT("\t\tPath padding left: ") << symbol->pathPaddingLeft << std::endl;
+                    output << xT("\t\tPath padding right: ") << symbol->pathPaddingRight << std::endl;
                     if (textSymbol)
                     {
                         output << xT("\t\tText: ") << QStringToStlString(textSymbol->value) << std::endl;

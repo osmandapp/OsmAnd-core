@@ -31,10 +31,10 @@ namespace OsmAnd
         private:
         protected:
         public:
-            RuleNode(const bool applyOnlyIfOneOfConditionalsAccepted);
+            RuleNode(const bool isSwitch);
             ~RuleNode();
 
-            const bool applyOnlyIfOneOfConditionalsAccepted;
+            const bool isSwitch;
 
             QHash<QString, QString> values;
             QList< std::shared_ptr<RuleNode> > oneOfConditionalSubnodes;

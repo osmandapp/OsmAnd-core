@@ -231,7 +231,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                 else
                 {
                     // Several cases:
-                    //  - Top-level <switch> may not have 'tag' and 'value' attributes pair, then it has to be flattened
+                    //  - Top-level <switch> may not have 'tag' and 'value' attributes pair, then it has to be copied inside every <case>-child
                     //  - Otherwise, process as case
                     const auto ok = insertNodeIntoTopLevelTagValueRule(
                         rulesets[static_cast<unsigned int>(currentRulesetType)],
@@ -414,17 +414,18 @@ bool OsmAnd::UnresolvedMapStyle_P::insertNodeIntoTopLevelTagValueRule(
     const auto itValueAttrib = ruleNode->values.find(QLatin1String("value"));
     const auto itAttribNotFound = ruleNode->values.end();
 
-    if (!ruleNode->oneOfConditionalSubnodes.isEmpty() && (itTagAttrib == itAttribNotFound || itValueAttrib == itAttribNotFound))
+    if (ruleNode->isSwitch && (itTagAttrib == itAttribNotFound || itValueAttrib == itAttribNotFound))
     {
         // In case current <switch> has no 'tag' and 'value' attributes pair, it needs to be merged inside it's children
         for (const auto& oneOfConditionalSubnode : constOf(ruleNode->oneOfConditionalSubnodes))
         {
-            // Merge only values from current <switch> node into its <case> node that are not yet set
+            // Merge only values from current <switch> node into its <case> node that are not yet set in the <case>
             mergeNonExistent(oneOfConditionalSubnode->values, ruleNode->values);
 
-            // Merge all <apply> nodes from current <switch> node into its <case> node before own <apply> nodes
-            // to keep proper apply order
-            oneOfConditionalSubnode->applySubnodes = ruleNode->applySubnodes + oneOfConditionalSubnode->applySubnodes;
+            // Merge all <apply> nodes from current <switch> node into its <case>-subnode, keeping following order:
+            //  - <apply> nodes from <case>
+            //  - <apply> nodes from <switch>
+            oneOfConditionalSubnode->applySubnodes = oneOfConditionalSubnode->applySubnodes + ruleNode->applySubnodes;
             
             if (!insertNodeIntoTopLevelTagValueRule(rules, rulesetType, oneOfConditionalSubnode))
                 return false;

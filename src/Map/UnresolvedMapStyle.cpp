@@ -57,8 +57,8 @@ bool OsmAnd::UnresolvedMapStyle::load()
     return _p->load();
 }
 
-OsmAnd::UnresolvedMapStyle::RuleNode::RuleNode(const bool applyOnlyIfOneOfConditionalsAccepted_)
-    : applyOnlyIfOneOfConditionalsAccepted(applyOnlyIfOneOfConditionalsAccepted_)
+OsmAnd::UnresolvedMapStyle::RuleNode::RuleNode(const bool isSwitch_)
+    : isSwitch(isSwitch_)
 {
 }
 
