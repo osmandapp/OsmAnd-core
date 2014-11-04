@@ -37,6 +37,12 @@ namespace OsmAnd
             Polygon = 3,
         };
 
+        enum {
+            LastZoomToUseBasemap = ZoomLevel11,
+            DetailedLandDataZoom = ZoomLevel14,
+            DefaultTextLabelWrappingLengthInCharacters = 20
+        };
+
         class Primitive;
         typedef QList< std::shared_ptr<const Primitive> > PrimitivesCollection;
 

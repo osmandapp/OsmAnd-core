@@ -3,6 +3,7 @@
 #include "ObfReader.h"
 #include "ObfInfo.h"
 #include "ObfMapSectionReader.h"
+#include "ObfMapSectionInfo.h"
 #include "IQueryController.h"
 
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
@@ -60,25 +61,35 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
 {
     auto mergedFoundation = MapFoundationType::Undefined;
+    std::shared_ptr<const ObfReader> basemapReader;
 
-    // Iterate through all OBF readers
-    bool basemapPresent = false;
     for (const auto& obfReader : constOf(obfReaders))
     {
-        // Check if request is aborted
         if (controller && controller->isAborted())
             return false;
 
         const auto& obfInfo = obfReader->obtainInfo();
 
-        // Check if there's a basemap present
+        // Handle basemap
         if (obfInfo->isBasemap)
-            basemapPresent = true;
+        {
+            // In case there's more than 1 basemap reader present, use only first and warn about this fact
+            if (basemapReader)
+            {
+                LogPrintf(LogSeverityLevel::Warning, "More than 1 basemap available");
+                continue;
+            }
 
-        // Iterate over all map sections of each OBF reader
+            // Save basemap reader for later use
+            basemapReader = obfReader;
+
+            // In case requested zoom is more detailed than basemap max zoom, skip basemap processing for now
+            if (zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+                continue;
+        }
+
         for (const auto& mapSection : constOf(obfInfo->mapSections))
         {
-            // Check if request is aborted
             if (controller && controller->isAborted())
                 return false;
 
@@ -107,8 +118,70 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         }
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    //if (bbox31 && *bbox31 == Utilities::tileBoundingBox31(TileId::fromXY(4211, 2691), ZoomLevel13))
+    //{
+    //    const auto basemap = Utilities::tileBoundingBox31(TileId::fromXY(2105u >> 1, 1345u >> 1), ZoomLevel11);
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
+    // In case there's basemap available and requested zoom is more detailed than basemap max zoom level,
+    // read tile from MaxBasemapZoomLevel that covers requested tile
+    if (basemapReader && zoom > static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel))
+    {
+        const auto& obfInfo = basemapReader->obtainInfo();
+
+        // Calculate proper bbox31 on MaxBasemapZoomLevel (if possible)
+        const AreaI *pBasemapBBox31 = nullptr;
+        AreaI basemapBBox31;
+        if (bbox31)
+        {
+            pBasemapBBox31 = &basemapBBox31;
+            basemapBBox31 = *bbox31;
+
+            const auto basemapTile31 = (1u << ObfMapSectionLevel::MaxBasemapZoomLevel);
+            const auto subBasemapPrecisionMask = basemapTile31 - 1u;
+
+            basemapBBox31.top() &= ~subBasemapPrecisionMask;
+            basemapBBox31.left() &= ~subBasemapPrecisionMask;
+            basemapBBox31.bottom() = (basemapBBox31.bottom() & (~subBasemapPrecisionMask)) + ((basemapBBox31.bottom() & subBasemapPrecisionMask) ? basemapTile31 : 0);
+            basemapBBox31.right() = (basemapBBox31.right() & (~subBasemapPrecisionMask)) + ((basemapBBox31.right() & subBasemapPrecisionMask) ? basemapTile31 : 0);
+            assert(basemapBBox31.contains(*bbox31));
+        }
+
+        for (const auto& mapSection : constOf(obfInfo->mapSections))
+        {
+            if (controller && controller->isAborted())
+                return false;
+
+            // Read objects from each map section
+            auto foundationToMerge = MapFoundationType::Undefined;
+            OsmAnd::ObfMapSectionReader::loadMapObjects(
+                basemapReader,
+                mapSection,
+                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel),
+                pBasemapBBox31,
+                resultOut,
+                &foundationToMerge,
+                filterById,
+                nullptr,
+                cache,
+                outReferencedCacheEntries,
+                controller,
+                metric);
+
+            // Basemap must always have a foundation defined
+            assert(foundationToMerge != MapFoundationType::Undefined);
+            if (mergedFoundation == MapFoundationType::Undefined)
+                mergedFoundation = foundationToMerge;
+            else if (mergedFoundation != foundationToMerge)
+                mergedFoundation = MapFoundationType::Mixed;
+        }
+    }
+
     // In case there was a basemap present, Undefined is Land
-    if (mergedFoundation == MapFoundationType::Undefined && !basemapPresent)
+    if (mergedFoundation == MapFoundationType::Undefined && !basemapReader)
         mergedFoundation = MapFoundationType::FullLand;
 
     if (outFoundation)

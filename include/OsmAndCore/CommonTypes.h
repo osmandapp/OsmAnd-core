@@ -57,6 +57,14 @@ namespace OsmAnd
             return this->id != that;
         }
 #endif // !defined(SWIG)
+
+        static inline TileId fromXY(const int32_t x, const int32_t y)
+        {
+            TileId tileId;
+            tileId.x = x;
+            tileId.y = y;
+            return tileId;
+        }
     };
 
 #if !defined(SWIG)

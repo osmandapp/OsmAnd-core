@@ -42,6 +42,13 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 {
     const Stopwatch totalStopwatch(metric != nullptr);
 
+    //////////////////////////////////////////////////////////////////////////
+    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(2105, 1346), ZoomLevel12))
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     uint32_t dummySectionObjectsLastUnusedId = 0;
     const std::shared_ptr<PrimitivisedArea> primitivisedArea(new PrimitivisedArea(
         area31,
@@ -63,7 +70,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 
         const auto& mapObjectSection = mapObject->section;
         const auto isFromBasemap = mapObjectSection->isBasemap;
-        if (zoom < static_cast<ZoomLevel>(BasemapZoom) && !isFromBasemap)
+        if (zoom < static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap) && !isFromBasemap)
             continue;
 
         if (mapObject->containsType(mapObjectSection->encodingDecodingRules->naturalCoastline_encodingRuleId))
@@ -84,6 +91,13 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     if (controller && controller->isAborted())
         return nullptr;
 
+    //////////////////////////////////////////////////////////////////////////
+    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(4211, 2691), ZoomLevel13))
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     if (metric)
         metric->elapsedTimeForSortingObjects += objectsSortingStopwatch.elapsed();
 
@@ -92,8 +106,8 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     // Polygonize coastlines
     bool fillEntireArea = true;
     bool addBasemapCoastlines = true;
-    const bool detailedLandData = (zoom >= static_cast<ZoomLevel>(DetailedLandDataZoom)) && !detailedmapMapObjects.isEmpty();
-    if (!detailedmapCoastlineObjects.empty())
+    const bool detailedLandData = (zoom >= Primitiviser::DetailedLandDataZoom) && !detailedmapMapObjects.isEmpty();
+    if (!detailedmapCoastlineObjects.isEmpty())
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
             owner->environment,
@@ -104,7 +118,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
             true,
             dummySectionObjectsLastUnusedId);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
-        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= static_cast<ZoomLevel>(BasemapZoom);
+        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap);
     }
     else
     {
@@ -172,12 +186,12 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     }
 
     // Obtain primitives
-    const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(BasemapZoom)) && detailedmapMapObjects.isEmpty() && detailedmapCoastlineObjects.isEmpty();
+    const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap)) && detailedmapMapObjects.isEmpty() && detailedmapCoastlineObjects.isEmpty();
 
     // Check if there is no data to primitivise. Report, clean-up and exit
     const auto mapObjectsCount =
         detailedmapMapObjects.size() +
-        ((zoom <= static_cast<ZoomLevel>(BasemapZoom) || detailedDataMissing) ? basemapMapObjects.size() : 0) +
+        ((zoom <= static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap) || detailedDataMissing) ? basemapMapObjects.size() : 0) +
         polygonizedCoastlineObjects.size();
     if (mapObjectsCount == 0)
     {
@@ -194,7 +208,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
-    if ((zoom <= static_cast<ZoomLevel>(BasemapZoom)) || detailedDataMissing)
+    if ((zoom <= static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap)) || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
         obtainPrimitives(owner->environment, primitivisedArea, basemapMapObjects, qMove(evaluationResult), cache, controller, metric);
@@ -261,7 +275,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 
         const auto& mapObjectSection = mapObject->section;
         const auto isFromBasemap = mapObjectSection->isBasemap;
-        if (zoom < static_cast<ZoomLevel>(BasemapZoom) && !isFromBasemap)
+        if (zoom < static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap) && !isFromBasemap)
             continue;
 
         if (!mapObject->containsType(mapObjectSection->encodingDecodingRules->naturalCoastline_encodingRuleId))
@@ -279,12 +293,12 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
         metric->elapsedTimeForSortingObjects += objectsSortingStopwatch.elapsed();
 
     // Obtain primitives
-    const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(BasemapZoom)) && detailedmapMapObjects.isEmpty();
+    const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap)) && detailedmapMapObjects.isEmpty();
 
     // Check if there is no data to primitivise. Report, clean-up and exit
     const auto mapObjectsCount =
         detailedmapMapObjects.size() +
-        ((zoom <= static_cast<ZoomLevel>(BasemapZoom) || detailedDataMissing) ? basemapMapObjects.size() : 0);
+        ((zoom <= static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap) || detailedDataMissing) ? basemapMapObjects.size() : 0);
     if (mapObjectsCount == 0)
     {
         // Empty area
@@ -300,7 +314,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
-    if ((zoom <= static_cast<ZoomLevel>(BasemapZoom)) || detailedDataMissing)
+    if ((zoom <= static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap)) || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
         obtainPrimitives(owner->environment, primitivisedArea, basemapMapObjects, qMove(evaluationResult), cache, controller, metric);
@@ -2149,7 +2163,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
         if (!text->drawOnPath && text->wrapWidth == 0)
         {
             // Default wrapping width (in characters)
-            text->wrapWidth = DefaultTextLabelWrappingLengthInCharacters;
+            text->wrapWidth = Primitiviser::DefaultTextLabelWrappingLengthInCharacters;
         }
 
         text->isBold = false;

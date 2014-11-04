@@ -25,6 +25,11 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfMapSectionLevel
     {
         Q_DISABLE_COPY_AND_MOVE(ObfMapSectionLevel);
+    public:
+        enum {
+            MaxBasemapZoomLevel = ZoomLevel11
+        };
+
     private:
         PrivateImplementation<ObfMapSectionLevel_P> _p;
     protected:

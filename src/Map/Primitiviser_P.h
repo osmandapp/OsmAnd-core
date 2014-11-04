@@ -35,12 +35,6 @@ namespace OsmAnd
         typedef Primitiviser::PrimitivisedArea PrimitivisedArea;
         typedef Primitiviser::Cache Cache;
 
-        enum {
-            BasemapZoom = 11,
-            DetailedLandDataZoom = 14,
-            DefaultTextLabelWrappingLengthInCharacters = 20
-        };
-
     private:
     protected:
         Primitiviser_P(Primitiviser* const owner);
