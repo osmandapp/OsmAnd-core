@@ -34,7 +34,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     const AreaI area31,
     const PointI sizeInPixels,
     const ZoomLevel zoom,
-    const MapFoundationType foundation,
+    const MapFoundationType foundation_,
     const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
     const IQueryController* const controller,
@@ -104,25 +104,28 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     const Stopwatch polygonizeCoastlinesStopwatch(metric != nullptr);
 
     // Polygonize coastlines
-    bool fillEntireArea = true;
-    bool addBasemapCoastlines = true;
-    const bool detailedLandData = (zoom >= Primitiviser::DetailedLandDataZoom) && !detailedmapMapObjects.isEmpty();
-    if (!detailedmapCoastlineObjects.isEmpty())
+    auto foundation = foundation_;
+    const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
+    const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
+    const auto detailedLandDataPresent = (zoom >= Primitiviser::DetailedLandDataZoom) && !detailedmapMapObjects.isEmpty();
+    auto fillEntireArea = true;
+    auto addBasemapCoastlines = true;
+    if (detailedmapCoastlinesPresent)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
             owner->environment,
             primitivisedArea,
             detailedmapCoastlineObjects,
             polygonizedCoastlineObjects,
-            !basemapCoastlineObjects.isEmpty(),
+            basemapCoastlinesPresent,
             true,
             dummySectionObjectsLastUnusedId);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
-        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || zoom <= static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap);
+        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandDataPresent) || zoom <= static_cast<ZoomLevel>(Primitiviser::LastZoomToUseBasemap);
     }
     else
     {
-        addBasemapCoastlines = !detailedLandData;
+        addBasemapCoastlines = !detailedLandDataPresent;
     }
     if (addBasemapCoastlines)
     {
@@ -135,6 +138,49 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
             true,
             dummySectionObjectsLastUnusedId);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
+    }
+
+    // In case zoom is higher than ObfMapSectionLevel::MaxBasemapZoomLevel and coastlines were not used
+    // due to none of them intersect current zoom tile edge, look for the nearest coastline segment
+    // to determine use FullLand or FullWater as foundation
+    if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && basemapCoastlinesPresent && fillEntireArea)
+    {
+        const auto center = area31.center();
+
+        std::shared_ptr<const Model::BinaryMapObject> neareastCoastlineMapObject;
+        PointI nearestCoastlineSegment0;
+        PointI nearestCoastlineSegment1;
+        double squaredMinDistance = std::numeric_limits<double>::max();
+
+        for (const auto& coastlineMapObject : constOf(basemapCoastlineObjects))
+        {
+            auto pCurrentPoint = coastlineMapObject->points31.constData();
+            auto pPrevPoint = pCurrentPoint++;
+            bool foundCloserCoastlineSegment = false;
+            for (auto currentPointIdx = 1, pointsCount = coastlineMapObject->points31.size(); currentPointIdx < pointsCount; currentPointIdx++, pPrevPoint++, pCurrentPoint++)
+            {
+                // Calculate minimal squared distance between center and line (*pPrevPoint -> *pCurrentPoint)
+                const auto squaredDistance = Utilities::minimalSquaredDistanceBetweenPointAndLine(*pPrevPoint, *pCurrentPoint, center);
+                if (squaredDistance < squaredMinDistance)
+                {
+                    nearestCoastlineSegment0 = *pPrevPoint;
+                    nearestCoastlineSegment1 = *pCurrentPoint;
+                    squaredMinDistance = squaredDistance;
+                    foundCloserCoastlineSegment = true;
+                }
+            }
+
+            if (foundCloserCoastlineSegment)
+                neareastCoastlineMapObject = coastlineMapObject;
+        }
+
+        // If nearest coastline was found, determine FullLand or FullWater using direction of the nearest segment
+        // Rule: Water is always on the right along the direction of coastline segment.
+        if (neareastCoastlineMapObject)
+        {
+            const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, center);
+            foundation = (sign >= 0) ? MapFoundationType::FullLand : MapFoundationType::FullWater;
+        }
     }
 
     if (metric)

@@ -121,7 +121,6 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     //////////////////////////////////////////////////////////////////////////
     //if (bbox31 && *bbox31 == Utilities::tileBoundingBox31(TileId::fromXY(4211, 2691), ZoomLevel13))
     //{
-    //    const auto basemap = Utilities::tileBoundingBox31(TileId::fromXY(2105u >> 1, 1345u >> 1), ZoomLevel11);
     //    int i = 5;
     //}
     //////////////////////////////////////////////////////////////////////////
@@ -138,16 +137,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         if (bbox31)
         {
             pBasemapBBox31 = &basemapBBox31;
-            basemapBBox31 = *bbox31;
-
-            const auto basemapTile31 = (1u << ObfMapSectionLevel::MaxBasemapZoomLevel);
-            const auto subBasemapPrecisionMask = basemapTile31 - 1u;
-
-            basemapBBox31.top() &= ~subBasemapPrecisionMask;
-            basemapBBox31.left() &= ~subBasemapPrecisionMask;
-            basemapBBox31.bottom() = (basemapBBox31.bottom() & (~subBasemapPrecisionMask)) + ((basemapBBox31.bottom() & subBasemapPrecisionMask) ? basemapTile31 : 0);
-            basemapBBox31.right() = (basemapBBox31.right() & (~subBasemapPrecisionMask)) + ((basemapBBox31.right() & subBasemapPrecisionMask) ? basemapTile31 : 0);
-            assert(basemapBBox31.contains(*bbox31));
+            basemapBBox31 = Utilities::roundBoundingBox31(*bbox31, static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
         }
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))

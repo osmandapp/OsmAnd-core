@@ -226,6 +226,14 @@ namespace OsmAnd
             return p;
         }
 
+        inline static double projection31(const PointI a, const PointI b, const PointI c)
+        {
+            return projection31(
+                a.x, a.y,
+                b.x, b.y,
+                c.x, c.y);
+        }
+
         inline static double normalizedAngleRadians(double angle)
         {
             while (angle > M_PI)
@@ -346,6 +354,44 @@ namespace OsmAnd
             return false;
         }
 
+        inline static double minimalSquaredDistanceBetweenPointAndLine(const PointI l0, const PointI l1, const PointI p)
+        {
+            // Do some precalculations
+            const auto dx0 = static_cast<int64_t>(l0.x) - static_cast<int64_t>(p.x);
+            const auto dy0 = static_cast<int64_t>(l0.y) - static_cast<int64_t>(p.y);
+
+            // Determine if projection of p onto l0-l1 lays inside l0-l1
+            const auto dxl = static_cast<int64_t>(l1.x) - static_cast<int64_t>(l0.x);
+            const auto dyl = static_cast<int64_t>(l1.y) - static_cast<int64_t>(l0.y);
+            const auto uNumerator = dxl * dy0 - dx0 * dyl;
+            const auto uNumeratorSquared = static_cast<uint64_t>(uNumerator * uNumerator);
+            const auto uDenominatorSquared = static_cast<uint64_t>(dxl*dxl) + static_cast<uint64_t>(dyl*dyl);
+
+            // In case denominator is zero, it means l0 the same as l1, in that case return distance to either l0 or l1
+            if (uDenominatorSquared == 0)
+                return static_cast<double>(static_cast<uint64_t>(dx0*dx0) + static_cast<uint64_t>(dy0*dy0));
+
+            // In case uSquared is not [0.0 ... 1.0], get minimal of the distances between and l0 or l1
+            const auto uSquared = static_cast<double>(uNumeratorSquared) / static_cast<double>(uDenominatorSquared);
+            if (uSquared < 0.0 || uSquared > 1.0)
+            {
+                const auto d0 = static_cast<uint64_t>(dx0*dx0) + static_cast<uint64_t>(dy0*dy0);
+
+                const auto dx1 = static_cast<int64_t>(l1.x) - static_cast<int64_t>(p.x);
+                const auto dy1 = static_cast<int64_t>(l1.y) - static_cast<int64_t>(p.y);
+                const auto d1 = static_cast<uint64_t>(dx1*dx1) + static_cast<uint64_t>(dy1*dy1);
+
+                return static_cast<double>(qMin(d0, d1));
+            }
+
+            return uSquared;
+        }
+
+        inline static double minimalDistanceBetweenPointAndLine(const PointI l0, const PointI l1, const PointI p)
+        {
+            return qSqrt(minimalSquaredDistanceBetweenPointAndLine(l0, l1, p));
+        }
+
         inline static double degreesDiff(const double a1, const double a2)
         {
             auto diff = a1 - a2;
@@ -385,6 +431,32 @@ namespace OsmAnd
             assert(output.bottom() >= output.top());
 
             return output;
+        }
+
+        inline static AreaI roundBoundingBox31(const AreaI bbox31, const ZoomLevel zoom)
+        {
+            const auto tilesCount = static_cast<int32_t>(1u << static_cast<unsigned int>(ZoomLevel31 - zoom));
+            const auto roudingMask = static_cast<uint32_t>(tilesCount - 1);
+
+            AreaI roundedBBox31;
+
+            roundedBBox31.top() = bbox31.top() & ~roudingMask;
+
+            roundedBBox31.left() = bbox31.left() & ~roudingMask;
+            
+            roundedBBox31.bottom() = bbox31.bottom() & ~roudingMask;
+            if ((bbox31.bottom() & roudingMask) != 0)
+                roundedBBox31.bottom() += tilesCount;
+            roundedBBox31.bottom() -= 1;
+
+            roundedBBox31.right() = bbox31.right() & ~roudingMask;
+            if ((bbox31.right() & roudingMask) != 0)
+                roundedBBox31.right() += tilesCount;
+            roundedBBox31.right() -= 1;
+
+            assert(roundedBBox31.contains(bbox31));
+
+            return roundedBBox31;
         }
 
         inline static AreaI areaRightShift(const AreaI& input, const uint32_t shift)

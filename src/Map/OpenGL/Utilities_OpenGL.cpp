@@ -15,13 +15,13 @@ float OsmAnd::Utilities_OpenGL_Common::calculateCameraDistance(const glm::mat4& 
 bool OsmAnd::Utilities_OpenGL_Common::rayIntersectPlane(const glm::vec3& planeN, const glm::vec3& planeO, const glm::vec3& rayD, const glm::vec3& rayO, float& distance)
 {
     const auto numerator = glm::dot(planeO - rayO, planeN);
-    if (qAbs(numerator) <= std::numeric_limits<float>::epsilon())
+    if (qFuzzyIsNull(numerator))
     {
         distance = std::numeric_limits<float>::quiet_NaN();
         return true;
     }
     const auto denominator = glm::dot(rayD, planeN);
-    if (qAbs(denominator) <= std::numeric_limits<float>::epsilon())
+    if (qFuzzyIsNull(denominator))
         return false;
 
     distance = numerator / denominator;

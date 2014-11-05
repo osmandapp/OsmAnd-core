@@ -242,13 +242,6 @@ QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QStr
 {
     bool ok = false;
 
-    //////////////////////////////////////////////////////////////////////////
-    //if (name.contains(QLatin1String("/osmc_")))
-    //{
-    //    int i = 5;
-    //}
-    //////////////////////////////////////////////////////////////////////////
-
     // Try to obtain from external resources first
     if (static_cast<bool>(owner->externalResourcesProvider))
     {
