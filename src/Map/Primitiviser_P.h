@@ -51,6 +51,8 @@ namespace OsmAnd
             const std::shared_ptr<const MapPresentationEnvironment>& env,
             const std::shared_ptr<PrimitivisedArea>& primitivisedArea);
 
+        static AreaI alignAreaForCoastlines(const AreaI& area31);
+
         static bool polygonizeCoastlines(
             const std::shared_ptr<const MapPresentationEnvironment>& env,
             const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,

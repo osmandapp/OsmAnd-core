@@ -57,7 +57,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
         cache,
         owner->environment));
     applyEnvironment(owner->environment, primitivisedArea);
-    
+
     const Stopwatch objectsSortingStopwatch(metric != nullptr);
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
@@ -407,6 +407,25 @@ void OsmAnd::Primitiviser_P::applyEnvironment(
     primitivisedArea->scale31ToPixelDivisor.y = tileDivisor / static_cast<double>(primitivisedArea->sizeInPixels.y);
 }
 
+OsmAnd::AreaI OsmAnd::Primitiviser_P::alignAreaForCoastlines(const AreaI& area31)
+{
+    const auto tilesCount = static_cast<int32_t>(1u << static_cast<unsigned int>(ZoomLevel5));
+    const auto alignMask = static_cast<uint32_t>(tilesCount - 1);
+
+    // Align area to 32: this fixes coastlines and specifically Antarctica
+    AreaI alignedArea31;
+
+    alignedArea31.top() = area31.top() & ~alignMask;
+
+    alignedArea31.left() = area31.left() & ~alignMask;
+
+    alignedArea31.bottom() = area31.bottom() & ~alignMask;
+
+    alignedArea31.right() = area31.right() & ~alignMask;
+
+    return alignedArea31;
+}
+
 bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
     const std::shared_ptr<const MapPresentationEnvironment>& env,
     const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
@@ -421,11 +440,7 @@ bool OsmAnd::Primitiviser_P::polygonizeCoastlines(
 
     // Align area to 32: this fixes coastlines and specifically Antarctica
     const auto area31 = primitivisedArea->area31;
-    auto alignedArea31 = primitivisedArea->area31;
-    alignedArea31.top() &= ~((1u << 5) - 1);
-    alignedArea31.left() &= ~((1u << 5) - 1);
-    alignedArea31.bottom() &= ~((1u << 5) - 1);
-    alignedArea31.right() &= ~((1u << 5) - 1);
+    const auto alignedArea31 = alignAreaForCoastlines(primitivisedArea->area31);
 
     QVector< PointI > linePoints31;
     for (const auto& coastline : constOf(coastlines))
@@ -613,12 +628,7 @@ bool OsmAnd::Primitiviser_P::buildCoastlinePolygonSegment(
 {
     bool lineEnded = false;
 
-    // Align area to 32: this fixes coastlines and specifically Antarctica
-    auto alignedArea31 = primitivisedArea->area31;
-    alignedArea31.top() &= ~((1u << 5) - 1);
-    alignedArea31.left() &= ~((1u << 5) - 1);
-    alignedArea31.bottom() &= ~((1u << 5) - 1);
-    alignedArea31.right() &= ~((1u << 5) - 1);
+    const auto alignedArea31 = alignAreaForCoastlines(primitivisedArea->area31);
 
     auto point = currentPoint31;
     if (prevInside)
@@ -820,12 +830,7 @@ void OsmAnd::Primitiviser_P::convertCoastlinePolylinesToPolygons(
     QList< QVector< PointI > >& coastlinePolylines,
     QList< QVector< PointI > >& coastlinePolygons)
 {
-    // Align area to 32: this fixes coastlines and specifically Antarctica
-    auto alignedArea31 = primitivisedArea->area31;
-    alignedArea31.top() &= ~((1u << 5) - 1);
-    alignedArea31.left() &= ~((1u << 5) - 1);
-    alignedArea31.bottom() &= ~((1u << 5) - 1);
-    alignedArea31.right() &= ~((1u << 5) - 1);
+    const auto alignedArea31 = alignAreaForCoastlines(primitivisedArea->area31);
 
     QList< QVector< PointI > > validPolylines;
 
@@ -1119,7 +1124,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitives(
                     primitivisedArea->polygons.append(group->polygons);
                     primitivisedArea->polylines.append(group->polylines);
                     primitivisedArea->points.append(group->points);
-                    
+
                     // Add shared group to current context
                     primitivisedArea->primitivesGroups.push_back(qMove(group));
                 }
@@ -1309,7 +1314,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
             // Check size of polygon
             const auto doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
-            const auto polygonArea31 = static_cast<double>(doubledPolygonArea31) * 0.5;
+            const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
             const auto polygonAreaInPixels = polygonArea31 / (primitivisedArea->scale31ToPixelDivisor.x * primitivisedArea->scale31ToPixelDivisor.y);
             const auto polygonAreaInAbstractPixels = polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
             if (polygonAreaInAbstractPixels <= primitivisedArea->polygonAreaMinimalThreshold)
@@ -1453,7 +1458,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivesGroup> OsmAnd::Primitivi
 
             // Create new primitive
             const std::shared_ptr<Primitive> primitive(new Primitive(
-                group, 
+                group,
                 objectType,
                 typeRuleIdIndex,
                 qMove(evaluationResult)));
@@ -1896,12 +1901,12 @@ void OsmAnd::Primitiviser_P::obtainSymbolsFromPoint(
     // Obtain icon for this symbol (only if there's no icon yet)
     const auto alreadyContainsIcon = std::find_if(outSymbols.cbegin(), outSymbols.cend(),
         []
-        (const std::shared_ptr<const Symbol>& symbol) -> bool
-        {
-            if (std::dynamic_pointer_cast<const IconSymbol>(symbol))
-                return true;
-            return false;
-        }) != outSymbols.cend();
+    (const std::shared_ptr<const Symbol>& symbol) -> bool
+    {
+        if (std::dynamic_pointer_cast<const IconSymbol>(symbol))
+            return true;
+        return false;
+    }) != outSymbols.cend();
     if (!alreadyContainsIcon)
     {
         obtainPrimitiveIcon(
@@ -2116,7 +2121,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             }
         }
     }
-    
+
     // Process captions in order how captions where declared in OBF source (what is being controlled by 'rendering_types.xml')
     bool ok;
     for (const auto& captionRuleId : constOf(captionsOrder))
@@ -2179,7 +2184,7 @@ void OsmAnd::Primitiviser_P::obtainPrimitiveTexts(
             if (!text->drawOnPath)
                 text->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
         }
-        
+
         // By default, text order is treated as 100
         text->order = 100;
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
