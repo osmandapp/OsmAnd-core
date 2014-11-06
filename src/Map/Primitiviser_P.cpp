@@ -146,6 +146,7 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
     if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && basemapCoastlinesPresent && fillEntireArea)
     {
         const auto center = area31.center();
+        assert(area31.contains(center));
 
         std::shared_ptr<const Model::BinaryMapObject> neareastCoastlineMapObject;
         PointI nearestCoastlineSegment0;
@@ -154,24 +155,21 @@ std::shared_ptr<const OsmAnd::Primitiviser_P::PrimitivisedArea> OsmAnd::Primitiv
 
         for (const auto& coastlineMapObject : constOf(basemapCoastlineObjects))
         {
-            auto pCurrentPoint = coastlineMapObject->points31.constData();
-            auto pPrevPoint = pCurrentPoint++;
-            bool foundCloserCoastlineSegment = false;
-            for (auto currentPointIdx = 1, pointsCount = coastlineMapObject->points31.size(); currentPointIdx < pointsCount; currentPointIdx++, pPrevPoint++, pCurrentPoint++)
+            int segmentIndex0 = -1;
+            int segmentIndex1 = -1;
+            const auto squaredDistance = Utilities::minimalSquaredDistanceToLineSegmentFromPoint(
+                coastlineMapObject->points31,
+                center,
+                &segmentIndex0,
+                &segmentIndex1);
+            if (segmentIndex0 != -1 && segmentIndex1 != -1 && squaredDistance < squaredMinDistance)
             {
-                // Calculate minimal squared distance between center and line (*pPrevPoint -> *pCurrentPoint)
-                const auto squaredDistance = Utilities::minimalSquaredDistanceBetweenPointAndLine(*pPrevPoint, *pCurrentPoint, center);
-                if (squaredDistance < squaredMinDistance)
-                {
-                    nearestCoastlineSegment0 = *pPrevPoint;
-                    nearestCoastlineSegment1 = *pCurrentPoint;
-                    squaredMinDistance = squaredDistance;
-                    foundCloserCoastlineSegment = true;
-                }
-            }
-
-            if (foundCloserCoastlineSegment)
+                const auto pPoints = coastlineMapObject->points31.constData();
+                nearestCoastlineSegment0 = pPoints[segmentIndex0];
+                nearestCoastlineSegment1 = pPoints[segmentIndex1];
+                squaredMinDistance = squaredDistance;
                 neareastCoastlineMapObject = coastlineMapObject;
+            }
         }
 
         // If nearest coastline was found, determine FullLand or FullWater using direction of the nearest segment

@@ -354,42 +354,115 @@ namespace OsmAnd
             return false;
         }
 
-        inline static double minimalSquaredDistanceBetweenPointAndLine(const PointI l0, const PointI l1, const PointI p)
+        inline static double squaredDistanceBetweenPointAndLine(const PointI l0, const PointI l1, const PointI p, bool* pOutInOnLine = nullptr)
         {
-            // Do some precalculations
-            const auto dx0 = static_cast<int64_t>(l0.x) - static_cast<int64_t>(p.x);
-            const auto dy0 = static_cast<int64_t>(l0.y) - static_cast<int64_t>(p.y);
+            // Make p center of the coordinate system
+            const auto a = PointI64(l0) - PointI64(p);
+            const auto b = PointI64(l1) - PointI64(p);
 
-            // Determine if projection of p onto l0-l1 lays inside l0-l1
-            const auto dxl = static_cast<int64_t>(l1.x) - static_cast<int64_t>(l0.x);
-            const auto dyl = static_cast<int64_t>(l1.y) - static_cast<int64_t>(l0.y);
-            const auto uNumerator = dxl * dy0 - dx0 * dyl;
-            const auto uNumeratorSquared = static_cast<uint64_t>(uNumerator * uNumerator);
-            const auto uDenominatorSquared = static_cast<uint64_t>(dxl*dxl) + static_cast<uint64_t>(dyl*dyl);
+            // Calculate distance between point and line using length of projection of point p on line l0-l1
+            const auto vL = b - a;
+            const auto squaredLineLength = vL.squareNorm();
 
             // In case denominator is zero, it means l0 the same as l1, in that case return distance to either l0 or l1
-            if (uDenominatorSquared == 0)
-                return static_cast<double>(static_cast<uint64_t>(dx0*dx0) + static_cast<uint64_t>(dy0*dy0));
-
-            // In case uSquared is not [0.0 ... 1.0], get minimal of the distances between and l0 or l1
-            const auto uSquared = static_cast<double>(uNumeratorSquared) / static_cast<double>(uDenominatorSquared);
-            if (uSquared < 0.0 || uSquared > 1.0)
+            if (squaredLineLength == 0)
             {
-                const auto d0 = static_cast<uint64_t>(dx0*dx0) + static_cast<uint64_t>(dy0*dy0);
+                // Also, in this case projection point is always equal to l0 (and l1), thus always on line
+                if (pOutInOnLine != nullptr)
+                    *pOutInOnLine = true;
 
-                const auto dx1 = static_cast<int64_t>(l1.x) - static_cast<int64_t>(p.x);
-                const auto dy1 = static_cast<int64_t>(l1.y) - static_cast<int64_t>(p.y);
-                const auto d1 = static_cast<uint64_t>(dx1*dx1) + static_cast<uint64_t>(dy1*dy1);
-
-                return static_cast<double>(qMin(d0, d1));
+                return static_cast<double>(a.squareNorm());
             }
 
-            return uSquared;
+            // Calculate squared distance (p == 0, l0 == 1, l1 == 2):
+            //       |(x2 - x1)*(y1 - y0) - (x1 - x0)*(y2 - y1)|
+            // d = -----------------------------------------------
+            //            sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
+            // Since p became center of the coordinate system, formula above can be rewritten as
+            //         |(x2 - x1)*y1 - x1*(y2 - y1)|
+            // d = -------------------------------------
+            //       sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
+            const auto nominator = qAbs(static_cast<double>(vL.x)*static_cast<double>(a.y) - static_cast<double>(a.x)*static_cast<double>(vL.y));
+            const auto squaredDistance = (nominator * nominator) / static_cast<double>(squaredLineLength);
+
+            // If requested to check in projected point used to calculate distance is on the line itself,
+            // do some extra calculations
+            if (pOutInOnLine != nullptr)
+            {
+                // In case u is [0.0 ... 1.0], projected point is on line
+                // uNominator = (p.x - l0.x)*vL.x + (p.y - l0.y)*vL.y
+                // Since p became center of the coordinate system, formula above can be rewritten as
+                // uNominator = (-l0.x)*vL.x + (-l0.y)*vL.y
+                const auto uDotProduct = static_cast<double>(-a.x)*static_cast<double>(vL.x) + static_cast<double>(-a.y)*static_cast<double>(vL.y);
+                const auto u = static_cast<double>(uDotProduct) / static_cast<double>(squaredLineLength);
+                *pOutInOnLine = (u >= 0.0 && u <= 1.0);
+            }
+
+            return squaredDistance;
         }
 
-        inline static double minimalDistanceBetweenPointAndLine(const PointI l0, const PointI l1, const PointI p)
+        inline static double distanceBetweenPointAndLine(const PointI l0, const PointI l1, const PointI p, bool* pOutInOnLine = nullptr)
         {
-            return qSqrt(minimalSquaredDistanceBetweenPointAndLine(l0, l1, p));
+            return qSqrt(squaredDistanceBetweenPointAndLine(l0, l1, p, pOutInOnLine));
+        }
+
+        inline static double minimalSquaredDistanceToLineSegmentFromPoint(
+            const QVector<PointI>& line,
+            const PointI p,
+            int* pOutSegmentIndex0 = nullptr,
+            int* pOutSegmentIndex1 = nullptr)
+        {
+            const auto pointsCount = line.size();
+            double squaredMinDistance = std::numeric_limits<double>::max();
+            *pOutSegmentIndex0 = -1;
+            *pOutSegmentIndex1 = -1;
+
+            // Find segment that is nearest to point p using only projected-p that is contained by the line
+            auto pCurrentPoint = line.constData();
+            auto pPrevPoint = pCurrentPoint++;
+            for (auto currentPointIdx = 1; currentPointIdx < pointsCount; currentPointIdx++, pPrevPoint++, pCurrentPoint++)
+            {
+                bool isOnLine = false;
+                const auto squaredDistance = squaredDistanceBetweenPointAndLine(*pPrevPoint, *pCurrentPoint, p, &isOnLine);
+                if (isOnLine && squaredDistance < squaredMinDistance)
+                {
+                    *pOutSegmentIndex0 = currentPointIdx - 1;
+                    *pOutSegmentIndex1 = currentPointIdx;
+                    squaredMinDistance = squaredDistance;
+                }
+            }
+
+            // Find segment that is nearest to point p using only points from the line
+            pCurrentPoint = line.constData();
+            for (auto currentPointIdx = 0; currentPointIdx < pointsCount; currentPointIdx++, pCurrentPoint++)
+            {
+                const auto squaredDistance = (PointI64(*pCurrentPoint) - PointI64(p)).squareNorm();
+                if (squaredDistance < squaredMinDistance)
+                {
+                    if (Q_UNLIKELY(currentPointIdx == 0))
+                    {
+                        *pOutSegmentIndex0 = 0;
+                        *pOutSegmentIndex1 = 1;
+                    }
+                    else
+                    {
+                        *pOutSegmentIndex0 = currentPointIdx - 1;
+                        *pOutSegmentIndex1 = currentPointIdx;
+                    }
+                    squaredMinDistance = squaredDistance;
+                }
+            }
+
+            return squaredMinDistance;
+        }
+
+        inline static double minimalDistanceToLineSegmentFromPoint(
+            const QVector<PointI>& line,
+            const PointI p,
+            int* pOutSegmentIndex0 = nullptr,
+            int* pOutSegmentIndex1 = nullptr)
+        {
+            return qSqrt(minimalSquaredDistanceToLineSegmentFromPoint(line, p, pOutSegmentIndex0, pOutSegmentIndex1));
         }
 
         inline static double degreesDiff(const double a1, const double a2)
