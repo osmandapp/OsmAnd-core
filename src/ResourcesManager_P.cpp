@@ -674,7 +674,12 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
     }
     if (xmlReader.hasError())
     {
-        LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(xmlReader.errorString()), xmlReader.lineNumber(), xmlReader.columnNumber());
+        LogPrintf(
+            LogSeverityLevel::Warning,
+            "XML error: %s (%"PRIi64", %"PRIi64")",
+            qPrintable(xmlReader.errorString()),
+            xmlReader.lineNumber(),
+            xmlReader.columnNumber());
         return false;
     }
 

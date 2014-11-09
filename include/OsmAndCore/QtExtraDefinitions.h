@@ -4,7 +4,7 @@
 #include <QtGlobal>
 
 #if !defined(qPrintableRef)
-#  define qPrintableRef(stringRef) (stringRef).toLocal8Bit().constData()
+#  define qPrintableRef(stringRef) stringRef.toLocal8Bit().constData()
 #endif // !defined(qPrintableRef)
 
 #if defined(_UNICODE) || defined(UNICODE)
@@ -15,8 +15,8 @@
 
 #if !defined(Q_DISABLE_MOVE)
 #   if defined(Q_COMPILER_RVALUE_REFS)
-#       define Q_DISABLE_MOVE(Class) \
-            Class(Class &&) Q_DECL_EQ_DELETE;\
+#       define Q_DISABLE_MOVE(Class)                                                        \
+            Class(Class &&) Q_DECL_EQ_DELETE;                                               \
             Class &operator=(Class &&) Q_DECL_EQ_DELETE;
 #   else
 #       define Q_DISABLE_MOVE(Class)
@@ -24,8 +24,8 @@
 #endif
 
 #if !defined(Q_DISABLE_COPY_AND_MOVE)
-#   define Q_DISABLE_COPY_AND_MOVE(Class) \
-        Q_DISABLE_COPY(Class);\
+#   define Q_DISABLE_COPY_AND_MOVE(Class)                                                   \
+        Q_DISABLE_COPY(Class);                                                              \
         Q_DISABLE_MOVE(Class);
 #endif // !defined(Q_DISABLE_COPY_AND_MOVE)
 

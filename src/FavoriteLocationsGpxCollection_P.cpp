@@ -111,16 +111,16 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
 	return true;
 }
 
-bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader)
+bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlReader)
 {
 	std::shared_ptr< FavoriteLocation > newItem;
 	QList< std::shared_ptr< FavoriteLocation > > newItems;
 
-	while (!reader.atEnd() && !reader.hasError())
+	while (!xmlReader.atEnd() && !xmlReader.hasError())
 	{
-		reader.readNext();
-		const auto tagName = reader.name();
-		if (reader.isStartElement())
+		xmlReader.readNext();
+		const auto tagName = xmlReader.name();
+		if (xmlReader.isStartElement())
 		{
 			if (tagName == QLatin1String("wpt"))
 			{
@@ -131,13 +131,13 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
 				}
 
 				bool ok = true;
-				const double lat = reader.attributes().value(QLatin1String("lat")).toDouble(&ok);
+				const double lat = xmlReader.attributes().value(QLatin1String("lat")).toDouble(&ok);
 				if (!ok)
 				{
 					LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: invalid latitude");
 					return false;
 				}
-				const double lon = reader.attributes().value(QLatin1String("lon")).toDouble(&ok);
+				const double lon = xmlReader.attributes().value(QLatin1String("lon")).toDouble(&ok);
 				if (!ok)
 				{
 					LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: invalid longitude");
@@ -154,7 +154,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
 					return false;
 				}
 
-				newItem->setTitle(reader.readElementText());
+				newItem->setTitle(xmlReader.readElementText());
 			}
 			else if (tagName == QLatin1String("category"))
 			{
@@ -164,7 +164,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
 					return false;
 				}
 
-                const auto& group = reader.readElementText();
+                const auto& group = xmlReader.readElementText();
                 if (!group.isEmpty())
                     newItem->setGroup(group);
 			}
@@ -177,7 +177,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
 				}
 
 				bool ok = false;
-				const auto color = Utilities::parseColor(reader.readElementText(), ColorARGB(), &ok);
+				const auto color = Utilities::parseColor(xmlReader.readElementText(), ColorARGB(), &ok);
 				if (!ok)
 				{
 					LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: invalid color");
@@ -197,7 +197,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
                 newItem->setIsHidden(true);
             }
 		}
-		else if (reader.isEndElement())
+		else if (xmlReader.isEndElement())
 		{
 			if (tagName == QLatin1String("wpt"))
 			{
@@ -212,9 +212,14 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& reader
 			}
 		}
 	}
-	if (reader.hasError())
+	if (xmlReader.hasError())
 	{
-		LogPrintf(LogSeverityLevel::Warning, "XML error: %s (%d, %d)", qPrintable(reader.errorString()), reader.lineNumber(), reader.columnNumber());
+		LogPrintf(
+            LogSeverityLevel::Warning,
+            "XML error: %s (%"PRIi64", %"PRIi64")",
+            qPrintable(xmlReader.errorString()),
+            xmlReader.lineNumber(),
+            xmlReader.columnNumber());
 		return false;
 	}
 
