@@ -21,7 +21,9 @@ QString OsmAnd::MapRasterizer_Metrics::Metric_rasterize::toString(const bool sho
     QString output;
 
     OsmAnd__MapRasterizer_Metrics__Metric_rasterize__FIELDS(PRINT_METRIC_FIELD);
-    output += QLatin1String("\n") + Metric::toString(shortFormat, prefix);
+    const auto submetricsString = Metric::toString(shortFormat, prefix);
+    if (!submetricsString.isEmpty())
+        output += QLatin1String("\n") + Metric::toString(shortFormat, prefix);
 
     return output;
 }

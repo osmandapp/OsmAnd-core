@@ -24,7 +24,9 @@ QString OsmAnd::ObfMapSectionReader_Metrics::Metric_loadMapObjects::toString(con
 
     output += QLatin1String("\n") + prefix + QString(QLatin1String("~time/1k-only-visited = %1ms")).arg((elapsedTimeForOnlyVisitedMapObjects * 1000.0f / static_cast<float>(visitedMapObjects - acceptedMapObjects)) * 1000.0f);
     output += QLatin1String("\n") + prefix + QString(QLatin1String("~time/1k-only-accepted = %1ms")).arg((elapsedTimeForOnlyAcceptedMapObjects * 1000.0f / static_cast<float>(acceptedMapObjects)) * 1000.0f);
-    output += QLatin1String("\n") + Metric::toString(shortFormat, prefix);
+    const auto submetricsString = Metric::toString(shortFormat, prefix);
+    if (!submetricsString.isEmpty())
+        output += QLatin1String("\n") + Metric::toString(shortFormat, prefix);
 
     return output;
 }

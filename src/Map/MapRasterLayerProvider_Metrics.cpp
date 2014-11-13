@@ -21,7 +21,9 @@ QString OsmAnd::MapRasterLayerProvider_Metrics::Metric_obtainData::toString(cons
     QString output;
 
     OsmAnd__MapRasterLayerProvider_Metrics__Metric_obtainData__FIELDS(PRINT_METRIC_FIELD);
-    output += QLatin1String("\n") + Metric::toString(shortFormat, prefix);
+    const auto submetricsString = Metric::toString(shortFormat, prefix);
+    if (!submetricsString.isEmpty())
+        output += QLatin1String("\n") + Metric::toString(shortFormat, prefix);
 
     return output;
 }

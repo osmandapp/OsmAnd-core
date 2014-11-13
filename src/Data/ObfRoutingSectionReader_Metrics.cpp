@@ -24,7 +24,9 @@ QString OsmAnd::ObfRoutingSectionReader_Metrics::Metric_loadRoads::toString(cons
 
     output += QLatin1String("\n") + prefix + QString(QLatin1String("~time/1k-only-visited = %1ms")).arg((elapsedTimeForOnlyVisitedRoads * 1000.0f / static_cast<float>(visitedRoads - acceptedRoads)) * 1000.0f);
     output += QLatin1String("\n") + prefix + QString(QLatin1String("~time/1k-only-accepted = %1ms")).arg((elapsedTimeForOnlyAcceptedRoads * 1000.0f / static_cast<float>(acceptedRoads)) * 1000.0f);
-    output += QLatin1String("\n") + Metric::toString(shortFormat, prefix);
+    const auto submetricsString = Metric::toString(shortFormat, prefix);
+    if (!submetricsString.isEmpty())
+        output += QLatin1String("\n") + Metric::toString(shortFormat, prefix);
 
     return output;
 }

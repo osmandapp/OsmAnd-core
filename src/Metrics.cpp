@@ -71,6 +71,11 @@ QString OsmAnd::Metric::toString(const bool shortFormat /*= false*/, const QStri
 {
     QStringList outputs;
     for (auto& submetric : submetrics)
+    {
+        const auto submetricString = submetric->toString(shortFormat, prefix);
+        if (submetricString.isEmpty())
+            continue;
         outputs.push_back(submetric->toString(shortFormat, prefix));
+    }
     return outputs.join(QChar(QLatin1Char('\n')));
 }
