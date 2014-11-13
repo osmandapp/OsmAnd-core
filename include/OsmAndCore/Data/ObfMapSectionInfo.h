@@ -70,7 +70,7 @@ namespace OsmAnd
         QSet<uint32_t> zeroLayers_encodingRuleIds;
         QSet<uint32_t> negativeLayers_encodingRuleIds;
 
-        virtual void addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
+        virtual uint32_t addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
     };
 
     class ObfMapSectionInfo_P;

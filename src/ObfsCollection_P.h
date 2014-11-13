@@ -30,8 +30,6 @@ namespace OsmAnd
     protected:
         ObfsCollection_P(ObfsCollection* owner);
 
-        ImplementationInterface<ObfsCollection> owner;
-
         QFileSystemWatcher* const _fileSystemWatcher;
         QMetaObject::Connection _onDirectoryChangedConnection;
         void onDirectoryChanged(const QString& path);
@@ -85,6 +83,8 @@ namespace OsmAnd
         void collectSources() const;
     public:
         virtual ~ObfsCollection_P();
+
+        ImplementationInterface<ObfsCollection> owner;
 
         ObfsCollection::SourceOriginId addDirectory(const QDir& dir, bool recursive);
         ObfsCollection::SourceOriginId addFile(const QFileInfo& fileInfo);

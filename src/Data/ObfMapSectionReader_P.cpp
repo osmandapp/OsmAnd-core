@@ -423,7 +423,15 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     readTreeNodeChildren(reader, section, childNode, subchildrenFoundation, nodesWithData, bbox31, controller, metric);
                     
                     if (const auto bytesUntilLimit = cis->BytesUntilLimit())
-                        LogPrintf(LogSeverityLevel::Error, "Error in reader: %d bytes until limit", bytesUntilLimit);
+                    {
+                        LogPrintf(LogSeverityLevel::Error,
+                            "Error in reader (readTreeNodeChildren): %d byte(s) was not read until limit of %d byte(s) starting at offset %d in '%s'. First child at %d offset.",
+                            bytesUntilLimit,
+                            length,
+                            childNode->offset,
+                            qPrintable(section->name),
+                            childNode->firstDataBoxInnerOffset);
+                    }
                     assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(oldLimit);
                 }

@@ -19,7 +19,7 @@ std::shared_ptr<const OsmAnd::MapObject::EncodingDecodingRules> OsmAnd::MapObjec
     }));
 
 OsmAnd::MapObject::MapObject()
-    : encodingDecodingRules(MapObject::defaultEncodingDecodingRules)
+    : encodingDecodingRules(defaultEncodingDecodingRules)
     , isArea(false)
 {
 }
@@ -84,7 +84,7 @@ void OsmAnd::MapObject::computeBBox31()
         bbox31.enlargeToInclude(*pPoint31);
 }
 
-bool OsmAnd::MapObject::intersects(const AreaI& area) const
+bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
 {
     // Check if area intersects bbox31 or bbox31 contains area or area contains bbox31
     // Fast check to exclude obviously false cases
@@ -258,7 +258,7 @@ void OsmAnd::MapObject::EncodingDecodingRules::createRequiredRules(uint32_t& las
     }
 }
 
-void OsmAnd::MapObject::EncodingDecodingRules::addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
+uint32_t OsmAnd::MapObject::EncodingDecodingRules::addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
 {
     // Insert encoding rule
     auto itEncodingRule = encodingRuleIds.find(ruleTag);
@@ -303,6 +303,8 @@ void OsmAnd::MapObject::EncodingDecodingRules::addRule(const uint32_t ruleId, co
         oneway_encodingRuleId = ruleId;
     else if (QLatin1String("oneway") == ruleTag && QLatin1String("-1") == ruleValue)
         onewayReverse_encodingRuleId = ruleId;
+
+    return ruleId;
 }
 
 OsmAnd::MapObject::EncodingDecodingRules::DecodingRule::DecodingRule()

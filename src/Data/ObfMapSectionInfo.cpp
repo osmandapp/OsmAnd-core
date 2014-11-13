@@ -40,7 +40,7 @@ OsmAnd::ObfMapSectionDecodingEncodingRules::~ObfMapSectionDecodingEncodingRules(
 {
 }
 
-void OsmAnd::ObfMapSectionDecodingEncodingRules::addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
+uint32_t OsmAnd::ObfMapSectionDecodingEncodingRules::addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
 {
     MapObject::EncodingDecodingRules::addRule(ruleId, ruleTag, ruleValue);
 
@@ -68,6 +68,8 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::addRule(const uint32_t ruleId, 
                 positiveLayers_encodingRuleIds.insert(ruleId);
         }
     }
+
+    return ruleId;
 }
 
 void OsmAnd::ObfMapSectionDecodingEncodingRules::createRequiredRules(uint32_t& lastUsedRuleId)

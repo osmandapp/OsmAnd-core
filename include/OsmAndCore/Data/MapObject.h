@@ -60,7 +60,7 @@ namespace OsmAnd
             uint32_t onewayReverse_encodingRuleId;
             uint32_t layerLowest_encodingRuleId;
 
-            virtual void addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
+            virtual uint32_t addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
             void verifyRequiredRulesExist();
         };
 
@@ -105,7 +105,7 @@ namespace OsmAnd
         AreaI bbox31;
         virtual bool isClosedFigure(bool checkInner = false) const;
         virtual void computeBBox31();
-        virtual bool intersects(const AreaI& area) const;
+        virtual bool intersectedOrContainedBy(const AreaI& area) const;
 
         // Rules
         QVector< uint32_t > typesRuleIds;
