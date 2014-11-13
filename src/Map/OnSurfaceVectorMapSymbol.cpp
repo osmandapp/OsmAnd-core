@@ -1,9 +1,8 @@
 #include "OnSurfaceVectorMapSymbol.h"
 
 OsmAnd::OnSurfaceVectorMapSymbol::OnSurfaceVectorMapSymbol(
-    const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_)
-    : VectorMapSymbol(group_, isShareable_)
+    const std::shared_ptr<MapSymbolsGroup>& group_)
+    : VectorMapSymbol(group_)
     , direction(0.0f)
 {
 }

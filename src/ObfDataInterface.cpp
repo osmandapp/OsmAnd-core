@@ -50,7 +50,7 @@ bool OsmAnd::ObfDataInterface::loadBasemapPresenceFlag(bool& outBasemapPresent, 
 }
 
 bool OsmAnd::ObfDataInterface::loadMapObjects(
-    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
+    QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapFoundationType* outFoundation,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
@@ -183,7 +183,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
 bool OsmAnd::ObfDataInterface::loadRoads(
     const RoutingDataLevel dataLevel,
     const AreaI* const bbox31 /*= nullptr*/,
-    QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut /*= nullptr*/,
+    QList< std::shared_ptr<const OsmAnd::Road> >* resultOut /*= nullptr*/,
     const FilterRoadsByIdFunction filterById /*= nullptr*/,
     const ObfRoutingSectionReader::VisitorFunction visitor /*= nullptr*/,
     ObfRoutingSectionReader::DataBlocksCache* cache /*= nullptr*/,

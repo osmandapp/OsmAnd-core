@@ -97,25 +97,15 @@ namespace OsmAnd
         /* Time spent totally */                                                            \
         FIELD_ACTION(float, elapsedTime, "s");
 
-        struct OSMAND_CORE_API Metric_primitivise
+        struct OSMAND_CORE_API Metric_primitivise : public Metric
         {
-            inline Metric_primitivise()
-            {
-                reset();
-            }
-
-            virtual ~Metric_primitivise()
-            {
-            }
-
-            inline void reset()
-            {
-                OsmAnd__Primitiviser_Metrics__Metric_primitivise__FIELDS(RESET_METRIC_FIELD);
-            }
+            Metric_primitivise();
+            virtual ~Metric_primitivise();
+            virtual void reset();
 
             OsmAnd__Primitiviser_Metrics__Metric_primitivise__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
         };
     }
 }

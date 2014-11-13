@@ -8,17 +8,13 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/ForwardReference.h>
 
 namespace OsmAnd
 {
     class ObfReader;
     class ObfPoiSectionInfo;
-    namespace Model
-    {
-        class Amenity;
-        class AmenityCategory;
-    }
+    class Amenity;
+    class AmenityCategory;
     class IQueryController;
 
     class OSMAND_CORE_API ObfPoiSectionReader
@@ -29,13 +25,13 @@ namespace OsmAnd
     protected:
     public:
         static void loadCategories(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
-            QList< Fwd<Model::AmenityCategory>::RefC >& categories);
+            QList< std::shared_ptr<const AmenityCategory> >& categories);
 
         static void loadAmenities(const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
             const ZoomLevel zoom, uint32_t zoomDepth = 3, const AreaI* bbox31 = nullptr,
             QSet<uint32_t>* desiredCategories = nullptr,
-            QList< Fwd<Model::Amenity>::RefC >* amenitiesOut = nullptr,
-            std::function<bool (Fwd<Model::Amenity>::NCRefC)> visitor = nullptr,
+            QList< std::shared_ptr<const Amenity> >* amenitiesOut = nullptr,
+            std::function<bool(std::shared_ptr<const Amenity>)> visitor = nullptr,
             const IQueryController* const controller = nullptr);
     };
 }

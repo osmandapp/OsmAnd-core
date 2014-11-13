@@ -22,10 +22,7 @@
 
 namespace OsmAnd
 {
-    namespace Model
-    {
-        class BinaryMapObject;
-    }
+    class BinaryMapObject;
     class IQueryController;
 
     class TextRasterizer;

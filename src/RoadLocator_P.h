@@ -14,11 +14,8 @@
 namespace OsmAnd
 {
     class IObfsCollection;
-    namespace Model
-    {
-        class Road;
-    }
-
+    class Road;
+    
     class RoadLocator;
     class RoadLocator_P Q_DECL_FINAL
     {
@@ -31,32 +28,32 @@ namespace OsmAnd
 
         ImplementationInterface<RoadLocator> owner;
 
-        std::shared_ptr<const Model::Road> findNearestRoadEx(
+        std::shared_ptr<const Road> findNearestRoadEx(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const;
-        QList< std::shared_ptr<const Model::Road> > findRoadsInAreaEx(
+        QList< std::shared_ptr<const Road> > findRoadsInAreaEx(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const;
 
-        static std::shared_ptr<const Model::Road> findNearestRoad(
-            const QList< std::shared_ptr<const Model::Road> >& collection,
+        static std::shared_ptr<const Road> findNearestRoad(
+            const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
             const double radiusInMeters,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint);
-        static std::shared_ptr<const Model::Road> findNearestRoad(
-            const QList< std::shared_ptr<const Model::Road> >& collection,
+        static std::shared_ptr<const Road> findNearestRoad(
+            const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint);
-        static QList< std::shared_ptr<const Model::Road> > findRoadsInArea(
-            const QList< std::shared_ptr<const Model::Road> >& collection,
+        static QList< std::shared_ptr<const Road> > findRoadsInArea(
+            const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
             const double radiusInMeters);
 

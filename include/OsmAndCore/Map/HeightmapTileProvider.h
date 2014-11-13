@@ -37,6 +37,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
+            std::shared_ptr<Metric>* pOutMetric = nullptr,
             const IQueryController* const queryController = nullptr);
 
         static const QString defaultIndexFilename;

@@ -13,7 +13,7 @@ OsmAnd::ObfPoiSectionReader::~ObfPoiSectionReader()
 
 void OsmAnd::ObfPoiSectionReader::loadCategories(
     const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
-    QList< Fwd<Model::AmenityCategory>::RefC >& categories)
+    QList< std::shared_ptr<const AmenityCategory> >& categories)
 {
     ObfPoiSectionReader_P::loadCategories(*reader->_p, section, categories);
 }
@@ -21,8 +21,8 @@ void OsmAnd::ObfPoiSectionReader::loadCategories(
 void OsmAnd::ObfPoiSectionReader::loadAmenities(
     const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
     const ZoomLevel zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/, QSet<uint32_t>* desiredCategories /*= nullptr*/,
-    QList< Fwd<Model::Amenity>::RefC >* amenitiesOut /*= nullptr*/,
-    std::function<bool (Fwd<Model::Amenity>::NCRefC)> visitor /*= nullptr*/, const IQueryController* const controller /*= nullptr*/ )
+    QList< std::shared_ptr<const Amenity> >* amenitiesOut /*= nullptr*/,
+    std::function<bool(std::shared_ptr<const Amenity>)> visitor /*= nullptr*/, const IQueryController* const controller /*= nullptr*/)
 {
     ObfPoiSectionReader_P::loadAmenities(*reader->_p, section, zoom, zoomDepth, bbox31, desiredCategories, amenitiesOut, visitor, controller);
 }

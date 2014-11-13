@@ -7,6 +7,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Metrics.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
 
 namespace OsmAnd
@@ -46,6 +47,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<Data>& outTiledData,
+            std::shared_ptr<Metric>* pOutMetric = nullptr,
             const IQueryController* const queryController = nullptr) = 0;
     };
 }

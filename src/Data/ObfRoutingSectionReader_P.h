@@ -19,10 +19,7 @@ namespace OsmAnd
     struct ObfRoutingSectionDecodingRules;
     class ObfRoutingSectionLevel;
     class ObfRoutingSectionLevelTreeNode;
-    namespace Model
-    {
-        class Road;
-    }
+    class Road;
     class IQueryController;
     namespace ObfRoutingSectionReader_Metrics
     {
@@ -51,13 +48,13 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<ObfRoutingSectionInfo>& section);
 
-        static void readRules(
+        static void readEncodingDecodingRules(
             const ObfReader_P& reader,
-            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules);
+            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules);
 
-        static void readRule(
+        static void readEncodingDecodingRule(
             const ObfReader_P& reader,
-            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules,
+            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules,
             const uint32_t defaultId);
 
         static void readLevelTreeNodes(
@@ -81,7 +78,7 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& tree,
-            QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut,
+            QList< std::shared_ptr<const OsmAnd::Road> >* resultOut,
             const AreaI* bbox31,
             const FilterRoadsByIdFunction filterById,
             const VisitorFunction visitor,
@@ -94,7 +91,7 @@ namespace OsmAnd
 
         static void readRoadsBlockRestrictions(
             const ObfReader_P& reader,
-            const QHash< uint32_t, std::shared_ptr<Model::Road> >& roadsByInternalIds,
+            const QHash< uint32_t, std::shared_ptr<Road> >& roadsByInternalIds,
             const QList<uint64_t>& roadsInternalIdToGlobalIdMap);
 
         static void readRoad(
@@ -105,7 +102,7 @@ namespace OsmAnd
             const FilterRoadsByIdFunction filterById,
             const QList<uint64_t>& idsTable,
             uint32_t& internalId,
-            std::shared_ptr<Model::Road>& road,
+            std::shared_ptr<Road>& road,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric);
 
     public:
@@ -114,7 +111,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const RoutingDataLevel dataLevel,
             const AreaI* const bbox31,
-            QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut,
+            QList< std::shared_ptr<const OsmAnd::Road> >* resultOut,
             const FilterRoadsByIdFunction filterById,
             const VisitorFunction visitor,
             DataBlocksCache* cache,

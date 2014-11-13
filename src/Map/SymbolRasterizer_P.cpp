@@ -15,7 +15,7 @@
 #include "MapStyleEvaluationResult.h"
 #include "Primitiviser.h"
 #include "TextRasterizer.h"
-#include "BinaryMapObject.h"
+#include "MapObject.h"
 #include "ObfMapSectionInfo.h"
 #include "QKeyValueIterator.h"
 #include "QCachingIterator.h"
@@ -44,7 +44,7 @@ OsmAnd::SymbolRasterizer_P::~SymbolRasterizer_P()
 void OsmAnd::SymbolRasterizer_P::rasterize(
     const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-    std::function<bool (const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter,
+    std::function<bool (const std::shared_ptr<const MapObject>& mapObject)> filter,
     const IQueryController* const controller)
 {
     const auto& env = primitivisedArea->mapPresentationEnvironment;

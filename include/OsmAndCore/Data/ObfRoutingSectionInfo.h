@@ -15,35 +15,18 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
+#include <OsmAndCore/Data/MapObject.h>
 
 namespace OsmAnd
 {
     class ObfRoutingSectionReader_P;
     class ObfReader_P;
-    namespace Model
-    {
-        class Road;
-    }
+    class Road;
 
-    struct OSMAND_CORE_API ObfRoutingSectionDecodingRule
-    {
-        QString tag;
-        QString value;
-    };
-
-    struct OSMAND_CORE_API ObfRoutingSectionEncodingDecodingRules
+    struct OSMAND_CORE_API ObfRoutingSectionEncodingDecodingRules : public MapObject::EncodingDecodingRules
     {
         ObfRoutingSectionEncodingDecodingRules();
-
-        QHash< QString, QHash<QString, uint32_t> > encodingRuleIds;
-        QHash< uint32_t, ObfRoutingSectionDecodingRule > decodingRules;
-        uint32_t name_encodingRuleId;
-        QHash< QString, uint32_t > localizedName_encodingRuleIds;
-        QHash< uint32_t, QString> localizedName_decodingRules;
-        QSet< uint32_t > namesRuleId;
-
-        void createRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
-        void createMissingRules();
+        virtual ~ObfRoutingSectionEncodingDecodingRules();
     };
 
     class ObfRoutingSectionInfo_P;
@@ -57,7 +40,7 @@ namespace OsmAnd
     public:
         virtual ~ObfRoutingSectionInfo();
 
-        const std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules;
+        std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> getEncodingDecodingRules() const;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     friend class OsmAnd::ObfReader_P;

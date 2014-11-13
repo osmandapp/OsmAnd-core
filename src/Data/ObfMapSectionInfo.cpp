@@ -4,28 +4,16 @@
 OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo(const std::weak_ptr<ObfInfo>& owner)
     : ObfSectionInfo(owner)
     , _p(new ObfMapSectionInfo_P(this))
-    , _isBasemap(false)
-    , isBasemap(_isBasemap)
-    , levels(_levels)
-    , encodingDecodingRules(_p->_encodingDecodingRules)
 {
-}
-
-OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo()
-    : ObfSectionInfo(std::weak_ptr<ObfInfo>())
-    , _p(new ObfMapSectionInfo_P(this))
-    , _isBasemap(false)
-    , isBasemap(_isBasemap)
-    , levels(_levels)
-    , encodingDecodingRules(_p->_encodingDecodingRules)
-{
-    auto rules = new ObfMapSectionDecodingEncodingRules();
-    rules->createMissingRules();
-    _p->_encodingDecodingRules.reset(rules);
 }
 
 OsmAnd::ObfMapSectionInfo::~ObfMapSectionInfo()
 {
+}
+
+std::shared_ptr<const OsmAnd::ObfMapSectionDecodingEncodingRules> OsmAnd::ObfMapSectionInfo::getEncodingDecodingRules() const
+{
+    return _p->getEncodingDecodingRules();
 }
 
 OsmAnd::ObfMapSectionLevel::ObfMapSectionLevel()
@@ -39,67 +27,25 @@ OsmAnd::ObfMapSectionLevel::~ObfMapSectionLevel()
 }
 
 OsmAnd::ObfMapSectionDecodingEncodingRules::ObfMapSectionDecodingEncodingRules()
-    : name_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , ref_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , naturalCoastline_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , naturalLand_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , naturalCoastlineBroken_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , naturalCoastlineLine_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , highway_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , oneway_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , onewayReverse_encodingRuleId(std::numeric_limits<uint32_t>::max())
+    : ref_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , tunnel_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , bridge_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , layerLowest_encodingRuleId(std::numeric_limits<uint32_t>::max())
 {
     positiveLayers_encodingRuleIds.reserve(2);
     zeroLayers_encodingRuleIds.reserve(1);
     negativeLayers_encodingRuleIds.reserve(2);
 }
 
-void OsmAnd::ObfMapSectionDecodingEncodingRules::createRule(const uint32_t ruleType, const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
+OsmAnd::ObfMapSectionDecodingEncodingRules::~ObfMapSectionDecodingEncodingRules()
 {
-    auto itEncodingRule = encodingRuleIds.find(ruleTag);
-    if (itEncodingRule == encodingRuleIds.end())
-        itEncodingRule = encodingRuleIds.insert(ruleTag, QHash<QString, uint32_t>());
-    itEncodingRule->insert(ruleValue, ruleId);
+}
 
-    if (!decodingRules.contains(ruleId))
-    {
-        ObfMapSectionDecodingRule rule;
-        rule.type = ruleType;
-        rule.tag = ruleTag;
-        rule.value = ruleValue;
+void OsmAnd::ObfMapSectionDecodingEncodingRules::addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
+{
+    MapObject::EncodingDecodingRules::addRule(ruleId, ruleTag, ruleValue);
 
-        decodingRules.insert(ruleId, rule);
-    }
-
-    if (QLatin1String("name") == ruleTag)
-    {
-        name_encodingRuleId = ruleId;
-        namesRuleId.insert(ruleId);
-    }
-    else if (ruleTag.startsWith(QLatin1String("name:")))
-    {
-        const QString languageId = ruleTag.mid(QLatin1String("name:").size());
-        localizedName_encodingRuleIds.insert(languageId, ruleId);
-        localizedName_decodingRules.insert(ruleId, languageId);
-        namesRuleId.insert(ruleId);
-    }
-    else if (QLatin1String("ref") == ruleTag)
+    if (QLatin1String("ref") == ruleTag)
         ref_encodingRuleId = ruleId;
-    else if (QLatin1String("natural") == ruleTag && QLatin1String("coastline") == ruleValue)
-        naturalCoastline_encodingRuleId = ruleId;
-    else if (QLatin1String("natural") == ruleTag && QLatin1String("land") == ruleValue)
-        naturalLand_encodingRuleId = ruleId;
-    else if (QLatin1String("natural") == ruleTag && QLatin1String("coastline_broken") == ruleValue)
-        naturalCoastlineBroken_encodingRuleId = ruleId;
-    else if (QLatin1String("natural") == ruleTag && QLatin1String("coastline_line") == ruleValue)
-        naturalCoastlineLine_encodingRuleId = ruleId;
-    else if (QLatin1String("oneway") == ruleTag && QLatin1String("yes") == ruleValue)
-        oneway_encodingRuleId = ruleId;
-    else if (QLatin1String("oneway") == ruleTag && QLatin1String("-1") == ruleValue)
-        onewayReverse_encodingRuleId = ruleId;
     else if (QLatin1String("tunnel") == ruleTag && QLatin1String("yes") == ruleValue)
     {
         tunnel_encodingRuleId = ruleId;
@@ -114,9 +60,9 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createRule(const uint32_t ruleT
     {
         if (!ruleValue.isEmpty() && ruleValue != QLatin1String("0"))
         {
-            if (ruleValue[0] == '-')
+            if (ruleValue[0] == QLatin1Char('-'))
                 negativeLayers_encodingRuleIds.insert(ruleId);
-            else if (ruleValue[0] == '0')
+            else if (ruleValue[0] == QLatin1Char('0'))
                 zeroLayers_encodingRuleIds.insert(ruleId);
             else
                 positiveLayers_encodingRuleIds.insert(ruleId);
@@ -124,56 +70,7 @@ void OsmAnd::ObfMapSectionDecodingEncodingRules::createRule(const uint32_t ruleT
     }
 }
 
-void OsmAnd::ObfMapSectionDecodingEncodingRules::createMissingRules()
+void OsmAnd::ObfMapSectionDecodingEncodingRules::createRequiredRules(uint32_t& lastUsedRuleId)
 {
-    auto nextId = decodingRules.size() * 2 + 1;
-
-    // Create 'name' encoding/decoding rule, if it still does not exist
-    if (name_encodingRuleId == std::numeric_limits<uint32_t>::max())
-    {
-        createRule(0, nextId++,
-            QLatin1String("name"), QString::null);
-    }
-
-    // Create 'natural=coastline' encoding/decoding rule, if it still does not exist
-    if (naturalCoastline_encodingRuleId == std::numeric_limits<uint32_t>::max())
-    {
-        createRule(0, nextId++,
-            QLatin1String("natural"), QLatin1String("coastline"));
-    }
-
-    // Create 'natural=land' encoding/decoding rule, if it still does not exist
-    if (naturalLand_encodingRuleId == std::numeric_limits<uint32_t>::max())
-    {
-        createRule(0, nextId++,
-            QLatin1String("natural"), QLatin1String("land"));
-    }
-
-    // Create 'natural=coastline_broken' encoding/decoding rule, if it still does not exist
-    if (naturalCoastlineBroken_encodingRuleId == std::numeric_limits<uint32_t>::max())
-    {
-        createRule(0, nextId++,
-            QLatin1String("natural"), QLatin1String("coastline_broken"));
-    }
-
-    // Create 'natural=coastline_line' encoding/decoding rule, if it still does not exist
-    if (naturalCoastlineLine_encodingRuleId == std::numeric_limits<uint32_t>::max())
-    {
-        createRule(0, nextId++,
-            QLatin1String("natural"), QLatin1String("coastline_line"));
-    }
-
-    // Create 'highway=yes' encoding/decoding rule, if it still does not exist
-    if (highway_encodingRuleId == std::numeric_limits<uint32_t>::max())
-    {
-        createRule(0, nextId++,
-            QLatin1String("highway"), QLatin1String("yes"));
-    }
-
-    // Create 'layer=-int32_max' encoding/decoding rule, if it still does not exist
-    if (layerLowest_encodingRuleId == std::numeric_limits<uint32_t>::max())
-    {
-        createRule(0, nextId++,
-            QLatin1String("layer"), QString::number(std::numeric_limits<int32_t>::min()));
-    }
+    MapObject::EncodingDecodingRules::createRequiredRules(lastUsedRuleId);
 }

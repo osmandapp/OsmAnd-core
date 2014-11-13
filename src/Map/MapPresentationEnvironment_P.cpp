@@ -23,7 +23,6 @@
 
 OsmAnd::MapPresentationEnvironment_P::MapPresentationEnvironment_P(MapPresentationEnvironment* owner_)
     : owner(owner_)
-    , dummyMapSection(new ObfMapSectionInfo())
 {
 }
 

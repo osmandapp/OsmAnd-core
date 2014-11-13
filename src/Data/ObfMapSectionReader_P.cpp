@@ -43,7 +43,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
             case OBF::OsmAndMapIndex::kNameFieldNumber:
             {
                 ObfReaderUtilities::readQString(cis, section->_name);
-                section->_isBasemap = (QString::compare(section->_name, QLatin1String("basemap"), Qt::CaseInsensitive) == 0);
+                section->isBasemap = (QString::compare(section->_name, QLatin1String("basemap"), Qt::CaseInsensitive) == 0);
                 break;
             }
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
@@ -55,7 +55,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
-                const std::shared_ptr<ObfMapSectionLevel> levelRoot(new ObfMapSectionLevel());
+                Ref<ObfMapSectionLevel> levelRoot(new ObfMapSectionLevel());
                 levelRoot->length = length;
                 levelRoot->offset = offset;
                 readMapLevelHeader(reader, section, levelRoot);
@@ -63,7 +63,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
-                section->_levels.push_back(qMove(levelRoot));
+                section->levels.push_back(qMove(levelRoot));
                 break;
             }
             default:
@@ -86,7 +86,7 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-                encodingDecodingRules->createMissingRules();
+                encodingDecodingRules->verifyRequiredRulesExist();
                 return;
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
             {
@@ -116,7 +116,6 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
     const auto cis = reader._codedInputStream.get();
 
     gpb::uint32 ruleId = defaultId;
-    gpb::uint32 ruleType = 0;
     QString ruleTag;
     QString ruleValue;
     for (;;)
@@ -125,16 +124,13 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-                encodingDecodingRules->createRule(ruleType, ruleId, ruleTag, ruleValue);
+                encodingDecodingRules->addRule(ruleId, ruleTag, ruleValue);
                 return;
             case OBF::OsmAndMapIndex_MapEncodingRule::kValueFieldNumber:
                 ObfReaderUtilities::readQString(cis, ruleValue);
                 break;
             case OBF::OsmAndMapIndex_MapEncodingRule::kTagFieldNumber:
                 ObfReaderUtilities::readQString(cis, ruleTag);
-                break;
-            case OBF::OsmAndMapIndex_MapEncodingRule::kTypeFieldNumber:
-                cis->ReadVarint32(&ruleType);
                 break;
             case OBF::OsmAndMapIndex_MapEncodingRule::kIdFieldNumber:
                 cis->ReadVarint32(&ruleId);
@@ -426,6 +422,8 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     cis->Skip(childNode->firstDataBoxInnerOffset);
                     readTreeNodeChildren(reader, section, childNode, subchildrenFoundation, nodesWithData, bbox31, controller, metric);
                     
+                    if (const auto bytesUntilLimit = cis->BytesUntilLimit())
+                        LogPrintf(LogSeverityLevel::Error, "Error in reader: %d bytes until limit", bytesUntilLimit);
                     assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(oldLimit);
                 }
@@ -452,7 +450,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& tree,
-    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
+    QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     const AreaI* bbox31,
     const FilterMapObjectsByIdFunction filterById,
     const VisitorFunction visitor,
@@ -461,7 +459,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 {
     const auto cis = reader._codedInputStream.get();
 
-    QList< std::shared_ptr<Model::BinaryMapObject> > intermediateResult;
+    QList< std::shared_ptr<BinaryMapObject> > intermediateResult;
     QStringList mapObjectsCaptionsTable;
     gpb::uint64 baseId = 0;
     for (;;)
@@ -477,7 +475,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 for (const auto& mapObject : constOf(intermediateResult))
                 {
                     // Fill mapObject captions from string-table
-                    for (auto& caption : mapObject->_captions)
+                    for (auto& caption : mapObject->captions)
                     {
                         const auto stringId = ObfReaderUtilities::decodeIntegerFromString(caption);
 
@@ -526,7 +524,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
 
                 // Read map object content
                 const Stopwatch readMapObjectStopwatch(metric != nullptr);
-                std::shared_ptr<OsmAnd::Model::BinaryMapObject> mapObject;
+                std::shared_ptr<OsmAnd::BinaryMapObject> mapObject;
                 auto oldLimit = cis->PushLimit(length);
                 
                 readMapObject(reader, section, baseId, tree, mapObject, bbox31, metric);
@@ -604,7 +602,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     uint64_t baseId,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
-    std::shared_ptr<OsmAnd::Model::BinaryMapObject>& mapObject,
+    std::shared_ptr<OsmAnd::BinaryMapObject>& mapObject,
     const AreaI* bbox31,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
@@ -750,23 +748,23 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 // Finally, create the object
                 if (!mapObject)
-                    mapObject.reset(new OsmAnd::Model::BinaryMapObject(section, treeNode->level));
-                mapObject->_isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
-                mapObject->_points31 = qMove(points31);
-                mapObject->_bbox31 = objectBBox;
-                assert(treeNode->area31.top() - mapObject->_bbox31.top() <= 32);
-                assert(treeNode->area31.left() - mapObject->_bbox31.left() <= 32);
-                assert(mapObject->_bbox31.bottom() - treeNode->area31.bottom() <= 1);
-                assert(mapObject->_bbox31.right() - treeNode->area31.right() <= 1);
-                assert(mapObject->_bbox31.right() >= mapObject->_bbox31.left());
-                assert(mapObject->_bbox31.bottom() >= mapObject->_bbox31.top());
+                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
+                mapObject->isArea = (tgn == OBF::MapData::kAreaCoordinatesFieldNumber);
+                mapObject->points31 = qMove(points31);
+                mapObject->bbox31 = objectBBox;
+                assert(treeNode->area31.top() - mapObject->bbox31.top() <= 32);
+                assert(treeNode->area31.left() - mapObject->bbox31.left() <= 32);
+                assert(mapObject->bbox31.bottom() - treeNode->area31.bottom() <= 1);
+                assert(mapObject->bbox31.right() - treeNode->area31.right() <= 1);
+                assert(mapObject->bbox31.right() >= mapObject->bbox31.left());
+                assert(mapObject->bbox31.bottom() >= mapObject->bbox31.top());
 
                 break;
             }
             case OBF::MapData::kPolygonInnerCoordinatesFieldNumber:
             {
                 if (!mapObject)
-                    mapObject.reset(new OsmAnd::Model::BinaryMapObject(section, treeNode->level));
+                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -778,8 +776,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
 
                 // Preallocate memory
                 const auto probableVerticesCount = (cis->BytesUntilLimit() / 2);
-                mapObject->_innerPolygonsPoints31.push_back(qMove(QVector< PointI >(probableVerticesCount)));
-                auto& polygon = mapObject->_innerPolygonsPoints31.last();
+                mapObject->innerPolygonsPoints31.push_back(qMove(QVector< PointI >(probableVerticesCount)));
+                auto& polygon = mapObject->innerPolygonsPoints31.last();
 
                 auto pPoint = polygon.data();
                 auto verticesCount = 0;
@@ -809,11 +807,11 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             case OBF::MapData::kTypesFieldNumber:
             {
                 if (!mapObject)
-                    mapObject.reset(new OsmAnd::Model::BinaryMapObject(section, treeNode->level));
+                    mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
 
                 auto& typesRuleIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber)
-                    ? mapObject->_extraTypesRuleIds
-                    : mapObject->_typesRuleIds;
+                    ? mapObject->additionalTypesRuleIds
+                    : mapObject->typesRuleIds;
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -855,8 +853,8 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     ok = cis->ReadVarint32(&stringId);
                     assert(ok);
 
-                    mapObject->_captions.insert(stringRuleId, qMove(ObfReaderUtilities::encodeIntegerToString(stringId)));
-                    mapObject->_captionsOrder.push_back(stringRuleId);
+                    mapObject->captions.insert(stringRuleId, qMove(ObfReaderUtilities::encodeIntegerToString(stringId)));
+                    mapObject->captionsOrder.push_back(stringRuleId);
                 }
 
                 assert(cis->BytesUntilLimit() == 0);
@@ -868,7 +866,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
             {
                 const auto d = ObfReaderUtilities::readSInt64(cis);
                 const auto rawId = static_cast<uint64_t>(d + baseId);
-                mapObject->_id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
+                mapObject->id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
 
                 break;
             }
@@ -884,7 +882,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     ZoomLevel zoom,
     const AreaI* bbox31,
-    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
+    QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapFoundationType* outBBoxOrSectionFoundation,
     const FilterMapObjectsByIdFunction filterById,
     const VisitorFunction visitor,
@@ -895,21 +893,38 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 {
     const auto cis = reader._codedInputStream.get();
 
-    // Check if this map section has initialized rules
+    // Ensure encoding/decoding rules are read
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+    if (std::atomic_load(&section->_p->_encodingDecodingRules) == nullptr)
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
+    if (section->_p->_encodingDecodingRulesLoaded.loadAcquire() == 0)
+#endif
     {
-        QMutexLocker scopedLocker(&section->_p->_encodingDecodingRulesMutex);
-
+        QMutexLocker scopedLocker(&section->_p->_encodingDecodingRulesLoadMutex);
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+        if (std::atomic_load(&section->_p->_encodingDecodingRules) == nullptr)
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
         if (!section->_p->_encodingDecodingRules)
+#endif
         {
+            // Read encoding/decoding rules
             cis->Seek(section->_offset);
             auto oldLimit = cis->PushLimit(section->_length);
 
-            std::shared_ptr<ObfMapSectionDecodingEncodingRules> encodingDecodingRules(new ObfMapSectionDecodingEncodingRules());
+            const std::shared_ptr<ObfMapSectionDecodingEncodingRules> encodingDecodingRules(new ObfMapSectionDecodingEncodingRules());
             readEncodingDecodingRules(reader, encodingDecodingRules);
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+            std::atomic_store(&section->_p->_encodingDecodingRules, encodingDecodingRules);
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
             section->_p->_encodingDecodingRules = encodingDecodingRules;
+#endif
 
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
+
+#if !defined(ATOMIC_POINTER_LOCK_FREE)
+            section->_p->_encodingDecodingRulesLoaded.storeRelease(1);
+#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
         }
     }
 
@@ -950,10 +965,19 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
         // If there are no tree nodes in map level, it means they are not loaded.
         // Since loading may be called from multiple threads, loading of root nodes needs synchronization
+        // Ensure encoding/decoding rules are read
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+        if (std::atomic_load(&mapLevel->_p->_rootNodes) == nullptr)
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
+        if (mapLevel->_p->_rootNodesLoaded.loadAcquire() == 0)
+#endif
         {
-            QMutexLocker scopedLocker(&mapLevel->_p->_rootNodesMutex);
-
+            QMutexLocker scopedLocker(&mapLevel->_p->_rootNodesLoadMutex);
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+            if (std::atomic_load(&mapLevel->_p->_rootNodes) == nullptr)
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
             if (!mapLevel->_p->_rootNodes)
+#endif
             {
                 cis->Seek(mapLevel->offset);
                 auto oldLimit = cis->PushLimit(mapLevel->length);
@@ -962,10 +986,18 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 const std::shared_ptr< QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > rootNodes(
                     new QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >());
                 readMapLevelTreeNodes(reader, section, mapLevel, *rootNodes);
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+                std::atomic_store(&mapLevel->_p->_rootNodes, std::static_pointer_cast<const QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > >(rootNodes));
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
                 mapLevel->_p->_rootNodes = rootNodes;
+#endif
 
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
+
+#if !defined(ATOMIC_POINTER_LOCK_FREE)
+                mapLevel->_p->_rootNodesLoaded.storeRelease(1);
+#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
             }
         }
 
@@ -1077,7 +1109,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 else
                 {
                     // Made a promise, so load entire block into temporary storage
-                    QList< std::shared_ptr<const Model::BinaryMapObject> > mapObjects;
+                    QList< std::shared_ptr<const BinaryMapObject> > mapObjects;
 
                     cis->Seek(treeNode->dataOffset);
 

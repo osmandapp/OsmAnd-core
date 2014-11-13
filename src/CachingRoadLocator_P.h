@@ -16,10 +16,7 @@
 namespace OsmAnd
 {
     class IObfsCollection;
-    namespace Model
-    {
-        class Road;
-    }
+    class Road;
 
     class CachingRoadLocator;
     class CachingRoadLocator_P Q_DECL_FINAL
@@ -46,13 +43,13 @@ namespace OsmAnd
 
         ImplementationInterface<CachingRoadLocator> owner;
 
-        std::shared_ptr<const Model::Road> findNearestRoad(
+        std::shared_ptr<const Road> findNearestRoad(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint) const;
-        QList< std::shared_ptr<const Model::Road> > findRoadsInArea(
+        QList< std::shared_ptr<const Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel) const;

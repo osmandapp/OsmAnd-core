@@ -17,10 +17,7 @@ namespace OsmAnd
 {
     class ObfReader;
     class ObfRoutingSectionInfo;
-    namespace Model
-    {
-        class Road;
-    }
+    class Road;
     class IQueryController;
     namespace ObfRoutingSectionReader_Metrics
     {
@@ -31,7 +28,7 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfRoutingSectionReader
     {
     public:
-        typedef std::function<bool (const std::shared_ptr<const OsmAnd::Model::Road>&)> VisitorFunction;
+        typedef std::function<bool (const std::shared_ptr<const OsmAnd::Road>&)> VisitorFunction;
         typedef ObfRoutingSectionDataBlockId DataBlockId;
 
         class OSMAND_CORE_API DataBlock Q_DECL_FINAL
@@ -43,14 +40,14 @@ namespace OsmAnd
                 const DataBlockId id,
                 const RoutingDataLevel dataLevel,
                 const AreaI area31,
-                const QList< std::shared_ptr<const OsmAnd::Model::Road> >& roads);
+                const QList< std::shared_ptr<const OsmAnd::Road> >& roads);
         public:
             ~DataBlock();
 
             const DataBlockId id;
             const RoutingDataLevel dataLevel;
             const AreaI area31;
-            const QList< std::shared_ptr<const OsmAnd::Model::Road> > roads;
+            const QList< std::shared_ptr<const OsmAnd::Road> > roads;
 
         friend class OsmAnd::ObfRoutingSectionReader;
         friend class OsmAnd::ObfRoutingSectionReader_P;
@@ -84,7 +81,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const RoutingDataLevel dataLevel,
             const AreaI* const bbox31 = nullptr,
-            QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut = nullptr,
+            QList< std::shared_ptr<const OsmAnd::Road> >* resultOut = nullptr,
             const FilterRoadsByIdFunction filterById = nullptr,
             const VisitorFunction visitor = nullptr,
             DataBlocksCache* cache = nullptr,

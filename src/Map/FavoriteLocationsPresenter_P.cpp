@@ -27,7 +27,7 @@ bool OsmAnd::FavoriteLocationsPresenter_P::obtainData(
     std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
     const IQueryController* const queryController)
 {
-    return _markersCollection->obtainData(key, outKeyedData, queryController);
+    return _markersCollection->obtainData(key, outKeyedData, nullptr, queryController);
 }
 
 void OsmAnd::FavoriteLocationsPresenter_P::subscribeToChanges()

@@ -46,7 +46,7 @@ void OsmAnd::MapStyleEvaluator::setStringValue(const ResolvedMapStyle::ValueDefi
 }
 
 bool OsmAnd::MapStyleEvaluator::evaluate(
-    const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
+    const std::shared_ptr<const MapObject>& mapObject,
     const MapStyleRulesetType rulesetType,
     MapStyleEvaluationResult* const outResultStorage /*= nullptr*/) const
 {

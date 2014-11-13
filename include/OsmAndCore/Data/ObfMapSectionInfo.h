@@ -13,8 +13,10 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Ref.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
+#include <OsmAndCore/Data/MapObject.h>
 
 namespace OsmAnd
 {
@@ -49,42 +51,26 @@ namespace OsmAnd
     friend class OsmAnd::ObfMapSectionReader_P;
     };
 
-    struct ObfMapSectionDecodingRule
+    class OSMAND_CORE_API ObfMapSectionDecodingEncodingRules : public MapObject::EncodingDecodingRules
     {
-        uint32_t type;
-
-        QString tag;
-        QString value;
-    };
-
-    struct OSMAND_CORE_API ObfMapSectionDecodingEncodingRules
-    {
+        Q_DISABLE_COPY_AND_MOVE(ObfMapSectionDecodingEncodingRules);
+    private:
+    protected:
+        virtual void createRequiredRules(uint32_t& lastUsedRuleId);
+    public:
         ObfMapSectionDecodingEncodingRules();
+        virtual ~ObfMapSectionDecodingEncodingRules();
 
-        QHash< QString, QHash<QString, uint32_t> > encodingRuleIds;
-        QHash< uint32_t, ObfMapSectionDecodingRule > decodingRules;
-        uint32_t name_encodingRuleId;
-        QHash< QString, uint32_t > localizedName_encodingRuleIds;
-        QHash< uint32_t, QString > localizedName_decodingRules;
-        QSet< uint32_t > namesRuleId;
+        // Quick-access rules
         uint32_t ref_encodingRuleId;
-        uint32_t naturalCoastline_encodingRuleId;
-        uint32_t naturalLand_encodingRuleId;
-        uint32_t naturalCoastlineBroken_encodingRuleId;
-        uint32_t naturalCoastlineLine_encodingRuleId;
-        uint32_t highway_encodingRuleId;
-        uint32_t oneway_encodingRuleId;
-        uint32_t onewayReverse_encodingRuleId;
         uint32_t tunnel_encodingRuleId;
         uint32_t bridge_encodingRuleId;
-        uint32_t layerLowest_encodingRuleId;
 
         QSet<uint32_t> positiveLayers_encodingRuleIds;
         QSet<uint32_t> zeroLayers_encodingRuleIds;
         QSet<uint32_t> negativeLayers_encodingRuleIds;
 
-        void createRule(const uint32_t ruleType, const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
-        void createMissingRules();
+        virtual void addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
     };
 
     class ObfMapSectionInfo_P;
@@ -95,17 +81,13 @@ namespace OsmAnd
         PrivateImplementation<ObfMapSectionInfo_P> _p;
     protected:
         ObfMapSectionInfo(const std::weak_ptr<ObfInfo>& owner);
-
-        bool _isBasemap;
-        QList< std::shared_ptr<const ObfMapSectionLevel> > _levels;
     public:
-        ObfMapSectionInfo();
         virtual ~ObfMapSectionInfo();
 
-        const bool& isBasemap;
-        const QList< std::shared_ptr<const ObfMapSectionLevel> >& levels;
+        std::shared_ptr<const ObfMapSectionDecodingEncodingRules> getEncodingDecodingRules() const;
 
-        const std::shared_ptr<const ObfMapSectionDecodingEncodingRules>& encodingDecodingRules;
+        bool isBasemap;
+        QList< Ref<ObfMapSectionLevel> > levels;
 
     friend class OsmAnd::ObfMapSectionReader_P;
     friend class OsmAnd::ObfReader_P;

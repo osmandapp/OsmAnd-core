@@ -18,10 +18,7 @@ namespace OsmAnd
 {
     class ObfReader;
     class ObfMapSectionInfo;
-    namespace Model
-    {
-        class BinaryMapObject;
-    }
+    class BinaryMapObject;
     class IQueryController;
     namespace ObfMapSectionReader_Metrics
     {
@@ -32,7 +29,7 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfMapSectionReader
     {
     public:
-        typedef std::function<bool(const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>&)> VisitorFunction;
+        typedef std::function<bool(const std::shared_ptr<const OsmAnd::BinaryMapObject>&)> VisitorFunction;
         typedef ObfMapSectionDataBlockId DataBlockId;
 
         class OSMAND_CORE_API DataBlock Q_DECL_FINAL
@@ -44,14 +41,14 @@ namespace OsmAnd
                 const DataBlockId id,
                 const AreaI bbox31,
                 const MapFoundationType foundationType,
-                const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& mapObjects);
+                const QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >& mapObjects);
         public:
             ~DataBlock();
 
             const DataBlockId id;
             const AreaI bbox31;
             const MapFoundationType foundationType;
-            const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
+            const QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > mapObjects;
 
         friend class OsmAnd::ObfMapSectionReader;
         friend class OsmAnd::ObfMapSectionReader_P;
@@ -81,7 +78,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
-            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut = nullptr,
+            QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut = nullptr,
             MapFoundationType* outBBoxOrSectionFoundation = nullptr,
             const FilterMapObjectsByIdFunction filterById = nullptr,
             const VisitorFunction visitor = nullptr,

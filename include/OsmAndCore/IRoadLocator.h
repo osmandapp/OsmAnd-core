@@ -14,10 +14,7 @@
 namespace OsmAnd
 {
     class IObfsCollection;
-    namespace Model
-    {
-        class Road;
-    }
+    class Road;
 
     class OSMAND_CORE_API IRoadLocator
     {
@@ -28,13 +25,13 @@ namespace OsmAnd
     public:
         virtual ~IRoadLocator();
 
-        virtual std::shared_ptr<const Model::Road> findNearestRoad(
+        virtual std::shared_ptr<const Road> findNearestRoad(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr) const = 0;
-        virtual QList< std::shared_ptr<const Model::Road> > findRoadsInArea(
+        virtual QList< std::shared_ptr<const Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel) const = 0;

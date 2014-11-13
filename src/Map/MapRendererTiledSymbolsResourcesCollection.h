@@ -11,6 +11,7 @@
 #include "SharedResourcesContainer.h"
 #include "MapRendererTiledResourcesCollection.h"
 #include "MapRendererTiledSymbolsResource.h"
+#include "MapSymbolsGroup.h"
 
 namespace OsmAnd
 {
@@ -22,7 +23,7 @@ namespace OsmAnd
     protected:
         MapRendererTiledSymbolsResourcesCollection();
 
-        std::array< SharedResourcesContainer<uint64_t, MapRendererTiledSymbolsResource::SharedGroupResources>, ZoomLevelsCount > _sharedGroupsResources;
+        std::array< SharedResourcesContainer<MapSymbolsGroup::SharingKey, MapRendererTiledSymbolsResource::SharedGroupResources>, ZoomLevelsCount > _sharedGroupsResources;
     public:
         virtual ~MapRendererTiledSymbolsResourcesCollection();
 

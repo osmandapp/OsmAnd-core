@@ -23,10 +23,7 @@
 
 namespace OsmAnd
 {
-    namespace Model
-    {
-        class BinaryMapObject;
-    }
+    class MapObject;
     class IQueryController;
 
     class SymbolRasterizer;
@@ -49,7 +46,7 @@ namespace OsmAnd
         void rasterize(
             const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool(const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter,
+            std::function<bool(const std::shared_ptr<const MapObject>& mapObject)> filter,
             const IQueryController* const controller);
 
     friend class OsmAnd::SymbolRasterizer;

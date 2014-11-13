@@ -1,9 +1,8 @@
 #include "OnPathRasterMapSymbol.h"
 
 OsmAnd::OnPathRasterMapSymbol::OnPathRasterMapSymbol(
-    const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_)
-    : RasterMapSymbol(group_, isShareable_)
+    const std::shared_ptr<MapSymbolsGroup>& group_)
+    : RasterMapSymbol(group_)
 {
 }
 

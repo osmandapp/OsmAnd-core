@@ -96,8 +96,8 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressBlocksSectionHeader( const Ob
 
 void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
     const ObfReader_P& reader, const std::shared_ptr<const ObfAddressSectionInfo>& section,
-    QList< std::shared_ptr<const Model::StreetGroup> >* resultOut,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::StreetGroup>&)> visitor,
+    QList< std::shared_ptr<const StreetGroup> >* resultOut,
+    std::function<bool (const std::shared_ptr<const OsmAnd::StreetGroup>&)> visitor,
     const IQueryController* const controller,
     QSet<ObfAddressBlockType>* blockTypeFilter /*= nullptr*/ )
 {
@@ -120,8 +120,8 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
 
 void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromAddressBlocksSection(
     const ObfReader_P& reader, const std::shared_ptr<const ObfAddressBlocksSectionInfo>& section,
-    QList< std::shared_ptr<const Model::StreetGroup> >* resultOut,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::StreetGroup>&)> visitor, const IQueryController* const controller )
+    QList< std::shared_ptr<const StreetGroup> >* resultOut,
+    std::function<bool (const std::shared_ptr<const OsmAnd::StreetGroup>&)> visitor, const IQueryController* const controller )
 {
     const auto cis = reader._codedInputStream.get();
 
@@ -142,7 +142,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromAddressBlocksSection
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
 
-                std::shared_ptr<OsmAnd::Model::StreetGroup> streetGroup;
+                std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
                 readStreetGroupHeader(reader, section, offset, streetGroup);
 
                 assert(cis->BytesUntilLimit() == 0);
@@ -167,11 +167,11 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromAddressBlocksSection
 
 void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
     const ObfReader_P& reader, const std::shared_ptr<const ObfAddressBlocksSectionInfo>& section,
-    unsigned int offset, std::shared_ptr<OsmAnd::Model::StreetGroup>& outStreetGroup )
+    unsigned int offset, std::shared_ptr<OsmAnd::StreetGroup>& outStreetGroup )
 {
     const auto cis = reader._codedInputStream.get();
 
-    std::shared_ptr<OsmAnd::Model::StreetGroup> streetGroup;
+    std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
     //    boolean englishNameMatched = false;
     for(;;)
     {
@@ -187,7 +187,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
             {
                 gpb::uint32 type;
                 cis->ReadVarint32(&type);
-                streetGroup.reset(new Model::Settlement(/*TODO:type*/));
+                streetGroup.reset(new Settlement(/*TODO:type*/));
             }
             break;
         case OBF::CityIndex::kIdFieldNumber:
@@ -229,7 +229,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
                 */
 
                 if (!streetGroup)
-                    streetGroup.reset(new Model::PostcodeArea());
+                    streetGroup.reset(new PostcodeArea());
 
                 streetGroup->_name = name;
             }
@@ -260,8 +260,8 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupHeader(
 
 void OsmAnd::ObfAddressSectionReader_P::loadStreetGroups(
     const ObfReader_P& reader, const std::shared_ptr<const ObfAddressSectionInfo>& section,
-    QList< std::shared_ptr<const Model::StreetGroup> >* resultOut,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::StreetGroup>&)> visitor,
+    QList< std::shared_ptr<const StreetGroup> >* resultOut,
+    std::function<bool (const std::shared_ptr<const OsmAnd::StreetGroup>&)> visitor,
     const IQueryController* const controller,
     QSet<ObfAddressBlockType>* blockTypeFilter /*= nullptr*/ )
 {
@@ -269,9 +269,9 @@ void OsmAnd::ObfAddressSectionReader_P::loadStreetGroups(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::loadStreetsFromGroup(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::StreetGroup>& group,
-    QList< std::shared_ptr<const Model::Street> >* resultOut /*= nullptr*/,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::Street>&)> visitor /*= nullptr*/,
+    const ObfReader_P& reader, const std::shared_ptr<const StreetGroup>& group,
+    QList< std::shared_ptr<const Street> >* resultOut /*= nullptr*/,
+    std::function<bool (const std::shared_ptr<const OsmAnd::Street>&)> visitor /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/)
 {
     //TODO:checkAddressIndex(c.getFileOffset());
@@ -287,9 +287,9 @@ void OsmAnd::ObfAddressSectionReader_P::loadStreetsFromGroup(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::StreetGroup>& group,
-    QList< std::shared_ptr<const Model::Street> >* resultOut,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::Street>&)> visitor,
+    const ObfReader_P& reader, const std::shared_ptr<const StreetGroup>& group,
+    QList< std::shared_ptr<const Street> >* resultOut,
+    std::function<bool (const std::shared_ptr<const OsmAnd::Street>&)> visitor,
     const IQueryController* const controller)
 {
     const auto cis = reader._codedInputStream.get();
@@ -306,7 +306,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
             return;
         case OBF::CityBlockIndex::kStreetsFieldNumber:
             {
-                std::shared_ptr<Model::Street> street(new Model::Street(/*TODO:group*/));
+                std::shared_ptr<Street> street(new Street(/*TODO:group*/));
                 street->_offset = cis->CurrentPosition();
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -334,8 +334,8 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::readStreet(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::StreetGroup>& group,
-    const std::shared_ptr<Model::Street>& street)
+    const ObfReader_P& reader, const std::shared_ptr<const StreetGroup>& group,
+    const std::shared_ptr<Street>& street)
 {
     const auto cis = reader._codedInputStream.get();
 
@@ -385,9 +385,9 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::Street>& street,
-    QList< std::shared_ptr<const Model::Building> >* resultOut /*= nullptr*/,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::Building>&)> visitor /*= nullptr*/,
+    const ObfReader_P& reader, const std::shared_ptr<const Street>& street,
+    QList< std::shared_ptr<const Building> >* resultOut /*= nullptr*/,
+    std::function<bool (const std::shared_ptr<const OsmAnd::Building>&)> visitor /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/)
 {
     //TODO:checkAddressIndex(s.getFileOffset());
@@ -403,9 +403,9 @@ void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::Street>& street,
-    QList< std::shared_ptr<const Model::Building> >* resultOut,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::Building>&)> visitor,
+    const ObfReader_P& reader, const std::shared_ptr<const Street>& street,
+    QList< std::shared_ptr<const Building> >* resultOut,
+    std::function<bool (const std::shared_ptr<const OsmAnd::Building>&)> visitor,
     const IQueryController* const controller)
 {
     const auto cis = reader._codedInputStream.get();
@@ -434,7 +434,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
                 
-                std::shared_ptr<Model::Building> building(new Model::Building());
+                std::shared_ptr<Building> building(new Building());
                 building->_offset = offset;
                 readBuilding(reader, street, building);
 
@@ -456,8 +456,8 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::readBuilding(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::Street>& street,
-    const std::shared_ptr<Model::Building>& building )
+    const ObfReader_P& reader, const std::shared_ptr<const Street>& street,
+    const std::shared_ptr<Building>& building )
 {
     const auto cis = reader._codedInputStream.get();
 
@@ -493,7 +493,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
                 if (value > 0)
                     building->_interpolationInterval = value;
                 else
-                    building->_interpolation = static_cast<Model::Building::Interpolation>(value);
+                    building->_interpolation = static_cast<Building::Interpolation>(value);
             }
             break;
         case OBF::BuildingIndex::kXFieldNumber:
@@ -531,9 +531,9 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::loadIntersectionsFromStreet(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::Street>& street,
-    QList< std::shared_ptr<const Model::StreetIntersection> >* resultOut /*= nullptr*/,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::StreetIntersection>&)> visitor /*= nullptr*/,
+    const ObfReader_P& reader, const std::shared_ptr<const Street>& street,
+    QList< std::shared_ptr<const StreetIntersection> >* resultOut /*= nullptr*/,
+    std::function<bool (const std::shared_ptr<const OsmAnd::StreetIntersection>&)> visitor /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/)
 {
     //TODO:checkAddressIndex(s.getFileOffset());
@@ -549,9 +549,9 @@ void OsmAnd::ObfAddressSectionReader_P::loadIntersectionsFromStreet(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::Street>& street,
-    QList< std::shared_ptr<const Model::StreetIntersection> >* resultOut,
-    std::function<bool (const std::shared_ptr<const OsmAnd::Model::StreetIntersection>&)> visitor,
+    const ObfReader_P& reader, const std::shared_ptr<const Street>& street,
+    QList< std::shared_ptr<const StreetIntersection> >* resultOut,
+    std::function<bool (const std::shared_ptr<const OsmAnd::StreetIntersection>&)> visitor,
     const IQueryController* const controller)
 {
     const auto cis = reader._codedInputStream.get();
@@ -572,7 +572,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
 
-                std::shared_ptr<Model::StreetIntersection> intersectedStreet(new Model::StreetIntersection());
+                std::shared_ptr<StreetIntersection> intersectedStreet(new StreetIntersection());
                 readIntersectedStreet(reader, street, intersectedStreet);
                 
                 assert(cis->BytesUntilLimit() == 0);
@@ -601,8 +601,8 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
 }
 
 void OsmAnd::ObfAddressSectionReader_P::readIntersectedStreet(
-    const ObfReader_P& reader, const std::shared_ptr<const Model::Street>& street,
-    const std::shared_ptr<Model::StreetIntersection>& intersection )
+    const ObfReader_P& reader, const std::shared_ptr<const Street>& street,
+    const std::shared_ptr<StreetIntersection>& intersection )
 {
     const auto cis = reader._codedInputStream.get();
 

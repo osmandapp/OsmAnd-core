@@ -16,7 +16,6 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     , localeLanguageId(localeLanguageId_)
     , languagePreference(languagePreference_)
     , externalResourcesProvider(externalResourcesProvider_)
-    , dummyMapSection(_p->dummyMapSection)
 {
     _p->initialize();
 }

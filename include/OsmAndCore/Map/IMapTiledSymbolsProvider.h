@@ -55,6 +55,7 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
+            std::shared_ptr<Metric>* pOutMetric = nullptr,
             const IQueryController* const queryController = nullptr);
 
 # if !defined(SWIG)
@@ -62,8 +63,9 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<Data>& outTiledData,
-            const FilterCallback filterCallback = nullptr,
-            const IQueryController* const queryController = nullptr) = 0;
+            std::shared_ptr<Metric>* pOutMetric = nullptr,
+            const IQueryController* const queryController = nullptr,
+            const FilterCallback filterCallback = nullptr) = 0;
 #endif // !defined(SWIG)
     };
 }

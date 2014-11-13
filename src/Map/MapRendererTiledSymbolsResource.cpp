@@ -4,7 +4,6 @@
 #include "MapRendererResourcesManager.h"
 #include "IMapDataProvider.h"
 #include "IMapTiledSymbolsProvider.h"
-#include "IMapSymbolsGroupWithUniqueId.h"
 #include "RasterMapSymbol.h"
 #include "MapRendererResourcesManager.h"
 #include "MapRendererBaseResourcesCollection.h"
@@ -63,19 +62,20 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     QList< proper::shared_future< std::shared_ptr<SharedGroupResources> > > futureReferencedSharedGroupsResources;
     QSet< uint64_t > loadedSharedGroups;
     std::shared_ptr<IMapTiledSymbolsProvider::Data> tile;
-    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile,
+    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile, nullptr, nullptr, 
         [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
-        (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup_) -> bool
+        (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
         {
             // If map symbols group is not shareable, just accept it
-            const auto symbolsGroup = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(symbolsGroup_);
-            if (!symbolsGroup || !symbolsGroup->isSharableById())
+            MapSymbolsGroup::SharingKey sharingKey;
+            const auto isSharableById = symbolsGroup->obtainSharingKey(sharingKey);
+            if (!isSharableById)
                 return true;
 
             // Check if this shared symbol is already available, or mark it as pending
             std::shared_ptr<SharedGroupResources> sharedGroupResources;
             proper::shared_future< std::shared_ptr<SharedGroupResources> > futureSharedGroupResources;
-            if (sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(symbolsGroup->getId(), sharedGroupResources, futureSharedGroupResources))
+            if (sharedGroupsResources.obtainReferenceOrFutureReferenceOrMakePromise(sharingKey, sharedGroupResources, futureSharedGroupResources))
             {
                 if (static_cast<bool>(sharedGroupResources))
                 {
@@ -96,7 +96,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
             }
 
             // Or load this shared group
-            loadedSharedGroups.insert(symbolsGroup->getId());
+            loadedSharedGroups.insert(sharingKey);
             return true;
         });
     if (!requestSucceeded)
@@ -131,11 +131,11 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     // tile->symbolsGroups contains groups that derived from unique symbols, or loaded shared groups
     for (const auto& symbolsGroup : constOf(_sourceData->symbolsGroups))
     {
-        const auto symbolsGroupWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(symbolsGroup);
-        if (symbolsGroupWithId && symbolsGroupWithId->isSharableById())
+        MapSymbolsGroup::SharingKey sharingKey;
+        if (symbolsGroup->obtainSharingKey(sharingKey))
         {
             // Check if this map symbols group is loaded as shared (even if it's sharable)
-            if (!loadedSharedGroups.contains(symbolsGroupWithId->getId()))
+            if (!loadedSharedGroups.contains(sharingKey))
             {
                 // Create GroupResources instance and add it to unique group resources
                 const std::shared_ptr<GroupResources> groupResources(new GroupResources(symbolsGroup));
@@ -145,7 +145,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
 
             // Otherwise insert it as shared group
             const std::shared_ptr<SharedGroupResources> groupResources(new SharedGroupResources(symbolsGroup));
-            sharedGroupsResources.fulfilPromiseAndReference(symbolsGroupWithId->getId(), groupResources);
+            sharedGroupsResources.fulfilPromiseAndReference(sharingKey, groupResources);
             _referencedSharedGroupsResources.push_back(qMove(groupResources));
 
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
@@ -418,7 +418,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
     for (auto& groupResources : _referencedSharedGroupsResources)
     {
-        const auto symbolsGroupWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(groupResources->group);
+        MapSymbolsGroup::SharingKey sharingKey;
+        groupResources->group->obtainSharingKey(sharingKey);
 
         bool wasRemoved = false;
         uintmax_t* pRefsRemaining = nullptr;
@@ -430,7 +431,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
         // Release reference first, since GroupResources will be released after GPU resource will be dereferenced,
         // other tile may catch empty non-loadable GroupResources.
         auto groupResources_ = groupResources;
-        sharedGroupsResources.releaseReference(symbolsGroupWithId->getId(), groupResources_, true, &wasRemoved, pRefsRemaining);
+        sharedGroupsResources.releaseReference(sharingKey, groupResources_, true, &wasRemoved, pRefsRemaining);
 
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         LogPrintf(LogSeverityLevel::Debug,
@@ -519,8 +520,10 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     auto& sharedGroupsResources = collection->_sharedGroupsResources[zoom];
     for (auto& groupResources : _referencedSharedGroupsResources)
     {
+        MapSymbolsGroup::SharingKey sharingKey;
+        groupResources->group->obtainSharingKey(sharingKey);
+
         // Otherwise, perform dereferencing
-        const auto symbolsGroupWithId = std::dynamic_pointer_cast<const IMapSymbolsGroupWithUniqueId>(groupResources->group);
         uintmax_t* pRefsRemaining = nullptr;
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         uintmax_t refsRemaining = 0;
@@ -528,7 +531,7 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
 #endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         bool wasRemoved = false;
         auto groupResources_ = groupResources;
-        sharedGroupsResources.releaseReference(symbolsGroupWithId->getId(), groupResources_, true, &wasRemoved, pRefsRemaining);
+        sharedGroupsResources.releaseReference(sharingKey, groupResources_, true, &wasRemoved, pRefsRemaining);
 
 #if OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
         LogPrintf(LogSeverityLevel::Debug,

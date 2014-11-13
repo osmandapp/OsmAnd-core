@@ -90,7 +90,7 @@ void OsmAnd::ObfPoiSectionReader_P::readBoundaries( const ObfReader_P& reader, c
 
 void OsmAnd::ObfPoiSectionReader_P::readCategories(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QList< std::shared_ptr<const Model::AmenityCategory> >& categories )
+    QList< std::shared_ptr<const AmenityCategory> >& categories )
 {
     const auto cis = reader._codedInputStream.get();
 
@@ -107,7 +107,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
                 
-                std::shared_ptr<Model::AmenityCategory> category(new Model::AmenityCategory());
+                std::shared_ptr<AmenityCategory> category(new AmenityCategory());
                 readCategory(reader, category);
                 
                 assert(cis->BytesUntilLimit() == 0);
@@ -126,7 +126,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readCategory( const ObfReader_P& reader, const std::shared_ptr<Model::AmenityCategory>& category )
+void OsmAnd::ObfPoiSectionReader_P::readCategory( const ObfReader_P& reader, const std::shared_ptr<AmenityCategory>& category )
 {
     const auto cis = reader._codedInputStream.get();
 
@@ -156,7 +156,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategory( const ObfReader_P& reader, con
 
 void OsmAnd::ObfPoiSectionReader_P::loadCategories(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QList< std::shared_ptr<const OsmAnd::Model::AmenityCategory> >& categories )
+    QList< std::shared_ptr<const OsmAnd::AmenityCategory> >& categories )
 {
     const auto cis = reader._codedInputStream.get();
     cis->Seek(section->_offset);
@@ -171,8 +171,8 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     const ZoomLevel zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/,
     QSet<uint32_t>* desiredCategories /*= nullptr*/,
-    QList< Model::Amenity::RefC >* amenitiesOut /*= nullptr*/,
-    std::function<bool (Model::Amenity::NCRefC)> visitor /*= nullptr*/,
+    QList< std::shared_ptr<const Amenity> >* amenitiesOut /*= nullptr*/,
+    std::function<bool (std::shared_ptr<const Amenity>)> visitor /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
     const auto cis = reader._codedInputStream.get();
@@ -187,9 +187,9 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
 void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QSet<uint32_t>* desiredCategories,
-    QList< Model::Amenity::RefC >* amenitiesOut,
+    QList< std::shared_ptr<const Amenity> >* amenitiesOut,
     const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
-    std::function<bool (Model::Amenity::NCRefC)> visitor,
+    std::function<bool (std::shared_ptr<const Amenity>)> visitor,
     const IQueryController* const controller)
 {
     const auto cis = reader._codedInputStream.get();
@@ -426,9 +426,9 @@ bool OsmAnd::ObfPoiSectionReader_P::checkTileCategories(
 void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section, Tile* tile,
     QSet<uint32_t>* desiredCategories,
-    QList< Model::Amenity::RefC >* amenitiesOut,
+    QList< std::shared_ptr<const Amenity> >* amenitiesOut,
     const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
-    std::function<bool (Model::Amenity::NCRefC)> visitor,
+    std::function<bool (std::shared_ptr<const Amenity>)> visitor,
     const IQueryController* const controller,
     QSet< uint64_t >* amenitiesToSkip)
 {
@@ -479,7 +479,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
 
-                Model::Amenity::RefC amenity;
+                std::shared_ptr<const Amenity> amenity;
                 readAmenity(reader, section, pTile, zoomTile, amenity, desiredCategories, bbox31, controller);
 
                 assert(cis->BytesUntilLimit() == 0);
@@ -524,7 +524,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
 void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     const PointI& pTile, uint32_t pzoom,
-    Model::Amenity::OutRefC outAmenity,
+    std::shared_ptr<const Amenity>& outAmenity,
     QSet<uint32_t>* desiredCategories,
     const AreaI* bbox31,
     const IQueryController* const controller)
@@ -533,7 +533,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     PointI point;
     uint32_t catId;
     uint32_t subId;
-    Model::Amenity::Ref amenity;
+    std::shared_ptr<Amenity> amenity;
     for(;;)
     {
         if (controller && controller->isAborted())
@@ -578,7 +578,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                         return;
                     }
                 }
-                amenity = (new Model::Amenity())->getRef();
+                amenity.reset(new Amenity());
             }
             break;
         case OBF::OsmAndPoiBoxDataAtom::kIdFieldNumber:

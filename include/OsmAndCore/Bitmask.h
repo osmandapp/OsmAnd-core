@@ -4,9 +4,7 @@
 #include <OsmAndCore/stdlib_common.h>
 #include <type_traits>
 
-#include <OsmAndCore/QtExtensions.h>
-
-#include <OsmAndCore.h>
+#include <QtGlobal>
 
 namespace OsmAnd
 {

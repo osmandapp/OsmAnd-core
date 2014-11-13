@@ -32,7 +32,7 @@ bool OsmAnd::MapRendererElevationDataResource::obtainData(bool& dataAvailable, c
 
     // Obtain tile from provider
     std::shared_ptr<IMapTiledDataProvider::Data> tile;
-    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile, queryController);
+    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile, nullptr, queryController);
     if (!requestSucceeded)
         return false;
     dataAvailable = static_cast<bool>(tile);

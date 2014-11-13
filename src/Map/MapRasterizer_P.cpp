@@ -7,6 +7,7 @@
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBitmapDevice.h>
+#include <SkBlurMaskFilter.h>
 #include <SkBlurDrawLooper.h>
 #include <SkColorFilter.h>
 #include <SkDashPathEffect.h>
@@ -524,7 +525,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         return;
 
     const auto typeRuleId = primitive->sourceObject->typesRuleIds[primitive->typeRuleIdIndex];
-    const auto& encDecRules = primitive->sourceObject->section->encodingDecodingRules;
+    const auto& encDecRules = primitive->sourceObject->encodingDecodingRules;
 
     int oneway = 0;
     if (primitivisedArea->zoom >= ZoomLevel16 && typeRuleId == encDecRules->highway_encodingRuleId)
@@ -535,7 +536,6 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
             oneway = -1;
     }
 
-    // Construct and test geometry against (wider) bbox area
     SkPath path;
     int pointIdx = 0;
     bool intersect = false;
@@ -629,8 +629,7 @@ void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
     if (primitivisedArea->shadowRenderingMode == 2 && shadowRadius > 0)
     {
         // simply draw shadow? difference from option 3 ?
-        // paint->setColor(0xffffffff);
-        paint.setLooper(SkBlurDrawLooper::Create(shadowRadius, 0, 0, shadowColor.toSkColor()))->unref();
+        paint.setLooper(SkBlurDrawLooper::Create(shadowColor.toSkColor(), SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius), 0, 0))->unref();
         canvas.drawPath(path, paint);
     }
 
@@ -639,9 +638,7 @@ void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
     {
         paint.setLooper(nullptr);
         paint.setStrokeWidth(paint.getStrokeWidth() + shadowRadius * 2);
-        //		paint->setColor(0xffbababa);
         paint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor.toSkColor(), SkXfermode::kSrcIn_Mode))->unref();
-        //		paint->setColor(shadowColor);
         canvas.drawPath(path, paint);
     }
 }

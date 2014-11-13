@@ -21,6 +21,8 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(Primitiviser_P);
     public:
+        typedef Primitiviser::CoastlineMapObject CoastlineMapObject;
+        typedef Primitiviser::FoundationMapObject FoundationMapObject;
         typedef Primitiviser::PrimitiveType PrimitiveType;
         typedef Primitiviser::Primitive Primitive;
         typedef Primitiviser::PrimitivesCollection PrimitivesCollection;
@@ -56,11 +58,10 @@ namespace OsmAnd
         static bool polygonizeCoastlines(
             const std::shared_ptr<const MapPresentationEnvironment>& env,
             const std::shared_ptr<const PrimitivisedArea>& primitivisedArea,
-            const QList< std::shared_ptr<const Model::BinaryMapObject> >& coastlines,
-            QList< std::shared_ptr<const Model::BinaryMapObject> >& outVectorized,
+            const QList< std::shared_ptr<const MapObject> >& coastlines,
+            QList< std::shared_ptr<const MapObject> >& outVectorized,
             bool abortIfBrokenCoastlinesExist,
-            bool includeBrokenCoastlines,
-            uint32_t& dummySectionObjectsLastUnusedId);
+            bool includeBrokenCoastlines);
 
         static bool buildCoastlinePolygonSegment(
             const std::shared_ptr<const MapPresentationEnvironment>& env,
@@ -93,7 +94,7 @@ namespace OsmAnd
         static void obtainPrimitives(
             const std::shared_ptr<const MapPresentationEnvironment>& env,
             const std::shared_ptr<PrimitivisedArea>& primitivisedArea,
-            const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& source,
+            const QList< std::shared_ptr<const OsmAnd::MapObject> >& source,
 #ifdef Q_COMPILER_RVALUE_REFS
             MapStyleEvaluationResult&& evaluationResult,
 #else
@@ -106,7 +107,7 @@ namespace OsmAnd
         static std::shared_ptr<const PrimitivesGroup> obtainPrimitivesGroup(
             const std::shared_ptr<const MapPresentationEnvironment>& env,
             const std::shared_ptr<PrimitivisedArea>& primitivisedArea,
-            const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
+            const std::shared_ptr<const MapObject>& mapObject,
 #ifdef Q_COMPILER_RVALUE_REFS
             MapStyleEvaluationResult&& evaluationResult,
 #else
@@ -213,14 +214,14 @@ namespace OsmAnd
             const PointI sizeInPixels,
             const ZoomLevel zoom,
             const MapFoundationType foundation,
-            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+            const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache,
             const IQueryController* const controller,
             Primitiviser_Metrics::Metric_primitivise* const metric);
 
         std::shared_ptr<const PrimitivisedArea> primitiviseWithoutCoastlines(
             const ZoomLevel zoom,
-            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+            const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache,
             const IQueryController* const controller,
             Primitiviser_Metrics::Metric_primitivise* const metric);

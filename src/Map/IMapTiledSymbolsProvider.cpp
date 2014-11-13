@@ -12,10 +12,11 @@ bool OsmAnd::IMapTiledSymbolsProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
     std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
+    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
     const IQueryController* const queryController /*= nullptr*/)
 {
     std::shared_ptr<Data> tiledData;
-    const auto result = obtainData(tileId, zoom, tiledData, nullptr, queryController);
+    const auto result = obtainData(tileId, zoom, tiledData, pOutMetric, queryController, nullptr);
     outTiledData = tiledData;
     return result;
 }

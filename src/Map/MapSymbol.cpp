@@ -1,11 +1,12 @@
 #include "MapSymbol.h"
 
+#include "MapSymbolsGroup.h"
+
 OsmAnd::MapSymbol::MapSymbol(
-    const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_)
+    const std::shared_ptr<MapSymbolsGroup>& group_)
     : group(group_)
     , groupPtr(group_.get())
-    , isShareable(isShareable_)
+    , groupHasSharingKey([group_]() -> bool { MapSymbolsGroup::SharingKey sharingKey; return group_->obtainSharingKey(sharingKey); }())
     , order(0)
     , contentClass(ContentClass::Unknown)
     , isHidden(false)

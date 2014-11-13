@@ -18,6 +18,8 @@ class SkBitmap;
 
 namespace OsmAnd
 {
+    class MapObject;
+
     class SymbolRasterizer_P;
     class OSMAND_CORE_API SymbolRasterizer
     {
@@ -30,11 +32,11 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(RasterizedSymbolsGroup);
         private:
         protected:
-            RasterizedSymbolsGroup(const std::shared_ptr<const Model::BinaryMapObject>& mapObject);
+            RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject);
         public:
             virtual ~RasterizedSymbolsGroup();
 
-            const std::shared_ptr<const Model::BinaryMapObject> mapObject;
+            const std::shared_ptr<const MapObject> mapObject;
             QList< std::shared_ptr<const RasterizedSymbol> > symbols;
 
         friend class OsmAnd::SymbolRasterizer_P;
@@ -117,7 +119,7 @@ namespace OsmAnd
         void rasterize(
             const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool(const std::shared_ptr<const Model::BinaryMapObject>& mapObject)> filter = nullptr,
+            std::function<bool(const std::shared_ptr<const MapObject>& mapObject)> filter = nullptr,
             const IQueryController* const controller = nullptr);
     };
 }

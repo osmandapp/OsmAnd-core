@@ -16,7 +16,7 @@ void OsmAnd::ObfMapSectionReader::loadMapObjects(
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
-    QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut /*= nullptr*/,
+    QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut /*= nullptr*/,
     MapFoundationType* outBBoxOrSectionFoundation /*= nullptr*/,
     const FilterMapObjectsByIdFunction filterById /*= nullptr*/,
     const VisitorFunction visitor /*= nullptr*/,
@@ -44,7 +44,7 @@ OsmAnd::ObfMapSectionReader::DataBlock::DataBlock(
     const DataBlockId id_,
     const AreaI bbox31_,
     const MapFoundationType foundationType_,
-    const QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >& mapObjects_)
+    const QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >& mapObjects_)
     : id(id_)
     , bbox31(bbox31_)
     , foundationType(foundationType_)

@@ -14,9 +14,19 @@ OsmAnd::MapSymbolsGroup::~MapSymbolsGroup()
 {
 }
 
-QString OsmAnd::MapSymbolsGroup::getDebugTitle() const
+bool OsmAnd::MapSymbolsGroup::obtainSharingKey(SharingKey& outKey) const
 {
-    return QString().sprintf("MapSymbolsGroup %p", this);
+    return false;
+}
+
+bool OsmAnd::MapSymbolsGroup::obtainSortingKey(SortingKey& outKey) const
+{
+    return false;
+}
+
+QString OsmAnd::MapSymbolsGroup::toString() const
+{
+    return QString().sprintf("(@%p)", this);
 }
 
 std::shared_ptr<OsmAnd::MapSymbol> OsmAnd::MapSymbolsGroup::getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const
@@ -119,4 +129,32 @@ OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters::AdditionalOnP
 
 OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters::~AdditionalOnPathSymbolInstanceParameters()
 {
+}
+
+bool OsmAnd::MapSymbolsGroup::Comparator::operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const
+{
+    MapSymbolsGroup::SortingKey lKey;
+    const auto lHasKey = l->obtainSortingKey(lKey);
+
+    MapSymbolsGroup::SortingKey rKey;
+    const auto rHasKey = r->obtainSortingKey(rKey);
+
+    if (lHasKey && rHasKey)
+    {
+        if (lKey != rKey)
+            return (lKey < rKey);
+
+        return (l < r);
+    }
+
+    if (!lHasKey && !rHasKey)
+        return (l < r);
+
+    if (lHasKey && !rHasKey)
+        return true;
+
+    if (!lHasKey && rHasKey)
+        return false;
+
+    return (l < r);
 }

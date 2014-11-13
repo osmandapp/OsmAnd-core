@@ -75,8 +75,6 @@ namespace OsmAnd
 
         ImplementationInterface<MapPresentationEnvironment> owner;
 
-        const std::shared_ptr<const ObfMapSectionInfo> dummyMapSection;
-
         QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
         void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);

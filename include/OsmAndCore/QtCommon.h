@@ -210,6 +210,36 @@ namespace OsmAnd
             copy.insertMulti(inputEntry.key(), inputEntry.value());
         return copy;
     }
+
+    template<typename CONTAINER>
+    auto qMaxElement(const CONTAINER& container) -> typename CONTAINER::const_iterator
+    {
+        auto itElement = std::begin(container);
+        auto itMaxElement = itElement;
+        const auto itEnd = std::end(container);
+        for (++itElement; itElement != itEnd; ++itElement)
+        {
+            if (*itElement > *itMaxElement)
+                itMaxElement = itElement;
+        }
+
+        return itMaxElement;
+    }
+
+    template<typename CONTAINER>
+    auto qMaxElement(CONTAINER& container) -> typename CONTAINER::iterator
+    {
+        auto itElement = std::begin(container);
+        auto itMaxElement = itElement;
+        const auto itEnd = std::end(container);
+        for (++itElement; itElement != itEnd; ++itElement)
+        {
+            if (*itElement > *itMaxElement)
+                itMaxElement = itElement;
+        }
+
+        return itMaxElement;
+    }
 }
 
 #endif // !defined(_OSMAND_CORE_QT_COMMON_H_)

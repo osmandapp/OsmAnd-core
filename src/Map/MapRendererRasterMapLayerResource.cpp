@@ -32,7 +32,7 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(bool& dataAvailable, 
 
     // Obtain tile from provider
     std::shared_ptr<IMapTiledDataProvider::Data> tiledData;
-    const auto requestSucceeded = provider->obtainData(tileId, zoom, tiledData, queryController);
+    const auto requestSucceeded = provider->obtainData(tileId, zoom, tiledData, nullptr, queryController);
     if (!requestSucceeded)
         return false;
     dataAvailable = static_cast<bool>(tiledData);

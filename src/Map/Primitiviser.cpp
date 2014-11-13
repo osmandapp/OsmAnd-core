@@ -2,7 +2,7 @@
 #include "Primitiviser_P.h"
 
 #include "MapPresentationEnvironment.h"
-#include "BinaryMapObject.h"
+#include "MapObject.h"
 
 OsmAnd::Primitiviser::Primitiviser(const std::shared_ptr<const MapPresentationEnvironment>& environment_)
     : _p(new Primitiviser_P(this))
@@ -19,7 +19,7 @@ std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitivis
     const PointI sizeInPixels,
     const ZoomLevel zoom,
     const MapFoundationType foundation,
-    const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+    const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/,
     Primitiviser_Metrics::Metric_primitivise* const metric /*= nullptr*/)
@@ -29,7 +29,7 @@ std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitivis
 
 std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitiviser::primitiviseWithoutCoastlines(
     const ZoomLevel zoom,
-    const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+    const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/,
     Primitiviser_Metrics::Metric_primitivise* const metric /*= nullptr*/)
@@ -37,7 +37,33 @@ std::shared_ptr<const OsmAnd::Primitiviser::PrimitivisedArea> OsmAnd::Primitivis
     return _p->primitiviseWithoutCoastlines(zoom, objects, cache, controller, metric);
 }
 
-OsmAnd::Primitiviser::PrimitivesGroup::PrimitivesGroup(const std::shared_ptr<const Model::BinaryMapObject>& sourceObject_)
+OsmAnd::Primitiviser::CoastlineMapObject::CoastlineMapObject()
+{
+}
+
+OsmAnd::Primitiviser::CoastlineMapObject::~CoastlineMapObject()
+{
+}
+
+bool OsmAnd::Primitiviser::CoastlineMapObject::containsFoundationType() const
+{
+    return true;
+}
+
+OsmAnd::Primitiviser::FoundationMapObject::FoundationMapObject()
+{
+}
+
+OsmAnd::Primitiviser::FoundationMapObject::~FoundationMapObject()
+{
+}
+
+bool OsmAnd::Primitiviser::FoundationMapObject::containsFoundationType() const
+{
+    return true;
+}
+
+OsmAnd::Primitiviser::PrimitivesGroup::PrimitivesGroup(const std::shared_ptr<const MapObject>& sourceObject_)
     : sourceObject(sourceObject_)
 {
 }
@@ -95,7 +121,7 @@ OsmAnd::Primitiviser::Primitive::~Primitive()
 {
 }
 
-OsmAnd::Primitiviser::SymbolsGroup::SymbolsGroup(const std::shared_ptr<const Model::BinaryMapObject>& sourceObject_)
+OsmAnd::Primitiviser::SymbolsGroup::SymbolsGroup(const std::shared_ptr<const MapObject>& sourceObject_)
     : sourceObject(sourceObject_)
 {
 }
@@ -209,12 +235,12 @@ OsmAnd::Primitiviser::PrimitivisedArea::~PrimitivisedArea()
         auto& sharedGroups = cache->getPrimitivesGroups(zoom);
         for (auto& group : primitivesGroups)
         {
-            const auto canBeShared = (group->sourceObject->section != mapPresentationEnvironment->dummyMapSection);
-            if (!canBeShared)
+            MapObject::SharingKey sharingKey;
+            if (!group->sourceObject->obtainSharingKey(sharingKey))
                 continue;
 
             // Remove reference to this group from shared ones
-            sharedGroups.releaseReference(group->sourceObject->id, group);
+            sharedGroups.releaseReference(sharingKey, group);
         }
     }
 
@@ -225,12 +251,12 @@ OsmAnd::Primitiviser::PrimitivisedArea::~PrimitivisedArea()
         auto& sharedGroups = cache->getSymbolsGroups(zoom);
         for (auto& group : symbolsGroups)
         {
-            const auto canBeShared = (group->sourceObject->section != mapPresentationEnvironment->dummyMapSection);
-            if (!canBeShared)
+            MapObject::SharingKey sharingKey;
+            if (!group->sourceObject->obtainSharingKey(sharingKey))
                 continue;
 
             // Remove reference to this group from shared ones
-            sharedGroups.releaseReference(group->sourceObject->id, group);
+            sharedGroups.releaseReference(sharingKey, group);
         }
     }
 }

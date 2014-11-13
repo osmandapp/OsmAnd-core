@@ -42,24 +42,13 @@ namespace OsmAnd
 
         struct OSMAND_CORE_API Metric_renderFrame : public IMapRenderer_Metrics::Metric_renderFrame
         {
-            inline Metric_renderFrame()
-            {
-                reset();
-            }
-
-            virtual ~Metric_renderFrame()
-            {
-            }
-
-            inline void reset()
-            {
-                OsmAnd__AtlasMapRenderer_Metrics__Metric_renderFrame__FIELDS(RESET_METRIC_FIELD);
-                IMapRenderer_Metrics::Metric_renderFrame::reset();
-            }
+            Metric_renderFrame();
+            virtual ~Metric_renderFrame();
+            virtual void reset();
 
             OsmAnd__AtlasMapRenderer_Metrics__Metric_renderFrame__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
         };
     }
 }

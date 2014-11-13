@@ -75,25 +75,15 @@ namespace OsmAnd
         /* Number of points read from MapObjects that were not skipped */                       \
         FIELD_ACTION(unsigned int, notSkippedMapObjectsPoints, "");
 
-        struct OSMAND_CORE_API Metric_loadMapObjects
+        struct OSMAND_CORE_API Metric_loadMapObjects : public Metric
         {
-            inline Metric_loadMapObjects()
-            {
-                reset();
-            }
-
-            virtual ~Metric_loadMapObjects()
-            {
-            }
-
-            inline void reset()
-            {
-                OsmAnd__ObfMapSectionReader_Metrics__Metric_loadMapObjects__FIELDS(RESET_METRIC_FIELD);
-            }
+            Metric_loadMapObjects();
+            virtual ~Metric_loadMapObjects();
+            virtual void reset();
 
             OsmAnd__ObfMapSectionReader_Metrics__Metric_loadMapObjects__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
         };
     }
 }

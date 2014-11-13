@@ -15,10 +15,10 @@
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/Primitiviser.h>
-#include <OsmAndCore/Map/BinaryMapDataProvider.h>
-#include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
-#include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
-#include <OsmAndCore/Map/BinaryMapRasterLayerProvider_Software.h>
+#include <OsmAndCore/Map/BinaryMapObjectsProvider.h>
+#include <OsmAndCore/Map/MapPrimitivesProvider.h>
+#include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
+#include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
 
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #if defined(OSMAND_TARGET_OS_windows)

@@ -25,8 +25,7 @@ namespace OsmAnd
     protected:
     public:
         OnPathRasterMapSymbol(
-            const std::shared_ptr<MapSymbolsGroup>& group,
-            const bool isShareable);
+            const std::shared_ptr<MapSymbolsGroup>& group);
         virtual ~OnPathRasterMapSymbol();
 
         QVector<float> glyphsWidth;

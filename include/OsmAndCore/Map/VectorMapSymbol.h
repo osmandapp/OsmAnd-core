@@ -45,8 +45,7 @@ namespace OsmAnd
     private:
     protected:
         VectorMapSymbol(
-            const std::shared_ptr<MapSymbolsGroup>& group,
-            const bool isShareable);
+            const std::shared_ptr<MapSymbolsGroup>& group);
     public:
         virtual ~VectorMapSymbol();
 

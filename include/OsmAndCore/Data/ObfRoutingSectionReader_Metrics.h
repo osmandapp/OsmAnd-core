@@ -60,25 +60,15 @@ namespace OsmAnd
         /* Elapsed time for processing not-skipped Road points (in seconds) */                      \
         FIELD_ACTION(float, elapsedTimeForNotSkippedRoadsPoints, "s");
 
-        struct OSMAND_CORE_API Metric_loadRoads
+        struct OSMAND_CORE_API Metric_loadRoads : public Metric
         {
-            inline Metric_loadRoads()
-            {
-                reset();
-            }
-
-            virtual ~Metric_loadRoads()
-            {
-            }
-
-            inline void reset()
-            {
-                OsmAnd__ObfRoutingSectionReader_Metrics__Metric_loadRoads__FIELDS(RESET_METRIC_FIELD);
-            }
+            Metric_loadRoads();
+            virtual ~Metric_loadRoads();
+            virtual void reset();
 
             OsmAnd__ObfRoutingSectionReader_Metrics__Metric_loadRoads__FIELDS(EMIT_METRIC_FIELD);
 
-            virtual QString toString(const QString& prefix = QString::null) const;
+            virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
         };
     }
 }

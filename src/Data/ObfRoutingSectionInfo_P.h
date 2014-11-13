@@ -3,10 +3,14 @@
 
 #include "stdlib_common.h"
 #include <array>
+#include <atomic>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QString>
 #include <QMutex>
+#include <QAtomicInt>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -26,8 +30,11 @@ namespace OsmAnd
     protected:
         ObfRoutingSectionInfo_P(ObfRoutingSectionInfo* owner);
 
-        mutable QMutex _decodingRulesMutex;
-        mutable std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> _decodingRules;
+#if !defined(ATOMIC_POINTER_LOCK_FREE)
+        mutable QAtomicInt _encodingDecodingRulesLoaded;
+#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
+        mutable std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> _encodingDecodingRules;
+        mutable QMutex _encodingDecodingRulesLoadMutex;
 
         struct LevelContainer
         {
@@ -39,6 +46,8 @@ namespace OsmAnd
         ~ObfRoutingSectionInfo_P();
 
         ImplementationInterface<ObfRoutingSectionInfo> owner;
+
+        std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> getEncodingDecodingRules() const;
 
     friend class OsmAnd::ObfRoutingSectionInfo;
     friend class OsmAnd::ObfRoutingSectionReader_P;

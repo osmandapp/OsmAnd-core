@@ -46,11 +46,16 @@ bool OsmAnd::OnlineRasterMapLayerProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
     std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    const IQueryController* const queryController)
+    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
+    const IQueryController* const queryController /*= nullptr*/)
 {
+    if (pOutMetric)
+        pOutMetric->reset();
+
     std::shared_ptr<OnlineRasterMapLayerProvider::Data> tiledData;
     const auto result = _p->obtainData(tileId, zoom, tiledData, queryController);
     outTiledData = tiledData;
+
     return result;
 }
 

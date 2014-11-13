@@ -1,9 +1,8 @@
 #include "VectorMapSymbol.h"
 
 OsmAnd::VectorMapSymbol::VectorMapSymbol(
-    const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_)
-    : MapSymbol(group_, isShareable_)
+    const std::shared_ptr<MapSymbolsGroup>& group_)
+    : MapSymbol(group_)
     , vertices(nullptr)
     , verticesCount(0)
     , indices(nullptr)

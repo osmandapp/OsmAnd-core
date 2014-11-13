@@ -21,8 +21,7 @@ namespace OsmAnd
     protected:
     public:
         OnSurfaceRasterMapSymbol(
-            const std::shared_ptr<MapSymbolsGroup>& group,
-            const bool isShareable);
+            const std::shared_ptr<MapSymbolsGroup>& group);
         virtual ~OnSurfaceRasterMapSymbol();
 
         float direction;

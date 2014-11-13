@@ -19,11 +19,8 @@ namespace OsmAnd
     class ObfReader;
     class ObfFile;
     class ObfMapSectionInfo;
-    namespace Model
-    {
-        class BinaryMapObject;
-        class Road;
-    }
+    class BinaryMapObject;
+    class Road;
     class IQueryController;
     namespace ObfMapSectionReader_Metrics
     {
@@ -50,7 +47,7 @@ namespace OsmAnd
             const IQueryController* const controller = nullptr);
 
         bool loadMapObjects(
-            QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> >* resultOut,
+            QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             MapFoundationType* outFoundation,
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
@@ -63,7 +60,7 @@ namespace OsmAnd
         bool loadRoads(
             const RoutingDataLevel dataLevel,
             const AreaI* const bbox31 = nullptr,
-            QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut = nullptr,
+            QList< std::shared_ptr<const OsmAnd::Road> >* resultOut = nullptr,
             const FilterRoadsByIdFunction filterById = nullptr,
             const ObfRoutingSectionReader::VisitorFunction visitor = nullptr,
             ObfRoutingSectionReader::DataBlocksCache* cache = nullptr,

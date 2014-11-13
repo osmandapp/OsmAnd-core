@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iterator>
 #include <type_traits>
+#include <functional>
 
 #include <OsmAndCore/QtExtraDefinitions.h>
 #include <OsmAndCore/QtExtensions.h>
@@ -40,10 +41,20 @@ namespace OsmAnd
     }
 
     template<typename T>
-    const T& assignAndReturn(T& var, const T& value)
+    const T& assignAndReturn(T& out, const T& value)
     {
-        var = value;
+        out = value;
         return value;
+    }
+
+    template<typename T>
+    T modifyAndReturn(
+        const T instance,
+        const std::function<void(T& instance)> modifier)
+    {
+        auto copy = instance;
+        modifier(copy);
+        return copy;
     }
 
     template <typename FROM, typename TO>

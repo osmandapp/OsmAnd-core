@@ -100,6 +100,7 @@ namespace OsmAnd
 
         friend class OsmAnd::KeyValueContainerWrapper<CONTAINER>;
         };
+        typedef Iterator iterator;
 
         inline Iterator begin()
         {
@@ -167,6 +168,7 @@ namespace OsmAnd
 
         friend class OsmAnd::KeyValueContainerWrapper<CONTAINER>;
         };
+        typedef ConstIterator const_iterator;
 
         inline ConstIterator begin() const
         {
@@ -284,6 +286,7 @@ namespace OsmAnd
 
         friend class OsmAnd::KeyValueConstContainerWrapper<CONTAINER>;
         };
+        typedef ConstIterator const_iterator;
 
         inline ConstIterator begin() const
         {

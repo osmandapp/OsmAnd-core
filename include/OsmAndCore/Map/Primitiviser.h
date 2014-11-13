@@ -13,16 +13,14 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/IQueryController.h>
 #include <OsmAndCore/SharedResourcesContainer.h>
+#include <OsmAndCore/Data/MapObject.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapStyleEvaluationResult.h>
 #include <OsmAndCore/Map/Primitiviser_Metrics.h>
 
 namespace OsmAnd
 {
-    namespace Model
-    {
-        class BinaryMapObject;
-    }
+    class MapObject;
     class MapPresentationEnvironment;
 
     class Primitiviser_P;
@@ -43,6 +41,32 @@ namespace OsmAnd
             DefaultTextLabelWrappingLengthInCharacters = 20
         };
 
+        class OSMAND_CORE_API CoastlineMapObject : public MapObject
+        {
+            Q_DISABLE_COPY_AND_MOVE(CoastlineMapObject);
+
+        private:
+        protected:
+        public:
+            CoastlineMapObject();
+            virtual ~CoastlineMapObject();
+
+            virtual bool containsFoundationType() const;
+        };
+
+        class OSMAND_CORE_API FoundationMapObject : public MapObject
+        {
+            Q_DISABLE_COPY_AND_MOVE(FoundationMapObject);
+
+        private:
+        protected:
+        public:
+            FoundationMapObject();
+            virtual ~FoundationMapObject();
+
+            virtual bool containsFoundationType() const;
+        };
+
         class Primitive;
         typedef QList< std::shared_ptr<const Primitive> > PrimitivesCollection;
 
@@ -54,11 +78,11 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(PrimitivesGroup);
         private:
         protected:
-            PrimitivesGroup(const std::shared_ptr<const Model::BinaryMapObject>& sourceObject);
+            PrimitivesGroup(const std::shared_ptr<const MapObject>& sourceObject);
         public:
             ~PrimitivesGroup();
 
-            const std::shared_ptr<const Model::BinaryMapObject> sourceObject;
+            const std::shared_ptr<const MapObject> sourceObject;
 
             PrimitivesCollection polygons;
             PrimitivesCollection polylines;
@@ -95,7 +119,7 @@ namespace OsmAnd
             ~Primitive();
 
             const std::weak_ptr<const PrimitivesGroup> group;
-            const std::shared_ptr<const Model::BinaryMapObject> sourceObject;
+            const std::shared_ptr<const MapObject> sourceObject;
 
             const PrimitiveType type;
             const uint32_t typeRuleIdIndex;
@@ -112,18 +136,18 @@ namespace OsmAnd
         typedef QList< std::shared_ptr<const Symbol> > SymbolsCollection;
 
         class SymbolsGroup;
-        typedef QHash< std::shared_ptr<const Model::BinaryMapObject>, std::shared_ptr<const SymbolsGroup> > SymbolsGroupsCollection;
+        typedef QHash< std::shared_ptr<const MapObject>, std::shared_ptr<const SymbolsGroup> > SymbolsGroupsCollection;
 
         class OSMAND_CORE_API SymbolsGroup Q_DECL_FINAL
         {
             Q_DISABLE_COPY_AND_MOVE(SymbolsGroup);
         private:
         protected:
-            SymbolsGroup(const std::shared_ptr<const Model::BinaryMapObject>& sourceObject);
+            SymbolsGroup(const std::shared_ptr<const MapObject>& sourceObject);
         public:
             ~SymbolsGroup();
 
-            const std::shared_ptr<const Model::BinaryMapObject> sourceObject;
+            const std::shared_ptr<const MapObject> sourceObject;
 
             SymbolsCollection symbols;
         
@@ -200,8 +224,8 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(Cache);
         public:
-            typedef SharedResourcesContainer<uint64_t, const PrimitivesGroup> SharedPrimitivesGroupsContainer;
-            typedef SharedResourcesContainer<uint64_t, const SymbolsGroup> SharedSymbolsGroupsContainer;
+            typedef SharedResourcesContainer<MapObject::SharingKey, const PrimitivesGroup> SharedPrimitivesGroupsContainer;
+            typedef SharedResourcesContainer<MapObject::SharingKey, const SymbolsGroup> SharedSymbolsGroupsContainer;
 
         private:
         protected:
@@ -279,14 +303,14 @@ namespace OsmAnd
             const PointI sizeInPixels,
             const ZoomLevel zoom,
             const MapFoundationType foundation,
-            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+            const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
             const IQueryController* const controller = nullptr,
             Primitiviser_Metrics::Metric_primitivise* const metric = nullptr);
 
         std::shared_ptr<const PrimitivisedArea> primitiviseWithoutCoastlines(
             const ZoomLevel zoom,
-            const QList< std::shared_ptr<const Model::BinaryMapObject> >& objects,
+            const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
             const IQueryController* const controller = nullptr,
             Primitiviser_Metrics::Metric_primitivise* const metric = nullptr);

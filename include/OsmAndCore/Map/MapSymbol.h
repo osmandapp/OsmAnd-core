@@ -35,15 +35,13 @@ namespace OsmAnd
     private:
     protected:
         MapSymbol(
-            const std::shared_ptr<MapSymbolsGroup>& group,
-            const bool isShareable);
+            const std::shared_ptr<MapSymbolsGroup>& group);
     public:
         virtual ~MapSymbol();
 
         const std::weak_ptr<MapSymbolsGroup> group;
         MapSymbolsGroup* const groupPtr;
-
-        const bool isShareable;
+        const bool groupHasSharingKey;
 
         int order;
         ContentClass contentClass;

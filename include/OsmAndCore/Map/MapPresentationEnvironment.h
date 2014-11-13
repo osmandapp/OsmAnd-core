@@ -72,8 +72,6 @@ namespace OsmAnd
         const LanguagePreference languagePreference;
         const std::shared_ptr<const ICoreResourcesProvider> externalResourcesProvider;
 
-        const std::shared_ptr<const ObfMapSectionInfo>& dummyMapSection;
-
         QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
         void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);

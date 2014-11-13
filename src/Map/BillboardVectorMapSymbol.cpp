@@ -1,9 +1,8 @@
 #include "BillboardVectorMapSymbol.h"
 
 OsmAnd::BillboardVectorMapSymbol::BillboardVectorMapSymbol(
-    const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_)
-    : VectorMapSymbol(group_, isShareable_)
+    const std::shared_ptr<MapSymbolsGroup>& group_)
+    : VectorMapSymbol(group_)
 {
 }
 

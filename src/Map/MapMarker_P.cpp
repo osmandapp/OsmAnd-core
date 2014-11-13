@@ -179,8 +179,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     {
         // Add a circle that represent precision circle
         const std::shared_ptr<AccuracyCircleMapSymbol> accuracyCircleSymbol(new AccuracyCircleMapSymbol(
-            symbolsGroup,
-            false /* This symbol is not shareable*/));
+            symbolsGroup));
         accuracyCircleSymbol->order = order++;
         accuracyCircleSymbol->position31 = _position;
         VectorMapSymbol::generateCirclePrimitive(*accuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
@@ -192,8 +191,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
 
         // Add a ring-line that represent precision circle
         const std::shared_ptr<AccuracyCircleMapSymbol> precisionRingSymbol(new AccuracyCircleMapSymbol(
-            symbolsGroup,
-            false /* This symbol is not shareable */));
+            symbolsGroup));
         precisionRingSymbol->order = order++;
         precisionRingSymbol->position31 = _position;
         VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->accuracyCircleBaseColor.withAlpha(0.4f));
@@ -222,8 +220,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
 
         const std::shared_ptr<KeyedOnSurfaceRasterMapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceRasterMapSymbol(
             key,
-            symbolsGroup,
-            false /* This symbol is not shareable */));
+            symbolsGroup));
         onMapSurfaceIconSymbol->order = order++;
         onMapSurfaceIconSymbol->bitmap = iconClone;
         onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
@@ -244,8 +241,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         assert(ok);
 
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(
-            symbolsGroup,
-            false /* This symbol is not shareable*/));
+            symbolsGroup));
         pinIconSymbol->order = order++;
         pinIconSymbol->bitmap = pinIcon;
         pinIconSymbol->size = PointI(pinIcon->width(), pinIcon->height());
@@ -312,9 +308,8 @@ bool OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
 
 OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::KeyedOnSurfaceRasterMapSymbol(
     const MapMarker::OnSurfaceIconKey key_,
-    const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_)
-    : OnSurfaceRasterMapSymbol(group_, isShareable_)
+    const std::shared_ptr<MapSymbolsGroup>& group_)
+    : OnSurfaceRasterMapSymbol(group_)
     , key(key_)
 {
 }
@@ -324,9 +319,8 @@ OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::~KeyedOnSurfaceRasterMapSymb
 }
 
 OsmAnd::MapMarker_P::AccuracyCircleMapSymbol::AccuracyCircleMapSymbol(
-    const std::shared_ptr<MapSymbolsGroup>& group_,
-    const bool isShareable_)
-    : OnSurfaceVectorMapSymbol(group_, isShareable_)
+    const std::shared_ptr<MapSymbolsGroup>& group_)
+    : OnSurfaceVectorMapSymbol(group_)
 {
 }
 

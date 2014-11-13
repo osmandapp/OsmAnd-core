@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_OBF_MAP_SECTION_INFO_P_H_
 
 #include "stdlib_common.h"
+#include <atomic>
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
@@ -10,6 +11,7 @@
 #include <QHash>
 #include <QMap>
 #include <QString>
+#include <QAtomicInt>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -20,7 +22,7 @@
 namespace OsmAnd
 {
     class ObfMapSectionLevel;
-    struct ObfMapSectionDecodingEncodingRules;
+    class ObfMapSectionDecodingEncodingRules;
     class ObfMapSectionReader_P;
 
     class ObfMapSectionLevelTreeNode
@@ -52,8 +54,11 @@ namespace OsmAnd
     protected:
         ObfMapSectionLevel_P(ObfMapSectionLevel* owner);
 
-        mutable QMutex _rootNodesMutex;
         mutable std::shared_ptr< const QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > _rootNodes;
+#if !defined(ATOMIC_POINTER_LOCK_FREE)
+        mutable QAtomicInt _rootNodesLoaded;
+#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
+        mutable QMutex _rootNodesLoadMutex;
     public:
         virtual ~ObfMapSectionLevel_P();
 
@@ -70,12 +75,17 @@ namespace OsmAnd
     protected:
         ObfMapSectionInfo_P(ObfMapSectionInfo* owner);
 
-        ImplementationInterface<ObfMapSectionInfo> owner;
-
-        mutable QMutex _encodingDecodingRulesMutex;
-        mutable std::shared_ptr<const ObfMapSectionDecodingEncodingRules> _encodingDecodingRules;
+        mutable std::shared_ptr<ObfMapSectionDecodingEncodingRules> _encodingDecodingRules;
+#if !defined(ATOMIC_POINTER_LOCK_FREE)
+        mutable QAtomicInt _encodingDecodingRulesLoaded;
+#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
+        mutable QMutex _encodingDecodingRulesLoadMutex;
     public:
         virtual ~ObfMapSectionInfo_P();
+
+        ImplementationInterface<ObfMapSectionInfo> owner;
+
+        std::shared_ptr<const ObfMapSectionDecodingEncodingRules> getEncodingDecodingRules() const;
 
     friend class OsmAnd::ObfMapSectionInfo;
     friend class OsmAnd::ObfMapSectionReader_P;

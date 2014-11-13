@@ -21,8 +21,7 @@ namespace OsmAnd
     protected:
     public:
         BillboardRasterMapSymbol(
-            const std::shared_ptr<MapSymbolsGroup>& group,
-            const bool isShareable);
+            const std::shared_ptr<MapSymbolsGroup>& group);
         virtual ~BillboardRasterMapSymbol();
 
         PointI offset;

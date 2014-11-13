@@ -16,7 +16,7 @@ void OsmAnd::ObfRoutingSectionReader::loadRoads(
     const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const RoutingDataLevel dataLevel,
     const AreaI* const bbox31 /*= nullptr*/,
-    QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut /*= nullptr*/,
+    QList< std::shared_ptr<const OsmAnd::Road> >* resultOut /*= nullptr*/,
     const FilterRoadsByIdFunction filterById /*= nullptr*/,
     const VisitorFunction visitor /*= nullptr*/,
     DataBlocksCache* cache /*= nullptr*/,
@@ -42,7 +42,7 @@ OsmAnd::ObfRoutingSectionReader::DataBlock::DataBlock(
     const DataBlockId id_,
     const RoutingDataLevel dataLevel_,
     const AreaI area31_,
-    const QList< std::shared_ptr<const OsmAnd::Model::Road> >& roads_)
+    const QList< std::shared_ptr<const OsmAnd::Road> >& roads_)
     : id(id_)
     , dataLevel(dataLevel_)
     , area31(area31_)

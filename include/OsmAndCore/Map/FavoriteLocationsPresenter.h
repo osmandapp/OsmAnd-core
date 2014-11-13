@@ -41,6 +41,7 @@ namespace OsmAnd
         virtual bool obtainData(
             const IMapKeyedDataProvider::Key key,
             std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
+            std::shared_ptr<Metric>* pOutMetric = nullptr,
             const IQueryController* const queryController = nullptr);
     };
 }

@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Metrics.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
 
 namespace OsmAnd
@@ -43,6 +44,7 @@ namespace OsmAnd
         virtual bool obtainData(
             const Key key,
             std::shared_ptr<Data>& outKeyedData,
+            std::shared_ptr<Metric>* pOutMetric = nullptr,
             const IQueryController* const queryController = nullptr) = 0;
     };
 }

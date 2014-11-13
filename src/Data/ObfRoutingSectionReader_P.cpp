@@ -61,7 +61,7 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
     }
 }
 
-void OsmAnd::ObfRoutingSectionReader_P::readRules(
+void OsmAnd::ObfRoutingSectionReader_P::readEncodingDecodingRules(
     const ObfReader_P& reader,
     const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules)
 {
@@ -75,13 +75,14 @@ void OsmAnd::ObfRoutingSectionReader_P::readRules(
         switch (tfn)
         {
             case 0:
+                rules->verifyRequiredRulesExist();
                 return;
             case OBF::OsmAndRoutingIndex::kRulesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readLength(cis);
                 const auto oldLimit = cis->PushLimit(length);
 
-                readRule(reader, rules, defaultRuleId++);
+                readEncodingDecodingRule(reader, rules, defaultRuleId++);
 
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
@@ -95,9 +96,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRules(
     }
 }
 
-void OsmAnd::ObfRoutingSectionReader_P::readRule(
+void OsmAnd::ObfRoutingSectionReader_P::readEncodingDecodingRule(
     const ObfReader_P& reader,
-    const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules,
+    const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules,
     const uint32_t defaultId)
 {
     const auto cis = reader._codedInputStream.get();
@@ -113,13 +114,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRule(
         {
             case 0:
             {
-                // Normalize some values
-                if (ruleValue.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0)
-                    ruleValue = QLatin1String("yes");
-                if (ruleValue.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
-                    ruleValue = QLatin1String("no");
-
-                rules->createRule(ruleId, ruleTag, ruleValue);
+                encodingDecodingRules->addRule(ruleId, ruleTag, ruleValue);
                 return;
             }
             case OBF::OsmAndRoutingIndex_RouteEncodingRule::kTagFieldNumber:
@@ -127,6 +122,13 @@ void OsmAnd::ObfRoutingSectionReader_P::readRule(
                 break;
             case OBF::OsmAndRoutingIndex_RouteEncodingRule::kValueFieldNumber:
                 ObfReaderUtilities::readQString(cis, ruleValue);
+
+                // Normalize some values
+                if (ruleValue.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0)
+                    ruleValue = QLatin1String("yes");
+                if (ruleValue.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
+                    ruleValue = QLatin1String("no");
+
                 break;
             case OBF::OsmAndRoutingIndex_RouteEncodingRule::kIdFieldNumber:
             {
@@ -355,7 +357,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& treeNode,
-    QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut,
+    QList< std::shared_ptr<const OsmAnd::Road> >* resultOut,
     const AreaI* bbox31,
     const FilterRoadsByIdFunction filterById,
     const VisitorFunction visitor,
@@ -364,7 +366,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
 {
     QStringList roadsCaptionsTable;
     QList<uint64_t> roadsIdsTable;
-    QHash< uint32_t, std::shared_ptr<Model::Road> > resultsByInternalId;
+    QHash< uint32_t, std::shared_ptr<Road> > resultsByInternalId;
 
     const auto cis = reader._codedInputStream.get();
     for (;;)
@@ -377,7 +379,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                 for (const auto& road : constOf(resultsByInternalId))
                 {
                     // Fill captions of roads from stringtable
-                    for (auto& caption : road->_captions)
+                    for (auto& caption : road->captions)
                     {
                         const uint32_t stringId = ObfReaderUtilities::decodeIntegerFromString(caption);
 
@@ -417,7 +419,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             case OBF::OsmAndRoutingIndex_RouteDataBlock::kDataObjectsFieldNumber:
             {
                 const Stopwatch readRoadStopwatch(metric != nullptr);
-                std::shared_ptr<Model::Road> road;
+                std::shared_ptr<Road> road;
                 uint32_t internalId;
 
                 gpb::uint32 length;
@@ -515,7 +517,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockIdsTable(
 
 void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockRestrictions(
     const ObfReader_P& reader,
-    const QHash< uint32_t, std::shared_ptr<Model::Road> >& roadsByInternalIds,
+    const QHash< uint32_t, std::shared_ptr<Road> >& roadsByInternalIds,
     const QList<uint64_t>& roadsInternalIdToGlobalIdMap)
 {
     uint32_t originInternalId;
@@ -534,7 +536,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockRestrictions(
                 if (!originRoad)
                     return;
                 const auto destinationRoadId = roadsInternalIdToGlobalIdMap[destinationInternalId];
-                originRoad->_restrictions.insert(destinationRoadId, static_cast<Model::RoadRestriction>(restrictionType));
+                originRoad->restrictions.insert(destinationRoadId, static_cast<RoadRestriction>(restrictionType));
                 return;
             }
             case OBF::RestrictionData::kFromFieldNumber:
@@ -567,7 +569,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
     const FilterRoadsByIdFunction filterById,
     const QList<uint64_t>& idsTable,
     uint32_t& internalId,
-    std::shared_ptr<Model::Road>& road,
+    std::shared_ptr<Road>& road,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
     const auto cis = reader._codedInputStream.get();
@@ -685,9 +687,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
 
                 // Finally, create the object
                 if (!road)
-                    road.reset(new OsmAnd::Model::Road(section));
-                road->_points31 = qMove(points31);
-                road->_bbox31 = roadBBox;
+                    road.reset(new OsmAnd::Road(section));
+                road->points31 = qMove(points31);
+                road->bbox31 = roadBBox;
 
                 break;
             }
@@ -705,7 +707,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     cis->ReadVarint32(&innerLength);
                     auto innerOldLimit = cis->PushLimit(innerLength);
 
-                    auto& pointTypes = road->_pointsTypes.insert(pointIdx, QVector<uint32_t>()).value();
+                    auto& pointTypes = road->pointsTypes.insert(pointIdx, QVector<uint32_t>()).value();
                     while (cis->BytesUntilLimit() > 0)
                     {
                         gpb::uint32 pointType;
@@ -728,7 +730,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                 {
                     gpb::uint32 type;
                     cis->ReadVarint32(&type);
-                    road->_types.push_back(type);
+                    road->typesRuleIds.push_back(type);
                 }
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
@@ -740,9 +742,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                 cis->ReadVarint32(&id);
                 internalId = id;
                 if (id < idsTable.size())
-                    road->_id = ObfObjectId::generateUniqueId(idsTable[id], baseOffset, section);
+                    road->id = ObfObjectId::generateUniqueId(idsTable[id], baseOffset, section);
                 else
-                    road->_id = ObfObjectId::generateUniqueId(id, baseOffset, section);
+                    road->id = ObfObjectId::generateUniqueId(id, baseOffset, section);
                 break;
             }
             case OBF::RouteData::kStringNamesFieldNumber:
@@ -757,8 +759,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     gpb::uint32 stringId;
                     cis->ReadVarint32(&stringId);
 
-                    road->_captions.insert(stringTag, ObfReaderUtilities::encodeIntegerToString(stringId));
-                    road->_captionsOrder.push_back(stringTag);
+                    road->captions.insert(stringTag, ObfReaderUtilities::encodeIntegerToString(stringId));
+                    road->captionsOrder.push_back(stringTag);
                 }
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
@@ -776,7 +778,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
     const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const RoutingDataLevel dataLevel,
     const AreaI* const bbox31,
-    QList< std::shared_ptr<const OsmAnd::Model::Road> >* resultOut,
+    QList< std::shared_ptr<const OsmAnd::Road> >* resultOut,
     const FilterRoadsByIdFunction filterById,
     const VisitorFunction visitor,
     DataBlocksCache* cache,
@@ -786,21 +788,38 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
 {
     const auto cis = reader._codedInputStream.get();
 
-    // Check if this section has initialized rules
+    // Ensure encoding/decoding rules are read
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+    if (std::atomic_load(&section->_p->_encodingDecodingRules) == nullptr)
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
+    if (section->_p->_encodingDecodingRulesLoaded.loadAcquire() == 0)
+#endif
     {
-        QMutexLocker scopedLocker(&section->_p->_decodingRulesMutex);
-
-        if (!section->_p->_decodingRules)
+        QMutexLocker scopedLocker(&section->_p->_encodingDecodingRulesLoadMutex);
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+        if (std::atomic_load(&section->_p->_encodingDecodingRules) == nullptr)
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
+        if (!section->_p->_encodingDecodingRules)
+#endif
         {
+            // Read encoding/decoding rules
             cis->Seek(section->_offset);
             auto oldLimit = cis->PushLimit(section->_length);
 
-            std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> decodingRules(new ObfRoutingSectionEncodingDecodingRules());
-            readRules(reader, decodingRules);
-            section->_p->_decodingRules = decodingRules;
+            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> encodingDecodingRules(new ObfRoutingSectionEncodingDecodingRules());
+            readEncodingDecodingRules(reader, encodingDecodingRules);
+#if defined(ATOMIC_POINTER_LOCK_FREE)
+            std::atomic_store(&section->_p->_encodingDecodingRules, encodingDecodingRules);
+#else // !defined(ATOMIC_POINTER_LOCK_FREE)
+            section->_p->_encodingDecodingRules = encodingDecodingRules;
+#endif
 
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
+
+#if !defined(ATOMIC_POINTER_LOCK_FREE)
+            section->_p->_encodingDecodingRulesLoaded.storeRelease(1);
+#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
         }
     }
 
@@ -926,7 +945,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             else
             {
                 // Made a promise, so load entire block into temporary storage
-                QList< std::shared_ptr<const Model::Road> > roads;
+                QList< std::shared_ptr<const Road> > roads;
 
                 cis->Seek(treeNode->dataOffset);
 

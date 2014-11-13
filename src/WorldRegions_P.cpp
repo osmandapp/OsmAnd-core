@@ -56,9 +56,9 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
         const auto localizedNameTagPrefixLen = localizedNameTagPrefix.size();
         const auto worldRegionsCollector =
             [&outRegions, &idsCaptured, &nameId, &idId, &downloadNameId, &regionPrefixId, &regionSuffixId, localizedNameTagPrefix, localizedNameTagPrefixLen]
-            (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>& worldRegionMapObject) -> bool
+            (const std::shared_ptr<const OsmAnd::BinaryMapObject>& worldRegionMapObject) -> bool
             {
-                const auto& rules = worldRegionMapObject->section->encodingDecodingRules;
+                const auto& rules = worldRegionMapObject->encodingDecodingRules;
                 if (!idsCaptured)
                 {
                     nameId = rules->name_encodingRuleId;

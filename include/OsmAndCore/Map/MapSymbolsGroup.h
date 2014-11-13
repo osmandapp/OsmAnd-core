@@ -115,11 +115,27 @@ namespace OsmAnd
             Q_DISABLE_COPY(AdditionalOnPathSymbolInstanceParameters);
         };
 
+        typedef uint64_t SharingKey;
+
+        // Map symbols groups comparator using sorting key:
+        // - If key is available, sort by key in ascending order in case keys differ. Otherwise sort by pointer
+        // - If key is unavailable, sort by pointer
+        // - If key vs no-key is sorted, no-key is always goes "greater" than key
+        //NOTE: Symbol ordering should take into account ordering of primitives actually (in cases that apply)
+        typedef uint64_t SortingKey;
+        struct OSMAND_CORE_API Comparator
+        {
+            bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const;
+        };
     private:
     protected:
     public:
         MapSymbolsGroup();
         virtual ~MapSymbolsGroup();
+
+        virtual bool obtainSharingKey(SharingKey& outKey) const;
+        virtual bool obtainSortingKey(SortingKey& outKey) const;
+        virtual QString toString() const;
 
         PresentationMode presentationMode;
         IntersectionProcessingMode intersectionProcessingMode;
@@ -127,8 +143,6 @@ namespace OsmAnd
         QList< std::shared_ptr<MapSymbol> > symbols;
         std::shared_ptr<MapSymbol> getFirstSymbolWithContentClass(const MapSymbol::ContentClass contentClass) const;
         unsigned int numberOfSymbolsWithContentClass(const MapSymbol::ContentClass contentClass) const;
-
-        virtual QString getDebugTitle() const;
 
         bool additionalInstancesDiscardOriginal;
         QList< std::shared_ptr<AdditionalInstance> > additionalInstances;

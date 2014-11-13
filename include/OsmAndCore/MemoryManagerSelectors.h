@@ -20,12 +20,9 @@ namespace OsmAnd
         }
     };
 
-    namespace Model
-    {
-        class BinaryMapObject;
-    }
+    class BinaryMapObject;
     template<>
-    struct MemoryManagerSelector<OsmAnd::Model::BinaryMapObject>
+    struct MemoryManagerSelector<OsmAnd::BinaryMapObject>
     {
         static IMemoryManager* get()
         {

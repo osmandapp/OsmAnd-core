@@ -18,14 +18,14 @@ OsmAnd::CachingRoadLocator_P::~CachingRoadLocator_P()
 {
 }
 
-std::shared_ptr<const OsmAnd::Model::Road> OsmAnd::CachingRoadLocator_P::findNearestRoad(
+std::shared_ptr<const OsmAnd::Road> OsmAnd::CachingRoadLocator_P::findNearestRoad(
     const PointI position31,
     const double radiusInMeters,
     const RoutingDataLevel dataLevel,
     int* const outNearestRoadPointIndex,
     double* const outDistanceToNearestRoadPoint) const
 {
-    QList< std::shared_ptr<const Model::Road> > roadsInBBox;
+    QList< std::shared_ptr<const Road> > roadsInBBox;
 
     const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
     const auto obfDataInterface = owner->obfsCollection->obtainDataInterface();
@@ -51,12 +51,12 @@ std::shared_ptr<const OsmAnd::Model::Road> OsmAnd::CachingRoadLocator_P::findNea
     return RoadLocator::findNearestRoad(roadsInBBox, position31, radiusInMeters, outNearestRoadPointIndex, outDistanceToNearestRoadPoint);
 }
 
-QList< std::shared_ptr<const OsmAnd::Model::Road> > OsmAnd::CachingRoadLocator_P::findRoadsInArea(
+QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::CachingRoadLocator_P::findRoadsInArea(
     const PointI position31,
     const double radiusInMeters,
     const RoutingDataLevel dataLevel) const
 {
-    QList< std::shared_ptr<const Model::Road> > roadsInBBox;
+    QList< std::shared_ptr<const Road> > roadsInBBox;
 
     const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
     const auto obfDataInterface = owner->obfsCollection->obtainDataInterface();

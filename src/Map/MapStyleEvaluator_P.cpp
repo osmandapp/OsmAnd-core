@@ -11,7 +11,7 @@
 #include "MapStyleValueDefinition.h"
 #include "MapStyleEvaluationResult.h"
 #include "MapStyleConstantValue.h"
-#include "BinaryMapObject.h"
+#include "MapObject.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 
@@ -71,7 +71,7 @@ void OsmAnd::MapStyleEvaluator_P::setStringValue(const int valueDefId, const QSt
 }
 
 OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue(
-    const Model::BinaryMapObject* const mapObject,
+    const MapObject* const mapObject,
     const MapStyleValueDataType dataType,
     const ResolvedMapStyle::ResolvedValue& resolvedValue,
     const InputValuesDictionary& inputValues) const
@@ -146,7 +146,7 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
 }
 
 bool OsmAnd::MapStyleEvaluator_P::evaluate(
-    const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
+    const std::shared_ptr<const MapObject>& mapObject,
     const QHash< TagValueId, std::shared_ptr<const ResolvedMapStyle::Rule> >& ruleset,
     const ResolvedMapStyle::StringId tagStringId,
     const ResolvedMapStyle::StringId valueStringId,
@@ -189,7 +189,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
 }
 
 bool OsmAnd::MapStyleEvaluator_P::evaluate(
-    const Model::BinaryMapObject* const mapObject,
+    const MapObject* const mapObject,
     const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
     const InputValuesDictionary& inputValues,
     bool& outDisabled,
@@ -357,7 +357,7 @@ void OsmAnd::MapStyleEvaluator_P::fillResultFromRuleNode(
 }
 
 void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
-    const Model::BinaryMapObject* const mapObject,
+    const MapObject* const mapObject,
     const InputValuesDictionary& inputValues,
     const IntermediateEvaluationResult& intermediateResult,
     MapStyleEvaluationResult& outResultStorage) const
@@ -405,7 +405,7 @@ void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
 }
 
 bool OsmAnd::MapStyleEvaluator_P::evaluate(
-    const std::shared_ptr<const Model::BinaryMapObject>& mapObject,
+    const std::shared_ptr<const MapObject>& mapObject,
     const MapStyleRulesetType rulesetType,
     MapStyleEvaluationResult* const outResultStorage) const
 {
