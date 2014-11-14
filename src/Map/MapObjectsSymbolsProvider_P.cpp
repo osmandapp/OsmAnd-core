@@ -11,7 +11,7 @@
 #include "MapSymbolIntersectionClassesRegistry.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPresentationEnvironment.h"
-#include "Primitiviser.h"
+#include "MapPrimitiviser.h"
 #include "SymbolRasterizer.h"
 #include "BillboardRasterMapSymbol.h"
 #include "OnPathRasterMapSymbol.h"
@@ -43,7 +43,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     const auto primitivesTile = std::static_pointer_cast<MapPrimitivesProvider::Data>(primitivesTile_);
 
     // If tile has nothing to be rasterized, mark that data is not available for it
-    if (!primitivesTile_ || primitivesTile->primitivisedArea->isEmpty())
+    if (!primitivesTile_ || primitivesTile->primitivisedObjects->isEmpty())
     {
         // Mark tile as empty
         outTiledData.reset();
@@ -66,7 +66,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             }
             return false;
         };
-    SymbolRasterizer().rasterize(primitivesTile->primitivisedArea, rasterizedSymbolsGroups, rasterizationFilter, nullptr);
+    SymbolRasterizer().rasterize(primitivesTile->primitivisedObjects, rasterizedSymbolsGroups, rasterizationFilter, nullptr);
 
     // Convert results
     auto& mapSymbolIntersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();

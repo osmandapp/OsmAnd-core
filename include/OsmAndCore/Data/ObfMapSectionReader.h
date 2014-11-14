@@ -40,14 +40,14 @@ namespace OsmAnd
             DataBlock(
                 const DataBlockId id,
                 const AreaI bbox31,
-                const MapFoundationType foundationType,
+                const MapSurfaceType surfaceType,
                 const QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >& mapObjects);
         public:
             ~DataBlock();
 
             const DataBlockId id;
             const AreaI bbox31;
-            const MapFoundationType foundationType;
+            const MapSurfaceType surfaceType;
             const QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > mapObjects;
 
         friend class OsmAnd::ObfMapSectionReader;
@@ -79,7 +79,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut = nullptr,
-            MapFoundationType* outBBoxOrSectionFoundation = nullptr,
+            MapSurfaceType* outBBoxOrSectionSurfaceType = nullptr,
             const FilterMapObjectsByIdFunction filterById = nullptr,
             const VisitorFunction visitor = nullptr,
             DataBlocksCache* cache = nullptr,

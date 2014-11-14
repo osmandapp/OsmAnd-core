@@ -11,7 +11,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
-#include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/MapPrimitiviser.h>
 
 class SkCanvas;
 class SkBitmap;

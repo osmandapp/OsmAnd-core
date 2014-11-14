@@ -11,12 +11,12 @@ OsmAnd::SymbolRasterizer::~SymbolRasterizer()
 }
 
 void OsmAnd::SymbolRasterizer::rasterize(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     std::function<bool (const std::shared_ptr<const MapObject>& mapObject)> filter /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/)
 {
-    _p->rasterize(primitivisedArea, outSymbolsGroups, filter, controller);
+    _p->rasterize(primitivisedObjects, outSymbolsGroups, filter, controller);
 }
 
 OsmAnd::SymbolRasterizer::RasterizedSymbolsGroup::RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject_)
@@ -30,7 +30,7 @@ OsmAnd::SymbolRasterizer::RasterizedSymbolsGroup::~RasterizedSymbolsGroup()
 
 OsmAnd::SymbolRasterizer::RasterizedSymbol::RasterizedSymbol(
     const std::shared_ptr<const RasterizedSymbolsGroup>& group_,
-    const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol_)
+    const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol_)
     : group(group_)
     , primitiveSymbol(primitiveSymbol_)
     , pathPaddingLeft(0.0f)
@@ -44,7 +44,7 @@ OsmAnd::SymbolRasterizer::RasterizedSymbol::~RasterizedSymbol()
 
 OsmAnd::SymbolRasterizer::RasterizedSpriteSymbol::RasterizedSpriteSymbol(
     const std::shared_ptr<const RasterizedSymbolsGroup>& group_,
-    const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol_)
+    const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol_)
     : RasterizedSymbol(group_, primitiveSymbol_)
 {
 }
@@ -55,7 +55,7 @@ OsmAnd::SymbolRasterizer::RasterizedSpriteSymbol::~RasterizedSpriteSymbol()
 
 OsmAnd::SymbolRasterizer::RasterizedOnPathSymbol::RasterizedOnPathSymbol(
     const std::shared_ptr<const RasterizedSymbolsGroup>& group_,
-    const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol_)
+    const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol_)
     : RasterizedSymbol(group_, primitiveSymbol_)
 {
 }

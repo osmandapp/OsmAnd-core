@@ -103,15 +103,6 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
     return false;
 }
 
-bool OsmAnd::MapObject::containsFoundationType() const
-{
-    return
-        containsType(encodingDecodingRules->naturalCoastline_encodingRuleId) ||
-        containsType(encodingDecodingRules->naturalCoastlineBroken_encodingRuleId) ||
-        containsType(encodingDecodingRules->naturalCoastlineLine_encodingRuleId) ||
-        containsType(encodingDecodingRules->naturalLand_encodingRuleId);
-}
-
 bool OsmAnd::MapObject::containsType(const uint32_t typeRuleId, bool checkAdditional /*= false*/) const
 {
     return (checkAdditional ? additionalTypesRuleIds : typesRuleIds).contains(typeRuleId);

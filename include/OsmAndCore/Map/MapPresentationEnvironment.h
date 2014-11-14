@@ -52,6 +52,14 @@ namespace OsmAnd
             LocalizedOrTransliteratedAndNative
         };
 
+        enum class ShadowMode
+        {
+            NoShadow = 0,
+            OneStep = 1,
+            BlurShadow = 2,
+            SolidShadow = 3
+        };
+
     private:
         PrivateImplementation<MapPresentationEnvironment_P> _p;
     protected:
@@ -84,7 +92,7 @@ namespace OsmAnd
         bool obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outIconShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
-        void obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const;
+        void obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const;
         double getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const;
         unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
         unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;

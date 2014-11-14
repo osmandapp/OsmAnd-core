@@ -69,9 +69,9 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getDefaultBackgroundColor(
     return _p->getDefaultBackgroundColor(zoom);
 }
 
-void OsmAnd::MapPresentationEnvironment::obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const
+void OsmAnd::MapPresentationEnvironment::obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const
 {
-    _p->obtainShadowRenderingOptions(zoom, mode, color);
+    _p->obtainShadowOptions(zoom, mode, color);
 }
 
 double OsmAnd::MapPresentationEnvironment::getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const

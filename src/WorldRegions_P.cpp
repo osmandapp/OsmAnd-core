@@ -147,7 +147,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
             mapSection->levels.first()->minZoom,
             nullptr, // Query entire world
             nullptr, // No need for map objects to be stored
-            nullptr, // Foundation is not needed
+            nullptr, // Surface type is not needed
             nullptr, // No filtering by ID
             worldRegionsCollector,
             nullptr, // No cache

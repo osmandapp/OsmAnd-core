@@ -19,7 +19,8 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
-#include "Primitiviser.h"
+#include "MapPrimitiviser.h"
+#include "MapPresentationEnvironment.h"
 #include "MapRasterizer_Metrics.h"
 
 namespace OsmAnd
@@ -33,6 +34,21 @@ namespace OsmAnd
     private:
     protected:
         MapRasterizer_P(MapRasterizer* const owner);
+
+        struct Context
+        {
+            Context(
+                const AreaI area31,
+                const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects);
+
+            const AreaI area31;
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
+            const std::shared_ptr<const MapPresentationEnvironment> env;
+            const ZoomLevel zoom;
+
+            MapPresentationEnvironment::ShadowMode shadowMode;
+            ColorARGB shadowColor;
+        };
 
         enum class PrimitivesType
         {
@@ -53,32 +69,32 @@ namespace OsmAnd
         };
 
         bool updatePaint(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const Context& context,
             SkPaint& paint,
             const MapStyleEvaluationResult& evalResult,
             const PaintValuesSet valueSetSelector,
             const bool isArea);
 
         void rasterizeMapPrimitives(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const Context& context,
             SkCanvas& canvas,
-            const Primitiviser::PrimitivesCollection& primitives,
+            const MapPrimitiviser::PrimitivesCollection& primitives,
             const PrimitivesType type,
             const IQueryController* const controller);
 
         void rasterizePolygon(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const Context& context,
             SkCanvas& canvas,
-            const std::shared_ptr<const Primitiviser::Primitive>& primitive);
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive);
 
         void rasterizePolyline(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const Context& context,
             SkCanvas& canvas,
-            const std::shared_ptr<const Primitiviser::Primitive>& primitive,
+            const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
             bool drawOnlyShadow);
 
         void rasterizeLineShadow(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const Context& context,
             SkCanvas& canvas,
             const SkPath& path,
             SkPaint& paint,
@@ -86,13 +102,12 @@ namespace OsmAnd
             int shadowRadius);
 
         void rasterizeLine_OneWay(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
             SkCanvas& canvas,
             const SkPath& path,
             int oneway);
 
         inline void calculateVertex(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const Context& context,
             const PointI& point31,
             PointF& vertex);
 
@@ -118,7 +133,8 @@ namespace OsmAnd
         ImplementationInterface<MapRasterizer> owner;
 
         void rasterize(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const AreaI area31,
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             SkCanvas& canvas,
             const bool fillBackground,
             const AreaI* const destinationArea,

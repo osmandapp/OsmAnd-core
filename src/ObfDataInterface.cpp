@@ -51,7 +51,7 @@ bool OsmAnd::ObfDataInterface::loadBasemapPresenceFlag(bool& outBasemapPresent, 
 
 bool OsmAnd::ObfDataInterface::loadMapObjects(
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
-    MapFoundationType* outFoundation,
+    MapSurfaceType* outSurfaceType,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
     const FilterMapObjectsByIdFunction filterById /*= nullptr*/,
@@ -60,7 +60,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     const IQueryController* const controller /*= nullptr*/,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
 {
-    auto mergedFoundation = MapFoundationType::Undefined;
+    auto mergedSurfaceType = MapSurfaceType::Undefined;
     std::shared_ptr<const ObfReader> basemapReader;
 
     for (const auto& obfReader : constOf(obfReaders))
@@ -94,26 +94,26 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 return false;
 
             // Read objects from each map section
-            auto foundationToMerge = MapFoundationType::Undefined;
+            auto surfaceTypeToMerge = MapSurfaceType::Undefined;
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 obfReader,
                 mapSection,
                 zoom,
                 bbox31,
                 resultOut,
-                &foundationToMerge,
+                &surfaceTypeToMerge,
                 filterById,
                 nullptr,
                 cache,
                 outReferencedCacheEntries,
                 controller,
                 metric);
-            if (foundationToMerge != MapFoundationType::Undefined)
+            if (surfaceTypeToMerge != MapSurfaceType::Undefined)
             {
-                if (mergedFoundation == MapFoundationType::Undefined)
-                    mergedFoundation = foundationToMerge;
-                else if (mergedFoundation != foundationToMerge)
-                    mergedFoundation = MapFoundationType::Mixed;
+                if (mergedSurfaceType == MapSurfaceType::Undefined)
+                    mergedSurfaceType = surfaceTypeToMerge;
+                else if (mergedSurfaceType != surfaceTypeToMerge)
+                    mergedSurfaceType = MapSurfaceType::Mixed;
             }
         }
     }
@@ -146,14 +146,14 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 return false;
 
             // Read objects from each map section
-            auto foundationToMerge = MapFoundationType::Undefined;
+            auto surfaceTypeToMerge = MapSurfaceType::Undefined;
             OsmAnd::ObfMapSectionReader::loadMapObjects(
                 basemapReader,
                 mapSection,
                 static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel),
                 pBasemapBBox31,
                 resultOut,
-                &foundationToMerge,
+                &surfaceTypeToMerge,
                 filterById,
                 nullptr,
                 cache,
@@ -161,21 +161,21 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 controller,
                 metric);
 
-            // Basemap must always have a foundation defined
-            assert(foundationToMerge != MapFoundationType::Undefined);
-            if (mergedFoundation == MapFoundationType::Undefined)
-                mergedFoundation = foundationToMerge;
-            else if (mergedFoundation != foundationToMerge)
-                mergedFoundation = MapFoundationType::Mixed;
+            // Basemap must always have a surface type defined
+            assert(surfaceTypeToMerge != MapSurfaceType::Undefined);
+            if (mergedSurfaceType == MapSurfaceType::Undefined)
+                mergedSurfaceType = surfaceTypeToMerge;
+            else if (mergedSurfaceType != surfaceTypeToMerge)
+                mergedSurfaceType = MapSurfaceType::Mixed;
         }
     }
 
     // In case there was a basemap present, Undefined is Land
-    if (mergedFoundation == MapFoundationType::Undefined && !basemapReader)
-        mergedFoundation = MapFoundationType::FullLand;
+    if (mergedSurfaceType == MapSurfaceType::Undefined && !basemapReader)
+        mergedSurfaceType = MapSurfaceType::FullLand;
 
-    if (outFoundation)
-        *outFoundation = mergedFoundation;
+    if (outSurfaceType)
+        *outSurfaceType = mergedSurfaceType;
 
     return true;
 }

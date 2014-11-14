@@ -12,7 +12,7 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
-#include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/IMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider_Metrics.h>
 
@@ -33,12 +33,20 @@ namespace OsmAnd
                 const TileId tileId,
                 const ZoomLevel zoom,
                 const std::shared_ptr<const IMapObjectsProvider::Data>& mapObjectsData,
-                const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+                const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
                 const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 
             std::shared_ptr<const IMapObjectsProvider::Data> mapObjectsData;
-            std::shared_ptr<const Primitiviser::PrimitivisedArea> primitivisedArea;
+            std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
+        };
+
+        enum class Mode
+        {
+            AllObjects,
+            AllObjectsWithPolygonFiltering,
+            WithoutSurface,
+            WithSurface
         };
 
     private:
@@ -47,13 +55,15 @@ namespace OsmAnd
     public:
         MapPrimitivesProvider(
             const std::shared_ptr<IMapObjectsProvider>& mapObjectsProvider,
-            const std::shared_ptr<Primitiviser>& primitiviser,
-            const unsigned int tileSize = 256);
+            const std::shared_ptr<MapPrimitiviser>& primitiviser,
+            const unsigned int tileSize = 256,
+            const Mode mode = Mode::WithSurface);
         virtual ~MapPrimitivesProvider();
 
         const std::shared_ptr<IMapObjectsProvider> mapObjectsProvider;
-        const std::shared_ptr<Primitiviser> primitiviser;
+        const std::shared_ptr<MapPrimitiviser> primitiviser;
         const unsigned int tileSize;
+        const Mode mode;
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;

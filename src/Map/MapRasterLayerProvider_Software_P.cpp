@@ -72,7 +72,8 @@ std::shared_ptr<SkBitmap> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
 
     // Perform actual rendering
     _mapRasterizer->rasterize(
-        primitivesTile->primitivisedArea,
+        Utilities::tileBoundingBox31(tileId, zoom),
+        primitivesTile->primitivisedObjects,
         canvas,
         true,
         nullptr,

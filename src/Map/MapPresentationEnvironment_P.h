@@ -20,6 +20,7 @@
 #include "ResolvedMapStyle.h"
 #include "MapStyleConstantValue.h"
 #include "MapRasterizer.h"
+#include "MapPresentationEnvironment.h"
 
 class SkBitmap;
 
@@ -29,9 +30,14 @@ namespace OsmAnd
     class MapStyleEvaluator;
     class MapStyleEvaluator_P;
 
-    class MapPresentationEnvironment;
     class MapPresentationEnvironment_P Q_DECL_FINAL
     {
+        Q_DISABLE_COPY_AND_MOVE(MapPresentationEnvironment_P);
+
+    public:
+        typedef MapPresentationEnvironment::LanguagePreference LanguagePreference;
+        typedef MapPresentationEnvironment::ShadowMode ShadowMode;
+
     private:
     protected:
         MapPresentationEnvironment_P(MapPresentationEnvironment* owner);
@@ -41,12 +47,12 @@ namespace OsmAnd
         mutable QMutex _settingsChangeMutex;
         QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > _settings;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultColorAttribute;
-        ColorARGB _defaultColor;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultBackgroundColorAttribute;
+        ColorARGB _defaultBackgroundColor;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _shadowRenderingAttribute;
-        int _shadowRenderingMode;
-        ColorARGB _shadowRenderingColor;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _shadowOptionsAttribute;
+        ShadowMode _shadowMode;
+        ColorARGB _shadowColor;
 
         std::shared_ptr<const ResolvedMapStyle::Attribute> _polygonMinSizeToDisplayAttribute;
         double _polygonMinSizeToDisplay;
@@ -75,7 +81,7 @@ namespace OsmAnd
 
         ImplementationInterface<MapPresentationEnvironment> owner;
 
-        QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
+        QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
         void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);
 
@@ -87,7 +93,7 @@ namespace OsmAnd
         bool obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const;
 
         ColorARGB getDefaultBackgroundColor(const ZoomLevel zoom) const;
-        void obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const;
+        void obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const;
         double getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const;
         unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
         unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;

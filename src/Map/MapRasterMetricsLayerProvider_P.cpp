@@ -72,7 +72,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
         text += QString(QLatin1String("obf read    %1s\n"))
             .arg(QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 3));
     }
-    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<Primitiviser_Metrics::Metric_primitivise>())
+    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>())
     {
         text += QString(QLatin1String("primitives  %1s\n"))
             .arg(QString::number(primitiviseMetric->elapsedTime, 'f', 3));

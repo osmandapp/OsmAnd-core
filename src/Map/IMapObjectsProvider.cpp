@@ -24,11 +24,11 @@ bool OsmAnd::IMapObjectsProvider::obtainData(
 OsmAnd::IMapObjectsProvider::Data::Data(
     const TileId tileId_,
     const ZoomLevel zoom_,
-    const MapFoundationType tileFoundation_,
+    const MapSurfaceType tileSurfaceType_,
     const QList< std::shared_ptr<const MapObject> >& mapObjects_,
     const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
     : IMapTiledDataProvider::Data(tileId_, zoom_, pRetainableCacheMetadata_)
-    , tileFoundation(tileFoundation_)
+    , tileSurfaceType(tileSurfaceType_)
     , mapObjects(mapObjects_)
 {
 }

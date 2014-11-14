@@ -12,7 +12,7 @@
 #include "Logging.h"
 
 OsmAnd::MapPrimitivesProvider_P::MapPrimitivesProvider_P(MapPrimitivesProvider* owner_)
-    : _primitiviserCache(new Primitiviser::Cache())
+    : _primitiviserCache(new MapPrimitiviser::Cache())
     , owner(owner_)
 {
 }
@@ -101,26 +101,65 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
         return true;
     }
 
-    // Get primitivised area
-    const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
-    const auto primitivisedArea = owner->primitiviser->primitiviseWithCoastlines(
-        tileBBox31,
-        PointI(owner->tileSize, owner->tileSize),
-        zoom,
-        dataTile->tileFoundation,
-        dataTile->mapObjects,
-        //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
-        //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
-        nullptr, //_primitiviserCache,
-        nullptr,
-        metric ? metric->findOrAddSubmetricOfType<Primitiviser_Metrics::Metric_primitivise>().get() : nullptr);
+    // Get primitivised objects
+    std::shared_ptr<MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
+    if (owner->mode == MapPrimitivesProvider::Mode::AllObjects)
+    {
+        primitivisedObjects = owner->primitiviser->primitiviseAllMapObjects(
+            zoom,
+            dataTile->mapObjects,
+            //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
+            //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
+            nullptr, //_primitiviserCache,
+            nullptr,
+            metric ? metric->findOrAddSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects>().get() : nullptr);
+    }
+    else if (owner->mode == MapPrimitivesProvider::Mode::AllObjectsWithPolygonFiltering)
+    {
+        primitivisedObjects = owner->primitiviser->primitiviseAllMapObjects(
+            Utilities::getScaleDivisor31ToPixel(PointI(owner->tileSize, owner->tileSize), zoom),
+            zoom,
+            dataTile->mapObjects,
+            //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
+            //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
+            nullptr, //_primitiviserCache,
+            nullptr,
+            metric ? metric->findOrAddSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects>().get() : nullptr);
+    }
+    else if (owner->mode == MapPrimitivesProvider::Mode::WithoutSurface)
+    {
+        primitivisedObjects = owner->primitiviser->primitiviseWithoutSurface(
+            Utilities::getScaleDivisor31ToPixel(PointI(owner->tileSize, owner->tileSize), zoom),
+            zoom,
+            dataTile->mapObjects,
+            //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
+            //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
+            nullptr, //_primitiviserCache,
+            nullptr,
+            metric ? metric->findOrAddSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface>().get() : nullptr);
+    }
+    else // if (owner->mode == MapPrimitivesProvider::Mode::WithSurface)
+    {
+        const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
+        primitivisedObjects = owner->primitiviser->primitiviseWithSurface(
+            tileBBox31,
+            PointI(owner->tileSize, owner->tileSize),
+            zoom,
+            dataTile->tileSurfaceType,
+            dataTile->mapObjects,
+            //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
+            //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
+            nullptr, //_primitiviserCache,
+            nullptr,
+            metric ? metric->findOrAddSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithSurface>().get() : nullptr);
+    }
 
     // Create tile
     const std::shared_ptr<MapPrimitivesProvider::Data> newTile(new MapPrimitivesProvider::Data(
         tileId,
         zoom,
         dataTile,
-        primitivisedArea,
+        primitivisedObjects,
         new RetainableCacheMetadata(tileEntry, dataTile->retainableCacheMetadata)));
 
     // Publish new tile
@@ -143,9 +182,9 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
 #if OSMAND_PERFORMANCE_METRICS <= 1
     LogPrintf(LogSeverityLevel::Info,
         "%d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs",
-        primitivisedArea->polygons.size(),
-        primitivisedArea->polylines.size(),
-        primitivisedArea->polygons.size(),
+        primitivisedObjects->polygons.size(),
+        primitivisedObjects->polylines.size(),
+        primitivisedObjects->polygons.size(),
         tileId.x,
         tileId.y,
         zoom,
@@ -153,9 +192,9 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
 #else
     LogPrintf(LogSeverityLevel::Info,
         "%d polygons, %d polylines, %d points primitivised from %dx%d@%d in %fs:\n%s",
-        primitivisedArea->polygons.size(),
-        primitivisedArea->polylines.size(),
-        primitivisedArea->polygons.size(),
+        primitivisedObjects->polygons.size(),
+        primitivisedObjects->polylines.size(),
+        primitivisedObjects->polygons.size(),
         tileId.x,
         tileId.y,
         zoom,

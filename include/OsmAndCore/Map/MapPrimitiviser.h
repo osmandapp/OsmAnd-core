@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_PRIMITIVISER_H_
-#define _OSMAND_CORE_PRIMITIVISER_H_
+#ifndef _OSMAND_CORE_MAP_PRIMITIVISER_H_
+#define _OSMAND_CORE_MAP_PRIMITIVISER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
@@ -16,17 +16,17 @@
 #include <OsmAndCore/Data/MapObject.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapStyleEvaluationResult.h>
-#include <OsmAndCore/Map/Primitiviser_Metrics.h>
+#include <OsmAndCore/Map/MapPrimitiviser_Metrics.h>
 
 namespace OsmAnd
 {
     class MapObject;
     class MapPresentationEnvironment;
 
-    class Primitiviser_P;
-    class OSMAND_CORE_API Primitiviser
+    class MapPrimitiviser_P;
+    class OSMAND_CORE_API MapPrimitiviser
     {
-        Q_DISABLE_COPY_AND_MOVE(Primitiviser);
+        Q_DISABLE_COPY_AND_MOVE(MapPrimitiviser);
     public:
         enum class PrimitiveType : uint32_t
         {
@@ -50,21 +50,17 @@ namespace OsmAnd
         public:
             CoastlineMapObject();
             virtual ~CoastlineMapObject();
-
-            virtual bool containsFoundationType() const;
         };
 
-        class OSMAND_CORE_API FoundationMapObject : public MapObject
+        class OSMAND_CORE_API SurfaceMapObject : public MapObject
         {
-            Q_DISABLE_COPY_AND_MOVE(FoundationMapObject);
+            Q_DISABLE_COPY_AND_MOVE(SurfaceMapObject);
 
         private:
         protected:
         public:
-            FoundationMapObject();
-            virtual ~FoundationMapObject();
-
-            virtual bool containsFoundationType() const;
+            SurfaceMapObject();
+            virtual ~SurfaceMapObject();
         };
 
         class Primitive;
@@ -88,8 +84,8 @@ namespace OsmAnd
             PrimitivesCollection polylines;
             PrimitivesCollection points;
 
-        friend class OsmAnd::Primitiviser;
-        friend class OsmAnd::Primitiviser_P;
+        friend class OsmAnd::MapPrimitiviser;
+        friend class OsmAnd::MapPrimitiviser_P;
         };
         
         class OSMAND_CORE_API Primitive Q_DECL_FINAL
@@ -128,8 +124,8 @@ namespace OsmAnd
             int zOrder;
             int64_t doubledArea;
 
-        friend class OsmAnd::Primitiviser;
-        friend class OsmAnd::Primitiviser_P;
+        friend class OsmAnd::MapPrimitiviser;
+        friend class OsmAnd::MapPrimitiviser_P;
         };
 
         class Symbol;
@@ -151,8 +147,8 @@ namespace OsmAnd
 
             SymbolsCollection symbols;
         
-        friend class OsmAnd::Primitiviser;
-        friend class OsmAnd::Primitiviser_P;
+        friend class OsmAnd::MapPrimitiviser;
+        friend class OsmAnd::MapPrimitiviser_P;
         };
 
         class OSMAND_CORE_API Symbol
@@ -173,8 +169,8 @@ namespace OsmAnd
             float pathPaddingLeft;
             float pathPaddingRight;
 
-        friend class OsmAnd::Primitiviser;
-        friend class OsmAnd::Primitiviser_P;
+        friend class OsmAnd::MapPrimitiviser;
+        friend class OsmAnd::MapPrimitiviser_P;
         };
 
         class OSMAND_CORE_API TextSymbol : public Symbol
@@ -199,8 +195,8 @@ namespace OsmAnd
             PointI minDistance;
             QString shieldResourceName;
 
-        friend class OsmAnd::Primitiviser;
-        friend class OsmAnd::Primitiviser_P;
+        friend class OsmAnd::MapPrimitiviser;
+        friend class OsmAnd::MapPrimitiviser_P;
         };
 
         class OSMAND_CORE_API IconSymbol : public Symbol
@@ -216,8 +212,8 @@ namespace OsmAnd
             QString shieldResourceName;
             float intersectionSize;
 
-        friend class OsmAnd::Primitiviser;
-        friend class OsmAnd::Primitiviser_P;
+        friend class OsmAnd::MapPrimitiviser;
+        friend class OsmAnd::MapPrimitiviser_P;
         };
 
         class OSMAND_CORE_API Cache
@@ -246,36 +242,23 @@ namespace OsmAnd
             const SharedSymbolsGroupsContainer* getSymbolsGroupsPtr(const ZoomLevel zoom) const;
         };
         
-        class OSMAND_CORE_API PrimitivisedArea Q_DECL_FINAL
+        class OSMAND_CORE_API PrimitivisedObjects Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(PrimitivisedArea);
+            Q_DISABLE_COPY_AND_MOVE(PrimitivisedObjects);
         private:
             const std::weak_ptr<Cache> _cache;
         protected:
-            PrimitivisedArea(
-                const AreaI area31,
-                const PointI sizeInPixels,
-                const ZoomLevel zoom,
+            PrimitivisedObjects(
+                const std::shared_ptr<const MapPresentationEnvironment>& mapPresentationEnvironment,
                 const std::shared_ptr<Cache>& cache,
-                const std::shared_ptr<const MapPresentationEnvironment>& mapPresentationEnvironment);
+                const ZoomLevel zoom,
+                const PointD scaleDivisor31ToPixel);
         public:
-            ~PrimitivisedArea();
-
-            const AreaI area31;
-            const PointI sizeInPixels;
-            const ZoomLevel zoom;
+            ~PrimitivisedObjects();
 
             const std::shared_ptr<const MapPresentationEnvironment> mapPresentationEnvironment;
-
-            ColorARGB defaultBackgroundColor;
-            int shadowRenderingMode;
-            ColorARGB shadowRenderingColor;
-            double polygonAreaMinimalThreshold;
-            unsigned int roadDensityZoomTile;
-            unsigned int roadsDensityLimitPerTile;
-            int shadowLevelMin;
-            int shadowLevelMax;
-            PointD scale31ToPixelDivisor;
+            const ZoomLevel zoom;
+            const PointD scaleDivisor31ToPixel;
 
             PrimitivesGroupsCollection primitivesGroups;
             PrimitivesCollection polygons;
@@ -286,35 +269,51 @@ namespace OsmAnd
 
             bool isEmpty() const;
 
-        friend class OsmAnd::Primitiviser;
-        friend class OsmAnd::Primitiviser_P;
+        friend class OsmAnd::MapPrimitiviser;
+        friend class OsmAnd::MapPrimitiviser_P;
         };
     private:
-        PrivateImplementation<Primitiviser_P> _p;
+        PrivateImplementation<MapPrimitiviser_P> _p;
     protected:
     public:
-        Primitiviser(const std::shared_ptr<const MapPresentationEnvironment>& environment);
-        virtual ~Primitiviser();
+        MapPrimitiviser(const std::shared_ptr<const MapPresentationEnvironment>& environment);
+        virtual ~MapPrimitiviser();
 
         const std::shared_ptr<const MapPresentationEnvironment> environment;
-        
-        std::shared_ptr<const PrimitivisedArea> primitiviseWithCoastlines(
-            const AreaI area31,
-            const PointI sizeInPixels,
-            const ZoomLevel zoom,
-            const MapFoundationType foundation,
-            const QList< std::shared_ptr<const MapObject> >& objects,
-            const std::shared_ptr<Cache>& cache = nullptr,
-            const IQueryController* const controller = nullptr,
-            Primitiviser_Metrics::Metric_primitivise* const metric = nullptr);
 
-        std::shared_ptr<const PrimitivisedArea> primitiviseWithoutCoastlines(
+        std::shared_ptr<PrimitivisedObjects> primitiviseAllMapObjects(
             const ZoomLevel zoom,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
             const IQueryController* const controller = nullptr,
-            Primitiviser_Metrics::Metric_primitivise* const metric = nullptr);
+            MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric = nullptr);
+
+        std::shared_ptr<PrimitivisedObjects> primitiviseAllMapObjects(
+            const PointD scaleDivisor31ToPixel,
+            const ZoomLevel zoom,
+            const QList< std::shared_ptr<const MapObject> >& objects,
+            const std::shared_ptr<Cache>& cache = nullptr,
+            const IQueryController* const controller = nullptr,
+            MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric = nullptr);
+
+        std::shared_ptr<PrimitivisedObjects> primitiviseWithSurface(
+            const AreaI area31,
+            const PointI areaSizeInPixels,
+            const ZoomLevel zoom,
+            const MapSurfaceType surfaceType,
+            const QList< std::shared_ptr<const MapObject> >& objects,
+            const std::shared_ptr<Cache>& cache = nullptr,
+            const IQueryController* const controller = nullptr,
+            MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric = nullptr);
+
+        std::shared_ptr<PrimitivisedObjects> primitiviseWithoutSurface(
+            const PointD scaleDivisor31ToPixel,
+            const ZoomLevel zoom,
+            const QList< std::shared_ptr<const MapObject> >& objects,
+            const std::shared_ptr<Cache>& cache = nullptr,
+            const IQueryController* const controller = nullptr,
+            MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface* const metric = nullptr);
     };
 }
 
-#endif // !defined(_OSMAND_CORE_PRIMITIVISER_H_)
+#endif // !defined(_OSMAND_CORE_MAP_PRIMITIVISER_H_)

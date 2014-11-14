@@ -32,12 +32,12 @@ OsmAnd::MapPresentationEnvironment_P::~MapPresentationEnvironment_P()
 
 void OsmAnd::MapPresentationEnvironment_P::initialize()
 {
-    _defaultColorAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultColor"));
-    _defaultColor = ColorRGB(0xf1, 0xee, 0xe8);
+    _defaultBackgroundColorAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultColor"));
+    _defaultBackgroundColor = ColorRGB(0xf1, 0xee, 0xe8);
 
-    _shadowRenderingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("shadowRendering"));
-    _shadowRenderingMode = 0;
-    _shadowRenderingColor = ColorRGB(0x96, 0x96, 0x96);
+    _shadowOptionsAttribute = owner->resolvedStyle->getAttribute(QLatin1String("shadowRendering"));
+    _shadowMode = ShadowMode::NoShadow;
+    _shadowColor = ColorRGB(0x96, 0x96, 0x96);
 
     _polygonMinSizeToDisplayAttribute = owner->resolvedStyle->getAttribute(QLatin1String("polygonMinSizeToDisplay"));
     _polygonMinSizeToDisplay = 0.0;
@@ -263,37 +263,42 @@ QByteArray OsmAnd::MapPresentationEnvironment_P::obtainResourceByName(const QStr
 
 OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getDefaultBackgroundColor(const ZoomLevel zoom) const
 {
-    auto result = _defaultColor;
+    auto result = _defaultBackgroundColor;
 
-    if (_defaultColorAttribute)
+    if (_defaultBackgroundColorAttribute)
     {
         MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
         MapStyleEvaluationResult evalResult;
-        if (evaluator.evaluate(_defaultColorAttribute, &evalResult))
+        if (evaluator.evaluate(_defaultBackgroundColorAttribute, &evalResult))
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, result.argb);
     }
 
     return result;
 }
 
-void OsmAnd::MapPresentationEnvironment_P::obtainShadowRenderingOptions(const ZoomLevel zoom, int& mode, ColorARGB& color) const
+void OsmAnd::MapPresentationEnvironment_P::obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const
 {
-    mode = _shadowRenderingMode;
-    color = _shadowRenderingColor;
+    bool ok;
+    mode = _shadowMode;
+    color = _shadowColor;
 
-    if (_shadowRenderingAttribute)
+    if (_shadowOptionsAttribute)
     {
         MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
         MapStyleEvaluationResult evalResult;
-        if (evaluator.evaluate(_shadowRenderingAttribute, &evalResult))
+        if (evaluator.evaluate(_shadowOptionsAttribute, &evalResult))
         {
-            evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, mode);
+            int modeValue = 0;
+            ok = evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, modeValue);
+            if (ok)
+                mode = static_cast<ShadowMode>(modeValue);
+
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, color.argb);
         }
     }

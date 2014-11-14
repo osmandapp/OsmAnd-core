@@ -18,7 +18,7 @@
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
-#include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/MapStyleEvaluationResult.h>
 
 #include <OsmAndCore/QtExtensions.h>

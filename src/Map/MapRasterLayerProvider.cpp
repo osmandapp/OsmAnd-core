@@ -2,7 +2,7 @@
 #include "MapRasterLayerProvider_P.h"
 
 #include "MapPrimitivesProvider.h"
-#include "Primitiviser.h"
+#include "MapPrimitiviser.h"
 #include "MapPresentationEnvironment.h"
 
 OsmAnd::MapRasterLayerProvider::MapRasterLayerProvider(

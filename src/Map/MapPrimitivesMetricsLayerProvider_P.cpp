@@ -16,7 +16,7 @@
 
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
-#include "Primitiviser_Metrics.h"
+#include "MapPrimitiviser_Metrics.h"
 #include "BinaryMapObjectsProvider_Metrics.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
@@ -73,7 +73,7 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
         obtainBinaryMapObjectsElapsedTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 2);
     }
     QString primitiviseElapsedTime(QLatin1String("?"));
-    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<Primitiviser_Metrics::Metric_primitivise>())
+    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithSurface>())
     {
         text += QString(QLatin1String("order  %1/-%2 %3s\n"))
             .arg(primitiviseMetric->orderEvaluations)

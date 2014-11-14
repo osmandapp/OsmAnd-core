@@ -110,7 +110,6 @@ namespace OsmAnd
         // Rules
         QVector< uint32_t > typesRuleIds;
         QVector< uint32_t > additionalTypesRuleIds;
-        virtual bool containsFoundationType() const;
         virtual bool containsType(const uint32_t typeRuleId, bool checkAdditional = false) const;
         virtual bool containsTypeSlow(const QString& tag, const QString& value, bool checkAdditional = false) const;
         virtual bool obtainTagValueByTypeRuleIndex(const uint32_t typeRuleIndex, QString& outTag, QString& outValue, bool checkAdditional = false) const;

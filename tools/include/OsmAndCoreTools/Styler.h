@@ -21,7 +21,7 @@
 #include <OsmAndCore/IObfsCollection.h>
 #include <OsmAndCore/Data/Model/BinaryMapObject.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
-#include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/MapPrimitiviser.h>
 
 #include <OsmAndCoreTools.h>
 

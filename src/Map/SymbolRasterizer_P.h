@@ -18,7 +18,7 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
-#include "Primitiviser.h"
+#include "MapPrimitiviser.h"
 #include "SymbolRasterizer.h"
 
 namespace OsmAnd
@@ -44,7 +44,7 @@ namespace OsmAnd
         ImplementationInterface<SymbolRasterizer> owner;
 
         void rasterize(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             std::function<bool(const std::shared_ptr<const MapObject>& mapObject)> filter,
             const IQueryController* const controller);

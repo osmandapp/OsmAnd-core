@@ -13,7 +13,7 @@
 
 #include "MapPresentationEnvironment.h"
 #include "MapStyleEvaluationResult.h"
-#include "Primitiviser.h"
+#include "MapPrimitiviser.h"
 #include "TextRasterizer.h"
 #include "MapObject.h"
 #include "ObfMapSectionInfo.h"
@@ -42,14 +42,14 @@ OsmAnd::SymbolRasterizer_P::~SymbolRasterizer_P()
 }
 
 void OsmAnd::SymbolRasterizer_P::rasterize(
-    const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     std::function<bool (const std::shared_ptr<const MapObject>& mapObject)> filter,
     const IQueryController* const controller)
 {
-    const auto& env = primitivisedArea->mapPresentationEnvironment;
+    const auto& env = primitivisedObjects->mapPresentationEnvironment;
 
-    for (const auto& symbolGroupEntry : rangeOf(constOf(primitivisedArea->symbolsGroups)))
+    for (const auto& symbolGroupEntry : rangeOf(constOf(primitivisedObjects->symbolsGroups)))
     {
         if (controller && controller->isAborted())
             return;
@@ -82,7 +82,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
             if (controller && controller->isAborted())
                 return;
 
-            if (const auto& textSymbol = std::dynamic_pointer_cast<const Primitiviser::TextSymbol>(symbol))
+            if (const auto& textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol))
             {
                 TextRasterizer::Style style;
                 if (!textSymbol->drawOnPath && textSymbol->shieldResourceName.isEmpty())
@@ -195,7 +195,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     }
                 }
             }
-            else if (const auto& iconSymbol = std::dynamic_pointer_cast<const Primitiviser::IconSymbol>(symbol))
+            else if (const auto& iconSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::IconSymbol>(symbol))
             {
                 std::shared_ptr<const SkBitmap> iconBitmap;
                 if (!env->obtainMapIcon(iconSymbol->resourceName, iconBitmap) || !iconBitmap)

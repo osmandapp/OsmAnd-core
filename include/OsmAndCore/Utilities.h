@@ -148,6 +148,17 @@ namespace OsmAnd
             return qPow(2, zoom);
         }
 
+        inline static PointD getScaleDivisor31ToPixel(const PointI areaSizeInPixels, const ZoomLevel zoom)
+        {
+            PointD scaleDivisor31ToPixel;
+
+            const auto tileDivisor = getPowZoom(31 - zoom);
+            scaleDivisor31ToPixel.x = tileDivisor / static_cast<double>(areaSizeInPixels.x);
+            scaleDivisor31ToPixel.y = tileDivisor / static_cast<double>(areaSizeInPixels.y);
+
+            return scaleDivisor31ToPixel;
+        }
+
         inline static double getLongitudeFromTile(const float zoom, const double x)
         {
             return x / getPowZoom(zoom) * 360.0 - 180.0;

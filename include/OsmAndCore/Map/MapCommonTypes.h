@@ -9,7 +9,7 @@
 
 namespace OsmAnd
 {
-    enum class MapFoundationType
+    enum class MapSurfaceType
     {
         Undefined = -1,
 

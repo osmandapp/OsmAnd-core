@@ -48,7 +48,7 @@ OsmAnd::ObfMapSectionLevel_P::~ObfMapSectionLevel_P()
 OsmAnd::ObfMapSectionLevelTreeNode::ObfMapSectionLevelTreeNode(const std::shared_ptr<const ObfMapSectionLevel>& level_)
     : level(level_)
     , dataOffset(0)
-    , foundation(MapFoundationType::Undefined)
+    , surfaceType(MapSurfaceType::Undefined)
     , hasChildrenDataBoxes(false)
     , firstDataBoxInnerOffset(0)
 {

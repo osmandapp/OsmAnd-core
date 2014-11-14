@@ -39,7 +39,7 @@ namespace OsmAnd
         uint32_t offset;
         uint32_t length;
         uint32_t dataOffset;
-        MapFoundationType foundation;
+        MapSurfaceType surfaceType;
         AreaI area31;
 
         bool hasChildrenDataBoxes;

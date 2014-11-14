@@ -48,7 +48,7 @@ namespace OsmAnd
 
         bool loadMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
-            MapFoundationType* outFoundation,
+            MapSurfaceType* outSurfaceType,
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
             const FilterMapObjectsByIdFunction filterById = nullptr,

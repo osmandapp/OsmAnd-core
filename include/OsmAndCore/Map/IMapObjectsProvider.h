@@ -26,12 +26,12 @@ namespace OsmAnd
             Data(
                 const TileId tileId,
                 const ZoomLevel zoom,
-                const MapFoundationType tileFoundation,
+                const MapSurfaceType tileSurfaceType,
                 const QList< std::shared_ptr<const MapObject> >& mapObjects,
                 const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 
-            MapFoundationType tileFoundation;
+            MapSurfaceType tileSurfaceType;
             QList< std::shared_ptr<const MapObject> > mapObjects;
         };
 

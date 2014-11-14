@@ -91,6 +91,9 @@ bool OsmAnd::MapObjectsProvider_P::obtainData(
         return true;
     }
 
-    outTiledData.reset(new MapObjectsProvider::Data(tileId, zoom, MapFoundationType::Undefined, mapObjects));
+    outTiledData.reset(new MapObjectsProvider::Data(
+        tileId,
+        zoom,
+        MapSurfaceType::Undefined, mapObjects));
     return true;
 }

@@ -323,10 +323,10 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
 
-                treeNode->foundation = (value != 0) ? MapFoundationType::FullWater : MapFoundationType::FullLand;
+                treeNode->surfaceType = (value != 0) ? MapSurfaceType::FullWater : MapSurfaceType::FullLand;
                 assert(
-                    (treeNode->foundation != MapFoundationType::FullWater) ||
-                    (treeNode->foundation == MapFoundationType::FullWater && section->isBasemap));
+                    (treeNode->surfaceType != MapSurfaceType::FullWater) ||
+                    (treeNode->surfaceType == MapSurfaceType::FullWater && section->isBasemap));
 
                 fieldsMask |= (1ull << tfn);
                 break;
@@ -360,7 +360,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
-    MapFoundationType& outChildrenFoundation,
+    MapSurfaceType& outChildrenSurfaceType,
     QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
     const AreaI* bbox31,
     const IQueryController* const controller,
@@ -368,7 +368,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
 {
     const auto cis = reader._codedInputStream.get();
 
-    outChildrenFoundation = MapFoundationType::Undefined;
+    outChildrenSurfaceType = MapSurfaceType::Undefined;
 
     for (;;)
     {
@@ -384,7 +384,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 const auto oldLimit = cis->PushLimit(length);
 
                 const std::shared_ptr<ObfMapSectionLevelTreeNode> childNode(new ObfMapSectionLevelTreeNode(treeNode->level));
-                childNode->foundation = treeNode->foundation;
+                childNode->surfaceType = treeNode->surfaceType;
                 childNode->offset = offset;
                 childNode->length = length;
                 readTreeNode(reader, section, treeNode->area31, childNode);
@@ -413,14 +413,14 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 if (nodesWithData && childNode->dataOffset > 0)
                     nodesWithData->push_back(childNode);
 
-                auto subchildrenFoundation = MapFoundationType::Undefined;
+                auto subchildrenSurfaceType = MapSurfaceType::Undefined;
                 if (childNode->hasChildrenDataBoxes)
                 {
                     cis->Seek(childNode->offset);
                     const auto oldLimit = cis->PushLimit(length);
 
                     cis->Skip(childNode->firstDataBoxInnerOffset);
-                    readTreeNodeChildren(reader, section, childNode, subchildrenFoundation, nodesWithData, bbox31, controller, metric);
+                    readTreeNodeChildren(reader, section, childNode, subchildrenSurfaceType, nodesWithData, bbox31, controller, metric);
                     
                     if (const auto bytesUntilLimit = cis->BytesUntilLimit())
                     {
@@ -436,13 +436,13 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                     cis->PopLimit(oldLimit);
                 }
 
-                const auto foundationToMerge = (subchildrenFoundation != MapFoundationType::Undefined) ? subchildrenFoundation : childNode->foundation;
-                if (foundationToMerge != MapFoundationType::Undefined)
+                const auto surfaceTypeToMerge = (subchildrenSurfaceType != MapSurfaceType::Undefined) ? subchildrenSurfaceType : childNode->surfaceType;
+                if (surfaceTypeToMerge != MapSurfaceType::Undefined)
                 {
-                    if (outChildrenFoundation == MapFoundationType::Undefined)
-                        outChildrenFoundation = foundationToMerge;
-                    else if (outChildrenFoundation != foundationToMerge)
-                        outChildrenFoundation = MapFoundationType::Mixed;
+                    if (outChildrenSurfaceType == MapSurfaceType::Undefined)
+                        outChildrenSurfaceType = surfaceTypeToMerge;
+                    else if (outChildrenSurfaceType != surfaceTypeToMerge)
+                        outChildrenSurfaceType = MapSurfaceType::Mixed;
                 }
 
                 break;
@@ -891,7 +891,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     ZoomLevel zoom,
     const AreaI* bbox31,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
-    MapFoundationType* outBBoxOrSectionFoundation,
+    MapSurfaceType* outBBoxOrSectionSurfaceType,
     const FilterMapObjectsByIdFunction filterById,
     const VisitorFunction visitor,
     DataBlocksCache* cache,
@@ -938,9 +938,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
     ObfMapSectionReader_Metrics::Metric_loadMapObjects localMetric;
 
-    auto bboxOrSectionFoundation = MapFoundationType::Undefined;
-    if (outBBoxOrSectionFoundation)
-        *outBBoxOrSectionFoundation = bboxOrSectionFoundation;
+    auto bboxOrSectionSurfaceType = MapSurfaceType::Undefined;
+    if (outBBoxOrSectionSurfaceType)
+        *outBBoxOrSectionSurfaceType = bboxOrSectionSurfaceType;
     QList< std::shared_ptr<const DataBlock> > danglingReferencedCacheEntries;
     for (const auto& mapLevel : constOf(section->levels))
     {
@@ -1041,26 +1041,26 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             if (rootNode->dataOffset > 0)
                 treeNodesWithData.push_back(rootNode);
 
-            auto rootSubnodesFoundation = MapFoundationType::Undefined;
+            auto rootSubnodesSurfaceType = MapSurfaceType::Undefined;
             if (rootNode->hasChildrenDataBoxes)
             {
                 cis->Seek(rootNode->offset);
                 auto oldLimit = cis->PushLimit(rootNode->length);
 
                 cis->Skip(rootNode->firstDataBoxInnerOffset);
-                readTreeNodeChildren(reader, section, rootNode, rootSubnodesFoundation, &treeNodesWithData, bbox31, controller, metric);
+                readTreeNodeChildren(reader, section, rootNode, rootSubnodesSurfaceType, &treeNodesWithData, bbox31, controller, metric);
                 
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
             }
 
-            const auto foundationToMerge = (rootSubnodesFoundation != MapFoundationType::Undefined) ? rootSubnodesFoundation : rootNode->foundation;
-            if (foundationToMerge != MapFoundationType::Undefined)
+            const auto surfaceTypeToMerge = (rootSubnodesSurfaceType != MapSurfaceType::Undefined) ? rootSubnodesSurfaceType : rootNode->surfaceType;
+            if (surfaceTypeToMerge != MapSurfaceType::Undefined)
             {
-                if (bboxOrSectionFoundation == MapFoundationType::Undefined)
-                    bboxOrSectionFoundation = foundationToMerge;
-                else if (bboxOrSectionFoundation != foundationToMerge)
-                    bboxOrSectionFoundation = MapFoundationType::Mixed;
+                if (bboxOrSectionSurfaceType == MapSurfaceType::Undefined)
+                    bboxOrSectionSurfaceType = surfaceTypeToMerge;
+                else if (bboxOrSectionSurfaceType != surfaceTypeToMerge)
+                    bboxOrSectionSurfaceType = MapSurfaceType::Mixed;
             }
         }
 
@@ -1144,7 +1144,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         metric->mapObjectsBlocksRead++;
 
                     // Create a data block and share it
-                    dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->foundation, mapObjects));
+                    dataBlock.reset(new DataBlock(blockId, treeNode->area31, treeNode->surfaceType, mapObjects));
                     cache->fulfilPromiseAndReference(blockId, levelZooms, dataBlock);
                 }
 
@@ -1230,8 +1230,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         danglingReferencedCacheEntries.clear();
     }
 
-    if (outBBoxOrSectionFoundation)
-        *outBBoxOrSectionFoundation = bboxOrSectionFoundation;
+    if (outBBoxOrSectionSurfaceType)
+        *outBBoxOrSectionSurfaceType = bboxOrSectionSurfaceType;
 
     // In case cache was used, and metric was requested, some values must be taken from different parts
     if (cache && metric)

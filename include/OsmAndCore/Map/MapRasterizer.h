@@ -11,7 +11,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
-#include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/MapRasterizer_Metrics.h>
 
 class SkCanvas;
@@ -34,7 +34,8 @@ namespace OsmAnd
         const std::shared_ptr<const MapPresentationEnvironment> mapPresentationEnvironment;
 
         void rasterize(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const AreaI area31,
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             SkCanvas& canvas,
             const bool fillBackground = true,
             const AreaI* const destinationArea = nullptr,

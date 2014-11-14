@@ -8,7 +8,7 @@
 
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
-#include "Primitiviser.h"
+#include "MapPrimitiviser.h"
 #include "MapRasterizer.h"
 
 OsmAnd::MapRasterLayerProvider_P::MapRasterLayerProvider_P(MapRasterLayerProvider* const owner_)
@@ -57,7 +57,7 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
         primitivesTile,
         metric ? metric->findOrAddSubmetricOfType<MapPrimitivesProvider_Metrics::Metric_obtainData>().get() : nullptr,
         nullptr);
-    if (!primitivesTile || primitivesTile->primitivisedArea->isEmpty())
+    if (!primitivesTile || primitivesTile->primitivisedObjects->isEmpty())
     {
         outTiledData.reset();
         return true;

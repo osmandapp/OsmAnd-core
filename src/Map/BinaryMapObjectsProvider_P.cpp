@@ -107,7 +107,7 @@ bool OsmAnd::BinaryMapObjectsProvider_P::obtainData(
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > allLoadedMapObjectsCounters;
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedSharedMapObjectsCounters;
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedNonSharedMapObjectsCounters;
-    auto tileFoundation = MapFoundationType::Undefined;
+    auto tileSurfaceType = MapSurfaceType::Undefined;
     Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
     if (metric)
     {
@@ -116,7 +116,7 @@ bool OsmAnd::BinaryMapObjectsProvider_P::obtainData(
     }
     dataInterface->loadMapObjects(
         &loadedMapObjects,
-        &tileFoundation,
+        &tileSurfaceType,
         zoom,
         &tileBBox31,
         [this, zoom, &referencedMapObjects, &futureReferencedMapObjects, &loadedSharedMapObjectsCounters, &loadedNonSharedMapObjectsCounters, &allLoadedMapObjectsCounters, tileBBox31, metric]
@@ -226,7 +226,7 @@ bool OsmAnd::BinaryMapObjectsProvider_P::obtainData(
     const std::shared_ptr<IMapObjectsProvider::Data> newTile(new IMapObjectsProvider::Data(
         tileId,
         zoom,
-        tileFoundation,
+        tileSurfaceType,
         copyAs< QList< std::shared_ptr<const MapObject> > >(allMapObjects),
         new RetainableCacheMetadata(zoom, _link, tileEntry, _dataBlocksCache, referencedMapDataBlocks, referencedMapObjects + loadedSharedMapObjects)));
 

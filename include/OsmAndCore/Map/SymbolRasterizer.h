@@ -11,7 +11,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
-#include <OsmAndCore/Map/Primitiviser.h>
+#include <OsmAndCore/Map/MapPrimitiviser.h>
 
 class SkCanvas;
 class SkBitmap;
@@ -57,12 +57,12 @@ namespace OsmAnd
         protected:
             RasterizedSymbol(
                 const std::shared_ptr<const RasterizedSymbolsGroup>& group,
-                const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol);
+                const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol);
         public:
             virtual ~RasterizedSymbol();
 
             const std::weak_ptr<const RasterizedSymbolsGroup> group;
-            const std::shared_ptr<const Primitiviser::Symbol> primitiveSymbol;
+            const std::shared_ptr<const MapPrimitiviser::Symbol> primitiveSymbol;
 
             std::shared_ptr<const SkBitmap> bitmap;
             int order;
@@ -81,7 +81,7 @@ namespace OsmAnd
         protected:
             RasterizedSpriteSymbol(
                 const std::shared_ptr<const RasterizedSymbolsGroup>& group,
-                const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol);
+                const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol);
         public:
             virtual ~RasterizedSpriteSymbol();
 
@@ -100,7 +100,7 @@ namespace OsmAnd
         protected:
             RasterizedOnPathSymbol(
                 const std::shared_ptr<const RasterizedSymbolsGroup>& group,
-                const std::shared_ptr<const Primitiviser::Symbol>& primitiveSymbol);
+                const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol);
         public:
             virtual ~RasterizedOnPathSymbol();
 
@@ -117,7 +117,7 @@ namespace OsmAnd
         virtual ~SymbolRasterizer();
 
         void rasterize(
-            const std::shared_ptr<const Primitiviser::PrimitivisedArea>& primitivisedArea,
+            const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             std::function<bool(const std::shared_ptr<const MapObject>& mapObject)> filter = nullptr,
             const IQueryController* const controller = nullptr);

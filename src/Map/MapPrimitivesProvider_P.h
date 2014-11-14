@@ -18,7 +18,7 @@
 #include "IMapTiledDataProvider.h"
 #include "TiledEntriesCollection.h"
 #include "ObfMapSectionReader.h"
-#include "Primitiviser.h"
+#include "MapPrimitiviser.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
 
@@ -57,7 +57,7 @@ namespace OsmAnd
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 
-        const std::shared_ptr<Primitiviser::Cache> _primitiviserCache;
+        const std::shared_ptr<MapPrimitiviser::Cache> _primitiviserCache;
 
         struct RetainableCacheMetadata : public IMapDataProvider::RetainableCacheMetadata
         {
