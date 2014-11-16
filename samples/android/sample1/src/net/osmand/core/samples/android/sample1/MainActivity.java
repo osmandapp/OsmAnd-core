@@ -71,10 +71,10 @@ public class MainActivity extends ActionBarActivity {
     private ObfsCollection _obfsCollection;
     private MapPresentationEnvironment _mapPresentationEnvironment;
     private Primitiviser _primitiviser;
-    private BinaryMapDataProvider _binaryMapDataProvider;
-    private BinaryMapPrimitivesProvider _binaryMapPrimitivesProvider;
-    private BinaryMapStaticSymbolsProvider _binaryMapStaticSymbolsProvider;
-    private BinaryMapRasterLayerProvider _binaryMapRasterLayerProvider;
+    private BinaryMapObjectsProvider _binaryMapObjectsProvider;
+    private MapPrimitivesProvider _mapPrimitivesProvider;
+    private MapObjectsSymbolsProvider _mapObjectsSymbolsProvider;
+    private MapRasterLayerProvider _mapRasterLayerProvider;
     private IMapRenderer _mapRenderer;
     private GpuWorkerThreadPrologue _gpuWorkerThreadPrologue;
     private GpuWorkerThreadEpilogue _gpuWorkerThreadEpilogue;
@@ -123,19 +123,19 @@ public class MainActivity extends ActionBarActivity {
                 _displayDensityFactor,
                 "en"); //TODO: here should be current locale
         //mapPresentationEnvironment->setSettings(configuration.styleSettings);
-        _primitiviser = new Primitiviser(
+        _primitiviser = new MapPrimitiviser(
                 _mapPresentationEnvironment);
-        _binaryMapDataProvider = new BinaryMapDataProvider(
+        _binaryMapObjectsProvider = new BinaryMapObjectsProvider(
                 _obfsCollection);
-        _binaryMapPrimitivesProvider = new BinaryMapPrimitivesProvider(
-                _binaryMapDataProvider,
+        _mapPrimitivesProvider = new MapPrimitivesProvider(
+                _binaryMapObjectsProvider,
                 _primitiviser,
                 _rasterTileSize);
-        _binaryMapStaticSymbolsProvider = new BinaryMapStaticSymbolsProvider(
-                _binaryMapPrimitivesProvider,
+        _mapObjectsSymbolsProvider = new MapObjectsSymbolsProvider(
+                _mapPrimitivesProvider,
                 _rasterTileSize);
-        _binaryMapRasterLayerProvider = new BinaryMapRasterLayerProvider_Software(
-                _binaryMapPrimitivesProvider);
+        _mapRasterLayerProvider = new MapRasterLayerProvider_Software(
+                _mapPrimitivesProvider);
 
         Log.i(TAG, "Going to create renderer");
         _mapRenderer = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2);
@@ -149,7 +149,7 @@ public class MainActivity extends ActionBarActivity {
         atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
         _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.Casts.downcastTo_MapRendererConfiguration(atlasRendererConfiguration));
 
-        _mapRenderer.addSymbolsProvider(_binaryMapStaticSymbolsProvider);
+        _mapRenderer.addSymbolsProvider(_mapObjectsSymbolsProvider);
         _mapRenderer.setAzimuth(0.0f);
         _mapRenderer.setElevationAngle(35.0f);
 
@@ -162,7 +162,7 @@ public class MainActivity extends ActionBarActivity {
         if (mapnik == null)
             Log.e(TAG, "Failed to create mapnik");
         */
-        _mapRenderer.setMapLayerProvider(0, _binaryMapRasterLayerProvider);
+        _mapRenderer.setMapLayerProvider(0, _mapRasterLayerProvider);
 
         _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
         //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
@@ -214,24 +214,24 @@ public class MainActivity extends ActionBarActivity {
             _primitiviser = null;
         }
 
-        if (_binaryMapDataProvider != null) {
-            _binaryMapDataProvider.delete();
-            _binaryMapDataProvider = null;
+        if (_binaryMapObjectsProvider != null) {
+            _binaryMapObjectsProvider.delete();
+            _binaryMapObjectsProvider = null;
         }
 
-        if (_binaryMapPrimitivesProvider != null) {
-            _binaryMapPrimitivesProvider.delete();
-            _binaryMapPrimitivesProvider = null;
+        if (_mapPrimitivesProvider != null) {
+            _mapPrimitivesProvider.delete();
+            _mapPrimitivesProvider = null;
         }
 
-        if (_binaryMapStaticSymbolsProvider != null) {
-            _binaryMapStaticSymbolsProvider.delete();
-            _binaryMapStaticSymbolsProvider = null;
+        if (_mapObjectsSymbolsProvider != null) {
+            _mapObjectsSymbolsProvider.delete();
+            _mapObjectsSymbolsProvider = null;
         }
 
-        if (_binaryMapRasterLayerProvider != null) {
-            _binaryMapRasterLayerProvider.delete();
-            _binaryMapRasterLayerProvider = null;
+        if (_mapRasterLayerProvider != null) {
+            _mapRasterLayerProvider.delete();
+            _mapRasterLayerProvider = null;
         }
 
         if (_mapRenderer != null) {

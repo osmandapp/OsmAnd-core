@@ -25,6 +25,9 @@
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
+#include <OsmAndCore/Data/MapObject.h>
+#include <OsmAndCore/Data/BinaryMapObject.h>
+#include <OsmAndCore/Data/Road.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
@@ -107,6 +110,9 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::QIODeviceLogSink)
 	%shared_ptr(OsmAnd::ObfFile)
 	%shared_ptr(OsmAnd::ObfInfo)
+	%shared_ptr(OsmAnd::MapObject)
+	%shared_ptr(OsmAnd::BinaryMapObject)
+	%shared_ptr(OsmAnd::Road)
 	%shared_ptr(OsmAnd::MapSymbolsGroup)
 	%shared_ptr(OsmAnd::MapSymbol)
 	%shared_ptr(OsmAnd::IMapStylesCollection)
@@ -135,6 +141,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IMapTiledSymbolsProvider)
 	%shared_ptr(OsmAnd::IMapKeyedSymbolsProvider)
 	%shared_ptr(OsmAnd::MapPrimitiviser)
+	%shared_ptr(OsmAnd::MapPrimitiviser::CoastlineMapObject)
+	%shared_ptr(OsmAnd::MapPrimitiviser::SurfaceMapObject)
 	%shared_ptr(OsmAnd::MapPrimitiviser::Cache)
 	%shared_ptr(OsmAnd::MapPrimitiviser::Primitive)
 	%shared_ptr(OsmAnd::MapPrimitiviser::PrimitivesGroup)
@@ -211,6 +219,9 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/DataCommonTypes.h>
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>
+%include <OsmAndCore/Data/MapObject.h>
+%include <OsmAndCore/Data/BinaryMapObject.h>
+%include <OsmAndCore/Data/Road.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
@@ -238,12 +249,13 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IRasterMapLayerProvider.h>
 %include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 %include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
-%include <OsmAndCore/Map/Primitiviser.h>
-%include <OsmAndCore/Map/BinaryMapDataProvider.h>
-%include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
-%include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
-%include <OsmAndCore/Map/BinaryMapRasterLayerProvider.h>
-%include <OsmAndCore/Map/BinaryMapRasterLayerProvider_Software.h>
+%include <OsmAndCore/Map/MapPrimitiviser.h>
+%include <OsmAndCore/Map/IMapObjectsProvider.h>
+%include <OsmAndCore/Map/BinaryMapObjectsProvider.h>
+%include <OsmAndCore/Map/MapPrimitivesProvider.h>
+%include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
+%include <OsmAndCore/Map/MapRasterLayerProvider.h>
+%include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
 %include <OsmAndCore/Map/IOnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
