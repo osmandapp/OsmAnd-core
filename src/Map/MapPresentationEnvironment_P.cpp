@@ -47,6 +47,9 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
 
     _roadsDensityLimitPerTileAttribute = owner->resolvedStyle->getAttribute(QLatin1String("roadsDensityLimitPerTile"));
     _roadsDensityLimitPerTile = 0;
+
+    _defaultPathPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultPathPadding"));
+    _defaultPathPadding = 0.0f;
 }
 
 QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue > OsmAnd::MapPresentationEnvironment_P::getSettings() const
@@ -360,4 +363,27 @@ unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadsDensityLimitPerTile(c
     }
 
     return result;
+}
+
+void OsmAnd::MapPresentationEnvironment_P::obtainDefaultPathPadding(float& outLeft, float& outRight) const
+{
+    outLeft = _defaultPathPadding;
+    outRight = _defaultPathPadding;
+
+    if (_defaultPathPaddingAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_defaultPathPaddingAttribute, &evalResult))
+        {
+            float defaultPathPadding = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, defaultPathPadding))
+            {
+                outLeft = defaultPathPadding;
+                outRight = defaultPathPadding;
+            }
+        }
+    }
 }

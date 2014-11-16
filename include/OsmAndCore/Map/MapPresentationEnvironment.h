@@ -96,6 +96,7 @@ namespace OsmAnd
         double getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const;
         unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
         unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;
+        void obtainDefaultPathPadding(float& outLeft, float& outRight) const;
 
         enum {
             DefaultShadowLevelMin = 0,

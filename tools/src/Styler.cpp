@@ -13,7 +13,7 @@
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/QKeyValueIterator.h>
 #include <OsmAndCore/Data/ObfMapSectionInfo.h>
-#include <OsmAndCore/Data/Model/BinaryMapObject.h>
+#include <OsmAndCore/Data/BinaryMapObject.h>
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
@@ -91,7 +91,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         }
 
         // Load all map objects
-        QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
+        QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > mapObjects;
         const auto mapObjectsFilterById =
             [this]
             (const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section,
@@ -149,24 +149,17 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         mapPresentationEnvironment->setSettings(configuration.styleSettings);
 
         // Create primitiviser
-        const std::shared_ptr<OsmAnd::Primitiviser> primitiviser(new OsmAnd::Primitiviser(mapPresentationEnvironment));
+        const std::shared_ptr<OsmAnd::MapPrimitiviser> primitiviser(new OsmAnd::MapPrimitiviser(mapPresentationEnvironment));
         if (configuration.verbose)
-            output << xT("Going to primitivise map objects ") << (configuration.excludeCoastlines ? xT("excluding") : xT("including")) << xT(" coastlines...") << std::endl;
-        const auto primitivisedArea = configuration.excludeCoastlines
-            ? primitiviser->primitiviseWithoutCoastlines(
+            output << xT("Going to primitivise map objects...") << std::endl;
+        const auto primitivisedData = primitiviser->primitiviseAllMapObjects(
                 configuration.zoom,
-                mapObjects)
-            : primitiviser->primitiviseWithCoastlines(
-                OsmAnd::AreaI(0, 0, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()),
-                OsmAnd::PointI(65536, 65536),
-                configuration.zoom,
-                OsmAnd::MapFoundationType::Mixed,
                 mapObjects);
         if (configuration.verbose)
-            output << xT("Primitivised ") << primitivisedArea->primitivesGroups.size() << xT(" groups from ") << mapObjects.size() << xT(" map objects") << std::endl;
+            output << xT("Primitivised ") << primitivisedData->primitivesGroups.size() << xT(" groups from ") << mapObjects.size() << xT(" map objects") << std::endl;
 
         // Obtain evaluated values for each group and print it
-        for (const auto& primitivisedGroup : OsmAnd::constOf(primitivisedArea->primitivesGroups))
+        for (const auto& primitivisedGroup : OsmAnd::constOf(primitivisedData->primitivesGroups))
         {
             const auto& mapObject = primitivisedGroup->sourceObject;
             const auto& encDecRules = mapObject->section->encodingDecodingRules;
@@ -340,8 +333,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 }
             }
 
-            const auto itSymbolsGroup = primitivisedArea->symbolsGroups.constFind(mapObject);
-            if (itSymbolsGroup != primitivisedArea->symbolsGroups.cend())
+            const auto itSymbolsGroup = primitivisedData->symbolsGroups.constFind(mapObject);
+            if (itSymbolsGroup != primitivisedData->symbolsGroups.cend())
             {
                 const auto& symbolsGroup = *itSymbolsGroup;
 
@@ -350,8 +343,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 unsigned int symbolIndex = 0u;
                 for (const auto& symbol : OsmAnd::constOf(symbolsGroup->symbols))
                 {
-                    const auto textSymbol = std::dynamic_pointer_cast<const OsmAnd::Primitiviser::TextSymbol>(symbol);
-                    const auto iconSymbol = std::dynamic_pointer_cast<const OsmAnd::Primitiviser::IconSymbol>(symbol);
+                    const auto textSymbol = std::dynamic_pointer_cast<const OsmAnd::MapPrimitiviser::TextSymbol>(symbol);
+                    const auto iconSymbol = std::dynamic_pointer_cast<const OsmAnd::MapPrimitiviser::IconSymbol>(symbol);
 
                     output << xT("\tSymbol #") << symbolIndex;
                     if (textSymbol)
@@ -463,7 +456,6 @@ OsmAndTools::Styler::Configuration::Configuration()
     , zoom(OsmAnd::ZoomLevel15)
     , displayDensityFactor(1.0f)
     , locale(QLatin1String("en"))
-    , excludeCoastlines(false)
     , verbose(false)
 {
 }
@@ -613,10 +605,6 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
         else if (arg == QLatin1String("-verbose"))
         {
             outConfiguration.verbose = true;
-        }
-        else if (arg == QLatin1String("-excludeCoastlines"))
-        {
-            outConfiguration.excludeCoastlines = true;
         }
         else if (arg.startsWith(QLatin1String("-styleDump=")))
         {

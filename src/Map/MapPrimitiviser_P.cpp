@@ -91,7 +91,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(owner->environment, primitivisedObjects, qMove(evaluationResult), cache, controller);
+    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, controller);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -346,7 +346,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(owner->environment, primitivisedObjects, qMove(evaluationResult), cache, controller);
+    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, controller);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -450,7 +450,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(owner->environment, primitivisedObjects, qMove(evaluationResult), cache, controller);
+    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, controller);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -1697,7 +1697,7 @@ void OsmAnd::MapPrimitiviser_P::filterOutHighwaysByDensity(
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
-    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const Context& context,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
 #ifdef Q_COMPILER_RVALUE_REFS
     MapStyleEvaluationResult&& evaluationResult,
@@ -1760,7 +1760,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         //NOTE: Each polygon that has icon or text is also added as point. So there's no need to process polygons
         /*
         collectSymbolsFromPrimitives(
-            env,
+            context,
             primitivisedObjects,
             primitivesGroup->polygons,
             PrimitivesType::Polygons,
@@ -1769,7 +1769,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             controller);
         */
         collectSymbolsFromPrimitives(
-            env,
+            context,
             primitivisedObjects,
             primitivesGroup->polylines,
             PrimitivesType::Polylines,
@@ -1777,7 +1777,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             constructedGroup->symbols,
             controller);
         collectSymbolsFromPrimitives(
-            env,
+            context,
             primitivisedObjects,
             primitivesGroup->points,
             PrimitivesType::Points,
@@ -1805,7 +1805,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
 }
 
 void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
-    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const PrimitivesCollection& primitives,
     const PrimitivesType type,
@@ -1826,21 +1826,36 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
 
         if (type == PrimitivesType::Polygons)
         {
-            obtainSymbolsFromPolygon(env, primitivisedObjects, primitive, qMove(evaluationResult), outSymbols);
+            obtainSymbolsFromPolygon(
+                context,
+                primitivisedObjects,
+                primitive,
+                qMove(evaluationResult),
+                outSymbols);
         }
         else if (type == PrimitivesType::Polylines)
         {
-            obtainSymbolsFromPolyline(env, primitivisedObjects, primitive, qMove(evaluationResult), outSymbols);
+            obtainSymbolsFromPolyline(
+                context,
+                primitivisedObjects,
+                primitive,
+                qMove(evaluationResult),
+                outSymbols);
         }
         else if (type == PrimitivesType::Points)
         {
-            obtainSymbolsFromPoint(env, primitivisedObjects, primitive, qMove(evaluationResult), outSymbols);
+            obtainSymbolsFromPoint(
+                context, 
+               primitivisedObjects,
+               primitive,
+               qMove(evaluationResult),
+               outSymbols);
         }
     }
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
-    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -1869,7 +1884,8 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
     center.y /= pointsCount;
 
     // Obtain texts for this symbol
-    obtainPrimitiveTexts(env,
+    obtainPrimitiveTexts(
+        context,
         primitivisedObjects,
         primitive,
         Utilities::normalizeCoordinates(center, ZoomLevel31),
@@ -1878,7 +1894,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
-    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -1897,7 +1913,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
 
     // Obtain texts for this symbol
     obtainPrimitiveTexts(
-        env,
+        context,
         primitivisedObjects,
         primitive,
         center,
@@ -1906,7 +1922,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
-    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -1965,7 +1981,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     if (!alreadyContainsIcon)
     {
         obtainPrimitiveIcon(
-            env,
+            context,
             primitive,
             center,
             qMove(evaluationResult),
@@ -1977,7 +1993,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     if (primitive->typeRuleIdIndex == 0)
     {
         obtainPrimitiveTexts(
-            env,
+            context,
             primitivisedObjects,
             primitive,
             center,
@@ -1987,7 +2003,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
-    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
@@ -1999,6 +2015,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     SymbolsCollection& outSymbols)
 {
     const auto& mapObject = primitive->sourceObject;
+    const auto& env = context.env;
 
     //////////////////////////////////////////////////////////////////////////
     //if ((primitive->sourceObject->id >> 1) == 189600735u)
@@ -2290,6 +2307,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
         text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
+        text->pathPaddingLeft = context.defaultPathPaddingLeft;
+        text->pathPaddingRight = context.defaultPathPaddingRight;
         float pathPadding = 0.0f;
         ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
         if (ok)
@@ -2302,7 +2321,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 }
 
 void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
-    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const Context& context,
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -2312,6 +2331,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 #endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols)
 {
+    const auto& env = context.env;
+
     //////////////////////////////////////////////////////////////////////////
     //if ((primitive->sourceObject->id >> 1) == 9223372034707225298u)
     //{
@@ -2352,6 +2373,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
         intersectsWith = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
     icon->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
+    icon->pathPaddingLeft = context.defaultPathPaddingLeft;
+    icon->pathPaddingRight = context.defaultPathPaddingRight;
     float pathPadding = 0.0f;
     ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
     if (ok)
@@ -2369,11 +2392,8 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
     : env(env_)
     , zoom(zoom_)
 {
-    //defaultBackgroundColor = env->getDefaultBackgroundColor(zoom);
-    //env->obtainShadowOptions(zoom, shadowMode, shadowRenderingColor);
     polygonAreaMinimalThreshold = env->getPolygonAreaMinimalThreshold(zoom);
     roadDensityZoomTile = env->getRoadDensityZoomTile(zoom);
     roadsDensityLimitPerTile = env->getRoadsDensityLimitPerTile(zoom);
-    //shadowLevelMin = MapPresentationEnvironment::DefaultShadowLevelMin;
-    //shadowLevelMax = MapPresentationEnvironment::DefaultShadowLevelMax;
+    env->obtainDefaultPathPadding(defaultPathPaddingLeft, defaultPathPaddingRight);
 }

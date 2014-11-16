@@ -866,30 +866,30 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
         if (configuration.verbose)
             output << xT("Creating primitiviser...") << std::endl;
-        const std::shared_ptr<OsmAnd::Primitiviser> primitiviser(new OsmAnd::Primitiviser(
+        const std::shared_ptr<OsmAnd::MapPrimitiviser> primitiviser(new OsmAnd::MapPrimitiviser(
             mapPresentationEnvironment));
 
         if (configuration.verbose)
-            output << xT("Creating binary map data provider...") << std::endl;
-        const std::shared_ptr<OsmAnd::BinaryMapDataProvider> binaryMapDataProvider(new OsmAnd::BinaryMapDataProvider(
+            output << xT("Creating binary map objects provider...") << std::endl;
+        const std::shared_ptr<OsmAnd::BinaryMapObjectsProvider> binaryMapDataProvider(new OsmAnd::BinaryMapObjectsProvider(
             configuration.obfsCollection));
 
         if (configuration.verbose)
-            output << xT("Creating binary map primitives provider...") << std::endl;
-        const std::shared_ptr<OsmAnd::BinaryMapPrimitivesProvider> binaryMapPrimitivesProvider(new OsmAnd::BinaryMapPrimitivesProvider(
+            output << xT("Creating map primitives provider...") << std::endl;
+        const std::shared_ptr<OsmAnd::MapPrimitivesProvider> binaryMapPrimitivesProvider(new OsmAnd::MapPrimitivesProvider(
             binaryMapDataProvider,
             primitiviser,
             configuration.referenceTileSize));
 
         if (configuration.verbose)
-            output << xT("Creating binary map static symbol provider...") << std::endl;
-        const std::shared_ptr<OsmAnd::BinaryMapStaticSymbolsProvider> binaryMapStaticSymbolProvider(new OsmAnd::BinaryMapStaticSymbolsProvider(
+            output << xT("Creating map objects symbols provider...") << std::endl;
+        const std::shared_ptr<OsmAnd::MapObjectsSymbolsProvider> binaryMapStaticSymbolProvider(new OsmAnd::MapObjectsSymbolsProvider(
             binaryMapPrimitivesProvider,
             configuration.referenceTileSize));
 
         if (configuration.verbose)
-            output << xT("Creating binary map raster tile provider...") << std::endl;
-        const std::shared_ptr<OsmAnd::BinaryMapRasterLayerProvider_Software> binaryMapRasterTileProvider(new OsmAnd::BinaryMapRasterLayerProvider_Software(
+            output << xT("Creating map raster layer provider...") << std::endl;
+        const std::shared_ptr<OsmAnd::MapRasterLayerProvider_Software> binaryMapRasterTileProvider(new OsmAnd::MapRasterLayerProvider_Software(
             binaryMapPrimitivesProvider));
         
         // Create renderer

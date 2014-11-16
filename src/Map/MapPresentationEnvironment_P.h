@@ -63,6 +63,9 @@ namespace OsmAnd
         std::shared_ptr<const ResolvedMapStyle::Attribute> _roadsDensityLimitPerTileAttribute;
         unsigned int _roadsDensityLimitPerTile;
 
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultPathPaddingAttribute;
+        float _defaultPathPadding;
+
         mutable QMutex _shadersBitmapsMutex;
         mutable QHash< QString, std::shared_ptr<SkBitmap> > _shadersBitmaps;
 
@@ -97,6 +100,7 @@ namespace OsmAnd
         double getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const;
         unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
         unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;
+        void obtainDefaultPathPadding(float& outLeft, float& outRight) const;
 
     friend class OsmAnd::MapPresentationEnvironment;
     };

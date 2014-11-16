@@ -88,3 +88,8 @@ unsigned int OsmAnd::MapPresentationEnvironment::getRoadsDensityLimitPerTile(con
 {
     return _p->getRoadsDensityLimitPerTile(zoom);
 }
+
+void OsmAnd::MapPresentationEnvironment::obtainDefaultPathPadding(float& outLeft, float& outRight) const
+{
+    _p->obtainDefaultPathPadding(outLeft, outRight);
+}

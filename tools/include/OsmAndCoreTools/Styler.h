@@ -19,7 +19,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/IObfsCollection.h>
-#include <OsmAndCore/Data/Model/BinaryMapObject.h>
+#include <OsmAndCore/Data/BinaryMapObject.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 
@@ -44,7 +44,6 @@ namespace OsmAndTools
             OsmAnd::ZoomLevel zoom;
             float displayDensityFactor;
             QString locale;
-            bool excludeCoastlines;
             QString styleDumpFilename;
             bool verbose;
 
@@ -54,7 +53,7 @@ namespace OsmAndTools
                 QString& outError);
         };
 
-        typedef QHash< std::shared_ptr<const OsmAnd::Model::BinaryMapObject>, std::shared_ptr<const OsmAnd::Primitiviser::PrimitivesGroup> > EvaluatedMapObjects;
+        typedef QHash< std::shared_ptr<const OsmAnd::BinaryMapObject>, std::shared_ptr<const OsmAnd::MapPrimitiviser::PrimitivesGroup> > EvaluatedMapObjects;
 
     private:
 #if defined(_UNICODE) || defined(UNICODE)

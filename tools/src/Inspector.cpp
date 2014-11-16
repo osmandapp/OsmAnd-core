@@ -15,21 +15,21 @@
 #include <OsmAndCore/Data/ObfReader.h>
 #include <OsmAndCore/Data/ObfMapSectionInfo.h>
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
-#include <OsmAndCore/Data/Model/BinaryMapObject.h>
+#include <OsmAndCore/Data/BinaryMapObject.h>
 #include <OsmAndCore/Data/ObfAddressSectionInfo.h>
 #include <OsmAndCore/Data/ObfAddressSectionReader.h>
-#include <OsmAndCore/Data/Model/Street.h>
-#include <OsmAndCore/Data/Model/StreetIntersection.h>
-#include <OsmAndCore/Data/Model/StreetGroup.h>
-#include <OsmAndCore/Data/Model/Building.h>
+#include <OsmAndCore/Data/Street.h>
+#include <OsmAndCore/Data/StreetIntersection.h>
+#include <OsmAndCore/Data/StreetGroup.h>
+#include <OsmAndCore/Data/Building.h>
 #include <OsmAndCore/Data/ObfTransportSectionInfo.h>
 #include <OsmAndCore/Data/ObfTransportSectionReader.h>
 #include <OsmAndCore/Data/ObfRoutingSectionInfo.h>
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 #include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 #include <OsmAndCore/Data/ObfPoiSectionReader.h>
-#include <OsmAndCore/Data/Model/Amenity.h>
-#include <OsmAndCore/Data/Model/AmenityCategory.h>
+#include <OsmAndCore/Data/Amenity.h>
+#include <OsmAndCore/Data/AmenityCategory.h>
 
 OsmAndTools::Inspector::Configuration::Configuration()
     : bbox(90.0, -180.0, -90.0, 179.9999999999)

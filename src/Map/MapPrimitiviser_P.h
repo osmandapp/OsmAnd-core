@@ -62,6 +62,8 @@ namespace OsmAnd
             double polygonAreaMinimalThreshold;
             unsigned int roadDensityZoomTile;
             unsigned int roadsDensityLimitPerTile;
+            float defaultPathPaddingLeft;
+            float defaultPathPaddingRight;
         };
 
         static AreaI alignAreaForCoastlines(const AreaI& area31);
@@ -138,7 +140,7 @@ namespace OsmAnd
             const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects);
 
         static void obtainPrimitivesSymbols(
-            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const Context& context,
             const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
 #ifdef Q_COMPILER_RVALUE_REFS
             MapStyleEvaluationResult&& evaluationResult,
@@ -149,7 +151,7 @@ namespace OsmAnd
             const IQueryController* const controller);
 
         static void collectSymbolsFromPrimitives(
-            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const PrimitivesCollection& primitives,
             const PrimitivesType type,
@@ -162,7 +164,7 @@ namespace OsmAnd
             const IQueryController* const controller);
 
         static void obtainSymbolsFromPolygon(
-            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const Primitive>& primitive,
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -173,7 +175,7 @@ namespace OsmAnd
             SymbolsCollection& outSymbols);
 
         static void obtainSymbolsFromPolyline(
-            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const Primitive>& primitive,
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -184,7 +186,7 @@ namespace OsmAnd
             SymbolsCollection& outSymbols);
 
         static void obtainSymbolsFromPoint(
-            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const Primitive>& primitive,
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -195,7 +197,7 @@ namespace OsmAnd
             SymbolsCollection& outSymbols);
 
         static void obtainPrimitiveTexts(
-            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const Primitive>& primitive,
             const PointI& location,
@@ -207,7 +209,7 @@ namespace OsmAnd
             SymbolsCollection& outSymbols);
 
         static void obtainPrimitiveIcon(
-            const std::shared_ptr<const MapPresentationEnvironment>& env,
+            const Context& context,
             const std::shared_ptr<const Primitive>& primitive,
             const PointI& location,
 #ifdef Q_COMPILER_RVALUE_REFS
