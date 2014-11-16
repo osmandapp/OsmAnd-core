@@ -1373,7 +1373,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
             const auto polygonAreaInPixels = polygonArea31 / (primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y);
             const auto polygonAreaInAbstractPixels = polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
-            if (polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold)
+            if (primitivisedObjects->scaleDivisor31ToPixel.x >= 0.0 &&
+                primitivisedObjects->scaleDivisor31ToPixel.y >= 0.0 &&
+                polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold)
             {
                 if (metric)
                     metric->polygonsRejectedByArea++;

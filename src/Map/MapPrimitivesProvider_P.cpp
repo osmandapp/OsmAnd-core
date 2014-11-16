@@ -122,7 +122,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
 
     // Get primitivised objects
     std::shared_ptr<MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
-    if (owner->mode == MapPrimitivesProvider::Mode::AllObjects)
+    if (owner->mode == MapPrimitivesProvider::Mode::AllObjectsWithoutPolygonFiltering)
     {
         primitivisedObjects = owner->primitiviser->primitiviseAllMapObjects(
             zoom,
@@ -174,7 +174,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     }
 
     // Create tile
-    const std::shared_ptr<MapPrimitivesProvider::Data> newTile(new MapPrimitivesProvider::Data(
+    const std::shared_ptr<MapPrimitivesProvider::Data> newTiledData(new MapPrimitivesProvider::Data(
         tileId,
         zoom,
         dataTile,
@@ -182,11 +182,11 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
         new RetainableCacheMetadata(tileEntry, dataTile->retainableCacheMetadata)));
 
     // Publish new tile
-    outTiledData = newTile;
+    outTiledData = newTiledData;
 
     // Store weak reference to new tile and mark it as 'Loaded'
     tileEntry->dataIsPresent = true;
-    tileEntry->dataWeakRef = newTile;
+    tileEntry->dataWeakRef = newTiledData;
     tileEntry->setState(TileState::Loaded);
 
     // Notify that tile has been loaded

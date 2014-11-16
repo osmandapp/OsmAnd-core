@@ -43,7 +43,7 @@ namespace OsmAnd
 
         enum class Mode
         {
-            AllObjects,
+            AllObjectsWithoutPolygonFiltering,
             AllObjectsWithPolygonFiltering,
             WithoutSurface,
             WithSurface

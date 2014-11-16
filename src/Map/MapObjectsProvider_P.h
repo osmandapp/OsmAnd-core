@@ -7,11 +7,15 @@
 #include "ignore_warnings_on_external_includes.h"
 #include <QMap>
 #include <QList>
+#include <QMutex>
+#include <QReadWriteLock>
+#include <QWaitCondition>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
+#include "TiledEntriesCollection.h"
 #include "MapObjectsProvider.h"
 #include "QuadTree.h"
 
@@ -47,6 +51,43 @@ namespace OsmAnd
             QMap<ZoomLevel, DataByZoomLevel> dataByZoomLevel;
         };
         Ref<PreparedData> _preparedData;
+
+        enum class TileState
+        {
+            Undefined = -1,
+
+            Loading,
+            Loaded
+        };
+        struct TileEntry : TiledEntriesCollectionEntryWithState < TileEntry, TileState, TileState::Undefined >
+        {
+            TileEntry(const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
+                : TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
+                , dataIsPresent(false)
+            {
+            }
+
+            virtual ~TileEntry()
+            {
+                safeUnlink();
+            }
+
+            bool dataIsPresent;
+            std::weak_ptr<MapObjectsProvider::Data> dataWeakRef;
+
+            QReadWriteLock loadedConditionLock;
+            QWaitCondition loadedCondition;
+        };
+        mutable TiledEntriesCollection<TileEntry> _tileReferences;
+
+        struct RetainableCacheMetadata : public IMapDataProvider::RetainableCacheMetadata
+        {
+            RetainableCacheMetadata(
+                const std::shared_ptr<TileEntry>& tileEntry);
+            virtual ~RetainableCacheMetadata();
+
+            std::weak_ptr<TileEntry> tileEntryWeakRef;
+        };
     public:
         virtual ~MapObjectsProvider_P();
 

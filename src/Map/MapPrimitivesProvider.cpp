@@ -1,8 +1,6 @@
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_P.h"
 
-#include "BinaryMapObjectsProvider.h"
-
 OsmAnd::MapPrimitivesProvider::MapPrimitivesProvider(
     const std::shared_ptr<IMapObjectsProvider>& mapObjectsProvider_,
     const std::shared_ptr<MapPrimitiviser>& primitiviser_,

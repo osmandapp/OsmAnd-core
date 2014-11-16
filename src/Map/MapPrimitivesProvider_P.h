@@ -2,14 +2,18 @@
 #define _OSMAND_CORE_MAP_PRIMITIVES_PROVIDER_P_H_
 
 #include "stdlib_common.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <utility>
+#include "restore_internal_warnings.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QHash>
 #include <QAtomicInt>
 #include <QMutex>
 #include <QReadWriteLock>
 #include <QWaitCondition>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "Link.h"
