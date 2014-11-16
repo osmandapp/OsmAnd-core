@@ -654,7 +654,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): more than one <gpx> tag",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): more than one <gpx> tag",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -673,7 +673,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): more than one <metadata> tag",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): more than one <metadata> tag",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -683,7 +683,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): nested <metadata> tag",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <metadata> tag",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -704,7 +704,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): nested <wpt>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <wpt>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -718,7 +718,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <wpt> 'lat' attribute value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <wpt> 'lat' attribute value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintableRef(latValue));
@@ -731,7 +731,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <wpt> 'lon' attribute value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <wpt> 'lon' attribute value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintableRef(lonValue));
@@ -751,7 +751,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): nested <trk>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <trk>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -768,7 +768,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): nested <rte>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <rte>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -807,7 +807,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <name> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <name> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -842,7 +842,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <desc> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <desc> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -858,7 +858,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <ele> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <ele> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(elevationValue));
@@ -881,7 +881,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <ele> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <ele> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -896,7 +896,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <time> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <time> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(timestampValue));
@@ -922,7 +922,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <time> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <time> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -938,7 +938,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <magvar> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <magvar> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(magneticVariationValue));
@@ -961,7 +961,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <magvar> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <magvar> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -977,7 +977,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <geoidheight> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <geoidheight> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(geoidHeightValue));
@@ -1000,7 +1000,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <geoidheight> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <geoidheight> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1032,7 +1032,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <cmt> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <cmt> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1064,7 +1064,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <src> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <src> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1090,7 +1090,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <sym> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <sym> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1125,7 +1125,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <type> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <type> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1150,7 +1150,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <fix> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <fix> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(fixValue));
@@ -1173,7 +1173,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <fix> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <fix> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1189,7 +1189,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <sat> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <sat> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(satValue));
@@ -1212,7 +1212,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <sat> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <sat> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1228,7 +1228,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <hdop> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <hdop> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(hdopValue));
@@ -1251,7 +1251,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <hdop> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <hdop> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1267,7 +1267,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <vdop> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <vdop> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(vdopValue));
@@ -1290,7 +1290,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <vdop> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <vdop> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1306,7 +1306,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <pdop> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <pdop> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(pdopValue));
@@ -1329,7 +1329,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <pdop> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <pdop> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1345,7 +1345,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <ageofdgpsdata> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <ageofdgpsdata> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(ageofdgpsdataValue));
@@ -1368,7 +1368,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <ageofdgpsdata> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <ageofdgpsdata> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1384,7 +1384,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <dgpsid> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <dgpsid> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(dgpsidValue));
@@ -1407,7 +1407,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <dgpsid> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <dgpsid> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1420,7 +1420,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): nested <link>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <link>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -1433,7 +1433,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <link> 'href' attribute value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <link> 'href' attribute value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(hrefValue));
@@ -1459,7 +1459,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <text> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <text> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1475,7 +1475,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <number> value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <number> value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(numberValue));
@@ -1495,7 +1495,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <number> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <number> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1508,7 +1508,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): <trkpt> not in <trkseg>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): <trkpt> not in <trkseg>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -1518,7 +1518,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): nested <trkpt>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <trkpt>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -1532,7 +1532,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <rtept> 'lat' attribute value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <rtept> 'lat' attribute value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintableRef(latValue));
@@ -1545,7 +1545,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <rtept> 'lon' attribute value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <rtept> 'lon' attribute value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintableRef(lonValue));
@@ -1565,7 +1565,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): <trkseg> not in <trk>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): <trkseg> not in <trk>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -1575,7 +1575,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): nested <trkseg>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <trkseg>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -1592,7 +1592,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): <rtept> not in <rte>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): <rtept> not in <rte>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -1602,7 +1602,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): nested <rtept>",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): nested <rtept>",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     xmlReader.skipCurrentElement();
@@ -1616,7 +1616,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <rtept> 'lat' attribute value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <rtept> 'lat' attribute value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintableRef(latValue));
@@ -1629,7 +1629,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%"PRIi64", %"PRIi64"): invalid <rtept> 'lon' attribute value '%s'",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): invalid <rtept> 'lon' attribute value '%s'",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintableRef(lonValue));
@@ -1655,7 +1655,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             {
                 LogPrintf(
                     LogSeverityLevel::Warning,
-                    "XML warning (%"PRIi64", %"PRIi64"): unknown <%s> tag",
+                    "XML warning (%" PRIi64 ", %" PRIi64 "): unknown <%s> tag",
                     xmlReader.lineNumber(),
                     xmlReader.columnNumber(),
                     qPrintableRef(tagName));
@@ -1805,7 +1805,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <link> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <link> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1884,7 +1884,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%"PRIi64", %"PRIi64"): unexpected <extensions> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <extensions> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         xmlReader.skipCurrentElement();
@@ -1908,7 +1908,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
     {
         LogPrintf(
             LogSeverityLevel::Warning,
-            "XML error: %s (%"PRIi64", %"PRIi64")",
+            "XML error: %s (%" PRIi64 ", %" PRIi64 ")",
             qPrintable(xmlReader.errorString()),
             xmlReader.lineNumber(),
             xmlReader.columnNumber());

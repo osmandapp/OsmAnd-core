@@ -61,7 +61,7 @@ bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
     {
         LogPrintf(
             LogSeverityLevel::Warning,
-            "XML error: %s (%"PRIi64", %"PRIi64")",
+            "XML error: %s (%" PRIi64 ", %" PRIi64 ")",
             qPrintable(xmlReader.errorString()),
             xmlReader.lineNumber(),
             xmlReader.columnNumber());

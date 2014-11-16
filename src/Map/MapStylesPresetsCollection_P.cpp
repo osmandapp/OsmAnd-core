@@ -107,7 +107,7 @@ bool OsmAnd::MapStylesPresetsCollection_P::deserializeFrom(QXmlStreamReader& xml
     {
         LogPrintf(
             LogSeverityLevel::Warning,
-            "XML error: %s (%"PRIi64", %"PRIi64")",
+            "XML error: %s (%" PRIi64 ", %" PRIi64 ")",
             qPrintable(xmlReader.errorString()),
             xmlReader.lineNumber(),
             xmlReader.columnNumber());

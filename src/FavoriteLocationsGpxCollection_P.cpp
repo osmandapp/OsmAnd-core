@@ -221,7 +221,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 	{
 		LogPrintf(
             LogSeverityLevel::Warning,
-            "XML error: %s (%"PRIi64", %"PRIi64")",
+            "XML error: %s (%" PRIi64 ", %" PRIi64 ")",
             qPrintable(xmlReader.errorString()),
             xmlReader.lineNumber(),
             xmlReader.columnNumber());
