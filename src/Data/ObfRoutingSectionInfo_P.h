@@ -30,9 +30,7 @@ namespace OsmAnd
     protected:
         ObfRoutingSectionInfo_P(ObfRoutingSectionInfo* owner);
 
-#if !defined(ATOMIC_POINTER_LOCK_FREE)
         mutable QAtomicInt _encodingDecodingRulesLoaded;
-#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
         mutable std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> _encodingDecodingRules;
         mutable QMutex _encodingDecodingRulesLoadMutex;
 

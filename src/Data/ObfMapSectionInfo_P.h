@@ -55,9 +55,7 @@ namespace OsmAnd
         ObfMapSectionLevel_P(ObfMapSectionLevel* owner);
 
         mutable std::shared_ptr< const QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > _rootNodes;
-#if !defined(ATOMIC_POINTER_LOCK_FREE)
         mutable QAtomicInt _rootNodesLoaded;
-#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
         mutable QMutex _rootNodesLoadMutex;
     public:
         virtual ~ObfMapSectionLevel_P();
@@ -76,9 +74,7 @@ namespace OsmAnd
         ObfMapSectionInfo_P(ObfMapSectionInfo* owner);
 
         mutable std::shared_ptr<ObfMapSectionDecodingEncodingRules> _encodingDecodingRules;
-#if !defined(ATOMIC_POINTER_LOCK_FREE)
         mutable QAtomicInt _encodingDecodingRulesLoaded;
-#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
         mutable QMutex _encodingDecodingRulesLoadMutex;
     public:
         virtual ~ObfMapSectionInfo_P();

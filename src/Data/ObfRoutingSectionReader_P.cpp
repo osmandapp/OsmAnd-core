@@ -789,18 +789,10 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
     const auto cis = reader._codedInputStream.get();
 
     // Ensure encoding/decoding rules are read
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-    if (std::atomic_load(&section->_p->_encodingDecodingRules) == nullptr)
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
     if (section->_p->_encodingDecodingRulesLoaded.loadAcquire() == 0)
-#endif
     {
         QMutexLocker scopedLocker(&section->_p->_encodingDecodingRulesLoadMutex);
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-        if (std::atomic_load(&section->_p->_encodingDecodingRules) == nullptr)
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
         if (!section->_p->_encodingDecodingRules)
-#endif
         {
             // Read encoding/decoding rules
             cis->Seek(section->_offset);
@@ -808,18 +800,12 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
 
             const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> encodingDecodingRules(new ObfRoutingSectionEncodingDecodingRules());
             readEncodingDecodingRules(reader, encodingDecodingRules);
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-            std::atomic_store(&section->_p->_encodingDecodingRules, encodingDecodingRules);
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
             section->_p->_encodingDecodingRules = encodingDecodingRules;
-#endif
 
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
 
-#if !defined(ATOMIC_POINTER_LOCK_FREE)
             section->_p->_encodingDecodingRulesLoaded.storeRelease(1);
-#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
         }
     }
 

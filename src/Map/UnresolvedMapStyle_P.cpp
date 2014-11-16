@@ -240,7 +240,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                     if (!ok)
                     {
                         LogPrintf(LogSeverityLevel::Error,
-                            "Failed to find 'tag' and 'value' attributes in nodes tree ending at %" PRIi64 ":%"PRIi64,
+                            "Failed to find 'tag' and 'value' attributes in nodes tree ending at %" PRIi64 ":%" PRIi64,
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         return false;
@@ -267,7 +267,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                     (!newCaseNode->values.contains(QLatin1String("tag")) || !newCaseNode->values.contains(QLatin1String("value"))))
                 {
                     LogPrintf(LogSeverityLevel::Error,
-                        "Top-level <case> must have 'tag' and 'value' attributes at %" PRIi64 ":%"PRIi64,
+                        "Top-level <case> must have 'tag' and 'value' attributes at %" PRIi64 ":%" PRIi64,
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     return false;
@@ -289,7 +289,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                     if (!ok)
                     {
                         LogPrintf(LogSeverityLevel::Error,
-                            "Failed to find 'tag' and 'value' attributes in nodes tree ending at %" PRIi64 ":"PRIi64,
+                            "Failed to find 'tag' and 'value' attributes in nodes tree ending at %" PRIi64 ":" PRIi64,
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
                         return false;
@@ -315,7 +315,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                 if (ruleNodesStack.isEmpty())
                 {
                     LogPrintf(LogSeverityLevel::Error,
-                        "<apply> must be inside <switch>, <case> or <renderingAttribute> at %" PRIi64 ":%"PRIi64,
+                        "<apply> must be inside <switch>, <case> or <renderingAttribute> at %" PRIi64 ":%" PRIi64,
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     return false;

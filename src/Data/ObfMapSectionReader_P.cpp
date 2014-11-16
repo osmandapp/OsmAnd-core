@@ -902,18 +902,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const auto cis = reader._codedInputStream.get();
 
     // Ensure encoding/decoding rules are read
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-    if (std::atomic_load(&section->_p->_encodingDecodingRules) == nullptr)
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
     if (section->_p->_encodingDecodingRulesLoaded.loadAcquire() == 0)
-#endif
     {
         QMutexLocker scopedLocker(&section->_p->_encodingDecodingRulesLoadMutex);
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-        if (std::atomic_load(&section->_p->_encodingDecodingRules) == nullptr)
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
         if (!section->_p->_encodingDecodingRules)
-#endif
         {
             // Read encoding/decoding rules
             cis->Seek(section->_offset);
@@ -921,18 +913,12 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
 
             const std::shared_ptr<ObfMapSectionDecodingEncodingRules> encodingDecodingRules(new ObfMapSectionDecodingEncodingRules());
             readEncodingDecodingRules(reader, encodingDecodingRules);
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-            std::atomic_store(&section->_p->_encodingDecodingRules, encodingDecodingRules);
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
             section->_p->_encodingDecodingRules = encodingDecodingRules;
-#endif
 
             assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
 
-#if !defined(ATOMIC_POINTER_LOCK_FREE)
             section->_p->_encodingDecodingRulesLoaded.storeRelease(1);
-#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
         }
     }
 
@@ -974,18 +960,10 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         // If there are no tree nodes in map level, it means they are not loaded.
         // Since loading may be called from multiple threads, loading of root nodes needs synchronization
         // Ensure encoding/decoding rules are read
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-        if (std::atomic_load(&mapLevel->_p->_rootNodes) == nullptr)
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
         if (mapLevel->_p->_rootNodesLoaded.loadAcquire() == 0)
-#endif
         {
             QMutexLocker scopedLocker(&mapLevel->_p->_rootNodesLoadMutex);
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-            if (std::atomic_load(&mapLevel->_p->_rootNodes) == nullptr)
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
             if (!mapLevel->_p->_rootNodes)
-#endif
             {
                 cis->Seek(mapLevel->offset);
                 auto oldLimit = cis->PushLimit(mapLevel->length);
@@ -994,18 +972,12 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 const std::shared_ptr< QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > > rootNodes(
                     new QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >());
                 readMapLevelTreeNodes(reader, section, mapLevel, *rootNodes);
-#if defined(ATOMIC_POINTER_LOCK_FREE)
-                std::atomic_store(&mapLevel->_p->_rootNodes, std::static_pointer_cast<const QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> > >(rootNodes));
-#else // !defined(ATOMIC_POINTER_LOCK_FREE)
                 mapLevel->_p->_rootNodes = rootNodes;
-#endif
 
                 assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
-#if !defined(ATOMIC_POINTER_LOCK_FREE)
                 mapLevel->_p->_rootNodesLoaded.storeRelease(1);
-#endif // !defined(ATOMIC_POINTER_LOCK_FREE)
             }
         }
 
