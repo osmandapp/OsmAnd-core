@@ -21,7 +21,9 @@ namespace OsmAnd
     private:
     protected:
     public:
-        MapRasterLayerProvider_GPU(const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider);
+        MapRasterLayerProvider_GPU(
+            const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
+            const bool fillBackground = true);
         virtual ~MapRasterLayerProvider_GPU();
     };
 }

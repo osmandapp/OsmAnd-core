@@ -7,9 +7,11 @@
 
 OsmAnd::MapRasterLayerProvider::MapRasterLayerProvider(
     MapRasterLayerProvider_P* const p_,
-    const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_)
+    const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
+    const bool fillBackground_)
     : _p(p_)
     , primitivesProvider(primitivesProvider_)
+    , fillBackground(fillBackground_)
 {
     _p->initialize();
 }

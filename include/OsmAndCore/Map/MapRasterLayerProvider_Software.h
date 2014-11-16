@@ -21,7 +21,9 @@ namespace OsmAnd
     private:
     protected:
     public:
-        MapRasterLayerProvider_Software(const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider);
+        MapRasterLayerProvider_Software(
+            const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
+            const bool fillBackground = true);
         virtual ~MapRasterLayerProvider_Software();
     };
 }

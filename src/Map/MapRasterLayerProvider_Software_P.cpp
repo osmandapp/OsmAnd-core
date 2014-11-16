@@ -70,12 +70,14 @@ std::shared_ptr<SkBitmap> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
     // Create rasterization canvas
     SkCanvas canvas(&rasterizationTarget);
 
-    // Perform actual rendering
+    // Perform actual rasterization
+    if (!owner->fillBackground)
+        canvas.clear(SK_ColorTRANSPARENT);
     _mapRasterizer->rasterize(
         Utilities::tileBoundingBox31(tileId, zoom),
         primitivesTile->primitivisedObjects,
         canvas,
-        true,
+        owner->fillBackground,
         nullptr,
         metric ? metric->findOrAddSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>().get() : nullptr,
         queryController);

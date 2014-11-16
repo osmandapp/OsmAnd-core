@@ -47,11 +47,13 @@ namespace OsmAnd
     protected:
         MapRasterLayerProvider(
             MapRasterLayerProvider_P* const p,
-            const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider);
+            const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
+            const bool fillBackground);
     public:
         virtual ~MapRasterLayerProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
+        const bool fillBackground;
 
         virtual float getTileDensityFactor() const;
         virtual uint32_t getTileSize() const;
