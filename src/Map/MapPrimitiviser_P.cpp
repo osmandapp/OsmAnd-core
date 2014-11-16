@@ -118,7 +118,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const Stopwatch totalStopwatch(metric != nullptr);
 
     //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(2105, 1346), ZoomLevel12))
+    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(2204, 1370), ZoomLevel12))
     //{
     //    int i = 5;
     //}
@@ -144,11 +144,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         // Check if this map object is from basemap
         auto isBasemapObject = false;
         if (const auto possiblyBasemapObject = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject))
-        {
             isBasemapObject = possiblyBasemapObject->section->isBasemap;
-            if (zoom < static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap) && !isBasemapObject)
-                continue;
-        }
 
         if (mapObject->containsType(mapObject->encodingDecodingRules->naturalCoastline_encodingRuleId))
         {
@@ -169,7 +165,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         return nullptr;
 
     //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(4211, 2691), ZoomLevel13))
+    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(2204, 1370), ZoomLevel12))
     //{
     //    int i = 5;
     //}
