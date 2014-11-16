@@ -123,8 +123,10 @@ namespace OsmAnd
         // - If key vs no-key is sorted, no-key is always goes "greater" than key
         //NOTE: Symbol ordering should take into account ordering of primitives actually (in cases that apply)
         typedef uint64_t SortingKey;
-        struct OSMAND_CORE_API Comparator
+        struct OSMAND_CORE_API Comparator Q_DECL_FINAL
         {
+            Comparator();
+
             bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const;
         };
     private:

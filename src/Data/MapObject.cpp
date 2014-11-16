@@ -306,6 +306,10 @@ OsmAnd::MapObject::EncodingDecodingRules::DecodingRule::~DecodingRule()
 {
 }
 
+OsmAnd::MapObject::Comparator::Comparator()
+{
+}
+
 bool OsmAnd::MapObject::Comparator::operator()(const std::shared_ptr<const MapObject>& l, const std::shared_ptr<const MapObject>& r) const
 {
     MapObject::SortingKey lKey;

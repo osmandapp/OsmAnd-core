@@ -131,6 +131,10 @@ OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters::~AdditionalOn
 {
 }
 
+OsmAnd::MapSymbolsGroup::Comparator::Comparator()
+{
+}
+
 bool OsmAnd::MapSymbolsGroup::Comparator::operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const
 {
     MapSymbolsGroup::SortingKey lKey;

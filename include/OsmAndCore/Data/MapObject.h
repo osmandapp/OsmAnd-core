@@ -79,8 +79,10 @@ namespace OsmAnd
         // - If key is unavailable, sort by pointer
         // - If key vs no-key is sorted, no-key is always goes "greater" than key
         //NOTE: Symbol ordering should take into account ordering of primitives actually (in cases that apply)
-        struct OSMAND_CORE_API Comparator
+        struct OSMAND_CORE_API Comparator Q_DECL_FINAL
         {
+            Comparator();
+
             bool operator()(const std::shared_ptr<const MapObject>& l, const std::shared_ptr<const MapObject>& r) const;
         };
 
