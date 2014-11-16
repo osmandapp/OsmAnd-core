@@ -650,6 +650,16 @@ namespace OsmAnd
 
             return *this;
         }
+
+        inline AreaT& enlargeToInclude(const AreaT& otherArea)
+        {
+            top() = std::min(top(), otherArea.top());
+            left() = std::min(left(), otherArea.left());
+            bottom() = std::max(bottom(), otherArea.bottom());
+            right() = std::max(right(), otherArea.right());
+
+            return *this;
+        }
 #endif // !defined(SWIG)
 
         inline AreaT getEnlargedToInclude(const PointT& p) const
@@ -659,6 +669,15 @@ namespace OsmAnd
                 std::min(left(), p.x),
                 std::max(bottom(), p.y),
                 std::max(right(), p.x));
+        }
+
+        inline AreaT getEnlargedToInclude(const AreaT& otherArea) const
+        {
+            return AreaT(
+                std::min(top(), otherArea.top()),
+                std::min(left(), otherArea.left()),
+                std::max(bottom(), otherArea.bottom()),
+                std::max(right(), otherArea.right()));
         }
 
 #if !defined(SWIG)

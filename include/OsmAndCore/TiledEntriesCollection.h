@@ -2,23 +2,29 @@
 #define _OSMAND_CORE_TILED_ENTRIES_COLLECTION_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <array>
 #include <functional>
 #include <type_traits>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <OsmAndCore/QtCommon.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QHash>
 #include <QReadWriteLock>
 #include <QAtomicInt>
+#include <QThread>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Logging.h>
 
-#if !defined(OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE)
-#   define OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE 0
-#endif // !defined(OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE)
+//#define OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT 1
+#if !defined(OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT)
+#   define OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT 0
+#endif // !defined(OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT)
 
 namespace OsmAnd
 {
@@ -315,9 +321,9 @@ namespace OsmAnd
     };
 
     template<typename ENTRY, typename STATE_ENUM, STATE_ENUM UNDEFINED_STATE_VALUE
-#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
         , bool LOG_TRACE = false
-#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
     >
     class TiledEntriesCollectionEntryWithState : public TiledEntriesCollectionEntry < ENTRY >
     {
@@ -327,12 +333,12 @@ namespace OsmAnd
     private:
         typedef TiledEntriesCollectionEntry < ENTRY > super;
     protected:
-#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
         mutable QMutex _stateLock;
         volatile int _stateValue;
 #else
         QAtomicInt _stateValue;
-#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
     public:
         TiledEntriesCollectionEntryWithState(const Collection& collection, const TileId tileId, const ZoomLevel zoom, const STATE_ENUM state = UNDEFINED_STATE_VALUE)
             : TiledEntriesCollectionEntry<ENTRY>(collection, tileId, zoom)
@@ -345,68 +351,81 @@ namespace OsmAnd
 
         inline STATE_ENUM getState() const
         {
-#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
             return static_cast<STATE_ENUM>(_stateValue);
 #else
             return static_cast<STATE_ENUM>(_stateValue.load());
-#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
         }
 
         inline void setState(const STATE_ENUM newState)
         {
-#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
             QMutexLocker scopedLocker(&_stateLock);
             if (LOG_TRACE
-#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE > 1
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT > 1
                 || true
 #endif
                 )
             {
                 LogPrintf(LogSeverityLevel::Debug,
-                    "%s %dx%d@%d state '%d'=>'%d'",
+                    "%s %dx%d@%d state '%d'=>'%d' (thread %p)",
                     typeid(ENTRY).name(),
-                    tileId.x, tileId.y, static_cast<int>(zoom),
-                    _stateValue, static_cast<int>(newState));
+                    tileId.x,
+                    tileId.y,
+                    static_cast<int>(zoom),
+                    _stateValue,
+                    static_cast<int>(newState),
+                    QThread::currentThreadId());
             }
             _stateValue = static_cast<int>(newState);
 #else
             _stateValue.fetchAndStoreOrdered(static_cast<int>(newState));
-#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
 
             super::onEntryModified();
         }
 
         inline bool setStateIf(const STATE_ENUM testState, const STATE_ENUM newState)
         {
-#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
             QMutexLocker scopedLocker(&_stateLock);
             if (_stateValue != static_cast<int>(testState))
             {
                 if (LOG_TRACE
-#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE > 1
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT > 1
                     || true
 #endif
                     )
                 {
                     LogPrintf(LogSeverityLevel::Debug,
-                        "%s %dx%d@%d state '%d'=>'%d' failed, since not '%d'",
+                        "%s %dx%d@%d state '%d'=>'%d' failed, since not '%d' (thread %p)",
                         typeid(ENTRY).name(),
-                        tileId.x, tileId.y, static_cast<int>(zoom),
-                        _stateValue, static_cast<int>(newState), static_cast<int>(testState));
+                        tileId.x,
+                        tileId.y,
+                        static_cast<int>(zoom),
+                        _stateValue,
+                        static_cast<int>(newState),
+                        static_cast<int>(testState),
+                        QThread::currentThreadId());
                 }
                 return false;
             }
             if (LOG_TRACE
-#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE > 1
+#if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT > 1
                 || true
 #endif
                 )
             {
                 LogPrintf(LogSeverityLevel::Debug,
-                    "%s %dx%d@%d state '%d'=>'%d'",
+                    "%s %dx%d@%d state '%d'=>'%d' (thread %p)",
                     typeid(ENTRY).name(),
-                    tileId.x, tileId.y, static_cast<int>(zoom),
-                    _stateValue, static_cast<int>(newState));
+                    tileId.x,
+                    tileId.y,
+                    static_cast<int>(zoom),
+                    _stateValue,
+                    static_cast<int>(newState),
+                    QThread::currentThreadId());
             }
             _stateValue = static_cast<int>(newState);
             super::onEntryModified();
@@ -416,7 +435,7 @@ namespace OsmAnd
             if (modified)
                 super::onEntryModified();
             return modified;
-#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE
+#endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
         }
     };
 }

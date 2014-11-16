@@ -35,13 +35,13 @@ namespace OsmAnd
             Undefined = -1,
 
             Loading,
-            Loaded,
-            Released
+            Loaded
         };
         struct TileEntry : TiledEntriesCollectionEntryWithState < TileEntry, TileState, TileState::Undefined >
         {
             TileEntry(const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom)
                 : TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
+                , dataIsPresent(false)
             {
             }
 
@@ -50,10 +50,11 @@ namespace OsmAnd
                 safeUnlink();
             }
 
-            std::weak_ptr<MapPrimitivesProvider::Data> _tile;
+            bool dataIsPresent;
+            std::weak_ptr<MapPrimitivesProvider::Data> dataWeakRef;
 
-            QReadWriteLock _loadedConditionLock;
-            QWaitCondition _loadedCondition;
+            QReadWriteLock loadedConditionLock;
+            QWaitCondition loadedCondition;
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 

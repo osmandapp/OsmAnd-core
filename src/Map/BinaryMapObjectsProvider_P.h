@@ -53,8 +53,7 @@ namespace OsmAnd
             Undefined = -1,
 
             Loading,
-            Loaded,
-            Released
+            Loaded
         };
         struct TileEntry : TiledEntriesCollectionEntryWithState < TileEntry, TileState, TileState::Undefined >
         {
@@ -68,10 +67,10 @@ namespace OsmAnd
                 safeUnlink();
             }
 
-            std::weak_ptr<BinaryMapObjectsProvider::Data> _tile;
+            std::weak_ptr<BinaryMapObjectsProvider::Data> dataWeakRef;
 
-            QReadWriteLock _loadedConditionLock;
-            QWaitCondition _loadedCondition;
+            QReadWriteLock loadedConditionLock;
+            QWaitCondition loadedCondition;
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 

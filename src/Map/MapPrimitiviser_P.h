@@ -17,7 +17,7 @@
 namespace OsmAnd
 {
     class MapPrimitiviser;
-    class MapPrimitiviser_P /*Q_DECL_FINAL*/
+    class MapPrimitiviser_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(MapPrimitiviser_P);
 
@@ -59,15 +59,9 @@ namespace OsmAnd
             const std::shared_ptr<const MapPresentationEnvironment> env;
             const ZoomLevel zoom;
 
-            //ColorARGB defaultBackgroundColor;
-            //int shadowMode;
-            //ColorARGB shadowRenderingColor;
             double polygonAreaMinimalThreshold;
             unsigned int roadDensityZoomTile;
             unsigned int roadsDensityLimitPerTile;
-            //int shadowLevelMin;
-            //int shadowLevelMax;
-            //
         };
 
         static AreaI alignAreaForCoastlines(const AreaI& area31);

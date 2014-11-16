@@ -13,6 +13,7 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "MapObjectsProvider.h"
+#include "QuadTree.h"
 
 namespace OsmAnd
 {
@@ -28,12 +29,22 @@ namespace OsmAnd
 
         bool prepareData();
 
+        typedef QuadTree< std::shared_ptr<const MapObject>, int32_t > MapObjectsTree;
+
         struct PreparedData
         {
             ZoomLevel minZoom;
             ZoomLevel maxZoom;
+            AreaI bbox31;
 
-            QMap<ZoomLevel, QList< std::shared_ptr<const MapObject> > > mapObjectsByZoomLevel;
+            struct DataByZoomLevel
+            {
+                AreaI bbox31;
+
+                QList< std::shared_ptr<const MapObject> > mapObjectsList;
+                MapObjectsTree mapObjectsTree;
+            };
+            QMap<ZoomLevel, DataByZoomLevel> dataByZoomLevel;
         };
         Ref<PreparedData> _preparedData;
     public:

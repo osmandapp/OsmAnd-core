@@ -60,15 +60,15 @@ bool OsmAnd::BinaryMapObjectsProvider_P::obtainData(
         // In case tile entry is being loaded, wait until it will finish loading
         if (tileEntry->getState() == TileState::Loading)
         {
-            QReadLocker scopedLcoker(&tileEntry->_loadedConditionLock);
+            QReadLocker scopedLcoker(&tileEntry->loadedConditionLock);
 
             // If tile is in 'Loading' state, wait until it will become 'Loaded'
             while (tileEntry->getState() != TileState::Loaded)
-                REPEAT_UNTIL(tileEntry->_loadedCondition.wait(&tileEntry->_loadedConditionLock));
+                REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
         }
 
         // Try to lock tile reference
-        outTiledData = tileEntry->_tile.lock();
+        outTiledData = tileEntry->dataWeakRef.lock();
 
         // If successfully locked, just return it
         if (outTiledData)
@@ -234,13 +234,13 @@ bool OsmAnd::BinaryMapObjectsProvider_P::obtainData(
     outTiledData = newTile;
 
     // Store weak reference to new tile and mark it as 'Loaded'
-    tileEntry->_tile = newTile;
+    tileEntry->dataWeakRef = newTile;
     tileEntry->setState(TileState::Loaded);
 
     // Notify that tile has been loaded
     {
-        QWriteLocker scopedLcoker(&tileEntry->_loadedConditionLock);
-        tileEntry->_loadedCondition.wakeAll();
+        QWriteLocker scopedLcoker(&tileEntry->loadedConditionLock);
+        tileEntry->loadedCondition.wakeAll();
     }
 
     if (metric)

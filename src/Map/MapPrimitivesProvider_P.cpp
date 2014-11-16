@@ -56,24 +56,33 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
         // In case tile entry is being loaded, wait until it will finish loading
         if (tileEntry->getState() == TileState::Loading)
         {
-            QReadLocker scopedLcoker(&tileEntry->_loadedConditionLock);
+            QReadLocker scopedLcoker(&tileEntry->loadedConditionLock);
 
             // If tile is in 'Loading' state, wait until it will become 'Loaded'
             while (tileEntry->getState() != TileState::Loaded)
-                REPEAT_UNTIL(tileEntry->_loadedCondition.wait(&tileEntry->_loadedConditionLock));
+                REPEAT_UNTIL(tileEntry->loadedCondition.wait(&tileEntry->loadedConditionLock));
         }
 
-        // Try to lock tile reference
-        outTiledData = tileEntry->_tile.lock();
-
-        // If successfully locked, just return it
-        if (outTiledData)
+        if (!tileEntry->dataIsPresent)
+        {
+            // If there was no data, return same
+            outTiledData.reset();
             return true;
+        }
+        else
+        {
+            // Otherwise, try to lock tile reference
+            outTiledData = tileEntry->dataWeakRef.lock();
 
-        // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
-        // This will enable creation of new entry on next loop cycle
-        _tileReferences.removeEntry(tileId, zoom);
-        tileEntry.reset();
+            // If successfully locked, just return it
+            if (outTiledData)
+                return true;
+
+            // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
+            // This will enable creation of new entry on next loop cycle
+            _tileReferences.removeEntry(tileId, zoom);
+            tileEntry.reset();
+        }
     }
 
     const Stopwatch totalTimeStopwatch(
@@ -97,6 +106,16 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
         metric->addOrReplaceSubmetric(submetric);
     if (!dataTile)
     {
+        // Store flag that there was no data and mark tile entry as 'Loaded'
+        tileEntry->dataIsPresent = false;
+        tileEntry->setState(TileState::Loaded);
+
+        // Notify that tile has been loaded
+        {
+            QWriteLocker scopedLcoker(&tileEntry->loadedConditionLock);
+            tileEntry->loadedCondition.wakeAll();
+        }
+
         outTiledData.reset();
         return true;
     }
@@ -166,13 +185,14 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     outTiledData = newTile;
 
     // Store weak reference to new tile and mark it as 'Loaded'
-    tileEntry->_tile = newTile;
+    tileEntry->dataIsPresent = true;
+    tileEntry->dataWeakRef = newTile;
     tileEntry->setState(TileState::Loaded);
 
     // Notify that tile has been loaded
     {
-        QWriteLocker scopedLcoker(&tileEntry->_loadedConditionLock);
-        tileEntry->_loadedCondition.wakeAll();
+        QWriteLocker scopedLcoker(&tileEntry->loadedConditionLock);
+        tileEntry->loadedCondition.wakeAll();
     }
 
     if (metric)

@@ -603,6 +603,19 @@ namespace OsmAnd
             return n;
         }
 
+        inline static uint32_t getPreviousPowerOfTwo(const uint32_t value)
+        {
+            auto n = value;
+
+            n = n | (n >> 1);
+            n = n | (n >> 2);
+            n = n | (n >> 4);
+            n = n | (n >> 8);
+            n = n | (n >> 16);
+
+            return n - (n >> 1);
+        }
+
         inline static double getMetersPerTileUnit(const float zoom, const double yTile, const double unitsPerTile)
         {
             // Equatorial circumference of the Earth in meters
