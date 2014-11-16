@@ -52,12 +52,14 @@
 #include <OsmAndCore/Map/IRasterMapLayerProvider.h>
 #include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
-#include <OsmAndCore/Map/Primitiviser.h>
-#include <OsmAndCore/Map/BinaryMapDataProvider.h>
-#include <OsmAndCore/Map/BinaryMapPrimitivesProvider.h>
-#include <OsmAndCore/Map/BinaryMapStaticSymbolsProvider.h>
-#include <OsmAndCore/Map/BinaryMapRasterLayerProvider.h>
-#include <OsmAndCore/Map/BinaryMapRasterLayerProvider_Software.h>
+#include <OsmAndCore/Map/MapPrimitiviser.h>
+#include <OsmAndCore/Map/IMapObjectsProvider.h>
+#include <OsmAndCore/Map/MapObjectsProvider.h>
+#include <OsmAndCore/Map/BinaryMapObjectsProvider.h>
+#include <OsmAndCore/Map/MapPrimitivesProvider.h>
+#include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
+#include <OsmAndCore/Map/MapRasterLayerProvider.h>
+#include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
@@ -132,20 +134,22 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IRasterMapLayerProvider)
 	%shared_ptr(OsmAnd::IMapTiledSymbolsProvider)
 	%shared_ptr(OsmAnd::IMapKeyedSymbolsProvider)
-	%shared_ptr(OsmAnd::Primitiviser)
-	%shared_ptr(OsmAnd::Primitiviser::Cache)
-	%shared_ptr(OsmAnd::Primitiviser::Primitive)
-	%shared_ptr(OsmAnd::Primitiviser::PrimitivesGroup)
-	%shared_ptr(OsmAnd::Primitiviser::Symbol)
-	%shared_ptr(OsmAnd::Primitiviser::SymbolsGroup)
-	%shared_ptr(OsmAnd::Primitiviser::TextSymbol)
-	%shared_ptr(OsmAnd::Primitiviser::IconSymbol)
-	%shared_ptr(OsmAnd::Primitiviser::PrimitivisedArea)
-	%shared_ptr(OsmAnd::BinaryMapDataProvider)
-	%shared_ptr(OsmAnd::BinaryMapPrimitivesProvider)
-	%shared_ptr(OsmAnd::BinaryMapStaticSymbolsProvider)
-	%shared_ptr(OsmAnd::BinaryMapRasterLayerProvider)
-	%shared_ptr(OsmAnd::BinaryMapRasterLayerProvider_Software)
+	%shared_ptr(OsmAnd::MapPrimitiviser)
+	%shared_ptr(OsmAnd::MapPrimitiviser::Cache)
+	%shared_ptr(OsmAnd::MapPrimitiviser::Primitive)
+	%shared_ptr(OsmAnd::MapPrimitiviser::PrimitivesGroup)
+	%shared_ptr(OsmAnd::MapPrimitiviser::Symbol)
+	%shared_ptr(OsmAnd::MapPrimitiviser::SymbolsGroup)
+	%shared_ptr(OsmAnd::MapPrimitiviser::TextSymbol)
+	%shared_ptr(OsmAnd::MapPrimitiviser::IconSymbol)
+	%shared_ptr(OsmAnd::MapPrimitiviser::PrimitivisedArea)
+	%shared_ptr(OsmAnd::IMapObjectsProvider)
+	%shared_ptr(OsmAnd::BinaryMapObjectsProvider)
+	%shared_ptr(OsmAnd::MapObjectsProvider)
+	%shared_ptr(OsmAnd::MapPrimitivesProvider)
+	%shared_ptr(OsmAnd::MapObjectsSymbolsProvider)
+	%shared_ptr(OsmAnd::MapRasterLayerProvider)
+	%shared_ptr(OsmAnd::MapRasterLayerProvider_Software)
 	%shared_ptr(OsmAnd::IOnlineTileSources)
 	%shared_ptr(OsmAnd::IOnlineTileSources::Source)
 	%shared_ptr(OsmAnd::OnlineTileSources)

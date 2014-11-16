@@ -235,7 +235,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
     bbox31.right() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
     if (cfg.verboseMapObjects)
     {
-        QList< std::shared_ptr<const OsmAnd::Model::BinaryMapObject> > mapObjects;
+        QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > mapObjects;
         OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, cfg.zoom, &bbox31, &mapObjects);
         output << xT("\tTotal map objects: ") << mapObjects.count() << std::endl;
         for (auto itMapObject = mapObjects.cbegin(); itMapObject != mapObjects.cend(); ++itMapObject)
@@ -247,7 +247,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
                 output << xT("\t\t\tNames:") << std::endl;
                 for (auto itCaption = mapObject->captions.cbegin(); itCaption != mapObject->captions.cend(); ++itCaption)
                 {
-                    const auto& rule = mapObject->section->encodingDecodingRules->decodingRules[itCaption.key()];
+                    const auto& rule = mapObject->encodingDecodingRules->decodingRules[itCaption.key()];
                     output << xT("\t\t\t\t") << QStringToStlString(rule.tag) << xT(" = ") << QStringToStlString(itCaption.value()) << std::endl;
                 }
             }
@@ -258,7 +258,7 @@ void printMapDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
         uint32_t mapObjectsCount = 0;
         OsmAnd::ObfMapSectionReader::loadMapObjects(reader, section, cfg.zoom, &bbox31, nullptr, nullptr, nullptr,
             [&mapObjectsCount]
-            (const std::shared_ptr<const OsmAnd::Model::BinaryMapObject>& mapObject) -> bool
+            (const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject) -> bool
             {
                 mapObjectsCount++;
                 return false;
@@ -274,7 +274,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
 #endif
 {
     output << xT("\tBounds ") << formatBounds(section->area31.left(), section->area31.right(), section->area31.top(), section->area31.bottom()) << std::endl;
-    QList< std::shared_ptr<const OsmAnd::Model::AmenityCategory> > categories;
+    QList< std::shared_ptr<const OsmAnd::AmenityCategory> > categories;
     OsmAnd::ObfPoiSectionReader::loadCategories(reader, section, categories);
     output << xT("\tCategories:") << std::endl;
     for (auto itCategory = categories.cbegin(); itCategory != categories.cend(); ++itCategory)
@@ -285,7 +285,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
             output << xT("\t\t\t") << QStringToStlString(*itSubcategory) << std::endl;
     }
 
-    QList< std::shared_ptr<const OsmAnd::Model::Amenity> > amenities;
+    QList< std::shared_ptr<const OsmAnd::Amenity> > amenities;
     OsmAnd::AreaI bbox31;
     bbox31.top() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top());
     bbox31.bottom() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());

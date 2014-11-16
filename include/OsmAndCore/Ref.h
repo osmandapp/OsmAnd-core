@@ -73,7 +73,7 @@ namespace OsmAnd
 #ifdef Q_COMPILER_RVALUE_REFS
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
         inline Ref(Ref< OtherType >&& objectRef)
-            : _objectRef(qMove(that.objectRef))
+            : _objectRef(qMove(objectRef))
         {
         }
 #endif // defined(Q_COMPILER_RVALUE_REFS)
