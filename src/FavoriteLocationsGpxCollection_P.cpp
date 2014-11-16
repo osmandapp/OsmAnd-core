@@ -1,8 +1,13 @@
 #include "FavoriteLocationsGpxCollection_P.h"
 #include "FavoriteLocationsGpxCollection.h"
 
+#include "stdlib_common.h"
+
+#include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QFile>
 #include <QIODevice>
+#include "restore_internal_warnings.h"
 
 #include "FavoriteLocation.h"
 #include "Utilities.h"
