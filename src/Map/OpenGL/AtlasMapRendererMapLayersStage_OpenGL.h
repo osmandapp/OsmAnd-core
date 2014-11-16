@@ -2,12 +2,19 @@
 #define _OSMAND_CORE_ATLAS_MAP_RENDERER_MAP_LAYERS_STAGE_OPENGL_H_
 
 #include "stdlib_common.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <array>
+#include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include <glm/glm.hpp>
+#include "restore_internal_warnings.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QHash>
+#include <QVector>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
@@ -88,9 +95,28 @@ namespace OsmAnd
         };
         QMap<unsigned int, RasterLayerTileProgram> _rasterLayerTilePrograms;
         bool initializeRasterLayers();
-        bool initializeRasterLayersProgram(const unsigned int numberOfLayersInBatch, RasterLayerTileProgram& outRasterLayerTileProgram);
-        bool canRasterMapLayerBeBatched(const QVector<unsigned int>& batchedLayerIndices, const unsigned int layerIndex);
-        bool renderRasterLayers(const QVector<unsigned int>& batchedLayerIndices, int& lastUsedProgram);
+        bool initializeRasterLayersProgram(
+            const unsigned int numberOfLayersInBatch,
+            RasterLayerTileProgram& outRasterLayerTileProgram);
+        bool canRasterMapLayerBeBatched(
+            const QVector<unsigned int>& batchedLayerIndices,
+            const unsigned int layerIndex);
+        bool renderRasterLayersBatch(
+            const bool allowStubsDrawing,
+            const QVector<unsigned int>& batchedLayerIndices,
+            int& lastUsedProgram);
+        bool activateRasterLayersProgram(
+            const unsigned int numberOfLayersInBatch,
+            const bool elevationProviderPresent,
+            const int elevationDataSamplerIndex,
+            int& lastUsedProgram);
+        std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
+            const TileId normalizedTileId);
+        unsigned int captureRasterLayersResources(
+            const TileId normalizedTileId,
+            const bool allowStubsDrawing,
+            const QVector<unsigned int>& batchedLayerIndices,
+            QVector< std::shared_ptr<const GPUAPI::ResourceInGPU> >& outResourcesInGPU);
         bool releaseRasterLayers();
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
