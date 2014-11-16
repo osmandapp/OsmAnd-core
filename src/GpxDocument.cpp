@@ -1928,7 +1928,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(const QString
 {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return false;
+        return nullptr;
     const auto gpxDocument = loadFrom(file);
     file.close();
 
