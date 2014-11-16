@@ -27,8 +27,7 @@ OsmAnd::ObfMapSectionLevel::~ObfMapSectionLevel()
 }
 
 OsmAnd::ObfMapSectionDecodingEncodingRules::ObfMapSectionDecodingEncodingRules()
-    : ref_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , tunnel_encodingRuleId(std::numeric_limits<uint32_t>::max())
+    : tunnel_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , bridge_encodingRuleId(std::numeric_limits<uint32_t>::max())
 {
     positiveLayers_encodingRuleIds.reserve(2);
@@ -44,9 +43,7 @@ uint32_t OsmAnd::ObfMapSectionDecodingEncodingRules::addRule(const uint32_t rule
 {
     MapObject::EncodingDecodingRules::addRule(ruleId, ruleTag, ruleValue);
 
-    if (QLatin1String("ref") == ruleTag)
-        ref_encodingRuleId = ruleId;
-    else if (QLatin1String("tunnel") == ruleTag && QLatin1String("yes") == ruleValue)
+    if (QLatin1String("tunnel") == ruleTag && QLatin1String("yes") == ruleValue)
     {
         tunnel_encodingRuleId = ruleId;
         negativeLayers_encodingRuleIds.insert(ruleId);

@@ -91,7 +91,6 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         }
 
         // Load all map objects
-        QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > mapObjects;
         const auto mapObjectsFilterById =
             [this]
             (const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section,
@@ -110,8 +109,9 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 output << xT("Going to load ") << configuration.mapObjectsIds.size() << xT(" map objects...") << std::endl;
         }
         const auto obfDataInterface = configuration.obfsCollection->obtainDataInterface();
+        QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > mapObjects_;
         success = obfDataInterface->loadMapObjects(
-            &mapObjects,
+            &mapObjects_,
             nullptr,
             configuration.zoom,
             nullptr,
@@ -120,6 +120,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             nullptr,
             nullptr,
             nullptr);
+        const auto mapObjects = OsmAnd::copyAs< QList< std::shared_ptr<const OsmAnd::MapObject> > >(mapObjects_);
         if (!success)
         {
             if (configuration.verbose)
@@ -162,16 +163,17 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         for (const auto& primitivisedGroup : OsmAnd::constOf(primitivisedData->primitivesGroups))
         {
             const auto& mapObject = primitivisedGroup->sourceObject;
-            const auto& encDecRules = mapObject->section->encodingDecodingRules;
+            const auto binaryMapObject = std::dynamic_pointer_cast<const OsmAnd::BinaryMapObject>(mapObject);
+            const auto& encDecRules = mapObject->encodingDecodingRules;
 
             // Skip objects that were not requested
-            if (!configuration.mapObjectsIds.isEmpty() && !configuration.mapObjectsIds.contains(mapObject->id))
+            if (!configuration.mapObjectsIds.isEmpty() && binaryMapObject && !configuration.mapObjectsIds.contains(binaryMapObject->id))
                 continue;
 
             outEvaluatedMapObjects[mapObject] = primitivisedGroup;
 
             output << QStringToStlString(QString(80, QLatin1Char('-'))) << std::endl;
-            output << QStringToStlString(mapObject->id.toString()) << std::endl;
+            output << QStringToStlString(mapObject->toString()) << std::endl;
 
             for (const auto& typeRuleId : OsmAnd::constOf(mapObject->typesRuleIds))
             {
@@ -188,7 +190,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 }
             }
 
-            for (const auto& typeRuleId : OsmAnd::constOf(mapObject->extraTypesRuleIds))
+            for (const auto& typeRuleId : OsmAnd::constOf(mapObject->additionalTypesRuleIds))
             {
                 const auto itTypeRule = encDecRules->decodingRules.constFind(typeRuleId);
                 if (itTypeRule != encDecRules->decodingRules.cend())

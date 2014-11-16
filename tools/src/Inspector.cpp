@@ -330,7 +330,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
     {
         auto type = types[typeIdx];
 
-        QList< std::shared_ptr<const OsmAnd::Model::StreetGroup> > streetGroups;
+        QList< std::shared_ptr<const OsmAnd::StreetGroup> > streetGroups;
         QSet<OsmAnd::ObfAddressBlockType> typeSet;
         typeSet << types[typeIdx];
         OsmAnd::ObfAddressSectionReader::loadStreetGroups(reader, section, &streetGroups, nullptr, nullptr, &typeSet);
@@ -346,7 +346,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
         {
             auto g = *itStreetGroup;
 
-            QList< std::shared_ptr<const OsmAnd::Model::Street> > streets;
+            QList< std::shared_ptr<const OsmAnd::Street> > streets;
             OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(reader, g, &streets);
             output << xT("\t\t'") << QStringToStlString(g->_latinName) << xT("' [") << g->_id << xT("], ") << streets.size() << xT(" street(s)");
             if (!cfg.verboseStreets)
@@ -367,9 +367,9 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
                 //if(!isInside)
                 //    continue;
                 //
-                QList< std::shared_ptr<const OsmAnd::Model::Building> > buildings;
+                QList< std::shared_ptr<const OsmAnd::Building> > buildings;
                 OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(reader, s, &buildings);
-                QList< std::shared_ptr<const OsmAnd::Model::StreetIntersection> > intersections;
+                QList< std::shared_ptr<const OsmAnd::StreetIntersection> > intersections;
                 OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(reader, s, &intersections);
                 output << xT("\t\t\t'") << QStringToStlString(s->latinName) << xT("' [") << s->id << xT("], ") << buildings.size() << xT(" building(s), ") << intersections.size() << xT(" intersection(s)") << std::endl;
                 if (cfg.verboseBuildings && buildings.size() > 0)
@@ -381,7 +381,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
 
                         if (building->_interpolationInterval != 0)
                             output << xT("\t\t\t\t\t") << QStringToStlString(building->_latinName) << xT("-") << QStringToStlString(building->_latinName2) << xT(" (+") << building->_interpolationInterval << xT(") [") << building->_id << xT("]") << std::endl;
-                        else if (building->_interpolation != OsmAnd::Model::Building::Interpolation::Invalid)
+                        else if (building->_interpolation != OsmAnd::Building::Interpolation::Invalid)
                             output << xT("\t\t\t\t\t") << QStringToStlString(building->_latinName) << xT("-") << QStringToStlString(building->_latinName2) << xT(" (") << building->_interpolation << xT(") [") << building->_id << xT("]") << std::endl;
                     }
                 }

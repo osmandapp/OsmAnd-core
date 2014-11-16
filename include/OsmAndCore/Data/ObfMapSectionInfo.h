@@ -62,7 +62,6 @@ namespace OsmAnd
         virtual ~ObfMapSectionDecodingEncodingRules();
 
         // Quick-access rules
-        uint32_t ref_encodingRuleId;
         uint32_t tunnel_encodingRuleId;
         uint32_t bridge_encodingRuleId;
 

@@ -53,7 +53,7 @@ namespace OsmAndTools
                 QString& outError);
         };
 
-        typedef QHash< std::shared_ptr<const OsmAnd::BinaryMapObject>, std::shared_ptr<const OsmAnd::MapPrimitiviser::PrimitivesGroup> > EvaluatedMapObjects;
+        typedef QHash< std::shared_ptr<const OsmAnd::MapObject>, std::shared_ptr<const OsmAnd::MapPrimitiviser::PrimitivesGroup> > EvaluatedMapObjects;
 
     private:
 #if defined(_UNICODE) || defined(UNICODE)

@@ -168,6 +168,7 @@ QString OsmAnd::MapObject::getCaptionInLanguage(const QString& lang) const
 
 OsmAnd::MapObject::EncodingDecodingRules::EncodingDecodingRules()
     : name_encodingRuleId(std::numeric_limits<uint32_t>::max())
+    , ref_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , naturalCoastline_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , naturalLand_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , naturalCoastlineBroken_encodingRuleId(std::numeric_limits<uint32_t>::max())
@@ -198,6 +199,12 @@ void OsmAnd::MapObject::EncodingDecodingRules::createRequiredRules(uint32_t& las
     {
         addRule(lastUsedRuleId++,
             QLatin1String("name"), QString::null);
+    }
+
+    if (ref_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    {
+        addRule(lastUsedRuleId++,
+            QLatin1String("ref"), QString::null);
     }
 
     if (naturalCoastline_encodingRuleId == std::numeric_limits<uint32_t>::max())
@@ -280,6 +287,8 @@ uint32_t OsmAnd::MapObject::EncodingDecodingRules::addRule(const uint32_t ruleId
         localizedName_decodingRules.insert(ruleId, languageId);
         namesRuleId.insert(ruleId);
     }
+    else if (QLatin1String("ref") == ruleTag)
+        ref_encodingRuleId = ruleId;
     else if (QLatin1String("natural") == ruleTag && QLatin1String("coastline") == ruleValue)
         naturalCoastline_encodingRuleId = ruleId;
     else if (QLatin1String("natural") == ruleTag && QLatin1String("land") == ruleValue)
