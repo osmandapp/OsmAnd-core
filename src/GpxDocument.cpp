@@ -560,8 +560,8 @@ void OsmAnd::GpxDocument::writeExtensions(const std::shared_ptr<const GpxExtensi
     for (const auto attributeEntry : rangeOf(constOf(extensions->attributes)))
         xmlWriter.writeAttribute(attributeEntry.key(), attributeEntry.value());
 
-    for (const auto& extension : constOf(extensions->extensions))
-        writeExtension(extension, xmlWriter);
+    for (const auto& subextension : constOf(extensions->extensions))
+        writeExtension(subextension, xmlWriter);
 
     // </extensions>
     xmlWriter.writeEndElement();
@@ -577,8 +577,8 @@ void OsmAnd::GpxDocument::writeExtension(const std::shared_ptr<const GpxExtensio
     if (!extension->value.isEmpty())
         xmlWriter.writeCharacters(extension->value);
 
-    for (const auto& extension : constOf(extension->subextensions))
-        writeExtension(extension, xmlWriter);
+    for (const auto& subextension : constOf(extension->subextensions))
+        writeExtension(subextension, xmlWriter);
 
     // </*>
     xmlWriter.writeEndElement();
