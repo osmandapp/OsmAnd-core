@@ -665,7 +665,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 document->version = xmlReader.attributes().value(QLatin1String("version")).toString();
                 document->creator = xmlReader.attributes().value(QLatin1String("creator")).toString();
 
-                tokens.push(Token::metadata);
+                tokens.push(Token::gpx);
             }
             else if (tagName == QLatin1String("metadata"))
             {
@@ -782,6 +782,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             else if (tagName == QLatin1String("name"))
             {
                 const auto name = xmlReader.readElementText();
+                
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <name> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
 
                 switch (tokens.top())
                 {
@@ -816,6 +826,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             else if (tagName == QLatin1String("desc"))
             {
                 const auto description = xmlReader.readElementText();
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <desc> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
 
                 switch (tokens.top())
                 {
@@ -863,6 +883,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <ele> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -896,6 +926,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(timestampValue));
+                    continue;
+                }
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <time> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
                     continue;
                 }
 
@@ -939,6 +979,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <magvar> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -976,6 +1026,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <geoidheight> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -1000,6 +1060,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             else if (tagName == QLatin1String("cmt"))
             {
                 const auto comment = xmlReader.readElementText();
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <cmt> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
 
                 switch (tokens.top())
                 {
@@ -1032,6 +1102,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             {
                 const auto source = xmlReader.readElementText();
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <src> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -1063,6 +1143,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             {
                 const auto symbol = xmlReader.readElementText();
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <sym> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -1087,6 +1177,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             else if (tagName == QLatin1String("type"))
             {
                 const auto type = xmlReader.readElementText();
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <type> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
 
                 switch (tokens.top())
                 {
@@ -1143,6 +1243,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <fix> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -1177,6 +1287,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(satValue));
+                    continue;
+                }
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <sat> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
                     continue;
                 }
 
@@ -1217,6 +1337,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <hdop> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -1251,6 +1381,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(vdopValue));
+                    continue;
+                }
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <vdop> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
                     continue;
                 }
 
@@ -1291,6 +1431,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <pdop> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -1328,6 +1478,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     continue;
                 }
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <ageofdgpsdata> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::wpt:
@@ -1362,6 +1522,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(dgpsidValue));
+                    continue;
+                }
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <dgpsid> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
                     continue;
                 }
 
@@ -1422,6 +1592,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             {
                 const auto text = xmlReader.readElementText();
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <text> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::link:
@@ -1450,6 +1630,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(numberValue));
+                    continue;
+                }
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <number> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
                     continue;
                 }
 
@@ -1752,6 +1942,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             {
                 tokens.pop();
 
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <link> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
+
                 switch (tokens.top())
                 {
                     case Token::metadata:
@@ -1814,6 +2014,16 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             else if (tagName == QLatin1String("extensions"))
             {
                 tokens.pop();
+
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                        LogSeverityLevel::Warning,
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <extensions> tag",
+                        xmlReader.lineNumber(),
+                        xmlReader.columnNumber());
+                    continue;
+                }
 
                 switch (tokens.top())
                 {
