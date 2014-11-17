@@ -70,7 +70,7 @@ public class MainActivity extends ActionBarActivity {
     private ResolvedMapStyle _mapStyle;
     private ObfsCollection _obfsCollection;
     private MapPresentationEnvironment _mapPresentationEnvironment;
-    private Primitiviser _primitiviser;
+    private MapPrimitiviser _mapPrimitiviser;
     private ObfMapObjectsProvider _obfMapObjectsProvider;
     private MapPrimitivesProvider _mapPrimitivesProvider;
     private MapObjectsSymbolsProvider _mapObjectsSymbolsProvider;
@@ -123,13 +123,13 @@ public class MainActivity extends ActionBarActivity {
                 _displayDensityFactor,
                 "en"); //TODO: here should be current locale
         //mapPresentationEnvironment->setSettings(configuration.styleSettings);
-        _primitiviser = new MapPrimitiviser(
+        _mapPrimitiviser = new MapPrimitiviser(
                 _mapPresentationEnvironment);
         _obfMapObjectsProvider = new ObfMapObjectsProvider(
                 _obfsCollection);
         _mapPrimitivesProvider = new MapPrimitivesProvider(
                 _obfMapObjectsProvider,
-                _primitiviser,
+                _mapPrimitiviser,
                 _rasterTileSize);
         _mapObjectsSymbolsProvider = new MapObjectsSymbolsProvider(
                 _mapPrimitivesProvider,
@@ -209,9 +209,9 @@ public class MainActivity extends ActionBarActivity {
             _mapPresentationEnvironment = null;
         }
 
-        if (_primitiviser != null) {
-            _primitiviser.delete();
-            _primitiviser = null;
+        if (_mapPrimitiviser != null) {
+            _mapPrimitiviser.delete();
+            _mapPrimitiviser = null;
         }
 
         if (_obfMapObjectsProvider != null) {
