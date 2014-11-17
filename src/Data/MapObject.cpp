@@ -12,7 +12,7 @@
 
 std::shared_ptr<const OsmAnd::MapObject::EncodingDecodingRules> OsmAnd::MapObject::defaultEncodingDecodingRules(OsmAnd::modifyAndReturn(
     std::shared_ptr<OsmAnd::MapObject::EncodingDecodingRules>(new OsmAnd::MapObject::EncodingDecodingRules()),
-    (std::function<void(std::shared_ptr<OsmAnd::MapObject::EncodingDecodingRules>& instance)>)[]
+    (std::function< void (std::shared_ptr<OsmAnd::MapObject::EncodingDecodingRules>& instance) > )[]
     (std::shared_ptr<OsmAnd::MapObject::EncodingDecodingRules>& rules) -> void
     {
         rules->verifyRequiredRulesExist();

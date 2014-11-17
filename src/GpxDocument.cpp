@@ -810,7 +810,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <name> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -845,7 +844,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <desc> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -862,7 +860,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(elevationValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -884,7 +881,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <ele> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -900,7 +896,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(timestampValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -925,7 +920,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <time> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -942,7 +936,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(magneticVariationValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -964,7 +957,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <magvar> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -981,7 +973,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(geoidHeightValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1003,7 +994,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <geoidheight> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1035,7 +1025,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <cmt> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1067,7 +1056,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <src> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1093,7 +1081,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <sym> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1128,7 +1115,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <type> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1154,7 +1140,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(fixValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1176,7 +1161,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <fix> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1193,7 +1177,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(satValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1215,7 +1198,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <sat> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1232,7 +1214,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(hdopValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1254,7 +1235,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <hdop> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1271,7 +1251,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(vdopValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1293,7 +1272,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <vdop> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1310,7 +1288,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(pdopValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1332,7 +1309,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <pdop> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1349,7 +1325,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(ageofdgpsdataValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1371,7 +1346,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <ageofdgpsdata> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1388,7 +1362,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(dgpsidValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1410,7 +1383,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <dgpsid> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1462,7 +1434,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <text> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
@@ -1479,7 +1450,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber(),
                         qPrintable(numberValue));
-                    xmlReader.skipCurrentElement();
                     continue;
                 }
 
@@ -1498,7 +1468,6 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                             "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <number> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         continue;
                 }
             }
