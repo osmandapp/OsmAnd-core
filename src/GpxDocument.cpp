@@ -62,7 +62,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
         // <time>
         if (!metadata->timestamp.isNull())
-            xmlWriter.writeTextElement(QLatin1String("time"), metadata->timestamp.toString(QLatin1String("YYYY-MM-DDThh:mm:ss")));
+            xmlWriter.writeTextElement(QLatin1String("time"), metadata->timestamp.toString(Qt::DateFormat::ISODate));
         
         // Write extensions
         if (const auto extensions = std::dynamic_pointer_cast<const GpxExtensions>(metadata->extraData.shared_ptr()))
@@ -94,7 +94,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
         // <time>
         if (!locationMark->timestamp.isNull())
-            xmlWriter.writeTextElement(QLatin1String("time"), locationMark->timestamp.toString(QLatin1String("YYYY-MM-DDThh:mm:ss")));
+            xmlWriter.writeTextElement(QLatin1String("time"), locationMark->timestamp.toString(Qt::DateFormat::ISODate));
 
         // <cmt>
         if (!locationMark->comment.isEmpty())
@@ -256,7 +256,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
                 // <time>
                 if (!trackPoint->timestamp.isNull())
-                    xmlWriter.writeTextElement(QLatin1String("time"), trackPoint->timestamp.toString(QLatin1String("YYYY-MM-DDThh:mm:ss")));
+                    xmlWriter.writeTextElement(QLatin1String("time"), trackPoint->timestamp.toString(Qt::DateFormat::ISODate));
 
                 // <cmt>
                 if (!trackPoint->comment.isEmpty())
@@ -424,7 +424,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
             // <time>
             if (!routePoint->timestamp.isNull())
-                xmlWriter.writeTextElement(QLatin1String("time"), routePoint->timestamp.toString(QLatin1String("YYYY-MM-DDThh:mm:ss")));
+                xmlWriter.writeTextElement(QLatin1String("time"), routePoint->timestamp.toString(Qt::DateFormat::ISODate));
 
             // <cmt>
             if (!routePoint->comment.isEmpty())
@@ -891,7 +891,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             else if (tagName == QLatin1String("time"))
             {
                 const auto timestampValue = xmlReader.readElementText();
-                const auto timestamp = QDateTime::fromString(timestampValue, QLatin1String("YYYY-MM-DDThh:mm:ss"));
+                const auto timestamp = QDateTime::fromString(timestampValue, Qt::DateFormat::ISODate);
                 if (!timestamp.isValid() || timestamp.isNull())
                 {
                     LogPrintf(

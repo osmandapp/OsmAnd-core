@@ -155,7 +155,7 @@ namespace OsmAnd
             QString source;
             int slotNumber;
         };
-        
+
     private:
     protected:
         static void writeLinks(const QList< Ref<Link> >& links, QXmlStreamWriter& xmlWriter);
