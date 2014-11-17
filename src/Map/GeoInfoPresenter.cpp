@@ -21,11 +21,11 @@ std::shared_ptr<OsmAnd::IMapObjectsProvider> OsmAnd::GeoInfoPresenter::createMap
 
 std::shared_ptr<const OsmAnd::GeoInfoPresenter::MapObject::EncodingDecodingRules> OsmAnd::GeoInfoPresenter::MapObject::defaultEncodingDecodingRules(OsmAnd::modifyAndReturn(
     std::shared_ptr<OsmAnd::GeoInfoPresenter::MapObject::EncodingDecodingRules>(new OsmAnd::GeoInfoPresenter::MapObject::EncodingDecodingRules()),
-    (std::function<void(std::shared_ptr<OsmAnd::GeoInfoPresenter::MapObject::EncodingDecodingRules>& instance)>)[]
+    static_cast< std::function<void(std::shared_ptr<OsmAnd::GeoInfoPresenter::MapObject::EncodingDecodingRules>& instance)> >([]
     (std::shared_ptr<OsmAnd::GeoInfoPresenter::MapObject::EncodingDecodingRules>& rules) -> void
     {
         rules->verifyRequiredRulesExist();
-    }));
+    })));
 
 OsmAnd::GeoInfoPresenter::MapObject::EncodingDecodingRules::EncodingDecodingRules()
     : waypoint_encodingRuleId(std::numeric_limits<uint32_t>::max())
