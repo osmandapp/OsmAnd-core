@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_BINARY_MAP_OBJECTS_METRICS_LAYER_PROVIDER_P_H_
-#define _OSMAND_CORE_BINARY_MAP_OBJECTS_METRICS_LAYER_PROVIDER_P_H_
+#ifndef _OSMAND_CORE_OBF_MAP_OBJECTS_METRICS_LAYER_PROVIDER_P_H_
+#define _OSMAND_CORE_OBF_MAP_OBJECTS_METRICS_LAYER_PROVIDER_P_H_
 
 #include "stdlib_common.h"
 #include <functional>
@@ -13,18 +13,18 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "IMapDataProvider.h"
-#include "BinaryMapObjectsMetricsLayerProvider.h"
+#include "ObfMapObjectsMetricsLayerProvider.h"
 
 namespace OsmAnd
 {
     class IQueryController;
 
-    class BinaryMapObjectsMetricsLayerProvider_P Q_DECL_FINAL
+    class ObfMapObjectsMetricsLayerProvider_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(BinaryMapObjectsMetricsLayerProvider_P);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsMetricsLayerProvider_P);
     private:
     protected:
-        BinaryMapObjectsMetricsLayerProvider_P(BinaryMapObjectsMetricsLayerProvider* const owner);
+        ObfMapObjectsMetricsLayerProvider_P(ObfMapObjectsMetricsLayerProvider* const owner);
 
         struct RetainableCacheMetadata : public IMapDataProvider::RetainableCacheMetadata
         {
@@ -35,21 +35,21 @@ namespace OsmAnd
             std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> binaryMapRetainableCacheMetadata;
         };
     public:
-        ~BinaryMapObjectsMetricsLayerProvider_P();
+        ~ObfMapObjectsMetricsLayerProvider_P();
 
-        ImplementationInterface<BinaryMapObjectsMetricsLayerProvider> owner;
+        ImplementationInterface<ObfMapObjectsMetricsLayerProvider> owner;
 
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<BinaryMapObjectsMetricsLayerProvider::Data>& outTiledData,
+            std::shared_ptr<ObfMapObjectsMetricsLayerProvider::Data>& outTiledData,
             const IQueryController* const queryController);
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;
 
-    friend class OsmAnd::BinaryMapObjectsMetricsLayerProvider;
+    friend class OsmAnd::ObfMapObjectsMetricsLayerProvider;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_BINARY_MAP_OBJECTS_METRICS_LAYER_PROVIDER_P_H_)
+#endif // !defined(_OSMAND_CORE_OBF_MAP_OBJECTS_METRICS_LAYER_PROVIDER_P_H_)

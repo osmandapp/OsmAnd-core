@@ -1,32 +1,32 @@
-#include "BinaryMapObjectsMetricsLayerProvider.h"
-#include "BinaryMapObjectsMetricsLayerProvider_P.h"
+#include "ObfMapObjectsMetricsLayerProvider.h"
+#include "ObfMapObjectsMetricsLayerProvider_P.h"
 
-OsmAnd::BinaryMapObjectsMetricsLayerProvider::BinaryMapObjectsMetricsLayerProvider(
+OsmAnd::ObfMapObjectsMetricsLayerProvider::ObfMapObjectsMetricsLayerProvider(
     const std::shared_ptr<ObfMapObjectsProvider>& dataProvider_,
     const uint32_t tileSize_ /*= 256*/,
     const float densityFactor_ /*= 1.0f*/)
-    : _p(new BinaryMapObjectsMetricsLayerProvider_P(this))
+    : _p(new ObfMapObjectsMetricsLayerProvider_P(this))
     , dataProvider(dataProvider_)
     , tileSize(tileSize_)
     , densityFactor(densityFactor_)
 {
 }
 
-OsmAnd::BinaryMapObjectsMetricsLayerProvider::~BinaryMapObjectsMetricsLayerProvider()
+OsmAnd::ObfMapObjectsMetricsLayerProvider::~ObfMapObjectsMetricsLayerProvider()
 {
 }
 
-float OsmAnd::BinaryMapObjectsMetricsLayerProvider::getTileDensityFactor() const
+float OsmAnd::ObfMapObjectsMetricsLayerProvider::getTileDensityFactor() const
 {
     return densityFactor;
 }
 
-uint32_t OsmAnd::BinaryMapObjectsMetricsLayerProvider::getTileSize() const
+uint32_t OsmAnd::ObfMapObjectsMetricsLayerProvider::getTileSize() const
 {
     return tileSize;
 }
 
-bool OsmAnd::BinaryMapObjectsMetricsLayerProvider::obtainData(
+bool OsmAnd::ObfMapObjectsMetricsLayerProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
     std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
@@ -43,17 +43,17 @@ bool OsmAnd::BinaryMapObjectsMetricsLayerProvider::obtainData(
     return result;
 }
 
-OsmAnd::ZoomLevel OsmAnd::BinaryMapObjectsMetricsLayerProvider::getMinZoom() const
+OsmAnd::ZoomLevel OsmAnd::ObfMapObjectsMetricsLayerProvider::getMinZoom() const
 {
     return _p->getMinZoom();
 }
 
-OsmAnd::ZoomLevel OsmAnd::BinaryMapObjectsMetricsLayerProvider::getMaxZoom() const
+OsmAnd::ZoomLevel OsmAnd::ObfMapObjectsMetricsLayerProvider::getMaxZoom() const
 {
     return _p->getMaxZoom();
 }
 
-OsmAnd::BinaryMapObjectsMetricsLayerProvider::Data::Data(
+OsmAnd::ObfMapObjectsMetricsLayerProvider::Data::Data(
     const TileId tileId_,
     const ZoomLevel zoom_,
     const AlphaChannelData alphaChannelData_,
@@ -66,7 +66,7 @@ OsmAnd::BinaryMapObjectsMetricsLayerProvider::Data::Data(
 {
 }
 
-OsmAnd::BinaryMapObjectsMetricsLayerProvider::Data::~Data()
+OsmAnd::ObfMapObjectsMetricsLayerProvider::Data::~Data()
 {
     release();
 }

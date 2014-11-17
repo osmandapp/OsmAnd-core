@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_BINARY_MAP_OBJECTS_METRICS_LAYER_PROVIDER_H_
-#define _OSMAND_CORE_BINARY_MAP_OBJECTS_METRICS_LAYER_PROVIDER_H_
+#ifndef _OSMAND_CORE_OBF_MAP_OBJECTS_METRICS_LAYER_PROVIDER_H_
+#define _OSMAND_CORE_OBF_MAP_OBJECTS_METRICS_LAYER_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <functional>
@@ -17,10 +17,10 @@
 
 namespace OsmAnd
 {
-    class BinaryMapObjectsMetricsLayerProvider_P;
-    class OSMAND_CORE_API BinaryMapObjectsMetricsLayerProvider : public IRasterMapLayerProvider
+    class ObfMapObjectsMetricsLayerProvider_P;
+    class OSMAND_CORE_API ObfMapObjectsMetricsLayerProvider : public IRasterMapLayerProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(BinaryMapObjectsMetricsLayerProvider);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsMetricsLayerProvider);
     public:
         class OSMAND_CORE_API Data : public IRasterMapLayerProvider::Data
         {
@@ -42,14 +42,14 @@ namespace OsmAnd
         };
 
     private:
-        PrivateImplementation<BinaryMapObjectsMetricsLayerProvider_P> _p;
+        PrivateImplementation<ObfMapObjectsMetricsLayerProvider_P> _p;
     protected:
     public:
-        BinaryMapObjectsMetricsLayerProvider(
+        ObfMapObjectsMetricsLayerProvider(
             const std::shared_ptr<ObfMapObjectsProvider>& dataProvider,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f);
-        virtual ~BinaryMapObjectsMetricsLayerProvider();
+        virtual ~ObfMapObjectsMetricsLayerProvider();
 
         const std::shared_ptr<ObfMapObjectsProvider> dataProvider;
         const uint32_t tileSize;
@@ -70,4 +70,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_BINARY_MAP_OBJECTS_METRICS_LAYER_PROVIDER_H_)
+#endif // !defined(_OSMAND_CORE_OBF_MAP_OBJECTS_METRICS_LAYER_PROVIDER_H_)

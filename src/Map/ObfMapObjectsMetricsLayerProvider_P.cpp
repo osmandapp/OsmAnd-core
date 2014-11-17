@@ -1,5 +1,5 @@
-#include "BinaryMapObjectsMetricsLayerProvider_P.h"
-#include "BinaryMapObjectsMetricsLayerProvider.h"
+#include "ObfMapObjectsMetricsLayerProvider_P.h"
+#include "ObfMapObjectsMetricsLayerProvider.h"
 
 #include "stdlib_common.h"
 
@@ -24,19 +24,19 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::BinaryMapObjectsMetricsLayerProvider_P(BinaryMapObjectsMetricsLayerProvider* const owner_)
+OsmAnd::ObfMapObjectsMetricsLayerProvider_P::ObfMapObjectsMetricsLayerProvider_P(ObfMapObjectsMetricsLayerProvider* const owner_)
     : owner(owner_)
 {
 }
 
-OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::~BinaryMapObjectsMetricsLayerProvider_P()
+OsmAnd::ObfMapObjectsMetricsLayerProvider_P::~ObfMapObjectsMetricsLayerProvider_P()
 {
 }
 
-bool OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::obtainData(
+bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<BinaryMapObjectsMetricsLayerProvider::Data>& outTiledData,
+    std::shared_ptr<ObfMapObjectsMetricsLayerProvider::Data>& outTiledData,
     const IQueryController* const queryController)
 {
     ObfMapObjectsProvider_Metrics::Metric_obtainData obtainDataMetric;
@@ -102,7 +102,7 @@ bool OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::obtainData(
         topOffset += 1.25f * fontSize;
     }
 
-    outTiledData.reset(new BinaryMapObjectsMetricsLayerProvider::Data(
+    outTiledData.reset(new ObfMapObjectsMetricsLayerProvider::Data(
         tileId,
         zoom,
         AlphaChannelData::NotPresent,
@@ -114,22 +114,22 @@ bool OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::obtainData(
     return true;
 }
 
-OsmAnd::ZoomLevel OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::getMinZoom() const
+OsmAnd::ZoomLevel OsmAnd::ObfMapObjectsMetricsLayerProvider_P::getMinZoom() const
 {
     return MinZoomLevel;
 }
 
-OsmAnd::ZoomLevel OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::getMaxZoom() const
+OsmAnd::ZoomLevel OsmAnd::ObfMapObjectsMetricsLayerProvider_P::getMaxZoom() const
 {
     return MaxZoomLevel;
 }
 
-OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
+OsmAnd::ObfMapObjectsMetricsLayerProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
     const std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata>& binaryMapRetainableCacheMetadata_)
     : binaryMapRetainableCacheMetadata(binaryMapRetainableCacheMetadata_)
 {
 }
 
-OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::RetainableCacheMetadata::~RetainableCacheMetadata()
+OsmAnd::ObfMapObjectsMetricsLayerProvider_P::RetainableCacheMetadata::~RetainableCacheMetadata()
 {
 }
