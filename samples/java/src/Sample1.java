@@ -115,7 +115,7 @@ public class Sample1 implements GLEventListener {
   private ObfsCollection _obfsCollection;
   private MapPresentationEnvironment _mapPresentationEnvironment;
   private MapPrimitiviser _mapPrimitiviser;
-  private BinaryMapObjectsProvider _binaryMapObjectsProvider;
+  private ObfMapObjectsProvider _obfMapObjectsProvider;
   private MapPrimitivesProvider _mapPrimitivesProvider;
   private MapObjectsSymbolsProvider _mapObjectsSymbolsProvider;
   private MapRasterLayerProvider _mapRasterLayerProvider;
@@ -152,16 +152,16 @@ public class Sample1 implements GLEventListener {
       "en"); //TODO: here should be current locale
     _mapPrimitiviser = new MapPrimitiviser(
       _mapPresentationEnvironment);
-    _binaryMapObjectsProvider = new BinaryMapObjectsProvider(
+    _obfMapObjectsProvider = new ObfMapObjectsProvider(
       _obfsCollection);
     _mapPrimitivesProvider = new MapPrimitivesProvider(
-      _binaryMapObjectsProvider,
+      _obfMapObjectsProvider,
       _mapPrimitiviser,
       _rasterTileSize);
     _mapObjectsSymbolsProvider = new MapObjectsSymbolsProvider(
       _mapPrimitivesProvider,
       _rasterTileSize);
-    _mapRasterLayerProvider = new BinaryMapRasterLayerProvider_Software(
+    _mapRasterLayerProvider = new MapRasterLayerProvider_Software(
       _mapPrimitivesProvider);
 
     _mapRenderer = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGL2plus);
@@ -259,9 +259,9 @@ public class Sample1 implements GLEventListener {
       _mapPrimitiviser = null;
     }
 
-    if (_binaryMapObjectsProvider != null) {
-      _binaryMapObjectsProvider.delete();
-      _binaryMapObjectsProvider = null;
+    if (_obfMapObjectsProvider != null) {
+      _obfMapObjectsProvider.delete();
+      _obfMapObjectsProvider = null;
     }
 
     if (_mapPrimitivesProvider != null) {

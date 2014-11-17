@@ -82,6 +82,8 @@ namespace OsmAnd
         static ObfObjectId generateUniqueId(
             const uint32_t offsetInObf,
             const std::shared_ptr<const ObfSectionInfo>& obfSectionInfo);
+
+        static ObfObjectId fromRawId(const uint64_t rawId);
     };
 
 #if !defined(SWIG)

@@ -6,7 +6,8 @@
 OsmAnd::BinaryMapObject::BinaryMapObject(
     const std::shared_ptr<const ObfMapSectionInfo>& section_,
     const std::shared_ptr<const ObfMapSectionLevel>& level_)
-    : section(section_)
+    : ObfMapObject(section_)
+    , section(section_)
     , level(level_)
 {
     encodingDecodingRules = section->getEncodingDecodingRules();
@@ -36,11 +37,6 @@ OsmAnd::ZoomLevel OsmAnd::BinaryMapObject::getMinZoomLevel() const
 OsmAnd::ZoomLevel OsmAnd::BinaryMapObject::getMaxZoomLevel() const
 {
     return level->maxZoom;
-}
-
-QString OsmAnd::BinaryMapObject::toString() const
-{
-    return id.toString();
 }
 
 OsmAnd::MapObject::LayerType OsmAnd::BinaryMapObject::getLayerType() const

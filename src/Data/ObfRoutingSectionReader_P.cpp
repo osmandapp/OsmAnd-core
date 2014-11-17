@@ -536,7 +536,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockRestrictions(
                 if (!originRoad)
                     return;
                 const auto destinationRoadId = roadsInternalIdToGlobalIdMap[destinationInternalId];
-                originRoad->restrictions.insert(destinationRoadId, static_cast<RoadRestriction>(restrictionType));
+                originRoad->restrictions.insert(ObfObjectId::fromRawId(destinationRoadId), static_cast<RoadRestriction>(restrictionType));
                 return;
             }
             case OBF::RestrictionData::kFromFieldNumber:

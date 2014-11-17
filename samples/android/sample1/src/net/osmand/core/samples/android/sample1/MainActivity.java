@@ -71,7 +71,7 @@ public class MainActivity extends ActionBarActivity {
     private ObfsCollection _obfsCollection;
     private MapPresentationEnvironment _mapPresentationEnvironment;
     private Primitiviser _primitiviser;
-    private BinaryMapObjectsProvider _binaryMapObjectsProvider;
+    private ObfMapObjectsProvider _obfMapObjectsProvider;
     private MapPrimitivesProvider _mapPrimitivesProvider;
     private MapObjectsSymbolsProvider _mapObjectsSymbolsProvider;
     private MapRasterLayerProvider _mapRasterLayerProvider;
@@ -125,10 +125,10 @@ public class MainActivity extends ActionBarActivity {
         //mapPresentationEnvironment->setSettings(configuration.styleSettings);
         _primitiviser = new MapPrimitiviser(
                 _mapPresentationEnvironment);
-        _binaryMapObjectsProvider = new BinaryMapObjectsProvider(
+        _obfMapObjectsProvider = new ObfMapObjectsProvider(
                 _obfsCollection);
         _mapPrimitivesProvider = new MapPrimitivesProvider(
-                _binaryMapObjectsProvider,
+                _obfMapObjectsProvider,
                 _primitiviser,
                 _rasterTileSize);
         _mapObjectsSymbolsProvider = new MapObjectsSymbolsProvider(
@@ -214,9 +214,9 @@ public class MainActivity extends ActionBarActivity {
             _primitiviser = null;
         }
 
-        if (_binaryMapObjectsProvider != null) {
-            _binaryMapObjectsProvider.delete();
-            _binaryMapObjectsProvider = null;
+        if (_obfMapObjectsProvider != null) {
+            _obfMapObjectsProvider.delete();
+            _obfMapObjectsProvider = null;
         }
 
         if (_mapPrimitivesProvider != null) {

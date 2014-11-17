@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_BINARY_MAP_OBJECTS_PROVIDER_H_
-#define _OSMAND_CORE_BINARY_MAP_OBJECTS_PROVIDER_H_
+#ifndef _OSMAND_CORE_OBF_MAP_OBJECTS_PROVIDER_H_
+#define _OSMAND_CORE_OBF_MAP_OBJECTS_PROVIDER_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -12,25 +12,36 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapObjectsProvider.h>
-#include <OsmAndCore/Map/BinaryMapObjectsProvider_Metrics.h>
+#include <OsmAndCore/Map/ObfMapObjectsProvider_Metrics.h>
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
 
 namespace OsmAnd
 {
     class IObfsCollection;
 
-    class BinaryMapObjectsProvider_P;
-    class OSMAND_CORE_API BinaryMapObjectsProvider : public IMapObjectsProvider
+    class ObfMapObjectsProvider_P;
+    class OSMAND_CORE_API ObfMapObjectsProvider : public IMapObjectsProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(BinaryMapObjectsProvider);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsProvider);
+    public:
+        enum class Mode
+        {
+            OnlyBinaryMapObjects,
+            OnlyRoads,
+            BinaryMapObjectsAndRoads
+        };
+
     private:
-        PrivateImplementation<BinaryMapObjectsProvider_P> _p;
+        PrivateImplementation<ObfMapObjectsProvider_P> _p;
     protected:
     public:
-        BinaryMapObjectsProvider(const std::shared_ptr<const IObfsCollection>& obfsCollection);
-        virtual ~BinaryMapObjectsProvider();
+        ObfMapObjectsProvider(
+            const std::shared_ptr<const IObfsCollection>& obfsCollection,
+            const Mode mode = Mode::BinaryMapObjectsAndRoads);
+        virtual ~ObfMapObjectsProvider();
 
         const std::shared_ptr<const IObfsCollection> obfsCollection;
+        const Mode mode;
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
@@ -46,9 +57,9 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<Data>& outTiledData,
-            BinaryMapObjectsProvider_Metrics::Metric_obtainData* const metric,
+            ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
     };
 }
 
-#endif // !defined(_OSMAND_CORE_BINARY_MAP_OBJECTS_PROVIDER_H_)
+#endif // !defined(_OSMAND_CORE_OBF_MAP_OBJECTS_PROVIDER_H_)

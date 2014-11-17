@@ -26,6 +26,7 @@
 #include <OsmAndCore/Data/ObfFile.h>
 #include <OsmAndCore/Data/ObfInfo.h>
 #include <OsmAndCore/Data/MapObject.h>
+#include <OsmAndCore/Data/ObfMapObject.h>
 #include <OsmAndCore/Data/BinaryMapObject.h>
 #include <OsmAndCore/Data/Road.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
@@ -58,7 +59,7 @@
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/IMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapObjectsProvider.h>
-#include <OsmAndCore/Map/BinaryMapObjectsProvider.h>
+#include <OsmAndCore/Map/ObfMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 #include <OsmAndCore/Map/MapRasterLayerProvider.h>
@@ -111,6 +112,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ObfFile)
 	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::MapObject)
+	%shared_ptr(OsmAnd::ObfMapObject)
 	%shared_ptr(OsmAnd::BinaryMapObject)
 	%shared_ptr(OsmAnd::Road)
 	%shared_ptr(OsmAnd::MapSymbolsGroup)
@@ -152,10 +154,11 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapPrimitiviser::IconSymbol)
 	%shared_ptr(OsmAnd::MapPrimitiviser::PrimitivisedArea)
 	%shared_ptr(OsmAnd::IMapObjectsProvider)
-	%shared_ptr(OsmAnd::BinaryMapObjectsProvider)
+	%shared_ptr(OsmAnd::ObfMapObjectsProvider)
 	%shared_ptr(OsmAnd::MapObjectsProvider)
 	%shared_ptr(OsmAnd::MapPrimitivesProvider)
 	%shared_ptr(OsmAnd::MapObjectsSymbolsProvider)
+	%shared_ptr(OsmAnd::MapObjectsSymbolsProvider::MapObjectSymbolsGroup)
 	%shared_ptr(OsmAnd::MapRasterLayerProvider)
 	%shared_ptr(OsmAnd::MapRasterLayerProvider_Software)
 	%shared_ptr(OsmAnd::IOnlineTileSources)
@@ -220,6 +223,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/ObfFile.h>
 %include <OsmAndCore/Data/ObfInfo.h>
 %include <OsmAndCore/Data/MapObject.h>
+%include <OsmAndCore/Data/ObfMapObject.h>
 %include <OsmAndCore/Data/BinaryMapObject.h>
 %include <OsmAndCore/Data/Road.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
@@ -251,7 +255,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 %include <OsmAndCore/Map/MapPrimitiviser.h>
 %include <OsmAndCore/Map/IMapObjectsProvider.h>
-%include <OsmAndCore/Map/BinaryMapObjectsProvider.h>
+%include <OsmAndCore/Map/ObfMapObjectsProvider.h>
 %include <OsmAndCore/Map/MapPrimitivesProvider.h>
 %include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 %include <OsmAndCore/Map/MapRasterLayerProvider.h>

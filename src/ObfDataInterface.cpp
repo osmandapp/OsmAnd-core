@@ -49,7 +49,7 @@ bool OsmAnd::ObfDataInterface::loadBasemapPresenceFlag(bool& outBasemapPresent, 
     return true;
 }
 
-bool OsmAnd::ObfDataInterface::loadMapObjects(
+bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapSurfaceType* outSurfaceType,
     const ZoomLevel zoom,

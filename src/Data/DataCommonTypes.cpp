@@ -47,3 +47,13 @@ QString OsmAnd::ObfObjectId::toString() const
         .arg(static_cast<uint32_t>(rawId & 0xFFFFFFFF))
         .arg(id);
 }
+
+OsmAnd::ObfObjectId OsmAnd::ObfObjectId::fromRawId(const uint64_t rawId)
+{
+    if (static_cast<int64_t>(rawId) <= 0)
+        return ObfObjectId::invalidId();
+
+    ObfObjectId obfObjectId;
+    obfObjectId.id = rawId;
+    return obfObjectId;
+}

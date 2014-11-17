@@ -15,7 +15,7 @@
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
-#include <OsmAndCore/Map/BinaryMapObjectsProvider.h>
+#include <OsmAndCore/Map/ObfMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapObjectsSymbolsProvider.h>
 #include <OsmAndCore/Map/MapRasterLayerProvider_Software.h>
@@ -871,7 +871,7 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
         if (configuration.verbose)
             output << xT("Creating binary map objects provider...") << std::endl;
-        const std::shared_ptr<OsmAnd::BinaryMapObjectsProvider> binaryMapDataProvider(new OsmAnd::BinaryMapObjectsProvider(
+        const std::shared_ptr<OsmAnd::ObfMapObjectsProvider> binaryMapDataProvider(new OsmAnd::ObfMapObjectsProvider(
             configuration.obfsCollection));
 
         if (configuration.verbose)

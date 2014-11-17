@@ -17,7 +17,7 @@
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
 #include "MapPrimitiviser_Metrics.h"
-#include "BinaryMapObjectsProvider_Metrics.h"
+#include "ObfMapObjectsProvider_Metrics.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
 #include "MapPresentationEnvironment.h"
@@ -68,7 +68,7 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
         .arg(tileId.y)
         .arg(zoom);
     QString obtainBinaryMapObjectsElapsedTime(QLatin1String("?"));
-    if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<BinaryMapObjectsProvider_Metrics::Metric_obtainData>())
+    if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>())
     {
         obtainBinaryMapObjectsElapsedTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 2);
     }

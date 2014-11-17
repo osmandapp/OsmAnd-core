@@ -2,7 +2,7 @@
 #include "BinaryMapObjectsMetricsLayerProvider_P.h"
 
 OsmAnd::BinaryMapObjectsMetricsLayerProvider::BinaryMapObjectsMetricsLayerProvider(
-    const std::shared_ptr<BinaryMapObjectsProvider>& dataProvider_,
+    const std::shared_ptr<ObfMapObjectsProvider>& dataProvider_,
     const uint32_t tileSize_ /*= 256*/,
     const float densityFactor_ /*= 1.0f*/)
     : _p(new BinaryMapObjectsMetricsLayerProvider_P(this))
@@ -59,7 +59,7 @@ OsmAnd::BinaryMapObjectsMetricsLayerProvider::Data::Data(
     const AlphaChannelData alphaChannelData_,
     const float densityFactor_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
-    const std::shared_ptr<const BinaryMapObjectsProvider::Data>& binaryMapData_,
+    const std::shared_ptr<const ObfMapObjectsProvider::Data>& binaryMapData_,
     const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
     : IRasterMapLayerProvider::Data(tileId_, zoom_, alphaChannelData_, densityFactor_, bitmap_, pRetainableCacheMetadata_)
     , binaryMapData(binaryMapData_)

@@ -16,7 +16,7 @@
 
 #include "MapRasterLayerProvider.h"
 #include "MapRasterLayerProvider_Metrics.h"
-#include "BinaryMapObjectsProvider_Metrics.h"
+#include "ObfMapObjectsProvider_Metrics.h"
 #include "MapRasterizer_Metrics.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
@@ -67,7 +67,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
         .arg(tileId.x)
         .arg(tileId.y)
         .arg(zoom);
-    if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<BinaryMapObjectsProvider_Metrics::Metric_obtainData>())
+    if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>())
     {
         text += QString(QLatin1String("obf read    %1s\n"))
             .arg(QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 3));

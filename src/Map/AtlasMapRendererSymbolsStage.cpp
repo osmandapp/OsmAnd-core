@@ -161,7 +161,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // Iterate over map symbols layer sorted by "order" in ascending direction.
     // This means that map symbols with smaller order value are more important than map symbols with
     // larger order value.
-    outIntersections = IntersectionsQuadTree(currentState.viewport, 8);
+    outIntersections = qMove(IntersectionsQuadTree(currentState.viewport, 8));
     ComputedPathsDataCache computedPathsDataCache;
     for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
     {

@@ -11,7 +11,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Data/MapObject.h>
+#include <OsmAndCore/Data/ObfMapObject.h>
 
 namespace OsmAnd
 {
@@ -40,7 +40,7 @@ namespace OsmAnd
         OnlyStraightOn = 7,
     };
 
-    class OSMAND_CORE_API Road Q_DECL_FINAL : public MapObject
+    class OSMAND_CORE_API Road Q_DECL_FINAL : public ObfMapObject
     {
         Q_DISABLE_COPY_AND_MOVE(Road);
     private:
@@ -50,12 +50,11 @@ namespace OsmAnd
         virtual ~Road();
 
         // General information
-        ObfObjectId id;
         const std::shared_ptr<const ObfRoutingSectionInfo> section;
 
         // Road information
         QHash< uint32_t, QVector<uint32_t> > pointsTypes;
-        QHash< uint64_t, RoadRestriction > restrictions;
+        QHash< ObfObjectId, RoadRestriction > restrictions;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     };

@@ -14,8 +14,8 @@
 #include <SkImageEncoder.h>
 #include "restore_internal_warnings.h"
 
-#include "BinaryMapObjectsProvider.h"
-#include "BinaryMapObjectsProvider_Metrics.h"
+#include "ObfMapObjectsProvider.h"
+#include "ObfMapObjectsProvider_Metrics.h"
 #include "ObfMapSectionReader_Metrics.h"
 #include "ObfsCollection.h"
 #include "ObfDataInterface.h"
@@ -39,10 +39,10 @@ bool OsmAnd::BinaryMapObjectsMetricsLayerProvider_P::obtainData(
     std::shared_ptr<BinaryMapObjectsMetricsLayerProvider::Data>& outTiledData,
     const IQueryController* const queryController)
 {
-    BinaryMapObjectsProvider_Metrics::Metric_obtainData obtainDataMetric;
+    ObfMapObjectsProvider_Metrics::Metric_obtainData obtainDataMetric;
 
     // Obtain offline map data tile
-    std::shared_ptr<BinaryMapObjectsProvider::Data> binaryData;
+    std::shared_ptr<ObfMapObjectsProvider::Data> binaryData;
     owner->dataProvider->obtainData(tileId, zoom, binaryData, &obtainDataMetric, nullptr);
     if (!binaryData)
     {

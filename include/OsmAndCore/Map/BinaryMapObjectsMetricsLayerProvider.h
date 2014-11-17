@@ -13,7 +13,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/IRasterMapLayerProvider.h>
-#include <OsmAndCore/Map/BinaryMapObjectsProvider.h>
+#include <OsmAndCore/Map/ObfMapObjectsProvider.h>
 
 namespace OsmAnd
 {
@@ -34,11 +34,11 @@ namespace OsmAnd
                 const AlphaChannelData alphaChannelData,
                 const float densityFactor,
                 const std::shared_ptr<const SkBitmap>& bitmap,
-                const std::shared_ptr<const BinaryMapObjectsProvider::Data>& binaryMapData,
+                const std::shared_ptr<const ObfMapObjectsProvider::Data>& binaryMapData,
                 const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 
-            std::shared_ptr<const BinaryMapObjectsProvider::Data> binaryMapData;
+            std::shared_ptr<const ObfMapObjectsProvider::Data> binaryMapData;
         };
 
     private:
@@ -46,12 +46,12 @@ namespace OsmAnd
     protected:
     public:
         BinaryMapObjectsMetricsLayerProvider(
-            const std::shared_ptr<BinaryMapObjectsProvider>& dataProvider,
+            const std::shared_ptr<ObfMapObjectsProvider>& dataProvider,
             const uint32_t tileSize = 256,
             const float densityFactor = 1.0f);
         virtual ~BinaryMapObjectsMetricsLayerProvider();
 
-        const std::shared_ptr<BinaryMapObjectsProvider> dataProvider;
+        const std::shared_ptr<ObfMapObjectsProvider> dataProvider;
         const uint32_t tileSize;
         const float densityFactor;
 

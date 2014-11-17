@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_BINARY_MAP_DATA_PROVIDER_P_H_
-#define _OSMAND_CORE_BINARY_MAP_DATA_PROVIDER_P_H_
+#ifndef _OSMAND_CORE_OBF_MAP_DATA_PROVIDER_P_H_
+#define _OSMAND_CORE_OBF_MAP_DATA_PROVIDER_P_H_
 
 #include "stdlib_common.h"
 #include <utility>
@@ -19,18 +19,18 @@
 #include "TiledEntriesCollection.h"
 #include "SharedByZoomResourcesContainer.h"
 #include "ObfMapSectionReader.h"
-#include "BinaryMapObjectsProvider.h"
-#include "BinaryMapObjectsProvider_Metrics.h"
+#include "ObfMapObjectsProvider.h"
+#include "ObfMapObjectsProvider_Metrics.h"
 
 namespace OsmAnd
 {
     class BinaryMapObject;
 
-    class BinaryMapObjectsProvider_P Q_DECL_FINAL
+    class ObfMapObjectsProvider_P Q_DECL_FINAL
     {
     private:
     protected:
-        BinaryMapObjectsProvider_P(BinaryMapObjectsProvider* owner);
+        ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner);
 
         class DataBlocksCache : public ObfMapSectionReader::DataBlocksCache
         {
@@ -67,14 +67,14 @@ namespace OsmAnd
                 safeUnlink();
             }
 
-            std::weak_ptr<BinaryMapObjectsProvider::Data> dataWeakRef;
+            std::weak_ptr<ObfMapObjectsProvider::Data> dataWeakRef;
 
             QReadWriteLock loadedConditionLock;
             QWaitCondition loadedCondition;
         };
         mutable TiledEntriesCollection<TileEntry> _tileReferences;
 
-        typedef OsmAnd::Link<BinaryMapObjectsProvider_P*> Link;
+        typedef OsmAnd::Link<ObfMapObjectsProvider_P*> Link;
         std::shared_ptr<Link> _link;
 
         struct RetainableCacheMetadata : public IMapDataProvider::RetainableCacheMetadata
@@ -96,19 +96,19 @@ namespace OsmAnd
             QList< std::shared_ptr<const BinaryMapObject> > referencedMapObjects;
         };
     public:
-        ~BinaryMapObjectsProvider_P();
+        ~ObfMapObjectsProvider_P();
 
-        ImplementationInterface<BinaryMapObjectsProvider> owner;
+        ImplementationInterface<ObfMapObjectsProvider> owner;
 
         bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
-            std::shared_ptr<BinaryMapObjectsProvider::Data>& outTiledData,
-            BinaryMapObjectsProvider_Metrics::Metric_obtainData* const metric,
+            std::shared_ptr<ObfMapObjectsProvider::Data>& outTiledData,
+            ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
 
-    friend class OsmAnd::BinaryMapObjectsProvider;
+    friend class OsmAnd::ObfMapObjectsProvider;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_BINARY_MAP_DATA_PROVIDER_P_H_)
+#endif // !defined(_OSMAND_CORE_OBF_MAP_DATA_PROVIDER_P_H_)

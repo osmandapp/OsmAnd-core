@@ -4,7 +4,8 @@
 #include "ObfRoutingSectionInfo_P.h"
 
 OsmAnd::Road::Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section_)
-    : section(section_)
+    : ObfMapObject(section_)
+    , section(section_)
 {
     encodingDecodingRules = section->getEncodingDecodingRules();
 }

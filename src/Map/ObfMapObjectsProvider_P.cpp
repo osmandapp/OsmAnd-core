@@ -1,5 +1,5 @@
-#include "BinaryMapObjectsProvider_P.h"
-#include "BinaryMapObjectsProvider.h"
+#include "ObfMapObjectsProvider_P.h"
+#include "ObfMapObjectsProvider.h"
 
 //#define OSMAND_PERFORMANCE_METRICS 2
 #if !defined(OSMAND_PERFORMANCE_METRICS)
@@ -15,27 +15,27 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::BinaryMapObjectsProvider_P::BinaryMapObjectsProvider_P(BinaryMapObjectsProvider* owner_)
+OsmAnd::ObfMapObjectsProvider_P::ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner_)
     : _dataBlocksCache(new DataBlocksCache(false))
     , _link(new Link(this))
     , owner(owner_)
 {
 }
 
-OsmAnd::BinaryMapObjectsProvider_P::~BinaryMapObjectsProvider_P()
+OsmAnd::ObfMapObjectsProvider_P::~ObfMapObjectsProvider_P()
 {
     _link->release();
 }
 
-bool OsmAnd::BinaryMapObjectsProvider_P::obtainData(
+bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,
-    std::shared_ptr<BinaryMapObjectsProvider::Data>& outTiledData,
-    BinaryMapObjectsProvider_Metrics::Metric_obtainData* const metric_,
+    std::shared_ptr<ObfMapObjectsProvider::Data>& outTiledData,
+    ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric_,
     const IQueryController* const queryController)
 {
 #if OSMAND_PERFORMANCE_METRICS
-    BinaryMapObjectsProvider_Metrics::Metric_obtainData localMetric;
+    ObfMapObjectsProvider_Metrics::Metric_obtainData localMetric;
     const auto metric = metric_ ? metric_ : &localMetric;
 #else
     const auto metric = metric_;
@@ -114,7 +114,7 @@ bool OsmAnd::BinaryMapObjectsProvider_P::obtainData(
         loadMapObjectsMetric = new ObfMapSectionReader_Metrics::Metric_loadMapObjects();
         metric->submetrics.push_back(loadMapObjectsMetric);
     }
-    dataInterface->loadMapObjects(
+    dataInterface->loadBinaryMapObjects(
         &loadedMapObjects,
         &tileSurfaceType,
         zoom,
@@ -279,16 +279,16 @@ bool OsmAnd::BinaryMapObjectsProvider_P::obtainData(
     return true;
 }
 
-OsmAnd::BinaryMapObjectsProvider_P::DataBlocksCache::DataBlocksCache(const bool cacheTileInnerDataBlocks_)
+OsmAnd::ObfMapObjectsProvider_P::DataBlocksCache::DataBlocksCache(const bool cacheTileInnerDataBlocks_)
     : cacheTileInnerDataBlocks(cacheTileInnerDataBlocks_)
 {
 }
 
-OsmAnd::BinaryMapObjectsProvider_P::DataBlocksCache::~DataBlocksCache()
+OsmAnd::ObfMapObjectsProvider_P::DataBlocksCache::~DataBlocksCache()
 {
 }
 
-bool OsmAnd::BinaryMapObjectsProvider_P::DataBlocksCache::shouldCacheBlock(const DataBlockId id, const AreaI blockBBox31, const AreaI* const queryArea31 /*= nullptr*/) const
+bool OsmAnd::ObfMapObjectsProvider_P::DataBlocksCache::shouldCacheBlock(const DataBlockId id, const AreaI blockBBox31, const AreaI* const queryArea31 /*= nullptr*/) const
 {
     if (!queryArea31)
         return ObfMapSectionReader::DataBlocksCache::shouldCacheBlock(id, blockBBox31, queryArea31);
@@ -298,7 +298,7 @@ bool OsmAnd::BinaryMapObjectsProvider_P::DataBlocksCache::shouldCacheBlock(const
     return true;
 }
 
-OsmAnd::BinaryMapObjectsProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
+OsmAnd::ObfMapObjectsProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(
     const ZoomLevel zoom_,
     const std::shared_ptr<Link>& link,
     const std::shared_ptr<TileEntry>& tileEntry,
@@ -314,7 +314,7 @@ OsmAnd::BinaryMapObjectsProvider_P::RetainableCacheMetadata::RetainableCacheMeta
 {
 }
 
-OsmAnd::BinaryMapObjectsProvider_P::RetainableCacheMetadata::~RetainableCacheMetadata()
+OsmAnd::ObfMapObjectsProvider_P::RetainableCacheMetadata::~RetainableCacheMetadata()
 {
     // Dereference DataBlocks from cache
     if (const auto dataBlocksCache = dataBlocksCacheWeakRef.lock())

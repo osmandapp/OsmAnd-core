@@ -18,14 +18,7 @@ namespace OsmAnd
 {
     class ObfReader;
     class ObfFile;
-    class ObfMapSectionInfo;
-    class BinaryMapObject;
-    class Road;
     class IQueryController;
-    namespace ObfMapSectionReader_Metrics
-    {
-        struct Metric_loadMapObjects;
-    }
 
     class OSMAND_CORE_API ObfDataInterface
     {
@@ -46,7 +39,7 @@ namespace OsmAnd
             bool& outBasemapPresent,
             const IQueryController* const controller = nullptr);
 
-        bool loadMapObjects(
+        bool loadBinaryMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             MapSurfaceType* outSurfaceType,
             const ZoomLevel zoom,

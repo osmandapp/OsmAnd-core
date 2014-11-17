@@ -12,9 +12,9 @@
 
 namespace OsmAnd
 {
-    namespace BinaryMapObjectsProvider_Metrics
+    namespace ObfMapObjectsProvider_Metrics
     {
-#define OsmAnd__BinaryMapObjectsProvider_Metrics__Metric_obtainData__FIELDS(FIELD_ACTION)       \
+#define OsmAnd__ObfMapObjectsProvider_Metrics__Metric_obtainData__FIELDS(FIELD_ACTION)          \
         /* Elapsed time on obtaining OBF interface */                                           \
         FIELD_ACTION(float, elapsedTimeForObtainingObfInterface, "s");                          \
                                                                                                 \
@@ -41,7 +41,7 @@ namespace OsmAnd
             virtual ~Metric_obtainData();
             virtual void reset();
 
-            OsmAnd__BinaryMapObjectsProvider_Metrics__Metric_obtainData__FIELDS(EMIT_METRIC_FIELD);
+            OsmAnd__ObfMapObjectsProvider_Metrics__Metric_obtainData__FIELDS(EMIT_METRIC_FIELD);
 
             virtual QString toString(const bool shortFormat = false, const QString& prefix = QString::null) const;
         };

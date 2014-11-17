@@ -110,7 +110,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         }
         const auto obfDataInterface = configuration.obfsCollection->obtainDataInterface();
         QList< std::shared_ptr<const OsmAnd::BinaryMapObject> > mapObjects_;
-        success = obfDataInterface->loadMapObjects(
+        success = obfDataInterface->loadBinaryMapObjects(
             &mapObjects_,
             nullptr,
             configuration.zoom,
