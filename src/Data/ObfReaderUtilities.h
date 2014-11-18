@@ -15,22 +15,29 @@
 
 namespace OsmAnd
 {
-    namespace ObfReaderUtilities
-    {
-        namespace gpb = google::protobuf;
+    class ObfSectionInfo;
+    class ObfReader;
 
-        bool readQString(gpb::io::CodedInputStream* cis, QString& output);
-        int32_t readSInt32(gpb::io::CodedInputStream* cis);
-        int64_t readSInt64(gpb::io::CodedInputStream* cis);
-        uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
-        uint32_t readLength(gpb::io::CodedInputStream* cis);
-        void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
-        void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
-        void skipBlockWithLength(gpb::io::CodedInputStream* cis);
-        QString encodeIntegerToString(const uint32_t value);
-        uint32_t decodeIntegerFromString(const QString& container);
-    }
+    namespace gpb = google::protobuf;
+
+    struct ObfReaderUtilities Q_DECL_FINAL
+    {
+        static bool readQString(gpb::io::CodedInputStream* cis, QString& output);
+        static int32_t readSInt32(gpb::io::CodedInputStream* cis);
+        static int64_t readSInt64(gpb::io::CodedInputStream* cis);
+        static uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
+        static uint32_t readLength(gpb::io::CodedInputStream* cis);
+        static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
+
+        static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
+        static void skipBlockWithLength(gpb::io::CodedInputStream* cis);
+
+        static QString encodeIntegerToString(const uint32_t value);
+        static uint32_t decodeIntegerFromString(const QString& container);
+
+        static bool reachedDataEnd(gpb::io::CodedInputStream* cis);
+        static void ensureAllDataWasRead(gpb::io::CodedInputStream* cis);
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_OBF_READER_UTILITIES_H_)
-

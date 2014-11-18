@@ -28,7 +28,7 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
     const ObfReader_P& reader,
     const std::shared_ptr<ObfRoutingSectionInfo>& section)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for (;;)
     {
@@ -37,6 +37,9 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
         switch (tfn)
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndRoutingIndex::kNameFieldNumber:
                 ObfReaderUtilities::readQString(cis, section->_name);
@@ -63,10 +66,12 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
 
 void OsmAnd::ObfRoutingSectionReader_P::readEncodingDecodingRules(
     const ObfReader_P& reader,
+    const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& rules)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
+    bool atLeastOneRuleRead = false;
     uint32_t defaultRuleId = 1;
     for (;;)
     {
@@ -75,21 +80,31 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingDecodingRules(
         switch (tfn)
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 rules->verifyRequiredRulesExist();
                 return;
             case OBF::OsmAndRoutingIndex::kRulesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readLength(cis);
+                const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 readEncodingDecodingRule(reader, rules, defaultRuleId++);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
+                atLeastOneRuleRead = true;
                 break;
             }
             default:
+                if (atLeastOneRuleRead)
+                {
+                    rules->verifyRequiredRulesExist();
+                    return;
+                }
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
         }
@@ -101,7 +116,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingDecodingRule(
     const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules,
     const uint32_t defaultId)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     QString ruleTag;
     QString ruleValue;
@@ -113,10 +128,11 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingDecodingRule(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-            {
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 encodingDecodingRules->addRule(ruleId, ruleTag, ruleValue);
                 return;
-            }
             case OBF::OsmAndRoutingIndex_RouteEncodingRule::kTagFieldNumber:
                 ObfReaderUtilities::readQString(cis, ruleTag);
                 break;
@@ -146,10 +162,13 @@ void OsmAnd::ObfRoutingSectionReader_P::readEncodingDecodingRule(
 
 void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodes(
     const ObfReader_P& reader,
+    const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const std::shared_ptr<ObfRoutingSectionLevel>& level)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
+    bool atLeastOneBasemapRootBoxRead = false; 
+    bool atLeastOneDetailedRootBoxRead = false;
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -157,10 +176,18 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodes(
         switch (tfn)
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber:
             case OBF::OsmAndRoutingIndex::kBasemapBoxesFieldNumber:
             {
+                if (tfn == OBF::OsmAndRoutingIndex::kBasemapBoxesFieldNumber)
+                    atLeastOneBasemapRootBoxRead = true;
+                else if (tfn == OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber)
+                    atLeastOneDetailedRootBoxRead = true;
+
                 if ((level->dataLevel == RoutingDataLevel::Basemap && tfn == OBF::OsmAndRoutingIndex::kRootBoxesFieldNumber) ||
                     (level->dataLevel == RoutingDataLevel::Detailed && tfn == OBF::OsmAndRoutingIndex::kBasemapBoxesFieldNumber))
                 {
@@ -173,18 +200,19 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodes(
                 const std::shared_ptr<ObfRoutingSectionLevelTreeNode> treeNode(new ObfRoutingSectionLevelTreeNode());
                 treeNode->length = ObfReaderUtilities::readBigEndianInt(cis);
                 treeNode->offset = cis->CurrentPosition();
-
                 const auto oldLimit = cis->PushLimit(treeNode->length);
 
                 readLevelTreeNode(reader, treeNode, nullptr);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 level->_p->_rootNodes.push_back(qMove(treeNode));
                 break;
             }
             default:
+                if (atLeastOneBasemapRootBoxRead || atLeastOneDetailedRootBoxRead)
+                    return;
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
         }
@@ -196,7 +224,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNode(
     const std::shared_ptr<ObfRoutingSectionLevelTreeNode>& node,
     const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& parentNode)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     const auto origin = cis->CurrentPosition();
 
     uint64_t fieldsMask = 0u;
@@ -215,6 +243,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNode(
         switch (tgn)
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndRoutingIndex_RouteDataBox::kLeftFieldNumber:
             {
@@ -282,13 +313,14 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNode(
 
 void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
     const ObfReader_P& reader,
+    const std::shared_ptr<const ObfRoutingSectionInfo>& section,
     const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& treeNode,
     QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* outNodesWithData,
     const AreaI* bbox31,
     const IQueryController* const controller,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for (;;)
     {
@@ -297,19 +329,21 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndRoutingIndex_RouteDataBox::kBoxesFieldNumber:
             {
                 const std::shared_ptr<ObfRoutingSectionLevelTreeNode> childNode(new ObfRoutingSectionLevelTreeNode());
                 childNode->length = ObfReaderUtilities::readBigEndianInt(cis);
                 childNode->offset = cis->CurrentPosition();
-
                 const auto oldLimit = cis->PushLimit(childNode->length);
 
                 readLevelTreeNode(reader, childNode, treeNode);
                 assert(treeNode->area31.contains(childNode->area31));
                 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 // Update metric
@@ -339,9 +373,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
                     const auto oldLimit = cis->PushLimit(childNode->length);
 
                     cis->Skip(childNode->firstDataBoxInnerOffset);
-                    readLevelTreeNodeChildren(reader, childNode, outNodesWithData, bbox31, controller, metric);
+                    readLevelTreeNodeChildren(reader, section, childNode, outNodesWithData, bbox31, controller, metric);
 
-                    assert(cis->BytesUntilLimit() == 0);
+                    ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
                 }
                 break;
@@ -368,7 +402,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
     QList<uint64_t> roadsIdsTable;
     QHash< uint32_t, std::shared_ptr<Road> > resultsByInternalId;
 
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -376,6 +410,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
         {
             case 0:
             {
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 for (const auto& road : constOf(resultsByInternalId))
                 {
                     // Fill captions of roads from stringtable
@@ -408,11 +445,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 readRoadsBlockIdsTable(reader, roadsIdsTable);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -424,11 +462,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 readRoad(reader, section, treeNode, bbox31, filterById, roadsIdsTable, internalId, road, metric);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 // Update metric
@@ -460,11 +499,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 readRoadsBlockRestrictions(reader, resultsByInternalId, roadsIdsTable);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -472,11 +512,12 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 ObfReaderUtilities::readStringTable(cis, roadsCaptionsTable);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -491,7 +532,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockIdsTable(
     const ObfReader_P& reader,
     QList<uint64_t>& ids)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     uint64_t id = 0;
 
@@ -501,6 +542,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockIdsTable(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::IdTable::kRouteIdFieldNumber:
             {
@@ -524,7 +568,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockRestrictions(
     uint32_t destinationInternalId;
     uint32_t restrictionType;
 
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -532,6 +576,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlockRestrictions(
         {
             case 0:
             {
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 const auto originRoad = roadsByInternalIds[originInternalId];
                 if (!originRoad)
                     return;
@@ -572,7 +619,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
     std::shared_ptr<Road>& road,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     const auto baseOffset = cis->CurrentPosition();
 
     for (;;)
@@ -581,6 +628,9 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::RouteData::kPointsFieldNumber:
             {
@@ -637,7 +687,6 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                         lastUnprocessedPointForBBox = pointsCount;
                     }
                 }
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 // Since reserved space may be larger than actual amount of data,
@@ -714,10 +763,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                         cis->ReadVarint32(&pointType);
                         pointTypes.push_back(pointType);
                     }
-                    assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(innerOldLimit);
                 }
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -732,7 +779,6 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     cis->ReadVarint32(&type);
                     road->typesRuleIds.push_back(type);
                 }
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -762,7 +808,6 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoad(
                     road->captions.insert(stringTag, ObfReaderUtilities::encodeIntegerToString(stringId));
                     road->captionsOrder.push_back(stringTag);
                 }
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
                 break;
             }
@@ -786,7 +831,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
     const IQueryController* const controller,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     // Ensure encoding/decoding rules are read
     if (section->_p->_encodingDecodingRulesLoaded.loadAcquire() == 0)
@@ -799,10 +844,9 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             auto oldLimit = cis->PushLimit(section->_length);
 
             const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> encodingDecodingRules(new ObfRoutingSectionEncodingDecodingRules());
-            readEncodingDecodingRules(reader, encodingDecodingRules);
+            readEncodingDecodingRules(reader, section, encodingDecodingRules);
             section->_p->_encodingDecodingRules = encodingDecodingRules;
 
-            assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
 
             section->_p->_encodingDecodingRulesLoaded.storeRelease(1);
@@ -824,10 +868,9 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             auto oldLimit = cis->PushLimit(section->_length);
 
             std::shared_ptr<ObfRoutingSectionLevel> level(new ObfRoutingSectionLevel(dataLevel));
-            readLevelTreeNodes(reader, level);
+            readLevelTreeNodes(reader, section, level);
             container.level = level;
             
-            assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
         }
     }
@@ -869,9 +912,9 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             auto oldLimit = cis->PushLimit(rootNode->length);
 
             cis->Skip(rootNode->firstDataBoxInnerOffset);
-            readLevelTreeNodeChildren(reader, rootNode, &treeNodesWithData, bbox31, controller, metric);
+            readLevelTreeNodeChildren(reader, section, rootNode, &treeNodesWithData, bbox31, controller, metric);
 
-            assert(cis->BytesUntilLimit() == 0);
+            ObfReaderUtilities::ensureAllDataWasRead(cis);
             cis->PopLimit(oldLimit);
         }
     }
@@ -950,7 +993,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                     nullptr,
                     metric ? &localMetric : nullptr);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 // Update metric
@@ -1018,7 +1061,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                 controller,
                 metric);
             
-            assert(cis->BytesUntilLimit() == 0);
+            ObfReaderUtilities::ensureAllDataWasRead(cis);
             cis->PopLimit(oldLimit);
 
             // Update metric

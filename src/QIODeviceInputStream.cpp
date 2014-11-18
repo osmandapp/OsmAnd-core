@@ -1,13 +1,18 @@
 #include "QIODeviceInputStream.h"
 
-namespace gpb = google::protobuf;
+namespace OsmAnd
+{
+    namespace gpb = google::protobuf;
+}
 
-OsmAnd::QIODeviceInputStream::QIODeviceInputStream( const std::shared_ptr<QIODevice>& device, const size_t bufferSize /*= DefaultBufferSize*/ )
-    : _device(device)
+OsmAnd::QIODeviceInputStream::QIODeviceInputStream(
+    const std::shared_ptr<QIODevice>& device_,
+    const size_t bufferSize_ /*= DefaultBufferSize*/)
+    : _device(device_)
     , _deviceSize(_device->size())
-    , _buffer(new uint8_t[bufferSize])
-    , _bufferSize(bufferSize)
-    , _closeOnDestruction(!device->isOpen())
+    , _buffer(new uint8_t[bufferSize_])
+    , _bufferSize(bufferSize_)
+    , _closeOnDestruction(!device_->isOpen())
 {
     // Open the device if it was not yet opened
     if (!_device->isOpen())
@@ -25,7 +30,7 @@ OsmAnd::QIODeviceInputStream::~QIODeviceInputStream()
     delete[] _buffer;
 }
 
-bool OsmAnd::QIODeviceInputStream::Next( const void** data, int* size )
+bool OsmAnd::QIODeviceInputStream::Next(const void** data, int* size)
 {
     const auto bytesRead = _device->read(reinterpret_cast<char*>(_buffer), _bufferSize);
     if (Q_UNLIKELY(bytesRead < 0 || (bytesRead == 0 && _device->atEnd())))
@@ -42,7 +47,7 @@ bool OsmAnd::QIODeviceInputStream::Next( const void** data, int* size )
     }
 }
 
-void OsmAnd::QIODeviceInputStream::BackUp( int count )
+void OsmAnd::QIODeviceInputStream::BackUp(int count)
 {
     if (Q_UNLIKELY(!_device->isOpen() && !_closeOnDestruction))
         return;
@@ -53,7 +58,7 @@ void OsmAnd::QIODeviceInputStream::BackUp( int count )
         _device->seek(_device->pos() - count);
 }
 
-bool OsmAnd::QIODeviceInputStream::Skip( int count )
+bool OsmAnd::QIODeviceInputStream::Skip(int count)
 {
     if (Q_UNLIKELY(!_device->isOpen() && !_closeOnDestruction))
         return false;
@@ -70,7 +75,7 @@ bool OsmAnd::QIODeviceInputStream::Skip( int count )
     }
 }
 
-gpb::int64 OsmAnd::QIODeviceInputStream::ByteCount() const
+OsmAnd::gpb::int64 OsmAnd::QIODeviceInputStream::ByteCount() const
 {
     return _device->pos();
 }

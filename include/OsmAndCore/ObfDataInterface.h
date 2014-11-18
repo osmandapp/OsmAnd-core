@@ -18,6 +18,7 @@ namespace OsmAnd
 {
     class ObfReader;
     class ObfFile;
+    class ObfMapObject;
     class IQueryController;
 
     class OSMAND_CORE_API ObfDataInterface
@@ -44,7 +45,7 @@ namespace OsmAnd
             MapSurfaceType* outSurfaceType,
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,
-            const FilterMapObjectsByIdFunction filterById = nullptr,
+            const FilterBinaryMapObjectsByIdFunction filterById = nullptr,
             ObfMapSectionReader::DataBlocksCache* cache = nullptr,
             QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
             const IQueryController* const controller = nullptr,
@@ -60,6 +61,21 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
             const IQueryController* const controller = nullptr,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr);
+
+        bool loadMapObjects(
+            QList< std::shared_ptr<const OsmAnd::ObfMapObject> >* resultOut,
+            MapSurfaceType* outSurfaceType,
+            const ZoomLevel zoom,
+            const AreaI* const bbox31 = nullptr,
+            const FilterBinaryMapObjectsByIdFunction filterBinaryMapObjectsById = nullptr,
+            ObfMapSectionReader::DataBlocksCache* binaryMapObjectsCache = nullptr,
+            QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedBinaryMapObjectsCacheEntries = nullptr,
+            const FilterRoadsByIdFunction filterRoadsById = nullptr,
+            ObfRoutingSectionReader::DataBlocksCache* roadsCache = nullptr,
+            QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedRoadsCacheEntries = nullptr,
+            const IQueryController* const controller = nullptr,
+            ObfMapSectionReader_Metrics::Metric_loadMapObjects* const binaryMapObjectsMetric = nullptr,
+            ObfRoutingSectionReader_Metrics::Metric_loadRoads* const roadsMetric = nullptr);
     };
 }
 

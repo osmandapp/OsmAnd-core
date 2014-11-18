@@ -50,11 +50,11 @@ namespace OsmAnd
 
         static void readMapLevelHeader(
             const ObfReader_P& reader,
-            const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionLevel>& level);
 
         static void readEncodingDecodingRules(
             const ObfReader_P& reader,
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
 
         static void readEncodingDecodingRule(
@@ -90,7 +90,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             const AreaI* bbox31,
-            const FilterMapObjectsByIdFunction filterById,
+            const FilterBinaryMapObjectsByIdFunction filterById,
             const VisitorFunction visitor,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
@@ -123,7 +123,7 @@ namespace OsmAnd
             const AreaI* bbox31,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             MapSurfaceType* outBBoxOrSectionSurfaceType,
-            const FilterMapObjectsByIdFunction filterById,
+            const FilterBinaryMapObjectsByIdFunction filterById,
             const VisitorFunction visitor,
             DataBlocksCache* cache,
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,

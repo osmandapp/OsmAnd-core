@@ -12,7 +12,6 @@
 #include "QIODeviceInputStream.h"
 #include "QFileDeviceInputStream.h"
 #include "ObfFile.h"
-#include "ObfFile.h"
 #include "ObfFile_P.h"
 #include "ObfInfo.h"
 #include "ObfMapSectionInfo.h"
@@ -26,10 +25,21 @@
 #include "ObfPoiSectionInfo.h"
 #include "ObfPoiSectionReader_P.h"
 #include "ObfReaderUtilities.h"
+#include "Logging.h"
 
-OsmAnd::ObfReader_P::ObfReader_P(ObfReader* const owner_, const std::shared_ptr<QIODevice>& input_)
-    : owner(owner_)
-    , _input(input_)
+//#define OSMAND_TRACE_OBF_READERS 1
+#if !defined(OSMAND_TRACE_OBF_READERS)
+#   define OSMAND_TRACE_OBF_READERS 0
+#endif // !defined(OSMAND_TRACE_OBF_READERS)
+
+OsmAnd::ObfReader_P::ObfReader_P(
+    ObfReader* const owner_,
+    const std::shared_ptr<QIODevice>& input_)
+    : _input(input_)
+#if OSMAND_VERIFY_OBF_READER_THREAD
+    , _threadId(QThread::currentThreadId())
+#endif // OSMAND_VERIFY_OBF_READER_THREAD
+    , owner(owner_)
 {
 }
 
@@ -44,13 +54,27 @@ bool OsmAnd::ObfReader_P::isOpened() const
 
 bool OsmAnd::ObfReader_P::open()
 {
+#if OSMAND_VERIFY_OBF_READER_THREAD
+    if (_threadId != QThread::currentThreadId())
+    {
+        LogPrintf(LogSeverityLevel::Warning,
+            "ObfReader(%p) was accessed from thread %p, but created in thread %p",
+            owner.get(),
+            QThread::currentThreadId(),
+            _threadId);
+#   if OSMAND_VERIFY_OBF_READER_THREAD > 1
+        assert(false);
+#   endif // OSMAND_VERIFY_OBF_READER_THREAD > 1
+    }
+#endif // OSMAND_VERIFY_OBF_READER_THREAD
+
     if (isOpened())
         return false;
 
     // Create zero-copy input stream
     gpb::io::ZeroCopyInputStream* zcis = nullptr;
-    if (const auto inputAsFileDevice = std::dynamic_pointer_cast<QFileDevice>(_input))
-        zcis = new QFileDeviceInputStream(inputAsFileDevice);
+    if (const auto inputFileDevice = std::dynamic_pointer_cast<QFileDevice>(_input))
+        zcis = new QFileDeviceInputStream(inputFileDevice);
     else
         zcis = new QIODeviceInputStream(_input);
     _zeroCopyInputStream.reset(zcis);
@@ -60,13 +84,53 @@ bool OsmAnd::ObfReader_P::open()
     cis->SetTotalBytesLimit(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
     _codedInputStream.reset(cis);
 
+#if OSMAND_TRACE_OBF_READERS
+    if (const auto inputFileDevice = std::dynamic_pointer_cast<QFileDevice>(_input))
+    {
+        LogPrintf(LogSeverityLevel::Debug,
+            "Opened ObfReader(%p) in %p for '%s', handle 0x%08x",
+            owner.get(),
+            QThread::currentThreadId(),
+            qPrintable(inputFileDevice->fileName()),
+            inputFileDevice->handle());
+    }
+#endif // OSMAND_TRACE_OBF_READERS
+
     return true;
 }
 
 bool OsmAnd::ObfReader_P::close()
 {
+#if OSMAND_VERIFY_OBF_READER_THREAD
+    if (_threadId != QThread::currentThreadId())
+    {
+        LogPrintf(LogSeverityLevel::Warning,
+            "ObfReader(%p) was accessed from thread %p, but created in thread %p",
+            owner.get(),
+            QThread::currentThreadId(),
+            _threadId);
+#   if OSMAND_VERIFY_OBF_READER_THREAD > 1
+        assert(false);
+#   endif // OSMAND_VERIFY_OBF_READER_THREAD > 1
+    }
+#endif // OSMAND_VERIFY_OBF_READER_THREAD
+
     if (!isOpened())
         return false;
+
+#if OSMAND_TRACE_OBF_READERS
+    if (const auto fileDeviceInputStream = std::dynamic_pointer_cast<QFileDeviceInputStream>(_zeroCopyInputStream))
+    {
+        const auto& inputFileDevice = fileDeviceInputStream->file;
+
+        LogPrintf(LogSeverityLevel::Debug,
+            "Closing ObfReader(%p) in %p for '%s', handle 0x%08x",
+            owner.get(),
+            QThread::currentThreadId(),
+            qPrintable(inputFileDevice->fileName()),
+            inputFileDevice->handle());
+    }
+#endif // OSMAND_TRACE_OBF_READERS
 
     _codedInputStream.reset();
     _zeroCopyInputStream.reset();
@@ -76,6 +140,20 @@ bool OsmAnd::ObfReader_P::close()
 
 std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
 {
+#if OSMAND_VERIFY_OBF_READER_THREAD
+    if (_threadId != QThread::currentThreadId())
+    {
+        LogPrintf(LogSeverityLevel::Warning,
+            "ObfReader(%p) was accessed from thread %p, but created in thread %p",
+            owner.get(),
+            QThread::currentThreadId(),
+            _threadId);
+#   if OSMAND_VERIFY_OBF_READER_THREAD > 1
+        assert(false);
+#   endif // OSMAND_VERIFY_OBF_READER_THREAD > 1
+    }
+#endif // OSMAND_VERIFY_OBF_READER_THREAD
+
     // Check if information is already available
     if (_obfInfo)
         return _obfInfo;
@@ -105,122 +183,141 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
     }
 }
 
-bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& info_)
+std::shared_ptr<OsmAnd::gpb::io::CodedInputStream> OsmAnd::ObfReader_P::getCodedInputStream() const
 {
-    const auto cis = reader._codedInputStream.get();
+#if OSMAND_VERIFY_OBF_READER_THREAD
+    if (_threadId != QThread::currentThreadId())
+    {
+        LogPrintf(LogSeverityLevel::Warning,
+            "ObfReader(%p) was accessed from thread %p, but created in thread %p",
+            owner.get(),
+            QThread::currentThreadId(),
+            _threadId);
+#   if OSMAND_VERIFY_OBF_READER_THREAD > 1
+        assert(false);
+#   endif // OSMAND_VERIFY_OBF_READER_THREAD > 1
+    }
+#endif // OSMAND_VERIFY_OBF_READER_THREAD
+
+    return _codedInputStream;
+}
+
+bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& outInfo)
+{
+    const auto cis = reader.getCodedInputStream().get();
 
     std::shared_ptr<ObfInfo> info(new ObfInfo());
     bool loadedCorrectly = false;
-    for(;;)
+    for (;;)
     {
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (loadedCorrectly)
-                info_ = info;
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return false;
 
-            return loadedCorrectly;
-        case OBF::OsmAndStructure::kVersionFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&info->_version));
-            break;
-        case OBF::OsmAndStructure::kDateCreatedFieldNumber:
-            cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&info->_creationTimestamp));
-            break;
-        case OBF::OsmAndStructure::kMapIndexFieldNumber:
+                if (loadedCorrectly)
+                    outInfo = info;
+                return loadedCorrectly;
+            case OBF::OsmAndStructure::kVersionFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&info->_version));
+                break;
+            case OBF::OsmAndStructure::kDateCreatedFieldNumber:
+                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&info->_creationTimestamp));
+                break;
+            case OBF::OsmAndStructure::kMapIndexFieldNumber:
             {
                 const std::shared_ptr<ObfMapSectionInfo> section(new ObfMapSectionInfo(info));
                 section->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 section->_offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(section->_length);
+                const auto oldLimit = cis->PushLimit(section->_length);
 
                 ObfMapSectionReader_P::read(reader, section);
 
                 info->_isBasemap = info->_isBasemap || section->isBasemap;
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
                 info->_mapSections.push_back(qMove(section));
+                break;
             }
-            break;
-        case OBF::OsmAndStructure::kAddressIndexFieldNumber:
+            case OBF::OsmAndStructure::kAddressIndexFieldNumber:
             {
                 const std::shared_ptr<ObfAddressSectionInfo> section(new ObfAddressSectionInfo(info));
                 section->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 section->_offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(section->_length);
+                const auto oldLimit = cis->PushLimit(section->_length);
 
                 ObfAddressSectionReader_P::read(reader, section);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
                 info->_addressSections.push_back(qMove(section));
+                break;
             }
-            break;
-        case OBF::OsmAndStructure::kTransportIndexFieldNumber:
+            case OBF::OsmAndStructure::kTransportIndexFieldNumber:
             {
                 const std::shared_ptr<ObfTransportSectionInfo> section(new ObfTransportSectionInfo(info));
                 section->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 section->_offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(section->_length);
+                const auto oldLimit = cis->PushLimit(section->_length);
 
                 ObfTransportSectionReader_P::read(reader, section);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
                 info->_transportSections.push_back(qMove(section));
+                break;
             }
-            break;
-        case OBF::OsmAndStructure::kRoutingIndexFieldNumber:
+            case OBF::OsmAndStructure::kRoutingIndexFieldNumber:
             {
                 const std::shared_ptr<ObfRoutingSectionInfo> section(new ObfRoutingSectionInfo(info));
                 section->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 section->_offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(section->_length);
+                const auto oldLimit = cis->PushLimit(section->_length);
 
                 ObfRoutingSectionReader_P::read(reader, section);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
                 info->_routingSections.push_back(qMove(section));
+                break;
             }
-            break;
-        case OBF::OsmAndStructure::kPoiIndexFieldNumber:
+            case OBF::OsmAndStructure::kPoiIndexFieldNumber:
             {
                 const std::shared_ptr<ObfPoiSectionInfo> section(new ObfPoiSectionInfo(info));
                 section->_length = ObfReaderUtilities::readBigEndianInt(cis);
                 section->_offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(section->_length);
+                const auto oldLimit = cis->PushLimit(section->_length);
 
                 ObfPoiSectionReader_P::read(reader, section);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 cis->Seek(section->_offset + section->_length);
 
                 info->_poiSections.push_back(qMove(section));
+                break;
             }
-            break;
-        case OBF::OsmAndStructure::kVersionConfirmFieldNumber:
+            case OBF::OsmAndStructure::kVersionConfirmFieldNumber:
             {
                 gpb::uint32 controlVersion;
                 cis->ReadVarint32(&controlVersion);
                 loadedCorrectly = (controlVersion == info->_version);
-                if (!loadedCorrectly)
-                    break;
+                break;
             }
-            break;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 

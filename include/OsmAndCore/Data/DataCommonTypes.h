@@ -133,7 +133,7 @@ namespace OsmAnd
         const ObfObjectId mapObjectId,
         const AreaI& bbox,
         const ZoomLevel firstZoomLevel,
-        const ZoomLevel lasttZoomLevel) > FilterMapObjectsByIdFunction;
+        const ZoomLevel lasttZoomLevel) > FilterBinaryMapObjectsByIdFunction;
 
     union ObfRoutingSectionDataBlockId
     {

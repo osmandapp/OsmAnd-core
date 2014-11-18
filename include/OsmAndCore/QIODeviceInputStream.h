@@ -21,6 +21,11 @@ namespace OsmAnd
     */
     class OSMAND_CORE_API QIODeviceInputStream : public gpb::io::ZeroCopyInputStream
     {
+    public:
+        enum {
+            DefaultBufferSize = 4 * 1024, // 4Kb
+        };
+
     private:
         GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(QIODeviceInputStream);
 
@@ -38,15 +43,12 @@ namespace OsmAnd
 
         //! Should close on destruction?
         const bool _closeOnDestruction;
-
-        //! Constants
-        enum {
-            DefaultBufferSize = 4 * 1024, // 4Kb
-        };
     protected:
     public:
         //! Ctor
-        QIODeviceInputStream(const std::shared_ptr<QIODevice>& device, const size_t bufferSize = DefaultBufferSize);
+        QIODeviceInputStream(
+            const std::shared_ptr<QIODevice>& device,
+            const size_t bufferSize = DefaultBufferSize);
 
         //! Dtor
         virtual ~QIODeviceInputStream();
@@ -56,7 +58,6 @@ namespace OsmAnd
         virtual bool Skip(int count);
         virtual gpb::int64 ByteCount() const;
     };
-
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_Q_IO_DEVICE_INPUT_STREAM_H_)

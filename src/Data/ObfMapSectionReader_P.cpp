@@ -31,7 +31,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
     const ObfReader_P& reader,
     const std::shared_ptr<ObfMapSectionInfo>& section)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for (;;)
     {
@@ -39,6 +39,9 @@ void OsmAnd::ObfMapSectionReader_P::read(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndMapIndex::kNameFieldNumber:
             {
@@ -58,9 +61,9 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 Ref<ObfMapSectionLevel> levelRoot(new ObfMapSectionLevel());
                 levelRoot->length = length;
                 levelRoot->offset = offset;
-                readMapLevelHeader(reader, section, levelRoot);
+                readMapLevelHeader(reader, levelRoot);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 section->levels.push_back(qMove(levelRoot));
@@ -75,10 +78,12 @@ void OsmAnd::ObfMapSectionReader_P::read(
 
 void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
     const ObfReader_P& reader,
+    const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
+    bool atLeastOneRuleWasRead = false;
     uint32_t defaultId = 1;
     for (;;)
     {
@@ -86,22 +91,32 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 encodingDecodingRules->verifyRequiredRulesExist();
                 return;
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 readEncodingDecodingRule(reader, defaultId++, encodingDecodingRules);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
+                atLeastOneRuleWasRead = true;
                 break;
             }
             default:
+                if (atLeastOneRuleWasRead)
+                {
+                    encodingDecodingRules->verifyRequiredRulesExist();
+                    return;
+                }
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
         }
@@ -113,7 +128,7 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
     uint32_t defaultId,
     const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     gpb::uint32 ruleId = defaultId;
     QString ruleTag;
@@ -124,6 +139,9 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 encodingDecodingRules->addRule(ruleId, ruleTag, ruleValue);
                 return;
             case OBF::OsmAndMapIndex_MapEncodingRule::kValueFieldNumber:
@@ -144,10 +162,9 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
 
 void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
     const ObfReader_P& reader,
-    const std::shared_ptr<const ObfMapSectionInfo>& section,
     const std::shared_ptr<ObfMapSectionLevel>& level)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     uint64_t fieldsMask = 0u;
     const auto safeToSkipFieldsMask =
@@ -167,6 +184,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelHeader(
         switch (tfn)
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndMapIndex_MapRootLevel::kMaxZoomFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&level->maxZoom));
@@ -220,13 +240,18 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
     const std::shared_ptr<const ObfMapSectionLevel>& level,
     QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >& trees)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
+
+    bool atLeastOneMapRootLevelRead = false;
     for (;;)
     {
         gpb::uint32 tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndMapIndex_MapRootLevel::kBoxesFieldNumber:
             {
@@ -239,14 +264,17 @@ void OsmAnd::ObfMapSectionReader_P::readMapLevelTreeNodes(
                 levelTree->length = length;
                 readTreeNode(reader, section, level->area31, levelTree);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 trees.push_back(qMove(levelTree));
 
+                atLeastOneMapRootLevelRead = true;
                 break;
             }
             default:
+                if (atLeastOneMapRootLevelRead)
+                    return;
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
         }
@@ -259,7 +287,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
     const AreaI& parentArea,
     const std::shared_ptr<ObfMapSectionLevelTreeNode>& treeNode)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     uint64_t fieldsMask = 0u;
     const auto safeToSkipFieldsMask =
@@ -277,6 +305,9 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
         switch (tfn)
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndMapIndex_MapDataBox::kLeftFieldNumber:
             {
@@ -366,16 +397,18 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     outChildrenSurfaceType = MapSurfaceType::Undefined;
-
     for (;;)
     {
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber:
             {
@@ -389,7 +422,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 childNode->length = length;
                 readTreeNode(reader, section, treeNode->area31, childNode);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 // Update metric
@@ -417,22 +450,12 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNodeChildren(
                 if (childNode->hasChildrenDataBoxes)
                 {
                     cis->Seek(childNode->offset);
-                    const auto oldLimit = cis->PushLimit(length);
+                    const auto oldLimit = cis->PushLimit(childNode->length);
 
                     cis->Skip(childNode->firstDataBoxInnerOffset);
                     readTreeNodeChildren(reader, section, childNode, subchildrenSurfaceType, nodesWithData, bbox31, controller, metric);
-                    
-                    if (const auto bytesUntilLimit = cis->BytesUntilLimit())
-                    {
-                        LogPrintf(LogSeverityLevel::Error,
-                            "Error in reader (readTreeNodeChildren): %d byte(s) was not read until limit of %d byte(s) starting at offset %d in '%s'. First child at %d offset.",
-                            bytesUntilLimit,
-                            length,
-                            childNode->offset,
-                            qPrintable(section->name),
-                            childNode->firstDataBoxInnerOffset);
-                    }
-                    assert(cis->BytesUntilLimit() == 0);
+
+                    ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
                 }
 
@@ -460,12 +483,12 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& tree,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     const AreaI* bbox31,
-    const FilterMapObjectsByIdFunction filterById,
+    const FilterBinaryMapObjectsByIdFunction filterById,
     const VisitorFunction visitor,
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     QList< std::shared_ptr<BinaryMapObject> > intermediateResult;
     QStringList mapObjectsCaptionsTable;
@@ -480,6 +503,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
         {
             case 0:
             {
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 for (const auto& mapObject : constOf(intermediateResult))
                 {
                     // Fill mapObject captions from string-table
@@ -529,6 +555,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
 
                 // Read map object content
                 const Stopwatch readMapObjectStopwatch(metric != nullptr);
@@ -537,7 +564,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 
                 readMapObject(reader, section, baseId, tree, mapObject, bbox31, metric);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 // Update metric
@@ -581,19 +608,18 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
                 if (intermediateResult.isEmpty())
                 {
                     cis->Skip(cis->BytesUntilLimit());
-
-                    assert(cis->BytesUntilLimit() == 0);
                     cis->PopLimit(oldLimit);
                     break;
                 }
                 
                 ObfReaderUtilities::readStringTable(cis, mapObjectsCaptionsTable);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 break;
@@ -614,7 +640,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
     const AreaI* bbox31,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     const auto baseOffset = cis->CurrentPosition();
 
     for (;;)
@@ -625,6 +651,9 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
         {
             case 0:
             {
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 if (mapObject && mapObject->points31.isEmpty())
                 {
                     LogPrintf(LogSeverityLevel::Warning,
@@ -692,7 +721,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     }
                 }
 
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 // Since reserved space may be larger than actual amount of data,
@@ -806,7 +834,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 // Shrink memory
                 polygon.resize(verticesCount);
 
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 break;
@@ -839,7 +866,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 // Shrink preallocated space
                 typesRuleIds.squeeze();
 
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 break;
@@ -865,7 +891,6 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                     mapObject->captionsOrder.push_back(stringRuleId);
                 }
 
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 break;
@@ -892,14 +917,14 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const AreaI* bbox31,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapSurfaceType* outBBoxOrSectionSurfaceType,
-    const FilterMapObjectsByIdFunction filterById,
+    const FilterBinaryMapObjectsByIdFunction filterById,
     const VisitorFunction visitor,
     DataBlocksCache* cache,
     QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     // Ensure encoding/decoding rules are read
     if (section->_p->_encodingDecodingRulesLoaded.loadAcquire() == 0)
@@ -912,10 +937,9 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             auto oldLimit = cis->PushLimit(section->_length);
 
             const std::shared_ptr<ObfMapSectionDecodingEncodingRules> encodingDecodingRules(new ObfMapSectionDecodingEncodingRules());
-            readEncodingDecodingRules(reader, encodingDecodingRules);
+            readEncodingDecodingRules(reader, section, encodingDecodingRules);
             section->_p->_encodingDecodingRules = encodingDecodingRules;
 
-            assert(cis->BytesUntilLimit() == 0);
             cis->PopLimit(oldLimit);
 
             section->_p->_encodingDecodingRulesLoaded.storeRelease(1);
@@ -974,7 +998,6 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 readMapLevelTreeNodes(reader, section, mapLevel, *rootNodes);
                 mapLevel->_p->_rootNodes = rootNodes;
 
-                assert(cis->BytesUntilLimit() == 0);
                 cis->PopLimit(oldLimit);
 
                 mapLevel->_p->_rootNodesLoaded.storeRelease(1);
@@ -1022,7 +1045,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 cis->Skip(rootNode->firstDataBoxInnerOffset);
                 readTreeNodeChildren(reader, section, rootNode, rootSubnodesSurfaceType, &treeNodesWithData, bbox31, controller, metric);
                 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
             }
 
@@ -1108,7 +1131,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                         nullptr,
                         metric ? &localMetric : nullptr);
 
-                    assert(cis->BytesUntilLimit() == 0);
+                    ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
 
                     // Update metric
@@ -1176,7 +1199,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     controller,
                     metric);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 // Update metric

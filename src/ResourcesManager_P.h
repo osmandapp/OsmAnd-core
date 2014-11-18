@@ -71,9 +71,21 @@ namespace OsmAnd
         mutable WebClient _webClient;
 
         bool uninstallMapRegion(const std::shared_ptr<const InstalledResource>& resource);
+        bool uninstallRoadMapRegion(const std::shared_ptr<const InstalledResource>& resource);
+        bool uninstallSrtmMapRegion(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource);
 
         bool installMapRegionFromFile(
+            const QString& id,
+            const QString& filePath,
+            std::shared_ptr<const InstalledResource>& outResource,
+            const QString& localPath = QString::null);
+        bool installRoadMapRegionFromFile(
+            const QString& id,
+            const QString& filePath,
+            std::shared_ptr<const InstalledResource>& outResource,
+            const QString& localPath = QString::null);
+        bool installSrtmMapRegionFromFile(
             const QString& id,
             const QString& filePath,
             std::shared_ptr<const InstalledResource>& outResource,
@@ -85,10 +97,13 @@ namespace OsmAnd
             const QString& localPath = QString::null);
 
         bool updateMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+        bool updateRoadMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+        bool updateSrtmMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
 
         class OnlineTileSourcesProxy : public IOnlineTileSources
         {
+            Q_DISABLE_COPY_AND_MOVE(OnlineTileSourcesProxy);
         private:
         protected:
             OnlineTileSourcesProxy(ResourcesManager_P* owner);

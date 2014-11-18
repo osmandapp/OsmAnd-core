@@ -19,34 +19,59 @@
 #include "TiledEntriesCollection.h"
 #include "SharedByZoomResourcesContainer.h"
 #include "ObfMapSectionReader.h"
+#include "ObfRoutingSectionReader.h"
 #include "ObfMapObjectsProvider.h"
 #include "ObfMapObjectsProvider_Metrics.h"
 
 namespace OsmAnd
 {
     class BinaryMapObject;
+    class Road;
 
-    class ObfMapObjectsProvider_P Q_DECL_FINAL
+    class ObfMapObjectsProvider_P /*Q_DECL_FINAL*/
     {
     private:
     protected:
         ObfMapObjectsProvider_P(ObfMapObjectsProvider* owner);
 
-        class DataBlocksCache : public ObfMapSectionReader::DataBlocksCache
+        class BinaryMapObjectsDataBlocksCache : public ObfMapSectionReader::DataBlocksCache
         {
+            Q_DISABLE_COPY_AND_MOVE(BinaryMapObjectsDataBlocksCache);
         private:
         protected:
         public:
-            DataBlocksCache(const bool cacheTileInnerDataBlocks);
-            virtual ~DataBlocksCache();
+            BinaryMapObjectsDataBlocksCache(const bool cacheTileInnerDataBlocks);
+            virtual ~BinaryMapObjectsDataBlocksCache();
 
             const bool cacheTileInnerDataBlocks;
 
-            virtual bool shouldCacheBlock(const DataBlockId id, const AreaI blockBBox31, const AreaI* const queryArea31 = nullptr) const;
+            virtual bool shouldCacheBlock(
+                const DataBlockId id,
+                const AreaI blockBBox31,
+                const AreaI* const queryArea31 = nullptr) const;
         };
-        const std::shared_ptr<ObfMapSectionReader::DataBlocksCache> _dataBlocksCache;
+        const std::shared_ptr<ObfMapSectionReader::DataBlocksCache> _binaryMapObjectsDataBlocksCache;
+        mutable SharedByZoomResourcesContainer<ObfObjectId, const BinaryMapObject> _sharedBinaryMapObjects;
 
-        mutable SharedByZoomResourcesContainer<ObfObjectId, const BinaryMapObject> _sharedMapObjects;
+        class RoadsDataBlocksCache : public ObfRoutingSectionReader::DataBlocksCache
+        {
+            Q_DISABLE_COPY_AND_MOVE(RoadsDataBlocksCache);
+        private:
+        protected:
+        public:
+            RoadsDataBlocksCache(const bool cacheTileInnerDataBlocks);
+            virtual ~RoadsDataBlocksCache();
+
+            const bool cacheTileInnerDataBlocks;
+
+            virtual bool shouldCacheBlock(
+                const DataBlockId id,
+                const RoutingDataLevel dataLevel,
+                const AreaI blockBBox31,
+                const AreaI* const queryArea31 = nullptr) const;
+        };
+        const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache> _roadsDataBlocksCache;
+        mutable SharedResourcesContainer<ObfObjectId, const Road> _sharedRoads;
 
         enum class TileState
         {
@@ -83,17 +108,25 @@ namespace OsmAnd
                 const ZoomLevel zoom,
                 const std::shared_ptr<Link>& link,
                 const std::shared_ptr<TileEntry>& tileEntry,
-                const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& dataBlocksCache,
-                const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedDataBlocks,
-                const QList< std::shared_ptr<const BinaryMapObject> >& referencedMapObjects);
+                const std::shared_ptr<ObfMapSectionReader::DataBlocksCache>& binaryMapObjectsDataBlocksCache,
+                const QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >& referencedBinaryMapObjectsDataBlocks,
+                const QList< std::shared_ptr<const BinaryMapObject> >& referencedBinaryMapObjects,
+                const std::shared_ptr<ObfRoutingSectionReader::DataBlocksCache>& roadsDataBlocksCache,
+                const QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >& referencedRoadsDataBlocks,
+                const QList< std::shared_ptr<const Road> >& referencedRoads);
             virtual ~RetainableCacheMetadata();
 
             ZoomLevel zoom;
             Link::WeakEnd weakLink;
             std::weak_ptr<TileEntry> tileEntryWeakRef;
-            std::weak_ptr<ObfMapSectionReader::DataBlocksCache> dataBlocksCacheWeakRef;
-            QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> > referencedDataBlocks;
-            QList< std::shared_ptr<const BinaryMapObject> > referencedMapObjects;
+
+            std::weak_ptr<ObfMapSectionReader::DataBlocksCache> binaryMapObjectsDataBlocksCacheWeakRef;
+            QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> > referencedBinaryMapObjectsDataBlocks;
+            QList< std::shared_ptr<const BinaryMapObject> > referencedBinaryMapObjects;
+
+            std::weak_ptr<ObfRoutingSectionReader::DataBlocksCache> roadsDataBlocksCacheWeakRef;
+            QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> > referencedRoadsDataBlocks;
+            QList< std::shared_ptr<const Road> > referencedRoads;
         };
     public:
         ~ObfMapObjectsProvider_P();

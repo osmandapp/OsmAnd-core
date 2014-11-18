@@ -1,27 +1,45 @@
 #include "QFileDeviceInputStream.h"
 
-namespace gpb = google::protobuf;
+#include "Logging.h"
 
-OsmAnd::QFileDeviceInputStream::QFileDeviceInputStream(const std::shared_ptr<QFileDevice>& file, const size_t memoryWindowSize /*= DefaultMemoryWindowSize*/)
-    : _file(file)
+namespace OsmAnd
+{
+    namespace gpb = google::protobuf;
+}
+
+OsmAnd::QFileDeviceInputStream::QFileDeviceInputStream(
+    const std::shared_ptr<QFileDevice>& file_,
+    const size_t memoryWindowSize_ /*= DefaultMemoryWindowSize*/)
+    : _file(file_)
     , _fileSize(_file->size())
     , _mappedMemory(nullptr)
-    , _memoryWindowSize(memoryWindowSize)
+    , _memoryWindowSize(memoryWindowSize_)
     , _currentPosition(0)
     , _wasInitiallyOpened(_file->isOpen())
     , _originalOpenMode(_file->openMode())
     , _closeOnDestruction(false)
+    , file(_file)
 {
 }
 
 OsmAnd::QFileDeviceInputStream::~QFileDeviceInputStream()
 {
+    bool ok;
+
     // Unmap memory if it's still mapped
     if (_mappedMemory)
     {
-        bool ok;
         ok = _file->unmap(_mappedMemory);
-        assert(ok);
+        if (!ok)
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Failed to unmap memory %p of '%s' (handle 0x%08x): (%d) %s",
+                _mappedMemory,
+                qPrintable(file->fileName()),
+                file->handle(),
+                static_cast<int>(file->error()),
+                qPrintable(file->errorString()));
+        }
 
         _mappedMemory = nullptr;
     }
@@ -37,10 +55,22 @@ OsmAnd::QFileDeviceInputStream::~QFileDeviceInputStream()
 
 bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
 {
+    bool ok;
+
     // If memory was already mapped, unmap it
     if (Q_LIKELY(_mappedMemory != nullptr))
     {
-        _file->unmap(_mappedMemory);
+        ok = _file->unmap(_mappedMemory);
+        if (!ok)
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Failed to unmap memory %p of '%s' (handle 0x%08x): (%d) %s",
+                _mappedMemory,
+                qPrintable(file->fileName()),
+                file->handle(),
+                static_cast<int>(file->error()),
+                qPrintable(file->errorString()));
+        }
         _mappedMemory = nullptr;
     }
 
@@ -71,20 +101,27 @@ bool OsmAnd::QFileDeviceInputStream::Next(const void** data, int* size)
     _mappedMemory = _file->map(_currentPosition, mappedSize);
 
     // Check if memory was mapped successfully
-    if (!_mappedMemory)
+    if (Q_UNLIKELY(!_mappedMemory))
     {
+        LogPrintf(LogSeverityLevel::Warning,
+            "Failed to map %" PRIu64 " bytes starting at %" PRIi64 " offset from '%s' (handle 0x%08x) into memory: (%d) %s",
+            static_cast<uint64_t>(mappedSize),
+            _currentPosition,
+            qPrintable(file->fileName()),
+            file->handle(),
+            static_cast<int>(file->error()),
+            qPrintable(file->errorString()));
+
         *data = nullptr;
         *size = 0;
         return false;
     }
-    else
-    {
-        _currentPosition += mappedSize;
+    
+    _currentPosition += mappedSize;
 
-        *data = _mappedMemory;
-        *size = mappedSize;
-        return true;
-    }
+    *data = _mappedMemory;
+    *size = mappedSize;
+    return true;
 }
 
 void OsmAnd::QFileDeviceInputStream::BackUp(int count)
@@ -102,14 +139,12 @@ bool OsmAnd::QFileDeviceInputStream::Skip(int count)
         _currentPosition = _fileSize;
         return false;
     }
-    else
-    {
-        _currentPosition += count;
-        return true;
-    }
+
+    _currentPosition += count;
+    return true;
 }
 
-gpb::int64 OsmAnd::QFileDeviceInputStream::ByteCount() const
+OsmAnd::gpb::int64 OsmAnd::QFileDeviceInputStream::ByteCount() const
 {
     return static_cast<gpb::int64>(_currentPosition);
 }

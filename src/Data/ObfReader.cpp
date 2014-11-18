@@ -42,3 +42,8 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader::obtainInfo() const
 {
     return _p->obtainInfo();
 }
+
+std::shared_ptr<OsmAnd::gpb::io::CodedInputStream> OsmAnd::ObfReader::getCodedInputStream() const
+{
+    return _p->getCodedInputStream();
+}

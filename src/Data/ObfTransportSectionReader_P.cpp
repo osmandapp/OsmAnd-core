@@ -20,7 +20,7 @@ OsmAnd::ObfTransportSectionReader_P::~ObfTransportSectionReader_P()
 
 void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const std::shared_ptr<ObfTransportSectionInfo>& section )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for(;;)
     {
@@ -28,6 +28,9 @@ void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             return;
         case OBF::OsmAndTransportIndex::kRoutesFieldNumber:
             ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -43,7 +46,7 @@ void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const
 
                 readTransportStopsBounds(reader, section);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
             }
             break;
@@ -72,7 +75,7 @@ void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const
 
 void OsmAnd::ObfTransportSectionReader_P::readTransportStopsBounds( const ObfReader_P& reader, const std::shared_ptr<ObfTransportSectionInfo>& section )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for(;;)
     {
@@ -80,6 +83,9 @@ void OsmAnd::ObfTransportSectionReader_P::readTransportStopsBounds( const ObfRea
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             return;
         case OBF::TransportStopsTree::kLeftFieldNumber:
             section->_area24.left() = ObfReaderUtilities::readSInt32(cis);

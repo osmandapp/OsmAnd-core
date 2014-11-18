@@ -4,8 +4,14 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
 #include <QIODevice>
+#include <OsmAndCore/restore_internal_warnings.h>
+
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <google/protobuf/io/coded_stream.h>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Data/ObfInfo.h>
@@ -13,6 +19,8 @@
 
 namespace OsmAnd
 {
+    namespace gpb = google::protobuf;
+
     class ObfFile;
 
     class ObfMapSectionReader;
@@ -40,6 +48,8 @@ namespace OsmAnd
         bool close();
 
         std::shared_ptr<const ObfInfo> obtainInfo() const;
+
+        std::shared_ptr<gpb::io::CodedInputStream> getCodedInputStream() const;
 
     friend class OsmAnd::ObfMapSectionReader;
     friend class OsmAnd::ObfAddressSectionReader;

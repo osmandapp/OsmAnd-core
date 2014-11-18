@@ -50,6 +50,7 @@ namespace OsmAnd
 
         static void readEncodingDecodingRules(
             const ObfReader_P& reader,
+            const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules);
 
         static void readEncodingDecodingRule(
@@ -59,6 +60,7 @@ namespace OsmAnd
 
         static void readLevelTreeNodes(
             const ObfReader_P& reader,
+            const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const std::shared_ptr<ObfRoutingSectionLevel>& level);
 
         static void readLevelTreeNode(
@@ -68,6 +70,7 @@ namespace OsmAnd
 
         static void readLevelTreeNodeChildren(
             const ObfReader_P& reader,
+            const std::shared_ptr<const ObfRoutingSectionInfo>& section,
             const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& treeNode,
             QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* outNodesWithData,
             const AreaI* bbox31,

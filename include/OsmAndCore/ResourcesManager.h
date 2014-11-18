@@ -38,12 +38,12 @@ namespace OsmAnd
             Unknown = -1,
 
             MapRegion,
+            RoadMapRegion,
+            SrtmMapRegion,
             VoicePack,
             MapStyle,
             MapStylesPresets,
             OnlineTileSources,
-            //RoadMapRegion,
-            //SrtmRegion,
             //HillshadeRegion,
             //HeightmapRegion
         };
@@ -191,6 +191,9 @@ namespace OsmAnd
             virtual ~ObfMetadata();
 
             const std::shared_ptr<const ObfFile> obfFile;
+
+        private:
+            Q_DISABLE_COPY_AND_MOVE(ObfMetadata);
         };
 
         struct OSMAND_CORE_API MapStyleMetadata : public Resource::Metadata
@@ -199,6 +202,9 @@ namespace OsmAnd
             virtual ~MapStyleMetadata();
 
             const std::shared_ptr<UnresolvedMapStyle> mapStyle;
+
+        private:
+            Q_DISABLE_COPY_AND_MOVE(MapStyleMetadata);
         };
 
         struct OSMAND_CORE_API MapStylesPresetsMetadata : public Resource::Metadata
@@ -207,6 +213,9 @@ namespace OsmAnd
             virtual ~MapStylesPresetsMetadata();
 
             const std::shared_ptr<const MapStylesPresetsCollection> presets;
+
+        private:
+            Q_DISABLE_COPY_AND_MOVE(MapStylesPresetsMetadata);
         };
 
         struct OSMAND_CORE_API OnlineTileSourcesMetadata : public Resource::Metadata
@@ -215,6 +224,9 @@ namespace OsmAnd
             virtual ~OnlineTileSourcesMetadata();
 
             const std::shared_ptr<const OnlineTileSources> sources;
+
+        private:
+            Q_DISABLE_COPY_AND_MOVE(OnlineTileSourcesMetadata);
         };
     private:
         PrivateImplementation<ResourcesManager_P> _p;

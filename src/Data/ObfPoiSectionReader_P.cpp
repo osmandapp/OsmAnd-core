@@ -24,7 +24,7 @@ OsmAnd::ObfPoiSectionReader_P::~ObfPoiSectionReader_P()
 
 void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::shared_ptr<ObfPoiSectionInfo>& section )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for(;;)
     {
@@ -32,6 +32,9 @@ void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             return;
         case OBF::OsmAndPoiIndex::kNameFieldNumber:
             ObfReaderUtilities::readQString(cis, section->_name);
@@ -40,11 +43,12 @@ void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 readBoundaries(reader, section);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
             }
             break; 
@@ -60,7 +64,7 @@ void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::
 
 void OsmAnd::ObfPoiSectionReader_P::readBoundaries( const ObfReader_P& reader, const std::shared_ptr<ObfPoiSectionInfo>& section )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for(;;)
     {
@@ -68,6 +72,9 @@ void OsmAnd::ObfPoiSectionReader_P::readBoundaries( const ObfReader_P& reader, c
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             return;
         case OBF::OsmAndTileBox::kLeftFieldNumber:
             cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.left()));
@@ -92,7 +99,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QList< std::shared_ptr<const AmenityCategory> >& categories )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for(;;)
     {
@@ -100,17 +107,21 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             return;
         case OBF::OsmAndPoiIndex::kCategoriesTableFieldNumber:
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
                 
                 std::shared_ptr<AmenityCategory> category(new AmenityCategory());
                 readCategory(reader, category);
                 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 categories.push_back(qMove(category));
@@ -128,7 +139,7 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
 
 void OsmAnd::ObfPoiSectionReader_P::readCategory( const ObfReader_P& reader, const std::shared_ptr<AmenityCategory>& category )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     for(;;)
     {
@@ -136,6 +147,9 @@ void OsmAnd::ObfPoiSectionReader_P::readCategory( const ObfReader_P& reader, con
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             return;
         case OBF::OsmAndCategoryTable::kCategoryFieldNumber:
             ObfReaderUtilities::readQString(cis, category->_name);
@@ -158,12 +172,13 @@ void OsmAnd::ObfPoiSectionReader_P::loadCategories(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QList< std::shared_ptr<const OsmAnd::AmenityCategory> >& categories )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     cis->Seek(section->_offset);
     auto oldLimit = cis->PushLimit(section->_length);
+
     readCategories(reader, section, categories);
 
-    assert(cis->BytesUntilLimit() == 0);
+    ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
 }
 
@@ -175,12 +190,13 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     std::function<bool (std::shared_ptr<const Amenity>)> visitor /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/ )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     cis->Seek(section->_offset);
     auto oldLimit = cis->PushLimit(section->_length);
+
     readAmenities(reader, section, desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller);
 
-    assert(cis->BytesUntilLimit() == 0);
+    ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
 }
 
@@ -192,7 +208,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     std::function<bool (std::shared_ptr<const Amenity>)> visitor,
     const IQueryController* const controller)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     QList< std::shared_ptr<Tile> > tiles;
     for(;;)
     {
@@ -200,15 +216,19 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             return;
         case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
             {
-                auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                auto oldLimit = cis->PushLimit(length);
+                const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
 
                 readTile(reader, section, tiles, nullptr, desiredCategories, zoom, zoomDepth, bbox31, controller, nullptr);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 if (controller && controller->isAborted())
                     return;
@@ -225,12 +245,13 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                 for(const auto& tile : constOf(tiles))
                 {
                     cis->Seek(section->_offset + tile->_offset);
-                    auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                    auto oldLimit = cis->PushLimit(length);
+                    const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                    const auto offset = cis->CurrentPosition();
+                    const auto oldLimit = cis->PushLimit(length);
 
                     readAmenitiesFromTile(reader, section, tile.get(), desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller, nullptr);
 
-                    assert(cis->BytesUntilLimit() == 0);
+                    ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
                     if (controller && controller->isAborted())
                         return;
@@ -254,7 +275,7 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
     const IQueryController* const controller,
     QSet< uint64_t >* tilesToSkip)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     const auto zoomToSkip = zoom + zoomDepth;
     QSet< uint64_t > tilesToSkip_;
@@ -272,6 +293,9 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return false;
+
             tiles.push_back(qMove(tile));
             return true;
         case OBF::OsmAndPoiBox::kZoomFieldNumber:
@@ -330,11 +354,12 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
                 }
                 gpb::uint32 length;
                 cis->ReadLittleEndian32(&length);
-                auto oldLimit = cis->PushLimit(length);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
 
                 const auto containsDesired = checkTileCategories(reader, section, desiredCategories);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 if (!containsDesired)
                 {
@@ -345,12 +370,13 @@ bool OsmAnd::ObfPoiSectionReader_P::readTile(
             break;
         case OBF::OsmAndPoiBox::kSubBoxesFieldNumber:
             {
-                auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                auto oldLimit = cis->PushLimit(length);
+                const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
 
                 auto tileOmitted = readTile(reader, section, tiles, tile.get(), desiredCategories, zoom, zoomDepth, bbox31, controller, tilesToSkip);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 if (tilesToSkip && tile->_zoom >= zoomToSkip && tileOmitted)
@@ -392,13 +418,16 @@ bool OsmAnd::ObfPoiSectionReader_P::checkTileCategories(
     const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QSet<uint32_t>* desiredCategories )
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     for(;;)
     {
         const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return false;
+
             return false;
         case OBF::OsmAndPoiCategories::kCategoriesFieldNumber:
             {
@@ -432,7 +461,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
     const IQueryController* const controller,
     QSet< uint64_t >* amenitiesToSkip)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
 
     const auto zoomToSkip = zoom + zoomDepth;
     QSet< uint64_t > amenitiesToSkip_;
@@ -451,6 +480,9 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             return;
         case OBF::OsmAndPoiBoxData::kZoomFieldNumber:
             {
@@ -477,12 +509,13 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                auto oldLimit = cis->PushLimit(length);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<const Amenity> amenity;
                 readAmenity(reader, section, pTile, zoomTile, amenity, desiredCategories, bbox31, controller);
 
-                assert(cis->BytesUntilLimit() == 0);
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 if (!amenity)
@@ -529,7 +562,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const AreaI* bbox31,
     const IQueryController* const controller)
 {
-    const auto cis = reader._codedInputStream.get();
+    const auto cis = reader.getCodedInputStream().get();
     PointI point;
     uint32_t catId;
     uint32_t subId;
@@ -543,6 +576,9 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
         case 0:
+            if (!ObfReaderUtilities::reachedDataEnd(cis))
+                return;
+
             if (amenity->_latinName.isEmpty())
                 amenity->_latinName = ICU::transliterateToLatin(amenity->_name);
             amenity->_point31 = point;

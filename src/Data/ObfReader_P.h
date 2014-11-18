@@ -5,8 +5,11 @@
 #include <functional>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QString>
 #include <QIODevice>
+#include <QThread>
+#include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include <google/protobuf/io/coded_stream.h>
@@ -16,32 +19,35 @@
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
 
+//#define OSMAND_VERIFY_OBF_READER_THREAD 1
+#if !defined(OSMAND_VERIFY_OBF_READER_THREAD)
+#   define OSMAND_VERIFY_OBF_READER_THREAD 0
+#endif // !defined(OSMAND_VERIFY_OBF_READER_THREAD)
+
 namespace OsmAnd
 {
     namespace gpb = google::protobuf;
 
     class ObfInfo;
 
-    class ObfMapSectionReader_P;
-    class ObfAddressSectionReader_P;
-    class ObfRoutingSectionReader_P;
-    class ObfPoiSectionReader_P;
-    class ObfTransportSectionReader_P;
-
     class ObfReader;
     class ObfReader_P Q_DECL_FINAL
     {
+        Q_DISABLE_COPY_AND_MOVE(ObfReader_P);
+
     private:
-        mutable std::unique_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
-
         const std::shared_ptr<QIODevice> _input;
-        mutable std::shared_ptr<const ObfInfo> _obfInfo;
+        std::shared_ptr<gpb::io::ZeroCopyInputStream> _zeroCopyInputStream;
+        std::shared_ptr<gpb::io::CodedInputStream> _codedInputStream;
 
+        mutable std::shared_ptr<const ObfInfo> _obfInfo;
         static bool readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& info);
+
+#if OSMAND_VERIFY_OBF_READER_THREAD
+        const Qt::HANDLE _threadId;
+#endif // OSMAND_VERIFY_OBF_READER_THREAD
     protected:
         ObfReader_P(ObfReader* const owner, const std::shared_ptr<QIODevice>& input);
-
-        mutable std::unique_ptr<gpb::io::CodedInputStream> _codedInputStream;
     public:
         virtual ~ObfReader_P();
 
@@ -53,13 +59,9 @@ namespace OsmAnd
 
         std::shared_ptr<const ObfInfo> obtainInfo() const;
 
-    friend class OsmAnd::ObfReader;
+        std::shared_ptr<gpb::io::CodedInputStream> getCodedInputStream() const;
 
-    friend class OsmAnd::ObfMapSectionReader_P;
-    friend class OsmAnd::ObfAddressSectionReader_P;
-    friend class OsmAnd::ObfRoutingSectionReader_P;
-    friend class OsmAnd::ObfPoiSectionReader_P;
-    friend class OsmAnd::ObfTransportSectionReader_P;
+    friend class OsmAnd::ObfReader;
     };
 }
 

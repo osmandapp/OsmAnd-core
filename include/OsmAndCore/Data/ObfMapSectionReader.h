@@ -80,7 +80,7 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut = nullptr,
             MapSurfaceType* outBBoxOrSectionSurfaceType = nullptr,
-            const FilterMapObjectsByIdFunction filterById = nullptr,
+            const FilterBinaryMapObjectsByIdFunction filterById = nullptr,
             const VisitorFunction visitor = nullptr,
             DataBlocksCache* cache = nullptr,
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries = nullptr,

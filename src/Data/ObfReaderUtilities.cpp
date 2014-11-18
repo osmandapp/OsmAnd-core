@@ -1,12 +1,18 @@
 #include "ObfReaderUtilities.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QtEndian>
+#include <QThread>
+#include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include "OBF.pb.h"
 #include <google/protobuf/wire_format_lite.h>
 #include "restore_internal_warnings.h"
+
+#include "ObfSectionInfo.h"
+#include "Logging.h"
 
 bool OsmAnd::ObfReaderUtilities::readQString(gpb::io::CodedInputStream* cis, QString& output)
 {
@@ -59,6 +65,9 @@ void OsmAnd::ObfReaderUtilities::readStringTable(gpb::io::CodedInputStream* cis,
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
                 return;
             case OBF::StringTable::kSFieldNumber:
             {
@@ -117,3 +126,29 @@ uint32_t OsmAnd::ObfReaderUtilities::decodeIntegerFromString(const QString& cont
     return res;
 }
 
+bool OsmAnd::ObfReaderUtilities::reachedDataEnd(gpb::io::CodedInputStream* cis)
+{
+    if (cis->ConsumedEntireMessage())
+        return true;
+
+    LogPrintf(LogSeverityLevel::Warning,
+        "Unexpected data end at %d, %d byte(s) not read",
+        cis->CurrentPosition(),
+        cis->BytesUntilLimit());
+
+    return false;
+}
+
+void OsmAnd::ObfReaderUtilities::ensureAllDataWasRead(gpb::io::CodedInputStream* cis)
+{
+    const auto bytesUntilLimit = cis->BytesUntilLimit();
+    if (bytesUntilLimit == 0)
+        return;
+
+    LogPrintf(LogSeverityLevel::Warning,
+        "Unexpected %d unread byte(s) at %d",
+        cis->BytesUntilLimit(),
+        cis->CurrentPosition());
+
+    cis->Skip(cis->BytesUntilLimit());
+}
