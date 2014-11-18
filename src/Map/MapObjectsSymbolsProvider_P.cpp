@@ -696,9 +696,10 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::computeBlockPinPoint(
     if (endOffset > pathLengthInPixels)
         return false;
 
+    bool blockPinPointFound = false;
     auto testPathPointIndex = scanOriginPathPointIndex;
     auto scannedLengthInPixels = scanOriginPathPointOffsetInPixels;
-    while (scannedLengthInPixels < pinPointOffset)
+    while (scannedLengthInPixels <= pinPointOffset)
     {
         if (testPathPointIndex >= pathSegmentsCount)
         {
@@ -706,7 +707,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::computeBlockPinPoint(
             return false;
         }
         const auto& segmentLengthInPixels = pathSegmentsLengthInPixels[testPathPointIndex];
-        if (scannedLengthInPixels + segmentLengthInPixels > pinPointOffset)
+        if (scannedLengthInPixels + segmentLengthInPixels >= pinPointOffset)
         {
             const auto nOffsetFromPoint = (pinPointOffset - scannedLengthInPixels) / segmentLengthInPixels;
             const auto& segmentStartPoint31 = path31[testPathPointIndex + 0];
@@ -718,6 +719,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::computeBlockPinPoint(
             outComputedBlockPinPoint.basePathPointIndex = testPathPointIndex;
             outComputedBlockPinPoint.offsetFromBasePathPoint31 = pathSegmentsLength31[testPathPointIndex] * nOffsetFromPoint;
             outComputedBlockPinPoint.normalizedOffsetFromBasePathPoint = nOffsetFromPoint;
+            blockPinPointFound = true;
 
             outNextScanOriginPathPointIndex = testPathPointIndex;
             outNextScanOriginPathPointOffsetInPixels = scannedLengthInPixels;
@@ -744,7 +746,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::computeBlockPinPoint(
         testPathPointIndex++;
     }
 
-    return true;
+    return blockPinPointFound;
 }
 
 bool OsmAnd::MapObjectsSymbolsProvider_P::computeSymbolPinPoint(
