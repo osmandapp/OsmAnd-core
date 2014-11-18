@@ -48,6 +48,9 @@ namespace OsmAnd
 
             MapPresentationEnvironment::ShadowMode shadowMode;
             ColorARGB shadowColor;
+
+        private:
+            Q_DISABLE_COPY_AND_MOVE(Context);
         };
 
         enum class PrimitivesType

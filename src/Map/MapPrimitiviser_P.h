@@ -64,6 +64,9 @@ namespace OsmAnd
             unsigned int roadsDensityLimitPerTile;
             float defaultPathPaddingLeft;
             float defaultPathPaddingRight;
+
+        private:
+            Q_DISABLE_COPY_AND_MOVE(Context);
         };
 
         static AreaI alignAreaForCoastlines(const AreaI& area31);
