@@ -2302,34 +2302,34 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
         QString intersectsWith;
-        ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
+        ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
         if (!ok)
             intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
         text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
         float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
-        ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, intersectionSizeFactor);
+        ok = evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, intersectionSizeFactor);
         if (ok)
             text->intersectionSizeFactor = intersectionSizeFactor;
 
         float intersectionSize = std::numeric_limits<float>::quiet_NaN();
-        ok = !ok && primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, intersectionSize);
+        ok = !ok && evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, intersectionSize);
         if (ok)
             text->intersectionSize = intersectionSize;
 
         float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
-        ok = !ok && primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, intersectionMargin);
+        ok = !ok && evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, intersectionMargin);
         if (ok)
             text->intersectionMargin = intersectionMargin;
 
         text->pathPaddingLeft = context.defaultPathPaddingLeft;
         text->pathPaddingRight = context.defaultPathPaddingRight;
         float pathPadding = 0.0f;
-        ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
+        ok = evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
         if (ok)
             text->pathPaddingLeft = text->pathPaddingRight = pathPadding;
-        primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, text->pathPaddingLeft);
-        primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, text->pathPaddingRight);
+        evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, text->pathPaddingLeft);
+        evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, text->pathPaddingRight);
 
         outSymbols.push_back(qMove(text));
     }
