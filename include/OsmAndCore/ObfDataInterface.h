@@ -63,7 +63,8 @@ namespace OsmAnd
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr);
 
         bool loadMapObjects(
-            QList< std::shared_ptr<const OsmAnd::ObfMapObject> >* resultOut,
+            QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* outBinaryMapObjects,
+            QList< std::shared_ptr<const OsmAnd::Road> >* outRoads,
             MapSurfaceType* outSurfaceType,
             const ZoomLevel zoom,
             const AreaI* const bbox31 = nullptr,

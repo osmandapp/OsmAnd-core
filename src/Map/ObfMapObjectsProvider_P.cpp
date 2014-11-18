@@ -104,6 +104,9 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
     // Perform read-out
     const Stopwatch totalReadTimeStopwatch(metric != nullptr);
 
+    // General:
+    auto tileSurfaceType = MapSurfaceType::Undefined;
+
     // BinaryMapObjects:
     QList< std::shared_ptr< const ObfMapSectionReader::DataBlock > > referencedBinaryMapObjectsDataBlocks;
     QList< std::shared_ptr<const BinaryMapObject> > referencedBinaryMapObjects;
@@ -113,29 +116,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > allLoadedBinaryMapObjectsCounters;
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedSharedBinaryMapObjectsCounters;
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedNonSharedBinaryMapObjectsCounters;
-
-    // Roads:
-    QList< std::shared_ptr< const ObfRoutingSectionReader::DataBlock > > referencedRoadsDataBlocks;
-    QList< std::shared_ptr<const Road> > referencedRoads;
-    //QList< proper::shared_future< std::shared_ptr<const BinaryMapObject> > > futureReferencedBinaryMapObjects;
-    //QList< std::shared_ptr<const BinaryMapObject> > loadedBinaryMapObjects;
-    QList< std::shared_ptr<const Road> > loadedSharedRoads;
-    //QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > allLoadedBinaryMapObjectsCounters;
-    //QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedSharedBinaryMapObjectsCounters;
-    //QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedNonSharedBinaryMapObjectsCounters;
-
-    auto tileSurfaceType = MapSurfaceType::Undefined;
-    Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
-    if (metric)
-    {
-        loadMapObjectsMetric = new ObfMapSectionReader_Metrics::Metric_loadMapObjects();
-        metric->submetrics.push_back(loadMapObjectsMetric);
-    }
-    dataInterface->loadBinaryMapObjects(
-        &loadedBinaryMapObjects,
-        &tileSurfaceType,
-        zoom,
-        &tileBBox31,
+    const auto binaryMapObjectsFilteringFunctor =
         [this, zoom, &referencedBinaryMapObjects, &futureReferencedBinaryMapObjects, &loadedSharedBinaryMapObjectsCounters, &loadedNonSharedBinaryMapObjectsCounters, &allLoadedBinaryMapObjectsCounters, tileBBox31, metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section, const ObfObjectId id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
         {
@@ -201,50 +182,227 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
             totalLoadCount++;
 
             return true;
-        },
-        _binaryMapObjectsDataBlocksCache.get(),
-        &referencedBinaryMapObjectsDataBlocks,
-        nullptr,// query controller
-        loadMapObjectsMetric.get());
+        };
 
-    // Process loaded-and-shared map objects
-    for (auto& mapObject : loadedBinaryMapObjects)
+    // Roads:
+    QList< std::shared_ptr< const ObfRoutingSectionReader::DataBlock > > referencedRoadsDataBlocks;
+    QList< std::shared_ptr<const Road> > referencedRoads;
+    QList< proper::shared_future< std::shared_ptr<const Road> > > futureReferencedRoads;
+    QList< std::shared_ptr<const Road> > loadedRoads;
+    QList< std::shared_ptr<const Road> > loadedSharedRoads;
+    QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > allLoadedRoadsCounters;
+    QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedSharedRoadsCounters;
+    QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedNonSharedRoadsCounters;
+    const auto roadsFilteringFunctor =
+        [this, &referencedRoads, &futureReferencedRoads, &loadedSharedRoadsCounters, &loadedNonSharedRoadsCounters, &allLoadedRoadsCounters, &allLoadedBinaryMapObjectsCounters, tileBBox31, metric]
+        (const std::shared_ptr<const ObfRoutingSectionInfo>& section, const ObfObjectId id, const AreaI& bbox) -> bool
+        {
+            const Stopwatch objectsFilteringStopwatch(metric != nullptr);
+
+            // Ensure that binary map object with same ID was not yet loaded
+            if (allLoadedBinaryMapObjectsCounters.constFind(id) != allLoadedBinaryMapObjectsCounters.cend())
+                return false;
+
+            // Check if this road was not loaded before
+            unsigned int& totalLoadCount = allLoadedRoadsCounters[id];
+            if (totalLoadCount > 0u)
+                return false;
+            totalLoadCount++;
+
+            // This road may be shared only in case it crosses bounds of a tile
+            const auto canNotBeShared = tileBBox31.contains(bbox);
+
+            // If road can not be shared, just read it
+            if (canNotBeShared)
+            {
+                if (metric)
+                    metric->elapsedTimeForObjectsFiltering += objectsFilteringStopwatch.elapsed();
+
+                unsigned int& loadCount = loadedNonSharedRoadsCounters[id];
+                if (loadCount > 0u)
+                    return false;
+                loadCount++;
+                totalLoadCount++;
+
+                return true;
+            }
+
+            // Otherwise, this road can be shared, so it should be checked for
+            // being present in shared roads storage, or be reserved there
+            std::shared_ptr<const Road> sharedRoadReference;
+            proper::shared_future< std::shared_ptr<const Road> > futureSharedRoadReference;
+            const auto existsOrWillBeInFuture = _sharedRoads.obtainReferenceOrFutureReferenceOrMakePromise(
+                id,
+                sharedRoadReference,
+                futureSharedRoadReference);
+            if (existsOrWillBeInFuture)
+            {
+                if (sharedRoadReference)
+                {
+                    // If road is already in shared roads cache and is available, use that one
+                    referencedRoads.push_back(qMove(sharedRoadReference));
+                }
+                else
+                {
+                    futureReferencedRoads.push_back(qMove(futureSharedRoadReference));
+                }
+
+                if (metric)
+                    metric->elapsedTimeForObjectsFiltering += objectsFilteringStopwatch.elapsed();
+
+                return false;
+            }
+
+            // This road was reserved, and is going to be shared, but needs to be loaded (and it was promised)
+            unsigned int& loadCount = loadedSharedRoadsCounters[id];
+            if (loadCount > 0u)
+                return false;
+            loadCount += 1;
+            totalLoadCount++;
+
+            return true;
+        };
+
+    if (owner->mode == ObfMapObjectsProvider::Mode::OnlyBinaryMapObjects)
     {
-        const auto id = mapObject->id;
+        Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
+        if (metric)
+        {
+            loadMapObjectsMetric = new ObfMapSectionReader_Metrics::Metric_loadMapObjects();
+            metric->submetrics.push_back(loadMapObjectsMetric);
+        }
 
+        dataInterface->loadBinaryMapObjects(
+            &loadedBinaryMapObjects,
+            &tileSurfaceType,
+            zoom,
+            &tileBBox31,
+            binaryMapObjectsFilteringFunctor,
+            _binaryMapObjectsDataBlocksCache.get(),
+            &referencedBinaryMapObjectsDataBlocks,
+            nullptr,// query controller
+            loadMapObjectsMetric.get());
+    }
+    else if (owner->mode == ObfMapObjectsProvider::Mode::OnlyRoads)
+    {
+        Ref<ObfRoutingSectionReader_Metrics::Metric_loadRoads> loadRoadsMetric;
+        if (metric)
+        {
+            loadRoadsMetric = new ObfRoutingSectionReader_Metrics::Metric_loadRoads();
+            metric->submetrics.push_back(loadRoadsMetric);
+        }
+
+        dataInterface->loadRoads(
+            RoutingDataLevel::Detailed,
+            &tileBBox31,
+            &loadedSharedRoads,
+            roadsFilteringFunctor,
+            nullptr,// visitor
+            _roadsDataBlocksCache.get(),
+            &referencedRoadsDataBlocks,
+            nullptr,// query controller
+            loadRoadsMetric.get());
+    }
+    else if (owner->mode == ObfMapObjectsProvider::Mode::BinaryMapObjectsAndRoads)
+    {
+        Ref<ObfMapSectionReader_Metrics::Metric_loadMapObjects> loadMapObjectsMetric;
+        if (metric)
+        {
+            loadMapObjectsMetric = new ObfMapSectionReader_Metrics::Metric_loadMapObjects();
+            metric->submetrics.push_back(loadMapObjectsMetric);
+        }
+        Ref<ObfRoutingSectionReader_Metrics::Metric_loadRoads> loadRoadsMetric;
+        if (metric)
+        {
+            loadRoadsMetric = new ObfRoutingSectionReader_Metrics::Metric_loadRoads();
+            metric->submetrics.push_back(loadRoadsMetric);
+        }
+
+        dataInterface->loadMapObjects(
+            &loadedBinaryMapObjects,
+            &loadedRoads,
+            &tileSurfaceType,
+            zoom,
+            &tileBBox31,
+            binaryMapObjectsFilteringFunctor,
+            _binaryMapObjectsDataBlocksCache.get(),
+            &referencedBinaryMapObjectsDataBlocks,
+            roadsFilteringFunctor,
+            _roadsDataBlocksCache.get(),
+            &referencedRoadsDataBlocks,
+            nullptr,// query controller
+            loadMapObjectsMetric.get(),
+            loadRoadsMetric.get());
+    }
+
+    // Process loaded-and-shared map objects (both binary and roads)
+    for (auto& binaryMapObject : loadedBinaryMapObjects)
+    {
+        // Check if this binary map object is shared (since only shared produce promises)
+        if (!loadedSharedBinaryMapObjectsCounters.contains(binaryMapObject->id))
+            continue;
+
+        // Add unique binary map object under lock to all zoom levels, for which this map object is valid
+        _sharedBinaryMapObjects.fulfilPromiseAndReference(
+            binaryMapObject->id,
+            Utilities::enumerateZoomLevels(binaryMapObject->level->minZoom, binaryMapObject->level->maxZoom),
+            binaryMapObject);
+        loadedSharedBinaryMapObjects.push_back(binaryMapObject);
+    }
+    for (auto& road : loadedRoads)
+    {
         // Check if this map object is shared (since only shared produce promises)
-        if (!loadedSharedBinaryMapObjectsCounters.contains(id))
+        if (!loadedSharedRoadsCounters.contains(road->id))
             continue;
 
         // Add unique map object under lock to all zoom levels, for which this map object is valid
-        assert(mapObject->level);
-        _sharedBinaryMapObjects.fulfilPromiseAndReference(
-            id,
-            Utilities::enumerateZoomLevels(mapObject->level->minZoom, mapObject->level->maxZoom),
-            mapObject);
-        loadedSharedBinaryMapObjects.push_back(mapObject);
+        _sharedRoads.fulfilPromiseAndReference(
+            road->id,
+            road);
+        loadedSharedRoads.push_back(road);
     }
 
-    for (auto& futureMapObject : futureReferencedBinaryMapObjects)
+    // Request all future map objects (both binary and roads)
+    for (auto& futureBinaryMapObject : futureReferencedBinaryMapObjects)
     {
-        auto mapObject = futureMapObject.get();
+        auto binaryMapObject = futureBinaryMapObject.get();
 
-        referencedBinaryMapObjects.push_back(qMove(mapObject));
+        referencedBinaryMapObjects.push_back(qMove(binaryMapObject));
+    }
+    for (auto& futureRoad : futureReferencedRoads)
+    {
+        auto road = futureRoad.get();
+
+        referencedRoads.push_back(qMove(road));
     }
 
     if (metric)
         metric->elapsedTimeForRead += totalReadTimeStopwatch.elapsed();
 
     // Prepare data for the tile
-    const auto sharedMapObjectsCount = referencedBinaryMapObjects.size() + loadedSharedBinaryMapObjectsCounters.size();
-    const auto allMapObjects = loadedBinaryMapObjects + referencedBinaryMapObjects;
+    const auto sharedMapObjectsCount =
+        (referencedBinaryMapObjects.size() + loadedSharedBinaryMapObjectsCounters.size()) +
+        (referencedRoads.size() + loadedSharedRoadsCounters.size());
+    const auto allMapObjectsCount =
+        (loadedBinaryMapObjects.size() + referencedBinaryMapObjects.size()) +
+        (loadedRoads.size() + referencedRoads.size());
+    QList< std::shared_ptr<const MapObject> > allMapObjects;
+    allMapObjects.reserve(allMapObjectsCount);
+    for (const auto& binaryMapObject : constOf(loadedBinaryMapObjects))
+        allMapObjects.push_back(binaryMapObject);
+    for (const auto& binaryMapObject : constOf(referencedBinaryMapObjects))
+        allMapObjects.push_back(binaryMapObject);
+    for (const auto& road : constOf(loadedRoads))
+        allMapObjects.push_back(road);
+    for (const auto& road : constOf(referencedRoads))
+        allMapObjects.push_back(road);
 
     // Create tile
     const std::shared_ptr<IMapObjectsProvider::Data> newTile(new IMapObjectsProvider::Data(
         tileId,
         zoom,
         tileSurfaceType,
-        copyAs< QList< std::shared_ptr<const MapObject> > >(allMapObjects),
+        allMapObjects,
         new RetainableCacheMetadata(
             zoom,
             _link,
