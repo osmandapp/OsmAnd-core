@@ -770,12 +770,12 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::computeSymbolPinPoint(
 
         auto testPathPointIndex = blockPinPoint.basePathPointIndex;
         auto scannedLength = 0.0f;
-        while (scannedLength < offsetFromOriginPathPoint)
+        while (scannedLength <= offsetFromOriginPathPoint)
         {
             if (testPathPointIndex >= pathSegmentsCount)
                 return false;
             const auto segmentLength = pathSegmentsLengthInPixels[testPathPointIndex] * neededZoomPixelScaleFactor;
-            if (scannedLength + segmentLength > offsetFromOriginPathPoint)
+            if (scannedLength + segmentLength >= offsetFromOriginPathPoint)
             {
                 const auto pathPointIndex = testPathPointIndex;
                 const auto offsetFromPathPoint = offsetFromOriginPathPoint - scannedLength;
@@ -803,10 +803,10 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::computeSymbolPinPoint(
 
         auto testPathPointIndex = blockPinPoint.basePathPointIndex - 1;
         auto scannedLength = 0.0f;
-        while (scannedLength > offsetFromOriginPathPoint)
+        while (scannedLength >= offsetFromOriginPathPoint)
         {
             const auto& segmentLength = pathSegmentsLengthInPixels[testPathPointIndex] * neededZoomPixelScaleFactor;
-            if (scannedLength - segmentLength < offsetFromOriginPathPoint)
+            if (scannedLength - segmentLength <= offsetFromOriginPathPoint)
             {
                 const auto pathPointIndex = testPathPointIndex;
                 const auto offsetFromPathPoint = segmentLength + (offsetFromOriginPathPoint - scannedLength);
