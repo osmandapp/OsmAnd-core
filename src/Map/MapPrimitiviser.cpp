@@ -146,6 +146,9 @@ OsmAnd::MapPrimitiviser::Symbol::Symbol(const std::shared_ptr<const Primitive>& 
     : primitive(primitive_)
     , order(-1)
     , drawAlongPath(false)
+    , intersectionSizeFactor(std::numeric_limits<float>::quiet_NaN())
+    , intersectionSize(std::numeric_limits<float>::quiet_NaN())
+    , intersectionMargin(std::numeric_limits<float>::quiet_NaN())
     , pathPaddingLeft(0.0f)
     , pathPaddingRight(0.0f)
 {

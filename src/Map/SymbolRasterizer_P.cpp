@@ -178,7 +178,26 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->location31 = textSymbol->location31;
                     rasterizedSymbol->offset = textSymbol->drawAlongPath ? localOffset : totalOffset;
                     rasterizedSymbol->drawAlongPath = textSymbol->drawAlongPath;
-                    rasterizedSymbol->intersectionSize = PointI(-1, -1);
+                    if (!qIsNaN(textSymbol->intersectionSizeFactor))
+                    {
+                        rasterizedSymbol->intersectionSize = PointI(
+                            static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->width()),
+                            static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->height()));
+                    }
+                    else if (!qIsNaN(textSymbol->intersectionSize))
+                    {
+                        rasterizedSymbol->intersectionSize = PointI(
+                            static_cast<int>(textSymbol->intersectionSize),
+                            static_cast<int>(textSymbol->intersectionSize));
+                    }
+                    else if (!qIsNaN(textSymbol->intersectionMargin))
+                    {
+                        rasterizedSymbol->intersectionSize = PointI(
+                            rasterizedText->width() + static_cast<int>(textSymbol->intersectionMargin),
+                            rasterizedText->height() + static_cast<int>(textSymbol->intersectionMargin));
+                    }
+                    else
+                        rasterizedSymbol->intersectionSize = PointI(-1, -1);
                     rasterizedSymbol->pathPaddingLeft = textSymbol->pathPaddingLeft;
                     rasterizedSymbol->pathPaddingRight = textSymbol->pathPaddingRight;
                     group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
@@ -273,7 +292,26 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 rasterizedSymbol->location31 = iconSymbol->location31;
                 rasterizedSymbol->offset = iconSymbol->drawAlongPath ? localOffset : totalOffset;
                 rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;
-                rasterizedSymbol->intersectionSize = PointI(iconSymbol->intersectionSize, iconSymbol->intersectionSize);
+                if (!qIsNaN(iconSymbol->intersectionSizeFactor))
+                {
+                    rasterizedSymbol->intersectionSize = PointI(
+                        static_cast<int>(iconSymbol->intersectionSizeFactor * rasterizedIcon->width()),
+                        static_cast<int>(iconSymbol->intersectionSizeFactor * rasterizedIcon->height()));
+                }
+                else if (!qIsNaN(iconSymbol->intersectionSize))
+                {
+                    rasterizedSymbol->intersectionSize = PointI(
+                        static_cast<int>(iconSymbol->intersectionSize),
+                        static_cast<int>(iconSymbol->intersectionSize));
+                }
+                else if (!qIsNaN(iconSymbol->intersectionMargin))
+                {
+                    rasterizedSymbol->intersectionSize = PointI(
+                        rasterizedIcon->width() + static_cast<int>(iconSymbol->intersectionMargin),
+                        rasterizedIcon->height() + static_cast<int>(iconSymbol->intersectionMargin));
+                }
+                else
+                    rasterizedSymbol->intersectionSize = PointI(-1, -1);
                 rasterizedSymbol->pathPaddingLeft = iconSymbol->pathPaddingLeft;
                 rasterizedSymbol->pathPaddingRight = iconSymbol->pathPaddingRight;
                 group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));

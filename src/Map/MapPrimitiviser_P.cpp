@@ -2307,6 +2307,21 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
         text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
+        float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
+        ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, intersectionSizeFactor);
+        if (ok)
+            text->intersectionSizeFactor = intersectionSizeFactor;
+
+        float intersectionSize = std::numeric_limits<float>::quiet_NaN();
+        ok = !ok && primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, intersectionSize);
+        if (ok)
+            text->intersectionSize = intersectionSize;
+
+        float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
+        ok = !ok && primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, intersectionMargin);
+        if (ok)
+            text->intersectionMargin = intersectionMargin;
+
         text->pathPaddingLeft = context.defaultPathPaddingLeft;
         text->pathPaddingRight = context.defaultPathPaddingRight;
         float pathPadding = 0.0f;
@@ -2362,16 +2377,35 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIELD, icon->shieldResourceName);
 
-    icon->intersectionSize = 0.0f; // 0.0 means 'Excluded from intersection check'
-    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_INTERSECTION_SIZE, icon->intersectionSize);
-    if (!ok)
-        icon->intersectionSize = -1.0f; // < 0 means 'Determined by it's real size'
-
     QString intersectsWith;
     ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
     if (!ok)
         intersectsWith = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
     icon->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
+
+    float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
+    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, intersectionSizeFactor);
+    if (ok)
+        icon->intersectionSizeFactor = intersectionSizeFactor;
+
+    float intersectionSize = std::numeric_limits<float>::quiet_NaN();
+    ok = !ok && primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, intersectionSize);
+    if (ok)
+        icon->intersectionSize = intersectionSize;
+
+    float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
+    ok = !ok && primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, intersectionMargin);
+    if (ok)
+        icon->intersectionMargin = intersectionMargin;
+
+    //TODO: Obsolete
+    if (!ok)
+    {
+        float iconIntersectionSize = std::numeric_limits<float>::quiet_NaN();
+        ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_INTERSECTION_SIZE, iconIntersectionSize);
+        if (ok)
+            icon->intersectionSize = iconIntersectionSize;
+    }
 
     icon->pathPaddingLeft = context.defaultPathPaddingLeft;
     icon->pathPaddingRight = context.defaultPathPaddingRight;

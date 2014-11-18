@@ -31,6 +31,9 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", fa
 
 // Text&Icon properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, Output, String, "intersectsWith", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, Output, Float, "intersectionSize", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, Output, Float, "intersectionMargin", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING, Output, Float, "pathPadding", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, Output, Float, "pathPaddingLeft", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, Output, Float, "pathPaddingRight", true)
@@ -52,7 +55,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath", fal
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_ORDER, Output, Integer, "iconOrder", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIELD, Output, String, "shield", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_INTERSECTION_SIZE, Output, Float, "iconVisibleSize", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_INTERSECTION_SIZE, Output, Float, "iconVisibleSize", true) //TODO: Obsolete, superseded by "intersectionSize"
 
 // polygon/way:
 

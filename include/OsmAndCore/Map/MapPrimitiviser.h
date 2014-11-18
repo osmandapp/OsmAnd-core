@@ -166,6 +166,9 @@ namespace OsmAnd
             int order;
             bool drawAlongPath;
             QSet<QString> intersectsWith;
+            float intersectionSizeFactor;
+            float intersectionSize;
+            float intersectionMargin;
             float pathPaddingLeft;
             float pathPaddingRight;
 
