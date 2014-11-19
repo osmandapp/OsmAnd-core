@@ -33,6 +33,7 @@ OsmAnd::SymbolRasterizer::RasterizedSymbol::RasterizedSymbol(
     const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol_)
     : group(group_)
     , primitiveSymbol(primitiveSymbol_)
+    , minDistance(-1.0f)
     , pathPaddingLeft(0.0f)
     , pathPaddingRight(0.0f)
 {

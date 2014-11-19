@@ -69,7 +69,7 @@ namespace OsmAnd
             ContentType contentType;
             QString content;
             LanguageId languageId;
-            PointI minDistance;
+            float minDistance;
             float pathPaddingLeft;
             float pathPaddingRight;
         };

@@ -2317,14 +2317,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
         evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ITALIC, text->isItalic);
 
-        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE_X, text->minDistance.x);
-        if (ok && (text->minDistance.x > 0 || text->minDistance.y > 0))
-        {
-            text->minDistance.y = 15.0f*env->displayDensityFactor; /* 15dip */
-            const auto minDistanceX = 5.0f*env->displayDensityFactor; /* 5dip */
-            if (text->minDistance.x < minDistanceX)
-                text->minDistance.x = minDistanceX;
-        }
+        evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE, text->minDistance);
 
         evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 

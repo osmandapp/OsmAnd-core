@@ -702,6 +702,27 @@ namespace OsmAnd
         }
 
 #if !defined(SWIG)
+        inline AreaT& enlargeBy(const T& delta)
+        {
+            top() -= delta;
+            left() -= delta;
+            bottom() += delta;
+            right() += delta;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        inline AreaT getEnlargedBy(const T& delta) const
+        {
+            return AreaT(
+                top() - delta,
+                left() - delta,
+                bottom() + delta,
+                right() + delta);
+        }
+
+#if !defined(SWIG)
         inline AreaT& enlargeBy(const T& dt, const T& dl, const T& db, const T& dr)
         {
             top() -= dt;
@@ -1026,6 +1047,30 @@ namespace OsmAnd
                 _unrotatedBBox.left() - delta.x,
                 _unrotatedBBox.bottom() + delta.y,
                 _unrotatedBBox.right() + delta.x),
+                _rotation);
+        }
+
+#if !defined(SWIG)
+        inline OOBBT& enlargeBy(const T& delta)
+        {
+            _unrotatedBBox.top() -= delta;
+            _unrotatedBBox.left() -= delta;
+            _unrotatedBBox.bottom() += delta;
+            _unrotatedBBox.right() += delta;
+            updateDerivedData();
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        inline OOBBT getEnlargedBy(const T& delta) const
+        {
+            return OOBBT(
+                AreaT(
+                _unrotatedBBox.top() - delta,
+                _unrotatedBBox.left() - delta,
+                _unrotatedBBox.bottom() + delta,
+                _unrotatedBBox.right() + delta),
                 _rotation);
         }
 

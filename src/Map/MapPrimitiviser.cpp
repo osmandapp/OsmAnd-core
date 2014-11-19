@@ -167,6 +167,7 @@ OsmAnd::MapPrimitiviser::TextSymbol::TextSymbol(const std::shared_ptr<const Prim
     , wrapWidth(0)
     , isBold(false)
     , isItalic(false)
+    , minDistance(-1.0f)
 {
 }
 

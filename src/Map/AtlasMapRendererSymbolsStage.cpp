@@ -1156,7 +1156,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
 {
     const auto& symbol = std::static_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol);
 
-    if ((symbol->minDistance.x <= 0 && symbol->minDistance.y <= 0) || symbol->content.isNull())
+    if (symbol->minDistance < 0.0f || symbol->content.isNull())
         return true;
 
     if (Q_UNLIKELY(debugSettings->skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck))

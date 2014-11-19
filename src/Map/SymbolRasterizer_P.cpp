@@ -289,7 +289,6 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Icon;
                 rasterizedSymbol->content = iconSymbol->resourceName;
                 rasterizedSymbol->languageId = LanguageId::Invariant;
-                rasterizedSymbol->minDistance = PointI();
                 rasterizedSymbol->location31 = iconSymbol->location31;
                 rasterizedSymbol->offset = iconSymbol->drawAlongPath ? localOffset : totalOffset;
                 rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;

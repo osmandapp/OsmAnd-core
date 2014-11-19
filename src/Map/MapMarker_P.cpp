@@ -226,7 +226,6 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
         onMapSurfaceIconSymbol->content = QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels());
         onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
-        onMapSurfaceIconSymbol->minDistance = PointI(); // Since minDistance is (0, 0), this map symbol will not be compared to others
         onMapSurfaceIconSymbol->position31 = _position;
         onMapSurfaceIconSymbol->direction = direction;
         onMapSurfaceIconSymbol->isHidden = _isHidden;
@@ -247,7 +246,6 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         pinIconSymbol->size = PointI(pinIcon->width(), pinIcon->height());
         pinIconSymbol->content = QString().sprintf("markerGroup(%p:%p)->pinIconBitmap:%p", this, symbolsGroup.get(), pinIcon->getPixels());
         pinIconSymbol->languageId = LanguageId::Invariant;
-        pinIconSymbol->minDistance = PointI(); // Since minDistance is (0, 0), this map symbol will not be compared to others
         pinIconSymbol->position31 = _position;
         pinIconSymbol->offset = PointI(0, -pinIcon->height() / 2);
         pinIconSymbol->isHidden = _isHidden;

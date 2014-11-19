@@ -196,7 +196,7 @@ namespace OsmAnd
             int wrapWidth;
             bool isBold;
             bool isItalic;
-            PointI minDistance;
+            float minDistance;
             QString shieldResourceName;
 
         friend class OsmAnd::MapPrimitiviser;

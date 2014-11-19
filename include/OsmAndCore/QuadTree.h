@@ -122,6 +122,14 @@ namespace OsmAnd
                     return BBox(asOOBB.getEnlargedBy(delta));
             }
 
+            inline BBox getEnlargedBy(const COORD_TYPE& delta) const
+            {
+                if (type == BBoxType::AABB)
+                    return BBox(asAABB.getEnlargedBy(delta));
+                else /* if (type == BBoxType::OOBB) */
+                    return BBox(asOOBB.getEnlargedBy(delta));
+            }
+
             inline BBox getEnlargedBy(const COORD_TYPE& dt, const COORD_TYPE& dl, const COORD_TYPE& db, const COORD_TYPE& dr) const
             {
                 if (type == BBoxType::AABB)

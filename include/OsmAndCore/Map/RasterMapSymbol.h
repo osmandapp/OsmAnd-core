@@ -29,7 +29,7 @@ namespace OsmAnd
         PointI size;
         QString content;
         LanguageId languageId;
-        PointI minDistance;
+        float minDistance;
         PointI margin;
         float pathPaddingLeft;
         float pathPaddingRight;
