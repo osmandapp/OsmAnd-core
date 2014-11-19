@@ -11,7 +11,7 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     const ZoomLevel maxZoom_ /*= MaxZoomLevel*/,
     const uint32_t maxConcurrentDownloads_ /*= 1*/,
     const uint32_t providerTileSize_ /*= 256*/,
-    const AlphaChannelData alphaChannelData_ /*= AlphaChannelData::Undefined*/)
+    const AlphaChannelPresence alphaChannelPresence_ /*= AlphaChannelPresence::Undefined*/)
     : _p(new OnlineRasterMapLayerProvider_P(this))
     , localCachePath(_p->_localCachePath)
     , networkAccessAllowed(_p->_networkAccessAllowed)
@@ -22,7 +22,7 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     , maxZoom(maxZoom_)
     , maxConcurrentDownloads(maxConcurrentDownloads_)
     , providerTileSize(providerTileSize_)
-    , alphaChannelData(alphaChannelData_)
+    , alphaChannelPresence(alphaChannelPresence_)
 {
     _p->_localCachePath = QDir(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(pathSuffix));
 }

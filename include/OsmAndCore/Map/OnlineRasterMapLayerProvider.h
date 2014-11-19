@@ -26,7 +26,7 @@ namespace OsmAnd
         OnlineRasterMapLayerProvider(const QString& name, const QString& urlPattern,
             const ZoomLevel minZoom = MinZoomLevel, const ZoomLevel maxZoom = MaxZoomLevel,
             const uint32_t maxConcurrentDownloads = 1, const uint32_t providerTileSize = 256,
-            const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined);
+            const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown);
         virtual ~OnlineRasterMapLayerProvider();
 
         const QString name;
@@ -39,7 +39,7 @@ namespace OsmAnd
 #endif // !defined(SWIG)
         const uint32_t maxConcurrentDownloads;
         const uint32_t providerTileSize;
-        const AlphaChannelData alphaChannelData;
+        const AlphaChannelPresence alphaChannelPresence;
 
         void setLocalCachePath(const QDir& localCachePath, const bool appendPathSuffix = true);
         const QDir& localCachePath;

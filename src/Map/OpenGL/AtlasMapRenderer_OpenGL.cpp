@@ -119,16 +119,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
-    // Turn on blending since now objects with transparency are going to be rendered
-    glEnable(GL_BLEND);
-    GL_CHECK_RESULT;
-
     // Raster map stage is rendered without blending, since it's done in fragment shader
     Stopwatch mapLayersStageStopwatch(metric != nullptr);
     if (!_mapLayersStage->render(metric))
         ok = false;
     if (metric)
         metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
+
+    // Turn on blending since now objects with transparency are going to be rendered
+    glEnable(GL_BLEND);
+    GL_CHECK_RESULT;
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     //NOTE: Currently map symbols are incompatible with height-maps
@@ -142,6 +142,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     if (metric)
         metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
 
+    // Restore post-multiplied color blending
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
     //TODO: render special fog object some day
 
     // Render debug stage
@@ -150,10 +154,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     {
         glDisable(GL_DEPTH_TEST);
         GL_CHECK_RESULT;
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        GL_CHECK_RESULT;
+
         if (!_debugStage->render(metric))
             ok = false;
+
         glEnable(GL_DEPTH_TEST);
         GL_CHECK_RESULT;
     }

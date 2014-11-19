@@ -46,7 +46,7 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(bool& dataAvailable, 
     {
         _sourceData->bitmap = resourcesManager->adjustBitmapToConfiguration(
             _sourceData->bitmap,
-            _sourceData->alphaChannelData);
+            _sourceData->alphaChannelPresence);
     }
 
     return true;

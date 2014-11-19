@@ -108,7 +108,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
     outTiledData.reset(new MapRasterMetricsLayerProvider::Data(
         tileId,
         zoom,
-        AlphaChannelData::NotPresent,
+        AlphaChannelPresence::NotPresent,
         owner->densityFactor,
         bitmap, 
         rasterizedTile,

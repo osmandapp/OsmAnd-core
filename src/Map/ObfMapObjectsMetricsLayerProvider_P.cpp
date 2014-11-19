@@ -105,7 +105,7 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
     outTiledData.reset(new ObfMapObjectsMetricsLayerProvider::Data(
         tileId,
         zoom,
-        AlphaChannelData::NotPresent,
+        AlphaChannelPresence::NotPresent,
         owner->densityFactor,
         bitmap,
         binaryData,

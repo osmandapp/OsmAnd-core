@@ -23,7 +23,7 @@ std::shared_ptr<OsmAnd::OnlineRasterMapLayerProvider> OsmAnd::IOnlineTileSources
         source->maxZoom,
         source->maxConcurrentDownloads,
         source->tileSize,
-        source->alphaChannelData));
+        source->alphaChannelPresence));
 }
 
 OsmAnd::IOnlineTileSources::Source::Source(const QString& name_)

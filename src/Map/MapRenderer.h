@@ -163,10 +163,10 @@ namespace OsmAnd
         bool adjustBitmapToConfiguration(
             const std::shared_ptr<const SkBitmap>& input,
             std::shared_ptr<const SkBitmap>& output,
-            const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
+            const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown) const;
         std::shared_ptr<const SkBitmap> adjustBitmapToConfiguration(
             const std::shared_ptr<const SkBitmap>& input,
-            const AlphaChannelData alphaChannelData = AlphaChannelData::Undefined) const;
+            const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown) const;
 
         // Symbols-related:
         QReadWriteLock& publishedMapSymbolsByOrderLock;

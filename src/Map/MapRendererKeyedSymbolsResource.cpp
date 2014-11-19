@@ -86,7 +86,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
 
         rasterMapSymbol->bitmap = resourcesManager->adjustBitmapToConfiguration(
             rasterMapSymbol->bitmap,
-            AlphaChannelData::Present);
+            AlphaChannelPresence::Present);
     }
 
     // Register all obtained symbols

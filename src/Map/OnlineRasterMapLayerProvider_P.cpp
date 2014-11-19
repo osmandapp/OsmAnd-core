@@ -81,7 +81,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         outTiledData.reset(new OnlineRasterMapLayerProvider::Data(
             tileId,
             zoom,
-            owner->alphaChannelData,
+            owner->alphaChannelPresence,
             owner->getTileDensityFactor(),
             bitmap));
         return true;
@@ -184,7 +184,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     outTiledData.reset(new OnlineRasterMapLayerProvider::Data(
         tileId,
         zoom,
-        owner->alphaChannelData,
+        owner->alphaChannelPresence,
         owner->getTileDensityFactor(),
         bitmap));
     return true;

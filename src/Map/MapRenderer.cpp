@@ -794,7 +794,7 @@ void OsmAnd::MapRenderer::requestResourcesUploadOrUnload()
 bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
     const std::shared_ptr<const SkBitmap>& input,
     std::shared_ptr<const SkBitmap>& output,
-    const AlphaChannelData alphaChannelData /*= AlphaChannelData::Undefined*/) const
+    const AlphaChannelPresence alphaChannelPresence /*= AlphaChannelPresence::Undefined*/) const
 {
     // Check if we're going to convert
     bool doConvert = false;
@@ -814,12 +814,12 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
         return false;
 
     // Check if we need alpha
-    auto convertedAlphaChannelData = alphaChannelData;
-    if (doConvert && (convertedAlphaChannelData == AlphaChannelData::Undefined))
+    auto convertedAlphaChannelPresence = alphaChannelPresence;
+    if (doConvert && (convertedAlphaChannelPresence == AlphaChannelPresence::Unknown))
     {
-        convertedAlphaChannelData = SkBitmap::ComputeIsOpaque(*input)
-            ? AlphaChannelData::NotPresent
-            : AlphaChannelData::Present;
+        convertedAlphaChannelPresence = SkBitmap::ComputeIsOpaque(*input)
+            ? AlphaChannelPresence::NotPresent
+            : AlphaChannelPresence::Present;
     }
 
     // If we have limit of 16bits per pixel in bitmaps, convert to ARGB(4444) or RGB(565)
@@ -828,7 +828,7 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
         auto convertedBitmap = new SkBitmap();
 
         const bool ok = input->copyTo(convertedBitmap,
-            convertedAlphaChannelData == AlphaChannelData::Present
+            convertedAlphaChannelPresence == AlphaChannelPresence::Present
             ? SkColorType::kARGB_4444_SkColorType
             : SkColorType::kRGB_565_SkColorType);
         if (!ok)
@@ -848,7 +848,7 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
 
         const bool ok = input->copyTo(convertedBitmap,
             currentConfiguration->limitTextureColorDepthBy16bits
-            ? (convertedAlphaChannelData == AlphaChannelData::Present ? SkColorType::kARGB_4444_SkColorType : SkColorType::kRGB_565_SkColorType)
+            ? (convertedAlphaChannelPresence == AlphaChannelPresence::Present ? SkColorType::kARGB_4444_SkColorType : SkColorType::kRGB_565_SkColorType)
             : SkColorType::kN32_SkColorType);
         if (!ok)
         {
@@ -865,10 +865,10 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
 
 std::shared_ptr<const SkBitmap> OsmAnd::MapRenderer::adjustBitmapToConfiguration(
     const std::shared_ptr<const SkBitmap>& input,
-    const AlphaChannelData alphaChannelData /*= AlphaChannelData::Undefined*/) const
+    const AlphaChannelPresence alphaChannelPresence /*= AlphaChannelPresence::Undefined*/) const
 {
     std::shared_ptr<const SkBitmap> output;
-    if (adjustBitmapToConfiguration(input, output, alphaChannelData))
+    if (adjustBitmapToConfiguration(input, output, alphaChannelPresence))
         return output;
     return input;
 }

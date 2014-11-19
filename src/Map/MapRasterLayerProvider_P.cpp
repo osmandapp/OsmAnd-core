@@ -72,7 +72,7 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
     outTiledData.reset(new MapRasterLayerProvider::Data(
         tileId,
         zoom,
-        AlphaChannelData::NotPresent,
+        AlphaChannelPresence::NotPresent,
         owner->getTileDensityFactor(),
         bitmap,
         primitivesTile,

@@ -29,13 +29,13 @@ namespace OsmAnd
             Data(
                 const TileId tileId,
                 const ZoomLevel zoom,
-                const AlphaChannelData alphaChannelData,
+                const AlphaChannelPresence alphaChannelPresence,
                 const float densityFactor,
                 const std::shared_ptr<const SkBitmap>& bitmap,
                 const RetainableCacheMetadata* const pRetainableCacheMetadata = nullptr);
             virtual ~Data();
 
-            AlphaChannelData alphaChannelData;
+            AlphaChannelPresence alphaChannelPresence;
             float densityFactor;
             std::shared_ptr<const SkBitmap> bitmap;
         };

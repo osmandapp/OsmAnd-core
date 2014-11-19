@@ -18,11 +18,11 @@ namespace OsmAnd
         FullWater,
     };
 
-    enum class AlphaChannelData
+    enum class AlphaChannelPresence
     {
         Present,
         NotPresent,
-        Undefined
+        Unknown
     };
 
     typedef int MapSymbolIntersectionClassId;

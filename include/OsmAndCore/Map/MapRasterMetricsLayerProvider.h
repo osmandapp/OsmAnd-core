@@ -32,7 +32,7 @@ namespace OsmAnd
             Data(
                 const TileId tileId,
                 const ZoomLevel zoom,
-                const AlphaChannelData alphaChannelData,
+                const AlphaChannelPresence alphaChannelPresence,
                 const float densityFactor,
                 const std::shared_ptr<const SkBitmap>& bitmap,
                 const std::shared_ptr<const MapRasterLayerProvider::Data>& rasterizedBinaryMap,

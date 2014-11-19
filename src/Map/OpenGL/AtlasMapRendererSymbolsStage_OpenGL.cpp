@@ -432,7 +432,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     {
         GL_PUSH_GROUP_MARKER("use 'billboard-raster' program");
 
-        // Raster symbols use premultiplied alpha (due to SKIA)
+        // Raster symbols use premultiplied color (due to SKIA)
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         GL_CHECK_RESULT;
 
@@ -1190,7 +1190,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     {
         GL_PUSH_GROUP_MARKER("use 'on-path-2d' program");
 
-        // Raster symbols use premultiplied alpha (due to SKIA)
+        // Raster symbols use premultiplied color (due to SKIA)
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         GL_CHECK_RESULT;
 
@@ -1313,7 +1313,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     {
         GL_PUSH_GROUP_MARKER("use 'on-path-3d' program");
 
-        // Raster symbols use premultiplied alpha (due to SKIA)
+        // Raster symbols use premultiplied color (due to SKIA)
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         GL_CHECK_RESULT;
 
@@ -1707,7 +1707,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-raster' program");
 
-        // Raster symbols use premultiplied alpha (due to SKIA)
+        // Raster symbols use premultiplied color (due to SKIA)
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         GL_CHECK_RESULT;
 
@@ -1938,7 +1938,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-vector' program");
 
-        // Raster symbols use non-multiplied alpha
+        // Vector symbols use post-multiplied color
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         GL_CHECK_RESULT;
 

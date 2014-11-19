@@ -43,14 +43,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
 
     bool ok = true;
 
-    GL_PUSH_GROUP_MARKER(QLatin1String("mapLayers"));
-
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
+
+    GL_PUSH_GROUP_MARKER(QLatin1String("mapLayers"));
 
     QVector<unsigned int> rasterMapLayersBatch;
     rasterMapLayersBatch.reserve(_maxNumberOfRasterMapLayersInBatch);
     bool atLeastOneRasterLayerRendered = false;
+
+    // First layers batch should be rendered without blending
+    bool firstLayersRendered = false;
+    bool blendingEnabled = false;
+    glDisable(GL_BLEND);
+    GL_CHECK_RESULT;
 
     int lastUsedProgram = -1;
     const auto itMapLayersEnd = currentState.mapLayersProviders.cend();
@@ -63,6 +69,16 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
         if (!getResources().getCollectionSnapshot(MapRendererResourceType::MapLayer, std::dynamic_pointer_cast<IMapDataProvider>(provider)))
             continue;
 
+        // Check if blending needs to be enabled
+        if (firstLayersRendered && !blendingEnabled)
+        {
+            glEnable(GL_BLEND);
+            GL_CHECK_RESULT;
+
+            blendingEnabled = true;
+        }
+
+        bool batchRendered = false;
         if (const auto rasterMapLayerProvider = std::dynamic_pointer_cast<IRasterMapLayerProvider>(provider))
         {
             if (!canRasterMapLayerBeBatched(rasterMapLayersBatch, layerIndex))
@@ -74,10 +90,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
                 rasterMapLayersBatch.clear();
 
                 atLeastOneRasterLayerRendered = true;
+                batchRendered = true;
             }
 
             rasterMapLayersBatch.push_back(layerIndex);
         }
+
+        // If anything was rendered, remember this fact
+        if (batchRendered && !firstLayersRendered)
+            firstLayersRendered = true;
     }
 
     // Finally, if there was some layers not yet rendered, but still in batch, process those
@@ -330,7 +351,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    finalColor.a *= param_fs_rasterTileLayer_0.opacity;                                                            ""\n"
+        // Premultiplied color
+        "    finalColor *= param_fs_rasterTileLayer_0.opacity;                                                              ""\n"
         "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
         "                                                                                                                   ""\n"
 #if 0
@@ -362,8 +384,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                             ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
-        "        layerColor.a *= param_fs_rasterTileLayer_%rasterLayerIndex%.opacity;                                       ""\n"
-        "        finalColor = mix(finalColor, layerColor, layerColor.a);                                                    ""\n"
+        // Premultiplied color mixing
+        "        layerColor *= param_fs_rasterTileLayer_%rasterLayerIndex%.opacity;                                         ""\n"
+        "        finalColor = finalColor * (1.0 - layerColor.a) + layerColor;                                               ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
@@ -514,8 +537,16 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::canRasterMapLayerBeBatched(
     const QVector<unsigned int>& batchedLayerIndices,
     const unsigned int layerIndex)
 {
+    // Check if there's still space in batch
     if (batchedLayerIndices.size() >= _maxNumberOfRasterMapLayersInBatch)
         return false;
+
+    // If this is first layer in batch, just accept it
+    if (batchedLayerIndices.isEmpty())
+        return true;
+
+    const auto lastBatchedLayerProvider = std::static_pointer_cast<IRasterMapLayerProvider>(currentState.mapLayersProviders[batchedLayerIndices.last()]);
+    const auto thisLayerProvider = std::static_pointer_cast<IRasterMapLayerProvider>(currentState.mapLayersProviders[layerIndex]);
 
     return true;
 }
@@ -798,7 +829,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
 
     GL_PUSH_GROUP_MARKER(QString("use '%1-batched-raster-map-layers' program").arg(numberOfLayersInBatch));
 
-    // Raster symbols use premultiplied alpha (due to SKIA)
+    // Prepare for premultiplied color (all raster layers come through SkBitmap)
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 

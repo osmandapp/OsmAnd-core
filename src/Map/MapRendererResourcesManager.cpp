@@ -120,7 +120,7 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
             std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
                 TileId(),
                 InvalidZoom,
-                AlphaChannelData::Undefined,
+                AlphaChannelPresence::Unknown,
                 1.0f,
                 bitmap));
             if (!uploadTiledDataToGPU(bitmapTile, _processingTileStub))
@@ -136,7 +136,7 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
             std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
                 TileId(),
                 InvalidZoom,
-                AlphaChannelData::Undefined,
+                AlphaChannelPresence::Unknown,
                 1.0f,
                 bitmap));
             if (!uploadTiledDataToGPU(bitmapTile, _unavailableTileStub))
@@ -166,9 +166,9 @@ bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(const std::shared_pt
     return renderer->gpuAPI->uploadSymbolToGPU(mapSymbol, outResourceInGPU);
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::MapRendererResourcesManager::adjustBitmapToConfiguration(const std::shared_ptr<const SkBitmap>& input, const AlphaChannelData alphaChannelData) const
+std::shared_ptr<const SkBitmap> OsmAnd::MapRendererResourcesManager::adjustBitmapToConfiguration(const std::shared_ptr<const SkBitmap>& input, const AlphaChannelPresence alphaChannelPresence) const
 {
-    return renderer->adjustBitmapToConfiguration(input, alphaChannelData);
+    return renderer->adjustBitmapToConfiguration(input, alphaChannelPresence);
 }
 
 void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol)

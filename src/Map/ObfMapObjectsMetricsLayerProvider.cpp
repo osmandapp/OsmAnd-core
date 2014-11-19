@@ -56,12 +56,12 @@ OsmAnd::ZoomLevel OsmAnd::ObfMapObjectsMetricsLayerProvider::getMaxZoom() const
 OsmAnd::ObfMapObjectsMetricsLayerProvider::Data::Data(
     const TileId tileId_,
     const ZoomLevel zoom_,
-    const AlphaChannelData alphaChannelData_,
+    const AlphaChannelPresence alphaChannelPresence_,
     const float densityFactor_,
     const std::shared_ptr<const SkBitmap>& bitmap_,
     const std::shared_ptr<const ObfMapObjectsProvider::Data>& binaryMapData_,
     const RetainableCacheMetadata* const pRetainableCacheMetadata_ /*= nullptr*/)
-    : IRasterMapLayerProvider::Data(tileId_, zoom_, alphaChannelData_, densityFactor_, bitmap_, pRetainableCacheMetadata_)
+    : IRasterMapLayerProvider::Data(tileId_, zoom_, alphaChannelPresence_, densityFactor_, bitmap_, pRetainableCacheMetadata_)
     , binaryMapData(binaryMapData_)
 {
 }

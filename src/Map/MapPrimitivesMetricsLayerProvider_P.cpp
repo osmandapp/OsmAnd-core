@@ -130,7 +130,7 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
     outTiledData.reset(new MapPrimitivesMetricsLayerProvider::Data(
         tileId,
         zoom,
-        AlphaChannelData::NotPresent,
+        AlphaChannelPresence::NotPresent,
         owner->densityFactor,
         bitmap,
         primitivesTile,

@@ -161,7 +161,7 @@ namespace OsmAnd
         bool uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU);
         std::shared_ptr<const SkBitmap> adjustBitmapToConfiguration(
             const std::shared_ptr<const SkBitmap>& input,
-            const AlphaChannelData alphaChannelData) const;
+            const AlphaChannelPresence alphaChannelPresence) const;
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
         void updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);

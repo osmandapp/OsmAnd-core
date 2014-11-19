@@ -49,7 +49,7 @@ bool OsmAnd::OnlineTileSources_P::deserializeFrom(QXmlStreamReader& xmlReader)
             newSource->maxZoom = maxZoom;
             newSource->maxConcurrentDownloads = 1;
             newSource->tileSize = tileSize;
-            newSource->alphaChannelData = AlphaChannelData::Undefined;
+            newSource->alphaChannelPresence = AlphaChannelPresence::Unknown;
             collection.insert(name, newSource);
         }
         else if (tagName == QLatin1String("tileSource"))
@@ -142,7 +142,7 @@ std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::ge
         mapnikOsmAndSource->maxZoom = ZoomLevel19;
         mapnikOsmAndSource->maxConcurrentDownloads = 0;
         mapnikOsmAndSource->tileSize = 256;
-        mapnikOsmAndSource->alphaChannelData = AlphaChannelData::NotPresent;
+        mapnikOsmAndSource->alphaChannelPresence = AlphaChannelPresence::NotPresent;
         _builtIn->addSource(mapnikOsmAndSource);
     }
 

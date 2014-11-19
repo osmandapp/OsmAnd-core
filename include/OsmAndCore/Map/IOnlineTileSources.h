@@ -33,7 +33,7 @@ namespace OsmAnd
             ZoomLevel maxZoom;
             unsigned int maxConcurrentDownloads;
             unsigned int tileSize;
-            AlphaChannelData alphaChannelData;
+            AlphaChannelPresence alphaChannelPresence;
 
         private:
             Q_DISABLE_COPY_AND_MOVE(Source);
