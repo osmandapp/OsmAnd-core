@@ -2280,8 +2280,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             }
         }
 
-        text->drawOnPath = false;
-        text->drawAlongPath = false;
         if (primitive->type == PrimitiveType::Polyline)
         {
             evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
@@ -2295,7 +2293,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         //NOTE: a magic shifting of text order. This is needed to keep text more important than anything else
         text->order += 100000;
 
-        text->verticalOffset = 0;
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
 
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color.argb);
@@ -2304,14 +2301,12 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
         text->size = textSize;
 
-        text->shadowRadius = 0;
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
 
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor.argb);
         if (!ok || text->shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
             text->shadowColor = ColorARGB::fromSkColor(SK_ColorWHITE);
 
-        text->wrapWidth = 0;
         evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_WRAP_WIDTH, text->wrapWidth);
         if (!text->drawOnPath && text->wrapWidth == 0)
         {
@@ -2319,8 +2314,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             text->wrapWidth = MapPrimitiviser::DefaultTextLabelWrappingLengthInCharacters;
         }
 
-        text->isBold = false;
         evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_BOLD, text->isBold);
+        evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ITALIC, text->isItalic);
 
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_MIN_DISTANCE_X, text->minDistance.x);
         if (ok && (text->minDistance.x > 0 || text->minDistance.y > 0))

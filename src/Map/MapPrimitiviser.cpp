@@ -160,6 +160,13 @@ OsmAnd::MapPrimitiviser::Symbol::~Symbol()
 
 OsmAnd::MapPrimitiviser::TextSymbol::TextSymbol(const std::shared_ptr<const Primitive>& primitive_)
     : Symbol(primitive_)
+    , drawOnPath(false)
+    , verticalOffset(0)
+    , size(0)
+    , shadowRadius(0)
+    , wrapWidth(0)
+    , isBold(false)
+    , isItalic(false)
 {
 }
 

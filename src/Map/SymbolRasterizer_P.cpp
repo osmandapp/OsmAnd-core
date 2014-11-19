@@ -91,6 +91,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     env->obtainTextShield(textSymbol->shieldResourceName, style.backgroundBitmap);
                 style
                     .setBold(textSymbol->isBold)
+                    .setItalic(textSymbol->isItalic)
                     .setColor(textSymbol->color)
                     .setSize(textSymbol->size);
 

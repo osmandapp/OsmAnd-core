@@ -406,6 +406,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         output << xT("\t\tText shadow color: ") << QStringToStlString(textSymbol->shadowColor.toString()) << std::endl;
                         output << xT("\t\tText wrap width: ") << textSymbol->wrapWidth << std::endl;
                         output << xT("\t\tText is bold: ") << (textSymbol->isBold ? xT("yes") : xT("no")) << std::endl;
+                        output << xT("\t\tText is italic: ") << (textSymbol->isItalic ? xT("yes") : xT("no")) << std::endl;
                         output << xT("\t\tText minDistance: ") << textSymbol->minDistance.x << xT("x") << textSymbol->minDistance.y << std::endl;
                         output << xT("\t\tShield resource name: ") << QStringToStlString(textSymbol->shieldResourceName) << std::endl;
                     }

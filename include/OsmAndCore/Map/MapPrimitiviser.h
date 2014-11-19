@@ -195,6 +195,7 @@ namespace OsmAnd
             ColorARGB shadowColor;
             int wrapWidth;
             bool isBold;
+            bool isItalic;
             PointI minDistance;
             QString shieldResourceName;
 

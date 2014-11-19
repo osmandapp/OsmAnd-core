@@ -49,6 +49,7 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_MIN_DISTANCE_X, Output, Integer, "textMinDi
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_SHIELD, Output, String, "textShield", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_COLOR, Output, Color, "textColor", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_BOLD, Output, Boolean, "textBold", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ITALIC, Output, Boolean, "textItalic", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath", false)
 
 // Icon properties
