@@ -2196,6 +2196,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
     // Process captions in order how captions where declared in OBF source (what is being controlled by 'rendering_types.xml')
     bool ok;
+    bool extraCaptionTextAdded = false;
     for (const auto& captionRuleId : constOf(captionsOrder))
     {
         const auto& caption = constOf(captions)[captionRuleId];
@@ -2247,6 +2248,37 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         text->location31 = location;
         text->languageId = languageId;
         text->value = caption;
+
+        // Get additional text from nameTag2 if present (and not yet added)
+        if (!extraCaptionTextAdded)
+        {
+            QString nameTag2;
+            ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_NAME_TAG2, nameTag2);
+            if (ok && !nameTag2.isEmpty())
+            {
+                const auto citNameTag2RulesGroup = encDecRules->encodingRuleIds.constFind(nameTag2);
+                if (citNameTag2RulesGroup != encDecRules->encodingRuleIds.constEnd())
+                {
+                    const auto& nameTag2RulesGroup = *citNameTag2RulesGroup;
+                    for (const auto& nameTag2RuleEntry : rangeOf(constOf(nameTag2RulesGroup)))
+                    {
+                        const auto& ruleId = nameTag2RuleEntry.value();
+                        const auto citExtraCaption = mapObject->captions.constFind(ruleId);
+
+                        if (citExtraCaption == mapObject->captions.constEnd())
+                            continue;
+                        const auto& extraCaption = *citExtraCaption;
+                        if (extraCaption.isEmpty())
+                            continue;
+                        
+                        text->value += QString(QLatin1String(" (%1)")).arg(extraCaption);
+
+                        extraCaptionTextAdded = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         text->drawOnPath = false;
         text->drawAlongPath = false;
