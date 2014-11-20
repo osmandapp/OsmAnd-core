@@ -86,6 +86,7 @@ namespace OsmAnd
 
         ImplementationInterface<ObfsCollection> owner;
 
+        QList<ObfsCollection::SourceOriginId> getSourceOriginIds() const;
         ObfsCollection::SourceOriginId addDirectory(const QDir& dir, bool recursive);
         ObfsCollection::SourceOriginId addFile(const QFileInfo& fileInfo);
         bool remove(const ObfsCollection::SourceOriginId entryId);

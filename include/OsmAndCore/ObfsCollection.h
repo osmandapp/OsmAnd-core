@@ -33,6 +33,7 @@ namespace OsmAnd
         ObfsCollection();
         virtual ~ObfsCollection();
 
+        QList<SourceOriginId> getSourceOriginIds() const;
         SourceOriginId addDirectory(const QDir& dir, bool recursive = true);
         SourceOriginId addDirectory(const QString& dirPath, bool recursive = true);
         SourceOriginId addFile(const QFileInfo& fileInfo);

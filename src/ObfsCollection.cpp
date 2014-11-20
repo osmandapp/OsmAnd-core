@@ -10,6 +10,11 @@ OsmAnd::ObfsCollection::~ObfsCollection()
 {
 }
 
+QList<OsmAnd::ObfsCollection::SourceOriginId> OsmAnd::ObfsCollection::getSourceOriginIds() const
+{
+    return _p->getSourceOriginIds();
+}
+
 OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection::addDirectory(const QString& dirPath, bool recursive /*= true*/)
 {
     return addDirectory(QDir(dirPath), recursive);

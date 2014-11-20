@@ -170,6 +170,13 @@ void OsmAnd::ObfsCollection_P::collectSources() const
     LogPrintf(LogSeverityLevel::Info, "Collected OBF sources in %fs", collectSourcesStopwatch.elapsed());
 }
 
+QList<OsmAnd::ObfsCollection::SourceOriginId> OsmAnd::ObfsCollection_P::getSourceOriginIds() const
+{
+    QReadLocker scopedLocker(&_sourcesOriginsLock);
+
+    return _sourcesOrigins.keys();
+}
+
 OsmAnd::ObfsCollection::SourceOriginId OsmAnd::ObfsCollection_P::addDirectory(const QDir& dir, bool recursive)
 {
     QWriteLocker scopedLocker(&_sourcesOriginsLock);

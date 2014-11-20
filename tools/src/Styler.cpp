@@ -623,6 +623,11 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
     }
 
     // Validate
+    if (obfsCollection->getSourceOriginIds().isEmpty())
+    {
+        outError = QLatin1String("No OBF files found or specified");
+        return false;
+    }
     if (outConfiguration.styleName.isEmpty())
     {
         outError = QLatin1String("'styleName' can not be empty");
