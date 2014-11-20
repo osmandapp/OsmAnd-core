@@ -26,6 +26,7 @@ namespace OsmAnd
         /* Time elapsed for symbols stage */                                                                    \
         FIELD_ACTION(float, elapsedTimeForSymbolsStage, "s");                                                   \
         FIELD_ACTION(float, elapsedTimeForPreparingSymbols, "s");                                               \
+        FIELD_ACTION(float, elapsedTimeForPublishingPreparedSymbols, "s");                                      \
         FIELD_ACTION(float, elapsedTimeForObtainingRenderableSymbols, "s");                                     \
         FIELD_ACTION(float, elapsedTimeForObtainingRenderableSymbolsNoLock, "s");                               \
         FIELD_ACTION(float, elapsedTimeForObtainingRenderableSymbolsOnlyLock, "s");                             \
@@ -54,7 +55,7 @@ namespace OsmAnd
         FIELD_ACTION(unsigned int, onPathSymbolsRendered, "");                                                  \
         FIELD_ACTION(float, elapsedTimeForOnSurfaceSymbolsRendering, "s");                                      \
         FIELD_ACTION(unsigned int, onSurfaceSymbolsRendered, "");                                               \
-        \
+                                                                                                                \
         /* Time elapsed for debug stage */                                                                      \
         FIELD_ACTION(float, elapsedTimeForDebugStage, "s");                                                     \
         FIELD_ACTION(float, elapsedTimeForDebugRects2D, "s");                                                   \

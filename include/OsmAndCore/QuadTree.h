@@ -2,15 +2,20 @@
 #define _OSMAND_CORE_QUAD_TREE_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <functional>
 #include <utility>
 #include <array>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QList>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Ref.h>
 
 namespace OsmAnd
 {
@@ -164,7 +169,7 @@ namespace OsmAnd
                         continue;
                     auto& target = subnodes[idx];
 
-                    target.reset(new Node(*source));
+                    target = new Node(*source);
                 }
 
                 for (const auto& source : constOf(that.entries))
@@ -172,7 +177,7 @@ namespace OsmAnd
             }
 
             const AreaT area;
-            std::array< std::unique_ptr< Node >, 4 > subnodes;
+            std::array< Ref< Node >, 4 > subnodes;
             typedef std::pair<BBox, ELEMENT_TYPE> EntryPair;
             QList< EntryPair > entries;
 
@@ -213,7 +218,7 @@ namespace OsmAnd
                         const auto subArea = area.getQuadrant(static_cast<Quadrant>(idx));
                         if (!subArea.contains(bbox_))
                             continue;
-                        subnodes[idx].reset(new Node(subArea));
+                        subnodes[idx] = new Node(subArea);
                         subnodes[idx]->insertNoCheck(element, bbox_, allowedDepthRemaining - 1);
                         return;
                     }
@@ -514,19 +519,28 @@ namespace OsmAnd
             Q_DISABLE_MOVE(Node);
         };
 
-        std::unique_ptr< Node > _root;
+        Ref< Node > _rootNode;
     public:
         inline QuadTree(const AreaT& rootArea = AreaT::largest(), const uintmax_t maxDepth_ = std::numeric_limits<uintmax_t>::max())
-            : _root(new Node(rootArea))
+            : _rootNode(new Node(rootArea))
             , maxDepth(std::max(maxDepth_, static_cast<uintmax_t>(1u)))
         {
         }
 
         inline QuadTree(const QuadTreeT& that)
-            : _root(new Node(*that._root))
+            : _rootNode(new Node(*that._rootNode))
             , maxDepth(that.maxDepth)
         {
         }
+
+#ifdef Q_COMPILER_RVALUE_REFS
+        inline QuadTree(QuadTreeT&& that)
+            : _rootNode(that._rootNode)
+            , maxDepth(that.maxDepth)
+        {
+            that._rootNode = new Node(_rootNode->area);
+        }
+#endif // Q_COMPILER_RVALUE_REFS
 
         virtual ~QuadTree()
         {
@@ -537,10 +551,24 @@ namespace OsmAnd
             if (this != &that)
             {
                 maxDepth = that.maxDepth;
-                _root.reset(new Node(*that._root));
+                _rootNode = new Node(*that._rootNode);
             }
             return *this;
         }
+
+#ifdef Q_COMPILER_RVALUE_REFS
+        inline QuadTreeT& operator=(QuadTreeT&& that)
+        {
+            if (this != &that)
+            {
+                maxDepth = that.maxDepth;
+                _rootNode = that._rootNode;
+
+                that._rootNode = new Node(_rootNode->area);
+            }
+            return *this;
+        }
+#endif // Q_COMPILER_RVALUE_REFS
 
         uintmax_t maxDepth;
 
@@ -571,81 +599,81 @@ namespace OsmAnd
         inline bool insert(const ELEMENT_TYPE& entry, const AreaT& bbox, const bool strict = false)
         {
             // Check if this root can hold entire element
-            if (!_root->area.contains(bbox))
+            if (!_rootNode->area.contains(bbox))
             {
                 if (strict)
                     return false;
-                if (!bbox.intersects(_root->area))
+                if (!bbox.intersects(_rootNode->area))
                     return false;
             }
 
-            _root->insertNoCheck(entry, bbox, maxDepth - 1);
+            _rootNode->insertNoCheck(entry, bbox, maxDepth - 1);
             return true;
         }
 
         inline void query(const AreaT& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
-            _root->query(bbox, outResults, strict, acceptor);
+            _rootNode->query(bbox, outResults, strict, acceptor);
         }
 
         inline bool test(const AreaT& bbox, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
-            return _root->test(bbox, strict, acceptor);
+            return _rootNode->test(bbox, strict, acceptor);
         }
 
         inline bool insert(const ELEMENT_TYPE& entry, const OOBBT& bbox, const bool strict = false)
         {
             // Check if this root can hold entire element
-            if (!_root->area.contains(bbox))
+            if (!_rootNode->area.contains(bbox))
             {
                 if (strict)
                     return false;
-                if (!bbox.intersects(_root->area))
+                if (!bbox.intersects(_rootNode->area))
                     return false;
             }
 
-            _root->insertNoCheck(entry, bbox, maxDepth - 1);
+            _rootNode->insertNoCheck(entry, bbox, maxDepth - 1);
             return true;
         }
 
         inline void query(const OOBBT& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
-            _root->query(bbox, outResults, strict, acceptor);
+            _rootNode->query(bbox, outResults, strict, acceptor);
         }
 
         inline bool test(const OOBBT& bbox, const bool strict = false, const Acceptor acceptor = nullptr) const
         {
-            return _root->test(bbox, strict, acceptor);
+            return _rootNode->test(bbox, strict, acceptor);
         }
 
         inline void select(const PointT& point, QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor = nullptr) const
         {
-            _root->select(point, outResults, acceptor);
+            _rootNode->select(point, outResults, acceptor);
         }
 
         inline bool removeOne(const ELEMENT_TYPE& entry, const BBox& bbox)
         {
-            return _root->removeOne(entry, bbox);
+            return _rootNode->removeOne(entry, bbox);
         }
 
         inline unsigned int removeAll(const ELEMENT_TYPE& entry, const BBox& bbox)
         {
-            return _root->removeAll(entry, bbox);
+            return _rootNode->removeAll(entry, bbox);
         }
 
         inline bool removeOneSlow(const ELEMENT_TYPE& entry)
         {
-            return _root->removeOneSlow(entry);
+            return _rootNode->removeOneSlow(entry);
         }
 
         inline unsigned int removeAllSlow(const ELEMENT_TYPE& entry)
         {
-            return _root->removeAllSlow(entry);
+            return _rootNode->removeAllSlow(entry);
         }
 
         inline unsigned int removeSlow(const Acceptor acceptor)
         {
-            return _root->removeAllSlow(acceptor);
+            return _rootNode->removeAllSlow(acceptor);
         }
     };
 }

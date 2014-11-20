@@ -55,10 +55,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
         return;
     }
 
+    Stopwatch preparedSymbolsPublishingStopwatch(metric != nullptr);
     {
         QWriteLocker scopedLocker(&_lastPreparedIntersectionsLock);
         _lastPreparedIntersections = qMove(intersections);
     }
+    if (metric)
+        metric->elapsedTimeForPublishingPreparedSymbols = preparedSymbolsPublishingStopwatch.elapsed();
 
     if (metric)
         metric->elapsedTimeForPreparingSymbols = stopwatch.elapsed();
