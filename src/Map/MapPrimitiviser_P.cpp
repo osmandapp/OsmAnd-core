@@ -2018,12 +2018,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const auto& env = context.env;
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 189600735u)
+    //if (primitive->sourceObject->toString() == "OSM-node 1705951317 [3411902634]")
     //{
     //    int i = 5;
     //}
-    //else
-    //    return;
     //////////////////////////////////////////////////////////////////////////
 
     // Text symbols can only be obtained from captions
@@ -2270,7 +2268,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                         const auto& extraCaption = *citExtraCaption;
                         if (extraCaption.isEmpty())
                             continue;
-                        
+
                         text->value += QString(QLatin1String(" (%1)")).arg(extraCaption);
 
                         extraCaptionTextAdded = true;
@@ -2280,11 +2278,11 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             }
         }
 
+        // In case text is from polyline primitive, it's drawn along-path if not on-path
         if (primitive->type == PrimitiveType::Polyline)
         {
             evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ON_PATH, text->drawOnPath);
-            if (!text->drawOnPath)
-                text->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
+            text->drawAlongPath = !text->drawOnPath;
         }
 
         // By default, text order is treated as 100
@@ -2293,7 +2291,11 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         //NOTE: a magic shifting of text order. This is needed to keep text more important than anything else
         text->order += 100000;
 
-        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
+        if (primitive->type == PrimitiveType::Point ||
+            primitive->type == PrimitiveType::Polygon)
+        {
+            evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_DY, text->verticalOffset);
+        }
 
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_COLOR, text->color.argb);
         if (!ok || text->color == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))

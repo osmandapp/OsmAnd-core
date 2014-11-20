@@ -129,12 +129,6 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 
                 if (textSymbol->drawOnPath)
                 {
-                    if (textSymbol->drawOnPath && textSymbol->verticalOffset > 0)
-                    {
-                        LogPrintf(LogSeverityLevel::Warning, "Hey, on-path + vertical offset is not supported!");
-                        //assert(false);
-                    }
-
                     // Publish new rasterized symbol
                     const std::shared_ptr<RasterizedOnPathSymbol> rasterizedSymbol(new RasterizedOnPathSymbol(group, textSymbol));
                     rasterizedSymbol->bitmap = qMove(rasterizedText);
