@@ -517,6 +517,7 @@ namespace OsmAnd
 
         private:
             Q_DISABLE_MOVE(Node);
+            Q_DISABLE_ASSIGN(Node);
         };
 
         Ref< Node > _rootNode;

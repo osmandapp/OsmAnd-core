@@ -3,7 +3,9 @@
 #include "MapRasterizer_Metrics.h"
 
 #include "QtCommon.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QReadWriteLock>
+#include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include <SkBitmapDevice.h>
@@ -12,6 +14,7 @@
 #include <SkColorFilter.h>
 #include <SkDashPathEffect.h>
 #include <SkBitmapProcShader.h>
+#include <SkPathMeasure.h>
 #include <SkError.h>
 #include "restore_internal_warnings.h"
 
@@ -19,8 +22,6 @@
 #include "MapStyleEvaluationResult.h"
 #include "MapStyleBuiltinValueDefinitions.h"
 #include "MapPrimitiviser.h"
-#include "BinaryMapObject.h"
-#include "ObfMapSectionInfo.h"
 #include "QKeyValueIterator.h"
 #include "QCachingIterator.h"
 #include "Stopwatch.h"
@@ -45,106 +46,6 @@ OsmAnd::MapRasterizer_P::~MapRasterizer_P()
 void OsmAnd::MapRasterizer_P::initialize()
 {
     _defaultPaint.setAntiAlias(true);
-
-    const auto intervalW = 0.5f*owner->mapPresentationEnvironment->displayDensityFactor + 0.5f; // 0.5dp + 0.5px
-    {
-        const float intervals_oneway[4][4] =
-        {
-            { 0, 12, 10 * intervalW, 152 },
-            { 0, 12, 9 * intervalW, 152 + intervalW },
-            { 0, 12 + 6 * intervalW, 2 * intervalW, 152 + 2 * intervalW },
-            { 0, 12 + 6 * intervalW, 1 * intervalW, 152 + 3 * intervalW }
-        };
-        SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_oneway[0], 4, 0);
-        SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_oneway[1], 4, 1);
-        SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_oneway[2], 4, 1);
-        SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_oneway[3], 4, 1);
-
-        {
-            SkPaint paint;
-            initializeOneWayPaint(paint);
-            paint.setStrokeWidth(1.0f * intervalW);
-            paint.setPathEffect(arrowDashEffect1)->unref();
-            _oneWayPaints.push_back(qMove(paint));
-        }
-
-        {
-            SkPaint paint;
-            initializeOneWayPaint(paint);
-            paint.setStrokeWidth(2.0f * intervalW);
-            paint.setPathEffect(arrowDashEffect2)->unref();
-            _oneWayPaints.push_back(qMove(paint));
-        }
-
-        {
-            SkPaint paint;
-            initializeOneWayPaint(paint);
-            paint.setStrokeWidth(3.0f * intervalW);
-            paint.setPathEffect(arrowDashEffect3)->unref();
-            _oneWayPaints.push_back(qMove(paint));
-        }
-
-        {
-            SkPaint paint;
-            initializeOneWayPaint(paint);
-            paint.setStrokeWidth(4.0f * intervalW);
-            paint.setPathEffect(arrowDashEffect4)->unref();
-            _oneWayPaints.push_back(qMove(paint));
-        }
-    }
-
-    {
-        const float intervals_reverse[4][4] =
-        {
-            { 0, 12, 10 * intervalW, 152 },
-            { 0, 12 + 1 * intervalW, 9 * intervalW, 152 },
-            { 0, 12 + 2 * intervalW, 2 * intervalW, 152 + 6 * intervalW },
-            { 0, 12 + 3 * intervalW, 1 * intervalW, 152 + 6 * intervalW }
-        };
-        SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_reverse[0], 4, 0);
-        SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_reverse[1], 4, 1);
-        SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_reverse[2], 4, 1);
-        SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_reverse[3], 4, 1);
-
-        {
-            SkPaint paint;
-            initializeOneWayPaint(paint);
-            paint.setStrokeWidth(1.0f * intervalW);
-            paint.setPathEffect(arrowDashEffect1)->unref();
-            _reverseOneWayPaints.push_back(qMove(paint));
-        }
-
-        {
-            SkPaint paint;
-            initializeOneWayPaint(paint);
-            paint.setStrokeWidth(2.0f * intervalW);
-            paint.setPathEffect(arrowDashEffect2)->unref();
-            _reverseOneWayPaints.push_back(qMove(paint));
-        }
-
-        {
-            SkPaint paint;
-            initializeOneWayPaint(paint);
-            paint.setStrokeWidth(3.0f * intervalW);
-            paint.setPathEffect(arrowDashEffect3)->unref();
-            _reverseOneWayPaints.push_back(qMove(paint));
-        }
-
-        {
-            SkPaint paint;
-            initializeOneWayPaint(paint);
-            paint.setStrokeWidth(4.0f * intervalW);
-            paint.setPathEffect(arrowDashEffect4)->unref();
-            _reverseOneWayPaints.push_back(qMove(paint));
-        }
-    }
-}
-
-void OsmAnd::MapRasterizer_P::initializeOneWayPaint(SkPaint& paint)
-{
-    paint.setAntiAlias(true);
-    paint.setStyle(SkPaint::kStroke_Style);
-    paint.setColor(0xff6c70d5);
 }
 
 void OsmAnd::MapRasterizer_P::rasterize(
@@ -186,7 +87,6 @@ void OsmAnd::MapRasterizer_P::rasterize(
         }
     }
 
-    // Precalculate values
     AreaI destinationArea;
     if (pDestinationArea)
     {
@@ -293,6 +193,8 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_4;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_4;
             break;
+        default:
+            return false;
     }
 
     if (isArea)
@@ -371,19 +273,22 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
     // do not check shadow color here
     if (context.shadowMode == MapPresentationEnvironment::ShadowMode::OneStep && valueSetSelector == PaintValuesSet::Set_0)
     {
-        SkColor shadowColor = SK_ColorTRANSPARENT;
-        ok = evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor);
+        ColorARGB shadowColor(0x00000000);
+        ok = evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor.argb);
+        if (!ok || shadowColor.isTransparent())
+            shadowColor = context.shadowColor;
 
-        int shadowRadius = 0;
-        evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
+        float shadowRadius = 0.0f;
+        evalResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
 
-        if (!ok || shadowColor == SK_ColorTRANSPARENT)
-            shadowColor = context.shadowColor.toSkColor();
-        if (shadowColor == SK_ColorTRANSPARENT)
-            shadowRadius = 0;
-
-        if (shadowRadius > 0)
-            paint.setLooper(SkBlurDrawLooper::Create(static_cast<SkScalar>(shadowRadius), 0, 0, shadowColor))->unref();
+        if (shadowRadius > 0.0f && !shadowColor.isTransparent())
+        {
+            paint.setLooper(SkBlurDrawLooper::Create(
+                shadowColor.toSkColor(),
+                SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius),
+                0,
+                0))->unref();
+        }
     }
 
     return true;
@@ -525,22 +430,10 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     if (!ok || shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))
         shadowColor = context.shadowColor;
 
-    int shadowRadius;
-    ok = primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
-    if (drawOnlyShadow && (!ok || shadowRadius == 0))
+    float shadowRadius;
+    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_RADIUS, shadowRadius);
+    if (drawOnlyShadow && (!ok || shadowRadius <= 0.0f))
         return;
-
-    const auto typeRuleId = primitive->sourceObject->typesRuleIds[primitive->typeRuleIdIndex];
-    const auto& encDecRules = primitive->sourceObject->encodingDecodingRules;
-
-    int oneway = 0;
-    if (context.zoom >= ZoomLevel16 && typeRuleId == encDecRules->highway_encodingRuleId)
-    {
-        if (primitive->sourceObject->containsType(encDecRules->oneway_encodingRuleId, true))
-            oneway = 1;
-        else if (primitive->sourceObject->containsType(encDecRules->onewayReverse_encodingRuleId, true))
-            oneway = -1;
-    }
 
     SkPath path;
     int pointIdx = 0;
@@ -589,77 +482,117 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     if (!intersect)
         return;
 
-    if (pointIdx > 0)
+    if (drawOnlyShadow)
     {
-        if (drawOnlyShadow)
-        {
-            rasterizeLineShadow(context, canvas, path, paint, shadowColor, shadowRadius);
-        }
-        else
-        {
-            if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_minus2, false))
-                canvas.drawPath(path, paint);
-
-            if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_minus1, false))
-                canvas.drawPath(path, paint);
-
-            if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
-                canvas.drawPath(path, paint);
-
+        rasterizePolylineShadow(
+            context,
+            canvas,
+            path,
+            paint,
+            shadowColor,
+            shadowRadius);
+    }
+    else
+    {
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_minus2, false))
             canvas.drawPath(path, paint);
 
-            if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
-                canvas.drawPath(path, paint);
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_minus1, false))
+            canvas.drawPath(path, paint);
 
-            if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_3, false))
-                canvas.drawPath(path, paint);
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
+            canvas.drawPath(path, paint);
 
-            if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_4, false))
-                canvas.drawPath(path, paint);
+        canvas.drawPath(path, paint);
+
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
+            canvas.drawPath(path, paint);
+
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_3, false))
+            canvas.drawPath(path, paint);
+
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_4, false))
+            canvas.drawPath(path, paint);
             
-            if (oneway && !drawOnlyShadow)
-                rasterizeLine_OneWay(canvas, path, oneway);
-        }
+        rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);
     }
 }
 
-void OsmAnd::MapRasterizer_P::rasterizeLineShadow(
+void OsmAnd::MapRasterizer_P::rasterizePolylineShadow(
     const Context& context,
     SkCanvas& canvas,
     const SkPath& path,
     SkPaint& paint,
     const ColorARGB shadowColor,
-    int shadowRadius)
+    const float shadowRadius)
 {
-    if (context.shadowMode == MapPresentationEnvironment::ShadowMode::BlurShadow && shadowRadius > 0)
+    if (context.shadowMode == MapPresentationEnvironment::ShadowMode::BlurShadow && shadowRadius > 0.0f)
     {
         // simply draw shadow? difference from option 3 ?
-        paint.setLooper(SkBlurDrawLooper::Create(shadowColor.toSkColor(), SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius), 0, 0))->unref();
+        paint.setLooper(SkBlurDrawLooper::Create(
+            shadowColor.toSkColor(),
+            SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius),
+            0,
+            0))->unref();
         canvas.drawPath(path, paint);
     }
-    else if (context.shadowMode == MapPresentationEnvironment::ShadowMode::SolidShadow && shadowRadius > 0)
+    else if (context.shadowMode == MapPresentationEnvironment::ShadowMode::SolidShadow && shadowRadius > 0.0f)
     {
         paint.setLooper(nullptr);
         paint.setStrokeWidth(paint.getStrokeWidth() + shadowRadius * 2);
-        paint.setColorFilter(SkColorFilter::CreateModeFilter(shadowColor.toSkColor(), SkXfermode::kSrcIn_Mode))->unref();
+        paint.setColorFilter(SkColorFilter::CreateModeFilter(
+            shadowColor.toSkColor(),
+            SkXfermode::kSrcIn_Mode))->unref();
         canvas.drawPath(path, paint);
     }
 }
 
-void OsmAnd::MapRasterizer_P::rasterizeLine_OneWay(
+void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
+    const Context& context,
     SkCanvas& canvas,
     const SkPath& path,
-    int oneway)
+    const MapStyleEvaluationResult& evalResult)
 {
-    if (oneway > 0)
+    bool ok;
+
+    QString pathIconName;
+    ok = evalResult.getStringValue(context.env->styleBuiltinValueDefs->id_OUTPUT_PATH_ICON, pathIconName);
+    if (!ok || pathIconName.isEmpty())
+        return;
+
+    float pathIconStep = 0.0f;
+    ok = evalResult.getFloatValue(context.env->styleBuiltinValueDefs->id_OUTPUT_PATH_ICON_STEP, pathIconStep);
+    if (!ok || pathIconStep <= 0.0f)
+        return;
+
+    std::shared_ptr<const SkBitmap> pathIcon;
+    ok = context.env->obtainMapIcon(pathIconName, pathIcon);
+    if (!ok || !pathIcon)
+        return;
+
+    SkMatrix mIconTransform;
+    mIconTransform.setIdentity();
+    mIconTransform.setTranslate(-0.5f * pathIcon->width(), -0.5f * pathIcon->height());
+    mIconTransform.postRotate(90.0f);
+
+    SkPathMeasure pathMeasure(path, false);
+
+    const auto length = pathMeasure.getLength();
+    auto iconOffset = 0.5f * pathIconStep;
+    const auto iconInstancesCount = static_cast<int>((length - iconOffset) / pathIconStep) + 1;
+    if (iconInstancesCount < 1)
+        return;
+
+    SkMatrix mIconInstanceTransform;
+    for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += pathIconStep)
     {
-        for (const auto& paint : constOf(_oneWayPaints))
-            canvas.drawPath(path, paint);
-    }
-    else
-    {
-        for (const auto& paint : constOf(_reverseOneWayPaints))
-            canvas.drawPath(path, paint);
+        SkMatrix mPinPoint;
+        ok = pathMeasure.getMatrix(iconOffset, &mPinPoint);
+        if (!ok)
+            break;
+
+        mIconInstanceTransform.setConcat(mPinPoint, mIconTransform);
+        canvas.drawBitmapMatrix(*pathIcon, mIconInstanceTransform, &_defaultPaint);
     }
 }
 

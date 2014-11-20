@@ -29,4 +29,9 @@
         Q_DISABLE_MOVE(Class);
 #endif // !defined(Q_DISABLE_COPY_AND_MOVE)
 
+#if !defined(Q_DISABLE_ASSIGN)
+#   define Q_DISABLE_ASSIGN(Class)                                                          \
+        Class &operator=(Class &) Q_DECL_EQ_DELETE;
+#endif // !defined(Q_DISABLE_ASSIGN)
+
 #endif // !defined(_OSMAND_CORE_QT_EXTRA_DEFINITIONS_H_)

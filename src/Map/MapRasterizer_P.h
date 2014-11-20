@@ -29,7 +29,7 @@ namespace OsmAnd
     class IQueryController;
 
     class MapRasterizer;
-    class MapRasterizer_P Q_DECL_FINAL
+    class MapRasterizer_P /*Q_DECL_FINAL*/
     {
     private:
     protected:
@@ -96,18 +96,19 @@ namespace OsmAnd
             const std::shared_ptr<const MapPrimitiviser::Primitive>& primitive,
             bool drawOnlyShadow);
 
-        void rasterizeLineShadow(
+        void rasterizePolylineShadow(
             const Context& context,
             SkCanvas& canvas,
             const SkPath& path,
             SkPaint& paint,
             const ColorARGB shadowColor,
-            int shadowRadius);
+            const float shadowRadius);
 
-        void rasterizeLine_OneWay(
+        void rasterizePolylineIcons(
+            const Context& context,
             SkCanvas& canvas,
             const SkPath& path,
-            int oneway);
+            const MapStyleEvaluationResult& evalResult);
 
         inline void calculateVertex(
             const Context& context,
@@ -121,10 +122,6 @@ namespace OsmAnd
         void initialize();
         
         SkPaint _defaultPaint;
-
-        static void initializeOneWayPaint(SkPaint& paint);
-        QList<SkPaint> _oneWayPaints;
-        QList<SkPaint> _reverseOneWayPaints;
 
         mutable QMutex _pathEffectsMutex;
         mutable QHash< QString, SkPathEffect* > _pathEffects;

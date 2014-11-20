@@ -97,7 +97,11 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_4, Output, String, "pathEffect_4", f
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_4, Output, String, "cap_4", false)
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADER, Output, String, "shader", false)
+
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_COLOR, Output, Color, "shadowColor", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_RADIUS, Output, Integer, "shadowRadius", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_RADIUS, Output, Float, "shadowRadius", true)
+
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_ICON, Output, String, "pathIcon", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_ICON_STEP, Output, Float, "pathIconStep", true)
 
 #endif // DECLARE_BUILTIN_VALUEDEF

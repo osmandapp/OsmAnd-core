@@ -73,6 +73,11 @@ namespace OsmAnd
             a = newAlpha;
             return *this;
         }
+
+        inline bool isTransparent() const
+        {
+            return qFuzzyIsNull(a);
+        }
     };
 
     union FColorRGB
@@ -225,6 +230,11 @@ namespace OsmAnd
         {
             a = newAlpha;
             return *this;
+        }
+
+        inline bool isTransparent() const
+        {
+            return (a == 0);
         }
 
         inline QString toString() const

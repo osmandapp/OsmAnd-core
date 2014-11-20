@@ -18,12 +18,12 @@ namespace OsmAnd
     class ObfRoutingSectionReader_P;
     class ObfRoutingSectionInfo;
 
-    //enum class RoadDirection : int32_t
-    //{
-    //    OneWayForward = -1,
-    //    TwoWay = 0,
-    //    OneWayReverse = +1
-    //};
+    enum class RoadDirection : int32_t
+    {
+        OneWayForward = -1,
+        TwoWay = 0,
+        OneWayReverse = +1
+    };
 
     enum class RoadRestriction : int32_t
     {
