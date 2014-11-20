@@ -109,7 +109,8 @@ namespace OsmAnd
     private:
         bool obtainRenderableSymbols(
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
-            IntersectionsQuadTree& outIntersections) const;
+            IntersectionsQuadTree& outIntersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         IntersectionsQuadTree _lastPreparedIntersections;
@@ -130,11 +131,13 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
-            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
+            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         bool plotSymbol(
             const std::shared_ptr<RenderableSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // Billboard symbols:
         void obtainRenderablesFromBillboardSymbol(
@@ -142,16 +145,20 @@ namespace OsmAnd
             const std::shared_ptr<const IBillboardMapSymbol>& billboardMapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
-            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
+            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotBillboardSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotBillboardRasterSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotBillboardVectorSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // On-surface symbols:
         void obtainRenderablesFromOnSurfaceSymbol(
@@ -159,16 +166,20 @@ namespace OsmAnd
             const std::shared_ptr<const IOnSurfaceMapSymbol>& onSurfaceMapSymbol,
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
-            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
+            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotOnSurfaceSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotOnSurfaceRasterSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotOnSurfaceVectorSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // On-path symbols:
         void obtainRenderablesFromOnPathSymbol(
@@ -177,21 +188,26 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>& instanceParameters,
             const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
             ComputedPathsDataCache& computedPathsDataCache,
-            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const;
+            QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotOnPathSymbol(
             const std::shared_ptr<RenderableOnPathSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // Intersection-related:
         bool applyIntersectionWithOtherSymbolsFiltering(
             const std::shared_ptr<const RenderableSymbol>& renderable,
-            const IntersectionsQuadTree& intersections) const;
+            const IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
             const std::shared_ptr<const RenderableSymbol>& renderable,
-            const IntersectionsQuadTree& intersections) const;
+            const IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool addToIntersections(
             const std::shared_ptr<const RenderableSymbol>& renderable,
-            IntersectionsQuadTree& intersections) const;
+            IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // Utilities:
         QVector<glm::vec2> convertPoints31ToWorld(

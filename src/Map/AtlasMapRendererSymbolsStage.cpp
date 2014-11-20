@@ -44,7 +44,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     Stopwatch stopwatch(metric != nullptr);
 
     IntersectionsQuadTree intersections;
-    if (!obtainRenderableSymbols(renderableSymbols, intersections))
+    if (!obtainRenderableSymbols(renderableSymbols, intersections, metric))
     {
         // In case obtain failed due to lock, schedule another frame
         invalidateFrame();
@@ -88,10 +88,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
-    IntersectionsQuadTree& outIntersections) const
+    IntersectionsQuadTree& outIntersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
+    Stopwatch stopwatch(metric != nullptr);
+
     if (!publishedMapSymbolsByOrderLock.tryLockForRead())
         return false;
+
+    Stopwatch noLockStopwatch(metric != nullptr);
 
     typedef QLinkedList< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
     PlottedSymbols plottedSymbols;
@@ -207,6 +212,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 // Process symbols from this group in order as they are stored in group
                 for (const auto& mapSymbol : constOf(mapSymbolsGroup->symbols))
                 {
+                    if (mapSymbol->isHidden)
+                        continue;
+
                     // If this map symbol is not published yet or is located at different order, skip
                     const auto citReferencesOrigins = publishedMapSymbolsFromGroup.constFind(mapSymbol);
                     if (citReferencesOrigins == publishedMapSymbolsFromGroup.cend())
@@ -220,11 +228,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         nullptr,
                         referencesOrigins,
                         computedPathsDataCache,
-                        renderableSymbols);
+                        renderableSymbols,
+                        metric);
 
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
-                        if (!plotSymbol(renderableSymbol, outIntersections))
+                        if (!plotSymbol(renderableSymbol, outIntersections, metric))
                             continue;
 
                         const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderableSymbol);
@@ -243,6 +252,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                 // Process symbols from this group in order as they are stored in original group
                 for (const auto& mapSymbol : constOf(mapSymbolsGroup->symbols))
                 {
+                    if (mapSymbol->isHidden)
+                        continue;
+
                     // If this map symbol is not published yet or is located at different order, skip
                     const auto citReferencesOrigins = publishedMapSymbolsFromGroup.constFind(mapSymbol);
                     if (citReferencesOrigins == publishedMapSymbolsFromGroup.cend())
@@ -262,11 +274,12 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         additionalSymbolInstance,
                         referencesOrigins,
                         computedPathsDataCache,
-                        renderableSymbols);
+                        renderableSymbols,
+                        metric);
 
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
-                        if (!plotSymbol(renderableSymbol, outIntersections))
+                        if (!plotSymbol(renderableSymbol, outIntersections, metric))
                             continue;
 
                         const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderableSymbol);
@@ -283,6 +296,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
     if (Q_LIKELY(!debugSettings->skipSymbolsPresentationModeCheck))
     {
+        Stopwatch symbolsPresentationModeCheckStopwatch(metric != nullptr);
+
         // Remove those plotted symbols that do not conform to presentation rules
         auto itPlottedSymbolsGroupInstancesEntry = mutableIteratorOf(plottedSymbolsMapByGroupAndInstance);
         while (itPlottedSymbolsGroupInstancesEntry.hasNext())
@@ -389,6 +404,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             if (plottedSymbolsGroupInstances.instancesRefs.isEmpty())
                 itPlottedSymbolsGroupInstancesEntry.remove();
         }
+
+        if (metric)
+            metric->elapsedTimeForSymbolsPresentationModeCheck = symbolsPresentationModeCheckStopwatch.elapsed();
     }
 
     // Publish the result
@@ -402,7 +420,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         outRenderableSymbols.push_back(qMove(plottedSymbol));
     }
 
+    if (metric)
+        metric->elapsedTimeForObtainingRenderableSymbolsNoLock = noLockStopwatch.elapsed();
+
     publishedMapSymbolsByOrderLock.unlock();
+
+    if (metric)
+    {
+        metric->elapsedTimeForObtainingRenderableSymbols = stopwatch.elapsed();
+        metric->elapsedTimeForObtainingRenderableSymbolsOnlyLock =
+            metric->elapsedTimeForObtainingRenderableSymbols - metric->elapsedTimeForObtainingRenderableSymbolsNoLock;
+    }
+
     return true;
 }
 
@@ -412,10 +441,10 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
     const std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters>& instanceParameters_,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
     ComputedPathsDataCache& computedPathsDataCache,
-    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
+    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
-    if (mapSymbol->isHidden)
-        return;
+    Stopwatch stopwatch(metric != nullptr);
 
     if (const auto onPathMapSymbol = std::dynamic_pointer_cast<const OnPathRasterMapSymbol>(mapSymbol))
     {
@@ -429,7 +458,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
             instanceParameters,
             referenceOrigins,
             computedPathsDataCache,
-            outRenderableSymbols);
+            outRenderableSymbols,
+            metric);
     }
     else if (const auto onSurfaceMapSymbol = std::dynamic_pointer_cast<const IOnSurfaceMapSymbol>(mapSymbol))
     {
@@ -442,7 +472,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
             onSurfaceMapSymbol,
             instanceParameters,
             referenceOrigins,
-            outRenderableSymbols);
+            outRenderableSymbols,
+            metric);
     }
     else if (const auto billboardMapSymbol = std::dynamic_pointer_cast<const IBillboardMapSymbol>(mapSymbol))
     {
@@ -455,33 +486,62 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
             billboardMapSymbol,
             instanceParameters,
             referenceOrigins,
-            outRenderableSymbols);
+            outRenderableSymbols,
+            metric);
     }
     else
     {
         assert(false);
     }
+
+    if (metric)
+    {
+        metric->elapsedTimeForObtainRenderableSymbolCalls += stopwatch.elapsed();
+        metric->obtainRenderableSymbolCalls++;
+    }
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
     const std::shared_ptr<RenderableSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
+    Stopwatch stopwatch(metric != nullptr);
+
+    bool plotted = false;
     if (const auto& renderableBillboard = std::dynamic_pointer_cast<RenderableBillboardSymbol>(renderable))
     {
-        return plotBillboardSymbol(renderableBillboard, intersections);
+        plotted = plotBillboardSymbol(
+            renderableBillboard,
+            intersections,
+            metric);
     }
     else if (const auto& renderableOnPath = std::dynamic_pointer_cast<RenderableOnPathSymbol>(renderable))
     {
-        return plotOnPathSymbol(renderableOnPath, intersections);
+        plotted = plotOnPathSymbol(
+            renderableOnPath,
+            intersections,
+            metric);
     }
     else if (const auto& renderableOnSurface = std::dynamic_pointer_cast<RenderableOnSurfaceSymbol>(renderable))
     {
-        return plotOnSurfaceSymbol(renderableOnSurface, intersections);
+        plotted = plotOnSurfaceSymbol(
+            renderableOnSurface,
+            intersections,
+            metric);
     }
 
-    assert(false);
-    return false;
+    if (metric)
+    {
+        metric->elapsedTimeForPlotSymbolCalls += stopwatch.elapsed();
+        metric->plotSymbolCalls++;
+        if (plotted)
+            metric->plotSymbolCallsSucceeded++;
+        else
+            metric->plotSymbolCallsFailed++;
+    }
+
+    return plotted;
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
@@ -489,7 +549,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
     const std::shared_ptr<const IBillboardMapSymbol>& billboardMapSymbol,
     const std::shared_ptr<const MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>& instanceParameters,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
-    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
+    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(billboardMapSymbol);
@@ -537,28 +598,31 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
+    bool plotted = false;
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
-        return plotBillboardRasterSymbol(
+        plotted = plotBillboardRasterSymbol(
             renderable,
-            intersections);
+            intersections,
+            metric);
     }
     else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
     {
-        return plotBillboardVectorSymbol(
+        plotted = plotBillboardVectorSymbol(
             renderable,
-            intersections);
+            intersections,metric);
     }
 
-    assert(false);
-    return false;
+    return plotted;
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
 
@@ -582,18 +646,19 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
         symbol->size.x + symbol->margin.x, symbol->size.y + symbol->margin.y);
     renderable->intersectionBBox = boundsInWindow;
 
-    if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections))
+    if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
         return false;
 
-    if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections))
+    if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
         return false;
 
-    return addToIntersections(renderable, intersections);
+    return addToIntersections(renderable, intersections, metric);
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardVectorSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     assert(false);
     return false;
@@ -604,7 +669,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
     const std::shared_ptr<const IOnSurfaceMapSymbol>& onSurfaceMapSymbol,
     const std::shared_ptr<const MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters>& instanceParameters,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
-    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
+    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
     const auto mapSymbol = std::dynamic_pointer_cast<const MapSymbol>(onSurfaceMapSymbol);
@@ -651,19 +717,22 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
         return plotOnSurfaceRasterSymbol(
             renderable,
-            intersections);
+            intersections,
+            metric);
     }
     else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
     {
         return plotOnSurfaceVectorSymbol(
             renderable,
-            intersections);
+            intersections,
+            metric);
     }
 
     assert(false);
@@ -672,7 +741,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceRasterSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
 
@@ -684,7 +754,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceRasterSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceVectorSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
 
@@ -700,7 +771,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     const std::shared_ptr<const MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters>& instanceParameters,
     const MapRenderer::MapSymbolReferenceOrigins& referenceOrigins,
     ComputedPathsDataCache& computedPathsDataCache,
-    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols) const
+    QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
 
@@ -993,7 +1065,8 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     const std::shared_ptr<RenderableOnPathSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
 
@@ -1010,13 +1083,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
 //        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-        if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections))
+        if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
             return false;
 
-        if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections))
+        if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
             return false;
 
-        if (!addToIntersections(renderable, intersections))
+        if (!addToIntersections(renderable, intersections, metric))
             return false;
 
         if (Q_UNLIKELY(debugSettings->showOnPath2dSymbolGlyphDetails))
@@ -1045,13 +1118,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
 //        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
-        if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections))
+        if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
             return false;
 
-        if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections))
+        if (!applyMinDistanceToSameContentFromOtherSymbolFiltering(renderable, intersections, metric))
             return false;
 
-        if (!addToIntersections(renderable, intersections))
+        if (!addToIntersections(renderable, intersections, metric))
             return false;
 
         if (Q_UNLIKELY(debugSettings->showOnPath3dSymbolGlyphDetails))
@@ -1091,15 +1164,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFiltering(
     const std::shared_ptr<const RenderableSymbol>& renderable,
-    const IntersectionsQuadTree& intersections) const
+    const IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
+    if (Q_UNLIKELY(debugSettings->skipSymbolsIntersectionCheck))
+        return true;
+
     const auto& symbol = renderable->mapSymbol;
 
     if (symbol->intersectsWithClasses.isEmpty())
         return true;
 
-    if (Q_UNLIKELY(debugSettings->skipSymbolsIntersectionCheck))
-        return true;
+    Stopwatch stopwatch(metric != nullptr);
     
     // Check intersections
     const auto checkIntersectionsWithinGroup = renderable->mapSymbolGroup->intersectionProcessingMode.isSet(MapSymbolsGroup::IntersectionProcessingModeFlag::CheckIntersectionsWithinGroup);
@@ -1141,6 +1217,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
             return hasCommonIntersectionClasses;
         });
 
+    if (metric)
+    {
+        metric->elapsedTimeForApplyIntersectionWithOtherSymbolsFilteringCalls += stopwatch.elapsed();
+        metric->applyIntersectionWithOtherSymbolsFilteringCalls++;
+        if (intersects)
+            metric->rejectedIntersectionWithOtherSymbolsFiltering++;
+        else
+            metric->acceptedIntersectionWithOtherSymbolsFiltering++;
+    }
+
     if (intersects)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck))
@@ -1152,15 +1238,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOtherSymbolFiltering(
     const std::shared_ptr<const RenderableSymbol>& renderable,
-    const IntersectionsQuadTree& intersections) const
+    const IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
-    const auto& symbol = std::static_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol);
-
-    if (symbol->minDistance < 0.0f || symbol->content.isNull())
-        return true;
-
     if (Q_UNLIKELY(debugSettings->skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck))
         return true;
+
+    const auto& symbol = std::static_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol);
+
+    if (symbol->minDistance <= 0.0f || symbol->content.isNull())
+        return true;
+
+    Stopwatch stopwatch(metric != nullptr);
 
     // Query for similar content from other groups in area of "minDistance" to exclude duplicates
     const auto symbolGroupPtr = symbol->groupPtr;
@@ -1188,6 +1277,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
             const auto shouldCheck = (otherSymbol->content == symbolContent);
             return shouldCheck;
         });
+
+    if (metric)
+    {
+        metric->elapsedTimeForApplyMinDistanceToSameContentFromOtherSymbolFilteringCalls += stopwatch.elapsed();
+        metric->applyMinDistanceToSameContentFromOtherSymbolFilteringCalls ++;
+        if (hasSimilarContent)
+            metric->rejectedMinDistanceToSameContentFromOtherSymbolFiltering++;
+        else
+            metric->acceptedMinDistanceToSameContentFromOtherSymbolFiltering++;
+    }
+
     if (hasSimilarContent)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
@@ -1195,6 +1295,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
 
         if (Q_UNLIKELY(debugSettings->showSymbolsCheckBBoxesRejectedByMinDistanceToSameContentFromOtherSymbolCheck))
             addIntersectionDebugBox(renderable->intersectionBBox.getEnlargedBy(symbol->minDistance), ColorARGB::fromSkColor(SK_ColorRED).withAlpha(128), false);
+
+        return false;
     }
 
     return true;
@@ -1202,15 +1304,30 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::addToIntersections(
     const std::shared_ptr<const RenderableSymbol>& renderable,
-    IntersectionsQuadTree& intersections) const
+    IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
-    if (renderable->mapSymbol->intersectsWithClasses.isEmpty())
-        return true;
-    
     if (Q_UNLIKELY(debugSettings->allSymbolsTransparentForIntersectionLookup))
         return true;
 
-    if (!intersections.insert(renderable, renderable->intersectionBBox))
+    if (renderable->mapSymbol->intersectsWithClasses.isEmpty())
+        return true;
+    
+    Stopwatch stopwatch(metric != nullptr);
+
+    const auto inserted = intersections.insert(renderable, renderable->intersectionBBox);
+
+    if (metric)
+    {
+        metric->elapsedTimeForAddToIntersectionsCalls += stopwatch.elapsed();
+        metric->addToIntersectionsCalls++;
+        if (!inserted)
+            metric->rejectedByAddToIntersections++;
+        else
+            metric->acceptedByAddToIntersections++;
+    }
+
+    if (!inserted)
     {
         if (Q_UNLIKELY(debugSettings->showSymbolsBBoxesRejectedByIntersectionCheck))
             addIntersectionDebugBox(renderable, ColorARGB::fromSkColor(SK_ColorBLUE).withAlpha(50));
