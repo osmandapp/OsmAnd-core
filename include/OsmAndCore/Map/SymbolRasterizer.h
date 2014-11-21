@@ -88,7 +88,7 @@ namespace OsmAnd
             PointI location31;
             PointI offset;
             bool drawAlongPath;
-            PointI intersectionSize;
+            AreaI intersectionBBox;
 
         friend class OsmAnd::SymbolRasterizer_P;
         };

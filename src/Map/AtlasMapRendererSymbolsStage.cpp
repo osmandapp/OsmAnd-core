@@ -646,7 +646,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     // Get bounds in screen coordinates
     auto boundsInWindow = AreaI::fromCenterAndSize(
         static_cast<int>(symbolOnScreen.x + offsetOnScreen.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + offsetOnScreen.y),
-        symbol->size.x + symbol->margin.x, symbol->size.y + symbol->margin.y);
+        symbol->size.x, symbol->size.y);
+    boundsInWindow.top() -= symbol->margin.top();
+    boundsInWindow.left() -= symbol->margin.left();
+    boundsInWindow.right() += symbol->margin.right();
+    boundsInWindow.bottom() += symbol->margin.bottom();
     renderable->intersectionBBox = boundsInWindow;
 
     if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))

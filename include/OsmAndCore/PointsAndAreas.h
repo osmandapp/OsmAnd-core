@@ -751,6 +751,13 @@ namespace OsmAnd
             return res;
         }
 
+        static AreaT fromCenterAndSize(const PointT& center, const PointT& size)
+        {
+            const T halfWidth = size.x / static_cast<T>(2);
+            const T halfHeight = size.y / static_cast<T>(2);
+            return AreaT(center.y - halfHeight, center.x - halfWidth, center.y + halfHeight, center.x + halfWidth);
+        }
+
         static AreaT fromCenterAndSize(const T& cx, const T& cy, const T& width, const T& height)
         {
             const T halfWidth = width / static_cast<T>(2);

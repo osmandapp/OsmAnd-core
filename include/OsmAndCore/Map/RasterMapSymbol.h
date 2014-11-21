@@ -30,7 +30,7 @@ namespace OsmAnd
         QString content;
         LanguageId languageId;
         float minDistance;
-        PointI margin;
+        AreaI margin;
         float pathPaddingLeft;
         float pathPaddingRight;
     };

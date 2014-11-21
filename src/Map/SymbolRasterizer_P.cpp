@@ -58,7 +58,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const auto& symbolsGroup = symbolGroupEntry.value();
 
         //////////////////////////////////////////////////////////////////////////
-        //if ((mapObject->id >> 1) == 189600735u)
+        //if (mapObject->toString() == "OBF(1):14463079 [18446744069400121241]")
         //{
         //    int i = 5;
         //}
@@ -175,24 +175,31 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     rasterizedSymbol->drawAlongPath = textSymbol->drawAlongPath;
                     if (!qIsNaN(textSymbol->intersectionSizeFactor))
                     {
-                        rasterizedSymbol->intersectionSize = PointI(
+                        rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
                             static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->width()),
-                            static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->height()));
+                            static_cast<int>(textSymbol->intersectionSizeFactor * rasterizedText->height())));
                     }
                     else if (!qIsNaN(textSymbol->intersectionSize))
                     {
-                        rasterizedSymbol->intersectionSize = PointI(
+                        rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
                             static_cast<int>(textSymbol->intersectionSize),
-                            static_cast<int>(textSymbol->intersectionSize));
+                            static_cast<int>(textSymbol->intersectionSize)));
                     }
                     else if (!qIsNaN(textSymbol->intersectionMargin))
                     {
-                        rasterizedSymbol->intersectionSize = PointI(
+                        rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
                             rasterizedText->width() + static_cast<int>(textSymbol->intersectionMargin),
-                            rasterizedText->height() + static_cast<int>(textSymbol->intersectionMargin));
+                            rasterizedText->height() + static_cast<int>(textSymbol->intersectionMargin)));
                     }
                     else
-                        rasterizedSymbol->intersectionSize = PointI(-1, -1);
+                    {
+                        rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
+                            static_cast<int>(rasterizedText->width()),
+                            static_cast<int>(rasterizedText->height())));
+
+                        rasterizedSymbol->intersectionBBox.top() -= static_cast<int>(symbolExtraTopSpace);
+                        rasterizedSymbol->intersectionBBox.bottom() += static_cast<int>(symbolExtraBottomSpace);
+                    }
                     rasterizedSymbol->pathPaddingLeft = textSymbol->pathPaddingLeft;
                     rasterizedSymbol->pathPaddingRight = textSymbol->pathPaddingRight;
                     group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));
@@ -288,24 +295,28 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;
                 if (!qIsNaN(iconSymbol->intersectionSizeFactor))
                 {
-                    rasterizedSymbol->intersectionSize = PointI(
+                    rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
                         static_cast<int>(iconSymbol->intersectionSizeFactor * rasterizedIcon->width()),
-                        static_cast<int>(iconSymbol->intersectionSizeFactor * rasterizedIcon->height()));
+                        static_cast<int>(iconSymbol->intersectionSizeFactor * rasterizedIcon->height())));
                 }
                 else if (!qIsNaN(iconSymbol->intersectionSize))
                 {
-                    rasterizedSymbol->intersectionSize = PointI(
+                    rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
                         static_cast<int>(iconSymbol->intersectionSize),
-                        static_cast<int>(iconSymbol->intersectionSize));
+                        static_cast<int>(iconSymbol->intersectionSize)));
                 }
                 else if (!qIsNaN(iconSymbol->intersectionMargin))
                 {
-                    rasterizedSymbol->intersectionSize = PointI(
+                    rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
                         rasterizedIcon->width() + static_cast<int>(iconSymbol->intersectionMargin),
-                        rasterizedIcon->height() + static_cast<int>(iconSymbol->intersectionMargin));
+                        rasterizedIcon->height() + static_cast<int>(iconSymbol->intersectionMargin)));
                 }
                 else
-                    rasterizedSymbol->intersectionSize = PointI(-1, -1);
+                {
+                    rasterizedSymbol->intersectionBBox = AreaI::fromCenterAndSize(PointI(), PointI(
+                        static_cast<int>(rasterizedIcon->width()),
+                        static_cast<int>(rasterizedIcon->height())));
+                }
                 rasterizedSymbol->pathPaddingLeft = iconSymbol->pathPaddingLeft;
                 rasterizedSymbol->pathPaddingRight = iconSymbol->pathPaddingRight;
                 group->symbols.push_back(qMove(std::shared_ptr<const RasterizedSymbol>(rasterizedSymbol)));

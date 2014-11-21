@@ -115,16 +115,15 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 billboardRasterSymbol->minDistance = rasterizedSpriteSymbol->minDistance;
                 billboardRasterSymbol->position31 = rasterizedSpriteSymbol->location31;
                 billboardRasterSymbol->offset = rasterizedSpriteSymbol->offset;
-                if (rasterizedSpriteSymbol->intersectionSize.x == 0 && rasterizedSpriteSymbol->intersectionSize.y == 0)
+                if (rasterizedSpriteSymbol->intersectionBBox.width() > 0 || rasterizedSpriteSymbol->intersectionBBox.height() > 0)
                 {
-                    // In this case ignore any intersection classes set
-                }
-                else
-                {
-                    if (rasterizedSpriteSymbol->intersectionSize.x > 0)
-                        billboardRasterSymbol->margin.x = rasterizedSpriteSymbol->intersectionSize.x - billboardRasterSymbol->size.x;
-                    if (rasterizedSpriteSymbol->intersectionSize.y > 0)
-                        billboardRasterSymbol->margin.y = rasterizedSpriteSymbol->intersectionSize.y - billboardRasterSymbol->size.y;
+                    const auto halfWidth = billboardRasterSymbol->size.x / 2;
+                    const auto halfHeight = billboardRasterSymbol->size.y / 2;
+
+                    billboardRasterSymbol->margin.top() = -rasterizedSpriteSymbol->intersectionBBox.top() - halfHeight;
+                    billboardRasterSymbol->margin.left() = -rasterizedSpriteSymbol->intersectionBBox.left() - halfWidth;
+                    billboardRasterSymbol->margin.bottom() = rasterizedSpriteSymbol->intersectionBBox.bottom() - halfHeight;
+                    billboardRasterSymbol->margin.right() = rasterizedSpriteSymbol->intersectionBBox.right() - halfWidth;
 
                     // Collect intersection classes
                     for (const auto& intersectsWithClass : constOf(rasterizedSpriteSymbol->primitiveSymbol->intersectsWith))
