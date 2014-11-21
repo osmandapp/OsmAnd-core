@@ -167,7 +167,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodes(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    bool atLeastOneBasemapRootBoxRead = false; 
+    bool atLeastOneBasemapRootBoxRead = false;
     bool atLeastOneDetailedRootBoxRead = false;
     for (;;)
     {
@@ -342,7 +342,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
 
                 readLevelTreeNode(reader, childNode, treeNode);
                 assert(treeNode->area31.contains(childNode->area31));
-                
+
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
@@ -439,8 +439,8 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
                             resultOut->push_back(road);
                     }
                 }
-            }
                 return;
+            }
             case OBF::OsmAndRoutingIndex_RouteDataBlock::kIdTableFieldNumber:
             {
                 gpb::uint32 length;
@@ -870,7 +870,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             std::shared_ptr<ObfRoutingSectionLevel> level(new ObfRoutingSectionLevel(dataLevel));
             readLevelTreeNodes(reader, section, level);
             container.level = level;
-            
+
             cis->PopLimit(oldLimit);
         }
     }
@@ -1060,7 +1060,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                 visitor,
                 controller,
                 metric);
-            
+
             ObfReaderUtilities::ensureAllDataWasRead(cis);
             cis->PopLimit(oldLimit);
 

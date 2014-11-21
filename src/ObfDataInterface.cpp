@@ -1,9 +1,16 @@
 #include "ObfDataInterface.h"
 
+#include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
+#include <QSet>
+#include "restore_internal_warnings.h"
+
 #include "ObfReader.h"
 #include "ObfInfo.h"
 #include "ObfMapSectionReader.h"
 #include "ObfMapSectionInfo.h"
+#include "ObfRoutingSectionReader.h"
+#include "ObfRoutingSectionInfo.h"
 #include "IQueryController.h"
 
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
@@ -232,6 +239,8 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     auto mergedSurfaceType = MapSurfaceType::Undefined;
     std::shared_ptr<const ObfReader> basemapReader;
 
+    QSet<QString> processedMapSectionsNames;
+
     for (const auto& obfReader : constOf(obfReaders))
     {
         if (controller && controller->isAborted())
@@ -261,6 +270,9 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         {
             if (controller && controller->isAborted())
                 return false;
+
+            // Remember that this section was processed (by name)
+            processedMapSectionsNames.insert(mapSection->name);
 
             // Read objects from each map section
             auto surfaceTypeToMerge = MapSurfaceType::Undefined;
@@ -339,36 +351,43 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     if (outSurfaceType)
         *outSurfaceType = mergedSurfaceType;
 
-    for (const auto& obfReader : constOf(obfReaders))
+    if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel)
     {
-        if (controller && controller->isAborted())
-            return false;
-
-        const auto& obfInfo = obfReader->obtainInfo();
-
-        // Skip all OBF readers that have map section, since they were already processed
-        if (!obfInfo->mapSections.isEmpty())
-            continue;
-
-        for (const auto& routingSection : constOf(obfInfo->routingSections))
+        for (const auto& obfReader : constOf(obfReaders))
         {
-            // Check if request is aborted
             if (controller && controller->isAborted())
                 return false;
 
-            // Read objects from each map section
-            OsmAnd::ObfRoutingSectionReader::loadRoads(
-                obfReader,
-                routingSection,
-                RoutingDataLevel::Detailed,
-                bbox31,
-                outRoads,
-                filterRoadsById,
-                nullptr,
-                roadsCache,
-                outReferencedRoadsCacheEntries,
-                controller,
-                roadsMetric);
+            const auto& obfInfo = obfReader->obtainInfo();
+
+            // Skip all OBF readers that have map section, since they were already processed
+            if (!obfInfo->mapSections.isEmpty())
+                continue;
+
+            for (const auto& routingSection : constOf(obfInfo->routingSections))
+            {
+                // Check if request is aborted
+                if (controller && controller->isAborted())
+                    return false;
+
+                // Check that map section with same name was not processed from other file
+                if (processedMapSectionsNames.contains(routingSection->name))
+                    continue;
+
+                // Read objects from each map section
+                OsmAnd::ObfRoutingSectionReader::loadRoads(
+                    obfReader,
+                    routingSection,
+                    RoutingDataLevel::Detailed,
+                    bbox31,
+                    outRoads,
+                    filterRoadsById,
+                    nullptr,
+                    roadsCache,
+                    outReferencedRoadsCacheEntries,
+                    controller,
+                    roadsMetric);
+            }
         }
     }
 
