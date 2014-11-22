@@ -232,7 +232,20 @@ void OsmAnd::MapAnimator_P::cancelAllAnimations()
 void OsmAnd::MapAnimator_P::update(const float timePassed)
 {
     if (_isPaused)
+    {
+        if (!_rendererSymbolsUpdateSuspended)
+        {
+            _renderer->suspendSymbolsUpdate();
+            _rendererSymbolsUpdateSuspended = true;
+        }
+        else // if (_rendererSymbolsUpdateSuspended)
+        {
+            _renderer->resumeSymbolsUpdate();
+            _rendererSymbolsUpdateSuspended = false;
+        }
+
         return;
+    }
 
     QWriteLocker scopedLocker(&_animationsCollectionLock);
 
