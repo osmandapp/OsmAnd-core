@@ -100,10 +100,50 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 {
     Stopwatch stopwatch(metric != nullptr);
 
-    if (!publishedMapSymbolsByOrderLock.tryLockForRead())
-        return false;
+    // In case symbols update was not suspended, process published symbols
+    if (!renderer->isSymbolsUpdateSuspended())
+    {
+        if (!publishedMapSymbolsByOrderLock.tryLockForRead())
+            return false;
 
-    Stopwatch noLockStopwatch(metric != nullptr);
+        _lastAcceptedMapSymbolsByOrder.clear();
+        const auto result = obtainRenderableSymbols(
+            publishedMapSymbolsByOrder,
+            outRenderableSymbols,
+            outIntersections,
+            &_lastAcceptedMapSymbolsByOrder,
+            metric);
+
+        publishedMapSymbolsByOrderLock.unlock();
+
+        if (metric)
+        {
+            metric->elapsedTimeForObtainingRenderableSymbolsWithLock = stopwatch.elapsed();
+            metric->elapsedTimeForObtainingRenderableSymbolsOnlyLock =
+                metric->elapsedTimeForObtainingRenderableSymbolsWithLock - metric->elapsedTimeForObtainingRenderableSymbols;
+        }
+
+        return result;
+    }
+    
+    // Otherwise, use last accepted map symbols by order
+    const auto result = obtainRenderableSymbols(
+        _lastAcceptedMapSymbolsByOrder,
+        outRenderableSymbols,
+        outIntersections,
+        nullptr,
+        metric);
+    return result;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
+    const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
+    QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
+    IntersectionsQuadTree& outIntersections,
+    MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
+{
+    Stopwatch stopwatch(metric != nullptr);
 
     typedef QLinkedList< std::shared_ptr<const RenderableSymbol> > PlottedSymbols;
     PlottedSymbols plottedSymbols;
@@ -179,13 +219,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     const auto treeDepth = 32u - SkCLZ(viewportMaxDimension >> 6);
     outIntersections = qMove(IntersectionsQuadTree(currentState.viewport, qMax(treeDepth, 1u)));
     ComputedPathsDataCache computedPathsDataCache;
-    for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
+    for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
     {
+        const auto order = mapSymbolsByOrderEntry.key();
+        const auto& mapSymbols = mapSymbolsByOrderEntry.value();
+        MapRenderer::PublishedMapSymbolsByGroup* pAcceptedMapSymbols = nullptr;
+
         // Iterate over all groups in proper order (proper order is maintained during publishing)
-        for (const auto& publishedMapSymbolsEntry : constOf(publishedMapSymbols))
+        for (const auto& mapSymbolsEntry : constOf(mapSymbols))
         {
-            const auto& mapSymbolsGroup = publishedMapSymbolsEntry.first;
-            const auto& publishedMapSymbolsFromGroup = publishedMapSymbolsEntry.second;
+            const auto& mapSymbolsGroup = mapSymbolsEntry.first;
+            const auto& mapSymbolsFromGroup = mapSymbolsEntry.second;
 
             // Debug: showTooShortOnPathSymbolsRenderablesPaths
             if (Q_UNLIKELY(debugSettings->showTooShortOnPathSymbolsRenderablesPaths) &&
@@ -227,8 +271,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         continue;
 
                     // If this map symbol is not published yet or is located at different order, skip
-                    const auto citReferencesOrigins = publishedMapSymbolsFromGroup.constFind(mapSymbol);
-                    if (citReferencesOrigins == publishedMapSymbolsFromGroup.cend())
+                    const auto citReferencesOrigins = mapSymbolsFromGroup.constFind(mapSymbol);
+                    if (citReferencesOrigins == mapSymbolsFromGroup.cend())
                         continue;
                     const auto& referencesOrigins = *citReferencesOrigins;
 
@@ -241,6 +285,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         computedPathsDataCache,
                         renderableSymbols,
                         metric);
+
+                    // In case renderable symbol was obtained and accepted map symbols were requested,
+                    // add this symbol to accepted
+                    if (pOutAcceptedMapSymbolsByOrder && !renderableSymbols.isEmpty())
+                    {
+                        if (pAcceptedMapSymbols == nullptr)
+                            pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
+
+                        (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
+                    }
 
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
@@ -267,8 +321,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         continue;
 
                     // If this map symbol is not published yet or is located at different order, skip
-                    const auto citReferencesOrigins = publishedMapSymbolsFromGroup.constFind(mapSymbol);
-                    if (citReferencesOrigins == publishedMapSymbolsFromGroup.cend())
+                    const auto citReferencesOrigins = mapSymbolsFromGroup.constFind(mapSymbol);
+                    if (citReferencesOrigins == mapSymbolsFromGroup.cend())
                         continue;
                     const auto& referencesOrigins = *citReferencesOrigins;
 
@@ -287,6 +341,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         computedPathsDataCache,
                         renderableSymbols,
                         metric);
+
+                    // In case renderable symbol was obtained and accepted map symbols were requested,
+                    // add this symbol to accepted
+                    if (pOutAcceptedMapSymbolsByOrder && !renderableSymbols.isEmpty())
+                    {
+                        if (pAcceptedMapSymbols == nullptr)
+                            pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
+
+                        (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
+                    }
 
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
@@ -432,16 +496,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     }
 
     if (metric)
-        metric->elapsedTimeForObtainingRenderableSymbolsNoLock = noLockStopwatch.elapsed();
-
-    publishedMapSymbolsByOrderLock.unlock();
-
-    if (metric)
-    {
         metric->elapsedTimeForObtainingRenderableSymbols = stopwatch.elapsed();
-        metric->elapsedTimeForObtainingRenderableSymbolsOnlyLock =
-            metric->elapsedTimeForObtainingRenderableSymbols - metric->elapsedTimeForObtainingRenderableSymbolsNoLock;
-    }
 
     return true;
 }

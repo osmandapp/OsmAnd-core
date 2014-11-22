@@ -40,6 +40,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , _currentConfiguration(baseConfiguration_->createCopy())
     , _currentConfigurationAsConst(_currentConfiguration)
     , _requestedConfiguration(baseConfiguration_->createCopy())
+    , _suspendSymbolsUpdateCounter(0)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerIsAlive(false)
     , _renderThreadId(nullptr)
@@ -1067,19 +1068,23 @@ unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
     return _publishedMapSymbolsCount.loadAcquire();
 }
 
-bool OsmAnd::MapRenderer::isSymbolsProcessingSuspended() const
+bool OsmAnd::MapRenderer::isSymbolsUpdateSuspended() const
 {
-    return false;
+    return (_suspendSymbolsUpdateCounter.loadAcquire() > 0);
 }
 
-bool OsmAnd::MapRenderer::suspendSymbolsProcessing()
+bool OsmAnd::MapRenderer::suspendSymbolsUpdate()
 {
-    return false;
+    return (_suspendSymbolsUpdateCounter.fetchAndAddOrdered(+1) >= 0);
 }
 
-bool OsmAnd::MapRenderer::resumeSymbolsProcessing()
+bool OsmAnd::MapRenderer::resumeSymbolsUpdate()
 {
-    return false;
+    const auto prevCounter = _suspendSymbolsUpdateCounter.fetchAndAddOrdered(-1);
+    if (prevCounter == 1)
+        invalidateFrame();
+
+    return (prevCounter <= 1);
 }
 
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const

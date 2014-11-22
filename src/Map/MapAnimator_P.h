@@ -38,8 +38,8 @@ namespace OsmAnd
     protected:
         MapAnimator_P(MapAnimator* const owner);
 
-        ImplementationInterface<MapAnimator> owner;
         std::shared_ptr<IMapRenderer> _renderer;
+        bool _rendererSymbolsUpdateSuspended;
 
         struct AnimationContext
         {
@@ -589,6 +589,8 @@ namespace OsmAnd
         static std::shared_ptr<GenericAnimation> findCurrentAnimation(const AnimatedValue animatedValue, const AnimationsCollection& collection);
     public:
         ~MapAnimator_P();
+
+        ImplementationInterface<MapAnimator> owner;
 
         void setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer);
 

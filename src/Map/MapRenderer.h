@@ -83,6 +83,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapSymbol>& symbol,
             const std::shared_ptr<MapRendererBaseResource>& resource);
         bool validatePublishedMapSymbolsIntegrity();
+        QAtomicInt _suspendSymbolsUpdateCounter;
         
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
@@ -275,9 +276,9 @@ namespace OsmAnd
 
         // Symbols-related:
         virtual unsigned int getSymbolsCount() const;
-        virtual bool isSymbolsProcessingSuspended() const;
-        virtual bool suspendSymbolsProcessing();
-        virtual bool resumeSymbolsProcessing();
+        virtual bool isSymbolsUpdateSuspended() const;
+        virtual bool suspendSymbolsUpdate();
+        virtual bool resumeSymbolsUpdate();
 
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const;

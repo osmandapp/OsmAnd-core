@@ -92,8 +92,11 @@ namespace OsmAnd
         PrivateImplementation<MapAnimator_P> _p;
     protected:
     public:
-        MapAnimator();
+        MapAnimator(
+            const bool suspendSymbolsDuringAnimation = true);
         virtual ~MapAnimator();
+
+        const bool suspendSymbolsDuringAnimation;
 
         void setMapRenderer(const std::shared_ptr<IMapRenderer>& mapRenderer);
         const std::shared_ptr<IMapRenderer>& mapRenderer;

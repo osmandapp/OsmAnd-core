@@ -75,9 +75,9 @@ namespace OsmAnd
 
         virtual unsigned int getSymbolsCount() const = 0;
         virtual QList< std::shared_ptr<const MapSymbol> > getSymbolsAt(const PointI& screenPoint) const = 0;
-        virtual bool isSymbolsProcessingSuspended() const = 0;
-        virtual bool suspendSymbolsProcessing() = 0;
-        virtual bool resumeSymbolsProcessing() = 0;
+        virtual bool isSymbolsUpdateSuspended() const = 0;
+        virtual bool suspendSymbolsUpdate() = 0;
+        virtual bool resumeSymbolsUpdate() = 0;
 
         virtual bool setMapLayerProvider(const unsigned int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool resetMapLayerProvider(const unsigned int layerIndex, bool forcedUpdate = false) = 0;

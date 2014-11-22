@@ -7,7 +7,7 @@
 #include "Utilities.h"
 
 OsmAnd::MapAnimator_P::MapAnimator_P( MapAnimator* const owner_ )
-    : owner(owner_)
+    : _rendererSymbolsUpdateSuspended(false)
     , _isPaused(true)
     , _zoomGetter(std::bind(&MapAnimator_P::zoomGetter, this, std::placeholders::_1, std::placeholders::_2))
     , _zoomSetter(std::bind(&MapAnimator_P::zoomSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
@@ -17,6 +17,7 @@ OsmAnd::MapAnimator_P::MapAnimator_P( MapAnimator* const owner_ )
     , _elevationAngleSetter(std::bind(&MapAnimator_P::elevationAngleSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
     , _targetGetter(std::bind(&MapAnimator_P::targetGetter, this, std::placeholders::_1, std::placeholders::_2))
     , _targetSetter(std::bind(&MapAnimator_P::targetSetter, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3))
+    , owner(owner_)
 {
 }
 
@@ -230,13 +231,20 @@ void OsmAnd::MapAnimator_P::cancelAllAnimations()
 
 void OsmAnd::MapAnimator_P::update(const float timePassed)
 {
-    QWriteLocker scopedLocker(&_animationsCollectionLock);
-
-    // Do nothing if animation is paused
     if (_isPaused)
         return;
 
-    // Apply all animations
+    QWriteLocker scopedLocker(&_animationsCollectionLock);
+
+    // In case there are animations and symbols suspend is enabled,
+    // actually suspend symbols
+    if (!_animationsByKey.isEmpty() && owner->suspendSymbolsDuringAnimation && !_rendererSymbolsUpdateSuspended)
+    {
+        _renderer->suspendSymbolsUpdate();
+        _rendererSymbolsUpdateSuspended = true;
+    }
+
+    // Perform all animations
     auto itAnimations = mutableIteratorOf(_animationsByKey);
     while(itAnimations.hasNext())
     {
@@ -255,6 +263,14 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
         
         if (animations.isEmpty())
             itAnimations.remove();
+    }
+
+    // In case there are no animations and symbols suspend is enabled,
+    // resume symbols update if it was enabled
+    if (_animationsByKey.isEmpty() && owner->suspendSymbolsDuringAnimation && _rendererSymbolsUpdateSuspended)
+    {
+        _renderer->resumeSymbolsUpdate();
+        _rendererSymbolsUpdateSuspended = false;
     }
 }
 

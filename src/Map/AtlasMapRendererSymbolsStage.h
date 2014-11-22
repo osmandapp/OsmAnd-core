@@ -111,6 +111,13 @@ namespace OsmAnd
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
             IntersectionsQuadTree& outIntersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+        bool obtainRenderableSymbols(
+            const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
+            QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
+            IntersectionsQuadTree& outIntersections,
+            MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
+        mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
         IntersectionsQuadTree _lastPreparedIntersections;

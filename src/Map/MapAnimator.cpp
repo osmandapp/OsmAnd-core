@@ -9,8 +9,10 @@
 #include <Logging.h>
 #include <Utilities.h>
 
-OsmAnd::MapAnimator::MapAnimator()
+OsmAnd::MapAnimator::MapAnimator(
+    const bool suspendSymbolsDuringAnimation_ /*= true*/)
     : _p(new MapAnimator_P(this))
+    , suspendSymbolsDuringAnimation(suspendSymbolsDuringAnimation_)
     , mapRenderer(_p->_renderer)
 {
 }
