@@ -75,7 +75,7 @@ namespace OsmAnd
 
         virtual unsigned int getSymbolsCount() const = 0;
         virtual QList< std::shared_ptr<const MapSymbol> > getSymbolsAt(const PointI& screenPoint) const = 0;
-        virtual bool isSymbolsUpdateSuspended() const = 0;
+        virtual bool isSymbolsUpdateSuspended(int* const pOutSuspendsCounter = nullptr) const = 0;
         virtual bool suspendSymbolsUpdate() = 0;
         virtual bool resumeSymbolsUpdate() = 0;
 

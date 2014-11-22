@@ -276,7 +276,7 @@ namespace OsmAnd
 
         // Symbols-related:
         virtual unsigned int getSymbolsCount() const;
-        virtual bool isSymbolsUpdateSuspended() const;
+        virtual bool isSymbolsUpdateSuspended(int* const pOutSuspendsCounter = nullptr) const;
         virtual bool suspendSymbolsUpdate();
         virtual bool resumeSymbolsUpdate();
 

@@ -1068,9 +1068,14 @@ unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
     return _publishedMapSymbolsCount.loadAcquire();
 }
 
-bool OsmAnd::MapRenderer::isSymbolsUpdateSuspended() const
+bool OsmAnd::MapRenderer::isSymbolsUpdateSuspended(int* const pOutSuspendsCounter /*= nullptr*/) const
 {
-    return (_suspendSymbolsUpdateCounter.loadAcquire() > 0);
+    const auto suspendsCounter = _suspendSymbolsUpdateCounter.loadAcquire();
+
+    if (pOutSuspendsCounter != nullptr)
+        *pOutSuspendsCounter = suspendsCounter;
+
+    return (suspendsCounter > 0);
 }
 
 bool OsmAnd::MapRenderer::suspendSymbolsUpdate()
