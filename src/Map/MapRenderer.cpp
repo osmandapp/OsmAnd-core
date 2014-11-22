@@ -1080,7 +1080,11 @@ bool OsmAnd::MapRenderer::isSymbolsUpdateSuspended(int* const pOutSuspendsCounte
 
 bool OsmAnd::MapRenderer::suspendSymbolsUpdate()
 {
-    return (_suspendSymbolsUpdateCounter.fetchAndAddOrdered(+1) >= 0);
+    const auto prevCounter = _suspendSymbolsUpdateCounter.fetchAndAddOrdered(+1);
+    if (prevCounter == 0)
+        invalidateFrame();
+
+    return (prevCounter >= 1);
 }
 
 bool OsmAnd::MapRenderer::resumeSymbolsUpdate()
