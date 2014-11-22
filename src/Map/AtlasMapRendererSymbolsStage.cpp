@@ -296,7 +296,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         {
                             // In case renderable symbol was obtained and accepted map symbols were requested,
                             // add this symbol to accepted
-                            if (pOutAcceptedMapSymbolsByOrder && !renderableSymbols.isEmpty())
+                            if (pOutAcceptedMapSymbolsByOrder)
                             {
                                 if (pAcceptedMapSymbols == nullptr)
                                     pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
@@ -357,7 +357,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         {
                             // In case renderable symbol was obtained and accepted map symbols were requested,
                             // add this symbol to accepted
-                            if (pOutAcceptedMapSymbolsByOrder && !renderableSymbols.isEmpty())
+                            if (pOutAcceptedMapSymbolsByOrder)
                             {
                                 if (pAcceptedMapSymbols == nullptr)
                                     pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
