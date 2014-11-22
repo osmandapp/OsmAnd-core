@@ -43,6 +43,9 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
 {
     mapSymbol.releaseVerticesAndIndices();
 
+    if (pointsCount == 0)
+        return;
+
     mapSymbol.primitiveType = PrimitiveType::TriangleFan;
 
     // Circle has no reusable vertices, because it's rendered as triangle-fan,
@@ -86,6 +89,9 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
     float radius /*= 1.0f*/)
 {
     mapSymbol.releaseVerticesAndIndices();
+
+    if (pointsCount == 0)
+        return;
 
     mapSymbol.primitiveType = PrimitiveType::LineLoop;
 
