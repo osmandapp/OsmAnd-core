@@ -13,6 +13,10 @@ bool OsmAnd::Frustum2D31::test(const PointI& p_) const
     const auto yMinK = qFloor(static_cast<double>(bbox.top()) / tilesCount);
     const auto yMaxK = qCeil(static_cast<double>(bbox.bottom()) / tilesCount);
 
+    // 3+ repeats for world include any point in world
+    if (qAbs(xMaxK - xMinK) >= 3 && qAbs(yMaxK - yMinK) >= 3)
+        return true;
+
     PointI64 dP;
     const PointI64 p(p_);
     for (auto xK = xMinK; xK <= xMaxK; xK++)
@@ -41,6 +45,10 @@ bool OsmAnd::Frustum2D31::test(const PointI& lp0_, const PointI& lp1_) const
     const auto xMaxK = qCeil(static_cast<double>(bbox.right()) / tilesCount);
     const auto yMinK = qFloor(static_cast<double>(bbox.top()) / tilesCount);
     const auto yMaxK = qCeil(static_cast<double>(bbox.bottom()) / tilesCount);
+
+    // 3+ repeats for world include any point in world
+    if (qAbs(xMaxK - xMinK) >= 3 && qAbs(yMaxK - yMinK) >= 3)
+        return true;
 
     PointI64 dP;
     const PointI64 lp0(lp0_);

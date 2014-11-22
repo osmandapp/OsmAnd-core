@@ -23,6 +23,7 @@ namespace OsmAnd
     {
         OSMAND_USE_MEMORY_MANAGER(Frustum2D);
 
+        typedef Frustum2D<T> Frustum2DT;
         typedef Point<T> PointT;
         typedef Area<T> AreaT;
 
@@ -108,6 +109,50 @@ namespace OsmAnd
                 area.contains(p1) ||
                 area.contains(p2) ||
                 area.contains(p3);
+        }
+
+        Frustum2DT operator+(const PointT& shift) const
+        {
+            Frustum2DT frustum = *this;
+
+            frustum.p0 += shift;
+            frustum.p1 += shift;
+            frustum.p2 += shift;
+            frustum.p3 += shift;
+
+            return frustum;
+        }
+
+        Frustum2DT& operator+=(const PointT& shift)
+        {
+            p0 += shift;
+            p1 += shift;
+            p2 += shift;
+            p3 += shift;
+
+            return *this;
+        }
+
+        Frustum2DT operator-(const PointT& shift) const
+        {
+            Frustum2DT frustum = *this;
+
+            frustum.p0 -= shift;
+            frustum.p1 -= shift;
+            frustum.p2 -= shift;
+            frustum.p3 -= shift;
+
+            return frustum;
+        }
+
+        Frustum2DT& operator-=(const PointT& shift)
+        {
+            p0 -= shift;
+            p1 -= shift;
+            p2 -= shift;
+            p3 -= shift;
+
+            return *this;
         }
     };
 

@@ -354,7 +354,7 @@ namespace OsmAnd
 #if OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
             return static_cast<STATE_ENUM>(_stateValue);
 #else
-            return static_cast<STATE_ENUM>(_stateValue.load());
+            return static_cast<STATE_ENUM>(_stateValue.loadAcquire());
 #endif // OSMAND_TRACE_TILED_ENTRIES_COLLECTION_STATE_SUPPORT
         }
 

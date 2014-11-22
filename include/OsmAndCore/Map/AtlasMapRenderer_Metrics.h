@@ -32,18 +32,25 @@ namespace OsmAnd
         FIELD_ACTION(float, elapsedTimeForObtainingRenderableSymbolsOnlyLock, "s");                             \
         FIELD_ACTION(float, elapsedTimeForObtainRenderableSymbolCalls, "s");                                    \
         FIELD_ACTION(unsigned int, obtainRenderableSymbolCalls, "");                                            \
+        FIELD_ACTION(unsigned int, onPathSymbolsRejectedByFrustum, "");                                         \
+        FIELD_ACTION(unsigned int, onSurfaceSymbolsRejectedByFrustum, "");                                      \
+        FIELD_ACTION(unsigned int, billboardSymbolsRejectedByFrustum, "");                                      \
         FIELD_ACTION(float, elapsedTimeForPlotSymbolCalls, "s");                                                \
         FIELD_ACTION(unsigned int, plotSymbolCalls, "");                                                        \
         FIELD_ACTION(unsigned int, plotSymbolCallsSucceeded, "");                                               \
         FIELD_ACTION(unsigned int, plotSymbolCallsFailed, "");                                                  \
+        FIELD_ACTION(float, elapsedTimeForApplyVisibilityFilteringCalls, "s");                                  \
+        FIELD_ACTION(unsigned int, applyVisibilityFilteringCalls, "");                                          \
+        FIELD_ACTION(unsigned int, acceptedByVisibilityFiltering, "");                                          \
+        FIELD_ACTION(unsigned int, rejectedByVisibilityFiltering, "");                                          \
         FIELD_ACTION(float, elapsedTimeForApplyIntersectionWithOtherSymbolsFilteringCalls, "s");                \
         FIELD_ACTION(unsigned int, applyIntersectionWithOtherSymbolsFilteringCalls, "");                        \
-        FIELD_ACTION(unsigned int, acceptedIntersectionWithOtherSymbolsFiltering, "");                          \
-        FIELD_ACTION(unsigned int, rejectedIntersectionWithOtherSymbolsFiltering, "");                          \
+        FIELD_ACTION(unsigned int, acceptedByIntersectionWithOtherSymbolsFiltering, "");                        \
+        FIELD_ACTION(unsigned int, rejectedByIntersectionWithOtherSymbolsFiltering, "");                        \
         FIELD_ACTION(float, elapsedTimeForApplyMinDistanceToSameContentFromOtherSymbolFilteringCalls, "s");     \
         FIELD_ACTION(unsigned int, applyMinDistanceToSameContentFromOtherSymbolFilteringCalls, "");             \
-        FIELD_ACTION(unsigned int, acceptedMinDistanceToSameContentFromOtherSymbolFiltering, "");               \
-        FIELD_ACTION(unsigned int, rejectedMinDistanceToSameContentFromOtherSymbolFiltering, "");               \
+        FIELD_ACTION(unsigned int, acceptedByMinDistanceToSameContentFromOtherSymbolFiltering, "");             \
+        FIELD_ACTION(unsigned int, rejectedByMinDistanceToSameContentFromOtherSymbolFiltering, "");             \
         FIELD_ACTION(float, elapsedTimeForAddToIntersectionsCalls, "s");                                        \
         FIELD_ACTION(unsigned int, addToIntersectionsCalls, "");                                                \
         FIELD_ACTION(unsigned int, acceptedByAddToIntersections, "");                                           \

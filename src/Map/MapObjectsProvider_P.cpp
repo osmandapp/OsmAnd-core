@@ -54,7 +54,7 @@ bool OsmAnd::MapObjectsProvider_P::prepareData()
         treeRootArea.left() = Utilities::getPreviousPowerOfTwo(treeRootArea.left());
         treeRootArea.bottom() = qMin(Utilities::getNextPowerOfTwo(treeRootArea.bottom()), static_cast<uint32_t>(std::numeric_limits<int32_t>::max()));
         treeRootArea.right() = qMin(Utilities::getNextPowerOfTwo(treeRootArea.right()), static_cast<uint32_t>(std::numeric_limits<int32_t>::max()));
-        dataByZoom.mapObjectsTree = qMove(MapObjectsTree(treeRootArea, 8));
+        dataByZoom.mapObjectsTree = qMove(MapObjectsTree(treeRootArea, 4));
 
         for (const auto& mapObject : constOf(dataByZoom.mapObjectsList))
             dataByZoom.mapObjectsTree.insert(mapObject, mapObject->bbox31);

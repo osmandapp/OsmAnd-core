@@ -24,6 +24,16 @@ namespace OsmAnd
     {
         OSMAND_USE_MEMORY_MANAGER(Frustum2D31);
 
+        inline Frustum2D31& operator=(const Frustum2DI64& that)
+        {
+            this->p0 = that.p0;
+            this->p1 = that.p1;
+            this->p2 = that.p2;
+            this->p3 = that.p3;
+
+            return *this;
+        }
+
         bool test(const PointI& p) const;
         bool test(const PointI& lp0, const PointI& lp1) const;
         bool test(const QVector<PointI>& path) const;

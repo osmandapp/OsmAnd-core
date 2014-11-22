@@ -13,6 +13,10 @@
 #include <glm/gtx/transform.hpp>
 #include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
+#include <SkMath.h>
+#include "restore_internal_warnings.h"
+
 #include "OsmAndCore.h"
 #include "AtlasMapRenderer.h"
 #include "AtlasMapRenderer_Metrics.h"
@@ -169,7 +173,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // Iterate over map symbols layer sorted by "order" in ascending direction.
     // This means that map symbols with smaller order value are more important than map symbols with
     // larger order value.
-    outIntersections = qMove(IntersectionsQuadTree(currentState.viewport, 8));
+    // Tree depth should satisfy following condition:
+    // (max(width, height) / 2^depth) >= 64
+    const auto viewportMaxDimension = qMax(currentState.viewport.height(), currentState.viewport.width());
+    const auto treeDepth = 32u - SkCLZ(viewportMaxDimension >> 6);
+    outIntersections = qMove(IntersectionsQuadTree(currentState.viewport, qMax(treeDepth, 1u)));
     ComputedPathsDataCache computedPathsDataCache;
     for (const auto& publishedMapSymbols : constOf(publishedMapSymbolsByOrder))
     {
@@ -562,6 +570,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         (instanceParameters && instanceParameters->overridesPosition31)
         ? instanceParameters->position31
         : billboardMapSymbol->getPosition31();
+
+    // Test against visible frustum area (if allowed)
+    if (mapSymbol->allowFastCheckByFrustum && !internalState.globalFrustum2D31.test(position31))
+    {
+        if (metric)
+            metric->billboardSymbolsRejectedByFrustum++;
+        return;
+    }
+
     //////////////////////////////////////////////////////////////////////////
     /*
     {
@@ -647,11 +664,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     auto boundsInWindow = AreaI::fromCenterAndSize(
         static_cast<int>(symbolOnScreen.x + offsetOnScreen.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + offsetOnScreen.y),
         symbol->size.x, symbol->size.y);
+    const auto visibleBBox = boundsInWindow;
     boundsInWindow.top() -= symbol->margin.top();
     boundsInWindow.left() -= symbol->margin.left();
     boundsInWindow.right() += symbol->margin.right();
     boundsInWindow.bottom() += symbol->margin.bottom();
     renderable->intersectionBBox = boundsInWindow;
+
+    if (!applyVisibilityFiltering(visibleBBox, intersections, metric))
+        return false;
 
     if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
         return false;
@@ -690,6 +711,14 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         (instanceParameters && instanceParameters->overridesDirection)
         ? instanceParameters->direction
         : onSurfaceMapSymbol->getDirection();
+
+    // Test against visible frustum area (if allowed)
+    if (mapSymbol->allowFastCheckByFrustum && !internalState.globalFrustum2D31.test(position31))
+    {
+        if (metric)
+            metric->onSurfaceSymbolsRejectedByFrustum++;
+        return;
+    }
 
     // Get GPU resource
     const auto gpuResource = captureGpuResource(referenceOrigins, mapSymbol);
@@ -781,6 +810,13 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
     QList< std::shared_ptr<RenderableSymbol> >& outRenderableSymbols,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
+    // Path must have at least 2 points and there must be at least one pin-point
+    if (Q_UNLIKELY(onPathMapSymbol->shareablePath31->size() < 2))
+    {
+        assert(false);
+        return;
+    }
+
     const auto& internalState = getInternalState();
 
     const auto& pinPointOnPath =
@@ -788,10 +824,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         ? instanceParameters->pinPointOnPath
         : onPathMapSymbol->pinPointOnPath;
 
-    // Path must have at least 2 points and there must be at least one pin-point
-    if (Q_UNLIKELY(onPathMapSymbol->shareablePath31->size() < 2))
+    // Test against visible frustum area (if allowed)
+    if (onPathMapSymbol->allowFastCheckByFrustum && !internalState.globalFrustum2D31.test(pinPointOnPath.point31))
     {
-        assert(false);
+        if (metric)
+            metric->onPathSymbolsRejectedByFrustum++;
         return;
     }
 
@@ -1085,10 +1122,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     {
         // Calculate OOBB for 2D SOP
         const auto oobb = calculateOnPath2dOOBB(renderable);
-        renderable->intersectionBBox = (OOBBI)oobb;
+        const auto visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
+
+        if (!applyVisibilityFiltering(visibleBBox, intersections, metric))
+            return false;
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-//        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+        //        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
         if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
             return false;
@@ -1120,10 +1160,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     {
         // Calculate OOBB for 3D SOP in world
         const auto oobb = calculateOnPath3dOOBB(renderable);
-        renderable->intersectionBBox = (OOBBI)oobb;
+        const auto visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
+
+        if (!applyVisibilityFiltering(visibleBBox, intersections, metric))
+            return false;
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
-//        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
+        //        oobb.enlargeBy(PointF(3.0f*setupOptions.displayDensityFactor, 10.0f*setupOptions.displayDensityFactor)); /* 3dip; 10dip */
 
         if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
             return false;
@@ -1167,6 +1210,31 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     }
 
     return true;
+}
+
+bool OsmAnd::AtlasMapRendererSymbolsStage::applyVisibilityFiltering(
+    const IntersectionsQuadTree::BBox& visibleBBox,
+    const IntersectionsQuadTree& intersections,
+    AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
+{
+    Stopwatch stopwatch(metric != nullptr);
+
+    const auto mayBeVisible =
+        visibleBBox.isContainedBy(intersections.rootArea()) ||
+        visibleBBox.isIntersectedBy(intersections.rootArea()) ||
+        visibleBBox.contains(intersections.rootArea());
+
+    if (metric)
+    {
+        metric->elapsedTimeForApplyVisibilityFilteringCalls += stopwatch.elapsed();
+        metric->applyVisibilityFilteringCalls++;
+        if (!mayBeVisible)
+            metric->rejectedByVisibilityFiltering++;
+        else
+            metric->acceptedByVisibilityFiltering++;
+    }
+
+    return mayBeVisible;
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFiltering(
@@ -1229,9 +1297,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         metric->elapsedTimeForApplyIntersectionWithOtherSymbolsFilteringCalls += stopwatch.elapsed();
         metric->applyIntersectionWithOtherSymbolsFilteringCalls++;
         if (intersects)
-            metric->rejectedIntersectionWithOtherSymbolsFiltering++;
+            metric->rejectedByIntersectionWithOtherSymbolsFiltering++;
         else
-            metric->acceptedIntersectionWithOtherSymbolsFiltering++;
+            metric->acceptedByIntersectionWithOtherSymbolsFiltering++;
     }
 
     if (intersects)
@@ -1290,9 +1358,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
         metric->elapsedTimeForApplyMinDistanceToSameContentFromOtherSymbolFilteringCalls += stopwatch.elapsed();
         metric->applyMinDistanceToSameContentFromOtherSymbolFilteringCalls ++;
         if (hasSimilarContent)
-            metric->rejectedMinDistanceToSameContentFromOtherSymbolFiltering++;
+            metric->rejectedByMinDistanceToSameContentFromOtherSymbolFiltering++;
         else
-            metric->acceptedMinDistanceToSameContentFromOtherSymbolFiltering++;
+            metric->acceptedByMinDistanceToSameContentFromOtherSymbolFiltering++;
     }
 
     if (hasSimilarContent)

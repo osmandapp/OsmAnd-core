@@ -275,6 +275,9 @@ namespace OsmAnd
 
         // Symbols-related:
         virtual unsigned int getSymbolsCount() const;
+        virtual bool isSymbolsProcessingSuspended() const;
+        virtual bool suspendSymbolsProcessing();
+        virtual bool resumeSymbolsProcessing();
 
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const;

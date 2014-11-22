@@ -172,7 +172,7 @@ namespace OsmAnd
             _isLockable = false;
 
             // Wait until all ref-counters are released
-            while (_locksCounter.load() > 0)
+            while (_locksCounter.loadAcquire() > 0)
             {
                 QMutexLocker scopedLocker(&_lockCounterDecrementedMutex);
                 REPEAT_UNTIL(_lockCounterDecremented.wait(&_lockCounterDecrementedMutex));

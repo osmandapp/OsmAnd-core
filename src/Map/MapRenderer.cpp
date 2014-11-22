@@ -1067,6 +1067,21 @@ unsigned int OsmAnd::MapRenderer::getSymbolsCount() const
     return _publishedMapSymbolsCount.loadAcquire();
 }
 
+bool OsmAnd::MapRenderer::isSymbolsProcessingSuspended() const
+{
+    return false;
+}
+
+bool OsmAnd::MapRenderer::suspendSymbolsProcessing()
+{
+    return false;
+}
+
+bool OsmAnd::MapRenderer::resumeSymbolsProcessing()
+{
+    return false;
+}
+
 OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
@@ -1077,7 +1092,7 @@ OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
 
 bool OsmAnd::MapRenderer::isFrameInvalidated() const
 {
-    return (_frameInvalidatesCounter.load() > 0);
+    return (_frameInvalidatesCounter.loadAcquire() > 0);
 }
 
 void OsmAnd::MapRenderer::forcedFrameInvalidate()
@@ -1477,7 +1492,7 @@ float OsmAnd::MapRenderer::getRecommendedMinZoom(const ZoomRecommendationStrateg
     float zoomLimit;
     if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
         zoomLimit = getMinZoom();
-    else if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+    else //if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
         zoomLimit = getMaxZoom();
 
     bool atLeastOneValid = false;
@@ -1489,7 +1504,7 @@ float OsmAnd::MapRenderer::getRecommendedMinZoom(const ZoomRecommendationStrateg
         atLeastOneValid = true;
         if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
             zoomLimit = qMax(zoomLimit, static_cast<float>(provider->getMinZoom()));
-        else if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+        else //if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
             zoomLimit = qMin(zoomLimit, static_cast<float>(provider->getMinZoom()));
     }
 
@@ -1505,7 +1520,7 @@ float OsmAnd::MapRenderer::getRecommendedMaxZoom(const ZoomRecommendationStrateg
     float zoomLimit;
     if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
         zoomLimit = getMaxZoom();
-    else if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+    else //if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
         zoomLimit = getMinZoom();
 
     bool atLeastOneValid = false;
@@ -1517,7 +1532,7 @@ float OsmAnd::MapRenderer::getRecommendedMaxZoom(const ZoomRecommendationStrateg
         atLeastOneValid = true;
         if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
             zoomLimit = qMin(zoomLimit, static_cast<float>(provider->getMaxZoom()));
-        else if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
+        else //if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
             zoomLimit = qMax(zoomLimit, static_cast<float>(provider->getMaxZoom()));
     }
 

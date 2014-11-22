@@ -196,6 +196,10 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // Intersection-related:
+        bool applyVisibilityFiltering(
+            const IntersectionsQuadTree::BBox& visibleBBox,
+            const IntersectionsQuadTree& intersections,
+            AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool applyIntersectionWithOtherSymbolsFiltering(
             const std::shared_ptr<const RenderableSymbol>& renderable,
             const IntersectionsQuadTree& intersections,

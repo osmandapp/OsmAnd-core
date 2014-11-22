@@ -143,6 +143,70 @@ namespace OsmAnd
                     return BBox(asOOBB.getEnlargedBy(dt, dl, db, dr));
             }
 
+            inline bool isContainedBy(const AreaT& that) const
+            {
+                if (type == BBoxType::AABB)
+                    return that.contains(asAABB);
+                else /* if (type == BBoxType::OOBB) */
+                    return that.contains(asOOBB);
+            }
+
+            inline bool isContainedBy(const OOBBT& that) const
+            {
+                if (type == BBoxType::AABB)
+                    return that.contains(asAABB);
+                else /* if (type == BBoxType::OOBB) */
+                    return that.contains(asOOBB);
+            }
+
+            inline bool isIntersectedBy(const AreaT& that) const
+            {
+                if (type == BBoxType::AABB)
+                    return that.intersects(asAABB);
+                else /* if (type == BBoxType::OOBB) */
+                    return that.intersects(asOOBB);
+            }
+
+            inline bool isIntersectedBy(const OOBBT& that) const
+            {
+                if (type == BBoxType::AABB)
+                    return that.intersects(asAABB);
+                else /* if (type == BBoxType::OOBB) */
+                    return that.intersects(asOOBB);
+            }
+
+            inline bool contains(const AreaT& that) const
+            {
+                if (type == BBoxType::AABB)
+                    return asAABB.contains(that);
+                else /* if (type == BBoxType::OOBB) */
+                    return asOOBB.contains(that);
+            }
+
+            inline bool contains(const OOBBT& that) const
+            {
+                if (type == BBoxType::AABB)
+                    return asAABB.contains(that);
+                else /* if (type == BBoxType::OOBB) */
+                    return asOOBB.contains(that);
+            }
+
+            inline bool intersects(const AreaT& that) const
+            {
+                if (type == BBoxType::AABB)
+                    return asAABB.intersects(that);
+                else /* if (type == BBoxType::OOBB) */
+                    return asOOBB.intersects(that);
+            }
+
+            inline bool intersects(const OOBBT& that) const
+            {
+                if (type == BBoxType::AABB)
+                    return asAABB.intersects(that);
+                else /* if (type == BBoxType::OOBB) */
+                    return asOOBB.intersects(that);
+            }
+
             uint8_t data[DataSize];
             AreaT& asAABB;
             OOBBT& asOOBB;
@@ -572,6 +636,16 @@ namespace OsmAnd
 #endif // Q_COMPILER_RVALUE_REFS
 
         uintmax_t maxDepth;
+
+        inline AreaT getRootArea() const
+        {
+            return _rootNode->area;
+        }
+
+        inline const AreaT& rootArea() const
+        {
+            return _rootNode->area;
+        }
 
         inline bool insert(const ELEMENT_TYPE& entry, const BBox& bbox, const bool strict = false)
         {
