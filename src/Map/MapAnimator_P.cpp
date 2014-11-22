@@ -238,10 +238,20 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
 
     // In case there are animations and symbols suspend is enabled,
     // actually suspend symbols
-    if (!_animationsByKey.isEmpty() && owner->suspendSymbolsDuringAnimation && !_rendererSymbolsUpdateSuspended)
+    // In case there are no animations and symbols suspend is enabled,
+    // resume symbols update if it was enabled
+    if (owner->suspendSymbolsDuringAnimation)
     {
-        _renderer->suspendSymbolsUpdate();
-        _rendererSymbolsUpdateSuspended = true;
+        if (!_animationsByKey.isEmpty() && !_rendererSymbolsUpdateSuspended)
+        {
+            _renderer->suspendSymbolsUpdate();
+            _rendererSymbolsUpdateSuspended = true;
+        }
+        else if (_animationsByKey.isEmpty() && _rendererSymbolsUpdateSuspended)
+        {
+            _renderer->resumeSymbolsUpdate();
+            _rendererSymbolsUpdateSuspended = false;
+        }
     }
 
     // Perform all animations
@@ -263,14 +273,6 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
         
         if (animations.isEmpty())
             itAnimations.remove();
-    }
-
-    // In case there are no animations and symbols suspend is enabled,
-    // resume symbols update if it was enabled
-    if (_animationsByKey.isEmpty() && owner->suspendSymbolsDuringAnimation && _rendererSymbolsUpdateSuspended)
-    {
-        _renderer->resumeSymbolsUpdate();
-        _rendererSymbolsUpdateSuspended = false;
     }
 }
 
