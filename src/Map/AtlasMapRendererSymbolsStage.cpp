@@ -286,20 +286,25 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         renderableSymbols,
                         metric);
 
-                    // In case renderable symbol was obtained and accepted map symbols were requested,
-                    // add this symbol to accepted
-                    if (pOutAcceptedMapSymbolsByOrder && !renderableSymbols.isEmpty())
-                    {
-                        if (pAcceptedMapSymbols == nullptr)
-                            pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
-
-                        (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
-                    }
-
+                    bool atLeastOnePlotted = false;
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
                         if (!plotSymbol(renderableSymbol, outIntersections, metric))
                             continue;
+
+                        if (!atLeastOnePlotted)
+                        {
+                            // In case renderable symbol was obtained and accepted map symbols were requested,
+                            // add this symbol to accepted
+                            if (pOutAcceptedMapSymbolsByOrder && !renderableSymbols.isEmpty())
+                            {
+                                if (pAcceptedMapSymbols == nullptr)
+                                    pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
+
+                                (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
+                            }
+                            atLeastOnePlotted = true;
+                        }
 
                         const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderableSymbol);
                         PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol };
@@ -342,20 +347,25 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         renderableSymbols,
                         metric);
 
-                    // In case renderable symbol was obtained and accepted map symbols were requested,
-                    // add this symbol to accepted
-                    if (pOutAcceptedMapSymbolsByOrder && !renderableSymbols.isEmpty())
-                    {
-                        if (pAcceptedMapSymbols == nullptr)
-                            pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
-
-                        (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
-                    }
-
+                    bool atLeastOnePlotted = false;
                     for (const auto& renderableSymbol : constOf(renderableSymbols))
                     {
                         if (!plotSymbol(renderableSymbol, outIntersections, metric))
                             continue;
+
+                        if (!atLeastOnePlotted)
+                        {
+                            // In case renderable symbol was obtained and accepted map symbols were requested,
+                            // add this symbol to accepted
+                            if (pOutAcceptedMapSymbolsByOrder && !renderableSymbols.isEmpty())
+                            {
+                                if (pAcceptedMapSymbols == nullptr)
+                                    pAcceptedMapSymbols = &(*pOutAcceptedMapSymbolsByOrder)[order];
+
+                                (*pAcceptedMapSymbols)[mapSymbolsGroup].insert(mapSymbol, referencesOrigins);
+                            }
+                            atLeastOnePlotted = true;
+                        }
 
                         const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderableSymbol);
                         PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol };
