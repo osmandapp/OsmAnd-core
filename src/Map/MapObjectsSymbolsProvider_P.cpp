@@ -359,7 +359,7 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
     // Step 1. Get scale factor from 31 to pixels for minZoom.
     // Length on path in pixels depends on tile size in pixels, and density
     const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - minZoom));
-    const auto from31toPixelsScale = static_cast<double>(owner->referenceTileSizeInPixels) / tileSize31;
+    const auto from31toPixelsScale = static_cast<double>(owner->referenceTileSizeOnScreenInPixels) / tileSize31;
 
     // Step 2. Compute path length, path segments length (in 31 and in pixels)
     const auto pathSize = path31.size();
