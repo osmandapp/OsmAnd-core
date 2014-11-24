@@ -233,17 +233,11 @@ void OsmAnd::MapAnimator_P::update(const float timePassed)
 {
     if (_isPaused)
     {
-        if (!_rendererSymbolsUpdateSuspended)
-        {
-            _renderer->suspendSymbolsUpdate();
-            _rendererSymbolsUpdateSuspended = true;
-        }
-        else // if (_rendererSymbolsUpdateSuspended)
+        if (owner->suspendSymbolsDuringAnimation && _rendererSymbolsUpdateSuspended)
         {
             _renderer->resumeSymbolsUpdate();
             _rendererSymbolsUpdateSuspended = false;
         }
-
         return;
     }
 

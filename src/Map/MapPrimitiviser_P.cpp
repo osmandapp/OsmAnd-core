@@ -2371,7 +2371,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     const auto& env = context.env;
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 9223372034707225298u)
+    //if (primitive->sourceObject->toString().contains("2380290737"))
     //{
     //    int i = 5;
     //}
@@ -2396,6 +2396,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     icon->order = 100;
     primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);
+
+    evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_MIN_DISTANCE, icon->minDistance);
 
     primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIELD, icon->shieldResourceName);
 

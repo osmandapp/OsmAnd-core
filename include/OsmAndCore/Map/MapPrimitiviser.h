@@ -171,6 +171,7 @@ namespace OsmAnd
             float intersectionMargin;
             float pathPaddingLeft;
             float pathPaddingRight;
+            float minDistance;
 
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
@@ -196,7 +197,6 @@ namespace OsmAnd
             int wrapWidth;
             bool isBold;
             bool isItalic;
-            float minDistance;
             QString shieldResourceName;
 
         friend class OsmAnd::MapPrimitiviser;
@@ -214,7 +214,6 @@ namespace OsmAnd
 
             QString resourceName;
             QString shieldResourceName;
-            float intersectionSize;
 
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;

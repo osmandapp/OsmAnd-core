@@ -151,6 +151,7 @@ OsmAnd::MapPrimitiviser::Symbol::Symbol(const std::shared_ptr<const Primitive>& 
     , intersectionMargin(std::numeric_limits<float>::quiet_NaN())
     , pathPaddingLeft(0.0f)
     , pathPaddingRight(0.0f)
+    , minDistance(-1.0f)
 {
 }
 
@@ -167,7 +168,6 @@ OsmAnd::MapPrimitiviser::TextSymbol::TextSymbol(const std::shared_ptr<const Prim
     , wrapWidth(0)
     , isBold(false)
     , isItalic(false)
-    , minDistance(-1.0f)
 {
 }
 
@@ -177,7 +177,6 @@ OsmAnd::MapPrimitiviser::TextSymbol::~TextSymbol()
 
 OsmAnd::MapPrimitiviser::IconSymbol::IconSymbol(const std::shared_ptr<const Primitive>& primitive_)
     : Symbol(primitive_)
-    , intersectionSize(-1.0f)
 {
 }
 

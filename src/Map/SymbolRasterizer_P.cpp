@@ -58,12 +58,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const auto& symbolsGroup = symbolGroupEntry.value();
 
         //////////////////////////////////////////////////////////////////////////
-        //if (mapObject->toString() == "OBF(1):14463079 [18446744069400121241]")
+        //if (mapObject->toString().contains("2380290737"))
         //{
         //    int i = 5;
         //}
-        //else
-        //    continue;
         //////////////////////////////////////////////////////////////////////////
 
         // Apply filter, if it's present
@@ -290,6 +288,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Icon;
                 rasterizedSymbol->content = iconSymbol->resourceName;
                 rasterizedSymbol->languageId = LanguageId::Invariant;
+                rasterizedSymbol->minDistance = iconSymbol->minDistance;
                 rasterizedSymbol->location31 = iconSymbol->location31;
                 rasterizedSymbol->offset = iconSymbol->drawAlongPath ? localOffset : totalOffset;
                 rasterizedSymbol->drawAlongPath = iconSymbol->drawAlongPath;

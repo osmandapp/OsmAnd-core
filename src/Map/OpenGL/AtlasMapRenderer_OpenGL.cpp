@@ -235,7 +235,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         internalState->mPerspectiveProjection,
         state.viewport,
         TileSize3D / 2.0f,
-        internalState->referenceTileSizeOnScreenInPixels / 2.0f, 0.75f);
+        internalState->referenceTileSizeOnScreenInPixels / 2.0f,
+        0.75f);
 
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]

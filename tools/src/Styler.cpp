@@ -381,6 +381,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\t\tIntersects with: ") << QStringToStlString(QStringList(symbol->intersectsWith.toList()).join(QLatin1String(", "))) << std::endl;
                     output << xT("\t\tPath padding left: ") << symbol->pathPaddingLeft << std::endl;
                     output << xT("\t\tPath padding right: ") << symbol->pathPaddingRight << std::endl;
+                    output << xT("\t\tMinDistance: ") << symbol->minDistance << std::endl;
                     if (textSymbol)
                     {
                         output << xT("\t\tText: ") << QStringToStlString(textSymbol->value) << std::endl;
@@ -407,7 +408,6 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         output << xT("\t\tText wrap width: ") << textSymbol->wrapWidth << std::endl;
                         output << xT("\t\tText is bold: ") << (textSymbol->isBold ? xT("yes") : xT("no")) << std::endl;
                         output << xT("\t\tText is italic: ") << (textSymbol->isItalic ? xT("yes") : xT("no")) << std::endl;
-                        output << xT("\t\tText minDistance: ") << textSymbol->minDistance << std::endl;
                         output << xT("\t\tShield resource name: ") << QStringToStlString(textSymbol->shieldResourceName) << std::endl;
                     }
                     else if (iconSymbol)
