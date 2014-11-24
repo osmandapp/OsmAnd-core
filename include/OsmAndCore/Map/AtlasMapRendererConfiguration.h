@@ -18,7 +18,7 @@ namespace OsmAnd
         AtlasMapRendererConfiguration();
         virtual ~AtlasMapRendererConfiguration();
 
-        unsigned int referenceTileSizeOnScreenInPixels;
+        float referenceTileSizeOnScreenInPixels;
 
         virtual void copyTo(MapRendererConfiguration& other) const;
         virtual std::shared_ptr<MapRendererConfiguration> createCopy() const;

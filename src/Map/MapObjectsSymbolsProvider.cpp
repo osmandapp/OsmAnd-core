@@ -5,10 +5,10 @@
 
 OsmAnd::MapObjectsSymbolsProvider::MapObjectsSymbolsProvider(
     const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
-    const unsigned int referenceTileSizeInPixels_)
+    const float referenceTileSizeOnScreenInPixels_)
     : _p(new MapObjectsSymbolsProvider_P(this))
     , primitivesProvider(primitivesProvider_)
-    , referenceTileSizeInPixels(referenceTileSizeInPixels_)
+    , referenceTileSizeOnScreenInPixels(referenceTileSizeOnScreenInPixels_)
 {
 }
 

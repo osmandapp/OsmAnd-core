@@ -63,11 +63,11 @@ namespace OsmAnd
     public:
         MapObjectsSymbolsProvider(
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
-            const unsigned int referenceTileSizeInPixels);
+            const float referenceTileSizeOnScreenInPixels);
         virtual ~MapObjectsSymbolsProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
-        unsigned int referenceTileSizeInPixels;
+        const float referenceTileSizeOnScreenInPixels;
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;

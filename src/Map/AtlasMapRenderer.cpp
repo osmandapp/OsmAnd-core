@@ -114,7 +114,7 @@ uint32_t OsmAnd::AtlasMapRenderer::getConfigurationChangeMask(
     const auto current = std::dynamic_pointer_cast<const AtlasMapRendererConfiguration>(current_);
     const auto updated = std::dynamic_pointer_cast<const AtlasMapRendererConfiguration>(updated_);
 
-    const bool referenceTileSizeChanged = (current->referenceTileSizeOnScreenInPixels != updated->referenceTileSizeOnScreenInPixels);
+    const bool referenceTileSizeChanged = !qFuzzyCompare(current->referenceTileSizeOnScreenInPixels, updated->referenceTileSizeOnScreenInPixels);
 
     if (referenceTileSizeChanged)
         mask |= enumToBit(ConfigurationChange::ReferenceTileSize);
