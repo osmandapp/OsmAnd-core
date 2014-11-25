@@ -424,7 +424,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		return;
 	}
 	int shadowColor = req->getIntPropertyValue(req->props()->R_SHADOW_COLOR);
-	int shadowRadius = req->getIntPropertyValue(req->props()->R_SHADOW_RADIUS);
+	int shadowRadius = getDensityValue(rc, req, req->props()->R_SHADOW_RADIUS);
 	if(drawOnlyShadow && shadowRadius == 0) {
 		return;
 	}
