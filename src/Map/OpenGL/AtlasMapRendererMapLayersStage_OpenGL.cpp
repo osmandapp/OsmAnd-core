@@ -535,7 +535,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::canRasterMapLayerBeBatched(
     const QVector<unsigned int>& batchedLayerIndices,
-    const unsigned int layerIndex)
+    const int layerIndex)
 {
     // Check if there's still space in batch
     if (batchedLayerIndices.size() >= _maxNumberOfRasterMapLayersInBatch)

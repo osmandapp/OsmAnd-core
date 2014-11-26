@@ -84,7 +84,7 @@
             virtual void name() const = 0;
 
 #   define SWIG_EMIT_DIRECTOR_END(name)                                                                                         \
-            std::shared_ptr< name > instantiateProxy();                                                                         \
+            std::shared_ptr< name > instantiateProxy(const bool deleteProxiedOnProxyDestruction = false);                       \
         };
 #elif defined(OSMAND_SWIG)
 #   define SWIG_EMIT_DIRECTOR_BEGIN(name)                                                                                       \
@@ -92,19 +92,24 @@
         {                                                                                                                       \
         private:                                                                                                                \
             interface_##name* const _instance;                                                                                  \
+            const bool _deleteProxiedOnProxyDestruction;                                                                        \
                                                                                                                                 \
-            interface_##name(interface_##name* const instance)                                                                  \
+            interface_##name(interface_##name* const instance, const bool deleteProxiedOnProxyDestruction)                      \
                 : _instance(instance)                                                                                           \
+                , _deleteProxiedOnProxyDestruction(deleteProxiedOnProxyDestruction)                                             \
             {                                                                                                                   \
             }                                                                                                                   \
         protected:                                                                                                              \
             interface_##name()                                                                                                  \
                 : _instance(nullptr)                                                                                            \
+                , _deleteProxiedOnProxyDestruction(false)                                                                       \
             {                                                                                                                   \
             }                                                                                                                   \
         public:                                                                                                                 \
             virtual ~interface_##name()                                                                                         \
             {                                                                                                                   \
+                if (_instance && _deleteProxiedOnProxyDestruction)                                                              \
+                    delete _instance;                                                                                           \
             }
 
 #   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_0(...)
@@ -199,9 +204,9 @@
             }
 
 #   define SWIG_EMIT_DIRECTOR_END(name)                                                                                         \
-            std::shared_ptr< name > instantiateProxy()                                                                          \
+            std::shared_ptr< name > instantiateProxy(const bool deleteProxiedOnProxyDestruction = false)                        \
             {                                                                                                                   \
-                return std::shared_ptr< name >( new interface_##name(this) );                                                   \
+                return std::shared_ptr< name >( new interface_##name(this, deleteProxiedOnProxyDestruction) );                  \
             }                                                                                                                   \
         };
 #else

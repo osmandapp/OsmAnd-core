@@ -79,9 +79,9 @@ namespace OsmAnd
         virtual bool suspendSymbolsUpdate() = 0;
         virtual bool resumeSymbolsUpdate() = 0;
 
-        virtual bool setMapLayerProvider(const unsigned int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false) = 0;
-        virtual bool resetMapLayerProvider(const unsigned int layerIndex, bool forcedUpdate = false) = 0;
-        virtual bool setMapLayerConfiguration(const unsigned int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate = false) = 0;
+        virtual bool setMapLayerProvider(const int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false) = 0;
+        virtual bool resetMapLayerProvider(const int layerIndex, bool forcedUpdate = false) = 0;
+        virtual bool setMapLayerConfiguration(const int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate = false) = 0;
 
         virtual bool setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate = false) = 0;
         virtual bool resetElevationDataProvider(bool forcedUpdate = false) = 0;

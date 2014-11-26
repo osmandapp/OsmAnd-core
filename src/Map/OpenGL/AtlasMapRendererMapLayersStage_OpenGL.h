@@ -100,7 +100,7 @@ namespace OsmAnd
             RasterLayerTileProgram& outRasterLayerTileProgram);
         bool canRasterMapLayerBeBatched(
             const QVector<unsigned int>& batchedLayerIndices,
-            const unsigned int layerIndex);
+            const int layerIndex);
         bool renderRasterLayersBatch(
             const bool allowStubsDrawing,
             const QVector<unsigned int>& batchedLayerIndices,

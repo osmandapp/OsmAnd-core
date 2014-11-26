@@ -1,67 +1,16 @@
 package net.osmand.core.samples.android.sample1;
 
-import android.opengl.EGL14;
-import android.opengl.GLSurfaceView;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
-import javax.microedition.khronos.egl.EGLSurface;
-import javax.microedition.khronos.opengles.GL10;
 
 import net.osmand.core.jni.*;
 import net.osmand.core.android.*;
 
 public class MainActivity extends ActionBarActivity {
-    static {
-        try {
-            System.loadLibrary("gnustl_shared");
-        }
-        catch( UnsatisfiedLinkError e ) {
-            System.err.println("Failed to load 'gnustl_shared':" + e);
-            System.exit(0);
-        }
-        try {
-            System.loadLibrary("Qt5Core");
-        }
-        catch( UnsatisfiedLinkError e ) {
-            System.err.println("Failed to load 'Qt5Core':" + e);
-            System.exit(0);
-        }
-        try {
-            System.loadLibrary("Qt5Network");
-        }
-        catch( UnsatisfiedLinkError e ) {
-            System.err.println("Failed to load 'Qt5Network':" + e);
-            System.exit(0);
-        }
-        try {
-            System.loadLibrary("Qt5Sql");
-        }
-        catch( UnsatisfiedLinkError e ) {
-            System.err.println("Failed to load 'Qt5Sql':" + e);
-            System.exit(0);
-        }
-        try {
-            System.loadLibrary("OsmAndCoreWithJNI");
-        }
-        catch( UnsatisfiedLinkError e ) {
-            System.err.println("Failed to load 'OsmAndCoreWithJNI':" + e);
-            System.exit(0);
-        }
-    }
-
     private static final String TAG = "OsmAndCoreSample";
-
-    private CoreResourcesFromAndroidAssets _coreResources;
 
     private float _displayDensityFactor;
     private int _referenceTileSize;
@@ -75,16 +24,26 @@ public class MainActivity extends ActionBarActivity {
     private MapPrimitivesProvider _mapPrimitivesProvider;
     private MapObjectsSymbolsProvider _mapObjectsSymbolsProvider;
     private MapRasterLayerProvider _mapRasterLayerProvider;
-    private IMapRenderer _mapRenderer;
-    private GpuWorkerThreadPrologue _gpuWorkerThreadPrologue;
-    private GpuWorkerThreadEpilogue _gpuWorkerThreadEpilogue;
-    private RenderRequestCallback _renderRequestCallback;
     private QIODeviceLogSink _fileLogSink;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize native core prior (if needed)
+        if (NativeCore.isAvailable() && !NativeCore.isLoaded())
+            NativeCore.load(CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this));
+
+        // Inflate views
         setContentView(R.layout.activity_main);
+
+        // Get map view
+        _mapView = (AtlasMapRendererView) findViewById(R.id.mapRendererView);
+
+        // Additional log sink
+        _fileLogSink = QIODeviceLogSink.createFileLogSink(
+                Environment.getExternalStorageDirectory() + "/osmand/osmandcore.log");
+        Logger.get().addLogSink(_fileLogSink);
 
         // Get device display density factor
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -95,13 +54,6 @@ public class MainActivity extends ActionBarActivity {
         Log.i(TAG, "displayDensityFactor = " + _displayDensityFactor);
         Log.i(TAG, "referenceTileSize = " + _referenceTileSize);
         Log.i(TAG, "rasterTileSize = " + _rasterTileSize);
-
-        Log.i(TAG, "Initializing core...");
-        _coreResources = CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this);
-        OsmAndCore.InitializeCore(_coreResources.instantiateProxy());
-
-        _fileLogSink = QIODeviceLogSink.createFileLogSink(Environment.getExternalStorageDirectory() + "/osmand/osmandcore.log");
-        Logger.get().addLogSink(_fileLogSink);
 
         Log.i(TAG, "Going to resolve default embedded style...");
         _mapStylesCollection = new MapStylesCollection();
@@ -137,297 +89,40 @@ public class MainActivity extends ActionBarActivity {
         _mapRasterLayerProvider = new MapRasterLayerProvider_Software(
                 _mapPrimitivesProvider);
 
-        Log.i(TAG, "Going to create renderer");
-        _mapRenderer = OsmAndCore.createMapRenderer(MapRendererClass.AtlasMapRenderer_OpenGLES2);
-        if (_mapRenderer == null)
-        {
-            Log.e(TAG, "Failed to create map renderer 'AtlasMapRenderer_OpenGLES2'");
-            System.exit(0);
-        }
+        _mapView.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
 
-        AtlasMapRendererConfiguration atlasRendererConfiguration = AtlasMapRendererConfiguration.Casts.upcastFrom(_mapRenderer.getConfiguration());
-        atlasRendererConfiguration.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
-        _mapRenderer.setConfiguration(AtlasMapRendererConfiguration.Casts.downcastTo_MapRendererConfiguration(atlasRendererConfiguration));
+        _mapView.addSymbolsProvider(_mapObjectsSymbolsProvider);
+        _mapView.setAzimuth(0.0f);
+        _mapView.setElevationAngle(35.0f);
 
-        _mapRenderer.addSymbolsProvider(_mapObjectsSymbolsProvider);
-        _mapRenderer.setAzimuth(0.0f);
-        _mapRenderer.setElevationAngle(35.0f);
-
-        _mapRenderer.setTarget(new PointI(
+        _mapView.setTarget(new PointI(
                 1102430866,
                 704978668));
-        _mapRenderer.setZoom(10.0f);
-        /*
-        IMapRasterLayerProvider mapnik = OnlineTileSources.getBuiltIn().createProviderFor("Mapnik (OsmAnd)");
-        if (mapnik == null)
-            Log.e(TAG, "Failed to create mapnik");
-        */
-        _mapRenderer.setMapLayerProvider(0, _mapRasterLayerProvider);
+        _mapView.setZoom(10.0f);
 
-        _glSurfaceView = (GLSurfaceView) findViewById(R.id.glSurfaceView);
-        //TODO:_glSurfaceView.setPreserveEGLContextOnPause(true);
-        _glSurfaceView.setEGLContextClientVersion(2);
-        _glSurfaceView.setEGLConfigChooser(true);
-        _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
-        _glSurfaceView.setRenderer(new Renderer());
-        _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        _mapView.setMapLayerProvider(0, _mapRasterLayerProvider);
     }
 
-    private GLSurfaceView _glSurfaceView;
+    private AtlasMapRendererView _mapView;
 
     @Override
     protected void onPause() {
         super.onPause();
-        _glSurfaceView.onPause();
+
+        _mapView.handleOnPause();
     }
 
     @Override
     protected void onResume() {
+        _mapView.handleOnResume();
+
         super.onResume();
-        _glSurfaceView.onResume();
     }
 
     @Override
     protected void onDestroy() {
-        if (_mapStylesCollection != null) {
-            _mapStylesCollection.delete();
-            _mapStylesCollection = null;
-        }
-
-        if (_mapStyle != null) {
-            _mapStyle.delete();
-            _mapStyle = null;
-        }
-
-        if (_obfsCollection != null) {
-            _obfsCollection.delete();
-            _obfsCollection = null;
-        }
-
-        if (_mapPresentationEnvironment != null) {
-            _mapPresentationEnvironment.delete();
-            _mapPresentationEnvironment = null;
-        }
-
-        if (_mapPrimitiviser != null) {
-            _mapPrimitiviser.delete();
-            _mapPrimitiviser = null;
-        }
-
-        if (_obfMapObjectsProvider != null) {
-            _obfMapObjectsProvider.delete();
-            _obfMapObjectsProvider = null;
-        }
-
-        if (_mapPrimitivesProvider != null) {
-            _mapPrimitivesProvider.delete();
-            _mapPrimitivesProvider = null;
-        }
-
-        if (_mapObjectsSymbolsProvider != null) {
-            _mapObjectsSymbolsProvider.delete();
-            _mapObjectsSymbolsProvider = null;
-        }
-
-        if (_mapRasterLayerProvider != null) {
-            _mapRasterLayerProvider.delete();
-            _mapRasterLayerProvider = null;
-        }
-
-        if (_mapRenderer != null) {
-            _mapRenderer.delete();
-            _mapRenderer = null;
-        }
-
-        OsmAndCore.ReleaseCore();
+        _mapView.handleOnDestroy();
 
         super.onDestroy();
-    }
-
-    private class RenderRequestCallback extends MapRendererSetupOptions.IFrameUpdateRequestCallback {
-        @Override
-        public void method(IMapRenderer mapRenderer) {
-            _glSurfaceView.requestRender();
-        }
-    }
-
-    private class GpuWorkerThreadPrologue extends MapRendererSetupOptions.IGpuWorkerThreadPrologue {
-        public GpuWorkerThreadPrologue(EGL10 egl, EGLDisplay eglDisplay, EGLContext context, EGLSurface surface) {
-            _egl = egl;
-            _eglDisplay = eglDisplay;
-            _context = context;
-            _eglSurface = surface;
-        }
-
-        private final EGL10 _egl;
-        private final EGLDisplay _eglDisplay;
-        private final EGLContext _context;
-        private final EGLSurface _eglSurface;
-
-        @Override
-        public void method(IMapRenderer mapRenderer) {
-            try {
-                if (!_egl.eglMakeCurrent(_eglDisplay, _eglSurface, _eglSurface, _context))
-                    Log.e(TAG, "Failed to set GPU worker context active: " + _egl.eglGetError());
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to set GPU worker context active", e);
-            }
-        }
-    }
-
-    private class GpuWorkerThreadEpilogue extends MapRendererSetupOptions.IGpuWorkerThreadEpilogue {
-        public GpuWorkerThreadEpilogue(EGL10 egl) {
-            _egl = egl;
-        }
-
-        private final EGL10 _egl;
-
-        @Override
-        public void method(IMapRenderer mapRenderer) {
-            try {
-                if (!_egl.eglWaitGL())
-                    Log.e(TAG, "Failed to wait for GPU worker context: " + _egl.eglGetError());
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to wait for GPU worker context", e);
-            }
-        }
-    }
-
-    private class EGLContextFactory implements GLSurfaceView.EGLContextFactory {
-        private EGLContext _gpuWorkerContext;
-        private EGLSurface _gpuWorkerFakeSurface;
-
-        public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
-            final String eglExtensions = egl.eglQueryString(display, EGL10.EGL_EXTENSIONS);
-            Log.i(TAG, "EGL extensions: " + eglExtensions);
-            final String eglVersion = egl.eglQueryString(display, EGL10.EGL_VERSION);
-            Log.i(TAG, "EGL version: " + eglVersion);
-
-            Log.i(TAG, "Creating main context...");
-            final int[] contextAttribList = {
-                    EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
-                    EGL10.EGL_NONE };
-
-            EGLContext mainContext = null;
-            try {
-                mainContext = egl.eglCreateContext(display, eglConfig, EGL10.EGL_NO_CONTEXT, contextAttribList);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to create main context", e);
-            }
-            if (mainContext == null || mainContext == EGL10.EGL_NO_CONTEXT) {
-                Log.e(TAG, "Failed to create main context: " + egl.eglGetError());
-                mainContext = null;
-                System.exit(0);
-            }
-            Log.d(TAG, "OpenGLES main context = " + mainContext);
-
-            Log.i(TAG, "Creating GPU worker context...");
-            try {
-                _gpuWorkerContext = egl.eglCreateContext(
-                        display,
-                        eglConfig,
-                        mainContext,
-                        contextAttribList);
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to create GPU worker context", e);
-            }
-            if (_gpuWorkerContext == null || _gpuWorkerContext == EGL10.EGL_NO_CONTEXT)
-            {
-                Log.e(TAG, "Failed to create GPU worker context: " + egl.eglGetError());
-                _gpuWorkerContext = null;
-            }
-            Log.d(TAG, "OpenGLES GPU worker context = " + _gpuWorkerContext);
-
-            if (_gpuWorkerContext != null)
-            {
-                Log.i(TAG, "Creating GPU worker fake surface...");
-                try {
-                    final int[] surfaceAttribList = {
-                            EGL10.EGL_WIDTH, 1,
-                            EGL10.EGL_HEIGHT, 1,
-                            EGL10.EGL_NONE };
-                    _gpuWorkerFakeSurface = egl.eglCreatePbufferSurface(display, eglConfig, surfaceAttribList);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failed to create GPU worker fake surface", e);
-                }
-                if (_gpuWorkerFakeSurface == null || _gpuWorkerFakeSurface == EGL10.EGL_NO_SURFACE)
-                {
-                    Log.e(TAG, "Failed to create GPU worker fake surface: " + egl.eglGetError());
-                    _gpuWorkerFakeSurface = null;
-                }
-            }
-
-            MapRendererSetupOptions rendererSetupOptions = new MapRendererSetupOptions();
-            if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
-                rendererSetupOptions.setGpuWorkerThreadEnabled(true);
-                _gpuWorkerThreadPrologue = new GpuWorkerThreadPrologue(egl, display, _gpuWorkerContext, _gpuWorkerFakeSurface);
-                rendererSetupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
-                _gpuWorkerThreadEpilogue = new GpuWorkerThreadEpilogue(egl);
-                rendererSetupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
-            } else {
-                rendererSetupOptions.setGpuWorkerThreadEnabled(false);
-            }
-            _renderRequestCallback = new RenderRequestCallback();
-            rendererSetupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
-            _mapRenderer.setup(rendererSetupOptions);
-
-            return mainContext;
-        }
-
-        public void destroyContext(EGL10 egl, EGLDisplay display, EGLContext context) {
-            egl.eglDestroyContext(display, context);
-
-            if (_gpuWorkerContext != null) {
-                egl.eglDestroyContext(display, _gpuWorkerContext);
-                _gpuWorkerContext = null;
-            }
-
-            if (_gpuWorkerFakeSurface != null) {
-                egl.eglDestroySurface(display, _gpuWorkerFakeSurface);
-                _gpuWorkerFakeSurface = null;
-            }
-        }
-    }
-
-    private class Renderer implements GLSurfaceView.Renderer {
-        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            Log.i(TAG, "onSurfaceCreated");
-            if (_mapRenderer.isRenderingInitialized())
-                _mapRenderer.releaseRendering();
-        }
-
-        public void onSurfaceChanged(GL10 gl, int width, int height) {
-            Log.i(TAG, "onSurfaceChanged");
-            _mapRenderer.setViewport(new AreaI(0, 0, height, width));
-            _mapRenderer.setWindowSize(new PointI(width, height));
-
-            if (!_mapRenderer.isRenderingInitialized())
-            {
-                if (!_mapRenderer.initializeRendering())
-                    Log.e(TAG, "Failed to initialize rendering");
-            }
-        }
-
-        public void onDrawFrame(GL10 gl) {
-            _mapRenderer.update();
-
-            if (_mapRenderer.prepareFrame())
-                _mapRenderer.renderFrame();
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 }

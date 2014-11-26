@@ -1279,6 +1279,10 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         //}
         //if (decodedType.value != QLatin1String("pedestrian"))
         //    continue;
+        //if (decodedType.tag == QLatin1String("barrier") && decodedType.value == QLatin1String("city_wall"))
+        //{
+        //    int i = 5;
+        //}
         //////////////////////////////////////////////////////////////////////////
 
         const Stopwatch orderEvaluationStopwatch(metric != nullptr);

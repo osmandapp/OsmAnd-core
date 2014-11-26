@@ -244,9 +244,9 @@ namespace OsmAnd
         Concurrent::Dispatcher& getRenderThreadDispatcher();
         Concurrent::Dispatcher& getGpuThreadDispatcher();
 
-        virtual bool setMapLayerProvider(const unsigned int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false);
-        virtual bool resetMapLayerProvider(const unsigned int layerIndex, bool forcedUpdate = false);
-        virtual bool setMapLayerConfiguration(const unsigned int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate = false);
+        virtual bool setMapLayerProvider(const int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate = false);
+        virtual bool resetMapLayerProvider(const int layerIndex, bool forcedUpdate = false);
+        virtual bool setMapLayerConfiguration(const int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate = false);
 
         virtual bool setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate = false);
         virtual bool resetElevationDataProvider(bool forcedUpdate = false);

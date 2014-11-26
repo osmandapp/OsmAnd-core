@@ -48,8 +48,8 @@ namespace OsmAnd
         MapRendererState();
         ~MapRendererState();
 
-        QMap<unsigned int, std::shared_ptr<IMapLayerProvider> > mapLayersProviders;
-        QMap<unsigned int, MapLayerConfiguration > mapLayersConfigurations;
+        QMap<int, std::shared_ptr<IMapLayerProvider> > mapLayersProviders;
+        QMap<int, MapLayerConfiguration > mapLayersConfigurations;
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
         ElevationDataConfiguration elevationDataConfiguration;
         QSet< std::shared_ptr<IMapTiledSymbolsProvider> > tiledSymbolsProviders;

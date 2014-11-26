@@ -1129,7 +1129,7 @@ OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getGpuThreadDispatcher()
     return _gpuThreadDispatcher;
 }
 
-bool OsmAnd::MapRenderer::setMapLayerProvider(const unsigned int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setMapLayerProvider(const int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1153,7 +1153,7 @@ bool OsmAnd::MapRenderer::setMapLayerProvider(const unsigned int layerIndex, con
     return true;
 }
 
-bool OsmAnd::MapRenderer::resetMapLayerProvider(const unsigned int layerIndex, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::resetMapLayerProvider(const int layerIndex, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1170,7 +1170,7 @@ bool OsmAnd::MapRenderer::resetMapLayerProvider(const unsigned int layerIndex, b
     return true;
 }
 
-bool OsmAnd::MapRenderer::setMapLayerConfiguration(const unsigned int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setMapLayerConfiguration(const int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 

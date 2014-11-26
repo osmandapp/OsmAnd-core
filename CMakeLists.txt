@@ -49,9 +49,6 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		${m_LIBRARY}
 		${dl_LIBRARY}
 	)
-	set(target_specific_private_definitions ${target_specific_private_definitions}
-		-DOSMAND_GPU_DEBUG=1
-	)
 elseif (CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		Ws2_32
