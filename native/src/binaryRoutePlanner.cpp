@@ -83,7 +83,7 @@ int64_t calculateRoutePointId(SHARED_PTR<RouteSegment> segm, bool direction) {
 	if(segm->getSegmentStart() == 0 && !direction) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Assert failed route point id  0");
 	}
-	if(segm->getSegmentStart() == segm->getRoad()->getPointsLength() - 1 && direction) {
+	if(segm->getSegmentStart() == segm->road->getPointsLength() - 1 && direction) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Assert failed route point length");
 	}
 	return calculateRoutePointId(segm->getRoad(),
@@ -233,12 +233,41 @@ int calculateSizeOfSearchMaps(SEGMENTS_QUEUE& graphDirectSegments, SEGMENTS_QUEU
 	return sz;
 }
 
+SHARED_PTR<RouteSegment> loadSameSegment(RoutingContext* ctx, SHARED_PTR<RouteSegment> segment, int ind) {
+	int x31 = segment->getRoad()->pointsX[ind];
+	int y31 = segment->getRoad()->pointsY[ind];
+	SHARED_PTR<RouteSegment> s = ctx->loadRouteSegment(x31, y31);
+	while(s.get() != NULL) {
+		if(s->getRoad()->getId() == segment->getRoad()->getId()) {
+			segment = s;
+			break;
+		}
+		s = s->next;
+	}
+	return segment;
+}
+
+
+SHARED_PTR<RouteSegment> initRouteSegment(RoutingContext* ctx, SHARED_PTR<RouteSegment> segment, bool positiveDirection) {
+	if(segment->getSegmentStart() == 0 && !positiveDirection && segment->getRoad()->getPointsLength() > 0) {
+		segment = loadSameSegment(ctx, segment, 1);
+	} else if(segment->getSegmentStart() == segment->getRoad()->getPointsLength() -1 && positiveDirection && segment->getSegmentStart() > 0) {
+		segment = loadSameSegment(ctx, segment, segment->getSegmentStart() -1);
+	}
+	if(segment.get() == NULL) {
+		return segment;
+	}
+	return RouteSegment::initRouteSegment(segment, positiveDirection);
+}
+
+
+
 void initQueuesWithStartEnd(RoutingContext* ctx,  SHARED_PTR<RouteSegment> start, SHARED_PTR<RouteSegment> end, 
 			SEGMENTS_QUEUE& graphDirectSegments, SEGMENTS_QUEUE& graphReverseSegments) {
-		SHARED_PTR<RouteSegment> startPos = RouteSegment::initRouteSegment(start, true);
-		SHARED_PTR<RouteSegment> startNeg = RouteSegment::initRouteSegment(start, false);
-		SHARED_PTR<RouteSegment> endPos = RouteSegment::initRouteSegment(end, true);
-		SHARED_PTR<RouteSegment> endNeg = RouteSegment::initRouteSegment(end, false);
+		SHARED_PTR<RouteSegment> startPos = initRouteSegment(ctx, start, true);
+		SHARED_PTR<RouteSegment> startNeg = initRouteSegment(ctx, start, false);
+		SHARED_PTR<RouteSegment> endPos = initRouteSegment(ctx, end, true);
+		SHARED_PTR<RouteSegment> endNeg = initRouteSegment(ctx, end, false);
 
 
 		// for start : f(start) = g(start) + h(start) = 0 + h(start) = h(start)
