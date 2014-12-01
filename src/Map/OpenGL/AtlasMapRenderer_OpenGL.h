@@ -62,8 +62,15 @@ namespace OsmAnd
         virtual ~AtlasMapRenderer_OpenGL();
 
         virtual float getCurrentTileSizeOnScreenInPixels() const;
+
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const;
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const;
+
+        virtual bool isPositionVisible(const PointI64& position) const;
+        virtual bool isPositionVisible(const PointI& position31) const;
+
+        virtual double getCurrentTileSizeInMeters() const;
+        virtual double getCurrentPixelsToMetersScaleFactor() const;
     };
 }
 

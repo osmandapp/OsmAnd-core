@@ -126,6 +126,12 @@ namespace OsmAnd
         //NOTE: screen points origin from top-left
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI& location31) const = 0;
         virtual bool getLocationFromScreenPoint(const PointI& screenPoint, PointI64& location) const = 0;
+        
+        virtual bool isPositionVisible(const PointI64& position) const = 0;
+        virtual bool isPositionVisible(const PointI& position31) const = 0;
+
+        virtual double getCurrentTileSizeInMeters() const = 0;
+        virtual double getCurrentPixelsToMetersScaleFactor() const = 0;
 
         virtual void dumpResourcesInfo() const = 0;
     };

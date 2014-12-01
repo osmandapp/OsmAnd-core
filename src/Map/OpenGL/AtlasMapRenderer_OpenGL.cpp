@@ -540,6 +540,57 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     return true;
 }
 
+bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI64& position) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
+    if (!ok)
+        return false;
+
+    return static_cast<const Frustum2DI64*>(&internalState.globalFrustum2D31)->test(position);
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI& position31) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
+    if (!ok)
+        return false;
+
+    return internalState.globalFrustum2D31.test(position31);
+}
+
+double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeInMeters() const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+
+    const auto tileSizeOnScreenInPixels = internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
+    const auto metersPerTile = Utilities::getMetersPerTileUnit(
+        state.zoomBase,
+        internalState.targetTileId,
+        tileSizeOnScreenInPixels);
+
+    return metersPerTile;
+}
+
+double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor() const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+
+    const auto metersPerPixel = Utilities::getMetersPerTileUnit(
+        state.zoomBase,
+        internalState.targetTileId,
+        1);
+
+    return metersPerPixel;
+}
+
 OsmAnd::AtlasMapRendererSkyStage* OsmAnd::AtlasMapRenderer_OpenGL::createSkyStage()
 {
     return new AtlasMapRendererSkyStage_OpenGL(this);
