@@ -2307,7 +2307,12 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
         text->size = textSize;
 
-        evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
+        ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_RADIUS, text->shadowRadius);
+        if (ok && text->shadowRadius > 0)
+        {
+            text->shadowRadius += 2; // + 2px
+            //NOTE: ^^^ This is same as specifying 'x:2' in style, but due to backward compatibility with Android, leave as-is
+        }
 
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_HALO_COLOR, text->shadowColor.argb);
         if (!ok || text->shadowColor == ColorARGB::fromSkColor(SK_ColorTRANSPARENT))

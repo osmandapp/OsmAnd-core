@@ -66,7 +66,12 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             }
             return false;
         };
-    SymbolRasterizer().rasterize(primitivesTile->primitivisedObjects, rasterizedSymbolsGroups, rasterizationFilter, nullptr);
+    SymbolRasterizer().rasterize(
+        primitivesTile->primitivisedObjects,
+        rasterizedSymbolsGroups,
+        owner->symbolsScaleFactor,
+        rasterizationFilter,
+        nullptr);
 
     // Convert results
     auto& mapSymbolIntersectionClassesRegistry = MapSymbolIntersectionClassesRegistry::globalInstance();

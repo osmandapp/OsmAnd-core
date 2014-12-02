@@ -10,6 +10,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 
@@ -109,6 +110,10 @@ namespace OsmAnd
         friend class OsmAnd::SymbolRasterizer_P;
         };
 
+        OSMAND_CALLABLE(FilterByMapObject,
+            bool,
+            const std::shared_ptr<const MapObject>& mapObject);
+
     private:
         PrivateImplementation<SymbolRasterizer_P> _p;
     protected:
@@ -119,7 +124,8 @@ namespace OsmAnd
         void rasterize(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool(const std::shared_ptr<const MapObject>& mapObject)> filter = nullptr,
+            const float scaleFactor = 1.0f,
+            const FilterByMapObject filter = nullptr,
             const IQueryController* const controller = nullptr);
     };
 }

@@ -44,7 +44,8 @@ OsmAnd::SymbolRasterizer_P::~SymbolRasterizer_P()
 void OsmAnd::SymbolRasterizer_P::rasterize(
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-    std::function<bool (const std::shared_ptr<const MapObject>& mapObject)> filter,
+    const float scaleFactor,
+    const FilterByMapObject filter,
     const IQueryController* const controller)
 {
     const auto& env = primitivisedObjects->mapPresentationEnvironment;
@@ -91,14 +92,13 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     .setBold(textSymbol->isBold)
                     .setItalic(textSymbol->isItalic)
                     .setColor(textSymbol->color)
-                    .setSize(textSymbol->size);
+                    .setSize(static_cast<int>(textSymbol->size * scaleFactor));
 
                 if (textSymbol->shadowRadius > 0)
                 {
                     style
                         .setHaloColor(textSymbol->shadowColor)
-                        .setHaloRadius(textSymbol->shadowRadius + 2 /*px*/);
-                    //NOTE: ^^^ This is same as specifying 'x:2' in style, but due to backward compatibility with Android, leave as-is
+                        .setHaloRadius(textSymbol->shadowRadius);
                 }
 
                 float lineSpacing;
@@ -128,7 +128,9 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 if (textSymbol->drawOnPath)
                 {
                     // Publish new rasterized symbol
-                    const std::shared_ptr<RasterizedOnPathSymbol> rasterizedSymbol(new RasterizedOnPathSymbol(group, textSymbol));
+                    const std::shared_ptr<RasterizedOnPathSymbol> rasterizedSymbol(new RasterizedOnPathSymbol(
+                        group,
+                        textSymbol));
                     rasterizedSymbol->bitmap = qMove(rasterizedText);
                     rasterizedSymbol->order = textSymbol->order;
                     rasterizedSymbol->contentType = RasterizedSymbol::ContentType::Text;

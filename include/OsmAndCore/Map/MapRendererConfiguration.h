@@ -24,7 +24,7 @@ namespace OsmAnd
 
         TextureFilteringQuality texturesFilteringQuality;
         bool limitTextureColorDepthBy16bits;
-        uint32_t heixelsPerTileSide;
+        unsigned int heixelsPerTileSide;
         bool paletteTexturesAllowed;
 
         virtual void copyTo(MapRendererConfiguration& other) const;

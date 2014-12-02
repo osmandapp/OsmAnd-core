@@ -26,7 +26,6 @@ namespace OsmAnd
     class MapObject;
     class IQueryController;
 
-    class SymbolRasterizer;
     class SymbolRasterizer_P Q_DECL_FINAL
     {
     public:
@@ -34,6 +33,7 @@ namespace OsmAnd
         typedef SymbolRasterizer::RasterizedSymbol RasterizedSymbol;
         typedef SymbolRasterizer::RasterizedSpriteSymbol RasterizedSpriteSymbol;
         typedef SymbolRasterizer::RasterizedOnPathSymbol RasterizedOnPathSymbol;
+        typedef SymbolRasterizer::FilterByMapObject FilterByMapObject;
 
     private:
     protected:
@@ -46,7 +46,8 @@ namespace OsmAnd
         void rasterize(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            std::function<bool(const std::shared_ptr<const MapObject>& mapObject)> filter,
+            const float scaleFactor,
+            const FilterByMapObject filter,
             const IQueryController* const controller);
 
     friend class OsmAnd::SymbolRasterizer;
