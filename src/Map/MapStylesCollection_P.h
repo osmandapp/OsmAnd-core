@@ -41,6 +41,7 @@ namespace OsmAnd
         ImplementationInterface<MapStylesCollection> owner;
 
         bool addStyleFromFile(const QString& filePath, const bool doNotReplace);
+        bool addStyleFromByteArray(const QByteArray& data, const QString& name, const bool doNotReplace);
 
         QList< std::shared_ptr<const UnresolvedMapStyle> > getCollection() const;
         std::shared_ptr<const UnresolvedMapStyle> getStyleByName(const QString& name) const;

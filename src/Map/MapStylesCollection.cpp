@@ -15,6 +15,11 @@ bool OsmAnd::MapStylesCollection::addStyleFromFile(const QString& filePath, cons
     return _p->addStyleFromFile(filePath, doNotReplace);
 }
 
+bool OsmAnd::MapStylesCollection::addStyleFromByteArray(const QByteArray& data, const QString& name, const bool doNotReplace /*= false*/)
+{
+    return _p->addStyleFromByteArray(data, name, doNotReplace);
+}
+
 QList< std::shared_ptr<const OsmAnd::UnresolvedMapStyle> > OsmAnd::MapStylesCollection::getCollection() const
 {
     return _p->getCollection();

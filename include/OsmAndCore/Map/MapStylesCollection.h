@@ -26,6 +26,7 @@ namespace OsmAnd
         virtual ~MapStylesCollection();
 
         bool addStyleFromFile(const QString& filePath, const bool doNotReplace = false);
+        bool addStyleFromByteArray(const QByteArray& data, const QString& name, const bool doNotReplace = false);
 
         virtual QList< std::shared_ptr<const UnresolvedMapStyle> > getCollection() const;
         virtual std::shared_ptr<const UnresolvedMapStyle> getStyleByName(const QString& name) const;

@@ -80,6 +80,26 @@ bool OsmAnd::MapStylesCollection_P::addStyleFromFile(const QString& filePath, co
     return true;
 }
 
+bool OsmAnd::MapStylesCollection_P::addStyleFromByteArray(const QByteArray& data, const QString& name, const bool doNotReplace)
+{
+    QWriteLocker scopedLocker(&_stylesLock);
+
+    const std::shared_ptr<QBuffer> styleContentBuffer(new QBuffer());
+    styleContentBuffer->setData(data);
+    std::shared_ptr<UnresolvedMapStyle> style(new UnresolvedMapStyle(styleContentBuffer, name));
+    if (!style->loadMetadata())
+        return false;
+
+    auto styleName = style->name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+    if (doNotReplace && _styles.contains(styleName))
+        return false;
+    _styles.insert(styleName, style);
+
+    return true;
+}
+
 QList< std::shared_ptr<const OsmAnd::UnresolvedMapStyle> > OsmAnd::MapStylesCollection_P::getCollection() const
 {
     QReadLocker scopedLocker(&_stylesLock);
