@@ -183,7 +183,12 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     QReadLocker scopedLocker(&_lock);
 
     // Construct map symbols group for this marker
-    const std::shared_ptr<MapMarker> marker(new MapMarker(_baseOrder, _pinIcon, detachedOf(_onMapSurfaceIcons), _isAccuracyCircleSupported, _accuracyCircleBaseColor));
+    const std::shared_ptr<MapMarker> marker(new MapMarker(
+        _baseOrder,
+        _pinIcon,
+        detachedOf(_onMapSurfaceIcons),
+        _isAccuracyCircleSupported,
+        _accuracyCircleBaseColor));
     marker->setIsHidden(_isHidden);
     if (_isAccuracyCircleSupported)
     {

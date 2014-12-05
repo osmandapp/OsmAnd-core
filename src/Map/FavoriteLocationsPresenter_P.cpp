@@ -56,7 +56,8 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
 {
     QWriteLocker scopedLocker(&_favoriteLocationToMarkerMapLock);
 
-    const auto favoriteLocations = copyAs< QList< std::shared_ptr<const IFavoriteLocation> > >(owner->collection->getFavoriteLocations());
+    const auto favoriteLocations = copyAs< QList< std::shared_ptr<const IFavoriteLocation> > >(
+        owner->collection->getFavoriteLocations());
 
     // Remove all markers that have no corresponding favorite locations anymore
     auto itObsoleteEntry = mutableIteratorOf(_favoriteLocationToMarkerMap);
