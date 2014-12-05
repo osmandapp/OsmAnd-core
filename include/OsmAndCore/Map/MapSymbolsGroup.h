@@ -29,7 +29,7 @@ namespace OsmAnd
             ShowAllOrNothing,
             ShowAllCaptionsOrNoCaptions,
             ShowNoneIfIconIsNotShown,
-            CheckIntersectionsWithinGroup,
+            ShowAnythingUntilFirstGap,
         };
         typedef Bitmask<PresentationModeFlag> PresentationMode;
 

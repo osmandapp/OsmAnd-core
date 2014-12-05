@@ -157,7 +157,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     {
         QList< PlottedSymbolRef > symbolsRefs;
 
-        void discard(const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, IntersectionsQuadTree& intersections)
+        void discard(
+            const AtlasMapRendererSymbolsStage* const stage,
+            PlottedSymbols& plottedSymbols,
+            IntersectionsQuadTree& intersections)
         {
             // Discard entire group
             for (auto& symbolRef : symbolsRefs)
@@ -174,7 +177,37 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
             symbolsRefs.clear();
         }
 
-        void discardAllOf(const MapSymbol::ContentClass contentClass, const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, IntersectionsQuadTree& intersections)
+        void discardSpecific(
+            const AtlasMapRendererSymbolsStage* const stage,
+            PlottedSymbols& plottedSymbols,
+            IntersectionsQuadTree& intersections,
+            const std::function<bool(const std::shared_ptr<const RenderableSymbol>&)> acceptor)
+        {
+            auto itSymbolRef = mutableIteratorOf(symbolsRefs);
+            while (itSymbolRef.hasNext())
+            {
+                const auto& symbolRef = itSymbolRef.next();
+
+                if (!acceptor(symbolRef.renderable))
+                    continue;
+
+                if (Q_UNLIKELY(stage->debugSettings->showSymbolsBBoxesRejectedByPresentationMode))
+                    stage->addIntersectionDebugBox(symbolRef.renderable, ColorARGB::fromSkColor(SK_ColorYELLOW).withAlpha(50));
+
+#if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
+                const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
+                assert(removed);
+#endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
+                plottedSymbols.erase(symbolRef.iterator);
+                itSymbolRef.remove();
+            }
+        }
+
+        void discardAllOf(
+            const AtlasMapRendererSymbolsStage* const stage,
+            PlottedSymbols& plottedSymbols,
+            IntersectionsQuadTree& intersections,
+            const MapSymbol::ContentClass contentClass)
         {
             auto itSymbolRef = mutableIteratorOf(symbolsRefs);
             while (itSymbolRef.hasNext())
@@ -421,7 +454,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         if (symbolsCount != plottedSymbolsGroupInstance.symbolsRefs.size())
                         {
                             // Discard entire group instance
-                            plottedSymbolsGroupInstance.discard(this, plottedSymbols, outIntersections);
+                            plottedSymbolsGroupInstance.discard(
+                                this,
+                                plottedSymbols,
+                                outIntersections);
                             itPlottedSymbolsGroupInstanceEntry.remove();
                             continue;
                         }
@@ -439,17 +475,20 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             bool iconPlotted = false;
                             for (const auto& plottedGroupSymbol : constOf(plottedSymbolsGroupInstance.symbolsRefs))
                             {
-                                if (plottedGroupSymbol.renderable->mapSymbol == symbolWithIconContentClass)
-                                {
-                                    iconPlotted = true;
-                                    break;
-                                }
+                                if (plottedGroupSymbol.renderable->mapSymbol != symbolWithIconContentClass)
+                                    continue;
+                                
+                                iconPlotted = true;
+                                break;
                             }
 
                             if (!iconPlotted)
                             {
                                 // Discard entire group instance
-                                plottedSymbolsGroupInstance.discard(this, plottedSymbols, outIntersections);
+                                plottedSymbolsGroupInstance.discard(
+                                    this,
+                                    plottedSymbols,
+                                    outIntersections);
                                 itPlottedSymbolsGroupInstanceEntry.remove();
                                 continue;
                             }
@@ -475,14 +514,72 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             if (captionsCount != captionsPlotted)
                             {
                                 // Discard all captions since at least one was not shown
-                                plottedSymbolsGroupInstance.discardAllOf(MapSymbol::ContentClass::Caption, this, plottedSymbols, outIntersections);
+                                plottedSymbolsGroupInstance.discardAllOf(
+                                    this,
+                                    plottedSymbols,
+                                    outIntersections,
+                                    MapSymbol::ContentClass::Caption);
                                 if (plottedSymbolsGroupInstance.symbolsRefs.isEmpty())
+                                {
                                     itPlottedSymbolsGroupInstanceEntry.remove();
-                                continue;
+                                    continue;
+                                }
                             }
                         }
                     }
+
+                    // Rule: show anything until first map symbol from group was not plotted
+                    if (mapSymbolsGroup->presentationMode & MapSymbolsGroup::PresentationModeFlag::ShowAnythingUntilFirstGap)
+                    {
+                        const auto& mapSymbols = mapSymbolsGroupInstance
+                            ? mapSymbolsGroupInstance->symbols.keys()
+                            : mapSymbolsGroup->symbols;
+
+                        auto itMapSymbol = iteratorOf(mapSymbols);
+                        while (itMapSymbol.hasNext())
+                        {
+                            const auto& mapSymbol = itMapSymbol.next();
+
+                            // Check if this symbol is plotted
+                            bool symbolPlotted = false;
+                            for (const auto& plottedGroupSymbol : constOf(plottedSymbolsGroupInstance.symbolsRefs))
+                            {
+                                if (plottedGroupSymbol.renderable->mapSymbol == mapSymbol)
+                                {
+                                    symbolPlotted = true;
+                                    break;
+                                }
+                            }
+                            if (symbolPlotted)
+                                continue;
+
+                            // In case this symbol was not plotted, discard all remaining symbol including this
+                            itMapSymbol.previous();
+                            break;
+                        }
+                        while (itMapSymbol.hasNext())
+                        {
+                            const auto& mapSymbol = itMapSymbol.next();
+
+                            plottedSymbolsGroupInstance.discardSpecific(
+                                this,
+                                plottedSymbols,
+                                outIntersections,
+                                [mapSymbol]
+                                (const std::shared_ptr<const RenderableSymbol>& renderableSymbol) -> bool
+                                {
+                                    return (renderableSymbol->mapSymbol == mapSymbol);
+                                });
+                        }
+                        if (plottedSymbolsGroupInstance.symbolsRefs.isEmpty())
+                        {
+                            itPlottedSymbolsGroupInstanceEntry.remove();
+                            continue;
+                        }
+                    }
                 }
+
+                break;
             }
 
             // In case all instances of group was removed, erase the group
