@@ -66,7 +66,7 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
             }
             return false;
         };
-    SymbolRasterizer().rasterize(
+    owner->symbolRasterizer->rasterize(
         primitivesTile->primitivisedObjects,
         rasterizedSymbolsGroups,
         owner->symbolsScaleFactor,

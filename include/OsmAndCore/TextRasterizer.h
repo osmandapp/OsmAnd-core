@@ -9,12 +9,15 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/IFontsCollection.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 
 class SkCanvas;
 class SkBitmap;
+class SkTypeface;
 
 namespace OsmAnd
 {
@@ -118,10 +121,11 @@ namespace OsmAnd
         PrivateImplementation<TextRasterizer_P> _p;
     protected:
     public:
-        TextRasterizer();
+        TextRasterizer(
+            const std::shared_ptr<const IFontsCollection>& fontsCollection);
         virtual ~TextRasterizer();
 
-        static const TextRasterizer& globalInstance();
+        const std::shared_ptr<const IFontsCollection> fontsCollection;
 
         std::shared_ptr<SkBitmap> rasterize(
             const QString& text,
@@ -139,6 +143,9 @@ namespace OsmAnd
             float* const outExtraTopSpace = nullptr,
             float* const outExtraBottomSpace = nullptr,
             float* const outLineSpacing = nullptr) const;
+
+        static std::shared_ptr<const TextRasterizer> getDefault();
+        static std::shared_ptr<const IFontsCollection> getCoreFontsCollection();
     };
 }
 

@@ -13,6 +13,7 @@
 #include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 #include <OsmAndCore/Map/MapPrimitivesProvider.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
+#include <OsmAndCore/Map/SymbolRasterizer.h>
 
 namespace OsmAnd
 {
@@ -64,12 +65,14 @@ namespace OsmAnd
         MapObjectsSymbolsProvider(
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
             const float referenceTileSizeOnScreenInPixels,
-            const float symbolsScaleFactor = 1.0f);
+            const float symbolsScaleFactor = 1.0f,
+            const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer = std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer()));
         virtual ~MapObjectsSymbolsProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
         const float referenceTileSizeOnScreenInPixels;
         const float symbolsScaleFactor;
+        const std::shared_ptr<const SymbolRasterizer> symbolRasterizer;
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;

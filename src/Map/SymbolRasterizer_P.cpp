@@ -47,7 +47,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     const float scaleFactor,
     const FilterByMapObject filter,
-    const IQueryController* const controller)
+    const IQueryController* const controller) const
 {
     const auto& env = primitivisedObjects->mapPresentationEnvironment;
 
@@ -115,7 +115,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 float symbolExtraTopSpace;
                 float symbolExtraBottomSpace;
                 QVector<SkScalar> glyphsWidth;
-                const auto rasterizedText = TextRasterizer::globalInstance().rasterize(
+                const auto rasterizedText = owner->textRasterizer->rasterize(
                     textSymbol->value,
                     style,
                     textSymbol->drawOnPath ? &glyphsWidth : nullptr,

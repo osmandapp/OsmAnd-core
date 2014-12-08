@@ -24,6 +24,7 @@
 #include "QMainThreadTaskEvent.h"
 #include "SKIA_private.h"
 #include "ICU_private.h"
+#include "CoreFontsCollection_private.h"
 #include "TextRasterizer_private.h"
 #include "MapSymbolIntersectionClassesRegistry_private.h"
 
@@ -122,24 +123,14 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
         initializeInAppThread();
     }
 
-    // GDAL
     GDALAllRegister();
-
-    // SKIA
     if (!SKIA::initialize())
         return false;
-
-    // ICU
     if (!ICU::initialize())
         return false;
-
-    // Qt
     (void)QLocale::system(); // This will initialize system locale, since it fails to initialize concurrently
-
-    // Text rasterizer
-    TextRasterizer_initializeGlobalInstance();
-
-    // MapSymbol intersection classes registry
+    CoreFontsCollection_initialize();
+    TextRasterizer_initialize();
     MapSymbolIntersectionClassesRegistry_initializeGlobalInstance();
 
     return true;
@@ -163,16 +154,10 @@ OSMAND_CORE_API void OSMAND_CORE_CALL OsmAnd::ReleaseCore()
         releaseInAppThread();
     }
 
-    // MapSymbol intersection classes registry
     MapSymbolIntersectionClassesRegistry_releaseGlobalInstance();
-
-    // Text rasterizer
-    TextRasterizer_releaseGlobalInstance();
-
-    // ICU
+    CoreFontsCollection_release();
+    TextRasterizer_release();
     ICU::release();
-
-    // SKIA
     SKIA::release();
 
     Logger::get()->flush();

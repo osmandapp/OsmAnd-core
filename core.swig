@@ -16,6 +16,9 @@
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
+#include <OsmAndCore/IFontsCollection.h>
+#include <OsmAndCore/CachingFontsCollection.h>
+#include <OsmAndCore/CoreFontsCollection.h>
 #include <OsmAndCore/Logging.h>
 #include <OsmAndCore/ILogSink.h>
 #include <OsmAndCore/DefaultLogSink.h>
@@ -105,6 +108,9 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResourcesManager::OnlineTileSourcesMetadata)
 	%shared_ptr(OsmAnd::ICoreResourcesProvider)
 	%shared_ptr(OsmAnd::CoreResourcesEmbeddedBundle)
+	%shared_ptr(OsmAnd::IFontsCollection)
+	%shared_ptr(OsmAnd::CachingFontsCollection)
+	%shared_ptr(OsmAnd::CoreFontsCollection)
 	%shared_ptr(OsmAnd::Logger)
 	%shared_ptr(OsmAnd::ILogSink)
 	%shared_ptr(OsmAnd::DefaultLogSink)
@@ -213,6 +219,9 @@ using namespace OsmAnd;
 %include <OsmAndCore/ResourcesManager.h>
 %include <OsmAndCore/ICoreResourcesProvider.h>
 %include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
+%include <OsmAndCore/IFontsCollection.h>
+%include <OsmAndCore/CachingFontsCollection.h>
+%include <OsmAndCore/CoreFontsCollection.h>
 %include <OsmAndCore/Logging.h>
 %include <OsmAndCore/ILogSink.h>
 %include <OsmAndCore/DefaultLogSink.h>

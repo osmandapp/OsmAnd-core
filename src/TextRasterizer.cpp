@@ -1,22 +1,18 @@
 #include "TextRasterizer.h"
 #include "TextRasterizer_P.h"
-
 #include "TextRasterizer_private.h"
 
-OsmAnd::TextRasterizer::TextRasterizer()
+#include "CoreFontsCollection.h"
+
+OsmAnd::TextRasterizer::TextRasterizer(
+    const std::shared_ptr<const IFontsCollection>& fontsCollection_)
     : _p(new TextRasterizer_P(this))
+    , fontsCollection(fontsCollection_)
 {
-    _p->initialize();
 }
 
 OsmAnd::TextRasterizer::~TextRasterizer()
 {
-}
-
-static std::shared_ptr<const OsmAnd::TextRasterizer> s_globalTextRasterizer;
-const OsmAnd::TextRasterizer& OsmAnd::TextRasterizer::globalInstance()
-{
-    return *s_globalTextRasterizer;
 }
 
 std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer::rasterize(
@@ -27,7 +23,13 @@ std::shared_ptr<SkBitmap> OsmAnd::TextRasterizer::rasterize(
     float* const outExtraBottomSpace /*= nullptr*/,
     float* const outLineSpacing /*= nullptr*/) const
 {
-    return _p->rasterize(text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace, outLineSpacing);
+    return _p->rasterize(
+        text,
+        style,
+        outGlyphWidths,
+        outExtraTopSpace,
+        outExtraBottomSpace,
+        outLineSpacing);
 }
 
 bool OsmAnd::TextRasterizer::rasterize(
@@ -39,15 +41,28 @@ bool OsmAnd::TextRasterizer::rasterize(
     float* const outExtraBottomSpace /*= nullptr*/,
     float* const outLineSpacing /*= nullptr*/) const
 {
-    return _p->rasterize(targetBitmap, text, style, outGlyphWidths, outExtraTopSpace, outExtraBottomSpace, outLineSpacing);
+    return _p->rasterize(
+        targetBitmap,
+        text,
+        style,
+        outGlyphWidths,
+        outExtraTopSpace,
+        outExtraBottomSpace,
+        outLineSpacing);
 }
 
-void OsmAnd::TextRasterizer_initializeGlobalInstance()
+static std::shared_ptr<const OsmAnd::TextRasterizer> s_defaultTextRasterizer;
+std::shared_ptr<const OsmAnd::TextRasterizer> OsmAnd::TextRasterizer::getDefault()
 {
-    s_globalTextRasterizer.reset(new TextRasterizer());
+    return s_defaultTextRasterizer;
 }
 
-void OsmAnd::TextRasterizer_releaseGlobalInstance()
+void OsmAnd::TextRasterizer_initialize()
 {
-    s_globalTextRasterizer.reset();
+    s_defaultTextRasterizer.reset(new TextRasterizer(CoreFontsCollection::getDefaultInstance()));
+}
+
+void OsmAnd::TextRasterizer_release()
+{
+    s_defaultTextRasterizer.reset();
 }

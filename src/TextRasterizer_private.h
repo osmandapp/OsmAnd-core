@@ -9,8 +9,8 @@
 
 namespace OsmAnd
 {
-    void TextRasterizer_initializeGlobalInstance();
-    void TextRasterizer_releaseGlobalInstance();
+    void TextRasterizer_initialize();
+    void TextRasterizer_release();
 }
 
 #endif // !defined(_OSMAND_CORE_TEXT_RASTERIZER_PRIVATE_H_)

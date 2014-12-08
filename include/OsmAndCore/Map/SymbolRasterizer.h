@@ -11,6 +11,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Callable.h>
+#include <OsmAndCore/TextRasterizer.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 
@@ -33,14 +34,12 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(RasterizedSymbolsGroup);
         private:
         protected:
-            RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject);
         public:
+            RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject);
             virtual ~RasterizedSymbolsGroup();
 
             const std::shared_ptr<const MapObject> mapObject;
             QList< std::shared_ptr<const RasterizedSymbol> > symbols;
-
-        friend class OsmAnd::SymbolRasterizer_P;
         };
 
         class OSMAND_CORE_API RasterizedSymbol
@@ -80,18 +79,16 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(RasterizedSpriteSymbol);
         private:
         protected:
+        public:
             RasterizedSpriteSymbol(
                 const std::shared_ptr<const RasterizedSymbolsGroup>& group,
                 const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol);
-        public:
             virtual ~RasterizedSpriteSymbol();
 
             PointI location31;
             PointI offset;
             bool drawAlongPath;
             AreaI intersectionBBox;
-
-        friend class OsmAnd::SymbolRasterizer_P;
         };
 
         class OSMAND_CORE_API RasterizedOnPathSymbol : public RasterizedSymbol
@@ -99,15 +96,13 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(RasterizedOnPathSymbol);
         private:
         protected:
+        public:
             RasterizedOnPathSymbol(
                 const std::shared_ptr<const RasterizedSymbolsGroup>& group,
                 const std::shared_ptr<const MapPrimitiviser::Symbol>& primitiveSymbol);
-        public:
             virtual ~RasterizedOnPathSymbol();
 
             QVector<SkScalar> glyphsWidth;
-
-        friend class OsmAnd::SymbolRasterizer_P;
         };
 
         OSMAND_CALLABLE(FilterByMapObject,
@@ -118,15 +113,18 @@ namespace OsmAnd
         PrivateImplementation<SymbolRasterizer_P> _p;
     protected:
     public:
-        SymbolRasterizer();
+        SymbolRasterizer(
+            const std::shared_ptr<const TextRasterizer>& textRasterizer = TextRasterizer::getDefault());
         virtual ~SymbolRasterizer();
 
-        void rasterize(
+        const std::shared_ptr<const TextRasterizer> textRasterizer;
+
+        virtual void rasterize(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             const float scaleFactor = 1.0f,
             const FilterByMapObject filter = nullptr,
-            const IQueryController* const controller = nullptr);
+            const IQueryController* const controller = nullptr) const;
     };
 }
 

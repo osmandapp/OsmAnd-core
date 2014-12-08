@@ -5,11 +5,13 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <QByteArray>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 
 class SkBitmap;
+class SkTypeface;
 
 namespace OsmAnd
 {
@@ -19,6 +21,10 @@ namespace OsmAnd
             const std::shared_ptr<const SkBitmap>& original,
             float xScale,
             float yScale);
+
+        static SkTypeface* createTypefaceFromData(
+            const QByteArray& data);
+
     private:
         SkiaUtilities();
         ~SkiaUtilities();

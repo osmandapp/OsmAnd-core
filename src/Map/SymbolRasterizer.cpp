@@ -1,8 +1,10 @@
 #include "SymbolRasterizer.h"
 #include "SymbolRasterizer_P.h"
 
-OsmAnd::SymbolRasterizer::SymbolRasterizer()
+OsmAnd::SymbolRasterizer::SymbolRasterizer(
+    const std::shared_ptr<const TextRasterizer>& textRasterizer_ /*= TextRasterizer::getDefault()*/)
     : _p(new SymbolRasterizer_P(this))
+    , textRasterizer(textRasterizer_)
 {
 }
 
@@ -15,7 +17,7 @@ void OsmAnd::SymbolRasterizer::rasterize(
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     const float scaleFactor /*= 1.0f*/,
     const FilterByMapObject filter /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/)
+    const IQueryController* const controller /*= nullptr*/) const
 {
     _p->rasterize(primitivisedObjects, outSymbolsGroups, scaleFactor, filter, controller);
 }

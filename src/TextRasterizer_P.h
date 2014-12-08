@@ -32,27 +32,15 @@ namespace OsmAnd
         typedef TextRasterizer::Style Style;
 
     private:
-    protected:
-        TextRasterizer_P(TextRasterizer* const owner);
-
-        void initialize();
-
         SkPaint _defaultPaint;
 
-        struct FontsRegistryEntry
-        {
-            QString resource;
-            bool bold;
-            bool italic;
-        };
-        QList< FontsRegistryEntry > _fontsRegistry;
-
-        mutable QMutex _fontTypefacesCacheMutex;
-        mutable QHash< QString, SkTypeface* > _fontTypefacesCache;
-        void clearFontsCache();
-        SkTypeface* getTypefaceForFontResource(const QString& fontResource) const;
-
-        void configurePaintForText(SkPaint& paint, const QString& text, const bool bold, const bool italic) const;
+        void configurePaintForText(
+            SkPaint& paint,
+            const QString& text,
+            const bool bold,
+            const bool italic) const;
+    protected:
+        TextRasterizer_P(TextRasterizer* const owner);
     public:
         ~TextRasterizer_P();
 
