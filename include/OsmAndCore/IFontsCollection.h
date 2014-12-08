@@ -35,7 +35,7 @@ namespace OsmAnd
     SWIG_EMIT_DIRECTOR_BEGIN(IFontsCollection);
         SWIG_EMIT_DIRECTOR_CONST_METHOD(
             QString,
-            findFont,
+            findSuitableFont,
             const QString& text,
             const bool isBold,
             const bool isItalic);
