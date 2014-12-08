@@ -145,7 +145,6 @@ namespace OsmAnd
             float* const outLineSpacing = nullptr) const;
 
         static std::shared_ptr<const TextRasterizer> getDefault();
-        static std::shared_ptr<const IFontsCollection> getCoreFontsCollection();
     };
 }
 

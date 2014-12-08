@@ -19,6 +19,8 @@
 #include <OsmAndCore/IFontsCollection.h>
 #include <OsmAndCore/CachingFontsCollection.h>
 #include <OsmAndCore/CoreFontsCollection.h>
+#include <OsmAndCore/TextRasterizer.h>
+#include <OsmAndCore/SymbolRasterizer.h>
 #include <OsmAndCore/Logging.h>
 #include <OsmAndCore/ILogSink.h>
 #include <OsmAndCore/DefaultLogSink.h>
@@ -111,6 +113,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IFontsCollection)
 	%shared_ptr(OsmAnd::CachingFontsCollection)
 	%shared_ptr(OsmAnd::CoreFontsCollection)
+	%shared_ptr(OsmAnd::TextRasterizer)
+	%shared_ptr(OsmAnd::SymbolRasterizer)
 	%shared_ptr(OsmAnd::Logger)
 	%shared_ptr(OsmAnd::ILogSink)
 	%shared_ptr(OsmAnd::DefaultLogSink)
@@ -222,6 +226,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/IFontsCollection.h>
 %include <OsmAndCore/CachingFontsCollection.h>
 %include <OsmAndCore/CoreFontsCollection.h>
+%include <OsmAndCore/TextRasterizer.h>
+%include <OsmAndCore/SymbolRasterizer.h>
 %include <OsmAndCore/Logging.h>
 %include <OsmAndCore/ILogSink.h>
 %include <OsmAndCore/DefaultLogSink.h>
