@@ -20,7 +20,6 @@
 #include <OsmAndCore/CachingFontsCollection.h>
 #include <OsmAndCore/CoreFontsCollection.h>
 #include <OsmAndCore/TextRasterizer.h>
-#include <OsmAndCore/SymbolRasterizer.h>
 #include <OsmAndCore/Logging.h>
 #include <OsmAndCore/ILogSink.h>
 #include <OsmAndCore/DefaultLogSink.h>
@@ -34,6 +33,7 @@
 #include <OsmAndCore/Data/ObfMapObject.h>
 #include <OsmAndCore/Data/BinaryMapObject.h>
 #include <OsmAndCore/Data/Road.h>
+#include <OsmAndCore/Map/SymbolRasterizer.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
@@ -114,13 +114,13 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::CachingFontsCollection)
 	%shared_ptr(OsmAnd::CoreFontsCollection)
 	%shared_ptr(OsmAnd::TextRasterizer)
-	%shared_ptr(OsmAnd::SymbolRasterizer)
 	%shared_ptr(OsmAnd::Logger)
 	%shared_ptr(OsmAnd::ILogSink)
 	%shared_ptr(OsmAnd::DefaultLogSink)
 	%shared_ptr(OsmAnd::QIODeviceLogSink)
 	%shared_ptr(OsmAnd::ObfFile)
 	%shared_ptr(OsmAnd::ObfInfo)
+	%shared_ptr(OsmAnd::SymbolRasterizer)
 	%shared_ptr(OsmAnd::MapObject)
 	%shared_ptr(OsmAnd::ObfMapObject)
 	%shared_ptr(OsmAnd::BinaryMapObject)
@@ -227,7 +227,6 @@ using namespace OsmAnd;
 %include <OsmAndCore/CachingFontsCollection.h>
 %include <OsmAndCore/CoreFontsCollection.h>
 %include <OsmAndCore/TextRasterizer.h>
-%include <OsmAndCore/SymbolRasterizer.h>
 %include <OsmAndCore/Logging.h>
 %include <OsmAndCore/ILogSink.h>
 %include <OsmAndCore/DefaultLogSink.h>
@@ -241,6 +240,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/ObfMapObject.h>
 %include <OsmAndCore/Data/BinaryMapObject.h>
 %include <OsmAndCore/Data/Road.h>
+%include <OsmAndCore/Map/SymbolRasterizer.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
