@@ -33,10 +33,10 @@
 #include <OsmAndCore/Data/ObfMapObject.h>
 #include <OsmAndCore/Data/BinaryMapObject.h>
 #include <OsmAndCore/Data/Road.h>
-#include <OsmAndCore/Map/SymbolRasterizer.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/SymbolRasterizer.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyleConstantValue.h>
@@ -59,6 +59,7 @@
 #include <OsmAndCore/Map/IMapElevationDataProvider.h>
 #include <OsmAndCore/Map/IMapLayerProvider.h>
 #include <OsmAndCore/Map/IRasterMapLayerProvider.h>
+#include <OsmAndCore/Map/ImageMapLayerProvider.h>
 #include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
@@ -120,13 +121,13 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::QIODeviceLogSink)
 	%shared_ptr(OsmAnd::ObfFile)
 	%shared_ptr(OsmAnd::ObfInfo)
-	%shared_ptr(OsmAnd::SymbolRasterizer)
 	%shared_ptr(OsmAnd::MapObject)
 	%shared_ptr(OsmAnd::ObfMapObject)
 	%shared_ptr(OsmAnd::BinaryMapObject)
 	%shared_ptr(OsmAnd::Road)
 	%shared_ptr(OsmAnd::MapSymbolsGroup)
 	%shared_ptr(OsmAnd::MapSymbol)
+	%shared_ptr(OsmAnd::SymbolRasterizer)
 	%shared_ptr(OsmAnd::IMapStylesCollection)
 	%shared_ptr(OsmAnd::MapStylesCollection)
 	%shared_ptr(OsmAnd::IMapStylesPresetsCollection)
@@ -150,6 +151,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IMapElevationDataProvider)
 	%shared_ptr(OsmAnd::IMapLayerProvider)
 	%shared_ptr(OsmAnd::IRasterMapLayerProvider)
+	%shared_ptr(OsmAnd::ImageMapLayerProvider)
 	%shared_ptr(OsmAnd::IMapTiledSymbolsProvider)
 	%shared_ptr(OsmAnd::IMapKeyedSymbolsProvider)
 	%shared_ptr(OsmAnd::MapPrimitiviser)
@@ -240,10 +242,10 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/ObfMapObject.h>
 %include <OsmAndCore/Data/BinaryMapObject.h>
 %include <OsmAndCore/Data/Road.h>
-%include <OsmAndCore/Map/SymbolRasterizer.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
+%include <OsmAndCore/Map/SymbolRasterizer.h>
 %include <OsmAndCore/Map/IMapStylesCollection.h>
 %include <OsmAndCore/Map/MapStylesCollection.h>
 %include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
@@ -266,6 +268,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IMapElevationDataProvider.h>
 %include <OsmAndCore/Map/IMapLayerProvider.h>
 %include <OsmAndCore/Map/IRasterMapLayerProvider.h>
+%include <OsmAndCore/Map/ImageMapLayerProvider.h>
 %include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 %include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
 %include <OsmAndCore/Map/MapPrimitiviser.h>

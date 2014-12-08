@@ -105,9 +105,11 @@ namespace OsmAnd
             QVector<SkScalar> glyphsWidth;
         };
 
-        OSMAND_CALLABLE(FilterByMapObject,
+        //NOTE: This won't work due to directors+shared_ptr are not supported. To summarize: it's currently impossible to use any %shared_ptr-marked type in a director declaration
+        typedef std::function<bool(const std::shared_ptr<const MapObject>& mapObject)> FilterByMapObject;
+        /*OSMAND_CALLABLE(FilterByMapObject,
             bool,
-            const std::shared_ptr<const MapObject>& mapObject);
+            const std::shared_ptr<const MapObject>& mapObject);*/
 
     private:
         PrivateImplementation<SymbolRasterizer_P> _p;
