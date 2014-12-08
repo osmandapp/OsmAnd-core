@@ -39,68 +39,84 @@ namespace OsmAnd
             }
 
             unsigned int wrapWidth;
+#if !defined(SWIG)
             inline Style& setWrapWidth(const unsigned int newWrapWidth)
             {
                 wrapWidth = newWrapWidth;
 
                 return *this;
             }
+#endif // !defined(SWIG)
 
             float size;
+#if !defined(SWIG)
             inline Style& setSize(const float newSize)
             {
                 size = newSize;
 
                 return *this;
             }
+#endif // !defined(SWIG)
 
             bool bold;
+#if !defined(SWIG)
             inline Style& setBold(const bool newBold)
             {
                 bold = newBold;
 
                 return *this;
             }
+#endif // !defined(SWIG)
 
             bool italic;
+#if !defined(SWIG)
             inline Style& setItalic(const bool newItalic)
             {
                 italic = newItalic;
 
                 return *this;
             }
+#endif // !defined(SWIG)
 
             ColorARGB color;
+#if !defined(SWIG)
             inline Style& setColor(const ColorARGB newColor)
             {
                 color = newColor;
 
                 return *this;
             }
+#endif // !defined(SWIG)
 
             unsigned int haloRadius;
+#if !defined(SWIG)
             inline Style& setHaloRadius(const unsigned int newHaloRadius)
             {
                 haloRadius = newHaloRadius;
 
                 return *this;
             }
+#endif // !defined(SWIG)
 
             ColorARGB haloColor;
+#if !defined(SWIG)
             inline Style& setHaloColor(const ColorARGB newHaloColor)
             {
                 haloColor = newHaloColor;
 
                 return *this;
             }
+#endif // !defined(SWIG)
 
             std::shared_ptr<const SkBitmap> backgroundBitmap;
+#if !defined(SWIG)
             inline Style& setBackgroundBitmap(const std::shared_ptr<const SkBitmap>& newBackgroundBitmap)
             {
                 backgroundBitmap = newBackgroundBitmap;
 
                 return *this;
             }
+#endif // !defined(SWIG)
 
             enum class TextAlignment
             {
@@ -109,12 +125,14 @@ namespace OsmAnd
                 Right
             };
             TextAlignment textAlignment;
+#if !defined(SWIG)
             inline Style& setTextAlignment(const TextAlignment newTextAlignment)
             {
                 textAlignment = newTextAlignment;
 
                 return *this;
             }
+#endif // !defined(SWIG)
         };
 
     private:
