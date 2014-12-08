@@ -31,6 +31,19 @@ namespace OsmAnd
         virtual SkTypeface* obtainTypeface(
             const QString& fontName) const = 0;
     };
+
+    SWIG_EMIT_DIRECTOR_BEGIN(IFontsCollection);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            QString,
+            findSuitableFont,
+            const QString& text,
+            const bool isBold,
+            const bool isItalic);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD(
+            SkTypeface*,
+            obtainTypeface,
+            const QString& fontName);
+    SWIG_EMIT_DIRECTOR_END(IFontsCollection);
 }
 
 #endif // !defined(_OSMAND_CORE_I_FONTS_COLLECTION_H_)
