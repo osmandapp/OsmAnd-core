@@ -29,7 +29,6 @@ class QString;
 
 %typemap(in) QString
 %{if(!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null QString");
     return $null;
   }
   const jchar *$1_pstr = jenv->GetStringChars($input, 0);
@@ -43,7 +42,6 @@ class QString;
 
 %typemap(directorout) QString
 %{if(!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null QString");
     return $null;
   }
   const jchar *$1_pstr = jenv->GetStringChars($input, 0);
@@ -84,7 +82,6 @@ class QString;
 
 %typemap(in) const QString &
 %{if(!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null QString");
     return $null;
   }
   const jchar *$1_pstr = jenv->GetStringChars($input, 0);
@@ -100,7 +97,6 @@ class QString;
 
 %typemap(directorout,warning=SWIGWARN_TYPEMAP_THREAD_UNSAFE_MSG) const QString & 
 %{if(!$input) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null QString");
     return $null;
   }
   const jchar *$1_pstr = jenv->GetStringChars($input, 0);
