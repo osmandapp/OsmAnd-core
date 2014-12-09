@@ -179,17 +179,23 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::OnlineRasterMapLayerProvider)
 %include <std_pair.i>
 %include <std_string.i>
-%include <swig/QString.i>
-	%apply QString { std::string };
+#ifdef SWIG_JAVA
+	%include <swig/java/QString.i>
+		%apply QString { std::string };
+#endif
 %include <std_vector.i>
-%include <swig/QList.i>
-	%template(QStringList) QList<QString>;
-%include <swig/QVector.i>
+#ifdef SWIG_JAVA
+	%include <swig/java/QList.i>
+		%template(QStringList) QList<QString>;
+	%include <swig/java/QVector.i>
+#endif
 %include <std_map.i>
-%include <swig/QHash.i>
-	%template(QStringStringHash) QHash<QString, QString>;
-%include <swig/QMap.i>
-	%template(QStringStringMap) QMap<QString, QString>;
+#ifdef SWIG_JAVA
+	%include <swig/java/QHash.i>
+		%template(QStringStringHash) QHash<QString, QString>;
+	%include <swig/java/QMap.i>
+		%template(QStringStringMap) QMap<QString, QString>;
+#endif
 #ifdef SWIG_JAVA
 	%include <swig/java/byteArrays.i>
 #endif

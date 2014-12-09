@@ -27,7 +27,7 @@ namespace OsmAnd
         virtual ~CachingFontsCollection();
 
         virtual SkTypeface* obtainTypeface(
-            const QString& fontName) const;
+            const QString& fontName) const Q_DECL_FINAL;
 
         virtual QByteArray obtainFont(
             const QString& fontName) const = 0;

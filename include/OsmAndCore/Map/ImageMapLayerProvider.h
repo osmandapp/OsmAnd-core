@@ -35,7 +35,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
             std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr);
+            const IQueryController* const queryController = nullptr) Q_DECL_FINAL;
     };
 
     SWIG_EMIT_DIRECTOR_BEGIN(ImageMapLayerProvider);
