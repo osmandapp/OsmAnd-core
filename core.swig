@@ -51,6 +51,7 @@
 #include <OsmAndCore/Map/MapRendererSetupOptions.h>
 #include <OsmAndCore/Map/MapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapRendererDebugSettings.h>
+#include <OsmAndCore/Map/MapRendererTypes.h>
 #include <OsmAndCore/Map/IMapRenderer.h>
 #include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
@@ -200,6 +201,11 @@ using namespace OsmAnd;
 	%include <swig/java/byteArrays.i>
 #endif
 
+#ifdef SWIG_JAVA
+	%rename(equals) operator==;
+	%rename(notEquals) operator!=;
+	%rename(method) operator();
+#endif
 %include <swig/OsmAndCore_Stubs.h>
 %include <swig/SwigUtilities.h>
 %include <OsmAndCore.h>
@@ -266,6 +272,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapRendererSetupOptions.h>
 %include <OsmAndCore/Map/MapRendererConfiguration.h>
 %include <OsmAndCore/Map/MapRendererDebugSettings.h>
+%include <OsmAndCore/Map/MapRendererTypes.h>
 %include <OsmAndCore/Map/IMapRenderer.h>
 %include <OsmAndCore/Map/AtlasMapRendererConfiguration.h>
 %include <OsmAndCore/Map/IMapDataProvider.h>

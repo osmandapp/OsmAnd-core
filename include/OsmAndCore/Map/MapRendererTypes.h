@@ -9,6 +9,7 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/LatLon.h>
+#include <OsmAndCore/CommonSWIG.h>
 
 namespace OsmAnd
 {
@@ -20,12 +21,14 @@ namespace OsmAnd
         }
 
         float opacity;
+#if !defined(SWIG)
         inline MapLayerConfiguration& setOpacity(const float newOpacity)
         {
             opacity = newOpacity;
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline bool isValid() const
         {
@@ -54,12 +57,14 @@ namespace OsmAnd
         }
 
         float scaleFactor;
+#if !defined(SWIG)
         inline ElevationDataConfiguration& setScaleFactor(const float newScaleFactor)
         {
             scaleFactor = newScaleFactor;
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline bool isValid() const
         {
@@ -91,44 +96,54 @@ namespace OsmAnd
         }
 
         float distanceToFog;
+#if !defined(SWIG)
         inline FogConfiguration& setDistanceToFog(const float newDistanceToFog)
         {
             distanceToFog = newDistanceToFog;
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         float originFactor;
+#if !defined(SWIG)
         inline FogConfiguration& setOriginFactor(const float newOriginFactor)
         {
             originFactor = newOriginFactor;
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         float heightOriginFactor;
+#if !defined(SWIG)
         inline FogConfiguration& setHeightOriginFactor(const float newHeightOriginFactor)
         {
             heightOriginFactor = newHeightOriginFactor;
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         float density;
+#if !defined(SWIG)
         inline FogConfiguration& setDensity(const float newDensity)
         {
             density = newDensity;
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         FColorRGB color;
+#if !defined(SWIG)
         inline FogConfiguration& setColor(const FColorRGB newColor)
         {
             color = newColor;
 
             return *this;
         }
+#endif // !defined(SWIG)
 
         inline bool isValid() const
         {
