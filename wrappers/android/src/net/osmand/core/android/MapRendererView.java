@@ -13,6 +13,7 @@ import net.osmand.core.jni.IMapKeyedSymbolsProvider;
 import net.osmand.core.jni.IMapLayerProvider;
 import net.osmand.core.jni.IMapRenderer;
 import net.osmand.core.jni.IMapTiledSymbolsProvider;
+import net.osmand.core.jni.MapLayerConfiguration;
 import net.osmand.core.jni.MapRendererConfiguration;
 import net.osmand.core.jni.MapRendererDebugSettings;
 import net.osmand.core.jni.MapRendererSetupOptions;
@@ -563,6 +564,14 @@ public abstract class MapRendererView extends FrameLayout {
         NativeCore.checkIfLoaded();
 
         return _mapRenderer.resetMapLayerProvider(layerIndex);
+    }
+
+    public final boolean setMapLayerConfiguration(
+            int layerIndex,
+            MapLayerConfiguration mapLayerConfiguration) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setMapLayerConfiguration(mapLayerConfiguration);
     }
 
     public final boolean setElevationDataProvider(IMapElevationDataProvider provider) {
