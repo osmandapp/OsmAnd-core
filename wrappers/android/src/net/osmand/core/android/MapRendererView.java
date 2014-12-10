@@ -571,7 +571,7 @@ public abstract class MapRendererView extends FrameLayout {
             MapLayerConfiguration mapLayerConfiguration) {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.setMapLayerConfiguration(mapLayerConfiguration);
+        return _mapRenderer.setMapLayerConfiguration(layerIndex, mapLayerConfiguration);
     }
 
     public final boolean setElevationDataProvider(IMapElevationDataProvider provider) {
