@@ -24,17 +24,12 @@ android {
 		assets.srcDirs = ["./assets"]
 	}
 
-	compileSdkVersion 19
+	compileSdkVersion 21
 	buildToolsVersion "20"
 
 	defaultConfig {
 		minSdkVersion 9
-		targetSdkVersion 19
-	}
-
-	buildTypes {
-		release {
-		}
+		targetSdkVersion 21
 	}
 
 	// Seems this has no effect at all, since not propagated. So should be inserted in host application

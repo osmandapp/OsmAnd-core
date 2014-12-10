@@ -1,7 +1,6 @@
 package net.osmand.core.android;
 
 import android.content.Context;
-import android.opengl.EGL14;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -498,7 +497,7 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.setConfiguration(configuration, forcedUpdate);
     }
 
-    public final void setConfiguration(net.osmand.core.jni.MapRendererConfiguration configuration) {
+    public final void setConfiguration(MapRendererConfiguration configuration) {
         NativeCore.checkIfLoaded();
 
         _mapRenderer.setConfiguration(configuration);

@@ -44,8 +44,6 @@ import android.content.pm.ConfigurationInfo;
 import android.os.SystemProperties;
 //OsmAnd{
 */
-import android.opengl.EGL14;
-import android.opengl.EGLExt;
 import android.opengl.GLDebugHelper;
 //}OsmAnd
 import android.util.AttributeSet;
@@ -1966,7 +1964,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 */
                 mGLESVersion = Integer.parseInt(System.getProperty(
                         "ro.opengles.version",
-                        new Integer(ConfigurationInfo.GL_ES_VERSION_UNDEFINED).toString()));
+                        Integer.valueOf(ConfigurationInfo.GL_ES_VERSION_UNDEFINED).toString()));
 //}OsmAnd
                 if (mGLESVersion >= kGLES_20) {
                     mMultipleGLESContextsAllowed = true;

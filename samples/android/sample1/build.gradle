@@ -1,12 +1,12 @@
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 21
     buildToolsVersion "20"
 
     defaultConfig {
         minSdkVersion 9
-        targetSdkVersion 19
+        targetSdkVersion 21
         versionCode 1
         versionName "1.0"
     }
@@ -42,7 +42,7 @@ repositories {
 }
 
 dependencies {
-    compile "com.android.support:appcompat-v7:19.0.+"
+    compile "com.android.support:appcompat-v7:21.0.2"
     compile fileTree(dir: "libs", include: ["*.jar"])
     compile "net.osmand.core:OsmAndCore_android:1.0@aar"
 }
