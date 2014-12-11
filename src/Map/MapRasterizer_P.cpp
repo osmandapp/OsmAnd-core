@@ -193,6 +193,12 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_4;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_4;
             break;
+        case PaintValuesSet::Set_5:
+            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_5;
+            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_5;
+            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_5;
+            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_5;
+            break;
         default:
             return false;
     }
@@ -512,6 +518,9 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
             canvas.drawPath(path, paint);
 
         if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_4, false))
+            canvas.drawPath(path, paint);
+
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_5, false))
             canvas.drawPath(path, paint);
             
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);

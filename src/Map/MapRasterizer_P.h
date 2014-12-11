@@ -69,6 +69,7 @@ namespace OsmAnd
             Set_minus2,
             Set_3,
             Set_4,
+            Set_5,
         };
 
         bool updatePaint(

@@ -97,6 +97,12 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_4, Output, Float, "strokeWidth_4", 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_4, Output, String, "pathEffect_4", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_4, Output, String, "cap_4", false)
 
+// - Set_5
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_5, Output, Color, "color_5", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_5, Output, Float, "strokeWidth_5", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_5, Output, String, "pathEffect_5", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_5, Output, String, "cap_5", false)
+
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADER, Output, String, "shader", false)
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_COLOR, Output, Color, "shadowColor", false)
