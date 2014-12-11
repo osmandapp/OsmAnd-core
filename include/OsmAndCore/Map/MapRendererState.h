@@ -11,9 +11,13 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/Bitmask.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapRendererTypes.h>
+
+SWIG_TEMPLATE(MapLayerProvidersMap, QMap<int, std::shared_ptr<OsmAnd::IMapLayerProvider> >);
+SWIG_TEMPLATE(MapLayerConfigurationsMap, QMap<int, OsmAnd::MapLayerConfiguration>);
 
 namespace OsmAnd
 {
@@ -50,10 +54,13 @@ namespace OsmAnd
 
         QMap<int, std::shared_ptr<IMapLayerProvider> > mapLayersProviders;
         QMap<int, MapLayerConfiguration > mapLayersConfigurations;
+
         std::shared_ptr<IMapElevationDataProvider> elevationDataProvider;
         ElevationDataConfiguration elevationDataConfiguration;
+
         QSet< std::shared_ptr<IMapTiledSymbolsProvider> > tiledSymbolsProviders;
         QSet< std::shared_ptr<IMapKeyedSymbolsProvider> > keyedSymbolsProviders;
+
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;

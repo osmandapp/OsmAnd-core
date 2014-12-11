@@ -48,6 +48,7 @@
 #   define SWIG_MARK_AS_DIRECTOR(name)
 #endif
 
+// SWIG_OMIT
 #if defined(SWIG)
 #   define SWIG_OMIT(x)
 #else
@@ -220,6 +221,13 @@
 #   define SWIG_EMIT_DIRECTOR_VOID_METHOD_NO_ARGS(name)
 #   define SWIG_EMIT_DIRECTOR_VOID_CONST_METHOD_NO_ARGS(name)
 #   define SWIG_EMIT_DIRECTOR_END(name)
+#endif
+
+// SWIG_TEMPLATE
+#if defined(SWIG)
+#   define SWIG_TEMPLATE(name, T...) %template(name) T
+#else
+#   define SWIG_TEMPLATE(name, ...)
 #endif
 
 #endif // !defined(_OSMAND_CORE_COMMON_SWIG_H_)

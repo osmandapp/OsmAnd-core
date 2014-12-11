@@ -193,10 +193,10 @@ using namespace OsmAnd;
 %include <std_map.i>
 #ifdef SWIG_JAVA
 	%include <swig/java/QHash.i>
-		%template(QStringStringHash) QHash<QString, QString>;
 	%include <swig/java/QMap.i>
-		%template(QStringStringMap) QMap<QString, QString>;
 #endif
+%template(QStringStringHash) QHash<QString, QString>;
+%template(QStringStringMap) QMap<QString, QString>;
 #ifdef SWIG_JAVA
 	%include <swig/java/byteArrays.i>
 #endif
