@@ -16,8 +16,8 @@
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapRendererTypes.h>
 
-SWIG_TEMPLATE(MapLayerProvidersMap, QMap<int, std::shared_ptr<OsmAnd::IMapLayerProvider> >);
-SWIG_TEMPLATE(MapLayerConfigurationsMap, QMap<int, OsmAnd::MapLayerConfiguration>);
+SWIG_TEMPLATE(MapLayerProvidersMap, QMap<int, std::shared_ptr<IMapLayerProvider> >);
+SWIG_TEMPLATE(MapLayerConfigurationsMap, QMap<int, MapLayerConfiguration>);
 
 namespace OsmAnd
 {
