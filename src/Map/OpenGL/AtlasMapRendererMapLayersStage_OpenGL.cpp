@@ -48,7 +48,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
 
     GL_PUSH_GROUP_MARKER(QLatin1String("mapLayers"));
 
-    QVector<unsigned int> rasterMapLayersBatch;
+    QVector<int> rasterMapLayersBatch;
     rasterMapLayersBatch.reserve(_maxNumberOfRasterMapLayersInBatch);
     bool atLeastOneRasterLayerRendered = false;
 
@@ -534,7 +534,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
 }
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::canRasterMapLayerBeBatched(
-    const QVector<unsigned int>& batchedLayerIndices,
+    const QVector<int>& batchedLayerIndices,
     const int layerIndex)
 {
     // Check if there's still space in batch
@@ -553,7 +553,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::canRasterMapLayerBeBatched(
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const bool allowStubsDrawing,
-    const QVector<unsigned int>& batchedLayerIndices,
+    const QVector<int>& batchedLayerIndices,
     int& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
@@ -952,7 +952,7 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
 unsigned int OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::captureRasterLayersResources(
     const TileId normalizedTileId,
     const bool allowStubsDrawing,
-    const QVector<unsigned int>& batchedLayerIndices,
+    const QVector<int>& batchedLayerIndices,
     QVector< std::shared_ptr<const GPUAPI::ResourceInGPU> >& outResourcesInGPU)
 {
     const auto batchedLayersCount = batchedLayerIndices.size();

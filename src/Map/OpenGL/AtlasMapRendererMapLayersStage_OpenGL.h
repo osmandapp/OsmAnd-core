@@ -99,11 +99,11 @@ namespace OsmAnd
             const unsigned int numberOfLayersInBatch,
             RasterLayerTileProgram& outRasterLayerTileProgram);
         bool canRasterMapLayerBeBatched(
-            const QVector<unsigned int>& batchedLayerIndices,
+            const QVector<int>& batchedLayerIndices,
             const int layerIndex);
         bool renderRasterLayersBatch(
             const bool allowStubsDrawing,
-            const QVector<unsigned int>& batchedLayerIndices,
+            const QVector<int>& batchedLayerIndices,
             int& lastUsedProgram);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
@@ -115,7 +115,7 @@ namespace OsmAnd
         unsigned int captureRasterLayersResources(
             const TileId normalizedTileId,
             const bool allowStubsDrawing,
-            const QVector<unsigned int>& batchedLayerIndices,
+            const QVector<int>& batchedLayerIndices,
             QVector< std::shared_ptr<const GPUAPI::ResourceInGPU> >& outResourcesInGPU);
         bool releaseRasterLayers();
     public:
