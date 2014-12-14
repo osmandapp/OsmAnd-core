@@ -145,6 +145,13 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
         rCap = req->props()->R_CAP_3;
         rPathEff = req->props()->R_PATH_EFFECT_3;
     }
+    else if (ind == -3)
+    {
+        rColor = req->props()->R_COLOR__2;
+        rStrokeW = req->props()->R_STROKE_WIDTH__2;
+        rCap = req->props()->R_CAP__2;
+        rPathEff = req->props()->R_PATH_EFFECT__2;
+    }
     else if (ind == 3)
     {
         rColor = req->props()->R_COLOR_4;
@@ -153,10 +160,10 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
         rPathEff = req->props()->R_PATH_EFFECT_4;
     } else 
     {
-    	rColor = req->props()->R_COLOR_4;
-        rStrokeW = req->props()->R_STROKE_WIDTH_4;
-        rCap = req->props()->R_CAP_4;
-        rPathEff = req->props()->R_PATH_EFFECT_4;
+    	rColor = req->props()->R_COLOR_5;
+        rStrokeW = req->props()->R_STROKE_WIDTH_5;
+        rCap = req->props()->R_CAP_5;
+        rPathEff = req->props()->R_PATH_EFFECT_5;
     }
 
     if (area)
@@ -484,6 +491,9 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		if (drawOnlyShadow) {
 			drawPolylineShadow(cv, paint, rc, &path, shadowColor, shadowRadius);
 		} else {
+			if (updatePaint(req, paint, -3, 0, rc)) {
+				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+			}
 			if (updatePaint(req, paint, -2, 0, rc)) {
 				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			}
@@ -493,7 +503,8 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			if (updatePaint(req, paint, 0, 0, rc)) {
 				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			}
-			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+			// looks like double drawing (check if there are any issues)
+			// PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			if (updatePaint(req, paint, 1, 0, rc)) {
 				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			}
@@ -501,6 +512,9 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			}
 			if (updatePaint(req, paint, 3, 0, rc)) {
+				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+			}
+			if (updatePaint(req, paint, 4, 0, rc)) {
 				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			}
 			if (oneway && !drawOnlyShadow) {
