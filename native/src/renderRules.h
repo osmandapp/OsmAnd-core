@@ -398,7 +398,7 @@ public:
 
 		// polygon/way
 		R_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("color"));
-		R_COLOR_5 = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("color_4"));
+		R_COLOR_5 = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("color_5"));
 		R_COLOR_4 = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("color_4"));
 		R_COLOR_3 = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("color_3"));
 		R_COLOR_2 = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("color_2"));		
