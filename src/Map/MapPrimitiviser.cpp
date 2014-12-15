@@ -133,7 +133,8 @@ OsmAnd::MapPrimitiviser::Primitive::~Primitive()
 {
 }
 
-OsmAnd::MapPrimitiviser::SymbolsGroup::SymbolsGroup(const std::shared_ptr<const MapObject>& sourceObject_)
+OsmAnd::MapPrimitiviser::SymbolsGroup::SymbolsGroup(
+    const std::shared_ptr<const MapObject>& sourceObject_)
     : sourceObject(sourceObject_)
 {
 }

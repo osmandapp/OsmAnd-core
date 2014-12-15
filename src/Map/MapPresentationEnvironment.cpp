@@ -93,3 +93,13 @@ void OsmAnd::MapPresentationEnvironment::obtainDefaultPathPadding(float& outLeft
 {
     _p->obtainDefaultPathPadding(outLeft, outRight);
 }
+
+void OsmAnd::MapPresentationEnvironment::obtainGlobalPathPadding(float& outLeft, float& outRight) const
+{
+    _p->obtainGlobalPathPadding(outLeft, outRight);
+}
+
+float OsmAnd::MapPresentationEnvironment::getGlobalPathSymbolsBlockSpacing() const
+{
+    return _p->getGlobalPathSymbolsBlockSpacing();
+}

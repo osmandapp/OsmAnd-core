@@ -157,43 +157,49 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
     int valueDefId_pathEffect = -1;
     switch (valueSetSelector)
     {
-        case PaintValuesSet::Set_0:
-            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR;
-            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH;
-            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP;
-            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT;
+        case PaintValuesSet::Layer_minus2:
+            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR__2;
+            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH__2;
+            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP__2;
+            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT__2;
             break;
-        case PaintValuesSet::Set_1:
-            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_2;
-            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_2;
-            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_2;
-            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_2;
-            break;
-        case PaintValuesSet::Set_minus1:
-            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_0;
-            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_0;
-            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_0;
-            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_0;
-            break;
-        case PaintValuesSet::Set_minus2:
+        case PaintValuesSet::Layer_minus1:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR__1;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH__1;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP__1;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT__1;
             break;
-        case PaintValuesSet::Set_3:
+        case PaintValuesSet::Layer_0:
+            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_0;
+            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_0;
+            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_0;
+            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_0;
+            break;
+        case PaintValuesSet::Layer_1:
+            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR;
+            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH;
+            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP;
+            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT;
+            break;
+        case PaintValuesSet::Layer_2:
+            valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_2;
+            valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_2;
+            valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_2;
+            valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_2;
+            break;
+        case PaintValuesSet::Layer_3:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_3;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_3;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_3;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_3;
             break;
-        case PaintValuesSet::Set_4:
+        case PaintValuesSet::Layer_4:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_4;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_4;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_4;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_4;
             break;
-        case PaintValuesSet::Set_5:
+        case PaintValuesSet::Layer_5:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_5;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_5;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_5;
@@ -258,7 +264,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
     evalResult.getIntegerValue(valueDefId_color, color);
     paint.setColor(color);
 
-    if (valueSetSelector == PaintValuesSet::Set_0)
+    if (valueSetSelector == PaintValuesSet::Layer_1)
     {
         QString shader;
         ok = evalResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADER, shader);
@@ -277,7 +283,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
     }
 
     // do not check shadow color here
-    if (context.shadowMode == MapPresentationEnvironment::ShadowMode::OneStep && valueSetSelector == PaintValuesSet::Set_0)
+    if (context.shadowMode == MapPresentationEnvironment::ShadowMode::OneStep && valueSetSelector == PaintValuesSet::Layer_1)
     {
         ColorARGB shadowColor(0x00000000);
         ok = evalResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_SHADOW_COLOR, shadowColor.argb);
@@ -320,7 +326,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     //////////////////////////////////////////////////////////////////////////
 
     SkPaint paint = _defaultPaint;
-    if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_0, true))
+    if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, true))
         return;
 
     // Construct and test geometry against bbox area
@@ -409,7 +415,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
     }
 
     canvas.drawPath(path, paint);
-    if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
+    if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
         canvas.drawPath(path, paint);
 }
 
@@ -426,7 +432,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     assert(points31.size() >= 2);
 
     SkPaint paint = _defaultPaint;
-    if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
+    if (!updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
         return;
 
     bool ok;
@@ -500,27 +506,30 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     }
     else
     {
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_minus2, false))
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus2, false))
             canvas.drawPath(path, paint);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_minus1, false))
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_minus1, false))
             canvas.drawPath(path, paint);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_0, false))
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_0, false))
+            canvas.drawPath(path, paint);
+
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, false))
             canvas.drawPath(path, paint);
 
         canvas.drawPath(path, paint);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_1, false))
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
             canvas.drawPath(path, paint);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_3, false))
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_3, false))
             canvas.drawPath(path, paint);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_4, false))
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_4, false))
             canvas.drawPath(path, paint);
 
-        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Set_5, false))
+        if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_5, false))
             canvas.drawPath(path, paint);
             
         rasterizePolylineIcons(context, canvas, path, primitive->evaluationResult);

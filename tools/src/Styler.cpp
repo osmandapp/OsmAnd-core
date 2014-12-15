@@ -413,6 +413,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     else if (iconSymbol)
                     {
                         output << xT("\t\tIcon resource name: ") << QStringToStlString(iconSymbol->resourceName) << std::endl;
+                        for (const auto& overlayResoucreName : iconSymbol->overlayResourceNames)
+                            output << xT("\t\tOverlay resource name: ") << QStringToStlString(overlayResoucreName) << std::endl;
                         output << xT("\t\tShield resource name: ") << QStringToStlString(iconSymbol->shieldResourceName) << std::endl;
                         output << xT("\t\tIntersection size: ") << iconSymbol->intersectionSize << std::endl;
                     }

@@ -63,13 +63,14 @@ namespace OsmAnd
 
         enum class PaintValuesSet
         {
-            Set_0,
-            Set_1,
-            Set_minus1,
-            Set_minus2,
-            Set_3,
-            Set_4,
-            Set_5,
+            Layer_minus2,
+            Layer_minus1,
+            Layer_0,
+            Layer_1,
+            Layer_2,
+            Layer_3,
+            Layer_4,
+            Layer_5,
         };
 
         bool updatePaint(

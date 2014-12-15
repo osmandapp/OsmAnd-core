@@ -71,7 +71,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
             continue;
 
         // Create group
-        const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(mapObject));
+        const std::shared_ptr<RasterizedSymbolsGroup> group(new RasterizedSymbolsGroup(
+            mapObject));
 
         // Total offset allows several symbols to stack into column. Offset specifies center of symbol bitmap.
         // This offset is computed only in case symbol is not on-path and not along-path
@@ -250,42 +251,21 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     }
                 }
 
-                // Compose final image
-                std::shared_ptr<const SkBitmap> rasterizedIcon;
-                if (!backgroundBitmap)
-                    rasterizedIcon = iconBitmap;
-                else
+                QList< std::shared_ptr<const SkBitmap> > layers;
+                if (backgroundBitmap)
+                    layers.push_back(backgroundBitmap);
+                layers.push_back(iconBitmap);
+                for (const auto& overlayResourceName : constOf(iconSymbol->overlayResourceNames))
                 {
-                    // Compute composed image size
-                    const auto rasterizedIconWidth = qMax(iconBitmap->width(), backgroundBitmap->width());
-                    const auto rasterizedIconHeight = qMax(iconBitmap->height(), backgroundBitmap->height());
+                    std::shared_ptr<const SkBitmap> overlayBitmap;
+                    if (!env->obtainMapIcon(overlayResourceName, overlayBitmap) || !overlayBitmap)
+                        continue;
 
-                    // Create a bitmap that will be hold entire symbol
-                    const auto pRasterizedIcon = new SkBitmap();
-                    rasterizedIcon.reset(pRasterizedIcon);
-                    pRasterizedIcon->setConfig(SkBitmap::kARGB_8888_Config, rasterizedIconWidth, rasterizedIconHeight);
-                    pRasterizedIcon->allocPixels();
-                    pRasterizedIcon->eraseColor(SK_ColorTRANSPARENT);
-                    
-                    // Create canvas
-                    SkBitmapDevice target(*pRasterizedIcon);
-                    SkCanvas canvas(&target);
-
-                    // Draw the background
-                    canvas.drawBitmap(*backgroundBitmap,
-                        (rasterizedIconWidth - backgroundBitmap->width()) / 2.0f,
-                        (rasterizedIconHeight - backgroundBitmap->height()) / 2.0f,
-                        nullptr);
-
-                    // Draw the icon
-                    canvas.drawBitmap(*iconBitmap,
-                        (rasterizedIconWidth - iconBitmap->width()) / 2.0f,
-                        (rasterizedIconHeight - iconBitmap->height()) / 2.0f,
-                        nullptr);
-
-                    // Flush all operations
-                    canvas.flush();
+                    layers.push_back(iconBitmap);
                 }
+
+                // Compose final image
+                const auto rasterizedIcon = SkiaUtilities::mergeBitmaps(layers);
 
 #if OSMAND_DUMP_SYMBOLS
                 {

@@ -66,6 +66,12 @@ namespace OsmAnd
         std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultPathPaddingAttribute;
         float _defaultPathPadding;
 
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _globalPathPaddingAttribute;
+        float _globalPathPadding;
+
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _globalPathSymbolsBlockSpacingAttribute;
+        float _globalPathSymbolsBlockSpacing;
+
         mutable QMutex _shadersBitmapsMutex;
         mutable QHash< QString, std::shared_ptr<SkBitmap> > _shadersBitmaps;
 
@@ -101,6 +107,8 @@ namespace OsmAnd
         unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
         unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;
         void obtainDefaultPathPadding(float& outLeft, float& outRight) const;
+        void obtainGlobalPathPadding(float& outLeft, float& outRight) const;
+        float getGlobalPathSymbolsBlockSpacing() const;
 
     friend class OsmAnd::MapPresentationEnvironment;
     };

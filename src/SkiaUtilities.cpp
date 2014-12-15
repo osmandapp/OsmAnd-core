@@ -117,3 +117,38 @@ SkTypeface* OsmAnd::SkiaUtilities::createTypefaceFromData(const QByteArray& data
     
     return typeface;
 }
+
+std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::mergeBitmaps(const QList< std::shared_ptr<const SkBitmap> >& bitmaps)
+{
+    if (bitmaps.isEmpty())
+        return nullptr;
+
+    int maxWidth = 0;
+    int maxHeight = 0;
+    for (const auto& bitmap : constOf(bitmaps))
+    {
+        maxWidth = qMax(maxWidth, bitmap->width());
+        maxHeight = qMax(maxHeight, bitmap->height());
+    }
+
+    if (maxWidth <= 0 || maxHeight <= 0)
+        return nullptr;
+
+    const std::shared_ptr<SkBitmap> outputBitmap(new SkBitmap());
+    outputBitmap->setConfig(SkBitmap::kARGB_8888_Config, maxWidth, maxHeight);
+    outputBitmap->allocPixels();
+    outputBitmap->eraseColor(SK_ColorTRANSPARENT);
+
+    SkBitmapDevice target(*outputBitmap);
+    SkCanvas canvas(&target);
+    for (const auto& bitmap : constOf(bitmaps))
+    {
+        canvas.drawBitmap(*bitmap,
+            (maxWidth - bitmap->width()) / 2.0f,
+            (maxHeight - bitmap->height()) / 2.0f,
+            nullptr);
+    }
+    canvas.flush();
+
+    return outputBitmap;
+}

@@ -139,7 +139,8 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(SymbolsGroup);
         private:
         protected:
-            SymbolsGroup(const std::shared_ptr<const MapObject>& sourceObject);
+            SymbolsGroup(
+                const std::shared_ptr<const MapObject>& sourceObject);
         public:
             ~SymbolsGroup();
 
@@ -213,6 +214,7 @@ namespace OsmAnd
             virtual ~IconSymbol();
 
             QString resourceName;
+            QList<QString> overlayResourceNames;
             QString shieldResourceName;
 
         friend class OsmAnd::MapPrimitiviser;

@@ -50,6 +50,12 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
 
     _defaultPathPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultPathPadding"));
     _defaultPathPadding = 0.0f;
+
+    _globalPathPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("globalPathPadding"));
+    _globalPathPadding = 0.0f;
+
+    _globalPathSymbolsBlockSpacingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("globalPathSymbolsBlockSpacing"));
+    _globalPathSymbolsBlockSpacing = 0.0f;
 }
 
 QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue > OsmAnd::MapPresentationEnvironment_P::getSettings() const
@@ -367,8 +373,7 @@ unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadsDensityLimitPerTile(c
 
 void OsmAnd::MapPresentationEnvironment_P::obtainDefaultPathPadding(float& outLeft, float& outRight) const
 {
-    outLeft = _defaultPathPadding;
-    outRight = _defaultPathPadding;
+    outLeft = outRight = _defaultPathPadding;
 
     if (_defaultPathPaddingAttribute)
     {
@@ -380,10 +385,43 @@ void OsmAnd::MapPresentationEnvironment_P::obtainDefaultPathPadding(float& outLe
         {
             float defaultPathPadding = 0.0f;
             if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, defaultPathPadding))
-            {
-                outLeft = defaultPathPadding;
-                outRight = defaultPathPadding;
-            }
+                outLeft = outRight = defaultPathPadding;
         }
     }
+}
+
+void OsmAnd::MapPresentationEnvironment_P::obtainGlobalPathPadding(float& outLeft, float& outRight) const
+{
+    outLeft = outRight = _globalPathPadding;
+
+    if (_globalPathPaddingAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_globalPathPaddingAttribute, &evalResult))
+        {
+            float globalPathPadding = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, globalPathPadding))
+                outLeft = outRight = globalPathPadding;
+        }
+    }
+}
+
+float OsmAnd::MapPresentationEnvironment_P::getGlobalPathSymbolsBlockSpacing() const
+{
+    auto globalPathSymbolsBlockSpacing = _globalPathSymbolsBlockSpacing;
+
+    if (_globalPathSymbolsBlockSpacingAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_globalPathSymbolsBlockSpacingAttribute, &evalResult))
+            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, globalPathSymbolsBlockSpacing);
+    }
+
+    return globalPathSymbolsBlockSpacing;
 }

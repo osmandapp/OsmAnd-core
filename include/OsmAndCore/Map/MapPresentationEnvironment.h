@@ -97,6 +97,8 @@ namespace OsmAnd
         unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
         unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;
         void obtainDefaultPathPadding(float& outLeft, float& outRight) const;
+        void obtainGlobalPathPadding(float& outLeft, float& outRight) const;
+        float getGlobalPathSymbolsBlockSpacing() const;
 
         enum {
             DefaultShadowLevelMin = 0,

@@ -1757,8 +1757,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         }
 
         // Create a symbols group
-        const auto constructedGroup = new SymbolsGroup(primitivesGroup->sourceObject);
-        std::shared_ptr<const SymbolsGroup> group(constructedGroup);
+        std::shared_ptr<SymbolsGroup> group(new SymbolsGroup(
+            primitivesGroup->sourceObject));
 
         // For each primitive if primitive group, collect symbols from it
         //NOTE: Each polygon that has icon or text is also added as point. So there's no need to process polygons
@@ -1778,7 +1778,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->polylines,
             PrimitivesType::Polylines,
             qMove(evaluationResult),
-            constructedGroup->symbols,
+            group->symbols,
             controller);
         collectSymbolsFromPrimitives(
             context,
@@ -1786,7 +1786,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->points,
             PrimitivesType::Points,
             qMove(evaluationResult),
-            constructedGroup->symbols,
+            group->symbols,
             controller);
 
         // Add this group to shared cache
@@ -1795,7 +1795,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
 
         // Empty groups are also inserted, to indicate that they are empty
         assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
-        primitivisedObjects->symbolsGroups.insert(group->sourceObject, qMove(group));
+        primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
     }
 
     for (auto& futureGroup : futureSharedSymbolGroups)
@@ -2402,6 +2402,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     icon->location31 = location;
 
     icon->resourceName = qMove(iconResourceName);
+    if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_2, iconResourceName))
+        icon->overlayResourceNames.push_back(qMove(iconResourceName));
+    if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_3, iconResourceName))
+        icon->overlayResourceNames.push_back(qMove(iconResourceName));
+    if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_4, iconResourceName))
+        icon->overlayResourceNames.push_back(qMove(iconResourceName));
+    if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_5, iconResourceName))
+        icon->overlayResourceNames.push_back(qMove(iconResourceName));
 
     icon->order = 100;
     primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);

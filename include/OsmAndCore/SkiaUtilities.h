@@ -25,6 +25,9 @@ namespace OsmAnd
         static SkTypeface* createTypefaceFromData(
             const QByteArray& data);
 
+        static std::shared_ptr<SkBitmap> mergeBitmaps(
+            const QList< std::shared_ptr<const SkBitmap> >& bitmaps);
+
     private:
         SkiaUtilities();
         ~SkiaUtilities();
