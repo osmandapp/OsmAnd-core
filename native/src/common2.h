@@ -84,6 +84,10 @@ struct TextDrawInfo {
 struct IconDrawInfo
 {
 	SkBitmap* bmp;
+	SkBitmap* bmp2;
+	SkBitmap* bmp3;
+	SkBitmap* bmp4;
+	SkBitmap* bmp5;
 	SkBitmap* shield;
 	float x;
 	float y;

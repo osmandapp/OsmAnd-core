@@ -32,7 +32,8 @@ TextDrawInfo::~TextDrawInfo()
 }
 
 IconDrawInfo::IconDrawInfo()
-	: bmp(NULL), shield(NULL)
+	: bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL),
+	  shield(NULL)
 {
 
 }
@@ -50,7 +51,7 @@ bool RenderingContext::interrupted()
 }
 
 SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
-	if (defaultIconsDir.size() > 0) {
+	if (defaultIconsDir.size() > 0 && bitmapResource.length() > 0) {
 		string fl = string(defaultIconsDir + "h_" + bitmapResource + ".png");
 		FILE* f = fopen(fl.c_str(), "r");
 		if (f == NULL) {

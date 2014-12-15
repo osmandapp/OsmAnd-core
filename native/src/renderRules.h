@@ -252,6 +252,10 @@ public:
 	RenderingRuleProperty* R_TEXT_MIN_DISTANCE;
 	RenderingRuleProperty* R_TEXT_ON_PATH;
 	RenderingRuleProperty* R_ICON;
+	RenderingRuleProperty* R_ICON2;
+	RenderingRuleProperty* R_ICON3;
+	RenderingRuleProperty* R_ICON4;
+	RenderingRuleProperty* R_ICON5;
 	RenderingRuleProperty* R_ICON_VISIBLE_SIZE;
 	RenderingRuleProperty* R_LAYER;
 	RenderingRuleProperty* R_ORDER;
@@ -384,6 +388,10 @@ public:
 
 		// point
 		R_ICON = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon"));
+		R_ICON2 = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon_2"));
+		R_ICON3 = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon_3"));
+		R_ICON4 = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon_4"));
+		R_ICON5 = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon_5"));
 		R_ICON_ORDER = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("iconOrder"));
 		R_SHIELD = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("shield"));
 		R_ICON_VISIBLE_SIZE = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("iconVisibleSize"));

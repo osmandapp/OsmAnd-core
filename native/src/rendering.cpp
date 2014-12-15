@@ -726,6 +726,10 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.x = px;
 		ico.y = py;
 		ico.bmp = bmp;
+		ico.bmp2 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON2));	
+		ico.bmp3 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON3));	
+		ico.bmp4 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON4));	
+		ico.bmp5 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON5));	
 		ico.shield = shield;
 		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
@@ -825,6 +829,18 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.shield, (SkIRect*) NULL, rt, &p));
 				}
 				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, r, &p));
+				if(icon.bmp2 != NULL) {
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp2, (SkIRect*) NULL, r, &p));
+				}
+				if(icon.bmp3 != NULL) {
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp3, (SkIRect*) NULL, r, &p));
+				}
+				if(icon.bmp4 != NULL) {
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp4, (SkIRect*) NULL, r, &p));
+				}
+				if(icon.bmp5 != NULL) {
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp5, (SkIRect*) NULL, r, &p));
+				}
 				if(bbox.width() > 0) {
 					bbox.inset(-bbox.width()/4, -bbox.height()/4);
 					boundsIntersect.insert(bbox, bbox);
