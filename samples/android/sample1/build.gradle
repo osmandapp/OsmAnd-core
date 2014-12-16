@@ -33,6 +33,35 @@ android {
             assets.srcDirs = ["assets"]
         }
     }
+
+    productFlavors {
+        x86 {
+            ndk {
+                abiFilter "x86"
+            }
+        }
+        mips {
+            ndk {
+                abiFilter "mips"
+            }
+        }
+        armv7 {
+            ndk {
+                abiFilter "armeabi-v7a"
+            }
+        }
+        armv5 {
+            ndk {
+                abiFilter "armeabi"
+            }
+        }
+        arm {
+            ndk {
+                abiFilter "armeabi-v7a", "armeabi"
+            }
+        }
+        fat
+    }
 }
 
 repositories {
