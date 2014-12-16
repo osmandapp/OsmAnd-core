@@ -55,11 +55,6 @@ android {
                 abiFilter "armeabi"
             }
         }
-        arm {
-            ndk {
-                abiFilter "armeabi-v7a", "armeabi"
-            }
-        }
         fat
     }
 }
