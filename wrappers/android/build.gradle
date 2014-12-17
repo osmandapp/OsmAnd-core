@@ -352,7 +352,7 @@ tasks.withType(JavaCompile) {
 }
 
 // Uploading artifacts to local path
-organisation = "net.osmand.core"
+group = "net.osmand.core"
 uploadArchives {
     repositories.ivy {
         credentials {
