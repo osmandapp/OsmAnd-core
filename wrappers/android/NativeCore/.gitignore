@@ -1,0 +1,8 @@
+# MacOSX
+.DS_Store
+
+# Output files
+/build
+
+# Project-specific
+/jniLibs

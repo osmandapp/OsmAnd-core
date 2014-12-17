@@ -28,21 +28,6 @@ android {
     }
 }
 
-// OsmAndCore JNI build task
-
-task buildOsmAndCore(type: Exec) {
-    description "Build OsmAndCore"
-
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine file("../build.cmd").getAbsolutePath(), "debug"
-    } else {
-        commandLine "sh", file("../build.sh").getAbsolutePath(), "debug"
-    }
-}
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn << buildOsmAndCore
-}
-
 // OsmAnd libraries tasks
 task cleanupOsmAndSharedLibs(type: Delete) {
     description "Clean-up OsmAnd shared libraries"
@@ -53,7 +38,7 @@ task cleanupOsmAndSharedLibs(type: Delete) {
 task copyOsmAndSharedLibs(type: Copy) {
     description "Copy OsmAnd shared libraries"
 
-    dependsOn cleanupOsmAndSharedLibs, buildOsmAndCore
+    dependsOn cleanupOsmAndSharedLibs
 
     from("../../../../binaries/android") {
         include "gcc-*/Debug/libOsmAndCoreWithJNI.so"
@@ -89,4 +74,8 @@ uploadArchives {
         version = parsedGitInfo.group(1) + "-SNAPSHOT"
         //version = parsedGitInfo.group(1) + "." + parsedGitInfo.group(2)
     }
+}
+
+dependencies {
+    compile project(":OsmAndCore_androidNative")
 }

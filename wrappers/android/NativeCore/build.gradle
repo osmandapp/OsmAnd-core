@@ -1,0 +1,43 @@
+apply plugin: 'com.android.library'
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+import org.apache.tools.ant.taskdefs.condition.Os
+
+android {
+    sourceSets {
+        main {
+            manifest.srcFile "AndroidManifest.xml"
+            java.srcDirs = []
+            jniLibs.srcDirs = []
+            jni.srcDirs = []
+            assets.srcDirs = []
+        }
+    }
+
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        minSdkVersion 9
+        targetSdkVersion 21
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+// OsmAndCore JNI build task
+task buildOsmAndCore(type: Exec) {
+    description "Build OsmAndCore"
+
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine file("../build.cmd").getAbsolutePath(), "debug"
+    } else {
+        commandLine "sh", file("../build.sh").getAbsolutePath(), "debug"
+    }
+}
+tasks.withType(JavaCompile) {
+    compileTask -> compileTask.dependsOn << buildOsmAndCore
+}

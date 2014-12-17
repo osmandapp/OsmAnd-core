@@ -1,5 +1,8 @@
 rootProject.name = "OsmAndCore_android"
 
+include ":NativeCore"
+project(":NativeCore").name = "OsmAndCore_androidNative"
+
 include ":NativeCoreRelease"
 project(":NativeCoreRelease").name = "OsmAndCore_androidNativeRelease"
 
