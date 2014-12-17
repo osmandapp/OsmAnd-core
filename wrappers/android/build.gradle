@@ -15,6 +15,8 @@ allprojects {
 
 apply plugin: 'com.android.library'
 
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 import org.apache.tools.ant.taskdefs.condition.Os
 
 android {
