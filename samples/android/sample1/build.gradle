@@ -58,11 +58,13 @@ android {
         fat
     }
 
-    debug {
-    }
-    nativeDebug {
-    }
-    release {
+    buildTypes {
+        debug {
+        }
+        nativeDebug {
+        }
+        release {
+        }
     }
 }
 
