@@ -127,7 +127,7 @@ task cleanupQtSharedLibs(type: Delete) {
 task copyQtSharedLibs(type: Copy) {
     description "Copy Qt shared libraries"
 
-    dependsOn cleanupQtSharedLibs, buildOsmAndCore
+    dependsOn cleanupQtSharedLibs
 
     from("../../externals/qtbase-android") {
         include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"

@@ -69,7 +69,7 @@ tasks.withType(JavaCompile) {
 
 // Uploading artifacts to local path
 group = "net.osmand"
-archivesBaseName = "OsmAndCore_androidNativeRelease"
+//archivesBaseName = "OsmAndCore_androidNativeRelease"
 uploadArchives {
     repositories.ivy {
         credentials {
