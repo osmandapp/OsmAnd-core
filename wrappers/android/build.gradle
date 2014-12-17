@@ -352,6 +352,7 @@ tasks.withType(JavaCompile) {
 }
 
 // Uploading artifacts to local path
+organisation = "net.osmand.core"
 uploadArchives {
     repositories.ivy {
         credentials {
@@ -363,7 +364,6 @@ uploadArchives {
             artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
         }
 
-        groupId = "net.osmand.core"
         def gitInfo = "git describe --long".execute().text.trim()
         def parsedGitInfo = Pattern.compile("v(\\d+\\.\\d+)-([\\d.]+)-(\\w+)").matcher(gitInfo)
         assert parsedGitInfo.matches()
