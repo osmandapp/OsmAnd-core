@@ -353,6 +353,6 @@ uploadArchives {
 
 dependencies {
     compile fileTree(dir: "libs", include: ["**/*.jar"])
-    releaseCompile project(":NativeCoreRelease")
-    debugCompile project(":NativeCoreDebug")
+    releaseCompile project(":OsmAndCore_androidNativeRelease")
+    debugCompile project(":OsmAndCore_androidNativeDebug")
 }
