@@ -23,7 +23,10 @@ android {
     sourceSets {
         main {
             manifest.srcFile "AndroidManifest.xml"
-            java.srcDirs = ["./src", "./gen/java"]
+            java.srcDirs = [
+            	"./src",
+            	"./gen/java"
+            ]
             jniLibs.srcDirs = ["./jniLibs/NDK"]
             jni.srcDirs = []
             assets.srcDirs = ["./assets"]
@@ -312,7 +315,8 @@ uploadArchives {
         def gitInfo = "git describe --long".execute().text.trim()
         def parsedGitInfo = Pattern.compile("v(\\d+\\.\\d+)-([\\d.]+)-(\\w+)").matcher(gitInfo)
         assert parsedGitInfo.matches()
-        version = parsedGitInfo.group(1) + "." + parsedGitInfo.group(2)
+        version = parsedGitInfo.group(1) + "-SNAPSHOT"
+        //version = parsedGitInfo.group(1) + "." + parsedGitInfo.group(2)
     }
 }
 

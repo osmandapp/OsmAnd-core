@@ -2,6 +2,7 @@ package net.osmand.core.android;
 
 import android.util.Log;
 
+import net.osmand.core.BuildConfig;
 import net.osmand.core.jni.ICoreResourcesProvider;
 import net.osmand.core.jni.OsmAndCore;
 import net.osmand.core.jni.interface_ICoreResourcesProvider;
