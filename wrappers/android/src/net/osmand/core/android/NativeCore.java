@@ -40,20 +40,21 @@ public class NativeCore {
      * Static block to perform loading of native libraries
      */
     static {
-        s_loadedNativeLibraries = loadNativeLibrary("gnustl_shared");
+        boolean ok = loadNativeLibrary("gnustl_shared");
         if (!BuildConfig.USE_DEBUG_LIBRARIES) {
-            s_loadedNativeLibraries = s_loadedNativeLibraries &&
+            ok = ok &&
                     loadNativeLibrary("Qt5Core") &&
                     loadNativeLibrary("Qt5Network") &&
                     loadNativeLibrary("Qt5Sql");
         } else {
-            s_loadedNativeLibraries = s_loadedNativeLibraries &&
+            ok = ok &&
                     loadNativeLibrary("Qt5Cored") &&
                     loadNativeLibrary("Qt5Networkd") &&
                     loadNativeLibrary("Qt5Sqld");
         }
-        s_loadedNativeLibraries = s_loadedNativeLibraries &&
+        ok = ok &&
                 loadNativeLibrary("OsmAndCoreWithJNI");
+        s_loadedNativeLibraries = ok;
     }
 
     /**
