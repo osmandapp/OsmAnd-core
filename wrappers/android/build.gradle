@@ -364,7 +364,6 @@ uploadArchives {
         }
 
         groupId = "net.osmand.core"
-        artifact = "OsmAndCore_android"
         def gitInfo = "git describe --long".execute().text.trim()
         def parsedGitInfo = Pattern.compile("v(\\d+\\.\\d+)-([\\d.]+)-(\\w+)").matcher(gitInfo)
         assert parsedGitInfo.matches()
