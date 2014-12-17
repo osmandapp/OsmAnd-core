@@ -57,6 +57,13 @@ android {
         }
         fat
     }
+
+    debug {
+    }
+    nativeDebug {
+    }
+    release {
+    }
 }
 
 repositories {
@@ -73,4 +80,7 @@ dependencies {
     compile "com.android.support:appcompat-v7:21.0.3"
     compile fileTree(dir: "libs", include: ["*.jar"])
     compile "net.osmand:OsmAndCore_android:0.1-SNAPSHOT@aar"
+    debugCompile "net.osmand:OsmAndCore_androidNativeRelease:0.1-SNAPSHOT@aar"
+    nativeDebugCompile "net.osmand:OsmAndCore_androidNativeDebug:0.1-SNAPSHOT@aar"
+    releaseCompile "net.osmand:OsmAndCore_androidNativeRelease:0.1-SNAPSHOT@aar"
 }
