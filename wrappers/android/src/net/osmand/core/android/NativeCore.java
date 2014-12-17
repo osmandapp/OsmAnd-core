@@ -7,7 +7,7 @@ import net.osmand.core.jni.OsmAndCore;
 import net.osmand.core.jni.interface_ICoreResourcesProvider;
 
 /**
- * Created by Alexey on 25.11.2014.
+ * Created by Alexey Pelykh on 25.11.2014.
  */
 public class NativeCore {
     private static final String TAG = "OsmAndCore:Android/NativeCore";
@@ -39,10 +39,19 @@ public class NativeCore {
      * Static block to perform loading of native libraries
      */
     static {
-        s_loadedNativeLibraries = loadNativeLibrary("gnustl_shared") &&
-                loadNativeLibrary("Qt5Core") &&
-                loadNativeLibrary("Qt5Network") &&
-                loadNativeLibrary("Qt5Sql") &&
+        s_loadedNativeLibraries = loadNativeLibrary("gnustl_shared");
+        if (!BuildConfig.USE_DEBUG_LIBRARIES) {
+            s_loadedNativeLibraries = s_loadedNativeLibraries &&
+                    loadNativeLibrary("Qt5Core") &&
+                    loadNativeLibrary("Qt5Network") &&
+                    loadNativeLibrary("Qt5Sql");
+        } else {
+            s_loadedNativeLibraries = s_loadedNativeLibraries &&
+                    loadNativeLibrary("Qt5Cored") &&
+                    loadNativeLibrary("Qt5Networkd") &&
+                    loadNativeLibrary("Qt5Sqld");
+        }
+        s_loadedNativeLibraries = s_loadedNativeLibraries &&
                 loadNativeLibrary("OsmAndCoreWithJNI");
     }
 

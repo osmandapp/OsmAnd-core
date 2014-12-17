@@ -7,7 +7,10 @@ android {
         main {
             manifest.srcFile "AndroidManifest.xml"
             java.srcDirs = []
-            jniLibs.srcDirs = ["./jniLibs/Qt", "./jniLibs/OsmAnd"]
+            jniLibs.srcDirs = [
+                    "./jniLibs/Qt",
+                    "./jniLibs/OsmAnd"
+            ]
             jni.srcDirs = []
             assets.srcDirs = []
         }
@@ -53,7 +56,7 @@ task copyOsmAndSharedLibs(type: Copy) {
 
     dependsOn cleanupOsmAndSharedLibs, buildOsmAndCore
 
-    from("../../../binaries/android") {
+    from("../../../../binaries/android") {
         include "gcc-*/Release/libOsmAndCoreWithJNI.so"
         eachFile { fileCopyDetails ->
             fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*gcc-(.*)\/Release\/(.*)/, '$1/$2')
@@ -79,7 +82,7 @@ task copyQtSharedLibs(type: Copy) {
 
     dependsOn cleanupQtSharedLibs, buildOsmAndCore
 
-    from("../../externals/qtbase-android") {
+    from("../../../externals/qtbase-android") {
         include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"
         include "upstream.patched.android.gcc-*.shared/lib/libQt5Network.so"
         include "upstream.patched.android.gcc-*.shared/lib/libQt5Sql.so"
