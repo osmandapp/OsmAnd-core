@@ -27,7 +27,10 @@ android {
             	"./src",
             	"./gen/java"
             ]
-            jniLibs.srcDirs = ["./jniLibs/NDK"]
+            jniLibs.srcDirs = [
+            	"./jniLibs/NDK",
+            	"./jniLibs/Qt"
+            ]
             jni.srcDirs = []
             assets.srcDirs = ["./assets"]
         }
@@ -112,6 +115,34 @@ task copyNdkSharedLibs(type: Copy) {
 }
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn << copyNdkSharedLibs
+}
+
+// Qt shared libraries tasks
+task cleanupQtSharedLibs(type: Delete) {
+    description "Clean-up Qt shared libraries"
+
+    delete "./jniLibs/Qt"
+}
+
+task copyQtSharedLibs(type: Copy) {
+    description "Copy Qt shared libraries"
+
+    dependsOn cleanupQtSharedLibs, buildOsmAndCore
+
+    from("../../externals/qtbase-android") {
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Network.so"
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Sql.so"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
+        }
+    }
+
+    into "./jniLibs/Qt"
+    includeEmptyDirs = false
+}
+tasks.withType(JavaCompile) {
+    compileTask -> compileTask.dependsOn << copyQtSharedLibs
 }
 
 // Qt JAR libraries tasks
