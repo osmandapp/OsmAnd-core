@@ -1,0 +1,96 @@
+apply plugin: 'com.android.library'
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
+android {
+    sourceSets {
+        main {
+            manifest.srcFile "AndroidManifest.xml"
+            java.srcDirs = []
+            jniLibs.srcDirs = ["./jniLibs/Qt", "./jniLibs/OsmAnd"]
+            jni.srcDirs = []
+            assets.srcDirs = []
+        }
+    }
+
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        minSdkVersion 9
+        targetSdkVersion 21
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+// OsmAndCore JNI build task
+
+task buildOsmAndCore(type: Exec) {
+    description "Build OsmAndCore"
+
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine file("../build.cmd").getAbsolutePath(), "release"
+    } else {
+        commandLine "sh", file("../build.sh").getAbsolutePath(), "release"
+    }
+}
+tasks.withType(JavaCompile) {
+    compileTask -> compileTask.dependsOn << buildOsmAndCore
+}
+
+// OsmAnd libraries tasks
+task cleanupOsmAndSharedLibs(type: Delete) {
+    description "Clean-up OsmAnd shared libraries"
+
+    delete "./jniLibs/OsmAnd"
+}
+
+task copyOsmAndSharedLibs(type: Copy) {
+    description "Copy OsmAnd shared libraries"
+
+    dependsOn cleanupOsmAndSharedLibs, buildOsmAndCore
+
+    from("../../../binaries/android") {
+        include "gcc-*/Release/libOsmAndCoreWithJNI.so"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*gcc-(.*)\/Release\/(.*)/, '$1/$2')
+        }
+    }
+
+    into "./jniLibs/OsmAnd"
+    includeEmptyDirs = false
+}
+tasks.withType(JavaCompile) {
+    compileTask -> compileTask.dependsOn << copyOsmAndSharedLibs
+}
+
+// Qt shared libraries tasks
+task cleanupQtSharedLibs(type: Delete) {
+    description "Clean-up Qt shared libraries"
+
+    delete "./jniLibs/Qt"
+}
+
+task copyQtSharedLibs(type: Copy) {
+    description "Copy Qt shared libraries"
+
+    dependsOn cleanupQtSharedLibs, buildOsmAndCore
+
+    from("../../externals/qtbase-android") {
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Network.so"
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Sql.so"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
+        }
+    }
+
+    into "./jniLibs/Qt"
+    includeEmptyDirs = false
+}
+tasks.withType(JavaCompile) {
+    compileTask -> compileTask.dependsOn << copyQtSharedLibs
+}

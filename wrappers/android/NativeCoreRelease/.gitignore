@@ -1,0 +1,5 @@
+# MacOSX
+.DS_Store
+
+# Project-specific
+/jniLibs
