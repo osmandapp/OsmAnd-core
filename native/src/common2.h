@@ -83,6 +83,7 @@ struct TextDrawInfo {
 
 struct IconDrawInfo
 {
+	SkBitmap* bmp_1;
 	SkBitmap* bmp;
 	SkBitmap* bmp2;
 	SkBitmap* bmp3;

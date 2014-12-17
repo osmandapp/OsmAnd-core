@@ -725,6 +725,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		IconDrawInfo ico;
 		ico.x = px;
 		ico.y = py;
+		ico.bmp_1 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON__1));	
 		ico.bmp = bmp;
 		ico.bmp2 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON2));	
 		ico.bmp3 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON3));	
@@ -827,6 +828,9 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 				if(icon.shield != NULL) {
 					SkRect rt = makeRect(rc, icon, icon.shield);
 					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.shield, (SkIRect*) NULL, rt, &p));
+				}
+				if(icon.bmp_1 != NULL) {
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp_1, (SkIRect*) NULL, r, &p));
 				}
 				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, r, &p));
 				if(icon.bmp2 != NULL) {
