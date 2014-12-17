@@ -1,343 +1,370 @@
 buildscript {
-	repositories {
-		mavenCentral()
-	}
-	dependencies {
-		classpath 'com.android.tools.build:gradle:1.0.0'
-	}
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.0.0'
+    }
 }
 
 allprojects {
-	repositories {
-		mavenCentral()
-	}
+    repositories {
+        mavenCentral()
+    }
 }
 
 apply plugin: 'com.android.library'
 
+import org.apache.tools.ant.taskdefs.condition.Os
+
 android {
-	sourceSets.main {
-		manifest.srcFile "AndroidManifest.xml"
-		java.srcDirs = ["./src", "./gen/java"]
-		jniLibs.srcDirs = ["./jniLibs/NDK", "./jniLibs/Qt", "./jniLibs/OsmAnd"]
-		jni.srcDirs = []
-		assets.srcDirs = ["./assets"]
-	}
+    sourceSets {
+        main {
+            manifest.srcFile "AndroidManifest.xml"
+            java.srcDirs = ["./src", "./gen/java"]
+            jniLibs.srcDirs = ["./jniLibs/NDK", "./jniLibs/Qt", "./jniLibs/OsmAnd"]
+            jni.srcDirs = []
+            assets.srcDirs = ["./assets"]
+        }
+    }
 
-	compileSdkVersion 21
-	buildToolsVersion "21.1.2"
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
 
-	defaultConfig {
-		minSdkVersion 9
-		targetSdkVersion 21
-	}
+    defaultConfig {
+        minSdkVersion 9
+        targetSdkVersion 21
+    }
 
-	// Seems this has no effect at all, since not propagated. So should be inserted in host application
-	aaptOptions {
-		// Don't compress any resources
-		noCompress "qz"
-	}
+    // Seems this has no effect at all, since not propagated. So should be inserted in host application
+    aaptOptions {
+        // Don't compress any resources
+        noCompress "qz"
+    }
 
-	lintOptions {
-		abortOnError false
-	}
+    lintOptions {
+        abortOnError false
+    }
 }
 
 // Java sources generation tasks
 task cleanupSwig(type: Delete) {
-	description "Clean-up old generated SWIG Java interface"
+    description "Clean-up old generated SWIG Java interface"
 
-	delete "./gen"
+    delete "./gen"
 }
-import org.apache.tools.ant.taskdefs.condition.Os
+
 task swigGenerateJava(type: Exec) {
-	description "Generate SWIG Java interface"
+    description "Generate SWIG Java interface"
 
-	dependsOn cleanupSwig
+    dependsOn cleanupSwig
 
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-		commandLine "cmd", "/c", "bash --login "+file("../java/generate.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()
-	} else {
-		commandLine "sh", file("../java/generate.sh").getAbsolutePath(), projectDir.getAbsolutePath()
-	}
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine "cmd", "/c", "bash --login " + file("../java/generate.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath()
+    } else {
+        commandLine "sh", file("../java/generate.sh").getAbsolutePath(), projectDir.getAbsolutePath()
+    }
 }
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << swigGenerateJava
+    compileTask -> compileTask.dependsOn << swigGenerateJava
 }
 
 // OsmAndCore JNI build task
-import org.apache.tools.ant.taskdefs.condition.Os
-task buildOsmAndCore(type: Exec) {
-	description "Build OsmAndCore"
 
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-		commandLine file("build.cmd").getAbsolutePath(), "release"
-	} else {
-		commandLine "sh", file("build.sh").getAbsolutePath(), "release"
-	}
+task buildOsmAndCore(type: Exec) {
+    description "Build OsmAndCore"
+
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine file("build.cmd").getAbsolutePath(), "release"
+    } else {
+        commandLine "sh", file("build.sh").getAbsolutePath(), "release"
+    }
 }
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << buildOsmAndCore
+    compileTask -> compileTask.dependsOn << buildOsmAndCore
 }
 
 // NDK libraries tasks
 task cleanupNdkSharedLibs(type: Delete) {
-	description "Clean-up NDK shared libraries"
+    description "Clean-up NDK shared libraries"
 
-	delete "./jniLibs/NDK"
+    delete "./jniLibs/NDK"
 }
+
 task copyNdkSharedLibs(type: Copy) {
-	description "Copy NDK shared libraries"
+    description "Copy NDK shared libraries"
 
-	dependsOn cleanupNdkSharedLibs
+    dependsOn cleanupNdkSharedLibs
 
-	from("$System.env.ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs") {
-		include "armeabi/libgnustl_shared.so"
-		include "armeabi-v7a/libgnustl_shared.so"
-		include "mips/libgnustl_shared.so"
-		include "x86/libgnustl_shared.so"
-	}
+    from("$System.env.ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.9/libs") {
+        include "armeabi/libgnustl_shared.so"
+        include "armeabi-v7a/libgnustl_shared.so"
+        include "mips/libgnustl_shared.so"
+        include "x86/libgnustl_shared.so"
+    }
 
-	into "./jniLibs/NDK"
-	includeEmptyDirs = false
+    into "./jniLibs/NDK"
+    includeEmptyDirs = false
 }
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << copyNdkSharedLibs
+    compileTask -> compileTask.dependsOn << copyNdkSharedLibs
 }
 
 // OsmAnd libraries tasks
 task cleanupOsmAndSharedLibs(type: Delete) {
-	description "Clean-up OsmAnd shared libraries"
+    description "Clean-up OsmAnd shared libraries"
 
-	delete "./jniLibs/OsmAnd"
+    delete "./jniLibs/OsmAnd"
 }
+
 task copyOsmAndSharedLibs(type: Copy) {
-	description "Copy OsmAnd shared libraries"
+    description "Copy OsmAnd shared libraries"
 
-	dependsOn cleanupOsmAndSharedLibs, buildOsmAndCore
+    dependsOn cleanupOsmAndSharedLibs, buildOsmAndCore
 
-	from("../../../binaries/android") {
-		include "gcc-*/Release/libOsmAndCoreWithJNI.so"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*gcc-(.*)\/Release\/(.*)/, '$1/$2')
-		}
-	}
+    from("../../../binaries/android") {
+        include "gcc-*/Release/libOsmAndCoreWithJNI.so"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*gcc-(.*)\/Release\/(.*)/, '$1/$2')
+        }
+    }
 
-	into "./jniLibs/OsmAnd"
-	includeEmptyDirs = false
+    into "./jniLibs/OsmAnd"
+    includeEmptyDirs = false
 }
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << copyOsmAndSharedLibs
+    compileTask -> compileTask.dependsOn << copyOsmAndSharedLibs
 }
 
 // Qt shared libraries tasks
 task cleanupQtSharedLibs(type: Delete) {
-	description "Clean-up Qt shared libraries"
+    description "Clean-up Qt shared libraries"
 
-	delete "./jniLibs/Qt"
+    delete "./jniLibs/Qt"
 }
+
 task copyQtSharedLibs(type: Copy) {
-	description "Copy Qt shared libraries"
+    description "Copy Qt shared libraries"
 
-	dependsOn cleanupQtSharedLibs, buildOsmAndCore
+    dependsOn cleanupQtSharedLibs, buildOsmAndCore
 
-	from("../../externals/qtbase-android") {
-		include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"
-		include "upstream.patched.android.gcc-*.shared/lib/libQt5Network.so"
-		include "upstream.patched.android.gcc-*.shared/lib/libQt5Sql.so"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
-		}
-	}
+    from("../../externals/qtbase-android") {
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Core.so"
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Network.so"
+        include "upstream.patched.android.gcc-*.shared/lib/libQt5Sql.so"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-(.*)\.shared\/lib\/(.*)/, '$1/$2')
+        }
+    }
 
-	into "./jniLibs/Qt"
-	includeEmptyDirs = false
+    into "./jniLibs/Qt"
+    includeEmptyDirs = false
 }
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << copyQtSharedLibs
+    compileTask -> compileTask.dependsOn << copyQtSharedLibs
 }
 
 // Qt JAR libraries tasks
 task cleanupQtJarLibs(type: Delete) {
-	description "Clean-up Qt JAR libraries"
+    description "Clean-up Qt JAR libraries"
 
-	delete "./libs/Qt"
+    delete "./libs/Qt"
 }
+
 task copyQtJarLibs(type: Copy) {
-	description "Copy Qt JAR libraries"
+    description "Copy Qt JAR libraries"
 
-	dependsOn cleanupQtJarLibs, buildOsmAndCore
+    dependsOn cleanupQtJarLibs, buildOsmAndCore
 
-	from("../../externals/qtbase-android") {
-		include "upstream.patched.android.gcc-*.shared/jar/*-bundled.jar"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-.*\.shared\/jar\/(.*)/, '$1')
-		}
-	}
+    from("../../externals/qtbase-android") {
+        include "upstream.patched.android.gcc-*.shared/jar/*-bundled.jar"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = fileCopyDetails.path.replaceAll(/.*upstream\.patched\.android\.gcc\-.*\.shared\/jar\/(.*)/, '$1')
+        }
+    }
 
-	into "./libs/Qt"
-	includeEmptyDirs = false
+    into "./libs/Qt"
+    includeEmptyDirs = false
 }
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << copyQtJarLibs
+    compileTask -> compileTask.dependsOn << copyQtJarLibs
 }
 
 // OsmAnd resources tasks
 task cleanupOsmAndResources(type: Delete) {
-	description "Clean-up OsmAnd resources"
+    description "Clean-up OsmAnd resources"
 
-	delete "./assets/OsmAndCore_ResourcesBundle"
+    delete "./assets/OsmAndCore_ResourcesBundle"
 }
+
 task copyOsmAndResources(type: Copy) {
-	description "Copy OsmAnd resources"
+    description "Copy OsmAnd resources"
 
-	dependsOn cleanupOsmAndResources
+    dependsOn cleanupOsmAndResources
 
-	// Map styles and related:
-	from("../../../resources/rendering_styles") {
-		include "default.render.xml"
-		include "default.map_styles_presets.xml"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "map/styles/" + fileCopyDetails.path
-		}
-	}
+    // Map styles and related:
+    from("../../../resources/rendering_styles") {
+        include "default.render.xml"
+        include "default.map_styles_presets.xml"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "map/styles/" + fileCopyDetails.path
+        }
+    }
 
-	// Map icons (Android mdpi == 1.0 ddf):
-	from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
-		include "h_*shield*.png"
-		include "h_*osmc*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=1.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
-		}
-	}
-	from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
-		include "h_*.png"
-		exclude "h_*shield*.png"
-		exclude "h_*osmc*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=1.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
-		}
-	}
-	from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
-		include "mm_*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=1.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
-		}
-	}
+    // Map icons (Android mdpi == 1.0 ddf):
+    from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
+        include "h_*shield*.png"
+        include "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
+        include "h_*.png"
+        exclude "h_*shield*.png"
+        exclude "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/drawable-mdpi") {
+        include "mm_*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+        }
+    }
 
-	// Map icons (Android hdpi == 1.5 ddf):
-	from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
-		include "h_*shield*.png"
-		include "h_*osmc*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=1.5]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
-		}
-	}
-	from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
-		include "h_*.png"
-		exclude "h_*shield*.png"
-		exclude "h_*osmc*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=1.5]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
-		}
-	}
-	from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
-		include "mm_*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=1.5]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
-		}
-	}
+    // Map icons (Android hdpi == 1.5 ddf):
+    from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
+        include "h_*shield*.png"
+        include "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.5]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
+        include "h_*.png"
+        exclude "h_*shield*.png"
+        exclude "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.5]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/drawable-hdpi") {
+        include "mm_*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.5]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+        }
+    }
 
-	// Map icons (Android xhdpi == 2.0 ddf):
-	from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
-		include "h_*shield*.png"
-		include "h_*osmc*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=2.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
-		}
-	}
-	from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
-		include "h_*.png"
-		exclude "h_*shield*.png"
-		exclude "h_*osmc*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=2.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
-		}
-	}
-	from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
-		include "mm_*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "[ddf=2.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
-		}
-	}
+    // Map icons (Android xhdpi == 2.0 ddf):
+    from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
+        include "h_*shield*.png"
+        include "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=2.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
+        include "h_*.png"
+        exclude "h_*shield*.png"
+        exclude "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=2.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/drawable-xhdpi") {
+        include "mm_*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=2.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+        }
+    }
 
-	// Misc map resources:
-	from("../../../resources/rendering_styles/stubs") {
-		include "**/*.png"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "map/stubs/" + fileCopyDetails.path
-		}
-	}
+    // Misc map resources:
+    from("../../../resources/rendering_styles/stubs") {
+        include "**/*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "map/stubs/" + fileCopyDetails.path
+        }
+    }
 
-	// Routing:
-	from("../../../resources/routing") {
-		include "routing.xml"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "routing/" + fileCopyDetails.path
-		}
-	}
+    // Routing:
+    from("../../../resources/routing") {
+        include "routing.xml"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "routing/" + fileCopyDetails.path
+        }
+    }
 
-	// Fonts:
-	from("../../../resources/rendering_styles/fonts") {
-		include "**/*.ttf"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "map/fonts/" + fileCopyDetails.path
-		}
-	}
+    // Fonts:
+    from("../../../resources/rendering_styles/fonts") {
+        include "**/*.ttf"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "map/fonts/" + fileCopyDetails.path
+        }
+    }
 
-	// Misc resources
-	from("../../../resources/misc/icu4c") {
-		include "*.dat"
-		eachFile { fileCopyDetails ->
-			fileCopyDetails.path = "misc/icu4c/" + fileCopyDetails.path.replaceAll(/icudt\d+([lb])\.dat/, 'icu-data-$1.dat')
-		}
-	}
+    // Misc resources
+    from("../../../resources/misc/icu4c") {
+        include "*.dat"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "misc/icu4c/" + fileCopyDetails.path.replaceAll(/icudt\d+([lb])\.dat/, 'icu-data-$1.dat')
+        }
+    }
 
-	into "./assets/OsmAndCore_ResourcesBundle"
-	includeEmptyDirs = false
+    into "./assets/OsmAndCore_ResourcesBundle"
+    includeEmptyDirs = false
 }
-import org.apache.tools.ant.taskdefs.condition.Os
+
 task packOsmAndResources(type: Exec) {
-	description "Pack OsmAnd resources"
+    description "Pack OsmAnd resources"
 
-	dependsOn copyOsmAndResources
+    dependsOn copyOsmAndResources
 
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-		commandLine "cmd", "/c", "bash --login "+file("./pack-resources.sh").getAbsolutePath()+" "+projectDir.getAbsolutePath()+"/assets/OsmAndCore_ResourcesBundle"
-	} else {
-		commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath()+"/assets/OsmAndCore_ResourcesBundle"
-	}
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        commandLine "cmd", "/c", "bash --login " + file("./pack-resources.sh").getAbsolutePath() + " " + projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+    } else {
+        commandLine "sh", file("./pack-resources.sh").getAbsolutePath(), projectDir.getAbsolutePath() + "/assets/OsmAndCore_ResourcesBundle"
+    }
 }
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << packOsmAndResources
+    compileTask -> compileTask.dependsOn << packOsmAndResources
 }
 
 // OsmAnd resources indexing task
 task indexOsmAndResources << {
-	description "Index OsmAnd resources"
+    description = "Index OsmAnd resources"
 
-	def resources = fileTree("./assets/OsmAndCore_ResourcesBundle") {
-		include "**/*.*"
-	}.collect { relativePath(it).replace('\\', '/').replaceAll("assets/OsmAndCore_ResourcesBundle/", "") }
+    def resources = fileTree("./assets/OsmAndCore_ResourcesBundle") {
+        include "**/*.*"
+    }.collect {
+        relativePath(it).replace('\\', '/').replaceAll("assets/OsmAndCore_ResourcesBundle/", "")
+    }
 
-	def indexFile = new File("./assets/OsmAndCore_ResourcesBundle.index")
-	indexFile.text = resources.join('\n')
+    def indexFile = new File("./assets/OsmAndCore_ResourcesBundle.index")
+    indexFile.text = resources.join('\n')
 }
 indexOsmAndResources.dependsOn << copyOsmAndResources
 tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn << indexOsmAndResources
+    compileTask -> compileTask.dependsOn << indexOsmAndResources
+}
+
+// Uploading artifacts to local path
+uploadArchives {
+    repositories {
+        ivy {
+            credentials {
+                username ""
+                password ""
+            }
+            url System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+            layout "pattern" , {
+	            artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+	        }
+        }
+    }
 }
 
 dependencies {
-	compile fileTree(dir: "libs", include: ["**/*.jar"])
+    compile fileTree(dir: "libs", include: ["**/*.jar"])
 }
