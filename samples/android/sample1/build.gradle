@@ -70,7 +70,7 @@ repositories {
 }
 
 dependencies {
-    compile "com.android.support:appcompat-v7:21.0.2"
+    compile "com.android.support:appcompat-v7:21.0.3"
     compile fileTree(dir: "libs", include: ["*.jar"])
     compile "net.osmand:OsmAndCore_android:0.1+@aar"
 }

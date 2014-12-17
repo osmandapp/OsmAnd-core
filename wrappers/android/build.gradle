@@ -47,6 +47,18 @@ android {
     lintOptions {
         abortOnError false
     }
+
+	buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+        }
+
+        release {
+        	debuggable false
+            jniDebuggable false
+        }
+    }
 }
 
 // Java sources generation tasks
