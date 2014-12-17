@@ -60,13 +60,17 @@ android {
 }
 
 repositories {
-    flatDir {
-        dirs "../../../wrappers/android/build/outputs/aar"
+    ivy {
+        name = "OsmAndBinariesIvy"
+        url = "http://builder.osmand.net:81"
+        layout "pattern" , {
+            artifact "ivy/[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+        }
     }
 }
 
 dependencies {
     compile "com.android.support:appcompat-v7:21.0.2"
     compile fileTree(dir: "libs", include: ["*.jar"])
-    compile "net.osmand.core:OsmAndCore_android-release:1.0@aar"
+    compile "net.osmand.core:OsmAndCore_android:0.1+@aar"
 }

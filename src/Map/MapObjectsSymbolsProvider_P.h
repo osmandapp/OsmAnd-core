@@ -50,6 +50,7 @@ namespace OsmAnd
             const QVector<PointI>& path31,
             const float globalLeftPaddingInPixels,
             const float globalRightPaddingInPixels,
+            const float globalSpacingBetweenBlocksInPixels,
             const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom,

@@ -212,10 +212,16 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
                 }
             }
 
+            const auto& env = owner->primitivesProvider->primitiviser->environment;
+            float globalLeftPaddingInPixels = 0.0f;
+            float globalRightPaddingInPixels = 0.0f;
+            env->obtainGlobalPathPadding(globalLeftPaddingInPixels, globalRightPaddingInPixels);
+            const auto globalSpacingBetweenBlocksInPixels = env->getGlobalPathSymbolsBlockSpacing();
             const auto computedPinPointsByLayer = computePinPoints(
                 mapObject->points31,
-                0.0f,
-                0.0f,
+                globalLeftPaddingInPixels, // global left padding in pixels
+                globalRightPaddingInPixels, // global right padding in pixels
+                globalSpacingBetweenBlocksInPixels, // global spacing between blocks in pixels
                 symbolsForComputation,
                 mapObject->getMinZoomLevel(),
                 mapObject->getMaxZoomLevel(),
@@ -320,6 +326,7 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
     const QVector<PointI>& path31,
     const float globalLeftPaddingInPixels,
     const float globalRightPaddingInPixels,
+    const float globalSpacingBetweenBlocksInPixels,
     const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
     const ZoomLevel minZoom,
     const ZoomLevel maxZoom,
@@ -407,7 +414,7 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
     const auto symbolsCount = symbolsForPinPointsComputation.size();
     QVector<float> symbolsFullSizesInPixels(symbolsCount);
     auto pSymbolFullSizeInPixels = symbolsFullSizesInPixels.data();
-    float blockWidth = 0.0f;
+    float blockWidthWithoutSpacing = 0.0f;
     for (const auto& symbolForPinPointsComputation : constOf(symbolsForPinPointsComputation))
     {
         auto symbolWidth = 0.0f;
@@ -415,10 +422,11 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
         symbolWidth += symbolForPinPointsComputation.widthInPixels;
         symbolWidth += symbolForPinPointsComputation.rightPaddingInPixels;
         *(pSymbolFullSizeInPixels++) = symbolWidth;
-        blockWidth += symbolWidth;
+        blockWidthWithoutSpacing += symbolWidth;
     }
-    if (symbolsForPinPointsComputation.isEmpty() || qFuzzyIsNull(blockWidth))
+    if (symbolsForPinPointsComputation.isEmpty() || qFuzzyIsNull(blockWidthWithoutSpacing))
         return computedPinPointsByLayer;
+    const auto blockWidthWithSpacing = blockWidthWithoutSpacing + globalSpacingBetweenBlocksInPixels;
 
     // Step 4. Process values for base zoom level
     const auto lengthOfPathInPixelsOnBaseZoom = usablePathLengthInPixels;
@@ -440,15 +448,30 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
         auto numberOfSymbolsThatFit = 0; // This is used only in case even 1 block doesn't fit
         if (totalNumberOfCompleteBlocks == 0)
         {
-            const auto numberOfBlocksThatFit = lengthOfPathInPixelsOnCurrentZoom / blockWidth;
-            blocksToInstantiate = qFloor(numberOfBlocksThatFit);
-            if (blocksToInstantiate > 0)
+            if (lengthOfPathInPixelsOnCurrentZoom >= blockWidthWithoutSpacing)
             {
+                const auto numberOfBlocksThatFit = lengthOfPathInPixelsOnCurrentZoom / blockWidthWithoutSpacing;
+                blocksToInstantiate = qMax(qFloor(numberOfBlocksThatFit), 1);
                 kOffsetToFirstNewBlockOnCurrentZoom = (numberOfBlocksThatFit - static_cast<int>(numberOfBlocksThatFit)) / 2.0f;
                 kOffsetToFirstPresentBlockOnCurrentZoom = -1.0f;
+                //if (lengthOfPathInPixelsOnCurrentZoom >= blockWidth + globalSpacingBetweenBlocksInPixels + blockWidth)
+                //{
+                //    // If more than 2 blocks + spacing between them
+                //    const auto numberOfBlocksThatFit = lengthOfPathInPixelsOnCurrentZoom / blockWidthWithSpacing;
+                //    blocksToInstantiate = qMax(qFloor(numberOfBlocksThatFit), 1);
+                //    kOffsetToFirstNewBlockOnCurrentZoom = (numberOfBlocksThatFit - static_cast<int>(numberOfBlocksThatFit)) / 2.0f;
+                //}
+                //else
+                //{
+                //    // If only 1 block (with or without spacing)
+                //    blocksToInstantiate = 1;
+                //    kOffsetToFirstNewBlockOnCurrentZoom = (numberOfBlocksThatFit - static_cast<int>(numberOfBlocksThatFit)) / 2.0f;
+                //}
+                //kOffsetToFirstPresentBlockOnCurrentZoom = -1.0f;
             }
             else
             {
+                blocksToInstantiate = 0;
                 for (auto symbolIdx = 0; symbolIdx < symbolsCount; symbolIdx++)
                 {
                     const auto& symbolFullSize = symbolsFullSizesInPixels[symbolIdx];
@@ -461,14 +484,14 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
                 }
 
                 // Actually offset to incomplete block
-                kOffsetToFirstNewBlockOnCurrentZoom = ((lengthOfPathInPixelsOnCurrentZoom - fullSizeOfSymbolsThatFit) / blockWidth) / 2.0f;
+                kOffsetToFirstNewBlockOnCurrentZoom = ((lengthOfPathInPixelsOnCurrentZoom - fullSizeOfSymbolsThatFit) / blockWidthWithoutSpacing) / 2.0f;
                 kOffsetToFirstPresentBlockOnCurrentZoom = -1.0f;
             }
         }
         else
         {
             kOffsetToFirstPresentBlockOnCurrentZoom = kOffsetToFirstBlockOnPrevZoom * 2.0f + 0.5f; // 0.5f represents shift of present instance due to x2 scale-up
-            blocksToInstantiate = qRound((lengthOfPathInPixelsOnCurrentZoom / blockWidth) - 2.0f * kOffsetToFirstPresentBlockOnCurrentZoom) - totalNumberOfCompleteBlocks;
+            blocksToInstantiate = qRound((lengthOfPathInPixelsOnCurrentZoom / blockWidthWithoutSpacing) - 2.0f * kOffsetToFirstPresentBlockOnCurrentZoom) - totalNumberOfCompleteBlocks;
             assert(blocksToInstantiate >= 0);
             if (kOffsetToFirstPresentBlockOnCurrentZoom > 1.0f)
             {
@@ -484,9 +507,9 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
             if (blocksToInstantiate == 0)
                 kOffsetToFirstNewBlockOnCurrentZoom = -1.0f;
         }
-        const auto remainingPathLengthOnCurrentZoom = lengthOfPathInPixelsOnCurrentZoom - (totalNumberOfCompleteBlocks + blocksToInstantiate) * blockWidth;
-        const auto offsetToFirstNewBlockInPixels = kOffsetToFirstNewBlockOnCurrentZoom * blockWidth;
-        const auto eachNewBlockAfterFirstOffsetInPixels = (totalNumberOfCompleteBlocks > 0 ? 2.0f : 1.0f) * blockWidth;
+        const auto remainingPathLengthOnCurrentZoom = lengthOfPathInPixelsOnCurrentZoom - (totalNumberOfCompleteBlocks + blocksToInstantiate) * blockWidthWithoutSpacing;
+        const auto offsetToFirstNewBlockInPixels = kOffsetToFirstNewBlockOnCurrentZoom * blockWidthWithoutSpacing;
+        const auto eachNewBlockAfterFirstOffsetInPixels = (totalNumberOfCompleteBlocks > 0 ? 2.0f : 1.0f) * blockWidthWithoutSpacing;
 
 #if OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION
         LogPrintf(LogSeverityLevel::Debug,
@@ -516,7 +539,7 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
             fullSizeOfSymbolsThatFit,
             numberOfSymbolsThatFit,
             lengthOfPathInPixelsOnCurrentZoom,
-            blockWidth);
+            blockWidthWithoutSpacing);
 #endif // OSMAND_LOG_SYMBOLS_PIN_POINTS_COMPUTATION
 
         // Compute actual pin-points only for zoom levels less detained that needed, including needed
@@ -541,7 +564,7 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
                         lengthOfPathInPixelsOnCurrentZoom,
                         pathSegmentsLength31,
                         path31,
-                        blockWidth,
+                        blockWidthWithoutSpacing,
                         offsetToFirstNewBlockInPixels + blockIdx * eachNewBlockAfterFirstOffsetInPixels,
                         scanOriginPathPointIndex,
                         scanOriginPathPointOffsetInPixels,
@@ -556,7 +579,7 @@ QList< QList<OsmAnd::MapObjectsSymbolsProvider_P::ComputedPinPoint> > OsmAnd::Ma
                     scanOriginPathPointIndex = nextScanOriginPathPointIndex;
                     scanOriginPathPointOffsetInPixels = nextScanOriginPathPointOffsetInPixels;
 
-                    float symbolPinPointOffset = -blockWidth / 2.0f;
+                    float symbolPinPointOffset = -blockWidthWithoutSpacing / 2.0f;
                     for (auto symbolIdx = 0u; symbolIdx < symbolsCount; symbolIdx++)
                     {
                         const auto& symbol = symbolsForPinPointsComputation[symbolIdx];
