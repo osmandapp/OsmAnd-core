@@ -361,7 +361,9 @@ uploadArchives {
             artifact "net.osmand.core/[module]/[revision]/[artifact]-[revision].[ext]"
         }
 
-        version = "0.101"
+        def gitInfo = "git describe --long".execute().trim()
+        def parsedGitInfo = Pattern.compile("v([\\d.]+)-([\\d.]+)-(\\w+)").matcher(gitInfo)
+        version = parsedGitInfo.group(1) + "." + parsedGitInfo.group(2)
     }
 }
 
