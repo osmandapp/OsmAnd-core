@@ -365,7 +365,7 @@ uploadArchives {
 
         def gitInfo = "git describe --long".execute().text.trim()
         def parsedGitInfo = Pattern.compile("v([\\d.]+)-([\\d.]+)-(\\w+)").matcher(gitInfo)
-        version = parsedGitInfo.group(1) + "." + parsedGitInfo.group(2)
+        version = parsedGitInfo.group()
     }
 }
 
