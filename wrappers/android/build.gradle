@@ -351,16 +351,15 @@ tasks.withType(JavaCompile) {
 
 // Uploading artifacts to local path
 uploadArchives {
-    repositories {
-        ivy {
-            credentials {
-                username ""
-                password ""
-            }
-            url System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
-            layout "pattern" , {
-	            artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
-	        }
+    repositories.ivy {
+        credentials {
+            username ""
+            password ""
+        }
+        groupId "net.osmand.core"
+        url System.getenv("OSMAND_BINARIES_IVY_ROOT") ?: "./"
+        layout "pattern" , {
+            artifact "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
         }
     }
 }
