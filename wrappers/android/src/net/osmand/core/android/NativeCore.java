@@ -45,7 +45,6 @@ public class NativeCore {
                 loadNativeLibrary("Qt5Network") &&
                 loadNativeLibrary("Qt5Sql") &&
                 loadNativeLibrary("OsmAndCoreWithJNI");
-        s_loadedNativeLibraries = ok;
     }
 
     /**
