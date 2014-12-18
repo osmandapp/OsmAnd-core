@@ -55,6 +55,13 @@
 #   define SWIG_OMIT(x) x
 #endif
 
+// SWIG_CLARIFY
+#if defined(SWIG)
+#   define SWIG_CLARIFY(fqpath, name) fqpath::name
+#else
+#   define SWIG_CLARIFY(fqpath, name) name
+#endif
+
 // Directors
 #if defined(SWIG)
 #   define SWIG_EMIT_DIRECTOR_BEGIN(name)                                                                                       \

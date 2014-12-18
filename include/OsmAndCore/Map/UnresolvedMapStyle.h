@@ -14,6 +14,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 
@@ -37,8 +38,8 @@ namespace OsmAnd
             const bool isSwitch;
 
             QHash<QString, QString> values;
-            QList< std::shared_ptr<RuleNode> > oneOfConditionalSubnodes;
-            QList< std::shared_ptr<RuleNode> > applySubnodes;
+            QList< std::shared_ptr<SWIG_CLARIFY(UnresolvedMapStyle, RuleNode)> > oneOfConditionalSubnodes;
+            QList< std::shared_ptr<SWIG_CLARIFY(UnresolvedMapStyle, RuleNode)> > applySubnodes;
         };
 
         class OSMAND_CORE_API BaseRule
