@@ -38,12 +38,12 @@
 #include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/SymbolRasterizer.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
+#include <OsmAndCore/Map/UnresolvedMapStyle.h>
+#include <OsmAndCore/Map/ResolvedMapStyle.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyleConstantValue.h>
 #include <OsmAndCore/Map/MapStyleValueDefinition.h>
 #include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
-#include <OsmAndCore/Map/UnresolvedMapStyle.h>
-#include <OsmAndCore/Map/ResolvedMapStyle.h>
 #include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
 #include <OsmAndCore/Map/MapStylesPresetsCollection.h>
 #include <OsmAndCore/Map/MapStylePreset.h>
@@ -130,14 +130,6 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapSymbolsGroup)
 	%shared_ptr(OsmAnd::MapSymbol)
 	%shared_ptr(OsmAnd::SymbolRasterizer)
-	%shared_ptr(OsmAnd::IMapStylesCollection)
-	%shared_ptr(OsmAnd::MapStylesCollection)
-	%shared_ptr(OsmAnd::IMapStylesPresetsCollection)
-	%shared_ptr(OsmAnd::MapStylesPresetsCollection)
-	%shared_ptr(OsmAnd::MapStyleConstantValue)
-	%shared_ptr(OsmAnd::MapStyleValueDefinition)
-	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions)
-	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions::MapStyleBuiltinValueDefinition)
 	%shared_ptr(OsmAnd::UnresolvedMapStyle)
 	%shared_ptr(OsmAnd::UnresolvedMapStyle::RuleNode)
 	%shared_ptr(OsmAnd::UnresolvedMapStyle::BaseRule)
@@ -152,6 +144,14 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResolvedMapStyle::Attribute)
 	%shared_ptr(OsmAnd::ResolvedMapStyle::Parameter)
 	%shared_ptr(OsmAnd::ResolvedMapStyle::ParameterValueDefinition)
+	%shared_ptr(OsmAnd::IMapStylesCollection)
+	%shared_ptr(OsmAnd::MapStylesCollection)
+	%shared_ptr(OsmAnd::IMapStylesPresetsCollection)
+	%shared_ptr(OsmAnd::MapStylesPresetsCollection)
+	%shared_ptr(OsmAnd::MapStyleConstantValue)
+	%shared_ptr(OsmAnd::MapStyleValueDefinition)
+	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions)
+	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions::MapStyleBuiltinValueDefinition)
 	%shared_ptr(OsmAnd::MapStylePreset)
 	%shared_ptr(OsmAnd::MapPresentationEnvironment)
 	%shared_ptr(OsmAnd::MapRendererSetupOptions)
@@ -271,6 +271,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
 %include <OsmAndCore/Map/SymbolRasterizer.h>
+%include <OsmAndCore/Map/UnresolvedMapStyle.h>
+%include <OsmAndCore/Map/ResolvedMapStyle.h>
 %include <OsmAndCore/Map/IMapStylesCollection.h>
 %include <OsmAndCore/Map/MapStylesCollection.h>
 %include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
@@ -278,8 +280,6 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapStyleConstantValue.h>
 %include <OsmAndCore/Map/MapStyleValueDefinition.h>
 %include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
-%include <OsmAndCore/Map/UnresolvedMapStyle.h>
-%include <OsmAndCore/Map/ResolvedMapStyle.h>
 %include <OsmAndCore/Map/MapStylePreset.h>
 %include <OsmAndCore/Map/MapPresentationEnvironment.h>
 %include <OsmAndCore/Map/MapRendererState.h>
