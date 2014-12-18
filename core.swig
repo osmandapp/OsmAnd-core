@@ -39,10 +39,10 @@
 #include <OsmAndCore/Map/SymbolRasterizer.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/UnresolvedMapStyle.h>
-#include <OsmAndCore/Map/ResolvedMapStyle.h>
-#include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyleConstantValue.h>
 #include <OsmAndCore/Map/MapStyleValueDefinition.h>
+#include <OsmAndCore/Map/ResolvedMapStyle.h>
+#include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 #include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
 #include <OsmAndCore/Map/MapStylesPresetsCollection.h>
@@ -136,6 +136,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::UnresolvedMapStyle::Rule)
 	%shared_ptr(OsmAnd::UnresolvedMapStyle::Attribute)
 	%shared_ptr(OsmAnd::UnresolvedMapStyle::Parameter)
+	%shared_ptr(OsmAnd::MapStyleConstantValue)
+	%shared_ptr(OsmAnd::MapStyleValueDefinition)
 	%shared_ptr(OsmAnd::ResolvedMapStyle)
 	%shared_ptr(OsmAnd::ResolvedMapStyle::ResolvedValue)
 	%shared_ptr(OsmAnd::ResolvedMapStyle::RuleNode)
@@ -148,8 +150,6 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapStylesCollection)
 	%shared_ptr(OsmAnd::IMapStylesPresetsCollection)
 	%shared_ptr(OsmAnd::MapStylesPresetsCollection)
-	%shared_ptr(OsmAnd::MapStyleConstantValue)
-	%shared_ptr(OsmAnd::MapStyleValueDefinition)
 	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions)
 	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions::MapStyleBuiltinValueDefinition)
 	%shared_ptr(OsmAnd::MapStylePreset)
@@ -272,13 +272,13 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
 %include <OsmAndCore/Map/SymbolRasterizer.h>
 %include <OsmAndCore/Map/UnresolvedMapStyle.h>
+%include <OsmAndCore/Map/MapStyleConstantValue.h>
+%include <OsmAndCore/Map/MapStyleValueDefinition.h>
 %include <OsmAndCore/Map/ResolvedMapStyle.h>
 %include <OsmAndCore/Map/IMapStylesCollection.h>
 %include <OsmAndCore/Map/MapStylesCollection.h>
 %include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
 %include <OsmAndCore/Map/MapStylesPresetsCollection.h>
-%include <OsmAndCore/Map/MapStyleConstantValue.h>
-%include <OsmAndCore/Map/MapStyleValueDefinition.h>
 %include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
 %include <OsmAndCore/Map/MapStylePreset.h>
 %include <OsmAndCore/Map/MapPresentationEnvironment.h>
