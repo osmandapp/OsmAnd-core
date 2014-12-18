@@ -10,7 +10,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
-#include <OsmandCore/CommonSWIG.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/UnresolvedMapStyle.h>
 #include <OsmAndCore/Map/MapStyleConstantValue.h>
