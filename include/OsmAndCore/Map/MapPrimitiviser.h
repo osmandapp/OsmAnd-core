@@ -214,6 +214,7 @@ namespace OsmAnd
             virtual ~IconSymbol();
 
             QString resourceName;
+            QList<QString> underlayResourceNames;
             QList<QString> overlayResourceNames;
             QString shieldResourceName;
 

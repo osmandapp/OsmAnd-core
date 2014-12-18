@@ -254,6 +254,14 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 QList< std::shared_ptr<const SkBitmap> > layers;
                 if (backgroundBitmap)
                     layers.push_back(backgroundBitmap);
+                for (const auto& overlayResourceName : constOf(iconSymbol->underlayResourceNames))
+                {
+                    std::shared_ptr<const SkBitmap> underlayBitmap;
+                    if (!env->obtainMapIcon(overlayResourceName, underlayBitmap) || !underlayBitmap)
+                        continue;
+
+                    layers.push_back(underlayBitmap);
+                }
                 layers.push_back(iconBitmap);
                 for (const auto& overlayResourceName : constOf(iconSymbol->overlayResourceNames))
                 {
@@ -261,7 +269,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                     if (!env->obtainMapIcon(overlayResourceName, overlayBitmap) || !overlayBitmap)
                         continue;
 
-                    layers.push_back(iconBitmap);
+                    layers.push_back(overlayBitmap);
                 }
 
                 // Compose final image

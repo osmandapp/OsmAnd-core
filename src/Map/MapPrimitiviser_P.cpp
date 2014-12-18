@@ -2402,6 +2402,12 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     icon->location31 = location;
 
     icon->resourceName = qMove(iconResourceName);
+    if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON__3, iconResourceName))
+        icon->underlayResourceNames.push_back(qMove(iconResourceName));
+    if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON__2, iconResourceName))
+        icon->underlayResourceNames.push_back(qMove(iconResourceName));
+    if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON__1, iconResourceName))
+        icon->underlayResourceNames.push_back(qMove(iconResourceName));
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_2, iconResourceName))
         icon->overlayResourceNames.push_back(qMove(iconResourceName));
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_3, iconResourceName))

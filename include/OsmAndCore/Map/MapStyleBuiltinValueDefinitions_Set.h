@@ -53,6 +53,9 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ITALIC, Output, Boolean, "textItalic", fals
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath", false)
 
 // Icon properties
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__3, Output, String, "icon__3", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__2, Output, String, "icon__2", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__1, Output, String, "icon__1", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_2, Output, String, "icon_2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_3, Output, String, "icon_3", false)
