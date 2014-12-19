@@ -13,8 +13,10 @@ if "%BUILD_TYPE%"=="release" (
 	set validBuildType=1
 )
 if not "%validBuildType%"=="1" (
-	echo Specify one of build types as first argument: debug, release
-	exit /B 1
+	echo None of build types (debug, release) were specified as first argument, going to build all
+
+	%0 debug && %0 release
+	exit /B %ERRORLEVEL%
 )
 echo Build type: %BUILD_TYPE%
 

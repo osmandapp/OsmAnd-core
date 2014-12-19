@@ -31,11 +31,9 @@ task buildOsmAndCore(type: Exec) {
     description "Build OsmAndCore"
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine file("../build.cmd").getAbsolutePath(), "debug"
-        commandLine file("../build.cmd").getAbsolutePath(), "release"
+        commandLine file("../build.cmd").getAbsolutePath()
     } else {
-        commandLine "sh", file("../build.sh").getAbsolutePath(), "debug"
-        commandLine "sh", file("../build.sh").getAbsolutePath(), "release"
+        commandLine "sh", file("../build.sh").getAbsolutePath()
     }
 }
 tasks.withType(JavaCompile) {

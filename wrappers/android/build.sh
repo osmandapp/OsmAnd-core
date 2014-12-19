@@ -10,8 +10,10 @@ SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECTS_ROOT="$SRCLOC/../../.."
 BUILD_TYPE=$1
 if [[ "$BUILD_TYPE" != "debug" ]] && [[ "$BUILD_TYPE" != "release" ]]; then
-	echo "Specify one of build types as first argument: debug, release"
-	exit 1
+	echo "None of build types (debug, release) were specified as first argument, going to build all"
+
+	"${BASH_SOURCE[0]}" debug && "${BASH_SOURCE[0]}" release
+	exit $?
 fi
 echo "Build type: $BUILD_TYPE"
 
