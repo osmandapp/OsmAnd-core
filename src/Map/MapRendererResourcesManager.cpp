@@ -369,15 +369,23 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 
 void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
-    // Lock worker wakeup mutex
-    QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
+    // Check if update needed
+    bool update = false;
+    update = update || (_activeZoom != zoom);
+    update = update || (_activeTiles != tiles);
 
-    // Update active zone
-    _activeTiles = tiles;
-    _activeZoom = zoom;
+    if (update)
+    {
+        // Lock worker wakeup mutex
+        QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
 
-    // Wake up the worker
-    _workerThreadWakeup.wakeAll();
+        // Update active zone
+        _activeTiles = tiles;
+        _activeZoom = zoom;
+
+        // Wake up the worker
+        _workerThreadWakeup.wakeAll();
+    }
 }
 
 bool OsmAnd::MapRendererResourcesManager::obtainProviderFor(MapRendererBaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapDataProvider>& provider) const
