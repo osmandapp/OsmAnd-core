@@ -7,11 +7,22 @@
 #include "ILogSink.h"
 
 OsmAnd::Logger::Logger()
+    : _severifyLevelThreshold(static_cast<int>(LogSeverityLevel::Debug))
 {
 }
 
 OsmAnd::Logger::~Logger()
 {
+}
+
+OsmAnd::LogSeverityLevel OsmAnd::Logger::getSeverityLevelThreshold() const
+{
+    return static_cast<LogSeverityLevel>(_severifyLevelThreshold.loadAcquire());
+}
+
+OsmAnd::LogSeverityLevel OsmAnd::Logger::setSeverityLevelThreshold(const LogSeverityLevel newThreshold)
+{
+    return static_cast<LogSeverityLevel>(_severifyLevelThreshold.fetchAndStoreOrdered(static_cast<int>(newThreshold)));
 }
 
 QSet< std::shared_ptr<OsmAnd::ILogSink> > OsmAnd::Logger::getCurrentLogSinks() const
@@ -49,6 +60,9 @@ void OsmAnd::Logger::removeAllLogSinks()
 
 void OsmAnd::Logger::log(const LogSeverityLevel level, const char* format, va_list args)
 {
+    if (static_cast<int>(level) < _severifyLevelThreshold.loadAcquire())
+        return;
+
     QReadLocker scopedLocker1(&_sinksLock);
     QMutexLocker scopedLocker2(&_logMutex); // To avoid mixing of lines
 

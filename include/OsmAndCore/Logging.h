@@ -2,13 +2,18 @@
 #define _OSMAND_CORE_LOGGING_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <cstdarg>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QSet>
 #include <QReadWriteLock>
 #include <QMutex>
 #include <QIODevice>
+#include <QAtomicInt>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 
@@ -16,10 +21,10 @@ namespace OsmAnd
 {
     enum class LogSeverityLevel
     {
-        Error = 1,
+        Debug = 0,
+        Info,
         Warning,
-        Debug,
-        Info
+        Error
     };
 
     class ILogSink;
@@ -33,8 +38,12 @@ namespace OsmAnd
         mutable QReadWriteLock _sinksLock;
         QSet< std::shared_ptr<ILogSink> > _sinks;
         mutable QMutex _logMutex;
+        mutable QAtomicInt _severifyLevelThreshold;
     public:
         virtual ~Logger();
+
+        LogSeverityLevel getSeverityLevelThreshold() const;
+        LogSeverityLevel setSeverityLevelThreshold(const LogSeverityLevel newThreshold);
 
         QSet< std::shared_ptr<ILogSink> > getCurrentLogSinks() const;
         bool addLogSink(const std::shared_ptr<ILogSink>& logSink);
