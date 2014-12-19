@@ -659,8 +659,6 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
             resourceType = ResourceType::SrtmMapRegion;
         else if (resourceTypeValue == QLatin1String("voice"))
             resourceType = ResourceType::VoicePack;
-        else if (resourceTypeValue == QLatin1String("hillshade"))
-            continue;
         else
         {
             LogPrintf(LogSeverityLevel::Warning, "Unknown resource type '%s' for '%s'", qPrintableRef(resourceTypeValue), qPrintable(name));
