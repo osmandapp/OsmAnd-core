@@ -273,7 +273,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     GLint attributesCount = 0;
     glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &attributesCount);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d input variable(s)", program, attributesCount);
+    LogPrintf(LogSeverityLevel::Verbose, "GLSL program %d has %d input variable(s)", program, attributesCount);
 
     GLint attributeNameMaxLength = 0;
     glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &attributeNameMaxLength);
@@ -291,7 +291,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
 #if OSMAND_GPU_DEBUG
         if (attributeSize > 1)
         {
-            LogPrintf(LogSeverityLevel::Debug,
+            LogPrintf(LogSeverityLevel::Verbose,
                 "\tInput %d: %20s %-20s <Size: %d>",
                 attributeIdx,
                 qPrintable(decodeGlslVariableDataType(attributeType)),
@@ -300,7 +300,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
         }
         else
         {
-            LogPrintf(LogSeverityLevel::Debug,
+            LogPrintf(LogSeverityLevel::Verbose,
                 "\tInput %d: %20s %-20s",
                 attributeIdx,
                 qPrintable(decodeGlslVariableDataType(attributeType)),
@@ -319,7 +319,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
     GLint uniformsCount = 0;
     glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &uniformsCount);
     GL_CHECK_RESULT;
-    LogPrintf(LogSeverityLevel::Info, "GLSL program %d has %d parameter variable(s)", program, uniformsCount);
+    LogPrintf(LogSeverityLevel::Verbose, "GLSL program %d has %d parameter variable(s)", program, uniformsCount);
 
     GLint uniformNameMaxLength = 0;
     glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &uniformNameMaxLength);
@@ -337,7 +337,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
 #if OSMAND_GPU_DEBUG
         if (uniformSize > 1)
         {
-            LogPrintf(LogSeverityLevel::Debug,
+            LogPrintf(LogSeverityLevel::Verbose,
                 "\tUniform %d: %20s %-20s <Size: %d>",
                 uniformIdx,
                 qPrintable(decodeGlslVariableDataType(uniformType)),
@@ -346,7 +346,7 @@ GLuint OsmAnd::GPUAPI_OpenGL::linkProgram(
         }
         else
         {
-            LogPrintf(LogSeverityLevel::Debug,
+            LogPrintf(LogSeverityLevel::Verbose,
                 "\tUniform %d: %20s %-20s",
                 uniformIdx,
                 qPrintable(decodeGlslVariableDataType(uniformType)),

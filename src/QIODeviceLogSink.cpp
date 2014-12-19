@@ -24,6 +24,27 @@ void OsmAnd::QIODeviceLogSink::log(const LogSeverityLevel level, const char* for
 {
     QString line;
     line.vsprintf(format, args);
+    switch (level)
+    {
+        case LogSeverityLevel::Verbose:
+            line.prepend(QLatin1String("[V] "));
+            break;
+        case LogSeverityLevel::Debug:
+            line.prepend(QLatin1String("[D] "));
+            break;
+        case LogSeverityLevel::Info:
+            line.prepend(QLatin1String("[I] "));
+            break;
+        case LogSeverityLevel::Warning:
+            line.prepend(QLatin1String("[W] "));
+            break;
+        case LogSeverityLevel::Error:
+            line.prepend(QLatin1String("[E] "));
+            break;
+        default:
+            line.prepend(QLatin1String("[?] "));
+            break;
+    }
     line.append(QLatin1String("\n"));
 
     _device->write(line.toUtf8());

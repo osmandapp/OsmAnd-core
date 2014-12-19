@@ -21,7 +21,8 @@ namespace OsmAnd
 {
     enum class LogSeverityLevel
     {
-        Debug = 0,
+        Verbose = 0,
+        Debug,
         Info,
         Warning,
         Error

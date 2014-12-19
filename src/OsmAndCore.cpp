@@ -102,7 +102,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
 
     if (!QCoreApplication::instance())
     {
-        LogPrintf(LogSeverityLevel::Info,
+        LogPrintf(LogSeverityLevel::Verbose,
             "OsmAnd Core is initialized standalone, so going to create 'application' thread");
         _qCoreApplicationThread.reset(new QCoreApplicationThread());
         gMainThread = _qCoreApplicationThread.get();
@@ -117,7 +117,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::InitializeCore(const std::shared_p
     }
     else
     {
-        LogPrintf(LogSeverityLevel::Info,
+        LogPrintf(LogSeverityLevel::Verbose,
             "OsmAnd Core is initialized inside a Qt application, so assuming that got called from application thread");
         gMainThread = QThread::currentThread();
         initializeInAppThread();

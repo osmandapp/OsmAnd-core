@@ -19,18 +19,21 @@ void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* forma
     int androidLevel;
     switch(level)
     {
-    case LogSeverityLevel::Error:
-        androidLevel = ANDROID_LOG_ERROR;
-        break;
-    case LogSeverityLevel::Warning:
-        androidLevel = ANDROID_LOG_WARN;
-        break;
-    case LogSeverityLevel::Info:
-        androidLevel = ANDROID_LOG_INFO;
-        break;
-    case LogSeverityLevel::Debug:
-        androidLevel = ANDROID_LOG_DEBUG;
-        break;
+        case LogSeverityLevel::Verbose:
+            androidLevel = ANDROID_LOG_VERBOSE;
+            break;
+        case LogSeverityLevel::Debug:
+            androidLevel = ANDROID_LOG_DEBUG;
+            break;
+        case LogSeverityLevel::Info:
+            androidLevel = ANDROID_LOG_INFO;
+            break;
+        case LogSeverityLevel::Warning:
+            androidLevel = ANDROID_LOG_WARN;
+            break;
+        case LogSeverityLevel::Error:
+            androidLevel = ANDROID_LOG_ERROR;
+            break;
     }
     __android_log_vprint(androidLevel, "net.osmand.core:native", format, args);
 }
@@ -43,14 +46,24 @@ void OsmAnd::DefaultLogSink::flush()
 
 void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* format, va_list args)
 {
-    if (level == LogSeverityLevel::Error)
-        printf("ERROR: ");
-    else if (level == LogSeverityLevel::Info)
-        printf("INFO: ");
-    else if (level == LogSeverityLevel::Warning)
-        printf("WARN: ");
-    else
-        printf("DEBUG: ");
+    switch(level)
+    {
+        case LogSeverityLevel::Verbose:
+            printf("VERBOSE: ");
+            break;
+        case LogSeverityLevel::Debug:
+            printf("DEBUG: ");
+            break;
+        case LogSeverityLevel::Info:
+            printf("INFO: ");
+            break;
+        case LogSeverityLevel::Warning:
+            printf("WARN: ");
+            break;
+        case LogSeverityLevel::Error:
+            printf("ERROR: ");
+            break;
+    }
     vprintf(format, args);
     printf("\n");
 }
@@ -72,14 +85,24 @@ void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* forma
 {
     if (IsDebuggerPresent())
     {
-        if (level == LogSeverityLevel::Error)
-            OutputDebugStringA("ERROR: ");
-        else if (level == LogSeverityLevel::Info)
-            OutputDebugStringA("INFO: ");
-        else if (level == LogSeverityLevel::Warning)
-            OutputDebugStringA("WARN: ");
-        else
-            OutputDebugStringA("DEBUG: ");
+        switch (level)
+        {
+            case LogSeverityLevel::Verbose:
+                OutputDebugStringA("VERBOSE: ");
+                break;
+            case LogSeverityLevel::Debug:
+                OutputDebugStringA("DEBUG: ");
+                break;
+            case LogSeverityLevel::Info:
+                OutputDebugStringA("INFO: ");
+                break;
+            case LogSeverityLevel::Warning:
+                OutputDebugStringA("WARN: ");
+                break;
+            case LogSeverityLevel::Error:
+                OutputDebugStringA("ERROR: ");
+                break;
+        }
 
         int len = vsnprintf(nullptr, 0, format, args);
         char* buffer = new char[len + 1];
@@ -99,14 +122,24 @@ void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* forma
 
         if (currentMode == -1 || (currentMode & (_O_U16TEXT | _O_U8TEXT | _O_WTEXT)) == 0)
         {
-            if (level == LogSeverityLevel::Error)
-                printf("ERROR: ");
-            else if (level == LogSeverityLevel::Info)
-                printf("INFO: ");
-            else if (level == LogSeverityLevel::Warning)
-                printf("WARN: ");
-            else
-                printf("DEBUG: ");
+            switch (level)
+            {
+                case LogSeverityLevel::Verbose:
+                    printf("VERBOSE: ");
+                    break;
+                case LogSeverityLevel::Debug:
+                    printf("DEBUG: ");
+                    break;
+                case LogSeverityLevel::Info:
+                    printf("INFO: ");
+                    break;
+                case LogSeverityLevel::Warning:
+                    printf("WARN: ");
+                    break;
+                case LogSeverityLevel::Error:
+                    printf("ERROR: ");
+                    break;
+            }
 
             vprintf(format, args);
 
@@ -114,14 +147,24 @@ void OsmAnd::DefaultLogSink::log(const LogSeverityLevel level, const char* forma
         }
         else
         {
-            if (level == LogSeverityLevel::Error)
-                wprintf(L"ERROR: ");
-            else if (level == LogSeverityLevel::Info)
-                wprintf(L"INFO: ");
-            else if (level == LogSeverityLevel::Warning)
-                wprintf(L"WARN: ");
-            else
-                wprintf(L"DEBUG: ");
+            switch (level)
+            {
+                case LogSeverityLevel::Verbose:
+                    wprintf(L"VERBOSE: ");
+                    break;
+                case LogSeverityLevel::Debug:
+                    wprintf(L"DEBUG: ");
+                    break;
+                case LogSeverityLevel::Info:
+                    wprintf(L"INFO: ");
+                    break;
+                case LogSeverityLevel::Warning:
+                    wprintf(L"WARN: ");
+                    break;
+                case LogSeverityLevel::Error:
+                    wprintf(L"ERROR: ");
+                    break;
+            }
 
             int len = vsnprintf(nullptr, 0, format, args);
             char* buffer = new char[len + 1];

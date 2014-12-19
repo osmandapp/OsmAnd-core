@@ -7,7 +7,12 @@
 #include "ILogSink.h"
 
 OsmAnd::Logger::Logger()
-    : _severifyLevelThreshold(static_cast<int>(LogSeverityLevel::Debug))
+    : _severifyLevelThreshold(
+#if OSMAND_DEBUG
+        static_cast<int>(LogSeverityLevel::Debug))
+#else
+        static_cast<int>(LogSeverityLevel::Warning))
+#endif // OSMAND_DEBUG
 {
 }
 

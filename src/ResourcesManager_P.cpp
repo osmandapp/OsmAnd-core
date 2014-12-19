@@ -661,7 +661,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
             resourceType = ResourceType::VoicePack;
         else
         {
-            LogPrintf(LogSeverityLevel::Warning, "Unknown resource type '%s' for '%s'", qPrintableRef(resourceTypeValue), qPrintable(name));
+            LogPrintf(LogSeverityLevel::Verbose, "Unsupported resource type '%s' for '%s'", qPrintableRef(resourceTypeValue), qPrintable(name));
             continue;
         }
 
