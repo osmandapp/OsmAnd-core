@@ -370,7 +370,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState&
 void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
     // Check if update needed
-    bool update = false;
+    bool update = true; //NOTE: So far this won't work, since resources won't be updated
     update = update || (_activeZoom != zoom);
     update = update || (_activeTiles != tiles);
 
