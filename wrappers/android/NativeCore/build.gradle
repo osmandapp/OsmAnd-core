@@ -32,8 +32,10 @@ task buildOsmAndCore(type: Exec) {
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         commandLine file("../build.cmd").getAbsolutePath(), "debug"
+        commandLine file("../build.cmd").getAbsolutePath(), "release"
     } else {
         commandLine "sh", file("../build.sh").getAbsolutePath(), "debug"
+        commandLine "sh", file("../build.sh").getAbsolutePath(), "release"
     }
 }
 tasks.withType(JavaCompile) {
