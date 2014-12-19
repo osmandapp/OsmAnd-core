@@ -92,8 +92,6 @@ namespace OsmAnd
         QMutex _gpuWorkerThreadWakeupMutex;
         QWaitCondition _gpuWorkerThreadWakeup;
         volatile bool _gpuWorkerIsPaused;
-        QMutex _gpuWorkerThreadPausedMutex;
-        QWaitCondition _gpuWorkerThreadPaused;
         void gpuWorkerThreadProcedure();
         void processGpuWorker();
 
@@ -231,6 +229,7 @@ namespace OsmAnd
         virtual bool isIdle() const;
         virtual QString getNotIdleReason() const;
 
+        virtual bool isGpuWorkerPaused() const;
         virtual bool pauseGpuWorkerThread();
         virtual bool resumeGpuWorkerThread();
 

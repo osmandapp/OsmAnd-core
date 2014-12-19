@@ -59,6 +59,7 @@ namespace OsmAnd
         virtual bool isIdle() const = 0;
         virtual QString getNotIdleReason() const = 0;
 
+        virtual bool isGpuWorkerPaused() const = 0;
         virtual bool pauseGpuWorkerThread() = 0;
         virtual bool resumeGpuWorkerThread() = 0;
 

@@ -238,20 +238,15 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
 
     while (_gpuWorkerIsAlive)
     {
-        // Check if worker was requested to pause and is allowed to be alive,
-        // wait for wake-up
-        while (_gpuWorkerIsPaused && _gpuWorkerIsAlive)
+        // Wait until we're unblocked by host
         {
-            // Notify that GPU worker was put into pause
-            {
-                QMutexLocker scopedLocker(&_gpuWorkerThreadPausedMutex);
-                _gpuWorkerThreadPaused.wakeAll();
-            }
-
-            // Wait to wake up
             QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
             REPEAT_UNTIL(_gpuWorkerThreadWakeup.wait(&_gpuWorkerThreadWakeupMutex));
         }
+
+        // If worker is paused, don't process anything
+        if (_gpuWorkerIsPaused)
+            continue;
 
         // If worker was requested to stop, let it be so
         if (!_gpuWorkerIsAlive)
@@ -719,42 +714,34 @@ QString OsmAnd::MapRenderer::getNotIdleReason() const
     return notIdleReasons.join(QLatin1String("; "));
 }
 
+bool OsmAnd::MapRenderer::isGpuWorkerPaused() const
+{
+    return _gpuWorkerIsPaused;
+}
+
 bool OsmAnd::MapRenderer::pauseGpuWorkerThread()
 {
-    if (!_gpuWorkerThread)
+    if (!_gpuWorkerThread || _gpuWorkerIsPaused)
         return false;
 
     // Notify that worker should be paused
     _gpuWorkerIsPaused = true;
-
-    // Since _gpuWorkerIsPaused == true, wake up GPU worker thread to allow it to pause
-    {
-        QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
-        _gpuWorkerThreadWakeup.wakeAll();
-    }
-
-    // Wait until worker thread will signalize that it was paused
-    {
-        QMutexLocker scopedLocker(&_gpuWorkerThreadPausedMutex);
-        REPEAT_UNTIL(_gpuWorkerThreadPaused.wait(&_gpuWorkerThreadPausedMutex));
-    }
 
     return true;
 }
 
 bool OsmAnd::MapRenderer::resumeGpuWorkerThread()
 {
-    if (!_gpuWorkerThread)
+    if (!_gpuWorkerThread || !_gpuWorkerIsPaused)
         return false;
+
+    QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
 
     // Notify that worker should be paused
     _gpuWorkerIsPaused = false;
 
     // Since _gpuWorkerIsPaused == false, wake up GPU worker thread to allow it to resume
-    {
-        QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
-        _gpuWorkerThreadWakeup.wakeAll();
-    }
+    _gpuWorkerThreadWakeup.wakeAll();
 
     return true;
 }
