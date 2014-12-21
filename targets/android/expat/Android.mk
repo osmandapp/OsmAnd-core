@@ -20,12 +20,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_EXPAT_RELATIVE)/lib/xmltok_impl.c \
 	$(OSMAND_EXPAT_RELATIVE)/lib/xmltok_ns.c
 
-ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand_expat
-else
-	LOCAL_MODULE := osmand_expat_neon
-	LOCAL_ARM_NEON := true
-endif
+LOCAL_MODULE := osmand_expat
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
 	include $(BUILD_STATIC_LIBRARY)

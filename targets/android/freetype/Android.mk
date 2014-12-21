@@ -38,12 +38,7 @@ LOCAL_C_INCLUDES += \
 LOCAL_CFLAGS += -DFT2_BUILD_LIBRARY -DFT_CONFIG_MODULES_H="<ftmodule-override.h>" -fPIC
 LOCAL_ARM_MODE := arm
 
-ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand_ft2
-else
-	LOCAL_MODULE := osmand_ft2_neon
-	LOCAL_ARM_NEON := true
-endif
+LOCAL_MODULE := osmand_ft2
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
 	include $(BUILD_STATIC_LIBRARY)

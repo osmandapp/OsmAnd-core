@@ -50,13 +50,7 @@ ifdef OSMAND_PROFILE_NATIVE_OPERATIONS
 		-DOSMAND_NATIVE_PROFILING
 endif
 
-# Name of the local module
-ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand
-else
-	LOCAL_MODULE := osmand_neon
-	LOCAL_ARM_NEON := true
-endif
+LOCAL_MODULE := osmand
 
 LOCAL_CFLAGS := \
 	-DGOOGLE_PROTOBUF_NO_RTTI \
@@ -69,25 +63,14 @@ LOCAL_CFLAGS := \
 	-DANDROID_BUILD \
 	-fPIC
 	
-ifneq ($(LOCAL_ARM_NEON),true)
-	LOCAL_STATIC_LIBRARIES := \
-		osmand_protobuf \
-		osmand_jpeg \
-		osmand_ft2 \
-		osmand_png \
-		osmand_gif \
-		osmand_expat
-	LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia
-else
-	LOCAL_STATIC_LIBRARIES := \
-		osmand_protobuf_neon \
-		osmand_jpeg_neon \
-		osmand_ft2_neon \
-		osmand_png_neon \
-		osmand_gif_neon \
-		osmand_expat_neon
-	LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia_neon
-endif
+LOCAL_STATIC_LIBRARIES := \
+	osmand_protobuf \
+	osmand_jpeg \
+	osmand_ft2 \
+	osmand_png \
+	osmand_gif \
+	osmand_expat
+LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia
 
 LOCAL_LDLIBS := -lz -llog -ldl
 # example of local shared library
