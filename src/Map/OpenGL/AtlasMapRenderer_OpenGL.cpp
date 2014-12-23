@@ -571,7 +571,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeInMeters() const
     const auto metersPerTile = Utilities::getMetersPerTileUnit(
         state.zoomBase,
         internalState.targetTileId,
-        tileSizeOnScreenInPixels) * tileSizeOnScreenInPixels;
+        1);
 
     return metersPerTile;
 }
