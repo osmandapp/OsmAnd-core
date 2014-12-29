@@ -2273,6 +2273,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                         if (extraCaption.isEmpty())
                             continue;
 
+                        // Skip extra caption in case it's same as caption
+                        if (extraCaption == caption)
+                            continue;
+
                         text->value += QString(QLatin1String(" (%1)")).arg(extraCaption);
 
                         extraCaptionTextAdded = true;
