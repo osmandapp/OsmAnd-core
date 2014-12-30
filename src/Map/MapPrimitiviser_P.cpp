@@ -2199,12 +2199,17 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     // Process captions in order how captions where declared in OBF source (what is being controlled by 'rendering_types.xml')
     bool ok;
     bool extraCaptionTextAdded = false;
+    uint32_t extraCaptionRuleId = std::numeric_limits<uint32_t>::max();
     for (const auto& captionRuleId : constOf(captionsOrder))
     {
         const auto& caption = constOf(captions)[captionRuleId];
 
         // If it's empty, it can not be primitivised
         if (caption.isEmpty())
+            continue;
+
+        // In case this tag was already processed as extra caption, no need to duplicate it
+        if (extraCaptionTextAdded && captionRuleId == extraCaptionRuleId)
             continue;
 
         // Skip captions that are from 'name[:*]'-tags but not of 'native' or 'localized' language
@@ -2264,7 +2269,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                     const auto& nameTag2RulesGroup = *citNameTag2RulesGroup;
                     for (const auto& nameTag2RuleEntry : rangeOf(constOf(nameTag2RulesGroup)))
                     {
-                        const auto& ruleId = nameTag2RuleEntry.value();
+                        const auto ruleId = nameTag2RuleEntry.value();
                         const auto citExtraCaption = mapObject->captions.constFind(ruleId);
 
                         if (citExtraCaption == mapObject->captions.constEnd())
@@ -2273,13 +2278,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                         if (extraCaption.isEmpty())
                             continue;
 
-                        // Skip extra caption in case it's same as caption
+                        // Skip extra caption in case it's same as caption, to avoid "X (X)" cases
                         if (extraCaption == caption)
                             continue;
 
                         text->value += QString(QLatin1String(" (%1)")).arg(extraCaption);
 
                         extraCaptionTextAdded = true;
+                        extraCaptionRuleId = ruleId;
                         break;
                     }
                 }
@@ -2365,6 +2371,21 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             text->pathPaddingLeft = text->pathPaddingRight = pathPadding;
         evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, text->pathPaddingLeft);
         evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, text->pathPaddingRight);
+
+        // In case new text symbol has a twin that was already added, ignore this one
+        const auto hasTwin = std::any_of(outSymbols.cbegin(), outSymbols.cend(),
+            [text]
+            (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
+            {
+                if (const auto otherText = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
+                {
+                    return (*otherText == *text);
+                }
+
+                return false;
+            });
+        if (hasTwin)
+            continue;
 
         outSymbols.push_back(qMove(text));
     }
@@ -2466,6 +2487,21 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
         icon->pathPaddingLeft = icon->pathPaddingRight = pathPadding;
     primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, icon->pathPaddingLeft);
     primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, icon->pathPaddingRight);
+
+    // In case new icon symbol has a twin that was already added, ignore this one
+    const auto hasTwin = std::any_of(outSymbols.cbegin(), outSymbols.cend(),
+        [icon]
+        (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
+        {
+            if (const auto otherIcon = std::dynamic_pointer_cast<const IconSymbol>(otherSymbol))
+            {
+                return (*otherIcon == *icon);
+            }
+
+            return false;
+        });
+    if (hasTwin)
+        return;
 
     // Icons are always first
     outSymbols.prepend(qMove(icon));

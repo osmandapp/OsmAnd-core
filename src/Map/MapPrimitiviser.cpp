@@ -160,6 +160,38 @@ OsmAnd::MapPrimitiviser::Symbol::~Symbol()
 {
 }
 
+bool OsmAnd::MapPrimitiviser::Symbol::operator==(const Symbol& that) const
+{
+    return
+        this->primitive == that.primitive &&
+        this->location31 == that.location31 &&
+        this->order == that.order &&
+        this->drawAlongPath == that.drawAlongPath &&
+        this->intersectsWith == that.intersectsWith &&
+        qFuzzyCompare(this->intersectionSizeFactor, that.intersectionSizeFactor) &&
+        qFuzzyCompare(this->intersectionSize, that.intersectionSize) &&
+        qFuzzyCompare(this->intersectionMargin, that.intersectionMargin) &&
+        qFuzzyCompare(this->pathPaddingLeft, that.pathPaddingLeft) &&
+        qFuzzyCompare(this->pathPaddingRight, that.pathPaddingRight) &&
+        qFuzzyCompare(this->minDistance, that.minDistance);
+}
+
+bool OsmAnd::MapPrimitiviser::Symbol::operator!=(const Symbol& that) const
+{
+    return
+        this->primitive != that.primitive ||
+        this->location31 != that.location31 ||
+        this->order != that.order ||
+        this->drawAlongPath != that.drawAlongPath ||
+        this->intersectsWith != that.intersectsWith ||
+        !qFuzzyCompare(this->intersectionSizeFactor, that.intersectionSizeFactor) ||
+        !qFuzzyCompare(this->intersectionSize, that.intersectionSize) ||
+        !qFuzzyCompare(this->intersectionMargin, that.intersectionMargin) ||
+        !qFuzzyCompare(this->pathPaddingLeft, that.pathPaddingLeft) ||
+        !qFuzzyCompare(this->pathPaddingRight, that.pathPaddingRight) ||
+        !qFuzzyCompare(this->minDistance, that.minDistance);
+}
+
 OsmAnd::MapPrimitiviser::TextSymbol::TextSymbol(const std::shared_ptr<const Primitive>& primitive_)
     : Symbol(primitive_)
     , drawOnPath(false)
@@ -176,6 +208,42 @@ OsmAnd::MapPrimitiviser::TextSymbol::~TextSymbol()
 {
 }
 
+bool OsmAnd::MapPrimitiviser::TextSymbol::operator==(const TextSymbol& that) const
+{
+    return
+        Symbol::operator==(that) &&
+        this->value == that.value &&
+        this->languageId == that.languageId &&
+        this->drawOnPath == that.drawOnPath &&
+        this->verticalOffset == that.verticalOffset &&
+        this->color == that.color &&
+        this->size == that.size &&
+        this->shadowRadius == that.shadowRadius &&
+        this->shadowColor == that.shadowColor &&
+        this->wrapWidth == that.wrapWidth &&
+        this->isBold == that.isBold &&
+        this->isItalic == that.isItalic &&
+        this->shieldResourceName == that.shieldResourceName;
+}
+
+bool OsmAnd::MapPrimitiviser::TextSymbol::operator!=(const TextSymbol& that) const
+{
+    return
+        Symbol::operator!=(that) ||
+        this->value != that.value ||
+        this->languageId != that.languageId ||
+        this->drawOnPath != that.drawOnPath ||
+        this->verticalOffset != that.verticalOffset ||
+        this->color != that.color ||
+        this->size != that.size ||
+        this->shadowRadius != that.shadowRadius ||
+        this->shadowColor != that.shadowColor ||
+        this->wrapWidth != that.wrapWidth ||
+        this->isBold != that.isBold ||
+        this->isItalic != that.isItalic ||
+        this->shieldResourceName != that.shieldResourceName;
+}
+
 OsmAnd::MapPrimitiviser::IconSymbol::IconSymbol(const std::shared_ptr<const Primitive>& primitive_)
     : Symbol(primitive_)
 {
@@ -183,6 +251,26 @@ OsmAnd::MapPrimitiviser::IconSymbol::IconSymbol(const std::shared_ptr<const Prim
 
 OsmAnd::MapPrimitiviser::IconSymbol::~IconSymbol()
 {
+}
+
+bool OsmAnd::MapPrimitiviser::IconSymbol::operator==(const IconSymbol& that) const
+{
+    return
+        Symbol::operator==(that) &&
+        this->resourceName == that.resourceName &&
+        this->underlayResourceNames == that.underlayResourceNames &&
+        this->overlayResourceNames == that.overlayResourceNames &&
+        this->shieldResourceName == that.shieldResourceName;
+}
+
+bool OsmAnd::MapPrimitiviser::IconSymbol::operator!=(const IconSymbol& that) const
+{
+    return
+        Symbol::operator!=(that) ||
+        this->resourceName != that.resourceName ||
+        this->underlayResourceNames != that.underlayResourceNames ||
+        this->overlayResourceNames != that.overlayResourceNames ||
+        this->shieldResourceName != that.shieldResourceName;
 }
 
 OsmAnd::MapPrimitiviser::Cache::Cache()

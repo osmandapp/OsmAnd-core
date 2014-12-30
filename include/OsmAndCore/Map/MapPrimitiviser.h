@@ -174,6 +174,9 @@ namespace OsmAnd
             float pathPaddingRight;
             float minDistance;
 
+            bool operator==(const Symbol& that) const;
+            bool operator!=(const Symbol& that) const;
+
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -200,6 +203,9 @@ namespace OsmAnd
             bool isItalic;
             QString shieldResourceName;
 
+            bool operator==(const TextSymbol& that) const;
+            bool operator!=(const TextSymbol& that) const;
+
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -217,6 +223,9 @@ namespace OsmAnd
             QList<QString> underlayResourceNames;
             QList<QString> overlayResourceNames;
             QString shieldResourceName;
+
+            bool operator==(const IconSymbol& that) const;
+            bool operator!=(const IconSymbol& that) const;
 
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
