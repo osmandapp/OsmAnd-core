@@ -177,6 +177,9 @@ namespace OsmAnd
             bool operator==(const Symbol& that) const;
             bool operator!=(const Symbol& that) const;
 
+            bool hasSameContentAs(const Symbol& that) const;
+            bool hasDifferentContentAs(const Symbol& that) const;
+
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -206,6 +209,9 @@ namespace OsmAnd
             bool operator==(const TextSymbol& that) const;
             bool operator!=(const TextSymbol& that) const;
 
+            bool hasSameContentAs(const TextSymbol& that) const;
+            bool hasDifferentContentAs(const TextSymbol& that) const;
+
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;
         };
@@ -226,6 +232,9 @@ namespace OsmAnd
 
             bool operator==(const IconSymbol& that) const;
             bool operator!=(const IconSymbol& that) const;
+
+            bool hasSameContentAs(const IconSymbol& that) const;
+            bool hasDifferentContentAs(const IconSymbol& that) const;
 
         friend class OsmAnd::MapPrimitiviser;
         friend class OsmAnd::MapPrimitiviser_P;

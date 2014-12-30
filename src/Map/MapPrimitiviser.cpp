@@ -192,6 +192,22 @@ bool OsmAnd::MapPrimitiviser::Symbol::operator!=(const Symbol& that) const
         !qFuzzyCompare(this->minDistance, that.minDistance);
 }
 
+bool OsmAnd::MapPrimitiviser::Symbol::hasSameContentAs(const Symbol& that) const
+{
+    return
+        this->location31 == that.location31 &&
+        this->order == that.order &&
+        this->drawAlongPath == that.drawAlongPath;
+}
+
+bool OsmAnd::MapPrimitiviser::Symbol::hasDifferentContentAs(const Symbol& that) const
+{
+    return
+        this->location31 != that.location31 ||
+        this->order != that.order ||
+        this->drawAlongPath != that.drawAlongPath;
+}
+
 OsmAnd::MapPrimitiviser::TextSymbol::TextSymbol(const std::shared_ptr<const Primitive>& primitive_)
     : Symbol(primitive_)
     , drawOnPath(false)
@@ -244,6 +260,40 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::operator!=(const TextSymbol& that) con
         this->shieldResourceName != that.shieldResourceName;
 }
 
+bool OsmAnd::MapPrimitiviser::TextSymbol::hasSameContentAs(const TextSymbol& that) const
+{
+    return
+        Symbol::hasSameContentAs(that) &&
+        this->value == that.value &&
+        this->drawOnPath == that.drawOnPath &&
+        this->verticalOffset == that.verticalOffset &&
+        this->color == that.color &&
+        this->size == that.size &&
+        this->shadowRadius == that.shadowRadius &&
+        this->shadowColor == that.shadowColor &&
+        this->wrapWidth == that.wrapWidth &&
+        this->isBold == that.isBold &&
+        this->isItalic == that.isItalic &&
+        this->shieldResourceName == that.shieldResourceName;
+}
+
+bool OsmAnd::MapPrimitiviser::TextSymbol::hasDifferentContentAs(const TextSymbol& that) const
+{
+    return
+        Symbol::hasDifferentContentAs(that) ||
+        this->value != that.value ||
+        this->drawOnPath != that.drawOnPath ||
+        this->verticalOffset != that.verticalOffset ||
+        this->color != that.color ||
+        this->size != that.size ||
+        this->shadowRadius != that.shadowRadius ||
+        this->shadowColor != that.shadowColor ||
+        this->wrapWidth != that.wrapWidth ||
+        this->isBold != that.isBold ||
+        this->isItalic != that.isItalic ||
+        this->shieldResourceName != that.shieldResourceName;
+}
+
 OsmAnd::MapPrimitiviser::IconSymbol::IconSymbol(const std::shared_ptr<const Primitive>& primitive_)
     : Symbol(primitive_)
 {
@@ -267,6 +317,26 @@ bool OsmAnd::MapPrimitiviser::IconSymbol::operator!=(const IconSymbol& that) con
 {
     return
         Symbol::operator!=(that) ||
+        this->resourceName != that.resourceName ||
+        this->underlayResourceNames != that.underlayResourceNames ||
+        this->overlayResourceNames != that.overlayResourceNames ||
+        this->shieldResourceName != that.shieldResourceName;
+}
+
+bool OsmAnd::MapPrimitiviser::IconSymbol::hasSameContentAs(const IconSymbol& that) const
+{
+    return
+        Symbol::hasSameContentAs(that) &&
+        this->resourceName == that.resourceName &&
+        this->underlayResourceNames == that.underlayResourceNames &&
+        this->overlayResourceNames == that.overlayResourceNames &&
+        this->shieldResourceName == that.shieldResourceName;
+}
+
+bool OsmAnd::MapPrimitiviser::IconSymbol::hasDifferentContentAs(const IconSymbol& that) const
+{
+    return
+        Symbol::hasDifferentContentAs(that) ||
         this->resourceName != that.resourceName ||
         this->underlayResourceNames != that.underlayResourceNames ||
         this->overlayResourceNames != that.overlayResourceNames ||

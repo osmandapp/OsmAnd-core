@@ -2379,7 +2379,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             {
                 if (const auto otherText = std::dynamic_pointer_cast<const TextSymbol>(otherSymbol))
                 {
-                    return (*otherText == *text);
+                    return text->hasSameContentAs(*otherText);
                 }
 
                 return false;
@@ -2495,7 +2495,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
         {
             if (const auto otherIcon = std::dynamic_pointer_cast<const IconSymbol>(otherSymbol))
             {
-                return (*otherIcon == *icon);
+                return icon->hasSameContentAs(*otherIcon);
             }
 
             return false;
