@@ -9,6 +9,7 @@
 #include "OsmAndCore.h"
 #include "Common.h"
 #include "QKeyIterator.h"
+#include "QKeyValueIterator.h"
 
 std::shared_ptr<const OsmAnd::MapObject::EncodingDecodingRules> OsmAnd::MapObject::defaultEncodingDecodingRules(OsmAnd::modifyAndReturn(
     std::shared_ptr<OsmAnd::MapObject::EncodingDecodingRules>(new OsmAnd::MapObject::EncodingDecodingRules()),
@@ -120,6 +121,21 @@ bool OsmAnd::MapObject::containsTypeSlow(const QString& tag, const QString& valu
 
     const auto typeRuleId = *citByValue;
     return (checkAdditional ? additionalTypesRuleIds : typesRuleIds).contains(typeRuleId);
+}
+
+bool OsmAnd::MapObject::containsTagSlow(const QString& tag, bool checkAdditional /*= false*/) const
+{
+    const auto citByTag = encodingDecodingRules->encodingRuleIds.constFind(tag);
+    if (citByTag == encodingDecodingRules->encodingRuleIds.cend())
+        return false;
+
+    for (const auto typeRuleId : constOf(*citByTag))
+    {
+        if ((checkAdditional ? additionalTypesRuleIds : typesRuleIds).contains(typeRuleId))
+            return true;
+    }
+
+    return false;
 }
 
 bool OsmAnd::MapObject::obtainTagValueByTypeRuleIndex(const uint32_t typeRuleIndex, QString& outTag, QString& outValue, bool checkAdditional /*= false*/) const

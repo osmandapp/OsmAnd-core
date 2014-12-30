@@ -245,7 +245,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                     evaluationResult = mapObject->containsTypeSlow(tag, value, true);
                 }
                 else
-                    evaluationResult = false;
+                    evaluationResult = mapObject->containsTagSlow(valueString, true);
             }
         }
         else if (valueDefId == _builtinValueDefs->id_INPUT_TEST)
