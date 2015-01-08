@@ -37,7 +37,7 @@ public:
 	}
 	bool containsAdditional(std::string key, std::string val) {
 		std::vector<tag_value>::iterator it = additionalTypes.begin();
-		boolean valEmpty = val == "";
+		bool valEmpty = (val == "");
 		while (it != additionalTypes.end()) {
 			if (it->first == key && (valEmpty || it->second == val)) {
 				return true;
