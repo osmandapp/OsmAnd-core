@@ -1249,27 +1249,24 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		// determine if there are enough objects like land/lake..
 		bool basemapMissing = q->zoom <= zoomOnlyForBasemaps && basemapCoastLines.empty() && !basemapExists;
 		bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && objectsFromMapSectionRead;
+		bool coastlinesWereAdded = false;
 		if (!coastLines.empty()) {
-			bool coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
+			coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					basemapCoastLines.empty(), true, tempResult);
 			addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
 		} else {
 			addBasemapCoastlines = !detailedLandData;
 		}
-		bool fillCompleteArea = false;
 		if (addBasemapCoastlines) {
-			bool coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
-					true, true, tempResult);
-			fillCompleteArea = !coastlinesWereAdded;
-		} else if(ocean) {
-			fillCompleteArea = true;
+			coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
+					true, true, tempResult);			
 		}
 		// processCoastlines always create new objects
 		deleteObjects(basemapCoastLines);
 		deleteObjects(coastLines);
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,"Ocean %d fillCompleteArea %d", 
-							ocean, fillCompleteArea);
-		if (fillCompleteArea) {
+							ocean, !coastlinesWereAdded);
+		if (!coastlinesWereAdded && ocean) {
 			MapDataObject* o = new MapDataObject();
 			o->points.push_back(int_pair(q->left, q->top));
 			o->points.push_back(int_pair(q->right, q->top));
