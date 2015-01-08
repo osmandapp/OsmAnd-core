@@ -30,12 +30,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_LIBPNG_RELATIVE)/pngwtran.c \
 	$(OSMAND_LIBPNG_RELATIVE)/pngwutil.c
 
-ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand_png
-else
-	LOCAL_MODULE := osmand_png_neon
-	LOCAL_ARM_NEON := true
-endif
+LOCAL_MODULE := osmand_png
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
 	include $(BUILD_STATIC_LIBRARY)

@@ -61,12 +61,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_JPEG_RELATIVE)/jquant2.c \
 	$(OSMAND_JPEG_RELATIVE)/jutils.c
 
-ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand_jpeg
-else
-	LOCAL_MODULE := osmand_jpeg_neon
-	LOCAL_ARM_NEON := true
-endif
+LOCAL_MODULE := osmand_jpeg
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
 	include $(BUILD_STATIC_LIBRARY)

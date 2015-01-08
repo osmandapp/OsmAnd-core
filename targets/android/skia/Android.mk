@@ -286,12 +286,7 @@ LOCAL_CPPFLAGS := \
 	-fno-rtti \
 	-fno-exceptions
 	
-ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand_skia
-else
-	LOCAL_MODULE := osmand_skia_neon
-	LOCAL_ARM_NEON := true
-endif
+LOCAL_MODULE := osmand_skia
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
 
@@ -305,10 +300,6 @@ endif
 
 ifneq ($(ARCH_ARM_HAVE_VFP),true)
 	LOCAL_CFLAGS += -DSK_SOFTWARE_FLOAT
-endif
-
-ifeq ($(LOCAL_ARM_NEON),true)
-	LOCAL_CFLAGS += -D__ARM_HAVE_NEON
 endif
 
 # Android specific files
@@ -329,15 +320,6 @@ LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread.cpp
 	
 ifeq ($(TARGET_ARCH),arm)
-	ifeq ($(LOCAL_ARM_NEON),true)
-		LOCAL_SRC_FILES += \
-			$(OSMAND_SKIA_RELATIVE)/src/opts/memset16_neon.S \
-			$(OSMAND_SKIA_RELATIVE)/src/opts/memset32_neon.S \
-			$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_arm_neon.cpp \
-			$(OSMAND_SKIA_RELATIVE)/src/opts/SkBitmapProcState_matrixProcs_neon.cpp \
-			$(OSMAND_SKIA_RELATIVE)/src/opts/SkBlitRow_opts_arm_neon.cpp
-	endif
-
 	LOCAL_SRC_FILES += \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/opts_check_arm.cpp \
 		$(OSMAND_SKIA_RELATIVE)/src/opts/memset.arm.S \
@@ -357,21 +339,12 @@ LOCAL_SHARED_LIBRARIES := \
 	libutils \
 	libz
 	
-ifeq ($(LOCAL_ARM_NEON),true)
-	LOCAL_STATIC_LIBRARIES += \
-		osmand_jpeg_neon \
-		osmand_ft2_neon \
-		osmand_png_neon \
-		osmand_gif_neon \
-		osmand_expat_neon
-else
-	LOCAL_STATIC_LIBRARIES += \
-		osmand_jpeg \
-		osmand_ft2 \
-		osmand_png \
-		osmand_gif \
-		osmand_expat
-endif
+LOCAL_STATIC_LIBRARIES += \
+	osmand_jpeg \
+	osmand_ft2 \
+	osmand_png \
+	osmand_gif \
+	osmand_expat
 
 LOCAL_LDLIBS += -lz -llog
 

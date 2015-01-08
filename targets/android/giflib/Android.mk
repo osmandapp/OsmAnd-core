@@ -15,12 +15,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_GIFLIB_RELATIVE)/lib/gifalloc.c \
 	$(OSMAND_GIFLIB_RELATIVE)/lib/gif_err.c
 
-ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand_gif
-else
-	LOCAL_MODULE := osmand_gif_neon
-	LOCAL_ARM_NEON := true
-endif
+LOCAL_MODULE := osmand_gif
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
 	include $(BUILD_STATIC_LIBRARY)

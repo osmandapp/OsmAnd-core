@@ -28,12 +28,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/once.cc \
 	$(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/wire_format_lite.cc
 
-ifneq ($(OSMAND_BUILDING_NEON_LIBRARY),true)
-	LOCAL_MODULE := osmand_protobuf
-else
-	LOCAL_MODULE := osmand_protobuf_neon
-	LOCAL_ARM_NEON := true
-endif
+LOCAL_MODULE := osmand_protobuf
 
 ifneq ($(OSMAND_USE_PREBUILT),true)
 	include $(BUILD_STATIC_LIBRARY)
