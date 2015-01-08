@@ -15,7 +15,7 @@
 #include <SkBlurDrawLooper.h>
 #include <SkDashPathEffect.h>
 #include <SkPaint.h>
-#include <SkPath.h>f
+#include <SkPath.h>
 
 #include "Common.h"
 #include "common2.h"
