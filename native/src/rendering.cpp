@@ -15,7 +15,7 @@
 #include <SkBlurDrawLooper.h>
 #include <SkDashPathEffect.h>
 #include <SkPaint.h>
-#include <SkPath.h>
+#include <SkPath.h>f
 
 #include "Common.h"
 #include "common2.h"
@@ -611,6 +611,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	bool containsPoint = false;
 	int bounds = 0;
 	std::vector< std::pair<int,int > > ps;
+	uint prevCross = 0;
 	for (; i < length; i++) {
 		calcPoint(mObj->points.at(i), rc);
 		if (i == 0) {
@@ -640,30 +641,31 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 			} else {
 				ps.push_back(std::pair<int, int>(rc->calcX, rc->calcY));
 			}
-			bounds |= (rc->calcX < 0 ? 1 : 0);
-			bounds |= (rc->calcX >= rc->getWidth() ? 2 : 0);
-			bounds |= (rc->calcY >= rc->getHeight()  ? 4 : 0);
-			bounds |= (rc->calcY <= rc->getHeight() ? 8 : 0);
+			uint cross = 0;
+			cross |= (rc->calcX < 0 ? 1 : 0);
+			cross |= (rc->calcX > rc->getWidth() ? 2 : 0);
+			cross |= (rc->calcY < 0 ? 4 : 0);
+			cross |= (rc->calcY > rc->getHeight() ? 8 : 0);
+			if(i > 0) {
+				if((prevCross & cross) == 0) {
+					containsPoint = true;
+				}
+			}
+			prevCross = cross;
 		}
+
 	}
 	xText /= length;
 	yText /= length;
+
+				
 	if(!containsPoint){
-			// fast check for polygons
-		if(((bounds & 3) != 3) || ((bounds >> 2) != 3) ) {
-			return;
-		}
-		if(contains(ps, 0, 0) ||
-			contains(ps, rc->getWidth(), rc->getHeight()) ||
-			contains(ps, 0, rc->getHeight()) ||
-			contains(ps, rc->getWidth(), 0)) {
-			if(contains(ps, rc->getWidth() / 2, rc->getHeight() / 2)) {
-				xText = rc->getWidth() / 2;
-				yText = rc->getHeight() / 2;
-			}
+		if(contains(ps, rc->getWidth() / 2, rc->getHeight() / 2)) {
+			xText = rc->getWidth() / 2;
+			yText = rc->getHeight() / 2;
 		} else {
 			return;
-		}
+		}		
 	}
 	std::vector<coordinates> polygonInnerCoordinates = mObj->polygonInnerCoordinates;
 	if (polygonInnerCoordinates.size() > 0) {
