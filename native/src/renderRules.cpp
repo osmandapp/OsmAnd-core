@@ -588,7 +588,7 @@ bool RenderingRuleSearchRequest::checkInputProperties(RenderingRule* rule) {
 					if (i >= 0) {
 						match = obj->containsAdditional(val.substr(0, i), val.substr(i + 1));
 					} else {
-						match = false;
+						match = obj->containsAdditional(val, "");
 					}
 				}
 			} else {
