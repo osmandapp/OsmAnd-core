@@ -37,10 +37,8 @@ struct MapTreeBounds {
 	uint32_t right ;
 	uint32_t top ;
 	uint32_t bottom;
-	bool ocean;
 
 	MapTreeBounds() {
-		ocean = -1;
 	}
 };
 struct RoutingIndex;
@@ -367,7 +365,6 @@ struct SearchQuery {
 
 	coordinates cacheCoordinates;
 	bool ocean;
-	bool mixed;
 
 	uint numberOfVisitedObjects;
 	uint numberOfAcceptedObjects;
@@ -378,7 +375,7 @@ struct SearchQuery {
 			req(req), left(l), right(r), top(t), bottom(b),publisher(publisher) {
 		numberOfAcceptedObjects = numberOfVisitedObjects = 0;
 		numberOfAcceptedSubtrees = numberOfReadSubtrees = 0;
-		ocean = mixed = false;
+		ocean = false;
 	}
 	SearchQuery(int l, int r, int t, int b) :
 				left(l), right(r), top(t), bottom(b) {

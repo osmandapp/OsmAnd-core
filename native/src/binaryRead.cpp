@@ -95,11 +95,7 @@ bool readMapTreeBounds(CodedInputStream* input, MapTreeBounds* tree, MapRoot* ro
 			DO_((WireFormatLite::ReadPrimitive<int32_t, WireFormatLite::TYPE_SINT32>(input, &si)));
 			tree->bottom = si + root->bottom;
 			break;
-		}
-		case OsmAndMapIndex_MapDataBox::kOceanFieldNumber: {
-			DO_((WireFormatLite::ReadPrimitive<bool, WireFormatLite::TYPE_BOOL>(input, &tree->ocean)));
-			break;
-		}
+		}		
 		default: {
 			if (WireFormatLite::GetTagWireType(tag) == WireFormatLite::WIRETYPE_END_GROUP) {
 				return true;
@@ -738,6 +734,7 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 	int tag;
 	int si;
 	req->numberOfReadSubtrees++;
+	bool ocean = false;
 	while ((tag = input->ReadTag()) != 0) {
 		if (req->publisher->isCancelled()) {
 			return false;
@@ -785,22 +782,16 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 			break;
 		}
 		case OsmAndMapIndex_MapDataBox::kOceanFieldNumber : {
-			DO_((WireFormatLite::ReadPrimitive<bool, WireFormatLite::TYPE_BOOL>(input, &current->ocean)));
-			if(current->ocean){
-				req->ocean = true;
-			} else {
-				req->mixed = true;
-			}
+			DO_((WireFormatLite::ReadPrimitive<bool, WireFormatLite::TYPE_BOOL>(input, &ocean)));			
 			break;
 		}
 		case OsmAndMapIndex_MapDataBox::kBoxesFieldNumber: {
 			MapTreeBounds* child = new MapTreeBounds();
+			// ocean set only if there is no children
+			ocean = false;
 			readInt(input, &child->length);
 			child->filePointer = input->TotalBytesRead();
 			int oldLimit = input->PushLimit(child->length);
-			if (current->ocean) {
-				child->ocean = current->ocean;
-			}
 			searchMapTreeBounds(input, child, current, req, foundSubtrees);
 			input->PopLimit(oldLimit);
 			input->Seek(child->filePointer + child->length);
@@ -817,6 +808,9 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 			break;
 		}
 		}
+	}
+	if(ocean) {
+		req->ocean = ocean;
 	}
 	return true;
 }
@@ -1250,7 +1244,6 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		deleteObjects(basemapResult);
 	} else {
 		bool ocean = q->ocean;
-		bool land = q->mixed;
 		bool addBasemapCoastlines = true;
 		bool emptyData = q->zoom > zoomOnlyForBasemaps && tempResult.empty() && coastLines.empty();
 		// determine if there are enough objects like land/lake..
@@ -1268,12 +1261,14 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			bool coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					true, true, tempResult);
 			fillCompleteArea = !coastlinesWereAdded;
+		} else if(ocean) {
+			fillCompleteArea = true;
 		}
 		// processCoastlines always create new objects
 		deleteObjects(basemapCoastLines);
 		deleteObjects(coastLines);
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,"Land %d ocean %d fillCompleteArea %d", 
-							land, ocean, fillCompleteArea);
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,"Ocean %d fillCompleteArea %d", 
+							ocean, fillCompleteArea);
 		if (fillCompleteArea) {
 			MapDataObject* o = new MapDataObject();
 			o->points.push_back(int_pair(q->left, q->top));
@@ -1281,7 +1276,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			o->points.push_back(int_pair(q->right, q->bottom));
 			o->points.push_back(int_pair(q->left, q->bottom));
 			o->points.push_back(int_pair(q->left, q->top));
-			if (ocean && !land) {
+			if (ocean) {
 				o->types.push_back(tag_value("natural", "coastline"));
 			} else {
 				o->types.push_back(tag_value("natural", "land"));
