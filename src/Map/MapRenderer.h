@@ -127,7 +127,6 @@ namespace OsmAnd
         enum class ConfigurationChange
         {
             ColorDepthForcing,
-            ElevationDataResolution,
             TexturesFilteringMode,
             PaletteTexturesUsage,
 

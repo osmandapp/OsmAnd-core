@@ -545,8 +545,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::canRasterMapLayerBeBatched(
     if (batchedLayerIndices.isEmpty())
         return true;
 
-    const auto lastBatchedLayerProvider = std::static_pointer_cast<IRasterMapLayerProvider>(currentState.mapLayersProviders[batchedLayerIndices.last()]);
-    const auto thisLayerProvider = std::static_pointer_cast<IRasterMapLayerProvider>(currentState.mapLayersProviders[layerIndex]);
+    const auto lastBatchedLayerProvider = std::static_pointer_cast<IRasterMapLayerProvider>(
+        currentState.mapLayersProviders[batchedLayerIndices.last()]);
+    const auto thisLayerProvider = std::static_pointer_cast<IRasterMapLayerProvider>(
+        currentState.mapLayersProviders[layerIndex]);
 
     return true;
 }
@@ -684,7 +686,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     assert(elevationDataResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
 
                     const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(elevationDataResource);
-                    assert(arrayBuffer->itemsCount == currentConfiguration.heixelsPerTileSide*currentConfiguration.heixelsPerTileSide);
+                    assert(arrayBuffer->itemsCount == (1u << AtlasMapRenderer::MaxMissingDataZoomShift)*(1u << AtlasMapRenderer::MaxMissingDataZoomShift));
 
                     if (!elevationVertexAttribArrayEnabled)
                     {
@@ -1040,7 +1042,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers()
 void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
 {
     const auto gpuAPI = getGPUAPI();
-    const auto& currentConfiguration = *this->currentConfiguration;
 
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -1061,89 +1062,59 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
     GLushort* pIndices = nullptr;
     GLsizei indicesCount = 0;
 
-    if (!currentState.elevationDataProvider)
+    const auto heixelsPerTileSide = 1u << AtlasMapRenderer::MaxMissingDataZoomShift;
+
+    // Complex tile patch, that consists of (heightPrimitivesPerSide*heightPrimitivesPerSide) number of
+    // height clusters. Height cluster itself consists of 4 vertices, 6 indices and 2 polygons
+    const auto heightPrimitivesPerSide = heixelsPerTileSide - 1;
+    const GLfloat clusterSize = static_cast<GLfloat>(AtlasMapRenderer::TileSize3D) / static_cast<float>(heightPrimitivesPerSide);
+    verticesCount = heixelsPerTileSide * heixelsPerTileSide;
+    pVertices = new Vertex[verticesCount];
+    indicesCount = (heightPrimitivesPerSide * heightPrimitivesPerSide) * 6;
+    pIndices = new GLushort[indicesCount];
+
+    Vertex* pV = pVertices;
+
+    // Form vertices
+    assert(verticesCount <= std::numeric_limits<GLushort>::max());
+    for (auto row = 0u, count = heixelsPerTileSide; row < count; row++)
     {
-        // Simple tile patch, that consists of 4 vertices
-
-        // Vertex data
-        const GLfloat tsz = static_cast<GLfloat>(AtlasMapRenderer::TileSize3D);
-        static Vertex vertices[4] =
+        for (auto col = 0u, count = heixelsPerTileSide; col < count; col++, pV++)
         {
-            // In OpenGL, UV origin is BL. But since same rule applies to uploading texture data,
-            // texture in memory is vertically flipped, so swap bottom and top UVs
-            { { 0.0f,  tsz }, { 0.0f, 1.0f } },//BL
-            { { 0.0f, 0.0f }, { 0.0f, 0.0f } },//TL
-            { {  tsz, 0.0f }, { 1.0f, 0.0f } },//TR
-            { {  tsz,  tsz }, { 1.0f, 1.0f } } //BR
-        };
-        pVertices = new Vertex[4];
-        memcpy(pVertices, vertices, 4 * sizeof(Vertex));
-        verticesCount = 4;
+            pV->positionXZ[0] = static_cast<float>(col)* clusterSize;
+            pV->positionXZ[1] = static_cast<float>(row)* clusterSize;
 
-        // Index data
-        static GLushort indices[6] =
-        {
-            0, 1, 2,
-            0, 2, 3
-        };
-        pIndices = new GLushort[6];
-        memcpy(pIndices, indices, 6 * sizeof(GLushort));
-        indicesCount = 6;
-    }
-    else
-    {
-        // Complex tile patch, that consists of (heightPrimitivesPerSide*heightPrimitivesPerSide) number of
-        // height clusters. Height cluster itself consists of 4 vertices, 6 indices and 2 polygons
-        const auto heightPrimitivesPerSide = currentConfiguration.heixelsPerTileSide - 1;
-        const GLfloat clusterSize = static_cast<GLfloat>(AtlasMapRenderer::TileSize3D) / static_cast<float>(heightPrimitivesPerSide);
-        verticesCount = currentConfiguration.heixelsPerTileSide * currentConfiguration.heixelsPerTileSide;
-        pVertices = new Vertex[verticesCount];
-        indicesCount = (heightPrimitivesPerSide * heightPrimitivesPerSide) * 6;
-        pIndices = new GLushort[indicesCount];
-
-        Vertex* pV = pVertices;
-
-        // Form vertices
-        assert(verticesCount <= std::numeric_limits<GLushort>::max());
-        for (auto row = 0u, count = currentConfiguration.heixelsPerTileSide; row < count; row++)
-        {
-            for (auto col = 0u, count = currentConfiguration.heixelsPerTileSide; col < count; col++, pV++)
-            {
-                pV->positionXZ[0] = static_cast<float>(col)* clusterSize;
-                pV->positionXZ[1] = static_cast<float>(row)* clusterSize;
-
-                pV->textureUV[0] = static_cast<float>(col) / static_cast<float>(heightPrimitivesPerSide);
-                pV->textureUV[1] = static_cast<float>(row) / static_cast<float>(heightPrimitivesPerSide);
-            }
+            pV->textureUV[0] = static_cast<float>(col) / static_cast<float>(heightPrimitivesPerSide);
+            pV->textureUV[1] = static_cast<float>(row) / static_cast<float>(heightPrimitivesPerSide);
         }
+    }
 
-        // Form indices
-        GLushort* pI = pIndices;
-        for (auto row = 0u; row < heightPrimitivesPerSide; row++)
+    // Form indices
+    GLushort* pI = pIndices;
+    for (auto row = 0u; row < heightPrimitivesPerSide; row++)
+    {
+        for (auto col = 0u; col < heightPrimitivesPerSide; col++)
         {
-            for (auto col = 0u; col < heightPrimitivesPerSide; col++)
-            {
-                const auto p0 = (row + 1) * currentConfiguration.heixelsPerTileSide + col + 0;//BL
-                const auto p1 = (row + 0) * currentConfiguration.heixelsPerTileSide + col + 0;//TL
-                const auto p2 = (row + 0) * currentConfiguration.heixelsPerTileSide + col + 1;//TR
-                const auto p3 = (row + 1) * currentConfiguration.heixelsPerTileSide + col + 1;//BR
-                assert(p0 <= verticesCount);
-                assert(p1 <= verticesCount);
-                assert(p2 <= verticesCount);
-                assert(p3 <= verticesCount);
+            const auto p0 = (row + 1) * heixelsPerTileSide + col + 0;//BL
+            const auto p1 = (row + 0) * heixelsPerTileSide + col + 0;//TL
+            const auto p2 = (row + 0) * heixelsPerTileSide + col + 1;//TR
+            const auto p3 = (row + 1) * heixelsPerTileSide + col + 1;//BR
+            assert(p0 <= verticesCount);
+            assert(p1 <= verticesCount);
+            assert(p2 <= verticesCount);
+            assert(p3 <= verticesCount);
 
-                // Triangle 0
-                pI[0] = p0;
-                pI[1] = p1;
-                pI[2] = p2;
-                pI += 3;
+            // Triangle 0
+            pI[0] = p0;
+            pI[1] = p1;
+            pI[2] = p2;
+            pI += 3;
 
-                // Triangle 1
-                pI[0] = p0;
-                pI[1] = p2;
-                pI[2] = p3;
-                pI += 3;
-            }
+            // Triangle 1
+            pI[0] = p0;
+            pI[1] = p2;
+            pI[2] = p3;
+            pI += 3;
         }
     }
 
@@ -1232,10 +1203,4 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile()
         _rasterTileVBO.reset();
     }
     _rasterTileIndicesCount = -1;
-}
-
-void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::updateRasterTile()
-{
-    releaseRasterTile();
-    initializeRasterTile();
 }

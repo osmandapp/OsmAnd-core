@@ -1629,6 +1629,61 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
 }
 
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterface(
+    const AreaI& bbox31,
+    const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
+    const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
+    const bool forceIncludeBasemap /*= false*/) const
+{
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
+
+    bool otherBasemapPresent = false;
+    QList< std::shared_ptr<const InstalledResource> > lockedResources;
+    QList< std::shared_ptr<const ObfReader> > obfReaders;
+    for (const auto& localResource : constOf(owner->_localResources))
+    {
+        if (localResource->type != ResourceType::MapRegion &&
+            localResource->type != ResourceType::RoadMapRegion &&
+            localResource->type != ResourceType::SrtmMapRegion)
+        {
+            continue;
+        }
+
+        const auto& obfMetadata = std::static_pointer_cast<const ObfMetadata>(localResource->_metadata);
+        if (!obfMetadata)
+            continue;
+
+        // Perform check if this OBF file is needed
+        bool accept = false;
+        if (forceIncludeBasemap)
+            accept = accept || obfMetadata->obfFile->obfInfo->isBasemap;
+        accept = accept || obfMetadata->obfFile->obfInfo->containsDataFor(bbox31, minZoomLevel, maxZoomLevel);
+        if (!accept)
+            continue;
+
+        if (const auto installedResource = std::dynamic_pointer_cast<const InstalledResource>(localResource))
+        {
+            if (!installedResource->_lock.tryLockForReading())
+                continue;
+            lockedResources.push_back(installedResource);
+        }
+
+        if (obfMetadata->obfFile->obfInfo->isBasemap)
+            otherBasemapPresent = true;
+        std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfMetadata->obfFile));
+        obfReaders.push_back(qMove(obfReader));
+    }
+    if (!otherBasemapPresent &&
+        owner->_miniBasemapObfFile &&
+        (forceIncludeBasemap || owner->_miniBasemapObfFile->obfInfo->containsDataFor(bbox31, minZoomLevel, maxZoomLevel)))
+    {
+        std::shared_ptr<const ObfReader> obfReader(new ObfReader(owner->_miniBasemapObfFile));
+        obfReaders.push_back(qMove(obfReader));
+    }
+
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
+}
+
 OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::MapStylesCollectionProxy(ResourcesManager_P* owner_)
     : owner(owner_)
 {

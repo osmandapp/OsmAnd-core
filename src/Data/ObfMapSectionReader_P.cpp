@@ -45,8 +45,8 @@ void OsmAnd::ObfMapSectionReader_P::read(
                 return;
             case OBF::OsmAndMapIndex::kNameFieldNumber:
             {
-                ObfReaderUtilities::readQString(cis, section->_name);
-                section->isBasemap = (QString::compare(section->_name, QLatin1String("basemap"), Qt::CaseInsensitive) == 0);
+                ObfReaderUtilities::readQString(cis, section->name);
+                section->isBasemap = (QString::compare(section->name, QLatin1String("basemap"), Qt::CaseInsensitive) == 0);
                 break;
             }
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
@@ -933,8 +933,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         if (!section->_p->_encodingDecodingRules)
         {
             // Read encoding/decoding rules
-            cis->Seek(section->_offset);
-            auto oldLimit = cis->PushLimit(section->_length);
+            cis->Seek(section->offset);
+            auto oldLimit = cis->PushLimit(section->length);
 
             const std::shared_ptr<ObfMapSectionDecodingEncodingRules> encodingDecodingRules(new ObfMapSectionDecodingEncodingRules());
             readEncodingDecodingRules(reader, section, encodingDecodingRules);

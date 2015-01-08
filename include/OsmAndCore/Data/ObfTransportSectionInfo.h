@@ -19,7 +19,7 @@ namespace OsmAnd {
         Q_DISABLE_COPY_AND_MOVE(ObfTransportSectionInfo)
     private:
     protected:
-        ObfTransportSectionInfo(const std::weak_ptr<ObfInfo>& owner);
+        ObfTransportSectionInfo(const std::shared_ptr<const ObfInfo>& container);
 
         AreaI _area24;
 

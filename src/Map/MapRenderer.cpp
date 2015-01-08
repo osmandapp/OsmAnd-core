@@ -134,15 +134,12 @@ uint32_t OsmAnd::MapRenderer::getConfigurationChangeMask(
     const std::shared_ptr<const MapRendererConfiguration>& updated) const
 {
     const bool colorDepthForcingChanged = (current->limitTextureColorDepthBy16bits != updated->limitTextureColorDepthBy16bits);
-    const bool elevationDataResolutionChanged = (current->heixelsPerTileSide != updated->heixelsPerTileSide);
     const bool texturesFilteringChanged = (current->texturesFilteringQuality != updated->texturesFilteringQuality);
     const bool paletteTexturesUsageChanged = (current->paletteTexturesAllowed != updated->paletteTexturesAllowed);
 
     uint32_t mask = 0;
     if (colorDepthForcingChanged)
         mask |= enumToBit(ConfigurationChange::ColorDepthForcing);
-    if (elevationDataResolutionChanged)
-        mask |= enumToBit(ConfigurationChange::ElevationDataResolution);
     if (texturesFilteringChanged)
         mask |= enumToBit(ConfigurationChange::TexturesFilteringMode);
     if (paletteTexturesUsageChanged)
@@ -195,11 +192,6 @@ void OsmAnd::MapRenderer::validateConfigurationChange(const ConfigurationChange&
     invalidateMapLayers = invalidateMapLayers || (change == ConfigurationChange::PaletteTexturesUsage);
     if (invalidateMapLayers)
         getResources().invalidateResourcesOfType(MapRendererResourceType::MapLayer);
-
-    bool invalidateElevationData = false;
-    invalidateElevationData = invalidateElevationData || (change == ConfigurationChange::ElevationDataResolution);
-    if (invalidateElevationData)
-        getResources().invalidateResourcesOfType(MapRendererResourceType::ElevationData);
 
     bool invalidateSymbols = false;
     invalidateSymbols = invalidateSymbols || (change == ConfigurationChange::ColorDepthForcing);

@@ -28,6 +28,11 @@ namespace OsmAnd
 
         virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const = 0;
         virtual std::shared_ptr<ObfDataInterface> obtainDataInterface() const = 0;
+        virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(
+            const AreaI& bbox31,
+            const ZoomLevel minZoomLevel = MinZoomLevel,
+            const ZoomLevel maxZoomLevel = MaxZoomLevel,
+            const bool forceIncludeBasemap = false) const = 0;
     };
 }
 

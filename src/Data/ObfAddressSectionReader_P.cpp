@@ -41,23 +41,23 @@ void OsmAnd::ObfAddressSectionReader_P::read( const ObfReader_P& reader, const s
                 return;
 
             if (section->_latinName.isEmpty())
-                section->_latinName = ICU::transliterateToLatin(section->_name);
+                section->_latinName = ICU::transliterateToLatin(section->name);
             return;
         case OBF::OsmAndAddressIndex::kNameFieldNumber:
-            ObfReaderUtilities::readQString(cis, section->_name);
+            ObfReaderUtilities::readQString(cis, section->name);
             break;
         case OBF::OsmAndAddressIndex::kNameEnFieldNumber:
             ObfReaderUtilities::readQString(cis, section->_latinName);
             break;
         case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
             {
-                const std::shared_ptr<ObfAddressBlocksSectionInfo> addressBlocksSection(new ObfAddressBlocksSectionInfo(section, section->owner));
-                addressBlocksSection->_length = ObfReaderUtilities::readBigEndianInt(cis);
-                addressBlocksSection->_offset = cis->CurrentPosition();
+                const std::shared_ptr<ObfAddressBlocksSectionInfo> addressBlocksSection(new ObfAddressBlocksSectionInfo(section, section->container.lock()));
+                addressBlocksSection->length = ObfReaderUtilities::readBigEndianInt(cis);
+                addressBlocksSection->offset = cis->CurrentPosition();
 
                 readAddressBlocksSectionHeader(reader, addressBlocksSection);
 
-                cis->Seek(addressBlocksSection->_offset + addressBlocksSection->_length);
+                cis->Seek(addressBlocksSection->offset + addressBlocksSection->length);
 
                 section->_addressBlocksSections.push_back(qMove(addressBlocksSection));
             }
@@ -116,8 +116,8 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroups(
         if (blockTypeFilter && !blockTypeFilter->contains(block->type))
             continue;
 
-        auto res = cis->Seek(block->_offset);
-        auto oldLimit = cis->PushLimit(block->_length);
+        auto res = cis->Seek(block->offset);
+        auto oldLimit = cis->PushLimit(block->length);
         readStreetGroupsFromAddressBlocksSection(reader, block, resultOut, visitor, controller);
         cis->PopLimit(oldLimit);
     }

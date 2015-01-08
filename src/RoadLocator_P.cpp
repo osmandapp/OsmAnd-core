@@ -27,7 +27,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoadEx(
     QList< std::shared_ptr<const Road> > roadsInBBox;
 
     const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
-    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface();
+    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(bbox31);
     obfDataInterface->loadRoads(
         dataLevel,
         &bbox31,
@@ -51,7 +51,7 @@ QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::RoadLocator_P::findRoadsInA
     QList< std::shared_ptr<const Road> > roadsInBBox;
 
     const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
-    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface();
+    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(bbox31);
     obfDataInterface->loadRoads(
         dataLevel,
         &bbox31,

@@ -176,12 +176,6 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 void OsmAnd::AtlasMapRenderer_OpenGL::onValidateResourcesOfType(const MapRendererResourceType type)
 {
     AtlasMapRenderer::onValidateResourcesOfType(type);
-
-    if (type == MapRendererResourceType::ElevationData)
-    {
-        // Recreate tile patch since elevation data influences density of tile patch
-        _mapLayersStage->updateRasterTile();
-    }
 }
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
@@ -567,7 +561,6 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeInMeters() const
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration());
 
-    const auto tileSizeOnScreenInPixels = internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
     const auto metersPerTile = Utilities::getMetersPerTileUnit(
         state.zoomBase,
         internalState.targetTileId.y,

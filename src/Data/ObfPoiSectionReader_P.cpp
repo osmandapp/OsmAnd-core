@@ -37,7 +37,7 @@ void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::
 
             return;
         case OBF::OsmAndPoiIndex::kNameFieldNumber:
-            ObfReaderUtilities::readQString(cis, section->_name);
+            ObfReaderUtilities::readQString(cis, section->name);
             break;
         case OBF::OsmAndPoiIndex::kBoundariesFieldNumber:
             {
@@ -173,8 +173,8 @@ void OsmAnd::ObfPoiSectionReader_P::loadCategories(
     QList< std::shared_ptr<const OsmAnd::AmenityCategory> >& categories )
 {
     const auto cis = reader.getCodedInputStream().get();
-    cis->Seek(section->_offset);
-    auto oldLimit = cis->PushLimit(section->_length);
+    cis->Seek(section->offset);
+    auto oldLimit = cis->PushLimit(section->length);
 
     readCategories(reader, section, categories);
 
@@ -191,8 +191,8 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     const IQueryController* const controller /*= nullptr*/ )
 {
     const auto cis = reader.getCodedInputStream().get();
-    cis->Seek(section->_offset);
-    auto oldLimit = cis->PushLimit(section->_length);
+    cis->Seek(section->offset);
+    auto oldLimit = cis->PushLimit(section->length);
 
     readAmenities(reader, section, desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller);
 
@@ -244,7 +244,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
 
                 for(const auto& tile : constOf(tiles))
                 {
-                    cis->Seek(section->_offset + tile->_offset);
+                    cis->Seek(section->offset + tile->_offset);
                     const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                     const auto offset = cis->CurrentPosition();
                     const auto oldLimit = cis->PushLimit(length);

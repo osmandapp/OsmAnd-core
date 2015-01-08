@@ -9,6 +9,7 @@
 #include "ObfReader.h"
 #include "ObfDataInterface.h"
 #include "ObfFile.h"
+#include "ObfInfo.h"
 #include "QKeyValueIterator.h"
 #include "Stopwatch.h"
 #include "Utilities.h"
@@ -291,6 +292,60 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
                 std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfFile));
                 if (!obfReader->isOpened() || !obfReader->obtainInfo())
                     continue;
+                obfReaders.push_back(qMove(obfReader));
+            }
+        }
+    }
+
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
+}
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataInterface(
+    const AreaI& bbox31,
+    const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
+    const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
+    const bool forceIncludeBasemap /*= false*/) const
+{
+    // Check if sources were invalidated
+    if (_collectedSourcesInvalidated.loadAcquire() > 0)
+        collectSources();
+
+    // Create ObfReaders from collected sources
+    QList< std::shared_ptr<const ObfReader> > obfReaders;
+    {
+        QReadLocker scopedLocker(&_collectedSourcesLock);
+
+        for (const auto& collectedSources : constOf(_collectedSources))
+        {
+            obfReaders.reserve(obfReaders.size() + collectedSources.size());
+            for (const auto& obfFile : constOf(collectedSources))
+            {
+                // If OBF information already available, perform check
+                bool accept = false;
+                if (obfFile->obfInfo)
+                {
+                    if (forceIncludeBasemap)
+                        accept = accept || obfFile->obfInfo->isBasemap;
+                    accept = accept || obfFile->obfInfo->containsDataFor(bbox31, minZoomLevel, maxZoomLevel);
+                    if (!accept)
+                        continue;
+                }
+
+                // Otherwise, open file in any case to repeat check
+                std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfFile));
+                if (!obfReader->isOpened() || !obfReader->obtainInfo())
+                    continue;
+
+                // Repeat checks if needed
+                if (!accept)
+                {
+                    if (forceIncludeBasemap)
+                        accept = accept || obfFile->obfInfo->isBasemap;
+                    accept = accept || obfFile->obfInfo->containsDataFor(bbox31, minZoomLevel, maxZoomLevel);
+                    if (!accept)
+                        continue;
+                }
+
                 obfReaders.push_back(qMove(obfReader));
             }
         }

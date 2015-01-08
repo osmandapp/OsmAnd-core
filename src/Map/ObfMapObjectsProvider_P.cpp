@@ -92,14 +92,14 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
 #endif // OSMAND_PERFORMANCE_METRICS
         );
 
-    // Obtain OBF data interface
-    const Stopwatch obtainObfInterfaceStopwatch(metric != nullptr);
-    const auto& dataInterface = owner->obfsCollection->obtainDataInterface();
-    if (metric)
-        metric->elapsedTimeForObtainingObfInterface += obtainObfInterfaceStopwatch.elapsed();
-
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
+
+    // Obtain OBF data interface
+    const Stopwatch obtainObfInterfaceStopwatch(metric != nullptr);
+    const auto& dataInterface = owner->obfsCollection->obtainDataInterface(tileBBox31, zoom, zoom, true);
+    if (metric)
+        metric->elapsedTimeForObtainingObfInterface += obtainObfInterfaceStopwatch.elapsed();
 
     // Perform read-out
     const Stopwatch totalReadTimeStopwatch(metric != nullptr);

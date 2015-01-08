@@ -21,7 +21,6 @@
 namespace OsmAnd
 {
     class ObfMapSectionReader_P;
-    class ObfReader_P;
 
     class ObfMapSectionLevel_P;
     class OSMAND_CORE_API ObfMapSectionLevel
@@ -35,8 +34,8 @@ namespace OsmAnd
     private:
         PrivateImplementation<ObfMapSectionLevel_P> _p;
     protected:
-        ObfMapSectionLevel();
     public:
+        ObfMapSectionLevel();
         virtual ~ObfMapSectionLevel();
 
         uint32_t offset;
@@ -79,8 +78,8 @@ namespace OsmAnd
     private:
         PrivateImplementation<ObfMapSectionInfo_P> _p;
     protected:
-        ObfMapSectionInfo(const std::weak_ptr<ObfInfo>& owner);
     public:
+        ObfMapSectionInfo(const std::shared_ptr<const ObfInfo>& container);
         virtual ~ObfMapSectionInfo();
 
         std::shared_ptr<const ObfMapSectionDecodingEncodingRules> getEncodingDecodingRules() const;
@@ -89,7 +88,6 @@ namespace OsmAnd
         QList< Ref<ObfMapSectionLevel> > levels;
 
     friend class OsmAnd::ObfMapSectionReader_P;
-    friend class OsmAnd::ObfReader_P;
     };
 }
 

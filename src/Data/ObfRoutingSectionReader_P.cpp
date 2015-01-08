@@ -42,7 +42,7 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
 
                 return;
             case OBF::OsmAndRoutingIndex::kNameFieldNumber:
-                ObfReaderUtilities::readQString(cis, section->_name);
+                ObfReaderUtilities::readQString(cis, section->name);
                 break;
             case OBF::OsmAndRoutingIndex::kRulesFieldNumber:
                 ObfReaderUtilities::skipBlockWithLength(cis);
@@ -840,8 +840,8 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
         if (!section->_p->_encodingDecodingRules)
         {
             // Read encoding/decoding rules
-            cis->Seek(section->_offset);
-            auto oldLimit = cis->PushLimit(section->_length);
+            cis->Seek(section->offset);
+            auto oldLimit = cis->PushLimit(section->length);
 
             const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> encodingDecodingRules(new ObfRoutingSectionEncodingDecodingRules());
             readEncodingDecodingRules(reader, section, encodingDecodingRules);
@@ -864,8 +864,8 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
 
         if (!container.level)
         {
-            cis->Seek(section->_offset);
-            auto oldLimit = cis->PushLimit(section->_length);
+            cis->Seek(section->offset);
+            auto oldLimit = cis->PushLimit(section->length);
 
             std::shared_ptr<ObfRoutingSectionLevel> level(new ObfRoutingSectionLevel(dataLevel));
             readLevelTreeNodes(reader, section, level);

@@ -3,7 +3,6 @@
 OsmAnd::MapRendererConfiguration::MapRendererConfiguration()
     : texturesFilteringQuality(TextureFilteringQuality::Good)
     , limitTextureColorDepthBy16bits(false)
-    , heixelsPerTileSide(32)
     , paletteTexturesAllowed(false)
 {
 }
@@ -16,7 +15,6 @@ void OsmAnd::MapRendererConfiguration::copyTo(MapRendererConfiguration& other) c
 {
     other.texturesFilteringQuality = texturesFilteringQuality;
     other.limitTextureColorDepthBy16bits = limitTextureColorDepthBy16bits;
-    other.heixelsPerTileSide = heixelsPerTileSide;
     other.paletteTexturesAllowed = paletteTexturesAllowed;
 }
 

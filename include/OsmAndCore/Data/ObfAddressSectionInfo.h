@@ -22,7 +22,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(ObfAddressSectionInfo)
     private:
     protected:
-        ObfAddressSectionInfo(const std::weak_ptr<ObfInfo>& owner);
+        ObfAddressSectionInfo(const std::shared_ptr<const ObfInfo>& container);
 
         //NOTE:?
         QString _latinName;
@@ -42,7 +42,7 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(ObfAddressBlocksSectionInfo)
     private:
     protected:
-        ObfAddressBlocksSectionInfo(const std::shared_ptr<const ObfAddressSectionInfo>& addressSection, const std::weak_ptr<ObfInfo>& owner);
+        ObfAddressBlocksSectionInfo(const std::shared_ptr<const ObfAddressSectionInfo>& addressSection, const std::shared_ptr<const ObfInfo>& container);
 
         ObfAddressBlockType _type;
     public:

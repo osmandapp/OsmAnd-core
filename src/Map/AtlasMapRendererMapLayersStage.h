@@ -23,8 +23,6 @@ namespace OsmAnd
     public:
         AtlasMapRendererMapLayersStage(AtlasMapRenderer* const renderer);
         virtual ~AtlasMapRendererMapLayersStage();
-
-        virtual void updateRasterTile() = 0;
     };
 }
 

@@ -167,8 +167,10 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
 
         if (!owner->obfFile->_p->_obfInfo)
         {
-            if (!readInfo(*this, owner->obfFile->_p->_obfInfo))
+            std::shared_ptr<ObfInfo> obfInfo;
+            if (!readInfo(*this, obfInfo))
                 return nullptr;
+            owner->obfFile->_p->_obfInfo = obfInfo;
         }
         _obfInfo = owner->obfFile->_p->_obfInfo;
 
@@ -176,8 +178,10 @@ std::shared_ptr<const OsmAnd::ObfInfo> OsmAnd::ObfReader_P::obtainInfo() const
     }
     else
     {
-        if (!readInfo(*this, _obfInfo))
+        std::shared_ptr<ObfInfo> obfInfo;
+        if (!readInfo(*this, obfInfo))
             return nullptr;
+        _obfInfo = obfInfo;
 
         return _obfInfo;
     }
@@ -202,11 +206,11 @@ std::shared_ptr<OsmAnd::gpb::io::CodedInputStream> OsmAnd::ObfReader_P::getCoded
     return _codedInputStream;
 }
 
-bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<const ObfInfo>& outInfo)
+bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<ObfInfo>& outInfo)
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    std::shared_ptr<ObfInfo> info(new ObfInfo());
+    const std::shared_ptr<ObfInfo> info(new ObfInfo());
     bool loadedCorrectly = false;
     for (;;)
     {
@@ -221,98 +225,98 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<co
                     outInfo = info;
                 return loadedCorrectly;
             case OBF::OsmAndStructure::kVersionFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&info->_version));
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&info->version));
                 break;
             case OBF::OsmAndStructure::kDateCreatedFieldNumber:
-                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&info->_creationTimestamp));
+                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&info->creationTimestamp));
                 break;
             case OBF::OsmAndStructure::kMapIndexFieldNumber:
             {
-                const std::shared_ptr<ObfMapSectionInfo> section(new ObfMapSectionInfo(info));
-                section->_length = ObfReaderUtilities::readBigEndianInt(cis);
-                section->_offset = cis->CurrentPosition();
-                const auto oldLimit = cis->PushLimit(section->_length);
+                std::shared_ptr<ObfMapSectionInfo> section(new ObfMapSectionInfo(info));
+                section->length = ObfReaderUtilities::readBigEndianInt(cis);
+                section->offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(section->length);
 
                 ObfMapSectionReader_P::read(reader, section);
 
-                info->_isBasemap = info->_isBasemap || section->isBasemap;
+                info->isBasemap = info->isBasemap || section->isBasemap;
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-                cis->Seek(section->_offset + section->_length);
+                cis->Seek(section->offset + section->length);
 
-                info->_mapSections.push_back(qMove(section));
+                info->mapSections.push_back(section);
                 break;
             }
             case OBF::OsmAndStructure::kAddressIndexFieldNumber:
             {
                 const std::shared_ptr<ObfAddressSectionInfo> section(new ObfAddressSectionInfo(info));
-                section->_length = ObfReaderUtilities::readBigEndianInt(cis);
-                section->_offset = cis->CurrentPosition();
-                const auto oldLimit = cis->PushLimit(section->_length);
+                section->length = ObfReaderUtilities::readBigEndianInt(cis);
+                section->offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(section->length);
 
                 ObfAddressSectionReader_P::read(reader, section);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-                cis->Seek(section->_offset + section->_length);
+                cis->Seek(section->offset + section->length);
 
-                info->_addressSections.push_back(qMove(section));
+                info->addressSections.push_back(section);
                 break;
             }
             case OBF::OsmAndStructure::kTransportIndexFieldNumber:
             {
                 const std::shared_ptr<ObfTransportSectionInfo> section(new ObfTransportSectionInfo(info));
-                section->_length = ObfReaderUtilities::readBigEndianInt(cis);
-                section->_offset = cis->CurrentPosition();
-                const auto oldLimit = cis->PushLimit(section->_length);
+                section->length = ObfReaderUtilities::readBigEndianInt(cis);
+                section->offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(section->length);
 
                 ObfTransportSectionReader_P::read(reader, section);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-                cis->Seek(section->_offset + section->_length);
+                cis->Seek(section->offset + section->length);
 
-                info->_transportSections.push_back(qMove(section));
+                info->transportSections.push_back(section);
                 break;
             }
             case OBF::OsmAndStructure::kRoutingIndexFieldNumber:
             {
                 const std::shared_ptr<ObfRoutingSectionInfo> section(new ObfRoutingSectionInfo(info));
-                section->_length = ObfReaderUtilities::readBigEndianInt(cis);
-                section->_offset = cis->CurrentPosition();
-                const auto oldLimit = cis->PushLimit(section->_length);
+                section->length = ObfReaderUtilities::readBigEndianInt(cis);
+                section->offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(section->length);
 
                 ObfRoutingSectionReader_P::read(reader, section);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-                cis->Seek(section->_offset + section->_length);
+                cis->Seek(section->offset + section->length);
 
-                info->_routingSections.push_back(qMove(section));
+                info->routingSections.push_back(section);
                 break;
             }
             case OBF::OsmAndStructure::kPoiIndexFieldNumber:
             {
                 const std::shared_ptr<ObfPoiSectionInfo> section(new ObfPoiSectionInfo(info));
-                section->_length = ObfReaderUtilities::readBigEndianInt(cis);
-                section->_offset = cis->CurrentPosition();
-                const auto oldLimit = cis->PushLimit(section->_length);
+                section->length = ObfReaderUtilities::readBigEndianInt(cis);
+                section->offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(section->length);
 
                 ObfPoiSectionReader_P::read(reader, section);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-                cis->Seek(section->_offset + section->_length);
+                cis->Seek(section->offset + section->length);
 
-                info->_poiSections.push_back(qMove(section));
+                info->poiSections.push_back(section);
                 break;
             }
             case OBF::OsmAndStructure::kVersionConfirmFieldNumber:
             {
                 gpb::uint32 controlVersion;
                 cis->ReadVarint32(&controlVersion);
-                loadedCorrectly = (controlVersion == info->_version);
+                loadedCorrectly = (controlVersion == info->version);
                 break;
             }
             default:

@@ -1,8 +1,8 @@
 #include "ObfMapSectionInfo.h"
 #include "ObfMapSectionInfo_P.h"
 
-OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo(const std::weak_ptr<ObfInfo>& owner)
-    : ObfSectionInfo(owner)
+OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo(const std::shared_ptr<const ObfInfo>& container)
+    : ObfSectionInfo(container)
     , _p(new ObfMapSectionInfo_P(this))
 {
 }

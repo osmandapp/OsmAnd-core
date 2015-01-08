@@ -49,3 +49,12 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInte
 {
     return _p->obtainDataInterface();
 }
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInterface(
+    const AreaI& bbox31,
+    const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
+    const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
+    const bool forceIncludeBasemap /*= false*/) const
+{
+    return _p->obtainDataInterface(bbox31, minZoomLevel, maxZoomLevel, forceIncludeBasemap);
+}

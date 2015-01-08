@@ -11,8 +11,8 @@ static_assert(
     _ObfAddressBlockType::OsmAndAddressIndex_CitiesIndex_CitiesType_Villages == static_cast<int>(OsmAnd::ObfAddressBlockType::Villages),
     "OsmAnd::ObfAddressBlockType must match OBF::OsmAndAddressIndex_CitiesIndex_CitiesType");
 
-OsmAnd::ObfAddressSectionInfo::ObfAddressSectionInfo( const std::weak_ptr<ObfInfo>& owner )
-    : ObfSectionInfo(owner)
+OsmAnd::ObfAddressSectionInfo::ObfAddressSectionInfo(const std::shared_ptr<const ObfInfo>& container)
+    : ObfSectionInfo(container)
     , addressBlocksSections(_addressBlocksSections)
 {
 }
@@ -21,8 +21,8 @@ OsmAnd::ObfAddressSectionInfo::~ObfAddressSectionInfo()
 {
 }
 
-OsmAnd::ObfAddressBlocksSectionInfo::ObfAddressBlocksSectionInfo( const std::shared_ptr<const ObfAddressSectionInfo>& addressSection, const std::weak_ptr<ObfInfo>& owner )
-    : ObfSectionInfo(owner)
+OsmAnd::ObfAddressBlocksSectionInfo::ObfAddressBlocksSectionInfo(const std::shared_ptr<const ObfAddressSectionInfo>& addressSection, const std::shared_ptr<const ObfInfo>& container)
+    : ObfSectionInfo(container)
     , type(_type)
 {
 }

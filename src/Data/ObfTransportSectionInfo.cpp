@@ -1,7 +1,7 @@
 #include "ObfTransportSectionInfo.h"
 
-OsmAnd::ObfTransportSectionInfo::ObfTransportSectionInfo( const std::weak_ptr<ObfInfo>& owner )
-    : ObfSectionInfo(owner)
+OsmAnd::ObfTransportSectionInfo::ObfTransportSectionInfo(const std::shared_ptr<const ObfInfo>& container)
+    : ObfSectionInfo(container)
     , area24(_area24)
 {
 }

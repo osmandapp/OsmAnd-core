@@ -20,7 +20,6 @@
 namespace OsmAnd
 {
     class ObfRoutingSectionReader_P;
-    class ObfReader_P;
     class Road;
 
     struct OSMAND_CORE_API ObfRoutingSectionEncodingDecodingRules : public MapObject::EncodingDecodingRules
@@ -36,14 +35,13 @@ namespace OsmAnd
     private:
         PrivateImplementation<ObfRoutingSectionInfo_P> _p;
     protected:
-        ObfRoutingSectionInfo(const std::weak_ptr<ObfInfo>& owner);
     public:
+        ObfRoutingSectionInfo(const std::shared_ptr<const ObfInfo>& container);
         virtual ~ObfRoutingSectionInfo();
 
         std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> getEncodingDecodingRules() const;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
-    friend class OsmAnd::ObfReader_P;
     };
 
     class ObfRoutingSectionLevelTreeNode;
@@ -54,8 +52,8 @@ namespace OsmAnd
     private:
         PrivateImplementation<ObfRoutingSectionLevel_P> _p;
     protected:
-        ObfRoutingSectionLevel(const RoutingDataLevel dataLevel);
     public:
+        ObfRoutingSectionLevel(const RoutingDataLevel dataLevel);
         virtual ~ObfRoutingSectionLevel();
 
         const RoutingDataLevel dataLevel;
@@ -66,10 +64,11 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfRoutingSectionLevelTreeNode Q_DECL_FINAL
     {
+        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionLevelTreeNode);
     private:
     protected:
-        ObfRoutingSectionLevelTreeNode();
     public:
+        ObfRoutingSectionLevelTreeNode();
         ~ObfRoutingSectionLevelTreeNode();
 
         uint32_t length;
@@ -80,8 +79,6 @@ namespace OsmAnd
         bool hasChildrenDataBoxes;
         uint32_t firstDataBoxInnerOffset;
         uint32_t dataOffset;
-
-    friend class OsmAnd::ObfRoutingSectionReader_P;
     };
 }
 

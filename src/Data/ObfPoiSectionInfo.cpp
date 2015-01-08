@@ -1,7 +1,7 @@
 #include "ObfPoiSectionInfo.h"
 
-OsmAnd::ObfPoiSectionInfo::ObfPoiSectionInfo( const std::weak_ptr<ObfInfo>& owner )
-    : ObfSectionInfo(owner)
+OsmAnd::ObfPoiSectionInfo::ObfPoiSectionInfo(const std::shared_ptr<const ObfInfo>& container)
+    : ObfSectionInfo(container)
     , area31(_area31)
 {
 }

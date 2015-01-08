@@ -36,7 +36,7 @@ void OsmAnd::ObfTransportSectionReader_P::read( const ObfReader_P& reader, const
             ObfReaderUtilities::skipUnknownField(cis, tag);
             break;
         case OBF::OsmAndTransportIndex::kNameFieldNumber:
-            ObfReaderUtilities::readQString(cis, section->_name);
+            ObfReaderUtilities::readQString(cis, section->name);
             break;
         case OBF::OsmAndTransportIndex::kStopsFieldNumber:
             {

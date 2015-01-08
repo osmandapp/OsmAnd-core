@@ -13,8 +13,6 @@
 namespace OsmAnd
 {
     class ObfInfo;
-    class ObfReader;
-    class ObfReader_P;
 
     class ObfSectionInfo
     {
@@ -22,24 +20,16 @@ namespace OsmAnd
     private:
         static QAtomicInt _nextRuntimeGeneratedId;
     protected:
-        ObfSectionInfo(const std::weak_ptr<ObfInfo>& owner);
-
-        QString _name;
-        uint32_t _length;
-        uint32_t _offset;
+        ObfSectionInfo(const std::shared_ptr<const ObfInfo>& container);
     public:
         virtual ~ObfSectionInfo();
 
-        const QString& name;
-        const uint32_t &length;
-        const uint32_t &offset;
-
         const int runtimeGeneratedId;
-        
-        std::weak_ptr<ObfInfo> owner;
+        const std::weak_ptr<const ObfInfo> container;
 
-    friend class OsmAnd::ObfReader;
-    friend class OsmAnd::ObfReader_P;
+        QString name;
+        uint32_t length;
+        uint32_t offset;
     };
 }
 

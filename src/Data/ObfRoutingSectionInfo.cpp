@@ -4,8 +4,8 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::ObfRoutingSectionInfo::ObfRoutingSectionInfo(const std::weak_ptr<ObfInfo>& owner)
-    : ObfSectionInfo(owner)
+OsmAnd::ObfRoutingSectionInfo::ObfRoutingSectionInfo(const std::shared_ptr<const ObfInfo>& container)
+    : ObfSectionInfo(container)
     , _p(new ObfRoutingSectionInfo_P(this))
 {
 }

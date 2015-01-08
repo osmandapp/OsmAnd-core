@@ -78,6 +78,10 @@ namespace OsmAnd
     public:
         virtual ~AtlasMapRenderer();
 
+        enum : unsigned int {
+            MaxMissingDataZoomShift = 5,
+        };
+
         // Stages:
         const std::shared_ptr<AtlasMapRendererSkyStage>& skyStage;
         const std::shared_ptr<AtlasMapRendererMapLayersStage>& mapLayersStage;
