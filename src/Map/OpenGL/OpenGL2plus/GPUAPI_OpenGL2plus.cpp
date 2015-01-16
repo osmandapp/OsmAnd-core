@@ -331,21 +331,21 @@ bool OsmAnd::GPUAPI_OpenGL2plus::release()
     return true;
 }
 
-OsmAnd::GPUAPI_OpenGL2plus::TextureFormat OsmAnd::GPUAPI_OpenGL2plus::getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const
+OsmAnd::GPUAPI_OpenGL2plus::TextureFormat OsmAnd::GPUAPI_OpenGL2plus::getTextureSizedFormat(const SkColorType skBitmapConfig) const
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
     switch (skBitmapConfig)
     {
-        case SkBitmap::Config::kARGB_8888_Config:
+        case SkColorType::kRGBA_8888_SkColorType:
             textureFormat = GL_RGBA8;
             break;
 
-        case SkBitmap::Config::kARGB_4444_Config:
+        case SkColorType::kARGB_4444_SkColorType:
             textureFormat = GL_RGBA4;
             break;
 
-        case SkBitmap::Config::kRGB_565_Config:
+        case SkColorType::kRGB_565_SkColorType:
             textureFormat = GL_RGB565;
             break;
 

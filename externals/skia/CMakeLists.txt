@@ -13,24 +13,36 @@ set(target_specific_definitions_public "")
 set(used_arch_specific_sources FALSE)
 if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
-	set(target_specific_sources "${target_specific_sources}"
+	set(target_specific_sources__x86
+		# x86
 		"upstream.patched/src/opts/opts_check_x86.cpp"
-		"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkTextureCompression_opts_none.cpp"
+
+		# SSE2
 		"upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp"
-		"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
-		"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
+		"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkBlurImage_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkMorphology_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
 		"upstream.patched/src/opts/SkXfermode_opts_SSE2.cpp"
-	)
+		
+		# SSSE3
+		"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
+		
+		# SSE4
+		# SkBlitRow_opts_SSE4_x64_asm.S
+		# SkBlitRow_opts_SSE4_asm.S
+		"upstream.patched/src/opts/SkBlurImage_opts_SSE4.cpp")
+	set(target_specific_sources "${target_specific_sources}"
+		"${target_specific_sources__x86}")
 	if (CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 		set_source_files_properties(
-			"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp"
-			"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
+			"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
+			"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkBlurImage_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkMorphology_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
@@ -41,12 +53,16 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 			"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
 			PROPERTIES
 				COMPILE_FLAGS "-mssse3")
+		set_source_files_properties(
+			"upstream.patched/src/opts/SkBlurImage_opts_SSE4.cpp"
+			PROPERTIES
+				COMPILE_FLAGS "-msse4.1")
 	elseif (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
 		set_source_files_properties(
-			"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkBitmapProcState_opts_SSE2.cpp"
-			"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
+			"upstream.patched/src/opts/SkBitmapFilter_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkBlitRow_opts_SSE2.cpp"
+			"upstream.patched/src/opts/SkBlitRect_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkBlurImage_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkMorphology_opts_SSE2.cpp"
 			"upstream.patched/src/opts/SkUtils_opts_SSE2.cpp"
@@ -55,6 +71,10 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 				COMPILE_FLAGS "/arch:SSE2")
 		set_source_files_properties(
 			"upstream.patched/src/opts/SkBitmapProcState_opts_SSSE3.cpp"
+			PROPERTIES
+				COMPILE_FLAGS "/arch:SSE2")
+		set_source_files_properties(
+			"upstream.patched/src/opts/SkBlurImage_opts_SSE4.cpp"
 			PROPERTIES
 				COMPILE_FLAGS "/arch:SSE2")
 	endif()
@@ -69,57 +89,61 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 
 	if (NOT CMAKE_TARGET_OS STREQUAL "ios")
 		set(target_specific_definitions_public ${target_specific_definitions_public}
-			-D__ARM_HAVE_OPTIONAL_NEON_SUPPORT
+			-DSK_ARM_HAS_OPTIONAL_NEON
 		)
 	endif()
-	set(target_specific_sources "${target_specific_sources}"
+	set(target_specific_sources__arm
+		# ARM
 		"upstream.patched/src/opts/memset.arm.S"
+		"upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
+		"upstream.patched/src/opts/SkBlurImage_opts_arm.cpp"
+		"upstream.patched/src/opts/SkMorphology_opts_arm.cpp"
+		"upstream.patched/src/opts/SkTextureCompression_opts_arm.cpp"
+		"upstream.patched/src/opts/SkUtils_opts_arm.cpp"
+		"upstream.patched/src/opts/SkXfermode_opts_arm.cpp"
+		
+		# NEON
 		"upstream.patched/src/opts/memset16_neon.S"
 		"upstream.patched/src/opts/memset32_neon.S"
 		"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
 		"upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
-		"upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
-		"upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
 		"upstream.patched/src/opts/SkBlitMask_opts_arm_neon.cpp"
-		"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
 		"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
-		"upstream.patched/src/opts/SkBlurImage_opts_arm.cpp"
 		"upstream.patched/src/opts/SkBlurImage_opts_neon.cpp"
-		"upstream.patched/src/opts/SkMorphology_opts_arm.cpp"
 		"upstream.patched/src/opts/SkMorphology_opts_neon.cpp"
-		"upstream.patched/src/opts/SkUtils_opts_arm.cpp"
-		"upstream.patched/src/opts/SkXfermode_opts_arm.cpp"
+		"upstream.patched/src/opts/SkTextureCompression_opts_neon.cpp"
 		"upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
 	)
+	set(target_specific_sources "${target_specific_sources}"
+		"${target_specific_sources__arm}")
 	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
 		set_source_files_properties(
+			# ARM
+			"upstream.patched/src/opts/memset.arm.S"
+			
+			# NEON
 			"upstream.patched/src/opts/memset32_neon.S"
 			"upstream.patched/src/opts/memset16_neon.S"
-			"upstream.patched/src/opts/memset.arm.S"
 			PROPERTIES
 				COMPILE_FLAGS "-no-integrated-as")
 	else()
 		set_source_files_properties(
+			# ARM
 			"upstream.patched/src/opts/memset.arm.S"
-			"upstream.patched/src/opts/memset16_neon.S"
-			"upstream.patched/src/opts/memset32_neon.S"
-			"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
-			"upstream.patched/src/opts/SkBitmapProcState_matrixProcs_neon.cpp"
 			"upstream.patched/src/opts/SkBitmapProcState_opts_arm.cpp"
 			"upstream.patched/src/opts/SkBlitMask_opts_arm.cpp"
-			"upstream.patched/src/opts/SkBlitMask_opts_arm_neon.cpp"
 			"upstream.patched/src/opts/SkBlitRow_opts_arm.cpp"
-			"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
 			"upstream.patched/src/opts/SkBlurImage_opts_arm.cpp"
-			"upstream.patched/src/opts/SkBlurImage_opts_neon.cpp"
 			"upstream.patched/src/opts/SkMorphology_opts_arm.cpp"
-			"upstream.patched/src/opts/SkMorphology_opts_neon.cpp"
+			"upstream.patched/src/opts/SkTextureCompression_opts_arm.cpp"
 			"upstream.patched/src/opts/SkUtils_opts_arm.cpp"
 			"upstream.patched/src/opts/SkXfermode_opts_arm.cpp"
-			"upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
 			PROPERTIES
 				COMPILE_FLAGS "-fomit-frame-pointer")
 		set_source_files_properties(
+			# NEON
 			"upstream.patched/src/opts/memset16_neon.S"
 			"upstream.patched/src/opts/memset32_neon.S"
 			"upstream.patched/src/opts/SkBitmapProcState_arm_neon.cpp"
@@ -128,6 +152,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 			"upstream.patched/src/opts/SkBlitRow_opts_arm_neon.cpp"
 			"upstream.patched/src/opts/SkBlurImage_opts_neon.cpp"
 			"upstream.patched/src/opts/SkMorphology_opts_neon.cpp"
+			"upstream.patched/src/opts/SkTextureCompression_opts_neon.cpp"
 			"upstream.patched/src/opts/SkXfermode_opts_arm_neon.cpp"
 			PROPERTIES
 				COMPILE_FLAGS "-mfloat-abi=softfp -mfpu=neon -fomit-frame-pointer")
@@ -140,6 +165,7 @@ if (NOT used_arch_specific_sources)
 		"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
 		"upstream.patched/src/opts/SkBlurImage_opts_none.cpp"
 		"upstream.patched/src/opts/SkMorphology_opts_none.cpp"
+		"upstream.patched/src/opts/SkTextureCompression_opts_none.cpp"
 		"upstream.patched/src/opts/SkUtils_opts_none.cpp"
 		"upstream.patched/src/opts/SkXfermode_opts_none.cpp"
 	)
@@ -160,6 +186,7 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		"upstream.patched/src/ports/SkOSFile_win.cpp"
 		"upstream.patched/src/ports/SkTime_win.cpp"
 		"upstream.patched/src/ports/SkTLS_win.cpp"
+		"upstream.patched/src/utils/SkThreadUtils_win.cpp"
 		${src_utils_win}
 		${src_gpu_gl_win}
 	)
@@ -172,9 +199,11 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		LANGUAGE CXX)
 	if (SIZEOF_IDWriteFontFileEnumerator)
 		set(target_specific_sources "${target_specific_sources}"
-			"upstream.patched/src/ports/SkFontHost_win_dw.cpp"
+			"upstream.patched/src/ports/SkFontMgr_win_dw.cpp"
 			"upstream.patched/src/ports/SkFontMgr_default_dw.cpp"
 			"upstream.patched/src/ports/SkRemotableFontMgr_win_dw.cpp"
+			"upstream.patched/src/ports/SkScalerContext_win_dw.cpp"
+			"upstream.patched/src/ports/SkTypeface_win_dw.cpp"
 		)
 	else()
 		set(target_specific_sources "${target_specific_sources}"
@@ -190,10 +219,9 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		-D_CRT_SECURE_NO_WARNINGS
 		-DGR_GL_FUNCTION_TYPE=__stdcall
 	)
-	# This doesn't work for some reason
-	#find_library(Usp10_LIBRARY Usp10)
+	find_library(usp10_LIBRARY usp10)
 	set(target_specific_libraries_public ${target_specific_libraries_public}
-		Usp10
+		"${usp10_LIBRARY}"
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
@@ -295,7 +323,6 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_android.cpp"
 		"upstream.patched/src/ports/SkDiscardableMemory_none.cpp"
-		"upstream.patched/src/ports/SkFontConfigInterface_android.cpp"
 		"upstream.patched/src/ports/SkFontConfigParser_android.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType_common.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType.cpp"
@@ -322,16 +349,27 @@ endif()
 file(GLOB src_core "upstream.patched/src/core/*")
 file(GLOB src_effects "upstream.patched/src/effects/*")
 file(GLOB src_effects_gradients "upstream.patched/src/effects/gradients/*")
-file(GLOB src_fonts "upstream.patched/src/fonts/*")
+file(GLOB src_fonts
+	#"upstream.patched/src/fonts/*"
+	"upstream.patched/src/fonts/SkGScalerContext.cpp"
+	"upstream.patched/src/fonts/SkRemotableFontMgr.cpp")
 file(GLOB src_image "upstream.patched/src/image/*")
 file(GLOB src_images "upstream.patched/src/images/*")
 file(GLOB src_images__remove
+	"upstream.patched/src/images/SkImageDecoder_astc.*"
+	"upstream.patched/src/images/SkImageDecoder_ktx.*"
 	"upstream.patched/src/images/SkImageDecoder_libwebp.*"
+	"upstream.patched/src/images/SkImageDecoder_pkm.*"
 	"upstream.patched/src/images/SkImageRef_ashmem.*")
 list(REMOVE_ITEM src_images ${src_images__remove})
 file(GLOB src_lazy "upstream.patched/src/lazy/*")
 file(GLOB src_sfnt "upstream.patched/src/sfnt/*")
 file(GLOB src_pathops "upstream.patched/src/pathops/*")
+file(GLOB src_pipe "upstream.patched/src/pipe/*")
+file(GLOB src_ports
+	"upstream.patched/src/ports/SkGlobalInitialization_default.cpp"
+	"upstream.patched/src/ports/SkMemory_malloc.cpp"
+	"upstream.patched/src/ports/SkOSFile_stdio.cpp")
 file(GLOB src_gpu "upstream.patched/src/gpu/*")
 file(GLOB src_gpu_effects "upstream.patched/src/gpu/effects/*")
 file(GLOB src_gpu_gl "upstream.patched/src/gpu/gl/*")
@@ -339,52 +377,34 @@ file(GLOB src_gpu_gl__remove
 	"upstream.patched/src/gpu/gl/GrGLCreateNativeInterface_none.cpp"
 	"upstream.patched/src/gpu/gl/GrGLDefaultInterface_none.cpp")
 list(REMOVE_ITEM src_gpu_gl ${src_gpu_gl__remove})
+file(GLOB src_gpu_gl_builders "upstream.patched/src/gpu/gl/builders/*")
+file(GLOB src_utils "upstream.patched/src/utils/*")
+file(GLOB src_utils__remove
+	"upstream.patched/src/utils/SkLua.*"
+	"upstream.patched/src/utils/SkLuaCanvas.*"
+	"upstream.patched/src/utils/SkThreadUtils_*")
+list(REMOVE_ITEM src_utils ${src_utils__remove})
+file(GLOB src_utils_debugger "upstream.patched/src/utils/debugger/*")
 
 add_library(skia_static STATIC
 	${src_core}
 	${src_effects}
 	${src_effects_gradients}
-	"upstream.patched/src/fonts/SkGScalerContext.cpp"
-	"upstream.patched/src/fonts/SkRemotableFontMgr.cpp"
+	${src_fonts}
 	${src_image}
 	${src_images}
 	${src_lazy}
 	${src_sfnt}
 	${src_pathops}
+	${src_pipe}
+	${src_ports}
 	${src_gpu}
 	${src_gpu_effects}
 	${src_gpu_gl}
-	"upstream.patched/src/utils/SkBase64.cpp"
-	"upstream.patched/src/utils/SkBitSet.cpp"
-	"upstream.patched/src/utils/SkBoundaryPatch.cpp"
-	"upstream.patched/src/utils/SkCamera.cpp"
-	"upstream.patched/src/utils/SkCondVar.cpp"
-	"upstream.patched/src/utils/SkCountdown.cpp"
-	"upstream.patched/src/utils/SkCubicInterval.cpp"
-	"upstream.patched/src/utils/SkCullPoints.cpp"
-	"upstream.patched/src/utils/SkDeferredCanvas.cpp"
-	"upstream.patched/src/utils/SkDumpCanvas.cpp"
-	"upstream.patched/src/utils/SkInterpolator.cpp"
-	"upstream.patched/src/utils/SkLayer.cpp"
-	"upstream.patched/src/utils/SkMatrix22.cpp"
-	"upstream.patched/src/utils/SkMatrix44.cpp"
-	"upstream.patched/src/utils/SkMeshUtils.cpp"
-	"upstream.patched/src/utils/SkNinePatch.cpp"
-	"upstream.patched/src/utils/SkNullCanvas.cpp"
-	"upstream.patched/src/utils/SkNWayCanvas.cpp"
-	"upstream.patched/src/utils/SkOSFile.cpp"
-	"upstream.patched/src/utils/SkParse.cpp"
-	"upstream.patched/src/utils/SkParseColor.cpp"
-	"upstream.patched/src/utils/SkParsePath.cpp"
-	"upstream.patched/src/utils/SkPictureUtils.cpp"
-	"upstream.patched/src/utils/SkProxyCanvas.cpp"
-	"upstream.patched/src/utils/SkUnitMappers.cpp"
-	"upstream.patched/src/utils/SkEventTracer.cpp"
-	"upstream.patched/src/pipe/SkGPipeRead.cpp"
-	"upstream.patched/src/pipe/SkGPipeWrite.cpp"
-	"upstream.patched/src/ports/SkGlobalInitialization_default.cpp"
-	"upstream.patched/src/ports/SkMemory_malloc.cpp"
-	"upstream.patched/src/ports/SkOSFile_stdio.cpp"
+	${src_gpu_gl_builders}
+	${src_utils}
+	${src_utils_debugger}
+	"upstream.patched/src/ports/SkDiscardableMemory_none.cpp"
 	${target_specific_sources}
 )
 
@@ -398,6 +418,7 @@ add_dependencies(skia_static
 
 target_compile_definitions(skia_static
 	PRIVATE
+		-DSK_IGNORE_ETC1_SUPPORT
 	PUBLIC
 	    -DSK_RELEASE
 		${target_specific_definitions_public}
@@ -444,39 +465,14 @@ target_link_libraries(skia_static
 
 if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios")
 	set(ios_iphoneos_exclude_list
-		"opts_check_x86.cpp"
-		"SkBitmapFilter_opts_SSE2.cpp"
-		"SkBitmapProcState_opts_SSE2.cpp"
-		"SkBitmapProcState_opts_SSSE3.cpp"
-		"SkBlitRect_opts_SSE2.cpp"
-		"SkBlitRow_opts_SSE2.cpp"
-		"SkBlurImage_opts_SSE2.cpp"
-		"SkMorphology_opts_SSE2.cpp"
-		"SkUtils_opts_SSE2.cpp"
-		"SkXfermode_opts_SSE2.cpp")
+		"${target_specific_sources__x86}")
 	string(REPLACE ";" " " ios_iphoneos_exclude "${ios_iphoneos_exclude_list}")
 	set_target_properties(skia_static
 		PROPERTIES
 			XCODE_ATTRIBUTE_EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*][arch=*] "${ios_iphoneos_exclude}")
 
 	set(ios_iphonesimulator_exclude_list
-		"memset.arm.S"
-		"memset16_neon.S"
-		"memset32_neon.S"
-		"SkBitmapProcState_arm_neon.cpp"
-		"SkBitmapProcState_matrixProcs_neon.cpp"
-		"SkBitmapProcState_opts_arm.cpp"
-		"SkBlitMask_opts_arm.cpp"
-		"SkBlitMask_opts_arm_neon.cpp"
-		"SkBlitRow_opts_arm.cpp"
-		"SkBlitRow_opts_arm_neon.cpp"
-		"SkBlurImage_opts_arm.cpp"
-		"SkBlurImage_opts_neon.cpp"
-		"SkMorphology_opts_arm.cpp"
-		"SkMorphology_opts_neon.cpp"
-		"SkUtils_opts_arm.cpp"
-		"SkXfermode_opts_arm.cpp"
-		"SkXfermode_opts_arm_neon.cpp")
+		"${target_specific_sources__arm}")
 	string(REPLACE ";" " " ios_iphonesimulator_exclude "${ios_iphonesimulator_exclude_list}")
 	set_target_properties(skia_static
 		PROPERTIES

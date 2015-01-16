@@ -67,7 +67,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkFILEStream fileStream(qPrintable(localFile.absoluteFilePath()));
-        if (!SkImageDecoder::DecodeStream(&fileStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&fileStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
         {
             LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'", qPrintable(localFile.absoluteFilePath()));
 
@@ -170,7 +170,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
     // Decode in-memory
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!SkImageDecoder::DecodeMemory(downloadResult.constData(), downloadResult.size(), bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+    if (!SkImageDecoder::DecodeMemory(downloadResult.constData(), downloadResult.size(), bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
     {
         LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'", qPrintable(tileUrl));
 

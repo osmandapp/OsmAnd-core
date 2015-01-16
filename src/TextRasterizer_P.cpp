@@ -290,8 +290,19 @@ bool OsmAnd::TextRasterizer_P::rasterize(
     // Create a bitmap that will be hold entire symbol (if target is empty)
     if (targetBitmap.isNull())
     {
-        targetBitmap.setConfig(SkBitmap::kARGB_8888_Config, bitmapWidth, bitmapHeight);
-        targetBitmap.allocPixels();
+        if (!targetBitmap.tryAllocPixels(SkImageInfo::Make(
+            bitmapWidth, bitmapHeight,
+            SkColorType::kRGBA_8888_SkColorType,
+            SkAlphaType::kUnpremul_SkAlphaType)))
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to allocate RGBA8888 bitmap of size %dx%d",
+                qPrintable(text),
+                bitmapWidth,
+                bitmapHeight);
+            return false;
+        }
+
         targetBitmap.eraseColor(SK_ColorTRANSPARENT);
     }
     SkBitmapDevice target(targetBitmap);

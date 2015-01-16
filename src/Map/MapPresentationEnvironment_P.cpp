@@ -161,7 +161,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainShaderBitmap(const QString& nam
         // Decode bitmap for a shader
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
             return false;
         itShaderBitmap = _shadersBitmaps.insert(name, bitmap);
     }
@@ -186,7 +186,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainMapIcon(const QString& name, st
         // Decode data
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
             return false;
 
         itIcon = _mapIcons.insert(name, bitmap);
@@ -211,7 +211,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainTextShield(const QString& name,
         // Decode data
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
             return false;
 
         itTextShield = _textShields.insert(name, bitmap);
@@ -236,7 +236,7 @@ bool OsmAnd::MapPresentationEnvironment_P::obtainIconShield(const QString& name,
         // Decode data
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkMemoryStream dataStream(data.constData(), data.length(), false);
-        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
             return false;
 
         itIconShield = _iconShields.insert(name, bitmap);

@@ -1,8 +1,6 @@
-diff --git a/include/core/SkPreConfig.h b/include/core/SkPreConfig.h
-index 9aefc2d..924d211 100644
---- a/include/core/SkPreConfig.h
-+++ b/include/core/SkPreConfig.h
-@@ -159,7 +159,8 @@
+--- upstream.original/include/core/SkPreConfig.h	2015-01-15 17:38:59.399858900 +0200
++++ upstream.patched/include/core/SkPreConfig.h	2015-01-15 17:46:52.570572700 +0200
+@@ -167,7 +167,8 @@
      #if defined(__GNUC__)
          #if defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) \
                  || defined(__ARM_ARCH_7R__) || defined(__ARM_ARCH_7M__) \

@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-skia.git" "chromium-36.0.1985.143"
+prepareUpstreamFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-skia.git" "chromium-39.0.2171.99"
 patchUpstream "$SRCLOC"

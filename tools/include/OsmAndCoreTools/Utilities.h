@@ -6,9 +6,11 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 
+#include <OsmAndCoreTools.h>
+
 namespace OsmAndTools
 {
-    struct OSMAND_CORE_API Utilities Q_DECL_FINAL
+    struct OSMAND_CORE_TOOLS_API Utilities Q_DECL_FINAL
     {
         static QString resolvePath(const QString& input);
         static QString purifyArgumentValue(const QString& input);

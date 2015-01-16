@@ -1,8 +1,7 @@
-diff --git a/src/opts/SkUtils_opts_arm.cpp b/src/opts/SkUtils_opts_arm.cpp
-index 2c57a3e..88f3481 100644
---- a/src/opts/SkUtils_opts_arm.cpp
-+++ b/src/opts/SkUtils_opts_arm.cpp
-@@ -19,8 +19,7 @@ extern "C" void arm_memset32(uint32_t* dst, uint32_t value, int count);
+diff -rupN upstream.original/src/opts/SkUtils_opts_arm.cpp upstream.patched/src/opts/SkUtils_opts_arm.cpp
+--- upstream.original/src/opts/SkUtils_opts_arm.cpp	2015-01-15 17:39:02.120010800 +0200
++++ upstream.patched/src/opts/SkUtils_opts_arm.cpp	2015-01-15 18:16:28.403156100 +0200
+@@ -19,8 +19,7 @@ extern "C" void arm_memset32(uint32_t* d
  #endif
  
  SkMemset16Proc SkMemset16GetPlatformProc() {
@@ -12,7 +11,7 @@ index 2c57a3e..88f3481 100644
      return NULL;
  #elif SK_ARM_NEON_IS_DYNAMIC
      if (sk_cpu_arm_has_neon()) {
-@@ -36,8 +35,7 @@ SkMemset16Proc SkMemset16GetPlatformProc() {
+@@ -36,8 +35,7 @@ SkMemset16Proc SkMemset16GetPlatformProc
  }
  
  SkMemset32Proc SkMemset32GetPlatformProc() {
@@ -22,17 +21,42 @@ index 2c57a3e..88f3481 100644
      return NULL;
  #elif SK_ARM_NEON_IS_DYNAMIC
      if (sk_cpu_arm_has_neon()) {
-diff --git a/src/opts/memset.arm.S b/src/opts/memset.arm.S
-index 44b75e3..7551ee4 100644
---- a/src/opts/memset.arm.S
-+++ b/src/opts/memset.arm.S
-@@ -13,14 +13,14 @@
-  *    to aid future maintenance.
+diff -rupN upstream.original/src/opts/arm-assember.h upstream.patched/src/opts/arm-assember.h
+--- upstream.original/src/opts/arm-assember.h	1970-01-01 02:00:00.000000000 +0200
++++ upstream.patched/src/opts/arm-assember.h	2015-01-15 18:24:48.663914600 +0200
+@@ -0,0 +1,19 @@
++#ifdef __APPLE__
++#   define ENTRY(x) _##x
++#   define GLOBAL(x) .globl _##x
++#   define UNWIND_START
++#   define UNWIND_END
++#   define FUNC_START
++#   define FUNC_END
++#   define THE_END
++#   define USE_FPU(x)
++#else
++#   define ENTRY(x) x
++#   define GLOBAL(x) .global x; .type x, %function
++#   define UNWIND_START .fnstart
++#   define UNWIND_END .fnend
++#   define FUNC_START .func
++#   define FUNC_END .endfunc
++#   define THE_END .end
++#   define USE_FPU(x) .fpu x
++#endif
+diff -rupN upstream.original/src/opts/memset.arm.S upstream.patched/src/opts/memset.arm.S
+--- upstream.original/src/opts/memset.arm.S	2015-01-15 17:39:02.138012100 +0200
++++ upstream.patched/src/opts/memset.arm.S	2015-01-15 18:19:33.275569400 +0200
+@@ -5,6 +5,8 @@
+  * found in the LICENSE file.
   */
  
-+#include "xcode-compiler.h"
++#include "arm-assember.h"
 +
-     .text
+ /* Changes:
+  * 2010-08-11 Steve McIntyre <steve.mcintyre@arm.com>
+  *    Added small changes to the two functions to make them work on the
+@@ -17,10 +19,8 @@
      .align 4
      .syntax unified
  
@@ -65,7 +89,7 @@ index 44b75e3..7551ee4 100644
  
 -arm_memset32:
 -        .fnstart
-+ENTRY(arm_memset32):
++ENTRY(arm_memset32)
 +        UNWIND_START
          push        {lr}
  
@@ -76,62 +100,51 @@ index 44b75e3..7551ee4 100644
          pop         {pc}
 -        .fnend
 +        UNWIND_END
-diff --git a/src/opts/memset16_neon.S b/src/opts/memset16_neon.S
-index b1719fa..92e5e89 100644
---- a/src/opts/memset16_neon.S
-+++ b/src/opts/memset16_neon.S
+diff -rupN upstream.original/src/opts/memset16_neon.S upstream.patched/src/opts/memset16_neon.S
+--- upstream.original/src/opts/memset16_neon.S	2015-01-15 17:39:02.140011500 +0200
++++ upstream.patched/src/opts/memset16_neon.S	2015-01-15 18:21:44.017165000 +0200
 @@ -5,6 +5,8 @@
   * found in the LICENSE file.
   ***************************************************************************/
  
-+#include "xcode-compiler.h"
++#include "arm-assember.h"
 +
  /***************************************************************************
    Neon memset: Attempts to do a memset with Neon registers if possible,
       Inputs:
-@@ -16,12 +18,12 @@
- ***************************************************************************/
+@@ -18,9 +20,9 @@
+         .syntax unified
  
          .code 32
 -        .fpu neon
 +        USE_FPU(neon)
          .align 4
 -        .globl memset16_neon
--        .func
 +        GLOBAL(memset16_neon)
-+        FUNC_START
  
--memset16_neon:
-+ENTRY(memset16_neon):
+ memset16_neon:
          cmp             r2, #0
-         bxeq            lr
- 
-@@ -139,5 +141,5 @@ memset_end:
+@@ -140,4 +142,4 @@ memset_end:
          pop             {r0}
          bx              lr
  
--        .endfunc
 -        .end
-+        FUNC_END
 +        THE_END
-diff --git a/src/opts/memset32_neon.S b/src/opts/memset32_neon.S
-index a9eaa0e..a9109b3 100644
---- a/src/opts/memset32_neon.S
-+++ b/src/opts/memset32_neon.S
-@@ -5,14 +5,16 @@
+diff -rupN upstream.original/src/opts/memset32_neon.S upstream.patched/src/opts/memset32_neon.S
+--- upstream.original/src/opts/memset32_neon.S	2015-01-15 17:39:02.141012200 +0200
++++ upstream.patched/src/opts/memset32_neon.S	2015-01-15 18:23:53.983011700 +0200
+@@ -5,13 +5,15 @@
   * found in the LICENSE file.
   ***************************************************************************/
  
-+ #include "xcode-compiler.h"
++#include "arm-assember.h"
 +
  	.code 32
 -	.fpu neon
 +	USE_FPU(neon)
  	.align 4
 -	.globl	memset32_neon
--	.func
 +	GLOBAL(memset32_neon)
-+	FUNC_START
  
  	/* r0 = buffer, r1 = value, r2 = times to write */
 -memset32_neon:
@@ -139,34 +152,9 @@ index a9eaa0e..a9109b3 100644
  	cmp		r2, #1
  	streq		r1, [r0], #4
  	bxeq		lr
-@@ -109,5 +111,5 @@ memset32_dropthru:
+@@ -108,4 +110,4 @@ memset32_dropthru:
  	str		r1, [r0, #0]
  	bx		lr
  
--	.endfunc
 -	.end
-+	FUNC_END
 +	THE_END
-diff -rupN upstream.original/src/opts/xcode-compiler.h upstream.patched/src/opts/xcode-compiler.h
---- upstream.original/src/opts/xcode-compiler.h	1970-01-01 02:00:00.000000000 +0200
-+++ upstream.patched/src/opts/xcode-compiler.h	2014-02-06 08:59:11.928949200 +0200
-@@ -0,0 +1,19 @@
-+#ifdef __APPLE__
-+#   define ENTRY(x) _##x
-+#   define GLOBAL(x) .globl _##x
-+#   define UNWIND_START
-+#   define UNWIND_END
-+#   define FUNC_START
-+#   define FUNC_END
-+#   define THE_END
-+#   define USE_FPU(x)
-+#else
-+#   define ENTRY(x) x
-+#   define GLOBAL(x) .global x; .type x, %function
-+#   define UNWIND_START .fnstart
-+#   define UNWIND_END .fnend
-+#   define FUNC_START .func
-+#   define FUNC_END .endfunc
-+#   define THE_END .end
-+#   define USE_FPU(x) .fpu x
-+#endif

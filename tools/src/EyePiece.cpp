@@ -1018,15 +1018,21 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
     if (configuration.verbose)
         output << xT("Reading result image from GPU...") << std::endl;
     SkBitmap outputBitmap;
-    outputBitmap.setConfig(SkBitmap::kARGB_8888_Config, configuration.outputImageWidth, configuration.outputImageHeight);
-    outputBitmap.allocPixels();
+    outputBitmap.allocPixels(SkImageInfo::Make(
+        configuration.outputImageWidth,
+        configuration.outputImageHeight,
+        SkColorType::kRGBA_8888_SkColorType,
+        SkAlphaType::kUnpremul_SkAlphaType));
     glReadPixels(0, 0, configuration.outputImageWidth, configuration.outputImageHeight, GL_RGBA, GL_UNSIGNED_BYTE, outputBitmap.getPixels());
     glVerifyResult(output);
 
     // Flip image vertically
     SkBitmap filledOutputBitmap;
-    filledOutputBitmap.setConfig(SkBitmap::kARGB_8888_Config, configuration.outputImageWidth, configuration.outputImageHeight);
-    filledOutputBitmap.allocPixels();
+    filledOutputBitmap.allocPixels(SkImageInfo::Make(
+        configuration.outputImageWidth,
+        configuration.outputImageHeight,
+        SkColorType::kRGBA_8888_SkColorType,
+        SkAlphaType::kUnpremul_SkAlphaType));
     const auto rowSizeInBytes = outputBitmap.rowBytes();
     for (int row = 0; row < configuration.outputImageHeight; row++)
     {

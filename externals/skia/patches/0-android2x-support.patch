@@ -1,6 +1,6 @@
---- upstream.original/src/ports/SkFontConfigParser_android.cpp	2014-08-21 13:23:43.261726000 +0300
-+++ upstream.patched/src/ports/SkFontConfigParser_android.cpp	2014-08-28 15:06:44.016233000 +0300
-@@ -267,6 +267,89 @@ void SkFontConfigParser::GetFontFamilies
+--- upstream.original/src/ports/SkFontConfigParser_android.cpp	2015-01-15 17:39:02.328025500 +0200
++++ upstream.patched/src/ports/SkFontConfigParser_android.cpp	2015-01-15 17:41:08.565087000 +0200
+@@ -579,6 +579,89 @@ void SkFontConfigParser::GetFontFamilies
          fallbackFonts[i]->fIsFallbackFont = true;
          *fontFamilies.append() = fallbackFonts[i];
      }

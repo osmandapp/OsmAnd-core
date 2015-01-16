@@ -31,7 +31,7 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     // Decode image data
     std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
     SkMemoryStream imageStream(image.constData(), image.length(), false);
-    if (!SkImageDecoder::DecodeStream(&imageStream, bitmap.get(), SkBitmap::Config::kNo_Config, SkImageDecoder::kDecodePixels_Mode))
+    if (!SkImageDecoder::DecodeStream(&imageStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
         return false;
     
     // Return tile

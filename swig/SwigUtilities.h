@@ -85,8 +85,14 @@ namespace OsmAnd
         {
             const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
 
-            bitmap->setConfig(SkBitmap::kARGB_8888_Config, width, height);
-            bitmap->allocPixels();
+            if (!bitmap->tryAllocPixels(SkImageInfo::Make(
+                width,
+                height,
+                SkColorType::kRGBA_8888_SkColorType,
+                SkAlphaType::kUnpremul_SkAlphaType)))
+            {
+                return nullptr;
+            }
             if (bitmap->getSize() < bufferSize)
                 return nullptr;
             memcpy(bitmap->getPixels(), pBuffer, bufferSize);

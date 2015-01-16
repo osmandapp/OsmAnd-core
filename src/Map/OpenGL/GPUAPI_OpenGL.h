@@ -257,12 +257,12 @@ namespace OsmAnd
         virtual void glPushGroupMarkerEXT_wrapper(GLsizei length, const GLchar* marker) = 0;
         virtual void glPopGroupMarkerEXT_wrapper() = 0;
 
-        virtual TextureFormat getTextureFormat(const SkBitmap::Config skBitmapConfig) const;
-        virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const = 0;
+        virtual TextureFormat getTextureFormat(const SkColorType skBitmapConfig) const;
+        virtual TextureFormat getTextureSizedFormat(const SkColorType skBitmapConfig) const = 0;
         virtual TextureFormat getTextureSizedFormat_float() const = 0;
         virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const = 0;
 
-        virtual SourceFormat getSourceFormat(const SkBitmap::Config skBitmapConfig) const;
+        virtual SourceFormat getSourceFormat(const SkColorType skBitmapConfig) const;
         virtual SourceFormat getSourceFormat_float() const = 0;
         virtual bool isValidSourceFormat(const SourceFormat sourceFormat) const = 0;
 

@@ -1,8 +1,6 @@
-diff --git a/src/utils/win/SkWGL_win.cpp b/src/utils/win/SkWGL_win.cpp
-index 3b1966d..aa2749d 100644
---- a/src/utils/win/SkWGL_win.cpp
-+++ b/src/utils/win/SkWGL_win.cpp
-@@ -200,7 +200,7 @@ void destroy_dummy_window(HWND dummy) {
+--- upstream.original/src/utils/win/SkWGL_win.cpp	2015-01-15 17:39:02.708044300 +0200
++++ upstream.patched/src/utils/win/SkWGL_win.cpp	2015-01-15 17:46:52.457552400 +0200
+@@ -224,7 +224,7 @@ void destroy_dummy_window(HWND dummy) {
  }
  
  #define GET_PROC(NAME, SUFFIX) f##NAME = \
