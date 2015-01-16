@@ -511,6 +511,34 @@ float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject
 	return obstaclesTime + distOnRoadToPass / speed;
 }
 
+bool checkViaRestrictions(SHARED_PTR<RouteSegment> from, SHARED_PTR<RouteSegment> to) {
+    if(from.get() != NULL && to.get() != NULL) {
+        int64_t fid = to->getRoad()->getId();
+        for(uint i = 0; i < from->getRoad()->restrictions.size(); i++) {
+            long id = from->getRoad()->restrictions[i] >> 3;
+            if(fid == id) {
+                int tp = from->getRoad()->restrictions[i] & 7;
+                if(tp == RESTRICTION_NO_LEFT_TURN || 
+                   tp == RESTRICTION_NO_RIGHT_TURN || 
+                   tp == RESTRICTION_NO_STRAIGHT_ON || 
+                   tp == RESTRICTION_NO_U_TURN) {
+                   return false;
+                }
+                break;
+            }
+        }
+    }
+    return true;
+}
+
+SHARED_PTR<RouteSegment> getParentDiffId(SHARED_PTR<RouteSegment> s) {
+    while(s->parentRoute.get() != NULL && s->parentRoute->getRoad()->id == s->getRoad()->id) {
+            s = s->parentRoute;
+    }
+    return s->parentRoute;
+}
+               
+
 bool checkIfOppositieSegmentWasVisited(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QUEUE& graphSegments,
 		SHARED_PTR<RouteSegment> segment, VISITED_MAP& oppositeSegments, 
 		 int segmentPoint, float segmentDist, float obstaclesTime) {
@@ -519,19 +547,23 @@ bool checkIfOppositieSegmentWasVisited(RoutingContext* ctx, bool reverseWaySearc
 	VISITED_MAP::iterator opIt = oppositeSegments.find(opp);
 	if (opIt != oppositeSegments.end() && opIt->second.get() != NULL ) {
 		SHARED_PTR<RouteSegment> opposite = opIt->second;
-		SHARED_PTR<RouteSegment> frs = SHARED_PTR<RouteSegment>(new RouteSegment(road, segmentPoint));
-		float distStartObstacles = segment->distanceFromStart + calculateTimeWithObstacles(ctx, road, segmentDist , obstaclesTime);
-		frs->parentRoute = segment;
-		frs->parentSegmentEnd = segmentPoint;
-		frs->reverseWaySearch = reverseWaySearch? 1 : -1;
-		frs->distanceFromStart = opposite->distanceFromStart + distStartObstacles;
-		frs->distanceToEnd = 0;
-		frs->opposite = opposite;
-		graphSegments.push(frs);
-		if(TRACE_ROUTING){
-			printRoad("  >> Final segment : ", frs);
+		SHARED_PTR<RouteSegment> to = reverseWaySearch ? getParentDiffId(segment) : getParentDiffId(opposite);
+        SHARED_PTR<RouteSegment> from = !reverseWaySearch ? getParentDiffId(segment) : getParentDiffId(opposite);
+        if (checkViaRestrictions(from, to)) {			
+			SHARED_PTR<RouteSegment> frs = SHARED_PTR<RouteSegment>(new RouteSegment(road, segmentPoint));
+			float distStartObstacles = segment->distanceFromStart + calculateTimeWithObstacles(ctx, road, segmentDist , obstaclesTime);
+			frs->parentRoute = segment;
+			frs->parentSegmentEnd = segmentPoint;
+			frs->reverseWaySearch = reverseWaySearch? 1 : -1;
+			frs->distanceFromStart = opposite->distanceFromStart + distStartObstacles;
+			frs->distanceToEnd = 0;
+			frs->opposite = opposite;
+			graphSegments.push(frs);
+			if(TRACE_ROUTING){
+				printRoad("  >> Final segment : ", frs);
+			}
+			return true;			
 		}
-		return true;			
 	}
 	return false;
 }
@@ -626,18 +658,12 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 
 }
 
-bool proccessRestrictions(RoutingContext* ctx, SHARED_PTR<RouteDataObject> road, SHARED_PTR<RouteSegment> inputNext, bool reverseWay) {
-	ctx->segmentsToVisitPrescripted.clear();
-	ctx->segmentsToVisitNotForbidden.clear();
-	bool exclusiveRestriction = false;
-	SHARED_PTR<RouteSegment> next = inputNext;
+void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment> inputNext, bool reverseWay, bool via,
+			SHARED_PTR<RouteDataObject> road) {
 
-	if (!reverseWay && road->restrictions.size() == 0) {
-		return false;
-	}
-	if(!ctx->config->router.restrictionsAware()) {
-		return false;
-	}
+	SHARED_PTR<RouteSegment> next = inputNext;
+	bool exclusiveRestriction = false;
+	
 	while (next.get() != NULL) {
 		int type = -1;
 		if (!reverseWay) {
@@ -680,25 +706,61 @@ bool proccessRestrictions(RoutingContext* ctx, SHARED_PTR<RouteDataObject> road,
 		} else if (type == RESTRICTION_NO_LEFT_TURN || type == RESTRICTION_NO_RIGHT_TURN
 		|| type == RESTRICTION_NO_STRAIGHT_ON || type == RESTRICTION_NO_U_TURN) {
 			// next = next.next; continue;
+			if(via) {
+				vector<SHARED_PTR<RouteSegment> >::iterator it;
+				for(it = ctx->segmentsToVisitPrescripted.begin(); it != ctx->segmentsToVisitPrescripted.end();
+					it++) {
+					if((*it)->road->id == next->road->id) {
+						ctx->segmentsToVisitPrescripted.erase(it);
+						break;
+					}
+					
+				}
+				
+			}
 		} else if (type == -1) {
 			// case no restriction
 			ctx->segmentsToVisitNotForbidden.push_back(next);
 		} else {
-			// case exclusive restriction (only_right, only_straight, ...)
-			// 1. in case we are going backward we should not consider only_restriction
-			// as exclusive because we have many "in" roads and one "out"
-			// 2. in case we are going forward we have one "in" and many "out"
-			if (!reverseWay) {
-				exclusiveRestriction = true;
-				ctx->segmentsToVisitNotForbidden.clear();
-				ctx->segmentsToVisitPrescripted.push_back(next);
-			} else {
-				ctx->segmentsToVisitNotForbidden.push_back(next);
+			if (!via) {
+				// case exclusive restriction (only_right, only_straight, ...)
+				// 1. in case we are going backward we should not consider only_restriction
+				// as exclusive because we have many "in" roads and one "out"
+				// 2. in case we are going forward we have one "in" and many "out"
+				if (!reverseWay) {
+					exclusiveRestriction = true;
+					ctx->segmentsToVisitNotForbidden.clear();
+					ctx->segmentsToVisitPrescripted.push_back(next);
+				} else {
+					ctx->segmentsToVisitNotForbidden.push_back(next);
+				}
 			}
 		}
 		next = next->next;
 	}
-	ctx->segmentsToVisitPrescripted.insert(ctx->segmentsToVisitPrescripted.end(), ctx->segmentsToVisitNotForbidden.begin(), ctx->segmentsToVisitNotForbidden.end());
+	if(!via) {
+		ctx->segmentsToVisitPrescripted.insert(ctx->segmentsToVisitPrescripted.end(), ctx->segmentsToVisitNotForbidden.begin(), ctx->segmentsToVisitNotForbidden.end());
+	}
+}
+
+bool proccessRestrictions(RoutingContext* ctx, SHARED_PTR<RouteSegment> segment, SHARED_PTR<RouteSegment> inputNext, bool reverseWay) {
+	
+	if(!ctx->config->router.restrictionsAware()) {
+		return false;
+	}
+	SHARED_PTR<RouteDataObject> road = segment->getRoad();
+	SHARED_PTR<RouteSegment> parent = getParentDiffId(segment);
+		
+	if (!reverseWay && road->restrictions.size() == 0 && 
+			(parent.get() == NULL || parent->road->restrictions.size() == 0)) {
+		return false;
+	}
+	ctx->segmentsToVisitPrescripted.clear();
+	ctx->segmentsToVisitNotForbidden.clear();
+	processRestriction(ctx, inputNext, reverseWay, false, road);
+	if(parent.get() != NULL) {
+		processRestriction(ctx, inputNext, reverseWay, true, parent->road);
+	}
 	return true;
 }
 
@@ -713,7 +775,7 @@ SHARED_PTR<RouteSegment> processIntersections(RoutingContext* ctx, SEGMENTS_QUEU
 		inputNext->next.get() == NULL) {
 		thereAreRestrictions = false;
 	} else {
-		thereAreRestrictions = proccessRestrictions(ctx, segment->road, inputNext, reverseWaySearch);
+		thereAreRestrictions = proccessRestrictions(ctx, segment, inputNext, reverseWaySearch);
 		if (thereAreRestrictions) {
 			nextIterator = ctx->segmentsToVisitPrescripted.begin();
 			if(TRACE_ROUTING) {
