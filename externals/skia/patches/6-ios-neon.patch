@@ -89,7 +89,7 @@ diff -rupN upstream.original/src/opts/memset.arm.S upstream.patched/src/opts/mem
  
 -arm_memset32:
 -        .fnstart
-+ENTRY(arm_memset32)
++ENTRY(arm_memset32):
 +        UNWIND_START
          push        {lr}
  
