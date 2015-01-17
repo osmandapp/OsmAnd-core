@@ -326,6 +326,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		"upstream.patched/src/ports/SkFontConfigParser_android.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType_common.cpp"
 		"upstream.patched/src/ports/SkFontHost_FreeType.cpp"
+		"upstream.patched/src/ports/SkFontMgr_android.cpp"
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
