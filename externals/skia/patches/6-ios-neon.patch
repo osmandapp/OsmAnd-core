@@ -100,9 +100,8 @@ diff -rupN upstream.original/src/opts/memset.arm.S upstream.patched/src/opts/mem
          pop         {pc}
 -        .fnend
 +        UNWIND_END
-diff -rupN upstream.original/src/opts/memset16_neon.S upstream.patched/src/opts/memset16_neon.S
---- upstream.original/src/opts/memset16_neon.S	2015-01-15 17:39:02.140011500 +0200
-+++ upstream.patched/src/opts/memset16_neon.S	2015-01-15 18:21:44.017165000 +0200
+--- upstream.original/src/opts/memset16_neon.S	2015-01-16 11:26:22.502494700 +0200
++++ upstream.patched/src/opts/memset16_neon.S	2015-01-17 23:12:29.504343100 +0200
 @@ -5,6 +5,8 @@
   * found in the LICENSE file.
   ***************************************************************************/
@@ -112,7 +111,7 @@ diff -rupN upstream.original/src/opts/memset16_neon.S upstream.patched/src/opts/
  /***************************************************************************
    Neon memset: Attempts to do a memset with Neon registers if possible,
       Inputs:
-@@ -18,9 +20,9 @@
+@@ -18,11 +20,11 @@
          .syntax unified
  
          .code 32
@@ -122,8 +121,11 @@ diff -rupN upstream.original/src/opts/memset16_neon.S upstream.patched/src/opts/
 -        .globl memset16_neon
 +        GLOBAL(memset16_neon)
  
- memset16_neon:
+-memset16_neon:
++ENTRY(memset16_neon):
          cmp             r2, #0
+         bxeq            lr
+ 
 @@ -140,4 +142,4 @@ memset_end:
          pop             {r0}
          bx              lr
