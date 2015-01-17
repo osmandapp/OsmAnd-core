@@ -40,7 +40,7 @@ namespace OsmAnd
         QStringList _gdebuggerGroupsStack;
         QMutex _gdebuggerGroupsStackMutex;
     protected:
-        virtual TextureFormat getTextureSizedFormat(const SkColorType skBitmapConfig) const;
+        virtual TextureFormat getTextureSizedFormat(const SkColorType skColorFormat) const;
         virtual TextureFormat getTextureSizedFormat_float() const;
         virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const;
 

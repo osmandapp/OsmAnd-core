@@ -3,10 +3,14 @@
 #include <cassert>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QRegExp>
 #include <QStringList>
+#include "restore_internal_warnings.h"
 
+#include "ignore_warnings_on_external_includes.h"
 #include <SkBitmap.h>
+#include "restore_internal_warnings.h"
 
 #include "MapCommonTypes.h"
 #include "IRasterMapLayerProvider.h"
@@ -396,24 +400,24 @@ bool OsmAnd::GPUAPI_OpenGLES2::release()
     return true;
 }
 
-OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const
+OsmAnd::GPUAPI_OpenGLES2::TextureFormat OsmAnd::GPUAPI_OpenGLES2::getTextureSizedFormat(const SkColorType skColorFormat) const
 {
     GLenum textureFormat = GL_INVALID_ENUM;
 
-    switch (skBitmapConfig)
+    switch (skColorFormat)
     {
-        case SkBitmap::Config::kARGB_8888_Config:
+        case SkColorType::kRGBA_8888_SkColorType:
             if (isSupported_ARM_rgba8 || isSupported_OES_rgb8_rgba8)
                 textureFormat = GL_RGBA8_OES;
             else if (isSupported_EXT_texture)
                 textureFormat = GL_RGBA8_EXT;
             break;
 
-        case SkBitmap::Config::kARGB_4444_Config:
+        case SkColorType::kARGB_4444_SkColorType:
             textureFormat = GL_RGBA4;
             break;
 
-        case SkBitmap::Config::kRGB_565_Config:
+        case SkColorType::kRGB_565_SkColorType:
             textureFormat = GL_RGB565;
             break;
 

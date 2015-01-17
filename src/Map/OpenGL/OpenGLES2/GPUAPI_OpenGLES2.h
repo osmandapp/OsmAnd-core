@@ -53,7 +53,7 @@ namespace OsmAnd
 
         bool isShaderPrecisionFormatSupported(GLenum shaderType, GLenum precisionType);
     protected:
-        virtual TextureFormat getTextureSizedFormat(const SkBitmap::Config skBitmapConfig) const;
+        virtual TextureFormat getTextureSizedFormat(const SkColorType skColorFormat) const;
         virtual TextureFormat getTextureSizedFormat_float() const;
         virtual bool isValidTextureSizedFormat(const TextureFormat textureFormat) const;
 
