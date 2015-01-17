@@ -86,6 +86,12 @@ task swigGenerateJava(type: Exec) {
     } else {
         commandLine "sh", file("../java/generate.sh").getAbsolutePath(), projectDir.getAbsolutePath()
     }
+	
+    doLast {
+        if (execResult.exitValue != 0) {
+            throw new GradleException()
+        }
+    }
 }
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn << swigGenerateJava

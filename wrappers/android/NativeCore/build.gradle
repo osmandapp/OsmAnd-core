@@ -35,6 +35,12 @@ task buildOsmAndCore(type: Exec) {
     } else {
         commandLine "sh", file("../build.sh").getAbsolutePath()
     }
+
+    doLast {
+        if (execResult.exitValue != 0) {
+            throw new GradleException()
+        }
+    }
 }
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn << buildOsmAndCore
