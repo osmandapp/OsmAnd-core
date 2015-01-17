@@ -1,6 +1,6 @@
---- upstream.original/src/ports/SkFontConfigParser_android.cpp	2015-01-15 17:39:02.328025500 +0200
-+++ upstream.patched/src/ports/SkFontConfigParser_android.cpp	2015-01-15 17:41:08.565087000 +0200
-@@ -579,6 +579,89 @@ void SkFontConfigParser::GetFontFamilies
+--- upstream.original/src/ports/SkFontConfigParser_android.cpp	2015-01-16 11:26:22.662483900 +0200
++++ upstream.patched/src/ports/SkFontConfigParser_android.cpp	2015-01-17 14:10:03.080819700 +0200
+@@ -579,6 +579,95 @@ void SkFontConfigParser::GetFontFamilies
          fallbackFonts[i]->fIsFallbackFont = true;
          *fontFamilies.append() = fallbackFonts[i];
      }
@@ -59,17 +59,23 @@
 +
 +        const FontInitRec* rec = gSystemFonts;
 +        FontFamily* newFontFamily = NULL;
++        int fontFileIndex = 0;
 +        for (size_t i = 0; i < SK_ARRAY_COUNT(gSystemFonts); i++) {
 +            // Marker that we're in the beginning of a new family
 +            if (rec[i].fNames != NULL) {
 +                if(newFontFamily != NULL)
 +                    *fontFamilies.append() = newFontFamily;
 +                newFontFamily = new FontFamily();
-+                newFontFamily->order = -1;
++                newFontFamily->fOrder = -1;
++
++                fontFileIndex = 0;
 +            }
 +
 +            // Append file name
-+            newFontFamily->fFontFiles.push_back().fFileName = rec[i].fFileName;
++            FontFileInfo fontFileInfo;
++            fontFileInfo.fFileName = rec[i].fFileName;
++            fontFileInfo.fIndex = fontFileIndex++;
++            newFontFamily->fFonts.push_back(fontFileInfo);
 +
 +            // Append names
 +            if(rec[i].fNames != NULL) {
