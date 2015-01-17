@@ -46,6 +46,7 @@ buildArch()
 	fi
 	
 	(cd "$bakedDir" && make -j$OSMAND_BUILD_CPU_CORES_NUM OsmAndCoreWithJNI)
+	retcode=$?
 	if [[ $retcode -ne 0 ]]; then
 		echo "Failed to build ($retcode), aborting..."
 		rm -rf "$bakedDir"
@@ -54,25 +55,29 @@ buildArch()
 }
 
 buildArch "armeabi"
+retcode=$?
 if [[ $retcode -ne 0 ]]; then
-	echo "Failed!"
+	echo "buildArch(armeabi) failed with $retcode, exiting..."
 	exit $retcode
 fi
 
 buildArch "armeabi-v7a"
+retcode=$?
 if [[ $retcode -ne 0 ]]; then
-	echo "Failed!"
+	echo "buildArch(armeabi-v7a) failed with $retcode, exiting..."
 	exit $retcode
 fi
 
 buildArch "x86"
+retcode=$?
 if [[ $retcode -ne 0 ]]; then
-	echo "Failed!"
+	echo "buildArch(x86) failed with $retcode, exiting..."
 	exit $retcode
 fi
 
 buildArch "mips"
+retcode=$?
 if [[ $retcode -ne 0 ]]; then
-	echo "Failed!"
+	echo "buildArch(mips) failed with $retcode, exiting..."
 	exit $retcode
 fi
