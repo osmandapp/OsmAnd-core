@@ -11,6 +11,8 @@ set(target_specific_definitions_private "")
 set(target_specific_definitions_public "")
 
 set(used_arch_specific_sources FALSE)
+
+set(target_specific_sources__x86 "")
 if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
 	set(target_specific_sources__x86
@@ -79,6 +81,8 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 				COMPILE_FLAGS "/arch:SSE2")
 	endif()
 endif()
+
+set(target_specific_sources__arm "")
 if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
 
@@ -158,6 +162,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 				COMPILE_FLAGS "-mfloat-abi=softfp -mfpu=neon -fomit-frame-pointer")
 	endif()
 endif()
+
 if (NOT used_arch_specific_sources)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp"
