@@ -1,0 +1,12 @@
+diff -rupN upstream.original/include/gpu/gl/SkNativeGLContext.h upstream.patched/include/gpu/gl/SkNativeGLContext.h
+--- upstream.original/include/gpu/gl/SkNativeGLContext.h	2015-01-19 12:22:51.174956200 +0200
++++ upstream.patched/include/gpu/gl/SkNativeGLContext.h	2015-01-21 15:17:02.764930800 +0200
+@@ -43,7 +43,7 @@ static const struct { int major, minor;
+     #include <GL/glx.h>
+ #elif defined(SK_BUILD_FOR_WIN32)
+     #include <windows.h>
+-    #include <GL/GL.h>
++    #include <GL/gl.h>
+     #include "SkWGL.h"
+ #endif
+ 
