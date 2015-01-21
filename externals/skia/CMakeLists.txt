@@ -184,6 +184,9 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 		"upstream.patched/include/utils/win"
 	)
 	file(GLOB src_utils_win "upstream.patched/src/utils/win/*")
+	file(GLOB src_utils_win__remove
+		"upstream.patched/src/utils/win/SkDWrite*")
+	list(REMOVE_ITEM src_utils_win ${src_utils_win__remove})
 	file(GLOB src_gpu_gl_win "upstream.patched/src/gpu/gl/win/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/fonts/SkFontMgr_indirect.cpp"
@@ -209,6 +212,9 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 			"upstream.patched/src/ports/SkRemotableFontMgr_win_dw.cpp"
 			"upstream.patched/src/ports/SkScalerContext_win_dw.cpp"
 			"upstream.patched/src/ports/SkTypeface_win_dw.cpp"
+			"upstream.patched/src/utils/win/SkDWrite.cpp"
+			"upstream.patched/src/utils/win/SkDWriteFontFileStream.cpp"
+			"upstream.patched/src/utils/win/SkDWriteGeometrySink.cpp"
 		)
 	else()
 		set(target_specific_sources "${target_specific_sources}"
