@@ -270,8 +270,11 @@ if (CMAKE_TARGET_OS STREQUAL "windows")
 	set(target_specific_sources ${target_specific_sources}
 		"upstream.patched/port/cpl_vsil_win32.cpp"
 	)
+	# This is not done via find_library() since under Linux it won't find needed library
+	#find_library(ws2_32_LIBRARY ws2_32)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		Ws2_32
+		#{ws2_32_LIBRARY}
+		ws2_32
 	)
 
 	if (CMAKE_COMPILER_FAMILY STREQUAL "msvc")
