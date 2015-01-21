@@ -50,8 +50,11 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		${dl_LIBRARY}
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "windows")
+	# This is not done via find_library() since under Linux it won't find needed library
+	#find_library(ws2_32_LIBRARY ws2_32)
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		Ws2_32
+		#{ws2_32_LIBRARY}
+		ws2_32
 	)
 endif()
 
