@@ -16,6 +16,7 @@
 #include "IMapTiledDataProvider.h"
 #include "IRasterMapLayerProvider.h"
 #include "IMapElevationDataProvider.h"
+#include "QKeyValueIterator.h"
 #include "Utilities.h"
 
 OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer_)
@@ -52,24 +53,30 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     rasterMapLayersBatch.reserve(_maxNumberOfRasterMapLayersInBatch);
     bool atLeastOneRasterLayerRendered = false;
 
-    // First layers batch should be rendered without blending
+    // First layers batch should be rendered without blending,
+    // since blending is performed inside shader itself.
     bool firstLayersRendered = false;
     bool blendingEnabled = false;
     glDisable(GL_BLEND);
     GL_CHECK_RESULT;
 
     int lastUsedProgram = -1;
-    const auto itMapLayersEnd = currentState.mapLayersProviders.cend();
-    for (auto itMapLayerEntry = currentState.mapLayersProviders.cbegin(); itMapLayerEntry != itMapLayersEnd; ++itMapLayerEntry)
+    for (const auto& mapLayerEntry : rangeOf(constOf(currentState.mapLayersProviders)))
     {
-        const auto layerIndex = itMapLayerEntry.key();
-        const auto& provider = itMapLayerEntry.value();
+        const auto layerIndex = mapLayerEntry.key();
+        const auto& provider = mapLayerEntry.value();
 
-        // Check that resources exist for this provider
-        if (!getResources().getCollectionSnapshot(MapRendererResourceType::MapLayer, std::dynamic_pointer_cast<IMapDataProvider>(provider)))
+        // If resources collection for this layer is missing,
+        // there's nothing to do here, so skip
+        if (!getResources().getCollectionSnapshot(
+            MapRendererResourceType::MapLayer,
+            std::dynamic_pointer_cast<IMapDataProvider>(provider)))
+        {
             continue;
+        }
 
-        // Check if blending needs to be enabled
+        // All batches after first are rendered using blending,
+        // since output color of new batch needs to be blended with destination color.
         if (firstLayersRendered && !blendingEnabled)
         {
             glEnable(GL_BLEND);
@@ -159,11 +166,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_vs_elevationData_upperMetersPerUnit*/ +
         1 /*param_vs_elevationData_lowerMetersPerUnit*/ +
         (gpuAPI->isSupported_vertexShaderTextureLookup ? vsUniformsPerLayer : 0) /*param_vs_elevationDataLayer*/;
-    _maxNumberOfRasterMapLayersInBatch = (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
+    _maxNumberOfRasterMapLayersInBatch =
+        (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
     if (_maxNumberOfRasterMapLayersInBatch > gpuAPI->maxTextureUnitsInFragmentShader)
         _maxNumberOfRasterMapLayersInBatch = gpuAPI->maxTextureUnitsInFragmentShader;
-    if (setupOptions.maxNumberOfRasterMapLayersInBatch != 0 && _maxNumberOfRasterMapLayersInBatch > setupOptions.maxNumberOfRasterMapLayersInBatch)
+    if (setupOptions.maxNumberOfRasterMapLayersInBatch != 0 &&
+        _maxNumberOfRasterMapLayersInBatch > setupOptions.maxNumberOfRasterMapLayersInBatch)
+    {
         _maxNumberOfRasterMapLayersInBatch = setupOptions.maxNumberOfRasterMapLayersInBatch;
+    }
 
     // Initialize programs that support [1 ... _maxNumberOfRasterMapLayersInBatch] as number of layers
     auto supportedMaxNumberOfRasterMapLayersInBatch = _maxNumberOfRasterMapLayersInBatch;
@@ -182,7 +193,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
     if (supportedMaxNumberOfRasterMapLayersInBatch != _maxNumberOfRasterMapLayersInBatch)
     {
         LogPrintf(LogSeverityLevel::Warning,
-            "Seems like buggy driver. This device should be capable of rendering %d raster map layers in batch, but only %d variant compiles",
+            "Seems like buggy driver. "
+            "This device should be capable of rendering %d raster map layers in batch, but only %d variant compiles",
             _maxNumberOfRasterMapLayersInBatch,
             supportedMaxNumberOfRasterMapLayersInBatch);
         _maxNumberOfRasterMapLayersInBatch = supportedMaxNumberOfRasterMapLayersInBatch;
@@ -637,9 +649,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 glUniform1f(program.vs.param.elevationData_scaleFactor, currentState.elevationDataConfiguration.scaleFactor);
                 GL_CHECK_RESULT;
 
-                const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y, AtlasMapRenderer::TileSize3D);
+                const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+                    currentState.zoomBase,
+                    tileIdN.y,
+                    AtlasMapRenderer::TileSize3D);
                 glUniform1f(program.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
-                const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(currentState.zoomBase, tileIdN.y + 1, AtlasMapRenderer::TileSize3D);
+                const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+                    currentState.zoomBase,
+                    tileIdN.y + 1,
+                    AtlasMapRenderer::TileSize3D);
                 glUniform1f(program.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
 
                 const auto& perTile_vs = program.vs.param.elevationDataLayer;
@@ -770,6 +788,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             }
 
             // Finally draw the tile
+            //glDrawElements(GL_TRIANGLES, /*_rasterTileIndicesCount*/6 * 10, GL_UNSIGNED_SHORT, nullptr);  // Works
+            //glDrawRangeElements(GL_TRIANGLES, 6 * 5, 6 * 10, 6 * 5, GL_UNSIGNED_SHORT, nullptr); // Has workaround:
+            //glDrawElements(GL_TRIANGLES, /*_rasterTileIndicesCount*/6 * 1, GL_UNSIGNED_SHORT, nullptr); // Works
+            //glDrawElements(GL_TRIANGLES, /*_rasterTileIndicesCount*/6 * 1, GL_UNSIGNED_SHORT, reinterpret_cast<const void*>(sizeof(uint16_t) * 6 * 2));  // Works
             glDrawElements(GL_TRIANGLES, _rasterTileIndicesCount, GL_UNSIGNED_SHORT, nullptr);
             GL_CHECK_RESULT;
 
