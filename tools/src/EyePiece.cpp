@@ -23,7 +23,7 @@
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #if defined(OSMAND_TARGET_OS_windows)
 #   define WIN32_LEAN_AND_MEAN
-#   include <Windows.h>
+#   include <windows.h>
 #endif
 #include <OsmAndCore/restore_internal_warnings.h>
 
