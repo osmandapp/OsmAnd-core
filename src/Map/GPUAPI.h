@@ -39,6 +39,14 @@ namespace OsmAnd
                 uint16_t type;
             };
         };
+        enum class AlphaChannelType
+        {
+            Invalid = -1,
+            NotPresent,
+            Opaque,
+            Straight,
+            Premultiplied,
+        };
 
         class ResourceInGPU
         {
@@ -81,12 +89,19 @@ namespace OsmAnd
         private:
         protected:
         public:
-            TextureInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int width, const unsigned int height, const unsigned int mipmapLevels);
+            TextureInGPU(
+                GPUAPI* api,
+                const RefInGPU& refInGPU,
+                const unsigned int width,
+                const unsigned int height,
+                const unsigned int mipmapLevels,
+                const AlphaChannelType alphaChannelType);
             virtual ~TextureInGPU();
 
             const unsigned int width;
             const unsigned int height;
             const unsigned int mipmapLevels;
+            const AlphaChannelType alphaChannelType;
             const float uTexelSizeN;
             const float vTexelSizeN;
             const float uHalfTexelSizeN;
@@ -105,7 +120,7 @@ namespace OsmAnd
             const unsigned int itemsCount;
         };
 
-        class ElementArrayBufferInGPU: public ResourceInGPU
+        class ElementArrayBufferInGPU : public ResourceInGPU
         {
             Q_DISABLE_COPY_AND_MOVE(ElementArrayBufferInGPU);
         private:
@@ -132,28 +147,28 @@ namespace OsmAnd
                 return id;
             }
 
-            inline AtlasTypeId& operator=( const uint64_t& that )
+            inline AtlasTypeId& operator=(const uint64_t& that)
             {
                 id = that;
                 return *this;
             }
 
-            inline bool operator==( const AtlasTypeId& that )
+            inline bool operator==(const AtlasTypeId& that)
             {
                 return this->id == that.id;
             }
 
-            inline bool operator!=( const AtlasTypeId& that )
+            inline bool operator!=(const AtlasTypeId& that)
             {
                 return this->id != that.id;
             }
 
-            inline bool operator==( const uint64_t& that )
+            inline bool operator==(const uint64_t& that)
             {
                 return this->id == that;
             }
 
-            inline bool operator!=( const uint64_t& that )
+            inline bool operator!=(const uint64_t& that)
             {
                 return this->id != that;
             }
@@ -166,7 +181,7 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(AtlasTexturesPool);
         public:
-            typedef std::function< AtlasTextureInGPU*() > AtlasTextureAllocatorSignature;
+            typedef std::function< AtlasTextureInGPU*() > AtlasTextureAllocator;
             typedef std::tuple< std::weak_ptr<AtlasTextureInGPU>, unsigned int > FreedSlotsEntry;
         private:
             mutable QMutex _freedSlotsMutex;
@@ -179,7 +194,9 @@ namespace OsmAnd
         protected:
             AtlasTexturesPool(GPUAPI* api, const AtlasTypeId& typeId);
 
-            std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(AtlasTextureAllocatorSignature atlasTextureAllocator);
+            std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(
+                const AlphaChannelType alphaChannelType,
+                AtlasTextureAllocator atlasTextureAllocator);
         public:
             virtual ~AtlasTexturesPool();
 
@@ -201,7 +218,12 @@ namespace OsmAnd
             QAtomicInt _tilesCounter;
 #endif
         public:
-            AtlasTextureInGPU(GPUAPI* api, const RefInGPU& refInGPU, const unsigned int textureSize, const unsigned int mipmapLevels, const std::shared_ptr<AtlasTexturesPool>& pool);
+            AtlasTextureInGPU(
+                GPUAPI* api,
+                const RefInGPU& refInGPU,
+                const unsigned int textureSize,
+                const unsigned int mipmapLevels,
+                const std::shared_ptr<AtlasTexturesPool>& pool);
             virtual ~AtlasTextureInGPU();
 
             const unsigned int tileSize;
@@ -221,11 +243,15 @@ namespace OsmAnd
         private:
         protected:
         public:
-            SlotOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas, const uint32_t slotIndex);
+            SlotOnAtlasTextureInGPU(
+                const std::shared_ptr<AtlasTextureInGPU>& atlas,
+                const unsigned int slotIndex,
+                const AlphaChannelType alphaChannelType);
             virtual ~SlotOnAtlasTextureInGPU();
 
             const std::shared_ptr<AtlasTextureInGPU> atlasTexture;
-            const uint32_t slotIndex;
+            const unsigned int slotIndex;
+            const AlphaChannelType alphaChannelType;
         };
 
         class MeshInGPU : public MetaResourceInGPU
@@ -257,7 +283,10 @@ namespace OsmAnd
         GPUAPI();
 
         std::shared_ptr<AtlasTexturesPool> obtainAtlasTexturesPool(const AtlasTypeId& atlasTypeId);
-        std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator );
+        std::shared_ptr<SlotOnAtlasTextureInGPU> allocateTileInAltasTexture(
+            const AlphaChannelType alphaChannelType,
+            const std::shared_ptr<AtlasTexturesPool>& pool,
+            AtlasTexturesPool::AtlasTextureAllocator atlasTextureAllocator);
 
         virtual bool releaseResourceInGPU(const ResourceInGPU::Type type, const RefInGPU& refInGPU) = 0;
 
@@ -270,8 +299,12 @@ namespace OsmAnd
         virtual bool initialize() = 0;
         virtual bool release() = 0;
 
-        virtual bool uploadTiledDataToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
-        virtual bool uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
+        virtual bool uploadTiledDataToGPU(
+            const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
+        virtual bool uploadSymbolToGPU(
+            const std::shared_ptr< const MapSymbol >& symbol,
+            std::shared_ptr< const ResourceInGPU >& resourceInGPU) = 0;
 
         virtual void waitUntilUploadIsComplete() = 0;
 

@@ -19,7 +19,11 @@ OsmAnd::GPUAPI::~GPUAPI()
         _allocatedResourcesCounter.load();
 #endif
     if (resourcesRemaining > 0)
-        LogPrintf(LogSeverityLevel::Error, "By the time of GPU destruction, it still contained %d allocated resources that will probably leak", resourcesRemaining);
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "By the time of GPU destruction, it still contained %d allocated resources that will probably leak",
+            resourcesRemaining);
+    }
     assert(resourcesRemaining == 0);
 }
 
@@ -45,9 +49,12 @@ std::shared_ptr<OsmAnd::GPUAPI::AtlasTexturesPool> OsmAnd::GPUAPI::obtainAtlasTe
     return *itPool;
 }
 
-std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocateTile(const std::shared_ptr<AtlasTexturesPool>& pool, AtlasTexturesPool::AtlasTextureAllocatorSignature atlasTextureAllocator)
+std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocateTileInAltasTexture(
+    const AlphaChannelType alphaChannelType,
+    const std::shared_ptr<AtlasTexturesPool>& pool,
+    AtlasTexturesPool::AtlasTextureAllocator atlasTextureAllocator)
 {
-    return pool->allocateTile(atlasTextureAllocator);
+    return pool->allocateTile(alphaChannelType, atlasTextureAllocator);
 }
 
 OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU(const Type type_, GPUAPI* api_, const RefInGPU& refInGPU_)
@@ -93,11 +100,18 @@ OsmAnd::GPUAPI::MetaResourceInGPU::~MetaResourceInGPU()
 {
 }
 
-OsmAnd::GPUAPI::TextureInGPU::TextureInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int width_, const unsigned int height_, const unsigned int mipmapLevels_)
+OsmAnd::GPUAPI::TextureInGPU::TextureInGPU(
+    GPUAPI* api_,
+    const RefInGPU& refInGPU_,
+    const unsigned int width_,
+    const unsigned int height_,
+    const unsigned int mipmapLevels_,
+    const AlphaChannelType alphaChannelType_)
     : ResourceInGPU(Type::Texture, api_, refInGPU_)
     , width(width_)
     , height(height_)
     , mipmapLevels(mipmapLevels_)
+    , alphaChannelType(alphaChannelType_)
     , uTexelSizeN(1.0f / static_cast<float>(width))
     , vTexelSizeN(1.0f / static_cast<float>(height))
     , uHalfTexelSizeN(0.5f / static_cast<float>(width))
@@ -129,8 +143,13 @@ OsmAnd::GPUAPI::ElementArrayBufferInGPU::~ElementArrayBufferInGPU()
 {
 }
 
-OsmAnd::GPUAPI::AtlasTextureInGPU::AtlasTextureInGPU(GPUAPI* api_, const RefInGPU& refInGPU_, const unsigned int textureSize_, const unsigned int mipmapLevels_, const std::shared_ptr<AtlasTexturesPool>& pool_)
-    : TextureInGPU(api_, refInGPU_, textureSize_, textureSize_, mipmapLevels_)
+OsmAnd::GPUAPI::AtlasTextureInGPU::AtlasTextureInGPU(
+    GPUAPI* api_,
+    const RefInGPU& refInGPU_,
+    const unsigned int textureSize_,
+    const unsigned int mipmapLevels_,
+    const std::shared_ptr<AtlasTexturesPool>& pool_)
+    : TextureInGPU(api_, refInGPU_, textureSize_, textureSize_, mipmapLevels_, AlphaChannelType::Invalid)
     , tileSize(pool_->typeId.tileSize)
     , padding(pool_->typeId.tilePadding)
     , slotsPerSide(textureSize_ / (tileSize + 2 * padding))
@@ -149,7 +168,11 @@ OsmAnd::GPUAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
         _tilesCounter.load();
 #endif
     if (tilesRemaining > 0)
-        LogPrintf(LogSeverityLevel::Error, "By the time of atlas texture destruction, it still contained %d allocated slots", tilesRemaining);
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "By the time of atlas texture destruction, it still contained %d allocated slots",
+            tilesRemaining);
+    }
     assert(tilesRemaining == 0);
 
     // Clear all references to this atlas
@@ -169,10 +192,14 @@ OsmAnd::GPUAPI::AtlasTextureInGPU::~AtlasTextureInGPU()
     }
 }
 
-OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(const std::shared_ptr<AtlasTextureInGPU>& atlas_, const unsigned int slotIndex_)
+OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU::SlotOnAtlasTextureInGPU(
+    const std::shared_ptr<AtlasTextureInGPU>& atlas_,
+    const unsigned int slotIndex_,
+    const AlphaChannelType alphaChannelType_)
     : ResourceInGPU(Type::SlotOnAtlasTexture, atlas_->api, atlas_->refInGPU)
     , atlasTexture(atlas_)
     , slotIndex(slotIndex_)
+    , alphaChannelType(alphaChannelType_)
 {
     // Add reference of this tile to atlas texture
     {
@@ -220,7 +247,9 @@ OsmAnd::GPUAPI::AtlasTexturesPool::~AtlasTexturesPool()
 {
 }
 
-std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTexturesPool::allocateTile(AtlasTextureAllocatorSignature atlasTextureAllocator)
+std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTexturesPool::allocateTile(
+    const AlphaChannelType alphaChannelType,
+    AtlasTextureAllocator atlasTextureAllocator)
 {
     // First look for freed slots
     {
@@ -237,7 +266,10 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
             // Return allocated slot
             const auto& atlasTexture = std::get<0>(freedSlotEntry);
             const auto& slotIndex = std::get<1>(freedSlotEntry);
-            return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(atlasTexture.lock(), slotIndex));
+            return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(
+                atlasTexture.lock(),
+                slotIndex,
+                alphaChannelType));
         }
     }
 
@@ -261,7 +293,10 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::AtlasTe
         }
 
         // Or let's just continue using current atlas texture
-        return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(atlasTexture, _firstUnusedSlotIndex++));
+        return std::shared_ptr<SlotOnAtlasTextureInGPU>(new SlotOnAtlasTextureInGPU(
+            atlasTexture,
+            _firstUnusedSlotIndex++,
+            alphaChannelType));
     }
 }
 

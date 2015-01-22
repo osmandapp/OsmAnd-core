@@ -135,21 +135,33 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
         //WORKAROUND: Sometimes compilation fails without a reason, but at least report glGetError() value
         if (logBuffer[0] == '\0')
         {
-            sprintf(logBuffer, "Driver haven't reported compilation failure reason, last result code was 0x%08x", compilationResult);
+            sprintf(logBuffer,
+                "Driver haven't reported compilation failure reason, last result code was 0x%08x",
+                compilationResult);
             logBufferSizeWorkaround = false;
         }
 
         if (logBufferSizeWorkaround)
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile GLSL shader (driver is buggy so errors log may be incomplete):\n%s\nSource:\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
+                "Failed to compile GLSL shader (driver is buggy so errors log may be incomplete):\n"
+                "%s\n"
+                "Source:\n"
+                "-------SHADER BEGIN-------\n"
+                "%s\n"
+                "--------SHADER END--------",
                 logBuffer,
                 source);
         }
         else
         {
             LogPrintf(LogSeverityLevel::Error,
-                "Failed to compile GLSL shader:\n%s\nSource:\n-------SHADER BEGIN-------\n%s\n--------SHADER END--------",
+                "Failed to compile GLSL shader:\n"
+                "%s\n"
+                "Source:\n"
+                "-------SHADER BEGIN-------\n"
+                "%s\n"
+                "--------SHADER END--------",
                 logBuffer,
                 source);
         }
@@ -713,7 +725,11 @@ std::shared_ptr<OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext> OsmAnd::GP
     return std::shared_ptr<ProgramVariablesLookupContext>(new ProgramVariablesLookupContext(this, program, variablesMap));
 }
 
-bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& location, const QString& name, const GlslVariableType& type)
+bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(
+    const GLuint& program,
+    GLint& location,
+    const QString& name,
+    const GlslVariableType& type)
 {
     GL_CHECK_PRESENT(glGetAttribLocation);
     GL_CHECK_PRESENT(glGetUniformLocation);
@@ -732,7 +748,9 @@ bool OsmAnd::GPUAPI_OpenGL::findVariableLocation(const GLuint& program, GLint& l
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(
+    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
@@ -754,7 +772,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataToGPU(const std::shared_ptr< const IM
     return false;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(const std::shared_ptr< const MapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadSymbolToGPU(
+    const std::shared_ptr< const MapSymbol >& symbol,
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     if (const auto rasterMapSymbol = std::dynamic_pointer_cast<const RasterMapSymbol>(symbol))
     {
@@ -782,7 +802,10 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
 #if OSMAND_DEBUG
             if (!glIsTexture(texture))
             {
-                LogPrintf(LogSeverityLevel::Error, "%d is not an OpenGL texture on thread %p", texture, QThread::currentThreadId());
+                LogPrintf(LogSeverityLevel::Error,
+                    "%d is not an OpenGL texture on thread %p",
+                    texture,
+                    QThread::currentThreadId());
                 return false;
             }
             GL_CHECK_RESULT;
@@ -802,7 +825,10 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
 #if OSMAND_DEBUG
             if (!glIsBuffer(buffer))
             {
-                LogPrintf(LogSeverityLevel::Error, "%d is not an OpenGL buffer on thread %p", buffer, QThread::currentThreadId());
+                LogPrintf(LogSeverityLevel::Error,
+                    "%d is not an OpenGL buffer on thread %p",
+                    buffer,
+                    QThread::currentThreadId());
                 return false;
             }
             GL_CHECK_RESULT;
@@ -817,7 +843,9 @@ bool OsmAnd::GPUAPI_OpenGL::releaseResourceInGPU(const ResourceInGPU::Type type,
     return false;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(
+    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -825,6 +853,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(const std::shared_ptr<
     GL_CHECK_PRESENT(glTexParameteri);
 
     // Depending on tile type, determine texture properties:
+    auto alphaChannelType = AlphaChannelType::Invalid;
     GLsizei sourcePixelByteSize = 0;
     bool mipmapGenerationSupported = false;
     bool tileUsesPalette = false;
@@ -833,8 +862,21 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(const std::shared_ptr<
     const void* tileData = nullptr;
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
-        //NOTE: Future check
-        //assert(rasterMapLayerData->bitmap->alphaType() != SkAlphaType::kUnpremul_SkAlphaType);
+        switch (rasterMapLayerData->bitmap->alphaType())
+        {
+            case SkAlphaType::kPremul_SkAlphaType:
+                alphaChannelType = AlphaChannelType::Premultiplied;
+                break;
+            case SkAlphaType::kUnpremul_SkAlphaType:
+                alphaChannelType = AlphaChannelType::Straight;
+                break;
+            case SkAlphaType::kOpaque_SkAlphaType:
+                alphaChannelType = AlphaChannelType::Opaque;
+                break;
+            default:
+                assert(false);
+                return false;
+        }
 
         switch (rasterMapLayerData->bitmap->colorType())
         {
@@ -986,8 +1028,13 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(const std::shared_ptr<
         GL_CHECK_RESULT;
 
         // Create resource-in-GPU descriptor
-        const auto textureInGPU = new TextureInGPU(this, reinterpret_cast<RefInGPU>(texture), textureSize, textureSize, mipmapLevels);
-        resourceInGPU.reset(static_cast<ResourceInGPU*>(textureInGPU));
+        resourceInGPU.reset(new TextureInGPU(
+            this,
+            reinterpret_cast<RefInGPU>(texture),
+            textureSize,
+            textureSize,
+            mipmapLevels,
+            alphaChannelType));
 
         return true;
     }
@@ -1006,7 +1053,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(const std::shared_ptr<
         return false;
 
     // Get free slot from that pool
-    const auto slotInGPU = allocateTile(atlasTexturesPool,
+    const auto slotInGPU = allocateTileInAltasTexture(alphaChannelType, atlasTexturesPool,
         [this, textureSize, mipmapLevels, atlasTexturesPool, textureFormat]
         () -> AtlasTextureInGPU*
         {
@@ -1031,7 +1078,12 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(const std::shared_ptr<
             glBindTexture(GL_TEXTURE_2D, 0);
             GL_CHECK_RESULT;
 
-            return new AtlasTextureInGPU(this, reinterpret_cast<RefInGPU>(texture), textureSize, mipmapLevels, atlasTexturesPool);
+            return new AtlasTextureInGPU(
+                this,
+                reinterpret_cast<RefInGPU>(texture),
+                textureSize,
+                mipmapLevels,
+                atlasTexturesPool);
         });
 
     // Upload tile to allocated slot in atlas texture
@@ -1063,7 +1115,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsTextureToGPU(const std::shared_ptr<
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(
+    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -1101,7 +1155,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadTiledDataAsArrayBufferToGPU(const std::shared_
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< const RasterMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(
+    const std::shared_ptr< const RasterMapSymbol >& symbol,
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenTextures);
     GL_CHECK_PRESENT(glBindTexture);
@@ -1109,8 +1165,24 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
     GL_CHECK_PRESENT(glTexParameteri);
 
     // Determine texture properties:
+    auto alphaChannelType = AlphaChannelType::Invalid;
     GLsizei sourcePixelByteSize = 0;
     bool symbolUsesPalette = false;
+    switch (symbol->bitmap->alphaType())
+    {
+        case SkAlphaType::kPremul_SkAlphaType:
+            alphaChannelType = AlphaChannelType::Premultiplied;
+            break;
+        case SkAlphaType::kUnpremul_SkAlphaType:
+            alphaChannelType = AlphaChannelType::Straight;
+            break;
+        case SkAlphaType::kOpaque_SkAlphaType:
+            alphaChannelType = AlphaChannelType::Opaque;
+            break;
+        default:
+            assert(false);
+            return false;
+    }
     switch (symbol->bitmap->colorType())
     {
         case SkColorType::kRGBA_8888_SkColorType:
@@ -1125,7 +1197,9 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
             symbolUsesPalette = true;
             break;
         default:
-            LogPrintf(LogSeverityLevel::Error, "Tried to upload symbol bitmap with unsupported color type %d to GPU", symbol->bitmap->colorType());
+            LogPrintf(LogSeverityLevel::Error,
+                "Tried to upload symbol bitmap with unsupported color type %d to GPU",
+                symbol->bitmap->colorType());
             assert(false);
             return false;
     }
@@ -1172,13 +1246,20 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsTextureToGPU(const std::shared_ptr< co
     GL_CHECK_RESULT;
 
     // Create resource-in-GPU descriptor
-    const auto textureInGPU = new TextureInGPU(this, reinterpret_cast<RefInGPU>(texture), symbol->bitmap->width(), symbol->bitmap->height(), 1);
-    resourceInGPU.reset(static_cast<ResourceInGPU*>(textureInGPU));
+    resourceInGPU.reset(new TextureInGPU(
+        this,
+        reinterpret_cast<RefInGPU>(texture),
+        symbol->bitmap->width(),
+        symbol->bitmap->height(),
+        1,
+        alphaChannelType));
 
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const VectorMapSymbol >& symbol, std::shared_ptr< const ResourceInGPU >& resourceInGPU)
+bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
+    const std::shared_ptr< const VectorMapSymbol >& symbol,
+    std::shared_ptr< const ResourceInGPU >& resourceInGPU)
 {
     GL_CHECK_PRESENT(glGenBuffers);
     GL_CHECK_PRESENT(glBindBuffer);
@@ -1205,7 +1286,10 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const
     GL_CHECK_RESULT;
 
     // Create ArrayBuffer resource
-    const std::shared_ptr<ArrayBufferInGPU> vertexBufferResource(new ArrayBufferInGPU(this, reinterpret_cast<RefInGPU>(vertexBuffer), symbol->verticesCount));
+    const std::shared_ptr<ArrayBufferInGPU> vertexBufferResource(new ArrayBufferInGPU(
+        this,
+        reinterpret_cast<RefInGPU>(vertexBuffer),
+        symbol->verticesCount));
 
     // Primitive map symbol may have no index buffer, so check if it needs to be created
     std::shared_ptr<ElementArrayBufferInGPU> indexBufferResource;
@@ -1221,7 +1305,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const
         GL_CHECK_RESULT;
 
         // Upload data
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, symbol->indicesCount*sizeof(VectorMapSymbol::Index), symbol->indices, GL_STATIC_DRAW);
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER,
+            symbol->indicesCount*sizeof(VectorMapSymbol::Index),
+            symbol->indices,
+            GL_STATIC_DRAW);
         GL_CHECK_RESULT;
 
         // Unbind it
@@ -1229,7 +1317,10 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(const std::shared_ptr< const
         GL_CHECK_RESULT;
 
         // Create ElementArrayBuffer resource
-        indexBufferResource.reset(new ElementArrayBufferInGPU(this, reinterpret_cast<RefInGPU>(indexBuffer), symbol->indicesCount));
+        indexBufferResource.reset(new ElementArrayBufferInGPU(
+            this,
+            reinterpret_cast<RefInGPU>(indexBuffer),
+            symbol->indicesCount));
     }
 
     // Create mesh resource
@@ -1257,7 +1348,8 @@ void OsmAnd::GPUAPI_OpenGL::popDebugGroupMarker()
         glPopGroupMarkerEXT_wrapper();
 }
 
-OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile)
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
+    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile)
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
@@ -1287,7 +1379,8 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(con
     return static_cast<TextureFormat>(GL_INVALID_ENUM);
 }
 
-OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
+OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(
+    const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
     return getTextureFormat(symbol->bitmap->colorType());
 }
@@ -1334,7 +1427,8 @@ OsmAnd::GPUAPI_OpenGL::TextureFormat OsmAnd::GPUAPI_OpenGL::getTextureFormat(con
     return (static_cast<TextureFormat>(format) << 16) | type;
 }
 
-OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const std::shared_ptr< const IMapTiledDataProvider::Data >& tile)
+OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
+    const std::shared_ptr< const IMapTiledDataProvider::Data >& tile)
 {
     if (const auto rasterMapLayerData = std::dynamic_pointer_cast<const IRasterMapLayerProvider::Data>(tile))
     {
@@ -1351,7 +1445,8 @@ OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const
     return sourceFormat;
 }
 
-OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const std::shared_ptr< const RasterMapSymbol >& symbol)
+OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(
+    const std::shared_ptr< const RasterMapSymbol >& symbol)
 {
     return getSourceFormat(symbol->bitmap->colorType());
 }
@@ -1381,7 +1476,12 @@ OsmAnd::GPUAPI_OpenGL::SourceFormat OsmAnd::GPUAPI_OpenGL::getSourceFormat(const
     return sourceFormat;
 }
 
-void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat encodedFormat)
+void OsmAnd::GPUAPI_OpenGL::allocateTexture2D(
+    GLenum target,
+    GLsizei levels,
+    GLsizei width,
+    GLsizei height,
+    const TextureFormat encodedFormat)
 {
     GLenum format = static_cast<GLenum>(encodedFormat >> 16);
     GLenum type = static_cast<GLenum>(encodedFormat & 0xFFFF);
@@ -1463,23 +1563,38 @@ void OsmAnd::GPUAPI_OpenGL::initializeVAO(const GLname vao)
 
         SimulatedVAO::VertexAttrib vertexAttrib;
 
-        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, reinterpret_cast<GLint*>(&vertexAttrib.arrayBufferBinding));
+        glGetVertexAttribiv(
+            vertexAttribIndex,
+            GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING,
+            reinterpret_cast<GLint*>(&vertexAttrib.arrayBufferBinding));
         GL_CHECK_RESULT;
 
         vertexAttrib.arraySize = 4;
-        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_SIZE, reinterpret_cast<GLint*>(&vertexAttrib.arraySize));
+        glGetVertexAttribiv(
+            vertexAttribIndex,
+            GL_VERTEX_ATTRIB_ARRAY_SIZE,
+            reinterpret_cast<GLint*>(&vertexAttrib.arraySize));
         GL_CHECK_RESULT;
 
         vertexAttrib.arrayStride = 0;
-        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_STRIDE, reinterpret_cast<GLint*>(&vertexAttrib.arrayStride));
+        glGetVertexAttribiv(
+            vertexAttribIndex,
+            GL_VERTEX_ATTRIB_ARRAY_STRIDE,
+            reinterpret_cast<GLint*>(&vertexAttrib.arrayStride));
         GL_CHECK_RESULT;
 
         vertexAttrib.arrayType = GL_FLOAT;
-        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_TYPE, reinterpret_cast<GLint*>(&vertexAttrib.arrayType));
+        glGetVertexAttribiv(
+            vertexAttribIndex,
+            GL_VERTEX_ATTRIB_ARRAY_TYPE,
+            reinterpret_cast<GLint*>(&vertexAttrib.arrayType));
         GL_CHECK_RESULT;
 
         vertexAttrib.arrayIsNormalized = GL_FALSE;
-        glGetVertexAttribiv(vertexAttribIndex, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, reinterpret_cast<GLint*>(&vertexAttrib.arrayIsNormalized));
+        glGetVertexAttribiv(
+            vertexAttribIndex,
+            GL_VERTEX_ATTRIB_ARRAY_NORMALIZED,
+            reinterpret_cast<GLint*>(&vertexAttrib.arrayIsNormalized));
         GL_CHECK_RESULT;
 
         vertexAttrib.arrayPointer = nullptr;
@@ -1612,7 +1727,10 @@ OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::~ProgramVariablesLookupCon
 {
 }
 
-bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint& location, const QString& name, const GlslVariableType& type)
+bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
+    GLint& location,
+    const QString& name,
+    const GlslVariableType& type)
 {
     auto& variablesByName = _variablesByName[type];
     const auto itPreviousLocation = variablesByName.constFind(name);
@@ -1660,7 +1778,10 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
 
             //WORKAROUND: 2. 'struct[0].member[0]' instead of 'struct.member'
             {
-                const QRegExp regExp(QLatin1String("^") + QRegExp::escape(name).replace("\\.", "(?:\\[0\\])?\\.") + QLatin1String("(?:\\[0\\])?$"));
+                const QRegExp regExp(
+                    QLatin1String("^") +
+                    QRegExp::escape(name).replace("\\.", "(?:\\[0\\])?\\.") +
+                    QLatin1String("(?:\\[0\\])?$"));
                 for (const auto& variable : constOf(variablesMap))
                 {
                     if (variable.type != type || !regExp.exactMatch(variable.name))
@@ -1702,7 +1823,10 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLint&
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type)
+bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
+    GLlocation& location,
+    const QString& name,
+    const GlslVariableType& type)
 {
     return lookupLocation(*location, name, type);
 }
