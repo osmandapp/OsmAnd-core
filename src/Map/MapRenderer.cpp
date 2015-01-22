@@ -828,7 +828,9 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
 
         const bool ok = input->copyTo(convertedBitmap,
             currentConfiguration->limitTextureColorDepthBy16bits
-            ? (convertedAlphaChannelPresence == AlphaChannelPresence::Present ? SkColorType::kARGB_4444_SkColorType : SkColorType::kRGB_565_SkColorType)
+            ? (convertedAlphaChannelPresence == AlphaChannelPresence::Present
+                ? SkColorType::kARGB_4444_SkColorType
+                : SkColorType::kRGB_565_SkColorType)
             : SkColorType::kRGBA_8888_SkColorType);
         if (!ok)
         {

@@ -235,16 +235,30 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
     // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
     if (state.zoomFraction >= 0.0f)
-        internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - (internalState->baseDistanceFromCameraToTarget - internalState->nearDistanceFromCameraToTarget) * (2.0f * state.zoomFraction);
+    {
+        const auto delta = (2.0f * state.zoomFraction)
+            * (internalState->baseDistanceFromCameraToTarget - internalState->nearDistanceFromCameraToTarget);
+        internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - delta;
+    }
     else
-        internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - (internalState->farDistanceFromCameraToTarget - internalState->baseDistanceFromCameraToTarget) * (2.0f * state.zoomFraction);
-    internalState->groundDistanceFromCameraToTarget = internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
-    internalState->tileOnScreenScaleFactor = ((state.zoomFraction >= 0.0f) ? (1.0f + state.zoomFraction) : (1.0f + 0.5f * state.zoomFraction));
-    internalState->scaleToRetainProjectedSize = internalState->distanceFromCameraToTarget / internalState->baseDistanceFromCameraToTarget;
-    internalState->pixelInWorldProjectionScale = (static_cast<float>(AtlasMapRenderer::TileSize3D) / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor));
+    {
+        const auto delta = (2.0f * state.zoomFraction)
+            * (internalState->farDistanceFromCameraToTarget - internalState->baseDistanceFromCameraToTarget);
+        internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - delta;
+    }
+    internalState->groundDistanceFromCameraToTarget =
+        internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
+    internalState->tileOnScreenScaleFactor = ((state.zoomFraction >= 0.0f)
+        ? (1.0f + state.zoomFraction)
+        : (1.0f + 0.5f * state.zoomFraction));
+    internalState->scaleToRetainProjectedSize =
+        internalState->distanceFromCameraToTarget / internalState->baseDistanceFromCameraToTarget;
+    internalState->pixelInWorldProjectionScale = static_cast<float>(AtlasMapRenderer::TileSize3D)
+        / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor);
 
     // Recalculate perspective projection with obtained value
-    internalState->zSkyplane = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize + internalState->distanceFromCameraToTarget;
+    internalState->zSkyplane = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize
+        + internalState->distanceFromCameraToTarget;
     internalState->zFar = glm::length(glm::vec3(
         internalState->projectionPlaneHalfWidth * (internalState->zSkyplane / _zNear),
         internalState->projectionPlaneHalfHeight * (internalState->zSkyplane / _zNear),
@@ -275,14 +289,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
     internalState->mCameraViewInv = internalState->mAzimuthInv * internalState->mElevationInv * internalState->mDistanceInv;
 
     // Get camera positions
-    internalState->groundCameraPosition = (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz;
+    internalState->groundCameraPosition =
+        (internalState->mAzimuthInv * glm::vec4(0.0f, 0.0f, internalState->distanceFromCameraToTarget, 1.0f)).xz;
     internalState->worldCameraPosition = (_internalState.mCameraViewInv * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
 
     // Convenience precalculations
     internalState->mPerspectiveProjectionView = internalState->mPerspectiveProjection * internalState->mCameraView;
 
     // Correct fog distance
-    internalState->correctedFogDistance = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
+    internalState->correctedFogDistance = state.fogConfiguration.distanceToFog * internalState->scaleToRetainProjectedSize
+        + (internalState->distanceFromCameraToTarget - internalState->groundDistanceFromCameraToTarget);
 
     // Calculate skyplane size
     float zSkyplaneK = internalState->zSkyplane / _zNear;
@@ -352,42 +368,50 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     glm::vec3 intersectionPoint;
     glm::vec2 intersectionPoints[4];
 
-    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz, fBL_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 &&
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBL_g.xyz, fBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz, fBR_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 &&
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nBR_g.xyz, fBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, fTR_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 &&
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, fTR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, fTL_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 &&
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, fTL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz, fBR_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 &&
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTR_g.xyz, fBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz, fBL_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 &&
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, fTL_g.xyz, fBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, nBL_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 &&
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTL_g.xyz, nBL_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
     }
-    if (intersectionPointsCounter < 4 && Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, nBR_g.xyz, intersectionPoint))
+    if (intersectionPointsCounter < 4 &&
+        Utilities_OpenGL_Common::lineSegmentIntersectPlane(planeN, planeO, nTR_g.xyz, nBR_g.xyz, intersectionPoint))
     {
         intersectionPoints[intersectionPointsCounter] = intersectionPoint.xz;
         intersectionPointsCounter++;
@@ -576,7 +600,8 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor() co
     InternalState internalState;
     bool ok = updateInternalState(internalState, state, *getConfiguration());
 
-    const auto tileSizeOnScreenInPixels = internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
+    const auto tileSizeOnScreenInPixels =
+        internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
     const auto metersPerPixel = Utilities::getMetersPerTileUnit(
         state.zoomBase,
         internalState.targetTileId.y,
