@@ -20,9 +20,18 @@ namespace OsmAnd
 
     enum class AlphaChannelPresence
     {
-        Present,
+        Unknown = -1,
+        NotPresent = 0,
+        Present = 1,
+    };
+
+    enum class AlphaChannelType
+    {
+        Invalid = -1,
         NotPresent,
-        Unknown
+        Opaque,
+        Straight,
+        Premultiplied,
     };
 
     typedef int MapSymbolIntersectionClassId;

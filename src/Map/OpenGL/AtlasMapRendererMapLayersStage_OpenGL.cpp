@@ -60,6 +60,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     glDisable(GL_BLEND);
     GL_CHECK_RESULT;
 
+    // Initially, configure for straight alpha channel type
+    auto currentAlphaChannelType = AlphaChannelType::Straight;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
     int lastUsedProgram = -1;
     for (const auto& mapLayerEntry : rangeOf(constOf(currentState.mapLayersProviders)))
     {
@@ -91,6 +96,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
             if (!canRasterMapLayerBeBatched(rasterMapLayersBatch, layerIndex))
             {
                 ok = ok && renderRasterLayersBatch(
+                    currentAlphaChannelType,
                     !atLeastOneRasterLayerRendered,
                     rasterMapLayersBatch,
                     lastUsedProgram);
@@ -112,6 +118,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     if (!rasterMapLayersBatch.isEmpty())
     {
         ok = ok && renderRasterLayersBatch(
+            currentAlphaChannelType,
             !atLeastOneRasterLayerRendered,
             rasterMapLayersBatch,
             lastUsedProgram);
@@ -566,6 +573,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::canRasterMapLayerBeBatched(
 }
 
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
+    AlphaChannelType &currentAlphaChannelType,
     const bool allowStubsDrawing,
     const QVector<int>& batchedLayerIndices,
     int& lastUsedProgram)
@@ -754,6 +762,36 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
             GL_CHECK_RESULT;
 
+            auto resourceAlphaChannelType = AlphaChannelType::Invalid;
+            if (resourceInGPU->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+            {
+                resourceAlphaChannelType =
+                    std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(resourceInGPU)->alphaChannelType;
+            }
+            else //if (resourceInGPU->type == GPUAPI::ResourceInGPU::Type::Texture)
+            {
+                resourceAlphaChannelType =
+                    std::static_pointer_cast<const GPUAPI::TextureInGPU>(resourceInGPU)->alphaChannelType;
+            }
+            if (currentAlphaChannelType != resourceAlphaChannelType)
+            {
+                switch (resourceAlphaChannelType)
+                {
+                    case AlphaChannelType::Premultiplied:
+                        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                        GL_CHECK_RESULT;
+                        break;
+                    case AlphaChannelType::Straight:
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        GL_CHECK_RESULT;
+                        break;
+                    default:
+                        break;
+                }
+
+                currentAlphaChannelType = resourceAlphaChannelType;
+            }
+
             glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
 
@@ -852,10 +890,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         return false;
 
     GL_PUSH_GROUP_MARKER(QString("use '%1-batched-raster-map-layers' program").arg(numberOfLayersInBatch));
-
-    // Prepare for premultiplied color (all raster layers come through SkBitmap)
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    GL_CHECK_RESULT;
 
     // Set symbol VAO
     gpuAPI->useVAO(vao);

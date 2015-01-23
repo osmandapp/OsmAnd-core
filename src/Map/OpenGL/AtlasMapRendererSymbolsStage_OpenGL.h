@@ -20,6 +20,7 @@ namespace OsmAnd
     protected:
         bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
+            AlphaChannelType &currentAlphaChannelType,
             int& lastUsedProgram);
 
         GLname _billboardRasterSymbolVAO;
@@ -64,12 +65,14 @@ namespace OsmAnd
         bool initializeBillboardRaster();
         bool renderBillboardRasterSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
+            AlphaChannelType &currentAlphaChannelType,
             int& lastUsedProgram);
         bool releaseBillboardRaster();
 
         bool initializeOnPath();
         bool renderOnPathSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
+            AlphaChannelType &currentAlphaChannelType,
             int& lastUsedProgram);
         bool releaseOnPath();
 
@@ -125,6 +128,7 @@ namespace OsmAnd
         bool initializeOnPath2DProgram(const unsigned int maxGlyphsPerDrawCall);
         bool renderOnPath2dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
+            AlphaChannelType &currentAlphaChannelType,
             int& lastUsedProgram);
         bool releaseOnPath2D();
 
@@ -172,11 +176,13 @@ namespace OsmAnd
         bool initializeOnPath3DProgram(const unsigned int maxGlyphsPerDrawCall);
         bool renderOnPath3dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
+            AlphaChannelType &currentAlphaChannelType,
             int& lastUsedProgram);
         bool releaseOnPath3D();
 
         bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+            AlphaChannelType &currentAlphaChannelType,
             int& lastUsedProgram);
 
         GLname _onSurfaceRasterSymbolVAO;
@@ -219,6 +225,7 @@ namespace OsmAnd
         bool initializeOnSurfaceRaster();
         bool renderOnSurfaceRasterSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+            AlphaChannelType &currentAlphaChannelType,
             int& lastUsedProgram);
         bool releaseOnSurfaceRaster();
 
@@ -255,6 +262,7 @@ namespace OsmAnd
         bool initializeOnSurfaceVector();
         bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+            AlphaChannelType &currentAlphaChannelType,
             int& lastUsedProgram);
         bool releaseOnSurfaceVector();
     public:

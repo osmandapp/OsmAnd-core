@@ -142,7 +142,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     if (metric)
         metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
 
-    // Restore post-multiplied color blending
+    // Restore straight color blending
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 

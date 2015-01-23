@@ -39,14 +39,6 @@ namespace OsmAnd
                 uint16_t type;
             };
         };
-        enum class AlphaChannelType
-        {
-            Invalid = -1,
-            NotPresent,
-            Opaque,
-            Straight,
-            Premultiplied,
-        };
 
         class ResourceInGPU
         {

@@ -59,6 +59,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
 
     prepare(metric);
 
+    // Initially, configure for straight alpha channel type
+    auto currentAlphaChannelType = AlphaChannelType::Straight;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GL_CHECK_RESULT;
+
     int lastUsedProgram = -1;
     for (const auto& renderable_ : constOf(renderableSymbols))
     {
@@ -67,6 +72,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
             Stopwatch renderBillboardSymbolStopwatch(metric != nullptr);
             ok = ok && renderBillboardSymbol(
                 renderable,
+                currentAlphaChannelType,
                 lastUsedProgram);
             if (metric)
             {
@@ -79,6 +85,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
             Stopwatch renderOnPathSymbolStopwatch(metric != nullptr);
             ok = ok && renderOnPathSymbol(
                 renderable,
+                currentAlphaChannelType,
                 lastUsedProgram);
             if (metric)
             {
@@ -91,6 +98,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
             Stopwatch renderOnSurfaceSymbolStopwatch(metric != nullptr);
             ok = ok && renderOnSurfaceSymbol(
                 renderable,
+                currentAlphaChannelType,
                 lastUsedProgram);
             if (metric)
             {
@@ -119,12 +127,14 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
     const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
+    AlphaChannelType &currentAlphaChannelType,
     int& lastUsedProgram)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
         return renderBillboardRasterSymbol(
             renderable,
+            currentAlphaChannelType,
             lastUsedProgram);
     }
     /*else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
@@ -142,6 +152,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
+    AlphaChannelType &currentAlphaChannelType,
     int& lastUsedProgram)
 {
     // Draw the glyphs
@@ -149,30 +160,35 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
     {
         return renderOnPath2dSymbol(
             renderable,
+            currentAlphaChannelType,
             lastUsedProgram);
     }
     else
     {
         return renderOnPath3dSymbol(
             renderable,
+            currentAlphaChannelType,
             lastUsedProgram);
     }
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+    AlphaChannelType &currentAlphaChannelType,
     int& lastUsedProgram)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
         return renderOnSurfaceRasterSymbol(
             renderable,
+            currentAlphaChannelType,
             lastUsedProgram);
     }
     else if (std::dynamic_pointer_cast<const VectorMapSymbol>(renderable->mapSymbol))
     {
         return renderOnSurfaceVectorSymbol(
             renderable,
+            currentAlphaChannelType,
             lastUsedProgram);
     }
 
@@ -418,6 +434,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
+    AlphaChannelType &currentAlphaChannelType,
     int& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
@@ -431,10 +448,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     if (lastUsedProgram != *_billboardRasterProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'billboard-raster' program");
-
-        // Raster symbols use premultiplied color (due to SKIA)
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        GL_CHECK_RESULT;
 
         // Set symbol VAO
         gpuAPI->useVAO(_billboardRasterSymbolVAO);
@@ -491,6 +504,25 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         : symbol->offset;
     glUniform2i(_billboardRasterProgram.vs.param.onScreenOffset, offsetOnScreen.x, -offsetOnScreen.y);
     GL_CHECK_RESULT;
+
+    if (currentAlphaChannelType != gpuResource->alphaChannelType)
+    {
+        switch (gpuResource->alphaChannelType)
+        {
+            case AlphaChannelType::Premultiplied:
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+                break;
+            case AlphaChannelType::Straight:
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+                break;
+            default:
+                break;
+        }
+
+        currentAlphaChannelType = gpuResource->alphaChannelType;
+    }
 
     // Activate symbol texture
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
@@ -1176,6 +1208,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
+    AlphaChannelType &currentAlphaChannelType,
     int& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
@@ -1189,10 +1222,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     if (lastUsedProgram != *_onPath2dProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-path-2d' program");
-
-        // Raster symbols use premultiplied color (due to SKIA)
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        GL_CHECK_RESULT;
 
         // Set symbol VAO
         gpuAPI->useVAO(_onPathSymbol2dVAO);
@@ -1229,6 +1258,25 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     // Set distance from camera to symbol
     glUniform1f(_onPath2dProgram.vs.param.distanceFromCamera, renderable->distanceToCamera);
     GL_CHECK_RESULT;
+
+    if (currentAlphaChannelType != gpuResource->alphaChannelType)
+    {
+        switch (gpuResource->alphaChannelType)
+        {
+            case AlphaChannelType::Premultiplied:
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+                break;
+            case AlphaChannelType::Straight:
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+                break;
+            default:
+                break;
+        }
+
+        currentAlphaChannelType = gpuResource->alphaChannelType;
+    }
 
     // Activate symbol texture
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
@@ -1299,6 +1347,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
+    AlphaChannelType &currentAlphaChannelType,
     int& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
@@ -1312,10 +1361,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     if (lastUsedProgram != *_onPath3dProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-path-3d' program");
-
-        // Raster symbols use premultiplied color (due to SKIA)
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        GL_CHECK_RESULT;
 
         // Set symbol VAO
         gpuAPI->useVAO(_onPathSymbol3dVAO);
@@ -1353,6 +1398,25 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -renderable->distanceToCamera, 1.0f)).z;
     glUniform1f(_onPath3dProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
     GL_CHECK_RESULT;
+
+    if (currentAlphaChannelType != gpuResource->alphaChannelType)
+    {
+        switch (gpuResource->alphaChannelType)
+        {
+            case AlphaChannelType::Premultiplied:
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+                break;
+            case AlphaChannelType::Straight:
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+                break;
+            default:
+                break;
+        }
+
+        currentAlphaChannelType = gpuResource->alphaChannelType;
+    }
 
     // Activate symbol texture
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
@@ -1693,6 +1757,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+    AlphaChannelType &currentAlphaChannelType,
     int& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
@@ -1706,10 +1771,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     if (lastUsedProgram != *_onSurfaceRasterProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-raster' program");
-
-        // Raster symbols use premultiplied color (due to SKIA)
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        GL_CHECK_RESULT;
 
         // Set symbol VAO
         gpuAPI->useVAO(_onSurfaceRasterSymbolVAO);
@@ -1755,6 +1816,25 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     const auto zDistanceFromCamera = (internalState.mOrthographicProjection * glm::vec4(0.0f, 0.0f, -renderable->distanceToCamera, 1.0f)).z;
     glUniform1f(_onSurfaceRasterProgram.vs.param.zDistanceFromCamera, zDistanceFromCamera);
     GL_CHECK_RESULT;
+
+    if (currentAlphaChannelType != gpuResource->alphaChannelType)
+    {
+        switch (gpuResource->alphaChannelType)
+        {
+            case AlphaChannelType::Premultiplied:
+                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+                break;
+            case AlphaChannelType::Straight:
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                GL_CHECK_RESULT;
+                break;
+            default:
+                break;
+        }
+
+        currentAlphaChannelType = gpuResource->alphaChannelType;
+    }
 
     // Activate symbol texture
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->refInGPU)));
@@ -1924,6 +2004,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
+    AlphaChannelType &currentAlphaChannelType,
     int& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
@@ -1937,10 +2018,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     if (lastUsedProgram != *_onSurfaceVectorProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-vector' program");
-
-        // Vector symbols use post-multiplied color
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        GL_CHECK_RESULT;
 
         // Activate program
         glUseProgram(_onSurfaceVectorProgram.id);
@@ -1957,6 +2034,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     GL_PUSH_GROUP_MARKER(QString("[%1(%2) on-surface vector]")
         .arg(QString().sprintf("%p", symbol->groupPtr))
         .arg(symbol->group.lock()->toString()));
+
+    if (currentAlphaChannelType != AlphaChannelType::Straight)
+    {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        GL_CHECK_RESULT;
+        currentAlphaChannelType = AlphaChannelType::Straight;
+    }
 
     // Activate vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(gpuResource->vertexBuffer->refInGPU)));

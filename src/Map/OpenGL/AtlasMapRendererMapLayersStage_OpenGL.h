@@ -102,6 +102,7 @@ namespace OsmAnd
             const QVector<int>& batchedLayerIndices,
             const int layerIndex);
         bool renderRasterLayersBatch(
+            AlphaChannelType &currentAlphaChannelType,
             const bool allowStubsDrawing,
             const QVector<int>& batchedLayerIndices,
             int& lastUsedProgram);
