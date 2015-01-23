@@ -172,7 +172,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         1 /*param_vs_elevationData_scaleFactor*/ +
         1 /*param_vs_elevationData_upperMetersPerUnit*/ +
         1 /*param_vs_elevationData_lowerMetersPerUnit*/ +
-        (gpuAPI->isSupported_vertexShaderTextureLookup ? vsUniformsPerLayer : 0) /*param_vs_elevationDataLayer*/;
+        (gpuAPI->isSupported_vertexShaderTextureLookup ? vsUniformsPerLayer : 0) /*param_vs_elevationDataLayer*/ +
+        1 /*param_fs_isPremultipliedAlpha*/;
     _maxNumberOfRasterMapLayersInBatch =
         (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
     if (_maxNumberOfRasterMapLayersInBatch > gpuAPI->maxTextureUnitsInFragmentShader)
@@ -348,6 +349,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    PARAM_INPUT float v2f_mipmapLOD;                                                                               ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
+        // Parameters: common data
+        "uniform float param_fs_isPremultipliedAlpha;                                                                       ""\n"
+        "                                                                                                                   ""\n"
         // Parameters: per-layer data
         "struct RasterLayerTile                                                                                             ""\n"
         "{                                                                                                                  ""\n"
@@ -355,6 +359,18 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    lowp sampler2D sampler;                                                                                        ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
+        "                                                                                                                   ""\n"
+        "void addExtraAlpha(inout vec4 color, in float alpha)                                                               ""\n"
+        "{                                                                                                                  ""\n"
+        "    lowp float colorAlpha = 1.0 - param_fs_isPremultipliedAlpha + param_fs_isPremultipliedAlpha * alpha;           ""\n"
+        "    color *= vec4(alpha, colorAlpha, colorAlpha, colorAlpha);                                                      ""\n"
+        "}                                                                                                                  ""\n"
+        "void mixColors(inout vec4 destColor, in vec4 srcColor)                                                             ""\n"
+        "{                                                                                                                  ""\n"
+        "    lowp float srcColorMultiplier =                                                                                ""\n"
+        "        param_fs_isPremultipliedAlpha + (1.0 - param_fs_isPremultipliedAlpha) * srcColor.a;                        ""\n"
+        "    destColor = destColor * (1.0 - srcColor.a) + srcColor * srcColorMultiplier;                                    ""\n"
+        "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
         "{                                                                                                                  ""\n"
@@ -370,8 +386,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        // Premultiplied color
-        "    finalColor *= param_fs_rasterTileLayer_0.opacity;                                                              ""\n"
+        "                                                                                                                   ""\n"
+        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacity);                                                 ""\n"
         "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
         "                                                                                                                   ""\n"
 #if 0
@@ -403,9 +419,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                             ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
-        // Premultiplied color mixing
-        "        layerColor *= param_fs_rasterTileLayer_%rasterLayerIndex%.opacity;                                         ""\n"
-        "        finalColor = finalColor * (1.0 - layerColor.a) + layerColor;                                               ""\n"
+        "        addExtraAlpha(layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.opacity);                            ""\n"
+        "        mixColors(finalColor, layerColor);                                                                         ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
@@ -520,6 +535,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         ok = ok && lookup->lookupLocation(outRasterLayerTileProgram.vs.param.elevationDataLayer.slotsPerSide, "param_vs_elevationDataLayer.slotsPerSide", GlslVariableType::Uniform);
         ok = ok && lookup->lookupLocation(outRasterLayerTileProgram.vs.param.elevationDataLayer.slotIndex, "param_vs_elevationDataLayer.slotIndex", GlslVariableType::Uniform);
     }
+    ok = ok && lookup->lookupLocation(outRasterLayerTileProgram.fs.param.isPremultipliedAlpha, "param_fs_isPremultipliedAlpha", GlslVariableType::Uniform);
     outRasterLayerTileProgram.vs.param.rasterTileLayers.resize(numberOfLayersInBatch);
     outRasterLayerTileProgram.fs.param.rasterTileLayers.resize(numberOfLayersInBatch);
     for (auto layerIndex = 0u; layerIndex < numberOfLayersInBatch; layerIndex++)
@@ -693,7 +709,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                         glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
                         GL_CHECK_RESULT;
                     }
-                    else
+                    else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
                     {
                         const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
 
@@ -780,9 +796,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     case AlphaChannelType::Premultiplied:
                         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                         GL_CHECK_RESULT;
+
+                        glUniform1f(program.fs.param.isPremultipliedAlpha, 1.0f);
+                        GL_CHECK_RESULT;
                         break;
                     case AlphaChannelType::Straight:
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        GL_CHECK_RESULT;
+
+                        glUniform1f(program.fs.param.isPremultipliedAlpha, 0.0f);
                         GL_CHECK_RESULT;
                         break;
                     default:
@@ -813,7 +835,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 glUniform1i(perTile_vs.slotsPerSide, tileOnAtlasTexture->atlasTexture->slotsPerSide);
                 GL_CHECK_RESULT;
             }
-            else
+            else // if (resourceInGPU->type == GPUAPI::ResourceInGPU::Type::Texture)
             {
                 glUniform1i(perTile_vs.slotIndex, 0);
                 GL_CHECK_RESULT;

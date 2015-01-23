@@ -83,6 +83,9 @@ namespace OsmAnd
             struct {
                 // Parameters
                 struct {
+                    // Common data
+                    GLlocation isPremultipliedAlpha;
+
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {
