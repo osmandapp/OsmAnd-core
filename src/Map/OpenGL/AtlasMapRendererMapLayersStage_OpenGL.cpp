@@ -796,15 +796,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     case AlphaChannelType::Premultiplied:
                         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                         GL_CHECK_RESULT;
-
-                        glUniform1f(program.fs.param.isPremultipliedAlpha, 1.0f);
-                        GL_CHECK_RESULT;
                         break;
                     case AlphaChannelType::Straight:
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        GL_CHECK_RESULT;
-
-                        glUniform1f(program.fs.param.isPremultipliedAlpha, 0.0f);
                         GL_CHECK_RESULT;
                         break;
                     default:
@@ -812,6 +806,20 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 }
 
                 currentAlphaChannelType = resourceAlphaChannelType;
+            }
+
+            switch (currentAlphaChannelType)
+            {
+                case AlphaChannelType::Premultiplied:
+                    glUniform1f(program.fs.param.isPremultipliedAlpha, 1.0f);
+                    GL_CHECK_RESULT;
+                    break;
+                case AlphaChannelType::Straight:
+                    glUniform1f(program.fs.param.isPremultipliedAlpha, 0.0f);
+                    GL_CHECK_RESULT;
+                    break;
+                default:
+                    break;
             }
 
             glActiveTexture(GL_TEXTURE0 + samplerIndex);
