@@ -12,12 +12,14 @@
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
+#include <QMap>
 #include <QHash>
 #include <QVector>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
+#include "Ref.h"
 #include "AtlasMapRendererMapLayersStage.h"
 #include "AtlasMapRendererStageHelper_OpenGL.h"
 
@@ -29,6 +31,28 @@ namespace OsmAnd
     {
     private:
     protected:
+        struct BatchedLayer
+        {
+            BatchedLayer(const int layerIndex);
+
+            int layerIndex;
+            std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
+        };
+        struct PerTileBatchedLayers
+        {
+            PerTileBatchedLayers(const TileId tileId, const bool containsOriginLayer);
+
+            const TileId tileId;
+            const bool containsOriginLayer;
+            QList<BatchedLayer> layers;
+
+            bool operator<(const PerTileBatchedLayers& that) const;
+
+        private:
+            Q_DISABLE_COPY(PerTileBatchedLayers);
+        };
+        QList< Ref<PerTileBatchedLayers> > batchLayersByTiles(const AtlasMapRendererInternalState& internalState);
+
         // Raster layers support:
         unsigned int _maxNumberOfRasterMapLayersInBatch;
         GLsizei _rasterTileIndicesCount;
@@ -101,26 +125,26 @@ namespace OsmAnd
         bool initializeRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             RasterLayerTileProgram& outRasterLayerTileProgram);
-        bool canRasterMapLayerBeBatched(
-            const QVector<int>& batchedLayerIndices,
-            const int layerIndex);
         bool renderRasterLayersBatch(
-            AlphaChannelType &currentAlphaChannelType,
-            const bool allowStubsDrawing,
-            const QVector<int>& batchedLayerIndices,
+            const Ref<PerTileBatchedLayers>& batch,
+            AlphaChannelType& currentAlphaChannelType,
+            GLlocation& activeElevationVertexAttribArray,
             int& lastUsedProgram);
+        void configureElevationData(
+            const RasterLayerTileProgram& program,
+            const int elevationDataSamplerIndex,
+            const TileId tileId,
+            GLlocation& activeElevationVertexAttribArray);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
-            const bool elevationProviderPresent,
             const int elevationDataSamplerIndex,
+            GLlocation& activeElevationVertexAttribArray,
             int& lastUsedProgram);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
             const TileId normalizedTileId);
-        unsigned int captureRasterLayersResources(
-            const TileId normalizedTileId,
-            const bool allowStubsDrawing,
-            const QVector<int>& batchedLayerIndices,
-            QVector< std::shared_ptr<const GPUAPI::ResourceInGPU> >& outResourcesInGPU);
+        std::shared_ptr<const GPUAPI::ResourceInGPU> captureLayerResource(
+            const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
+            const TileId normalizedTileId);
         bool releaseRasterLayers();
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
@@ -128,6 +152,7 @@ namespace OsmAnd
 
         virtual bool initialize();
         virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
+
         virtual bool release();
     };
 }

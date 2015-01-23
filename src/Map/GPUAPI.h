@@ -300,6 +300,8 @@ namespace OsmAnd
 
         virtual void waitUntilUploadIsComplete() = 0;
 
+        virtual AlphaChannelType getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource);
+
     friend OsmAnd::GPUAPI::ResourceInGPU;
     };
 }

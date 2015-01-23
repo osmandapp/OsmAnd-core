@@ -57,6 +57,14 @@ std::shared_ptr<OsmAnd::GPUAPI::SlotOnAtlasTextureInGPU> OsmAnd::GPUAPI::allocat
     return pool->allocateTile(alphaChannelType, atlasTextureAllocator);
 }
 
+OsmAnd::AlphaChannelType OsmAnd::GPUAPI::getGpuResourceAlphaChannelType(const std::shared_ptr<const ResourceInGPU> gpuResource)
+{
+    if (gpuResource->type == ResourceInGPU::Type::SlotOnAtlasTexture)
+        return std::static_pointer_cast<const SlotOnAtlasTextureInGPU>(gpuResource)->alphaChannelType;
+    else //if (gpuResource->type == ResourceInGPU::Type::Texture)
+        return std::static_pointer_cast<const TextureInGPU>(gpuResource)->alphaChannelType;
+}
+
 OsmAnd::GPUAPI::ResourceInGPU::ResourceInGPU(const Type type_, GPUAPI* api_, const RefInGPU& refInGPU_)
     : _refInGPU(refInGPU_)
     , api(api_)
