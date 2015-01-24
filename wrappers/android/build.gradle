@@ -24,12 +24,12 @@ android {
         main {
             manifest.srcFile "AndroidManifest.xml"
             java.srcDirs = [
-            	"./src",
-            	"./gen/java"
+                "./src",
+                "./gen/java"
             ]
             jniLibs.srcDirs = [
-            	"./jniLibs/NDK",
-            	"./jniLibs/Qt"
+                "./jniLibs/NDK",
+                "./jniLibs/Qt"
             ]
             jni.srcDirs = []
             assets.srcDirs = ["./assets"]
@@ -86,7 +86,7 @@ task swigGenerateJava(type: Exec) {
     } else {
         commandLine "sh", file("../java/generate.sh").getAbsolutePath(), projectDir.getAbsolutePath()
     }
-	
+
     doLast {
         if (execResult.exitValue != 0) {
             throw new GradleException()
@@ -357,6 +357,18 @@ task indexOsmAndResources << {
 indexOsmAndResources.dependsOn << copyOsmAndResources
 tasks.withType(JavaCompile) {
     compileTask -> compileTask.dependsOn << indexOsmAndResources
+}
+
+// Legacy OsmAnd for Android builds requires classes as a JAR, so add it as an artifact
+task OsmAndCore_classes_jar() {
+    destFile = file("build/intermediates/bundles/release/classes.jar")
+}
+artifacts {
+    archives(OsmAndCore_classes_jar.destFile) {
+        name "OsmAndCore_wrapper"
+        type "jar"
+        builtBy OsmAndCore_classes_jar
+    }
 }
 
 // Uploading artifacts to local path
