@@ -267,6 +267,29 @@ task copyOsmAndResources(type: Copy) {
         }
     }
 
+    // Map icons (Android xxhdpi == 3.0 ddf):
+    from("../../../resources/rendering_styles/style-icons/drawable-xxhdpi") {
+        include "h_*shield*.png"
+        include "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=3.0]/map/shields/" + fileCopyDetails.path.replaceAll(/h_((.*shield.*)|(.*osmc.*))\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/drawable-xxhdpi") {
+        include "h_*.png"
+        exclude "h_*shield*.png"
+        exclude "h_*osmc*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=3.0]/map/shaders/" + fileCopyDetails.path.replaceAll(/h_(.*)\.png/, '$1.png')
+        }
+    }
+    from("../../../resources/rendering_styles/style-icons/drawable-xxhdpi") {
+        include "mm_*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=3.0]/map/icons/" + fileCopyDetails.path.replaceAll(/mm_(.*)\.png/, '$1.png')
+        }
+    }
+
     // Misc map resources:
     from("../../../resources/rendering_styles/stubs") {
         include "**/*.png"
