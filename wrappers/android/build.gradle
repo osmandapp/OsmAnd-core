@@ -360,11 +360,8 @@ tasks.withType(JavaCompile) {
 }
 
 // Legacy OsmAnd for Android builds requires classes as a JAR, so add it as an artifact
-task OsmAndCore_classes_jar << {
-    destFile = file("build/intermediates/bundles/release/classes.jar")
-}
 artifacts {
-    archives(OsmAndCore_classes_jar.destFile) {
+    archives(file("build/intermediates/bundles/release/classes.jar")) {
         name "OsmAndCore_wrapper"
         type "jar"
         builtBy OsmAndCore_classes_jar
