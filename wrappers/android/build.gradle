@@ -364,7 +364,6 @@ artifacts {
     archives(file("build/intermediates/bundles/release/classes.jar")) {
         name "OsmAndCore_wrapper"
         type "jar"
-        builtBy OsmAndCore_classes_jar
     }
 }
 
