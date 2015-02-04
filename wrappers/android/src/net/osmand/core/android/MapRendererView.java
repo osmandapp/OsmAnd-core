@@ -124,19 +124,20 @@ public abstract class MapRendererView extends FrameLayout {
         _glSurfaceView.queueEvent(new Runnable() {
             @Override
             public void run() {
-                if (_mapRenderer.isRenderingInitialized()) {
-                    EGL10 egl = (EGL10) EGLContext.getEGL();
+                if (!_mapRenderer.isRenderingInitialized()) {
+                    return;
+                }
 
-                    if (egl == null ||
-                            egl.eglGetCurrentContext() == null ||
-                            egl.eglGetCurrentContext() == EGL10.EGL_NO_CONTEXT) {
-                        Log.v(TAG, "Forcibly releasing rendering");
-                        //TODO: support
-                        //_mapRenderer.releaseRendering(true);
-                    } else {
-                        Log.v(TAG, "Releasing rendering");
-                        _mapRenderer.releaseRendering();
-                    }
+                EGL10 egl = (EGL10) EGLContext.getEGL();
+                if (egl == null ||
+                        egl.eglGetCurrentContext() == null ||
+                        egl.eglGetCurrentContext() == EGL10.EGL_NO_CONTEXT) {
+                    Log.v(TAG, "Forcibly releasing rendering by schedule");
+                    //TODO: support
+                    //_mapRenderer.releaseRendering(true);
+                } else {
+                    Log.v(TAG, "Releasing rendering by schedule");
+                    _mapRenderer.releaseRendering();
                 }
             }
         });
@@ -144,8 +145,12 @@ public abstract class MapRendererView extends FrameLayout {
 
     @Override
     protected void onDetachedFromWindow() {
+        Log.v(TAG, "onDetachedFromWindow()");
+        NativeCore.checkIfLoaded();
+
         // Surface and context are going to be destroyed, thus try to release rendering
         // before that will happen
+        Log.v(TAG, "Scheduling rendering release due to onDetachedFromWindow()");
         scheduleReleaseRendering();
 
         super.onDetachedFromWindow();
@@ -172,6 +177,7 @@ public abstract class MapRendererView extends FrameLayout {
         // Don't delete map renderer here, since context destruction will happen later.
         // Map renderer will be automatically deleted by GC anyways. But queue
         // action to release rendering
+        Log.v(TAG, "Scheduling rendering release due to handleOnDestroy()");
         scheduleReleaseRendering();
     }
 
