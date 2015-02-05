@@ -82,8 +82,8 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
 		const auto group = item->getGroup();
 		if (!group.isEmpty())
 		{
-			// <category>
-			writer.writeTextElement(QLatin1String("category"), group);
+			// <type>
+			writer.writeTextElement(QLatin1String("type"), group);
 		}
 
 		const auto color = item->getColor();
@@ -161,7 +161,7 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
 
 				newItem->setTitle(xmlReader.readElementText());
 			}
-			else if (tagName == QLatin1String("category"))
+			else if (tagName == QLatin1String("category") || tagName == QLatin1String("type"))
 			{
 				if (!newItem)
 				{
