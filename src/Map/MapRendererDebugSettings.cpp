@@ -19,6 +19,8 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , allSymbolsTransparentForIntersectionLookup(false)
     , showTooShortOnPathSymbolsRenderablesPaths(false)
     , showAllPaths(false)
+    , rasterLayersOverscaleForbidden(false)
+    , rasterLayersUnderscaleForbidden(false)
 {
 }
 
@@ -46,6 +48,8 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.allSymbolsTransparentForIntersectionLookup = allSymbolsTransparentForIntersectionLookup;
     other.showTooShortOnPathSymbolsRenderablesPaths = showTooShortOnPathSymbolsRenderablesPaths;
     other.showAllPaths = showAllPaths;
+    other.rasterLayersOverscaleForbidden = rasterLayersOverscaleForbidden;
+    other.rasterLayersUnderscaleForbidden = rasterLayersUnderscaleForbidden;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const

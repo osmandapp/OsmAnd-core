@@ -33,6 +33,8 @@ namespace OsmAnd
         bool allSymbolsTransparentForIntersectionLookup;
         bool showTooShortOnPathSymbolsRenderablesPaths;
         bool showAllPaths;
+        bool rasterLayersOverscaleForbidden;
+        bool rasterLayersUnderscaleForbidden;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;
         virtual std::shared_ptr<MapRendererDebugSettings> createCopy() const;

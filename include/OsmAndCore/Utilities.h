@@ -520,27 +520,57 @@ namespace OsmAnd
         inline static AreaI roundBoundingBox31(const AreaI bbox31, const ZoomLevel zoom)
         {
             const auto tilesCount = static_cast<int32_t>(1u << static_cast<unsigned int>(ZoomLevel31 - zoom));
-            const auto roudingMask = static_cast<uint32_t>(tilesCount - 1);
+            const auto roundingMask = static_cast<uint32_t>(tilesCount - 1);
 
             AreaI roundedBBox31;
 
-            roundedBBox31.top() = bbox31.top() & ~roudingMask;
+            roundedBBox31.top() = bbox31.top() & ~roundingMask;
 
-            roundedBBox31.left() = bbox31.left() & ~roudingMask;
+            roundedBBox31.left() = bbox31.left() & ~roundingMask;
             
-            roundedBBox31.bottom() = bbox31.bottom() & ~roudingMask;
-            if ((bbox31.bottom() & roudingMask) != 0)
+            roundedBBox31.bottom() = bbox31.bottom() & ~roundingMask;
+            if ((bbox31.bottom() & roundingMask) != 0)
                 roundedBBox31.bottom() += tilesCount;
             roundedBBox31.bottom() -= 1;
 
-            roundedBBox31.right() = bbox31.right() & ~roudingMask;
-            if ((bbox31.right() & roudingMask) != 0)
+            roundedBBox31.right() = bbox31.right() & ~roundingMask;
+            if ((bbox31.right() & roundingMask) != 0)
                 roundedBBox31.right() += tilesCount;
             roundedBBox31.right() -= 1;
 
             assert(roundedBBox31.contains(bbox31));
 
             return roundedBBox31;
+        }
+
+        inline static TileId getTileIdOverscaledByZoomShift(
+            const TileId tileId,
+            const int zoomShift,
+            PointF* outNOffsetInTile = nullptr,
+            PointF* outNSizeInTile = nullptr)
+        {
+            assert(zoomShift < 0);
+
+            TileId shiftedTileId = tileId;
+            PointF nOffsetInTile;
+            PointF nSizeInTile;
+            const auto absZoomShift = -zoomShift;
+            auto appliedAbsZoomShift = 0;
+            while (appliedAbsZoomShift < absZoomShift)
+            {
+                const auto divisor = 1u << (appliedAbsZoomShift + 1);
+                nOffsetInTile.x += static_cast<float>(shiftedTileId.x % 2) / divisor;
+                nOffsetInTile.y += static_cast<float>(shiftedTileId.y % 2) / divisor;
+                shiftedTileId.x >>= 1;
+                shiftedTileId.y >>= 1;
+                appliedAbsZoomShift++;
+            }
+            nSizeInTile.x = nSizeInTile.y = 1.0f / (1u << absZoomShift);
+            if (outNOffsetInTile)
+                *outNOffsetInTile = nOffsetInTile;
+            if (outNSizeInTile)
+                *outNSizeInTile = nSizeInTile;
+            return shiftedTileId;
         }
 
         inline static AreaI areaRightShift(const AreaI& input, const uint32_t shift)

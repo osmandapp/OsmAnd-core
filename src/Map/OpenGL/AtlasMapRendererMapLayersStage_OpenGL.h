@@ -31,20 +31,41 @@ namespace OsmAnd
     {
     private:
     protected:
-        struct BatchedLayer
+        struct BatchedLayerResource Q_DECL_FINAL
+        {
+            BatchedLayerResource(
+                const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU,
+                const int zoomShift = 0,
+                const PointF nOffsetInTile = PointF(0.0f, 0.0f),
+                const PointF nSizeInTile = PointF(1.0f, 1.0f));
+
+            std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
+            int zoomShift;
+            PointF nOffsetInTile;
+            PointF nSizeInTile;
+
+            bool canBeBatchedWith(const BatchedLayerResource& that) const;
+
+        private:
+            Q_DISABLE_COPY(BatchedLayerResource);
+        };
+        struct BatchedLayer Q_DECL_FINAL
         {
             BatchedLayer(const int layerIndex);
 
-            int layerIndex;
-            std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
+            const int layerIndex;
+            QList< Ref<BatchedLayerResource> > resourcesInGPU;
+        
+        private:
+            Q_DISABLE_COPY(BatchedLayer);
         };
-        struct PerTileBatchedLayers
+        struct PerTileBatchedLayers Q_DECL_FINAL
         {
             PerTileBatchedLayers(const TileId tileId, const bool containsOriginLayer);
 
             const TileId tileId;
             const bool containsOriginLayer;
-            QList<BatchedLayer> layers;
+            QList< Ref<BatchedLayer> > layers;
 
             bool operator<(const PerTileBatchedLayers& that) const;
 
@@ -94,10 +115,8 @@ namespace OsmAnd
                     // Per-tile-per-layer data
                     struct VsPerTilePerLayerParameters
                     {
-                        GLlocation tileSizeN;
-                        GLlocation tilePaddingN;
-                        GLlocation slotsPerSide;
-                        GLlocation slotIndex;
+                        GLlocation nOffsetInTile;
+                        GLlocation nSizeInTile;
                     };
                     VsPerTilePerLayerParameters elevationDataLayer;
                     QVector<VsPerTilePerLayerParameters> rasterTileLayers;
@@ -107,13 +126,11 @@ namespace OsmAnd
             struct {
                 // Parameters
                 struct {
-                    // Common data
-                    GLlocation isPremultipliedAlpha;
-
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {
                         GLlocation opacity;
+                        GLlocation isPremultipliedAlpha;
                         GLlocation sampler;
                     };
                     QVector<FsPerTilePerLayerParameters> rasterTileLayers;
@@ -141,10 +158,12 @@ namespace OsmAnd
             GLlocation& activeElevationVertexAttribArray,
             int& lastUsedProgram);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
-            const TileId normalizedTileId);
+            const TileId normalizedTileId,
+            const ZoomLevel zoomLevel);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureLayerResource(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
-            const TileId normalizedTileId);
+            const TileId normalizedTileId,
+            const ZoomLevel zoomLevel);
         bool releaseRasterLayers();
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);

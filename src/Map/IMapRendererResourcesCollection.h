@@ -32,7 +32,9 @@ namespace OsmAnd
 
         virtual int getResourcesCount() const = 0;
         virtual void forEachResourceExecute(const ResourceActionCallback action) = 0;
-        virtual void obtainResources(QList< std::shared_ptr<MapRendererBaseResource> >* outList, const ResourceFilterCallback filter) = 0;
+        virtual void obtainResources(
+            QList< std::shared_ptr<MapRendererBaseResource> >* outList,
+            const ResourceFilterCallback filter) = 0;
     };
 }
 

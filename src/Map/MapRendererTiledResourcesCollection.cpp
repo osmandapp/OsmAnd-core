@@ -52,6 +52,18 @@ bool OsmAnd::MapRendererTiledResourcesCollection::obtainResource(
     return obtainEntry(outResource, tileId, zoomLevel);
 }
 
+bool OsmAnd::MapRendererTiledResourcesCollection::containsResource(
+    const TileId tileId,
+    const ZoomLevel zoomLevel,
+    const TiledResourceAcceptorCallback filter /*= nullptr*/) const
+{
+    std::shared_ptr<MapRendererBaseTiledResource> resource;
+    if (!obtainEntry(resource, tileId, zoomLevel))
+        return false;
+
+    return filter(resource);
+}
+
 int OsmAnd::MapRendererTiledResourcesCollection::getResourcesCount() const
 {
     return getEntriesCount();
@@ -209,7 +221,10 @@ void OsmAnd::MapRendererTiledResourcesCollection::Snapshot::obtainResources(QLis
     }
 }
 
-bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::obtainResource(const TileId tileId, const ZoomLevel zoomLevel, std::shared_ptr<MapRendererBaseTiledResource>& outResource) const
+bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::obtainResource(
+    const TileId tileId,
+    const ZoomLevel zoomLevel,
+    std::shared_ptr<MapRendererBaseTiledResource>& outResource) const
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -220,6 +235,26 @@ bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::obtainResource(const
         outResource = *itEntry;
 
         return true;
+    }
+
+    return false;
+}
+
+bool OsmAnd::MapRendererTiledResourcesCollection::Snapshot::containsResource(
+    const TileId tileId,
+    const ZoomLevel zoomLevel,
+    const TiledResourceAcceptorCallback filter /*= nullptr*/) const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    const auto& storage = _storage[zoomLevel];
+    const auto& itEntry = storage.constFind(tileId);
+    if (itEntry != storage.cend())
+    {
+        if (!filter)
+            return true;
+        
+        return filter(*itEntry);
     }
 
     return false;

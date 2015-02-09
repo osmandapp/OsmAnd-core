@@ -1035,8 +1035,9 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
 
             const auto dataSourceAvailable = isDataSourceAvailableFor(resourcesCollection);
 
+            // Regular checks common for all resources
             resourcesCollection->removeResources(
-                [this, dataSourceAvailable, activeTiles, activeZoom, &needsResourcesUploadOrUnload]
+                [this, dataSourceAvailable, &needsResourcesUploadOrUnload]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
                 {
                     // Resource with "Unloaded" state is junk, regardless if it's needed or not
@@ -1057,10 +1058,6 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
                     // If data source is gone, all resources from it are considered junk:
                     isJunk = isJunk || !dataSourceAvailable;
 
-                    // If resource is not in set of "needed tiles", it's junk:
-                    if (const auto tiledEntry = std::dynamic_pointer_cast<MapRendererBaseTiledResource>(entry))
-                        isJunk = isJunk || !(activeTiles.contains(tiledEntry->tileId) && tiledEntry->zoom == activeZoom);
-
                     // Skip cleaning if this resource is not junk
                     if (!isJunk)
                         return false;
@@ -1070,6 +1067,112 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
 
                     return cleanupJunkResource(entry, needsResourcesUploadOrUnload);
                 });
+
+            // Some checks are only valid for tiled resources
+            if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<IMapRendererTiledResourcesCollection>(resourcesCollection))
+            {
+                resourcesCollection->removeResources(
+                    [this, activeZoom, activeTiles, &needsResourcesUploadOrUnload]
+                    (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
+                    {
+                        // If it was previously marked as junk, just leave it
+                        if (entry->isJunk)
+                            return false;
+
+                        const auto tiledEntry = std::static_pointer_cast<MapRendererBaseTiledResource>(entry);
+
+                        // Determine if resource is junk:
+                        bool isJunk = false;
+                        
+                        // If this tiled entry is part of active zoom, it's treated as junk only if it's not a part
+                        // of active tiles set
+                        if (tiledEntry->zoom == activeZoom)
+                            isJunk = isJunk || !activeTiles.contains(tiledEntry->tileId);
+
+                        // If zoom delta from active zoom is larger than MapRenderer::MaxMissingDataZoomShift,
+                        // it's impossible to use it anyways - thus it's junk.
+                        const auto deltaZoom = static_cast<int>(tiledEntry->zoom) - static_cast<int>(activeZoom);
+                        isJunk = isJunk || (qAbs(deltaZoom) > MapRenderer::MaxMissingDataZoomShift);
+
+                        // Skip cleaning if this resource is not junk
+                        if (!isJunk)
+                            return false;
+
+                        // Mark this entry as junk until it will die
+                        entry->markAsJunk();
+
+                        return cleanupJunkResource(entry, needsResourcesUploadOrUnload);
+                    });
+
+                // Remove all tiled resources that are not needed for "full coverage" of (activeTiles@ActiveZoom)
+                QHash<ZoomLevel, QSet<TileId>> neededTilesMap;
+                const auto isUsableResource = 
+                    []
+                    (const std::shared_ptr<MapRendererBaseTiledResource>& entry) -> bool
+                    {
+                        // Resources marked as junk are not usable
+                        if (entry->isJunk)
+                            return false;
+
+                        // Only resources in GPU are usable
+                        const auto state = entry->getState();
+                        if (state != MapRendererResourceState::Uploaded && state != MapRendererResourceState::IsBeingUsed)
+                            return false;
+
+                        return true;
+                    };
+                for (const auto& activeTileId : constOf(activeTiles))
+                {
+                    // If resources have exact match for this tile, use only that
+                    neededTilesMap[activeZoom].insert(activeTileId);
+                    if (tiledResourcesCollection->containsResource(activeTileId, activeZoom, isUsableResource))
+                        continue;
+
+                    // Exact match was not found, so now try to look for overscaled/underscaled resources, taking into account
+                    // MaxMissingDataZoomShift and active zoom. It's better to show Z-"nearest" resource available,
+                    // giving preference to underscaled resource
+                    for (int absZoomShift = 1; absZoomShift <= MapRenderer::MaxMissingDataZoomShift; absZoomShift++)
+                    {
+                        //TODO: Try to find underscaled first (that is, currentState.zoomBase + 1). Only full match is accepted
+
+                        // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
+                        const auto overscaleZoom = static_cast<int>(activeZoom) - absZoomShift;
+                        if (overscaleZoom >= static_cast<int>(MinZoomLevel))
+                        {
+                            const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(activeTileId, -absZoomShift);
+                            neededTilesMap[static_cast<ZoomLevel>(overscaleZoom)].insert(overscaledTileId);
+                            if (tiledResourcesCollection->containsResource(
+                                    overscaledTileId,
+                                    static_cast<ZoomLevel>(overscaleZoom),
+                                    isUsableResource))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+                resourcesCollection->removeResources(
+                    [this, neededTilesMap, &needsResourcesUploadOrUnload]
+                    (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
+                    {
+                        // If it's already marked as junk, keep & skip it
+                        // (since if it has to be removed, it will be done during first-pass)
+                        if (entry->isJunk)
+                            return false;
+
+                        const auto tiledEntry = std::static_pointer_cast<MapRendererBaseTiledResource>(entry);
+                        
+                        // Any tiled resource that is not contained in neededTilesMap is junk
+                        const auto citNeededTilesAtZoom = neededTilesMap.constFind(tiledEntry->zoom);
+                        if (citNeededTilesAtZoom != neededTilesMap.cend() && citNeededTilesAtZoom->contains(tiledEntry->tileId))
+                            return false;
+
+                        // Mark this entry as junk until it will die
+                        entry->markAsJunk();
+
+                        return cleanupJunkResource(entry, needsResourcesUploadOrUnload);
+                    });
+            }
         }
     }
 

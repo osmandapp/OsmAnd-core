@@ -14,6 +14,11 @@ namespace OsmAnd
 
     class IMapRendererTiledResourcesCollection
     {
+    public:
+        typedef std::function<void(const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel)> TiledResourceActionCallback;
+        typedef std::function<bool(const std::shared_ptr<MapRendererBaseTiledResource>& entry, bool& cancel)> TiledResourceFilterCallback;
+        typedef std::function<bool(const std::shared_ptr<MapRendererBaseTiledResource>& entry)> TiledResourceAcceptorCallback;
+
     private:
     protected:
         IMapRendererTiledResourcesCollection();
@@ -24,6 +29,10 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoomLevel,
             std::shared_ptr<MapRendererBaseTiledResource>& outResource) const = 0;
+        virtual bool containsResource(
+            const TileId tileId,
+            const ZoomLevel zoomLevel,
+            const TiledResourceAcceptorCallback filter = nullptr) const = 0;
     };
 }
 

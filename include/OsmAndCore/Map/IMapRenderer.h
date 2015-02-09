@@ -60,8 +60,8 @@ namespace OsmAnd
         virtual QString getNotIdleReason() const = 0;
 
         virtual bool isGpuWorkerPaused() const = 0;
-        virtual bool pauseGpuWorkerThread() = 0;
-        virtual bool resumeGpuWorkerThread() = 0;
+        virtual bool suspendGpuWorker() = 0;
+        virtual bool resumeGpuWorker() = 0;
 
         OSMAND_OBSERVER_CALLABLE(FramePreparedObserver,
             IMapRenderer* mapRenderer);

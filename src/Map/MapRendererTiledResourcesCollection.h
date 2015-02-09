@@ -22,7 +22,7 @@ namespace OsmAnd
     class MapRendererTiledResourcesCollection
         : public MapRendererBaseResourcesCollection
         , public IMapRendererTiledResourcesCollection
-        , public TiledEntriesCollection < MapRendererBaseTiledResource >
+        , public TiledEntriesCollection<MapRendererBaseTiledResource>
     {
     public:
         class Snapshot
@@ -43,12 +43,18 @@ namespace OsmAnd
 
             virtual int getResourcesCount() const;
             virtual void forEachResourceExecute(const ResourceActionCallback action);
-            virtual void obtainResources(QList< std::shared_ptr<MapRendererBaseResource> >* outList, const ResourceFilterCallback filter);
+            virtual void obtainResources(
+                QList< std::shared_ptr<MapRendererBaseResource> >* outList,
+                const ResourceFilterCallback filter);
 
             virtual bool obtainResource(
                 const TileId tileId,
                 const ZoomLevel zoomLevel,
                 std::shared_ptr<MapRendererBaseTiledResource>& outResource) const;
+            virtual bool containsResource(
+                const TileId tileId,
+                const ZoomLevel zoomLevel,
+                const TiledResourceAcceptorCallback filter = nullptr) const;
 
         friend class OsmAnd::MapRendererTiledResourcesCollection;
         };
@@ -70,6 +76,10 @@ namespace OsmAnd
             const TileId tileId,
             const ZoomLevel zoomLevel,
             std::shared_ptr<MapRendererBaseTiledResource>& outResource) const;
+        virtual bool containsResource(
+            const TileId tileId,
+            const ZoomLevel zoomLevel,
+            const TiledResourceAcceptorCallback filter = nullptr) const;
 
         virtual int getResourcesCount() const;
         virtual void forEachResourceExecute(const ResourceActionCallback action);

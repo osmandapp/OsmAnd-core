@@ -18,6 +18,8 @@ namespace OsmAnd
 
     class AtlasMapRendererMapLayersStage : public AtlasMapRendererStage
     {
+        Q_DISABLE_COPY_AND_MOVE(AtlasMapRendererMapLayersStage);
+
     private:
     protected:
     public:

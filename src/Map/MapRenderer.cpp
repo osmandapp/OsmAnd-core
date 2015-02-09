@@ -236,15 +236,12 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
             REPEAT_UNTIL(_gpuWorkerThreadWakeup.wait(&_gpuWorkerThreadWakeupMutex));
         }
 
-        // If worker is paused, don't process anything
-        if (_gpuWorkerIsPaused)
-            continue;
-
         // If worker was requested to stop, let it be so
         if (!_gpuWorkerIsAlive)
             break;
 
-        processGpuWorker();
+        if (!_gpuWorkerIsSuspended)
+            processGpuWorker();
     }
 
     // Call epilogue
@@ -365,7 +362,7 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
     if (_gpuWorkerThread)
     {
         _gpuWorkerIsAlive = true;
-        _gpuWorkerIsPaused = false;
+        _gpuWorkerIsSuspended = false;
         _gpuWorkerThread->start();
     }
 
@@ -405,7 +402,7 @@ bool OsmAnd::MapRenderer::preUpdate(IMapRenderer_Metrics::Metric_update* const m
 bool OsmAnd::MapRenderer::doUpdate(IMapRenderer_Metrics::Metric_update* const metric)
 {
     // If GPU worker thread is not enabled, upload resource to GPU from render thread.
-    if (!_gpuWorkerThread)
+    if (!_gpuWorkerThread && !_gpuWorkerIsSuspended)
         processGpuWorker();
 
     // Process render thread dispatcher
@@ -628,7 +625,7 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     {
         // Deactivate worker thread
         _gpuWorkerIsAlive = false;
-        _gpuWorkerIsPaused = false;
+        _gpuWorkerIsSuspended = false;
 
         // Since _gpuWorkerAlive == false, wake up GPU worker thread to allow it to exit
         {
@@ -708,32 +705,35 @@ QString OsmAnd::MapRenderer::getNotIdleReason() const
 
 bool OsmAnd::MapRenderer::isGpuWorkerPaused() const
 {
-    return _gpuWorkerIsPaused;
+    return _gpuWorkerIsSuspended;
 }
 
-bool OsmAnd::MapRenderer::pauseGpuWorkerThread()
+bool OsmAnd::MapRenderer::suspendGpuWorker()
 {
-    if (!_gpuWorkerThread || _gpuWorkerIsPaused)
+    if (_gpuWorkerIsSuspended)
         return false;
 
-    // Notify that worker should be paused
-    _gpuWorkerIsPaused = true;
+    _gpuWorkerIsSuspended = true;
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::resumeGpuWorkerThread()
+bool OsmAnd::MapRenderer::resumeGpuWorker()
 {
-    if (!_gpuWorkerThread || !_gpuWorkerIsPaused)
+    if (!_gpuWorkerIsSuspended)
         return false;
 
-    QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
-
-    // Notify that worker should be paused
-    _gpuWorkerIsPaused = false;
-
-    // Since _gpuWorkerIsPaused == false, wake up GPU worker thread to allow it to resume
-    _gpuWorkerThreadWakeup.wakeAll();
+    if (_gpuWorkerThread)
+    {
+        QMutexLocker scopedLocker(&_gpuWorkerThreadWakeupMutex);
+        _gpuWorkerIsSuspended = false;
+        _gpuWorkerThreadWakeup.wakeAll();
+    }
+    else
+    {
+        _gpuWorkerIsSuspended = false;
+        invalidateFrame();
+    }
 
     return true;
 }

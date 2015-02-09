@@ -43,6 +43,10 @@ namespace OsmAnd
         typedef std::map< std::shared_ptr<const MapSymbolsGroup>, PublishedMapSymbols, MapSymbolsGroup::Comparator > PublishedMapSymbolsByGroup;
         typedef QMap< int, PublishedMapSymbolsByGroup > PublishedMapSymbolsByOrder;
 
+        enum {
+            MaxMissingDataZoomShift = 5,
+        };
+
     private:
         // General:
         bool _isRenderingInitialized;
@@ -91,7 +95,7 @@ namespace OsmAnd
         volatile bool _gpuWorkerIsAlive;
         QMutex _gpuWorkerThreadWakeupMutex;
         QWaitCondition _gpuWorkerThreadWakeup;
-        volatile bool _gpuWorkerIsPaused;
+        volatile bool _gpuWorkerIsSuspended;
         void gpuWorkerThreadProcedure();
         void processGpuWorker();
 
@@ -229,8 +233,8 @@ namespace OsmAnd
         virtual QString getNotIdleReason() const;
 
         virtual bool isGpuWorkerPaused() const;
-        virtual bool pauseGpuWorkerThread();
-        virtual bool resumeGpuWorkerThread();
+        virtual bool suspendGpuWorker();
+        virtual bool resumeGpuWorker();
 
         virtual void reloadEverything();
 
