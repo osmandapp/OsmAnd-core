@@ -558,9 +558,8 @@ namespace OsmAnd
             auto appliedAbsZoomShift = 0;
             while (appliedAbsZoomShift < absZoomShift)
             {
-                const auto divisor = 1u << (appliedAbsZoomShift + 1);
-                nOffsetInTile.x += static_cast<float>(shiftedTileId.x % 2) / divisor;
-                nOffsetInTile.y += static_cast<float>(shiftedTileId.y % 2) / divisor;
+                nOffsetInTile.x = 0.5f * (static_cast<float>(shiftedTileId.x % 2) + nOffsetInTile.x);
+                nOffsetInTile.y = 0.5f * (static_cast<float>(shiftedTileId.y % 2) + nOffsetInTile.y);
                 shiftedTileId.x >>= 1;
                 shiftedTileId.y >>= 1;
                 appliedAbsZoomShift++;

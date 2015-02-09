@@ -63,7 +63,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
         // <time>
         if (!metadata->timestamp.isNull())
             xmlWriter.writeTextElement(QLatin1String("time"), metadata->timestamp.toString(Qt::DateFormat::ISODate));
-        
+
         // Write extensions
         if (const auto extensions = std::dynamic_pointer_cast<const GpxExtensions>(metadata->extraData.shared_ptr()))
             writeExtensions(extensions, xmlWriter);
@@ -86,7 +86,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
 
         // <desc>
         if (!locationMark->description.isEmpty())
-        xmlWriter.writeTextElement(QLatin1String("desc"), locationMark->description);
+            xmlWriter.writeTextElement(QLatin1String("desc"), locationMark->description);
 
         // <ele>
         if (!qIsNaN(locationMark->elevation))
@@ -192,7 +192,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
     {
         // <trk>
         xmlWriter.writeStartElement(QLatin1String("trk"));
-        
+
         // <name>
         if (!track->name.isEmpty())
             xmlWriter.writeTextElement(QLatin1String("name"), track->name);
@@ -348,7 +348,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
                 // </trkpt>
                 xmlWriter.writeEndElement();
             }
-            
+
             // Write extensions
             if (const auto extensions = std::dynamic_pointer_cast<const GpxExtensions>(trackSegment->extraData.shared_ptr()))
                 writeExtensions(extensions, xmlWriter);
@@ -360,7 +360,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
         // </trk>
         xmlWriter.writeEndElement();
     }
-    
+
     // <rte>'s
     for (const auto& route : constOf(routes))
     {
@@ -516,7 +516,7 @@ bool OsmAnd::GpxDocument::saveTo(QXmlStreamWriter& xmlWriter) const
             // </rtept>
             xmlWriter.writeEndElement();
         }
-       
+
         // </rte>
         xmlWriter.writeEndElement();
     }
@@ -615,7 +615,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
     std::shared_ptr<GpxTrkSeg> trkseg;
     std::shared_ptr<GpxExtensions> extensions;
     QStack< std::shared_ptr<GpxExtension> > extensionStack;
-    
+
     enum class Token
     {
         gpx,
@@ -647,7 +647,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 extensionStack.push(extension);
                 continue;
             }
-            
+
             if (tagName == QLatin1String("gpx"))
             {
                 if (document)
@@ -782,7 +782,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             else if (tagName == QLatin1String("name"))
             {
                 const auto name = xmlReader.readElementText();
-                
+
                 if (tokens.isEmpty())
                 {
                     LogPrintf(
@@ -1834,7 +1834,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     extensionStack.top()->subextensions.push_back(extension);
                 continue;
             }
-            
+
             if (tagName == QLatin1String("gpx"))
             {
                 tokens.pop();
@@ -1843,7 +1843,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
             {
                 if (document->metadata)
                     continue;
-                
+
                 tokens.pop();
 
                 document->metadata = metadata;
