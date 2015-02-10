@@ -38,18 +38,18 @@
 #endif // !defined(OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER)
 
 #if OSMAND_LOG_RESOURCE_STATE_CHANGE
-#   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)                                                                          \
-    if (const auto tiledResource = std::dynamic_pointer_cast<const BaseTiledResource>(resource))                                            \
-    {                                                                                                                                       \
-        LogPrintf(LogSeverityLevel::Debug,                                                                                                  \
-            "Tile resource %p %dx%d@%d state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),              \
-            resource.get(), tiledResource.tileId.x, tiledResource.tileId.y, tiledResource.zoom);                                            \
-    }                                                                                                                                       \
-    else                                                                                                                                    \
-    {                                                                                                                                       \
-        LogPrintf(LogSeverityLevel::Debug,                                                                                                  \
-            "Resource %p state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),                            \
-            resource.get());                                                                                                                \
+#   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)                                                              \
+    if (const auto tiledResource = std::dynamic_pointer_cast<const BaseTiledResource>(resource))                                \
+    {                                                                                                                           \
+        LogPrintf(LogSeverityLevel::Debug,                                                                                      \
+            "Tile resource %p %dx%d@%d state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),  \
+            resource.get(), tiledResource.tileId.x, tiledResource.tileId.y, tiledResource.zoom);                                \
+    }                                                                                                                           \
+    else                                                                                                                        \
+    {                                                                                                                           \
+        LogPrintf(LogSeverityLevel::Debug,                                                                                      \
+            "Resource %p state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),                \
+            resource.get());                                                                                                    \
     }
 #else
 #   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)
@@ -68,7 +68,9 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     _resourcesRequestWorkersPool.setMaxThreadCount(1);
 #endif //OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
 #if OSMAND_DEBUG
-    LogPrintf(LogSeverityLevel::Info, "Map renderer will use max %d worker thread(s) to process requests", _resourcesRequestWorkersPool.maxThreadCount());
+    LogPrintf(LogSeverityLevel::Info,
+        "Map renderer will use max %d worker thread(s) to process requests",
+        _resourcesRequestWorkersPool.maxThreadCount());
 #endif
 
     // Initialize default resources
@@ -156,17 +158,23 @@ bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources()
     return true;
 }
 
-bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+bool OsmAnd::MapRendererResourcesManager::uploadTiledDataToGPU(
+    const std::shared_ptr<const IMapTiledDataProvider::Data>& mapTile,
+    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
     return renderer->gpuAPI->uploadTiledDataToGPU(mapTile, outResourceInGPU);
 }
 
-bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(const std::shared_ptr<const MapSymbol>& mapSymbol, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
+bool OsmAnd::MapRendererResourcesManager::uploadSymbolToGPU(
+    const std::shared_ptr<const MapSymbol>& mapSymbol,
+    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResourceInGPU)
 {
     return renderer->gpuAPI->uploadSymbolToGPU(mapSymbol, outResourceInGPU);
 }
 
-std::shared_ptr<const SkBitmap> OsmAnd::MapRendererResourcesManager::adjustBitmapToConfiguration(const std::shared_ptr<const SkBitmap>& input, const AlphaChannelPresence alphaChannelPresence) const
+std::shared_ptr<const SkBitmap> OsmAnd::MapRendererResourcesManager::adjustBitmapToConfiguration(
+    const std::shared_ptr<const SkBitmap>& input,
+    const AlphaChannelPresence alphaChannelPresence) const
 {
     return renderer->adjustBitmapToConfiguration(input, alphaChannelPresence);
 }
@@ -183,7 +191,9 @@ void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std
     }
 }
 
-void OsmAnd::MapRendererResourcesManager::updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask)
+void OsmAnd::MapRendererResourcesManager::updateBindings(
+    const MapRendererState& state,
+    const MapRendererStateChanges updatedMask)
 {
     bool wasLocked = false;
 
@@ -388,7 +398,9 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QSet<TileId>& t
     }
 }
 
-bool OsmAnd::MapRendererResourcesManager::obtainProviderFor(MapRendererBaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapDataProvider>& provider) const
+bool OsmAnd::MapRendererResourcesManager::obtainProviderFor(
+    MapRendererBaseResourcesCollection* const resourcesRef,
+    std::shared_ptr<IMapDataProvider>& provider) const
 {
     assert(resourcesRef != nullptr);
 
@@ -409,14 +421,16 @@ bool OsmAnd::MapRendererResourcesManager::obtainProviderFor(MapRendererBaseResou
     return false;
 }
 
-bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection) const
+bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(
+    const std::shared_ptr<MapRendererBaseResourcesCollection>& collection) const
 {
     const auto& binding = _bindings[static_cast<int>(collection->type)];
 
     return binding.collectionsToProviders.contains(collection);
 }
 
-QList< std::shared_ptr<OsmAnd::MapRendererBaseResourcesCollection> > OsmAnd::MapRendererResourcesManager::safeGetAllResourcesCollections() const
+QList< std::shared_ptr<OsmAnd::MapRendererBaseResourcesCollection> >
+OsmAnd::MapRendererResourcesManager::safeGetAllResourcesCollections() const
 {
     QReadLocker scopedLocker(&_resourcesStoragesLock);
 
@@ -456,12 +470,14 @@ void OsmAnd::MapRendererResourcesManager::unpublishMapSymbol(
     renderer->unpublishMapSymbol(symbolGroup, symbol, resource);
 }
 
-void OsmAnd::MapRendererResourcesManager::batchPublishMapSymbols(const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToPublish)
+void OsmAnd::MapRendererResourcesManager::batchPublishMapSymbols(
+    const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToPublish)
 {
     renderer->batchPublishMapSymbols(mapSymbolsToPublish);
 }
 
-void OsmAnd::MapRendererResourcesManager::batchUnpublishMapSymbols(const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnublish)
+void OsmAnd::MapRendererResourcesManager::batchUnpublishMapSymbols(
+    const QList< PublishOrUnpublishMapSymbol >& mapSymbolsToUnublish)
 {
     renderer->batchUnpublishMapSymbols(mapSymbolsToUnublish);
 }

@@ -853,8 +853,12 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::captureElevationDataResource(
 std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::captureLayerResource(
     const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection_,
     const TileId normalizedTileId,
-    const ZoomLevel zoomLevel)
+    const ZoomLevel zoomLevel,
+    MapRendererResourceState* const outState /*= nullptr*/)
 {
+    if (outState != nullptr)
+        *outState = MapRendererResourceState::Unknown;
+
     const auto& resourcesCollection =
         std::static_pointer_cast<const MapRendererTiledResourcesCollection::Snapshot>(resourcesCollection_);
 
@@ -872,8 +876,13 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
 
             resource->setState(MapRendererResourceState::Uploaded);
 
+            if (outState != nullptr)
+                *outState = MapRendererResourceState::Uploaded;
             return gpuResource;
         }
+
+        if (outState != nullptr)
+            *outState = resource->getState();
     }
 
     return nullptr;
@@ -1190,6 +1199,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
     const auto gpuAPI = getGPUAPI();
 
     QList< Ref<PerTileBatchedLayers> > perTileBatchedLayers;
+    bool atLeastOneNotUnavailable = false;
+    MapRendererResourceState resourceState;
 
     for (const auto& tileId : constOf(internalState.visibleTiles))
     {
@@ -1211,11 +1222,20 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 continue;
 
             Ref<BatchedLayer> batchedLayer = new BatchedLayer(layerIndex);
-            if (const auto gpuResource = captureLayerResource(resourcesCollection, tileIdN, currentState.zoomBase))
+
+            // Try to obtain exact match resource
+            const auto exactMatchGpuResource = captureLayerResource(
+                resourcesCollection,
+                tileIdN,
+                currentState.zoomBase, 
+                &resourceState);
+            if (resourceState != MapRendererResourceState::Unavailable)
+                atLeastOneNotUnavailable = true;
+            if (exactMatchGpuResource)
             {
                 // Exact match, no zoom shift or offset
                 batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
-                    new BatchedLayerResource(gpuResource)));
+                    new BatchedLayerResource(exactMatchGpuResource)));
             }
             else if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden || !debugSettings->rasterLayersUnderscaleForbidden))
             {
@@ -1303,12 +1323,16 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
         }
 
         // If there are no resources inside batch (and that batch is the only one),
-        // insert an "unavailable" stub for first provider
+        // insert an "unavailable" or "processing" stub for first provider
         if (batch->layers.isEmpty())
         {
+            const auto stubResource = atLeastOneNotUnavailable
+                ? getResources().processingTileStub
+                : getResources().unavailableTileStub;
+
             Ref<BatchedLayer> batchedLayer = new BatchedLayer(currentState.mapLayersProviders.firstKey());
             batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
-                new BatchedLayerResource(getResources().unavailableTileStub)));
+                new BatchedLayerResource(stubResource)));
             batch->layers.push_back(qMove(batchedLayer));
         }
     }

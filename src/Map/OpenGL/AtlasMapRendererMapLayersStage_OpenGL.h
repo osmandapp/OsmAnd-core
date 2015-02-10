@@ -163,7 +163,8 @@ namespace OsmAnd
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureLayerResource(
             const std::shared_ptr<const IMapRendererResourcesCollection>& resourcesCollection,
             const TileId normalizedTileId,
-            const ZoomLevel zoomLevel);
+            const ZoomLevel zoomLevel,
+            MapRendererResourceState* const outState = nullptr);
         bool releaseRasterLayers();
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
