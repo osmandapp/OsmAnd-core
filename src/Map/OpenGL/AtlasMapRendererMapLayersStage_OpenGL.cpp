@@ -605,7 +605,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             const auto& perTile_vs = program.vs.param.rasterTileLayers[layerIndexInBatch];
             const auto& perTile_fs = program.fs.param.rasterTileLayers[layerIndexInBatch];
 
-            glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
+            if (layer->layerIndex == currentState.mapLayersProviders.firstKey())
+                glUniform1f(perTile_fs.opacity, 1.0f);
+            else
+                glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
             GL_CHECK_RESULT;
 
             // Since it's single-pass tile rendering, there's only one resource per layer
@@ -674,6 +677,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     {
         //TODO: underscale cases are not supported so far, since they require multipass rendering
         assert(false);
+        LogPrintf(LogSeverityLevel::Error, "Underscale is not supported!");
     }
 
     // Disable textures
@@ -1199,12 +1203,13 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
     const auto gpuAPI = getGPUAPI();
 
     QList< Ref<PerTileBatchedLayers> > perTileBatchedLayers;
-    bool atLeastOneNotUnavailable = false;
-    MapRendererResourceState resourceState;
 
     for (const auto& tileId : constOf(internalState.visibleTiles))
     {
         const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
+
+        bool atLeastOneNotUnavailable = false;
+        MapRendererResourceState resourceState;
 
         Ref<PerTileBatchedLayers> batch = new PerTileBatchedLayers(tileId, true);
         perTileBatchedLayers.push_back(batch);
@@ -1276,7 +1281,23 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 }
             }
             if (!batchedLayer || batchedLayer->resourcesInGPU.isEmpty())
+            {
+                // In case this batch contains origin layer, and first layer is unavailable, then add a corresponding
+                // stub into the batch
+                if (batch->containsOriginLayer && layerIndex == currentState.mapLayersProviders.firstKey())
+                {
+                    const auto stubResource = atLeastOneNotUnavailable
+                        ? getResources().processingTileStub
+                        : getResources().unavailableTileStub;
+
+                    Ref<BatchedLayer> batchedLayer = new BatchedLayer(layerIndex);
+                    batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
+                        new BatchedLayerResource(stubResource)));
+                    batch->layers.push_back(qMove(batchedLayer));
+                }
+
                 continue;
+            }
 
             // Only raster layers can be batched, while if there's no previous
             bool canBeBatched = true;
@@ -1316,7 +1337,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
 
             if (!canBeBatched)
             {
-                batch = new PerTileBatchedLayers(tileId, true);
+                batch = new PerTileBatchedLayers(tileId, false);
                 perTileBatchedLayers.push_back(batch);
             }
             batch->layers.push_back(qMove(batchedLayer));
