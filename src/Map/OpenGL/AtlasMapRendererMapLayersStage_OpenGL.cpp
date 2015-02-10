@@ -574,8 +574,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const auto wasActivated = activateRasterLayersProgram(
         batchedLayersCount,
         elevationDataSamplerIndex,
-        activeElevationVertexAttribArray,
-        lastUsedProgram);
+        lastUsedProgram,
+        activeElevationVertexAttribArray);
     const auto& program = _rasterLayerTilePrograms[batchedLayersCount];
     const auto& vao = _rasterTileVAOs[batchedLayersCount];
 
@@ -588,8 +588,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     // Configure elevation data
     configureElevationData(
         program,
-        elevationDataSamplerIndex,
         batch->tileId,
+        elevationDataSamplerIndex,
         activeElevationVertexAttribArray);
 
     // Shader expects blending to be premultiplied
