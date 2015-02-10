@@ -64,7 +64,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
-    int lastUsedProgram = -1;
+    GLname lastUsedProgram;
     for (const auto& renderable_ : constOf(renderableSymbols))
     {
         if (const auto& renderable = std::dynamic_pointer_cast<const RenderableBillboardSymbol>(renderable_))
@@ -128,7 +128,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
     const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
@@ -153,7 +153,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardSymbol(
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     // Draw the glyphs
     if (renderable->is2D)
@@ -175,7 +175,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPathSymbol(
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
     {
@@ -435,7 +435,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeBillboardRaster()
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -445,7 +445,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != *_billboardRasterProgram.id)
+    if (lastUsedProgram != _billboardRasterProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'billboard-raster' program");
 
@@ -1209,7 +1209,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnPath3DProgram(cons
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1219,7 +1219,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != *_onPath2dProgram.id)
+    if (lastUsedProgram != _onPath2dProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-path-2d' program");
 
@@ -1348,7 +1348,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1358,7 +1358,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != *_onPath3dProgram.id)
+    if (lastUsedProgram != _onPath3dProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-path-3d' program");
 
@@ -1758,7 +1758,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceRaster()
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -1768,7 +1768,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != *_onSurfaceRasterProgram.id)
+    if (lastUsedProgram != _onSurfaceRasterProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-raster' program");
 
@@ -2005,7 +2005,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::initializeOnSurfaceVector()
 bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
     AlphaChannelType &currentAlphaChannelType,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
     const auto& internalState = getInternalState();
@@ -2015,7 +2015,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     const auto& symbolGroupPtr = symbol->groupPtr;
 
     // Check if correct program is being used
-    if (lastUsedProgram != *_onSurfaceVectorProgram.id)
+    if (lastUsedProgram != _onSurfaceVectorProgram.id)
     {
         GL_PUSH_GROUP_MARKER("use 'on-surface-vector' program");
 

@@ -21,7 +21,7 @@ namespace OsmAnd
         bool renderBillboardSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
 
         GLname _billboardRasterSymbolVAO;
         GLname _billboardRasterSymbolVBO;
@@ -66,14 +66,14 @@ namespace OsmAnd
         bool renderBillboardRasterSymbol(
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
         bool releaseBillboardRaster();
 
         bool initializeOnPath();
         bool renderOnPathSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
         bool releaseOnPath();
 
         struct Glyph
@@ -129,7 +129,7 @@ namespace OsmAnd
         bool renderOnPath2dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
         bool releaseOnPath2D();
 
         GLname _onPathSymbol3dVAO;
@@ -177,13 +177,13 @@ namespace OsmAnd
         bool renderOnPath3dSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
         bool releaseOnPath3D();
 
         bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
 
         GLname _onSurfaceRasterSymbolVAO;
         GLname _onSurfaceRasterSymbolVBO;
@@ -226,7 +226,7 @@ namespace OsmAnd
         bool renderOnSurfaceRasterSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
         bool releaseOnSurfaceRaster();
 
         struct OnSurfaceVectorProgram {
@@ -263,7 +263,7 @@ namespace OsmAnd
         bool renderOnSurfaceVectorSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
         bool releaseOnSurfaceVector();
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);

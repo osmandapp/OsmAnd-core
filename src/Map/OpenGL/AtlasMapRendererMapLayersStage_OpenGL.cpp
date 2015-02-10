@@ -63,7 +63,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     GL_CHECK_RESULT;
 
-    int lastUsedProgram = -1;
+    GLname lastUsedProgram;
     GLlocation activeElevationVertexAttribArray;
     const auto& batchedLayersByTiles = batchLayersByTiles(internalState);
     for (const auto& batchedLayersByTile : constOf(batchedLayersByTiles))
@@ -98,18 +98,26 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
         }
     }
 
-    // Disable elevation vertex attrib array (if enabled)
-    if (activeElevationVertexAttribArray.isValid())
-    {
-        glDisableVertexAttribArray(*activeElevationVertexAttribArray);
-        GL_CHECK_RESULT;
-    }
-
     // Deactivate program
-    glUseProgram(0);
-    GL_CHECK_RESULT;
+    if (lastUsedProgram.isValid())
+    {
+        // Elevation vertex attrib is bound to program
+        if (activeElevationVertexAttribArray.isValid())
+        {
+            glDisableVertexAttribArray(*activeElevationVertexAttribArray);
+            GL_CHECK_RESULT;
 
-    gpuAPI->unuseVAO();
+            activeElevationVertexAttribArray.reset();
+        }
+
+        glUseProgram(0);
+        GL_CHECK_RESULT;
+
+        // Also un-use any possibly used VAO
+        gpuAPI->unuseVAO();
+
+        lastUsedProgram.reset();
+    }
 
     GL_POP_GROUP_MARKER;
 
@@ -539,7 +547,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const Ref<PerTileBatchedLayers>& batch,
     AlphaChannelType& currentAlphaChannelType,
     GLlocation& activeElevationVertexAttribArray,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -703,8 +711,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const unsigned int numberOfLayersInBatch,
     const int elevationDataSamplerIndex,
-    GLlocation& activeElevationVertexAttribArray,
-    int& lastUsedProgram)
+    GLname& lastUsedProgram,
+    GLlocation& activeElevationVertexAttribArray)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -721,13 +729,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     const auto& program = _rasterLayerTilePrograms[numberOfLayersInBatch];
     const auto& vao = _rasterTileVAOs[numberOfLayersInBatch];
 
-    if (lastUsedProgram == *program.id)
+    if (lastUsedProgram == program.id)
         return false;
 
     GL_PUSH_GROUP_MARKER(QString("use '%1-batched-raster-map-layers' program").arg(numberOfLayersInBatch));
 
-    // Disable elevation vertex attrib array (if enabled)
-    if (activeElevationVertexAttribArray.isValid())
+    // Elevation vertex attrib is bound to program
+    if (lastUsedProgram.isValid() && activeElevationVertexAttribArray.isValid())
     {
         glDisableVertexAttribArray(*activeElevationVertexAttribArray);
         GL_CHECK_RESULT;
@@ -783,11 +791,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
                 break;
         }
     }
-    for (auto layerLinearIdx = 0u; layerLinearIdx < numberOfLayersInBatch; layerLinearIdx++)
+    for (auto layerIndexInBatch = 0u; layerIndexInBatch < numberOfLayersInBatch; layerIndexInBatch++)
     {
-        const auto samplerIndex = layerLinearIdx;
+        const auto samplerIndex = layerIndexInBatch;
 
-        glUniform1i(program.fs.param.rasterTileLayers[layerLinearIdx].sampler, samplerIndex);
+        glUniform1i(program.fs.param.rasterTileLayers[layerIndexInBatch].sampler, samplerIndex);
         GL_CHECK_RESULT;
 
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + samplerIndex, bitmapTileSamplerType);
@@ -798,18 +806,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
         GL_CHECK_RESULT;
 
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + elevationDataSamplerIndex, GPUAPI_OpenGL::SamplerType::ElevationDataTile);
-    }
-
-    // Configure program for elevation data
-    if (currentState.elevationDataProvider == nullptr)
-    {
-        glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
-        GL_CHECK_RESULT;
-    }
-    if (!gpuAPI->isSupported_vertexShaderTextureLookup)
-    {
-        glDisableVertexAttribArray(*program.vs.in.vertexElevation);
-        GL_CHECK_RESULT;
     }
 
     lastUsedProgram = program.id;
@@ -1085,109 +1081,124 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile()
 
 void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     const RasterLayerTileProgram& program,
-    const int elevationDataSamplerIndex,
     const TileId tileId,
+    const int elevationDataSamplerIndex,
     GLlocation& activeElevationVertexAttribArray)
 {
     const auto gpuAPI = getGPUAPI();
 
     const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
-    const auto elevationDataResource = captureElevationDataResource(tileIdN, currentState.zoomBase);
 
-    auto configuredElevationVertexAttribArray = false;
-    if (currentState.elevationDataProvider != nullptr)
+    // In case there's no elevation data provider, deactivate elevation data
+    if (!currentState.elevationDataProvider)
     {
-        if (!elevationDataResource)
+        if (!gpuAPI->isSupported_vertexShaderTextureLookup && activeElevationVertexAttribArray.isValid())
         {
-            // We have no elevation data, so we can not do anything
-            glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
+            glDisableVertexAttribArray(*activeElevationVertexAttribArray);
             GL_CHECK_RESULT;
+
+            activeElevationVertexAttribArray.reset();
+        }
+
+        glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
+        GL_CHECK_RESULT;
+
+        return;
+    }
+
+    // Per-tile elevation data configuration
+    const auto elevationDataResource = captureElevationDataResource(tileIdN, currentState.zoomBase);
+    bool usedElevationVertexAttribArray = false;
+    if (!elevationDataResource)
+    {
+        // We have no elevation data, so we can not do anything
+        glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
+        GL_CHECK_RESULT;
+    }
+    else
+    {
+        glUniform1f(program.vs.param.elevationData_scaleFactor, currentState.elevationDataConfiguration.scaleFactor);
+        GL_CHECK_RESULT;
+
+        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+            currentState.zoomBase,
+            tileIdN.y,
+            AtlasMapRenderer::TileSize3D);
+        glUniform1f(program.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
+        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+            currentState.zoomBase,
+            tileIdN.y + 1,
+            AtlasMapRenderer::TileSize3D);
+        glUniform1f(program.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
+
+        const auto& perTile_vs = program.vs.param.elevationDataLayer;
+
+        if (gpuAPI->isSupported_vertexShaderTextureLookup)
+        {
+            glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+            GL_CHECK_RESULT;
+
+            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
+            GL_CHECK_RESULT;
+
+            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
+
+            if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+            {
+                const auto tileOnAtlasTexture =
+                    std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
+
+                const auto rowIndex = tileOnAtlasTexture->slotIndex / tileOnAtlasTexture->atlasTexture->slotsPerSide;
+                const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * tileOnAtlasTexture->atlasTexture->slotsPerSide;
+                const auto tileSizeN = tileOnAtlasTexture->atlasTexture->tileSizeN;
+                const auto tilePaddingN = tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN;
+                const auto nSizeInTile = tileSizeN - 2.0f * tilePaddingN;
+                const PointF nOffsetInTile(colIndex * tileSizeN + tilePaddingN, rowIndex * tileSizeN + tilePaddingN);
+
+                glUniform2f(perTile_vs.nOffsetInTile, nOffsetInTile.x, nOffsetInTile.y);
+                GL_CHECK_RESULT;
+                glUniform2f(perTile_vs.nSizeInTile, nSizeInTile, nSizeInTile);
+                GL_CHECK_RESULT;
+            }
+            else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
+            {
+                const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
+
+                const auto nSizeInTile = 1.0f - 2.0f * texture->uHalfTexelSizeN;
+                const PointF nOffsetInTile(texture->uHalfTexelSizeN, texture->uHalfTexelSizeN);
+
+                glUniform2f(perTile_vs.nOffsetInTile, nOffsetInTile.x, nOffsetInTile.y);
+                GL_CHECK_RESULT;
+                glUniform2f(perTile_vs.nSizeInTile, nSizeInTile, nSizeInTile);
+                GL_CHECK_RESULT;
+            }
         }
         else
         {
-            glUniform1f(program.vs.param.elevationData_scaleFactor, currentState.elevationDataConfiguration.scaleFactor);
+            assert(elevationDataResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
+
+            const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(elevationDataResource);
+            assert(arrayBuffer->itemsCount ==
+                (1u << MapRenderer::MaxMissingDataZoomShift)*(1u << MapRenderer::MaxMissingDataZoomShift));
+
+            if (!activeElevationVertexAttribArray.isValid())
+            {
+                glEnableVertexAttribArray(*program.vs.in.vertexElevation);
+                GL_CHECK_RESULT;
+
+                activeElevationVertexAttribArray = program.vs.in.vertexElevation;
+            }
+
+            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
             GL_CHECK_RESULT;
 
-            const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-                currentState.zoomBase,
-                tileIdN.y,
-                AtlasMapRenderer::TileSize3D);
-            glUniform1f(program.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
-            const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-                currentState.zoomBase,
-                tileIdN.y + 1,
-                AtlasMapRenderer::TileSize3D);
-            glUniform1f(program.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
+            glVertexAttribPointer(*program.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
+            GL_CHECK_RESULT;
 
-            const auto& perTile_vs = program.vs.param.elevationDataLayer;
-
-            if (gpuAPI->isSupported_vertexShaderTextureLookup)
-            {
-                glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
-                GL_CHECK_RESULT;
-
-                glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
-                GL_CHECK_RESULT;
-
-                gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
-
-                if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
-                {
-                    const auto tileOnAtlasTexture =
-                        std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
-
-                    const auto rowIndex = tileOnAtlasTexture->slotIndex / tileOnAtlasTexture->atlasTexture->slotsPerSide;
-                    const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * tileOnAtlasTexture->atlasTexture->slotsPerSide;
-                    const auto tileSizeN = tileOnAtlasTexture->atlasTexture->tileSizeN;
-                    const auto tilePaddingN = tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN;
-                    const auto nSizeInTile = tileSizeN - 2.0f * tilePaddingN;
-                    const PointF nOffsetInTile(colIndex * tileSizeN + tilePaddingN, rowIndex * tileSizeN + tilePaddingN);
-
-                    glUniform2f(perTile_vs.nOffsetInTile, nOffsetInTile.x, nOffsetInTile.y);
-                    GL_CHECK_RESULT;
-                    glUniform2f(perTile_vs.nSizeInTile, nSizeInTile, nSizeInTile);
-                    GL_CHECK_RESULT;
-                }
-                else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
-                {
-                    const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
-
-                    const auto nSizeInTile = 1.0f - 2.0f * texture->uHalfTexelSizeN;
-                    const PointF nOffsetInTile(texture->uHalfTexelSizeN, texture->uHalfTexelSizeN);
-
-                    glUniform2f(perTile_vs.nOffsetInTile, nOffsetInTile.x, nOffsetInTile.y);
-                    GL_CHECK_RESULT;
-                    glUniform2f(perTile_vs.nSizeInTile, nSizeInTile, nSizeInTile);
-                    GL_CHECK_RESULT;
-                }
-            }
-            else
-            {
-                assert(elevationDataResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
-
-                const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(elevationDataResource);
-                assert(arrayBuffer->itemsCount ==
-                    (1u << MapRenderer::MaxMissingDataZoomShift)*(1u << MapRenderer::MaxMissingDataZoomShift));
-
-                if (!activeElevationVertexAttribArray.isValid())
-                {
-                    glEnableVertexAttribArray(*program.vs.in.vertexElevation);
-                    GL_CHECK_RESULT;
-
-                    activeElevationVertexAttribArray = program.vs.in.vertexElevation;
-                }
-
-                glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
-                GL_CHECK_RESULT;
-
-                glVertexAttribPointer(*program.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
-                GL_CHECK_RESULT;
-
-                configuredElevationVertexAttribArray = true;
-            }
+            usedElevationVertexAttribArray = true;
         }
     }
-    if (activeElevationVertexAttribArray.isValid() && !configuredElevationVertexAttribArray)
+    if (activeElevationVertexAttribArray.isValid() && !usedElevationVertexAttribArray)
     {
         // In case for this tile there was no elevation data, but vertex attrib array is enabled, disable it
         glDisableVertexAttribArray(*activeElevationVertexAttribArray);

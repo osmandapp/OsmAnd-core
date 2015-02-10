@@ -146,17 +146,17 @@ namespace OsmAnd
             const Ref<PerTileBatchedLayers>& batch,
             AlphaChannelType& currentAlphaChannelType,
             GLlocation& activeElevationVertexAttribArray,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram);
         void configureElevationData(
             const RasterLayerTileProgram& program,
-            const int elevationDataSamplerIndex,
             const TileId tileId,
+            const int elevationDataSamplerIndex,
             GLlocation& activeElevationVertexAttribArray);
         bool activateRasterLayersProgram(
             const unsigned int numberOfLayersInBatch,
             const int elevationDataSamplerIndex,
-            GLlocation& activeElevationVertexAttribArray,
-            int& lastUsedProgram);
+            GLname& lastUsedProgram,
+            GLlocation& activeElevationVertexAttribArray);
         std::shared_ptr<const GPUAPI::ResourceInGPU> captureElevationDataResource(
             const TileId normalizedTileId,
             const ZoomLevel zoomLevel);
