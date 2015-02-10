@@ -59,14 +59,10 @@ std::shared_ptr<SkBitmap> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
     // Allocate rasterization target
     const auto tileSize = owner->getTileSize();
     const std::shared_ptr<SkBitmap> rasterizationSurface(new SkBitmap());
-    if (!rasterizationSurface->tryAllocPixels(SkImageInfo::Make(
-        tileSize,
-        tileSize,
-        SkColorType::kRGBA_8888_SkColorType,
-        SkAlphaType::kUnpremul_SkAlphaType)))
+    if (!rasterizationSurface->tryAllocPixels(SkImageInfo::MakeN32Premul(tileSize, tileSize)))
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to allocate buffer for RGBA8888 rasterization surface %dx%d",
+            "Failed to allocate buffer for rasterization surface %dx%d",
             tileSize,
             tileSize);
         return nullptr;

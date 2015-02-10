@@ -52,9 +52,12 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
 
     // Prepare drawing canvas
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!bitmap->tryAllocPixels(SkImageInfo::Make(owner->tileSize, owner->tileSize, SkColorType::kRGBA_8888_SkColorType, SkAlphaType::kUnpremul_SkAlphaType)))
+    if (!bitmap->tryAllocPixels(SkImageInfo::MakeN32Premul(owner->tileSize, owner->tileSize)))
     {
-        LogPrintf(LogSeverityLevel::Error, "Failed to allocate buffer for RGBA8888 rasterization surface %dx%d", owner->tileSize, owner->tileSize);
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to allocate buffer for rasterization surface %dx%d",
+            owner->tileSize,
+            owner->tileSize);
         return false;
     }
     SkBitmapDevice target(*bitmap);

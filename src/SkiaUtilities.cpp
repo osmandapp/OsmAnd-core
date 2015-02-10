@@ -72,11 +72,7 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::mergeBitmaps(const QList< std::
         return nullptr;
 
     const std::shared_ptr<SkBitmap> outputBitmap(new SkBitmap());
-    if (!outputBitmap->tryAllocPixels(SkImageInfo::Make(
-        maxWidth,
-        maxHeight,
-        SkColorType::kRGBA_8888_SkColorType,
-        SkAlphaType::kUnpremul_SkAlphaType)))
+    if (!outputBitmap->tryAllocPixels(SkImageInfo::MakeN32Premul(maxWidth, maxHeight)))
     {
         return nullptr;
     }
