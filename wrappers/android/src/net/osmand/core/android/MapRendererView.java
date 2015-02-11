@@ -646,6 +646,9 @@ public abstract class MapRendererView extends FrameLayout {
             // In case a new frame was prepared, render it
             if (_mapRenderer.prepareFrame())
                 _mapRenderer.renderFrame();
+
+            // Flush all the commands to GPU
+            gl.glFlush();
         }
     }
 

@@ -244,7 +244,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
-        "uniform ivec2 param_vs_tileCoordsOffset;                                                                           ""\n"
+        "uniform vec2 param_vs_tileCoordsOffset;                                                                            ""\n"
         "uniform float param_vs_elevationData_scaleFactor;                                                                  ""\n"
         "uniform float param_vs_elevationData_upperMetersPerUnit;                                                           ""\n"
         "uniform float param_vs_elevationData_lowerMetersPerUnit;                                                           ""\n"
@@ -273,10 +273,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
-        "    float xOffset = float(param_vs_tileCoordsOffset.x) - param_vs_targetInTilePosN.x;                              ""\n"
-        "    v.x += xOffset * %TileSize3D%.0;                                                                               ""\n"
-        "    float yOffset = float(param_vs_tileCoordsOffset.y) - param_vs_targetInTilePosN.y;                              ""\n"
-        "    v.z += yOffset * %TileSize3D%.0;                                                                               ""\n"
+        "    v.xz += %TileSize3D%.0 * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                              ""\n"
         "                                                                                                                   ""\n"
         //   Process each tile layer texture coordinates (except elevation)
         "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
@@ -589,7 +586,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const auto& vao = _rasterTileVAOs[batchedLayersCount];
 
     // Set tile coordinates offset
-    glUniform2i(program.vs.param.tileCoordsOffset,
+    glUniform2f(program.vs.param.tileCoordsOffset,
         batch->tileId.x - internalState.targetTileId.x,
         batch->tileId.y - internalState.targetTileId.y);
     GL_CHECK_RESULT;
