@@ -42,7 +42,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , _requestedConfiguration(baseConfiguration_->createCopy())
     , _suspendSymbolsUpdateCounter(0)
     , _gpuWorkerThreadId(nullptr)
-    , _gpuWorkerIsAlive(false)
+    , _gpuWorkerThreadIsAlive(false)
     , _gpuWorkerIsSuspended(false)
     , _renderThreadId(nullptr)
     , _currentDebugSettings(baseDebugSettings_->createCopy())
@@ -229,7 +229,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     if (_setupOptions.gpuWorkerThreadPrologue)
         _setupOptions.gpuWorkerThreadPrologue(this);
 
-    while (_gpuWorkerIsAlive)
+    while (_gpuWorkerThreadIsAlive)
     {
         // Wait until we're unblocked by host
         {
@@ -238,7 +238,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
         }
 
         // If worker was requested to stop, let it be so
-        if (!_gpuWorkerIsAlive)
+        if (!_gpuWorkerThreadIsAlive)
             break;
 
         if (!_gpuWorkerIsSuspended)
@@ -359,11 +359,13 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
 {
     _isRenderingInitialized = true;
 
+    // GPU worker should not be suspended initially
+    _gpuWorkerIsSuspended = false;
+
     // Start GPU worker (if it exists)
     if (_gpuWorkerThread)
     {
-        _gpuWorkerIsAlive = true;
-        _gpuWorkerIsSuspended = false;
+        _gpuWorkerThreadIsAlive = true;
         _gpuWorkerThread->start();
     }
 
@@ -621,12 +623,14 @@ bool OsmAnd::MapRenderer::postReleaseRendering()
     // Release resources (to let all resources be released)
     _resources->releaseAllResources();
 
+    // GPU worker should not be suspected afterwards
+    _gpuWorkerIsSuspended = false;
+
     // Stop GPU worker if it exists
     if (_gpuWorkerThread)
     {
         // Deactivate worker thread
-        _gpuWorkerIsAlive = false;
-        _gpuWorkerIsSuspended = false;
+        _gpuWorkerThreadIsAlive = false;
 
         // Since _gpuWorkerAlive == false, wake up GPU worker thread to allow it to exit
         {

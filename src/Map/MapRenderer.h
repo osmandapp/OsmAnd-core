@@ -92,7 +92,7 @@ namespace OsmAnd
         // GPU worker related:
         Qt::HANDLE _gpuWorkerThreadId;
         std::unique_ptr<Concurrent::Thread> _gpuWorkerThread;
-        volatile bool _gpuWorkerIsAlive;
+        volatile bool _gpuWorkerThreadIsAlive;
         QMutex _gpuWorkerThreadWakeupMutex;
         QWaitCondition _gpuWorkerThreadWakeup;
         volatile bool _gpuWorkerIsSuspended;
