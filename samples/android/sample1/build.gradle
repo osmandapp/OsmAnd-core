@@ -60,10 +60,13 @@ android {
 
     buildTypes {
         debug {
+            signingConfig android.signingConfigs.debug
         }
         nativeDebug {
+            signingConfig android.signingConfigs.debug
         }
         release {
+            signingConfig android.signingConfigs.debug
         }
     }
 }
