@@ -276,9 +276,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
         "    v.xz += %TileSize3D%.0 * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                              ""\n"
-        //////////////////////////////////////////////////////////////////////////
-        "    v.xz -= %TileSize3D%.0 * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                              ""\n"
-        //////////////////////////////////////////////////////////////////////////
         "                                                                                                                   ""\n"
         //   Process each tile layer texture coordinates (except elevation)
         "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
@@ -395,8 +392,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         //////////////////////////////////////////////////////////////////////////
-        //"    finalColor.a = 1.0;                                                                            ""\n"
-        //"    finalColor.g = 1.0;                                                                            ""\n"
+        "    finalColor.a = 1.0;                                                                            ""\n"
+        "    finalColor.g = 1.0;                                                                            ""\n"
         //////////////////////////////////////////////////////////////////////////
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
@@ -623,16 +620,23 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
         {
             const auto& layer = batch->layers[layerIndexInBatch];
+            const auto samplerIndex = layerIndexInBatch;
 
-            const auto layerConfiguration = currentState.mapLayersConfigurations[layer->layerIndex];
             const auto& perTile_vs = program.vs.param.rasterTileLayers[layerIndexInBatch];
             const auto& perTile_fs = program.fs.param.rasterTileLayers[layerIndexInBatch];
 
-            if (layer->layerIndex == currentState.mapLayersProviders.firstKey())
+            if (currentState.mapLayersProviders.isEmpty() ||
+                layer->layerIndex == currentState.mapLayersProviders.firstKey())
+            {
                 glUniform1f(perTile_fs.opacity, 1.0f);
+                GL_CHECK_RESULT;
+            }
             else
+            {
+                const auto& layerConfiguration = currentState.mapLayersConfigurations[layer->layerIndex];
                 glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
-            GL_CHECK_RESULT;
+                GL_CHECK_RESULT;
+            }
 
             // Since it's single-pass tile rendering, there's only one resource per layer
             const auto& batchedResourceInGPU = layer->resourcesInGPU.first();
@@ -651,14 +655,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     break;
             }
 
-            glActiveTexture(GL_TEXTURE0 + layerIndexInBatch);
+            glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
 
             glBindTexture(GL_TEXTURE_2D,
                 static_cast<GLuint>(reinterpret_cast<intptr_t>(batchedResourceInGPU->resourceInGPU->refInGPU)));
             GL_CHECK_RESULT;
 
-            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + layerIndexInBatch);
+            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
 
             if (batchedResourceInGPU->resourceInGPU->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {

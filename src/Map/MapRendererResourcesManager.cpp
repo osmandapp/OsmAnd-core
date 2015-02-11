@@ -858,11 +858,13 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply() const
 void OsmAnd::MapRendererResourcesManager::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
 {
     // Before requesting missing tiled resources, clean up cache to free some space
-    cleanupJunkResources(tiles, zoom);
+    if (!renderer->currentDebugSettings->disableJunkResourcesCleanup)
+        cleanupJunkResources(tiles, zoom);
 
     // In the end of rendering processing, request tiled resources that are neither
     // present in requested list, nor in pending, nor in uploaded
-    requestNeededResources(tiles, zoom);
+    if (!renderer->currentDebugSettings->disableNeededResourcesRequests)
+        requestNeededResources(tiles, zoom);
 }
 
 unsigned int OsmAnd::MapRendererResourcesManager::unloadResources()
