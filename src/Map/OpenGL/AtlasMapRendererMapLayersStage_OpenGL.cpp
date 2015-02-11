@@ -204,6 +204,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
             "Maximal number of raster map layers in a batch must be not less than 1");
         return false;
     }
+    LogPrintf(LogSeverityLevel::Info,
+        "Maximal number of raster map layers in a batch is %d", _maxNumberOfRasterMapLayersInBatch);
 
     initializeRasterTile();
 
@@ -389,6 +391,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
         "    }                                                                                                              ""\n"
 #endif
+        //////////////////////////////////////////////////////////////////////////
+        "    finalColor.a = 1.0;                                                                            ""\n"
+        //////////////////////////////////////////////////////////////////////////
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
@@ -1331,7 +1336,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 canBeBatched = (previousProviderIsRaster && currentProviderIsRaster);
 
                 // Number of batched raster layers is limited
-                canBeBatched = canBeBatched && (batch->layers.size() < _maxNumberOfRasterMapLayersInBatch);
+                canBeBatched = canBeBatched && (batch->layers.size() <= _maxNumberOfRasterMapLayersInBatch);
 
                 // Batching is possible only if all BatchedLayerResources are compatible
                 if (canBeBatched)
