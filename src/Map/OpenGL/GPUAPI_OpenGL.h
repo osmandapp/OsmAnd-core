@@ -63,11 +63,11 @@
 
 #if OSMAND_GPU_DEBUG
 #   define GL_CHECK_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
 #   define GL_GET_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
 #   define GL_GET_AND_CHECK_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
 #   define GL_CHECK_PRESENT(x) \
         const static OsmAnd::GPUAPI_OpenGL::glPresenseChecker<decltype(x)> glPresenseChecker_##x(&x, #x)
 #   define GL_PUSH_GROUP_MARKER(title) \
@@ -295,7 +295,7 @@ namespace OsmAnd
         const GLint& maxFragmentUniformVectors;
         const GLint& maxVertexAttribs;
         
-        virtual GLenum validateResult() = 0;
+        virtual GLenum validateResult(const char* const function, const char* const file, const int line) = 0;
 
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(

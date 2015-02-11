@@ -21,10 +21,10 @@
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
 #undef GL_GET_AND_CHECK_RESULT
-#if OSMAND_DEBUG || defined(OSMAND_TARGET_OS_android)
-#   define GL_CHECK_RESULT validateResult()
-#   define GL_GET_RESULT validateResult()
-#   define GL_GET_AND_CHECK_RESULT validateResult()
+#if OSMAND_GPU_DEBUG
+#   define GL_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_AND_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
@@ -116,7 +116,7 @@ OsmAnd::GPUAPI_OpenGLES2::~GPUAPI_OpenGLES2()
 {
 }
 
-GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
+GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult(const char* const function, const char* const file, const int line)
 {
     auto result = glGetError();
     if (result == GL_NO_ERROR)
@@ -144,7 +144,13 @@ GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
             errorString = "(unknown)";
             break;
     }
-    LogPrintf(LogSeverityLevel::Error, "OpenGLES2 error 0x%08x : %s", result, errorString);
+    LogPrintf(LogSeverityLevel::Error,
+        "OpenGL error 0x%08x (%s) in %s at %s:%d",
+        result,
+        errorString,
+        function,
+        file,
+        line);
 
     return result;
 }

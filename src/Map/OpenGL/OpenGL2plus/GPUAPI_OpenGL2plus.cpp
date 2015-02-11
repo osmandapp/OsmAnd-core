@@ -22,9 +22,9 @@
 #undef GL_GET_RESULT
 #undef GL_GET_AND_CHECK_RESULT
 #if OSMAND_GPU_DEBUG
-#   define GL_CHECK_RESULT validateResult()
-#   define GL_GET_RESULT validateResult()
-#   define GL_GET_AND_CHECK_RESULT validateResult()
+#   define GL_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_AND_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
@@ -57,7 +57,7 @@ OsmAnd::GPUAPI_OpenGL2plus::~GPUAPI_OpenGL2plus()
 {
 }
 
-GLenum OsmAnd::GPUAPI_OpenGL2plus::validateResult()
+GLenum OsmAnd::GPUAPI_OpenGL2plus::validateResult(const char* const function, const char* const file, const int line)
 {
     GL_CHECK_PRESENT(glGetError);
 
@@ -65,7 +65,13 @@ GLenum OsmAnd::GPUAPI_OpenGL2plus::validateResult()
     if (result == GL_NO_ERROR)
         return result;
 
-    LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s", result, gluErrorString(result));
+    LogPrintf(LogSeverityLevel::Error,
+        "OpenGL error 0x%08x (%s) in %s at %s:%d",
+        result,
+        gluErrorString(result),
+        function,
+        file,
+        line);
 
     return result;
 }
