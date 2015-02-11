@@ -199,7 +199,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         _maxNumberOfRasterMapLayersInBatch = supportedMaxNumberOfRasterMapLayersInBatch;
     }
     if (_maxNumberOfRasterMapLayersInBatch < 1)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Maximal number of raster map layers in a batch must be not less than 1");
         return false;
+    }
 
     initializeRasterTile();
 
@@ -262,6 +266,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "void calculateTextureCoordinates(in RasterLayerTile tileLayer, out vec2 outTexCoords)                              ""\n"
         "{                                                                                                                  ""\n"
         "    outTexCoords = in_vs_vertexTexCoords * tileLayer.nSizeInTile + tileLayer.nOffsetInTile;                        ""\n"
+        //////////////////////////////////////////////////////////////////////////
+        "    outTexCoords =  outTexCoords * 0.0001 + in_vs_vertexTexCoords;                        ""\n"
+        //////////////////////////////////////////////////////////////////////////
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
         "void main()                                                                                                        ""\n"
