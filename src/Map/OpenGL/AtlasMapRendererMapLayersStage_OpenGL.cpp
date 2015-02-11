@@ -392,8 +392,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         //////////////////////////////////////////////////////////////////////////
-        "    finalColor.a = 1.0;                                                                            ""\n"
-        "    finalColor.g = 1.0;                                                                            ""\n"
+        //"    finalColor.a = 1.0;                                                                            ""\n"
+        //"    finalColor.g = 1.0;                                                                            ""\n"
         //////////////////////////////////////////////////////////////////////////
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
