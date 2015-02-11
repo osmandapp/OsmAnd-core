@@ -392,7 +392,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         //////////////////////////////////////////////////////////////////////////
-        "    finalColor.a = 1.0;                                                                            ""\n"
+        //"    finalColor.a = 1.0;                                                                            ""\n"
+        //"    finalColor.g = 1.0;                                                                            ""\n"
         //////////////////////////////////////////////////////////////////////////
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
@@ -1322,7 +1323,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
             }
 
             // Only raster layers can be batched, while if there's no previous
-            bool canBeBatched = true;
+            bool canBeBatched = !debugSettings->mapLayersBatchingForbidden;
             if (!batch->layers.isEmpty())
             {
                 const auto& lastBatchedLayer = batch->layers.last();
@@ -1357,7 +1358,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 }
             }
 
-            if (!canBeBatched)
+            if (!canBeBatched && !batch->layers.isEmpty())
             {
                 batch = new PerTileBatchedLayers(tileId, false);
                 perTileBatchedLayers.push_back(batch);
