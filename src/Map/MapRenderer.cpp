@@ -43,6 +43,7 @@ OsmAnd::MapRenderer::MapRenderer(
     , _suspendSymbolsUpdateCounter(0)
     , _gpuWorkerThreadId(nullptr)
     , _gpuWorkerIsAlive(false)
+    , _gpuWorkerIsSuspended(false)
     , _renderThreadId(nullptr)
     , _currentDebugSettings(baseDebugSettings_->createCopy())
     , _currentDebugSettingsAsConst(_currentDebugSettings)

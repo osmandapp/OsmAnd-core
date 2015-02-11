@@ -543,8 +543,9 @@ public abstract class MapRendererView extends FrameLayout {
 
             // Change renderer setup options
             MapRendererSetupOptions setupOptions = new MapRendererSetupOptions();
-            if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null && false) {
-                setupOptions.setGpuWorkerThreadEnabled(true);
+            if (_gpuWorkerContext != null && _gpuWorkerFakeSurface != null) {
+                //setupOptions.setGpuWorkerThreadEnabled(true);
+                setupOptions.setGpuWorkerThreadEnabled(false);
                 setupOptions.setGpuWorkerThreadPrologue(_gpuWorkerThreadPrologue.getBinding());
                 setupOptions.setGpuWorkerThreadEpilogue(_gpuWorkerThreadEpilogue.getBinding());
             } else {
