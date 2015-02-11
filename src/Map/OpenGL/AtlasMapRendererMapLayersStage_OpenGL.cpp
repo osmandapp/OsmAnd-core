@@ -276,9 +276,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
         "    v.xz += %TileSize3D%.0 * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                              ""\n"
-        //////////////////////////////////////////////////////////////////////////
-        "    v.xz -= %TileSize3D%.0 * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                              ""\n"
-        //////////////////////////////////////////////////////////////////////////
         "                                                                                                                   ""\n"
         //   Process each tile layer texture coordinates (except elevation)
         "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
@@ -395,8 +392,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         //////////////////////////////////////////////////////////////////////////
-        "    finalColor.a = 1.0;                                                                            ""\n"
-        "    finalColor.g = 1.0;                                                                            ""\n"
+        //"    finalColor.a = 1.0;                                                                            ""\n"
+        //"    finalColor.g = 1.0;                                                                            ""\n"
         //////////////////////////////////////////////////////////////////////////
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
@@ -1416,7 +1413,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayerResource::canBeB
         nSizeInTile == that.nSizeInTile;
 }
 
-OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayer::BatchedLayer(const int layerIndex_)
+OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayer::BatchedLayer(
+    const int layerIndex_)
     : layerIndex(layerIndex_)
 {
 }
