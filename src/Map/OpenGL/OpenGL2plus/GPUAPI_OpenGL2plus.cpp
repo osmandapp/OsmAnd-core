@@ -158,6 +158,10 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     //////////////////////////////////////////////////////////////////////////
     _isSupported_vertexShaderTextureLookup = (_maxTextureUnitsInVertexShader >= 1);
 
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsCombined));
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units combined %d", _maxTextureUnitsCombined);
+
     GLint maxTextureUnitsCombined;
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnitsCombined);
     GL_CHECK_RESULT;

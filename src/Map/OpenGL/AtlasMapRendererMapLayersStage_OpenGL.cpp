@@ -164,6 +164,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
     if (_maxNumberOfRasterMapLayersInBatch > gpuAPI->maxTextureUnitsInFragmentShader)
         _maxNumberOfRasterMapLayersInBatch = gpuAPI->maxTextureUnitsInFragmentShader;
+    if (gpuAPI->isSupported_vertexShaderTextureLookup &&
+        _maxNumberOfRasterMapLayersInBatch + 1 > gpuAPI->maxTextureUnitsCombined)
+    {
+        _maxNumberOfRasterMapLayersInBatch = gpuAPI->maxTextureUnitsCombined - 1;
+    }
     if (setupOptions.maxNumberOfRasterMapLayersInBatch != 0 &&
         _maxNumberOfRasterMapLayersInBatch > setupOptions.maxNumberOfRasterMapLayersInBatch)
     {
@@ -689,7 +694,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         LogPrintf(LogSeverityLevel::Error, "Underscale is not supported!");
     }
 
-    // Disable textures
+    // Unbind textures from texture samplers, that were used
     const auto usedSamplersCount = batchedLayersCount + (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0);
     for (int samplerIndex = 0; samplerIndex < usedSamplersCount; samplerIndex++)
     {

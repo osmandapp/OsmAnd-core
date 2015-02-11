@@ -108,7 +108,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         }
     }
 
-    // Deactivate any symbol texture
+    // Unbind symbol texture from texture sampler
     glActiveTexture(GL_TEXTURE0 + 0);
     GL_CHECK_RESULT;
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -2121,7 +2121,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         symbol->modulationColor.a);
     GL_CHECK_RESULT;
 
-    // Deactivate symbol texture
+    // Unbind symbol texture from texture sampler
     glBindTexture(GL_TEXTURE_2D, 0);
     GL_CHECK_RESULT;
 

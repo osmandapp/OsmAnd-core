@@ -240,6 +240,7 @@ namespace OsmAnd
         GLint _maxTextureSize;
         GLint _maxTextureUnitsInVertexShader;
         GLint _maxTextureUnitsInFragmentShader;
+        GLint _maxTextureUnitsCombined;
         bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
@@ -281,6 +282,7 @@ namespace OsmAnd
         const GLint& maxTextureSize;
         const GLint& maxTextureUnitsInVertexShader;
         const GLint& maxTextureUnitsInFragmentShader;
+        const GLint& maxTextureUnitsCombined;
         const bool& isSupported_vertexShaderTextureLookup;
         const bool& isSupported_textureLod;
         const bool& isSupported_texturesNPOT;
