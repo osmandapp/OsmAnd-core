@@ -198,8 +198,10 @@ namespace OsmAnd
             const GLuint program;
             const QHash<QString, GlslProgramVariable> variablesMap;
 
-            virtual bool lookupLocation(GLint& location, const QString& name, const GlslVariableType& type);
-            bool lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type);
+            virtual bool lookupLocation(GLint& outLocation, const QString& name, const GlslVariableType type);
+            bool lookupLocation(GLlocation& outLocation, const QString& name, const GlslVariableType type);
+            bool lookupInLocation(GLlocation& outLocation, const QString& name);
+            bool lookupUniformLocation(GLlocation& outLocation, const QString& name);
 
         friend class OsmAnd::GPUAPI_OpenGL;
         };

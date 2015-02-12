@@ -252,17 +252,17 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer-in-tile data
-        "struct RasterLayerTile                                                                                             ""\n"
+        "struct VsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
         "    vec2 nOffsetInTile;                                                                                            ""\n"
         "    vec2 nSizeInTile;                                                                                              ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "    uniform RasterLayerTile param_vs_elevationDataLayer;                                                           ""\n"
+        "    uniform VsRasterLayerTile param_vs_elevationDataLayer;                                                         ""\n"
         "#endif // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                          ""\n"
         "                                                                                                                   ""\n"
-        "void calculateTextureCoordinates(in RasterLayerTile tileLayer, out vec2 outTexCoords)                              ""\n"
+        "void calculateTextureCoordinates(in VsRasterLayerTile tileLayer, out vec2 outTexCoords)                            ""\n"
         "{                                                                                                                  ""\n"
         "    outTexCoords = in_vs_vertexTexCoords * tileLayer.nSizeInTile + tileLayer.nOffsetInTile;                        ""\n"
         "}                                                                                                                  ""\n"
@@ -315,7 +315,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     const auto& vertexShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                        ""\n");
     const auto& vertexShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
-        "uniform RasterLayerTile param_vs_rasterTileLayer_%rasterLayerIndex%;                                               ""\n");
+        "uniform VsRasterLayerTile param_vs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
     const auto& vertexShader_perRasterLayerTexCoordsProcessing = QString::fromLatin1(
         "    calculateTextureCoordinates(                                                                                   ""\n"
         "        param_vs_rasterTileLayer_%rasterLayerIndex%,                                                               ""\n"
@@ -330,7 +330,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
-        "struct RasterLayerTile                                                                                             ""\n"
+        "struct FsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
         "    lowp sampler2D sampler;                                                                                        ""\n"
         "    lowp float opacity;                                                                                            ""\n"
@@ -338,13 +338,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "                                                                                                                   ""\n"
-        "void addExtraAlpha(inout vec4 color, in float alpha, in float isPremultipliedAlpha)                                ""\n"
+        "void addExtraAlpha(inout lowp vec4 color, in lowp float alpha, in lowp float isPremultipliedAlpha)                 ""\n"
         "{                                                                                                                  ""\n"
         "    lowp float colorAlpha = 1.0 - isPremultipliedAlpha + isPremultipliedAlpha * alpha;                             ""\n"
         "    color *= vec4(colorAlpha, colorAlpha, colorAlpha, alpha);                                                      ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
-        "void mixColors(inout vec4 destColor, in vec4 srcColor, in float isPremultipliedAlpha)                              ""\n"
+        "void mixColors(inout lowp vec4 destColor, in lowp vec4 srcColor, in lowp float isPremultipliedAlpha)               ""\n"
         "{                                                                                                                  ""\n"
         "    lowp float srcColorMultiplier =                                                                                ""\n"
         "        isPremultipliedAlpha + (1.0 - isPremultipliedAlpha) * srcColor.a;                                          ""\n"
@@ -409,7 +409,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
     const auto& fragmentShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
-        "uniform RasterLayerTile param_fs_rasterTileLayer_%rasterLayerIndex%;                                               ""\n");
+        "uniform FsRasterLayerTile param_fs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
 
     // Compile vertex shader
     auto preprocessedVertexShader = vertexShader;
@@ -523,8 +523,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     {
         // Vertex shader
         {
-            auto layerStructName =
-                QString::fromLatin1("param_vs_rasterTileLayer_%layerIndex%")
+            auto layerStructName = QString::fromLatin1("param_vs_rasterTileLayer_%layerIndex%")
                 .replace(QLatin1String("%layerIndex%"), QString::number(layerIndex));
             auto& layerStruct = outRasterLayerTileProgram.vs.param.rasterTileLayers[layerIndex];
 
@@ -534,14 +533,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
 
         // Fragment shader
         {
-            auto layerStructName =
-                QString::fromLatin1("param_fs_rasterTileLayer_%layerIndex%")
+            auto layerStructName = QString::fromLatin1("param_fs_rasterTileLayer_%layerIndex%")
                 .replace(QLatin1String("%layerIndex%"), QString::number(layerIndex));
             auto& layerStruct = outRasterLayerTileProgram.fs.param.rasterTileLayers[layerIndex];
 
+            ok = ok && lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.opacity, layerStructName + ".opacity", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.isPremultipliedAlpha, layerStructName + ".isPremultipliedAlpha", GlslVariableType::Uniform);
-            ok = ok && lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GlslVariableType::Uniform);
         }
     }
 
