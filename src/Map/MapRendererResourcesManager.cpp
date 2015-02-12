@@ -1282,7 +1282,7 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
     {
         containedUnprocessableResources = false;
         collection->removeResources(
-            [&needsResourcesUploadOrUnload, &containedUnprocessableResources]
+            [&needsResourcesUploadOrUnload, &containedUnprocessableResources, gpuContextLost]
             (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
             {
                 // When resources are released, it's a termination process, so all entries have to be removed.
@@ -1329,6 +1329,10 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                 {
                     LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPending);
 
+                    // In case context was lost, it's impossible to unload anything, so just remove the resource
+                    if (gpuContextLost)
+                        return true;
+
                     // If resource is not needed anymore, change its state to "UnloadPending",
                     // but keep the resource entry, since it must be unload from GPU in another place
                     needsResourcesUploadOrUnload = true;
@@ -1361,6 +1365,10 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                     state == MapRendererResourceState::UnloadPending ||
                     state == MapRendererResourceState::Unloading)
                 {
+                    // In case GPU context is lost, nothing can be done with this resource, so just remove it
+                    if (gpuContextLost)
+                        return true;
+
                     needsResourcesUploadOrUnload = true;
                 }
 
@@ -1400,11 +1408,11 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                 // Dispatcher always runs after GPU resources sync stage
                 renderer->getGpuThreadDispatcher().invokeAsync(
                     [&gpuResourcesSyncStageExecutedOnceCondition, &gpuResourcesSyncStageExecutedOnceMutex]
-                ()
-                {
-                    QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
-                    gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
-                });
+                    ()
+                    {
+                        QMutexLocker scopedLocker(&gpuResourcesSyncStageExecutedOnceMutex);
+                        gpuResourcesSyncStageExecutedOnceCondition.wakeAll();
+                    });
 
                 requestResourcesUploadOrUnload();
                 needsResourcesUploadOrUnload = false;
@@ -1426,7 +1434,7 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
     } while (containedUnprocessableResources);
 
     // Perform final request to upload or unload resources
-    if (needsResourcesUploadOrUnload)
+    if (needsResourcesUploadOrUnload && !gpuContextLost)
     {
         if (renderer->hasGpuWorkerThread())
             requestResourcesUploadOrUnload();
