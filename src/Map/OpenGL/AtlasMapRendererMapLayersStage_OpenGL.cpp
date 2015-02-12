@@ -392,8 +392,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         //////////////////////////////////////////////////////////////////////////
-        //"    finalColor.a = 1.0;                                                                            ""\n"
-        //"    finalColor.g = 1.0;                                                                            ""\n"
+        "    finalColor.a = 1.0;                                                                            ""\n"
+        "    finalColor.g = 1.0;                                                                            ""\n"
         //////////////////////////////////////////////////////////////////////////
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
@@ -1269,8 +1269,10 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
             if (exactMatchGpuResource)
             {
                 // Exact match, no zoom shift or offset
+                //batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
+                //    new BatchedLayerResource(exactMatchGpuResource)));
                 batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
-                    new BatchedLayerResource(exactMatchGpuResource)));
+                    new BatchedLayerResource(getResources().unavailableTileStub)));
             }
             else if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden || !debugSettings->rasterLayersUnderscaleForbidden))
             {
