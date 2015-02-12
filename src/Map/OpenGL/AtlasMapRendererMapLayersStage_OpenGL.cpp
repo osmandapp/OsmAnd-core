@@ -391,10 +391,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
         "    }                                                                                                              ""\n"
 #endif
-        //////////////////////////////////////////////////////////////////////////
-        "    finalColor.a = 1.0;                                                                            ""\n"
-        "    finalColor.g = 1.0;                                                                            ""\n"
-        //////////////////////////////////////////////////////////////////////////
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
