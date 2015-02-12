@@ -366,6 +366,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
+        //////////////////////////////////////////////////////////////////////////
+        "    lowp vec4 TRUE_COLOR = finalColor;                                                                                          ""\n"
+        //////////////////////////////////////////////////////////////////////////
         "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacity, param_fs_rasterTileLayer_0.isPremultipliedAlpha);""\n"
         "    lowp float firstLayerColorDivisor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                          ""\n"
         "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
@@ -389,6 +392,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
+        //////////////////////////////////////////////////////////////////////////
+        "    FRAGMENT_COLOR_OUTPUT.arg = TRUE_COLOR.arg;                                                                            ""\n"
+        //////////////////////////////////////////////////////////////////////////
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
