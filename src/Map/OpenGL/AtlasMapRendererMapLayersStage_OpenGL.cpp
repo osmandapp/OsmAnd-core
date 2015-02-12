@@ -662,6 +662,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
             gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
 
+            //////////////////////////////////////////////////////////////////////////
+            // Possible workaround
+            glUniform1i(perTile_fs.sampler, samplerIndex);
+            //////////////////////////////////////////////////////////////////////////
+
             if (batchedResourceInGPU->resourceInGPU->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {
                 const auto tileOnAtlasTexture =

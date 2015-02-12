@@ -35,6 +35,8 @@ public class MainActivity extends ActionBarActivity {
         if (NativeCore.isAvailable() && !NativeCore.isLoaded())
             NativeCore.load(CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this));
 
+		Logger.get().setSeverityLevelThreshold(LogSeverityLevel.Verbose);
+
         // Inflate views
         setContentView(R.layout.activity_main);
 
