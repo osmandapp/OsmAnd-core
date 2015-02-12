@@ -918,12 +918,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(const bo
 
     for (auto& rasterLayerTileProgram : _rasterLayerTilePrograms)
     {
-        if (rasterLayerTileProgram.id.isValid())
+        if (!rasterLayerTileProgram.id.isValid())
+            continue;
+
+        if (!contextLost)
         {
             glDeleteProgram(rasterLayerTileProgram.id);
             GL_CHECK_RESULT;
-            rasterLayerTileProgram = RasterLayerTileProgram();
         }
+        rasterLayerTileProgram = RasterLayerTileProgram();
     }
     _rasterLayerTilePrograms.clear();
 
@@ -1079,21 +1082,27 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(const bool
     {
         if (rasterTileVAO.isValid())
         {
-            gpuAPI->releaseVAO(rasterTileVAO);
+            gpuAPI->releaseVAO(rasterTileVAO, contextLost);
             rasterTileVAO.reset();
         }
     }
 
     if (_rasterTileIBO.isValid())
     {
-        glDeleteBuffers(1, &_rasterTileIBO);
-        GL_CHECK_RESULT;
+        if (!contextLost)
+        {
+            glDeleteBuffers(1, &_rasterTileIBO);
+            GL_CHECK_RESULT;
+        }
         _rasterTileIBO.reset();
     }
     if (_rasterTileVBO.isValid())
     {
-        glDeleteBuffers(1, &_rasterTileVBO);
-        GL_CHECK_RESULT;
+        if (!contextLost)
+        {
+            glDeleteBuffers(1, &_rasterTileVBO);
+            GL_CHECK_RESULT;
+        }
         _rasterTileVBO.reset();
     }
     _rasterTileIndicesCount = -1;

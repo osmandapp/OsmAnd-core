@@ -328,8 +328,11 @@ bool OsmAnd::GPUAPI_OpenGL2plus::release(const bool contextLost)
         GL_CHECK_PRESENT(glDeleteSamplers);
         if (_textureSamplers[0] != 0)
         {
-            glDeleteSamplers(1, _textureSamplers.data());
-            GL_CHECK_RESULT;
+            if (!contextLost)
+            {
+                glDeleteSamplers(1, _textureSamplers.data());
+                GL_CHECK_RESULT;
+            }
             _textureSamplers.fill(0);
         }
     }

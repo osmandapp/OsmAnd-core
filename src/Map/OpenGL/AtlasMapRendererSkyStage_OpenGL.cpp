@@ -219,27 +219,36 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release(const bool contextLost)
 
     if (_skyplaneVAO.isValid())
     {
-        gpuAPI->releaseVAO(_skyplaneVAO);
+        gpuAPI->releaseVAO(_skyplaneVAO, contextLost);
         _skyplaneVAO.reset();
     }
 
     if (_skyplaneIBO.isValid())
     {
-        glDeleteBuffers(1, &_skyplaneIBO);
-        GL_CHECK_RESULT;
+        if (!contextLost)
+        {
+            glDeleteBuffers(1, &_skyplaneIBO);
+            GL_CHECK_RESULT;
+        }
         _skyplaneIBO.reset();
     }
     if (_skyplaneVBO.isValid())
     {
-        glDeleteBuffers(1, &_skyplaneVBO);
-        GL_CHECK_RESULT;
+        if (!contextLost)
+        {
+            glDeleteBuffers(1, &_skyplaneVBO);
+            GL_CHECK_RESULT;
+        }
         _skyplaneVBO.reset();
     }
 
     if (_program.id.isValid())
     {
-        glDeleteProgram(_program.id);
-        GL_CHECK_RESULT;
+        if (!contextLost)
+        {
+            glDeleteProgram(_program.id);
+            GL_CHECK_RESULT;
+        }
         _program = Program();
     }
 

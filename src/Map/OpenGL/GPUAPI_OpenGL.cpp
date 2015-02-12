@@ -1698,12 +1698,15 @@ void OsmAnd::GPUAPI_OpenGL::unuseVAO()
     _lastUsedSimulatedVAOObject.reset();
 }
 
-void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao)
+void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao, const bool contextLost /*= false*/)
 {
     if (isSupported_vertex_array_object)
     {
-        glDeleteVertexArrays_wrapper(1, &vao);
-        GL_CHECK_RESULT;
+        if (!contextLost)
+        {
+            glDeleteVertexArrays_wrapper(1, &vao);
+            GL_CHECK_RESULT;
+        }
 
         return;
     }
