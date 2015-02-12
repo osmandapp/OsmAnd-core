@@ -319,7 +319,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL2plus::release()
+bool OsmAnd::GPUAPI_OpenGL2plus::release(const bool contextLost)
 {
     bool ok;
 
@@ -334,7 +334,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::release()
         }
     }
 
-    ok = GPUAPI_OpenGL::release();
+    ok = GPUAPI_OpenGL::release(contextLost);
     if (!ok)
         return false;
 

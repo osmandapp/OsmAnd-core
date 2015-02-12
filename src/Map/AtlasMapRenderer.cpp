@@ -180,39 +180,39 @@ bool OsmAnd::AtlasMapRenderer::doInitializeRendering()
     return ok;
 }
 
-bool OsmAnd::AtlasMapRenderer::doReleaseRendering()
+bool OsmAnd::AtlasMapRenderer::doReleaseRendering(const bool contextLost)
 {
     bool ok = true;
 
     if (_skyStage)
     {
-        if (!_skyStage->release())
+        if (!_skyStage->release(contextLost))
             ok = false;
         _skyStage.reset();
     }
 
     if (_mapLayersStage)
     {
-        if (!_mapLayersStage->release())
+        if (!_mapLayersStage->release(contextLost))
             ok = false;
         _mapLayersStage.reset();
     }
 
     if (_symbolsStage)
     {
-        if (!_symbolsStage->release())
+        if (!_symbolsStage->release(contextLost))
             ok = false;
         _symbolsStage.reset();
     }
 
     if (_debugStage)
     {
-        if (!_debugStage->release())
+        if (!_debugStage->release(contextLost))
             ok = false;
         _debugStage.reset();
     }
 
-    if (!MapRenderer::doReleaseRendering())
+    if (!MapRenderer::doReleaseRendering(contextLost))
         ok = false;
 
     return ok;

@@ -133,8 +133,7 @@ public abstract class MapRendererView extends FrameLayout {
                         egl.eglGetCurrentContext() == null ||
                         egl.eglGetCurrentContext() == EGL10.EGL_NO_CONTEXT) {
                     Log.v(TAG, "Forcibly releasing rendering by schedule");
-                    //TODO: support
-                    //_mapRenderer.releaseRendering(true);
+                    _mapRenderer.releaseRendering(true);
                 } else {
                     Log.v(TAG, "Releasing rendering by schedule");
                     _mapRenderer.releaseRendering();
@@ -462,12 +461,9 @@ public abstract class MapRendererView extends FrameLayout {
                 Log.v(TAG, "Rendering is still initialized during context creation, " +
                         "force releasing it!");
 
-                //TODO: support
-                /*
                 // Since there's no more context, where previous resources were created,
                 // they are lost. Forcibly release rendering
                 _mapRenderer.releaseRendering(true);
-                */
             }
 
             // Create main EGL context
@@ -567,12 +563,9 @@ public abstract class MapRendererView extends FrameLayout {
                 Log.v(TAG, "Rendering is still initialized during context destruction, " +
                         "force releasing it!");
 
-                //TODO: support
-                /*
                 // Since there's no more context, where previous resources were created,
                 // they are lost. Forcibly release rendering
                 _mapRenderer.releaseRendering(true);
-                */
             }
 
             // Destroy GPU-worker EGL surface (if present)

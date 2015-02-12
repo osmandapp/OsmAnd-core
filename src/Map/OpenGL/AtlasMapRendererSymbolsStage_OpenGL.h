@@ -67,14 +67,14 @@ namespace OsmAnd
             const std::shared_ptr<const RenderableBillboardSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseBillboardRaster();
+        bool releaseBillboardRaster(const bool contextLost);
 
         bool initializeOnPath();
         bool renderOnPathSymbol(
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnPath();
+        bool releaseOnPath(const bool contextLost);
 
         struct Glyph
         {
@@ -130,7 +130,7 @@ namespace OsmAnd
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnPath2D();
+        bool releaseOnPath2D(const bool contextLost);
 
         GLname _onPathSymbol3dVAO;
         GLname _onPathSymbol3dVBO;
@@ -178,7 +178,7 @@ namespace OsmAnd
             const std::shared_ptr<const RenderableOnPathSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnPath3D();
+        bool releaseOnPath3D(const bool contextLost);
 
         bool renderOnSurfaceSymbol(
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
@@ -227,7 +227,7 @@ namespace OsmAnd
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnSurfaceRaster();
+        bool releaseOnSurfaceRaster(const bool contextLost);
 
         struct OnSurfaceVectorProgram {
             GLname id;
@@ -264,14 +264,14 @@ namespace OsmAnd
             const std::shared_ptr<const RenderableOnSurfaceSymbol>& renderable,
             AlphaChannelType &currentAlphaChannelType,
             GLname& lastUsedProgram);
-        bool releaseOnSurfaceVector();
+        bool releaseOnSurfaceVector(const bool contextLost);
     public:
         AtlasMapRendererSymbolsStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererSymbolsStage_OpenGL();
 
         virtual bool initialize();
         virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
-        virtual bool release();
+        virtual bool release(const bool contextLost);
     };
 }
 

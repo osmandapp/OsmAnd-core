@@ -55,7 +55,7 @@ namespace OsmAnd
 
         virtual bool initialize();
         virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
-        virtual bool release();
+        virtual bool release(const bool contextLost);
     };
 }
 

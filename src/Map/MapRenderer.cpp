@@ -579,33 +579,33 @@ bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFra
     return true;
 }
 
-bool OsmAnd::MapRenderer::releaseRendering()
+bool OsmAnd::MapRenderer::releaseRendering(const bool contextLost /*= false*/)
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
     bool ok;
 
-    ok = preReleaseRendering();
+    ok = preReleaseRendering(contextLost);
     if (!ok)
         return false;
 
-    ok = doReleaseRendering();
+    ok = doReleaseRendering(contextLost);
     if (!ok)
         return false;
 
-    ok = postReleaseRendering();
+    ok = postReleaseRendering(contextLost);
     if (!ok)
         return false;
 
     // After all release procedures, release render API
-    ok = gpuAPI->release();
+    ok = gpuAPI->release(contextLost);
     if (!ok)
         return false;
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::preReleaseRendering()
+bool OsmAnd::MapRenderer::preReleaseRendering(const bool contextLost)
 {
     if (!_isRenderingInitialized)
         return false;
@@ -613,12 +613,12 @@ bool OsmAnd::MapRenderer::preReleaseRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer::doReleaseRendering()
+bool OsmAnd::MapRenderer::doReleaseRendering(const bool contextLost)
 {
     return true;
 }
 
-bool OsmAnd::MapRenderer::postReleaseRendering()
+bool OsmAnd::MapRenderer::postReleaseRendering(const bool contextLost)
 {
     // Release resources (to let all resources be released)
     _resources->releaseAllResources();

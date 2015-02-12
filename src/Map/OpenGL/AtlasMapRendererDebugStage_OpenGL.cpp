@@ -70,13 +70,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(IMapRenderer_Metrics::Met
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release(const bool contextLost)
 {
     bool ok = true;
-    ok = ok && releaseRects2D();
-    ok = ok && releaseLines2D();
-    ok = ok && releaseLines3D();
-    ok = ok && releaseQuads3D();
+    ok = ok && releaseRects2D(contextLost);
+    ok = ok && releaseLines2D(contextLost);
+    ok = ok && releaseLines3D(contextLost);
+    ok = ok && releaseQuads3D(contextLost);
     return ok;
 }
 
@@ -283,7 +283,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -518,7 +518,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -751,7 +751,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -996,7 +996,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D()
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 

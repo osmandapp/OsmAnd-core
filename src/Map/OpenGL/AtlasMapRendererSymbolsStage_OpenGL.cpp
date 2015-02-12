@@ -195,13 +195,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     return false;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(const bool contextLost)
 {
     bool ok = true;
-    ok = ok && releaseBillboardRaster();
-    ok = ok && releaseOnPath();
-    ok = ok && releaseOnSurfaceRaster();
-    ok = ok && releaseOnSurfaceVector();
+    ok = ok && releaseBillboardRaster(contextLost);
+    ok = ok && releaseOnPath(contextLost);
+    ok = ok && releaseOnSurfaceRaster(contextLost);
+    ok = ok && releaseOnSurfaceVector(contextLost);
     return ok;
 }
 
@@ -552,7 +552,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1497,15 +1497,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath(const bool contextLost)
 {
     bool ok = true;
-    ok = ok && releaseOnPath3D();
-    ok = ok && releaseOnPath2D();
+    ok = ok && releaseOnPath3D(contextLost);
+    ok = ok && releaseOnPath2D(contextLost);
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1541,7 +1541,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1876,7 +1876,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -2178,7 +2178,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 

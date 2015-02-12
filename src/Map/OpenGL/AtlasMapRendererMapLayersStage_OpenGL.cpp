@@ -121,10 +121,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release(const bool contextLost)
 {
     bool ok = true;
-    ok = ok && releaseRasterLayers();
+    ok = ok && releaseRasterLayers(contextLost);
     return ok;
 }
 
@@ -908,13 +908,13 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
     return nullptr;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers()
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(const bool contextLost)
 {
     GL_CHECK_PRESENT(glDeleteProgram);
 
     _maxNumberOfRasterMapLayersInBatch = 0;
 
-    releaseRasterTile();
+    releaseRasterTile(contextLost);
 
     for (auto& rasterLayerTileProgram : _rasterLayerTilePrograms)
     {
@@ -1069,7 +1069,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
     delete[] pIndices;
 }
 
-void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile()
+void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(const bool contextLost)
 {
     const auto gpuAPI = getGPUAPI();
 

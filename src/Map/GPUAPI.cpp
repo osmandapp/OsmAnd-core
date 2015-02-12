@@ -32,7 +32,7 @@ bool OsmAnd::GPUAPI::initialize()
     return true;
 }
 
-bool OsmAnd::GPUAPI::release()
+bool OsmAnd::GPUAPI::release(const bool contextLost)
 {
     return true;
 }

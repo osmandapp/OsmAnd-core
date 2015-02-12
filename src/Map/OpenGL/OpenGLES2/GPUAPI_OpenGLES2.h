@@ -71,7 +71,7 @@ namespace OsmAnd
         virtual ~GPUAPI_OpenGLES2();
 
         virtual bool initialize();
-        virtual bool release();
+        virtual bool release(const bool contextLost);
 
         const bool& isSupported_EXT_unpack_subimage;
         const bool& isSupported_EXT_texture_storage;

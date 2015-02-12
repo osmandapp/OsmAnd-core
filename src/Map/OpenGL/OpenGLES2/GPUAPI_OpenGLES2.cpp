@@ -399,11 +399,11 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGLES2::release()
+bool OsmAnd::GPUAPI_OpenGLES2::release(const bool contextLost)
 {
     bool ok;
 
-    ok = GPUAPI_OpenGL::release();
+    ok = GPUAPI_OpenGL::release(contextLost);
     if (!ok)
         return false;
 

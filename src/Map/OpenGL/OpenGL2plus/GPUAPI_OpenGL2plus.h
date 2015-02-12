@@ -58,7 +58,7 @@ namespace OsmAnd
         virtual ~GPUAPI_OpenGL2plus();
 
         virtual bool initialize();
-        virtual bool release();
+        virtual bool release(const bool contextLost);
 
         const bool& isSupported_GREMEDY_string_marker;
         const bool& isSupported_ARB_sampler_objects;
