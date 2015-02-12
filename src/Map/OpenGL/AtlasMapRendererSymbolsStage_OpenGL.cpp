@@ -468,16 +468,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         glUniform4fv(_billboardRasterProgram.vs.param.viewport, 1, glm::value_ptr(internalState.glmViewport));
         GL_CHECK_RESULT;
 
-        // Bind texture to sampler
-        glUniform1i(_billboardRasterProgram.fs.param.sampler, 0);
-        GL_CHECK_RESULT;
-
         // Activate texture block for symbol textures
         glActiveTexture(GL_TEXTURE0 + 0);
         GL_CHECK_RESULT;
 
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
+
+        // Bind texture to sampler
+        glUniform1i(_billboardRasterProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
 
         lastUsedProgram = _billboardRasterProgram.id;
 
@@ -1238,16 +1238,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         glUniformMatrix4fv(_onPath2dProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
         GL_CHECK_RESULT;
 
-        // Bind texture to sampler
-        glUniform1i(_onPath2dProgram.fs.param.sampler, 0);
-        GL_CHECK_RESULT;
-
         // Activate texture block for symbol textures
         glActiveTexture(GL_TEXTURE0 + 0);
         GL_CHECK_RESULT;
 
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
+
+        // Bind texture to sampler
+        glUniform1i(_onPath2dProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
 
         lastUsedProgram = _onPath2dProgram.id;
 
@@ -1381,16 +1381,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         glUniformMatrix4fv(_onPath3dProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
         GL_CHECK_RESULT;
 
-        // Bind texture to sampler
-        glUniform1i(_onPath3dProgram.fs.param.sampler, 0);
-        GL_CHECK_RESULT;
-
         // Activate texture block for symbol textures
         glActiveTexture(GL_TEXTURE0 + 0);
         GL_CHECK_RESULT;
 
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
+
+        // Bind texture to sampler
+        glUniform1i(_onPath3dProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
 
         lastUsedProgram = _onPath3dProgram.id;
 
@@ -1795,16 +1795,16 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         glUniformMatrix4fv(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
         GL_CHECK_RESULT;
 
-        // Bind texture to sampler
-        glUniform1i(_onSurfaceRasterProgram.fs.param.sampler, 0);
-        GL_CHECK_RESULT;
-
         // Activate texture block for symbol textures
         glActiveTexture(GL_TEXTURE0 + 0);
         GL_CHECK_RESULT;
 
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
+
+        // Bind texture to sampler
+        glUniform1i(_onSurfaceRasterProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
 
         lastUsedProgram = _onSurfaceRasterProgram.id;
 

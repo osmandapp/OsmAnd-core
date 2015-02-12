@@ -562,7 +562,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_CHECK_PRESENT(glUniformMatrix4fv);
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
-    GL_CHECK_PRESENT(glUniform1i);
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glUniform2fv);
     GL_CHECK_PRESENT(glActiveTexture);
@@ -810,6 +809,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     {
         const auto samplerIndex = layerIndexInBatch;
 
+        glActiveTexture(GL_TEXTURE0 + samplerIndex);
+        GL_CHECK_RESULT;
+
         glUniform1i(program.fs.param.rasterTileLayers[layerIndexInBatch].sampler, samplerIndex);
         GL_CHECK_RESULT;
 
@@ -817,6 +819,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     }
     if (gpuAPI->isSupported_vertexShaderTextureLookup)
     {
+        glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+        GL_CHECK_RESULT;
+
         glUniform1i(program.vs.param.elevationData_sampler, elevationDataSamplerIndex);
         GL_CHECK_RESULT;
 
