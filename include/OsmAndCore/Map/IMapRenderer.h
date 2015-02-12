@@ -54,7 +54,7 @@ namespace OsmAnd
         virtual bool update(IMapRenderer_Metrics::Metric_update* const metric = nullptr) = 0;
         virtual bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric = nullptr) = 0;
         virtual bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric = nullptr) = 0;
-        virtual bool releaseRendering(const bool contextLost = false) = 0;
+        virtual bool releaseRendering(const bool gpuContextLost = false) = 0;
 
         virtual bool isIdle() const = 0;
         virtual QString getNotIdleReason() const = 0;

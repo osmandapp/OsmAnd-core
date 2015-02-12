@@ -289,7 +289,7 @@ namespace OsmAnd
         const bool& isSupported_8bitPaletteRGBA8;
 
         virtual bool initialize() = 0;
-        virtual bool release(const bool contextLost) = 0;
+        virtual bool release(const bool gpuContextLost) = 0;
 
         virtual bool uploadTiledDataToGPU(
             const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,

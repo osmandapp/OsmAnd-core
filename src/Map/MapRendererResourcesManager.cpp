@@ -1269,7 +1269,9 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(const std::shared_
     return false;
 }
 
-void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection)
+void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
+    const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
+    const bool gpuContextLost)
 {
     // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here.
     // So wait here until all resources will be unloaded from GPU
@@ -1442,7 +1444,7 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
     renderer->requestResourcesUploadOrUnload();
 }
 
-void OsmAnd::MapRendererResourcesManager::releaseAllResources()
+void OsmAnd::MapRendererResourcesManager::releaseAllResources(const bool gpuContextLost)
 {
     // Release all resources
     for (const auto& resourcesCollections : _storageByType)
@@ -1451,11 +1453,11 @@ void OsmAnd::MapRendererResourcesManager::releaseAllResources()
         {
             if (!resourcesCollection)
                 continue;
-            blockingReleaseResourcesFrom(resourcesCollection);
+            blockingReleaseResourcesFrom(resourcesCollection, gpuContextLost);
         }
     }
     for (const auto& resourcesCollection : _pendingRemovalResourcesCollections)
-        blockingReleaseResourcesFrom(resourcesCollection);
+        blockingReleaseResourcesFrom(resourcesCollection, gpuContextLost);
     _pendingRemovalResourcesCollections.clear();
 
     // Release all bindings

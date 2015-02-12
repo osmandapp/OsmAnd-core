@@ -88,7 +88,7 @@ namespace OsmAnd
         GLname _rasterTileIBO;
         QHash<unsigned int, GLname> _rasterTileVAOs;
         void initializeRasterTile();
-        void releaseRasterTile(const bool contextLost);
+        void releaseRasterTile(const bool gpuContextLost);
         struct RasterLayerTileProgram
         {
             GLname id;
@@ -172,14 +172,14 @@ namespace OsmAnd
             const TileId normalizedTileId,
             const ZoomLevel zoomLevel,
             MapRendererResourceState* const outState = nullptr);
-        bool releaseRasterLayers(const bool contextLost);
+        bool releaseRasterLayers(const bool gpuContextLost);
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererMapLayersStage_OpenGL();
 
         virtual bool initialize();
         virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
-        virtual bool release(const bool contextLost);
+        virtual bool release(const bool gpuContextLost);
     };
 }
 

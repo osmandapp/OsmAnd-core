@@ -64,7 +64,7 @@ namespace OsmAnd
         virtual bool prePrepareFrame();
         virtual bool postPrepareFrame();
 
-        virtual bool doReleaseRendering(const bool contextLost);
+        virtual bool doReleaseRendering(const bool gpuContextLost);
 
         // Stages:
         std::shared_ptr<AtlasMapRendererSkyStage> _skyStage;

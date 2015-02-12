@@ -319,7 +319,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL2plus::release(const bool contextLost)
+bool OsmAnd::GPUAPI_OpenGL2plus::release(const bool gpuContextLost)
 {
     bool ok;
 
@@ -328,7 +328,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::release(const bool contextLost)
         GL_CHECK_PRESENT(glDeleteSamplers);
         if (_textureSamplers[0] != 0)
         {
-            if (!contextLost)
+            if (!gpuContextLost)
             {
                 glDeleteSamplers(1, _textureSamplers.data());
                 GL_CHECK_RESULT;
@@ -337,7 +337,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::release(const bool contextLost)
         }
     }
 
-    ok = GPUAPI_OpenGL::release(contextLost);
+    ok = GPUAPI_OpenGL::release(gpuContextLost);
     if (!ok)
         return false;
 

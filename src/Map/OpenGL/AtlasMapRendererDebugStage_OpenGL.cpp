@@ -70,13 +70,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::render(IMapRenderer_Metrics::Met
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release(const bool contextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::release(const bool gpuContextLost)
 {
     bool ok = true;
-    ok = ok && releaseRects2D(contextLost);
-    ok = ok && releaseLines2D(contextLost);
-    ok = ok && releaseLines3D(contextLost);
-    ok = ok && releaseQuads3D(contextLost);
+    ok = ok && releaseRects2D(gpuContextLost);
+    ok = ok && releaseLines2D(gpuContextLost);
+    ok = ok && releaseLines3D(gpuContextLost);
+    ok = ok && releaseQuads3D(gpuContextLost);
     return ok;
 }
 
@@ -283,7 +283,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderRects2D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(const bool contextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -292,13 +292,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(const bool contex
 
     if (_vaoRect2D.isValid())
     {
-        gpuAPI->releaseVAO(_vaoRect2D, contextLost);
+        gpuAPI->releaseVAO(_vaoRect2D, gpuContextLost);
         _vaoRect2D.reset();
     }
 
     if (_iboRect2D.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_iboRect2D);
             GL_CHECK_RESULT;
@@ -307,7 +307,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(const bool contex
     }
     if (_vboRect2D.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_vboRect2D);
             GL_CHECK_RESULT;
@@ -317,7 +317,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseRects2D(const bool contex
 
     if (_programRect2D.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_programRect2D.id);
             GL_CHECK_RESULT;
@@ -527,7 +527,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines2D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool contextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -536,13 +536,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool contex
 
     if (_vaoLine2D.isValid())
     {
-        gpuAPI->releaseVAO(_vaoLine2D, contextLost);
+        gpuAPI->releaseVAO(_vaoLine2D, gpuContextLost);
         _vaoLine2D.reset();
     }
     
     if (_iboLine2D.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_iboLine2D);
             GL_CHECK_RESULT;
@@ -551,7 +551,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool contex
     }
     if (_vboLine2D.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_vboLine2D);
             GL_CHECK_RESULT;
@@ -561,7 +561,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines2D(const bool contex
     
     if (_programLine2D.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_programLine2D.id);
             GL_CHECK_RESULT;
@@ -769,7 +769,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderLines3D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool contextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -778,13 +778,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool contex
 
     if (_vaoLine3D.isValid())
     {
-        gpuAPI->releaseVAO(_vaoLine3D, contextLost);
+        gpuAPI->releaseVAO(_vaoLine3D, gpuContextLost);
         _vaoLine3D.reset();
     }
     
     if (_iboLine3D.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_iboLine3D);
             GL_CHECK_RESULT;
@@ -793,7 +793,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool contex
     }
     if (_vboLine3D.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_vboLine3D);
             GL_CHECK_RESULT;
@@ -803,7 +803,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseLines3D(const bool contex
     
     if (_programLine3D.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_programLine3D.id);
             GL_CHECK_RESULT;
@@ -1023,7 +1023,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::renderQuads3D()
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool contextLost)
+bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1032,13 +1032,13 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool contex
 
     if (_vaoQuad3D.isValid())
     {
-        gpuAPI->releaseVAO(_vaoQuad3D, contextLost);
+        gpuAPI->releaseVAO(_vaoQuad3D, gpuContextLost);
         _vaoQuad3D.reset();
     }
     
     if (_iboQuad3D.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_iboQuad3D);
             GL_CHECK_RESULT;
@@ -1047,7 +1047,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool contex
     }
     if (_vboQuad3D.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_vboQuad3D);
             GL_CHECK_RESULT;
@@ -1057,7 +1057,7 @@ bool OsmAnd::AtlasMapRendererDebugStage_OpenGL::releaseQuads3D(const bool contex
     
     if (_programQuad3D.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_programQuad3D.id);
             GL_CHECK_RESULT;

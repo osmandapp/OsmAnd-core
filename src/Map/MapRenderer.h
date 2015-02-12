@@ -208,9 +208,9 @@ namespace OsmAnd
         virtual bool doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric) = 0;
         virtual bool postRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric);
 
-        virtual bool preReleaseRendering(const bool contextLost);
-        virtual bool doReleaseRendering(const bool contextLost);
-        virtual bool postReleaseRendering(const bool contextLost);
+        virtual bool preReleaseRendering(const bool gpuContextLost);
+        virtual bool doReleaseRendering(const bool gpuContextLost);
+        virtual bool postReleaseRendering(const bool gpuContextLost);
     public:
         virtual ~MapRenderer();
 
@@ -227,7 +227,7 @@ namespace OsmAnd
         virtual bool update(IMapRenderer_Metrics::Metric_update* const metric = nullptr) Q_DECL_FINAL;
         virtual bool prepareFrame(IMapRenderer_Metrics::Metric_prepareFrame* const metric = nullptr) Q_DECL_FINAL;
         virtual bool renderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric = nullptr) Q_DECL_FINAL;
-        virtual bool releaseRendering(const bool contextLost = false);
+        virtual bool releaseRendering(const bool gpuContextLost = false);
 
         virtual bool isIdle() const;
         virtual QString getNotIdleReason() const;

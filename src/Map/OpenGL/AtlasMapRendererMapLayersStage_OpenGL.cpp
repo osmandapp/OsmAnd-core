@@ -121,10 +121,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release(const bool contextLost)
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release(const bool gpuContextLost)
 {
     bool ok = true;
-    ok = ok && releaseRasterLayers(contextLost);
+    ok = ok && releaseRasterLayers(gpuContextLost);
     return ok;
 }
 
@@ -908,20 +908,20 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
     return nullptr;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(const bool contextLost)
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(const bool gpuContextLost)
 {
     GL_CHECK_PRESENT(glDeleteProgram);
 
     _maxNumberOfRasterMapLayersInBatch = 0;
 
-    releaseRasterTile(contextLost);
+    releaseRasterTile(gpuContextLost);
 
     for (auto& rasterLayerTileProgram : _rasterLayerTilePrograms)
     {
         if (!rasterLayerTileProgram.id.isValid())
             continue;
 
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(rasterLayerTileProgram.id);
             GL_CHECK_RESULT;
@@ -1072,7 +1072,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
     delete[] pIndices;
 }
 
-void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(const bool contextLost)
+void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1082,14 +1082,14 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(const bool
     {
         if (rasterTileVAO.isValid())
         {
-            gpuAPI->releaseVAO(rasterTileVAO, contextLost);
+            gpuAPI->releaseVAO(rasterTileVAO, gpuContextLost);
             rasterTileVAO.reset();
         }
     }
 
     if (_rasterTileIBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_rasterTileIBO);
             GL_CHECK_RESULT;
@@ -1098,7 +1098,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(const bool
     }
     if (_rasterTileVBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_rasterTileVBO);
             GL_CHECK_RESULT;

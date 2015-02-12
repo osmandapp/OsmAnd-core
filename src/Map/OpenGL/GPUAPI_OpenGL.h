@@ -319,7 +319,7 @@ namespace OsmAnd
         void initializeVAO(const GLname vao);
         void useVAO(const GLname vao);
         void unuseVAO();
-        void releaseVAO(const GLname vao, const bool contextLost = false);
+        void releaseVAO(const GLname vao, const bool gpuContextLost = false);
 
         virtual void preprocessVertexShader(QString& code) = 0;
         virtual void preprocessFragmentShader(QString& code) = 0;

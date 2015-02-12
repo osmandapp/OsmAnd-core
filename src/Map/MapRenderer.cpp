@@ -579,33 +579,33 @@ bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFra
     return true;
 }
 
-bool OsmAnd::MapRenderer::releaseRendering(const bool contextLost /*= false*/)
+bool OsmAnd::MapRenderer::releaseRendering(const bool gpuContextLost /*= false*/)
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
     bool ok;
 
-    ok = preReleaseRendering(contextLost);
+    ok = preReleaseRendering(gpuContextLost);
     if (!ok)
         return false;
 
-    ok = doReleaseRendering(contextLost);
+    ok = doReleaseRendering(gpuContextLost);
     if (!ok)
         return false;
 
-    ok = postReleaseRendering(contextLost);
+    ok = postReleaseRendering(gpuContextLost);
     if (!ok)
         return false;
 
     // After all release procedures, release render API
-    ok = gpuAPI->release(contextLost);
+    ok = gpuAPI->release(gpuContextLost);
     if (!ok)
         return false;
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::preReleaseRendering(const bool contextLost)
+bool OsmAnd::MapRenderer::preReleaseRendering(const bool gpuContextLost)
 {
     if (!_isRenderingInitialized)
         return false;
@@ -613,15 +613,15 @@ bool OsmAnd::MapRenderer::preReleaseRendering(const bool contextLost)
     return true;
 }
 
-bool OsmAnd::MapRenderer::doReleaseRendering(const bool contextLost)
+bool OsmAnd::MapRenderer::doReleaseRendering(const bool gpuContextLost)
 {
     return true;
 }
 
-bool OsmAnd::MapRenderer::postReleaseRendering(const bool contextLost)
+bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
 {
     // Release resources (to let all resources be released)
-    _resources->releaseAllResources();
+    _resources->releaseAllResources(gpuContextLost);
 
     // GPU worker should not be suspected afterwards
     _gpuWorkerIsSuspended = false;

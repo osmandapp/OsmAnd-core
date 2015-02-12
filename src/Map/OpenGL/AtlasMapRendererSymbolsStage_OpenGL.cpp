@@ -195,13 +195,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     return false;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(const bool contextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(const bool gpuContextLost)
 {
     bool ok = true;
-    ok = ok && releaseBillboardRaster(contextLost);
-    ok = ok && releaseOnPath(contextLost);
-    ok = ok && releaseOnSurfaceRaster(contextLost);
-    ok = ok && releaseOnSurfaceVector(contextLost);
+    ok = ok && releaseBillboardRaster(gpuContextLost);
+    ok = ok && releaseOnPath(gpuContextLost);
+    ok = ok && releaseOnSurfaceRaster(gpuContextLost);
+    ok = ok && releaseOnSurfaceVector(gpuContextLost);
     return ok;
 }
 
@@ -552,7 +552,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const bool contextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -561,13 +561,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const b
 
     if (_billboardRasterSymbolVAO.isValid())
     {
-        gpuAPI->releaseVAO(_billboardRasterSymbolVAO, contextLost);
+        gpuAPI->releaseVAO(_billboardRasterSymbolVAO, gpuContextLost);
         _billboardRasterSymbolVAO.reset();
     }
 
     if (_billboardRasterSymbolIBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_billboardRasterSymbolIBO);
             GL_CHECK_RESULT;
@@ -576,7 +576,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const b
     }
     if (_billboardRasterSymbolVBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_billboardRasterSymbolVBO);
             GL_CHECK_RESULT;
@@ -586,7 +586,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const b
     
     if (_billboardRasterProgram.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_billboardRasterProgram.id);
             GL_CHECK_RESULT;
@@ -1506,15 +1506,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath(const bool contextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath(const bool gpuContextLost)
 {
     bool ok = true;
-    ok = ok && releaseOnPath3D(contextLost);
-    ok = ok && releaseOnPath2D(contextLost);
+    ok = ok && releaseOnPath3D(gpuContextLost);
+    ok = ok && releaseOnPath2D(gpuContextLost);
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool contextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1523,13 +1523,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool con
 
     if (_onPathSymbol2dVAO.isValid())
     {
-        gpuAPI->releaseVAO(_onPathSymbol2dVAO, contextLost);
+        gpuAPI->releaseVAO(_onPathSymbol2dVAO, gpuContextLost);
         _onPathSymbol2dVAO.reset();
     }
 
     if (_onPathSymbol2dIBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_onPathSymbol2dIBO);
             GL_CHECK_RESULT;
@@ -1538,7 +1538,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool con
     }
     if (_onPathSymbol2dVBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_onPathSymbol2dVBO);
             GL_CHECK_RESULT;
@@ -1548,7 +1548,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool con
     
     if (_onPath2dProgram.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_onPath2dProgram.id);
             GL_CHECK_RESULT;
@@ -1559,7 +1559,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool con
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(const bool contextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1568,13 +1568,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(const bool con
 
     if (_onPathSymbol3dVAO.isValid())
     {
-        gpuAPI->releaseVAO(_onPathSymbol3dVAO, contextLost);
+        gpuAPI->releaseVAO(_onPathSymbol3dVAO, gpuContextLost);
         _onPathSymbol3dVAO.reset();
     }
 
     if (_onPathSymbol3dIBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_onPathSymbol3dIBO);
             GL_CHECK_RESULT;
@@ -1583,7 +1583,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(const bool con
     }
     if (_onPathSymbol3dVBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_onPathSymbol3dVBO);
             GL_CHECK_RESULT;
@@ -1593,7 +1593,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(const bool con
 
     if (_onPath3dProgram.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_onPath3dProgram.id);
             GL_CHECK_RESULT;
@@ -1902,7 +1902,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const bool contextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1911,13 +1911,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const b
 
     if (_onSurfaceRasterSymbolVAO.isValid())
     {
-        gpuAPI->releaseVAO(_onSurfaceRasterSymbolVAO, contextLost);
+        gpuAPI->releaseVAO(_onSurfaceRasterSymbolVAO, gpuContextLost);
         _onSurfaceRasterSymbolVAO.reset();
     }
     
     if (_onSurfaceRasterSymbolIBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_onSurfaceRasterSymbolIBO);
             GL_CHECK_RESULT;
@@ -1926,7 +1926,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const b
     }
     if (_onSurfaceRasterSymbolVBO.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteBuffers(1, &_onSurfaceRasterSymbolVBO);
             GL_CHECK_RESULT;
@@ -1936,7 +1936,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const b
     
     if (_onSurfaceRasterProgram.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_onSurfaceRasterProgram.id);
             GL_CHECK_RESULT;
@@ -2213,7 +2213,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const bool contextLost)
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -2221,7 +2221,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const b
 
     if (_onSurfaceVectorProgram.id.isValid())
     {
-        if (!contextLost)
+        if (!gpuContextLost)
         {
             glDeleteProgram(_onSurfaceVectorProgram.id);
             GL_CHECK_RESULT;
