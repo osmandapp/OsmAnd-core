@@ -468,6 +468,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         glUniform4fv(_billboardRasterProgram.vs.param.viewport, 1, glm::value_ptr(internalState.glmViewport));
         GL_CHECK_RESULT;
 
+        // Bind texture to sampler
+        glUniform1i(_billboardRasterProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
+
         // Activate texture block for symbol textures
         glActiveTexture(GL_TEXTURE0 + 0);
         GL_CHECK_RESULT;
@@ -1234,6 +1238,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         glUniformMatrix4fv(_onPath2dProgram.vs.param.mOrthographicProjection, 1, GL_FALSE, glm::value_ptr(internalState.mOrthographicProjection));
         GL_CHECK_RESULT;
 
+        // Bind texture to sampler
+        glUniform1i(_onPath2dProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
+
         // Activate texture block for symbol textures
         glActiveTexture(GL_TEXTURE0 + 0);
         GL_CHECK_RESULT;
@@ -1371,6 +1379,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
 
         // Set view-projection matrix
         glUniformMatrix4fv(_onPath3dProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Bind texture to sampler
+        glUniform1i(_onPath3dProgram.fs.param.sampler, 0);
         GL_CHECK_RESULT;
 
         // Activate texture block for symbol textures
@@ -1781,6 +1793,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
 
         // Set perspective projection-view matrix
         glUniformMatrix4fv(_onSurfaceRasterProgram.vs.param.mPerspectiveProjectionView, 1, GL_FALSE, glm::value_ptr(internalState.mPerspectiveProjectionView));
+        GL_CHECK_RESULT;
+
+        // Bind texture to sampler
+        glUniform1i(_onSurfaceRasterProgram.fs.param.sampler, 0);
         GL_CHECK_RESULT;
 
         // Activate texture block for symbol textures
