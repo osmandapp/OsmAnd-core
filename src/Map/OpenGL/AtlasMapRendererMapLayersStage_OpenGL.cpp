@@ -47,9 +47,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     const auto& internalState = getInternalState();
     const auto gpuAPI = getGPUAPI();
 
-    if (currentState.mapLayersProviders.isEmpty())
-        return ok;
-
     GL_PUSH_GROUP_MARKER(QLatin1String("mapLayers"));
 
     // First vector layer or first raster layers batch should be rendered without blending,
@@ -64,7 +61,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     GL_CHECK_RESULT;
 
     GLname lastUsedProgram;
-    GLlocation activeElevationVertexAttribArray;
+    GLlocation elevationDataVertexAttribArray;
     const auto& batchedLayersByTiles = batchLayersByTiles(internalState);
     for (const auto& batchedLayersByTile : constOf(batchedLayersByTiles))
     {
@@ -86,14 +83,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
             blendingEnabled = !batchedLayersByTile->containsOriginLayer;
         }
 
-        // Depending on type of first provider (and all others), batch is rendered differently
+        // Depending on type of first (and all others) batched layer, batch is rendered differently
         const auto& firstProviderInBatch = currentState.mapLayersProviders[batchedLayersByTile->layers.first()->layerIndex];
-        if (const auto rasterMapLayerProvider = std::dynamic_pointer_cast<IRasterMapLayerProvider>(firstProviderInBatch))
+        if (batchedLayersByTile->layers.first()->type == BatchedLayerType::Raster)
         {
             renderRasterLayersBatch(
                 batchedLayersByTile,
                 currentAlphaChannelType,
-                activeElevationVertexAttribArray,
+                elevationDataVertexAttribArray,
                 lastUsedProgram);
         }
     }
@@ -102,12 +99,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     if (lastUsedProgram.isValid())
     {
         // Elevation vertex attrib is bound to program
-        if (activeElevationVertexAttribArray.isValid())
+        if (elevationDataVertexAttribArray.isValid())
         {
-            glDisableVertexAttribArray(*activeElevationVertexAttribArray);
+            glDisableVertexAttribArray(*elevationDataVertexAttribArray);
             GL_CHECK_RESULT;
 
-            activeElevationVertexAttribArray.reset();
+            elevationDataVertexAttribArray.reset();
         }
 
         glUseProgram(0);
@@ -335,9 +332,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         // Parameters: per-layer data
         "struct RasterLayerTile                                                                                             ""\n"
         "{                                                                                                                  ""\n"
+        "    lowp sampler2D sampler;                                                                                        ""\n"
         "    lowp float opacity;                                                                                            ""\n"
         "    lowp float isPremultipliedAlpha;                                                                               ""\n"
-        "    lowp sampler2D sampler;                                                                                        ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "                                                                                                                   ""\n"
@@ -463,7 +460,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         if (layerIndex > 0)
         {
             preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode +=
-                detachedOf(fragmentShader_perRasterLayer).replace("%rasterLayerIndex%", QString::number(layerIndex));;
+                detachedOf(fragmentShader_perRasterLayer).replace("%rasterLayerIndex%", QString::number(layerIndex));
         }
     }
     preprocessedFragmentShader.replace("%UnrolledPerRasterLayerTexCoordsDeclarationCode%", preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
@@ -661,11 +658,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             GL_CHECK_RESULT;
 
             gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
-
-            //////////////////////////////////////////////////////////////////////////
-            // Possible workaround
-            glUniform1i(perTile_fs.sampler, samplerIndex);
-            //////////////////////////////////////////////////////////////////////////
 
             if (batchedResourceInGPU->resourceInGPU->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {
@@ -1169,7 +1161,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
         glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
         GL_CHECK_RESULT;
 
-        gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
+        gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + elevationDataSamplerIndex);
 
         if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
         {
@@ -1254,7 +1246,11 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
             if (!resourcesCollection)
                 continue;
 
-            Ref<BatchedLayer> batchedLayer = new BatchedLayer(layerIndex);
+            Ref<BatchedLayer> batchedLayer = new BatchedLayer(
+                (std::dynamic_pointer_cast<IRasterMapLayerProvider>(provider) != nullptr)
+                    ? BatchedLayerType::Raster
+                    : BatchedLayerType::Other,
+                layerIndex);
 
             // Try to obtain exact match resource
             const auto exactMatchGpuResource = captureLayerResource(
@@ -1267,10 +1263,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
             if (exactMatchGpuResource)
             {
                 // Exact match, no zoom shift or offset
-                //batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
-                //    new BatchedLayerResource(exactMatchGpuResource)));
                 batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
-                    new BatchedLayerResource(getResources().unavailableTileStub)));
+                    new BatchedLayerResource(exactMatchGpuResource)));
             }
             else if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden || !debugSettings->rasterLayersUnderscaleForbidden))
             {
@@ -1320,7 +1314,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                         ? getResources().processingTileStub
                         : getResources().unavailableTileStub;
 
-                    Ref<BatchedLayer> batchedLayer = new BatchedLayer(layerIndex);
+                    Ref<BatchedLayer> batchedLayer = new BatchedLayer(BatchedLayerType::Raster, layerIndex);
                     batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
                         new BatchedLayerResource(stubResource)));
                     batch->layers.push_back(qMove(batchedLayer));
@@ -1329,19 +1323,13 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 continue;
             }
 
-            // Only raster layers can be batched, while if there's no previous
             bool canBeBatched = !debugSettings->mapLayersBatchingForbidden;
             if (!batch->layers.isEmpty())
             {
                 const auto& lastBatchedLayer = batch->layers.last();
-                const auto& previousProvider = currentState.mapLayersProviders[lastBatchedLayer->layerIndex];
 
                 // Only raster layers can be batched
-                const auto previousProviderIsRaster =
-                    (std::dynamic_pointer_cast<IRasterMapLayerProvider>(previousProvider) != nullptr);
-                const auto currentProviderIsRaster =
-                    (std::dynamic_pointer_cast<IRasterMapLayerProvider>(provider) != nullptr);
-                canBeBatched = (previousProviderIsRaster && currentProviderIsRaster);
+                canBeBatched = (lastBatchedLayer->type == BatchedLayerType::Raster);
 
                 // Number of batched raster layers is limited
                 canBeBatched = canBeBatched && (batch->layers.size() <= _maxNumberOfRasterMapLayersInBatch);
@@ -1381,7 +1369,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 ? getResources().processingTileStub
                 : getResources().unavailableTileStub;
 
-            Ref<BatchedLayer> batchedLayer = new BatchedLayer(currentState.mapLayersProviders.firstKey());
+            Ref<BatchedLayer> batchedLayer = new BatchedLayer(BatchedLayerType::Raster, std::numeric_limits<int>::min());
             batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
                 new BatchedLayerResource(stubResource)));
             batch->layers.push_back(qMove(batchedLayer));
@@ -1420,8 +1408,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayerResource::canBeB
         nSizeInTile == that.nSizeInTile;
 }
 
-OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayer::BatchedLayer(const int layerIndex_)
-    : layerIndex(layerIndex_)
+OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayer::BatchedLayer(const BatchedLayerType type_, const int layerIndex_)
+    : type(type_)
+    , layerIndex(layerIndex_)
 {
 }
 

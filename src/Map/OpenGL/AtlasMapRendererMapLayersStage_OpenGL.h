@@ -31,6 +31,12 @@ namespace OsmAnd
     {
     private:
     protected:
+        enum class BatchedLayerType
+        {
+            Raster,
+            Other
+        };
+
         struct BatchedLayerResource Q_DECL_FINAL
         {
             BatchedLayerResource(
@@ -51,8 +57,9 @@ namespace OsmAnd
         };
         struct BatchedLayer Q_DECL_FINAL
         {
-            BatchedLayer(const int layerIndex);
+            BatchedLayer(const BatchedLayerType type, const int layerIndex);
 
+            const BatchedLayerType type;
             const int layerIndex;
             QList< Ref<BatchedLayerResource> > resourcesInGPU;
         
