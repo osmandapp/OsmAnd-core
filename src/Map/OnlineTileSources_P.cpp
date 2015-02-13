@@ -136,14 +136,27 @@ std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::ge
     {
         _builtIn.reset(new OnlineTileSources());
 
-        std::shared_ptr<Source> mapnikOsmAndSource(new Source(QLatin1String("Mapnik (OsmAnd)")));
-        mapnikOsmAndSource->urlPattern = QLatin1String("http://mapnik.osmand.net/${osm_zoom}/${osm_x}/${osm_y}.png");
-        mapnikOsmAndSource->minZoom = ZoomLevel0;
-        mapnikOsmAndSource->maxZoom = ZoomLevel19;
-        mapnikOsmAndSource->maxConcurrentDownloads = 0;
-        mapnikOsmAndSource->tileSize = 256;
-        mapnikOsmAndSource->alphaChannelPresence = AlphaChannelPresence::NotPresent;
-        _builtIn->addSource(mapnikOsmAndSource);
+        std::shared_ptr<Source> osmAndSD(new Source(
+            OnlineTileSources::BuiltInOsmAndSD,
+            QLatin1String("Mapnik (OsmAnd)")));
+        osmAndSD->urlPattern = QLatin1String("http://mapnik.osmand.net/${osm_zoom}/${osm_x}/${osm_y}.png");
+        osmAndSD->minZoom = ZoomLevel0;
+        osmAndSD->maxZoom = ZoomLevel19;
+        osmAndSD->maxConcurrentDownloads = 0;
+        osmAndSD->tileSize = 256;
+        osmAndSD->alphaChannelPresence = AlphaChannelPresence::NotPresent;
+        _builtIn->addSource(osmAndSD);
+
+        std::shared_ptr<Source> osmAndHD(new Source(
+            OnlineTileSources::BuiltInOsmAndHD,
+            QLatin1String("Mapnik HD (OsmAnd)")));
+        osmAndHD->urlPattern = QLatin1String("http://mapnikhd.osmand.net/hd/${osm_zoom}/${osm_x}/${osm_y}.png");
+        osmAndHD->minZoom = ZoomLevel0;
+        osmAndHD->maxZoom = ZoomLevel19;
+        osmAndHD->maxConcurrentDownloads = 0;
+        osmAndHD->tileSize = 512;
+        osmAndHD->alphaChannelPresence = AlphaChannelPresence::NotPresent;
+        _builtIn->addSource(osmAndHD);
     }
 
     return _builtIn;

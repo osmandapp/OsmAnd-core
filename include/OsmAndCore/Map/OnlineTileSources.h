@@ -46,6 +46,8 @@ namespace OsmAnd
         bool removeSource(const QString& sourceName);
 
         static std::shared_ptr<const OnlineTileSources> getBuiltIn();
+        static const QString BuiltInOsmAndSD;
+        static const QString BuiltInOsmAndHD;
     };
 }
 

@@ -10,7 +10,8 @@ OsmAnd::IOnlineTileSources::~IOnlineTileSources()
 {
 }
 
-std::shared_ptr<OsmAnd::OnlineRasterMapLayerProvider> OsmAnd::IOnlineTileSources::createProviderFor(const QString& sourceName) const
+std::shared_ptr<OsmAnd::OnlineRasterMapLayerProvider> OsmAnd::IOnlineTileSources::createProviderFor(
+    const QString& sourceName) const
 {
     const auto source = getSourceByName(sourceName);
     if (!source)
@@ -28,6 +29,13 @@ std::shared_ptr<OsmAnd::OnlineRasterMapLayerProvider> OsmAnd::IOnlineTileSources
 
 OsmAnd::IOnlineTileSources::Source::Source(const QString& name_)
     : name(name_)
+    , title(name)
+{
+}
+
+OsmAnd::IOnlineTileSources::Source::Source(const QString& name_, const QString& title_)
+    : name(name_)
+    , title(title_)
 {
 }
 

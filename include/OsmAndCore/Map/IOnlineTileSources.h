@@ -25,9 +25,11 @@ namespace OsmAnd
         struct OSMAND_CORE_API Source
         {
             Source(const QString& name);
+            Source(const QString& name, const QString& title);
             virtual ~Source();
 
             const QString name;
+            QString title;
             QString urlPattern;
             ZoomLevel minZoom;
             ZoomLevel maxZoom;
