@@ -137,11 +137,11 @@ std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources_P::ge
         _builtIn.reset(new OnlineTileSources());
 
         std::shared_ptr<Source> mapnikOsmAndSource(new Source(QLatin1String("OsmAnd (online tiles)")));
-        mapnikOsmAndSource->urlPattern = QLatin1String("http://mapnik.osmand.net/${osm_zoom}/${osm_x}/${osm_y}.png");
+        mapnikOsmAndSource->urlPattern = QLatin1String("http://mapnikhd.osmand.net/hd/${osm_zoom}/${osm_x}/${osm_y}.png");
         mapnikOsmAndSource->minZoom = ZoomLevel0;
         mapnikOsmAndSource->maxZoom = ZoomLevel19;
         mapnikOsmAndSource->maxConcurrentDownloads = 0;
-        mapnikOsmAndSource->tileSize = 256;
+        mapnikOsmAndSource->tileSize = 512;
         mapnikOsmAndSource->alphaChannelPresence = AlphaChannelPresence::NotPresent;
         _builtIn->addSource(mapnikOsmAndSource);
     }
