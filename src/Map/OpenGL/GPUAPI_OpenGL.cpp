@@ -1817,7 +1817,7 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
     if (itOtherName != variablesByLocation.constEnd())
     {
         LogPrintf(LogSeverityLevel::Error,
-            "Variable '%s' (%s) in program %d was shares same location at other variable '%s'",
+            "Variable '%s' (%s) in program %d shares same location at other variable '%s'",
             qPrintable(name),
             type == GlslVariableType::In ? "In" : "Uniform",
             program,
