@@ -538,7 +538,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             auto& layerStruct = outRasterLayerTileProgram.fs.param.rasterTileLayers[layerIndex];
 
             ok = ok && lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GlslVariableType::Uniform);
-            ok = ok && lookup->lookupLocation(layerStruct.opacity, layerStructName + ".opacityFactor", GlslVariableType::Uniform);
+            ok = ok && lookup->lookupLocation(layerStruct.opacityFactor, layerStructName + ".opacityFactor", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.isPremultipliedAlpha, layerStructName + ".isPremultipliedAlpha", GlslVariableType::Uniform);
         }
     }
