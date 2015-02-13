@@ -84,7 +84,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
         }
 
         // Depending on type of first (and all others) batched layer, batch is rendered differently
-        const auto& firstProviderInBatch = currentState.mapLayersProviders[batchedLayersByTile->layers.first()->layerIndex];
         if (batchedLayersByTile->layers.first()->type == BatchedLayerType::Raster)
         {
             renderRasterLayersBatch(
@@ -366,7 +365,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacity + 1.0, param_fs_rasterTileLayer_0.isPremultipliedAlpha);""\n"
+        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacity, param_fs_rasterTileLayer_0.isPremultipliedAlpha);""\n"
         "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
         "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
         "    finalColor *= vec4(firstLayerColorFactor, firstLayerColorFactor, firstLayerColorFactor, 1.0);                  ""\n"
@@ -621,7 +620,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             if (currentState.mapLayersProviders.isEmpty() ||
                 layer->layerIndex == currentState.mapLayersProviders.firstKey())
             {
-                glUniform1f(perTile_fs.opacity, 1.0f);
+                glUniform1f(perTile_fs.opacity, 1000000000000.0f);
                 GL_CHECK_RESULT;
             }
             else
