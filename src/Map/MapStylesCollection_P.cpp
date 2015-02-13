@@ -27,20 +27,12 @@ OsmAnd::MapStylesCollection_P::~MapStylesCollection_P()
 {
 }
 
-QString getStyleName(const QString& name )
-{
-    auto styleName = name.toLower();
-    if(styleName == "osmand") {
-        styleName = "default";
-    }
-    if (!styleName.endsWith(QLatin1String(".render.xml")))
-        styleName.append(QLatin1String(".render.xml"));
-    return styleName;
-}
-
 std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P::getEditableStyleByName_noSync(const QString& name) const
 {
-    auto styleName = getStyleName(name);
+    auto styleName = name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+
     const auto citStyle = _styles.constFind(styleName);
     if (citStyle == _styles.cend())
         return nullptr;
@@ -78,7 +70,9 @@ bool OsmAnd::MapStylesCollection_P::addStyleFromFile(const QString& filePath, co
     if (!style->loadMetadata())
         return false;
 
-    auto styleName = getStyleName(style->name);
+    auto styleName = style->name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
     if (doNotReplace && _styles.contains(styleName))
         return false;
     _styles.insert(styleName, style);
@@ -117,7 +111,10 @@ std::shared_ptr<const OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P:
 {
     QReadLocker scopedLocker(&_stylesLock);
 
-    auto styleName = getStyleName(name);
+    auto styleName = name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+
     const auto citStyle = _styles.constFind(styleName);
     if (citStyle == _styles.cend())
         return nullptr;
@@ -127,8 +124,11 @@ std::shared_ptr<const OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P:
 std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::MapStylesCollection_P::getResolvedStyleByName(const QString& name) const
 {
     QMutexLocker scopedLocker(&_resolvedStylesLock);
-    auto styleName = getStyleName(name);
-    
+
+    auto styleName = name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+
     // Check if such style was already resolved
     auto& resolvedStyle = _resolvedStyles[styleName];
     if (resolvedStyle)
