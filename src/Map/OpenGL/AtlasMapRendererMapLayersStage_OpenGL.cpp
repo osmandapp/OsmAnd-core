@@ -367,9 +367,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacity + 1.0, param_fs_rasterTileLayer_0.isPremultipliedAlpha);""\n"
-        //////////////////////////////////////////////////////////////////////////
-        "    lowp vec4 TRUE_COLOR = finalColor;                                                                                          ""\n"
-        //////////////////////////////////////////////////////////////////////////
         "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
         "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
         "    finalColor *= vec4(firstLayerColorFactor, firstLayerColorFactor, firstLayerColorFactor, 1.0);                  ""\n"
@@ -392,12 +389,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
-        //////////////////////////////////////////////////////////////////////////
-        "    FRAGMENT_COLOR_OUTPUT.arg = TRUE_COLOR.arg;                                                                            ""\n"
-        //"    FRAGMENT_COLOR_OUTPUT.a = 1.0;                                                            ""\n"
-        //"    FRAGMENT_COLOR_OUTPUT.r = param_fs_rasterTileLayer_0.opacity;                                                            ""\n"
-        //"    FRAGMENT_COLOR_OUTPUT.g = param_fs_rasterTileLayer_0.isPremultipliedAlpha;                                                            ""\n"
-        //////////////////////////////////////////////////////////////////////////
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
