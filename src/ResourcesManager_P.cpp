@@ -1909,7 +1909,7 @@ std::shared_ptr<const OsmAnd::MapStylePreset> OsmAnd::ResourcesManager_P::MapSty
 
         for (const auto& localResource : constOf(owner->_localResources))
         {
-            if (localResource->type != ResourceType::MapStyle)
+            if (localResource->type != ResourceType::MapStylesPresets)
                 continue;
 
             const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(localResource->_metadata)->presets;
