@@ -388,7 +388,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()
     return true;
 }
 
-void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
+void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU(const bool gpuContextLost)
 {
     const auto link_ = link.lock();
     const auto collection = static_cast<MapRendererTiledSymbolsResourcesCollection*>(&link_->collection);
@@ -404,11 +404,22 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
             this);
     }
 #endif // OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_CHANGES
+    if (gpuContextLost)
+    {
+        for (auto& resourceInGPU : constOf(_symbolToResourceInGpuLUT))
+            resourceInGPU->lostRefInGPU();
+    }
     _symbolToResourceInGpuLUT.clear();
 
     // Unique
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
+        if (gpuContextLost)
+        {
+            for (auto& resourceInGPU : constOf(groupResources->resourcesInGPU))
+                resourceInGPU->lostRefInGPU();
+        }
+
         // For unique group resources it's safe to clear 'MapSymbol->ResourceInGPU' map
         groupResources->resourcesInGPU.clear();
     }
@@ -448,9 +459,27 @@ void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
         // since no-one else will check for this map being empty. Otherwise, these resources are still needed
         // somewhere
         if (wasRemoved)
+        {
+            if (gpuContextLost)
+            {
+                for (auto& resourceInGPU : constOf(groupResources->resourcesInGPU))
+                    resourceInGPU->lostRefInGPU();
+            }
+
             groupResources->resourcesInGPU.clear();
+        }
     }
     _referencedSharedGroupsResources.clear();
+}
+
+void OsmAnd::MapRendererTiledSymbolsResource::unloadFromGPU()
+{
+    unloadFromGPU(false);
+}
+
+void OsmAnd::MapRendererTiledSymbolsResource::lostDataInGPU()
+{
+    unloadFromGPU(true);
 }
 
 void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
@@ -577,7 +606,8 @@ void OsmAnd::MapRendererTiledSymbolsResource::releaseData()
     _sourceData.reset();
 }
 
-std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererTiledSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol) const
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererTiledSymbolsResource::getGpuResourceFor(
+    const std::shared_ptr<const MapSymbol>& mapSymbol) const
 {
     QReadLocker scopedLocker(&_symbolToResourceInGpuLUTLock);
 
@@ -614,7 +644,8 @@ OsmAnd::MapRendererTiledSymbolsResource::GroupResources::~GroupResources()
 #endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
 }
 
-OsmAnd::MapRendererTiledSymbolsResource::SharedGroupResources::SharedGroupResources(const std::shared_ptr<MapSymbolsGroup>& group)
+OsmAnd::MapRendererTiledSymbolsResource::SharedGroupResources::SharedGroupResources(
+    const std::shared_ptr<MapSymbolsGroup>& group)
     : GroupResources(group)
 {
 }

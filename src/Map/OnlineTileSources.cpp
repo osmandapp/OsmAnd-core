@@ -71,6 +71,9 @@ bool OsmAnd::OnlineTileSources::removeSource(const QString& sourceName)
     return _p->removeSource(sourceName);
 }
 
+const QString OsmAnd::OnlineTileSources::BuiltInOsmAndSD(QLatin1String("osmand_sd"));
+const QString OsmAnd::OnlineTileSources::BuiltInOsmAndHD(QLatin1String("osmand_hd"));
+
 std::shared_ptr<const OsmAnd::OnlineTileSources> OsmAnd::OnlineTileSources::getBuiltIn()
 {
     return OnlineTileSources_P::getBuiltIn();

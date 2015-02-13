@@ -47,9 +47,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     const auto& internalState = getInternalState();
     const auto gpuAPI = getGPUAPI();
 
-    if (currentState.mapLayersProviders.isEmpty())
-        return ok;
-
     GL_PUSH_GROUP_MARKER(QLatin1String("mapLayers"));
 
     // First vector layer or first raster layers batch should be rendered without blending,
@@ -64,7 +61,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     GL_CHECK_RESULT;
 
     GLname lastUsedProgram;
-    GLlocation activeElevationVertexAttribArray;
+    GLlocation elevationDataVertexAttribArray;
     const auto& batchedLayersByTiles = batchLayersByTiles(internalState);
     for (const auto& batchedLayersByTile : constOf(batchedLayersByTiles))
     {
@@ -86,14 +83,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
             blendingEnabled = !batchedLayersByTile->containsOriginLayer;
         }
 
-        // Depending on type of first provider (and all others), batch is rendered differently
-        const auto& firstProviderInBatch = currentState.mapLayersProviders[batchedLayersByTile->layers.first()->layerIndex];
-        if (const auto rasterMapLayerProvider = std::dynamic_pointer_cast<IRasterMapLayerProvider>(firstProviderInBatch))
+        // Depending on type of first (and all others) batched layer, batch is rendered differently
+        if (batchedLayersByTile->layers.first()->type == BatchedLayerType::Raster)
         {
             renderRasterLayersBatch(
                 batchedLayersByTile,
                 currentAlphaChannelType,
-                activeElevationVertexAttribArray,
+                elevationDataVertexAttribArray,
                 lastUsedProgram);
         }
     }
@@ -102,12 +98,12 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     if (lastUsedProgram.isValid())
     {
         // Elevation vertex attrib is bound to program
-        if (activeElevationVertexAttribArray.isValid())
+        if (elevationDataVertexAttribArray.isValid())
         {
-            glDisableVertexAttribArray(*activeElevationVertexAttribArray);
+            glDisableVertexAttribArray(*elevationDataVertexAttribArray);
             GL_CHECK_RESULT;
 
-            activeElevationVertexAttribArray.reset();
+            elevationDataVertexAttribArray.reset();
         }
 
         glUseProgram(0);
@@ -124,10 +120,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::render(IMapRenderer_Metrics:
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::release(const bool gpuContextLost)
 {
     bool ok = true;
-    ok = ok && releaseRasterLayers();
+    ok = ok && releaseRasterLayers(gpuContextLost);
     return ok;
 }
 
@@ -164,6 +160,11 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         (gpuAPI->maxVertexUniformVectors - alreadyOccupiedUniforms) / (vsUniformsPerLayer + fsUniformsPerLayer);
     if (_maxNumberOfRasterMapLayersInBatch > gpuAPI->maxTextureUnitsInFragmentShader)
         _maxNumberOfRasterMapLayersInBatch = gpuAPI->maxTextureUnitsInFragmentShader;
+    if (gpuAPI->isSupported_vertexShaderTextureLookup &&
+        _maxNumberOfRasterMapLayersInBatch + 1 > gpuAPI->maxTextureUnitsCombined)
+    {
+        _maxNumberOfRasterMapLayersInBatch = gpuAPI->maxTextureUnitsCombined - 1;
+    }
     if (setupOptions.maxNumberOfRasterMapLayersInBatch != 0 &&
         _maxNumberOfRasterMapLayersInBatch > setupOptions.maxNumberOfRasterMapLayersInBatch)
     {
@@ -194,7 +195,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayers()
         _maxNumberOfRasterMapLayersInBatch = supportedMaxNumberOfRasterMapLayersInBatch;
     }
     if (_maxNumberOfRasterMapLayersInBatch < 1)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Maximal number of raster map layers in a batch must be not less than 1");
         return false;
+    }
+    LogPrintf(LogSeverityLevel::Info,
+        "Maximal number of raster map layers in a batch is %d", _maxNumberOfRasterMapLayersInBatch);
 
     initializeRasterTile();
 
@@ -235,7 +242,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-tile data
-        "uniform ivec2 param_vs_tileCoordsOffset;                                                                           ""\n"
+        "uniform vec2 param_vs_tileCoordsOffset;                                                                            ""\n"
         "uniform float param_vs_elevationData_scaleFactor;                                                                  ""\n"
         "uniform float param_vs_elevationData_upperMetersPerUnit;                                                           ""\n"
         "uniform float param_vs_elevationData_lowerMetersPerUnit;                                                           ""\n"
@@ -244,17 +251,17 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // VERTEX_TEXTURE_FETCH_SUPPORTED                                                                           ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer-in-tile data
-        "struct RasterLayerTile                                                                                             ""\n"
+        "struct VsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
         "    vec2 nOffsetInTile;                                                                                            ""\n"
         "    vec2 nSizeInTile;                                                                                              ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "#if VERTEX_TEXTURE_FETCH_SUPPORTED                                                                                 ""\n"
-        "    uniform RasterLayerTile param_vs_elevationDataLayer;                                                           ""\n"
+        "    uniform VsRasterLayerTile param_vs_elevationDataLayer;                                                         ""\n"
         "#endif // !VERTEX_TEXTURE_FETCH_SUPPORTED                                                                          ""\n"
         "                                                                                                                   ""\n"
-        "void calculateTextureCoordinates(in RasterLayerTile tileLayer, out vec2 outTexCoords)                              ""\n"
+        "void calculateTextureCoordinates(in VsRasterLayerTile tileLayer, out vec2 outTexCoords)                            ""\n"
         "{                                                                                                                  ""\n"
         "    outTexCoords = in_vs_vertexTexCoords * tileLayer.nSizeInTile + tileLayer.nOffsetInTile;                        ""\n"
         "}                                                                                                                  ""\n"
@@ -264,10 +271,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    vec4 v = vec4(in_vs_vertexPosition.x, 0.0, in_vs_vertexPosition.y, 1.0);                                       ""\n"
         "                                                                                                                   ""\n"
         //   Shift vertex to it's proper position
-        "    float xOffset = float(param_vs_tileCoordsOffset.x) - param_vs_targetInTilePosN.x;                              ""\n"
-        "    v.x += xOffset * %TileSize3D%.0;                                                                               ""\n"
-        "    float yOffset = float(param_vs_tileCoordsOffset.y) - param_vs_targetInTilePosN.y;                              ""\n"
-        "    v.z += yOffset * %TileSize3D%.0;                                                                               ""\n"
+        "    v.xz += %TileSize3D%.0 * (param_vs_tileCoordsOffset - param_vs_targetInTilePosN);                              ""\n"
         "                                                                                                                   ""\n"
         //   Process each tile layer texture coordinates (except elevation)
         "%UnrolledPerRasterLayerTexCoordsProcessingCode%                                                                    ""\n"
@@ -310,7 +314,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     const auto& vertexShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_OUTPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                        ""\n");
     const auto& vertexShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
-        "uniform RasterLayerTile param_vs_rasterTileLayer_%rasterLayerIndex%;                                               ""\n");
+        "uniform VsRasterLayerTile param_vs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
     const auto& vertexShader_perRasterLayerTexCoordsProcessing = QString::fromLatin1(
         "    calculateTextureCoordinates(                                                                                   ""\n"
         "        param_vs_rasterTileLayer_%rasterLayerIndex%,                                                               ""\n"
@@ -325,21 +329,21 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
         // Parameters: per-layer data
-        "struct RasterLayerTile                                                                                             ""\n"
+        "struct FsRasterLayerTile                                                                                           ""\n"
         "{                                                                                                                  ""\n"
-        "    lowp float opacity;                                                                                            ""\n"
-        "    lowp float isPremultipliedAlpha;                                                                               ""\n"
         "    lowp sampler2D sampler;                                                                                        ""\n"
+        "    lowp int opacity;                                                                                            ""\n"
+        "    lowp float isPremultipliedAlpha;                                                                               ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "                                                                                                                   ""\n"
-        "void addExtraAlpha(inout vec4 color, in float alpha, in float isPremultipliedAlpha)                                ""\n"
+        "void addExtraAlpha(inout lowp vec4 color, in lowp float alpha, in lowp float isPremultipliedAlpha)                 ""\n"
         "{                                                                                                                  ""\n"
         "    lowp float colorAlpha = 1.0 - isPremultipliedAlpha + isPremultipliedAlpha * alpha;                             ""\n"
         "    color *= vec4(colorAlpha, colorAlpha, colorAlpha, alpha);                                                      ""\n"
         "}                                                                                                                  ""\n"
         "                                                                                                                   ""\n"
-        "void mixColors(inout vec4 destColor, in vec4 srcColor, in float isPremultipliedAlpha)                              ""\n"
+        "void mixColors(inout lowp vec4 destColor, in lowp vec4 srcColor, in lowp float isPremultipliedAlpha)               ""\n"
         "{                                                                                                                  ""\n"
         "    lowp float srcColorMultiplier =                                                                                ""\n"
         "        isPremultipliedAlpha + (1.0 - isPremultipliedAlpha) * srcColor.a;                                          ""\n"
@@ -361,10 +365,10 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacity, param_fs_rasterTileLayer_0.isPremultipliedAlpha);""\n"
-        "    lowp float firstLayerColorDivisor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                          ""\n"
+        "    addExtraAlpha(finalColor, float(param_fs_rasterTileLayer_0.opacity), param_fs_rasterTileLayer_0.isPremultipliedAlpha);""\n"
+        "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
         "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
-        "    finalColor /= vec4(firstLayerColorDivisor, firstLayerColorDivisor, firstLayerColorDivisor, 1.0);               ""\n"
+        "    finalColor *= vec4(firstLayerColorFactor, firstLayerColorFactor, firstLayerColorFactor, 1.0);                  ""\n"
         "                                                                                                                   ""\n"
         "%UnrolledPerRasterLayerProcessingCode%                                                                             ""\n"
         "                                                                                                                   ""\n"
@@ -383,8 +387,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        finalColor = mix(finalColor, mipmapDebugColor, 0.5);                                                       ""\n"
         "    }                                                                                                              ""\n"
 #endif
-        //"    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
-        "    FRAGMENT_COLOR_OUTPUT = mix(finalColor, vec4(1.0, 0.0, 0.0, 1.0), 0.2);                                                                            ""\n"
+        "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
@@ -398,14 +401,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                             ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
-        "        addExtraAlpha(layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.opacity,                             ""\n"
+        "        addExtraAlpha(layerColor, float(param_fs_rasterTileLayer_%rasterLayerIndex%.opacity),                             ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);                                     ""\n"
         "        mixColors(finalColor, layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);       ""\n"
         "    }                                                                                                              ""\n");
     const auto& fragmentShader_perRasterLayerTexCoordsDeclaration = QString::fromLatin1(
         "PARAM_INPUT vec2 v2f_texCoordsPerLayer_%rasterLayerIndex%;                                                         ""\n");
     const auto& fragmentShader_perRasterLayerParamsDeclaration = QString::fromLatin1(
-        "uniform RasterLayerTile param_fs_rasterTileLayer_%rasterLayerIndex%;                                               ""\n");
+        "uniform FsRasterLayerTile param_fs_rasterTileLayer_%rasterLayerIndex%;                                             ""\n");
 
     // Compile vertex shader
     auto preprocessedVertexShader = vertexShader;
@@ -456,7 +459,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         if (layerIndex > 0)
         {
             preprocessedFragmentShader_UnrolledPerRasterLayerProcessingCode +=
-                detachedOf(fragmentShader_perRasterLayer).replace("%rasterLayerIndex%", QString::number(layerIndex));;
+                detachedOf(fragmentShader_perRasterLayer).replace("%rasterLayerIndex%", QString::number(layerIndex));
         }
     }
     preprocessedFragmentShader.replace("%UnrolledPerRasterLayerTexCoordsDeclarationCode%", preprocessedFragmentShader_UnrolledPerRasterLayerTexCoordsDeclarationCode);
@@ -519,8 +522,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
     {
         // Vertex shader
         {
-            auto layerStructName =
-                QString::fromLatin1("param_vs_rasterTileLayer_%layerIndex%")
+            auto layerStructName = QString::fromLatin1("param_vs_rasterTileLayer_%layerIndex%")
                 .replace(QLatin1String("%layerIndex%"), QString::number(layerIndex));
             auto& layerStruct = outRasterLayerTileProgram.vs.param.rasterTileLayers[layerIndex];
 
@@ -530,14 +532,13 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
 
         // Fragment shader
         {
-            auto layerStructName =
-                QString::fromLatin1("param_fs_rasterTileLayer_%layerIndex%")
+            auto layerStructName = QString::fromLatin1("param_fs_rasterTileLayer_%layerIndex%")
                 .replace(QLatin1String("%layerIndex%"), QString::number(layerIndex));
             auto& layerStruct = outRasterLayerTileProgram.fs.param.rasterTileLayers[layerIndex];
 
+            ok = ok && lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.opacity, layerStructName + ".opacity", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.isPremultipliedAlpha, layerStructName + ".isPremultipliedAlpha", GlslVariableType::Uniform);
-            ok = ok && lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GlslVariableType::Uniform);
         }
     }
 
@@ -555,7 +556,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     GL_CHECK_PRESENT(glUniformMatrix4fv);
     GL_CHECK_PRESENT(glUniform1f);
     GL_CHECK_PRESENT(glUniform2f);
-    GL_CHECK_PRESENT(glUniform1i);
     GL_CHECK_PRESENT(glUniform2i);
     GL_CHECK_PRESENT(glUniform2fv);
     GL_CHECK_PRESENT(glActiveTexture);
@@ -581,19 +581,22 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const auto& vao = _rasterTileVAOs[batchedLayersCount];
 
     // Set tile coordinates offset
-    glUniform2i(program.vs.param.tileCoordsOffset,
+    glUniform2f(program.vs.param.tileCoordsOffset,
         batch->tileId.x - internalState.targetTileId.x,
         batch->tileId.y - internalState.targetTileId.y);
     GL_CHECK_RESULT;
 
     // Configure elevation data
-    configureElevationData(
-        program,
-        batch->tileId,
-        elevationDataSamplerIndex,
-        activeElevationVertexAttribArray);
+    if (currentState.elevationDataProvider)
+    {
+        configureElevationData(
+            program,
+            batch->tileId,
+            elevationDataSamplerIndex,
+            activeElevationVertexAttribArray);
+    }
 
-    // Shader expects blending to be premultiplied
+    // Shader expects blending to be premultiplied, since output color of fragment shader is premultiplied by alpha
     if (currentAlphaChannelType != AlphaChannelType::Premultiplied)
     {
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -609,16 +612,23 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
         {
             const auto& layer = batch->layers[layerIndexInBatch];
+            const auto samplerIndex = layerIndexInBatch;
 
-            const auto layerConfiguration = currentState.mapLayersConfigurations[layer->layerIndex];
             const auto& perTile_vs = program.vs.param.rasterTileLayers[layerIndexInBatch];
             const auto& perTile_fs = program.fs.param.rasterTileLayers[layerIndexInBatch];
 
-            if (layer->layerIndex == currentState.mapLayersProviders.firstKey())
-                glUniform1f(perTile_fs.opacity, 1.0f);
+            if (currentState.mapLayersProviders.isEmpty() ||
+                layer->layerIndex == currentState.mapLayersProviders.firstKey())
+            {
+                glUniform1i(perTile_fs.opacity, 1);
+                GL_CHECK_RESULT;
+            }
             else
+            {
+                const auto& layerConfiguration = currentState.mapLayersConfigurations[layer->layerIndex];
                 glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
-            GL_CHECK_RESULT;
+                GL_CHECK_RESULT;
+            }
 
             // Since it's single-pass tile rendering, there's only one resource per layer
             const auto& batchedResourceInGPU = layer->resourcesInGPU.first();
@@ -637,14 +647,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                     break;
             }
 
-            glActiveTexture(GL_TEXTURE0 + layerIndexInBatch);
+            glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
 
             glBindTexture(GL_TEXTURE_2D,
                 static_cast<GLuint>(reinterpret_cast<intptr_t>(batchedResourceInGPU->resourceInGPU->refInGPU)));
             GL_CHECK_RESULT;
 
-            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + layerIndexInBatch);
+            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
 
             if (batchedResourceInGPU->resourceInGPU->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
             {
@@ -689,7 +699,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         LogPrintf(LogSeverityLevel::Error, "Underscale is not supported!");
     }
 
-    // Disable textures
+    // Unbind textures from texture samplers, that were used
     const auto usedSamplersCount = batchedLayersCount + (gpuAPI->isSupported_vertexShaderTextureLookup ? 1 : 0);
     for (int samplerIndex = 0; samplerIndex < usedSamplersCount; samplerIndex++)
     {
@@ -796,6 +806,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     {
         const auto samplerIndex = layerIndexInBatch;
 
+        glActiveTexture(GL_TEXTURE0 + samplerIndex);
+        GL_CHECK_RESULT;
+
         glUniform1i(program.fs.param.rasterTileLayers[layerIndexInBatch].sampler, samplerIndex);
         GL_CHECK_RESULT;
 
@@ -803,6 +816,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::activateRasterLayersProgram(
     }
     if (gpuAPI->isSupported_vertexShaderTextureLookup)
     {
+        glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+        GL_CHECK_RESULT;
+
         glUniform1i(program.vs.param.elevationData_sampler, elevationDataSamplerIndex);
         GL_CHECK_RESULT;
 
@@ -889,22 +905,25 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererMap
     return nullptr;
 }
 
-bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers()
+bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterLayers(const bool gpuContextLost)
 {
     GL_CHECK_PRESENT(glDeleteProgram);
 
     _maxNumberOfRasterMapLayersInBatch = 0;
 
-    releaseRasterTile();
+    releaseRasterTile(gpuContextLost);
 
     for (auto& rasterLayerTileProgram : _rasterLayerTilePrograms)
     {
-        if (rasterLayerTileProgram.id.isValid())
+        if (!rasterLayerTileProgram.id.isValid())
+            continue;
+
+        if (!gpuContextLost)
         {
             glDeleteProgram(rasterLayerTileProgram.id);
             GL_CHECK_RESULT;
-            rasterLayerTileProgram = RasterLayerTileProgram();
         }
+        rasterLayerTileProgram = RasterLayerTileProgram();
     }
     _rasterLayerTilePrograms.clear();
 
@@ -1050,7 +1069,7 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterTile()
     delete[] pIndices;
 }
 
-void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile()
+void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1060,21 +1079,27 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::releaseRasterTile()
     {
         if (rasterTileVAO.isValid())
         {
-            gpuAPI->releaseVAO(rasterTileVAO);
+            gpuAPI->releaseVAO(rasterTileVAO, gpuContextLost);
             rasterTileVAO.reset();
         }
     }
 
     if (_rasterTileIBO.isValid())
     {
-        glDeleteBuffers(1, &_rasterTileIBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_rasterTileIBO);
+            GL_CHECK_RESULT;
+        }
         _rasterTileIBO.reset();
     }
     if (_rasterTileVBO.isValid())
     {
-        glDeleteBuffers(1, &_rasterTileVBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_rasterTileVBO);
+            GL_CHECK_RESULT;
+        }
         _rasterTileVBO.reset();
     }
     _rasterTileIndicesCount = -1;
@@ -1090,10 +1115,23 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
 
     const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
 
-    // In case there's no elevation data provider, deactivate elevation data
-    if (!currentState.elevationDataProvider)
+    // In case there's no elevation data provider or if there's no data for this tile,
+    // deactivate elevation data
+    const auto elevationDataResource = captureElevationDataResource(tileIdN, currentState.zoomBase);
+    if (!elevationDataResource)
     {
-        if (!gpuAPI->isSupported_vertexShaderTextureLookup && activeElevationVertexAttribArray.isValid())
+        glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
+        GL_CHECK_RESULT;
+
+        if (gpuAPI->isSupported_vertexShaderTextureLookup)
+        {
+            glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
+            GL_CHECK_RESULT;
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+            GL_CHECK_RESULT;
+        }
+        else if (activeElevationVertexAttribArray.isValid())
         {
             glDisableVertexAttribArray(*activeElevationVertexAttribArray);
             GL_CHECK_RESULT;
@@ -1101,111 +1139,87 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
             activeElevationVertexAttribArray.reset();
         }
 
-        glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
-        GL_CHECK_RESULT;
-
         return;
     }
 
     // Per-tile elevation data configuration
-    const auto elevationDataResource = captureElevationDataResource(tileIdN, currentState.zoomBase);
-    bool usedElevationVertexAttribArray = false;
-    if (!elevationDataResource)
+    glUniform1f(program.vs.param.elevationData_scaleFactor, currentState.elevationDataConfiguration.scaleFactor);
+    GL_CHECK_RESULT;
+
+    const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
+        currentState.zoomBase,
+        tileIdN.y,
+        AtlasMapRenderer::TileSize3D);
+    glUniform1f(program.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
+    const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
+        currentState.zoomBase,
+        tileIdN.y + 1,
+        AtlasMapRenderer::TileSize3D);
+    glUniform1f(program.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
+
+    const auto& perTile_vs = program.vs.param.elevationDataLayer;
+
+    if (gpuAPI->isSupported_vertexShaderTextureLookup)
     {
-        // We have no elevation data, so we can not do anything
-        glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
+        glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
         GL_CHECK_RESULT;
+
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
+        GL_CHECK_RESULT;
+
+        gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + elevationDataSamplerIndex);
+
+        if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
+        {
+            const auto tileOnAtlasTexture =
+                std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
+
+            const auto rowIndex = tileOnAtlasTexture->slotIndex / tileOnAtlasTexture->atlasTexture->slotsPerSide;
+            const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * tileOnAtlasTexture->atlasTexture->slotsPerSide;
+            const auto tileSizeN = tileOnAtlasTexture->atlasTexture->tileSizeN;
+            const auto tilePaddingN = tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN;
+            const auto nSizeInTile = tileSizeN - 2.0f * tilePaddingN;
+            const PointF nOffsetInTile(colIndex * tileSizeN + tilePaddingN, rowIndex * tileSizeN + tilePaddingN);
+
+            glUniform2f(perTile_vs.nOffsetInTile, nOffsetInTile.x, nOffsetInTile.y);
+            GL_CHECK_RESULT;
+            glUniform2f(perTile_vs.nSizeInTile, nSizeInTile, nSizeInTile);
+            GL_CHECK_RESULT;
+        }
+        else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
+        {
+            const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
+
+            const auto nSizeInTile = 1.0f - 2.0f * texture->uHalfTexelSizeN;
+            const PointF nOffsetInTile(texture->uHalfTexelSizeN, texture->uHalfTexelSizeN);
+
+            glUniform2f(perTile_vs.nOffsetInTile, nOffsetInTile.x, nOffsetInTile.y);
+            GL_CHECK_RESULT;
+            glUniform2f(perTile_vs.nSizeInTile, nSizeInTile, nSizeInTile);
+            GL_CHECK_RESULT;
+        }
     }
     else
     {
-        glUniform1f(program.vs.param.elevationData_scaleFactor, currentState.elevationDataConfiguration.scaleFactor);
+        assert(elevationDataResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
+
+        const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(elevationDataResource);
+        assert(arrayBuffer->itemsCount ==
+            (1u << MapRenderer::MaxMissingDataZoomShift)*(1u << MapRenderer::MaxMissingDataZoomShift));
+
+        if (!activeElevationVertexAttribArray.isValid())
+        {
+            glEnableVertexAttribArray(*program.vs.in.vertexElevation);
+            GL_CHECK_RESULT;
+
+            activeElevationVertexAttribArray = program.vs.in.vertexElevation;
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
         GL_CHECK_RESULT;
 
-        const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-            currentState.zoomBase,
-            tileIdN.y,
-            AtlasMapRenderer::TileSize3D);
-        glUniform1f(program.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
-        const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-            currentState.zoomBase,
-            tileIdN.y + 1,
-            AtlasMapRenderer::TileSize3D);
-        glUniform1f(program.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
-
-        const auto& perTile_vs = program.vs.param.elevationDataLayer;
-
-        if (gpuAPI->isSupported_vertexShaderTextureLookup)
-        {
-            glActiveTexture(GL_TEXTURE0 + elevationDataSamplerIndex);
-            GL_CHECK_RESULT;
-
-            glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
-            GL_CHECK_RESULT;
-
-            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0);
-
-            if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
-            {
-                const auto tileOnAtlasTexture =
-                    std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(elevationDataResource);
-
-                const auto rowIndex = tileOnAtlasTexture->slotIndex / tileOnAtlasTexture->atlasTexture->slotsPerSide;
-                const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * tileOnAtlasTexture->atlasTexture->slotsPerSide;
-                const auto tileSizeN = tileOnAtlasTexture->atlasTexture->tileSizeN;
-                const auto tilePaddingN = tileOnAtlasTexture->atlasTexture->uHalfTexelSizeN;
-                const auto nSizeInTile = tileSizeN - 2.0f * tilePaddingN;
-                const PointF nOffsetInTile(colIndex * tileSizeN + tilePaddingN, rowIndex * tileSizeN + tilePaddingN);
-
-                glUniform2f(perTile_vs.nOffsetInTile, nOffsetInTile.x, nOffsetInTile.y);
-                GL_CHECK_RESULT;
-                glUniform2f(perTile_vs.nSizeInTile, nSizeInTile, nSizeInTile);
-                GL_CHECK_RESULT;
-            }
-            else // if (elevationDataResource->type == GPUAPI::ResourceInGPU::Type::Texture)
-            {
-                const auto& texture = std::static_pointer_cast<const GPUAPI::TextureInGPU>(elevationDataResource);
-
-                const auto nSizeInTile = 1.0f - 2.0f * texture->uHalfTexelSizeN;
-                const PointF nOffsetInTile(texture->uHalfTexelSizeN, texture->uHalfTexelSizeN);
-
-                glUniform2f(perTile_vs.nOffsetInTile, nOffsetInTile.x, nOffsetInTile.y);
-                GL_CHECK_RESULT;
-                glUniform2f(perTile_vs.nSizeInTile, nSizeInTile, nSizeInTile);
-                GL_CHECK_RESULT;
-            }
-        }
-        else
-        {
-            assert(elevationDataResource->type == GPUAPI::ResourceInGPU::Type::ArrayBuffer);
-
-            const auto& arrayBuffer = std::static_pointer_cast<const GPUAPI::ArrayBufferInGPU>(elevationDataResource);
-            assert(arrayBuffer->itemsCount ==
-                (1u << MapRenderer::MaxMissingDataZoomShift)*(1u << MapRenderer::MaxMissingDataZoomShift));
-
-            if (!activeElevationVertexAttribArray.isValid())
-            {
-                glEnableVertexAttribArray(*program.vs.in.vertexElevation);
-                GL_CHECK_RESULT;
-
-                activeElevationVertexAttribArray = program.vs.in.vertexElevation;
-            }
-
-            glBindBuffer(GL_ARRAY_BUFFER, static_cast<GLuint>(reinterpret_cast<intptr_t>(elevationDataResource->refInGPU)));
-            GL_CHECK_RESULT;
-
-            glVertexAttribPointer(*program.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
-            GL_CHECK_RESULT;
-
-            usedElevationVertexAttribArray = true;
-        }
-    }
-    if (activeElevationVertexAttribArray.isValid() && !usedElevationVertexAttribArray)
-    {
-        // In case for this tile there was no elevation data, but vertex attrib array is enabled, disable it
-        glDisableVertexAttribArray(*activeElevationVertexAttribArray);
+        glVertexAttribPointer(*program.vs.in.vertexElevation, 1, GL_FLOAT, GL_FALSE, sizeof(float), nullptr);
         GL_CHECK_RESULT;
-
-        activeElevationVertexAttribArray.reset();
     }
 }
 
@@ -1238,7 +1252,11 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
             if (!resourcesCollection)
                 continue;
 
-            Ref<BatchedLayer> batchedLayer = new BatchedLayer(layerIndex);
+            Ref<BatchedLayer> batchedLayer = new BatchedLayer(
+                (std::dynamic_pointer_cast<IRasterMapLayerProvider>(provider) != nullptr)
+                    ? BatchedLayerType::Raster
+                    : BatchedLayerType::Other,
+                layerIndex);
 
             // Try to obtain exact match resource
             const auto exactMatchGpuResource = captureLayerResource(
@@ -1302,7 +1320,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                         ? getResources().processingTileStub
                         : getResources().unavailableTileStub;
 
-                    Ref<BatchedLayer> batchedLayer = new BatchedLayer(layerIndex);
+                    Ref<BatchedLayer> batchedLayer = new BatchedLayer(BatchedLayerType::Raster, layerIndex);
                     batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
                         new BatchedLayerResource(stubResource)));
                     batch->layers.push_back(qMove(batchedLayer));
@@ -1311,22 +1329,16 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 continue;
             }
 
-            // Only raster layers can be batched, while if there's no previous
-            bool canBeBatched = true;
+            bool canBeBatched = !debugSettings->mapLayersBatchingForbidden;
             if (!batch->layers.isEmpty())
             {
                 const auto& lastBatchedLayer = batch->layers.last();
-                const auto& previousProvider = currentState.mapLayersProviders[lastBatchedLayer->layerIndex];
 
                 // Only raster layers can be batched
-                const auto previousProviderIsRaster =
-                    (std::dynamic_pointer_cast<IRasterMapLayerProvider>(previousProvider) != nullptr);
-                const auto currentProviderIsRaster =
-                    (std::dynamic_pointer_cast<IRasterMapLayerProvider>(provider) != nullptr);
-                canBeBatched = (previousProviderIsRaster && currentProviderIsRaster);
+                canBeBatched = (lastBatchedLayer->type == BatchedLayerType::Raster);
 
                 // Number of batched raster layers is limited
-                canBeBatched = canBeBatched && (batch->layers.size() < _maxNumberOfRasterMapLayersInBatch);
+                canBeBatched = canBeBatched && (batch->layers.size() <= _maxNumberOfRasterMapLayersInBatch);
 
                 // Batching is possible only if all BatchedLayerResources are compatible
                 if (canBeBatched)
@@ -1347,7 +1359,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 }
             }
 
-            if (!canBeBatched)
+            if (!canBeBatched && !batch->layers.isEmpty())
             {
                 batch = new PerTileBatchedLayers(tileId, false);
                 perTileBatchedLayers.push_back(batch);
@@ -1363,7 +1375,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 ? getResources().processingTileStub
                 : getResources().unavailableTileStub;
 
-            Ref<BatchedLayer> batchedLayer = new BatchedLayer(currentState.mapLayersProviders.firstKey());
+            Ref<BatchedLayer> batchedLayer = new BatchedLayer(BatchedLayerType::Raster, std::numeric_limits<int>::min());
             batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
                 new BatchedLayerResource(stubResource)));
             batch->layers.push_back(qMove(batchedLayer));
@@ -1402,9 +1414,9 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayerResource::canBeB
         nSizeInTile == that.nSizeInTile;
 }
 
-OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayer::BatchedLayer(
-    const int layerIndex_)
-    : layerIndex(layerIndex_)
+OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::BatchedLayer::BatchedLayer(const BatchedLayerType type_, const int layerIndex_)
+    : type(type_)
+    , layerIndex(layerIndex_)
 {
 }
 

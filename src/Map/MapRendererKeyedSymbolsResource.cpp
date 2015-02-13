@@ -168,6 +168,13 @@ void OsmAnd::MapRendererKeyedSymbolsResource::unloadFromGPU()
     _resourcesInGPU.clear();
 }
 
+void OsmAnd::MapRendererKeyedSymbolsResource::lostDataInGPU()
+{
+    for (auto& resourceInGPU : constOf(_resourcesInGPU))
+        resourceInGPU->lostRefInGPU();
+    _resourcesInGPU.clear();
+}
+
 void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
 {
     // Unregister all obtained symbols
@@ -190,7 +197,8 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
     _sourceData.reset();
 }
 
-std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol) const
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getGpuResourceFor(
+    const std::shared_ptr<const MapSymbol>& mapSymbol) const
 {
     const auto citResourceInGPU = _resourcesInGPU.constFind(mapSymbol);
     if (citResourceInGPU == _resourcesInGPU.cend())

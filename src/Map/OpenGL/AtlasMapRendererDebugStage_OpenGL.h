@@ -50,7 +50,7 @@ namespace OsmAnd
         } _programRect2D;
         bool initializeRects2D();
         bool renderRects2D();
-        bool releaseRects2D();
+        bool releaseRects2D(const bool gpuContextLost);
 
         GLname _vaoLine2D;
         GLname _vboLine2D;
@@ -83,7 +83,7 @@ namespace OsmAnd
         } _programLine2D;
         bool initializeLines2D();
         bool renderLines2D();
-        bool releaseLines2D();
+        bool releaseLines2D(const bool gpuContextLost);
 
         GLname _vaoLine3D;
         GLname _vboLine3D;
@@ -116,7 +116,7 @@ namespace OsmAnd
         } _programLine3D;
         bool initializeLines3D();
         bool renderLines3D();
-        bool releaseLines3D();
+        bool releaseLines3D(const bool gpuContextLost);
 
         GLname _vaoQuad3D;
         GLname _vboQuad3D;
@@ -151,14 +151,14 @@ namespace OsmAnd
         } _programQuad3D;
         bool initializeQuads3D();
         bool renderQuads3D();
-        bool releaseQuads3D();
+        bool releaseQuads3D(const bool gpuContextLost);
     public:
         AtlasMapRendererDebugStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererDebugStage_OpenGL();
 
         virtual bool initialize();
         virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
-        virtual bool release();
+        virtual bool release(const bool gpuContextLost);
     };
 }
 

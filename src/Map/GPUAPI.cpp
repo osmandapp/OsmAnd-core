@@ -32,7 +32,7 @@ bool OsmAnd::GPUAPI::initialize()
     return true;
 }
 
-bool OsmAnd::GPUAPI::release()
+bool OsmAnd::GPUAPI::release(const bool gpuContextLost)
 {
     return true;
 }
@@ -97,6 +97,11 @@ OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
         api->_allocatedResourcesCounter.deref();
 #endif
     }
+}
+
+void OsmAnd::GPUAPI::ResourceInGPU::lostRefInGPU() const
+{
+    _refInGPU = nullptr;
 }
 
 OsmAnd::GPUAPI::MetaResourceInGPU::MetaResourceInGPU(const Type type_, GPUAPI* api_)

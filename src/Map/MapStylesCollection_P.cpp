@@ -27,11 +27,10 @@ OsmAnd::MapStylesCollection_P::~MapStylesCollection_P()
 {
 }
 
-std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P::getEditableStyleByName_noSync(const QString& name) const
+std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P::getEditableStyleByName_noSync(
+    const QString& name) const
 {
-    auto styleName = name.toLower();
-    if (!styleName.endsWith(QLatin1String(".render.xml")))
-        styleName.append(QLatin1String(".render.xml"));
+    const auto styleName = getFullyQualifiedStyleName(name);
 
     const auto citStyle = _styles.constFind(styleName);
     if (citStyle == _styles.cend())
@@ -70,9 +69,7 @@ bool OsmAnd::MapStylesCollection_P::addStyleFromFile(const QString& filePath, co
     if (!style->loadMetadata())
         return false;
 
-    auto styleName = style->name.toLower();
-    if (!styleName.endsWith(QLatin1String(".render.xml")))
-        styleName.append(QLatin1String(".render.xml"));
+    const auto styleName = getFullyQualifiedStyleName(style->name);
     if (doNotReplace && _styles.contains(styleName))
         return false;
     _styles.insert(styleName, style);
@@ -90,9 +87,7 @@ bool OsmAnd::MapStylesCollection_P::addStyleFromByteArray(const QByteArray& data
     if (!style->loadMetadata())
         return false;
 
-    auto styleName = style->name.toLower();
-    if (!styleName.endsWith(QLatin1String(".render.xml")))
-        styleName.append(QLatin1String(".render.xml"));
+    const auto styleName = getFullyQualifiedStyleName(name);
     if (doNotReplace && _styles.contains(styleName))
         return false;
     _styles.insert(styleName, style);
@@ -111,9 +106,7 @@ std::shared_ptr<const OsmAnd::UnresolvedMapStyle> OsmAnd::MapStylesCollection_P:
 {
     QReadLocker scopedLocker(&_stylesLock);
 
-    auto styleName = name.toLower();
-    if (!styleName.endsWith(QLatin1String(".render.xml")))
-        styleName.append(QLatin1String(".render.xml"));
+    const auto styleName = getFullyQualifiedStyleName(name);
 
     const auto citStyle = _styles.constFind(styleName);
     if (citStyle == _styles.cend())
@@ -125,9 +118,7 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::MapStylesCollection_P::g
 {
     QMutexLocker scopedLocker(&_resolvedStylesLock);
 
-    auto styleName = name.toLower();
-    if (!styleName.endsWith(QLatin1String(".render.xml")))
-        styleName.append(QLatin1String(".render.xml"));
+    const auto styleName = getFullyQualifiedStyleName(name);
 
     // Check if such style was already resolved
     auto& resolvedStyle = _resolvedStyles[styleName];
@@ -180,4 +171,12 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::MapStylesCollection_P::g
     }
 
     return ResolvedMapStyle::resolveMapStylesChain(copyAs< QList< std::shared_ptr<const UnresolvedMapStyle> > >(stylesChain));;
+}
+
+QString OsmAnd::MapStylesCollection_P::getFullyQualifiedStyleName(const QString& name)
+{
+    auto styleName = name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+    return styleName;
 }

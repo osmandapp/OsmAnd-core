@@ -21,10 +21,10 @@
 #undef GL_CHECK_RESULT
 #undef GL_GET_RESULT
 #undef GL_GET_AND_CHECK_RESULT
-#if OSMAND_DEBUG || defined(OSMAND_TARGET_OS_android)
-#   define GL_CHECK_RESULT validateResult()
-#   define GL_GET_RESULT validateResult()
-#   define GL_GET_AND_CHECK_RESULT validateResult()
+#if OSMAND_GPU_DEBUG
+#   define GL_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_AND_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
@@ -116,7 +116,7 @@ OsmAnd::GPUAPI_OpenGLES2::~GPUAPI_OpenGLES2()
 {
 }
 
-GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
+GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult(const char* const function, const char* const file, const int line)
 {
     auto result = glGetError();
     if (result == GL_NO_ERROR)
@@ -144,7 +144,13 @@ GLenum OsmAnd::GPUAPI_OpenGLES2::validateResult()
             errorString = "(unknown)";
             break;
     }
-    LogPrintf(LogSeverityLevel::Error, "OpenGLES2 error 0x%08x : %s", result, errorString);
+    LogPrintf(LogSeverityLevel::Error,
+        "OpenGL error 0x%08x (%s) in %s at %s:%d",
+        result,
+        errorString,
+        function,
+        file,
+        line);
 
     return result;
 }
@@ -221,6 +227,10 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     GL_CHECK_RESULT;
     LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units in vertex shader %d", _maxTextureUnitsInVertexShader);
     _isSupported_vertexShaderTextureLookup = (_maxTextureUnitsInVertexShader >= 1);
+
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsCombined));
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGLES2 maximal texture units combined %d", _maxTextureUnitsCombined);
 
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &_maxVertexUniformVectors);
     GL_CHECK_RESULT;
@@ -389,11 +399,11 @@ bool OsmAnd::GPUAPI_OpenGLES2::initialize()
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGLES2::release()
+bool OsmAnd::GPUAPI_OpenGLES2::release(const bool contextLost)
 {
     bool ok;
 
-    ok = GPUAPI_OpenGL::release();
+    ok = GPUAPI_OpenGL::release(contextLost);
     if (!ok)
         return false;
 

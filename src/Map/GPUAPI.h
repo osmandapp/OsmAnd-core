@@ -56,13 +56,15 @@ namespace OsmAnd
         protected:
             ResourceInGPU(const Type type, GPUAPI* api, const RefInGPU& refInGPU);
 
-            RefInGPU _refInGPU;
+            mutable RefInGPU _refInGPU;
         public:
             virtual ~ResourceInGPU();
 
             GPUAPI* const api;
             const Type type;
             const RefInGPU& refInGPU;
+
+            virtual void lostRefInGPU() const;
         };
 
         class MetaResourceInGPU : public ResourceInGPU
@@ -289,7 +291,7 @@ namespace OsmAnd
         const bool& isSupported_8bitPaletteRGBA8;
 
         virtual bool initialize() = 0;
-        virtual bool release() = 0;
+        virtual bool release(const bool gpuContextLost) = 0;
 
         virtual bool uploadTiledDataToGPU(
             const std::shared_ptr< const IMapTiledDataProvider::Data >& tile,

@@ -23,7 +23,8 @@ public class MainActivity extends ActionBarActivity {
     private ObfMapObjectsProvider _obfMapObjectsProvider;
     private MapPrimitivesProvider _mapPrimitivesProvider;
     private MapObjectsSymbolsProvider _mapObjectsSymbolsProvider;
-    private MapRasterLayerProvider _mapRasterLayerProvider;
+    private IMapLayerProvider _mapLayerProvider0;
+    private IMapLayerProvider _mapLayerProvider1;
     private QIODeviceLogSink _fileLogSink;
 
     @Override
@@ -33,6 +34,8 @@ public class MainActivity extends ActionBarActivity {
         // Initialize native core prior (if needed)
         if (NativeCore.isAvailable() && !NativeCore.isLoaded())
             NativeCore.load(CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this));
+
+		Logger.get().setSeverityLevelThreshold(LogSeverityLevel.Verbose);
 
         // Inflate views
         setContentView(R.layout.activity_main);
@@ -86,8 +89,6 @@ public class MainActivity extends ActionBarActivity {
         _mapObjectsSymbolsProvider = new MapObjectsSymbolsProvider(
                 _mapPrimitivesProvider,
                 _rasterTileSize);
-        _mapRasterLayerProvider = new MapRasterLayerProvider_Software(
-                _mapPrimitivesProvider);
 
         _mapView.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
 
@@ -100,23 +101,24 @@ public class MainActivity extends ActionBarActivity {
                 704978668));
         _mapView.setZoom(10.0f);
 
-        _mapView.setMapLayerProvider(0, _mapRasterLayerProvider);
+        _mapLayerProvider0 = new MapRasterLayerProvider_Software(_mapPrimitivesProvider);
+        _mapView.setMapLayerProvider(0, _mapLayerProvider0);
     }
 
     private AtlasMapRendererView _mapView;
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onResume() {
+        super.onResume();
 
-        _mapView.handleOnPause();
+        _mapView.handleOnResume();
     }
 
     @Override
-    protected void onResume() {
-        _mapView.handleOnResume();
+    protected void onPause() {
+        _mapView.handleOnPause();
 
-        super.onResume();
+        super.onPause();
     }
 
     @Override

@@ -35,6 +35,9 @@ namespace OsmAnd
         bool showAllPaths;
         bool rasterLayersOverscaleForbidden;
         bool rasterLayersUnderscaleForbidden;
+        bool mapLayersBatchingForbidden;
+        bool disableJunkResourcesCleanup;
+        bool disableNeededResourcesRequests;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;
         virtual std::shared_ptr<MapRendererDebugSettings> createCopy() const;

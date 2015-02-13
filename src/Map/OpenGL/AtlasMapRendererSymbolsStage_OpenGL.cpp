@@ -108,7 +108,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::render(IMapRenderer_Metrics::M
         }
     }
 
-    // Deactivate any symbol texture
+    // Unbind symbol texture from texture sampler
     glActiveTexture(GL_TEXTURE0 + 0);
     GL_CHECK_RESULT;
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -195,13 +195,13 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceSymbol(
     return false;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::release(const bool gpuContextLost)
 {
     bool ok = true;
-    ok = ok && releaseBillboardRaster();
-    ok = ok && releaseOnPath();
-    ok = ok && releaseOnSurfaceRaster();
-    ok = ok && releaseOnSurfaceVector();
+    ok = ok && releaseBillboardRaster(gpuContextLost);
+    ok = ok && releaseOnPath(gpuContextLost);
+    ok = ok && releaseOnSurfaceRaster(gpuContextLost);
+    ok = ok && releaseOnSurfaceVector(gpuContextLost);
     return ok;
 }
 
@@ -475,6 +475,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
 
+        // Bind texture to sampler
+        glUniform1i(_billboardRasterProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _billboardRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
@@ -548,7 +552,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -557,27 +561,36 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseBillboardRaster()
 
     if (_billboardRasterSymbolVAO.isValid())
     {
-        gpuAPI->releaseVAO(_billboardRasterSymbolVAO);
+        gpuAPI->releaseVAO(_billboardRasterSymbolVAO, gpuContextLost);
         _billboardRasterSymbolVAO.reset();
     }
 
     if (_billboardRasterSymbolIBO.isValid())
     {
-        glDeleteBuffers(1, &_billboardRasterSymbolIBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_billboardRasterSymbolIBO);
+            GL_CHECK_RESULT;
+        }
         _billboardRasterSymbolIBO.reset();
     }
     if (_billboardRasterSymbolVBO.isValid())
     {
-        glDeleteBuffers(1, &_billboardRasterSymbolVBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_billboardRasterSymbolVBO);
+            GL_CHECK_RESULT;
+        }
         _billboardRasterSymbolVBO.reset();
     }
     
     if (_billboardRasterProgram.id.isValid())
     {
-        glDeleteProgram(_billboardRasterProgram.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_billboardRasterProgram.id);
+            GL_CHECK_RESULT;
+        }
         _billboardRasterProgram = BillboardRasterSymbolProgram();
     }
 
@@ -1241,6 +1254,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath2dSymbol(
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
 
+        // Bind texture to sampler
+        glUniform1i(_onPath2dProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _onPath2dProgram.id;
 
         GL_POP_GROUP_MARKER;
@@ -1380,6 +1397,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
 
+        // Bind texture to sampler
+        glUniform1i(_onPath3dProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _onPath3dProgram.id;
 
         GL_POP_GROUP_MARKER;
@@ -1485,15 +1506,15 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnPath3dSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath(const bool gpuContextLost)
 {
     bool ok = true;
-    ok = ok && releaseOnPath3D();
-    ok = ok && releaseOnPath2D();
+    ok = ok && releaseOnPath3D(gpuContextLost);
+    ok = ok && releaseOnPath2D(gpuContextLost);
     return ok;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1502,34 +1523,43 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath2D()
 
     if (_onPathSymbol2dVAO.isValid())
     {
-        gpuAPI->releaseVAO(_onPathSymbol2dVAO);
+        gpuAPI->releaseVAO(_onPathSymbol2dVAO, gpuContextLost);
         _onPathSymbol2dVAO.reset();
     }
 
     if (_onPathSymbol2dIBO.isValid())
     {
-        glDeleteBuffers(1, &_onPathSymbol2dIBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_onPathSymbol2dIBO);
+            GL_CHECK_RESULT;
+        }
         _onPathSymbol2dIBO.reset();
     }
     if (_onPathSymbol2dVBO.isValid())
     {
-        glDeleteBuffers(1, &_onPathSymbol2dVBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_onPathSymbol2dVBO);
+            GL_CHECK_RESULT;
+        }
         _onPathSymbol2dVBO.reset();
     }
     
     if (_onPath2dProgram.id.isValid())
     {
-        glDeleteProgram(_onPath2dProgram.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_onPath2dProgram.id);
+            GL_CHECK_RESULT;
+        }
         _onPath2dProgram = OnPathSymbol2dProgram();
     }
 
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1538,28 +1568,36 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnPath3D()
 
     if (_onPathSymbol3dVAO.isValid())
     {
-        gpuAPI->releaseVAO(_onPathSymbol3dVAO);
+        gpuAPI->releaseVAO(_onPathSymbol3dVAO, gpuContextLost);
         _onPathSymbol3dVAO.reset();
     }
 
-
     if (_onPathSymbol3dIBO.isValid())
     {
-        glDeleteBuffers(1, &_onPathSymbol3dIBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_onPathSymbol3dIBO);
+            GL_CHECK_RESULT;
+        }
         _onPathSymbol3dIBO.reset();
     }
     if (_onPathSymbol3dVBO.isValid())
     {
-        glDeleteBuffers(1, &_onPathSymbol3dVBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_onPathSymbol3dVBO);
+            GL_CHECK_RESULT;
+        }
         _onPathSymbol3dVBO.reset();
     }
 
     if (_onPath3dProgram.id.isValid())
     {
-        glDeleteProgram(_onPath3dProgram.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_onPath3dProgram.id);
+            GL_CHECK_RESULT;
+        }
         _onPath3dProgram = OnPathSymbol3dProgram();
     }
 
@@ -1790,6 +1828,10 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
         // Set proper sampler for texture block
         gpuAPI->setTextureBlockSampler(GL_TEXTURE0 + 0, GPUAPI_OpenGL::SamplerType::Symbol);
 
+        // Bind texture to sampler
+        glUniform1i(_onSurfaceRasterProgram.fs.param.sampler, 0);
+        GL_CHECK_RESULT;
+
         lastUsedProgram = _onSurfaceRasterProgram.id;
 
         GL_POP_GROUP_MARKER;
@@ -1860,7 +1902,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceRasterSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -1869,27 +1911,36 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceRaster()
 
     if (_onSurfaceRasterSymbolVAO.isValid())
     {
-        gpuAPI->releaseVAO(_onSurfaceRasterSymbolVAO);
+        gpuAPI->releaseVAO(_onSurfaceRasterSymbolVAO, gpuContextLost);
         _onSurfaceRasterSymbolVAO.reset();
     }
     
     if (_onSurfaceRasterSymbolIBO.isValid())
     {
-        glDeleteBuffers(1, &_onSurfaceRasterSymbolIBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_onSurfaceRasterSymbolIBO);
+            GL_CHECK_RESULT;
+        }
         _onSurfaceRasterSymbolIBO.reset();
     }
     if (_onSurfaceRasterSymbolVBO.isValid())
     {
-        glDeleteBuffers(1, &_onSurfaceRasterSymbolVBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_onSurfaceRasterSymbolVBO);
+            GL_CHECK_RESULT;
+        }
         _onSurfaceRasterSymbolVBO.reset();
     }
     
     if (_onSurfaceRasterProgram.id.isValid())
     {
-        glDeleteProgram(_onSurfaceRasterProgram.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_onSurfaceRasterProgram.id);
+            GL_CHECK_RESULT;
+        }
         _onSurfaceRasterProgram = OnSurfaceSymbolProgram();
     }
 
@@ -2121,7 +2172,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
         symbol->modulationColor.a);
     GL_CHECK_RESULT;
 
-    // Deactivate symbol texture
+    // Unbind symbol texture from texture sampler
     glBindTexture(GL_TEXTURE_2D, 0);
     GL_CHECK_RESULT;
 
@@ -2162,7 +2213,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
+bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -2170,8 +2221,11 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::releaseOnSurfaceVector()
 
     if (_onSurfaceVectorProgram.id.isValid())
     {
-        glDeleteProgram(_onSurfaceVectorProgram.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_onSurfaceVectorProgram.id);
+            GL_CHECK_RESULT;
+        }
         _onSurfaceVectorProgram = OnSurfaceVectorProgram();
     }
 

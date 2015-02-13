@@ -71,7 +71,7 @@ namespace OsmAnd
         virtual ~GPUAPI_OpenGLES2();
 
         virtual bool initialize();
-        virtual bool release();
+        virtual bool release(const bool contextLost);
 
         const bool& isSupported_EXT_unpack_subimage;
         const bool& isSupported_EXT_texture_storage;
@@ -87,7 +87,7 @@ namespace OsmAnd
         const QSet<GLenum>& supportedVertexShaderPrecisionFormats;
         const QSet<GLenum>& supportedFragmentShaderPrecisionFormats;
 
-        virtual GLenum validateResult();
+        virtual GLenum validateResult(const char* const function, const char* const file, const int line);
 
         virtual void allocateTexture2D(GLenum target, GLsizei levels, GLsizei width, GLsizei height, const TextureFormat format);
         virtual void uploadDataToTexture2D(GLenum target, GLint level,

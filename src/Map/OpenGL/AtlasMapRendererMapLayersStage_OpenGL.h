@@ -31,6 +31,12 @@ namespace OsmAnd
     {
     private:
     protected:
+        enum class BatchedLayerType
+        {
+            Raster,
+            Other
+        };
+
         struct BatchedLayerResource Q_DECL_FINAL
         {
             BatchedLayerResource(
@@ -51,8 +57,9 @@ namespace OsmAnd
         };
         struct BatchedLayer Q_DECL_FINAL
         {
-            BatchedLayer(const int layerIndex);
+            BatchedLayer(const BatchedLayerType type, const int layerIndex);
 
+            const BatchedLayerType type;
             const int layerIndex;
             QList< Ref<BatchedLayerResource> > resourcesInGPU;
         
@@ -81,7 +88,7 @@ namespace OsmAnd
         GLname _rasterTileIBO;
         QHash<unsigned int, GLname> _rasterTileVAOs;
         void initializeRasterTile();
-        void releaseRasterTile();
+        void releaseRasterTile(const bool gpuContextLost);
         struct RasterLayerTileProgram
         {
             GLname id;
@@ -129,9 +136,9 @@ namespace OsmAnd
                     // Per-tile-per-layer data
                     struct FsPerTilePerLayerParameters
                     {
+                        GLlocation sampler;
                         GLlocation opacity;
                         GLlocation isPremultipliedAlpha;
-                        GLlocation sampler;
                     };
                     QVector<FsPerTilePerLayerParameters> rasterTileLayers;
                 } param;
@@ -165,15 +172,14 @@ namespace OsmAnd
             const TileId normalizedTileId,
             const ZoomLevel zoomLevel,
             MapRendererResourceState* const outState = nullptr);
-        bool releaseRasterLayers();
+        bool releaseRasterLayers(const bool gpuContextLost);
     public:
         AtlasMapRendererMapLayersStage_OpenGL(AtlasMapRenderer_OpenGL* const renderer);
         virtual ~AtlasMapRendererMapLayersStage_OpenGL();
 
         virtual bool initialize();
         virtual bool render(IMapRenderer_Metrics::Metric_renderFrame* const metric);
-
-        virtual bool release();
+        virtual bool release(const bool gpuContextLost);
     };
 }
 

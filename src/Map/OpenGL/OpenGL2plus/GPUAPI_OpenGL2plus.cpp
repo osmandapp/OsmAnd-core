@@ -22,9 +22,9 @@
 #undef GL_GET_RESULT
 #undef GL_GET_AND_CHECK_RESULT
 #if OSMAND_GPU_DEBUG
-#   define GL_CHECK_RESULT validateResult()
-#   define GL_GET_RESULT validateResult()
-#   define GL_GET_AND_CHECK_RESULT validateResult()
+#   define GL_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_AND_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
@@ -57,7 +57,7 @@ OsmAnd::GPUAPI_OpenGL2plus::~GPUAPI_OpenGL2plus()
 {
 }
 
-GLenum OsmAnd::GPUAPI_OpenGL2plus::validateResult()
+GLenum OsmAnd::GPUAPI_OpenGL2plus::validateResult(const char* const function, const char* const file, const int line)
 {
     GL_CHECK_PRESENT(glGetError);
 
@@ -65,7 +65,13 @@ GLenum OsmAnd::GPUAPI_OpenGL2plus::validateResult()
     if (result == GL_NO_ERROR)
         return result;
 
-    LogPrintf(LogSeverityLevel::Error, "OpenGL error 0x%08x : %s", result, gluErrorString(result));
+    LogPrintf(LogSeverityLevel::Error,
+        "OpenGL error 0x%08x (%s) in %s at %s:%d",
+        result,
+        gluErrorString(result),
+        function,
+        file,
+        line);
 
     return result;
 }
@@ -157,6 +163,10 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     //maxTextureUnitsInVertexShader = 0;
     //////////////////////////////////////////////////////////////////////////
     _isSupported_vertexShaderTextureLookup = (_maxTextureUnitsInVertexShader >= 1);
+
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint*>(&_maxTextureUnitsCombined));
+    GL_CHECK_RESULT;
+    LogPrintf(LogSeverityLevel::Info, "OpenGL maximal texture units combined %d", _maxTextureUnitsCombined);
 
     GLint maxTextureUnitsCombined;
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnitsCombined);
@@ -309,7 +319,7 @@ bool OsmAnd::GPUAPI_OpenGL2plus::initialize()
     return true;
 }
 
-bool OsmAnd::GPUAPI_OpenGL2plus::release()
+bool OsmAnd::GPUAPI_OpenGL2plus::release(const bool gpuContextLost)
 {
     bool ok;
 
@@ -318,13 +328,16 @@ bool OsmAnd::GPUAPI_OpenGL2plus::release()
         GL_CHECK_PRESENT(glDeleteSamplers);
         if (_textureSamplers[0] != 0)
         {
-            glDeleteSamplers(1, _textureSamplers.data());
-            GL_CHECK_RESULT;
+            if (!gpuContextLost)
+            {
+                glDeleteSamplers(1, _textureSamplers.data());
+                GL_CHECK_RESULT;
+            }
             _textureSamplers.fill(0);
         }
     }
 
-    ok = GPUAPI_OpenGL::release();
+    ok = GPUAPI_OpenGL::release(gpuContextLost);
     if (!ok)
         return false;
 

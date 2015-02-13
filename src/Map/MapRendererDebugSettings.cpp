@@ -21,6 +21,9 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , showAllPaths(false)
     , rasterLayersOverscaleForbidden(false)
     , rasterLayersUnderscaleForbidden(false)
+    , mapLayersBatchingForbidden(false)
+    , disableJunkResourcesCleanup(false)
+    , disableNeededResourcesRequests(false)
 {
 }
 
@@ -50,6 +53,9 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.showAllPaths = showAllPaths;
     other.rasterLayersOverscaleForbidden = rasterLayersOverscaleForbidden;
     other.rasterLayersUnderscaleForbidden = rasterLayersUnderscaleForbidden;
+    other.mapLayersBatchingForbidden = mapLayersBatchingForbidden;
+    other.disableJunkResourcesCleanup = disableJunkResourcesCleanup;
+    other.disableNeededResourcesRequests = disableNeededResourcesRequests;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const

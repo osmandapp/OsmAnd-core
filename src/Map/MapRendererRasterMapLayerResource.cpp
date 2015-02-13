@@ -70,6 +70,12 @@ void OsmAnd::MapRendererRasterMapLayerResource::unloadFromGPU()
     _resourceInGPU.reset();
 }
 
+void OsmAnd::MapRendererRasterMapLayerResource::lostDataInGPU()
+{
+    _resourceInGPU->lostRefInGPU();
+    _resourceInGPU.reset();
+}
+
 void OsmAnd::MapRendererRasterMapLayerResource::releaseData()
 {
     _retainableCacheMetadata.reset();

@@ -211,7 +211,7 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::render(IMapRenderer_Metrics::Metri
     return true;
 }
 
-bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
+bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release(const bool gpuContextLost)
 {
     const auto gpuAPI = getGPUAPI();
 
@@ -219,27 +219,36 @@ bool OsmAnd::AtlasMapRendererSkyStage_OpenGL::release()
 
     if (_skyplaneVAO.isValid())
     {
-        gpuAPI->releaseVAO(_skyplaneVAO);
+        gpuAPI->releaseVAO(_skyplaneVAO, gpuContextLost);
         _skyplaneVAO.reset();
     }
 
     if (_skyplaneIBO.isValid())
     {
-        glDeleteBuffers(1, &_skyplaneIBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_skyplaneIBO);
+            GL_CHECK_RESULT;
+        }
         _skyplaneIBO.reset();
     }
     if (_skyplaneVBO.isValid())
     {
-        glDeleteBuffers(1, &_skyplaneVBO);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteBuffers(1, &_skyplaneVBO);
+            GL_CHECK_RESULT;
+        }
         _skyplaneVBO.reset();
     }
 
     if (_program.id.isValid())
     {
-        glDeleteProgram(_program.id);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteProgram(_program.id);
+            GL_CHECK_RESULT;
+        }
         _program = Program();
     }
 

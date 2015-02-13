@@ -24,6 +24,8 @@ namespace OsmAnd
     class MapStylesCollection_P Q_DECL_FINAL
     {
     private:
+        static QString getFullyQualifiedStyleName(const QString& name);
+
         QHash< QString, std::shared_ptr<UnresolvedMapStyle> > _styles;
         mutable QReadWriteLock _stylesLock;
 

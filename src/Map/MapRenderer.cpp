@@ -42,7 +42,8 @@ OsmAnd::MapRenderer::MapRenderer(
     , _requestedConfiguration(baseConfiguration_->createCopy())
     , _suspendSymbolsUpdateCounter(0)
     , _gpuWorkerThreadId(nullptr)
-    , _gpuWorkerIsAlive(false)
+    , _gpuWorkerThreadIsAlive(false)
+    , _gpuWorkerIsSuspended(false)
     , _renderThreadId(nullptr)
     , _currentDebugSettings(baseDebugSettings_->createCopy())
     , _currentDebugSettingsAsConst(_currentDebugSettings)
@@ -228,7 +229,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
     if (_setupOptions.gpuWorkerThreadPrologue)
         _setupOptions.gpuWorkerThreadPrologue(this);
 
-    while (_gpuWorkerIsAlive)
+    while (_gpuWorkerThreadIsAlive)
     {
         // Wait until we're unblocked by host
         {
@@ -237,7 +238,7 @@ void OsmAnd::MapRenderer::gpuWorkerThreadProcedure()
         }
 
         // If worker was requested to stop, let it be so
-        if (!_gpuWorkerIsAlive)
+        if (!_gpuWorkerThreadIsAlive)
             break;
 
         if (!_gpuWorkerIsSuspended)
@@ -358,11 +359,13 @@ bool OsmAnd::MapRenderer::postInitializeRendering()
 {
     _isRenderingInitialized = true;
 
+    // GPU worker should not be suspended initially
+    _gpuWorkerIsSuspended = false;
+
     // Start GPU worker (if it exists)
     if (_gpuWorkerThread)
     {
-        _gpuWorkerIsAlive = true;
-        _gpuWorkerIsSuspended = false;
+        _gpuWorkerThreadIsAlive = true;
         _gpuWorkerThread->start();
     }
 
@@ -576,33 +579,33 @@ bool OsmAnd::MapRenderer::postRenderFrame(IMapRenderer_Metrics::Metric_renderFra
     return true;
 }
 
-bool OsmAnd::MapRenderer::releaseRendering()
+bool OsmAnd::MapRenderer::releaseRendering(const bool gpuContextLost /*= false*/)
 {
     assert(_renderThreadId == QThread::currentThreadId());
 
     bool ok;
 
-    ok = preReleaseRendering();
+    ok = preReleaseRendering(gpuContextLost);
     if (!ok)
         return false;
 
-    ok = doReleaseRendering();
+    ok = doReleaseRendering(gpuContextLost);
     if (!ok)
         return false;
 
-    ok = postReleaseRendering();
+    ok = postReleaseRendering(gpuContextLost);
     if (!ok)
         return false;
 
     // After all release procedures, release render API
-    ok = gpuAPI->release();
+    ok = gpuAPI->release(gpuContextLost);
     if (!ok)
         return false;
 
     return true;
 }
 
-bool OsmAnd::MapRenderer::preReleaseRendering()
+bool OsmAnd::MapRenderer::preReleaseRendering(const bool gpuContextLost)
 {
     if (!_isRenderingInitialized)
         return false;
@@ -610,22 +613,24 @@ bool OsmAnd::MapRenderer::preReleaseRendering()
     return true;
 }
 
-bool OsmAnd::MapRenderer::doReleaseRendering()
+bool OsmAnd::MapRenderer::doReleaseRendering(const bool gpuContextLost)
 {
     return true;
 }
 
-bool OsmAnd::MapRenderer::postReleaseRendering()
+bool OsmAnd::MapRenderer::postReleaseRendering(const bool gpuContextLost)
 {
     // Release resources (to let all resources be released)
-    _resources->releaseAllResources();
+    _resources->releaseAllResources(gpuContextLost);
+
+    // GPU worker should not be suspected afterwards
+    _gpuWorkerIsSuspended = false;
 
     // Stop GPU worker if it exists
     if (_gpuWorkerThread)
     {
         // Deactivate worker thread
-        _gpuWorkerIsAlive = false;
-        _gpuWorkerIsSuspended = false;
+        _gpuWorkerThreadIsAlive = false;
 
         // Since _gpuWorkerAlive == false, wake up GPU worker thread to allow it to exit
         {

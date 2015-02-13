@@ -63,11 +63,11 @@
 
 #if OSMAND_GPU_DEBUG
 #   define GL_CHECK_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
 #   define GL_GET_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
 #   define GL_GET_AND_CHECK_RESULT \
-        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult()
+        static_cast<GPUAPI_OpenGL*>(this->gpuAPI.get())->validateResult(__FUNCTION__, __FILE__, __LINE__)
 #   define GL_CHECK_PRESENT(x) \
         const static OsmAnd::GPUAPI_OpenGL::glPresenseChecker<decltype(x)> glPresenseChecker_##x(&x, #x)
 #   define GL_PUSH_GROUP_MARKER(title) \
@@ -198,8 +198,10 @@ namespace OsmAnd
             const GLuint program;
             const QHash<QString, GlslProgramVariable> variablesMap;
 
-            virtual bool lookupLocation(GLint& location, const QString& name, const GlslVariableType& type);
-            bool lookupLocation(GLlocation& location, const QString& name, const GlslVariableType& type);
+            virtual bool lookupLocation(GLint& outLocation, const QString& name, const GlslVariableType type);
+            bool lookupLocation(GLlocation& outLocation, const QString& name, const GlslVariableType type);
+            bool lookupInLocation(GLlocation& outLocation, const QString& name);
+            bool lookupUniformLocation(GLlocation& outLocation, const QString& name);
 
         friend class OsmAnd::GPUAPI_OpenGL;
         };
@@ -240,6 +242,7 @@ namespace OsmAnd
         GLint _maxTextureSize;
         GLint _maxTextureUnitsInVertexShader;
         GLint _maxTextureUnitsInFragmentShader;
+        GLint _maxTextureUnitsCombined;
         bool _isSupported_vertexShaderTextureLookup;
         bool _isSupported_textureLod;
         bool _isSupported_texturesNPOT;
@@ -281,6 +284,7 @@ namespace OsmAnd
         const GLint& maxTextureSize;
         const GLint& maxTextureUnitsInVertexShader;
         const GLint& maxTextureUnitsInFragmentShader;
+        const GLint& maxTextureUnitsCombined;
         const bool& isSupported_vertexShaderTextureLookup;
         const bool& isSupported_textureLod;
         const bool& isSupported_texturesNPOT;
@@ -293,7 +297,7 @@ namespace OsmAnd
         const GLint& maxFragmentUniformVectors;
         const GLint& maxVertexAttribs;
         
-        virtual GLenum validateResult() = 0;
+        virtual GLenum validateResult(const char* const function, const char* const file, const int line) = 0;
 
         virtual GLuint compileShader(GLenum shaderType, const char* source);
         virtual GLuint linkProgram(
@@ -317,7 +321,7 @@ namespace OsmAnd
         void initializeVAO(const GLname vao);
         void useVAO(const GLname vao);
         void unuseVAO();
-        void releaseVAO(const GLname vao);
+        void releaseVAO(const GLname vao, const bool gpuContextLost = false);
 
         virtual void preprocessVertexShader(QString& code) = 0;
         virtual void preprocessFragmentShader(QString& code) = 0;

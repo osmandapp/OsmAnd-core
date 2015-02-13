@@ -27,9 +27,9 @@
 #undef GL_GET_RESULT
 #undef GL_GET_AND_CHECK_RESULT
 #if OSMAND_GPU_DEBUG
-#   define GL_CHECK_RESULT validateResult()
-#   define GL_GET_RESULT validateResult()
-#   define GL_GET_AND_CHECK_RESULT validateResult()
+#   define GL_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
+#   define GL_GET_AND_CHECK_RESULT validateResult(__FUNCTION__, __FILE__, __LINE__)
 #else
 #   define GL_CHECK_RESULT
 #   define GL_GET_RESULT glGetError()
@@ -43,6 +43,7 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , _maxTextureSize(0)
     , _maxTextureUnitsInVertexShader(0)
     , _maxTextureUnitsInFragmentShader(0)
+    , _maxTextureUnitsCombined(0)
     , _isSupported_vertexShaderTextureLookup(false)
     , _isSupported_textureLod(false)
     , _isSupported_texturesNPOT(false)
@@ -60,6 +61,7 @@ OsmAnd::GPUAPI_OpenGL::GPUAPI_OpenGL()
     , maxTextureSize(_maxTextureSize)
     , maxTextureUnitsInVertexShader(_maxTextureUnitsInVertexShader)
     , maxTextureUnitsInFragmentShader(_maxTextureUnitsInFragmentShader)
+    , maxTextureUnitsCombined(_maxTextureUnitsCombined)
     , isSupported_vertexShaderTextureLookup(_isSupported_vertexShaderTextureLookup)
     , isSupported_textureLod(_isSupported_textureLod)
     , isSupported_texturesNPOT(_isSupported_texturesNPOT)
@@ -1696,12 +1698,15 @@ void OsmAnd::GPUAPI_OpenGL::unuseVAO()
     _lastUsedSimulatedVAOObject.reset();
 }
 
-void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao)
+void OsmAnd::GPUAPI_OpenGL::releaseVAO(const GLname vao, const bool gpuContextLost /*= false*/)
 {
     if (isSupported_vertex_array_object)
     {
-        glDeleteVertexArrays_wrapper(1, &vao);
-        GL_CHECK_RESULT;
+        if (!gpuContextLost)
+        {
+            glDeleteVertexArrays_wrapper(1, &vao);
+            GL_CHECK_RESULT;
+        }
 
         return;
     }
@@ -1728,9 +1733,9 @@ OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::~ProgramVariablesLookupCon
 }
 
 bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
-    GLint& location,
+    GLint& outLocation,
     const QString& name,
-    const GlslVariableType& type)
+    const GlslVariableType type)
 {
     auto& variablesByName = _variablesByName[type];
     const auto itPreviousLocation = variablesByName.constFind(name);
@@ -1745,7 +1750,7 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
         return false;
     }
 
-    if (!gpuAPI->findVariableLocation(program, location, name, type))
+    if (!gpuAPI->findVariableLocation(program, outLocation, name, type))
     {
         // In case the variable was not found in the program, this does not necessarily mean that it's not there.
         //WORKAROUND: Some drivers have naming differences with specification:
@@ -1771,7 +1776,7 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
                         qPrintable(name),
                         type == GlslVariableType::In ? "In" : "Uniform");
 
-                    if (lookupLocation(location, variable.name, type))
+                    if (lookupLocation(outLocation, variable.name, type))
                         return true;
                 }
             }
@@ -1793,7 +1798,7 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
                         qPrintable(name),
                         type == GlslVariableType::In ? "In" : "Uniform");
 
-                    if (lookupLocation(location, variable.name, type))
+                    if (lookupLocation(outLocation, variable.name, type))
                         return true;
                 }
             }
@@ -1808,7 +1813,7 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
     }
 
     auto& variablesByLocation = _variablesByLocation[type];
-    const auto itOtherName = variablesByLocation.constFind(location);
+    const auto itOtherName = variablesByLocation.constFind(outLocation);
     if (itOtherName != variablesByLocation.constEnd())
     {
         LogPrintf(LogSeverityLevel::Error,
@@ -1824,9 +1829,19 @@ bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
 }
 
 bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupLocation(
-    GLlocation& location,
+    GLlocation& outLocation,
     const QString& name,
-    const GlslVariableType& type)
+    const GlslVariableType type)
 {
-    return lookupLocation(*location, name, type);
+    return lookupLocation(*outLocation, name, type);
+}
+
+bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupInLocation(GLlocation& outLocation, const QString& name)
+{
+    return lookupLocation(outLocation, name, GlslVariableType::In);
+}
+
+bool OsmAnd::GPUAPI_OpenGL::ProgramVariablesLookupContext::lookupUniformLocation(GLlocation& outLocation, const QString& name)
+{
+    return lookupLocation(outLocation, name, GlslVariableType::Uniform);
 }

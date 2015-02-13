@@ -71,6 +71,8 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doInitializeRendering()
 
 bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric_renderFrame* const metric_)
 {
+    const auto gpuAPI = getGPUAPI();
+
     bool ok = true;
 
     const auto metric = dynamic_cast<AtlasMapRenderer_Metrics::Metric_renderFrame*>(metric_);
@@ -96,6 +98,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     // Clear buffers
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     GL_CHECK_RESULT;
+
+    // Unbind any textures from texture samplers
+    for (int samplerIndex = 0; samplerIndex < gpuAPI->maxTextureUnitsCombined; samplerIndex++)
+    {
+        glActiveTexture(GL_TEXTURE0 + samplerIndex);
+        GL_CHECK_RESULT;
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        GL_CHECK_RESULT;
+    }
 
     // Turn off blending for sky
     glDisable(GL_BLEND);
