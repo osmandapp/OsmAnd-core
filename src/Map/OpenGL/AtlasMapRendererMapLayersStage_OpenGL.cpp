@@ -333,8 +333,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "{                                                                                                                  ""\n"
         "    lowp sampler2D sampler;                                                                                        ""\n"
         "    lowp float isPremultipliedAlpha;                                                                               ""\n"
-        "    lowp vec4 opacity;                                                                                             ""\n"
-        "    lowp vec4 opacity2;                                                                                             ""\n"
+        "    lowp float opacityFactor;                                                                                      ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "                                                                                                                   ""\n"
@@ -366,7 +365,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacity2.a, param_fs_rasterTileLayer_0.isPremultipliedAlpha);""\n"
+        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor, param_fs_rasterTileLayer_0.isPremultipliedAlpha);""\n"
         "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
         "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
         "    finalColor *= vec4(firstLayerColorFactor, firstLayerColorFactor, firstLayerColorFactor, 1.0);                  ""\n"
@@ -389,9 +388,6 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    }                                                                                                              ""\n"
 #endif
         "    FRAGMENT_COLOR_OUTPUT = finalColor;                                                                            ""\n"
-        //////////////////////////////////////////////////////////////////////////
-        "    FRAGMENT_COLOR_OUTPUT = FRAGMENT_COLOR_OUTPUT * 0.5 + param_fs_rasterTileLayer_0.opacity * 0.5;                                                                            ""\n"
-        //////////////////////////////////////////////////////////////////////////
         "}                                                                                                                  ""\n");
     const auto& fragmentShader_perRasterLayer = QString::fromLatin1(
         "    {                                                                                                              ""\n"
@@ -405,7 +401,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "            v2f_texCoordsPerLayer_%rasterLayerIndex%);                                                             ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
         "                                                                                                                   ""\n"
-        "        addExtraAlpha(layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.opacity.a,                             ""\n"
+        "        addExtraAlpha(layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.opacityFactor,                             ""\n"
         "            param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);                                     ""\n"
         "        mixColors(finalColor, layerColor, param_fs_rasterTileLayer_%rasterLayerIndex%.isPremultipliedAlpha);       ""\n"
         "    }                                                                                                              ""\n");
@@ -541,8 +537,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             auto& layerStruct = outRasterLayerTileProgram.fs.param.rasterTileLayers[layerIndex];
 
             ok = ok && lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GlslVariableType::Uniform);
-            ok = ok && lookup->lookupLocation(layerStruct.opacity, layerStructName + ".opacity", GlslVariableType::Uniform);
-            ok = ok && lookup->lookupLocation(layerStruct.opacity2, layerStructName + ".opacity2", GlslVariableType::Uniform);
+            ok = ok && lookup->lookupLocation(layerStruct.opacity, layerStructName + ".opacityFactor", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.isPremultipliedAlpha, layerStructName + ".isPremultipliedAlpha", GlslVariableType::Uniform);
         }
     }
@@ -625,16 +620,15 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             if (currentState.mapLayersProviders.isEmpty() ||
                 layer->layerIndex == currentState.mapLayersProviders.firstKey())
             {
-                glUniform4f(perTile_fs.opacity, 1.0f, 1.0f, 1.0f, 1.0f);
+                glUniform1f(perTile_fs.opacity, 1.0f);
                 GL_CHECK_RESULT;
             }
             else
             {
                 const auto& layerConfiguration = currentState.mapLayersConfigurations[layer->layerIndex];
-                glUniform4f(perTile_fs.opacity, layerConfiguration.opacity, layerConfiguration.opacity, layerConfiguration.opacity, layerConfiguration.opacity);
+                glUniform1f(perTile_fs.opacity, layerConfiguration.opacity);
                 GL_CHECK_RESULT;
             }
-            glUniform4f(perTile_fs.opacity2, 1.0f, 1.0f, 1.0f, 1.0f);
 
             // Since it's single-pass tile rendering, there's only one resource per layer
             const auto& batchedResourceInGPU = layer->resourcesInGPU.first();
