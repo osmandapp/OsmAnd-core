@@ -16,15 +16,15 @@ namespace OsmAnd
     struct MapLayerConfiguration Q_DECL_FINAL
     {
         MapLayerConfiguration()
-            : opacity(1.0f)
+            : opacityFactor(1.0f)
         {
         }
 
-        float opacity;
+        float opacityFactor;
 #if !defined(SWIG)
-        inline MapLayerConfiguration& setOpacity(const float newOpacity)
+        inline MapLayerConfiguration& setOpacityFactor(const float newOpacityFactor)
         {
-            opacity = newOpacity;
+            opacityFactor = newOpacityFactor;
 
             return *this;
         }
@@ -33,19 +33,19 @@ namespace OsmAnd
         inline bool isValid() const
         {
             return
-                (opacity >= 0.0f && opacity <= 1.0f);
+                (opacityFactor >= 0.0f && opacityFactor <= 1.0f);
         }
 
         inline bool operator==(const MapLayerConfiguration& r) const
         {
             return
-                qFuzzyCompare(opacity, r.opacity);
+                qFuzzyCompare(opacityFactor, r.opacityFactor);
         }
 
         inline bool operator!=(const MapLayerConfiguration& r) const
         {
             return
-                !qFuzzyCompare(opacity, r.opacity);
+                !qFuzzyCompare(opacityFactor, r.opacityFactor);
         }
     };
 

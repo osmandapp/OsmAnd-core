@@ -137,9 +137,8 @@ namespace OsmAnd
                     struct FsPerTilePerLayerParameters
                     {
                         GLlocation sampler;
-                        GLlocation opacity;
-                        GLlocation opacity2;
                         GLlocation isPremultipliedAlpha;
+                        GLlocation opacityFactor;
                     };
                     QVector<FsPerTilePerLayerParameters> rasterTileLayers;
                 } param;
