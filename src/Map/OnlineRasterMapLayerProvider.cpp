@@ -24,7 +24,8 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     , providerTileSize(providerTileSize_)
     , alphaChannelPresence(alphaChannelPresence_)
 {
-    _p->_localCachePath = QDir(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(pathSuffix));
+    _p->_localCachePath =
+        QDir(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(pathSuffix));
 }
 
 OsmAnd::OnlineRasterMapLayerProvider::~OnlineRasterMapLayerProvider()
@@ -34,7 +35,9 @@ OsmAnd::OnlineRasterMapLayerProvider::~OnlineRasterMapLayerProvider()
 void OsmAnd::OnlineRasterMapLayerProvider::setLocalCachePath(const QDir& localCachePath, const bool appendPathSuffix /*= true*/)
 {
     QMutexLocker scopedLocker(&_p->_localCachePathMutex);
-    _p->_localCachePath = appendPathSuffix ? QDir(localCachePath.absoluteFilePath(pathSuffix)) : localCachePath;
+    _p->_localCachePath = appendPathSuffix
+        ? QDir(localCachePath.absoluteFilePath(pathSuffix))
+        : localCachePath;
 }
 
 void OsmAnd::OnlineRasterMapLayerProvider::setNetworkAccessPermission(bool allowed)
