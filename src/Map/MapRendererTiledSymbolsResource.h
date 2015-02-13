@@ -68,7 +68,10 @@ namespace OsmAnd
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();
+        virtual void lostDataInGPU();
         virtual void releaseData();
+
+        void unloadFromGPU(const bool gpuContextLost);
     public:
         virtual ~MapRendererTiledSymbolsResource();
 

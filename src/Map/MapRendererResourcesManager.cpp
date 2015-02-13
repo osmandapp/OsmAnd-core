@@ -1331,7 +1331,10 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
 
                     // In case context was lost, it's impossible to unload anything, so just remove the resource
                     if (gpuContextLost)
+                    {
+                        entry->lostDataInGPU();
                         return true;
+                    }
 
                     // If resource is not needed anymore, change its state to "UnloadPending",
                     // but keep the resource entry, since it must be unload from GPU in another place
@@ -1367,7 +1370,10 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                 {
                     // In case GPU context is lost, nothing can be done with this resource, so just remove it
                     if (gpuContextLost)
+                    {
+                        entry->lostDataInGPU();
                         return true;
+                    }
 
                     needsResourcesUploadOrUnload = true;
                 }

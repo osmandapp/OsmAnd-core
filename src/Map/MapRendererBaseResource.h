@@ -37,6 +37,7 @@ namespace OsmAnd
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController = nullptr) = 0;
         virtual bool uploadToGPU() = 0;
         virtual void unloadFromGPU() = 0;
+        virtual void lostDataInGPU() = 0;
         virtual void releaseData() = 0;
 
         virtual void removeSelfFromCollection() = 0;

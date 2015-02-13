@@ -32,6 +32,7 @@ namespace OsmAnd
         virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();
+        virtual void lostDataInGPU();
         virtual void releaseData();
     public:
         virtual ~MapRendererRasterMapLayerResource();

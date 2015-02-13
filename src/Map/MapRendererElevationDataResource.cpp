@@ -25,7 +25,11 @@ bool OsmAnd::MapRendererElevationDataResource::obtainData(bool& dataAvailable, c
     // Get source of tile
     std::shared_ptr<IMapDataProvider> provider_;
     if (const auto link_ = link.lock())
-        ok = resourcesManager->obtainProviderFor(static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)), provider_);
+    {
+        ok = resourcesManager->obtainProviderFor(
+            static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)),
+            provider_);
+    }
     if (!ok)
         return false;
     const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
@@ -59,6 +63,12 @@ bool OsmAnd::MapRendererElevationDataResource::uploadToGPU()
 
 void OsmAnd::MapRendererElevationDataResource::unloadFromGPU()
 {
+    _resourceInGPU.reset();
+}
+
+void OsmAnd::MapRendererElevationDataResource::lostDataInGPU()
+{
+    _resourceInGPU->lostRefInGPU();
     _resourceInGPU.reset();
 }
 

@@ -56,13 +56,15 @@ namespace OsmAnd
         protected:
             ResourceInGPU(const Type type, GPUAPI* api, const RefInGPU& refInGPU);
 
-            RefInGPU _refInGPU;
+            mutable RefInGPU _refInGPU;
         public:
             virtual ~ResourceInGPU();
 
             GPUAPI* const api;
             const Type type;
             const RefInGPU& refInGPU;
+
+            virtual void lostRefInGPU() const;
         };
 
         class MetaResourceInGPU : public ResourceInGPU

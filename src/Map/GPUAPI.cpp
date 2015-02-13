@@ -99,6 +99,11 @@ OsmAnd::GPUAPI::ResourceInGPU::~ResourceInGPU()
     }
 }
 
+void OsmAnd::GPUAPI::ResourceInGPU::lostRefInGPU() const
+{
+    _refInGPU = nullptr;
+}
+
 OsmAnd::GPUAPI::MetaResourceInGPU::MetaResourceInGPU(const Type type_, GPUAPI* api_)
     : ResourceInGPU(type_, api_, nullptr)
 {
