@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromTarArchive "$SRCLOC" "http://download.osmand.net/prebuilt/zlib-1.2.8.tar.bz2"
+prepareUpstreamFromTarArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/zlib-1.2.8.tar.gz"
 patchUpstream "$SRCLOC"

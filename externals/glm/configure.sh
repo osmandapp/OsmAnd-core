@@ -8,5 +8,5 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromZipArchive "$SRCLOC" "http://sourceforge.net/projects/ogl-math/files/glm-0.9.5.3/glm-0.9.5.3.zip/download"
+prepareUpstreamFromZipArchive "$SRCLOC" "http://builder.osmand.net/dependencies-mirror/glm-0.9.5.3.zip"
 patchUpstream "$SRCLOC"
