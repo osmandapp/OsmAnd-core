@@ -16,7 +16,7 @@ fi
 
 # Download
 echo "Downloading new upstream..."
-curl -L http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2 > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
+curl -L http://builder.osmand.net/legacy-dependencies-mirror/protobuf-2.4.1.tar.bz2 > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
 echo "Extracting upstream..."
