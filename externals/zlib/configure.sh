@@ -16,7 +16,7 @@ fi
 
 # Download
 echo "Zlib Downloading new upstream..."
-curl -L http://sourceforge.net/projects/libpng/files/zlib/1.2.7/zlib-1.2.7.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
+curl -L http://builder.osmand.net/legacy-dependencies-mirror/zlib-1.2.7.tar.bz2 > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
 echo "Zlib Extracting upstream..."
