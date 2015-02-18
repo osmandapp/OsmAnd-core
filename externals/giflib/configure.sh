@@ -15,9 +15,7 @@ fi
 
 # Download
 echo "GIF Downloading new upstream..."
-# GIF 5.x is not supported yet by SKIA
-#curl -L http://sourceforge.net/projects/giflib/files/giflib-5.x/giflib-5.0.2.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
-curl -L http://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.1.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
+curl -L http://builder.osmand.net/legacy-dependencies-mirror/giflib-4.2.1.tar.bz2 > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
 echo "GIF Extracting upstream..."
