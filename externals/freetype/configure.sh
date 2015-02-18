@@ -15,7 +15,7 @@ fi
 
 # Download
 echo "FreeType Downloading new upstream..."
-curl -L http://sourceforge.net/projects/freetype/files/freetype2/2.4.10/freetype-2.4.10.tar.bz2/download > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
+curl -L http://builder.osmand.net/legacy-dependencies-mirror/freetype-2.4.10.tar.bz2 > $SRCLOC/upstream.tar.bz2 || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
 echo "FreeType Extracting upstream..."
