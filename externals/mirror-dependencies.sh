@@ -11,9 +11,10 @@ function download
 {
 	local from=$1
 	local to=$2
-	curl --fail "$from" > "$to"
 	
+	curl -L --fail "$from" > "$to"
 	local exitCode=$?
+
 	if [ $exitCode -ne 0 ]; then
 		echo "Download $from failed"
 		exit $exitCode
@@ -28,6 +29,9 @@ if [ -z "$DEPENDENCIES_MIRROR" ]; then
 	echo "DEPENDENCIES_MIRROR is not set!"
 	exit 1
 fi
+
+mkdir -p "$DEPENDENCIES_MIRROR/*"
+rm -f "$DEPENDENCIES_MIRROR/*"
 
 download "http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.bz2/download" "$DEPENDENCIES_MIRROR/boost_1_56_0.tar.bz2"
 download "http://sourceforge.net/projects/expat/files/expat/2.1.0/expat-2.1.0.tar.gz/download" "$DEPENDENCIES_MIRROR/expat-2.1.0.tar.gz"
