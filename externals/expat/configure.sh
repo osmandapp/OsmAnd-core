@@ -15,7 +15,7 @@ fi
 
 # Download
 echo "Downloading new upstream..."
-curl -L http://sourceforge.net/projects/expat/files/expat/2.1.0/expat-2.1.0.tar.gz/download > $SRCLOC/upstream.tar.gz || { echo "Failed to download!" 1>&2; exit; }
+curl -L http://builder.osmand.net/legacy-dependencies-mirror/expat-2.1.0.tar.gz > $SRCLOC/upstream.tar.gz || { echo "Failed to download!" 1>&2; exit; }
 
 # Extract
 echo "Extracting upstream..."
