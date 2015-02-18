@@ -46,3 +46,4 @@ download "http://sourceforge.net/projects/libpng/files/libpng16/older-releases/1
 download "http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2" "$DEPENDENCIES_MIRROR/protobuf-2.4.1.tar.bz2"
 download "http://zlib.net/zlib-1.2.8.tar.gz" "$DEPENDENCIES_MIRROR/zlib-1.2.8.tar.gz"
 download "http://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.3.tar.bz2/download" "$DEPENDENCIES_MIRROR/giflib-4.2.3.tar.bz2"
+download "http://sourceforge.net/projects/freeglut/files/freeglut/2.8.1/freeglut-2.8.1.tar.gz/download" "$DEPENDENCIES_MIRROR/freeglut-2.8.1.tar.gz"
