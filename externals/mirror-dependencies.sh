@@ -45,3 +45,4 @@ download "http://www.libarchive.org/downloads/libarchive-3.1.2.tar.gz" "$DEPENDE
 download "http://sourceforge.net/projects/libpng/files/libpng16/older-releases/1.6.6/libpng-1.6.6.tar.xz/download" "$DEPENDENCIES_MIRROR/libpng-1.6.6.tar.xz"
 download "http://protobuf.googlecode.com/files/protobuf-2.4.1.tar.bz2" "$DEPENDENCIES_MIRROR/protobuf-2.4.1.tar.bz2"
 download "http://zlib.net/zlib-1.2.8.tar.gz" "$DEPENDENCIES_MIRROR/zlib-1.2.8.tar.gz"
+download "http://sourceforge.net/projects/giflib/files/giflib-4.x/giflib-4.2.3.tar.bz2/download" "$DEPENDENCIES_MIRROR/giflib-4.2.3.tar.bz2"
