@@ -618,7 +618,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             const auto& perTile_vs = program.vs.param.rasterTileLayers[layerIndexInBatch];
             const auto& perTile_fs = program.fs.param.rasterTileLayers[layerIndexInBatch];
 
-            if (currentState.mapLayersProviders.isEmpty() ||
+            const auto citMapLayerConfiguration = currentState.mapLayersConfigurations.constFind(layer->layerIndex);
+            if (citMapLayerConfiguration == currentState.mapLayersConfigurations.cend() ||
                 layer->layerIndex == currentState.mapLayersProviders.firstKey())
             {
                 glUniform1f(perTile_fs.opacityFactor, 1.0f);
@@ -626,7 +627,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
             }
             else
             {
-                const auto& layerConfiguration = currentState.mapLayersConfigurations[layer->layerIndex];
+                const auto& layerConfiguration = *citMapLayerConfiguration;
                 glUniform1f(perTile_fs.opacityFactor, layerConfiguration.opacityFactor);
                 GL_CHECK_RESULT;
             }
