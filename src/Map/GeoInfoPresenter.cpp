@@ -233,14 +233,11 @@ OsmAnd::GeoInfoPresenter::TracklineMapObject::TracklineMapObject(
     , track(track_)
     , trackSegment(trackSegment_)
 {
-    if (!trackSegment->points.isEmpty())
-    {
-        points31.resize(trackSegment->points.size());
-        auto pPosition31 = points31.data();
-        for (const auto& trackpoint : constOf(trackSegment->points))
-            *(pPosition31++) = Utilities::convertLatLonTo31(trackpoint->position);
-        computeBBox31();
-    }
+    points31.resize(trackSegment->points.size());
+    auto pPosition31 = points31.data();
+    for (const auto& trackpoint : constOf(trackSegment->points))
+        *(pPosition31++) = Utilities::convertLatLonTo31(trackpoint->position);
+    computeBBox31();
     
     if (!track->name.isEmpty())
     {
@@ -286,14 +283,11 @@ OsmAnd::GeoInfoPresenter::RoutelineMapObject::RoutelineMapObject(
     : MapObject(geoInfoDocument_)
     , route(route_)
 {
-    if (!route->points.isEmpty())
-    {
-        points31.resize(route->points.size());
-        auto pPosition31 = points31.data();
-        for (const auto& routepoint : constOf(route->points))
-            *(pPosition31++) = Utilities::convertLatLonTo31(routepoint->position);
-        computeBBox31();
-    }
+    points31.resize(route->points.size());
+    auto pPosition31 = points31.data();
+    for (const auto& routepoint : constOf(route->points))
+        *(pPosition31++) = Utilities::convertLatLonTo31(routepoint->position);
+    computeBBox31();
 
     if (!route->name.isEmpty())
     {

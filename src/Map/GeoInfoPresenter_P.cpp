@@ -32,6 +32,9 @@ QList< std::shared_ptr<const OsmAnd::GeoInfoPresenter_P::MapObject> > OsmAnd::Ge
         {
             for (const auto& trackSegment : constOf(track->segments))
             {
+                if (trackSegment->points.isEmpty())
+                    continue;
+
                 const std::shared_ptr<TracklineMapObject> newMapObject(new TracklineMapObject(
                     geoInfoDocument,
                     track,
@@ -52,6 +55,9 @@ QList< std::shared_ptr<const OsmAnd::GeoInfoPresenter_P::MapObject> > OsmAnd::Ge
 
         for (const auto& route : constOf(geoInfoDocument->routes))
         {
+            if (route->points.isEmpty())
+                continue;
+
             const std::shared_ptr<RoutelineMapObject> newMapObject(new RoutelineMapObject(
                 geoInfoDocument,
                 route));
