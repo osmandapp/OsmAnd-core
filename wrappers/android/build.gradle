@@ -291,8 +291,33 @@ task copyOsmAndResources(type: Copy) {
     }
 
     // Misc map resources:
+    from("../../../resources/rendering_styles/stubs/[ddf=1.0]") {
+        include "*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.0]/map/stubs/" + fileCopyDetails.path
+        }
+    }
+    from("../../../resources/rendering_styles/stubs/[ddf=1.5]") {
+        include "*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=1.5]/map/stubs/" + fileCopyDetails.path
+        }
+    }
+    from("../../../resources/rendering_styles/stubs/[ddf=2.0]") {
+        include "*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=2.0]/map/stubs/" + fileCopyDetails.path
+        }
+    }
+    from("../../../resources/rendering_styles/stubs/[ddf=3.0]") {
+        include "*.png"
+        eachFile { fileCopyDetails ->
+            fileCopyDetails.path = "[ddf=3.0]/map/stubs/" + fileCopyDetails.path
+        }
+    }
+    
     from("../../../resources/rendering_styles/stubs") {
-        include "**/*.png"
+        include "*.png"
         eachFile { fileCopyDetails ->
             fileCopyDetails.path = "map/stubs/" + fileCopyDetails.path
         }
