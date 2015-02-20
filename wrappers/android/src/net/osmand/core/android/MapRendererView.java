@@ -18,6 +18,7 @@ import net.osmand.core.jni.MapRendererConfiguration;
 import net.osmand.core.jni.MapRendererDebugSettings;
 import net.osmand.core.jni.MapRendererSetupOptions;
 import net.osmand.core.jni.MapRendererState;
+import net.osmand.core.jni.MapStubStyle;
 import net.osmand.core.jni.PointI;
 
 import javax.microedition.khronos.egl.EGL10;
