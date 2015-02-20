@@ -1284,7 +1284,9 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
                     new BatchedLayerResource(exactMatchGpuResource)));
             }
-            else if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden || !debugSettings->rasterLayersUnderscaleForbidden))
+            else if (
+                resourceState != MapRendererResourceState::Unavailable &&
+                (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden || !debugSettings->rasterLayersUnderscaleForbidden)))
             {
                 // Exact match was not found, so now try to look for overscaled/underscaled resources, taking into account
                 // MaxMissingDataZoomShift and current zoom. It's better to show Z-"nearest" resource available,
