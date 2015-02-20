@@ -25,8 +25,14 @@ std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(
 
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
     SkMemoryStream dataStream(data.constData(), data.length(), false);
-    if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+    if (!SkImageDecoder::DecodeStream(
+            &dataStream,
+            bitmap.get(),
+            SkColorType::kUnknown_SkColorType,
+            SkImageDecoder::kDecodePixels_Mode))
+    {
         return nullptr;
+    }
 
     return bitmap;
 }
@@ -40,8 +46,14 @@ std::shared_ptr<SkBitmap> OsmAnd::ICoreResourcesProvider::getResourceAsBitmap(co
 
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
     SkMemoryStream dataStream(data.constData(), data.length(), false);
-    if (!SkImageDecoder::DecodeStream(&dataStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+    if (!SkImageDecoder::DecodeStream(
+            &dataStream,
+            bitmap.get(),
+            SkColorType::kUnknown_SkColorType,
+            SkImageDecoder::kDecodePixels_Mode))
+    {
         return nullptr;
+    }
 
     return bitmap;
 }

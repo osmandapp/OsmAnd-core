@@ -66,6 +66,7 @@ OsmAnd::MapRenderer::MapRenderer(
     const auto centerIndex = 1u << (ZoomLevel::MaxZoomLevel - 1);
     setTarget(PointI(centerIndex, centerIndex), true);
     setZoom(0, true);
+    setStubsStyle(MapRendererStubStyle::Light, true);
 }
 
 OsmAnd::MapRenderer::~MapRenderer()
@@ -1471,6 +1472,21 @@ bool OsmAnd::MapRenderer::setZoom(const float zoom, bool forcedUpdate /*= false*
     _requestedState.zoomFraction = _requestedState.requestedZoom - _requestedState.zoomBase;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setStubsStyle(const MapRendererStubStyle style, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update = forcedUpdate || _requestedState.stubsStyle != style;
+    if (!update)
+        return false;
+
+    _requestedState.stubsStyle = style;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::StubsStyle);
 
     return true;
 }

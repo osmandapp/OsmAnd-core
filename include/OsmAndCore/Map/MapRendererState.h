@@ -44,6 +44,7 @@ namespace OsmAnd
         ElevationAngle,
         Target,
         Zoom,
+        StubsStyle,
     };
     typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
 
@@ -72,6 +73,7 @@ namespace OsmAnd
         float requestedZoom;
         ZoomLevel zoomBase;
         float zoomFraction;
+        MapRendererStubStyle stubsStyle;
     };
 }
 

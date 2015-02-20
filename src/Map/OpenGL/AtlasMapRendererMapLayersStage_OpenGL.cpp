@@ -1231,6 +1231,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
     const auto gpuAPI = getGPUAPI();
 
     QList< Ref<PerTileBatchedLayers> > perTileBatchedLayers;
+    const auto stubsStyle = currentState.stubsStyle;
 
     for (const auto& tileId : constOf(internalState.visibleTiles))
     {
@@ -1319,8 +1320,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 if (batch->containsOriginLayer && layerIndex == currentState.mapLayersProviders.firstKey())
                 {
                     const auto stubResource = atLeastOneNotUnavailable
-                        ? getResources().processingTileStub
-                        : getResources().unavailableTileStub;
+                        ? getResources().processingTileStubs[static_cast<int>(stubsStyle)]
+                        : getResources().unavailableTileStubs[static_cast<int>(stubsStyle)];
 
                     Ref<BatchedLayer> batchedLayer = new BatchedLayer(BatchedLayerType::Raster, layerIndex);
                     batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(
@@ -1374,8 +1375,8 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
         if (batch->layers.isEmpty())
         {
             const auto stubResource = atLeastOneNotUnavailable
-                ? getResources().processingTileStub
-                : getResources().unavailableTileStub;
+                ? getResources().processingTileStubs[static_cast<int>(stubsStyle)]
+                : getResources().unavailableTileStubs[static_cast<int>(stubsStyle)];
 
             Ref<BatchedLayer> batchedLayer = new BatchedLayer(BatchedLayerType::Raster, std::numeric_limits<int>::min());
             batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>(

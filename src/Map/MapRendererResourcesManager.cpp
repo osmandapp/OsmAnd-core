@@ -61,8 +61,8 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     , _workerThreadId(nullptr)
     , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResourcesManager::workerThreadProcedure, this)))
     , renderer(owner_)
-    , processingTileStub(_processingTileStub)
-    , unavailableTileStub(_unavailableTileStub)
+    , processingTileStubs(_processingTileStubs)
+    , unavailableTileStubs(_unavailableTileStubs)
 {
 #if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
     _resourcesRequestWorkersPool.setMaxThreadCount(1);
@@ -112,48 +112,56 @@ OsmAnd::MapRendererResourcesManager::~MapRendererResourcesManager()
 
 bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
 {
-    // Upload stubs
-    {
-        const auto bitmap = getCoreResourcesProvider()->getResourceAsBitmap(QLatin1String("map/stubs/processing_tile.png"));
-        if (!bitmap)
-            return false;
-        else
-        {
-            std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
-                TileId(),
-                InvalidZoom,
-                AlphaChannelPresence::Unknown,
-                1.0f,
-                bitmap));
-            if (!uploadTiledDataToGPU(bitmapTile, _processingTileStub))
-                return false;
-        }
-    }
-    {
-        const auto bitmap = getCoreResourcesProvider()->getResourceAsBitmap(QLatin1String("map/stubs/unavailable_tile.png"));
-        if (!bitmap)
-            return false;
-        else
-        {
-            std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
-                TileId(),
-                InvalidZoom,
-                AlphaChannelPresence::Unknown,
-                1.0f,
-                bitmap));
-            if (!uploadTiledDataToGPU(bitmapTile, _unavailableTileStub))
-                return false;
-        }
-    }
+    bool ok = true;
 
+    // Upload stubs
+    ok = ok && initializeTileStub(
+        QLatin1String("map/stubs/processing_tile_light.png"),
+        _processingTileStubs[static_cast<int>(MapRendererStubStyle::Light)]);
+    ok = ok && initializeTileStub(
+        QLatin1String("map/stubs/processing_tile_dark.png"),
+        _processingTileStubs[static_cast<int>(MapRendererStubStyle::Dark)]);
+    ok = ok && initializeTileStub(
+        QLatin1String("map/stubs/unavailable_tile_light.png"),
+        _unavailableTileStubs[static_cast<int>(MapRendererStubStyle::Light)]);
+    ok = ok && initializeTileStub(
+        QLatin1String("map/stubs/unavailable_tile_dark.png"),
+        _unavailableTileStubs[static_cast<int>(MapRendererStubStyle::Dark)]);
+
+    return ok;
+}
+
+bool OsmAnd::MapRendererResourcesManager::initializeTileStub(
+    const QString& resourceName,
+    std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource)
+{
+    const auto bitmap = getCoreResourcesProvider()->getResourceAsBitmap(
+        resourceName,
+        renderer->setupOptions.displayDensityFactor);
+    if (!bitmap)
+        return false;
+
+    std::shared_ptr<const GPUAPI::ResourceInGPU> resource;
+    std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
+        TileId(),
+        InvalidZoom,
+        AlphaChannelPresence::Unknown,
+        1.0f,
+        bitmap));
+    if (!uploadTiledDataToGPU(bitmapTile, resource))
+        return false;
+    
+    outResource = resource;
     return true;
 }
 
 bool OsmAnd::MapRendererResourcesManager::releaseDefaultResources()
 {
     // Release stubs
-    _unavailableTileStub.reset();
-    _processingTileStub.reset();
+    for (auto& resource : _processingTileStubs)
+        resource.reset();
+    for (auto& resource : _processingTileStubs)
+        resource.reset();
 
     return true;
 }

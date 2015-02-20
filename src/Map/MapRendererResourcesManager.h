@@ -151,10 +151,11 @@ namespace OsmAnd
         void workerThreadProcedure();
 
         // Default resources:
+        std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapRendererStubStylesCount> _processingTileStubs;
+        std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapRendererStubStylesCount> _unavailableTileStubs;
         bool initializeDefaultResources();
+        bool initializeTileStub(const QString& resourceName, std::shared_ptr<const GPUAPI::ResourceInGPU>& outResource);
         bool releaseDefaultResources();
-        std::shared_ptr<const GPUAPI::ResourceInGPU> _processingTileStub;
-        std::shared_ptr<const GPUAPI::ResourceInGPU> _unavailableTileStub;
     protected:
         MapRendererResourcesManager(MapRenderer* const owner);
 
@@ -184,8 +185,8 @@ namespace OsmAnd
         MapRenderer* const renderer;
 
         // Default resources:
-        const std::shared_ptr<const GPUAPI::ResourceInGPU>& processingTileStub;
-        const std::shared_ptr<const GPUAPI::ResourceInGPU>& unavailableTileStub;
+        const std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapRendererStubStylesCount>& processingTileStubs;
+        const std::array<std::shared_ptr<const GPUAPI::ResourceInGPU>, MapRendererStubStylesCount>& unavailableTileStubs;
 
         // Resources management:
         bool collectionsSnapshotsInvalidated() const;

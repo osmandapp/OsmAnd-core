@@ -15,22 +15,84 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API MapRendererSetupOptions Q_DECL_FINAL
     {
+        OSMAND_CALLABLE(GpuWorkerThreadPrologue, void, const IMapRenderer* const mapRenderer);
+        OSMAND_CALLABLE(GpuWorkerThreadEpilogue, void, const IMapRenderer* const mapRenderer);
+        OSMAND_CALLABLE(FrameUpdateRequestCallback, void, const IMapRenderer* const mapRenderer);
+
         MapRendererSetupOptions();
         ~MapRendererSetupOptions();
 
         // Background GPU worker is used for uploading/unloading resources from GPU in background
-        OSMAND_CALLABLE(GpuWorkerThreadPrologue, void, const IMapRenderer* const mapRenderer);
-        OSMAND_CALLABLE(GpuWorkerThreadEpilogue, void, const IMapRenderer* const mapRenderer);
         bool gpuWorkerThreadEnabled;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setGpuWorkerThreadEnabled(const bool newGpuWorkerThreadEnabled)
+        {
+            gpuWorkerThreadEnabled = newGpuWorkerThreadEnabled;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         GpuWorkerThreadPrologue gpuWorkerThreadPrologue;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setGpuWorkerThreadPrologue(const GpuWorkerThreadPrologue newGpuWorkerThreadPrologue)
+        {
+            gpuWorkerThreadPrologue = newGpuWorkerThreadPrologue;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
         GpuWorkerThreadEpilogue gpuWorkerThreadEpilogue;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setGpuWorkerThreadEpilogue(const GpuWorkerThreadEpilogue newGpuWorkerThreadEpilogue)
+        {
+            gpuWorkerThreadEpilogue = newGpuWorkerThreadEpilogue;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
 
         // This callback is called when frame needs update
-        OSMAND_CALLABLE(FrameUpdateRequestCallback, void, const IMapRenderer* const mapRenderer);
         FrameUpdateRequestCallback frameUpdateRequestCallback;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setFrameUpdateRequestCallback(const FrameUpdateRequestCallback newFrameUpdateRequestCallback)
+        {
+            frameUpdateRequestCallback = newFrameUpdateRequestCallback;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
 
         // Limit maximal number of raster map layers drawn in batch. 0 means "maximal as limited by platform"
         unsigned int maxNumberOfRasterMapLayersInBatch;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setMaxNumberOfRasterMapLayersInBatch(
+            const unsigned int newMaxNumberOfRasterMapLayersInBatch)
+        {
+            maxNumberOfRasterMapLayersInBatch = newMaxNumberOfRasterMapLayersInBatch;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        // Display density factor
+        float displayDensityFactor;
+#if !defined(SWIG)
+        inline MapRendererSetupOptions& setDisplayDensityFactor(
+            const float newDisplayDensityFactor)
+        {
+            displayDensityFactor = newDisplayDensityFactor;
+
+            return *this;
+        }
+#endif // !defined(SWIG)
+
+        inline bool isValid() const
+        {
+            return
+                (displayDensityFactor > 0.0f);
+        }
     };
 }
 
