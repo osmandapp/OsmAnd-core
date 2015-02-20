@@ -73,9 +73,6 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
         _resourcesRequestWorkersPool.maxThreadCount());
 #endif
 
-    // Initialize default resources
-    initializeDefaultResources();
-
     // Start worker thread
     _workerThreadIsAlive = true;
     _workerThread->start();

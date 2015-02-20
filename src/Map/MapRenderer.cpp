@@ -340,6 +340,8 @@ bool OsmAnd::MapRenderer::preInitializeRendering()
     // Create resources
     assert(!static_cast<bool>(_resources));
     _resources.reset(new MapRendererResourcesManager(this));
+    if (!_resources->initializeDefaultResources())
+        return false;
 
     return true;
 }
