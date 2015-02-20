@@ -371,6 +371,12 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setZoom(zoom);
     }
 
+    public final boolean setStubsStyle(MapStubStyle style) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setStubsStyle(style);
+    }
+
     public final MapRendererDebugSettings getDebugSettings() {
         NativeCore.checkIfLoaded();
 

@@ -1231,7 +1231,16 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
     const auto gpuAPI = getGPUAPI();
 
     QList< Ref<PerTileBatchedLayers> > perTileBatchedLayers;
-    const auto stubsStyle = currentState.stubsStyle;
+    auto stubsStyle = currentState.stubsStyle;
+    for (const auto& mapLayerProvider : constOf(currentState.mapLayersProviders))
+    {
+        const auto layerStubsStyle = mapLayerProvider->getDesiredStubsStyle();
+        if (layerStubsStyle == MapStubStyle::Unspecified)
+            continue;
+
+        stubsStyle = layerStubsStyle;
+        break;
+    }
 
     for (const auto& tileId : constOf(internalState.visibleTiles))
     {

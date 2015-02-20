@@ -47,6 +47,8 @@ namespace OsmAnd
         void setNetworkAccessPermission(bool allowed);
         const bool& networkAccessAllowed;
 
+        virtual MapStubStyle getDesiredStubsStyle() const;
+
         virtual float getTileDensityFactor() const;
         virtual uint32_t getTileSize() const;
 

@@ -3,6 +3,8 @@
 
 #include <limits>
 
+#include "QtCommon.h"
+
 #include "ignore_warnings_on_external_includes.h"
 #include <SkImageDecoder.h>
 #include <SkStream.h>
@@ -56,11 +58,15 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
 
     _globalPathSymbolsBlockSpacingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("globalPathSymbolsBlockSpacing"));
     _globalPathSymbolsBlockSpacing = 0.0f;
+
+    _desiredStubsStyle = MapStubStyle::Unspecified;
 }
 
 QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue > OsmAnd::MapPresentationEnvironment_P::getSettings() const
 {
-    return _settings;
+    QMutexLocker scopedLocker(&_settingsChangeMutex);
+
+    return detachedOf(_settings);
 }
 
 void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings)
@@ -101,6 +107,14 @@ void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QSt
                 qPrintable(name),
                 qPrintable(value));
             continue;
+        }
+
+        // Special case for night mode
+        if (valueDefId == MapStyleBuiltinValueDefinitions::get()->id_INPUT_NIGHT_MODE)
+        {
+            _desiredStubsStyle = (parsedValue.asSimple.asInt == 1)
+                ? MapStubStyle::Dark
+                : MapStubStyle::Light;
         }
 
         resolvedSettings.insert(valueDefId, parsedValue);
@@ -424,4 +438,9 @@ float OsmAnd::MapPresentationEnvironment_P::getGlobalPathSymbolsBlockSpacing() c
     }
 
     return globalPathSymbolsBlockSpacing;
+}
+
+OsmAnd::MapStubStyle OsmAnd::MapPresentationEnvironment_P::getDesiredStubsStyle() const
+{
+    return _desiredStubsStyle;
 }

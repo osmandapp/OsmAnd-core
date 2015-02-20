@@ -56,6 +56,8 @@ namespace OsmAnd
         const uint32_t tileSize;
         const float densityFactor;
 
+        virtual MapStubStyle getDesiredStubsStyle() const;
+
         virtual float getTileDensityFactor() const;
         virtual uint32_t getTileSize() const;
 

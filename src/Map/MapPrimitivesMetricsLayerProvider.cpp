@@ -1,6 +1,9 @@
 #include "MapPrimitivesMetricsLayerProvider.h"
 #include "MapPrimitivesMetricsLayerProvider_P.h"
 
+#include "MapPrimitivesProvider.h"
+#include "MapPresentationEnvironment.h"
+
 OsmAnd::MapPrimitivesMetricsLayerProvider::MapPrimitivesMetricsLayerProvider(
     const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
     const uint32_t tileSize_ /*= 256*/,
@@ -14,6 +17,11 @@ OsmAnd::MapPrimitivesMetricsLayerProvider::MapPrimitivesMetricsLayerProvider(
 
 OsmAnd::MapPrimitivesMetricsLayerProvider::~MapPrimitivesMetricsLayerProvider()
 {
+}
+
+OsmAnd::MapStubStyle OsmAnd::MapPrimitivesMetricsLayerProvider::getDesiredStubsStyle() const
+{
+    return primitivesProvider->primitiviser->environment->getDesiredStubsStyle();
 }
 
 float OsmAnd::MapPrimitivesMetricsLayerProvider::getTileDensityFactor() const

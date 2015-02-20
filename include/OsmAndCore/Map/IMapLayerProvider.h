@@ -8,6 +8,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
+#include <OsmAndCore/Map/MapRendererTypes.h>
 
 namespace OsmAnd
 {
@@ -19,6 +20,8 @@ namespace OsmAnd
         IMapLayerProvider();
     public:
         virtual ~IMapLayerProvider();
+
+        virtual MapStubStyle getDesiredStubsStyle() const = 0;
     };
 }
 

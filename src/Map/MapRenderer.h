@@ -270,7 +270,7 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false);
         virtual bool setZoom(const float zoom, bool forcedUpdate = false);
 
-        virtual bool setStubsStyle(const MapRendererStubStyle style, bool forcedUpdate = false);
+        virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false);
 
         virtual float getMinZoom() const;
         virtual float getMaxZoom() const;

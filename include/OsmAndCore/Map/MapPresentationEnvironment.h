@@ -99,6 +99,7 @@ namespace OsmAnd
         void obtainDefaultPathPadding(float& outLeft, float& outRight) const;
         void obtainGlobalPathPadding(float& outLeft, float& outRight) const;
         float getGlobalPathSymbolsBlockSpacing() const;
+        MapStubStyle getDesiredStubsStyle() const;
 
         enum {
             DefaultShadowLevelMin = 0,

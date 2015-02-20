@@ -103,3 +103,8 @@ float OsmAnd::MapPresentationEnvironment::getGlobalPathSymbolsBlockSpacing() con
 {
     return _p->getGlobalPathSymbolsBlockSpacing();
 }
+
+OsmAnd::MapStubStyle OsmAnd::MapPresentationEnvironment::getDesiredStubsStyle() const
+{
+    return _p->getDesiredStubsStyle();
+}

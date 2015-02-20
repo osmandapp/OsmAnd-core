@@ -72,6 +72,8 @@ namespace OsmAnd
         std::shared_ptr<const ResolvedMapStyle::Attribute> _globalPathSymbolsBlockSpacingAttribute;
         float _globalPathSymbolsBlockSpacing;
 
+        MapStubStyle _desiredStubsStyle;
+
         mutable QMutex _shadersBitmapsMutex;
         mutable QHash< QString, std::shared_ptr<SkBitmap> > _shadersBitmaps;
 
@@ -109,6 +111,7 @@ namespace OsmAnd
         void obtainDefaultPathPadding(float& outLeft, float& outRight) const;
         void obtainGlobalPathPadding(float& outLeft, float& outRight) const;
         float getGlobalPathSymbolsBlockSpacing() const;
+        MapStubStyle getDesiredStubsStyle() const;
 
     friend class OsmAnd::MapPresentationEnvironment;
     };

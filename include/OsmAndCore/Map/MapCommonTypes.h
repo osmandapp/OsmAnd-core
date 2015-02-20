@@ -61,6 +61,18 @@ namespace OsmAnd
         Color,
     };
 
+    enum class MapStubStyle
+    {
+        Unspecified = -1,
+        Light = 0,
+        Dark,
+
+        __LAST
+    };
+    enum : unsigned int {
+        MapStubStylesCount = static_cast<unsigned int>(MapStubStyle::__LAST),
+    };
+
     union TagValueId
     {
         uint64_t id;

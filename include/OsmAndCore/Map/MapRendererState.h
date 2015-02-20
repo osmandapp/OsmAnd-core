@@ -73,7 +73,7 @@ namespace OsmAnd
         float requestedZoom;
         ZoomLevel zoomBase;
         float zoomFraction;
-        MapRendererStubStyle stubsStyle;
+        MapStubStyle stubsStyle;
     };
 }
 

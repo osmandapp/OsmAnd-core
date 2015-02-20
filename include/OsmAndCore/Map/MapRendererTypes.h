@@ -174,18 +174,6 @@ namespace OsmAnd
                 color != r.color;
         }
     };
-
-    enum class MapRendererStubStyle
-    {
-        Light = 0,
-        Dark,
-
-        __LAST
-    };
-    enum
-    {
-        MapRendererStubStylesCount = static_cast<int>(MapRendererStubStyle::__LAST),
-    };
 }
 
 #endif // !defined(_OSMAND_CORE_MAP_RENDERER_TYPES_H_)

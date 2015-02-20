@@ -117,16 +117,16 @@ bool OsmAnd::MapRendererResourcesManager::initializeDefaultResources()
     // Upload stubs
     ok = ok && initializeTileStub(
         QLatin1String("map/stubs/processing_tile_light.png"),
-        _processingTileStubs[static_cast<int>(MapRendererStubStyle::Light)]);
+        _processingTileStubs[static_cast<int>(MapStubStyle::Light)]);
     ok = ok && initializeTileStub(
         QLatin1String("map/stubs/processing_tile_dark.png"),
-        _processingTileStubs[static_cast<int>(MapRendererStubStyle::Dark)]);
+        _processingTileStubs[static_cast<int>(MapStubStyle::Dark)]);
     ok = ok && initializeTileStub(
         QLatin1String("map/stubs/unavailable_tile_light.png"),
-        _unavailableTileStubs[static_cast<int>(MapRendererStubStyle::Light)]);
+        _unavailableTileStubs[static_cast<int>(MapStubStyle::Light)]);
     ok = ok && initializeTileStub(
         QLatin1String("map/stubs/unavailable_tile_dark.png"),
-        _unavailableTileStubs[static_cast<int>(MapRendererStubStyle::Dark)]);
+        _unavailableTileStubs[static_cast<int>(MapStubStyle::Dark)]);
 
     return ok;
 }

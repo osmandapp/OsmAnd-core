@@ -104,7 +104,7 @@ namespace OsmAnd
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
 
-        virtual bool setStubsStyle(const MapRendererStubStyle style, bool forcedUpdate = false) = 0;
+        virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) = 0;
 
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const = 0;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) = 0;

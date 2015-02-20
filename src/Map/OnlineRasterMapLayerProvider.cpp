@@ -62,6 +62,11 @@ bool OsmAnd::OnlineRasterMapLayerProvider::obtainData(
     return result;
 }
 
+OsmAnd::MapStubStyle OsmAnd::OnlineRasterMapLayerProvider::getDesiredStubsStyle() const
+{
+    return MapStubStyle::Unspecified;
+}
+
 float OsmAnd::OnlineRasterMapLayerProvider::getTileDensityFactor() const
 {
     // Online tile providers do not have any idea about our tile density

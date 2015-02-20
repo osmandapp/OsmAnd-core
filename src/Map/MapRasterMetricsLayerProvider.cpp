@@ -16,6 +16,11 @@ OsmAnd::MapRasterMetricsLayerProvider::~MapRasterMetricsLayerProvider()
 {
 }
 
+OsmAnd::MapStubStyle OsmAnd::MapRasterMetricsLayerProvider::getDesiredStubsStyle() const
+{
+    return rasterBitmapTileProvider->getDesiredStubsStyle();
+}
+
 float OsmAnd::MapRasterMetricsLayerProvider::getTileDensityFactor() const
 {
     return densityFactor;

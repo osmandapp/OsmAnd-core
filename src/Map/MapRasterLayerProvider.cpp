@@ -20,6 +20,11 @@ OsmAnd::MapRasterLayerProvider::~MapRasterLayerProvider()
 {
 }
 
+OsmAnd::MapStubStyle OsmAnd::MapRasterLayerProvider::getDesiredStubsStyle() const
+{
+    return primitivesProvider->primitiviser->environment->getDesiredStubsStyle();
+}
+
 float OsmAnd::MapRasterLayerProvider::getTileDensityFactor() const
 {
     return primitivesProvider->primitiviser->environment->displayDensityFactor;

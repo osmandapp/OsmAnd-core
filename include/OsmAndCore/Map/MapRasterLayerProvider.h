@@ -55,6 +55,8 @@ namespace OsmAnd
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
         const bool fillBackground;
 
+        virtual MapStubStyle getDesiredStubsStyle() const;
+
         virtual float getTileDensityFactor() const;
         virtual uint32_t getTileSize() const;
 

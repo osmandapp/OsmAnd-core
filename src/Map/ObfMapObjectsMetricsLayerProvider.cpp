@@ -16,6 +16,11 @@ OsmAnd::ObfMapObjectsMetricsLayerProvider::~ObfMapObjectsMetricsLayerProvider()
 {
 }
 
+OsmAnd::MapStubStyle OsmAnd::ObfMapObjectsMetricsLayerProvider::getDesiredStubsStyle() const
+{
+    return MapStubStyle::Unspecified;
+}
+
 float OsmAnd::ObfMapObjectsMetricsLayerProvider::getTileDensityFactor() const
 {
     return densityFactor;

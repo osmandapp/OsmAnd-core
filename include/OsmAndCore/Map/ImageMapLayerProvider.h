@@ -59,6 +59,9 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             AlphaChannelPresence,
             getAlphaChannelPresence);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            MapStubStyle,
+            getDesiredStubsStyle);
     SWIG_EMIT_DIRECTOR_END(ImageMapLayerProvider);
 }
 
