@@ -20,6 +20,7 @@ import net.osmand.core.jni.MapRendererSetupOptions;
 import net.osmand.core.jni.MapRendererState;
 import net.osmand.core.jni.MapStubStyle;
 import net.osmand.core.jni.PointI;
+import net.osmand.core.jni.ZoomLevel;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -84,6 +85,11 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private EGLSurface _gpuWorkerFakeSurface;
 
+    /**
+     * Device density factor (160 DPI == 1.0f)
+     */
+    private float _densityFactor;
+
     public MapRendererView(Context context) {
         this(context, null);
     }
@@ -95,6 +101,9 @@ public abstract class MapRendererView extends FrameLayout {
     public MapRendererView(Context context, AttributeSet attrs, int defaultStyle) {
         super(context, attrs, defaultStyle);
         NativeCore.checkIfLoaded();
+
+        // Get display density factor
+        _densityFactor = getResources().getDisplayMetrics().density;
 
         // Create instance of OsmAndCore::IMapRenderer
         _mapRenderer = createMapRendererInstance();
@@ -372,6 +381,30 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.setZoom(zoom);
     }
 
+    public final boolean setZoom(ZoomLevel zoomLevel, float visualZoom) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setZoom(zoomLevel, visualZoom);
+    }
+
+    public final boolean setZoomLevel(ZoomLevel zoomLevel) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setZoomLevel(zoomLevel);
+    }
+
+    public final boolean setVisualZoom(float visualZoom) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setVisualZoom(visualZoom);
+    }
+
+    public final boolean setVisualZoomShift(float visualZoomShift) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.setVisualZoomShift(visualZoomShift);
+    }
+
     public final boolean setStubsStyle(MapStubStyle style) {
         NativeCore.checkIfLoaded();
 
@@ -390,40 +423,40 @@ public abstract class MapRendererView extends FrameLayout {
         _mapRenderer.setDebugSettings(debugSettings);
     }
 
-    public final float getMinZoom() {
+    public final ZoomLevel getMinZoomLevel() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getMinZoom();
+        return _mapRenderer.getMinZoomLevel();
     }
 
-    public final float getMaxZoom() {
+    public final ZoomLevel getMaxZoomLevel() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getMaxZoom();
+        return _mapRenderer.getMaxZoomLevel();
     }
 
-    public final float getRecommendedMinZoom(IMapRenderer.ZoomRecommendationStrategy strategy) {
+    public final ZoomLevel getMinimalZoomLevelsRangeLowerBound() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getRecommendedMinZoom(strategy);
+        return _mapRenderer.getMinimalZoomLevelsRangeLowerBound();
     }
 
-    public final float getRecommendedMinZoom() {
+    public final ZoomLevel getMinimalZoomLevelsRangeUpperBound() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getRecommendedMinZoom();
+        return _mapRenderer.getMinimalZoomLevelsRangeUpperBound();
     }
 
-    public final float getRecommendedMaxZoom(IMapRenderer.ZoomRecommendationStrategy strategy) {
+    public final ZoomLevel getMaximalZoomLevelsRangeLowerBound() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getRecommendedMaxZoom(strategy);
+        return _mapRenderer.getMaximalZoomLevelsRangeLowerBound();
     }
 
-    public final float getRecommendedMaxZoom() {
+    public final ZoomLevel getMaximalZoomLevelsRangeUpperBound() {
         NativeCore.checkIfLoaded();
 
-        return _mapRenderer.getRecommendedMaxZoom();
+        return _mapRenderer.getMaximalZoomLevelsRangeUpperBound();
     }
 
     public final boolean getLocationFromScreenPoint(PointI screenPoint, PointI location31) {
@@ -556,6 +589,7 @@ public abstract class MapRendererView extends FrameLayout {
                 setupOptions.setGpuWorkerThreadEpilogue(null);
             }
             setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
+            setupOptions.setDisplayDensityFactor(_densityFactor);
             _mapRenderer.setup(setupOptions);
 
             return _mainContext;
