@@ -1141,8 +1141,19 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
                         const auto state = entry->getState();
                         return
                             state == MapRendererResourceState::Unavailable ||
-                            state == MapRendererResourceState::Uploaded ||
-                            state == MapRendererResourceState::IsBeingUsed;
+                            state == MapRendererResourceState::Uploaded;
+                    };
+                const auto isUsableAndAvailableResource = 
+                    []
+                    (const std::shared_ptr<MapRendererBaseTiledResource>& entry) -> bool
+                    {
+                        // Resources marked as junk are not usable
+                        if (entry->isJunk)
+                            return false;
+
+                        // Only resources in GPU are usable, or Unavailable
+                        const auto state = entry->getState();
+                        return state == MapRendererResourceState::Uploaded;
                     };
                 for (const auto& activeTileId : constOf(activeTiles))
                 {
@@ -1167,7 +1178,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
                             if (tiledResourcesCollection->containsResource(
                                     overscaledTileId,
                                     static_cast<ZoomLevel>(overscaleZoom),
-                                    isUsableResource))
+                                    isUsableAndAvailableResource))
                             {
                                 break;
                             }
