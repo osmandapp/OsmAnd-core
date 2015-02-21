@@ -1457,6 +1457,8 @@ bool OsmAnd::MapRenderer::setZoom(const float zoom, bool forcedUpdate /*= false*
     // zoomFraction [ 0.0 ... 0.5] scales [1.0x ... 1.5x]
     // zoomFraction [-0.5 ...-0.0] scales [.75x ... 1.0x]
     const auto zoomFraction = zoom - zoomLevel;
+    if (zoomFraction < -0.5f || zoomFraction > 0.5f)
+        return false;
     const auto visualZoom = (zoomFraction >= 0.0f)
         ? 1.0f + zoomFraction
         : 1.0f + 0.5f * zoomFraction;
