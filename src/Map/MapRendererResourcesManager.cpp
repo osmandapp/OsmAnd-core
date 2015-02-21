@@ -1137,12 +1137,12 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
                         if (entry->isJunk)
                             return false;
 
-                        // Only resources in GPU are usable
+                        // Only resources in GPU are usable, or Unavailable
                         const auto state = entry->getState();
-                        if (state != MapRendererResourceState::Uploaded && state != MapRendererResourceState::IsBeingUsed)
-                            return false;
-
-                        return true;
+                        return
+                            state == MapRendererResourceState::Unavailable ||
+                            state == MapRendererResourceState::Uploaded ||
+                            state == MapRendererResourceState::IsBeingUsed;
                     };
                 for (const auto& activeTileId : constOf(activeTiles))
                 {
