@@ -1946,7 +1946,7 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                 {
                     LogPrintf(
                         LogSeverityLevel::Warning,
-                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <link> tag",
+                        "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected </link> tag",
                         xmlReader.lineNumber(),
                         xmlReader.columnNumber());
                     continue;
@@ -1966,18 +1966,25 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                         trk->links.append(link);
                         link = nullptr;
                         break;
+                    case Token::trkpt:
+                        trkpt->links.append(link);
+                        link = nullptr;
+                        break;
                     case Token::rte:
                         rte->links.append(link);
+                        link = nullptr;
+                        break;
+                    case Token::rtept:
+                        rtept->links.append(link);
                         link = nullptr;
                         break;
 
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <link> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected </link> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         link = nullptr;
                         continue;
                 }
@@ -2063,13 +2070,23 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
                     default:
                         LogPrintf(
                             LogSeverityLevel::Warning,
-                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <extensions> tag",
+                            "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected </extensions> tag",
                             xmlReader.lineNumber(),
                             xmlReader.columnNumber());
-                        xmlReader.skipCurrentElement();
                         extensions = nullptr;
                         continue;
                 }
+            }
+            else
+            {
+                LogPrintf(
+                    LogSeverityLevel::Warning,
+                    "XML warning (%" PRIi64 ", %" PRIi64 "): unknown </%s> tag",
+                    xmlReader.lineNumber(),
+                    xmlReader.columnNumber(),
+                    qPrintableRef(tagName));
+                xmlReader.skipCurrentElement();
+                continue;
             }
         }
         else if (xmlReader.isCharacters())
