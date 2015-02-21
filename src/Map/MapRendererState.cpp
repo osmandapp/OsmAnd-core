@@ -8,7 +8,7 @@ OsmAnd::MapRendererState::MapRendererState()
     , target31(1u << (ZoomLevel::MaxZoomLevel - 1), 1u << (ZoomLevel::MaxZoomLevel - 1))
     , zoomLevel(MinZoomLevel)
     , visualZoom(1.0f)
-    , visualZoomShift(1.0f)
+    , visualZoomShift(0.0f)
     , stubsStyle(MapStubStyle::Light)
 {
 }

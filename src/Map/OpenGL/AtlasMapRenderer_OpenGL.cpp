@@ -225,7 +225,10 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         _zNear, 1000.0f);
 
     // Calculate distance from camera to target based on visual zoom and visual zoom shift
-    internalState->tileOnScreenScaleFactor = state.visualZoomShift * state.visualZoom;
+    const auto visualZoomFactor = state.visualZoomShift >= 0.0f
+        ? 1.0f + state.visualZoomShift
+        : 1.0f + 0.5f * state.visualZoomShift;
+    internalState->tileOnScreenScaleFactor = state.visualZoom * visualZoomFactor;
     internalState->referenceTileSizeOnScreenInPixels = configuration->referenceTileSizeOnScreenInPixels;
     internalState->distanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
         internalState->mPerspectiveProjection,
