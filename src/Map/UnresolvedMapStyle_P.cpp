@@ -144,11 +144,13 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
             {
                 const auto& attribs = xmlReader.attributes();
 
-                const auto nameAttribValue = attribs.value(QLatin1String("attr")).toString();
-                const auto typeAttribValue = attribs.value(QLatin1String("type")).toString();
                 const auto titleAttribValue = attribs.value(QLatin1String("name")).toString();
                 const auto descriptionAttribValue = attribs.value(QLatin1String("description")).toString();
-                const auto possibleValues = attribs.value(QLatin1String("possibleValues")).toString().split(QLatin1Char(','), QString::SkipEmptyParts);
+                const auto categoryAttribValue = attribs.value(QLatin1String("category")).toString();
+                const auto nameAttribValue = attribs.value(QLatin1String("attr")).toString();
+                const auto typeAttribValue = attribs.value(QLatin1String("type")).toString();
+                const auto possibleValues = attribs.value(QLatin1String("possibleValues")).toString()
+                    .split(QLatin1Char(','), QString::SkipEmptyParts);
 
                 MapStyleValueDataType dataType;
                 if (typeAttribValue == QLatin1String("string"))
@@ -167,6 +169,7 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                 const std::shared_ptr<const Parameter> newParameter(new Parameter(
                     titleAttribValue,
                     descriptionAttribValue,
+                    categoryAttribValue,
                     nameAttribValue,
                     dataType,
                     possibleValues));

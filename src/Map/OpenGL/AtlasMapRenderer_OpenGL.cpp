@@ -224,47 +224,25 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
         -internalState->projectionPlaneHalfHeight, internalState->projectionPlaneHalfHeight,
         _zNear, 1000.0f);
 
-    // Calculate limits of camera distance to target and actual distance
+    // Calculate distance from camera to target based on visual zoom and visual zoom shift
     internalState->referenceTileSizeOnScreenInPixels = configuration->referenceTileSizeOnScreenInPixels;
-    internalState->nearDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
+    internalState->distanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
         internalState->mPerspectiveProjection,
-        state.viewport, TileSize3D / 2.0f,
+        state.viewport,
+        TileSize3D / 2.0f,
         internalState->referenceTileSizeOnScreenInPixels / 2.0f,
-        1.5f);
-    internalState->baseDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
+        state.visualZoom + state.visualZoomShift);
+    internalState->groundDistanceFromCameraToTarget =
+        internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
+    internalState->tileOnScreenScaleFactor = state.visualZoom + state.visualZoomShift;
+    const auto distanceFromCameraToTargetWithNoVisualScale = Utilities_OpenGL_Common::calculateCameraDistance(
         internalState->mPerspectiveProjection,
         state.viewport,
         TileSize3D / 2.0f,
         internalState->referenceTileSizeOnScreenInPixels / 2.0f,
         1.0f);
-    internalState->farDistanceFromCameraToTarget = Utilities_OpenGL_Common::calculateCameraDistance(
-        internalState->mPerspectiveProjection,
-        state.viewport,
-        TileSize3D / 2.0f,
-        internalState->referenceTileSizeOnScreenInPixels / 2.0f,
-        0.75f);
-
-    // zoomFraction == [ 0.0 ... 0.5] scales tile [1.0x ... 1.5x]
-    // zoomFraction == [-0.5 ...-0.0] scales tile [.75x ... 1.0x]
-    if (state.zoomFraction >= 0.0f)
-    {
-        const auto delta = (2.0f * state.zoomFraction)
-            * (internalState->baseDistanceFromCameraToTarget - internalState->nearDistanceFromCameraToTarget);
-        internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - delta;
-    }
-    else
-    {
-        const auto delta = (2.0f * state.zoomFraction)
-            * (internalState->farDistanceFromCameraToTarget - internalState->baseDistanceFromCameraToTarget);
-        internalState->distanceFromCameraToTarget = internalState->baseDistanceFromCameraToTarget - delta;
-    }
-    internalState->groundDistanceFromCameraToTarget =
-        internalState->distanceFromCameraToTarget * qCos(qDegreesToRadians(state.elevationAngle));
-    internalState->tileOnScreenScaleFactor = ((state.zoomFraction >= 0.0f)
-        ? (1.0f + state.zoomFraction)
-        : (1.0f + 0.5f * state.zoomFraction));
     internalState->scaleToRetainProjectedSize =
-        internalState->distanceFromCameraToTarget / internalState->baseDistanceFromCameraToTarget;
+        internalState->distanceFromCameraToTarget / distanceFromCameraToTargetWithNoVisualScale;
     internalState->pixelInWorldProjectionScale = static_cast<float>(AtlasMapRenderer::TileSize3D)
         / (internalState->referenceTileSizeOnScreenInPixels*internalState->tileOnScreenScaleFactor);
 
@@ -435,7 +413,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::updateFrustum(InternalState* internalState
     internalState->frustum2D.p2 = PointF(intersectionPoints[2].x, intersectionPoints[2].y);
     internalState->frustum2D.p3 = PointF(intersectionPoints[3].x, intersectionPoints[3].y);
 
-    const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomBase));
+    const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - state.zoomLevel));
     internalState->frustum2D31.p0 = PointI64((internalState->frustum2D.p0 / TileSize3D) * static_cast<double>(tileSize31));
     internalState->frustum2D31.p1 = PointI64((internalState->frustum2D.p1 / TileSize3D) * static_cast<double>(tileSize31));
     internalState->frustum2D31.p2 = PointI64((internalState->frustum2D.p2 / TileSize3D) * static_cast<double>(tileSize31));
@@ -559,13 +537,13 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     double x = intersection.x + internalState.targetInTileOffsetN.x;
     double y = intersection.z + internalState.targetInTileOffsetN.y;
 
-    const auto zoomDiff = ZoomLevel::MaxZoomLevel - state.zoomBase;
-    const auto tileSize31 = (1u << zoomDiff);
+    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
+    const auto tileSize31 = (1u << zoomLevelDiff);
     x *= tileSize31;
     y *= tileSize31;
 
-    location.x = static_cast<int64_t>(x)+(internalState.targetTileId.x << zoomDiff);
-    location.y = static_cast<int64_t>(y)+(internalState.targetTileId.y << zoomDiff);
+    location.x = static_cast<int64_t>(x)+(internalState.targetTileId.x << zoomLevelDiff);
+    location.y = static_cast<int64_t>(y)+(internalState.targetTileId.y << zoomLevelDiff);
 
     return true;
 }
@@ -598,7 +576,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeInMeters() const
     bool ok = updateInternalState(internalState, state, *getConfiguration());
 
     const auto metersPerTile = Utilities::getMetersPerTileUnit(
-        state.zoomBase,
+        state.zoomLevel,
         internalState.targetTileId.y,
         1);
 
@@ -615,7 +593,7 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor() co
     const auto tileSizeOnScreenInPixels =
         internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
     const auto metersPerPixel = Utilities::getMetersPerTileUnit(
-        state.zoomBase,
+        state.zoomLevel,
         internalState.targetTileId.y,
         tileSizeOnScreenInPixels);
 

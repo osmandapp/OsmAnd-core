@@ -103,22 +103,23 @@ namespace OsmAnd
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false) = 0;
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false) = 0;
         virtual bool setZoom(const float zoom, bool forcedUpdate = false) = 0;
+        virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false) = 0;
+        virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false) = 0;
+        virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false) = 0;
+        virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false) = 0;
 
         virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false) = 0;
 
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const = 0;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings) = 0;
 
-        virtual float getMinZoom() const = 0;
-        virtual float getMaxZoom() const = 0;
+        virtual ZoomLevel getMinZoomLevel() const = 0;
+        virtual ZoomLevel getMaxZoomLevel() const = 0;
 
-        enum class ZoomRecommendationStrategy
-        {
-            NarrowestRange,
-            WidestRange
-        };
-        virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
-        virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy = ZoomRecommendationStrategy::NarrowestRange) const = 0;
+        virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const = 0;
+        virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const = 0;
+        virtual ZoomLevel getMaximalZoomLevelsRangeLowerBound() const = 0;
+        virtual ZoomLevel getMaximalZoomLevelsRangeUpperBound() const = 0;
 
         OSMAND_OBSERVER_CALLABLE(StateChangeObserver,
             const IMapRenderer* const mapRenderer,

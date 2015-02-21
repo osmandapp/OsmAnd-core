@@ -31,18 +31,18 @@ bool OsmAnd::AtlasMapRenderer::updateInternalState(
 {
     const auto internalState = static_cast<AtlasMapRendererInternalState*>(&outInternalState_);
 
-    const auto zoomDiff = ZoomLevel::MaxZoomLevel - state.zoomBase;
+    const auto zoomLevelDiff = ZoomLevel::MaxZoomLevel - state.zoomLevel;
 
     // Get target tile id
-    internalState->targetTileId.x = state.target31.x >> zoomDiff;
-    internalState->targetTileId.y = state.target31.y >> zoomDiff;
+    internalState->targetTileId.x = state.target31.x >> zoomLevelDiff;
+    internalState->targetTileId.y = state.target31.y >> zoomLevelDiff;
 
     // Compute in-tile offset
     PointI targetTile31;
-    targetTile31.x = internalState->targetTileId.x << zoomDiff;
-    targetTile31.y = internalState->targetTileId.y << zoomDiff;
+    targetTile31.x = internalState->targetTileId.x << zoomLevelDiff;
+    targetTile31.y = internalState->targetTileId.y << zoomLevelDiff;
 
-    const auto tileSize31 = 1u << zoomDiff;
+    const auto tileSize31 = 1u << zoomLevelDiff;
     const auto inTileOffset = state.target31 - targetTile31;
     internalState->targetInTileOffsetN.x = static_cast<float>(inTileOffset.x) / tileSize31;
     internalState->targetInTileOffsetN.y = static_cast<float>(inTileOffset.y) / tileSize31;
@@ -73,7 +73,7 @@ bool OsmAnd::AtlasMapRenderer::prePrepareFrame()
     const auto internalState = static_cast<AtlasMapRendererInternalState*>(getInternalStateRef());
     _uniqueTiles.clear();
     for (const auto& tileId : constOf(internalState->visibleTiles))
-        _uniqueTiles.insert(Utilities::normalizeTileId(tileId, currentState.zoomBase));
+        _uniqueTiles.insert(Utilities::normalizeTileId(tileId, currentState.zoomLevel));
 
     return true;
 }
@@ -84,7 +84,7 @@ bool OsmAnd::AtlasMapRenderer::postPrepareFrame()
         return false;
 
     // Notify resources manager about new active zone
-    getResources().updateActiveZone(_uniqueTiles, currentState.zoomBase);
+    getResources().updateActiveZone(_uniqueTiles, currentState.zoomLevel);
 
     return true;
 }

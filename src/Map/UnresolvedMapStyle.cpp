@@ -98,11 +98,13 @@ OsmAnd::UnresolvedMapStyle::Attribute::~Attribute()
 OsmAnd::UnresolvedMapStyle::Parameter::Parameter(
     const QString& title_,
     const QString& description_,
+    const QString& category_,
     const QString& name_,
     const MapStyleValueDataType dataType_,
     const QStringList& possibleValues_)
     : title(title_)
     , description(description_)
+    , category(category_)
     , name(name_)
     , dataType(dataType_)
     , possibleValues(possibleValues_)

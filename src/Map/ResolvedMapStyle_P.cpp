@@ -290,6 +290,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveParameters()
             resolvedParameter.reset(new Parameter(
                 unresolvedParameter->title,
                 unresolvedParameter->description,
+                unresolvedParameter->category,
                 nameId,
                 unresolvedParameter->dataType,
                 resolvedPossibleValues));

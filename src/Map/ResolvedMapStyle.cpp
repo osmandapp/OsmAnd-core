@@ -129,11 +129,13 @@ OsmAnd::ResolvedMapStyle::Attribute::~Attribute()
 OsmAnd::ResolvedMapStyle::Parameter::Parameter(
     const QString& title_,
     const QString& description_,
+    const QString& category_,
     const unsigned int nameId_,
     const MapStyleValueDataType dataType_,
     const QList<MapStyleConstantValue>& possibleValues_)
     : title(title_)
     , description(description_)
+    , category(category_)
     , nameId(nameId_)
     , dataType(dataType_)
     , possibleValues(possibleValues_)

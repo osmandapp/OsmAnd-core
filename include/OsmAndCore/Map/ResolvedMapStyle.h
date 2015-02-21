@@ -114,6 +114,7 @@ namespace OsmAnd
             Parameter(
                 const QString& title,
                 const QString& description,
+                const QString& category,
                 const unsigned int nameId,
                 const MapStyleValueDataType dataType,
                 const QList<MapStyleConstantValue>& possibleValues);
@@ -121,6 +122,7 @@ namespace OsmAnd
 
             QString title;
             QString description;
+            QString category;
             unsigned int nameId;
             MapStyleValueDataType dataType;
             QList<MapStyleConstantValue> possibleValues;

@@ -70,9 +70,9 @@ namespace OsmAnd
         float azimuth;
         float elevationAngle;
         PointI target31;
-        float requestedZoom;
-        ZoomLevel zoomBase;
-        float zoomFraction;
+        ZoomLevel zoomLevel;
+        float visualZoom;
+        float visualZoomShift;
         MapStubStyle stubsStyle;
     };
 }

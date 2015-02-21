@@ -1143,7 +1143,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
                             state == MapRendererResourceState::Unavailable ||
                             state == MapRendererResourceState::Uploaded;
                     };
-                const auto isUsableAndAvailableResource = 
+                const auto isUsableAndNotUnavailableResource = 
                     []
                     (const std::shared_ptr<MapRendererBaseTiledResource>& entry) -> bool
                     {
@@ -1167,7 +1167,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
                     // giving preference to underscaled resource
                     for (int absZoomShift = 1; absZoomShift <= MapRenderer::MaxMissingDataZoomShift; absZoomShift++)
                     {
-                        //TODO: Try to find underscaled first (that is, currentState.zoomBase + 1). Only full match is accepted
+                        //TODO: Try to find underscaled first (that is, currentState.zoomLevel + 1). Only full match is accepted
 
                         // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
                         const auto overscaleZoom = static_cast<int>(activeZoom) - absZoomShift;
@@ -1178,7 +1178,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId
                             if (tiledResourcesCollection->containsResource(
                                     overscaledTileId,
                                     static_cast<ZoomLevel>(overscaleZoom),
-                                    isUsableAndAvailableResource))
+                                    isUsableAndNotUnavailableResource))
                             {
                                 break;
                             }

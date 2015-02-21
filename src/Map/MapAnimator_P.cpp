@@ -541,7 +541,9 @@ void OsmAnd::MapAnimator_P::animateMoveWith(
 
 float OsmAnd::MapAnimator_P::zoomGetter(AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
 {
-    return _renderer->getState().requestedZoom;
+    const auto state = _renderer->getState();
+    const auto zoom = state.zoomLevel + (state.visualZoom >= 1.0f ? state.visualZoom - 1.0f : (state.visualZoom - 1.0f) * 2.0f);
+    return zoom;
 }
 
 void OsmAnd::MapAnimator_P::zoomSetter(const float newValue, AnimationContext& context, const std::shared_ptr<AnimationContext>& sharedContext)
@@ -698,7 +700,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta_Zoom(
         {
             // Recalculate delta to tiles at current zoom base
             PointI64 deltaInTiles;
-            const auto bitShift = MaxZoomLevel - _renderer->getState().zoomBase;
+            const auto bitShift = MaxZoomLevel - _renderer->getState().zoomLevel;
             deltaInTiles.x = qAbs(targetDeltaValue.x) >> bitShift;
             deltaInTiles.y = qAbs(targetDeltaValue.y) >> bitShift;
 
@@ -707,7 +709,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta_Zoom(
 
             // Get current zoom
             const auto currentZoom = zoomGetter(context, sharedContext);
-            const auto minZoom = _renderer->getMinZoom();
+            const auto minZoomLevel = _renderer->getMaximalZoomLevelsRangeLowerBound();
 
             // Calculate zoom shift
             float zoomShift = (std::log10(distance) - 1.3f /*~= std::log10f(20.0f)*/) * 7.0f;
@@ -715,8 +717,8 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationByDelta_Zoom(
                 return 0.0f;
 
             // If zoom shift will move zoom out of bounds, reduce zoom shift
-            if (currentZoom - zoomShift < minZoom)
-                zoomShift = currentZoom - minZoom;
+            if (currentZoom - zoomShift < minZoomLevel)
+                zoomShift = currentZoom - minZoomLevel;
 
             sharedContext->storageList.push_back(QVariant(zoomShift));
             return -zoomShift;
@@ -778,7 +780,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue_Zoom(
 
             // Recalculate delta to tiles at current zoom base
             PointI64 deltaInTiles;
-            const auto bitShift = MaxZoomLevel - _renderer->getState().zoomBase;
+            const auto bitShift = MaxZoomLevel - _renderer->getState().zoomLevel;
             deltaInTiles.x = qAbs(targetDeltaValue.x) >> bitShift;
             deltaInTiles.y = qAbs(targetDeltaValue.y) >> bitShift;
 
@@ -787,7 +789,7 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue_Zoom(
 
             // Get current zoom
             const auto currentZoom = zoomGetter(context, sharedContext);
-            const auto minZoom = _renderer->getMinZoom();
+            const auto minZoomLevel = _renderer->getMaximalZoomLevelsRangeLowerBound();
 
             // Calculate zoom shift
             float zoomShift = (std::log10(distance) - 1.3f /*~= std::log10f(20.0f)*/) * 7.0f;
@@ -795,8 +797,8 @@ void OsmAnd::MapAnimator_P::constructParabolicTargetAnimationToValue_Zoom(
                 return 0.0f;
 
             // If zoom shift will move zoom out of bounds, reduce zoom shift
-            if (currentZoom - zoomShift < minZoom)
-                zoomShift = currentZoom - minZoom;
+            if (currentZoom - zoomShift < minZoomLevel)
+                zoomShift = currentZoom - minZoomLevel;
 
             sharedContext->storageList.push_back(QVariant(zoomShift));
             return -zoomShift;

@@ -570,7 +570,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     const auto batchedLayersCount = batch->layers.size();
     const auto elevationDataSamplerIndex = gpuAPI->isSupported_vertexShaderTextureLookup ? batchedLayersCount : -1;
 
-    GL_PUSH_GROUP_MARKER(QString("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(currentState.zoomBase));
+    GL_PUSH_GROUP_MARKER(QString("%1x%2@%3").arg(batch->tileId.x).arg(batch->tileId.y).arg(currentState.zoomLevel));
 
     // Activate proper program depending on number of captured layers
     const auto wasActivated = activateRasterLayersProgram(
@@ -1115,11 +1115,11 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
 {
     const auto gpuAPI = getGPUAPI();
 
-    const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
+    const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
 
     // In case there's no elevation data provider or if there's no data for this tile,
     // deactivate elevation data
-    const auto elevationDataResource = captureElevationDataResource(tileIdN, currentState.zoomBase);
+    const auto elevationDataResource = captureElevationDataResource(tileIdN, currentState.zoomLevel);
     if (!elevationDataResource)
     {
         glUniform1f(program.vs.param.elevationData_scaleFactor, 0.0f);
@@ -1149,12 +1149,12 @@ void OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::configureElevationData(
     GL_CHECK_RESULT;
 
     const auto upperMetersPerUnit = Utilities::getMetersPerTileUnit(
-        currentState.zoomBase,
+        currentState.zoomLevel,
         tileIdN.y,
         AtlasMapRenderer::TileSize3D);
     glUniform1f(program.vs.param.elevationData_upperMetersPerUnit, upperMetersPerUnit);
     const auto lowerMetersPerUnit = Utilities::getMetersPerTileUnit(
-        currentState.zoomBase,
+        currentState.zoomLevel,
         tileIdN.y + 1,
         AtlasMapRenderer::TileSize3D);
     glUniform1f(program.vs.param.elevationData_lowerMetersPerUnit, lowerMetersPerUnit);
@@ -1244,7 +1244,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
 
     for (const auto& tileId : constOf(internalState.visibleTiles))
     {
-        const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomBase);
+        const auto tileIdN = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
 
         bool atLeastOneNotUnavailable = false;
         MapRendererResourceState resourceState;
@@ -1274,7 +1274,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
             const auto exactMatchGpuResource = captureLayerResource(
                 resourcesCollection,
                 tileIdN,
-                currentState.zoomBase, 
+                currentState.zoomLevel,
                 &resourceState);
             if (resourceState != MapRendererResourceState::Unavailable)
                 atLeastOneNotUnavailable = true;
@@ -1291,7 +1291,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 // giving preference to underscaled resource
                 for (int absZoomShift = 1; absZoomShift <= MapRenderer::MaxMissingDataZoomShift; absZoomShift++)
                 {
-                    //TODO: Try to find underscaled first (that is, currentState.zoomBase + 1). Only full match is accepted
+                    //TODO: Try to find underscaled first (that is, currentState.zoomLevel + 1). Only full match is accepted
                     if (Q_LIKELY(!debugSettings->rasterLayersUnderscaleForbidden))
                     {
                     }
@@ -1299,7 +1299,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                     // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
                     if (Q_LIKELY(!debugSettings->rasterLayersOverscaleForbidden))
                     {
-                        const auto overscaleZoom = static_cast<int>(currentState.zoomBase) - absZoomShift;
+                        const auto overscaleZoom = static_cast<int>(currentState.zoomLevel) - absZoomShift;
                         if (overscaleZoom >= static_cast<int>(MinZoomLevel))
                         {
                             PointF nOffsetInTile;

@@ -56,17 +56,6 @@ OsmAnd::MapRenderer::MapRenderer(
     , currentDebugSettings(_currentDebugSettingsAsConst)
     , gpuAPI(gpuAPI_)
 {
-    // Fill-up default state
-    setElevationDataConfiguration(ElevationDataConfiguration(), true);
-    setFieldOfView(16.5f, true);
-    setFogConfiguration(FogConfiguration(), true);
-    setSkyColor(ColorRGB(140, 190, 214), true);
-    setAzimuth(0.0f, true);
-    setElevationAngle(45.0f, true);
-    const auto centerIndex = 1u << (ZoomLevel::MaxZoomLevel - 1);
-    setTarget(PointI(centerIndex, centerIndex), true);
-    setZoom(0, true);
-    setStubsStyle(MapStubStyle::Light, true);
 }
 
 OsmAnd::MapRenderer::~MapRenderer()
@@ -1459,19 +1448,92 @@ bool OsmAnd::MapRenderer::setTarget(const PointI& target31_, bool forcedUpdate /
 
 bool OsmAnd::MapRenderer::setZoom(const float zoom, bool forcedUpdate /*= false*/)
 {
+    const auto zoomLevel = qBound(
+        getMinZoomLevel(),
+        static_cast<ZoomLevel>(qRound(zoom)),
+        getMaxZoomLevel());
+
+    // In case zoom is being set via single value, calculate optimal visual zoom:
+    // zoomFraction [ 0.0 ... 0.5] scales [1.0x ... 1.5x]
+    // zoomFraction [-0.5 ...-0.0] scales [.75x ... 1.0x]
+    const auto zoomFraction = zoom - zoomLevel;
+    const auto visualZoom = (zoomFraction >= 0.0f)
+        ? 1.0f + zoomFraction
+        : 1.0f + 0.5f * zoomFraction;
+
+    return setZoom(zoomLevel, visualZoom, forcedUpdate);
+}
+
+bool OsmAnd::MapRenderer::setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate /*= false*/)
+{
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (zoom < getMinZoom() || zoom > getMaxZoom())
+    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
         return false;
 
-    bool update = forcedUpdate || !qFuzzyCompare(_requestedState.requestedZoom, zoom);
+    bool update =
+        forcedUpdate ||
+        (_requestedState.zoomLevel != zoomLevel) ||
+        !qFuzzyCompare(_requestedState.visualZoom, visualZoom);
     if (!update)
         return false;
 
-    _requestedState.requestedZoom = zoom;
-    _requestedState.zoomBase = static_cast<ZoomLevel>(qRound(zoom));
-    assert(_requestedState.zoomBase >= MinZoomLevel && _requestedState.zoomBase <= MaxZoomLevel);
-    _requestedState.zoomFraction = _requestedState.requestedZoom - _requestedState.zoomBase;
+    _requestedState.zoomLevel = zoomLevel;
+    _requestedState.visualZoom = visualZoom;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (zoomLevel < getMinZoomLevel() || zoomLevel > getMaxZoomLevel())
+        return false;
+
+    bool update =
+        forcedUpdate ||
+        (_requestedState.zoomLevel != zoomLevel);
+    if (!update)
+        return false;
+
+    _requestedState.zoomLevel = zoomLevel;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setVisualZoom(const float visualZoom, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update =
+        forcedUpdate ||
+        !qFuzzyCompare(_requestedState.visualZoom, visualZoom);
+    if (!update)
+        return false;
+
+    _requestedState.visualZoom = visualZoom;
+
+    notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
+
+    return true;
+}
+
+bool OsmAnd::MapRenderer::setVisualZoomShift(const float visualZoomShift, bool forcedUpdate /*= false*/)
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    bool update =
+        forcedUpdate ||
+        !qFuzzyCompare(_requestedState.visualZoomShift, visualZoomShift);
+    if (!update)
+        return false;
+
+    _requestedState.visualZoomShift = visualZoomShift;
 
     notifyRequestedStateWasUpdated(MapRendererStateChange::Zoom);
 
@@ -1496,70 +1558,66 @@ bool OsmAnd::MapRenderer::setStubsStyle(const MapStubStyle style, bool forcedUpd
     return true;
 }
 
-float OsmAnd::MapRenderer::getMinZoom() const
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinZoomLevel() const
 {
-    return static_cast<float>(MinZoomLevel);
+    return MinZoomLevel;
 }
 
-float OsmAnd::MapRenderer::getMaxZoom() const
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaxZoomLevel() const
 {
-    return static_cast<float>(MaxZoomLevel) + 0.49999f;
+    return MaxZoomLevel;
 }
 
-float OsmAnd::MapRenderer::getRecommendedMinZoom(const ZoomRecommendationStrategy strategy) const
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeLowerBound() const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    float zoomLimit;
-    if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
-        zoomLimit = getMinZoom();
-    else //if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
-        zoomLimit = getMaxZoom();
+    if (_requestedState.mapLayersProviders.isEmpty())
+        return getMinZoomLevel();
 
-    bool atLeastOneValid = false;
+    auto zoomLevel = getMinZoomLevel();
     for (const auto& provider : constOf(_requestedState.mapLayersProviders))
-    {
-        if (!provider)
-            continue;
-
-        atLeastOneValid = true;
-        if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
-            zoomLimit = qMax(zoomLimit, static_cast<float>(provider->getMinZoom()));
-        else //if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
-            zoomLimit = qMin(zoomLimit, static_cast<float>(provider->getMinZoom()));
-    }
-
-    if (!atLeastOneValid)
-        return getMinZoom();
-    return (zoomLimit >= 0.5f) ? (zoomLimit - 0.5f) : zoomLimit;
+        zoomLevel = qMax(zoomLevel, provider->getMinZoom());
+    return zoomLevel;
 }
 
-float OsmAnd::MapRenderer::getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy) const
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMinimalZoomLevelsRangeUpperBound() const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    float zoomLimit;
-    if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
-        zoomLimit = getMaxZoom();
-    else //if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
-        zoomLimit = getMinZoom();
+    if (_requestedState.mapLayersProviders.isEmpty())
+        return getMaxZoomLevel();
 
-    bool atLeastOneValid = false;
+    auto zoomLevel = getMaxZoomLevel();
     for (const auto& provider : constOf(_requestedState.mapLayersProviders))
-    {
-        if (!provider)
-            continue;
+        zoomLevel = qMin(zoomLevel, provider->getMaxZoom());
+    return zoomLevel;
+}
 
-        atLeastOneValid = true;
-        if (strategy == IMapRenderer::ZoomRecommendationStrategy::NarrowestRange)
-            zoomLimit = qMin(zoomLimit, static_cast<float>(provider->getMaxZoom()));
-        else //if (strategy == IMapRenderer::ZoomRecommendationStrategy::WidestRange)
-            zoomLimit = qMax(zoomLimit, static_cast<float>(provider->getMaxZoom()));
-    }
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaximalZoomLevelsRangeLowerBound() const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    if (!atLeastOneValid)
-        return getMaxZoom();
-    return zoomLimit + 0.49999f;
+    if (_requestedState.mapLayersProviders.isEmpty())
+        return getMinZoomLevel();
+
+    auto zoomLevel = getMaxZoomLevel();
+    for (const auto& provider : constOf(_requestedState.mapLayersProviders))
+        zoomLevel = qMin(zoomLevel, provider->getMinZoom());
+    return zoomLevel;
+}
+
+OsmAnd::ZoomLevel OsmAnd::MapRenderer::getMaximalZoomLevelsRangeUpperBound() const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    if (_requestedState.mapLayersProviders.isEmpty())
+        return getMaxZoomLevel();
+
+    auto zoomLevel = getMinZoomLevel();
+    for (const auto& provider : constOf(_requestedState.mapLayersProviders))
+        zoomLevel = qMax(zoomLevel, provider->getMaxZoom());
+    return zoomLevel;
 }
 
 bool OsmAnd::MapRenderer::updateCurrentDebugSettings()

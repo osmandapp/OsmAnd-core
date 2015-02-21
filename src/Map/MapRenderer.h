@@ -269,14 +269,20 @@ namespace OsmAnd
         virtual bool setElevationAngle(const float elevationAngle, bool forcedUpdate = false);
         virtual bool setTarget(const PointI& target31, bool forcedUpdate = false);
         virtual bool setZoom(const float zoom, bool forcedUpdate = false);
+        virtual bool setZoom(const ZoomLevel zoomLevel, const float visualZoom, bool forcedUpdate = false);
+        virtual bool setZoomLevel(const ZoomLevel zoomLevel, bool forcedUpdate = false);
+        virtual bool setVisualZoom(const float visualZoom, bool forcedUpdate = false);
+        virtual bool setVisualZoomShift(const float visualZoomShift, bool forcedUpdate = false);
 
         virtual bool setStubsStyle(const MapStubStyle style, bool forcedUpdate = false);
 
-        virtual float getMinZoom() const;
-        virtual float getMaxZoom() const;
+        virtual ZoomLevel getMinZoomLevel() const;
+        virtual ZoomLevel getMaxZoomLevel() const;
 
-        virtual float getRecommendedMinZoom(const ZoomRecommendationStrategy strategy) const;
-        virtual float getRecommendedMaxZoom(const ZoomRecommendationStrategy strategy) const;
+        virtual ZoomLevel getMinimalZoomLevelsRangeLowerBound() const;
+        virtual ZoomLevel getMinimalZoomLevelsRangeUpperBound() const;
+        virtual ZoomLevel getMaximalZoomLevelsRangeLowerBound() const;
+        virtual ZoomLevel getMaximalZoomLevelsRangeUpperBound() const;
 
         // Symbols-related:
         virtual unsigned int getSymbolsCount() const;

@@ -768,7 +768,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
 
     // Calculate location of symbol in world coordinates.
     renderable->offsetFromTarget31 = position31 - currentState.target31;
-    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
+    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomLevel);
     renderable->positionInWorld = glm::vec3(
         renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
         0.0f,
@@ -897,7 +897,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
 
     // Calculate location of symbol in world coordinates.
     renderable->offsetFromTarget31 = position31 - currentState.target31;
-    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomBase);
+    renderable->offsetFromTarget = Utilities::convert31toFloat(renderable->offsetFromTarget31, currentState.zoomLevel);
     renderable->positionInWorld = glm::vec3(
         renderable->offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
         0.0f,
@@ -1242,7 +1242,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         {
             const auto pinPointInWorld = Utilities::convert31toFloat(
                 pinPointOnPath.point31 - currentState.target31,
-                currentState.zoomBase) * static_cast<float>(AtlasMapRenderer::TileSize3D);
+                currentState.zoomLevel) * static_cast<float>(AtlasMapRenderer::TileSize3D);
             const auto pinPointOnScreen = glm_extensions::fastProject(
                 glm::vec3(pinPointInWorld.x, 0.0f, pinPointInWorld.y),
                 internalState.mPerspectiveProjectionView,
@@ -1595,7 +1595,7 @@ QVector<glm::vec2> OsmAnd::AtlasMapRendererSymbolsStage::convertPoints31ToWorld(
     for (auto idx = 0u; idx < count; idx++)
     {
         *(pPointInWorld++) = 
-            Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomBase) *
+            Utilities::convert31toFloat(*(pPoint31++) - currentState.target31, currentState.zoomLevel) *
             static_cast<float>(AtlasMapRenderer::TileSize3D);
     }
 

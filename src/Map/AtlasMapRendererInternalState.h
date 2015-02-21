@@ -46,9 +46,6 @@ namespace OsmAnd
         float aspectRatio;
         float fovInRadians;
         float referenceTileSizeOnScreenInPixels;
-        float nearDistanceFromCameraToTarget;
-        float baseDistanceFromCameraToTarget;
-        float farDistanceFromCameraToTarget;
         float distanceFromCameraToTarget;
         float groundDistanceFromCameraToTarget;
         float tileOnScreenScaleFactor;
