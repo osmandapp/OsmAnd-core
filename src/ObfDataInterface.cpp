@@ -61,7 +61,7 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
     MapSurfaceType* outSurfaceType,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
-    const FilterBinaryMapObjectsByIdFunction filterById /*= nullptr*/,
+    const ObfMapSectionReader::FilterByIdFunction filterById /*= nullptr*/,
     ObfMapSectionReader::DataBlocksCache* cache /*= nullptr*/,
     QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/,
@@ -226,7 +226,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
     MapSurfaceType* outSurfaceType,
     const ZoomLevel zoom,
     const AreaI* const bbox31 /*= nullptr*/,
-    const FilterBinaryMapObjectsByIdFunction filterBinaryMapObjectsById /*= nullptr*/,
+    const ObfMapSectionReader::FilterByIdFunction filterMapObjectsById /*= nullptr*/,
     ObfMapSectionReader::DataBlocksCache* binaryMapObjectsCache /*= nullptr*/,
     QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedBinaryMapObjectsCacheEntries /*= nullptr*/,
     const FilterRoadsByIdFunction filterRoadsById /*= nullptr*/,
@@ -283,7 +283,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 bbox31,
                 outBinaryMapObjects,
                 &surfaceTypeToMerge,
-                filterBinaryMapObjectsById,
+                filterMapObjectsById,
                 nullptr,
                 binaryMapObjectsCache,
                 outReferencedBinaryMapObjectsCacheEntries,
@@ -311,7 +311,9 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         if (bbox31)
         {
             pBasemapBBox31 = &basemapBBox31;
-            basemapBBox31 = Utilities::roundBoundingBox31(*bbox31, static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
+            basemapBBox31 = Utilities::roundBoundingBox31(
+                *bbox31,
+                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
         }
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))
@@ -328,7 +330,7 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
                 pBasemapBBox31,
                 outBinaryMapObjects,
                 &surfaceTypeToMerge,
-                filterBinaryMapObjectsById,
+                filterMapObjectsById,
                 nullptr,
                 binaryMapObjectsCache,
                 outReferencedBinaryMapObjectsCacheEntries,

@@ -34,6 +34,7 @@ namespace OsmAnd
     class ObfMapSectionReader_P Q_DECL_FINAL
     {
     public:
+        typedef ObfMapSectionReader::FilterByIdFunction FilterByIdFunction;
         typedef ObfMapSectionReader::VisitorFunction VisitorFunction;
         typedef ObfMapSectionReader::DataBlockId DataBlockId;
         typedef ObfMapSectionReader::DataBlock DataBlock;
@@ -84,13 +85,19 @@ namespace OsmAnd
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
+        typedef std::function < bool(
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const ObfObjectId mapObjectId,
+            const AreaI& bbox,
+            const ZoomLevel firstZoomLevel,
+            const ZoomLevel lastZoomLevel) > FilterReadingByIdFunction;
         static void readMapObjectsBlock(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
             const std::shared_ptr<const ObfMapSectionLevelTreeNode>& treeNode,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             const AreaI* bbox31,
-            const FilterBinaryMapObjectsByIdFunction filterById,
+            const FilterReadingByIdFunction filterById,
             const VisitorFunction visitor,
             const IQueryController* const controller,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
@@ -123,7 +130,7 @@ namespace OsmAnd
             const AreaI* bbox31,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             MapSurfaceType* outBBoxOrSectionSurfaceType,
-            const FilterBinaryMapObjectsByIdFunction filterById,
+            const FilterByIdFunction filterById,
             const VisitorFunction visitor,
             DataBlocksCache* cache,
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,

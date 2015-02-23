@@ -483,7 +483,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
     const std::shared_ptr<const ObfMapSectionLevelTreeNode>& tree,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     const AreaI* bbox31,
-    const FilterBinaryMapObjectsByIdFunction filterById,
+    const FilterReadingByIdFunction filterById,
     const VisitorFunction visitor,
     const IQueryController* const controller,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
@@ -596,7 +596,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 //////////////////////////////////////////////////////////////////////////
 
                 // Check if map object is desired
-                if (filterById && !filterById(section, mapObject->id, mapObject->bbox31, mapObject->level->minZoom, mapObject->level->maxZoom))
+                const auto shouldReject = filterById && !filterById(
+                    section,
+                    mapObject->id,
+                    mapObject->bbox31,
+                    mapObject->level->minZoom,
+                    mapObject->level->maxZoom);
+                if (shouldReject)
                     break;
 
                 // Save object
@@ -917,7 +923,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     const AreaI* bbox31,
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapSurfaceType* outBBoxOrSectionSurfaceType,
-    const FilterBinaryMapObjectsByIdFunction filterById,
+    const ObfMapSectionReader::FilterByIdFunction filterById,
     const VisitorFunction visitor,
     DataBlocksCache* cache,
     QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
@@ -925,6 +931,17 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric)
 {
     const auto cis = reader.getCodedInputStream().get();
+
+    const auto filterReadById =
+        [filterById, zoom]
+        (const std::shared_ptr<const ObfMapSectionInfo>& section,
+        const ObfObjectId mapObjectId,
+        const AreaI& bbox,
+        const ZoomLevel firstZoomLevel,
+        const ZoomLevel lastZoomLevel) -> bool
+        {
+            return filterById(section, mapObjectId, bbox, firstZoomLevel, lastZoomLevel, zoom);
+        };
 
     // Ensure encoding/decoding rules are read
     if (section->_p->_encodingDecodingRulesLoaded.loadAcquire() == 0)
@@ -1165,7 +1182,14 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     }
 
                     // Check if map object is desired
-                    if (filterById && !filterById(section, mapObject->id, mapObject->bbox31, mapObject->level->minZoom, mapObject->level->maxZoom))
+                    const auto shouldReject = filterById && !filterById(
+                        section,
+                        mapObject->id,
+                        mapObject->bbox31,
+                        mapObject->level->minZoom,
+                        mapObject->level->maxZoom,
+                        zoom);
+                    if (shouldReject)
                         continue;
 
                     if (!visitor || visitor(mapObject))
@@ -1194,7 +1218,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     treeNode,
                     resultOut,
                     bbox31,
-                    filterById,
+                    filterReadById,
                     visitor,
                     controller,
                     metric);

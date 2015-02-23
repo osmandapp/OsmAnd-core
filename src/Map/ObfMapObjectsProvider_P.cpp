@@ -117,8 +117,20 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedSharedBinaryMapObjectsCounters;
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedNonSharedBinaryMapObjectsCounters;
     const auto binaryMapObjectsFilteringFunctor =
-        [this, zoom, &referencedBinaryMapObjects, &futureReferencedBinaryMapObjects, &loadedSharedBinaryMapObjectsCounters, &loadedNonSharedBinaryMapObjectsCounters, &allLoadedBinaryMapObjectsCounters, tileBBox31, metric]
-        (const std::shared_ptr<const ObfMapSectionInfo>& section, const ObfObjectId id, const AreaI& bbox, const ZoomLevel firstZoomLevel, const ZoomLevel lastZoomLevel) -> bool
+        [this,
+            &referencedBinaryMapObjects,
+            &futureReferencedBinaryMapObjects,
+            &loadedSharedBinaryMapObjectsCounters,
+            &loadedNonSharedBinaryMapObjectsCounters,
+            &allLoadedBinaryMapObjectsCounters,
+            tileBBox31,
+            metric]
+        (const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const ObfObjectId id,
+            const AreaI& bbox,
+            const ZoomLevel firstZoomLevel,
+            const ZoomLevel lastZoomLevel,
+            const ZoomLevel requestedZoom) -> bool
         {
             const Stopwatch objectsFilteringStopwatch(metric != nullptr);
 
@@ -152,7 +164,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
             proper::shared_future< std::shared_ptr<const BinaryMapObject> > futureSharedMapObjectReference;
             const auto existsOrWillBeInFuture = _sharedBinaryMapObjects.obtainReferenceOrFutureReferenceOrMakePromise(
                 id,
-                zoom,
+                requestedZoom,
                 Utilities::enumerateZoomLevels(firstZoomLevel, lastZoomLevel),
                 sharedMapObjectReference,
                 futureSharedMapObjectReference);

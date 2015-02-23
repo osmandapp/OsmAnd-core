@@ -127,14 +127,6 @@ namespace OsmAnd
 #endif // !defined(SWIG)
     };
 
-    class ObfMapSectionInfo;
-    typedef std::function < bool(
-        const std::shared_ptr<const ObfMapSectionInfo>& section,
-        const ObfObjectId mapObjectId,
-        const AreaI& bbox,
-        const ZoomLevel firstZoomLevel,
-        const ZoomLevel lasttZoomLevel) > FilterBinaryMapObjectsByIdFunction;
-
     union ObfRoutingSectionDataBlockId
     {
         uint64_t id;

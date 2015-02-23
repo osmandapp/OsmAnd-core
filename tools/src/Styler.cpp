@@ -97,7 +97,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             const uint64_t mapObjectId,
             const OsmAnd::AreaI& bbox,
             const OsmAnd::ZoomLevel firstZoomLevel,
-            const OsmAnd::ZoomLevel lastZoomLevel) -> bool
+            const OsmAnd::ZoomLevel lastZoomLevel,
+            const OsmAnd::ZoomLevel requestedZoom) -> bool
             {
                 return configuration.mapObjectsIds.contains(mapObjectId);
             };
@@ -115,7 +116,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             nullptr,
             configuration.zoom,
             nullptr,
-            configuration.mapObjectsIds.isEmpty() ? OsmAnd::FilterBinaryMapObjectsByIdFunction() : mapObjectsFilterById,
+            configuration.mapObjectsIds.isEmpty() ? OsmAnd::FilterObfMapObjectsByIdFunction() : mapObjectsFilterById,
             nullptr,
             nullptr,
             nullptr,

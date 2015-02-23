@@ -29,6 +29,13 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfMapSectionReader
     {
     public:
+        typedef std::function < bool(
+            const std::shared_ptr<const ObfMapSectionInfo>& section,
+            const ObfObjectId mapObjectId,
+            const AreaI& bbox,
+            const ZoomLevel firstZoomLevel,
+            const ZoomLevel lastZoomLevel,
+            const ZoomLevel requestedZoomLevel) > FilterByIdFunction;
         typedef std::function<bool(const std::shared_ptr<const OsmAnd::BinaryMapObject>&)> VisitorFunction;
         typedef ObfMapSectionDataBlockId DataBlockId;
 
@@ -80,7 +87,7 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut = nullptr,
             MapSurfaceType* outBBoxOrSectionSurfaceType = nullptr,
-            const FilterBinaryMapObjectsByIdFunction filterById = nullptr,
+            const FilterByIdFunction filterById = nullptr,
             const VisitorFunction visitor = nullptr,
             DataBlocksCache* cache = nullptr,
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries = nullptr,
