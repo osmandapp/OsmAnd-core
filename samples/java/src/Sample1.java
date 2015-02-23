@@ -149,6 +149,8 @@ public class Sample1 implements GLEventListener {
     _mapPresentationEnvironment = new MapPresentationEnvironment(
       _mapStyle,
       _displayDensityFactor,
+	  1.0f,
+	  1.0f,
       "en"); //TODO: here should be current locale
     _mapPrimitiviser = new MapPrimitiviser(
       _mapPresentationEnvironment);

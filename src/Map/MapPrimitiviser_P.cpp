@@ -2255,6 +2255,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         text->location31 = location;
         text->languageId = languageId;
         text->value = caption;
+        text->scaleFactor = env->symbolsScaleFactor;
 
         // Get additional text from nameTag2 if present (and not yet added)
         if (!extraCaptionTextAdded)
@@ -2425,6 +2426,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     const std::shared_ptr<IconSymbol> icon(new IconSymbol(primitive));
     icon->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
     icon->location31 = location;
+    icon->scaleFactor = env->symbolsScaleFactor;
 
     icon->resourceName = qMove(iconResourceName);
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON__3, iconResourceName))

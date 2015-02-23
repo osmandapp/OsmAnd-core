@@ -88,7 +88,16 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 if (!textSymbol->drawOnPath && textSymbol->shieldResourceName.isEmpty())
                     style.wrapWidth = textSymbol->wrapWidth;
                 if (!textSymbol->shieldResourceName.isEmpty())
+                {
                     env->obtainTextShield(textSymbol->shieldResourceName, style.backgroundBitmap);
+
+                    if (!qFuzzyCompare(textSymbol->scaleFactor, 1.0f) && style.backgroundBitmap) {
+                        style.backgroundBitmap = SkiaUtilities::scaleBitmap(
+                            style.backgroundBitmap,
+                            textSymbol->scaleFactor,
+                            textSymbol->scaleFactor);
+                    }
+                }
                 style
                     .setBold(textSymbol->isBold)
                     .setItalic(textSymbol->isItalic)
@@ -222,10 +231,24 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 std::shared_ptr<const SkBitmap> iconBitmap;
                 if (!env->obtainMapIcon(iconSymbol->resourceName, iconBitmap) || !iconBitmap)
                     continue;
+                if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f)) {
+                    iconBitmap = SkiaUtilities::scaleBitmap(
+                        iconBitmap,
+                        iconSymbol->scaleFactor,
+                        iconSymbol->scaleFactor);
+                }
 
                 std::shared_ptr<const SkBitmap> backgroundBitmap;
-                if (!iconSymbol->shieldResourceName.isEmpty())
+                if (!iconSymbol->shieldResourceName.isEmpty()) {
                     env->obtainIconShield(iconSymbol->shieldResourceName, backgroundBitmap);
+
+                    if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f) && backgroundBitmap) {
+                        backgroundBitmap = SkiaUtilities::scaleBitmap(
+                            backgroundBitmap,
+                            iconSymbol->scaleFactor,
+                            iconSymbol->scaleFactor);
+                    }
+                }
 
                 QList< std::shared_ptr<const SkBitmap> > layers;
                 if (backgroundBitmap)

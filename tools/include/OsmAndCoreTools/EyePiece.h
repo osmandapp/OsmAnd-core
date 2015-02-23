@@ -53,6 +53,8 @@ namespace OsmAndTools
             float fov;
             unsigned int referenceTileSize;
             float displayDensityFactor;
+            float mapScale;
+            float symbolsScale;
             QString locale;
             bool verbose;
 #if defined(OSMAND_TARGET_OS_linux)

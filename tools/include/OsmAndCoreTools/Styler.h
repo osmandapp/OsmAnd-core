@@ -43,6 +43,8 @@ namespace OsmAndTools
             QSet< uint64_t > mapObjectsIds;
             OsmAnd::ZoomLevel zoom;
             float displayDensityFactor;
+            float mapScale;
+            float symbolsScale;
             QString locale;
             QString styleDumpFilename;
             bool verbose;

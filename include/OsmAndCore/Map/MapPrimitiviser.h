@@ -173,6 +173,7 @@ namespace OsmAnd
             float pathPaddingLeft;
             float pathPaddingRight;
             float minDistance;
+            float scaleFactor;
 
             bool operator==(const Symbol& that) const;
             bool operator!=(const Symbol& that) const;

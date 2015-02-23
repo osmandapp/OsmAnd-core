@@ -76,6 +76,8 @@ public class MainActivity extends ActionBarActivity {
         _mapPresentationEnvironment = new MapPresentationEnvironment(
                 _mapStyle,
                 _displayDensityFactor,
+                1.0f,
+                1.0f,
                 "en"); //TODO: here should be current locale
         //mapPresentationEnvironment->setSettings(configuration.styleSettings);
         _mapPrimitiviser = new MapPrimitiviser(

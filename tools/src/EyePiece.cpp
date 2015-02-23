@@ -851,6 +851,10 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
             output
                 << xT("Initializing map presentation environment with display density ")
                 << configuration.displayDensityFactor
+                << xT(", map scale ")
+                << configuration.mapScale
+                << xT(", symbols scale ")
+                << configuration.symbolsScale
                 << xT(" and locale '")
                 << QStringToStlString(configuration.locale)
                 << xT("'...") << std::endl;
@@ -858,6 +862,8 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
         const std::shared_ptr<OsmAnd::MapPresentationEnvironment> mapPresentationEnvironment(new OsmAnd::MapPresentationEnvironment(
             mapStyle,
             configuration.displayDensityFactor,
+            configuration.mapScale,
+            configuration.symbolsScale,
             configuration.locale));
 
         if (configuration.verbose)
@@ -1170,6 +1176,8 @@ OsmAndTools::EyePiece::Configuration::Configuration()
     , fov(16.5f)
     , referenceTileSize(256)
     , displayDensityFactor(1.0f)
+    , mapScale(1.0f)
+    , symbolsScale(1.0f)
     , locale(QLatin1String("en"))
     , verbose(false)
 #if defined(OSMAND_TARGET_OS_linux)
@@ -1434,6 +1442,30 @@ bool OsmAndTools::EyePiece::Configuration::parseFromCommandLineArguments(
             if (!ok)
             {
                 outError = QString("'%1' can not be parsed as display density factor").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-mapScale=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-mapScale=")));
+
+            bool ok = false;
+            outConfiguration.mapScale = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as map scale factor").arg(value);
+                return false;
+            }
+        }
+        else if (arg.startsWith(QLatin1String("-symbolsScale=")))
+        {
+            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-symbolsScale=")));
+
+            bool ok = false;
+            outConfiguration.symbolsScale = value.toFloat(&ok);
+            if (!ok)
+            {
+                outError = QString("'%1' can not be parsed as symbols scale factor").arg(value);
                 return false;
             }
         }
