@@ -9,10 +9,10 @@
 
 OsmAnd::MapStyleEvaluator::MapStyleEvaluator(
     const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle_,
-    const float displayDensityFactor_)
+    const float ptScaleFactor_)
     : _p(new MapStyleEvaluator_P(this))
     , resolvedStyle(resolvedStyle_)
-    , displayDensityFactor(displayDensityFactor_)
+    , ptScaleFactor(ptScaleFactor_)
 {
 }
 

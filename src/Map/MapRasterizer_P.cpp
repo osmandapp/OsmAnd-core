@@ -670,7 +670,7 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
             }
             else
             {
-                // "dip:px" format
+                // "pt:px" format
                 const auto& complexValue = strInterval.split(QLatin1Char(':'), QString::KeepEmptyParts);
 
                 computedValue = complexValue[0].toFloat()*owner->mapPresentationEnvironment->displayDensityFactor + complexValue[1].toFloat();
@@ -682,7 +682,10 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
         // Validate
         if (intervalsCount < 2 || intervalsCount % 2 != 0)
         {
-            LogPrintf(LogSeverityLevel::Warning, "Path effect (%s) with %d intervals is invalid", qPrintable(encodedPathEffect), intervalsCount);
+            LogPrintf(LogSeverityLevel::Warning,
+                "Path effect (%s) with %d intervals is invalid",
+                qPrintable(encodedPathEffect),
+                intervalsCount);
             return false;
         }
 
@@ -696,7 +699,10 @@ bool OsmAnd::MapRasterizer_P::obtainPathEffect(const QString& encodedPathEffect,
     return true;
 }
 
-bool OsmAnd::MapRasterizer_P::obtainBitmapShader(const std::shared_ptr<const MapPresentationEnvironment>& env, const QString& name, SkBitmapProcShader* &outShader)
+bool OsmAnd::MapRasterizer_P::obtainBitmapShader(
+    const std::shared_ptr<const MapPresentationEnvironment>& env,
+    const QString& name,
+    SkBitmapProcShader* &outShader)
 {
     std::shared_ptr<const SkBitmap> bitmap;
     if (!env->obtainShaderBitmap(name, bitmap))

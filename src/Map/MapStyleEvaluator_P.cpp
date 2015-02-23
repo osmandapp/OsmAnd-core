@@ -255,7 +255,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         else if (valueDef->dataType == MapStyleValueDataType::Float)
         {
             const auto lvalue = constantRuleValue.isComplex
-                ? constantRuleValue.asComplex.asFloat.evaluate(owner->displayDensityFactor)
+                ? constantRuleValue.asComplex.asFloat.evaluate(owner->ptScaleFactor)
                 : constantRuleValue.asSimple.asFloat;
 
             evaluationResult = qFuzzyCompare(lvalue, inputValue.asFloat);
@@ -263,7 +263,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         else
         {
             const auto lvalue = constantRuleValue.isComplex
-                ? constantRuleValue.asComplex.asInt.evaluate(owner->displayDensityFactor)
+                ? constantRuleValue.asComplex.asInt.evaluate(owner->ptScaleFactor)
                 : constantRuleValue.asSimple.asInt;
 
             evaluationResult = (lvalue == inputValue.asInt);
@@ -383,12 +383,12 @@ void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
                 break;
             case MapStyleValueDataType::Integer:
                 postprocessedValue = constantRuleValue.isComplex
-                    ? constantRuleValue.asComplex.asInt.evaluate(owner->displayDensityFactor)
+                    ? constantRuleValue.asComplex.asInt.evaluate(owner->ptScaleFactor)
                     : constantRuleValue.asSimple.asInt;
                 break;
             case MapStyleValueDataType::Float:
                 postprocessedValue = constantRuleValue.isComplex
-                    ? constantRuleValue.asComplex.asFloat.evaluate(owner->displayDensityFactor)
+                    ? constantRuleValue.asComplex.asFloat.evaluate(owner->ptScaleFactor)
                     : constantRuleValue.asSimple.asFloat;
                 break;
             case MapStyleValueDataType::String:

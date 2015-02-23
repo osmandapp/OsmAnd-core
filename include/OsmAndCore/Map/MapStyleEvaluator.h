@@ -22,11 +22,13 @@ namespace OsmAnd
         PrivateImplementation<MapStyleEvaluator_P> _p;
     protected:
     public:
-        MapStyleEvaluator(const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle, const float displayDensityFactor);
+        MapStyleEvaluator(
+            const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle,
+            const float ptScaleFactor);
         virtual ~MapStyleEvaluator();
 
         const std::shared_ptr<const ResolvedMapStyle> resolvedStyle;
-        const float displayDensityFactor;
+        const float ptScaleFactor;
 
         void setBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const bool value);
         void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const int value);

@@ -13,7 +13,11 @@ OsmAnd::MapStyleConstantValue::~MapStyleConstantValue()
 
 }
 
-bool OsmAnd::MapStyleConstantValue::parse(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleConstantValue& output)
+bool OsmAnd::MapStyleConstantValue::parse(
+    const QString& input,
+    const MapStyleValueDataType dataType,
+    const bool isComplex,
+    MapStyleConstantValue& output)
 {
     switch (dataType)
     {
@@ -30,15 +34,15 @@ bool OsmAnd::MapStyleConstantValue::parse(const QString& input, const MapStyleVa
                 output.isComplex = true;
                 if (!input.contains(QLatin1Char(':')))
                 {
-                    output.asComplex.asInt.dip = Utilities::parseArbitraryInt(input, -1);
+                    output.asComplex.asInt.pt = Utilities::parseArbitraryInt(input, -1);
                     output.asComplex.asInt.px = 0.0;
                 }
                 else
                 {
-                    // "dip:px" format
+                    // "pt:px" format
                     const auto& complexValue = input.split(QLatin1Char(':'), QString::KeepEmptyParts);
 
-                    output.asComplex.asInt.dip = Utilities::parseArbitraryInt(complexValue[0], 0);
+                    output.asComplex.asInt.pt = Utilities::parseArbitraryInt(complexValue[0], 0);
                     output.asComplex.asInt.px = Utilities::parseArbitraryInt(complexValue[1], 0);
                 }
             }
@@ -57,15 +61,15 @@ bool OsmAnd::MapStyleConstantValue::parse(const QString& input, const MapStyleVa
                 output.isComplex = true;
                 if (!input.contains(':'))
                 {
-                    output.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(input, -1.0f);
+                    output.asComplex.asFloat.pt = Utilities::parseArbitraryFloat(input, -1.0f);
                     output.asComplex.asFloat.px = 0.0f;
                 }
                 else
                 {
-                    // 'dip:px' format
+                    // 'pt:px' format
                     const auto& complexValue = input.split(':', QString::KeepEmptyParts);
 
-                    output.asComplex.asFloat.dip = Utilities::parseArbitraryFloat(complexValue[0], 0);
+                    output.asComplex.asFloat.pt = Utilities::parseArbitraryFloat(complexValue[0], 0);
                     output.asComplex.asFloat.px = Utilities::parseArbitraryFloat(complexValue[1], 0);
                 }
             }
@@ -103,25 +107,52 @@ QString OsmAnd::MapStyleConstantValue::toString(const MapStyleValueDataType data
     switch (dataType)
     {
         case MapStyleValueDataType::Boolean:
-            return QString(QLatin1String("boolean(%1)")).arg((asSimple.asUInt == 0) ? QLatin1String("false") : QLatin1String("true"));
+        {
+            return QString(QLatin1String("boolean(%1)"))
+                .arg((asSimple.asUInt == 0) ? QLatin1String("false") : QLatin1String("true"));
+        }
 
         case MapStyleValueDataType::Integer:
+        {
             if (isComplex)
-                return QString(QLatin1String("integer(%1dp:%2px)")).arg(QString::number(asComplex.asInt.dip)).arg(QString::number(asComplex.asInt.px));
+            {
+                return QString(QLatin1String("integer(%1pt:%2px)"))
+                    .arg(QString::number(asComplex.asInt.pt))
+                    .arg(QString::number(asComplex.asInt.px));
+            }
             else
-                return QString(QLatin1String("integer(%1)")).arg(QString::number(asSimple.asInt));
+            {
+                return QString(QLatin1String("integer(%1)"))
+                    .arg(QString::number(asSimple.asInt));
+            }
+        }
 
         case MapStyleValueDataType::Float:
+        {
             if (isComplex)
-                return QString(QLatin1String("float(%1dp:%2px)")).arg(QString::number(asComplex.asFloat.dip)).arg(QString::number(asComplex.asFloat.px));
+            {
+                return QString(QLatin1String("float(%1pt:%2px)"))
+                    .arg(QString::number(asComplex.asFloat.pt))
+                    .arg(QString::number(asComplex.asFloat.px));
+            }
             else
-                return QString(QLatin1String("float(%1)")).arg(QString::number(asSimple.asFloat));
+            {
+                return QString(QLatin1String("float(%1)"))
+                    .arg(QString::number(asSimple.asFloat));
+            }
+        }
 
         case MapStyleValueDataType::String:
-            return QString(QLatin1String("string(#%1)")).arg(QString::number(asSimple.asInt));
+        {
+            return QString(QLatin1String("string(#%1)"))
+                .arg(QString::number(asSimple.asInt));
+        }
 
         case MapStyleValueDataType::Color:
-            return QString(QLatin1String("color(#%1)")).arg(QString::number(ColorARGB(asSimple.asUInt).argb, 16).right(6));
+        {
+            return QString(QLatin1String("color(#%1)"))
+                .arg(QString::number(ColorARGB(asSimple.asUInt).argb, 16).right(6));
+        }
     }
 
     return QString::null;

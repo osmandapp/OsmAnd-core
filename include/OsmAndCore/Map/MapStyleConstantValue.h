@@ -20,12 +20,12 @@ namespace OsmAnd
 
         template<typename T> struct ComplexData
         {
-            T dip;
+            T pt;
             T px;
 
-            inline T evaluate(const float densityFactor) const
+            inline T evaluate(const float pointScaleFactor) const
             {
-                return dip*densityFactor + px;
+                return pt*pointScaleFactor + px;
             }
         };
 
@@ -47,7 +47,11 @@ namespace OsmAnd
             } asComplex;
         };
 
-        static bool parse(const QString& input, const MapStyleValueDataType dataType, const bool isComplex, MapStyleConstantValue& outValue);
+        static bool parse(
+            const QString& input,
+            const MapStyleValueDataType dataType,
+            const bool isComplex,
+            MapStyleConstantValue& outValue);
 
         static inline MapStyleConstantValue fromSimpleUInt(const uint32_t input)
         {

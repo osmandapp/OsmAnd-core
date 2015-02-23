@@ -290,7 +290,7 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getDefaultBackgroundColo
 
     if (_defaultBackgroundColorAttribute)
     {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->mapScaleFactor);
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
@@ -310,7 +310,7 @@ void OsmAnd::MapPresentationEnvironment_P::obtainShadowOptions(const ZoomLevel z
 
     if (_shadowOptionsAttribute)
     {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->mapScaleFactor);
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
@@ -333,7 +333,7 @@ double OsmAnd::MapPresentationEnvironment_P::getPolygonAreaMinimalThreshold(cons
 
     if (_polygonMinSizeToDisplayAttribute)
     {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->mapScaleFactor);
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
@@ -355,7 +355,7 @@ unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadDensityZoomTile(const 
 
     if (_roadDensityZoomTileAttribute)
     {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->mapScaleFactor);
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
@@ -373,7 +373,7 @@ unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadsDensityLimitPerTile(c
 
     if (_roadsDensityLimitPerTileAttribute)
     {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->mapScaleFactor);
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
@@ -391,7 +391,7 @@ void OsmAnd::MapPresentationEnvironment_P::obtainDefaultPathPadding(float& outLe
 
     if (_defaultPathPaddingAttribute)
     {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
         applyTo(evaluator);
 
         MapStyleEvaluationResult evalResult;
@@ -410,7 +410,7 @@ void OsmAnd::MapPresentationEnvironment_P::obtainGlobalPathPadding(float& outLef
 
     if (_globalPathPaddingAttribute)
     {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
         applyTo(evaluator);
 
         MapStyleEvaluationResult evalResult;
@@ -429,7 +429,7 @@ float OsmAnd::MapPresentationEnvironment_P::getGlobalPathSymbolsBlockSpacing() c
 
     if (_globalPathSymbolsBlockSpacingAttribute)
     {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor);
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
         applyTo(evaluator);
 
         MapStyleEvaluationResult evalResult;
