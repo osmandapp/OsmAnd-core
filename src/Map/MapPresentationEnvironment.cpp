@@ -6,6 +6,8 @@
 OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle_,
     const float displayDensityFactor_ /*= 1.0f*/,
+    const float mapScaleFactor_ /*= 1.0f*/,
+    const float symbolsScaleFactor_ /*= 1.0f*/,
     const QString& localeLanguageId_ /*= QLatin1String("en")*/,
     const LanguagePreference languagePreference_ /*= LanguagePreference::LocalizedOrNative*/,
     const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/)
@@ -13,6 +15,8 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     , styleBuiltinValueDefs(MapStyleBuiltinValueDefinitions::get())
     , resolvedStyle(resolvedStyle_)
     , displayDensityFactor(displayDensityFactor_)
+    , mapScaleFactor(mapScaleFactor_)
+    , symbolsScaleFactor(symbolsScaleFactor_)
     , localeLanguageId(localeLanguageId_)
     , languagePreference(languagePreference_)
     , externalResourcesProvider(externalResourcesProvider_)

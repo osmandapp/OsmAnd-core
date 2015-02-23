@@ -15,11 +15,10 @@ OsmAnd::SymbolRasterizer::~SymbolRasterizer()
 void OsmAnd::SymbolRasterizer::rasterize(
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-    const float scaleFactor /*= 1.0f*/,
     const FilterByMapObject filter /*= nullptr*/,
     const IQueryController* const controller /*= nullptr*/) const
 {
-    _p->rasterize(primitivisedObjects, outSymbolsGroups, scaleFactor, filter, controller);
+    _p->rasterize(primitivisedObjects, outSymbolsGroups, filter, controller);
 }
 
 OsmAnd::SymbolRasterizer::RasterizedSymbolsGroup::RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject_)

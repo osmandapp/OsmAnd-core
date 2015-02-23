@@ -46,7 +46,6 @@ namespace OsmAnd
         void rasterize(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            const float scaleFactor,
             const FilterByMapObject filter,
             const IQueryController* const controller) const;
 

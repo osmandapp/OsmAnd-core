@@ -7,12 +7,10 @@
 OsmAnd::MapObjectsSymbolsProvider::MapObjectsSymbolsProvider(
     const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider_,
     const float referenceTileSizeOnScreenInPixels_,
-    const float symbolsScaleFactor_ /*= 1.0f*/,
     const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer_ /*= std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer())*/)
     : _p(new MapObjectsSymbolsProvider_P(this))
     , primitivesProvider(primitivesProvider_)
     , referenceTileSizeOnScreenInPixels(referenceTileSizeOnScreenInPixels_)
-    , symbolsScaleFactor(symbolsScaleFactor_)
     , symbolRasterizer(symbolRasterizer_)
 {
 }

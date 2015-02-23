@@ -65,13 +65,11 @@ namespace OsmAnd
         MapObjectsSymbolsProvider(
             const std::shared_ptr<MapPrimitivesProvider>& primitivesProvider,
             const float referenceTileSizeOnScreenInPixels,
-            const float symbolsScaleFactor = 1.0f,
             const std::shared_ptr<const SymbolRasterizer>& symbolRasterizer = std::shared_ptr<const SymbolRasterizer>(new SymbolRasterizer()));
         virtual ~MapObjectsSymbolsProvider();
 
         const std::shared_ptr<MapPrimitivesProvider> primitivesProvider;
         const float referenceTileSizeOnScreenInPixels;
-        const float symbolsScaleFactor;
         const std::shared_ptr<const SymbolRasterizer> symbolRasterizer;
 
         virtual ZoomLevel getMinZoom() const;

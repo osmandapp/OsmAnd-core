@@ -45,7 +45,6 @@ OsmAnd::SymbolRasterizer_P::~SymbolRasterizer_P()
 void OsmAnd::SymbolRasterizer_P::rasterize(
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-    const float scaleFactor,
     const FilterByMapObject filter,
     const IQueryController* const controller) const
 {
@@ -89,21 +88,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 if (!textSymbol->drawOnPath && textSymbol->shieldResourceName.isEmpty())
                     style.wrapWidth = textSymbol->wrapWidth;
                 if (!textSymbol->shieldResourceName.isEmpty())
-                {
                     env->obtainTextShield(textSymbol->shieldResourceName, style.backgroundBitmap);
-
-                    if (!qFuzzyCompare(scaleFactor, 1.0f) && style.backgroundBitmap) {
-                        style.backgroundBitmap = SkiaUtilities::scaleBitmap(
-                            style.backgroundBitmap,
-                            scaleFactor,
-                            scaleFactor);
-                    }
-                }
                 style
                     .setBold(textSymbol->isBold)
                     .setItalic(textSymbol->isItalic)
                     .setColor(textSymbol->color)
-                    .setSize(static_cast<int>(textSymbol->size * scaleFactor));
+                    .setSize(static_cast<int>(textSymbol->size));
 
                 if (textSymbol->shadowRadius > 0)
                 {
@@ -232,24 +222,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 std::shared_ptr<const SkBitmap> iconBitmap;
                 if (!env->obtainMapIcon(iconSymbol->resourceName, iconBitmap) || !iconBitmap)
                     continue;
-                if (!qFuzzyCompare(scaleFactor, 1.0f)) {
-                    iconBitmap = SkiaUtilities::scaleBitmap(
-                        iconBitmap,
-                        scaleFactor,
-                        scaleFactor);
-                }
 
                 std::shared_ptr<const SkBitmap> backgroundBitmap;
-                if (!iconSymbol->shieldResourceName.isEmpty()) {
+                if (!iconSymbol->shieldResourceName.isEmpty())
                     env->obtainIconShield(iconSymbol->shieldResourceName, backgroundBitmap);
-
-                    if (!qFuzzyCompare(scaleFactor, 1.0f) && backgroundBitmap) {
-                        backgroundBitmap = SkiaUtilities::scaleBitmap(
-                            backgroundBitmap,
-                            scaleFactor,
-                            scaleFactor);
-                    }
-                }
 
                 QList< std::shared_ptr<const SkBitmap> > layers;
                 if (backgroundBitmap)

@@ -124,7 +124,6 @@ namespace OsmAnd
         virtual void rasterize(
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
-            const float scaleFactor = 1.0f,
             const FilterByMapObject filter = nullptr,
             const IQueryController* const controller = nullptr) const;
     };
