@@ -37,7 +37,7 @@ namespace OsmAnd
 
         enum {
             LastZoomToUseBasemap = ZoomLevel11,
-            DetailedLandDataZoom = ZoomLevel14,
+            DetailedLandDataMinZoom = ZoomLevel14,
             DefaultTextLabelWrappingLengthInCharacters = 20
         };
 

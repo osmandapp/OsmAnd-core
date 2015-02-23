@@ -16,6 +16,7 @@
 #include "ObfMapSectionInfo.h"
 #include "MapObject.h"
 #include "BinaryMapObject.h"
+#include "Road.h"
 #include "Stopwatch.h"
 #include "Utilities.h"
 #include "QKeyValueIterator.h"
@@ -118,7 +119,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const Stopwatch totalStopwatch(metric != nullptr);
 
     //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(2204, 1370), ZoomLevel12))
+    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(8329, 5465), ZoomLevel14) && zoom == ZoomLevel14)
     //{
     //    int i = 5;
     //}
@@ -134,17 +135,28 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const Stopwatch objectsSortingStopwatch(metric != nullptr);
 
     // Split input map objects to object, coastline, basemapObjects and basemapCoastline
-    QList< std::shared_ptr<const MapObject> > detailedmapMapObjects, detailedmapCoastlineObjects, basemapMapObjects, basemapCoastlineObjects;
-    QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
+    QList< std::shared_ptr<const MapObject> > detailedmapMapObjects;
+    QList< std::shared_ptr<const MapObject> > detailedmapCoastlineObjects;
+    QList< std::shared_ptr<const MapObject> > basemapMapObjects;
+    QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
+    bool binaryMapObjectsPresent = false;
+    bool roadsPresent = false;
     for (const auto& mapObject : constOf(objects))
     {
         if (controller && controller->isAborted())
             break;
 
-        // Check if this map object is from basemap
+        // Check origin of map object
         auto isBasemapObject = false;
-        if (const auto possiblyBasemapObject = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject))
-            isBasemapObject = possiblyBasemapObject->section->isBasemap;
+        if (const auto binaryMapObject = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject))
+        {
+            isBasemapObject = binaryMapObject->section->isBasemap;
+            binaryMapObjectsPresent = true;
+        }
+        else if (const auto road = std::dynamic_pointer_cast<const Road>(mapObject))
+        {
+            roadsPresent = true;
+        }
 
         if (mapObject->containsType(mapObject->encodingDecodingRules->naturalCoastline_encodingRuleId))
         {
@@ -165,8 +177,11 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         return nullptr;
 
     //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(2204, 1370), ZoomLevel12))
+    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(8329, 5465), ZoomLevel14) && zoom == ZoomLevel14)
     //{
+    //    const auto tl = Utilities::convert31ToLatLon(area31.topLeft);
+    //    const auto br = Utilities::convert31ToLatLon(area31.bottomRight);
+
     //    int i = 5;
     //}
     //////////////////////////////////////////////////////////////////////////
@@ -177,12 +192,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const Stopwatch polygonizeCoastlinesStopwatch(metric != nullptr);
 
     // Polygonize coastlines
-    auto surfaceType = surfaceType_;
+    QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
     const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
-    const auto detailedLandDataPresent = (zoom >= MapPrimitiviser::DetailedLandDataZoom) && !detailedmapMapObjects.isEmpty();
+    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && binaryMapObjectsPresent;
     auto fillEntireArea = true;
-    auto addBasemapCoastlines = true;
+    auto shouldAddBasemapCoastlines = true;
     if (detailedmapCoastlinesPresent)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
@@ -194,13 +209,15 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             basemapCoastlinesPresent,
             true);
         fillEntireArea = !coastlinesWereAdded && fillEntireArea;
-        addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandDataPresent) || zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap);
+        shouldAddBasemapCoastlines =
+            (!coastlinesWereAdded && !detailedLandDataPresent) ||
+            zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap);
     }
     else
     {
-        addBasemapCoastlines = !detailedLandDataPresent;
+        shouldAddBasemapCoastlines = !detailedLandDataPresent;
     }
-    if (addBasemapCoastlines)
+    if (shouldAddBasemapCoastlines)
     {
         const bool coastlinesWereAdded = polygonizeCoastlines(
             area31,
@@ -216,6 +233,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     // In case zoom is higher than ObfMapSectionLevel::MaxBasemapZoomLevel and coastlines were not used
     // due to none of them intersect current zoom tile edge, look for the nearest coastline segment
     // to determine use FullLand or FullWater as surface type
+    auto surfaceType = surfaceType_;
     if (zoom > ObfMapSectionLevel::MaxBasemapZoomLevel && basemapCoastlinesPresent && fillEntireArea)
     {
         const auto center = area31.center();
