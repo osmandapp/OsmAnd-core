@@ -143,8 +143,11 @@ bool OsmAnd::MapMarker_P::applyChanges()
                 symbol->scale = _accuracyCircleRadius;
             }
 
-            if (const auto symbol = std::dynamic_pointer_cast<IBillboardMapSymbol>(symbol_))
+            if (const auto symbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol_))
+            {
                 symbol->setPosition31(_position);
+                symbol_->modulationColor = _pinIconModulationColor;
+            }
 
             if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceRasterMapSymbol>(symbol_))
             {
@@ -224,7 +227,11 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         onMapSurfaceIconSymbol->order = order++;
         onMapSurfaceIconSymbol->bitmap = iconClone;
         onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
-        onMapSurfaceIconSymbol->content = QString().sprintf("markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p", this, symbolsGroup.get(), iconClone->getPixels());
+        onMapSurfaceIconSymbol->content = QString().sprintf(
+            "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
+            this,
+            symbolsGroup.get(),
+            iconClone->getPixels());
         onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
         onMapSurfaceIconSymbol->position31 = _position;
         onMapSurfaceIconSymbol->direction = direction;
@@ -244,7 +251,11 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
         pinIconSymbol->order = order++;
         pinIconSymbol->bitmap = pinIcon;
         pinIconSymbol->size = PointI(pinIcon->width(), pinIcon->height());
-        pinIconSymbol->content = QString().sprintf("markerGroup(%p:%p)->pinIconBitmap:%p", this, symbolsGroup.get(), pinIcon->getPixels());
+        pinIconSymbol->content = QString().sprintf(
+            "markerGroup(%p:%p)->pinIconBitmap:%p",
+            this,
+            symbolsGroup.get(),
+            pinIcon->getPixels());
         pinIconSymbol->languageId = LanguageId::Invariant;
         pinIconSymbol->position31 = _position;
         pinIconSymbol->offset = PointI(0, -pinIcon->height() / 2);
