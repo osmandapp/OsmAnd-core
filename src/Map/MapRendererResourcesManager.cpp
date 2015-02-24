@@ -267,14 +267,14 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
             const auto provider = std::dynamic_pointer_cast<IMapLayerProvider>(itBindedProvider.key());
 
             // Skip binding if it's still active
-            if (std::find(state.mapLayersProviders.cbegin(), state.mapLayersProviders.cend(), provider) != state.mapLayersProviders.cend())
+            if (std::contains(state.mapLayersProviders, provider))
                 continue;
 
             // Clean-up resources (deferred)
             _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
 
             // Reset reference to resources collection, but keep the space in array
-            qFind(resources.begin(), resources.end(), itBindedProvider.value())->reset();
+            std::find(resources, itBindedProvider.value())->reset();
 
             // Remove binding
             bindings.collectionsToProviders.remove(itBindedProvider.value());

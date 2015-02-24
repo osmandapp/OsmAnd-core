@@ -1997,14 +1997,14 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     }
 
     // Obtain icon for this symbol (only if there's no icon yet)
-    const auto alreadyContainsIcon = std::find_if(outSymbols.cbegin(), outSymbols.cend(),
+    const auto alreadyContainsIcon = std::contains_if(outSymbols,
         []
-    (const std::shared_ptr<const Symbol>& symbol) -> bool
-    {
-        if (std::dynamic_pointer_cast<const IconSymbol>(symbol))
-            return true;
-        return false;
-    }) != outSymbols.cend();
+        (const std::shared_ptr<const Symbol>& symbol) -> bool
+        {
+            if (std::dynamic_pointer_cast<const IconSymbol>(symbol))
+                return true;
+            return false;
+        });
     if (!alreadyContainsIcon)
     {
         obtainPrimitiveIcon(
