@@ -1218,7 +1218,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                     treeNode,
                     resultOut,
                     bbox31,
-                    filterReadById,
+                    filterById != nullptr ? filterReadById : FilterReadingByIdFunction(),
                     visitor,
                     controller,
                     metric);
