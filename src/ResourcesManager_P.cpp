@@ -48,7 +48,11 @@ void OsmAnd::ResourcesManager_P::initialize()
         if (ObfReader(obfFile).obtainInfo())
             _miniBasemapObfFile = obfFile;
         else
-            LogPrintf(LogSeverityLevel::Warning, "Failed to open mini basemap OBF '%s'", qPrintable(owner->miniBasemapFilename));
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Failed to open mini basemap OBF '%s'",
+                qPrintable(owner->miniBasemapFilename));
+        }
     }
 }
 
@@ -157,7 +161,8 @@ QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResourc
     return _builtinResources;
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResource> OsmAnd::ResourcesManager_P::getBuiltInResource(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager_P::BuiltinResource> OsmAnd::ResourcesManager_P::getBuiltInResource(
+    const QString& id) const
 {
     const auto citResource = _builtinResources.constFind(id);
     if (citResource == _builtinResources.cend())
@@ -532,7 +537,11 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     if (isUnmanagedStorage)
     {
         QFileInfoList mapStylesPresetsFileInfos;
-        Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.map_styles_presets.xml"), mapStylesPresetsFileInfos, false);
+        Utilities::findDirectories(
+            storageDir,
+            QStringList() << QLatin1String("*.map_styles_presets.xml"),
+            mapStylesPresetsFileInfos,
+            false);
         for (const auto& mapStylesPresetsFileInfo : constOf(mapStylesPresetsFileInfos))
         {
             const auto filePath = mapStylesPresetsFileInfo.absoluteFilePath();
@@ -565,7 +574,11 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     if (isUnmanagedStorage)
     {
         QFileInfoList onlineTileSourcesFileInfos;
-        Utilities::findDirectories(storageDir, QStringList() << QLatin1String("*.online_tile_sources.xml"), onlineTileSourcesFileInfos, false);
+        Utilities::findDirectories(
+            storageDir,
+            QStringList() << QLatin1String("*.online_tile_sources.xml"),
+            onlineTileSourcesFileInfos,
+            false);
         for (const auto& onlineTileSourcesFileInfo : constOf(onlineTileSourcesFileInfos))
         {
             const auto filePath = onlineTileSourcesFileInfo.absoluteFilePath();
@@ -597,14 +610,16 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     return true;
 }
 
-QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> > OsmAnd::ResourcesManager_P::getLocalResources() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> >
+OsmAnd::ResourcesManager_P::getLocalResources() const
 {
     QReadLocker scopedLocker(&_localResourcesLock);
 
     return detachedOf(_localResources);
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> OsmAnd::ResourcesManager_P::getLocalResource(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager_P::LocalResource> OsmAnd::ResourcesManager_P::getLocalResource(
+    const QString& id) const
 {
     QReadLocker scopedLocker(&_localResourcesLock);
 
@@ -621,7 +636,9 @@ bool OsmAnd::ResourcesManager_P::isLocalResource(const QString& id) const
     return _localResources.contains(id);
 }
 
-bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QList< std::shared_ptr<const ResourceInRepository> >& repository) const
+bool OsmAnd::ResourcesManager_P::parseRepository(
+    QXmlStreamReader& xmlReader,
+    QList< std::shared_ptr<const ResourceInRepository> >& repository) const
 {
     bool ok = false;
     while (!xmlReader.atEnd() && !xmlReader.hasError())
@@ -661,28 +678,40 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
             resourceType = ResourceType::VoicePack;
         else
         {
-            LogPrintf(LogSeverityLevel::Verbose, "Unsupported resource type '%s' for '%s'", qPrintableRef(resourceTypeValue), qPrintable(name));
+            LogPrintf(LogSeverityLevel::Verbose,
+                "Unsupported resource type '%s' for '%s'",
+                qPrintableRef(resourceTypeValue),
+                qPrintable(name));
             continue;
         }
 
         const auto timestamp = timestampValue.toULongLong(&ok);
         if (!ok)
         {
-            LogPrintf(LogSeverityLevel::Warning, "Invalid timestamp '%s' for '%s'", qPrintableRef(timestampValue), qPrintable(name));
+            LogPrintf(LogSeverityLevel::Warning,
+                "Invalid timestamp '%s' for '%s'",
+                qPrintableRef(timestampValue),
+                qPrintable(name));
             continue;
         }
 
         const auto containerSize = containerSizeValue.toULongLong(&ok);
         if (!ok)
         {
-            LogPrintf(LogSeverityLevel::Warning, "Invalid container size '%s' for '%s'", qPrintableRef(containerSizeValue), qPrintable(name));
+            LogPrintf(LogSeverityLevel::Warning,
+                "Invalid container size '%s' for '%s'",
+                qPrintableRef(containerSizeValue),
+                qPrintable(name));
             continue;
         }
 
         const auto contentSize = contentSizeValue.toULongLong(&ok);
         if (!ok)
         {
-            LogPrintf(LogSeverityLevel::Warning, "Invalid content size '%s' for '%s'", qPrintableRef(contentSizeValue), qPrintable(name));
+            LogPrintf(LogSeverityLevel::Warning,
+                "Invalid content size '%s' for '%s'",
+                qPrintableRef(contentSizeValue),
+                qPrintable(name));
             continue;
         }
 
@@ -695,28 +724,40 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.obf.zip")).toLower()
                     .append(QLatin1String(".map.obf"));
-                downloadUrl = owner->repositoryBaseUrl + QLatin1String("/download.php?file=") + QUrl::toPercentEncoding(name);
+                downloadUrl =
+                    owner->repositoryBaseUrl +
+                    QLatin1String("/download.php?file=") +
+                    QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::RoadMapRegion:
                 // '[region]_2.obf.zip' -> '[region].road.obf'
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.obf.zip")).toLower()
                     .append(QLatin1String(".road.obf"));
-                downloadUrl = owner->repositoryBaseUrl + QLatin1String("/download.php?road=yes&file=") + QUrl::toPercentEncoding(name);
+                downloadUrl =
+                    owner->repositoryBaseUrl +
+                    QLatin1String("/download.php?road=yes&file=") +
+                    QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::SrtmMapRegion:
                 // '[region]_2.srtm.obf.zip' -> '[region].srtm.obf'
                 resourceId = QString(name)
                     .remove(QLatin1String("_2.srtm.obf.zip")).toLower()
                     .append(QLatin1String(".srtm.obf"));
-                downloadUrl = owner->repositoryBaseUrl + QLatin1String("/download.php?srtmcountry=yes&file=") + QUrl::toPercentEncoding(name);
+                downloadUrl =
+                    owner->repositoryBaseUrl +
+                    QLatin1String("/download.php?srtmcountry=yes&file=") +
+                    QUrl::toPercentEncoding(name);
                 break;
             case ResourceType::VoicePack:
                 // '[language]_0.voice.zip' -> '[resourceName].voice'
                 resourceId = QString(name)
                     .remove(QLatin1String("_0.voice.zip")).toLower()
                     .append(QLatin1String(".voice"));
-                downloadUrl = owner->repositoryBaseUrl + QLatin1String("/download.php?file=") + QUrl::toPercentEncoding(name);
+                downloadUrl =
+                    owner->repositoryBaseUrl +
+                    QLatin1String("/download.php?file=") +
+                    QUrl::toPercentEncoding(name);
                 break;
             default:
                 /*
@@ -824,7 +865,9 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
 
     // Download content of the index
     std::shared_ptr<const WebClient::RequestResult> requestResult;
-    const auto& downloadResult = WebClient().downloadData(QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")), &requestResult);
+    const auto& downloadResult = WebClient().downloadData(
+        QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")),
+        &requestResult);
     if (downloadResult.isNull() || !requestResult->isSuccessful())
         return false;
 
@@ -857,14 +900,16 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
     return true;
 }
 
-QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> > OsmAnd::ResourcesManager_P::getResourcesInRepository() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> >
+OsmAnd::ResourcesManager_P::getResourcesInRepository() const
 {
     QReadLocker scopedLocker(&_resourcesInRepositoryLock);
 
     return detachedOf(_resourcesInRepository);
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> OsmAnd::ResourcesManager_P::getResourceInRepository(const QString& id) const
+std::shared_ptr<const OsmAnd::ResourcesManager_P::ResourceInRepository> OsmAnd::ResourcesManager_P::getResourceInRepository(
+    const QString& id) const
 {
     QReadLocker scopedLocker(&_resourcesInRepositoryLock);
 
@@ -1240,7 +1285,9 @@ bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::installFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
+bool OsmAnd::ResourcesManager_P::installFromRepository(
+    const QString& id,
+    const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
 {
     if (isResourceInstalled(id))
         return false;
@@ -1301,7 +1348,8 @@ bool OsmAnd::ResourcesManager_P::isInstalledResourceOutdated(const QString& id) 
     return outdated;
 }
 
-QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> > OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager::LocalResource> >
+OsmAnd::ResourcesManager_P::getOutdatedInstalledResources() const
 {
     QReadLocker scopedLocker(&_localResourcesLock);
 
@@ -1330,7 +1378,9 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& filePath)
     return updateFromFile(guessedResourceId, filePath);
 }
 
-bool OsmAnd::ResourcesManager_P::updateMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath)
+bool OsmAnd::ResourcesManager_P::updateMapRegionFromFile(
+    std::shared_ptr<const InstalledResource>& resource,
+    const QString& filePath)
 {
     if (!resource->_lock.lockForWriting())
         return false;
@@ -1343,7 +1393,9 @@ bool OsmAnd::ResourcesManager_P::updateMapRegionFromFile(std::shared_ptr<const I
     return ok;
 }
 
-bool OsmAnd::ResourcesManager_P::updateRoadMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath)
+bool OsmAnd::ResourcesManager_P::updateRoadMapRegionFromFile(
+    std::shared_ptr<const InstalledResource>& resource,
+    const QString& filePath)
 {
     if (!resource->_lock.lockForWriting())
         return false;
@@ -1356,7 +1408,9 @@ bool OsmAnd::ResourcesManager_P::updateRoadMapRegionFromFile(std::shared_ptr<con
     return ok;
 }
 
-bool OsmAnd::ResourcesManager_P::updateSrtmMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath)
+bool OsmAnd::ResourcesManager_P::updateSrtmMapRegionFromFile(
+    std::shared_ptr<const InstalledResource>& resource,
+    const QString& filePath)
 {
     if (!resource->_lock.lockForWriting())
         return false;
@@ -1369,7 +1423,9 @@ bool OsmAnd::ResourcesManager_P::updateSrtmMapRegionFromFile(std::shared_ptr<con
     return ok;
 }
 
-bool OsmAnd::ResourcesManager_P::updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath)
+bool OsmAnd::ResourcesManager_P::updateVoicePackFromFile(
+    std::shared_ptr<const InstalledResource>& resource,
+    const QString& filePath)
 {
     if (!resource->_lock.lockForWriting())
         return false;
@@ -1382,7 +1438,9 @@ bool OsmAnd::ResourcesManager_P::updateVoicePackFromFile(std::shared_ptr<const I
     return ok;
 }
 
-bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString& filePath)
+bool OsmAnd::ResourcesManager_P::updateFromFile(
+    const QString& id,
+    const QString& filePath)
 {
     QWriteLocker scopedLocker(&_localResourcesLock);
 
@@ -1425,7 +1483,9 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(const QString& id, const QString
     return true;
 }
 
-bool OsmAnd::ResourcesManager_P::updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
+bool OsmAnd::ResourcesManager_P::updateFromRepository(
+    const QString& id,
+    const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
 {
     const auto& resourceInRepository = getResourceInRepository(id);
     if (!resourceInRepository)
@@ -1463,7 +1523,8 @@ OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::~OnlineTileSourcesProxy()
 {
 }
 
-QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source> > OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getCollection() const
+QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source> >
+OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getCollection() const
 {
     QHash< QString, std::shared_ptr<const OnlineTileSourcesProxy::Source> > result;
 
@@ -1492,7 +1553,8 @@ QHash< QString, std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSour
     return result;
 }
 
-std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source> OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getSourceByName(const QString& sourceName) const
+std::shared_ptr<const OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::Source>
+OsmAnd::ResourcesManager_P::OnlineTileSourcesProxy::getSourceByName(const QString& sourceName) const
 {
     {
         QReadLocker scopedLocker(&owner->_localResourcesLock);
@@ -1694,7 +1756,8 @@ OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::~MapStylesCollectionProxy(
 {
 }
 
-QList< std::shared_ptr<const OsmAnd::UnresolvedMapStyle> > OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getCollection() const
+QList< std::shared_ptr<const OsmAnd::UnresolvedMapStyle> >
+OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getCollection() const
 {
     QList< std::shared_ptr<const UnresolvedMapStyle> > result;
 
@@ -1723,16 +1786,15 @@ QList< std::shared_ptr<const OsmAnd::UnresolvedMapStyle> > OsmAnd::ResourcesMana
     return result;
 }
 
-std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getEditableStyleByName(const QString& styleName) const
+std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getEditableStyleByName(
+    const QString& styleName) const
 {
-    auto resourceId = styleName;
-    if (!resourceId.endsWith(QLatin1String(".render.xml")))
-        resourceId.append(QLatin1String(".render.xml"));
+    const auto resourceId = normalizeStyleName(styleName);
 
     {
         QReadLocker scopedLocker(&owner->_localResourcesLock);
 
-        // Unmanaged resources override installed resoucres
+        // Unmanaged resources override installed resources
         for (const auto& localResource : constOf(owner->_localResources))
         {
             if (localResource->type != ResourceType::MapStyle)
@@ -1748,7 +1810,7 @@ std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStyle
             return mapStyle;
         }
 
-        // Installed resoures override builtin resources
+        // Installed resources override built-in resources
         for (const auto& localResource : constOf(owner->_localResources))
         {
             if (localResource->type != ResourceType::MapStyle)
@@ -1781,20 +1843,22 @@ std::shared_ptr<OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStyle
     return nullptr;
 }
 
-std::shared_ptr<const OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getStyleByName(const QString& name) const
+std::shared_ptr<const OsmAnd::UnresolvedMapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getStyleByName(
+    const QString& name) const
 {
     return getEditableStyleByName(name);
 }
 
-std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getResolvedStyleByName(const QString& name) const
+std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::getResolvedStyleByName(
+    const QString& name) const
 {
-    auto styleName = name.toLower();
-    if (!styleName.endsWith(QLatin1String(".render.xml")))
-        styleName.append(QLatin1String(".render.xml"));
+    const auto styleName = normalizeStyleName(name);
 
     // Get style inheritance chain
     QList< std::shared_ptr<UnresolvedMapStyle> > stylesChain;
     auto style = getEditableStyleByName(name);
+    if (!style)
+        return nullptr;
     while (style)
     {
         stylesChain.push_back(style);
@@ -1836,6 +1900,14 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResourcesManager_P::MapS
     return ResolvedMapStyle::resolveMapStylesChain(copyAs< QList< std::shared_ptr<const UnresolvedMapStyle> > >(stylesChain));
 }
 
+QString OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::normalizeStyleName(const QString& name)
+{
+    auto styleName = name.toLower();
+    if (!styleName.endsWith(QLatin1String(".render.xml")))
+        styleName.append(QLatin1String(".render.xml"));
+    return styleName;
+}
+
 OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::MapStylesPresetsCollectionProxy(ResourcesManager_P* owner_)
     : owner(owner_)
 {
@@ -1845,7 +1917,8 @@ OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::~MapStylesPresetsCo
 {
 }
 
-QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getCollection() const
+QList< std::shared_ptr<const OsmAnd::MapStylePreset> >
+OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getCollection() const
 {
     QList< std::shared_ptr<const MapStylePreset> > result;
 
@@ -1874,7 +1947,8 @@ QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::ResourcesManager_
     return result;
 }
 
-QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getCollectionFor(const QString& styleName) const
+QList< std::shared_ptr<const OsmAnd::MapStylePreset> >
+OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getCollectionFor(const QString& styleName) const
 {
     QList< std::shared_ptr<const MapStylePreset> > result;
 
@@ -1903,7 +1977,9 @@ QList< std::shared_ptr<const OsmAnd::MapStylePreset> > OsmAnd::ResourcesManager_
     return result;
 }
 
-std::shared_ptr<const OsmAnd::MapStylePreset> OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getPreset(const QString& styleName, const QString& presetName) const
+std::shared_ptr<const OsmAnd::MapStylePreset> OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getPreset(
+    const QString& styleName,
+    const QString& presetName) const
 {
     {
         QReadLocker scopedLocker(&owner->_localResourcesLock);

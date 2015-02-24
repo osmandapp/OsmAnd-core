@@ -157,6 +157,7 @@ namespace OsmAnd
         class MapStylesCollectionProxy : public IMapStylesCollection
         {
         private:
+            static QString normalizeStyleName(const QString& name);
             std::shared_ptr<UnresolvedMapStyle> getEditableStyleByName(const QString& name) const;
         protected:
             MapStylesCollectionProxy(ResourcesManager_P* owner);
