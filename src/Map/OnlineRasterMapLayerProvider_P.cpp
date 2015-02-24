@@ -107,10 +107,13 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     }
 
     // Perform synchronous download
+    const auto tileSize = (1u << zoom);
     const auto tileUrl = QString(owner->urlPattern)
         .replace(QLatin1String("${osm_zoom}"), QString::number(zoom))
         .replace(QLatin1String("${osm_x}"), QString::number(tileId.x))
+        .replace(QLatin1String("${osm_x_inv}"), QString::number(tileSize - tileId.x - 1))
         .replace(QLatin1String("${osm_y}"), QString::number(tileId.y))
+        .replace(QLatin1String("${osm_y_inv}"), QString::number(tileSize - tileId.y - 1))
         .replace(QLatin1String("${quadkey}"), Utilities::getQuadKey(tileId.x, tileId.y, zoom));
     std::shared_ptr<const WebClient::RequestResult> requestResult;
     const auto& downloadResult = _downloadManager.downloadData(QUrl(tileUrl), &requestResult);
