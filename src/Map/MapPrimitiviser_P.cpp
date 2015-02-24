@@ -139,7 +139,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > detailedmapCoastlineObjects;
     QList< std::shared_ptr<const MapObject> > basemapMapObjects;
     QList< std::shared_ptr<const MapObject> > basemapCoastlineObjects;
-    bool binaryMapObjectsPresent = false;
+    bool detailedBinaryMapObjectsPresent = false;
     bool roadsPresent = false;
     for (const auto& mapObject : constOf(objects))
     {
@@ -151,7 +151,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         if (const auto binaryMapObject = std::dynamic_pointer_cast<const BinaryMapObject>(mapObject))
         {
             isBasemapObject = binaryMapObject->section->isBasemap;
-            binaryMapObjectsPresent = true;
+            if(!isBasemapObject) 
+            {
+                detailedBinaryMapObjectsPresent = true;
+            }
         }
         else if (const auto road = std::dynamic_pointer_cast<const Road>(mapObject))
         {
@@ -195,7 +198,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
     const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
-    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && !detailedmapMapObjects.isEmpty() && binaryMapObjectsPresent;
+    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && detailedBinaryMapObjectsPresent;
     auto fillEntireArea = true;
     auto shouldAddBasemapCoastlines = true;
     if (detailedmapCoastlinesPresent)
