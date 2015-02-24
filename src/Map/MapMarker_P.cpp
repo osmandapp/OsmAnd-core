@@ -146,7 +146,7 @@ bool OsmAnd::MapMarker_P::applyChanges()
             if (const auto symbol = std::dynamic_pointer_cast<BillboardRasterMapSymbol>(symbol_))
             {
                 symbol->setPosition31(_position);
-                symbol_->modulationColor = _pinIconModulationColor;
+                symbol->modulationColor = _pinIconModulationColor;
             }
 
             if (const auto symbol = std::dynamic_pointer_cast<KeyedOnSurfaceRasterMapSymbol>(symbol_))
