@@ -318,12 +318,17 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
 
     // Obtain primitives
-    const bool detailedDataMissing = (zoom > static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) && detailedmapMapObjects.isEmpty() && detailedmapCoastlineObjects.isEmpty();
+    const bool detailedDataMissing =
+        (zoom > static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) &&
+        detailedmapMapObjects.isEmpty() &&
+        detailedmapCoastlineObjects.isEmpty();
 
     // Check if there is no data to primitivise. Report, clean-up and exit
     const auto mapObjectsCount =
         detailedmapMapObjects.size() +
-        ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap) || detailedDataMissing) ? basemapMapObjects.size() : 0) +
+        ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap) || detailedDataMissing)
+            ? basemapMapObjects.size()
+            : 0) +
         polygonizedCoastlineObjects.size();
     if (mapObjectsCount == 0)
     {
