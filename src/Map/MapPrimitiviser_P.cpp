@@ -195,7 +195,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > polygonizedCoastlineObjects;
     const auto basemapCoastlinesPresent = !basemapCoastlineObjects.isEmpty();
     const auto detailedmapCoastlinesPresent = !detailedmapCoastlineObjects.isEmpty();
-    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && binaryMapObjectsPresent;
+    const auto detailedLandDataPresent = zoom >= MapPrimitiviser::DetailedLandDataMinZoom && !detailedmapMapObjects.isEmpty() && binaryMapObjectsPresent;
     auto fillEntireArea = true;
     auto shouldAddBasemapCoastlines = true;
     if (detailedmapCoastlinesPresent)
