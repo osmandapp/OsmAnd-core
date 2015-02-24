@@ -304,7 +304,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "ios")
 		"${CORE_GRAPHICS_LIBRARY}/CoreGraphics"
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "linux")
-	file(GLOB src_gpu_gl_unix "upstream.patched/src/gpu/gl/unix/*")
+	file(GLOB src_gpu_gl_glx "upstream.patched/src/gpu/gl/glx/*")
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/fonts/SkFontMgr_fontconfig.cpp"
 		"upstream.patched/src/ports/SkDebug_stdio.cpp"
@@ -318,7 +318,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
 		"upstream.patched/src/utils/SkThreadUtils_pthread_linux.cpp"
-		${src_gpu_gl_unix}
+		${src_gpu_gl_glx}
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_UNIX
