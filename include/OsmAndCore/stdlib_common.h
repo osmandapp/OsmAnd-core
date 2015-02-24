@@ -6,6 +6,7 @@
 #include <memory>
 #include <chrono>
 #include <cassert>
+#include <algorithm>
 
 namespace std
 {
