@@ -258,6 +258,9 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 		-DSK_BUILD_FOR_MAC
 		-DSK_FONTHOST_USES_FONTMGR
 	)
+	set(target_specific_definitions_private ${target_specific_definitions_private}
+		-DSK_USE_POSIX_THREADS
+	)
 	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
 	find_library(CORE_TEXT_LIBRARY CoreText)
 	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
@@ -289,6 +292,9 @@ elseif (CMAKE_TARGET_OS STREQUAL "ios")
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_IOS
 	)
+	set(target_specific_definitions_private ${target_specific_definitions_private}
+		-DSK_USE_POSIX_THREADS
+	)
 	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
 	find_library(CORE_TEXT_LIBRARY CoreText)
 	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
@@ -316,6 +322,9 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 	)
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_UNIX
+	)
+	set(target_specific_definitions_private ${target_specific_definitions_private}
+		-DSK_USE_POSIX_THREADS
 	)
 	set(target_specific_dependencies ${target_specific_dependencies}
 		freetype2_static
@@ -349,6 +358,9 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 	set(target_specific_definitions_public ${target_specific_definitions_public}
 		-DSK_BUILD_FOR_ANDROID
 		-DANDROID_LARGE_MEMORY_DEVICE
+	)
+	set(target_specific_definitions_private ${target_specific_definitions_private}
+		-DSK_USE_POSIX_THREADS
 	)
 	set(target_specific_dependencies ${target_specific_dependencies}
 		freetype2_static
@@ -433,6 +445,7 @@ add_dependencies(skia_static
 target_compile_definitions(skia_static
 	PRIVATE
 		-DSK_IGNORE_ETC1_SUPPORT
+		${target_specific_definitions_private}
 	PUBLIC
 	    -DSK_RELEASE
 		${target_specific_definitions_public}
