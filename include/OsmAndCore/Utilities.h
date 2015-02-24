@@ -833,6 +833,8 @@ namespace OsmAnd
 
             return result;
         }
+
+        static QString getQuadKey(const uint32_t x, const uint32_t y, const uint32_t z);
     private:
         Utilities();
         ~Utilities();

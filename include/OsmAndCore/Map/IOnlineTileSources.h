@@ -36,6 +36,7 @@ namespace OsmAnd
             unsigned int maxConcurrentDownloads;
             unsigned int tileSize;
             AlphaChannelPresence alphaChannelPresence;
+            float tileDensityFactor;
 
         private:
             Q_DISABLE_COPY_AND_MOVE(Source);

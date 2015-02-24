@@ -29,7 +29,7 @@ namespace OsmAnd
         OnlineRasterMapLayerProvider_P(OnlineRasterMapLayerProvider* owner);
 
         mutable QMutex _localCachePathMutex;
-        QDir _localCachePath;
+        QString _localCachePath;
         bool _networkAccessAllowed;
 
         mutable QMutex _tilesInProcessMutex;

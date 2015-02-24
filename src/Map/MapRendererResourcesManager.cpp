@@ -67,11 +67,9 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
 #if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
     _resourcesRequestWorkersPool.setMaxThreadCount(1);
 #endif //OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-#if OSMAND_DEBUG
-    LogPrintf(LogSeverityLevel::Info,
+    LogPrintf(LogSeverityLevel::Verbose,
         "Map renderer will use max %d worker thread(s) to process requests",
         _resourcesRequestWorkersPool.maxThreadCount());
-#endif
 
     // Start worker thread
     _workerThreadIsAlive = true;

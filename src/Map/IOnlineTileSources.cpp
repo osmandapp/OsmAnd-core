@@ -24,18 +24,24 @@ std::shared_ptr<OsmAnd::OnlineRasterMapLayerProvider> OsmAnd::IOnlineTileSources
         source->maxZoom,
         source->maxConcurrentDownloads,
         source->tileSize,
-        source->alphaChannelPresence));
+        source->alphaChannelPresence,
+        source->tileDensityFactor));
 }
 
 OsmAnd::IOnlineTileSources::Source::Source(const QString& name_)
-    : name(name_)
-    , title(name)
+    : Source(name_, name_)
 {
 }
 
 OsmAnd::IOnlineTileSources::Source::Source(const QString& name_, const QString& title_)
     : name(name_)
     , title(title_)
+    , minZoom(MinZoomLevel)
+    , maxZoom(MaxZoomLevel)
+    , maxConcurrentDownloads(0)
+    , tileSize(256)
+    , alphaChannelPresence(AlphaChannelPresence::Unknown)
+    , tileDensityFactor(1.0f)
 {
 }
 

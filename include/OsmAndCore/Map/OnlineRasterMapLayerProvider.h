@@ -23,10 +23,15 @@ namespace OsmAnd
         PrivateImplementation<OnlineRasterMapLayerProvider_P> _p;
     protected:
     public:
-        OnlineRasterMapLayerProvider(const QString& name, const QString& urlPattern,
-            const ZoomLevel minZoom = MinZoomLevel, const ZoomLevel maxZoom = MaxZoomLevel,
-            const uint32_t maxConcurrentDownloads = 1, const uint32_t providerTileSize = 256,
-            const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown);
+        OnlineRasterMapLayerProvider(
+            const QString& name,
+            const QString& urlPattern,
+            const ZoomLevel minZoom = MinZoomLevel,
+            const ZoomLevel maxZoom = MaxZoomLevel,
+            const unsigned int maxConcurrentDownloads = 1,
+            const unsigned int tileSize = 256,
+            const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown,
+            const float tileDensityFactor = 1.0f);
         virtual ~OnlineRasterMapLayerProvider();
 
         const QString name;
@@ -37,12 +42,19 @@ namespace OsmAnd
         const ZoomLevel minZoom;
         const ZoomLevel maxZoom;
 #endif // !defined(SWIG)
-        const uint32_t maxConcurrentDownloads;
-        const uint32_t providerTileSize;
+        const unsigned int maxConcurrentDownloads;
+#if !defined(SWIG)
+        //NOTE: This stuff breaks SWIG due to conflict with get*();
+        const unsigned int tileSize;
+#endif // !defined(SWIG)
         const AlphaChannelPresence alphaChannelPresence;
+#if !defined(SWIG)
+        //NOTE: This stuff breaks SWIG due to conflict with get*();
+        const float tileDensityFactor;
+#endif // !defined(SWIG)
 
-        void setLocalCachePath(const QDir& localCachePath, const bool appendPathSuffix = true);
-        const QDir& localCachePath;
+        void setLocalCachePath(const QString& localCachePath, const bool appendPathSuffix = true);
+        const QString& localCachePath;
 
         void setNetworkAccessPermission(bool allowed);
         const bool& networkAccessAllowed;

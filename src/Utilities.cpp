@@ -509,3 +509,19 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
     for(const auto& edge : constOf(edges))
         delete edge;
 }
+
+QString OsmAnd::Utilities::getQuadKey(const uint32_t x, const uint32_t y, const uint32_t z)
+{
+    QString quadkey;
+    for (auto level = z; level > 0; level--)
+    {
+        const auto mask = 1u << (level - 1);
+        auto value = '0';
+        if ((x & mask) != 0)
+            value += 1;
+        if ((y & mask) != 0)
+            value += 2;
+        quadkey += QLatin1Char(value);
+    }
+    return quadkey;
+}

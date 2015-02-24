@@ -766,7 +766,8 @@ bool OsmAnd::ResourcesManager_P::parseRepository(QXmlStreamReader& xmlReader, QL
                     const auto& installedResource = std::static_pointer_cast<const InstalledResource>(localResource);
                     if (installedResource->timestamp > timestamp)
                     {
-                        LogPrintf(LogSeverityLevel::Warning, "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
+                        LogPrintf(LogSeverityLevel::Warning,
+                            "Installed resource '%s' is newer than in repository (%" PRIu64 " > %" PRIu64 ")",
                             qPrintable(resourceId),
                             installedResource->timestamp,
                             timestamp);

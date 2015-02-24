@@ -10,8 +10,9 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     const ZoomLevel minZoom_ /*= MinZoomLevel*/,
     const ZoomLevel maxZoom_ /*= MaxZoomLevel*/,
     const uint32_t maxConcurrentDownloads_ /*= 1*/,
-    const uint32_t providerTileSize_ /*= 256*/,
-    const AlphaChannelPresence alphaChannelPresence_ /*= AlphaChannelPresence::Undefined*/)
+    const uint32_t tileSize_ /*= 256*/,
+    const AlphaChannelPresence alphaChannelPresence_ /*= AlphaChannelPresence::Undefined*/,
+    const float tileDensityFactor_ /*= 1.0f*/)
     : _p(new OnlineRasterMapLayerProvider_P(this))
     , localCachePath(_p->_localCachePath)
     , networkAccessAllowed(_p->_networkAccessAllowed)
@@ -21,22 +22,26 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     , minZoom(minZoom_)
     , maxZoom(maxZoom_)
     , maxConcurrentDownloads(maxConcurrentDownloads_)
-    , providerTileSize(providerTileSize_)
+    , tileSize(tileSize_)
     , alphaChannelPresence(alphaChannelPresence_)
+    , tileDensityFactor(tileDensityFactor_)
 {
-    _p->_localCachePath =
-        QDir(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(pathSuffix));
+    _p->_localCachePath = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).absoluteFilePath(pathSuffix);
+    if (_p->_localCachePath.isEmpty())
+        _p->_localCachePath = QLatin1String(".");
 }
 
 OsmAnd::OnlineRasterMapLayerProvider::~OnlineRasterMapLayerProvider()
 {
 }
 
-void OsmAnd::OnlineRasterMapLayerProvider::setLocalCachePath(const QDir& localCachePath, const bool appendPathSuffix /*= true*/)
+void OsmAnd::OnlineRasterMapLayerProvider::setLocalCachePath(
+    const QString& localCachePath,
+    const bool appendPathSuffix /*= true*/)
 {
     QMutexLocker scopedLocker(&_p->_localCachePathMutex);
     _p->_localCachePath = appendPathSuffix
-        ? QDir(localCachePath.absoluteFilePath(pathSuffix))
+        ? QDir(localCachePath).absoluteFilePath(pathSuffix)
         : localCachePath;
 }
 
@@ -69,13 +74,12 @@ OsmAnd::MapStubStyle OsmAnd::OnlineRasterMapLayerProvider::getDesiredStubsStyle(
 
 float OsmAnd::OnlineRasterMapLayerProvider::getTileDensityFactor() const
 {
-    // Online tile providers do not have any idea about our tile density
-    return 1.0f;
+    return tileDensityFactor;
 }
 
 uint32_t OsmAnd::OnlineRasterMapLayerProvider::getTileSize() const
 {
-    return providerTileSize;
+    return tileSize;
 }
 
 OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getMinZoom() const

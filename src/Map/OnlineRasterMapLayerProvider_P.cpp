@@ -15,6 +15,7 @@
 #include "restore_internal_warnings.h"
 
 #include "Logging.h"
+#include "Utilities.h"
 
 OsmAnd::OnlineRasterMapLayerProvider_P::OnlineRasterMapLayerProvider_P(OnlineRasterMapLayerProvider* owner_)
     : owner(owner_)
@@ -51,7 +52,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     QFileInfo localFile;
     {
         QMutexLocker scopedLocker(&_localCachePathMutex);
-        localFile.setFile(_localCachePath.absoluteFilePath(tileLocalRelativePath));
+        localFile.setFile(QDir(_localCachePath).absoluteFilePath(tileLocalRelativePath));
     }
     if (localFile.exists())
     {
@@ -67,15 +68,21 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
 
         const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
         SkFILEStream fileStream(qPrintable(localFile.absoluteFilePath()));
-        if (!SkImageDecoder::DecodeStream(&fileStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+        if (!SkImageDecoder::DecodeStream(
+                &fileStream,
+                bitmap.get(),
+                SkColorType::kUnknown_SkColorType,
+                SkImageDecoder::kDecodePixels_Mode))
         {
-            LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file '%s'", qPrintable(localFile.absoluteFilePath()));
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to decode tile file '%s'",
+                qPrintable(localFile.absoluteFilePath()));
 
             return false;
         }
 
         assert(bitmap->width() == bitmap->height());
-        assert(bitmap->width() == owner->providerTileSize);
+        assert(bitmap->width() == owner->tileSize);
 
         // Return tile
         outTiledData.reset(new OnlineRasterMapLayerProvider::Data(
@@ -100,11 +107,11 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     }
 
     // Perform synchronous download
-    auto tileUrl = owner->urlPattern;
-    tileUrl
+    const auto tileUrl = QString(owner->urlPattern)
         .replace(QLatin1String("${osm_zoom}"), QString::number(zoom))
         .replace(QLatin1String("${osm_x}"), QString::number(tileId.x))
-        .replace(QLatin1String("${osm_y}"), QString::number(tileId.y));
+        .replace(QLatin1String("${osm_y}"), QString::number(tileId.y))
+        .replace(QLatin1String("${quadkey}"), Utilities::getQuadKey(tileId.x, tileId.y, zoom));
     std::shared_ptr<const WebClient::RequestResult> requestResult;
     const auto& downloadResult = _downloadManager.downloadData(QUrl(tileUrl), &requestResult);
 
@@ -116,7 +123,10 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     {
         const auto httpStatus = std::dynamic_pointer_cast<const WebClient::HttpRequestResult>(requestResult)->httpStatusCode;
 
-        LogPrintf(LogSeverityLevel::Warning, "Failed to download tile from %s (HTTP status %d)", qPrintable(tileUrl), httpStatus);
+        LogPrintf(LogSeverityLevel::Warning,
+            "Failed to download tile from %s (HTTP status %d)",
+            qPrintable(tileUrl),
+            httpStatus);
 
         // 404 means that this tile does not exist, so create a zero file
         if (httpStatus == 404)
@@ -133,7 +143,9 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
             }
             else
             {
-                LogPrintf(LogSeverityLevel::Error, "Failed to mark tile as non-existent with empty file '%s'", qPrintable(localFile.absoluteFilePath()));
+                LogPrintf(LogSeverityLevel::Error,
+                    "Failed to mark tile as non-existent with empty file '%s'",
+                    qPrintable(localFile.absoluteFilePath()));
 
                 // Unlock the tile
                 unlockTile(tileId, zoom);
@@ -147,9 +159,9 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     }
 
     // Obtain all data
-#if OSMAND_DEBUG
-    LogPrintf(LogSeverityLevel::Info, "Downloaded tile from %s", qPrintable(tileUrl));
-#endif
+    LogPrintf(LogSeverityLevel::Verbose,
+        "Downloaded tile from %s",
+        qPrintable(tileUrl));
 
     // Save to a file
     QFile tileFile(localFile.absoluteFilePath());
@@ -158,27 +170,38 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         tileFile.write(downloadResult);
         tileFile.close();
 
-#if OSMAND_DEBUG
-        LogPrintf(LogSeverityLevel::Info, "Saved tile from %s to %s", qPrintable(tileUrl), qPrintable(localFile.absoluteFilePath()));
-#endif
+        LogPrintf(LogSeverityLevel::Verbose,
+            "Saved tile from %s to %s",
+            qPrintable(tileUrl),
+            qPrintable(localFile.absoluteFilePath()));
     }
     else
-        LogPrintf(LogSeverityLevel::Error, "Failed to save tile to '%s'", qPrintable(localFile.absoluteFilePath()));
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to save tile to '%s'",
+            qPrintable(localFile.absoluteFilePath()));
+    }
 
     // Unlock tile, since local storage work is done
     unlockTile(tileId, zoom);
 
     // Decode in-memory
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
-    if (!SkImageDecoder::DecodeMemory(downloadResult.constData(), downloadResult.size(), bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
+    if (!SkImageDecoder::DecodeMemory(
+            downloadResult.constData(), downloadResult.size(),
+            bitmap.get(),
+            SkColorType::kUnknown_SkColorType,
+            SkImageDecoder::kDecodePixels_Mode))
     {
-        LogPrintf(LogSeverityLevel::Error, "Failed to decode tile file from '%s'", qPrintable(tileUrl));
+        LogPrintf(LogSeverityLevel::Error,
+            "Failed to decode tile file from '%s'",
+            qPrintable(tileUrl));
 
         return false;
     }
 
     assert(bitmap->width() == bitmap->height());
-    assert(bitmap->width() == owner->providerTileSize);
+    assert(bitmap->width() == owner->tileSize);
 
     // Return tile
     outTiledData.reset(new OnlineRasterMapLayerProvider::Data(
