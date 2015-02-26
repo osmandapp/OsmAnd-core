@@ -62,8 +62,10 @@ namespace OsmAnd
             double polygonAreaMinimalThreshold;
             unsigned int roadDensityZoomTile;
             unsigned int roadsDensityLimitPerTile;
-            float defaultPathPaddingLeft;
-            float defaultPathPaddingRight;
+            float defaultSymbolPathPaddingLeft;
+            float defaultSymbolPathPaddingRight;
+            float defaultBlockPathPaddingLeft;
+            float defaultBlockPathPaddingRight;
 
         private:
             Q_DISABLE_COPY_AND_MOVE(Context);

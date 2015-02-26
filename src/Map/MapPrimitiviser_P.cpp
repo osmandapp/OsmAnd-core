@@ -2390,8 +2390,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         if (ok)
             text->intersectionMargin = intersectionMargin;
 
-        text->pathPaddingLeft = context.defaultPathPaddingLeft;
-        text->pathPaddingRight = context.defaultPathPaddingRight;
+        text->pathPaddingLeft = context.defaultSymbolPathPaddingLeft;
+        text->pathPaddingRight = context.defaultSymbolPathPaddingRight;
         float pathPadding = 0.0f;
         ok = evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
         if (ok)
@@ -2507,8 +2507,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
             icon->intersectionSize = iconIntersectionSize;
     }
 
-    icon->pathPaddingLeft = context.defaultPathPaddingLeft;
-    icon->pathPaddingRight = context.defaultPathPaddingRight;
+    icon->pathPaddingLeft = context.defaultSymbolPathPaddingLeft;
+    icon->pathPaddingRight = context.defaultSymbolPathPaddingRight;
     float pathPadding = 0.0f;
     ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
     if (ok)
@@ -2544,5 +2544,6 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
     polygonAreaMinimalThreshold = env->getPolygonAreaMinimalThreshold(zoom);
     roadDensityZoomTile = env->getRoadDensityZoomTile(zoom);
     roadsDensityLimitPerTile = env->getRoadsDensityLimitPerTile(zoom);
-    env->obtainDefaultPathPadding(defaultPathPaddingLeft, defaultPathPaddingRight);
+    env->obtainDefaultSymbolPathPadding(defaultSymbolPathPaddingLeft, defaultSymbolPathPaddingRight);
+    env->obtainDefaultBlockPathPadding(defaultBlockPathPaddingLeft, defaultBlockPathPaddingRight);
 }

@@ -100,9 +100,9 @@ namespace OsmAnd
         double getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const;
         unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
         unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;
-        void obtainDefaultPathPadding(float& outLeft, float& outRight) const;
+        void obtainDefaultSymbolPathPadding(float& outLeft, float& outRight) const;
+        void obtainDefaultBlockPathPadding(float& outLeft, float& outRight) const;
         void obtainGlobalPathPadding(float& outLeft, float& outRight) const;
-        float getGlobalPathSymbolsBlockSpacing() const;
         MapStubStyle getDesiredStubsStyle() const;
 
         enum {

@@ -63,14 +63,18 @@ namespace OsmAnd
         std::shared_ptr<const ResolvedMapStyle::Attribute> _roadsDensityLimitPerTileAttribute;
         unsigned int _roadsDensityLimitPerTile;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultPathPaddingAttribute;
-        float _defaultPathPadding;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultSymbolPathPaddingAttribute;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultSymbolPathLeftPaddingAttribute;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultSymbolPathRightPaddingAttribute;
+        float _defaultSymbolPathPadding;
+
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultBlockPathPaddingAttribute;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultBlockPathLeftPaddingAttribute;
+        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultBlockPathRightPaddingAttribute;
+        float _defaultBlockPathPadding;
 
         std::shared_ptr<const ResolvedMapStyle::Attribute> _globalPathPaddingAttribute;
         float _globalPathPadding;
-
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _globalPathSymbolsBlockSpacingAttribute;
-        float _globalPathSymbolsBlockSpacing;
 
         MapStubStyle _desiredStubsStyle;
 
@@ -108,9 +112,9 @@ namespace OsmAnd
         double getPolygonAreaMinimalThreshold(const ZoomLevel zoom) const;
         unsigned int getRoadDensityZoomTile(const ZoomLevel zoom) const;
         unsigned int getRoadsDensityLimitPerTile(const ZoomLevel zoom) const;
-        void obtainDefaultPathPadding(float& outLeft, float& outRight) const;
+        void obtainDefaultSymbolPathPadding(float& outLeft, float& outRight) const;
+        void obtainDefaultBlockPathPadding(float& outLeft, float& outRight) const;
         void obtainGlobalPathPadding(float& outLeft, float& outRight) const;
-        float getGlobalPathSymbolsBlockSpacing() const;
         MapStubStyle getDesiredStubsStyle() const;
 
     friend class OsmAnd::MapPresentationEnvironment;

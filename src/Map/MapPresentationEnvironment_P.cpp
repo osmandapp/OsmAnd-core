@@ -50,14 +50,18 @@ void OsmAnd::MapPresentationEnvironment_P::initialize()
     _roadsDensityLimitPerTileAttribute = owner->resolvedStyle->getAttribute(QLatin1String("roadsDensityLimitPerTile"));
     _roadsDensityLimitPerTile = 0;
 
-    _defaultPathPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultPathPadding"));
-    _defaultPathPadding = 0.0f;
+    _defaultSymbolPathPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultSymbolPathPadding"));
+    _defaultSymbolPathLeftPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultSymbolPathLeftPadding"));
+    _defaultSymbolPathRightPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultSymbolPathRightPadding"));
+    _defaultSymbolPathPadding = 0.0f;
+
+    _defaultBlockPathPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultBlockPathPadding"));
+    _defaultBlockPathLeftPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultBlockPathLeftPadding"));
+    _defaultBlockPathRightPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("defaultBlockPathRightPadding"));
+    _defaultBlockPathPadding = 0.0f;
 
     _globalPathPaddingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("globalPathPadding"));
     _globalPathPadding = 0.0f;
-
-    _globalPathSymbolsBlockSpacingAttribute = owner->resolvedStyle->getAttribute(QLatin1String("globalPathSymbolsBlockSpacing"));
-    _globalPathSymbolsBlockSpacing = 0.0f;
 
     _desiredStubsStyle = MapStubStyle::Unspecified;
 }
@@ -385,21 +389,96 @@ unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadsDensityLimitPerTile(c
     return result;
 }
 
-void OsmAnd::MapPresentationEnvironment_P::obtainDefaultPathPadding(float& outLeft, float& outRight) const
+void OsmAnd::MapPresentationEnvironment_P::obtainDefaultSymbolPathPadding(float& outLeft, float& outRight) const
 {
-    outLeft = outRight = _defaultPathPadding;
+    outLeft = outRight = _defaultSymbolPathPadding;
 
-    if (_defaultPathPaddingAttribute)
+    if (_defaultSymbolPathPaddingAttribute)
     {
         MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
         applyTo(evaluator);
 
         MapStyleEvaluationResult evalResult;
-        if (evaluator.evaluate(_defaultPathPaddingAttribute, &evalResult))
+        if (evaluator.evaluate(_defaultSymbolPathPaddingAttribute, &evalResult))
         {
-            float defaultPathPadding = 0.0f;
-            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, defaultPathPadding))
-                outLeft = outRight = defaultPathPadding;
+            float value = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, value))
+                outLeft = outRight = value;
+        }
+    }
+
+    if (_defaultSymbolPathLeftPaddingAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_defaultSymbolPathLeftPaddingAttribute, &evalResult))
+        {
+            float value = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, value))
+                outLeft = value;
+        }
+    }
+
+    if (_defaultSymbolPathRightPaddingAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_defaultSymbolPathRightPaddingAttribute, &evalResult))
+        {
+            float value = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, value))
+                outRight = value;
+        }
+    }
+}
+
+void OsmAnd::MapPresentationEnvironment_P::obtainDefaultBlockPathPadding(float& outLeft, float& outRight) const
+{
+    outLeft = outRight = _defaultBlockPathPadding;
+
+    if (_defaultBlockPathPaddingAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_defaultBlockPathPaddingAttribute, &evalResult))
+        {
+            float value = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, value))
+                outLeft = outRight = value;
+        }
+    }
+
+    if (_defaultBlockPathLeftPaddingAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_defaultBlockPathLeftPaddingAttribute, &evalResult))
+        {
+            float value = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, value))
+                outLeft = value;
+        }
+    }
+
+    if (_defaultBlockPathRightPaddingAttribute)
+    {
+        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
+        applyTo(evaluator);
+
+        MapStyleEvaluationResult evalResult;
+        if (evaluator.evaluate(_defaultBlockPathRightPaddingAttribute, &evalResult))
+        {
+            float value = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, value))
+                outRight = value;
         }
     }
 }
@@ -416,28 +495,11 @@ void OsmAnd::MapPresentationEnvironment_P::obtainGlobalPathPadding(float& outLef
         MapStyleEvaluationResult evalResult;
         if (evaluator.evaluate(_globalPathPaddingAttribute, &evalResult))
         {
-            float globalPathPadding = 0.0f;
-            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, globalPathPadding))
-                outLeft = outRight = globalPathPadding;
+            float value = 0.0f;
+            if (evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, value))
+                outLeft = outRight = value;
         }
     }
-}
-
-float OsmAnd::MapPresentationEnvironment_P::getGlobalPathSymbolsBlockSpacing() const
-{
-    auto globalPathSymbolsBlockSpacing = _globalPathSymbolsBlockSpacing;
-
-    if (_globalPathSymbolsBlockSpacingAttribute)
-    {
-        MapStyleEvaluator evaluator(owner->resolvedStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
-        applyTo(evaluator);
-
-        MapStyleEvaluationResult evalResult;
-        if (evaluator.evaluate(_globalPathSymbolsBlockSpacingAttribute, &evalResult))
-            evalResult.getFloatValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_FLOAT_VALUE, globalPathSymbolsBlockSpacing);
-    }
-
-    return globalPathSymbolsBlockSpacing;
 }
 
 OsmAnd::MapStubStyle OsmAnd::MapPresentationEnvironment_P::getDesiredStubsStyle() const
