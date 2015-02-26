@@ -37,6 +37,27 @@ bool OsmAnd::MapObjectsSymbolsProvider::obtainData(
     return result;
 }
 
+OsmAnd::IMapDataProvider::SourceType OsmAnd::MapObjectsSymbolsProvider::getSourceType() const
+{
+    const auto underlyingSourceType = primitivesProvider->getSourceType();
+
+    switch (underlyingSourceType)
+    {
+        case IMapDataProvider::SourceType::LocalDirect:
+        case IMapDataProvider::SourceType::LocalGenerated:
+            return IMapDataProvider::SourceType::LocalGenerated;
+
+        case IMapDataProvider::SourceType::NetworkDirect:
+        case IMapDataProvider::SourceType::NetworkGenerated:
+            return IMapDataProvider::SourceType::NetworkGenerated;
+
+        case IMapDataProvider::SourceType::MiscDirect:
+        case IMapDataProvider::SourceType::MiscGenerated:
+        default:
+            return IMapDataProvider::SourceType::MiscGenerated;
+    }
+}
+
 OsmAnd::ZoomLevel OsmAnd::MapObjectsSymbolsProvider::getMinZoom() const
 {
     return primitivesProvider->getMinZoom();

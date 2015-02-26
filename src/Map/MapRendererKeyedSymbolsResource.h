@@ -24,7 +24,11 @@ namespace OsmAnd
     {
     private:
     protected:
-        MapRendererKeyedSymbolsResource(MapRendererResourcesManager* owner, const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection, const Key key);
+        MapRendererKeyedSymbolsResource(
+            MapRendererResourcesManager* owner,
+            const IMapDataProvider::SourceType sourceType,
+            const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection,
+            const Key key);
 
         std::shared_ptr<IMapKeyedSymbolsProvider::Data> _sourceData;
         std::shared_ptr<MapSymbolsGroup> _mapSymbolsGroup;

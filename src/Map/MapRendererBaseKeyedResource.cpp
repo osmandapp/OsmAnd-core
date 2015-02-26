@@ -1,12 +1,13 @@
 #include "MapRendererBaseKeyedResource.h"
 
 OsmAnd::MapRendererBaseKeyedResource::MapRendererBaseKeyedResource(
-    MapRendererResourcesManager* owner,
-    const MapRendererResourceType type,
-    const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection,
-    const Key key)
-    : MapRendererBaseResource(owner, type)
-    , KeyedEntriesCollectionEntryWithState(collection, key)
+    MapRendererResourcesManager* owner_,
+    const MapRendererResourceType type_,
+    const IMapDataProvider::SourceType sourceType_,
+    const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection_,
+    const Key key_)
+    : MapRendererBaseResource(owner_, type_, sourceType_)
+    , KeyedEntriesCollectionEntryWithState(collection_, key_)
 {
 }
 
@@ -18,7 +19,9 @@ OsmAnd::MapRendererBaseKeyedResource::~MapRendererBaseKeyedResource()
         state == MapRendererResourceState::IsBeingUsed ||
         state == MapRendererResourceState::Unloading)
     {
-        LogPrintf(LogSeverityLevel::Error, "Keyed resource for %p still resides in GPU memory. This may cause GPU memory leak", key);
+        LogPrintf(LogSeverityLevel::Error,
+            "Keyed resource for %p still resides in GPU memory. This may cause GPU memory leak",
+            key);
     }
 
     safeUnlink();
@@ -34,7 +37,9 @@ void OsmAnd::MapRendererBaseKeyedResource::setState(const MapRendererResourceSta
     return BaseKeyedEntriesCollectionEntryWithState::setState(newState);
 }
 
-bool OsmAnd::MapRendererBaseKeyedResource::setStateIf(const MapRendererResourceState testState, const MapRendererResourceState newState)
+bool OsmAnd::MapRendererBaseKeyedResource::setStateIf(
+    const MapRendererResourceState testState,
+    const MapRendererResourceState newState)
 {
     return BaseKeyedEntriesCollectionEntryWithState::setStateIf(testState, newState);
 }

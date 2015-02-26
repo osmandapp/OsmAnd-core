@@ -31,6 +31,7 @@ namespace OsmAnd
         MapRendererBaseKeyedResource(
             MapRendererResourcesManager* owner,
             const MapRendererResourceType type,
+            const IMapDataProvider::SourceType sourceType,
             const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection,
             const Key key);
 

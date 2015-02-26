@@ -70,6 +70,8 @@ namespace OsmAnd
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
+
+        virtual SourceType getSourceType() const;
     };
 }
 

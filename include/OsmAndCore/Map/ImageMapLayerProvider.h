@@ -62,6 +62,9 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             MapStubStyle,
             getDesiredStubsStyle);
+        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
+            IMapDataProvider::SourceType,
+            getSourceType);
     SWIG_EMIT_DIRECTOR_END(ImageMapLayerProvider);
 }
 

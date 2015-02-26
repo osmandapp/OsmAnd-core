@@ -28,6 +28,7 @@ namespace OsmAnd
         MapRendererBaseTiledResource(
             MapRendererResourcesManager* owner,
             const MapRendererResourceType type,
+            const IMapDataProvider::SourceType sourceType,
             const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
             const TileId tileId,
             const ZoomLevel zoom);

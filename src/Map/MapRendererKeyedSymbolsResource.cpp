@@ -11,8 +11,12 @@
 #include "MapRendererResourcesManager.h"
 #include "QKeyValueIterator.h"
 
-OsmAnd::MapRendererKeyedSymbolsResource::MapRendererKeyedSymbolsResource(MapRendererResourcesManager* owner, const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection, const Key key)
-    : MapRendererBaseKeyedResource(owner, MapRendererResourceType::Symbols, collection, key)
+OsmAnd::MapRendererKeyedSymbolsResource::MapRendererKeyedSymbolsResource(
+    MapRendererResourcesManager* owner_,
+    const IMapDataProvider::SourceType sourceType_,
+    const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection_,
+    const Key key_)
+    : MapRendererBaseKeyedResource(owner_, MapRendererResourceType::Symbols, sourceType_, collection_, key_)
 {
 }
 

@@ -43,6 +43,11 @@ bool OsmAnd::ObfMapObjectsProvider::obtainData(
     return result;
 }
 
+OsmAnd::IMapDataProvider::SourceType OsmAnd::ObfMapObjectsProvider::getSourceType() const
+{
+    return IMapDataProvider::SourceType::LocalDirect;
+}
+
 bool OsmAnd::ObfMapObjectsProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,

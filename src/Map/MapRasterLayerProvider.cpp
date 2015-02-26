@@ -82,6 +82,27 @@ OsmAnd::ZoomLevel OsmAnd::MapRasterLayerProvider::getMaxZoom() const
     return _p->getMaxZoom();
 }
 
+OsmAnd::IMapDataProvider::SourceType OsmAnd::MapRasterLayerProvider::getSourceType() const
+{
+    const auto underlyingSourceType = primitivesProvider->getSourceType();
+
+    switch (underlyingSourceType)
+    {
+        case IMapDataProvider::SourceType::LocalDirect:
+        case IMapDataProvider::SourceType::LocalGenerated:
+            return IMapDataProvider::SourceType::LocalGenerated;
+
+        case IMapDataProvider::SourceType::NetworkDirect:
+        case IMapDataProvider::SourceType::NetworkGenerated:
+            return IMapDataProvider::SourceType::NetworkGenerated;
+
+        case IMapDataProvider::SourceType::MiscDirect:
+        case IMapDataProvider::SourceType::MiscGenerated:
+        default:
+            return IMapDataProvider::SourceType::MiscGenerated;
+    }
+}
+
 OsmAnd::MapRasterLayerProvider::Data::Data(
     const TileId tileId_,
     const ZoomLevel zoom_,

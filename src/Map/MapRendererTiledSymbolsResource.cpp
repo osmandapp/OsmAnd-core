@@ -27,11 +27,12 @@
 #endif // !defined(OSMAND_LOG_MAP_SYMBOLS_TO_GPU_RESOURCES_MAP_REQUESTS)
 
 OsmAnd::MapRendererTiledSymbolsResource::MapRendererTiledSymbolsResource(
-    MapRendererResourcesManager* owner,
-    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
-    const TileId tileId,
-    const ZoomLevel zoom)
-    : MapRendererBaseTiledResource(owner, MapRendererResourceType::Symbols, collection, tileId, zoom)
+    MapRendererResourcesManager* owner_,
+    const IMapDataProvider::SourceType sourceType_,
+    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
+    const TileId tileId_,
+    const ZoomLevel zoom_)
+    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::Symbols, sourceType_, collection_, tileId_, zoom_)
 {
 }
 

@@ -121,29 +121,52 @@
             }
 
 #   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_0(...)
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_1(...) boost::function_traits<void (__VA_ARGS__)>::arg1_type  arg0
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_2(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_1(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg2_type arg1
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_3(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_2(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg3_type arg2
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_4(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_3(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg4_type arg3
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_5(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_4(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg5_type arg4
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_6(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_5(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg6_type arg5
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_7(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_6(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg7_type arg6
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_8(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_7(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg8_type arg7
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_9(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_8(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg9_type arg8
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_10(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_9(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg10_type arg9
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_11(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_10(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg11_type arg10
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_12(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_11(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg12_type arg11
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_13(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_12(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg13_type arg12
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_14(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_13(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg14_type arg13
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_15(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_14(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg15_type arg14
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_16(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_15(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg16_type arg15
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_17(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_16(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg17_type arg16
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_18(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_17(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg18_type arg17
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_19(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_18(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg19_type arg18
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_20(...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_19(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg20_type arg19
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_HELPER2(count, ...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_##count(__VA_ARGS__)
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_HELPER1(count, ...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_HELPER2(count, __VA_ARGS__)
-#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS(count, ...) _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_HELPER1(count, __VA_ARGS__)
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_1(...)                                                                        \
+    boost::function_traits<void (__VA_ARGS__)>::arg1_type  arg0
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_2(...)                                                                        \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_1(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg2_type arg1
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_3(...)                                                                        \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_2(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg3_type arg2
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_4(...)                                                                        \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_3(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg4_type arg3
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_5(...)                                                                        \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_4(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg5_type arg4
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_6(...)                                                                        \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_5(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg6_type arg5
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_7(...)                                                                        \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_6(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg7_type arg6
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_8(...)                                                                        \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_7(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg8_type arg7
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_9(...)                                                                        \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_8(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg9_type arg8
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_10(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_9(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg10_type arg9
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_11(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_10(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg11_type arg10
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_12(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_11(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg12_type arg11
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_13(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_12(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg13_type arg12
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_14(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_13(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg14_type arg13
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_15(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_14(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg15_type arg14
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_16(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_15(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg16_type arg15
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_17(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_16(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg17_type arg16
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_18(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_17(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg18_type arg17
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_19(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_18(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg19_type arg18
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_20(...)                                                                       \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_19(__VA_ARGS__), boost::function_traits<void (__VA_ARGS__)>::arg20_type arg19
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_HELPER2(count, ...)                                                           \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_##count(__VA_ARGS__)
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_HELPER1(count, ...)                                                           \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_HELPER2(count, __VA_ARGS__)
+#   define _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS(count, ...)                                                                   \
+    _SWIG_DIRECTOR_METHOD_UNWRAP_ARGUMENTS_HELPER1(count, __VA_ARGS__)
 
 #   define _SWIG_DIRECTOR_METHOD_PASS_ARGUMENTS_0
 #   define _SWIG_DIRECTOR_METHOD_PASS_ARGUMENTS_1 arg0

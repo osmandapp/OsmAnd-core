@@ -42,3 +42,8 @@ bool OsmAnd::FavoriteLocationsPresenter::obtainData(
 
     return _p->obtainData(key, outKeyedData, queryController);
 }
+
+OsmAnd::IMapDataProvider::SourceType OsmAnd::FavoriteLocationsPresenter::getSourceType() const
+{
+    return IMapDataProvider::SourceType::MiscDirect;
+}

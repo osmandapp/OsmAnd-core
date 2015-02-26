@@ -1,13 +1,14 @@
 #include "MapRendererBaseTiledResource.h"
 
 OsmAnd::MapRendererBaseTiledResource::MapRendererBaseTiledResource(
-    MapRendererResourcesManager* owner,
-    const MapRendererResourceType type,
-    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
-    const TileId tileId,
-    const ZoomLevel zoom)
-    : MapRendererBaseResource(owner, type)
-    , TiledEntriesCollectionEntryWithState(collection, tileId, zoom)
+    MapRendererResourcesManager* owner_,
+    const MapRendererResourceType type_,
+    const IMapDataProvider::SourceType sourceType_,
+    const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
+    const TileId tileId_,
+    const ZoomLevel zoom_)
+    : MapRendererBaseResource(owner_, type_, sourceType_)
+    , TiledEntriesCollectionEntryWithState(collection_, tileId_, zoom_)
 {
 }
 
@@ -19,7 +20,11 @@ OsmAnd::MapRendererBaseTiledResource::~MapRendererBaseTiledResource()
         state == MapRendererResourceState::IsBeingUsed ||
         state == MapRendererResourceState::Unloading)
     {
-        LogPrintf(LogSeverityLevel::Error, "Tiled resource for %dx%d@%d still resides in GPU memory. This may cause GPU memory leak", tileId.x, tileId.y, zoom);
+        LogPrintf(LogSeverityLevel::Error,
+            "Tiled resource for %dx%d@%d still resides in GPU memory. This may cause GPU memory leak",
+            tileId.x,
+            tileId.y,
+            zoom);
     }
 
     safeUnlink();
@@ -35,7 +40,9 @@ void OsmAnd::MapRendererBaseTiledResource::setState(const MapRendererResourceSta
     return BaseTilesCollectionEntryWithState::setState(newState);
 }
 
-bool OsmAnd::MapRendererBaseTiledResource::setStateIf(const MapRendererResourceState testState, const MapRendererResourceState newState)
+bool OsmAnd::MapRendererBaseTiledResource::setStateIf(
+    const MapRendererResourceState testState,
+    const MapRendererResourceState newState)
 {
     return BaseTilesCollectionEntryWithState::setStateIf(testState, newState);
 }

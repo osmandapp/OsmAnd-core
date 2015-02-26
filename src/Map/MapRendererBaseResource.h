@@ -23,7 +23,10 @@ namespace OsmAnd
     private:
         bool _isJunk;
     protected:
-        MapRendererBaseResource(MapRendererResourcesManager* owner, const MapRendererResourceType type);
+        MapRendererBaseResource(
+            MapRendererResourcesManager* const owner,
+            const MapRendererResourceType type,
+            const IMapDataProvider::SourceType sourceType);
 
         Concurrent::Task* _requestTask;
 
@@ -46,6 +49,7 @@ namespace OsmAnd
 
         MapRendererResourcesManager* const resourcesManager;
         const MapRendererResourceType type;
+        const IMapDataProvider::SourceType sourceType;
 
         const bool& isJunk;
 

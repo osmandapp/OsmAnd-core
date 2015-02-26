@@ -54,6 +54,27 @@ bool OsmAnd::MapPrimitivesProvider::obtainData(
     return result;
 }
 
+OsmAnd::IMapDataProvider::SourceType OsmAnd::MapPrimitivesProvider::getSourceType() const
+{
+    const auto underlyingSourceType = mapObjectsProvider->getSourceType();
+
+    switch (underlyingSourceType)
+    {
+        case IMapDataProvider::SourceType::LocalDirect:
+        case IMapDataProvider::SourceType::LocalGenerated:
+            return IMapDataProvider::SourceType::LocalGenerated;
+
+        case IMapDataProvider::SourceType::NetworkDirect:
+        case IMapDataProvider::SourceType::NetworkGenerated:
+            return IMapDataProvider::SourceType::NetworkGenerated;
+
+        case IMapDataProvider::SourceType::MiscDirect:
+        case IMapDataProvider::SourceType::MiscGenerated:
+        default:
+            return IMapDataProvider::SourceType::MiscGenerated;
+    }
+}
+
 bool OsmAnd::MapPrimitivesProvider::obtainData(
     const TileId tileId,
     const ZoomLevel zoom,

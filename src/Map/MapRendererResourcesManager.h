@@ -55,7 +55,7 @@ namespace OsmAnd
     private:
         // Resource-requests related:
         const Concurrent::TaskHost::Bridge _taskHostBridge;
-        QThreadPool _resourcesRequestWorkersPool;
+        std::array<QThreadPool, IMapDataProvider::SourceTypesCount> _resourcesRequestWorkersPools;
         mutable QAtomicInt _resourcesRequestTasksCounter;
         class ResourceRequestTask : public Concurrent::HostedTask
         {
@@ -119,8 +119,14 @@ namespace OsmAnd
         bool checkForUpdatesAndApply() const;
         void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
-        void requestNeededTiledResources(const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection, const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
-        void requestNeededKeyedResources(const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection);
+        void requestNeededTiledResources(
+            const IMapDataProvider::SourceType sourceType,
+            const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
+            const QSet<TileId>& activeTiles,
+            const ZoomLevel activeZoom);
+        void requestNeededKeyedResources(
+            const IMapDataProvider::SourceType sourceType,
+            const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection);
         void requestNeededResource(const std::shared_ptr<MapRendererBaseResource>& resource);
         void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         bool cleanupJunkResource(const std::shared_ptr<MapRendererBaseResource>& resource, bool& needsResourcesUploadOrUnload);
