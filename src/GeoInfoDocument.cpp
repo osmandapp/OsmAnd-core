@@ -42,14 +42,6 @@ OsmAnd::GeoInfoDocument::LocationMark::~LocationMark()
 {
 }
 
-OsmAnd::GeoInfoDocument::TrackPoint::TrackPoint()
-{
-}
-
-OsmAnd::GeoInfoDocument::TrackPoint::~TrackPoint()
-{
-}
-
 OsmAnd::GeoInfoDocument::TrackSegment::TrackSegment()
 {
 }
@@ -63,14 +55,6 @@ OsmAnd::GeoInfoDocument::Track::Track()
 }
 
 OsmAnd::GeoInfoDocument::Track::~Track()
-{
-}
-
-OsmAnd::GeoInfoDocument::RoutePoint::RoutePoint()
-{
-}
-
-OsmAnd::GeoInfoDocument::RoutePoint::~RoutePoint()
 {
 }
 

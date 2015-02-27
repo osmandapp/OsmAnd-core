@@ -86,6 +86,7 @@ namespace OsmAnd
             double magneticVariation;
             double geoidHeight;
             QString source;
+            QString category;
             QString symbol;
             GpxFixType fixType;
             int satellitesUsedForFixCalculation;
@@ -96,22 +97,11 @@ namespace OsmAnd
             int dgpsStationId;
         };
 
-        struct OSMAND_CORE_API GpxTrkPt : public TrackPoint
+        struct OSMAND_CORE_API GpxTrkPt : public GpxWpt
         {
             GpxTrkPt();
             virtual ~GpxTrkPt();
 
-            double magneticVariation;
-            double geoidHeight;
-            QString source;
-            QString symbol;
-            GpxFixType fixType;
-            int satellitesUsedForFixCalculation;
-            double horizontalDilutionOfPrecision;
-            double verticalDilutionOfPrecision;
-            double positionDilutionOfPrecision;
-            double ageOfGpsData;
-            int dgpsStationId;
         };
 
         struct OSMAND_CORE_API GpxTrkSeg : public TrackSegment
@@ -129,22 +119,10 @@ namespace OsmAnd
             int slotNumber;
         };
 
-        struct OSMAND_CORE_API GpxRtePt : public RoutePoint
+        struct OSMAND_CORE_API GpxRtePt : public GpxWpt
         {
             GpxRtePt();
             virtual ~GpxRtePt();
-
-            double magneticVariation;
-            double geoidHeight;
-            QString source;
-            QString symbol;
-            GpxFixType fixType;
-            int satellitesUsedForFixCalculation;
-            double horizontalDilutionOfPrecision;
-            double verticalDilutionOfPrecision;
-            double positionDilutionOfPrecision;
-            double ageOfGpsData;
-            int dgpsStationId;
         };
 
         struct OSMAND_CORE_API GpxRte : public Route

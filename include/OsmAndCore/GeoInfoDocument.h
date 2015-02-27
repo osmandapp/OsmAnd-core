@@ -66,18 +66,12 @@ namespace OsmAnd
             Ref<ExtraData> extraData;
         };
 
-        struct OSMAND_CORE_API TrackPoint : public LocationMark
-        {
-            TrackPoint();
-            virtual ~TrackPoint();
-        };
-
         struct OSMAND_CORE_API TrackSegment
         {
             TrackSegment();
             virtual ~TrackSegment();
 
-            QList< Ref<TrackPoint> > points;
+            QList< Ref<LocationMark> > points;
             Ref<ExtraData> extraData;
         };
 
@@ -95,12 +89,6 @@ namespace OsmAnd
             Ref<ExtraData> extraData;
         };
 
-        struct OSMAND_CORE_API RoutePoint : public LocationMark
-        {
-            RoutePoint();
-            virtual ~RoutePoint();
-        };
-
         struct OSMAND_CORE_API Route
         {
             Route();
@@ -111,7 +99,7 @@ namespace OsmAnd
             QString comment;
             QString type;
             QList< Ref<Link> > links;
-            QList< Ref<RoutePoint> > points;
+            QList< Ref<LocationMark> > points;
             Ref<ExtraData> extraData;
         };
 

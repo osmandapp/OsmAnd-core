@@ -275,7 +275,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         for (const auto& obfFileInfo : constOf(obfFileInfos))
         {
             const auto filePath = obfFileInfo.absoluteFilePath();
-            printf("File %s \n", filePath.toStdString().c_str());
+            printf("Managed File %s \n", qPrintable(filePath));
 
             // Read information from OBF
             const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
@@ -364,7 +364,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         }
     }
 
-    // In unmanaged storage, "*.obf" files can contain anything anything
+    // In unmanaged storage, "*.obf" files can contain anything
     if (isUnmanagedStorage)
     {
         QFileInfoList obfFileInfos;
@@ -374,6 +374,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             const auto filePath = obfFileInfo.absoluteFilePath();
             const auto fileName = obfFileInfo.fileName();
 
+            printf("UnManaged File %s \n", qPrintable(filePath));
             // Read information from OBF
             const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
             const auto obfInfo = ObfReader(obfFile).obtainInfo();
@@ -538,7 +539,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     if (isUnmanagedStorage)
     {
         QFileInfoList mapStylesPresetsFileInfos;
-        Utilities::findDirectories(
+        Utilities::findFiles(
             storageDir,
             QStringList() << QLatin1String("*.map_styles_presets.xml"),
             mapStylesPresetsFileInfos,
@@ -575,7 +576,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     if (isUnmanagedStorage)
     {
         QFileInfoList onlineTileSourcesFileInfos;
-        Utilities::findDirectories(
+        Utilities::findFiles(
             storageDir,
             QStringList() << QLatin1String("*.online_tile_sources.xml"),
             onlineTileSourcesFileInfos,

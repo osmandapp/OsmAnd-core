@@ -779,6 +779,38 @@ std::shared_ptr<OsmAnd::GpxDocument> OsmAnd::GpxDocument::loadFrom(QXmlStreamRea
 
                 tokens.push(Token::rte);
             }
+            else if (tagName == QLatin1String("category"))
+            {
+                const auto name = xmlReader.readElementText();
+                
+                if (tokens.isEmpty())
+                {
+                    LogPrintf(
+                              LogSeverityLevel::Warning,
+                              "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <category> tag",
+                              xmlReader.lineNumber(),
+                              xmlReader.columnNumber());
+                    continue;
+                }
+                
+                switch (tokens.top())
+                {
+                    case Token::wpt:
+                        wpt->category = name;
+                        break;
+                    case Token::rtept:
+                        rtept->category = name;
+                        break;
+                        
+                    default:
+                        LogPrintf(
+                                  LogSeverityLevel::Warning,
+                                  "XML warning (%" PRIi64 ", %" PRIi64 "): unexpected <category> tag",
+                                  xmlReader.lineNumber(),
+                                  xmlReader.columnNumber());
+                        continue;
+                }
+            }
             else if (tagName == QLatin1String("name"))
             {
                 const auto name = xmlReader.readElementText();
@@ -2181,15 +2213,6 @@ OsmAnd::GpxDocument::GpxWpt::~GpxWpt()
 }
 
 OsmAnd::GpxDocument::GpxTrkPt::GpxTrkPt()
-    : magneticVariation(std::numeric_limits<double>::quiet_NaN())
-    , geoidHeight(std::numeric_limits<double>::quiet_NaN())
-    , fixType(GpxFixType::Unknown)
-    , satellitesUsedForFixCalculation(-1)
-    , horizontalDilutionOfPrecision(std::numeric_limits<double>::quiet_NaN())
-    , verticalDilutionOfPrecision(std::numeric_limits<double>::quiet_NaN())
-    , positionDilutionOfPrecision(std::numeric_limits<double>::quiet_NaN())
-    , ageOfGpsData(std::numeric_limits<double>::quiet_NaN())
-    , dgpsStationId(-1)
 {
 }
 
@@ -2215,15 +2238,6 @@ OsmAnd::GpxDocument::GpxTrk::~GpxTrk()
 }
 
 OsmAnd::GpxDocument::GpxRtePt::GpxRtePt()
-    : magneticVariation(std::numeric_limits<double>::quiet_NaN())
-    , geoidHeight(std::numeric_limits<double>::quiet_NaN())
-    , fixType(GpxFixType::Unknown)
-    , satellitesUsedForFixCalculation(-1)
-    , horizontalDilutionOfPrecision(std::numeric_limits<double>::quiet_NaN())
-    , verticalDilutionOfPrecision(std::numeric_limits<double>::quiet_NaN())
-    , positionDilutionOfPrecision(std::numeric_limits<double>::quiet_NaN())
-    , ageOfGpsData(std::numeric_limits<double>::quiet_NaN())
-    , dgpsStationId(-1)
 {
 }
 

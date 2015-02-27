@@ -201,7 +201,7 @@ OsmAnd::GeoInfoPresenter::TrackpointMapObject::TrackpointMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Track>& track_,
     const std::shared_ptr<const GeoInfoDocument::TrackSegment>& trackSegment_,
-    const std::shared_ptr<const GeoInfoDocument::TrackPoint>& trackpoint_)
+    const std::shared_ptr<const GeoInfoDocument::LocationMark>& trackpoint_)
     : MapObject(geoInfoDocument_)
     , track(track_)
     , trackSegment(trackSegment_)
@@ -255,7 +255,7 @@ OsmAnd::GeoInfoPresenter::TracklineMapObject::~TracklineMapObject()
 OsmAnd::GeoInfoPresenter::RoutepointMapObject::RoutepointMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Route>& route_,
-    const std::shared_ptr<const GeoInfoDocument::RoutePoint>& routepoint_)
+    const std::shared_ptr<const GeoInfoDocument::LocationMark   >& routepoint_)
     : MapObject(geoInfoDocument_)
     , route(route_)
     , routepoint(routepoint_)
