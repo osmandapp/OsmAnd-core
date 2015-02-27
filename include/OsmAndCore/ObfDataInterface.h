@@ -36,10 +36,6 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr,
             const IQueryController* const controller = nullptr);
 
-        bool loadBasemapPresenceFlag(
-            bool& outBasemapPresent,
-            const IQueryController* const controller = nullptr);
-
         bool loadBinaryMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
             MapSurfaceType* outSurfaceType,

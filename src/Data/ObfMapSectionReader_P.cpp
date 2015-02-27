@@ -46,7 +46,9 @@ void OsmAnd::ObfMapSectionReader_P::read(
             case OBF::OsmAndMapIndex::kNameFieldNumber:
             {
                 ObfReaderUtilities::readQString(cis, section->name);
-                section->isBasemap = section->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
+                section->isBasemap = section->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive) ||
+                section->name.contains(QLatin1String("seamarks"), Qt::CaseInsensitive);
+                // TODO should be deleted after Leonid test
                 break;
             }
             case OBF::OsmAndMapIndex::kRulesFieldNumber:

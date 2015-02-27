@@ -39,23 +39,6 @@ bool OsmAnd::ObfDataInterface::loadObfFiles(QList< std::shared_ptr<const ObfFile
     return true;
 }
 
-bool OsmAnd::ObfDataInterface::loadBasemapPresenceFlag(bool& outBasemapPresent, const IQueryController* const controller /*= nullptr*/)
-{
-    outBasemapPresent = false;
-    for (const auto& obfReader : constOf(obfReaders))
-    {
-        if (controller && controller->isAborted())
-            return false;
-
-        const auto& obfInfo = obfReader->obtainInfo();
-        outBasemapPresent = obfInfo->isBasemap;
-        if (outBasemapPresent)
-            break;
-    }
-
-    return true;
-}
-
 bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
     QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
     MapSurfaceType* outSurfaceType,
@@ -77,8 +60,9 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
 
         const auto& obfInfo = obfReader->obtainInfo();
 
-        // Handle basemap
-        if (obfInfo->isBasemap)
+        // Handle main basemap
+        if (obfInfo->mapSections.length() > 0 &&
+            obfInfo->mapSections[0]->name == "basemap")
         {
             // In case there's more than 1 basemap reader present, use only first and warn about this fact
             if (basemapReader)
@@ -249,7 +233,8 @@ bool OsmAnd::ObfDataInterface::loadMapObjects(
         const auto& obfInfo = obfReader->obtainInfo();
 
         // Handle basemap
-        if (obfInfo->isBasemap)
+        if (obfInfo->mapSections.length() > 0 &&
+            obfInfo->mapSections[0]->name == "basemap")
         {
             // In case there's more than 1 basemap reader present, use only first and warn about this fact
             if (basemapReader)

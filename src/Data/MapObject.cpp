@@ -97,15 +97,19 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
     const auto pointsCount = points31.size();
     uint prevCross = 0;
     uint corners = 0;
+    int lft = area.left() ;
+    int rht = area.right() ;
+    int tp = area.top() ;
+    int btm = area.bottom() ;
     for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint31++)
     {
         uint cross = 0;
         int x31 = (*pPoint31).x;
         int y31 = (*pPoint31).y;
-        cross |= (x31 < area.left() ? 1 : 0);
-        cross |= (x31 > area.right() ? 2 : 0);
-        cross |= (y31 < area.top() ? 4 : 0);
-        cross |= (y31 > area.bottom() ? 8 : 0);
+        cross |= (x31 < lft? 1 : 0);
+        cross |= (x31 > rht? 2 : 0);
+        cross |= (y31 < tp ? 4 : 0);
+        cross |= (y31 > btm ? 8 : 0);
         if(pointIdx > 0 && (prevCross & cross) == 0)
         {
             return true;

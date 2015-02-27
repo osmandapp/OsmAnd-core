@@ -275,8 +275,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         for (const auto& obfFileInfo : constOf(obfFileInfos))
         {
             const auto filePath = obfFileInfo.absoluteFilePath();
-            printf("Managed File %s \n", qPrintable(filePath));
-
+            
             // Read information from OBF
             const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
             if (!ObfReader(obfFile).obtainInfo())
@@ -374,7 +373,6 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             const auto filePath = obfFileInfo.absoluteFilePath();
             const auto fileName = obfFileInfo.fileName();
 
-            printf("UnManaged File %s \n", qPrintable(filePath));
             // Read information from OBF
             const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));
             const auto obfInfo = ObfReader(obfFile).obtainInfo();
@@ -385,48 +383,20 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
             }
 
             // Determine resource type and id
-            QString resourceId;
+            QString resourceId = fileName.toLower().remove("_2");
             auto resourceType = ResourceType::Unknown;
-            if (!obfInfo->isBasemap &&
-                !obfInfo->mapSections.isEmpty() &&
-                !obfInfo->addressSections.isEmpty() &&
-                !obfInfo->routingSections.isEmpty() &&
-                !obfInfo->poiSections.isEmpty() &&
-                !obfInfo->transportSections.isEmpty())
-            {
-                resourceType = ResourceType::MapRegion;
-                resourceId = fileName.toLower().remove("_2")
-                    .replace(QLatin1String(".obf"), QLatin1String(".map.obf"));
-            }
-            else if (
-                !obfInfo->isBasemap &&
-                obfInfo->mapSections.isEmpty() &&
-                obfInfo->addressSections.isEmpty() &&
-                !obfInfo->routingSections.isEmpty() &&
-                obfInfo->poiSections.isEmpty() &&
-                obfInfo->transportSections.isEmpty())
-            {
-                resourceType = ResourceType::RoadMapRegion;
-                resourceId = fileName.toLower().remove("_2")
-                    .replace(QLatin1String(".obf"), QLatin1String(".road.obf"));
-            }
-            else if (
-                !obfInfo->isBasemap &&
-                !obfInfo->mapSections.isEmpty() &&
-                obfInfo->addressSections.isEmpty() &&
-                obfInfo->routingSections.isEmpty() &&
-                obfInfo->poiSections.isEmpty() &&
-                obfInfo->transportSections.isEmpty())
+            if(fileName.endsWith(".srtm.obf"))
             {
                 resourceType = ResourceType::SrtmMapRegion;
-                resourceId = fileName.toLower().remove("_2");
             }
-            else if (
-                obfInfo->isBasemap &&
-                !obfInfo->mapSections.isEmpty())
+            else if(fileName.endsWith(".road.obf"))
+            {
+                resourceType = ResourceType::RoadMapRegion;
+            }
+            else
             {
                 resourceType = ResourceType::MapRegion;
-                resourceId = QLatin1String("world_basemap.map.obf");
+                resourceId = resourceId.replace(QLatin1String(".obf"), QLatin1String(".map.obf"));
             }
 
             if (resourceType == ResourceType::Unknown)
