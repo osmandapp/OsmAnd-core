@@ -275,6 +275,7 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
         for (const auto& obfFileInfo : constOf(obfFileInfos))
         {
             const auto filePath = obfFileInfo.absoluteFilePath();
+            printf("File %s \n", filePath.toStdString().c_str());
 
             // Read information from OBF
             const std::shared_ptr<const ObfFile> obfFile(new ObfFile(filePath));

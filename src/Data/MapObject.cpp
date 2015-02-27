@@ -89,18 +89,40 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
 {
     // Check if area intersects bbox31 or bbox31 contains area or area contains bbox31
     // Fast check to exclude obviously false cases
-    if (!bbox31.contains(area) && !area.contains(bbox31) && !area.intersects(bbox31))
+    if (!area.intersects(bbox31))
         return false;
 
     // Check if any of the object points is inside area
     auto pPoint31 = points31.constData();
     const auto pointsCount = points31.size();
+    uint prevCross = 0;
+    uint corners = 0;
     for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint31++)
     {
-        if (area.contains(*pPoint31))
+        uint cross = 0;
+        int x31 = (*pPoint31).x;
+        int y31 = (*pPoint31).y;
+        cross |= (x31 < area.left() ? 1 : 0);
+        cross |= (x31 > area.right() ? 2 : 0);
+        cross |= (y31 < area.top() ? 4 : 0);
+        cross |= (y31 > area.bottom() ? 8 : 0);
+        if(pointIdx > 0 && (prevCross & cross) == 0)
+        {
             return true;
+        }
+        if(cross == (1 | 4)) {
+            corners |= 1;
+        } else if(cross == (2 | 4)) {
+            corners |= 2;
+        } else if(cross == (1 | 8)) {
+            corners |= 4;
+        } else if(cross == (2 | 8)) {
+            corners |= 8;
+        }
+        prevCross = cross;
     }
-
+    if(isArea && corners == 15)
+        return true;
     return false;
 }
 

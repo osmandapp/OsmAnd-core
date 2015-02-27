@@ -145,6 +145,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     {
         if (controller && controller->isAborted())
             break;
+        
+        if(!mapObject->intersectedOrContainedBy(area31))
+            continue;
+        
 
         // Check origin of map object
         auto isBasemapObject = false;
