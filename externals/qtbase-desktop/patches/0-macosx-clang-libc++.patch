@@ -1,32 +1,26 @@
 diff -rupN upstream.original/mkspecs/macx-clang-libc++-32/qmake.conf upstream.patched/mkspecs/macx-clang-libc++-32/qmake.conf
---- upstream.original/mkspecs/macx-clang-libc++-32/qmake.conf	2013-12-30 20:18:02.390338000 +0200
-+++ upstream.patched/mkspecs/macx-clang-libc++-32/qmake.conf	2014-02-07 12:16:15.801687900 +0200
-@@ -11,6 +11,11 @@ include(../common/gcc-base-mac.conf)
- include(../common/clang.conf)
- include(../common/clang-mac.conf)
+--- upstream.original/mkspecs/macx-clang-libc++-32/qmake.conf	2015-02-28 15:07:03.543550500 +0200
++++ upstream.patched/mkspecs/macx-clang-libc++-32/qmake.conf	2015-02-28 15:23:50.124035700 +0200
+@@ -13,4 +13,9 @@ include(../common/clang-mac.conf)
  
--QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-+QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
-+
+ QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+ 
 +QMAKE_CFLAGS           += -arch i386
 +QMAKE_OBJECTIVE_CFLAGS += -arch i386 -stdlib=libc++
 +QMAKE_CXXFLAGS         += -arch i386 -stdlib=libc++
 +QMAKE_LFLAGS           += -arch i386 -stdlib=libc++
- 
++
  load(qt_config)
 diff -rupN upstream.original/mkspecs/macx-clang-libc++-64/qmake.conf upstream.patched/mkspecs/macx-clang-libc++-64/qmake.conf
---- upstream.original/mkspecs/macx-clang-libc++-64/qmake.conf	2013-12-30 20:18:02.390338000 +0200
-+++ upstream.patched/mkspecs/macx-clang-libc++-64/qmake.conf	2014-02-07 12:16:10.009674700 +0200
-@@ -11,6 +11,11 @@ include(../common/gcc-base-mac.conf)
- include(../common/clang.conf)
- include(../common/clang-mac.conf)
+--- upstream.original/mkspecs/macx-clang-libc++-64/qmake.conf	2015-02-28 15:07:03.543550500 +0200
++++ upstream.patched/mkspecs/macx-clang-libc++-64/qmake.conf	2015-02-28 15:23:50.130038300 +0200
+@@ -13,4 +13,9 @@ include(../common/clang-mac.conf)
  
--QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-+QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
-+
+ QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+ 
 +QMAKE_CFLAGS           += -arch x86_64
 +QMAKE_OBJECTIVE_CFLAGS += -arch x86_64 -stdlib=libc++
 +QMAKE_CXXFLAGS         += -arch x86_64 -stdlib=libc++
 +QMAKE_LFLAGS           += -arch x86_64 -stdlib=libc++
- 
++
  load(qt_config)

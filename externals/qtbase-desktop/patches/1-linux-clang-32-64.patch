@@ -1,6 +1,6 @@
 diff -rupN upstream.original/mkspecs/linux-clang-32/qmake.conf upstream.patched/mkspecs/linux-clang-32/qmake.conf
---- upstream.original/mkspecs/linux-clang-32/qmake.conf	2014-07-02 13:04:30.509950600 +0300
-+++ upstream.patched/mkspecs/linux-clang-32/qmake.conf	2014-08-20 14:55:22.787086700 +0300
+--- upstream.original/mkspecs/linux-clang-32/qmake.conf	2015-02-28 15:07:03.481509000 +0200
++++ upstream.patched/mkspecs/linux-clang-32/qmake.conf	2015-02-28 15:23:50.165061700 +0200
 @@ -7,6 +7,9 @@ CONFIG += incremental
  
  QMAKE_INCREMENTAL_STYLE = sublib
@@ -12,8 +12,8 @@ diff -rupN upstream.original/mkspecs/linux-clang-32/qmake.conf upstream.patched/
  include(../common/gcc-base-unix.conf)
  include(../common/clang.conf)
 diff -rupN upstream.original/mkspecs/linux-clang-64/qmake.conf upstream.patched/mkspecs/linux-clang-64/qmake.conf
---- upstream.original/mkspecs/linux-clang-64/qmake.conf	2014-07-02 13:04:30.509950600 +0300
-+++ upstream.patched/mkspecs/linux-clang-64/qmake.conf	2014-08-20 14:55:34.779506900 +0300
+--- upstream.original/mkspecs/linux-clang-64/qmake.conf	2015-02-28 15:07:03.481509000 +0200
++++ upstream.patched/mkspecs/linux-clang-64/qmake.conf	2015-02-28 15:23:50.170065500 +0200
 @@ -7,6 +7,9 @@ CONFIG += incremental
  
  QMAKE_INCREMENTAL_STYLE = sublib

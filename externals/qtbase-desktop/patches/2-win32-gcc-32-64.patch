@@ -1,6 +1,6 @@
 diff -rupN upstream.original/mkspecs/win32-g++-32/qmake.conf upstream.patched/mkspecs/win32-g++-32/qmake.conf
---- upstream.original/mkspecs/win32-g++-32/qmake.conf	2014-08-20 18:09:25.476658500 +0300
-+++ upstream.patched/mkspecs/win32-g++-32/qmake.conf	2014-10-02 17:33:10.711315100 +0300
+--- upstream.original/mkspecs/win32-g++-32/qmake.conf	2015-02-28 15:07:03.818733400 +0200
++++ upstream.patched/mkspecs/win32-g++-32/qmake.conf	2015-02-28 15:23:50.212093100 +0200
 @@ -25,7 +25,7 @@ QMAKE_LEX               = flex
  QMAKE_LEXFLAGS          =
  QMAKE_YACC              = byacc
@@ -10,7 +10,7 @@ diff -rupN upstream.original/mkspecs/win32-g++-32/qmake.conf upstream.patched/mk
  QMAKE_CFLAGS_DEPS       = -M
  QMAKE_CFLAGS_WARN_ON    = -Wall -Wextra
  QMAKE_CFLAGS_WARN_OFF   = -w
-@@ -66,7 +66,7 @@ QMAKE_RUN_CXX_IMP       = $(CXX) -c $(CX
+@@ -67,7 +67,7 @@ QMAKE_RUN_CXX_IMP       = $(CXX) -c $(CX
  
  QMAKE_LINK              = $${CROSS_COMPILE}g++
  QMAKE_LINK_C            = $${CROSS_COMPILE}gcc
@@ -19,7 +19,7 @@ diff -rupN upstream.original/mkspecs/win32-g++-32/qmake.conf upstream.patched/mk
  QMAKE_LFLAGS_EXCEPTIONS_ON = -mthreads
  QMAKE_LFLAGS_EXCEPTIONS_OFF =
  QMAKE_LFLAGS_RELEASE    = -Wl,-s
-@@ -104,7 +104,7 @@ QMAKE_LIBS_QT_ENTRY     = -lmingw32 -lqt
+@@ -108,7 +108,7 @@ QMAKE_LIBS_QT_ENTRY     = -lmingw32 -lqt
  
  QMAKE_IDL               = midl
  QMAKE_LIB               = $${CROSS_COMPILE}ar -ru
@@ -29,8 +29,8 @@ diff -rupN upstream.original/mkspecs/win32-g++-32/qmake.conf upstream.patched/mk
  QMAKE_STRIP             = $${CROSS_COMPILE}strip
  QMAKE_STRIPFLAGS_LIB   += --strip-unneeded
 diff -rupN upstream.original/mkspecs/win32-g++-64/qmake.conf upstream.patched/mkspecs/win32-g++-64/qmake.conf
---- upstream.original/mkspecs/win32-g++-64/qmake.conf	2014-08-20 18:09:25.476658500 +0300
-+++ upstream.patched/mkspecs/win32-g++-64/qmake.conf	2014-10-02 17:33:33.551770500 +0300
+--- upstream.original/mkspecs/win32-g++-64/qmake.conf	2015-02-28 15:07:03.818733400 +0200
++++ upstream.patched/mkspecs/win32-g++-64/qmake.conf	2015-02-28 15:23:50.223100900 +0200
 @@ -25,7 +25,7 @@ QMAKE_LEX               = flex
  QMAKE_LEXFLAGS          =
  QMAKE_YACC              = byacc
@@ -40,7 +40,7 @@ diff -rupN upstream.original/mkspecs/win32-g++-64/qmake.conf upstream.patched/mk
  QMAKE_CFLAGS_DEPS       = -M
  QMAKE_CFLAGS_WARN_ON    = -Wall -Wextra
  QMAKE_CFLAGS_WARN_OFF   = -w
-@@ -66,7 +66,7 @@ QMAKE_RUN_CXX_IMP       = $(CXX) -c $(CX
+@@ -67,7 +67,7 @@ QMAKE_RUN_CXX_IMP       = $(CXX) -c $(CX
  
  QMAKE_LINK              = $${CROSS_COMPILE}g++
  QMAKE_LINK_C            = $${CROSS_COMPILE}gcc
@@ -49,7 +49,7 @@ diff -rupN upstream.original/mkspecs/win32-g++-64/qmake.conf upstream.patched/mk
  QMAKE_LFLAGS_EXCEPTIONS_ON = -mthreads
  QMAKE_LFLAGS_EXCEPTIONS_OFF =
  QMAKE_LFLAGS_RELEASE    = -Wl,-s
-@@ -104,7 +104,7 @@ QMAKE_LIBS_QT_ENTRY     = -lmingw32 -lqt
+@@ -108,7 +108,7 @@ QMAKE_LIBS_QT_ENTRY     = -lmingw32 -lqt
  
  QMAKE_IDL               = midl
  QMAKE_LIB               = $${CROSS_COMPILE}ar -ru
