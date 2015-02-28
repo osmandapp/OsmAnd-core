@@ -50,7 +50,7 @@ if "%compiler%"=="msvc" (
 		-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
 		-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
 		-no-style-windowsvista -no-style-fusion -no-style-windowsce -no-style-windowsmobile ^
-		-nomake examples -nomake tools -no-vcproj -no-native-gestures
+		-nomake examples -nomake tools -no-native-gestures
 	set MAKE_CMD=nmake
 
 	REM Build for x86
