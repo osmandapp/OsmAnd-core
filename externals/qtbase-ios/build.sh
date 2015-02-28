@@ -62,55 +62,43 @@ if [[ "$targetOS" == "ios" ]]; then
 	
 	if [[ "$compiler" == "clang" ]]; then
 		echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
-		makeFlavor "ios.simulator.${compiler}-i386.static" "macx-ios-${compiler}-simulator-i386" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
-		makeFlavor "ios.device.${compiler}-armv7.static" "macx-ios-${compiler}-device-armv7" "$QTBASE_CONFIGURATION -sdk iphoneos"
-		makeFlavor "ios.device.${compiler}-armv7s.static" "macx-ios-${compiler}-device-armv7s" "$QTBASE_CONFIGURATION -sdk iphoneos"
+		makeFlavor "ios.simulator.${compiler}.static" "macx-ios-${compiler}-simulator" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
+		makeFlavor "ios.device.${compiler}.static" "macx-ios-${compiler}-device" "$QTBASE_CONFIGURATION -sdk iphoneos"
 	else
 		echo "Only 'clang' is supported compiler for '${targetOS}' target, while '${compiler}' was specified"
 		exit 1
 	fi
 
-	if [ ! -h "$SRCLOC/upstream.patched.ios.simulator.${compiler}.static" ]; then
-		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios.simulator.${compiler}-i386.static" "upstream.patched.ios.simulator.${compiler}.static")
-	fi
-
-	if [ ! -h "$SRCLOC/upstream.patched.ios.device.${compiler}.static" ]; then
-		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios.device.${compiler}-armv7.static" "upstream.patched.ios.device.${compiler}.static")
-	fi
-
 	if [ ! -h "$SRCLOC/upstream.patched.ios.${compiler}-iphoneos" ]; then
 		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios.device.${compiler}-armv7.static" "upstream.patched.ios.${compiler}-iphoneos")
+			ln -s "upstream.patched.ios.device.${compiler}.static" "upstream.patched.ios.${compiler}-iphoneos")
 	fi
 
 	if [ ! -h "$SRCLOC/upstream.patched.ios.${compiler}-iphonesimulator" ]; then
 		(cd "$SRCLOC" && \
-			ln -s "upstream.patched.ios.simulator.${compiler}-i386.static" "upstream.patched.ios.${compiler}-iphonesimulator")
+			ln -s "upstream.patched.ios.simulator.${compiler}.static" "upstream.patched.ios.${compiler}-iphonesimulator")
 	fi
 
 	if [ ! -d "$SRCLOC/upstream.patched.ios.${compiler}" ]; then
 		# Make link to cmake stuff and include, src and bin from already built target (any is suitable)
 		mkdir -p "$SRCLOC/upstream.patched.ios.${compiler}"
 		(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
-			ln -s "../upstream.patched.ios.simulator.${compiler}-i386.static/include" "include")
+			ln -s "../upstream.patched.ios.simulator.${compiler}.static/include" "include")
 		(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
-			ln -s "../upstream.patched.ios.simulator.${compiler}-i386.static/src" "src")
+			ln -s "../upstream.patched.ios.simulator.${compiler}.static/src" "src")
 		(cd "$SRCLOC/upstream.patched.ios.${compiler}" && \
-			ln -s "../upstream.patched.ios.simulator.${compiler}-i386.static/bin" "bin")
+			ln -s "../upstream.patched.ios.simulator.${compiler}.static/bin" "bin")
 		mkdir -p "$SRCLOC/upstream.patched.ios.${compiler}/lib"
 		(cd "$SRCLOC/upstream.patched.ios.${compiler}/lib" && \
-			ln -s "../../upstream.patched.ios.simulator.${compiler}-i386.static/lib/cmake" "cmake")
+			ln -s "../../upstream.patched.ios.simulator.${compiler}.static/lib/cmake" "cmake")
 
 		# Make universal libraries using lipo
 		libraries=(Core Concurrent Network Sql Xml)
 		for libName in "${libraries[@]}" ; do
 			echo "Packing '$libName'..."
 			lipo -create \
-				"$SRCLOC/upstream.patched.ios.simulator.${compiler}-i386.static/lib/libQt5${libName}.a" \
-				"$SRCLOC/upstream.patched.ios.device.${compiler}-armv7.static/lib/libQt5${libName}.a" \
-				"$SRCLOC/upstream.patched.ios.device.${compiler}-armv7s.static/lib/libQt5${libName}.a" \
+				"$SRCLOC/upstream.patched.ios.simulator.${compiler}.static/lib/libQt5${libName}.a" \
+				"$SRCLOC/upstream.patched.ios.device.${compiler}.static/lib/libQt5${libName}.a" \
 				-output "$SRCLOC/upstream.patched.ios.${compiler}/lib/libQt5${libName}.a"
 			retcode=$?
 			if [ $retcode -ne 0 ]; then
