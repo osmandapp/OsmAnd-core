@@ -1,0 +1,22 @@
+diff -rupN upstream.original/mkspecs/macx-ios-clang-device/qmake.conf upstream.patched/mkspecs/macx-ios-clang-device/qmake.conf
+--- upstream.original/mkspecs/macx-ios-clang-device/qmake.conf	2015-02-28 15:35:48.347756700 +0200
++++ upstream.patched/mkspecs/macx-ios-clang-device/qmake.conf	2015-02-28 15:46:59.079585000 +0200
+@@ -16,7 +16,6 @@ DEFINES                += DARWIN_NO_CARB
+ QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2
+ 
+ QMAKE_IOS_DEVICE_ARCHS = armv7 arm64
+-QMAKE_IOS_SIMULATOR_ARCHS = i386 x86_64
+ 
+ include(../common/ios.conf)
+ include(../common/gcc-base-mac.conf)
+diff -rupN upstream.original/mkspecs/macx-ios-clang-simulator/qmake.conf upstream.patched/mkspecs/macx-ios-clang-simulator/qmake.conf
+--- upstream.original/mkspecs/macx-ios-clang-simulator/qmake.conf	2015-02-28 15:35:48.347756700 +0200
++++ upstream.patched/mkspecs/macx-ios-clang-simulator/qmake.conf	2015-02-28 15:46:55.071373900 +0200
+@@ -15,7 +15,6 @@ DEFINES                += DARWIN_NO_CARB
+ # Universal target (iPhone and iPad)
+ QMAKE_IOS_TARGETED_DEVICE_FAMILY = 1,2
+ 
+-QMAKE_IOS_DEVICE_ARCHS = armv7 arm64
+ QMAKE_IOS_SIMULATOR_ARCHS = i386 x86_64
+ 
+ include(../common/ios.conf)

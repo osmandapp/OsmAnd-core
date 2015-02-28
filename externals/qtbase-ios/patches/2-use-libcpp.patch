@@ -1,0 +1,12 @@
+diff -rupN upstream.original/mkspecs/common/ios/qmake.conf upstream.patched/mkspecs/common/ios/qmake.conf
+--- upstream.original/mkspecs/common/ios/qmake.conf	2015-02-28 15:35:47.763114800 +0200
++++ upstream.patched/mkspecs/common/ios/qmake.conf	2015-02-28 15:47:59.095267200 +0200
+@@ -23,3 +23,8 @@ QMAKE_LIBS_OPENGL_ES2   = -framework Ope
+ # No desktop OpenGL
+ QMAKE_INCDIR_OPENGL     =
+ QMAKE_LIBS_OPENGL       =
++
++QMAKE_OBJECTIVE_CFLAGS += -stdlib=libc++
++QMAKE_CFLAGS           += -stdlib=libc++
++QMAKE_CXXFLAGS         += -stdlib=libc++
++QMAKE_LFLAGS           += -stdlib=libc++
