@@ -30,73 +30,73 @@
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndAndRelaxed(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToAnd) Q_DECL_NOTHROW
++    T fetchAndAndRelaxed(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToAnd) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_and(valueToAnd, std::memory_order_relaxed);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndAndAcquire(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToAnd) Q_DECL_NOTHROW
++    T fetchAndAndAcquire(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToAnd) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_and(valueToAnd, std::memory_order_acquire);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndAndRelease(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToAnd) Q_DECL_NOTHROW
++    T fetchAndAndRelease(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToAnd) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_and(valueToAnd, std::memory_order_release);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndAndOrdered(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToAnd) Q_DECL_NOTHROW
++    T fetchAndAndOrdered(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToAnd) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_and(valueToAnd, std::memory_order_acq_rel);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndOrRelaxed(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToOr) Q_DECL_NOTHROW
++    T fetchAndOrRelaxed(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToOr) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_or(valueToOr, std::memory_order_relaxed);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndOrAcquire(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToOr) Q_DECL_NOTHROW
++    T fetchAndOrAcquire(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToOr) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_or(valueToOr, std::memory_order_acquire);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndOrRelease(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToOr) Q_DECL_NOTHROW
++    T fetchAndOrRelease(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToOr) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_or(valueToOr, std::memory_order_release);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndOrOrdered(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToOr) Q_DECL_NOTHROW
++    T fetchAndOrOrdered(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToOr) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_or(valueToOr, std::memory_order_acq_rel);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndXorRelaxed(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToXor) Q_DECL_NOTHROW
++    T fetchAndXorRelaxed(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToXor) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_xor(valueToXor, std::memory_order_relaxed);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndXorAcquire(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToXor) Q_DECL_NOTHROW
++    T fetchAndXorAcquire(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToXor) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_xor(valueToXor, std::memory_order_acquire);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndXorRelease(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToXor) Q_DECL_NOTHROW
++    T fetchAndXorRelease(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToXor) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_xor(valueToXor, std::memory_order_release);
 +    }
 +
 +    template <typename T> static inline
-+    T fetchAndXorOrdered(std::atomic<T> &_q_value, typename QAtomicAdditiveType<T>::AdditiveT valueToXor) Q_DECL_NOTHROW
++    T fetchAndXorOrdered(std::atomic<T> &_q_value, typename QtPrivate::QEnableIf<QTypeInfo<T>::isIntegral, T>::Type valueToXor) Q_DECL_NOTHROW
 +    {
 +        return _q_value.fetch_xor(valueToXor, std::memory_order_acq_rel);
 +    }
