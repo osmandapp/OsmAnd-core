@@ -1861,5 +1861,5 @@ OsmAnd::MapRendererResourcesManager::ResourceRequestTask::ResourceRequestTask(
 
 OsmAnd::MapRendererResourcesManager::ResourceRequestTask::~ResourceRequestTask()
 {
-    manager->_resourcesRequestTasksCounter.fetchAndAddOrdered(-1);
+    manager->_resourcesRequestTasksCounter.fetchAndSubOrdered(1);
 }

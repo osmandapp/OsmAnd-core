@@ -133,7 +133,7 @@ namespace OsmAnd
 
         inline void unlock()
         {
-            const auto prevLocksCount = _locksCounter.fetchAndAddOrdered(-1);
+            const auto prevLocksCount = _locksCounter.fetchAndSubOrdered(1);
 
             // Previous locks count was less or equal to zero - unpaired unlock() call
             if (prevLocksCount <= 0)
