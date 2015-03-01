@@ -47,7 +47,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
             {
                 ObfReaderUtilities::readQString(cis, section->name);
                 section->isBasemap = section->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
-                section->isBaseMapWithCoastlines = section->name === QLatin1String("basemap");
+                section->isBaseMapWithCoastlines = section->name == QLatin1String("basemap");
                 break;
             }
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
