@@ -49,11 +49,13 @@ endif()
 
 add_library(gif_static STATIC
 	"upstream.patched/lib/dgif_lib.c"
+    "upstream.patched/lib/egif_lib.c"
+	"upstream.patched/lib/gif_font.c"
+	"upstream.patched/lib/gif_hash.c"
+	"upstream.patched/lib/gif_hash.h"
 	"upstream.patched/lib/gifalloc.c"
 	"upstream.patched/lib/gif_err.c"
-	"upstream.patched/lib/gif_lib.h"
 	"upstream.patched/lib/gif_lib_private.h"
-	"upstream.patched/lib/gif_hash.h"
 )
 
 set(target_specific_private_definitions "")

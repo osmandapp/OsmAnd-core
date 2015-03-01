@@ -1,26 +1,156 @@
 diff -rupN upstream.original/lib/dgif_lib.c upstream.patched/lib/dgif_lib.c
 --- upstream.original/lib/dgif_lib.c	2013-09-03 16:43:22.000000000 +0300
-+++ upstream.patched/lib/dgif_lib.c	2014-08-21 11:29:32.924832400 +0300
-@@ -14,7 +14,9 @@
- #include <limits.h>
- #include <stdint.h>
- #include <fcntl.h>
-+#if defined(HAVE_UNISTD_H) && HAVE_UNISTD_H
- #include <unistd.h>
-+#endif // defined(HAVE_UNISTD_H) && HAVE_UNISTD_H
- #include <stdio.h>
- #include <string.h>
++++ upstream.patched/lib/dgif_lib.c	2015-03-01 13:01:35.047148100 +0200
+@@ -10,13 +10,27 @@
+  *  3 Sep 90 - Version 1.1 by Gershon Elber (Support for Gif89, Unique names).
+  *****************************************************************************/
  
+-#include <stdlib.h>
+-#include <limits.h>
+-#include <stdint.h>
+-#include <fcntl.h>
+-#include <unistd.h>
++#include "config.h"
++
++#ifdef HAVE_STDLIB_H
++#   include <stdlib.h>
++#endif
++#ifdef HAVE_LIMITS_H
++#   include <limits.h>
++#endif
++#ifdef HAVE_STDINT_H
++#   include <stdint.h>
++#endif
++#ifdef HAVE_FCNTL_H
++#   include <fcntl.h>
++#endif
++#ifdef HAVE_UNISTD_H
++#   include <unistd.h>
++#endif
+ #include <stdio.h>
+-#include <string.h>
++#ifdef HAVE_STRING_H
++#   include <string.h>
++#endif
+ 
+ #if (defined (__MSDOS__) || defined(WINDOWS32))  && !defined(__DJGPP__) && !defined(__GNUC__)
+ #include <io.h>
+diff -rupN upstream.original/lib/egif_lib.c upstream.patched/lib/egif_lib.c
+--- upstream.original/lib/egif_lib.c	2013-09-03 16:41:31.000000000 +0300
++++ upstream.patched/lib/egif_lib.c	2015-03-01 13:01:31.566944300 +0200
+@@ -11,12 +11,24 @@
+  * 26 Jun 96 - Version 3.0 by Eric S. Raymond (Full GIF89 support)
+  *****************************************************************************/
+ 
+-#include <unistd.h>
+-#include <stdint.h>
+-#include <stdlib.h>
++#include "config.h"
++
++#ifdef HAVE_UNISTD_H
++#   include <unistd.h>
++#endif
++#ifdef HAVE_STDINT_H
++#   include <stdint.h>
++#endif
++#ifdef HAVE_STDLIB_H
++#   include <stdlib.h>
++#endif
+ #include <stdio.h>
+-#include <string.h>
+-#include <fcntl.h>
++#ifdef HAVE_STRING_H
++#   include <string.h>
++#endif
++#ifdef HAVE_FCNTL_H
++#   include <fcntl.h>
++#endif
+ 
+ #if (defined (__MSDOS__) || defined(WINDOWS32))  && !defined(__DJGPP__) && !defined(__GNUC__)
+ #include <io.h>
+diff -rupN upstream.original/lib/gif_font.c upstream.patched/lib/gif_font.c
+--- upstream.original/lib/gif_font.c	2013-09-03 16:41:31.000000000 +0300
++++ upstream.patched/lib/gif_font.c	2015-03-01 13:01:43.135329700 +0200
+@@ -10,7 +10,11 @@
+  * 25 Sep 92 - Draw functions added by Eric S. Raymond                 
+  ****************************************************************************/
+ 
+-#include <string.h>
++#include "config.h"
++
++#ifdef HAVE_STRING_H
++#   include <string.h>
++#endif
+ 
+ #include "gif_lib.h"
+ 
+diff -rupN upstream.original/lib/gif_hash.c upstream.patched/lib/gif_hash.c
+--- upstream.original/lib/gif_hash.c	2013-09-03 16:41:31.000000000 +0300
++++ upstream.patched/lib/gif_hash.c	2015-03-01 12:59:12.527618800 +0200
+@@ -16,11 +16,21 @@
+ * 14 Jun 89 - Version 1.0 by Gershon Elber.
+ *****************************************************************************/
+ 
+-#include <unistd.h>
+-#include <stdint.h>
+-#include <fcntl.h>
++#include "config.h"
++
++#ifdef HAVE_UNISTD_H
++#   include <unistd.h>
++#endif
++#ifdef HAVE_STDINT_H
++#   include <stdint.h>
++#endif
++#ifdef HAVE_FCNTL_H
++#   include <fcntl.h>
++#endif
+ #include <stdio.h>
+-#include <string.h>
++#ifdef HAVE_STRING_H
++#   include <string.h>
++#endif
+ 
+ #include "gif_lib.h"
+ #include "gif_hash.h"
 diff -rupN upstream.original/lib/gif_hash.h upstream.patched/lib/gif_hash.h
 --- upstream.original/lib/gif_hash.h	2013-09-03 16:41:31.000000000 +0300
-+++ upstream.patched/lib/gif_hash.h	2014-08-21 11:29:18.797137600 +0300
-@@ -10,7 +10,9 @@
++++ upstream.patched/lib/gif_hash.h	2015-03-01 13:01:48.990397400 +0200
+@@ -10,8 +10,14 @@
  #ifndef _GIF_HASH_H_
  #define _GIF_HASH_H_
  
-+#if defined(HAVE_UNISTD_H) && HAVE_UNISTD_H
- #include <unistd.h>
-+#endif // defined(HAVE_UNISTD_H) && HAVE_UNISTD_H
- #include <stdint.h>
+-#include <unistd.h>
+-#include <stdint.h>
++#include "config.h"
++
++#ifdef HAVE_UNISTD_H
++#   include <unistd.h>
++#endif
++#ifdef HAVE_STDINT_H
++#   include <stdint.h>
++#endif
  
  #define HT_SIZE			8192	   /* 12bits = 4096 or twice as big! */
+ #define HT_KEY_MASK		0x1FFF			      /* 13bits keys */
+diff -rupN upstream.original/lib/gifalloc.c upstream.patched/lib/gifalloc.c
+--- upstream.original/lib/gifalloc.c	2013-09-03 16:41:31.000000000 +0300
++++ upstream.patched/lib/gifalloc.c	2015-03-01 13:02:01.525952400 +0200
+@@ -10,9 +10,15 @@
+  * 15 Sep 92 - Version 1.0 by Eric Raymond.                     
+  ****************************************************************************/
+ 
+-#include <stdlib.h>
++#include "config.h"
++
++#ifdef HAVE_STDLIB_H
++#   include <stdlib.h>
++#endif
+ #include <stdio.h>
+-#include <string.h>
++#ifdef HAVE_STRING_H
++#   include <string.h>
++#endif
+ 
+ #include "gif_lib.h"
+ 
