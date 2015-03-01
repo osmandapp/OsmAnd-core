@@ -1,6 +1,6 @@
 diff -rupN upstream.original/mkspecs/android-g++/qmake.conf upstream.patched/mkspecs/android-g++/qmake.conf
---- upstream.original/mkspecs/android-g++/qmake.conf	2014-08-26 10:14:25.374280900 +0300
-+++ upstream.patched/mkspecs/android-g++/qmake.conf	2014-08-26 12:22:27.247057900 +0300
+--- upstream.original/mkspecs/android-g++/qmake.conf	2015-03-01 18:02:26.943536600 +0200
++++ upstream.patched/mkspecs/android-g++/qmake.conf	2015-03-01 18:14:25.151249900 +0200
 @@ -21,6 +21,7 @@ contains(QMAKE_HOST.os,Windows) {
          # (via unix.conf, via linux.conf).
          include(../common/shell-win32.conf)
@@ -9,12 +9,17 @@ diff -rupN upstream.original/mkspecs/android-g++/qmake.conf upstream.patched/mks
          QMAKE_INSTALL_FILE    = copy /y
          QMAKE_INSTALL_PROGRAM = copy /y
      } else {
-@@ -71,21 +72,21 @@ else: ANDROID_ARCHITECTURE = arm
+@@ -72,7 +73,7 @@ else: ANDROID_ARCHITECTURE = arm
  !equals(NDK_TOOLCHAIN_VERSION, 4.4.3): ANDROID_CXXSTL_SUFFIX = -$$NDK_TOOLCHAIN_VERSION
  
  NDK_TOOLCHAIN = $$NDK_TOOLCHAIN_PREFIX-$$NDK_TOOLCHAIN_VERSION
 -NDK_TOOLCHAIN_PATH = $$NDK_ROOT/toolchains/$$NDK_TOOLCHAIN/prebuilt/$$NDK_HOST
 +NDK_TOOLCHAIN_PATH = $$system_path($$NDK_ROOT/toolchains/$$NDK_TOOLCHAIN/prebuilt/$$NDK_HOST)
+ 
+ 
+ ANDROID_SDK_ROOT = $$(ANDROID_SDK_ROOT)
+@@ -88,18 +89,18 @@ isEmpty(ANDROID_SDK_BUILD_TOOLS_REVISION
+ }
  
  CONFIG += $$ANDROID_PLATFORM
 -ANDROID_PLATFORM_ROOT_PATH  = $$NDK_ROOT/platforms/$$ANDROID_PLATFORM/arch-$$ANDROID_ARCHITECTURE/
@@ -38,8 +43,8 @@ diff -rupN upstream.original/mkspecs/android-g++/qmake.conf upstream.patched/mks
 +QMAKE_CC                = $$system_path($$NDK_TOOLCHAIN_PATH/bin/$$NDK_TOOLS_PREFIX-gcc)
  
  equals(ANDROID_TARGET_ARCH, armeabi-v7a): \
-     QMAKE_CFLAGS = -Wno-psabi -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -ffunction-sections -funwind-tables -fstack-protector -fno-short-enums -DANDROID -Wa,--noexecstack
-@@ -123,7 +124,7 @@ QMAKE_CFLAGS_YACC       = -Wno-unused -W
+     QMAKE_CFLAGS = -Wno-psabi -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -ffunction-sections -funwind-tables -fstack-protector -fno-short-enums -DANDROID -Wa,--noexecstack -fno-builtin-memmove
+@@ -137,7 +138,7 @@ QMAKE_CFLAGS_YACC       = -Wno-unused -W
  QMAKE_CFLAGS_THREAD     = -D_REENTRANT
  QMAKE_CFLAGS_HIDESYMS   = -fvisibility=hidden
  
@@ -48,7 +53,7 @@ diff -rupN upstream.original/mkspecs/android-g++/qmake.conf upstream.patched/mks
  QMAKE_CXXFLAGS          = $$QMAKE_CFLAGS -std=gnu++0x
  QMAKE_CXXFLAGS_WARN_ON  = $$QMAKE_CFLAGS_WARN_ON
  QMAKE_CXXFLAGS_WARN_OFF = $$QMAKE_CFLAGS_WARN_OFF
-@@ -139,21 +140,21 @@ QMAKE_LINK              = $$QMAKE_CXX
+@@ -153,21 +154,21 @@ QMAKE_LINK              = $$QMAKE_CXX
  QMAKE_LINK_SHLIB        = $$QMAKE_LINK
  
  # modifications to linux.conf
@@ -79,7 +84,7 @@ diff -rupN upstream.original/mkspecs/android-g++/qmake.conf upstream.patched/mks
  
  equals(ANDROID_TARGET_ARCH, x86)|equals(ANDROID_TARGET_ARCH, mips): \
      LIBGCC_PATH_FULL = $$system("$$QMAKE_CC -print-libgcc-file-name")
-@@ -165,14 +166,14 @@ LIBGCC_PATH             = $$dirname(LIBG
+@@ -179,14 +180,14 @@ LIBGCC_PATH             = $$dirname(LIBG
  QMAKE_LINK              = $$QMAKE_CXX
  QMAKE_LINK_SHLIB        = $$QMAKE_CXX
  QMAKE_LFLAGS            = --sysroot=$$ANDROID_PLATFORM_ROOT_PATH

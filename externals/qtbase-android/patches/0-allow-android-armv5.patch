@@ -1,6 +1,7 @@
---- upstream.original/src/corelib/arch/qatomic_armv5.h	2014-08-26 10:14:29.626713200 +0300
-+++ upstream.patched/src/corelib/arch/qatomic_armv5.h	2014-08-26 14:12:30.764221500 +0300
-@@ -69,9 +69,6 @@ QT_END_NAMESPACE
+diff -rupN upstream.original/src/corelib/arch/qatomic_armv5.h upstream.patched/src/corelib/arch/qatomic_armv5.h
+--- upstream.original/src/corelib/arch/qatomic_armv5.h	2015-03-01 18:02:31.050284400 +0200
++++ upstream.patched/src/corelib/arch/qatomic_armv5.h	2015-03-01 18:06:02.171905200 +0200
+@@ -61,9 +61,6 @@ QT_END_NAMESPACE
  #ifdef QT_NO_ARM_EABI
  # error "Sorry, ARM without EABI is no longer supported"
  #endif
