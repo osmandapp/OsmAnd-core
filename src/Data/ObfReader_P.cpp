@@ -240,6 +240,8 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<Ob
                 ObfMapSectionReader_P::read(reader, section);
 
                 info->isBasemap = info->isBasemap || section->isBasemap;
+                info->isBasemapWithCoastlines = info->isBasemapWithCoastlines
+                        || section->isBaseMapWithCoastlines;
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);

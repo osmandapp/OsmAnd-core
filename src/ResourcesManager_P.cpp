@@ -1613,7 +1613,7 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
         }
 
         const auto& obfMetadata = std::static_pointer_cast<const ObfMetadata>(localResource->_metadata);
-        if (obfMetadata->obfFile->obfInfo->isBasemap)
+        if (obfMetadata->obfFile->obfInfo->isBasemapWithCoastlines)
             otherBasemapPresent = true;
         obfFiles.push_back(obfMetadata->obfFile);
     }
@@ -1650,7 +1650,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
             lockedResources.push_back(installedResource);
         }
 
-        if (obfMetadata->obfFile->obfInfo->isBasemap)
+        if (obfMetadata->obfFile->obfInfo->isBasemapWithCoastlines)
             otherBasemapPresent = true;
         std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfMetadata->obfFile));
         obfReaders.push_back(qMove(obfReader));
@@ -1703,7 +1703,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
             lockedResources.push_back(installedResource);
         }
 
-        if (obfMetadata->obfFile->obfInfo->isBasemap)
+        if (obfMetadata->obfFile->obfInfo->isBasemapWithCoastlines)
             otherBasemapPresent = true;
         std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfMetadata->obfFile));
         obfReaders.push_back(qMove(obfReader));

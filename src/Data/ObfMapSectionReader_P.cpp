@@ -47,6 +47,7 @@ void OsmAnd::ObfMapSectionReader_P::read(
             {
                 ObfReaderUtilities::readQString(cis, section->name);
                 section->isBasemap = section->name.contains(QLatin1String("basemap"), Qt::CaseInsensitive);
+                section->isBaseMapWithCoastlines = section->name === QLatin1String("basemap");
                 break;
             }
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
@@ -357,7 +358,7 @@ void OsmAnd::ObfMapSectionReader_P::readTreeNode(
                 treeNode->surfaceType = (value != 0) ? MapSurfaceType::FullWater : MapSurfaceType::FullLand;
                 assert(
                     (treeNode->surfaceType != MapSurfaceType::FullWater) ||
-                    (treeNode->surfaceType == MapSurfaceType::FullWater && section->isBasemap));
+                    (treeNode->surfaceType == MapSurfaceType::FullWater && section->isBaseMapWithCoastlines));
 
                 fieldsMask |= (1ull << tfn);
                 break;
