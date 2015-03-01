@@ -125,7 +125,7 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
         }
         prevCross = cross;
     }
-    if(isArea && corners == 15)
+    if(corners == 15) // && isArea - we can't here detect area or non-area field
         return true;
     return false;
 }
