@@ -49,7 +49,7 @@ endif()
 
 add_library(gif_static STATIC
 	"upstream.patched/lib/dgif_lib.c"
-    "upstream.patched/lib/egif_lib.c"
+	#"upstream.patched/lib/egif_lib.c"
 	"upstream.patched/lib/gif_font.c"
 	"upstream.patched/lib/gif_hash.c"
 	"upstream.patched/lib/gif_hash.h"
