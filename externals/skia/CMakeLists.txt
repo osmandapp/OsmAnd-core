@@ -12,8 +12,19 @@ set(target_specific_definitions_public "")
 
 set(used_arch_specific_sources FALSE)
 
+set(target_specific_sources__none
+	"upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp"
+	"upstream.patched/src/opts/SkBlitMask_opts_none.cpp"
+	"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
+	"upstream.patched/src/opts/SkBlurImage_opts_none.cpp"
+	"upstream.patched/src/opts/SkMorphology_opts_none.cpp"
+	"upstream.patched/src/opts/SkTextureCompression_opts_none.cpp"
+	"upstream.patched/src/opts/SkUtils_opts_none.cpp"
+	"upstream.patched/src/opts/SkXfermode_opts_none.cpp")
+
 set(target_specific_sources__x86 "")
-if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR
+	(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
 	set(target_specific_sources__x86
 		# x86
@@ -83,7 +94,8 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "x86" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 endif()
 
 set(target_specific_sources__arm "")
-if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
+if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR
+	(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(used_arch_specific_sources TRUE)
 
 	# SKIA should be build with ARM instruction set instead of Thumb
@@ -163,16 +175,10 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR (CMAKE_TARGET_CPU_ARCH_FAMILY
 	endif()
 endif()
 
-if (NOT used_arch_specific_sources)
+if (NOT used_arch_specific_sources OR
+	(CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios"))
 	set(target_specific_sources "${target_specific_sources}"
-		"upstream.patched/src/opts/SkBitmapProcState_opts_none.cpp"
-		"upstream.patched/src/opts/SkBlitMask_opts_none.cpp"
-		"upstream.patched/src/opts/SkBlitRow_opts_none.cpp"
-		"upstream.patched/src/opts/SkBlurImage_opts_none.cpp"
-		"upstream.patched/src/opts/SkMorphology_opts_none.cpp"
-		"upstream.patched/src/opts/SkTextureCompression_opts_none.cpp"
-		"upstream.patched/src/opts/SkUtils_opts_none.cpp"
-		"upstream.patched/src/opts/SkXfermode_opts_none.cpp"
+		"${target_specific_sources__none}"
 	)
 endif()
 
@@ -491,15 +497,25 @@ target_link_libraries(skia_static
 )
 
 if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "ios")
-	set(ios_iphoneos_exclude_list
-		"${target_specific_sources__x86}")
-	string(REPLACE ";" " " ios_iphoneos_exclude "${ios_iphoneos_exclude_list}")
+	set(ios_iphoneos_armv7_exclude_list
+		"${target_specific_sources__x86}"
+		"${target_specific_sources__none}")
+	string(REPLACE ";" " " ios_iphoneos_armv7_exclude "${ios_iphoneos_armv7_exclude_list}")
 	set_target_properties(skia_static
 		PROPERTIES
-			XCODE_ATTRIBUTE_EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*][arch=*] "${ios_iphoneos_exclude}")
+			XCODE_ATTRIBUTE_EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*][arch=armv7] "${ios_iphoneos_armv7_exclude}")
+
+	set(ios_iphoneos_arm64_exclude_list
+		"${target_specific_sources__x86}"
+		"${target_specific_sources__arm}")
+	string(REPLACE ";" " " ios_iphoneos_arm64_exclude "${ios_iphoneos_arm64_exclude_list}")
+	set_target_properties(skia_static
+		PROPERTIES
+			XCODE_ATTRIBUTE_EXCLUDED_SOURCE_FILE_NAMES[sdk=iphoneos*][arch=arm64] "${ios_iphoneos_arm64_exclude}")
 
 	set(ios_iphonesimulator_exclude_list
-		"${target_specific_sources__arm}")
+		"${target_specific_sources__arm}"
+		"${target_specific_sources__none}")
 	string(REPLACE ";" " " ios_iphonesimulator_exclude "${ios_iphonesimulator_exclude_list}")
 	set_target_properties(skia_static
 		PROPERTIES
