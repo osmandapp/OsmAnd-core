@@ -68,7 +68,7 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     LogPrintf(LogSeverityLevel::Verbose,
         "Map renderer will use only 1 concurrent worker to process requests for all source types");
     for (auto& threadPool : _resourcesRequestWorkersPools)
-        threadPool.setMaxThreadCount(maxConcurrentWorkersPerSourceType);
+        threadPool.setMaxThreadCount(1);
 #else // !OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
     const auto maxConcurrentWorkersPerSourceType =
         qMax(QThread::idealThreadCount() / IMapDataProvider::SourceTypesCount, 1);
