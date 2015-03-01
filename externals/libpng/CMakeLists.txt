@@ -17,12 +17,6 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "arm" OR
 		"upstream.patched/arm/filter_neon_intrinsics.c"
 		"upstream.patched/arm/filter_neon.S"
 	)
-	if (CMAKE_TARGET_OS STREQUAL "ios" AND CMAKE_COMPILER_FAMILY STREQUAL "clang")
-		set_source_files_properties(
-			"upstream.patched/arm/filter_neon.S"
-			PROPERTIES
-				COMPILE_FLAGS "-no-integrated-as")
-	endif()
 endif()
 
 if (CMAKE_TARGET_OS STREQUAL "windows")
