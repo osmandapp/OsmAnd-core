@@ -32,6 +32,7 @@ namespace OsmAnd
         int version;
         uint64_t creationTimestamp;
         bool isBasemap;
+        bool isBasemapWithCoastlines;
 
         QList< Ref<ObfMapSectionInfo> > mapSections;
         QList< Ref<ObfAddressSectionInfo> > addressSections;

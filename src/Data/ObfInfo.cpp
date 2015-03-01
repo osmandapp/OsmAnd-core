@@ -8,6 +8,7 @@ OsmAnd::ObfInfo::ObfInfo()
     : version(-1)
     , creationTimestamp(0)
     , isBasemap(false)
+    , isBasemapWithCoastlines(false)
 {
 }
 
