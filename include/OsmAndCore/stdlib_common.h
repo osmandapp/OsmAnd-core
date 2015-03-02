@@ -39,8 +39,7 @@ namespace std
     template<class CONTAINER_TYPE, class PREDICATE>
     inline bool any_of(const CONTAINER_TYPE& container, PREDICATE predicate)
     {
-        const auto itEnd = std::end(container);
-        return any_of(std::begin(container), std::end(container), predicate) != itEnd;
+        return any_of(std::begin(container), std::end(container), predicate);
     }
 }
 
