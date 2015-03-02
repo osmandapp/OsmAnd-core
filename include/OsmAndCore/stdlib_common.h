@@ -20,7 +20,7 @@ namespace std
     inline bool contains(const CONTAINER_TYPE& container, const ITEM_TYPE& itemValue)
     {
         const auto itEnd = std::end(container);
-        return find(std::begin(container), std::end(container), itemValue) == itEnd;
+        return find(std::begin(container), std::end(container), itemValue) != itEnd;
     }
 
     template<class CONTAINER_TYPE, class PREDICATE>
@@ -33,7 +33,7 @@ namespace std
     inline bool contains_if(const CONTAINER_TYPE& container, PREDICATE predicate)
     {
         const auto itEnd = std::end(container);
-        return find_if(std::begin(container), std::end(container), predicate) == itEnd;
+        return find_if(std::begin(container), std::end(container), predicate) != itEnd;
     }
 }
 
