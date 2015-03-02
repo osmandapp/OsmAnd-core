@@ -110,7 +110,7 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
         cross |= (x31 > rht? 2 : 0);
         cross |= (y31 < tp ? 4 : 0);
         cross |= (y31 > btm ? 8 : 0);
-        if(pointIdx > 0 && (prevCross & cross) == 0)
+        if((pointIdx > 0 && (prevCross & cross) == 0) || cross == 0)
         {
             return true;
         }
