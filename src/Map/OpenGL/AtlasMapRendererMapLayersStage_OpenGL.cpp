@@ -366,7 +366,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor * 0.5 + param_fs_rasterTileLayer_0.blablablabla1 * 0.5,                                            ""\n"
+        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor * 0.01 + param_fs_rasterTileLayer_0.blablablabla1 * 0.99,                                            ""\n"
         "        param_fs_rasterTileLayer_0.isPremultipliedAlpha);                                                          ""\n"
         "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
         "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
