@@ -335,6 +335,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "    lowp float isPremultipliedAlpha;                                                                               ""\n"
         "    lowp float opacityFactor;                                                                                      ""\n"
         "    lowp float blablabla1;                                                                                      ""\n"
+        "    lowp float blablabla2;                                                                                      ""\n"
         "};                                                                                                                 ""\n"
         "%UnrolledPerRasterLayerParamsDeclarationCode%                                                                      ""\n"
         "                                                                                                                   ""\n"
@@ -366,7 +367,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
         "        param_fs_rasterTileLayer_0.sampler,                                                                        ""\n"
         "        v2f_texCoordsPerLayer_0);                                                                                  ""\n"
         "#endif // TEXTURE_LOD_SUPPORTED                                                                                    ""\n"
-        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor * 0.01 + param_fs_rasterTileLayer_0.blablabla1 * 0.99,                                            ""\n"
+        "    addExtraAlpha(finalColor, param_fs_rasterTileLayer_0.opacityFactor * 0.01 + param_fs_rasterTileLayer_0.blablabla1 * 0.01 + param_fs_rasterTileLayer_0.blablabla2 * 0.99,                                            ""\n"
         "        param_fs_rasterTileLayer_0.isPremultipliedAlpha);                                                          ""\n"
         "    lowp float firstLayerColorFactor = param_fs_rasterTileLayer_0.isPremultipliedAlpha +                           ""\n"
         "        (1.0 - param_fs_rasterTileLayer_0.isPremultipliedAlpha) * finalColor.a;                                    ""\n"
@@ -541,6 +542,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::initializeRasterLayersProgra
             ok = ok && lookup->lookupLocation(layerStruct.sampler, layerStructName + ".sampler", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.opacityFactor, layerStructName + ".opacityFactor", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.blablabla1, layerStructName + ".blablabla1", GlslVariableType::Uniform);
+            ok = ok && lookup->lookupLocation(layerStruct.blablabla2, layerStructName + ".blablabla2", GlslVariableType::Uniform);
             ok = ok && lookup->lookupLocation(layerStruct.isPremultipliedAlpha, layerStructName + ".isPremultipliedAlpha", GlslVariableType::Uniform);
         }
     }
@@ -632,6 +634,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 const auto& layerConfiguration = *citMapLayerConfiguration;
                 glUniform1f(perTile_fs.opacityFactor, layerConfiguration.opacityFactor);
                 glUniform1f(perTile_fs.blablabla1, layerConfiguration.opacityFactor);
+                glUniform1f(perTile_fs.blablabla2, layerConfiguration.opacityFactor);
                 GL_CHECK_RESULT;
             }
 
