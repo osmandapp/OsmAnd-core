@@ -517,6 +517,7 @@ if (CMAKE_TARGET_CPU_ARCH_FAMILY STREQUAL "fat" AND CMAKE_TARGET_OS STREQUAL "io
 	set(ios_iphonesimulator_exclude_list
 		"${target_specific_sources__arm}"
 		"${target_specific_sources__none}")
+	list(REMOVE_ITEM ios_iphonesimulator_exclude_list "upstream.patched/src/opts/SkTextureCompression_opts_none.cpp")
 	string(REPLACE ";" " " ios_iphonesimulator_exclude "${ios_iphonesimulator_exclude_list}")
 	set_target_properties(skia_static
 		PROPERTIES
