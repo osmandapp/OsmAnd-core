@@ -65,6 +65,8 @@ public abstract class MapRendererView extends FrameLayout {
      */
     private final RenderRequestCallback _renderRequestCallback = new RenderRequestCallback();
 
+    private IMapRendererSetupOptionsConfigurator _mapRendererSetupOptionsConfigurator;
+
     /**
      * Reference to valid EGL display
      */
@@ -121,6 +123,15 @@ public abstract class MapRendererView extends FrameLayout {
         _glSurfaceView.setEGLContextFactory(new EGLContextFactory());
         _glSurfaceView.setRenderer(new RendererProxy());
         _glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+    }
+
+    public void setMapRendererSetupOptionsConfigurator(
+            IMapRendererSetupOptionsConfigurator configurator) {
+        _mapRendererSetupOptionsConfigurator = configurator;
+    }
+
+    public IMapRendererSetupOptionsConfigurator getMapRendererSetupOptionsConfigurator() {
+        return _mapRendererSetupOptionsConfigurator;
     }
 
     /**
@@ -590,6 +601,8 @@ public abstract class MapRendererView extends FrameLayout {
             }
             setupOptions.setFrameUpdateRequestCallback(_renderRequestCallback.getBinding());
             setupOptions.setDisplayDensityFactor(_densityFactor);
+            if (_mapRendererSetupOptionsConfigurator != null)
+                _mapRendererSetupOptionsConfigurator.configureMapRendererSetupOptions(setupOptions);
             _mapRenderer.setup(setupOptions);
 
             return _mainContext;
@@ -764,5 +777,9 @@ public abstract class MapRendererView extends FrameLayout {
                 Log.e(TAG, "Failed to wait for GPU-worker EGL context", e);
             }
         }
+    }
+
+    public interface IMapRendererSetupOptionsConfigurator {
+        void configureMapRendererSetupOptions(MapRendererSetupOptions mapRendererSetupOptions);
     }
 }
