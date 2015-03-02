@@ -1353,7 +1353,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 canBeBatched = (lastBatchedLayer->type == BatchedLayerType::Raster);
 
                 // Number of batched raster layers is limited
-                canBeBatched = canBeBatched && (batch->layers.size() <= _maxNumberOfRasterMapLayersInBatch);
+                canBeBatched = canBeBatched && (batch->layers.size() < _maxNumberOfRasterMapLayersInBatch);
 
                 // Batching is possible only if all BatchedLayerResources are compatible
                 if (canBeBatched)
@@ -1362,7 +1362,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 {
                     for (const auto& batchedLayerResource : constOf(batchedLayer->resourcesInGPU))
                     {
-                        canBeBatched = std::any_of(lastBatchedLayer->resourcesInGPU.cbegin(), lastBatchedLayer->resourcesInGPU.cend(),
+                        canBeBatched = std::any_of(lastBatchedLayer->resourcesInGPU,
                             [batchedLayerResource]
                             (const Ref<BatchedLayerResource>& otherBatchedLayerResource)
                             {

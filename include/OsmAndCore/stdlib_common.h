@@ -35,6 +35,13 @@ namespace std
         const auto itEnd = std::end(container);
         return find_if(std::begin(container), std::end(container), predicate) != itEnd;
     }
+
+    template<class CONTAINER_TYPE, class PREDICATE>
+    inline bool any_of(const CONTAINER_TYPE& container, PREDICATE predicate)
+    {
+        const auto itEnd = std::end(container);
+        return any_of(std::begin(container), std::end(container), predicate) != itEnd;
+    }
 }
 
 #endif // !defined(_OSMAND_CORE_STDLIB_COMMON_H_)

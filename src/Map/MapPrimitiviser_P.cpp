@@ -2404,7 +2404,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, text->pathPaddingRight);
 
         // In case new text symbol has a twin that was already added, ignore this one
-        const auto hasTwin = std::any_of(outSymbols.cbegin(), outSymbols.cend(),
+        const auto hasTwin = std::any_of(outSymbols,
             [text]
             (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
             {
@@ -2521,7 +2521,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, icon->pathPaddingRight);
 
     // In case new icon symbol has a twin that was already added, ignore this one
-    const auto hasTwin = std::any_of(outSymbols.cbegin(), outSymbols.cend(),
+    const auto hasTwin = std::any_of(outSymbols,
         [icon]
         (const std::shared_ptr<const Symbol>& otherSymbol) -> bool
         {
