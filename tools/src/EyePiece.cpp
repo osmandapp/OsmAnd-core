@@ -996,7 +996,10 @@ bool OsmAndTools::EyePiece::rasterize(std::ostream& output)
 
         if (wasInterrupted)
         {
-            output << xT("ERROR: Rendering was interrupted since it took too long (more than 10 minutes). Probably it's stuck: ") << QStringToStlString(mapRenderer->getNotIdleReason()) << std::endl;
+            output
+                << xT("ERROR: Rendering was interrupted since it took too long (more than 10 minutes). Probably it's stuck: ")
+                << QStringToStlString(mapRenderer->getNotIdleReason())
+                << std::endl;
             success = false;
         }
 
