@@ -22,7 +22,9 @@ OsmAnd::ObfDataInterface::~ObfDataInterface()
 {
 }
 
-bool OsmAnd::ObfDataInterface::loadObfFiles(QList< std::shared_ptr<const ObfFile> >* outFiles /*= nullptr*/, const IQueryController* const controller /*= nullptr*/)
+bool OsmAnd::ObfDataInterface::loadObfFiles(
+    QList< std::shared_ptr<const ObfFile> >* outFiles /*= nullptr*/,
+    const IQueryController* const controller /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
     {
@@ -120,7 +122,9 @@ bool OsmAnd::ObfDataInterface::loadBinaryMapObjects(
         if (bbox31)
         {
             pBasemapBBox31 = &basemapBBox31;
-            basemapBBox31 = Utilities::roundBoundingBox31(*bbox31, static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
+            basemapBBox31 = Utilities::roundBoundingBox31(
+                *bbox31,
+                static_cast<ZoomLevel>(ObfMapSectionLevel::MaxBasemapZoomLevel));
         }
 
         for (const auto& mapSection : constOf(obfInfo->mapSections))

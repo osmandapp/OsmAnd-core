@@ -124,6 +124,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
             &loadedNonSharedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectsCounters,
             tileBBox31,
+            zoom,
             metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section,
             const ObfObjectId id,
@@ -141,7 +142,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
             totalLoadCount++;
 
             // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = tileBBox31.contains(bbox);
+            const auto canNotBeShared = requestedZoom == zoom && tileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
             if (canNotBeShared)
@@ -206,7 +207,15 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedSharedRoadsCounters;
     QHash< ObfObjectId, SmartPOD<unsigned int, 0u> > loadedNonSharedRoadsCounters;
     const auto roadsFilteringFunctor =
-        [this, &referencedRoads, &futureReferencedRoads, &loadedSharedRoadsCounters, &loadedNonSharedRoadsCounters, &allLoadedRoadsCounters, &allLoadedBinaryMapObjectsCounters, tileBBox31, metric]
+        [this,
+            &referencedRoads,
+            &futureReferencedRoads,
+            &loadedSharedRoadsCounters,
+            &loadedNonSharedRoadsCounters,
+            &allLoadedRoadsCounters,
+            &allLoadedBinaryMapObjectsCounters,
+            tileBBox31,
+            metric]
         (const std::shared_ptr<const ObfRoutingSectionInfo>& section, const ObfObjectId id, const AreaI& bbox) -> bool
         {
             const Stopwatch objectsFilteringStopwatch(metric != nullptr);
