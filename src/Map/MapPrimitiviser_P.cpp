@@ -146,9 +146,11 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         if (controller && controller->isAborted())
             break;
         
-        if(!mapObject->intersectedOrContainedBy(area31))
+        if(!mapObject->intersectedOrContainedBy(area31) &&
+           !mapObject->containsType(mapObject->encodingDecodingRules->naturalCoastline_encodingRuleId))
+        {
             continue;
-        
+        }
 
         // Check origin of map object
         auto isBasemapObject = false;
@@ -249,6 +251,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         std::shared_ptr<const MapObject> neareastCoastlineMapObject;
         PointI nearestCoastlineSegment0;
         PointI nearestCoastlineSegment1;
+        PointI mCenter = center;
         double squaredMinDistance = std::numeric_limits<double>::max();
 
         for (const auto& coastlineMapObject : constOf(basemapCoastlineObjects))
@@ -260,21 +263,54 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 center,
                 &segmentIndex0,
                 &segmentIndex1);
-            if (segmentIndex0 != -1 && segmentIndex1 != -1 && squaredDistance < squaredMinDistance)
+            if (segmentIndex0 != -1 && segmentIndex1 != -1 && coastlineMapObject->points31.size() > 1)
             {
                 const auto pPoints = coastlineMapObject->points31.constData();
-                nearestCoastlineSegment0 = pPoints[segmentIndex0];
-                nearestCoastlineSegment1 = pPoints[segmentIndex1];
-                squaredMinDistance = squaredDistance;
-                neareastCoastlineMapObject = coastlineMapObject;
+                if(squaredDistance <= squaredMinDistance)
+                {
+                    if(segmentIndex0 == segmentIndex1)
+                    {
+                        if(segmentIndex0 == 0)
+                        {
+                            nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
+                            mCenter = pPoints[segmentIndex0];
+                            if(!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
+                            {
+                                nearestCoastlineSegment0 = pPoints[segmentIndex0];
+                                mCenter = center;
+                            }
+                        } else if(segmentIndex0 == coastlineMapObject->points31.size() - 1) {
+                            nearestCoastlineSegment0 = pPoints[segmentIndex0 - 1];
+                            mCenter = pPoints[segmentIndex0];
+                            if(!neareastCoastlineMapObject || squaredDistance < squaredMinDistance)
+                            {
+                                nearestCoastlineSegment1 = pPoints[segmentIndex1];
+                                mCenter = center;
+                            }
+                        } else {
+                            nearestCoastlineSegment0 = pPoints[segmentIndex0 - 1];
+                            nearestCoastlineSegment1 = pPoints[segmentIndex0 + 1];
+                            mCenter = pPoints[segmentIndex0];
+                        }
+                    }
+                    else
+                    {
+                        nearestCoastlineSegment0 = pPoints[segmentIndex0];
+                        nearestCoastlineSegment1 = pPoints[segmentIndex1];
+                        mCenter = center;
+                    }
+                    squaredMinDistance = squaredDistance;
+                    neareastCoastlineMapObject = coastlineMapObject;
+
+                }
             }
         }
 
         // If nearest coastline was found, determine FullLand or FullWater using direction of the nearest segment
         // Rule: Water is always on the right along the direction of coastline segment.
         if (neareastCoastlineMapObject)
-        {
-            const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, center);
+        { 
+            const auto sign = crossProductSign(nearestCoastlineSegment0, nearestCoastlineSegment1, mCenter);
             surfaceType = (sign >= 0) ? MapSurfaceType::FullLand : MapSurfaceType::FullWater;
         }
     }
