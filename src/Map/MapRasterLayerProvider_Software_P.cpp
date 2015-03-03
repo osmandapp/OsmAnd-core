@@ -84,9 +84,6 @@ std::shared_ptr<SkBitmap> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
         metric ? metric->findOrAddSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>().get() : nullptr,
         queryController);
 
-    if (metric)
-        metric->elapsedTime += totalStopwatch.elapsed();
-
 #if OSMAND_PERFORMANCE_METRICS
 #if OSMAND_PERFORMANCE_METRICS <= 1
     LogPrintf(LogSeverityLevel::Info,

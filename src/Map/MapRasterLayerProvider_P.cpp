@@ -10,6 +10,7 @@
 #include "MapPrimitivesProvider_Metrics.h"
 #include "MapPrimitiviser.h"
 #include "MapRasterizer.h"
+#include "Stopwatch.h"
 
 OsmAnd::MapRasterLayerProvider_P::MapRasterLayerProvider_P(MapRasterLayerProvider* const owner_)
     : owner(owner_)
@@ -49,6 +50,14 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
     const auto metric = metric_;
 #endif
 
+    const Stopwatch totalStopwatch(
+#if OSMAND_PERFORMANCE_METRICS
+        true
+#else
+        metric != nullptr
+#endif // OSMAND_PERFORMANCE_METRICS
+        );
+
     // Obtain offline map primitives tile
     std::shared_ptr<MapPrimitivesProvider::Data> primitivesTile;
     owner->primitivesProvider->obtainData(
@@ -60,13 +69,22 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
     if (!primitivesTile || primitivesTile->primitivisedObjects->isEmpty())
     {
         outTiledData.reset();
+
+        if (metric)
+            metric->elapsedTime += totalStopwatch.elapsed();
+
         return true;
     }
 
     // Perform actual rasterization
     const auto bitmap = rasterize(tileId, zoom, primitivesTile, metric, queryController);
     if (!bitmap)
+    {
+        if (metric)
+            metric->elapsedTime += totalStopwatch.elapsed();
+
         return false;
+    }
 
     // Or supply newly rasterized tile
     outTiledData.reset(new MapRasterLayerProvider::Data(
@@ -77,6 +95,9 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
         bitmap,
         primitivesTile,
         new RetainableCacheMetadata(primitivesTile->retainableCacheMetadata)));
+
+    if (metric)
+        metric->elapsedTime += totalStopwatch.elapsed();
 
     return true;
 }

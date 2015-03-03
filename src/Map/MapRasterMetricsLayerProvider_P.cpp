@@ -69,17 +69,17 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
         .arg(tileId.x)
         .arg(tileId.y)
         .arg(zoom);
-    if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>())
+    if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
         text += QString(QLatin1String("obf read    %1s\n"))
             .arg(QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 3));
     }
-    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>())
+    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitivise>(true))
     {
         text += QString(QLatin1String("primitives  %1s\n"))
             .arg(QString::number(primitiviseMetric->elapsedTime, 'f', 3));
     }
-    if (const auto rasterizeMetric = obtainDataMetric.findSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>())
+    if (const auto rasterizeMetric = obtainDataMetric.findSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>(true))
     {
         text += QString(QLatin1String("rasterize   %1s\n"))
             .arg(QString::number(rasterizeMetric->elapsedTime, 'f', 3));

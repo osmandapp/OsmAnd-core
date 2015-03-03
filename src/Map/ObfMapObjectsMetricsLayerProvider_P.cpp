@@ -69,7 +69,7 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
         .arg(tileId.x)
         .arg(tileId.y)
         .arg(zoom);
-    if (const auto loadMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapSectionReader_Metrics::Metric_loadMapObjects>())
+    if (const auto loadMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapSectionReader_Metrics::Metric_loadMapObjects>(true))
     {
         text += QString(QLatin1String("BLOCKS r:%1+s:%2=%3\n"))
             .arg(loadMapObjectsMetric->mapObjectsBlocksRead)

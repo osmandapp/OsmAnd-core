@@ -14,12 +14,15 @@
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/Ref.h>
 
-#define EMIT_METRIC_FIELD(type, name, measurement) \
+#define EMIT_METRIC_FIELD(type, name, measurement)                                                                              \
     type name
-#define RESET_METRIC_FIELD(type, name, measurement) \
+#define RESET_METRIC_FIELD(type, name, measurement)                                                                             \
     name = 0
-#define PRINT_METRIC_FIELD(type, name, measurement) \
-    output += (output.isEmpty() ? QString() : QString(QLatin1String("\n"))) + prefix + QString(QLatin1String(#name " = %1" measurement)).arg(name)
+#define PRINT_METRIC_FIELD(type, name, measurement)                                                                             \
+    output +=                                                                                                                   \
+        (output.isEmpty() ? QString() : QString(QLatin1String("\n"))) +                                                         \
+        prefix +                                                                                                                \
+        QString(QLatin1String(#name " = %1" measurement)).arg(name)
 
 namespace OsmAnd
 {
@@ -41,26 +44,68 @@ namespace OsmAnd
             return newSubmetric;
         }
 
-        void addOrReplaceSubmetric(const std::shared_ptr<Metric>& submetric);
-
-        std::shared_ptr<Metric> findSubmetricOfType(const std::type_info& requestedType);
         template<typename T>
-        std::shared_ptr<T> findSubmetricOfType()
+        std::shared_ptr<T> findSubmetricOfType(const bool recursive = false)
         {
-            return std::dynamic_pointer_cast<T>(findSubmetricOfType(typeid(T)));
+            for (auto& submetric : submetrics)
+            {
+                if (const auto typedSubmetric = std::dynamic_pointer_cast<T>(submetric.shared_ptr()))
+                    return typedSubmetric;
+            }
+
+            if (recursive)
+            {
+                for (auto& submetric : submetrics)
+                {
+                    if (const auto typedSubmetric = submetric->findSubmetricOfType<T>(true))
+                        return typedSubmetric;
+                }
+            }
+
+            return nullptr;
         }
 
-        std::shared_ptr<const Metric> findSubmetricOfType(const std::type_info& requestedType) const;
         template<typename T>
-        std::shared_ptr<const T> findSubmetricOfType() const
+        std::shared_ptr<const T> findSubmetricOfType(const bool recursive = false) const
         {
-            return std::dynamic_pointer_cast<const T>(findSubmetricOfType(typeid(T)));
+            for (const auto& submetric : submetrics)
+            {
+                if (const auto typedSubmetric = std::dynamic_pointer_cast<const T>(submetric.shared_ptr()))
+                    return typedSubmetric;
+            }
+
+            if (recursive)
+            {
+                for (auto& submetric : submetrics)
+                {
+                    if (const auto typedSubmetric = submetric->findSubmetricOfType<const T>(true))
+                        return typedSubmetric;
+                }
+            }
+
+            return nullptr;
+        }
+
+        void addOrReplaceSubmetric(const std::shared_ptr<Metric>& submetric);
+
+        std::shared_ptr<Metric> findSubmetricOfExactType(const std::type_info& requestedType);
+        template<typename T>
+        std::shared_ptr<T> findSubmetricOfExactType()
+        {
+            return std::dynamic_pointer_cast<T>(findSubmetricOfExactType(typeid(T)));
+        }
+
+        std::shared_ptr<const Metric> findSubmetricOfExactType(const std::type_info& requestedType) const;
+        template<typename T>
+        std::shared_ptr<const T> findSubmetricOfExactType() const
+        {
+            return std::dynamic_pointer_cast<const T>(findSubmetricOfExactType(typeid(T)));
         }
 
         template<typename T>
         std::shared_ptr<T> findOrAddSubmetricOfType()
         {
-            if (const auto submetric = findSubmetricOfType<T>())
+            if (const auto submetric = findSubmetricOfExactType<T>())
                 return submetric;
 
             return addSubmetricOfType<T>();

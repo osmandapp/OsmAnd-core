@@ -70,12 +70,12 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
         .arg(tileId.y)
         .arg(zoom);
     QString obtainBinaryMapObjectsElapsedTime(QLatin1String("?"));
-    if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>())
+    if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
         obtainBinaryMapObjectsElapsedTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 2);
     }
     QString primitiviseElapsedTime(QLatin1String("?"));
-    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithSurface>())
+    if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithSurface>(true))
     {
         text += QString(QLatin1String("order  %1/-%2 %3s\n"))
             .arg(primitiviseMetric->orderEvaluations)
