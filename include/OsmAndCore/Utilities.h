@@ -445,21 +445,13 @@ namespace OsmAnd
 
             // Find segment that is nearest to point p using only points from the line
             pCurrentPoint = line.constData();
-            for (auto currentPointIdx = 1; currentPointIdx < pointsCount - 1; currentPointIdx++, pCurrentPoint++)
+            for (auto currentPointIdx = 0; currentPointIdx < pointsCount; currentPointIdx++, pCurrentPoint++)
             {
                 const auto squaredDistance = (PointI64(*pCurrentPoint) - PointI64(p)).squareNorm();
                 if (squaredDistance < squaredMinDistance)
                 {
-                    if (Q_UNLIKELY(currentPointIdx == 0))
-                    {
-                        *pOutSegmentIndex0 = 0;
-                        *pOutSegmentIndex1 = 1;
-                    }
-                    else
-                    {
-                        *pOutSegmentIndex0 = currentPointIdx - 1;
-                        *pOutSegmentIndex1 = currentPointIdx + 1;
-                    }
+                    *pOutSegmentIndex0 = currentPointIdx;
+                    *pOutSegmentIndex1 = currentPointIdx;
                     squaredMinDistance = squaredDistance;
                 }
             }
