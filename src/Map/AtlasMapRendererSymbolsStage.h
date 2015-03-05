@@ -320,7 +320,7 @@ namespace OsmAnd
 
         void queryLastPreparedSymbolsAt(
             const PointI screenPoint,
-            QList< std::shared_ptr<const MapSymbol> >& outMapSymbols) const;
+            QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const;
     };
 }
 

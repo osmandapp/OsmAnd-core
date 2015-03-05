@@ -20,6 +20,8 @@
 #include <OsmAndCore/Map/MapRendererConfiguration.h>
 #include <OsmAndCore/Map/MapRendererSetupOptions.h>
 #include <OsmAndCore/Map/MapRendererDebugSettings.h>
+#include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/MapSymbolsGroup.h>
 
 namespace OsmAnd
 {
@@ -37,6 +39,13 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IMapRenderer
     {
+    public:
+        struct MapSymbolInformation Q_DECL_FINAL
+        {
+            std::shared_ptr<const MapSymbol> mapSymbol;
+            std::shared_ptr<const MapSymbolsGroup::AdditionalSymbolInstanceParameters> instanceParameters;
+        };
+
     private:
     protected:
         IMapRenderer();
@@ -75,7 +84,7 @@ namespace OsmAnd
         virtual void forcedGpuProcessingCycle() = 0;
 
         virtual unsigned int getSymbolsCount() const = 0;
-        virtual QList< std::shared_ptr<const MapSymbol> > getSymbolsAt(const PointI& screenPoint) const = 0;
+        virtual QList<MapSymbolInformation> getSymbolsAt(const PointI& screenPoint) const = 0;
         virtual bool isSymbolsUpdateSuspended(int* const pOutSuspendsCounter = nullptr) const = 0;
         virtual bool suspendSymbolsUpdate() = 0;
         virtual bool resumeSymbolsUpdate() = 0;

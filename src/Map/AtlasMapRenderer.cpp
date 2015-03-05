@@ -218,9 +218,9 @@ bool OsmAnd::AtlasMapRenderer::doReleaseRendering(const bool gpuContextLost)
     return ok;
 }
 
-QList< std::shared_ptr<const OsmAnd::MapSymbol> > OsmAnd::AtlasMapRenderer::getSymbolsAt(const PointI& screenPoint) const
+QList<OsmAnd::IMapRenderer::MapSymbolInformation> OsmAnd::AtlasMapRenderer::getSymbolsAt(const PointI& screenPoint) const
 {
-    QList< std::shared_ptr<const MapSymbol> > result;
+    QList<MapSymbolInformation> result;
     if (symbolsStage)
         symbolsStage->queryLastPreparedSymbolsAt(screenPoint, result);
     return result;

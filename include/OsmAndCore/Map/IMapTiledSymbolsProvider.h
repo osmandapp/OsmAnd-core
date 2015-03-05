@@ -10,6 +10,8 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Callable.h>
+#include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IMapTiledDataProvider.h>
 
 namespace OsmAnd

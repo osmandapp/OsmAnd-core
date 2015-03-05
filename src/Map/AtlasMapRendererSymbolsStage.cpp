@@ -73,7 +73,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
 
 void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
     const PointI screenPoint,
-    QList< std::shared_ptr<const MapSymbol> >& outMapSymbols) const
+    QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const
 {
     QList< std::shared_ptr<const RenderableSymbol> > selectedRenderables;
     
@@ -82,10 +82,15 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
         _lastPreparedIntersections.select(screenPoint, selectedRenderables);
     }
 
-    QSet< std::shared_ptr<const MapSymbol> > mapSymbolsSet;
     for (const auto& renderable : constOf(selectedRenderables))
-        mapSymbolsSet.insert(renderable->mapSymbol);
-    outMapSymbols = mapSymbolsSet.toList();
+    {
+        IMapRenderer::MapSymbolInformation mapSymbolInfo;
+
+        mapSymbolInfo.mapSymbol = renderable->mapSymbol;
+        mapSymbolInfo.instanceParameters = renderable->genericInstanceParameters;
+
+        outMapSymbols.push_back(qMove(mapSymbolInfo));
+    }
 }
 
 //#define OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE 1
