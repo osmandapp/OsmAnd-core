@@ -1077,6 +1077,8 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
 
 void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
 {
+    QWriteLocker scopedLocker(&_resourcesStoragesLock);
+
     // This method is called from non-GPU thread, so it's impossible to unload resources from GPU here
     bool needsResourcesUploadOrUnload = false;
 
