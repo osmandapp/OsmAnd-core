@@ -194,7 +194,7 @@ namespace OsmAnd
 
             const ValueGetter valueGetter;
 
-            bool operator()(
+            void operator()(
                 AnimationContext& context,
                 const std::shared_ptr<AnimationContext>& sharedContext,
                 VALUE_TYPE& outValue) const
