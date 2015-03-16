@@ -8,6 +8,7 @@
 #include <QReadWriteLock>
 #include <QHash>
 #include <QAtomicInt>
+#include <QMutex>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
