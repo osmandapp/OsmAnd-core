@@ -1437,8 +1437,10 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Check size of polygon
             const auto doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
             const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
-            const auto polygonAreaInPixels = polygonArea31 / (primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y);
-            const auto polygonAreaInAbstractPixels = polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
+            const auto polygonAreaInPixels =
+                polygonArea31 / (primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y);
+            const auto polygonAreaInAbstractPixels =
+                polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
             if (primitivisedObjects->scaleDivisor31ToPixel.x >= 0.0 &&
                 primitivisedObjects->scaleDivisor31ToPixel.y >= 0.0 &&
                 polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold)
@@ -1823,7 +1825,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
         }
 
         // Create a symbols group
-        std::shared_ptr<SymbolsGroup> group(new SymbolsGroup(
+        const std::shared_ptr<SymbolsGroup> group(new SymbolsGroup(
             primitivesGroup->sourceObject));
 
         // For each primitive if primitive group, collect symbols from it
@@ -1866,11 +1868,11 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
 
     for (auto& futureGroup : futureSharedSymbolGroups)
     {
-        auto group = futureGroup.get();
+        const auto group = futureGroup.get();
 
         // Add shared group to current context
         assert(!primitivisedObjects->symbolsGroups.contains(group->sourceObject));
-        primitivisedObjects->symbolsGroups.insert(group->sourceObject, qMove(group));
+        primitivisedObjects->symbolsGroups.insert(group->sourceObject, group);
     }
 }
 
@@ -2430,15 +2432,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         if (ok)
             text->intersectionMargin = intersectionMargin;
 
-        text->pathPaddingLeft = context.defaultSymbolPathPaddingLeft;
-        text->pathPaddingRight = context.defaultSymbolPathPaddingRight;
-        float pathPadding = 0.0f;
-        ok = evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
-        if (ok)
-            text->pathPaddingLeft = text->pathPaddingRight = pathPadding;
-        evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, text->pathPaddingLeft);
-        evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, text->pathPaddingRight);
-
         // In case new text symbol has a twin that was already added, ignore this one
         const auto hasTwin = std::any_of(outSymbols,
             [text]
@@ -2547,15 +2540,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
             icon->intersectionSize = iconIntersectionSize;
     }
 
-    icon->pathPaddingLeft = context.defaultSymbolPathPaddingLeft;
-    icon->pathPaddingRight = context.defaultSymbolPathPaddingRight;
-    float pathPadding = 0.0f;
-    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING, pathPadding);
-    if (ok)
-        icon->pathPaddingLeft = icon->pathPaddingRight = pathPadding;
-    primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, icon->pathPaddingLeft);
-    primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, icon->pathPaddingRight);
-
     // In case new icon symbol has a twin that was already added, ignore this one
     const auto hasTwin = std::any_of(outSymbols,
         [icon]
@@ -2584,6 +2568,6 @@ OsmAnd::MapPrimitiviser_P::Context::Context(
     polygonAreaMinimalThreshold = env->getPolygonAreaMinimalThreshold(zoom);
     roadDensityZoomTile = env->getRoadDensityZoomTile(zoom);
     roadsDensityLimitPerTile = env->getRoadsDensityLimitPerTile(zoom);
-    env->obtainDefaultSymbolPathPadding(defaultSymbolPathPaddingLeft, defaultSymbolPathPaddingRight);
-    env->obtainDefaultBlockPathPadding(defaultBlockPathPaddingLeft, defaultBlockPathPaddingRight);
+    defaultSymbolPathSpacing = env->getDefaultSymbolPathSpacing();
+    defaultBlockPathSpacing = env->getDefaultBlockPathSpacing();
 }

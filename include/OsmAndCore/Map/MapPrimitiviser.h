@@ -170,8 +170,6 @@ namespace OsmAnd
             float intersectionSizeFactor;
             float intersectionSize;
             float intersectionMargin;
-            float pathPaddingLeft;
-            float pathPaddingRight;
             float minDistance;
             float scaleFactor;
 

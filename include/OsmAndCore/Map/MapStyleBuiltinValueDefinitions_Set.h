@@ -34,9 +34,6 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, Output, String, "i
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, Output, Float, "intersectionSize", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, Output, Float, "intersectionMargin", true)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING, Output, Float, "pathPadding", true)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING_LEFT, Output, Float, "pathPaddingLeft", true)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_PATH_PADDING_RIGHT, Output, Float, "pathPaddingRight", true)
 
 // Text properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth", false)
@@ -123,5 +120,10 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_RADIUS, Output, Float, "shadowRadius", tr
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_ICON, Output, String, "pathIcon", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_ICON_STEP, Output, Float, "pathIconStep", true)
+// Following can not be placed in any of current rule sections, since describes parameter of path itself, not primitive that was
+// created from this path
+//DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_PADDING, Output, Float, "pathPadding", true)
+//DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_SYMBOL_SPACING, Output, Float, "pathSymbolSpacing", true)
+//DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_BLOCK_SPACING, Output, Float, "pathBlockSpacing", true)
 
 #endif // DECLARE_BUILTIN_VALUEDEF

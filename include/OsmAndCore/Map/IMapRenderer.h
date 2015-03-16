@@ -85,6 +85,7 @@ namespace OsmAnd
 
         virtual unsigned int getSymbolsCount() const = 0;
         virtual QList<MapSymbolInformation> getSymbolsAt(const PointI& screenPoint) const = 0;
+        virtual QList<MapSymbolInformation> getSymbolsIn(const AreaI& screenPoint, const bool strict = false) const = 0;
         virtual bool isSymbolsUpdateSuspended(int* const pOutSuspendsCounter = nullptr) const = 0;
         virtual bool suspendSymbolsUpdate() = 0;
         virtual bool resumeSymbolsUpdate() = 0;
@@ -142,6 +143,8 @@ namespace OsmAnd
         
         virtual bool isPositionVisible(const PointI64& position) const = 0;
         virtual bool isPositionVisible(const PointI& position31) const = 0;
+        virtual bool obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const = 0;
+        virtual bool obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint) const = 0;
 
         virtual double getCurrentTileSizeInMeters() const = 0;
         virtual double getCurrentPixelsToMetersScaleFactor() const = 0;

@@ -23,6 +23,7 @@ namespace OsmAnd
     class QuadTree
     {
     public:
+        typedef COORD_TYPE CoordType;
         typedef QuadTree<ELEMENT_TYPE, COORD_TYPE> QuadTreeT;
         typedef Area<COORD_TYPE> AreaT;
         typedef OOBB<COORD_TYPE> OOBBT;
@@ -135,7 +136,11 @@ namespace OsmAnd
                     return BBox(asOOBB.getEnlargedBy(delta));
             }
 
-            inline BBox getEnlargedBy(const COORD_TYPE& dt, const COORD_TYPE& dl, const COORD_TYPE& db, const COORD_TYPE& dr) const
+            inline BBox getEnlargedBy(
+                const COORD_TYPE& dt,
+                const COORD_TYPE& dl,
+                const COORD_TYPE& db,
+                const COORD_TYPE& dr) const
             {
                 if (type == BBoxType::AABB)
                     return BBox(asAABB.getEnlargedBy(dt, dl, db, dr));
@@ -303,10 +308,28 @@ namespace OsmAnd
                     insertNoCheck(element, bbox_.asOOBB, allowedDepthRemaining);
             }
 
+            void get(QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor) const
+            {
+                for (const auto& entry : constOf(entries))
+                {
+                    if (!acceptor || acceptor(entry.second, entry.first))
+                        outResults.push_back(entry.second);
+                }
+
+                for (auto idx = 0u; idx < 4; idx++)
+                {
+                    if (!subnodes[idx])
+                        continue;
+
+                    subnodes[idx]->get(outResults, acceptor);
+                }
+            }
+
             template<typename BBOX_TYPE>
             void query(const BBOX_TYPE& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
             {
-                // If this node can not contain the bbox and bbox doesn't intersect node, the node can not have anything that will give positive result
+                // If this node can not contain the bbox and bbox doesn't intersect node,
+                // the node can not have anything that will give positive result
                 if (!area.contains(bbox_))
                 {
                     if (strict)
@@ -333,7 +356,11 @@ namespace OsmAnd
                 }
             }
 
-            inline void query(const BBox& bbox_, QList<ELEMENT_TYPE>& outResults, const bool strict, const Acceptor acceptor) const
+            inline void query(
+                const BBox& bbox_,
+                QList<ELEMENT_TYPE>& outResults,
+                const bool strict,
+                const Acceptor acceptor) const
             {
                 if (bbox_.type == BBoxType::AABB)
                     query(bbox_.asAABB, outResults, strict, acceptor);
@@ -344,7 +371,8 @@ namespace OsmAnd
             template<typename BBOX_TYPE>
             bool test(const BBOX_TYPE& bbox_, const bool strict, const Acceptor acceptor) const
             {
-                // If this node can not contain the bbox and bbox doesn't intersect node, the node can not have anything that will give positive result
+                // If this node can not contain the bbox and bbox doesn't intersect node,
+                // the node can not have anything that will give positive result
                 if (!area.contains(bbox_))
                 {
                     if (strict)
@@ -586,7 +614,9 @@ namespace OsmAnd
 
         Ref< Node > _rootNode;
     public:
-        inline QuadTree(const AreaT& rootArea = AreaT::largest(), const uintmax_t maxDepth_ = std::numeric_limits<uintmax_t>::max())
+        inline QuadTree(
+            const AreaT& rootArea = AreaT::largest(),
+            const uintmax_t maxDepth_ = std::numeric_limits<uintmax_t>::max())
             : _rootNode(new Node(rootArea))
             , maxDepth(std::max(maxDepth_, static_cast<uintmax_t>(1u)))
         {
@@ -655,7 +685,43 @@ namespace OsmAnd
                 return insert(entry, bbox.asOOBB, strict);
         }
 
-        inline void query(const BBox& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
+        template<class ITERATOR_TYPE>
+        inline int insertFrom(
+            const ITERATOR_TYPE& itBegin,
+            const ITERATOR_TYPE& itEnd,
+            const std::function<bool(const ELEMENT_TYPE& item, BBox& outBbox)> obtainBBox,
+            const bool strict = false)
+        {
+            int insertedCount = 0;
+
+            for (auto itItem = itBegin; itItem != itEnd; ++itItem)
+            {
+                const auto& item = *itItem;
+                BBox bbox;
+                if (!obtainBBox(item, bbox))
+                    continue;
+
+                if (insert(item, bbox, strict))
+                    insertedCount++;
+            }
+
+            return insertedCount;
+        }
+
+        template<class CONTAINER_TYPE>
+        inline int insertFrom(
+            const CONTAINER_TYPE& container,
+            const std::function<bool(const ELEMENT_TYPE& item, BBox& outBbox)> obtainBBox,
+            const bool strict = false)
+        {
+            return insertFrom(std::begin(container), std::end(container), obtainBBox, strict);
+        }
+
+        inline void query(
+            const BBox& bbox,
+            QList<ELEMENT_TYPE>& outResults,
+            const bool strict = false,
+            const Acceptor acceptor = nullptr) const
         {
             if (bbox.type == BBoxType::AABB)
                 query(bbox.asAABB, outResults, strict, acceptor);
@@ -686,7 +752,11 @@ namespace OsmAnd
             return true;
         }
 
-        inline void query(const AreaT& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
+        inline void query(
+            const AreaT& bbox,
+            QList<ELEMENT_TYPE>& outResults,
+            const bool strict = false,
+            const Acceptor acceptor = nullptr) const
         {
             _rootNode->query(bbox, outResults, strict, acceptor);
         }
@@ -711,7 +781,16 @@ namespace OsmAnd
             return true;
         }
 
-        inline void query(const OOBBT& bbox, QList<ELEMENT_TYPE>& outResults, const bool strict = false, const Acceptor acceptor = nullptr) const
+        inline void get(QList<ELEMENT_TYPE>& outResults, const Acceptor acceptor = nullptr) const
+        {
+            _rootNode->get(outResults, acceptor);
+        }
+
+        inline void query(
+            const OOBBT& bbox,
+            QList<ELEMENT_TYPE>& outResults,
+            const bool strict = false,
+            const Acceptor acceptor = nullptr) const
         {
             _rootNode->query(bbox, outResults, strict, acceptor);
         }

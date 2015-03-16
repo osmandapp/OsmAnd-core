@@ -55,7 +55,11 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         {
             if (configuration.verbose)
             {
-                output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "' from collection:" << std::endl;
+                output
+                    << "Failed to resolve style '"
+                    << QStringToStlString(configuration.styleName)
+                    << "' from collection:"
+                    << std::endl;
                 for (const auto& style : configuration.stylesCollection->getCollection())
                 {
                     if (style->isMetadataLoaded())
@@ -63,7 +67,14 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         if (style->isStandalone())
                             output << "\t" << QStringToStlString(style->name) << std::endl;
                         else
-                            output << "\t" << QStringToStlString(style->name) << "::" << QStringToStlString(style->parentName) << std::endl;
+                        {
+                            output
+                                << "\t"
+                                << QStringToStlString(style->name)
+                                << "::"
+                                << QStringToStlString(style->parentName)
+                                << std::endl;
+                        }
                     }
                     else
                         output << "\t[missing metadata]" << std::endl;
@@ -71,7 +82,11 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             }
             else
             {
-                output << "Failed to resolve style '" << QStringToStlString(configuration.styleName) << "' from collection:" << std::endl;
+                output
+                    << "Failed to resolve style '"
+                    << QStringToStlString(configuration.styleName)
+                    << "' from collection:"
+                    << std::endl;
             }
 
             success = false;
@@ -164,7 +179,14 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 configuration.zoom,
                 mapObjects);
         if (configuration.verbose)
-            output << xT("Primitivised ") << primitivisedData->primitivesGroups.size() << xT(" groups from ") << mapObjects.size() << xT(" map objects") << std::endl;
+        {
+            output
+                << xT("Primitivised ")
+                << primitivisedData->primitivesGroups.size()
+                << xT(" groups from ")
+                << mapObjects.size()
+                << xT(" map objects") << std::endl;
+        }
 
         // Obtain evaluated values for each group and print it
         for (const auto& primitivisedGroup : OsmAnd::constOf(primitivisedData->primitivesGroups))
@@ -174,8 +196,12 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             const auto& encDecRules = mapObject->encodingDecodingRules;
 
             // Skip objects that were not requested
-            if (!configuration.mapObjectsIds.isEmpty() && binaryMapObject && !configuration.mapObjectsIds.contains(binaryMapObject->id))
+            if (!configuration.mapObjectsIds.isEmpty() &&
+                binaryMapObject &&
+                !configuration.mapObjectsIds.contains(binaryMapObject->id))
+            {
                 continue;
+            }
 
             outEvaluatedMapObjects[mapObject] = primitivisedGroup;
 
@@ -189,7 +215,12 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 {
                     const auto& typeRule = *itTypeRule;
 
-                    output << xT("\tType: ") << QStringToStlString(typeRule.tag) << xT(" = ") << QStringToStlString(typeRule.value) << std::endl;
+                    output
+                        << xT("\tType: ")
+                        << QStringToStlString(typeRule.tag)
+                        << xT(" = ")
+                        << QStringToStlString(typeRule.value)
+                        << std::endl;
                 }
                 else
                 {
@@ -204,7 +235,12 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 {
                     const auto& typeRule = *itTypeRule;
 
-                    output << xT("\tExtra type: ") << QStringToStlString(typeRule.tag) << xT(" = ") << QStringToStlString(typeRule.value) << std::endl;
+                    output
+                        << xT("\tExtra type: ")
+                        << QStringToStlString(typeRule.tag)
+                        << xT(" = ")
+                        << QStringToStlString(typeRule.value)
+                        << std::endl;
                 }
                 else
                 {
@@ -230,7 +266,12 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         captionTag = *itCaptionTagAsLocalizedName;
                     if (itCaptionTagRule != encDecRules->decodingRules.cend())
                         captionTag = itCaptionTagRule->tag;
-                    output << xT("\tCaption [") << QStringToStlString(captionTag) << xT("]: ") << QStringToStlString(captionValue) << std::endl;
+                    output
+                        << xT("\tCaption [")
+                        << QStringToStlString(captionTag)
+                        << xT("]: ")
+                        << QStringToStlString(captionValue)
+                        << std::endl;
                 }
             }
 
@@ -244,11 +285,27 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\tPoint #") << pointPrimitiveIndex << std::endl;
                     QString ruleTag;
                     QString ruleValue;
-                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(pointPrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(
+                        pointPrimitive->typeRuleIdIndex,
+                        ruleTag,
+                        ruleValue);
                     if (typeRuleResolved)
-                        output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
+                    {
+                        output
+                            << xT("\t\tTag/value: ")
+                            << QStringToStlString(ruleTag)
+                            << xT(" = ")
+                            << QStringToStlString(ruleValue)
+                            << std::endl;
+                    }
                     else
-                        output << xT("\t\tTag/value: ") << pointPrimitive->typeRuleIdIndex << xT(" (failed to resolve)") << std::endl;
+                    {
+                        output
+                            << xT("\t\tTag/value: ")
+                            << pointPrimitive->typeRuleIdIndex
+                            << xT(" (failed to resolve)")
+                            << std::endl;
+                    }
                     output << xT("\t\tZ order: ") << pointPrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << pointPrimitive->doubledArea << std::endl;
                     for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(pointPrimitive->evaluationResult.values)))
@@ -280,11 +337,26 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\tPolyline #") << polylinePrimitiveIndex << std::endl;
                     QString ruleTag;
                     QString ruleValue;
-                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(polylinePrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(
+                        polylinePrimitive->typeRuleIdIndex,
+                        ruleTag,
+                        ruleValue);
                     if (typeRuleResolved)
-                        output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
+                    {
+                        output
+                            << xT("\t\tTag/value: ")
+                            << QStringToStlString(ruleTag)
+                            << xT(" = ")
+                            << QStringToStlString(ruleValue) << std::endl;
+                    }
                     else
-                        output << xT("\t\tTag/value: ") << polylinePrimitive->typeRuleIdIndex << xT(" (failed to resolve)") << std::endl;
+                    {
+                        output
+                            << xT("\t\tTag/value: ")
+                            << polylinePrimitive->typeRuleIdIndex
+                            << xT(" (failed to resolve)")
+                            << std::endl;
+                    }
                     output << xT("\t\tZ order: ") << polylinePrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << polylinePrimitive->doubledArea << std::endl;
                     for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polylinePrimitive->evaluationResult.values)))
@@ -316,11 +388,27 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\tPolygon #") << polygonPrimitiveIndex << std::endl;
                     QString ruleTag;
                     QString ruleValue;
-                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(polygonPrimitive->typeRuleIdIndex, ruleTag, ruleValue);
+                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(
+                        polygonPrimitive->typeRuleIdIndex,
+                        ruleTag,
+                        ruleValue);
                     if (typeRuleResolved)
-                        output << xT("\t\tTag/value: ") << QStringToStlString(ruleTag) << xT(" = ") << QStringToStlString(ruleValue) << std::endl;
+                    {
+                        output
+                            << xT("\t\tTag/value: ")
+                            << QStringToStlString(ruleTag)
+                            << xT(" = ")
+                            << QStringToStlString(ruleValue)
+                            << std::endl;
+                    }
                     else
-                        output << xT("\t\tTag/value: ") << polygonPrimitive->typeRuleIdIndex << xT(" (failed to resolve)") << std::endl;
+                    {
+                        output
+                            << xT("\t\tTag/value: ")
+                            << polygonPrimitive->typeRuleIdIndex
+                            << xT(" (failed to resolve)")
+                            << std::endl;
+                    }
                     output << xT("\t\tZ order: ") << polygonPrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << polygonPrimitive->doubledArea << std::endl;
                     for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polygonPrimitive->evaluationResult.values)))
@@ -385,9 +473,10 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     output << xT("\t\tPosition31: ") << symbol->location31.x << xT("x") << symbol->location31.y << std::endl;
                     output << xT("\t\tOrder: ") << symbol->order << std::endl;
                     output << xT("\t\tDraw along path: ") << (symbol->drawAlongPath ? xT("yes") : xT("no")) << std::endl;
-                    output << xT("\t\tIntersects with: ") << QStringToStlString(QStringList(symbol->intersectsWith.toList()).join(QLatin1String(", "))) << std::endl;
-                    output << xT("\t\tPath padding left: ") << symbol->pathPaddingLeft << std::endl;
-                    output << xT("\t\tPath padding right: ") << symbol->pathPaddingRight << std::endl;
+                    output
+                        << xT("\t\tIntersects with: ")
+                        << QStringToStlString(QStringList(symbol->intersectsWith.toList()).join(QLatin1String(", ")))
+                        << std::endl;
                     output << xT("\t\tMinDistance: ") << symbol->minDistance << std::endl;
                     if (textSymbol)
                     {
@@ -411,18 +500,27 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         output << xT("\t\tText color: ") << QStringToStlString(textSymbol->color.toString()) << std::endl;
                         output << xT("\t\tText size: ") << textSymbol->size << std::endl;
                         output << xT("\t\tText shadow radius: ") << textSymbol->shadowRadius << std::endl;
-                        output << xT("\t\tText shadow color: ") << QStringToStlString(textSymbol->shadowColor.toString()) << std::endl;
+                        output
+                            << xT("\t\tText shadow color: ")
+                            << QStringToStlString(textSymbol->shadowColor.toString())
+                            << std::endl;
                         output << xT("\t\tText wrap width: ") << textSymbol->wrapWidth << std::endl;
                         output << xT("\t\tText is bold: ") << (textSymbol->isBold ? xT("yes") : xT("no")) << std::endl;
                         output << xT("\t\tText is italic: ") << (textSymbol->isItalic ? xT("yes") : xT("no")) << std::endl;
-                        output << xT("\t\tShield resource name: ") << QStringToStlString(textSymbol->shieldResourceName) << std::endl;
+                        output
+                            << xT("\t\tShield resource name: ")
+                            << QStringToStlString(textSymbol->shieldResourceName)
+                            << std::endl;
                     }
                     else if (iconSymbol)
                     {
                         output << xT("\t\tIcon resource name: ") << QStringToStlString(iconSymbol->resourceName) << std::endl;
                         for (const auto& overlayResoucreName : iconSymbol->overlayResourceNames)
                             output << xT("\t\tOverlay resource name: ") << QStringToStlString(overlayResoucreName) << std::endl;
-                        output << xT("\t\tShield resource name: ") << QStringToStlString(iconSymbol->shieldResourceName) << std::endl;
+                        output
+                            << xT("\t\tShield resource name: ")
+                            << QStringToStlString(iconSymbol->shieldResourceName)
+                            << std::endl;
                         output << xT("\t\tIntersection size: ") << iconSymbol->intersectionSize << std::endl;
                     }
 

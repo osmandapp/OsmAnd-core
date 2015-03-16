@@ -107,7 +107,9 @@ std::shared_ptr<OsmAnd::MapRendererConfiguration> OsmAnd::MapRenderer::getConfig
     return _requestedConfiguration->createCopy();
 }
 
-void OsmAnd::MapRenderer::setConfiguration(const std::shared_ptr<const MapRendererConfiguration>& configuration, bool forcedUpdate /*= false*/)
+void OsmAnd::MapRenderer::setConfiguration(
+    const std::shared_ptr<const MapRendererConfiguration>& configuration,
+    bool forcedUpdate /*= false*/)
 {
     QWriteLocker scopedLocker(&_configurationLock);
 
@@ -267,7 +269,8 @@ void OsmAnd::MapRenderer::processGpuWorker()
         unsigned int resourcesUploaded = 0u;
         unsigned int resourcesUnloaded = 0u;
         _resources->syncResourcesInGPU(1u, &moreUploadThanLimitAvailable, &resourcesUploaded, &resourcesUnloaded);
-        const auto unprocessedRequests = _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
+        const auto unprocessedRequests =
+            _resourcesGpuSyncRequestsCounter.fetchAndAddOrdered(-requestsToProcess) - requestsToProcess;
 
         // If any resource was uploaded or there is more resources to uploaded, invalidate frame
         // to use that resource
@@ -775,7 +778,8 @@ bool OsmAnd::MapRenderer::adjustBitmapToConfiguration(
 {
     // Check if we're going to convert
     bool doConvert = false;
-    const bool force16bit = (currentConfiguration->limitTextureColorDepthBy16bits && input->colorType() == SkColorType::kRGBA_8888_SkColorType);
+    const bool force16bit =
+        (currentConfiguration->limitTextureColorDepthBy16bits && input->colorType() == SkColorType::kRGBA_8888_SkColorType);
     const bool canUsePaletteTextures = currentConfiguration->paletteTexturesAllowed && gpuAPI->isSupported_8bitPaletteRGBA8;
     const bool paletteTexture = (input->colorType() == SkColorType::kIndex_8_SkColorType);
     const bool unsupportedFormat =
@@ -1107,7 +1111,10 @@ OsmAnd::Concurrent::Dispatcher& OsmAnd::MapRenderer::getGpuThreadDispatcher()
     return _gpuThreadDispatcher;
 }
 
-bool OsmAnd::MapRenderer::setMapLayerProvider(const int layerIndex, const std::shared_ptr<IMapLayerProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setMapLayerProvider(
+    const int layerIndex,
+    const std::shared_ptr<IMapLayerProvider>& provider,
+    bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1148,7 +1155,10 @@ bool OsmAnd::MapRenderer::resetMapLayerProvider(const int layerIndex, bool force
     return true;
 }
 
-bool OsmAnd::MapRenderer::setMapLayerConfiguration(const int layerIndex, const MapLayerConfiguration& configuration, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setMapLayerConfiguration(
+    const int layerIndex,
+    const MapLayerConfiguration& configuration,
+    bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1172,7 +1182,9 @@ bool OsmAnd::MapRenderer::setMapLayerConfiguration(const int layerIndex, const M
     return true;
 }
 
-bool OsmAnd::MapRenderer::setElevationDataProvider(const std::shared_ptr<IMapElevationDataProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setElevationDataProvider(
+    const std::shared_ptr<IMapElevationDataProvider>& provider,
+    bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1205,7 +1217,9 @@ bool OsmAnd::MapRenderer::resetElevationDataProvider(bool forcedUpdate /*= false
     return true;
 }
 
-bool OsmAnd::MapRenderer::setElevationDataConfiguration(const ElevationDataConfiguration& configuration, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::setElevationDataConfiguration(
+    const ElevationDataConfiguration& configuration,
+    bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1223,7 +1237,9 @@ bool OsmAnd::MapRenderer::setElevationDataConfiguration(const ElevationDataConfi
     return true;
 }
 
-bool OsmAnd::MapRenderer::addSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::addSymbolsProvider(
+    const std::shared_ptr<IMapTiledSymbolsProvider>& provider,
+    bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1241,7 +1257,9 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(const std::shared_ptr<IMapTiledSymb
     return true;
 }
 
-bool OsmAnd::MapRenderer::addSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::addSymbolsProvider(
+    const std::shared_ptr<IMapKeyedSymbolsProvider>& provider,
+    bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1259,7 +1277,9 @@ bool OsmAnd::MapRenderer::addSymbolsProvider(const std::shared_ptr<IMapKeyedSymb
     return true;
 }
 
-bool OsmAnd::MapRenderer::removeSymbolsProvider(const std::shared_ptr<IMapTiledSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::removeSymbolsProvider(
+    const std::shared_ptr<IMapTiledSymbolsProvider>& provider,
+    bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1277,7 +1297,9 @@ bool OsmAnd::MapRenderer::removeSymbolsProvider(const std::shared_ptr<IMapTiledS
     return true;
 }
 
-bool OsmAnd::MapRenderer::removeSymbolsProvider(const std::shared_ptr<IMapKeyedSymbolsProvider>& provider, bool forcedUpdate /*= false*/)
+bool OsmAnd::MapRenderer::removeSymbolsProvider(
+    const std::shared_ptr<IMapKeyedSymbolsProvider>& provider,
+    bool forcedUpdate /*= false*/)
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
@@ -1299,7 +1321,10 @@ bool OsmAnd::MapRenderer::removeAllSymbolsProviders(bool forcedUpdate /*= false*
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    bool update = forcedUpdate || !_requestedState.tiledSymbolsProviders.isEmpty() || !_requestedState.keyedSymbolsProviders.isEmpty();
+    const auto update =
+        forcedUpdate ||
+        !_requestedState.tiledSymbolsProviders.isEmpty() ||
+        !_requestedState.keyedSymbolsProviders.isEmpty();
     if (!update)
         return false;
 

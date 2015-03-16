@@ -110,6 +110,14 @@ namespace OsmAnd
                 static_cast<float>((static_cast<double>(p.y) / tileSize31)));
         }
 
+        inline static PointD convert31toDouble(const PointI64& p, const ZoomLevel zoom)
+        {
+            const auto tileSize31 = (1u << (ZoomLevel::MaxZoomLevel - zoom));
+            return PointD(
+                (static_cast<double>(p.x) / tileSize31),
+                (static_cast<double>(p.y) / tileSize31));
+        }
+
         inline static double normalizeLatitude(double latitude)
         {
             while (latitude < -90.0 || latitude > 90.0)
@@ -778,55 +786,29 @@ namespace OsmAnd
 
             return result;
         }
-
-        inline static QString stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels)
-        {
-            QString result;
-
-            auto sortedZoomLevels = zoomLevels.values();
-            qSort(sortedZoomLevels.begin(), sortedZoomLevels.end());
-            bool previousCaptured = false;
-            ZoomLevel previousZoomLevel = sortedZoomLevels.first();
-            bool range = false;
-            ZoomLevel rangeStart;
-            for (const auto zoomLevel : sortedZoomLevels)
-            {
-                if (previousCaptured && static_cast<int>(zoomLevel) == static_cast<int>(previousZoomLevel)+1)
-                {
-                    if (!range)
-                        rangeStart = previousZoomLevel;
-                    range = true;
-                    previousZoomLevel = zoomLevel;
-                    previousCaptured = true;
-                }
-                else if (range)
-                {
-                    range = false;
-                    previousZoomLevel = zoomLevel;
-                    previousCaptured = true;
-
-                    result += QString::fromLatin1("%1-%2, %3, ").arg(rangeStart).arg(previousZoomLevel).arg(zoomLevel);
-                }
-                else
-                {
-                    previousZoomLevel = zoomLevel;
-                    previousCaptured = true;
-
-                    result += QString::fromLatin1("%1, ").arg(zoomLevel);
-                }
-            }
-
-            // Process last range
-            if (range)
-                result += QString::fromLatin1("%1-%2, ").arg(rangeStart).arg(sortedZoomLevels.last());
-
-            if (result.length() > 2)
-                result.truncate(result.length() - 2);
-
-            return result;
-        }
+        static QString stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels);
 
         static QString getQuadKey(const uint32_t x, const uint32_t y, const uint32_t z);
+
+        struct ItemPointOnPath Q_DECL_FINAL
+        {
+            int priority;
+            float itemCenterOffset;
+            float itemCenterN;
+
+            struct PriorityComparator Q_DECL_FINAL
+            {
+                inline bool operator()(const ItemPointOnPath& l, const ItemPointOnPath& r) const
+                {
+                    return (l.priority < r.priority);
+                }
+            };
+        };
+        static QList<ItemPointOnPath> calculateItemPointsOnPath(
+            const float pathLength,
+            const float itemLength,
+            const float padding = 0.0f,
+            const float spacing = 0.0f);
     private:
         Utilities();
         ~Utilities();

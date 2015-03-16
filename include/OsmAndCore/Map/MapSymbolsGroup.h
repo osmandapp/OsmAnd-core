@@ -127,7 +127,9 @@ namespace OsmAnd
         {
             Comparator();
 
-            bool operator()(const std::shared_ptr<const MapSymbolsGroup>& l, const std::shared_ptr<const MapSymbolsGroup>& r) const;
+            bool operator()(
+                const std::shared_ptr<const MapSymbolsGroup>& l,
+                const std::shared_ptr<const MapSymbolsGroup>& r) const;
         };
     private:
     protected:

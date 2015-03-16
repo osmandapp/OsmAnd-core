@@ -150,8 +150,6 @@ OsmAnd::MapPrimitiviser::Symbol::Symbol(const std::shared_ptr<const Primitive>& 
     , intersectionSizeFactor(std::numeric_limits<float>::quiet_NaN())
     , intersectionSize(std::numeric_limits<float>::quiet_NaN())
     , intersectionMargin(std::numeric_limits<float>::quiet_NaN())
-    , pathPaddingLeft(0.0f)
-    , pathPaddingRight(0.0f)
     , minDistance(-1.0f)
     , scaleFactor(1.0f)
 {
@@ -172,8 +170,6 @@ bool OsmAnd::MapPrimitiviser::Symbol::operator==(const Symbol& that) const
         qFuzzyCompare(this->intersectionSizeFactor, that.intersectionSizeFactor) &&
         qFuzzyCompare(this->intersectionSize, that.intersectionSize) &&
         qFuzzyCompare(this->intersectionMargin, that.intersectionMargin) &&
-        qFuzzyCompare(this->pathPaddingLeft, that.pathPaddingLeft) &&
-        qFuzzyCompare(this->pathPaddingRight, that.pathPaddingRight) &&
         qFuzzyCompare(this->minDistance, that.minDistance) &&
         qFuzzyCompare(this->scaleFactor, that.scaleFactor);
 }
@@ -189,8 +185,6 @@ bool OsmAnd::MapPrimitiviser::Symbol::operator!=(const Symbol& that) const
         !qFuzzyCompare(this->intersectionSizeFactor, that.intersectionSizeFactor) ||
         !qFuzzyCompare(this->intersectionSize, that.intersectionSize) ||
         !qFuzzyCompare(this->intersectionMargin, that.intersectionMargin) ||
-        !qFuzzyCompare(this->pathPaddingLeft, that.pathPaddingLeft) ||
-        !qFuzzyCompare(this->pathPaddingRight, that.pathPaddingRight) ||
         !qFuzzyCompare(this->minDistance, that.minDistance) ||
         !qFuzzyCompare(this->scaleFactor, that.scaleFactor);
 }

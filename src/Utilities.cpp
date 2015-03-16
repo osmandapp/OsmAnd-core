@@ -510,6 +510,53 @@ void OsmAnd::Utilities::scanlineFillPolygon(const unsigned int verticesCount, co
         delete edge;
 }
 
+QString OsmAnd::Utilities::stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels)
+{
+    QString result;
+
+    auto sortedZoomLevels = zoomLevels.values();
+    qSort(sortedZoomLevels.begin(), sortedZoomLevels.end());
+    bool previousCaptured = false;
+    ZoomLevel previousZoomLevel = sortedZoomLevels.first();
+    bool range = false;
+    ZoomLevel rangeStart;
+    for (const auto zoomLevel : sortedZoomLevels)
+    {
+        if (previousCaptured && static_cast<int>(zoomLevel) == static_cast<int>(previousZoomLevel)+1)
+        {
+            if (!range)
+                rangeStart = previousZoomLevel;
+            range = true;
+            previousZoomLevel = zoomLevel;
+            previousCaptured = true;
+        }
+        else if (range)
+        {
+            range = false;
+            previousZoomLevel = zoomLevel;
+            previousCaptured = true;
+
+            result += QString::fromLatin1("%1-%2, %3, ").arg(rangeStart).arg(previousZoomLevel).arg(zoomLevel);
+        }
+        else
+        {
+            previousZoomLevel = zoomLevel;
+            previousCaptured = true;
+
+            result += QString::fromLatin1("%1, ").arg(zoomLevel);
+        }
+    }
+
+    // Process last range
+    if (range)
+        result += QString::fromLatin1("%1-%2, ").arg(rangeStart).arg(sortedZoomLevels.last());
+
+    if (result.length() > 2)
+        result.truncate(result.length() - 2);
+
+    return result;
+}
+
 QString OsmAnd::Utilities::getQuadKey(const uint32_t x, const uint32_t y, const uint32_t z)
 {
     QString quadkey;
@@ -524,4 +571,34 @@ QString OsmAnd::Utilities::getQuadKey(const uint32_t x, const uint32_t y, const 
         quadkey += QLatin1Char(value);
     }
     return quadkey;
+}
+
+QList<OsmAnd::Utilities::ItemPointOnPath> OsmAnd::Utilities::calculateItemPointsOnPath(
+    const float pathLength,
+    const float itemLength,
+    const float padding /*= 0.0f*/,
+    const float spacing /*= 0.0f*/)
+{
+    QList<OsmAnd::Utilities::ItemPointOnPath> itemPoints;
+
+    int depth = 0;
+    unsigned int vCountNext = 2;
+    while(
+        (pathLength / vCountNext >= (spacing + itemLength) || depth == 0) &&
+        pathLength / vCountNext >= (padding + itemLength / 2.0f))
+    {
+        depth++;
+        vCountNext <<= 1;
+    }
+    for (int priority = 0; priority < depth; priority++)
+    {
+        int ln = (1 << (priority + 1));
+        for (int i = 1; i < ln; i += 2)
+        {
+            const auto offset = (pathLength * static_cast<float>(i)) / static_cast<float>(ln);
+            itemPoints.push_back({ priority, offset, offset / pathLength });
+        }
+    }
+
+    return itemPoints;
 }

@@ -89,6 +89,7 @@ namespace OsmAnd
 
         // Symbols-related
         virtual QList<MapSymbolInformation> getSymbolsAt(const PointI& screenPoint) const;
+        virtual QList<MapSymbolInformation> getSymbolsIn(const AreaI& screenPoint, const bool strict = false) const;
     };
 }
 

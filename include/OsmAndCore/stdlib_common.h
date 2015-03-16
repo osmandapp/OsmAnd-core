@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cassert>
 #include <algorithm>
+#include <numeric>
 
 namespace std
 {
@@ -40,6 +41,30 @@ namespace std
     inline bool any_of(const CONTAINER_TYPE& container, PREDICATE predicate)
     {
         return any_of(std::begin(container), std::end(container), predicate);
+    }
+
+    template<class CONTAINER_TYPE, class T>
+    inline T accumulate(const CONTAINER_TYPE& container, T initialValue)
+    {
+        return accumulate(std::begin(container), std::end(container), initialValue);
+    }
+
+    template<class CONTAINER_TYPE, class T, class OPERATION>
+    inline T accumulate(const CONTAINER_TYPE& container, T initialValue, OPERATION operation)
+    {
+        return accumulate(std::begin(container), std::end(container), initialValue, operation);
+    }
+
+    template<class CONTAINER_TYPE>
+    inline void sort(CONTAINER_TYPE& container)
+    {
+        return sort(std::begin(container), std::end(container));
+    }
+
+    template<class CONTAINER_TYPE, class PREDICATE>
+    inline void sort(CONTAINER_TYPE& container, PREDICATE predicate)
+    {
+        return sort(std::begin(container), std::end(container), predicate);
     }
 }
 

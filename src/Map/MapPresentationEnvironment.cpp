@@ -93,19 +93,19 @@ unsigned int OsmAnd::MapPresentationEnvironment::getRoadsDensityLimitPerTile(con
     return _p->getRoadsDensityLimitPerTile(zoom);
 }
 
-void OsmAnd::MapPresentationEnvironment::obtainDefaultSymbolPathPadding(float& outLeft, float& outRight) const
+float OsmAnd::MapPresentationEnvironment::getDefaultSymbolPathSpacing() const
 {
-    _p->obtainDefaultSymbolPathPadding(outLeft, outRight);
+    return _p->getDefaultSymbolPathSpacing();
 }
 
-void OsmAnd::MapPresentationEnvironment::obtainDefaultBlockPathPadding(float& outLeft, float& outRight) const
+float OsmAnd::MapPresentationEnvironment::getDefaultBlockPathSpacing() const
 {
-    _p->obtainDefaultBlockPathPadding(outLeft, outRight);
+    return _p->getDefaultBlockPathSpacing();
 }
 
-void OsmAnd::MapPresentationEnvironment::obtainGlobalPathPadding(float& outLeft, float& outRight) const
+float OsmAnd::MapPresentationEnvironment::getGlobalPathPadding() const
 {
-    _p->obtainGlobalPathPadding(outLeft, outRight);
+    return _p->getGlobalPathPadding();
 }
 
 OsmAnd::MapStubStyle OsmAnd::MapPresentationEnvironment::getDesiredStubsStyle() const

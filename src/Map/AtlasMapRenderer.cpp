@@ -222,6 +222,16 @@ QList<OsmAnd::IMapRenderer::MapSymbolInformation> OsmAnd::AtlasMapRenderer::getS
 {
     QList<MapSymbolInformation> result;
     if (symbolsStage)
-        symbolsStage->queryLastPreparedSymbolsAt(screenPoint, result);
+        symbolsStage->queryLastVisibleSymbolsAt(screenPoint, result);
+    return result;
+}
+
+QList<OsmAnd::IMapRenderer::MapSymbolInformation> OsmAnd::AtlasMapRenderer::getSymbolsIn(
+    const AreaI& screenArea,
+    const bool strict /*= false*/) const
+{
+    QList<MapSymbolInformation> result;
+    if (symbolsStage)
+        symbolsStage->queryLastVisibleSymbolsIn(screenArea, result, strict);
     return result;
 }

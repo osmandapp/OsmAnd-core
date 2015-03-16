@@ -30,6 +30,7 @@
 #include "IMapElevationDataProvider.h"
 #include "Logging.h"
 #include "Stopwatch.h"
+#include "GlmExtensions.h"
 #include "Utilities.h"
 
 #include "OpenGL/Utilities_OpenGL.h"
@@ -566,6 +567,62 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI& position31
         return false;
 
     return internalState.globalFrustum2D31.test(position31);
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI64& position, PointI& outScreenPoint) const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    if (!ok)
+        return false;
+
+    if (!static_cast<const Frustum2DI64*>(&internalState.globalFrustum2D31)->test(position))
+        return false;
+
+    const auto offsetFromTarget31 = position - state.target31;
+    const auto offsetFromTarget = Utilities::convert31toDouble(offsetFromTarget31, state.zoomLevel);
+    const auto positionInWorld = glm::vec3(
+        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+        0.0f,
+        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+
+    const auto projectedPosition = glm_extensions::fastProject(
+        positionInWorld,
+        internalState.mPerspectiveProjectionView,
+        internalState.glmViewport);
+    outScreenPoint.x = projectedPosition.x;
+    outScreenPoint.y = state.windowSize.y - projectedPosition.y;
+    return true;
+}
+
+bool OsmAnd::AtlasMapRenderer_OpenGL::obtainScreenPointFromPosition(const PointI& position31, PointI& outScreenPoint) const
+{
+    const auto state = getState();
+
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    if (!ok)
+        return false;
+
+    if (!internalState.globalFrustum2D31.test(position31))
+        return false;
+
+    const auto offsetFromTarget31 = position31 - state.target31;
+    const auto offsetFromTarget = Utilities::convert31toFloat(offsetFromTarget31, state.zoomLevel);
+    const auto positionInWorld = glm::vec3(
+        offsetFromTarget.x * AtlasMapRenderer::TileSize3D,
+        0.0f,
+        offsetFromTarget.y * AtlasMapRenderer::TileSize3D);
+
+    const auto projectedPosition = glm_extensions::fastProject(
+        positionInWorld,
+        internalState.mPerspectiveProjectionView,
+        internalState.glmViewport);
+    outScreenPoint.x = projectedPosition.x;
+    outScreenPoint.y = state.windowSize.y - projectedPosition.y;
+    return true;
 }
 
 double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentTileSizeInMeters() const

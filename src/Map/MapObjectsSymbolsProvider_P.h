@@ -30,55 +30,33 @@ namespace OsmAnd
         typedef MapObjectsSymbolsProvider::MapObjectSymbolsGroup MapObjectSymbolsGroup;
 
     private:
-        struct SymbolForPinPointsComputation
-        {
-            float leftPaddingInPixels;
-            float widthInPixels;
-            float rightPaddingInPixels;
-        };
-
         struct ComputedPinPoint
         {
             PointI point31;
 
             unsigned int basePathPointIndex;
-            double offsetFromBasePathPoint31;
             float normalizedOffsetFromBasePathPoint;
         };
 
-        QList< QList<ComputedPinPoint> > computePinPoints(
+        QList<ComputedPinPoint> computePinPoints(
             const QVector<PointI>& path31,
-            const float globalLeftPaddingInPixels,
-            const float globalRightPaddingInPixels,
-            const float blockLeftPaddingInPixels,
-            const float blockRightPaddingInPixels,
-            const QList<SymbolForPinPointsComputation>& symbolsForPinPointsComputation,
+            const float globalPaddingInPixels,
+            const float blockSpacingInPixels,
+            const float symbolSpacingInPixels,
+            const QVector<float>& symbolsWidthsInPixels,
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom,
             const ZoomLevel neededZoom) const;
 
-        bool computeBlockPinPoint(
-            const QVector<float>& pathSegmentsLengthInPixels,
-            const float pathLengthInPixels,
-            const QVector<double>& pathSegmentsLength31,
+        void computeSymbolsPinPoints(
+            const QVector<float>& symbolsWidthsN,
+            const int symbolsCount,
+            float nextSymbolStartN,
+            const QVector<float>& pathSegmentsLengthN,
             const QVector<PointI>& path31,
-            const float blockWidthInPixels,
-            const float offsetFromPathStartInPixels,
-            const unsigned int scanOriginPathPointIndex,
-            const float scanOriginPathPointOffsetInPixels,
-            unsigned int& outNextScanOriginPathPointIndex,
-            float& outNextScanOriginPathPointOffsetInPixels,
-            ComputedPinPoint& outComputedBlockPinPoint) const;
+            const float symbolSpacingN,
+            QList<ComputedPinPoint>& outComputedPinPoints) const;
 
-        bool computeSymbolPinPoint(
-            const QVector<float>& pathSegmentsLengthInPixels,
-            const float pathLengthInPixels,
-            const QVector<double>& pathSegmentsLength31,
-            const QVector<PointI>& path31,
-            const ComputedPinPoint& blockPinPoint,
-            const float neededZoomPixelScaleFactor,
-            const float offsetFromBlockPinPointInPixelsOnNeededZoom,
-            ComputedPinPoint& outComputedSymbolPinPoint) const;
     protected:
         MapObjectsSymbolsProvider_P(MapObjectsSymbolsProvider* owner);
 

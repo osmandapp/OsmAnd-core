@@ -30,7 +30,7 @@ namespace OsmAnd
     {
     public:
         struct RenderableSymbol;
-        typedef QuadTree< std::shared_ptr<const RenderableSymbol>, AreaI::CoordType > IntersectionsQuadTree;
+        typedef QuadTree< std::shared_ptr<const RenderableSymbol>, AreaI::CoordType > ScreenQuadTree;
 
         struct RenderableSymbol
         {
@@ -42,7 +42,8 @@ namespace OsmAnd
 
             std::shared_ptr<const GPUAPI::ResourceInGPU> gpuResource;
             double distanceToCamera;
-            IntersectionsQuadTree::BBox intersectionBBox;
+            ScreenQuadTree::BBox visibleBBox;
+            ScreenQuadTree::BBox intersectionBBox;
         };
 
         struct RenderableBillboardSymbol : RenderableSymbol
@@ -109,18 +110,21 @@ namespace OsmAnd
     private:
         bool obtainRenderableSymbols(
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
-            IntersectionsQuadTree& outIntersections,
+            ScreenQuadTree& outIntersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool obtainRenderableSymbols(
             const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
             QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
-            IntersectionsQuadTree& outIntersections,
+            ScreenQuadTree& outIntersections,
             MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         mutable MapRenderer::PublishedMapSymbolsByOrder _lastAcceptedMapSymbolsByOrder;
 
         mutable QReadWriteLock _lastPreparedIntersectionsLock;
-        IntersectionsQuadTree _lastPreparedIntersections;
+        ScreenQuadTree _lastPreparedIntersections;
+
+        mutable QReadWriteLock _lastVisibleSymbolsLock;
+        ScreenQuadTree _lastVisibleSymbols;
 
         // Path calculations cache
         struct ComputedPathData
@@ -143,7 +147,7 @@ namespace OsmAnd
 
         bool plotSymbol(
             const std::shared_ptr<RenderableSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // Billboard symbols:
@@ -156,15 +160,15 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotBillboardSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotBillboardRasterSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotBillboardVectorSymbol(
             const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // On-surface symbols:
@@ -177,15 +181,15 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotOnSurfaceSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotOnSurfaceRasterSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotOnSurfaceVectorSymbol(
             const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // On-path symbols:
@@ -199,25 +203,25 @@ namespace OsmAnd
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool plotOnPathSymbol(
             const std::shared_ptr<RenderableOnPathSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // Intersection-related:
         bool applyVisibilityFiltering(
-            const IntersectionsQuadTree::BBox& visibleBBox,
-            const IntersectionsQuadTree& intersections,
+            const ScreenQuadTree::BBox& visibleBBox,
+            const ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool applyIntersectionWithOtherSymbolsFiltering(
             const std::shared_ptr<const RenderableSymbol>& renderable,
-            const IntersectionsQuadTree& intersections,
+            const ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool applyMinDistanceToSameContentFromOtherSymbolFiltering(
             const std::shared_ptr<const RenderableSymbol>& renderable,
-            const IntersectionsQuadTree& intersections,
+            const ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
         bool addToIntersections(
             const std::shared_ptr<const RenderableSymbol>& renderable,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const;
 
         // Utilities:
@@ -307,9 +311,13 @@ namespace OsmAnd
             const bool drawBorder = true) const;
 
         void addIntersectionDebugBox(
-            const IntersectionsQuadTree::BBox intersectionBBox,
+            const ScreenQuadTree::BBox intersectionBBox,
             const ColorARGB color,
             const bool drawBorder = true) const;
+
+        static void convertRenderableSymbolsToMapSymbolInformation(
+            const QList< std::shared_ptr<const RenderableSymbol> >& input,
+            QList<IMapRenderer::MapSymbolInformation>& output);
     protected:
         QList< std::shared_ptr<const RenderableSymbol> > renderableSymbols;
 
@@ -321,6 +329,17 @@ namespace OsmAnd
         void queryLastPreparedSymbolsAt(
             const PointI screenPoint,
             QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const;
+        void queryLastPreparedSymbolsIn(
+            const AreaI screenArea,
+            QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
+            const bool strict = false) const;
+        void queryLastVisibleSymbolsAt(
+            const PointI screenPoint,
+            QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const;
+        void queryLastVisibleSymbolsIn(
+            const AreaI screenArea,
+            QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
+            const bool strict = false) const;
     };
 }
 

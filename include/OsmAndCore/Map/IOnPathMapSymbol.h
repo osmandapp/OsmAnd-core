@@ -23,7 +23,6 @@ namespace OsmAnd
             PointI point31;
 
             unsigned int basePathPointIndex;
-            double offsetFromBasePathPoint31;
             float normalizedOffsetFromBasePathPoint;
         };
 

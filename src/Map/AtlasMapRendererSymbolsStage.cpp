@@ -47,7 +47,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
 {
     Stopwatch stopwatch(metric != nullptr);
 
-    IntersectionsQuadTree intersections;
+    ScreenQuadTree intersections;
     if (!obtainRenderableSymbols(renderableSymbols, intersections, metric))
     {
         // In case obtain failed due to lock, schedule another frame
@@ -60,15 +60,44 @@ void OsmAnd::AtlasMapRendererSymbolsStage::prepare(AtlasMapRenderer_Metrics::Met
     }
 
     Stopwatch preparedSymbolsPublishingStopwatch(metric != nullptr);
+    
+    ScreenQuadTree visibleSymbols(intersections.getRootArea(), intersections.maxDepth);
+    visibleSymbols.insertFrom(renderableSymbols,
+        []
+        (const std::shared_ptr<const RenderableSymbol>& item, ScreenQuadTree::BBox& outBbox) -> bool
+        {
+            outBbox = item->visibleBBox;
+            return true;
+        });
+
     {
         QWriteLocker scopedLocker(&_lastPreparedIntersectionsLock);
         _lastPreparedIntersections = qMove(intersections);
+    }
+    {
+        QWriteLocker scopedLocker(&_lastVisibleSymbolsLock);
+        _lastVisibleSymbols = qMove(visibleSymbols);
     }
     if (metric)
         metric->elapsedTimeForPublishingPreparedSymbols = preparedSymbolsPublishingStopwatch.elapsed();
 
     if (metric)
         metric->elapsedTimeForPreparingSymbols = stopwatch.elapsed();
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::convertRenderableSymbolsToMapSymbolInformation(
+    const QList< std::shared_ptr<const RenderableSymbol> >& input,
+    QList<IMapRenderer::MapSymbolInformation>& output)
+{
+    for (const auto& renderable : constOf(input))
+    {
+        IMapRenderer::MapSymbolInformation mapSymbolInfo;
+
+        mapSymbolInfo.mapSymbol = renderable->mapSymbol;
+        mapSymbolInfo.instanceParameters = renderable->genericInstanceParameters;
+
+        output.push_back(qMove(mapSymbolInfo));
+    }
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
@@ -82,15 +111,51 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
         _lastPreparedIntersections.select(screenPoint, selectedRenderables);
     }
 
-    for (const auto& renderable : constOf(selectedRenderables))
+    convertRenderableSymbolsToMapSymbolInformation(selectedRenderables, outMapSymbols);
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsIn(
+    const AreaI screenArea,
+    QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
+    const bool strict /*= false*/) const
+{
+    QList< std::shared_ptr<const RenderableSymbol> > selectedRenderables;
+
     {
-        IMapRenderer::MapSymbolInformation mapSymbolInfo;
-
-        mapSymbolInfo.mapSymbol = renderable->mapSymbol;
-        mapSymbolInfo.instanceParameters = renderable->genericInstanceParameters;
-
-        outMapSymbols.push_back(qMove(mapSymbolInfo));
+        QReadLocker scopedLocker(&_lastPreparedIntersectionsLock);
+        _lastPreparedIntersections.query(screenArea, selectedRenderables, strict);
     }
+
+    convertRenderableSymbolsToMapSymbolInformation(selectedRenderables, outMapSymbols);
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsAt(
+    const PointI screenPoint,
+    QList<IMapRenderer::MapSymbolInformation>& outMapSymbols) const
+{
+    QList< std::shared_ptr<const RenderableSymbol> > selectedRenderables;
+
+    {
+        QReadLocker scopedLocker(&_lastVisibleSymbolsLock);
+        _lastVisibleSymbols.select(screenPoint, selectedRenderables);
+    }
+
+    convertRenderableSymbolsToMapSymbolInformation(selectedRenderables, outMapSymbols);
+}
+
+void OsmAnd::AtlasMapRendererSymbolsStage::queryLastVisibleSymbolsIn(
+    const AreaI screenArea,
+    QList<IMapRenderer::MapSymbolInformation>& outMapSymbols,
+    const bool strict /*= false*/) const
+{
+    QList< std::shared_ptr<const RenderableSymbol> > selectedRenderables;
+
+    {
+        QReadLocker scopedLocker(&_lastVisibleSymbolsLock);
+        _lastVisibleSymbols.query(screenArea, selectedRenderables, strict);
+    }
+
+    convertRenderableSymbolsToMapSymbolInformation(selectedRenderables, outMapSymbols);
 }
 
 //#define OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE 1
@@ -100,7 +165,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::queryLastPreparedSymbolsAt(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
-    IntersectionsQuadTree& outIntersections,
+    ScreenQuadTree& outIntersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     Stopwatch stopwatch(metric != nullptr);
@@ -144,7 +209,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     const MapRenderer::PublishedMapSymbolsByOrder& mapSymbolsByOrder,
     QList< std::shared_ptr<const RenderableSymbol> >& outRenderableSymbols,
-    IntersectionsQuadTree& outIntersections,
+    ScreenQuadTree& outIntersections,
     MapRenderer::PublishedMapSymbolsByOrder* pOutAcceptedMapSymbolsByOrder,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
@@ -165,7 +230,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         void discard(
             const AtlasMapRendererSymbolsStage* const stage,
             PlottedSymbols& plottedSymbols,
-            IntersectionsQuadTree& intersections)
+            ScreenQuadTree& intersections)
         {
             // Discard entire group
             for (auto& symbolRef : symbolsRefs)
@@ -185,7 +250,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         void discardSpecific(
             const AtlasMapRendererSymbolsStage* const stage,
             PlottedSymbols& plottedSymbols,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             const std::function<bool(const std::shared_ptr<const RenderableSymbol>&)> acceptor)
         {
             auto itSymbolRef = mutableIteratorOf(symbolsRefs);
@@ -211,7 +276,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         void discardAllOf(
             const AtlasMapRendererSymbolsStage* const stage,
             PlottedSymbols& plottedSymbols,
-            IntersectionsQuadTree& intersections,
+            ScreenQuadTree& intersections,
             const MapSymbol::ContentClass contentClass)
         {
             auto itSymbolRef = mutableIteratorOf(symbolsRefs);
@@ -238,7 +303,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     {
         QHash< std::shared_ptr<const MapSymbolsGroup::AdditionalInstance>, PlottedSymbolsRefGroupInstance > instancesRefs;
 
-        void discard(const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, IntersectionsQuadTree& intersections)
+        void discard(const AtlasMapRendererSymbolsStage* const stage, PlottedSymbols& plottedSymbols, ScreenQuadTree& intersections)
         {
             // Discard all instances
             for (auto& instanceRef : instancesRefs)
@@ -255,7 +320,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     // (max(width, height) / 2^depth) >= 64
     const auto viewportMaxDimension = qMax(currentState.viewport.height(), currentState.viewport.width());
     const auto treeDepth = 32u - SkCLZ(viewportMaxDimension >> 6);
-    outIntersections = qMove(IntersectionsQuadTree(currentState.viewport, qMax(treeDepth, 1u)));
+    outIntersections = qMove(ScreenQuadTree(currentState.viewport, qMax(treeDepth, 1u)));
     ComputedPathsDataCache computedPathsDataCache;
     for (const auto& mapSymbolsByOrderEntry : rangeOf(constOf(mapSymbolsByOrder)))
     {
@@ -681,7 +746,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotSymbol(
     const std::shared_ptr<RenderableSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     Stopwatch stopwatch(metric != nullptr);
@@ -785,7 +850,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     bool plotted = false;
@@ -808,7 +873,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
@@ -829,16 +894,18 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
 
     // Get bounds in screen coordinates
     auto boundsInWindow = AreaI::fromCenterAndSize(
-        static_cast<int>(symbolOnScreen.x + offsetOnScreen.x), static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + offsetOnScreen.y),
-        symbol->size.x, symbol->size.y);
-    const auto visibleBBox = boundsInWindow;
+        static_cast<int>(symbolOnScreen.x + offsetOnScreen.x),
+        static_cast<int>((currentState.windowSize.y - symbolOnScreen.y) + offsetOnScreen.y),
+        symbol->size.x,
+        symbol->size.y);
+    renderable->visibleBBox = boundsInWindow;
     boundsInWindow.top() -= symbol->margin.top();
     boundsInWindow.left() -= symbol->margin.left();
     boundsInWindow.right() += symbol->margin.right();
     boundsInWindow.bottom() += symbol->margin.bottom();
     renderable->intersectionBBox = boundsInWindow;
 
-    if (!applyVisibilityFiltering(visibleBBox, intersections, metric))
+    if (!applyVisibilityFiltering(renderable->visibleBBox, intersections, metric))
         return false;
 
     if (!applyIntersectionWithOtherSymbolsFiltering(renderable, intersections, metric))
@@ -852,7 +919,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardRasterSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotBillboardVectorSymbol(
     const std::shared_ptr<RenderableBillboardSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     assert(false);
@@ -920,7 +987,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     if (std::dynamic_pointer_cast<const RasterMapSymbol>(renderable->mapSymbol))
@@ -944,7 +1011,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceRasterSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
@@ -957,7 +1024,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceRasterSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnSurfaceVectorSymbol(
     const std::shared_ptr<RenderableOnSurfaceSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
@@ -1276,7 +1343,7 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     const std::shared_ptr<RenderableOnPathSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     const auto& internalState = getInternalState();
@@ -1289,9 +1356,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     {
         // Calculate OOBB for 2D SOP
         const auto oobb = calculateOnPath2dOOBB(renderable);
-        const auto visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
+        renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
 
-        if (!applyVisibilityFiltering(visibleBBox, intersections, metric))
+        if (!applyVisibilityFiltering(renderable->visibleBBox, intersections, metric))
             return false;
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
@@ -1327,9 +1394,9 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
     {
         // Calculate OOBB for 3D SOP in world
         const auto oobb = calculateOnPath3dOOBB(renderable);
-        const auto visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
+        renderable->visibleBBox = renderable->intersectionBBox = (OOBBI)oobb;
 
-        if (!applyVisibilityFiltering(visibleBBox, intersections, metric))
+        if (!applyVisibilityFiltering(renderable->visibleBBox, intersections, metric))
             return false;
 
         //TODO: use symbolExtraTopSpace & symbolExtraBottomSpace from font via Rasterizer_P
@@ -1380,8 +1447,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::plotOnPathSymbol(
 }
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::applyVisibilityFiltering(
-    const IntersectionsQuadTree::BBox& visibleBBox,
-    const IntersectionsQuadTree& intersections,
+    const ScreenQuadTree::BBox& visibleBBox,
+    const ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     Stopwatch stopwatch(metric != nullptr);
@@ -1406,7 +1473,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyVisibilityFiltering(
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFiltering(
     const std::shared_ptr<const RenderableSymbol>& renderable,
-    const IntersectionsQuadTree& intersections,
+    const ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     if (Q_UNLIKELY(debugSettings->skipSymbolsIntersectionCheck))
@@ -1431,7 +1498,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
         : nullptr;
     const auto intersects = intersections.test(renderable->intersectionBBox, false,
         [symbolGroupPtr, symbolIntersectsWithClasses, symbolIntersectsWithAnyClass, anyIntersectionClass, symbolGroupInstancePtr, checkIntersectionsWithinGroup]
-        (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+        (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const ScreenQuadTree::BBox& otherBBox) -> bool
         {
             const auto& otherSymbol = otherRenderable->mapSymbol;
 
@@ -1480,7 +1547,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyIntersectionWithOtherSymbolsFilt
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOtherSymbolFiltering(
     const std::shared_ptr<const RenderableSymbol>& renderable,
-    const IntersectionsQuadTree& intersections,
+    const ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     if (Q_UNLIKELY(debugSettings->skipSymbolsMinDistanceToSameContentFromOtherSymbolCheck))
@@ -1501,7 +1568,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
     const auto& symbolContent = symbol->content;
     const auto hasSimilarContent = intersections.test(renderable->intersectionBBox.getEnlargedBy(symbol->minDistance), false,
         [symbolContent, symbolGroupPtr, symbolGroupInstancePtr]
-        (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const IntersectionsQuadTree::BBox& otherBBox) -> bool
+        (const std::shared_ptr<const RenderableSymbol>& otherRenderable, const ScreenQuadTree::BBox& otherBBox) -> bool
         {
             const auto otherSymbol = std::dynamic_pointer_cast<const RasterMapSymbol>(otherRenderable->mapSymbol);
             if (!otherSymbol)
@@ -1546,7 +1613,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::applyMinDistanceToSameContentFromOthe
 
 bool OsmAnd::AtlasMapRendererSymbolsStage::addToIntersections(
     const std::shared_ptr<const RenderableSymbol>& renderable,
-    IntersectionsQuadTree& intersections,
+    ScreenQuadTree& intersections,
     AtlasMapRenderer_Metrics::Metric_renderFrame* const metric) const
 {
     if (Q_UNLIKELY(debugSettings->allSymbolsTransparentForIntersectionLookup))
@@ -1685,7 +1752,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::computePointIndexAndOffsetFromOriginA
     float& outOffsetFromPathPoint)
 {
     const auto pathSegmentsCount = pathSegmentsLengths.size();
-    const auto offsetFromOriginPathPoint = (pathSegmentsLengths[originPathPointIndex] * nOffsetFromOriginPathPoint) + offsetToPoint;
+    const auto offsetFromOriginPathPoint =
+        (pathSegmentsLengths[originPathPointIndex] * nOffsetFromOriginPathPoint) + offsetToPoint;
 
     if (offsetFromOriginPathPoint >= 0.0f)
     {
@@ -2283,11 +2351,11 @@ void OsmAnd::AtlasMapRendererSymbolsStage::addIntersectionDebugBox(
 }
 
 void OsmAnd::AtlasMapRendererSymbolsStage::addIntersectionDebugBox(
-    const IntersectionsQuadTree::BBox intersectionBBox,
+    const ScreenQuadTree::BBox intersectionBBox,
     const ColorARGB color,
     const bool drawBorder /*= true*/) const
 {
-    if (intersectionBBox.type == IntersectionsQuadTree::BBoxType::AABB)
+    if (intersectionBBox.type == ScreenQuadTree::BBoxType::AABB)
     {
         const auto& boundsInWindow = intersectionBBox.asAABB;
 
