@@ -88,7 +88,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
         .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 3));
     text = text.trimmed();
 
-    const auto fontSize = 16.0f;
+    const auto fontSize = 16.0f * owner->densityFactor;
 
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
