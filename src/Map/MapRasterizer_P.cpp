@@ -419,6 +419,8 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         canvas.drawPath(path, paint);
 }
 
+
+
 void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const Context& context,
     SkCanvas& canvas,
@@ -455,6 +457,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const auto pointsCount = points31.size();
     auto pPoint = points31.constData();
     PointF pVertex;
+    PointF tempVertex;
     bool previousAdded = false;
     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
@@ -472,9 +475,11 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
             {
                 if (!previousAdded)
                 {
-                    path.moveTo(pVertex.x, pVertex.y);
+                    simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
+                    path.moveTo(tempVertex.x, tempVertex.y);
                 }
-                path.lineTo(vertex.x, vertex.y);
+                simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
+                path.lineTo(tempVertex.x, tempVertex.y);
                 intersect = true;
                 previousAdded = true;
             } else {
@@ -483,6 +488,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         }
         prevCross = cross;
         pVertex = vertex;
+        
     }
 
     if (!intersect)
@@ -605,6 +611,39 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
 
         mIconInstanceTransform.setConcat(mPinPoint, mIconTransform);
         canvas.drawBitmapMatrix(*pathIcon, mIconInstanceTransform, &_defaultPaint);
+    }
+}
+
+float  OsmAnd::MapRasterizer_P::lineEquation(float x1, float y1, float x2, float y2, float x) {
+    if(x2 == x1) {
+        return y1;
+    }
+    return (x - x1) / (x2 - x1) * (y2 - y1) + y1;
+}
+
+void OsmAnd::MapRasterizer_P::simplifyVertexToDirection(
+                                              const Context& context,
+                                              PointF& vertex,
+                                              PointF& vertexTo,
+                                              PointF& res)
+{
+    int tileSize = 512;
+    int shiftForSpacing = tileSize / 10;
+    if(vertex.x > (tileSize + shiftForSpacing)) {
+        res.x = tileSize + shiftForSpacing;
+        res.y = lineEquation(vertex.x, vertex.y, vertexTo.x, vertexTo.y, res.x);
+    } else if(vertex.x <  -shiftForSpacing) {
+        res.x = -shiftForSpacing;
+        res.y = lineEquation(vertex.x, vertex.y, vertexTo.x, vertexTo.y, res.x);
+    } else if(vertex.y > (tileSize + shiftForSpacing)) {
+        res.y = tileSize + shiftForSpacing;
+        res.x = lineEquation(vertex.y, vertex.x, vertexTo.y, vertexTo.x, res.y);
+    } else if(vertex.y <  -shiftForSpacing) {
+        res.y = -shiftForSpacing;
+        res.x = lineEquation(vertex.y, vertex.x, vertexTo.y, vertexTo.x, res.y);
+    } else {
+        res.x = vertex.x;
+        res.y = vertex.y;
     }
 }
 

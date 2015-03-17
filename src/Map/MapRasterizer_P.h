@@ -116,6 +116,14 @@ namespace OsmAnd
             const Context& context,
             const PointI& point31,
             PointF& vertex);
+        
+        inline float lineEquation(float x1, float y1, float x2, float y2, float x);
+        
+        inline void simplifyVertexToDirection(
+                                    const Context& context,
+                                    PointF& vertex,
+                                    PointF& vertexTo,
+                                    PointF& res);
 
         static bool containsHelper(
             const QVector< PointI >& points,
