@@ -454,41 +454,35 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     PointF vertex;
     const auto pointsCount = points31.size();
     auto pPoint = points31.constData();
+    PointF pVertex;
+    bool previousAdded = false;
     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
         const auto& point = *pPoint;
         calculateVertex(context, point, vertex);
 
-        // Hit-test
-        if (!intersect)
+        int cross = 0;
+        cross |= (point.x < area31.left() ? 1 : 0);
+        cross |= (point.x > area31.right() ? 2 : 0);
+        cross |= (point.y < area31.top() ? 4 : 0);
+        cross |= (point.y > area31.bottom() ? 8 : 0);
+        if (pointIdx > 0)
         {
-            if (area31.contains(PointI(vertex)))
+            if ((prevCross & cross) == 0)
             {
-                intersect = true;
-            }
-            else
-            {
-                int cross = 0;
-                cross |= (point.x < area31.left() ? 1 : 0);
-                cross |= (point.x > area31.right() ? 2 : 0);
-                cross |= (point.y < area31.top() ? 4 : 0);
-                cross |= (point.y > area31.bottom() ? 8 : 0);
-                if (pointIdx > 0)
+                if (!previousAdded)
                 {
-                    if ((prevCross & cross) == 0)
-                    {
-                        intersect = true;
-                    }
+                    path.moveTo(pVertex.x, pVertex.y);
                 }
-                prevCross = cross;
+                path.lineTo(vertex.x, vertex.y);
+                intersect = true;
+                previousAdded = true;
+            } else {
+                previousAdded = false;
             }
         }
-
-        // Plot vertex
-        if (pointIdx == 0)
-            path.moveTo(vertex.x, vertex.y);
-        else
-            path.lineTo(vertex.x, vertex.y);
+        prevCross = cross;
+        pVertex = vertex;
     }
 
     if (!intersect)
