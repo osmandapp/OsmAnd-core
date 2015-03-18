@@ -39,12 +39,14 @@ namespace OsmAnd
         {
             Context(
                 const AreaI area31,
-                const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects);
+                const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
+                const AreaI pixelArea);
 
             const AreaI area31;
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects> primitivisedObjects;
             const std::shared_ptr<const MapPresentationEnvironment> env;
             const ZoomLevel zoom;
+            const AreaI pixelArea;
 
             MapPresentationEnvironment::ShadowMode shadowMode;
             ColorARGB shadowColor;
@@ -112,22 +114,10 @@ namespace OsmAnd
             const SkPath& path,
             const MapStyleEvaluationResult& evalResult);
 
-        inline void calculateVertex(
-            const Context& context,
-            const PointI& point31,
-            PointF& vertex);
-        
+        inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex);
         inline float lineEquation(float x1, float y1, float x2, float y2, float x);
-        
-        inline void simplifyVertexToDirection(
-                                    const Context& context,
-                                    PointF& vertex,
-                                    PointF& vertexTo,
-                                    PointF& res);
-
-        static bool containsHelper(
-            const QVector< PointI >& points,
-            const PointI& otherPoint);
+        inline void simplifyVertexToDirection(const Context& context, const PointF& vertex, const PointF& vertexTo, PointF& res);
+        static bool containsHelper(const QVector< PointI >& points, const PointI& otherPoint);
 
         void initialize();
         

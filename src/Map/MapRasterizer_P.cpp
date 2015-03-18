@@ -59,7 +59,10 @@ void OsmAnd::MapRasterizer_P::rasterize(
 {
     const Stopwatch totalStopwatch(metric != nullptr);
 
-    const Context context(area31, primitivisedObjects);
+    const Context context(
+        area31,
+        primitivisedObjects,
+        pDestinationArea ? *pDestinationArea : AreaI(0, 0, canvas.imageInfo().height(), canvas.imageInfo().width()));
 
     // Deal with background
     if (fillBackground)
@@ -419,8 +422,6 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         canvas.drawPath(path, paint);
 }
 
-
-
 void OsmAnd::MapRasterizer_P::rasterizePolyline(
     const Context& context,
     SkCanvas& canvas,
@@ -482,13 +483,14 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
                 path.lineTo(tempVertex.x, tempVertex.y);
                 intersect = true;
                 previousAdded = true;
-            } else {
+            }
+            else
+            {
                 previousAdded = false;
             }
         }
         prevCross = cross;
         pVertex = vertex;
-        
     }
 
     if (!intersect)
@@ -614,46 +616,55 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
     }
 }
 
-float  OsmAnd::MapRasterizer_P::lineEquation(float x1, float y1, float x2, float y2, float x) {
-    if(x2 == x1) {
+float OsmAnd::MapRasterizer_P::lineEquation(float x1, float y1, float x2, float y2, float x)
+{
+    if(x2 == x1)
         return y1;
-    }
     return (x - x1) / (x2 - x1) * (y2 - y1) + y1;
 }
 
 void OsmAnd::MapRasterizer_P::simplifyVertexToDirection(
-                                              const Context& context,
-                                              PointF& vertex,
-                                              PointF& vertexTo,
-                                              PointF& res)
+    const Context& context,
+    const PointF& vertex,
+    const PointF& vertexTo,
+    PointF& res)
 {
-    int tileSize = 512;
-    int shiftForSpacing = tileSize / 10;
-    if(vertex.x > (tileSize + shiftForSpacing)) {
-        res.x = tileSize + shiftForSpacing;
+    const auto xShiftForSpacing = context.pixelArea.width() / 10;
+    const auto yShiftForSpacing = context.pixelArea.height() / 10;
+
+    if (vertex.x > context.pixelArea.right() + xShiftForSpacing)
+    {
+        res.x = context.pixelArea.right() + xShiftForSpacing;
         res.y = lineEquation(vertex.x, vertex.y, vertexTo.x, vertexTo.y, res.x);
-    } else if(vertex.x <  -shiftForSpacing) {
-        res.x = -shiftForSpacing;
+    }
+    else if (vertex.x < context.pixelArea.left() - xShiftForSpacing)
+    {
+        res.x = context.pixelArea.left() - xShiftForSpacing;
         res.y = lineEquation(vertex.x, vertex.y, vertexTo.x, vertexTo.y, res.x);
-    } else if(vertex.y > (tileSize + shiftForSpacing)) {
-        res.y = tileSize + shiftForSpacing;
+    }
+    else if (vertex.y > context.pixelArea.bottom() + yShiftForSpacing)
+    {
+        res.y = context.pixelArea.bottom() + yShiftForSpacing;
         res.x = lineEquation(vertex.y, vertex.x, vertexTo.y, vertexTo.x, res.y);
-    } else if(vertex.y <  -shiftForSpacing) {
-        res.y = -shiftForSpacing;
+    }
+    else if (vertex.y < context.pixelArea.top() - yShiftForSpacing)
+    {
+        res.y = context.pixelArea.top() - yShiftForSpacing;
         res.x = lineEquation(vertex.y, vertex.x, vertexTo.y, vertexTo.x, res.y);
-    } else {
+    }
+    else
+    {
         res.x = vertex.x;
         res.y = vertex.y;
     }
 }
 
-void OsmAnd::MapRasterizer_P::calculateVertex(
-    const Context& context,
-    const PointI& point31,
-    PointF& vertex)
+void OsmAnd::MapRasterizer_P::calculateVertex(const Context& context, const PointI& point31, PointF& vertex)
 {
     vertex.x = static_cast<float>(point31.x - context.area31.left()) / context.primitivisedObjects->scaleDivisor31ToPixel.x;
     vertex.y = static_cast<float>(point31.y - context.area31.top()) / context.primitivisedObjects->scaleDivisor31ToPixel.y;
+
+    vertex += PointF(context.pixelArea.topLeft);
 }
 
 bool OsmAnd::MapRasterizer_P::containsHelper(const QVector< PointI >& points, const PointI& otherPoint)
@@ -753,11 +764,13 @@ bool OsmAnd::MapRasterizer_P::obtainBitmapShader(
 
 OsmAnd::MapRasterizer_P::Context::Context(
     const AreaI area31_,
-    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects_)
+    const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects_,
+    const AreaI pixelArea_)
     : area31(area31_)
     , primitivisedObjects(primitivisedObjects_)
     , env(primitivisedObjects->mapPresentationEnvironment)
     , zoom(primitivisedObjects->zoom)
+    , pixelArea(pixelArea_)
 {
     env->obtainShadowOptions(zoom, shadowMode, shadowColor);
 }
