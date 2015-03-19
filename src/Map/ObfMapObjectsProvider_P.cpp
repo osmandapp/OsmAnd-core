@@ -97,7 +97,11 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainData(
 
     // Obtain OBF data interface
     const Stopwatch obtainObfInterfaceStopwatch(metric != nullptr);
-    const auto& dataInterface = owner->obfsCollection->obtainDataInterface(tileBBox31, zoom, zoom, true);
+    const auto& dataInterface = owner->obfsCollection->obtainDataInterface(
+        &tileBBox31,
+        zoom,
+        zoom,
+        ObfDataTypesMask().set(ObfDataType::Map).set(ObfDataType::Routing));
     if (metric)
         metric->elapsedTimeForObtainingObfInterface += obtainObfInterfaceStopwatch.elapsed();
 

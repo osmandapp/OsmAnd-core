@@ -22,28 +22,6 @@ namespace OsmAnd
     class ObfRoutingSectionReader_P;
     class Road;
 
-    struct OSMAND_CORE_API ObfRoutingSectionEncodingDecodingRules : public MapObject::EncodingDecodingRules
-    {
-        ObfRoutingSectionEncodingDecodingRules();
-        virtual ~ObfRoutingSectionEncodingDecodingRules();
-    };
-
-    class ObfRoutingSectionInfo_P;
-    class OSMAND_CORE_API ObfRoutingSectionInfo : public ObfSectionInfo
-    {
-        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionInfo)
-    private:
-        PrivateImplementation<ObfRoutingSectionInfo_P> _p;
-    protected:
-    public:
-        ObfRoutingSectionInfo(const std::shared_ptr<const ObfInfo>& container);
-        virtual ~ObfRoutingSectionInfo();
-
-        std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> getEncodingDecodingRules() const;
-
-    friend class OsmAnd::ObfRoutingSectionReader_P;
-    };
-
     class ObfRoutingSectionLevelTreeNode;
     class ObfRoutingSectionLevel_P;
     class OSMAND_CORE_API ObfRoutingSectionLevel
@@ -79,6 +57,28 @@ namespace OsmAnd
         bool hasChildrenDataBoxes;
         uint32_t firstDataBoxInnerOffset;
         uint32_t dataOffset;
+    };
+
+    struct OSMAND_CORE_API ObfRoutingSectionEncodingDecodingRules : public MapObject::EncodingDecodingRules
+    {
+        ObfRoutingSectionEncodingDecodingRules();
+        virtual ~ObfRoutingSectionEncodingDecodingRules();
+    };
+
+    class ObfRoutingSectionInfo_P;
+    class OSMAND_CORE_API ObfRoutingSectionInfo : public ObfSectionInfo
+    {
+        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionInfo)
+    private:
+        PrivateImplementation<ObfRoutingSectionInfo_P> _p;
+    protected:
+    public:
+        ObfRoutingSectionInfo(const std::shared_ptr<const ObfInfo>& container);
+        virtual ~ObfRoutingSectionInfo();
+
+        std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> getEncodingDecodingRules() const;
+
+    friend class OsmAnd::ObfRoutingSectionReader_P;
     };
 }
 

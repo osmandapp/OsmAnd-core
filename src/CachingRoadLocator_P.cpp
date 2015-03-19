@@ -28,7 +28,11 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::CachingRoadLocator_P::findNearestRoa
     QList< std::shared_ptr<const Road> > roadsInBBox;
 
     const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
-    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(bbox31);
+    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(
+        &bbox31,
+        MinZoomLevel,
+        MaxZoomLevel,
+        ObfDataTypesMask().set(ObfDataType::Routing));
     QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> > referencedCacheEntries;
     obfDataInterface->loadRoads(
         dataLevel,
@@ -59,7 +63,11 @@ QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::CachingRoadLocator_P::findR
     QList< std::shared_ptr<const Road> > roadsInBBox;
 
     const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
-    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(bbox31);
+    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(
+        &bbox31,
+        MinZoomLevel,
+        MaxZoomLevel,
+        ObfDataTypesMask().set(ObfDataType::Routing));
     QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> > referencedCacheEntries;
     obfDataInterface->loadRoads(
         dataLevel,

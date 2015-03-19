@@ -12,17 +12,33 @@ OsmAnd::ObfPoiSectionReader::~ObfPoiSectionReader()
 }
 
 void OsmAnd::ObfPoiSectionReader::loadCategories(
-    const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
-    QList< std::shared_ptr<const AmenityCategory> >& categories)
+    const std::shared_ptr<const ObfReader>& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    std::shared_ptr<const ObfPoiSectionCategories>& outCategories,
+    const IQueryController* const controller /*= nullptr*/)
 {
-    ObfPoiSectionReader_P::loadCategories(*reader->_p, section, categories);
+    ObfPoiSectionReader_P::loadCategories(*reader->_p, section, outCategories, controller);
 }
 
 void OsmAnd::ObfPoiSectionReader::loadAmenities(
-    const std::shared_ptr<ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section,
-    const ZoomLevel zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/, QSet<uint32_t>* desiredCategories /*= nullptr*/,
-    QList< std::shared_ptr<const Amenity> >* amenitiesOut /*= nullptr*/,
-    std::function<bool(std::shared_ptr<const Amenity>)> visitor /*= nullptr*/, const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const ObfReader>& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const ZoomLevel minZoom /*= MinZoomLevel*/,
+    const ZoomLevel maxZoom /*= MaxZoomLevel*/,
+    const AreaI* const bbox31 /*= nullptr*/,
+    const QSet<ObfPoiCategoryId>* const categoriesFilter /*= nullptr*/,
+    const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
+    const IQueryController* const controller /*= nullptr*/)
 {
-    ObfPoiSectionReader_P::loadAmenities(*reader->_p, section, zoom, zoomDepth, bbox31, desiredCategories, amenitiesOut, visitor, controller);
+    ObfPoiSectionReader_P::loadAmenities(
+        *reader->_p,
+        section,
+        outAmenities,
+        minZoom,
+        maxZoom,
+        bbox31,
+        categoriesFilter,
+        visitor,
+        controller);
 }

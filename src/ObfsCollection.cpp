@@ -45,16 +45,11 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> >OsmAnd::ObfsCollection::getObfFil
     return _p->getObfFiles();
 }
 
-std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInterface() const
-{
-    return _p->obtainDataInterface();
-}
-
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection::obtainDataInterface(
-    const AreaI& bbox31,
+    const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
     const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
-    const bool forceIncludeBasemap /*= false*/) const
+    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/) const
 {
-    return _p->obtainDataInterface(bbox31, minZoomLevel, maxZoomLevel, forceIncludeBasemap);
+    return _p->obtainDataInterface(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
 }

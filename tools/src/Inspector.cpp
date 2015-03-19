@@ -29,7 +29,6 @@
 #include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 #include <OsmAndCore/Data/ObfPoiSectionReader.h>
 #include <OsmAndCore/Data/Amenity.h>
-#include <OsmAndCore/Data/AmenityCategory.h>
 
 OsmAndTools::Inspector::Configuration::Configuration()
     : bbox(90.0, -180.0, -90.0, 179.9999999999)
@@ -274,15 +273,14 @@ void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
 #endif
 {
     output << xT("\tBounds ") << formatBounds(section->area31.left(), section->area31.right(), section->area31.top(), section->area31.bottom()) << std::endl;
-    QList< std::shared_ptr<const OsmAnd::AmenityCategory> > categories;
+    std::shared_ptr<const OsmAnd::ObfPoiSectionCategories> categories;
     OsmAnd::ObfPoiSectionReader::loadCategories(reader, section, categories);
     output << xT("\tCategories:") << std::endl;
-    for (auto itCategory = categories.cbegin(); itCategory != categories.cend(); ++itCategory)
+    for (auto mainCategoryIndex = 0; mainCategoryIndex < categories->mainCategories.size(); mainCategoryIndex++)
     {
-        auto category = *itCategory;
-        output << xT("\t\t") << QStringToStlString(category->name) << std::endl;
-        for (auto itSubcategory = category->subcategories.cbegin(); itSubcategory != category->subcategories.cend(); ++itSubcategory)
-            output << xT("\t\t\t") << QStringToStlString(*itSubcategory) << std::endl;
+        output << xT("\t\t") << QStringToStlString(categories->mainCategories[mainCategoryIndex]) << std::endl;
+        for (const auto& subCategory : categories->subCategories[mainCategoryIndex])
+            output << xT("\t\t\t") << QStringToStlString(subCategory) << std::endl;
     }
 
     QList< std::shared_ptr<const OsmAnd::Amenity> > amenities;
@@ -291,7 +289,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
     bbox31.bottom() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
     bbox31.left() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
     bbox31.right() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
-    OsmAnd::ObfPoiSectionReader::loadAmenities(reader, section, cfg.zoom, 3, &bbox31, nullptr, &amenities);
+    OsmAnd::ObfPoiSectionReader::loadAmenities(reader, section, &amenities, cfg.zoom, cfg.zoom, &bbox31);
     output << xT("\tAmenities, ") << amenities.count() << xT(" item(s)");
     if (!cfg.verboseAmenities)
     {
@@ -303,10 +301,10 @@ void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
     {
         auto amenity = *itAmenity;
 
-        output << xT("\t\t") <<
-            QStringToStlString(amenity->latinName) << xT(" [") << amenity->id << xT("], ") <<
-            QStringToStlString(categories[amenity->categoryId]->name) << xT(":") << QStringToStlString(categories[amenity->categoryId]->subcategories[amenity->subcategoryId]) <<
-            xT(", lat ") << OsmAnd::Utilities::get31LatitudeY(amenity->point31.y) << xT(" lon ") << OsmAnd::Utilities::get31LongitudeX(amenity->point31.x) << std::endl;
+        /*output << xT("\t\t") <<
+            QStringToStlString(amenity->nativeName) << xT(" [") << amenity->id << xT("], ") <<
+            QStringToStlString(categories->mainCategories[amenity->categoryId]->name) << xT(":") << QStringToStlString(categories[amenity->categoryId]->subcategories[amenity->subcategoryId]) <<
+            xT(", lat ") << OsmAnd::Utilities::get31LatitudeY(amenity->point31.y) << xT(" lon ") << OsmAnd::Utilities::get31LongitudeX(amenity->point31.x) << std::endl;*/
     }
 }
 

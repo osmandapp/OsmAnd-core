@@ -13,6 +13,7 @@
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
+#include <OsmAndCore/Data/ObfPoiSectionReader.h>
 
 namespace OsmAnd
 {
@@ -73,6 +74,20 @@ namespace OsmAnd
             const IQueryController* const controller = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const binaryMapObjectsMetric = nullptr,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const roadsMetric = nullptr);
+
+        bool loadAmenityCategories(
+            QHash<QString, QStringList>* outCategories,
+            const AreaI* const pBbox31 = nullptr,
+            const IQueryController* const controller = nullptr);
+
+        bool loadAmenities(
+            QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+            const ZoomLevel minZoom = MinZoomLevel,
+            const ZoomLevel maxZoom = MaxZoomLevel,
+            const AreaI* const bbox31 = nullptr,
+            const QHash<QString, QStringList>* const categoriesFilter = nullptr,
+            const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
+            const IQueryController* const controller = nullptr);
     };
 }
 

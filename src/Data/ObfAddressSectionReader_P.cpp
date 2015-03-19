@@ -309,9 +309,6 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
 
     for(;;)
     {
-        if (controller && controller->isAborted())
-            return;
-
         const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
@@ -586,9 +583,6 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
 
     for(;;)
     {
-        if (controller && controller->isAborted())
-            return;
-
         const auto tag = cis->ReadTag();
         switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {

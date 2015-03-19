@@ -85,7 +85,7 @@ namespace OsmAnd
         std::shared_ptr<const ObfMapSectionDecodingEncodingRules> getEncodingDecodingRules() const;
 
         bool isBasemap;
-        bool isBaseMapWithCoastlines;
+        bool isBasemapWithCoastlines;
         QList< Ref<ObfMapSectionLevel> > levels;
 
     friend class OsmAnd::ObfMapSectionReader_P;

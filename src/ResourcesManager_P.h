@@ -144,12 +144,11 @@ namespace OsmAnd
             ResourcesManager_P* const owner;
 
             virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
-            virtual std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
             virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(
-                const AreaI& bbox31,
+                const AreaI* const pBbox31 = nullptr,
                 const ZoomLevel minZoomLevel = MinZoomLevel,
                 const ZoomLevel maxZoomLevel = MaxZoomLevel,
-                const bool forceIncludeBasemap = false) const;
+                const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const;
 
         friend class OsmAnd::ResourcesManager_P;
         };

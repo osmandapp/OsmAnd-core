@@ -7,11 +7,10 @@
 
 #include "ObfReader_P.h"
 #include "ObfPoiSectionInfo.h"
+#include "ObfPoiSectionInfo_P.h"
 #include "Amenity.h"
-#include "AmenityCategory.h"
 #include "ObfReaderUtilities.h"
 #include "IQueryController.h"
-#include "ICU.h"
 #include "Utilities.h"
 
 OsmAnd::ObfPoiSectionReader_P::ObfPoiSectionReader_P()
@@ -22,24 +21,27 @@ OsmAnd::ObfPoiSectionReader_P::~ObfPoiSectionReader_P()
 {
 }
 
-void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::shared_ptr<ObfPoiSectionInfo>& section )
+void OsmAnd::ObfPoiSectionReader_P::read(
+    const ObfReader_P& reader,
+    const std::shared_ptr<ObfPoiSectionInfo>& section)
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    for(;;)
+    for (;;)
     {
+        const auto tagPos = cis->CurrentPosition();
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
-                return;
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
 
-            return;
-        case OBF::OsmAndPoiIndex::kNameFieldNumber:
-            ObfReaderUtilities::readQString(cis, section->name);
-            break;
-        case OBF::OsmAndPoiIndex::kBoundariesFieldNumber:
+                return;
+            case OBF::OsmAndPoiIndex::kNameFieldNumber:
+                ObfReaderUtilities::readQString(cis, section->name);
+                break;
+            case OBF::OsmAndPoiIndex::kBoundariesFieldNumber:
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
@@ -50,19 +52,37 @@ void OsmAnd::ObfPoiSectionReader_P::read( const ObfReader_P& reader, const std::
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
+                break;
             }
-            break; 
-        case OBF::OsmAndPoiIndex::kCategoriesTableFieldNumber:
-            cis->Skip(cis->BytesUntilLimit());
-            return;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            case OBF::OsmAndPoiIndex::kCategoriesTableFieldNumber:
+                if (!section->hasCategories)
+                {
+                    section->hasCategories = true;
+                    section->firstCategoryInnerOffset = tagPos - section->offset;
+                }
+                ObfReaderUtilities::skipBlockWithLength(cis);
+                break;
+            case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
+                if (!section->hasNameIndex)
+                {
+                    section->hasNameIndex = true;
+                    section->hasNameIndex = tagPos - section->offset;
+                }
+            case OBF::OsmAndPoiIndex::kSubtypesTableFieldNumber:
+            case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
+            case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
+                cis->Skip(cis->BytesUntilLimit());
+                return;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readBoundaries( const ObfReader_P& reader, const std::shared_ptr<ObfPoiSectionInfo>& section )
+void OsmAnd::ObfPoiSectionReader_P::readBoundaries(
+    const ObfReader_P& reader,
+    const std::shared_ptr<ObfPoiSectionInfo>& section)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -77,16 +97,16 @@ void OsmAnd::ObfPoiSectionReader_P::readBoundaries( const ObfReader_P& reader, c
 
             return;
         case OBF::OsmAndTileBox::kLeftFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.left()));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.left()));
             break;
         case OBF::OsmAndTileBox::kRightFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.right()));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.right()));
             break;
         case OBF::OsmAndTileBox::kTopFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.top()));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.top()));
             break;
         case OBF::OsmAndTileBox::kBottomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->_area31.bottom()));
+            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.bottom()));
             break;
         default:
             ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -96,8 +116,8 @@ void OsmAnd::ObfPoiSectionReader_P::readBoundaries( const ObfReader_P& reader, c
 }
 
 void OsmAnd::ObfPoiSectionReader_P::readCategories(
-    const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QList< std::shared_ptr<const AmenityCategory> >& categories )
+    const ObfReader_P& reader,
+    const std::shared_ptr<ObfPoiSectionCategories>& categories)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -116,18 +136,23 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto offset = cis->CurrentPosition();
-                auto oldLimit = cis->PushLimit(length);
+                const auto oldLimit = cis->PushLimit(length);
                 
-                std::shared_ptr<AmenityCategory> category(new AmenityCategory());
-                readCategory(reader, category);
+                QString mainCategory;
+                QStringList subcategories;
+                readCategoriesEntry(reader, mainCategory, subcategories);
                 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
-                categories.push_back(qMove(category));
+                categories->mainCategories.push_back(qMove(mainCategory));
+                categories->subCategories.push_back(qMove(subcategories));
             }
             break;
         case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
+        case OBF::OsmAndPoiIndex::kSubtypesTableFieldNumber:
+        case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
+        case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             cis->Skip(cis->BytesUntilLimit());
             return;
         default:
@@ -137,512 +162,568 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readCategory( const ObfReader_P& reader, const std::shared_ptr<AmenityCategory>& category )
+void OsmAnd::ObfPoiSectionReader_P::readCategoriesEntry(
+    const ObfReader_P& reader,
+    QString& outMainCategory,
+    QStringList& outSubcategories)
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    for(;;)
+    for (;;)
     {
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
-                return;
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
 
-            return;
-        case OBF::OsmAndCategoryTable::kCategoryFieldNumber:
-            ObfReaderUtilities::readQString(cis, category->_name);
-            break;
-        case OBF::OsmAndCategoryTable::kSubcategoriesFieldNumber:
+                return;
+            case OBF::OsmAndCategoryTable::kCategoryFieldNumber:
+                ObfReaderUtilities::readQString(cis, outMainCategory);
+                break;
+            case OBF::OsmAndCategoryTable::kSubcategoriesFieldNumber:
             {
                 QString name;
-                if (ObfReaderUtilities::readQString(cis, name))
-                    category->_subcategories.push_back(qMove(name));
+                ObfReaderUtilities::readQString(cis, name);
+                outSubcategories.push_back(qMove(name));
+                break;
             }
-            break;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::loadCategories(
-    const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QList< std::shared_ptr<const OsmAnd::AmenityCategory> >& categories )
+void OsmAnd::ObfPoiSectionReader_P::ensureCategoriesLoaded(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section)
 {
-    const auto cis = reader.getCodedInputStream().get();
-    cis->Seek(section->offset);
-    auto oldLimit = cis->PushLimit(section->length);
+    if (!section->hasCategories)
+        return;
 
-    readCategories(reader, section, categories);
+    if (section->_p->_categoriesLoaded.loadAcquire() == 0)
+    {
+        QMutexLocker scopedLocker(&section->_p->_categoriesLoadMutex);
+        if (!section->_p->_categories)
+        {
+            const auto cis = reader.getCodedInputStream().get();
 
-    ObfReaderUtilities::ensureAllDataWasRead(cis);
-    cis->PopLimit(oldLimit);
-}
+            cis->Seek(section->offset);
+            const auto oldLimit = cis->PushLimit(section->length);
+            cis->Skip(section->firstCategoryInnerOffset);
 
-void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
-    const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    const ZoomLevel zoom, uint32_t zoomDepth /*= 3*/, const AreaI* bbox31 /*= nullptr*/,
-    QSet<uint32_t>* desiredCategories /*= nullptr*/,
-    QList< std::shared_ptr<const Amenity> >* amenitiesOut /*= nullptr*/,
-    std::function<bool (std::shared_ptr<const Amenity>)> visitor /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/ )
-{
-    const auto cis = reader.getCodedInputStream().get();
-    cis->Seek(section->offset);
-    auto oldLimit = cis->PushLimit(section->length);
+            const std::shared_ptr<ObfPoiSectionCategories> categories(new ObfPoiSectionCategories());
+            readCategories(reader, categories);
+            section->_p->_categories = categories;
 
-    readAmenities(reader, section, desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller);
-
-    ObfReaderUtilities::ensureAllDataWasRead(cis);
-    cis->PopLimit(oldLimit);
+            ObfReaderUtilities::ensureAllDataWasRead(cis);
+            cis->PopLimit(oldLimit);
+        }
+    }
 }
 
 void OsmAnd::ObfPoiSectionReader_P::readAmenities(
-    const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QSet<uint32_t>* desiredCategories,
-    QList< std::shared_ptr<const Amenity> >* amenitiesOut,
-    const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
-    std::function<bool (std::shared_ptr<const Amenity>)> visitor,
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const ZoomLevel minZoom,
+    const ZoomLevel maxZoom,
+    const AreaI* const bbox31,
+    const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const ObfPoiSectionReader::VisitorFunction visitor,
     const IQueryController* const controller)
 {
     const auto cis = reader.getCodedInputStream().get();
-    QList< std::shared_ptr<Tile> > tiles;
-    for(;;)
+    
+    QVector<uint32_t> dataBoxesOffsets;
+
+    for (;;)
     {
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
-                return;
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
 
-            return;
-        case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
+                return;
+            case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                readTile(reader, section, tiles, nullptr, desiredCategories, zoom, zoomDepth, bbox31, controller, nullptr);
+                readDataOffsetsFromTiles(
+                    reader,
+                    dataBoxesOffsets,
+                    MinZoomLevel,
+                    TileId(),
+                    minZoom,
+                    maxZoom,
+                    bbox31,
+                    categoriesFilter);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 if (controller && controller->isAborted())
                     return;
-            }
-            break;
-        case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
-            {
-                // Sort tiles byte data offset, to all cache-friendly with I/O system
-                qSort(tiles.begin(), tiles.end(), [](const std::shared_ptr<Tile>& l, const std::shared_ptr<Tile>& r) -> bool
-                {
-                    return l->_hash < r->_hash;
-                });
 
-                for(const auto& tile : constOf(tiles))
+                break;
+            }
+            case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
+            {
+                std::sort(dataBoxesOffsets);
+
+                auto pDataOffset = dataBoxesOffsets.constData();
+                const auto dataBoxesCount = dataBoxesOffsets.size();
+                for (auto dataBoxIndex = 0; dataBoxIndex < dataBoxesCount; dataBoxIndex++)
                 {
-                    cis->Seek(section->offset + tile->_offset);
+                    const auto dataOffset = *(pDataOffset++);
+
+                    cis->Seek(section->offset + dataOffset);
                     const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                     const auto offset = cis->CurrentPosition();
                     const auto oldLimit = cis->PushLimit(length);
 
-                    readAmenitiesFromTile(reader, section, tile.get(), desiredCategories, amenitiesOut, zoom, zoomDepth, bbox31, visitor, controller, nullptr);
+                    readAmenitiesDataBox(
+                        reader,
+                        section,
+                        outAmenities,
+                        minZoom,
+                        maxZoom,
+                        bbox31,
+                        categoriesFilter,
+                        visitor,
+                        controller);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
                     if (controller && controller->isAborted())
                         return;
                 }
+
                 cis->Skip(cis->BytesUntilLimit());
+                return;
             }
-            return;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
 
-bool OsmAnd::ObfPoiSectionReader_P::readTile(
-    const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QList< std::shared_ptr<Tile> >& tiles,
-    Tile* parent,
-    QSet<uint32_t>* desiredCategories,
-    uint32_t zoom, uint32_t zoomDepth, const AreaI* bbox31,
-    const IQueryController* const controller,
-    QSet< uint64_t >* tilesToSkip)
+void OsmAnd::ObfPoiSectionReader_P::readDataOffsetsFromTiles(
+    const ObfReader_P& reader,
+    QVector<uint32_t>& outDataOffsets,
+    const ZoomLevel parentZoom,
+    const TileId parentTileId,
+    const ZoomLevel minZoom,
+    const ZoomLevel maxZoom,
+    const AreaI* const bbox31,
+    const QSet<ObfPoiCategoryId>* const categoriesFilter)
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    const auto zoomToSkip = zoom + zoomDepth;
-    QSet< uint64_t > tilesToSkip_;
-    if (parent == nullptr && !tilesToSkip)
-        tilesToSkip = &tilesToSkip_;
+    gpb::uint32 deltaZoom = 0;
+    auto zoom = MinZoomLevel;
+    auto tileId = TileId::fromXY(0, 0);
 
-    const std::shared_ptr<Tile> tile(new Tile());
-    gpb::uint32 lzoom;
-
-    for(;;)
+    for (;;)
     {
-        if (controller && controller->isAborted())
-            return false;
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
-                return false;
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
 
-            tiles.push_back(qMove(tile));
-            return true;
-        case OBF::OsmAndPoiBox::kZoomFieldNumber:
+                return;
+            case OBF::OsmAndPoiBox::kZoomFieldNumber:
             {
-                cis->ReadVarint32(&lzoom);
-                tile->_zoom = lzoom;
-                if (parent)
-                    tile->_zoom += parent->_zoom;
-            }
-            break;
-        case OBF::OsmAndPoiBox::kLeftFieldNumber:
-            {
-                auto x = ObfReaderUtilities::readSInt32(cis);
-                if (parent)
-                    tile->_x = x + (parent->_x << lzoom);
-                else
-                    tile->_x = x;
-            }
-            break;
-        case OBF::OsmAndPoiBox::kTopFieldNumber:
-            {
-                auto y = ObfReaderUtilities::readSInt32(cis);
-                if (parent)
-                    tile->_y = y + (parent->_y << lzoom);
-                else
-                    tile->_y = y;
+                cis->ReadVarint32(&deltaZoom);
 
-                // Check that we're inside bounding box, if requested
+                zoom = static_cast<ZoomLevel>(static_cast<gpb::uint32>(parentZoom)+deltaZoom);
+                if (zoom > maxZoom)
+                {
+                    cis->Skip(cis->BytesUntilLimit());
+                    return;
+                }
+                break;
+            }
+            case OBF::OsmAndPoiBox::kLeftFieldNumber:
+            {
+                const auto d = ObfReaderUtilities::readSInt32(cis);
+                tileId.x = (parentTileId.x << deltaZoom) + d;
+                break;
+            }
+            case OBF::OsmAndPoiBox::kTopFieldNumber:
+            {
+                const auto d = ObfReaderUtilities::readSInt32(cis);
+                tileId.y = (parentTileId.y << deltaZoom) + d;
+
                 if (bbox31)
                 {
-                    AreaI area31;
-                    area31.left() = tile->_x << (31 - tile->_zoom);
-                    area31.right() = (tile->_x + 1) << (31 - tile->_zoom);
-                    area31.top() = tile->_y << (31 - tile->_zoom);
-                    area31.bottom() = (tile->_y + 1) << (31 - tile->_zoom);
-
+                    const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
                     const auto shouldSkip =
-                        !bbox31->contains(area31) &&
-                        !area31.contains(*bbox31) &&
-                        !bbox31->intersects(area31);
+                        !bbox31->contains(tileBBox31) &&
+                        !tileBBox31.contains(*bbox31) &&
+                        !bbox31->intersects(tileBBox31);
                     if (shouldSkip)
                     {
-                        // This tile is outside of bounding box
                         cis->Skip(cis->BytesUntilLimit());
-                        return false;
+                        return;
                     }
                 }
+                break;
             }
-            break;
-        case OBF::OsmAndPoiBox::kCategoriesFieldNumber:
+            case OBF::OsmAndPoiBox::kCategoriesFieldNumber:
             {
-                if (!desiredCategories)
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                if (!categoriesFilter)
                 {
-                    ObfReaderUtilities::skipUnknownField(cis, tag);
+                    cis->Skip(length);
                     break;
                 }
-                gpb::uint32 length;
-                cis->ReadLittleEndian32(&length);
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                const auto containsDesired = checkTileCategories(reader, section, desiredCategories);
+                const auto hasMatchingContent = tileContainsAnyCategory(reader, *categoriesFilter);
 
-                ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-                if (!containsDesired)
+
+                if (!hasMatchingContent)
                 {
                     cis->Skip(cis->BytesUntilLimit());
-                    return false;
+                    return;
                 }
+                break;
             }
-            break;
-        case OBF::OsmAndPoiBox::kSubBoxesFieldNumber:
+            case OBF::OsmAndPoiBox::kSubBoxesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                auto tileOmitted = readTile(reader, section, tiles, tile.get(), desiredCategories, zoom, zoomDepth, bbox31, controller, tilesToSkip);
-
+                readDataOffsetsFromTiles(reader, outDataOffsets, zoom, tileId, minZoom, maxZoom, bbox31, categoriesFilter);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
+
                 cis->PopLimit(oldLimit);
-
-                if (tilesToSkip && tile->_zoom >= zoomToSkip && tileOmitted)
-                {
-                    auto skipHash = (static_cast<uint64_t>(tile->_x) >> (tile->_zoom - zoomToSkip)) << zoomToSkip;
-                    skipHash |= static_cast<uint64_t>(tile->_y) >> (tile->_zoom - zoomToSkip);
-                    if (tilesToSkip->contains(skipHash))
-                    {
-                        cis->Skip(cis->BytesUntilLimit());
-                        return true;
-                    }
-                }
+                break;
             }
-            break;
-        case OBF::OsmAndPoiBox::kShiftToDataFieldNumber:
+            case OBF::OsmAndPoiBox::kShiftToDataFieldNumber:
             {
-                tile->_offset = ObfReaderUtilities::readBigEndianInt(cis);
-                tile->_hash  = static_cast<uint64_t>(tile->_x) << tile->_zoom;
-                tile->_hash |= static_cast<uint64_t>(tile->_y);
-                tile->_hash |= tile->_zoom;
+                const auto dataOffset = ObfReaderUtilities::readBigEndianInt(cis);
 
-                // skipTiles - these tiles are going to be ignored, since we need only 1 POI object (x;y)@zoom
-                if (tilesToSkip && tile->_zoom >= zoomToSkip)
-                {
-                    auto skipHash = (static_cast<uint64_t>(tile->_x) >> (tile->_zoom - zoomToSkip)) << zoomToSkip;
-                    skipHash |= static_cast<uint64_t>(tile->_y) >> (tile->_zoom - zoomToSkip);
-                    tilesToSkip->insert(skipHash);
-                }
+                if (zoom < minZoom)
+                    break;
+
+                outDataOffsets.push_back(dataOffset);
+                break;
             }
-            break;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
 
-bool OsmAnd::ObfPoiSectionReader_P::checkTileCategories(
-    const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    QSet<uint32_t>* desiredCategories )
+bool OsmAnd::ObfPoiSectionReader_P::tileContainsAnyCategory(
+    const ObfReader_P& reader,
+    const QSet<ObfPoiCategoryId>& categories)
 {
     const auto cis = reader.getCodedInputStream().get();
-    for(;;)
+    for (;;)
     {
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return false;
+
                 return false;
-
-            return false;
-        case OBF::OsmAndPoiCategories::kCategoriesFieldNumber:
+            case OBF::OsmAndPoiCategories::kCategoriesFieldNumber:
             {
-                gpb::uint32 binaryMixedId;
-                cis->ReadVarint32(&binaryMixedId);
-                const auto catId = binaryMixedId & CategoryIdMask;
-                const auto subId = binaryMixedId >> SubcategoryIdShift;
-
-                const uint32_t allSubsId = (catId << 16) | 0xFFFF;
-                const uint32_t mixedId = (catId << 16) | subId;
-                if (desiredCategories->contains(allSubsId) || desiredCategories->contains(mixedId))
+                ObfPoiCategoryId id;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
+                
+                if (categories.contains(id))
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return true;
                 }
+                break;
             }
-            break;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            //			case OsmandOdb.OsmAndPoiCategories.SUBCATEGORIES_FIELD_NUMBER:
+            //				int subcatvl = codedIS.readUInt32();
+            //				if(req.poiTypeFilter.filterSubtypes()) {
+            //					subType.setLength(0);
+            //					PoiSubType pt = region.getSubtypeFromId(subcatvl, subType);
+            //					if(pt != null && req.poiTypeFilter.accept(pt.name, subType.toString())) {
+            //						codedIS.skipRawBytes(codedIS.getBytesUntilLimit());
+            //						return true;
+            //					}
+            //				}
+            //				break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readAmenitiesFromTile(
-    const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section, Tile* tile,
-    QSet<uint32_t>* desiredCategories,
-    QList< std::shared_ptr<const Amenity> >* amenitiesOut,
-    const ZoomLevel zoom, uint32_t zoomDepth, const AreaI* bbox31,
-    std::function<bool (std::shared_ptr<const Amenity>)> visitor,
-    const IQueryController* const controller,
-    QSet< uint64_t >* amenitiesToSkip)
+void OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const ZoomLevel minZoom,
+    const ZoomLevel maxZoom,
+    const AreaI* const bbox31,
+    const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const ObfPoiSectionReader::VisitorFunction visitor,
+    const IQueryController* const controller)
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    const auto zoomToSkip = zoom + zoomDepth;
-    QSet< uint64_t > amenitiesToSkip_;
-    if (!amenitiesToSkip)
-        amenitiesToSkip = &amenitiesToSkip_;
+    auto zoom = InvalidZoomLevel;
+    TileId tileId;
+    bool firstAmenityRead = false;
 
-    PointI pTile;
-    uint32_t zoomTile = 0;
-
-    for(;;)
+    for (;;)
     {
-        if (controller && controller->isAborted())
-            return;
-
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
-                return;
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
 
-            return;
-        case OBF::OsmAndPoiBoxData::kZoomFieldNumber:
+                return;
+            case OBF::OsmAndPoiBoxData::kZoomFieldNumber:
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
-                zoomTile = value;
+
+                zoom = static_cast<ZoomLevel>(value);
+                break;
             }
-            break;
-        case OBF::OsmAndPoiBoxData::kXFieldNumber:
+            case OBF::OsmAndPoiBoxData::kXFieldNumber:
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
-                pTile.x = value;
+
+                tileId.x = value;
+                break;
             }
-            break;
-        case OBF::OsmAndPoiBoxData::kYFieldNumber:
+            case OBF::OsmAndPoiBoxData::kYFieldNumber:
             {
                 gpb::uint32 value;
                 cis->ReadVarint32(&value);
-                pTile.y = value;
+
+                tileId.y = value;
+                break;
             }
-            break;
-        case OBF::OsmAndPoiBoxData::kPoiDataFieldNumber:
+            case OBF::OsmAndPoiBoxData::kPoiDataFieldNumber:
             {
+                if (!firstAmenityRead)
+                {
+                    bool rejectBox = false;
+                    rejectBox = rejectBox || (zoom < minZoom || zoom > maxZoom);
+                    if (bbox31)
+                    {
+                        const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
+                        const auto shouldSkip =
+                            !bbox31->contains(tileBBox31) &&
+                            !tileBBox31.contains(*bbox31) &&
+                            !bbox31->intersects(tileBBox31);
+
+                        rejectBox = rejectBox || shouldSkip;
+                    }
+
+                    if (rejectBox)
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
+                        return;
+                    }
+                }
+
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<const Amenity> amenity;
-                readAmenity(reader, section, pTile, zoomTile, amenity, desiredCategories, bbox31, controller);
+                readAmenity(reader, section, amenity, zoom, tileId, bbox31, categoriesFilter, controller);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 if (!amenity)
                     break;
-                if (amenitiesToSkip)
+
+                if (!visitor || visitor(amenity))
                 {
-                    const auto xp = amenity->_point31.x >> (31 - zoomToSkip);
-                    const auto yp = amenity->_point31.y >> (31 - zoomToSkip);
-                    const auto hash = (static_cast<uint64_t>(xp) << zoomToSkip) | static_cast<uint64_t>(yp);
-                    if (!amenitiesToSkip->contains(hash))
-                    {
-                        if (!visitor || visitor(amenity))
-                        {
-                            amenitiesToSkip->insert(hash);
-                            if (amenitiesOut)
-                                amenitiesOut->push_back(qMove(amenity));
-                        }
-                    }
-                    if (zoomToSkip <= zoom)
-                    {
-                        cis->Skip(cis->BytesUntilLimit());
-                        return;
-                    }
+                    if (outAmenities)
+                        outAmenities->push_back(qMove(amenity));
                 }
-                else
-                {
-                    if (amenitiesOut && (!visitor || visitor(amenity)))
-                        amenitiesOut->push_back(qMove(amenity));
-                }
+                break;
             }
-            break;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
 
 void OsmAnd::ObfPoiSectionReader_P::readAmenity(
-    const ObfReader_P& reader, const std::shared_ptr<const ObfPoiSectionInfo>& section,
-    const PointI& pTile, uint32_t pzoom,
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const Amenity>& outAmenity,
-    QSet<uint32_t>* desiredCategories,
-    const AreaI* bbox31,
+    const ZoomLevel zoom,
+    const TileId boxTileId,
+    const AreaI* const bbox31,
+    const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const IQueryController* const controller)
 {
     const auto cis = reader.getCodedInputStream().get();
-    PointI point;
-    uint32_t catId;
-    uint32_t subId;
+    const auto baseOffset = cis->CurrentPosition();
+
+    bool autogenerateId = true;
     std::shared_ptr<Amenity> amenity;
-    for(;;)
+    PointI position31;
+    QSet<ObfPoiCategoryId> categories;
+
+    for (;;)
     {
-        if (controller && controller->isAborted())
-            return;
-
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
-                return;
-
-            if (amenity->_latinName.isEmpty())
-                amenity->_latinName = ICU::transliterateToLatin(amenity->_name);
-            amenity->_point31 = point;
-            amenity->_categoryId = catId;
-            amenity->_subcategoryId = subId;
-            outAmenity = amenity;
-            return;
-        case OBF::OsmAndPoiBoxDataAtom::kDxFieldNumber:
-            point.x = (ObfReaderUtilities::readSInt32(cis) + (pTile.x << (24 - pzoom))) << 7;
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kDyFieldNumber:
-            point.y = (ObfReaderUtilities::readSInt32(cis) + (pTile.y << (24 - pzoom))) << 7;
-            if (bbox31 && !bbox31->contains(point))
+            case 0:
             {
-                cis->Skip(cis->BytesUntilLimit());
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
+                if (!amenity)
+                    amenity.reset(new Amenity(section));
+
+                amenity->position31 = position31;
+                amenity->categories = categories;
+                if (autogenerateId)
+                    amenity->id = ObfObjectId::generateUniqueId(baseOffset, section);
+                outAmenity = amenity;
                 return;
             }
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kCategoriesFieldNumber:
+            case OBF::OsmAndPoiBoxDataAtom::kDxFieldNumber:
             {
-                gpb::uint32 value;
-                cis->ReadVarint32(&value);
-                catId = value & CategoryIdMask;
-                subId = value >> SubcategoryIdShift;
+                const auto d = ObfReaderUtilities::readSInt32(cis);
+                position31.x = ((boxTileId.x << (24 - zoom)) + d) << 7;
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kDyFieldNumber:
+            {
+                const auto d = ObfReaderUtilities::readSInt32(cis);
+                position31.y = ((boxTileId.y << (24 - zoom)) + d) << 7;
 
-                if (desiredCategories)
+                if (bbox31 && !bbox31->contains(position31))
                 {
-                    const uint32_t allSubsId = (catId << 16) | 0xFFFF;
-                    const uint32_t mixedId = (catId << 16) | subId;
-                    if (desiredCategories->contains(allSubsId) || desiredCategories->contains(mixedId))
-                    {
-                        cis->Skip(cis->BytesUntilLimit());
-                        return;
-                    }
+                    cis->Skip(cis->BytesUntilLimit());
+                    return;
                 }
-                amenity.reset(new Amenity());
+                break;
             }
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kIdFieldNumber:
+            case OBF::OsmAndPoiBoxDataAtom::kCategoriesFieldNumber:
             {
-                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&amenity->_id));
+                ObfPoiCategoryId categoryId;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&categoryId));
+                categories.insert(categoryId);
+                break;
             }
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
-            ObfReaderUtilities::readQString(cis, amenity->_name);
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kNameEnFieldNumber:
-            ObfReaderUtilities::readQString(cis, amenity->_latinName);
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kOpeningHoursFieldNumber:
-            ObfReaderUtilities::readQString(cis, amenity->_openingHours);
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kSiteFieldNumber:
-            ObfReaderUtilities::readQString(cis, amenity->_site);
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kPhoneFieldNumber:
-            ObfReaderUtilities::readQString(cis, amenity->_phone);
-            break;
-        case OBF::OsmAndPoiBoxDataAtom::kNoteFieldNumber:
-            ObfReaderUtilities::readQString(cis, amenity->_description);
-            break;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            case OBF::OsmAndPoiBoxDataAtom::kSubcategoriesFieldNumber:
+            {
+                if (categoriesFilter && categories.intersect(*categoriesFilter).isEmpty())
+                {
+                    cis->Skip(cis->BytesUntilLimit());
+                    return;
+                }
+
+                if (!amenity)
+                    amenity.reset(new Amenity(section));
+                /*int subtypev = codedIS.readUInt32();
+                retValue.setLength(0);
+                PoiSubType st = region.getSubtypeFromId(subtypev, retValue);
+                if (st != null) {
+                    am.setAdditionalInfo(st.name, retValue.toString());
+                }*/
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
+                if (!amenity)
+                    amenity.reset(new Amenity(section));
+                ObfReaderUtilities::readQString(cis, amenity->nativeName);
+                break;
+            case OBF::OsmAndPoiBoxDataAtom::kNameEnFieldNumber:
+            {
+                if (!amenity)
+                    amenity.reset(new Amenity(section));
+
+                QString name;
+                ObfReaderUtilities::readQString(cis, name);
+                amenity->localizedNames.insert(QLatin1String("en"), name);
+
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kIdFieldNumber:
+                if (!amenity)
+                    amenity.reset(new Amenity(section));
+
+                gpb::uint64 rawId;
+                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&rawId));
+                amenity->id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
+
+                autogenerateId = false;
+                break;
+            //repeated uint32 textCategories = 14; // v1.7
+            //repeated string textValues = 15;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
+}
+
+void OsmAnd::ObfPoiSectionReader_P::loadCategories(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    std::shared_ptr<const ObfPoiSectionCategories>& outCategories,
+    const IQueryController* const controller)
+{
+    if (!section->hasCategories)
+        return;
+
+    ensureCategoriesLoaded(reader, section);
+    outCategories = section->getCategories();
+}
+
+void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const ZoomLevel minZoom,
+    const ZoomLevel maxZoom,
+    const AreaI* const bbox31,
+    const QSet<ObfPoiCategoryId>* const categoriesFilter,
+    const ObfPoiSectionReader::VisitorFunction visitor,
+    const IQueryController* const controller)
+{
+    const auto cis = reader.getCodedInputStream().get();
+    cis->Seek(section->offset);
+    auto oldLimit = cis->PushLimit(section->length);
+
+    readAmenities(reader, section, outAmenities, minZoom, maxZoom, bbox31, categoriesFilter, visitor, controller);
+
+    ObfReaderUtilities::ensureAllDataWasRead(cis);
+    cis->PopLimit(oldLimit);
 }

@@ -92,12 +92,11 @@ namespace OsmAnd
         bool remove(const ObfsCollection::SourceOriginId entryId);
 
         QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
-        std::shared_ptr<ObfDataInterface> obtainDataInterface() const;
         std::shared_ptr<ObfDataInterface> obtainDataInterface(
-            const AreaI& bbox31,
+            const AreaI* const pBbox31,
             const ZoomLevel minZoomLevel,
             const ZoomLevel maxZoomLevel,
-            const bool forceIncludeBasemap) const;
+            const ObfDataTypesMask desiredDataTypes) const;
 
     friend class OsmAnd::ObfsCollection;
     friend class OsmAnd::ObfsCollection_P__SignalProxy;

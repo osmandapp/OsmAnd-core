@@ -585,13 +585,13 @@ namespace OsmAnd
             return false;
         }
 
-        uintmax_t getReferencesCount(const KEY_TYPE& key, const ZoomLevel level = InvalidZoom) const
+        uintmax_t getReferencesCount(const KEY_TYPE& key, const ZoomLevel level = InvalidZoomLevel) const
         {
             QReadLocker scopedLocker(&this->_lock);
 
             uintmax_t result = 0;
-            const auto firstZoom = (level == InvalidZoom) ? MinZoomLevel : level;
-            const auto lastZoom = (level == InvalidZoom) ? MaxZoomLevel : level;
+            const auto firstZoom = (level == InvalidZoomLevel) ? MinZoomLevel : level;
+            const auto lastZoom = (level == InvalidZoomLevel) ? MaxZoomLevel : level;
             for (int currentLevel = firstZoom; currentLevel <= lastZoom; currentLevel++)
             {
                 const auto& availableResources = _availableResources[currentLevel];

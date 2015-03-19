@@ -16,60 +16,66 @@ OsmAnd::ObfInfo::~ObfInfo()
 {
 }
 
-bool OsmAnd::ObfInfo::containsDataFor(const AreaI& bbox31, const ZoomLevel minZoomLevel, const ZoomLevel maxZoomLevel) const
+bool OsmAnd::ObfInfo::containsDataFor(
+    const AreaI* const pBbox31,
+    const ZoomLevel minZoomLevel,
+    const ZoomLevel maxZoomLevel,
+    const ObfDataTypesMask desiredDataTypes) const
 {
-    //TODO: This needs to be implemented to allow skipping OBF files that do not contain any valuable data for given bbox
-    return true;
-    //for (const auto& mapSection : constOf(mapSections))
-    //{
-    //    for (const auto& level : constOf(mapSection->levels))
-    //    {
-    //        bool accept = false;
+    if (desiredDataTypes.isSet(ObfDataType::Map))
+    {
+        for (const auto& mapSection : constOf(mapSections))
+        {
+            for (const auto& level : constOf(mapSection->levels))
+            {
+                bool accept = false;
 
-    //        // Check by zoom
-    //        accept = accept || (minZoomLevel <= level->maxZoom && level->minZoom <= maxZoomLevel);
+                // Check by zoom
+                accept = accept || (minZoomLevel <= level->maxZoom && level->minZoom <= maxZoomLevel);
 
-    //        // Check by area
-    //        accept = accept || level->area31.contains(bbox31);
-    //        accept = accept || level->area31.intersects(bbox31);
-    //        accept = accept || bbox31.contains(level->area31);
+                // Check by area
+                if (pBbox31)
+                {
+                    accept = accept || level->area31.contains(*pBbox31);
+                    accept = accept || level->area31.intersects(*pBbox31);
+                    accept = accept || pBbox31->contains(level->area31);
+                }
 
-    //        if (accept)
-    //            return true;
-    //    }
-    //}
+                if (accept)
+                    return true;
+            }
+        }
+    }
 
-    //for (const auto& routingSection : constOf(routingSections))
-    //{
-    //    for (const auto& level : constOf(routingSection->levels))
-    //    {
-    //        bool accept = false;
+    if (desiredDataTypes.isSet(ObfDataType::Routing))
+    {
+        // Routing sections do not contain areas that are suitable for this check,
+        // so in case there are no map sections but there are routing sections, lie that this file surely has data
+        if (!routingSections.isEmpty() && mapSections.isEmpty())
+            return true;
+    }
 
-    //        // Check by zoom
-    //        accept = accept || (minZoomLevel <= level->maxZoom && level->minZoom <= maxZoomLevel);
+    if (desiredDataTypes.isSet(ObfDataType::POI))
+    {
+        for (const auto& poiSection : constOf(poiSections))
+        {
+            bool accept = false;
 
-    //        // Check by area
-    //        accept = accept || level->area31.contains(bbox31);
-    //        accept = accept || level->area31.intersects(bbox31);
-    //        accept = accept || bbox31.contains(level->area31);
+            // Check by area
+            if (pBbox31)
+            {
+                accept = accept || poiSection->area31.contains(*pBbox31);
+                accept = accept || poiSection->area31.intersects(*pBbox31);
+                accept = accept || pBbox31->contains(poiSection->area31);
+            }
 
-    //        if (accept)
-    //            return true;
-    //    }
-    //}
+            if (accept)
+                return true;
+        }
+    }
 
-    //for (const auto& poiSection : constOf(poiSections))
-    //{
-    //    bool accept = false;
+    //TODO: ObfAddressSectionInfo
+    //TODO: ObfTransportSectionInfo
 
-    //    // Check by area
-    //    accept = accept || poiSection->area31.contains(bbox31);
-    //    accept = accept || poiSection->area31.intersects(bbox31);
-    //    accept = accept || bbox31.contains(poiSection->area31);
-
-    //    if (accept)
-    //        return true;
-    //}
-
-    //return false;
+    return false;
 }

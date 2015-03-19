@@ -106,7 +106,7 @@ namespace OsmAnd
         ZoomLevel30,
         ZoomLevel31 = 31,
 
-        InvalidZoom = -1,
+        InvalidZoomLevel = -1,
         MinZoomLevel = ZoomLevel0,
         MaxZoomLevel = ZoomLevel31,
     };

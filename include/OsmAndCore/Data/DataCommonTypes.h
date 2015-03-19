@@ -10,15 +10,30 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Bitmask.h>
 
 namespace OsmAnd
 {
-    enum class ObfAddressBlockType
+    enum class ObfDataType
     {
-        CitiesOrTowns = 1,
-        Villages = 3,
-        Postcodes = 2,
+        Map = 0,
+        Routing = 1,
+        Address = 2,
+        POI = 3,
+        Transport = 4
     };
+
+    typedef Bitmask<ObfDataType> ObfDataTypesMask;
+
+    inline ObfDataTypesMask fullObfDataTypesMask()
+    {
+        return ObfDataTypesMask()
+            .set(ObfDataType::Map)
+            .set(ObfDataType::Routing)
+            .set(ObfDataType::Address)
+            .set(ObfDataType::POI)
+            .set(ObfDataType::Transport);
+    }
 
     class ObfSectionInfo;
 
@@ -127,6 +142,21 @@ namespace OsmAnd
 #endif // !defined(SWIG)
     };
 
+#if !defined(SWIG)
+    static_assert(sizeof(ObfMapSectionDataBlockId) == 8, "ObfMapSectionDataBlockId must be 8 bytes in size");
+#endif // !defined(SWIG)
+
+    enum class RoutingDataLevel
+    {
+        Basemap,
+        Detailed,
+
+        __LAST
+    };
+    enum {
+        RoutingDataLevelsCount = static_cast<int>(RoutingDataLevel::__LAST)
+    };
+
     union ObfRoutingSectionDataBlockId
     {
         uint64_t id;
@@ -164,19 +194,64 @@ namespace OsmAnd
 #endif // !defined(SWIG)
     };
 
+#if !defined(SWIG)
+    static_assert(sizeof(ObfRoutingSectionDataBlockId) == 8, "ObfRoutingSectionDataBlockId must be 8 bytes in size");
+#endif // !defined(SWIG)
+
     class ObfRoutingSectionInfo;
     typedef std::function < bool(
         const std::shared_ptr<const ObfRoutingSectionInfo>& section,
         const ObfObjectId roadId,
         const AreaI& bbox) > FilterRoadsByIdFunction;
 
-    enum class RoutingDataLevel
+    union ObfPoiCategoryId
     {
-        Basemap,
-        Detailed
+        // ((subcategory_order << 7) | category_order)
+
+        uint32_t id;
+        struct
+        {
+            uint32_t subCategoryIndex : 25;
+            uint32_t mainCategoryIndex : 7;
+        };
+
+#if !defined(SWIG)
+        inline operator uint32_t() const
+        {
+            return id;
+        }
+
+        inline bool operator==(const ObfPoiCategoryId& that)
+        {
+            return this->id == that.id;
+        }
+
+        inline bool operator!=(const ObfPoiCategoryId& that)
+        {
+            return this->id != that.id;
+        }
+
+        inline bool operator==(const uint32_t& that)
+        {
+            return this->id == that;
+        }
+
+        inline bool operator!=(const uint32_t& that)
+        {
+            return this->id != that;
+        }
+#endif // !defined(SWIG)
     };
-    enum {
-        RoutingDataLevelsCount = 2
+
+#if !defined(SWIG)
+    static_assert(sizeof(ObfPoiCategoryId) == 4, "ObfPoiCategoryId must be 4 bytes in size");
+#endif // !defined(SWIG)
+
+    enum class ObfAddressBlockType
+    {
+        CitiesOrTowns = 1,
+        Villages = 3,
+        Postcodes = 2,
     };
 }
 

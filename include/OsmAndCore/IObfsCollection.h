@@ -11,6 +11,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
 
 namespace OsmAnd
@@ -27,12 +28,11 @@ namespace OsmAnd
         virtual ~IObfsCollection();
 
         virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const = 0;
-        virtual std::shared_ptr<ObfDataInterface> obtainDataInterface() const = 0;
         virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(
-            const AreaI& bbox31,
+            const AreaI* const pBbox31 = nullptr,
             const ZoomLevel minZoomLevel = MinZoomLevel,
             const ZoomLevel maxZoomLevel = MaxZoomLevel,
-            const bool forceIncludeBasemap = false) const = 0;
+            const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const = 0;
     };
 }
 

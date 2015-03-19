@@ -40,7 +40,11 @@ namespace OsmAnd
         QList< Ref<ObfPoiSectionInfo> > poiSections;
         QList< Ref<ObfTransportSectionInfo> > transportSections;
 
-        bool containsDataFor(const AreaI& bbox31, const ZoomLevel minZoomLevel, const ZoomLevel maxZoomLevel) const;
+        bool containsDataFor(
+            const AreaI* const pBbox31,
+            const ZoomLevel minZoomLevel,
+            const ZoomLevel maxZoomLevel,
+            const ObfDataTypesMask desiredDataTypes) const;
     };
 }
 

@@ -273,38 +273,11 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ObfsCollection_P::getObf
     return obfFiles;
 }
 
-std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataInterface() const
-{
-    // Check if sources were invalidated
-    if (_collectedSourcesInvalidated.loadAcquire() > 0)
-        collectSources();
-
-    // Create ObfReaders from collected sources
-    QList< std::shared_ptr<const ObfReader> > obfReaders;
-    {
-        QReadLocker scopedLocker(&_collectedSourcesLock);
-
-        for(const auto& collectedSources : constOf(_collectedSources))
-        {
-            obfReaders.reserve(obfReaders.size() + collectedSources.size());
-            for(const auto& obfFile : constOf(collectedSources))
-            {
-                std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfFile));
-                if (!obfReader->isOpened() || !obfReader->obtainInfo())
-                    continue;
-                obfReaders.push_back(qMove(obfReader));
-            }
-        }
-    }
-
-    return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
-}
-
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataInterface(
-    const AreaI& bbox31,
+    const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
     const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
-    const bool forceIncludeBasemap /*= false*/) const
+    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/) const
 {
     // Check if sources were invalidated
     if (_collectedSourcesInvalidated.loadAcquire() > 0)
@@ -324,9 +297,9 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
                 bool accept = false;
                 if (obfFile->obfInfo)
                 {
-                    if (forceIncludeBasemap)
-                        accept = accept || obfFile->obfInfo->isBasemap;
-                    accept = accept || obfFile->obfInfo->containsDataFor(bbox31, minZoomLevel, maxZoomLevel);
+                    accept = accept || obfFile->obfInfo->isBasemap;
+                    accept = accept || obfFile->obfInfo->isBasemapWithCoastlines;
+                    accept = accept || obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
                     if (!accept)
                         continue;
                 }
@@ -339,9 +312,9 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
                 // Repeat checks if needed
                 if (!accept)
                 {
-                    if (forceIncludeBasemap)
-                        accept = accept || obfFile->obfInfo->isBasemap;
-                    accept = accept || obfFile->obfInfo->containsDataFor(bbox31, minZoomLevel, maxZoomLevel);
+                    accept = accept || obfFile->obfInfo->isBasemap;
+                    accept = accept || obfFile->obfInfo->isBasemapWithCoastlines;
+                    accept = accept || obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
                     if (!accept)
                         continue;
                 }
