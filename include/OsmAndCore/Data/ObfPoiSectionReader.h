@@ -15,6 +15,7 @@ namespace OsmAnd
 {
     class ObfReader;
     class ObfPoiSectionCategories;
+    class ObfPoiSectionSubtypes;
     class ObfPoiSectionInfo;
     class Amenity;
     class IQueryController;
@@ -33,6 +34,12 @@ namespace OsmAnd
             const std::shared_ptr<const ObfReader>& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const ObfPoiSectionCategories>& outCategories,
+            const IQueryController* const controller = nullptr);
+
+        static void loadSubtypes(
+            const std::shared_ptr<const ObfReader>& reader,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            std::shared_ptr<const ObfPoiSectionSubtypes>& outSubtypes,
             const IQueryController* const controller = nullptr);
 
         static void loadAmenities(

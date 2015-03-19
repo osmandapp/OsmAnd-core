@@ -43,8 +43,20 @@ namespace OsmAnd
             const ObfReader_P& reader,
             QString& outMainCategory,
             QStringList& outSubcategories);
-
         static void ensureCategoriesLoaded(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section);
+
+        static void readSubtypes(
+            const ObfReader_P& reader,
+            const std::shared_ptr<ObfPoiSectionSubtypes>& subtypes);
+        static void readSubtypesStructure(
+            const ObfReader_P& reader,
+            const std::shared_ptr<ObfPoiSectionSubtypes>& subtypes);
+        static void readSubtype(
+            const ObfReader_P& reader,
+            const std::shared_ptr<ObfPoiSectionSubtype>& subtype);
+        static void ensureSubtypesLoaded(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section);
 
@@ -58,7 +70,7 @@ namespace OsmAnd
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
             const IQueryController* const controller);
-        static void readDataOffsetsFromTiles(
+        static void scanTiles(
             const ObfReader_P& reader,
             QVector<uint32_t>& outDataOffsets,
             const ZoomLevel parentZoom,
@@ -67,7 +79,7 @@ namespace OsmAnd
             const ZoomLevel maxZoom,
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter);
-        static bool tileContainsAnyCategory(
+        static bool scanTileForMatchingCategories(
             const ObfReader_P& reader,
             const QSet<ObfPoiCategoryId>& categories);
         static void readAmenitiesDataBox(
@@ -94,6 +106,12 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const ObfPoiSectionCategories>& outCategories,
+            const IQueryController* const controller);
+
+        static void loadSubtypes(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            std::shared_ptr<const ObfPoiSectionSubtypes>& outSubtypes,
             const IQueryController* const controller);
 
         static void loadAmenities(

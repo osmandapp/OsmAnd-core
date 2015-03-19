@@ -74,8 +74,93 @@ void OsmAnd::ObfReaderUtilities::readStringTable(gpb::io::CodedInputStream* cis,
                 QString value;
                 if (readQString(cis, value))
                     stringTableOut.push_back(qMove(value));
-            }
                 break;
+            }
+            default:
+                skipUnknownField(cis, tag);
+                break;
+        }
+    }
+}
+
+int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
+    gpb::io::CodedInputStream* cis,
+    const QString& query,
+    QVector<uint32_t>& outValues,
+    const QString& keysPrefix /*= QString::null*/,
+    const int matchedCharactersCount_ /*= 0*/)
+{
+    QString key;
+    auto matchedCharactersCount = matchedCharactersCount_;
+
+    for (;;)
+    {
+        const auto tag = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return matchedCharactersCount;
+
+                return matchedCharactersCount;
+            case OBF::IndexedStringTable::kKeyFieldNumber:
+            {
+                readQString(cis, key);
+                if (!keysPrefix.isEmpty())
+                    key.prepend(keysPrefix);
+
+                //// check query is part of key (the best matching)
+                //if (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH)){
+                //    if (query.length() >= charMatches){
+                //        if (query.length() > charMatches){
+                //            charMatches = query.length();
+                //            list.clear();
+                //        }
+                //    }
+                //    else {
+                //        key = null;
+                //    }
+                //    // check key is part of query
+                //}
+                //else if (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH)) {
+                //    if (key.length() >= charMatches) {
+                //        if (key.length() > charMatches) {
+                //            charMatches = key.length();
+                //            list.clear();
+                //        }
+                //    }
+                //    else {
+                //        key = null;
+                //    }
+                //}
+                //else {
+                //    key = null;
+                //}
+                break;
+            }
+            case OBF::IndexedStringTable::kValFieldNumber:
+            {
+                const auto value = readBigEndianInt(cis);
+
+                if (!key.isNull())
+                    outValues.push_back(value);
+                break;
+            }
+            case OBF::IndexedStringTable::kSubtablesFieldNumber:
+            {
+                const auto length = ObfReaderUtilities::readLength(cis);
+                const auto oldLimit = cis->PushLimit(length);
+
+                if (!key.isNull())
+                    matchedCharactersCount = scanIndexedStringTable(cis, query, outValues, key, matchedCharactersCount);
+                else
+                    cis->Skip(cis->BytesUntilLimit());
+
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
+                cis->PopLimit(oldLimit);
+
+                break;
+            }
             default:
                 skipUnknownField(cis, tag);
                 break;

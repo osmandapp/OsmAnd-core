@@ -5,6 +5,9 @@
 #include <google/protobuf/wire_format_lite.h>
 #include "restore_internal_warnings.h"
 
+#include "QtExtensions.h"
+#include "QtCommon.h"
+
 #include "ObfReader_P.h"
 #include "ObfPoiSectionInfo.h"
 #include "ObfPoiSectionInfo_P.h"
@@ -55,20 +58,16 @@ void OsmAnd::ObfPoiSectionReader_P::read(
                 break;
             }
             case OBF::OsmAndPoiIndex::kCategoriesTableFieldNumber:
-                if (!section->hasCategories)
-                {
-                    section->hasCategories = true;
+                if (section->firstCategoryInnerOffset == 0)
                     section->firstCategoryInnerOffset = tagPos - section->offset;
-                }
                 ObfReaderUtilities::skipBlockWithLength(cis);
                 break;
             case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
-                if (!section->hasNameIndex)
-                {
-                    section->hasNameIndex = true;
-                    section->hasNameIndex = tagPos - section->offset;
-                }
+                section->nameIndexInnerOffset = tagPos - section->offset;
+                break;
             case OBF::OsmAndPoiIndex::kSubtypesTableFieldNumber:
+                section->subtypesInnerOffset = tagPos - section->offset;
+                break;
             case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
                 cis->Skip(cis->BytesUntilLimit());
@@ -200,9 +199,6 @@ void OsmAnd::ObfPoiSectionReader_P::ensureCategoriesLoaded(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section)
 {
-    if (!section->hasCategories)
-        return;
-
     if (section->_p->_categoriesLoaded.loadAcquire() == 0)
     {
         QMutexLocker scopedLocker(&section->_p->_categoriesLoadMutex);
@@ -217,6 +213,157 @@ void OsmAnd::ObfPoiSectionReader_P::ensureCategoriesLoaded(
             const std::shared_ptr<ObfPoiSectionCategories> categories(new ObfPoiSectionCategories());
             readCategories(reader, categories);
             section->_p->_categories = categories;
+
+            ObfReaderUtilities::ensureAllDataWasRead(cis);
+            cis->PopLimit(oldLimit);
+        }
+    }
+}
+
+void OsmAnd::ObfPoiSectionReader_P::readSubtypes(
+    const ObfReader_P& reader,
+    const std::shared_ptr<ObfPoiSectionSubtypes>& subtypes)
+{
+    const auto cis = reader.getCodedInputStream().get();
+
+    for (;;)
+    {
+        const auto tag = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
+                return;
+            case OBF::OsmAndPoiIndex::kSubtypesTableFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
+
+                readSubtypesStructure(reader, subtypes);
+
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
+                cis->PopLimit(oldLimit);
+                break;
+            }
+            case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
+            case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
+                cis->Skip(cis->BytesUntilLimit());
+                return;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
+        }
+    }
+}
+
+void OsmAnd::ObfPoiSectionReader_P::readSubtypesStructure(
+    const ObfReader_P& reader,
+    const std::shared_ptr<ObfPoiSectionSubtypes>& subtypes)
+{
+    const auto cis = reader.getCodedInputStream().get();
+
+    for (;;)
+    {
+        const auto tag = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
+                return;
+            case OBF::OsmAndSubtypesTable::kSubtypesFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                const auto offset = cis->CurrentPosition();
+                const auto oldLimit = cis->PushLimit(length);
+
+                const std::shared_ptr<ObfPoiSectionSubtype> subtype(new ObfPoiSectionSubtype());
+                readSubtype(reader, subtype);
+                subtypes->subtypes.push_back(subtype);
+
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
+                cis->PopLimit(oldLimit);
+                break;
+            }
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
+        }
+    }
+}
+
+void OsmAnd::ObfPoiSectionReader_P::readSubtype(
+    const ObfReader_P& reader,
+    const std::shared_ptr<ObfPoiSectionSubtype>& subtype)
+{
+    const auto cis = reader.getCodedInputStream().get();
+
+    for (;;)
+    {
+        const auto tag = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
+                return;
+            case OBF::OsmAndPoiSubtype::kNameFieldNumber:
+                ObfReaderUtilities::readQString(cis, subtype->name);
+                break;
+            case OBF::OsmAndPoiSubtype::kTagnameFieldNumber:
+                ObfReaderUtilities::readQString(cis, subtype->tagName);
+                break;
+            case OBF::OsmAndPoiSubtype::kIsTextFieldNumber:
+            {
+                gpb::uint32 value;
+                cis->ReadVarint32(&value);
+                subtype->isText = (value != 0);
+                break;
+            }
+            case OBF::OsmAndPoiSubtype::kFrequencyFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&subtype->frequency));
+                break;
+            //case OBF::OsmAndPoiSubtype::kSubtypeValuesSizeFieldNumber:
+            //    break;
+            case OBF::OsmAndPoiSubtype::kSubtypeValueFieldNumber:
+            {
+                QString value;
+                ObfReaderUtilities::readQString(cis, value);
+                subtype->possibleValues.push_back(value);
+                break;
+            }
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
+        }
+    }
+}
+
+void OsmAnd::ObfPoiSectionReader_P::ensureSubtypesLoaded(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section)
+{
+    if (section->_p->_subtypesLoaded.loadAcquire() == 0)
+    {
+        QMutexLocker scopedLocker(&section->_p->_subtypesLoadMutex);
+        if (!section->_p->_subtypes)
+        {
+            const auto cis = reader.getCodedInputStream().get();
+
+            cis->Seek(section->offset);
+            const auto oldLimit = cis->PushLimit(section->length);
+            cis->Skip(section->subtypesInnerOffset);
+
+            const std::shared_ptr<ObfPoiSectionSubtypes> subtypes(new ObfPoiSectionSubtypes());
+            readSubtypes(reader, subtypes);
+            section->_p->_subtypes = subtypes;
 
             ObfReaderUtilities::ensureAllDataWasRead(cis);
             cis->PopLimit(oldLimit);
@@ -255,7 +402,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                readDataOffsetsFromTiles(
+                scanTiles(
                     reader,
                     dataBoxesOffsets,
                     MinZoomLevel,
@@ -314,7 +461,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     }
 }
 
-void OsmAnd::ObfPoiSectionReader_P::readDataOffsetsFromTiles(
+void OsmAnd::ObfPoiSectionReader_P::scanTiles(
     const ObfReader_P& reader,
     QVector<uint32_t>& outDataOffsets,
     const ZoomLevel parentZoom,
@@ -390,7 +537,7 @@ void OsmAnd::ObfPoiSectionReader_P::readDataOffsetsFromTiles(
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                const auto hasMatchingContent = tileContainsAnyCategory(reader, *categoriesFilter);
+                const auto hasMatchingContent = scanTileForMatchingCategories(reader, *categoriesFilter);
 
                 cis->PopLimit(oldLimit);
 
@@ -407,7 +554,7 @@ void OsmAnd::ObfPoiSectionReader_P::readDataOffsetsFromTiles(
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                readDataOffsetsFromTiles(reader, outDataOffsets, zoom, tileId, minZoom, maxZoom, bbox31, categoriesFilter);
+                scanTiles(reader, outDataOffsets, zoom, tileId, minZoom, maxZoom, bbox31, categoriesFilter);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
@@ -430,7 +577,7 @@ void OsmAnd::ObfPoiSectionReader_P::readDataOffsetsFromTiles(
     }
 }
 
-bool OsmAnd::ObfPoiSectionReader_P::tileContainsAnyCategory(
+bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
     const ObfReader_P& reader,
     const QSet<ObfPoiCategoryId>& categories)
 {
@@ -594,7 +741,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     bool autogenerateId = true;
     std::shared_ptr<Amenity> amenity;
     PointI position31;
-    QSet<ObfPoiCategoryId> categories;
+    QList<ObfPoiCategoryId> categories;
+    QVector<int> textValueSubtypeIndices;
+    QHash<int, QVariant> intValues;
+    QHash<int, QVariant> stringValues;
 
     for (;;)
     {
@@ -613,6 +763,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 amenity->categories = categories;
                 if (autogenerateId)
                     amenity->id = ObfObjectId::generateUniqueId(baseOffset, section);
+                amenity->values = detachedOf(intValues).unite(stringValues);
                 outAmenity = amenity;
                 return;
             }
@@ -638,25 +789,28 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             {
                 ObfPoiCategoryId categoryId;
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&categoryId));
-                categories.insert(categoryId);
+                categories.push_back(categoryId);
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kSubcategoriesFieldNumber:
             {
-                if (categoriesFilter && categories.intersect(*categoriesFilter).isEmpty())
+                if (categoriesFilter && categories.toSet().intersect(*categoriesFilter).isEmpty())
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return;
                 }
 
-                if (!amenity)
-                    amenity.reset(new Amenity(section));
-                /*int subtypev = codedIS.readUInt32();
-                retValue.setLength(0);
-                PoiSubType st = region.getSubtypeFromId(subtypev, retValue);
-                if (st != null) {
-                    am.setAdditionalInfo(st.name, retValue.toString());
-                }*/
+                gpb::uint32 rawValue;
+                cis->ReadVarint32(&rawValue);
+
+                const auto subtypeIndex = ((rawValue & 0x1) == 0x1)
+                    ? ((rawValue >> 1) & 0xFFFF)
+                    : ((rawValue >> 1) & 0x1F);
+                const auto intValue = ((rawValue & 0x1) == 0x1)
+                    ? (rawValue >> 17)
+                    : (rawValue >> 6);
+
+                intValues.insert(subtypeIndex, QVariant(intValue));
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
@@ -680,13 +834,30 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     amenity.reset(new Amenity(section));
 
                 gpb::uint64 rawId;
-                cis->ReadVarint64(reinterpret_cast<gpb::uint64*>(&rawId));
+                cis->ReadVarint64(&rawId);
                 amenity->id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
 
                 autogenerateId = false;
                 break;
-            //repeated uint32 textCategories = 14; // v1.7
-            //repeated string textValues = 15;
+            case OBF::OsmAndPoiBoxDataAtom::kTextCategoriesFieldNumber:
+            {
+                int value;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&value));
+                textValueSubtypeIndices.push_back(value);
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kTextValuesFieldNumber:
+            {
+                QString valueString;
+                ObfReaderUtilities::readQString(cis, valueString);
+                if (stringValues.size() >= textValueSubtypeIndices.size())
+                    break;
+
+                const auto subtypeIndex = textValueSubtypeIndices[stringValues.size()];
+                stringValues.insert(subtypeIndex, valueString);
+
+                break;
+            }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
@@ -700,11 +871,18 @@ void OsmAnd::ObfPoiSectionReader_P::loadCategories(
     std::shared_ptr<const ObfPoiSectionCategories>& outCategories,
     const IQueryController* const controller)
 {
-    if (!section->hasCategories)
-        return;
-
     ensureCategoriesLoaded(reader, section);
     outCategories = section->getCategories();
+}
+
+void OsmAnd::ObfPoiSectionReader_P::loadSubtypes(
+    const ObfReader_P& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    std::shared_ptr<const ObfPoiSectionSubtypes>& outSubtypes,
+    const IQueryController* const controller)
+{
+    ensureSubtypesLoaded(reader, section);
+    outSubtypes = section->getSubtypes();
 }
 
 void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
@@ -718,6 +896,9 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     const ObfPoiSectionReader::VisitorFunction visitor,
     const IQueryController* const controller)
 {
+    ensureCategoriesLoaded(reader, section);
+    ensureSubtypesLoaded(reader, section);
+
     const auto cis = reader.getCodedInputStream().get();
     cis->Seek(section->offset);
     auto oldLimit = cis->PushLimit(section->length);

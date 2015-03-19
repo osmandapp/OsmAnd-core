@@ -20,6 +20,16 @@ void OsmAnd::ObfPoiSectionReader::loadCategories(
     ObfPoiSectionReader_P::loadCategories(*reader->_p, section, outCategories, controller);
 }
 
+
+void OsmAnd::ObfPoiSectionReader::loadSubtypes(
+    const std::shared_ptr<const ObfReader>& reader,
+    const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    std::shared_ptr<const ObfPoiSectionSubtypes>& outSubtypes,
+    const IQueryController* const controller /*= nullptr*/)
+{
+    ObfPoiSectionReader_P::loadSubtypes(*reader->_p, section, outSubtypes, controller);
+}
+
 void OsmAnd::ObfPoiSectionReader::loadAmenities(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,

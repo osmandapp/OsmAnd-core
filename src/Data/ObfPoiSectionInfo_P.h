@@ -21,6 +21,7 @@
 namespace OsmAnd
 {
     class ObfPoiSectionCategories;
+    class ObfPoiSectionSubtypes;
     class ObfPoiSectionReader_P;
 
     class ObfPoiSectionInfo;
@@ -33,12 +34,17 @@ namespace OsmAnd
         mutable std::shared_ptr<ObfPoiSectionCategories> _categories;
         mutable QAtomicInt _categoriesLoaded;
         mutable QMutex _categoriesLoadMutex;
+
+        mutable std::shared_ptr<ObfPoiSectionSubtypes> _subtypes;
+        mutable QAtomicInt _subtypesLoaded;
+        mutable QMutex _subtypesLoadMutex;
     public:
         virtual ~ObfPoiSectionInfo_P();
 
         ImplementationInterface<ObfPoiSectionInfo> owner;
 
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
+        std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;
 
     friend class OsmAnd::ObfPoiSectionInfo;
     friend class OsmAnd::ObfPoiSectionReader_P;

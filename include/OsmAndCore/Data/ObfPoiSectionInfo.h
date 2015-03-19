@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 
 namespace OsmAnd
@@ -31,6 +32,33 @@ namespace OsmAnd
     friend class OsmAnd::ObfPoiSectionReader_P;
     };
 
+    struct OSMAND_CORE_API ObfPoiSectionSubtype Q_DECL_FINAL
+    {
+        ObfPoiSectionSubtype();
+        virtual ~ObfPoiSectionSubtype();
+
+        QString name;
+        QString tagName;
+        bool isText;
+        int frequency;
+        QStringList possibleValues;
+    };
+
+    class OSMAND_CORE_API ObfPoiSectionSubtypes Q_DECL_FINAL
+    {
+        Q_DISABLE_COPY_AND_MOVE(ObfPoiSectionSubtypes);
+
+    private:
+    protected:
+    public:
+        ObfPoiSectionSubtypes();
+        virtual ~ObfPoiSectionSubtypes();
+
+        QList< std::shared_ptr<const ObfPoiSectionSubtype> > subtypes;
+
+    friend class OsmAnd::ObfPoiSectionReader_P;
+    };
+
     class ObfPoiSectionInfo_P;
     class OSMAND_CORE_API ObfPoiSectionInfo : public ObfSectionInfo
     {
@@ -44,13 +72,12 @@ namespace OsmAnd
 
         AreaI area31;
 
-        bool hasCategories;
         uint32_t firstCategoryInnerOffset;
-
-        bool hasNameIndex;
         uint32_t nameIndexInnerOffset;
+        uint32_t subtypesInnerOffset;
 
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
+        std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;
 
     friend class OsmAnd::ObfPoiSectionReader_P;
     };

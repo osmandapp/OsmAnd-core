@@ -6,6 +6,8 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QSet>
 #include <QHash>
+#include <QList>
+#include <QVariant>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/MemoryCommon.h>
@@ -31,16 +33,14 @@ namespace OsmAnd
 
         PointI position31;
         ZoomLevel zoomLevel;
-
-        QSet<ObfPoiCategoryId> categories;
-        //repeated uint32 subcategories = 5; // v1.7
-
+        QList<ObfPoiCategoryId> categories;
         QString nativeName;
         QHash<QString, QString> localizedNames;
         ObfObjectId id;
+        QHash<int, QVariant> values;
 
-        //repeated uint32 textCategories = 14; // v1.7
-        //repeated string textValues = 15;
+        QHash<QString, QStringList> getDecodedCategories() const;
+        QHash<QString, QString> getDecodedValues() const;
     };
 }
 

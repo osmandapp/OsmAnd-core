@@ -6,6 +6,7 @@
 #include "QtExtensions.h"
 #include <QString>
 #include <QStringList>
+#include <QVector>
 
 #include "ignore_warnings_on_external_includes.h"
 #include <google/protobuf/io/coded_stream.h>
@@ -28,6 +29,12 @@ namespace OsmAnd
         static uint32_t readBigEndianInt(gpb::io::CodedInputStream* cis);
         static uint32_t readLength(gpb::io::CodedInputStream* cis);
         static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
+        static int scanIndexedStringTable(
+            gpb::io::CodedInputStream* cis,
+            const QString& query,
+            QVector<uint32_t>& outValues,
+            const QString& keysPrefix = QString::null,
+            const int matchedCharactersCount = 0);
 
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
         static void skipBlockWithLength(gpb::io::CodedInputStream* cis);

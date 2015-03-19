@@ -206,8 +206,6 @@ namespace OsmAnd
 
     union ObfPoiCategoryId
     {
-        // ((subcategory_order << 7) | category_order)
-
         uint32_t id;
         struct
         {
