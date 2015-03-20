@@ -146,7 +146,7 @@ bool OsmAnd::MapRendererResourcesManager::initializeTileStub(
 
     std::shared_ptr<const GPUAPI::ResourceInGPU> resource;
     std::shared_ptr<const IRasterMapLayerProvider::Data> bitmapTile(new IRasterMapLayerProvider::Data(
-        TileId(),
+        TileId::zero(),
         InvalidZoomLevel,
         AlphaChannelPresence::Unknown,
         1.0f,

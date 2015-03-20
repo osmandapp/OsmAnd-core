@@ -7,6 +7,7 @@ OsmAnd::ObfPoiSectionInfo::ObfPoiSectionInfo(const std::shared_ptr<const ObfInfo
     , firstCategoryInnerOffset(0)
     , nameIndexInnerOffset(0)
     , subtypesInnerOffset(0)
+    , firstBoxInnerOffset(0)
 {
 }
 

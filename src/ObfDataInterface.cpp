@@ -528,3 +528,99 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
 
     return true;
 }
+
+bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
+    const QString& query,
+    QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const ZoomLevel minZoom /*= MinZoomLevel*/,
+    const ZoomLevel maxZoom /*= MaxZoomLevel*/,
+    const AreaI* const pBbox31 /*= nullptr*/,
+    const QHash<QString, QStringList>* const categoriesFilter /*= nullptr*/,
+    const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
+    const IQueryController* const controller /*= nullptr*/)
+{
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        if (controller && controller->isAborted())
+            return false;
+
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& poiSection : constOf(obfInfo->poiSections))
+        {
+            if (controller && controller->isAborted())
+                return false;
+
+            if (pBbox31)
+            {
+                bool accept = false;
+                accept = accept || poiSection->area31.contains(*pBbox31);
+                accept = accept || poiSection->area31.intersects(*pBbox31);
+                accept = accept || pBbox31->contains(poiSection->area31);
+
+                if (!accept)
+                    continue;
+            }
+
+            QSet<ObfPoiCategoryId> categoriesFilterById;
+            if (categoriesFilter)
+            {
+                std::shared_ptr<const ObfPoiSectionCategories> categories;
+                OsmAnd::ObfPoiSectionReader::loadCategories(
+                    obfReader,
+                    poiSection,
+                    categories,
+                    controller);
+
+                if (!categories)
+                    continue;
+
+                for (const auto& categoriesFilterEntry : rangeOf(constOf(*categoriesFilter)))
+                {
+                    const auto mainCategoryIndex = categories->mainCategories.indexOf(categoriesFilterEntry.key());
+                    if (mainCategoryIndex < 0)
+                        continue;
+
+                    const auto& subcategories = categories->subCategories[mainCategoryIndex];
+                    if (categoriesFilterEntry.value().isEmpty())
+                    {
+                        for (auto subCategoryIndex = 0; subCategoryIndex < subcategories.size(); subCategoryIndex++)
+                        {
+                            ObfPoiCategoryId obfPoiCategoryId;
+                            obfPoiCategoryId.mainCategoryIndex = mainCategoryIndex;
+                            obfPoiCategoryId.subCategoryIndex = subCategoryIndex;
+                            categoriesFilterById.insert(obfPoiCategoryId);
+                        }
+                    }
+                    else
+                    {
+                        for (const auto& subcategory : constOf(categoriesFilterEntry.value()))
+                        {
+                            const auto subCategoryIndex = subcategories.indexOf(subcategory);
+                            if (subCategoryIndex < 0)
+                                continue;
+
+                            ObfPoiCategoryId obfPoiCategoryId;
+                            obfPoiCategoryId.mainCategoryIndex = mainCategoryIndex;
+                            obfPoiCategoryId.subCategoryIndex = subCategoryIndex;
+                            categoriesFilterById.insert(obfPoiCategoryId);
+                        }
+                    }
+                }
+            }
+
+            OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
+                obfReader,
+                poiSection,
+                query,
+                outAmenities,
+                minZoom,
+                maxZoom,
+                pBbox31,
+                categoriesFilter ? &categoriesFilterById : nullptr,
+                visitor,
+                controller);
+        }
+    }
+
+    return true;
+}

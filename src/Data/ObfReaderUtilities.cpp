@@ -109,33 +109,34 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 if (!keysPrefix.isEmpty())
                     key.prepend(keysPrefix);
 
-                //// check query is part of key (the best matching)
-                //if (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH)){
-                //    if (query.length() >= charMatches){
-                //        if (query.length() > charMatches){
-                //            charMatches = query.length();
-                //            list.clear();
-                //        }
-                //    }
-                //    else {
-                //        key = null;
-                //    }
-                //    // check key is part of query
-                //}
-                //else if (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH)) {
-                //    if (key.length() >= charMatches) {
-                //        if (key.length() > charMatches) {
-                //            charMatches = key.length();
-                //            list.clear();
-                //        }
-                //    }
-                //    else {
-                //        key = null;
-                //    }
-                //}
-                //else {
-                //    key = null;
-                //}
+                if (key.startsWith(query)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                {
+                    if (query.size() > matchedCharactersCount)
+                    {
+                        matchedCharactersCount = query.length();
+                        outValues.clear();
+                    }
+                    else if (query.size() < matchedCharactersCount)
+                    {
+                        key = QString::null;
+                    }
+                }
+                else if (query.startsWith(key)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                {
+                    if (key.size() > matchedCharactersCount)
+                    {
+                        matchedCharactersCount = key.length();
+                        outValues.clear();
+                    }
+                    else if (key.size() < matchedCharactersCount)
+                    {
+                        key = QString::null;
+                    }
+                }
+                else
+                {
+                    key = QString::null;
+                }
                 break;
             }
             case OBF::IndexedStringTable::kValFieldNumber:

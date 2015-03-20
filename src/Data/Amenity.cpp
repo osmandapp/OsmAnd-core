@@ -75,3 +75,25 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValues() const
 
     return result;
 }
+
+QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > > > OsmAnd::Amenity::groupByCategories(
+    const QList< std::shared_ptr<const OsmAnd::Amenity> >& input)
+{
+    QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > > > result;
+
+    for (const auto& amenity : constOf(input))
+    {
+        const auto& categories = amenity->getDecodedCategories();
+
+        for (const auto& itCategoriesEntry : rangeOf(constOf(categories)))
+        {
+            const auto& mainCategory = itCategoriesEntry.key();
+            auto& groupedAmenities = result[mainCategory];
+
+            for (const auto& subCategory : constOf(itCategoriesEntry.value()))
+                groupedAmenities[subCategory].push_back(amenity);
+        }
+    }
+
+    return result;
+}

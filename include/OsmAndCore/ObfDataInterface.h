@@ -88,6 +88,15 @@ namespace OsmAnd
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const IQueryController* const controller = nullptr);
+        bool scanAmenitiesByName(
+            const QString& query,
+            QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+            const ZoomLevel minZoom = MinZoomLevel,
+            const ZoomLevel maxZoom = MaxZoomLevel,
+            const AreaI* const bbox31 = nullptr,
+            const QHash<QString, QStringList>* const categoriesFilter = nullptr,
+            const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
+            const IQueryController* const controller = nullptr);
     };
 }
 

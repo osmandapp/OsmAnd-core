@@ -65,6 +65,14 @@ namespace OsmAnd
             tileId.y = y;
             return tileId;
         }
+
+        static inline TileId zero()
+        {
+            TileId tileId;
+            tileId.x = 0;
+            tileId.y = 0;
+            return tileId;
+        }
     };
 
 #if !defined(SWIG)

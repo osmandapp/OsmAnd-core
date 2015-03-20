@@ -52,6 +52,18 @@ namespace OsmAnd
             const QSet<ObfPoiCategoryId>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const IQueryController* const controller = nullptr);
+
+        static void scanAmenitiesByName(
+            const std::shared_ptr<const ObfReader>& reader,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            const QString& query,
+            QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+            const ZoomLevel minZoom = MinZoomLevel,
+            const ZoomLevel maxZoom = MaxZoomLevel,
+            const AreaI* const bbox31 = nullptr,
+            const QSet<ObfPoiCategoryId>* const categoriesFilter = nullptr,
+            const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
+            const IQueryController* const controller = nullptr);
     };
 }
 

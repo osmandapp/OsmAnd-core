@@ -75,6 +75,7 @@ namespace OsmAnd
         uint32_t firstCategoryInnerOffset;
         uint32_t nameIndexInnerOffset;
         uint32_t subtypesInnerOffset;
+        uint32_t firstBoxInnerOffset;
 
         std::shared_ptr<const ObfPoiSectionCategories> getCategories() const;
         std::shared_ptr<const ObfPoiSectionSubtypes> getSubtypes() const;
