@@ -25,3 +25,11 @@ std::shared_ptr<const OsmAnd::IObfsCollection> OsmAnd::BaseSearch::getObfsCollec
 {
     return obfsCollection;
 }
+
+void OsmAnd::BaseSearch::startSearch(
+    const Criteria& criteria,
+    const NewResultEntryCallback newResultEntryCallback,
+    const IQueryController* const controller /*= nullptr*/) const
+{
+
+}

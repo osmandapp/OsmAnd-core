@@ -28,6 +28,11 @@ namespace OsmAnd
 
         const std::shared_ptr<const IObfsCollection> obfsCollection;
         virtual std::shared_ptr<const IObfsCollection> getObfsCollection() const;
+
+        virtual void startSearch(
+            const Criteria& criteria,
+            const NewResultEntryCallback newResultEntryCallback,
+            const IQueryController* const controller = nullptr) const;
     };
 }
 

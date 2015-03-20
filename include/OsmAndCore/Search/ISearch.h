@@ -18,8 +18,6 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(ISearch);
     public:
-        typedef const void* SearchKey;
-
         struct OSMAND_CORE_API Criteria
         {
         protected:
@@ -52,6 +50,11 @@ namespace OsmAnd
         virtual std::shared_ptr<const IObfsCollection> getObfsCollection() const = 0;
 
         virtual void performSearch(
+            const Criteria& criteria,
+            const NewResultEntryCallback newResultEntryCallback,
+            const IQueryController* const controller = nullptr) const = 0;
+
+        virtual void startSearch(
             const Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
             const IQueryController* const controller = nullptr) const = 0;
