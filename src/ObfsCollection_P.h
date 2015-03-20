@@ -96,7 +96,8 @@ namespace OsmAnd
             const AreaI* const pBbox31,
             const ZoomLevel minZoomLevel,
             const ZoomLevel maxZoomLevel,
-            const ObfDataTypesMask desiredDataTypes) const;
+            const ObfDataTypesMask desiredDataTypes,
+            const IObfsCollection::AcceptorFunction acceptor) const;
 
     friend class OsmAnd::ObfsCollection;
     friend class OsmAnd::ObfsCollection_P__SignalProxy;

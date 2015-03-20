@@ -148,7 +148,8 @@ namespace OsmAnd
                 const AreaI* const pBbox31 = nullptr,
                 const ZoomLevel minZoomLevel = MinZoomLevel,
                 const ZoomLevel maxZoomLevel = MaxZoomLevel,
-                const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const;
+                const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask(),
+                const AcceptorFunction acceptor = nullptr) const;
 
         friend class OsmAnd::ResourcesManager_P;
         };

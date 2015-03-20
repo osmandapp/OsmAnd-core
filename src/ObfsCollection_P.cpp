@@ -277,7 +277,8 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
     const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
     const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
-    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/) const
+    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/,
+    const IObfsCollection::AcceptorFunction acceptor /*= nullptr*/) const
 {
     // Check if sources were invalidated
     if (_collectedSourcesInvalidated.loadAcquire() > 0)
@@ -294,12 +295,10 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
             for (const auto& obfFile : constOf(collectedSources))
             {
                 // If OBF information already available, perform check
-                bool accept = false;
-                if (obfFile->obfInfo)
+                if (!obfFile->obfInfo->isBasemap && !obfFile->obfInfo->isBasemapWithCoastlines)
                 {
-                    accept = accept || obfFile->obfInfo->isBasemap;
-                    accept = accept || obfFile->obfInfo->isBasemapWithCoastlines;
-                    accept = accept || obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
+                    bool accept = obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
+                    accept = accept && (!acceptor || acceptor(obfFile->obfInfo));
                     if (!accept)
                         continue;
                 }
@@ -310,11 +309,10 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
                     continue;
 
                 // Repeat checks if needed
-                if (!accept)
+                if (!obfFile->obfInfo->isBasemap && !obfFile->obfInfo->isBasemapWithCoastlines)
                 {
-                    accept = accept || obfFile->obfInfo->isBasemap;
-                    accept = accept || obfFile->obfInfo->isBasemapWithCoastlines;
-                    accept = accept || obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
+                    bool accept = obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
+                    accept = accept && (!acceptor || acceptor(obfFile->obfInfo));
                     if (!accept)
                         continue;
                 }

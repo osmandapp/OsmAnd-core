@@ -21,6 +21,9 @@ namespace OsmAnd
     class OSMAND_CORE_API IObfsCollection
     {
         Q_DISABLE_COPY_AND_MOVE(IObfsCollection);
+    public:
+        typedef std::function<bool(const std::shared_ptr<const ObfInfo>& obfInfo)> AcceptorFunction;
+
     private:
     protected:
         IObfsCollection();
@@ -32,7 +35,8 @@ namespace OsmAnd
             const AreaI* const pBbox31 = nullptr,
             const ZoomLevel minZoomLevel = MinZoomLevel,
             const ZoomLevel maxZoomLevel = MaxZoomLevel,
-            const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask()) const = 0;
+            const ObfDataTypesMask desiredDataTypes = fullObfDataTypesMask(),
+            const AcceptorFunction acceptor = nullptr) const = 0;
     };
 }
 
