@@ -82,25 +82,6 @@ namespace OsmAnd
         static bool scanTileForMatchingCategories(
             const ObfReader_P& reader,
             const QSet<ObfPoiCategoryId>& categories);
-        static void readAmenitiesDataBox(
-            const ObfReader_P& reader,
-            const std::shared_ptr<const ObfPoiSectionInfo>& section,
-            QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
-            const ZoomLevel minZoom,
-            const ZoomLevel maxZoom,
-            const AreaI* const bbox31,
-            const QSet<ObfPoiCategoryId>* const categoriesFilter,
-            const ObfPoiSectionReader::VisitorFunction visitor,
-            const IQueryController* const controller);
-        static void readAmenity(
-            const ObfReader_P& reader,
-            const std::shared_ptr<const ObfPoiSectionInfo>& section,
-            std::shared_ptr<const Amenity>& outAmenity,
-            const ZoomLevel zoom,
-            const TileId boxTileId,
-            const AreaI* const bbox31,
-            const QSet<ObfPoiCategoryId>* const categoriesFilter,
-            const IQueryController* const controller);
 
         static void readAmenitiesByName(
             const ObfReader_P& reader,
@@ -132,6 +113,28 @@ namespace OsmAnd
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom,
             const AreaI* const bbox31);
+
+        static void readAmenitiesDataBox(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+            const QString& query,
+            const ZoomLevel minZoom,
+            const ZoomLevel maxZoom,
+            const AreaI* const bbox31,
+            const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const ObfPoiSectionReader::VisitorFunction visitor,
+            const IQueryController* const controller);
+        static void readAmenity(
+            const ObfReader_P& reader,
+            const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            std::shared_ptr<const Amenity>& outAmenity,
+            const QString& query,
+            const ZoomLevel zoom,
+            const TileId boxTileId,
+            const AreaI* const bbox31,
+            const QSet<ObfPoiCategoryId>* const categoriesFilter,
+            const IQueryController* const controller);
     public:
         static void loadCategories(
             const ObfReader_P& reader,

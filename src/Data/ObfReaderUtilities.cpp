@@ -109,7 +109,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 if (!keysPrefix.isEmpty())
                     key.prepend(keysPrefix);
 
-                if (key.startsWith(query)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                if (key.startsWith(query, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
                 {
                     if (query.size() > matchedCharactersCount)
                     {
@@ -121,7 +121,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                         key = QString::null;
                     }
                 }
-                else if (query.startsWith(key)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                else if (query.startsWith(key, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
                 {
                     if (key.size() > matchedCharactersCount)
                     {

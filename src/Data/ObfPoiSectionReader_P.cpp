@@ -64,9 +64,11 @@ void OsmAnd::ObfPoiSectionReader_P::read(
                 break;
             case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
                 section->nameIndexInnerOffset = tagPos - section->offset;
+                ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
             case OBF::OsmAndPoiIndex::kSubtypesTableFieldNumber:
                 section->subtypesInnerOffset = tagPos - section->offset;
+                ObfReaderUtilities::skipBlockWithLength(cis);
                 break;
             case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
                 if (section->firstBoxInnerOffset == 0)
@@ -89,31 +91,31 @@ void OsmAnd::ObfPoiSectionReader_P::readBoundaries(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    for(;;)
+    for (;;)
     {
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
-                return;
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
 
-            return;
-        case OBF::OsmAndTileBox::kLeftFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.left()));
-            break;
-        case OBF::OsmAndTileBox::kRightFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.right()));
-            break;
-        case OBF::OsmAndTileBox::kTopFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.top()));
-            break;
-        case OBF::OsmAndTileBox::kBottomFieldNumber:
-            cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.bottom()));
-            break;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+                return;
+            case OBF::OsmAndTileBox::kLeftFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.left()));
+                break;
+            case OBF::OsmAndTileBox::kRightFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.right()));
+                break;
+            case OBF::OsmAndTileBox::kTopFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.top()));
+                break;
+            case OBF::OsmAndTileBox::kBottomFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.bottom()));
+                break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
@@ -124,43 +126,43 @@ void OsmAnd::ObfPoiSectionReader_P::readCategories(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    for(;;)
+    for (;;)
     {
         const auto tag = cis->ReadTag();
-        switch(gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
-        case 0:
-            if (!ObfReaderUtilities::reachedDataEnd(cis))
-                return;
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
 
-            return;
-        case OBF::OsmAndPoiIndex::kCategoriesTableFieldNumber:
+                return;
+            case OBF::OsmAndPoiIndex::kCategoriesTableFieldNumber:
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
-                
+
                 QString mainCategory;
                 QStringList subcategories;
                 readCategoriesEntry(reader, mainCategory, subcategories);
-                
+
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
                 categories->mainCategories.push_back(qMove(mainCategory));
                 categories->subCategories.push_back(qMove(subcategories));
+                break;
             }
-            break;
-        case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
-        case OBF::OsmAndPoiIndex::kSubtypesTableFieldNumber:
-        case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
-        case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
-            cis->Skip(cis->BytesUntilLimit());
-            return;
-        default:
-            ObfReaderUtilities::skipUnknownField(cis, tag);
-            break;
+            case OBF::OsmAndPoiIndex::kNameIndexFieldNumber:
+            case OBF::OsmAndPoiIndex::kSubtypesTableFieldNumber:
+            case OBF::OsmAndPoiIndex::kBoxesFieldNumber:
+            case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
+                cis->Skip(cis->BytesUntilLimit());
+                return;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
         }
     }
 }
@@ -387,7 +389,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     const IQueryController* const controller)
 {
     const auto cis = reader.getCodedInputStream().get();
-    
+
     QVector<uint32_t> dataBoxesOffsets;
 
     for (;;)
@@ -442,6 +444,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                         reader,
                         section,
                         outAmenities,
+                        QString::null,
                         minZoom,
                         maxZoom,
                         bbox31,
@@ -600,7 +603,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
             {
                 ObfPoiCategoryId id;
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&id));
-                
+
                 if (categories.contains(id))
                 {
                     cis->Skip(cis->BytesUntilLimit());
@@ -630,6 +633,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const QString& query,
     const ZoomLevel minZoom,
     const ZoomLevel maxZoom,
     const AreaI* const bbox31,
@@ -692,7 +696,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<const Amenity> amenity;
-                readAmenity(reader, section, amenity, zoom, tileId, bbox31, categoriesFilter, controller);
+                readAmenity(reader, section, amenity, query, zoom, tileId, bbox31, categoriesFilter, controller);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -718,6 +722,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const Amenity>& outAmenity,
+    const QString& query,
     const ZoomLevel zoom,
     const TileId boxTileId,
     const AreaI* const bbox31,
@@ -727,9 +732,12 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const auto cis = reader.getCodedInputStream().get();
     const auto baseOffset = cis->CurrentPosition();
 
+    ObfObjectId id;
     bool autogenerateId = true;
     std::shared_ptr<Amenity> amenity;
     PointI position31;
+    QString nativeName;
+    QHash<QString, QString> localizedNames;
     QList<ObfPoiCategoryId> categories;
     QVector<int> textValueSubtypeIndices;
     QHash<int, QVariant> intValues;
@@ -745,13 +753,33 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
+                if (!query.isNull())
+                {
+                    bool accept = false;
+                    accept = accept || nativeName.contains(query, Qt::CaseInsensitive);
+                    for (const auto& localizedName : constOf(localizedNames))
+                    {
+                        accept = accept || localizedName.contains(query, Qt::CaseInsensitive);
+
+                        if (accept)
+                            break;
+                    }
+
+                    if (!accept)
+                        return;
+                }
+
                 if (!amenity)
                     amenity.reset(new Amenity(section));
 
+                amenity->nativeName = qMove(nativeName);
+                amenity->localizedNames = qMove(localizedNames);
                 amenity->position31 = position31;
-                amenity->categories = categories;
+                amenity->categories = qMove(categories);
                 if (autogenerateId)
                     amenity->id = ObfObjectId::generateUniqueId(baseOffset, section);
+                else
+                    amenity->id = id;
                 amenity->values = detachedOf(intValues).unite(stringValues);
                 outAmenity = amenity;
                 return;
@@ -803,31 +831,25 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kNameFieldNumber:
-                if (!amenity)
-                    amenity.reset(new Amenity(section));
-                ObfReaderUtilities::readQString(cis, amenity->nativeName);
+                ObfReaderUtilities::readQString(cis, nativeName);
                 break;
             case OBF::OsmAndPoiBoxDataAtom::kNameEnFieldNumber:
             {
-                if (!amenity)
-                    amenity.reset(new Amenity(section));
-
                 QString name;
                 ObfReaderUtilities::readQString(cis, name);
-                amenity->localizedNames.insert(QLatin1String("en"), name);
+                localizedNames.insert(QLatin1String("en"), name);
 
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kIdFieldNumber:
-                if (!amenity)
-                    amenity.reset(new Amenity(section));
-
+            {
                 gpb::uint64 rawId;
                 cis->ReadVarint64(&rawId);
-                amenity->id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
+                id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
 
                 autogenerateId = false;
                 break;
+            }
             case OBF::OsmAndPoiBoxDataAtom::kTextCategoriesFieldNumber:
             {
                 int value;
@@ -920,6 +942,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                         reader,
                         section,
                         outAmenities,
+                        query,
                         minZoom,
                         maxZoom,
                         bbox31,
@@ -1096,7 +1119,7 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
                 }
 
                 if (accept)
-                    outDataOffsets.push_back(dataOffset); 
+                    outDataOffsets.push_back(dataOffset);
                 break;
             }
             default:
