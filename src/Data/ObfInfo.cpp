@@ -28,17 +28,20 @@ bool OsmAnd::ObfInfo::containsDataFor(
         {
             for (const auto& level : constOf(mapSection->levels))
             {
-                bool accept = false;
+                bool accept = true;
 
                 // Check by zoom
-                accept = accept || (minZoomLevel <= level->maxZoom && level->minZoom <= maxZoomLevel);
+                accept = accept && (minZoomLevel <= level->maxZoom && level->minZoom <= maxZoomLevel);
 
                 // Check by area
                 if (pBbox31)
                 {
-                    accept = accept || level->area31.contains(*pBbox31);
-                    accept = accept || level->area31.intersects(*pBbox31);
-                    accept = accept || pBbox31->contains(level->area31);
+                    const auto fitsBBox =
+                        level->area31.contains(*pBbox31) ||
+                        level->area31.intersects(*pBbox31) ||
+                        pBbox31->contains(level->area31);
+
+                    accept = accept && fitsBBox;
                 }
 
                 if (accept)
@@ -59,14 +62,17 @@ bool OsmAnd::ObfInfo::containsDataFor(
     {
         for (const auto& poiSection : constOf(poiSections))
         {
-            bool accept = false;
+            bool accept = true;
 
             // Check by area
             if (pBbox31)
             {
-                accept = accept || poiSection->area31.contains(*pBbox31);
-                accept = accept || poiSection->area31.intersects(*pBbox31);
-                accept = accept || pBbox31->contains(poiSection->area31);
+                const auto fitsBBox =
+                    poiSection->area31.contains(*pBbox31) ||
+                    poiSection->area31.intersects(*pBbox31) ||
+                    pBbox31->contains(poiSection->area31);
+
+                accept = accept && fitsBBox;
             }
 
             if (accept)
