@@ -20,7 +20,6 @@ void OsmAnd::ObfPoiSectionReader::loadCategories(
     ObfPoiSectionReader_P::loadCategories(*reader->_p, section, outCategories, controller);
 }
 
-
 void OsmAnd::ObfPoiSectionReader::loadSubtypes(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
@@ -52,7 +51,6 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
         visitor,
         controller);
 }
-
 
 void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
     const std::shared_ptr<const ObfReader>& reader,
