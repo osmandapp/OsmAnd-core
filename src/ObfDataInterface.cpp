@@ -489,12 +489,7 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
                     if (categoriesFilterEntry.value().isEmpty())
                     {
                         for (auto subCategoryIndex = 0; subCategoryIndex < subcategories.size(); subCategoryIndex++)
-                        {
-                            ObfPoiCategoryId obfPoiCategoryId;
-                            obfPoiCategoryId.mainCategoryIndex = mainCategoryIndex;
-                            obfPoiCategoryId.subCategoryIndex = subCategoryIndex;
-                            categoriesFilterById.insert(obfPoiCategoryId);
-                        }
+                            categoriesFilterById.insert(ObfPoiCategoryId::create(mainCategoryIndex, subCategoryIndex));
                     }
                     else
                     {
@@ -504,10 +499,7 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
                             if (subCategoryIndex < 0)
                                 continue;
 
-                            ObfPoiCategoryId obfPoiCategoryId;
-                            obfPoiCategoryId.mainCategoryIndex = mainCategoryIndex;
-                            obfPoiCategoryId.subCategoryIndex = subCategoryIndex;
-                            categoriesFilterById.insert(obfPoiCategoryId);
+                            categoriesFilterById.insert(ObfPoiCategoryId::create(mainCategoryIndex, subCategoryIndex));
                         }
                     }
                 }
@@ -584,12 +576,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
                     if (categoriesFilterEntry.value().isEmpty())
                     {
                         for (auto subCategoryIndex = 0; subCategoryIndex < subcategories.size(); subCategoryIndex++)
-                        {
-                            ObfPoiCategoryId obfPoiCategoryId;
-                            obfPoiCategoryId.mainCategoryIndex = mainCategoryIndex;
-                            obfPoiCategoryId.subCategoryIndex = subCategoryIndex;
-                            categoriesFilterById.insert(obfPoiCategoryId);
-                        }
+                            categoriesFilterById.insert(ObfPoiCategoryId::create(mainCategoryIndex, subCategoryIndex));
                     }
                     else
                     {
@@ -599,10 +586,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
                             if (subCategoryIndex < 0)
                                 continue;
 
-                            ObfPoiCategoryId obfPoiCategoryId;
-                            obfPoiCategoryId.mainCategoryIndex = mainCategoryIndex;
-                            obfPoiCategoryId.subCategoryIndex = subCategoryIndex;
-                            categoriesFilterById.insert(obfPoiCategoryId);
+                            categoriesFilterById.insert(ObfPoiCategoryId::create(mainCategoryIndex, subCategoryIndex));
                         }
                     }
                 }

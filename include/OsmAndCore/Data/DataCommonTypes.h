@@ -206,39 +206,51 @@ namespace OsmAnd
 
     union ObfPoiCategoryId
     {
-        uint32_t id;
-        struct
+        uint32_t value;
+
+        inline uint32_t getMainCategoryIndex() const
         {
-            uint32_t subCategoryIndex : 25;
-            uint32_t mainCategoryIndex : 7;
-        };
+            return (value & 0x7F);
+        }
+
+        inline uint32_t getSubCategoryIndex() const
+        {
+            return (value >> 7);
+        }
 
 #if !defined(SWIG)
         inline operator uint32_t() const
         {
-            return id;
+            return value;
         }
 
         inline bool operator==(const ObfPoiCategoryId& that)
         {
-            return this->id == that.id;
+            return this->value == that.value;
         }
 
         inline bool operator!=(const ObfPoiCategoryId& that)
         {
-            return this->id != that.id;
+            return this->value != that.value;
         }
 
         inline bool operator==(const uint32_t& that)
         {
-            return this->id == that;
+            return this->value == that;
         }
 
         inline bool operator!=(const uint32_t& that)
         {
-            return this->id != that;
+            return this->value != that;
         }
 #endif // !defined(SWIG)
+
+        static inline ObfPoiCategoryId create(const uint32_t mainCategoryIndex, const uint32_t subCategoryIndex)
+        {
+            ObfPoiCategoryId id;
+            id.value = (subCategoryIndex << 7) | (mainCategoryIndex & 0x7F);
+            return id;
+        }
     };
 
 #if !defined(SWIG)

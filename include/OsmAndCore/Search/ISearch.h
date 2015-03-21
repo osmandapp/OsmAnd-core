@@ -40,6 +40,7 @@ namespace OsmAnd
         };
 
         typedef std::function<void(const Criteria& criteria, const IResultEntry& resultEntry)> NewResultEntryCallback;
+        typedef std::function<void(const Criteria& criteria, const QList<IResultEntry>& resultEntry)> SearchCompletedCallback;
 
     private:
     protected:
@@ -57,6 +58,7 @@ namespace OsmAnd
         virtual void startSearch(
             const Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
+            const SearchCompletedCallback searchCompletedCallback,
             const IQueryController* const controller = nullptr) const = 0;
     };
 }

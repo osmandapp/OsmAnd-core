@@ -32,6 +32,7 @@ namespace OsmAnd
         virtual void startSearch(
             const Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
+            const SearchCompletedCallback searchCompletedCallback,
             const IQueryController* const controller = nullptr) const;
     };
 }

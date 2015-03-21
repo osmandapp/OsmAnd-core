@@ -29,7 +29,8 @@ std::shared_ptr<const OsmAnd::IObfsCollection> OsmAnd::BaseSearch::getObfsCollec
 void OsmAnd::BaseSearch::startSearch(
     const Criteria& criteria,
     const NewResultEntryCallback newResultEntryCallback,
+    const SearchCompletedCallback searchCompletedCallback,
     const IQueryController* const controller /*= nullptr*/) const
 {
-
+    //QtConcurrent
 }

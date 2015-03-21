@@ -154,6 +154,11 @@ namespace OsmAnd
 
             return *this;
         }
+
+        AreaT getBBox() const
+        {
+            return AreaT(p0, p0).enlargeToInclude(p1).enlargeToInclude(p2).enlargeToInclude(p3);
+        }
     };
 
     typedef Frustum2D<PointI::CoordType> Frustum2DI;

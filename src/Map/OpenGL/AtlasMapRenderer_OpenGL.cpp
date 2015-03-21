@@ -549,6 +549,16 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::getLocationFromScreenPoint(const PointI& s
     return true;
 }
 
+OsmAnd::AreaI OsmAnd::AtlasMapRenderer_OpenGL::getVisibleBBox31() const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, getState(), *getConfiguration());
+    if (!ok)
+        return AreaI::largest();
+
+    return internalState.globalFrustum2D31.getBBox31();
+}
+
 bool OsmAnd::AtlasMapRenderer_OpenGL::isPositionVisible(const PointI64& position) const
 {
     InternalState internalState;

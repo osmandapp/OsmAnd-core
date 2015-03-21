@@ -2,6 +2,7 @@
 
 #include "ObfPoiSectionInfo.h"
 #include "QKeyValueIterator.h"
+#include "Logging.h"
 
 OsmAnd::Amenity::Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection_)
     : obfSection(obfSection_)
@@ -24,8 +25,32 @@ QHash<QString, QStringList> OsmAnd::Amenity::getDecodedCategories() const
 
     for (const auto& category : constOf(categories))
     {
-        const auto& mainCategory = sectionCategories->mainCategories[category.mainCategoryIndex];
-        const auto& subCategory = sectionCategories->subCategories[category.mainCategoryIndex][category.subCategoryIndex];
+        const auto mainCategoryIndex = category.getMainCategoryIndex();
+        const auto subCategoryIndex = category.getSubCategoryIndex();
+
+        if (mainCategoryIndex >= sectionCategories->mainCategories.size())
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Amenity %s (%s) references non-existent category %d",
+                qPrintable(id.toString()),
+                qPrintable(nativeName),
+                mainCategoryIndex);
+            continue;
+        }
+        const auto& mainCategory = sectionCategories->mainCategories[mainCategoryIndex];
+        const auto& subCategories = sectionCategories->subCategories[mainCategoryIndex];
+        
+        if (subCategoryIndex >= subCategories.size())
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Amenity %s (%s) references non-existent subcategory %d in category %d",
+                qPrintable(id.toString()),
+                qPrintable(nativeName),
+                subCategoryIndex,
+                mainCategoryIndex);
+            continue;
+        }
+        const auto& subCategory = subCategories[subCategoryIndex];
         
         auto itResultEntry = result.find(mainCategory);
         if (itResultEntry == result.cend())
@@ -46,7 +71,18 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValues() const
 
     for (const auto& valueEntry : rangeOf(constOf(values)))
     {
-        const auto& subtype = sectionSubtypes->subtypes[valueEntry.key()];
+        const auto subtypeIndex = valueEntry.key();
+        if (subtypeIndex >= sectionSubtypes->subtypes.size())
+        {
+            LogPrintf(LogSeverityLevel::Warning,
+                "Amenity %s (%s) references non-existent subtype %d",
+                qPrintable(id.toString()),
+                qPrintable(nativeName),
+                subtypeIndex);
+            continue;
+        }
+
+        const auto& subtype = sectionSubtypes->subtypes[subtypeIndex];
         const auto& value = valueEntry.value();
 
         switch (value.type())

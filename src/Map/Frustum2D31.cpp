@@ -88,3 +88,13 @@ bool OsmAnd::Frustum2D31::test(const QVector<PointI>& path) const
 
     return false;
 }
+
+OsmAnd::AreaI OsmAnd::Frustum2D31::getBBox31() const
+{
+    const auto np0 = Utilities::normalizeCoordinates(p0, ZoomLevel31);
+    const auto np1 = Utilities::normalizeCoordinates(p1, ZoomLevel31);
+    const auto np2 = Utilities::normalizeCoordinates(p2, ZoomLevel31);
+    const auto np3 = Utilities::normalizeCoordinates(p3, ZoomLevel31);
+
+    return AreaI(np0, np0).enlargeToInclude(np1).enlargeToInclude(np2).enlargeToInclude(np3);
+}

@@ -222,6 +222,8 @@ void OsmAnd::ObfPoiSectionReader_P::ensureCategoriesLoaded(
 
             ObfReaderUtilities::ensureAllDataWasRead(cis);
             cis->PopLimit(oldLimit);
+
+            section->_p->_categoriesLoaded.storeRelease(1);
         }
     }
 }
@@ -373,6 +375,8 @@ void OsmAnd::ObfPoiSectionReader_P::ensureSubtypesLoaded(
 
             ObfReaderUtilities::ensureAllDataWasRead(cis);
             cis->PopLimit(oldLimit);
+
+            section->_p->_subtypesLoaded.storeRelease(1);
         }
     }
 }
@@ -852,9 +856,13 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             }
             case OBF::OsmAndPoiBoxDataAtom::kTextCategoriesFieldNumber:
             {
-                int value;
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&value));
-                textValueSubtypeIndices.push_back(value);
+                gpb::uint32 rawValue;
+                cis->ReadVarint32(&rawValue);
+                const auto subtypeIndex = ((rawValue & 0x1) == 0x1)
+                    ? ((rawValue >> 1) & 0xFFFF)
+                    : ((rawValue >> 1) & 0x1F);
+
+                textValueSubtypeIndices.push_back(subtypeIndex);
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kTextValuesFieldNumber:
