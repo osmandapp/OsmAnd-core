@@ -804,7 +804,6 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 		{
 			SkBitmap* ico = icon.bmp;
 			
-			SkRect r = makeRect(rc, icon, ico);
 			float vwidth = icon.iconSize >= 0 ? icon.iconSize : ico->width();
 			float vheight = icon.iconSize >= 0 ? icon.iconSize : ico->height();
 			float vleft = icon.x -  vwidth / 2 * coef;
@@ -826,25 +825,31 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 					}
 				}
 			}
+			SkRect rm = makeRect(rc, icon, ico);
 			if (!intersects) {
 				if(icon.shield != NULL) {
 					SkRect rt = makeRect(rc, icon, icon.shield);
 					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.shield, (SkIRect*) NULL, rt, &p));
 				}
 				if(icon.bmp_1 != NULL) {
+					SkRect r = makeRect(rc, icon, icon.bmp_1);
 					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp_1, (SkIRect*) NULL, r, &p));
 				}
-				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, r, &p));
+				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, rm, &p));
 				if(icon.bmp2 != NULL) {
+					SkRect r = makeRect(rc, icon, icon.bmp2);
 					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp2, (SkIRect*) NULL, r, &p));
 				}
 				if(icon.bmp3 != NULL) {
+					SkRect r = makeRect(rc, icon, icon.bmp3);
 					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp3, (SkIRect*) NULL, r, &p));
 				}
 				if(icon.bmp4 != NULL) {
+					SkRect r = makeRect(rc, icon, icon.bmp4);
 					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp4, (SkIRect*) NULL, r, &p));
 				}
 				if(icon.bmp5 != NULL) {
+					SkRect r = makeRect(rc, icon, icon.bmp5);
 					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp5, (SkIRect*) NULL, r, &p));
 				}
 				if(bbox.width() > 0) {
