@@ -746,6 +746,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     QVector<int> textValueSubtypeIndices;
     QHash<int, QVariant> intValues;
     QHash<int, QVariant> stringValues;
+    auto categoriesFilterChecked = false;
 
     for (;;)
     {
@@ -771,6 +772,13 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
                     if (!accept)
                         return;
+                }
+
+                if (!categoriesFilterChecked &&
+                    categoriesFilter &&
+                    categories.toSet().intersect(*categoriesFilter).isEmpty())
+                {
+                    return;
                 }
 
                 if (!amenity)
@@ -815,11 +823,14 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             }
             case OBF::OsmAndPoiBoxDataAtom::kSubcategoriesFieldNumber:
             {
-                if (categoriesFilter && categories.toSet().intersect(*categoriesFilter).isEmpty())
+                if (!categoriesFilterChecked &&
+                    categoriesFilter &&
+                    categories.toSet().intersect(*categoriesFilter).isEmpty())
                 {
                     cis->Skip(cis->BytesUntilLimit());
                     return;
                 }
+                categoriesFilterChecked = true;
 
                 gpb::uint32 rawValue;
                 cis->ReadVarint32(&rawValue);
