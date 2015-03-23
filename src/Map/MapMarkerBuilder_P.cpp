@@ -11,11 +11,13 @@
 
 OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     : _isHidden(false)
-    , _baseOrder(std::numeric_limits<int>::min()) //NOTE: See Rasterizer_P.cpp:1115 - this is needed to keep markers as the most important symbols
+    //NOTE: See Rasterizer_P.cpp:1115 - this is needed to keep markers as the most important symbols
+    , _baseOrder(std::numeric_limits<int>::min())
     , _isAccuracyCircleSupported(false)
     , _isAccuracyCircleVisible(false)
     , _accuracyCircleRadius(0.0)
     , _direction(0.0f)
+    , _pinIconAlignment(MapMarker::PinIconAlignment::Center)
     , owner(owner_)
 {
 }
@@ -136,6 +138,20 @@ void OsmAnd::MapMarkerBuilder_P::setPinIcon(const std::shared_ptr<const SkBitmap
     _pinIcon = bitmap;
 }
 
+OsmAnd::MapMarker::PinIconAlignment OsmAnd::MapMarkerBuilder_P::getPinIconAlignment() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pinIconAlignment;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setPinIconAlignment(const MapMarker::PinIconAlignment value)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _pinIconAlignment = value;
+}
+
 OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder_P::getPinIconModulationColor() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -150,14 +166,17 @@ void OsmAnd::MapMarkerBuilder_P::setPinIconModulationColor(const ColorARGB color
     _pinIconModulationColor = colorValue;
 }
 
-QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > OsmAnd::MapMarkerBuilder_P::getOnMapSurfaceIcons() const
+QHash< OsmAnd::MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >
+OsmAnd::MapMarkerBuilder_P::getOnMapSurfaceIcons() const
 {
     QReadLocker scopedLocker(&_lock);
 
     return detachedOf(_onMapSurfaceIcons);
 }
 
-void OsmAnd::MapMarkerBuilder_P::addOnMapSurfaceIcon(const MapMarker::OnSurfaceIconKey key, const std::shared_ptr<const SkBitmap>& bitmap)
+void OsmAnd::MapMarkerBuilder_P::addOnMapSurfaceIcon(
+    const MapMarker::OnSurfaceIconKey key,
+    const std::shared_ptr<const SkBitmap>& bitmap)
 {
     QWriteLocker scopedLocker(&_lock);
 
@@ -178,7 +197,8 @@ void OsmAnd::MapMarkerBuilder_P::clearOnMapSurfaceIcons()
     _onMapSurfaceIcons.clear();
 }
 
-std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToCollection(const std::shared_ptr<MapMarkersCollection>& collection)
+std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToCollection(
+    const std::shared_ptr<MapMarkersCollection>& collection)
 {
     QReadLocker scopedLocker(&_lock);
 
@@ -186,6 +206,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     const std::shared_ptr<MapMarker> marker(new MapMarker(
         _baseOrder,
         _pinIcon,
+        _pinIconAlignment,
         detachedOf(_onMapSurfaceIcons),
         _isAccuracyCircleSupported,
         _accuracyCircleBaseColor));

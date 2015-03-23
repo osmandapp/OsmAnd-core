@@ -17,7 +17,6 @@ class SkBitmap;
 
 namespace OsmAnd
 {
-    class MapMarker;
     class MapMarkersCollection;
     class MapMarkersCollection_P;
 
@@ -46,6 +45,7 @@ namespace OsmAnd
         float _direction;
 
         std::shared_ptr<const SkBitmap> _pinIcon;
+        MapMarker::PinIconAlignment _pinIconAlignment;
         ColorARGB _pinIconModulationColor;
 
         QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > _onMapSurfaceIcons;
@@ -74,6 +74,10 @@ namespace OsmAnd
 
         std::shared_ptr<const SkBitmap> getPinIcon() const;
         void setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+
+        MapMarker::PinIconAlignment getPinIconAlignment() const;
+        void setPinIconAlignment(const MapMarker::PinIconAlignment value);
+
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);
 

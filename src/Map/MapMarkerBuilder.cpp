@@ -106,6 +106,18 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIcon(const std::shared
     return *this;
 }
 
+OsmAnd::MapMarker::PinIconAlignment OsmAnd::MapMarkerBuilder::getPinIconAlignment() const
+{
+    return _p->getPinIconAlignment();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconAlignment(const MapMarker::PinIconAlignment value)
+{
+    _p->setPinIconAlignment(value);
+
+    return *this;
+}
+
 OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder::getPinIconModulationColor() const
 {
     return _p->getPinIconModulationColor();

@@ -9,7 +9,9 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
+#include <OsmAndCore/Map/MapMarker.h>
 
 class SkBitmap;
 
@@ -29,13 +31,16 @@ namespace OsmAnd
     public:
         FavoriteLocationsPresenter(
             const std::shared_ptr<const IFavoriteLocationsCollection>& collection,
-            const std::shared_ptr<const SkBitmap>& favoriteLocationPinIconBitmap = nullptr);
+            const std::shared_ptr<const SkBitmap>& favoriteLocationPinIconBitmap = nullptr,
+            const Nullable<MapMarker::PinIconAlignment> favoriteLocationPinIconAlignment = Nullable<MapMarker::PinIconAlignment>());
         virtual ~FavoriteLocationsPresenter();
 
         const std::shared_ptr<const IFavoriteLocationsCollection> collection;
         const std::shared_ptr<const SkBitmap> favoriteLocationPinIconBitmap;
+        const Nullable<MapMarker::PinIconAlignment> favoriteLocationPinIconAlignment;
 
         static std::shared_ptr<const SkBitmap> getDefaultFavoriteLocationPinIconBitmap();
+        static MapMarker::PinIconAlignment getDefaultFavoriteLocationPinIconAlignment();
 
         virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
         virtual bool obtainData(

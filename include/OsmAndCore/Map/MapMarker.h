@@ -30,6 +30,20 @@ namespace OsmAnd
 
     public:
         typedef const void* OnSurfaceIconKey;
+        enum PinIconAlignment : unsigned int
+        {
+            XAxisMask = 0x3,
+            Left = 0 << 0,
+            CenterHorizontal = 1 << 0,
+            Right = 2 << 0,
+
+            YAxisMask = 0xC,
+            Top = 0 << 2,
+            CenterVertical = 1 << 2,
+            Bottom = 2 << 2,
+
+            Center = CenterHorizontal | CenterVertical,
+        };
 
     private:
         PrivateImplementation<MapMarker_P> _p;
@@ -37,6 +51,7 @@ namespace OsmAnd
         MapMarker(
             const int baseOrder,
             const std::shared_ptr<const SkBitmap>& pinIcon,
+            const PinIconAlignment pinIconAlignment,
             const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons,
             const bool isAccuracyCircleSupported,
             const FColorRGB accuracyCircleBaseColor);
@@ -47,6 +62,7 @@ namespace OsmAnd
 
         const int baseOrder;
         const std::shared_ptr<const SkBitmap> pinIcon;
+        const PinIconAlignment pinIconAlignment;
         const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > onMapSurfaceIcons;
         const bool isAccuracyCircleSupported;
         const FColorRGB accuracyCircleBaseColor;

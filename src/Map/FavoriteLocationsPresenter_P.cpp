@@ -80,6 +80,10 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
         owner->favoriteLocationPinIconBitmap
         ? owner->favoriteLocationPinIconBitmap
         : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconBitmap());
+    markerBuilder.setPinIconAlignment(
+        owner->favoriteLocationPinIconAlignment.isSet()
+        ? *owner->favoriteLocationPinIconAlignment.getValuePtrOrNullptr()
+        : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconAlignment());
     for (const auto& favoriteLocation : favoriteLocations)
     {
         if (_favoriteLocationToMarkerMap.contains(favoriteLocation))
@@ -94,7 +98,8 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
     }
 }
 
-void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarker(const std::shared_ptr<const IFavoriteLocation>& favoriteLocation)
+void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarker(
+    const std::shared_ptr<const IFavoriteLocation>& favoriteLocation)
 {
     QReadLocker scopedLocker(&_favoriteLocationToMarkerMapLock);
 

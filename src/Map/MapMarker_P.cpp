@@ -258,7 +258,36 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
             pinIcon->getPixels());
         pinIconSymbol->languageId = LanguageId::Invariant;
         pinIconSymbol->position31 = _position;
-        pinIconSymbol->offset = PointI(0, -pinIcon->height() / 2);
+        const auto xAxisAlignment = owner->pinIconAlignment & PinIconAlignment::XAxisMask;
+        const auto yAxisAlignment = owner->pinIconAlignment & PinIconAlignment::YAxisMask;
+        PointI offset;
+        switch (xAxisAlignment)
+        {
+            case PinIconAlignment::Left:
+                offset.x = -pinIcon->width() / 2;
+                break;
+            case PinIconAlignment::Right:
+                offset.x = pinIcon->width() / 2;
+                break;
+            case PinIconAlignment::CenterHorizontal:
+            default:
+                offset.x = 0;
+                break;
+        }
+        switch (yAxisAlignment)
+        {
+            case PinIconAlignment::Top:
+                offset.y = -pinIcon->height() / 2;
+                break;
+            case PinIconAlignment::Bottom:
+                offset.y = pinIcon->height() / 2;
+                break;
+            case PinIconAlignment::CenterVertical:
+            default:
+                offset.y = 0;
+                break;
+        }
+        pinIconSymbol->offset = offset;
         pinIconSymbol->isHidden = _isHidden;
         pinIconSymbol->modulationColor = _pinIconModulationColor;
         symbolsGroup->symbols.push_back(pinIconSymbol);
