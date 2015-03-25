@@ -295,7 +295,9 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataIn
             for (const auto& obfFile : constOf(collectedSources))
             {
                 // If OBF information already available, perform check
-                if (!obfFile->obfInfo->isBasemap && !obfFile->obfInfo->isBasemapWithCoastlines)
+                if (obfFile->obfInfo &&
+                    !obfFile->obfInfo->isBasemap &&
+                    !obfFile->obfInfo->isBasemapWithCoastlines)
                 {
                     bool accept = obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
                     accept = accept && (!acceptor || acceptor(obfFile->obfInfo));

@@ -1066,7 +1066,7 @@ bool OsmAnd::MapRenderer::suspendSymbolsUpdate()
     if (prevCounter == 0)
         invalidateFrame();
 
-    return (prevCounter >= 1);
+    return (prevCounter >= 0);
 }
 
 bool OsmAnd::MapRenderer::resumeSymbolsUpdate()
