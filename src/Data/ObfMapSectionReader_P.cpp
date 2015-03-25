@@ -525,7 +525,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                     }
 
                     //////////////////////////////////////////////////////////////////////////
-                    //if ((mapObject->id >> 1) == 7374044u)
+                    //if (mapObject->id.getOsmId() == 49048972u)
                     //{
                     //    int i = 5;
                     //}
@@ -587,7 +587,7 @@ void OsmAnd::ObfMapSectionReader_P::readMapObjectsBlock(
                 }
 
                 //////////////////////////////////////////////////////////////////////////
-                //if ((mapObject->id >> 1) == 7374044u)
+                //if (mapObject->id.getOsmId() == 49048972u)
                 //{
                 //    int i = 5;
                 //}
@@ -905,6 +905,13 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 const auto rawId = static_cast<uint64_t>(d + baseId);
                 mapObject->id = ObfObjectId::generateUniqueId(rawId, baseOffset, section);
 
+                //////////////////////////////////////////////////////////////////////////
+                //if (mapObject->id.getOsmId() == 49048972u)
+                //{
+                //    int i = 5;
+                //}
+                //////////////////////////////////////////////////////////////////////////
+
                 break;
             }
             default:
@@ -1166,6 +1173,17 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
                 // Process data block
                 for (const auto& mapObject : constOf(dataBlock->mapObjects))
                 {
+                    //////////////////////////////////////////////////////////////////////////
+                    //if (mapObject->id.getOsmId() == 49048972u)
+                    //{
+                    //    if (bbox31 && *bbox31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11))
+                    //    {
+                    //        const auto t = mapObject->toString();
+                    //        int i = 5;
+                    //    }
+                    //}
+                    //////////////////////////////////////////////////////////////////////////
+
                     if (metric)
                         metric->visitedMapObjects++;
 
@@ -1239,7 +1257,8 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
             metric->elapsedTimeForMapObjectsBlocks += mapObjectsStopwatch.elapsed();
     }
 
-    // In case cache was supplied, but referenced cache entries output collection was not specified, release all dangling references
+    // In case cache was supplied, but referenced cache entries output collection was not specified,
+    // release all dangling references
     if (cache && !outReferencedCacheEntries)
     {
         for (auto& referencedCacheEntry : danglingReferencedCacheEntries)

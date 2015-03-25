@@ -17,6 +17,11 @@ OsmAnd::BinaryMapObject::~BinaryMapObject()
 {
 }
 
+QString OsmAnd::BinaryMapObject::toString() const
+{
+    return ObfMapObject::toString() + QString(QLatin1String("@[%1-%2]")).arg(level->minZoom).arg(level->maxZoom);
+}
+
 bool OsmAnd::BinaryMapObject::obtainSharingKey(SharingKey& outKey) const
 {
     outKey = id;

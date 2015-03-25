@@ -33,6 +33,8 @@ namespace OsmAnd
 
                 QString tag;
                 QString value;
+
+                QString toString() const;
             };
 
         private:

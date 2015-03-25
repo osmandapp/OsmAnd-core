@@ -27,6 +27,8 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_ATTR_COLOR_VALUE, Output, Color, "attrColorValue
 // order - no sense to make it float
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ORDER, Output, Integer, "order", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_OBJECT_TYPE, Output, Integer, "objectType", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_IGNORE_POLYGON_AREA, Output, Boolean, "ignorePolygonArea", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_IGNORE_POLYGON_AS_POINT_AREA, Output, Boolean, "ignorePolygonAsPointArea", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", false)
 
 // Text&Icon properties

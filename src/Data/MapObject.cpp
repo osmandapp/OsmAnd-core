@@ -357,6 +357,11 @@ OsmAnd::MapObject::EncodingDecodingRules::DecodingRule::~DecodingRule()
 {
 }
 
+QString OsmAnd::MapObject::EncodingDecodingRules::DecodingRule::toString() const
+{
+    return tag + QLatin1String("=") + value;
+}
+
 OsmAnd::MapObject::Comparator::Comparator()
 {
 }

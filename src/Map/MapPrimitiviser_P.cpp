@@ -119,7 +119,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const Stopwatch totalStopwatch(metric != nullptr);
 
     //////////////////////////////////////////////////////////////////////////
-    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(8329, 5465), ZoomLevel14) && zoom == ZoomLevel14)
+    //if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
     //{
     //    int i = 5;
     //}
@@ -145,6 +145,17 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     {
         if (controller && controller->isAborted())
             break;
+
+        //////////////////////////////////////////////////////////////////////////
+        //if (mapObject->toString().contains("49048972"))
+        //{
+        //    if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
+        //    {
+        //        const auto t = mapObject->toString();
+        //        int i = 5;
+        //    }
+        //}
+        //////////////////////////////////////////////////////////////////////////
         
         if(!mapObject->intersectedOrContainedBy(area31) &&
            !mapObject->containsType(mapObject->encodingDecodingRules->naturalCoastline_encodingRuleId))
@@ -1220,6 +1231,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     QList< proper::shared_future< std::shared_ptr<const PrimitivesGroup> > > futureSharedPrimitivesGroups;
     for (const auto& mapObject : constOf(source))
     {
+        //////////////////////////////////////////////////////////////////////////
+        //if (mapObject->toString().contains("49048972"))
+        //{
+        //    const auto t = mapObject->toString();
+        //    int i = 5;
+        //}
+        //////////////////////////////////////////////////////////////////////////
+
         if (controller && controller->isAborted())
             return;
 
@@ -1322,12 +1341,11 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
     //////////////////////////////////////////////////////////////////////////
-    //if ((mapObject->id >> 1) == 192124575u)
+    //if (mapObject->toString().contains("49048972"))
     //{
+    //    const auto t = mapObject->toString();
     //    int i = 5;
     //}
-    //else
-    //    return group;
     //////////////////////////////////////////////////////////////////////////
 
     uint32_t typeRuleIdIndex = 0;
@@ -1337,16 +1355,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         const auto& decodedType = decRules[*itTypeRuleId];
 
         //////////////////////////////////////////////////////////////////////////
-        //if ((mapObject->id >> 1) == 9223371929479601886)
+        //if (mapObject->toString().contains("49048972"))
         //{
-        //    if (decodedType.tag != QLatin1String("building"))
-        //        continue;
-        //    int i = 5;
-        //}
-        //if (decodedType.value != QLatin1String("pedestrian"))
-        //    continue;
-        //if (decodedType.tag == QLatin1String("barrier") && decodedType.value == QLatin1String("city_wall"))
-        //{
+        //    const auto t = mapObject->toString();
         //    int i = 5;
         //}
         //////////////////////////////////////////////////////////////////////////
@@ -1435,113 +1446,130 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             //////////////////////////////////////////////////////////////////////////
 
             // Check size of polygon
+            bool ignorePolygonArea = false;
+            evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AREA, ignorePolygonArea);
+            bool ignorePolygonAsPointArea = false;
+            evaluationResult.getBooleanValue(
+                env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AS_POINT_AREA,
+                ignorePolygonAsPointArea);
             const auto doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
-            const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
-            const auto polygonAreaInPixels =
-                polygonArea31 / (primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y);
-            const auto polygonAreaInAbstractPixels =
-                polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
-            if (primitivisedObjects->scaleDivisor31ToPixel.x >= 0.0 &&
-                primitivisedObjects->scaleDivisor31ToPixel.y >= 0.0 &&
-                polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold)
+            auto rejectByArea = false;
+            if (!ignorePolygonArea)
             {
-                if (metric)
-                    metric->polygonsRejectedByArea++;
-
-                continue;
+                const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
+                const auto areaScaleDivisor31ToPixel =
+                    primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y;
+                const auto polygonAreaInPixels = polygonArea31 / areaScaleDivisor31ToPixel;
+                const auto polygonAreaInAbstractPixels =
+                    polygonAreaInPixels / (env->displayDensityFactor * env->displayDensityFactor);
+                rejectByArea =
+                    primitivisedObjects->scaleDivisor31ToPixel.x >= 0.0 &&
+                    primitivisedObjects->scaleDivisor31ToPixel.y >= 0.0 &&
+                    polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold;
             }
 
-            const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
-
-            // Setup mapObject-specific input data (for Polygon)
-            polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-            polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-
-            // Evaluate style for this primitive to check if it passes (for Polygon)
-            evaluationResult.clear();
-            ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
-
-            if (metric)
+            if (!rejectByArea)
             {
-                metric->elapsedTimeForPolygonEvaluation += polygonEvaluationStopwatch.elapsed();
-                metric->polygonEvaluations++;
-            }
+                const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
-            // Add as polygon if accepted as polygon
-            if (ok)
-            {
-                // Create new primitive
-                const std::shared_ptr<Primitive> primitive(new Primitive(
-                    group,
-                    objectType,
-                    typeRuleIdIndex,
-                    qMove(evaluationResult)));
-                primitive->zOrder = (std::dynamic_pointer_cast<const SurfaceMapObject>(mapObject) || std::dynamic_pointer_cast<const CoastlineMapObject>(mapObject))
-                    ? std::numeric_limits<int>::min()
-                    : zOrder;
-                primitive->doubledArea = doubledPolygonArea31;
+                // Setup mapObject-specific input data (for Polygon)
+                polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+                polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
-                // Accept this primitive
-                constructedGroup->polygons.push_back(qMove(primitive));
+                // Evaluate style for this primitive to check if it passes (for Polygon)
+                evaluationResult.clear();
+                ok = polygonEvaluator.evaluate(mapObject, MapStyleRulesetType::Polygon, &evaluationResult);
 
-                // Update metric
                 if (metric)
-                    metric->polygonPrimitives++;
+                {
+                    metric->elapsedTimeForPolygonEvaluation += polygonEvaluationStopwatch.elapsed();
+                    metric->polygonEvaluations++;
+                }
+
+                // Add as polygon if accepted as polygon
+                if (ok)
+                {
+                    // Create new primitive
+                    const std::shared_ptr<Primitive> primitive(new Primitive(
+                        group,
+                        objectType,
+                        typeRuleIdIndex,
+                        qMove(evaluationResult)));
+                    primitive->zOrder = (std::dynamic_pointer_cast<const SurfaceMapObject>(mapObject) || std::dynamic_pointer_cast<const CoastlineMapObject>(mapObject))
+                        ? std::numeric_limits<int>::min()
+                        : zOrder;
+                    primitive->doubledArea = doubledPolygonArea31;
+
+                    // Accept this primitive
+                    constructedGroup->polygons.push_back(qMove(primitive));
+
+                    // Update metric
+                    if (metric)
+                        metric->polygonPrimitives++;
+                }
+                else
+                {
+                    if (metric)
+                        metric->polygonRejects++;
+                }
             }
             else
             {
                 if (metric)
-                    metric->polygonRejects++;
+                    metric->polygonsRejectedByArea++;
             }
 
-            const Stopwatch pointEvaluationStopwatch(metric != nullptr);
-
-            // Setup mapObject-specific input data (for Point)
-            pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-            pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-
-            // Evaluate Point rules
-            evaluationResult.clear();
-            const auto hasIcon = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
-
-            // Update metric
-            if (metric)
+            if (!rejectByArea || ignorePolygonAsPointArea)
             {
-                metric->elapsedTimeForPointEvaluation += pointEvaluationStopwatch.elapsed();
-                metric->pointEvaluations++;
-            }
+                const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
-            // Create point primitive only in case polygon has any content
-            if (!mapObject->captions.isEmpty() || hasIcon)
-            {
-                // Duplicate primitive as point
-                std::shared_ptr<Primitive> pointPrimitive;
-                if (hasIcon)
-                {
-                    // Point evaluation is a bit special, it's success only indicates that point has an icon
-                    pointPrimitive.reset(new Primitive(
-                        group,
-                        PrimitiveType::Point,
-                        typeRuleIdIndex,
-                        qMove(evaluationResult)));
-                }
-                else
-                {
-                    pointPrimitive.reset(new Primitive(
-                        group,
-                        PrimitiveType::Point,
-                        typeRuleIdIndex));
-                }
-                pointPrimitive->zOrder = (std::dynamic_pointer_cast<const SurfaceMapObject>(mapObject) || std::dynamic_pointer_cast<const CoastlineMapObject>(mapObject))
-                    ? std::numeric_limits<int>::min()
-                    : zOrder;
-                pointPrimitive->doubledArea = doubledPolygonArea31;
+                // Setup mapObject-specific input data (for Point)
+                pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+                pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
-                constructedGroup->points.push_back(qMove(pointPrimitive));
+                // Evaluate Point rules
+                evaluationResult.clear();
+                const auto hasIcon = pointEvaluator.evaluate(mapObject, MapStyleRulesetType::Point, &evaluationResult);
 
                 // Update metric
                 if (metric)
-                    metric->pointPrimitives++;
+                {
+                    metric->elapsedTimeForPointEvaluation += pointEvaluationStopwatch.elapsed();
+                    metric->pointEvaluations++;
+                }
+
+                // Create point primitive only in case polygon has any content
+                if (!mapObject->captions.isEmpty() || hasIcon)
+                {
+                    // Duplicate primitive as point
+                    std::shared_ptr<Primitive> pointPrimitive;
+                    if (hasIcon)
+                    {
+                        // Point evaluation is a bit special, it's success only indicates that point has an icon
+                        pointPrimitive.reset(new Primitive(
+                            group,
+                            PrimitiveType::Point,
+                            typeRuleIdIndex,
+                            qMove(evaluationResult)));
+                    }
+                    else
+                    {
+                        pointPrimitive.reset(new Primitive(
+                            group,
+                            PrimitiveType::Point,
+                            typeRuleIdIndex));
+                    }
+                    pointPrimitive->zOrder = (std::dynamic_pointer_cast<const SurfaceMapObject>(mapObject) || std::dynamic_pointer_cast<const CoastlineMapObject>(mapObject))
+                        ? std::numeric_limits<int>::min()
+                        : zOrder;
+                    pointPrimitive->doubledArea = doubledPolygonArea31;
+
+                    constructedGroup->points.push_back(qMove(pointPrimitive));
+
+                    // Update metric
+                    if (metric)
+                        metric->pointPrimitives++;
+                }
             }
         }
         else if (objectType == PrimitiveType::Polyline)
@@ -1893,6 +1921,16 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
 
     for (const auto& primitive : constOf(primitives))
     {
+        //////////////////////////////////////////////////////////////////////////
+        //if (primitive->sourceObject->toString().contains("49048972"))
+        //{
+        //    const auto t = primitive->sourceObject->toString();
+        //    int i = 5;
+        //}
+        //else
+        //    return;
+        //////////////////////////////////////////////////////////////////////////
+
         if (controller && controller->isAborted())
             return;
 
@@ -1917,11 +1955,11 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
         else if (type == PrimitivesType::Points)
         {
             obtainSymbolsFromPoint(
-                context, 
-               primitivisedObjects,
-               primitive,
-               qMove(evaluationResult),
-               outSymbols);
+                context,
+                primitivisedObjects,
+                primitive,
+                qMove(evaluationResult),
+                outSymbols);
         }
     }
 }
@@ -2005,8 +2043,9 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     SymbolsCollection& outSymbols)
 {
     //////////////////////////////////////////////////////////////////////////
-    //if ((primitive->sourceObject->id >> 1) == 9223090561878064380u)
+    //if (primitive->sourceObject->toString().contains("49048972"))
     //{
+    //    const auto t = primitive->sourceObject->toString();
     //    int i = 5;
     //}
     //else
