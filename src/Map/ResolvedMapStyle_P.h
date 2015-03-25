@@ -112,7 +112,6 @@ namespace OsmAnd
             MapStyleConstantValue& outParsedValue) const;
 
         std::shared_ptr<const Attribute> getAttribute(const QString& name) const;
-
         const QHash< TagValueId, std::shared_ptr<const Rule> > getRuleset(const MapStyleRulesetType rulesetType) const;
 
         QString getStringById(const StringId id) const;

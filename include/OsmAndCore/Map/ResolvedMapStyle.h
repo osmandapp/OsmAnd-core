@@ -2,11 +2,13 @@
 #define _OSMAND_CORE_RESOLVED_MAP_STYLE_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <array>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
 #include <QList>
+#include <QHash>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -157,18 +159,29 @@ namespace OsmAnd
         ValueDefinitionId getValueDefinitionIdByName(const QString& name) const;
         std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(const ValueDefinitionId id) const;
 
-        bool parseValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleConstantValue& outParsedValue) const;
-        bool parseValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleConstantValue& outParsedValue) const;
+        bool parseValue(
+            const QString& input,
+            const ValueDefinitionId valueDefintionId,
+            MapStyleConstantValue& outParsedValue) const;
+        bool parseValue(
+            const QString& input,
+            const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion,
+            MapStyleConstantValue& outParsedValue) const;
+
+        const QHash<QString, QString>& constants;
+        const QHash<StringId, std::shared_ptr<const Parameter> >& parameters;
+        const QHash<StringId, std::shared_ptr<const Attribute> >& attributes;
+        const std::array< QHash<TagValueId, std::shared_ptr<const Rule> >, MapStyleRulesetTypesCount>& rulesets;
 
         std::shared_ptr<const Attribute> getAttribute(const QString& name) const;
-
         const QHash< TagValueId, std::shared_ptr<const Rule> > getRuleset(const MapStyleRulesetType rulesetType) const;
 
         QString getStringById(const StringId id) const;
 
         QString dump(const QString& prefix = QString()) const;
 
-        static std::shared_ptr<const ResolvedMapStyle> resolveMapStylesChain(const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain);
+        static std::shared_ptr<const ResolvedMapStyle> resolveMapStylesChain(
+            const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain);
     };
 }
 

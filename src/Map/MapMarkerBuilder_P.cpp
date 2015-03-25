@@ -11,7 +11,6 @@
 
 OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     : _isHidden(false)
-    //NOTE: See Rasterizer_P.cpp:1115 - this is needed to keep markers as the most important symbols
     , _baseOrder(std::numeric_limits<int>::min())
     , _isAccuracyCircleSupported(false)
     , _isAccuracyCircleVisible(false)

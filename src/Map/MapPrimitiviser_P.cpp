@@ -147,14 +147,17 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             break;
 
         //////////////////////////////////////////////////////////////////////////
-        //if (mapObject->toString().contains("49048972"))
+        //if (mapObject->toString().contains("74584457"))
         //{
-        //    if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
+        //    /*if (area31 == Utilities::tileBoundingBox31(TileId::fromXY(1052, 673), ZoomLevel11) && zoom == ZoomLevel11)
         //    {
         //        const auto t = mapObject->toString();
         //        int i = 5;
-        //    }
+        //    }*/
+        //    int i = 5;
         //}
+        //else
+        //    continue;
         //////////////////////////////////////////////////////////////////////////
         
         if(!mapObject->intersectedOrContainedBy(area31) &&

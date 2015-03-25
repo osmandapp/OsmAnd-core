@@ -4,6 +4,10 @@
 OsmAnd::ResolvedMapStyle::ResolvedMapStyle(const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain_)
     : _p(new ResolvedMapStyle_P(this))
     , unresolvedMapStylesChain(unresolvedMapStylesChain_)
+    , constants(_p->_constants)
+    , parameters(_p->_parameters)
+    , attributes(_p->_attributes)
+    , rulesets(_p->_rulesets)
 {
 }
 

@@ -435,21 +435,28 @@ OsmAnd::ResolvedMapStyle_P::ValueDefinitionId OsmAnd::ResolvedMapStyle_P::getVal
     return *citId;
 }
 
-std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle_P::getValueDefinitionById(const ValueDefinitionId id) const
+std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle_P::getValueDefinitionById(
+    const ValueDefinitionId id) const
 {
     if (id < 0 || id >= _valuesDefinitions.size())
         return nullptr;
     return _valuesDefinitions[id];
 }
 
-bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleConstantValue& outParsedValue) const
+bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(
+    const QString& input,
+    const ValueDefinitionId valueDefintionId,
+    MapStyleConstantValue& outParsedValue) const
 {
     if (valueDefintionId < 0 || valueDefintionId >= _valuesDefinitions.size())
         return false;
     return parseConstantValue(input, _valuesDefinitions[valueDefintionId], outParsedValue);
 }
 
-bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleConstantValue& outParsedValue) const
+bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(
+    const QString& input,
+    const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion,
+    MapStyleConstantValue& outParsedValue) const
 {
     return parseConstantValue(input, valueDefintion->dataType, valueDefintion->isComplex, outParsedValue);
 }
@@ -603,7 +610,10 @@ QString OsmAnd::ResolvedMapStyle_P::dump(const QString& prefix) const
     return dump;
 }
 
-QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(const std::shared_ptr<const RuleNode>& ruleNode, const bool rejectSupported, const QString& prefix) const
+QString OsmAnd::ResolvedMapStyle_P::dumpRuleNode(
+    const std::shared_ptr<const RuleNode>& ruleNode,
+    const bool rejectSupported,
+    const QString& prefix) const
 {
     QString dump;
     const auto builtinValueDefs = MapStyleBuiltinValueDefinitions::get();
@@ -777,7 +787,8 @@ QString OsmAnd::ResolvedMapStyle_P::dumpResolvedValue(const ResolvedValue& value
 {
     if (value.isDynamic)
     {
-        const auto attributeName = QString(QLatin1String("attribute $%1")).arg(getStringById(value.asDynamicValue.attribute->nameId));
+        const auto attributeName = QString(QLatin1String("attribute $%1"))
+            .arg(getStringById(value.asDynamicValue.attribute->nameId));
 
         switch (dataType)
         {
@@ -803,7 +814,9 @@ QString OsmAnd::ResolvedMapStyle_P::dumpResolvedValue(const ResolvedValue& value
     return dumpConstantValue(value.asConstantValue, dataType);
 }
 
-QString OsmAnd::ResolvedMapStyle_P::dumpConstantValue(const MapStyleConstantValue& value, const MapStyleValueDataType dataType) const
+QString OsmAnd::ResolvedMapStyle_P::dumpConstantValue(
+    const MapStyleConstantValue& value,
+    const MapStyleValueDataType dataType) const
 {
     if (dataType == MapStyleValueDataType::String)
         return QString(QLatin1String("string(\"%1\")")).arg(getStringById(value.asSimple.asInt));

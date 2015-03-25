@@ -33,6 +33,7 @@ namespace OsmAnd
             const Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
             const SearchCompletedCallback searchCompletedCallback,
+            QThreadPool* const threadPool,
             const IQueryController* const controller = nullptr) const;
     };
 }
