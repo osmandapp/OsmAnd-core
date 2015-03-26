@@ -81,32 +81,29 @@ namespace OsmAnd
 
         inline T& operator*()
         {
-            if (!_isSet)
-                return *reinterpret_cast<T*>(nullptr);
-            return _value;
+            return *getValuePtrOrNullptr();
         }
 
         inline const T& operator*() const
         {
-            if (!_isSet)
-                return *reinterpret_cast<const T*>(nullptr);
-            return _value;
+            return *getValuePtrOrNullptr();
         }
 
         inline T* operator->()
         {
-            if (!_isSet)
-                return nullptr;
-            return &_value;
+            return getValuePtrOrNullptr();
         }
 
         inline const T* operator->() const
         {
-            if (!_isSet)
-                return nullptr;
-            return &_value;
+            return getValuePtrOrNullptr();
         }
 #endif // !defined(SWIG)
+
+        inline T* getValuePtrOrNullptr()
+        {
+            return _isSet ? &_value : nullptr;
+        }
 
         inline const T* getValuePtrOrNullptr() const
         {
