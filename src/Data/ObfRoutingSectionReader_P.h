@@ -48,6 +48,10 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<ObfRoutingSectionInfo>& section);
 
+        static void readLevelTreeNodeBbox31(
+            const ObfReader_P& reader,
+            AreaI& outBbox31);
+
         static void readEncodingDecodingRules(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfRoutingSectionInfo>& section,

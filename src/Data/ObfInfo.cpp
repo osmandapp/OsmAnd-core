@@ -52,8 +52,24 @@ bool OsmAnd::ObfInfo::containsDataFor(
 
     if (desiredDataTypes.isSet(ObfDataType::Routing))
     {
-        if (!routingSections.isEmpty())
-            return true;
+        for (const auto& routingSection : constOf(routingSections))
+        {
+            bool accept = true;
+
+            // Check by area
+            if (pBbox31)
+            {
+                const auto fitsBBox =
+                    routingSection->area31.contains(*pBbox31) ||
+                    routingSection->area31.intersects(*pBbox31) ||
+                    pBbox31->contains(routingSection->area31);
+
+                accept = accept && fitsBBox;
+            }
+
+            if (accept)
+                return true;
+        }
     }
 
     if (desiredDataTypes.isSet(ObfDataType::POI))

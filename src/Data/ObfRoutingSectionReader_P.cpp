@@ -5,6 +5,7 @@
 #include <google/protobuf/wire_format_lite.h>
 #include "restore_internal_warnings.h"
 
+#include "Nullable.h"
 #include "ObfReader.h"
 #include "ObfReader_P.h"
 #include "ObfRoutingSectionInfo.h"
@@ -30,6 +31,8 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
 {
     const auto cis = reader.getCodedInputStream().get();
 
+    Nullable<AreaI> bbox31;
+
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -39,6 +42,8 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
             case 0:
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
+
+                section->area31 = *bbox31;
 
                 return;
             case OBF::OsmAndRoutingIndex::kNameFieldNumber:
@@ -51,12 +56,67 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
             case OBF::OsmAndRoutingIndex::kBasemapBoxesFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
-                cis->Skip(length);
+                const auto oldLimit = cis->PushLimit(length);
+
+                AreaI nodeBbox31;
+                readLevelTreeNodeBbox31(reader, nodeBbox31);
+                if (bbox31.isSet())
+                    bbox31->enlargeToInclude(nodeBbox31);
+                else
+                    bbox31 = nodeBbox31;
+
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
+                cis->PopLimit(oldLimit);
+
                 break;
             }
             case OBF::OsmAndRoutingIndex::kBlocksFieldNumber:
                 cis->Skip(cis->BytesUntilLimit());
                 break;
+            default:
+                ObfReaderUtilities::skipUnknownField(cis, tag);
+                break;
+        }
+    }
+}
+
+void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeBbox31(
+    const ObfReader_P& reader,
+    AreaI& outBbox31)
+{
+    const auto cis = reader.getCodedInputStream().get();
+
+    outBbox31.topLeft.x = outBbox31.topLeft.y = 0;
+    outBbox31.bottomRight.x = outBbox31.bottomRight.y = std::numeric_limits<int>::max();
+
+    for (;;)
+    {
+        const auto tagPos = cis->CurrentPosition();
+        const auto tag = cis->ReadTag();
+        const auto tgn = gpb::internal::WireFormatLite::GetTagFieldNumber(tag);
+        switch (tgn)
+        {
+            case 0:
+                if (!ObfReaderUtilities::reachedDataEnd(cis))
+                    return;
+
+                return;
+            case OBF::OsmAndRoutingIndex_RouteDataBox::kLeftFieldNumber:
+                outBbox31.topLeft.x = ObfReaderUtilities::readSInt32(cis);
+                break;
+            case OBF::OsmAndRoutingIndex_RouteDataBox::kRightFieldNumber:
+                outBbox31.bottomRight.x = ObfReaderUtilities::readSInt32(cis);
+                break;
+            case OBF::OsmAndRoutingIndex_RouteDataBox::kTopFieldNumber:
+                outBbox31.topLeft.y = ObfReaderUtilities::readSInt32(cis);
+                break;
+            case OBF::OsmAndRoutingIndex_RouteDataBox::kBottomFieldNumber:
+                outBbox31.bottomRight.y = ObfReaderUtilities::readSInt32(cis);
+                break;
+            case OBF::OsmAndRoutingIndex_RouteDataBox::kShiftToDataFieldNumber:
+            case OBF::OsmAndRoutingIndex_RouteDataBox::kBoxesFieldNumber:
+                cis->Skip(cis->BytesUntilLimit());
+                return;
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;

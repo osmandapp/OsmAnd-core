@@ -78,6 +78,8 @@ namespace OsmAnd
 
         std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> getEncodingDecodingRules() const;
 
+        AreaI area31;
+
     friend class OsmAnd::ObfRoutingSectionReader_P;
     };
 }
