@@ -551,13 +551,9 @@ OsmAnd::AreaI OsmAnd::MapPrimitiviser_P::alignAreaForCoastlines(const AreaI& are
 
     // Align area to 32: this fixes coastlines and specifically Antarctica
     AreaI alignedArea31;
-
     alignedArea31.top() = area31.top() & ~alignMask;
-
     alignedArea31.left() = area31.left() & ~alignMask;
-
     alignedArea31.bottom() = area31.bottom() & ~alignMask;
-
     alignedArea31.right() = area31.right() & ~alignMask;
 
     return alignedArea31;
@@ -1344,9 +1340,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     std::shared_ptr<const PrimitivesGroup> group(constructedGroup);
 
     //////////////////////////////////////////////////////////////////////////
-    //if (mapObject->toString().contains("49048972"))
+    //if (mapObject->toString().contains("47894962"))
     //{
-    //    const auto t = mapObject->toString();
     //    int i = 5;
     //}
     //////////////////////////////////////////////////////////////////////////
@@ -2132,7 +2127,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const auto& env = context.env;
 
     //////////////////////////////////////////////////////////////////////////
-    //if (primitive->sourceObject->toString() == "OSM-node 1705951317 [3411902634]")
+    //if (primitive->sourceObject->toString().contains("47894962"))
     //{
     //    int i = 5;
     //}

@@ -31,7 +31,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoadEx(
         &bbox31,
         MinZoomLevel,
         MaxZoomLevel,
-        ObfDataTypesMask().set(ObfDataType::Routing));
+        ObfDataTypesMask().set(ObfDataType::Routing).set(ObfDataType::Map));
     obfDataInterface->loadRoads(
         dataLevel,
         &bbox31,
@@ -59,7 +59,7 @@ QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::RoadLocator_P::findRoadsInA
         &bbox31,
         MinZoomLevel,
         MaxZoomLevel,
-        ObfDataTypesMask().set(ObfDataType::Routing));
+        ObfDataTypesMask().set(ObfDataType::Routing).set(ObfDataType::Map));
     obfDataInterface->loadRoads(
         dataLevel,
         &bbox31,

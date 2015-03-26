@@ -164,7 +164,11 @@ bool OsmAnd::MapObject::containsTagSlow(const QString& tag, bool checkAdditional
     return false;
 }
 
-bool OsmAnd::MapObject::obtainTagValueByTypeRuleIndex(const uint32_t typeRuleIndex, QString& outTag, QString& outValue, bool checkAdditional /*= false*/) const
+bool OsmAnd::MapObject::obtainTagValueByTypeRuleIndex(
+    const uint32_t typeRuleIndex,
+    QString& outTag,
+    QString& outValue,
+    bool checkAdditional /*= false*/) const
 {
     const auto& rulesIds = checkAdditional ? additionalTypesRuleIds : typesRuleIds;
 
@@ -366,7 +370,9 @@ OsmAnd::MapObject::Comparator::Comparator()
 {
 }
 
-bool OsmAnd::MapObject::Comparator::operator()(const std::shared_ptr<const MapObject>& l, const std::shared_ptr<const MapObject>& r) const
+bool OsmAnd::MapObject::Comparator::operator()(
+    const std::shared_ptr<const MapObject>& l,
+    const std::shared_ptr<const MapObject>& r) const
 {
     MapObject::SortingKey lKey;
     const auto lHasKey = l->obtainSortingKey(lKey);

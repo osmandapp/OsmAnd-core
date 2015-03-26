@@ -118,7 +118,11 @@ namespace OsmAnd
         virtual bool containsType(const uint32_t typeRuleId, bool checkAdditional = false) const;
         virtual bool containsTypeSlow(const QString& tag, const QString& value, bool checkAdditional = false) const;
         virtual bool containsTagSlow(const QString& tag, bool checkAdditional = false) const;
-        virtual bool obtainTagValueByTypeRuleIndex(const uint32_t typeRuleIndex, QString& outTag, QString& outValue, bool checkAdditional = false) const;
+        virtual bool obtainTagValueByTypeRuleIndex(
+            const uint32_t typeRuleIndex,
+            QString& outTag,
+            QString& outValue,
+            bool checkAdditional = false) const;
 
         // Layers
         virtual LayerType getLayerType() const;
