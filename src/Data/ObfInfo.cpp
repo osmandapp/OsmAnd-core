@@ -52,9 +52,7 @@ bool OsmAnd::ObfInfo::containsDataFor(
 
     if (desiredDataTypes.isSet(ObfDataType::Routing))
     {
-        // Routing sections do not contain areas that are suitable for this check,
-        // so in case there are no map sections but there are routing sections, lie that this file surely has data
-        if (!routingSections.isEmpty() && mapSections.isEmpty())
+        if (!routingSections.isEmpty())
             return true;
     }
 
