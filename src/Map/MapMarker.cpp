@@ -92,7 +92,41 @@ bool OsmAnd::MapMarker::applyChanges()
     return _p->applyChanges();
 }
 
-std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker::createSymbolsGroup() const
+std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker::createSymbolsGroup() const
 {
     return _p->createSymbolsGroup();
+}
+
+OsmAnd::MapMarker::SymbolsGroup::SymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP_)
+    : _mapMarkerP(mapMarkerP_)
+{
+}
+
+OsmAnd::MapMarker::SymbolsGroup::~SymbolsGroup()
+{
+    if (const auto mapMarkerP = _mapMarkerP.lock())
+        mapMarkerP->unregisterSymbolsGroup(this);
+}
+
+const OsmAnd::MapMarker* OsmAnd::MapMarker::SymbolsGroup::getMapMarker() const
+{
+    if (const auto mapMarkerP = _mapMarkerP.lock())
+        return mapMarkerP->owner;
+    return nullptr;
+}
+
+bool OsmAnd::MapMarker::SymbolsGroup::updatesPresent()
+{
+    if (const auto mapMarkerP = _mapMarkerP.lock())
+        return mapMarkerP->hasUnappliedChanges();
+
+    return false;
+}
+
+bool OsmAnd::MapMarker::SymbolsGroup::update()
+{
+    if (const auto mapMarkerP = _mapMarkerP.lock())
+        return mapMarkerP->applyChanges();
+
+    return false;
 }

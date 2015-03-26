@@ -165,14 +165,14 @@ bool OsmAnd::MapMarker_P::applyChanges()
     return true;
 }
 
-std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGroup() const
+std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGroup() const
 {
     QReadLocker scopedLocker(&_lock);
 
     bool ok;
 
     // Construct new map symbols group for this marker
-    const std::shared_ptr<MapSymbolsGroup> symbolsGroup(new LinkedMapSymbolsGroup(
+    const std::shared_ptr<MapMarker::SymbolsGroup> symbolsGroup(new MapMarker::SymbolsGroup(
         std::const_pointer_cast<MapMarker_P>(shared_from_this())));
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
 
@@ -296,7 +296,7 @@ std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::inflateSymbolsGrou
     return symbolsGroup;
 }
 
-std::shared_ptr<OsmAnd::MapSymbolsGroup> OsmAnd::MapMarker_P::createSymbolsGroup() const
+std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::createSymbolsGroup() const
 {
     const auto inflatedSymbolsGroup = inflateSymbolsGroup();
     registerSymbolsGroup(inflatedSymbolsGroup);
@@ -315,33 +315,6 @@ void OsmAnd::MapMarker_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbolsG
     QWriteLocker scopedLocker(&_symbolsGroupsRegistryLock);
 
     _symbolsGroupsRegistry.remove(symbolsGroup);
-}
-
-OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::LinkedMapSymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP_)
-    : mapMarkerP(mapMarkerP_)
-{
-}
-
-OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::~LinkedMapSymbolsGroup()
-{
-    if (const auto mapMarkerP_ = mapMarkerP.lock())
-        mapMarkerP_->unregisterSymbolsGroup(this);
-}
-
-bool OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::updatesPresent()
-{
-    if (const auto mapMarkerP_ = mapMarkerP.lock())
-        return mapMarkerP_->hasUnappliedChanges();
-
-    return false;
-}
-
-bool OsmAnd::MapMarker_P::LinkedMapSymbolsGroup::update()
-{
-    if (const auto mapMarkerP_ = mapMarkerP.lock())
-        return mapMarkerP_->applyChanges();
-
-    return false;
 }
 
 OsmAnd::MapMarker_P::KeyedOnSurfaceRasterMapSymbol::KeyedOnSurfaceRasterMapSymbol(

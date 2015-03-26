@@ -49,24 +49,6 @@ namespace OsmAnd
 
         ColorARGB _pinIconModulationColor;
 
-        class LinkedMapSymbolsGroup
-            : public MapSymbolsGroup
-            , public IUpdatableMapSymbolsGroup
-        {
-        private:
-        protected:
-            LinkedMapSymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP);
-        public:
-            virtual ~LinkedMapSymbolsGroup();
-
-            const std::weak_ptr<MapMarker_P> mapMarkerP;
-
-            virtual bool updatesPresent();
-            virtual bool update();
-
-        friend class OsmAnd::MapMarker_P;
-        };
-
         class KeyedOnSurfaceRasterMapSymbol : public OnSurfaceRasterMapSymbol
         {
         private:
@@ -96,7 +78,7 @@ namespace OsmAnd
 
         bool applyChanges();
 
-        std::shared_ptr<MapSymbolsGroup> inflateSymbolsGroup() const;
+        std::shared_ptr<MapMarker::SymbolsGroup> inflateSymbolsGroup() const;
         mutable QReadWriteLock _symbolsGroupsRegistryLock;
         mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
@@ -125,7 +107,7 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
         
-        std::shared_ptr<MapSymbolsGroup> createSymbolsGroup() const;
+        std::shared_ptr<MapMarker::SymbolsGroup> createSymbolsGroup() const;
 
     friend class OsmAnd::MapMarker;
     friend class OsmAnd::MapMarkersCollection;

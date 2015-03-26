@@ -12,6 +12,8 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Color.h>
+#include <OsmAndCore/Map/MapSymbolsGroup.h>
+#include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 
 class SkBitmap;
 
@@ -21,8 +23,7 @@ namespace OsmAnd
     class MapMarkerBuilder_P;
     class MapMarkersCollection;
     class MapMarkersCollection_P;
-    class MapSymbolsGroup;
-    
+
     class MapMarker_P;
     class OSMAND_CORE_API MapMarker
     {
@@ -43,6 +44,26 @@ namespace OsmAnd
             Bottom = 2 << 2,
 
             Center = CenterHorizontal | CenterVertical,
+        };
+
+        class SymbolsGroup
+            : public MapSymbolsGroup
+            , public IUpdatableMapSymbolsGroup
+        {
+        private:
+            const std::weak_ptr<MapMarker_P> _mapMarkerP;
+        protected:
+            SymbolsGroup(const std::shared_ptr<MapMarker_P>& mapMarkerP);
+        public:
+            virtual ~SymbolsGroup();
+
+            const MapMarker* getMapMarker() const;
+
+            virtual bool updatesPresent();
+            virtual bool update();
+
+        friend class OsmAnd::MapMarker;
+        friend class OsmAnd::MapMarker_P;
         };
 
     private:
@@ -86,7 +107,7 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
 
-        std::shared_ptr<MapSymbolsGroup> createSymbolsGroup() const;
+        std::shared_ptr<SymbolsGroup> createSymbolsGroup() const;
 
     friend class OsmAnd::MapMarkerBuilder;
     friend class OsmAnd::MapMarkerBuilder_P;
