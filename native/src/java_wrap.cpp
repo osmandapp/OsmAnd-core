@@ -162,6 +162,9 @@ void fillRenderingAttributes(JNIRenderingContext& rc, RenderingRuleSearchRequest
 	if (req->searchRenderingAttribute("defaultColor")) {
 		rc.setDefaultColor(req->getIntPropertyValue(req->props()->R_ATTR_COLOR_VALUE));
 	}
+	if (req->searchRenderingAttribute("waterwayArrows")) {
+		rc.setWaterwayArrows(req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE));
+	}
 	req->clearState();
 	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
 	if (req->searchRenderingAttribute("shadowRendering")) {

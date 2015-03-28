@@ -114,6 +114,7 @@ private :
 	int width;
 	int height;
 	int defaultColor;
+	int waterwayArrows;
 
 	int zoom;
 	float rotate;
@@ -224,6 +225,14 @@ public:
 
 	void setShadowRenderingColor(int color) {
 		shadowRenderingColor = color;
+	}
+
+	void setWaterwayArrows(int arrows) {
+		waterwayArrows = arrows;
+	}
+
+	int getWaterwayArrows() {
+		return waterwayArrows;
 	}
 
 	inline int getWidth(){

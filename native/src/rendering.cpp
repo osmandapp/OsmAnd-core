@@ -439,12 +439,22 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		shadowColor = rc->getShadowRenderingColor();
 	}
 	int oneway = 0;
-	if (rc->getZoom() >= 16 && pair.first == "highway") {
+	if (	
+		(rc->getZoom() >= 16 && pair.first == "highway") || 
+		(rc->getZoom() >= 15 && pair.first="route" && pair.second="ferry") 
+		) {
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
 		} else if (mObj->containsAdditional("oneway", "-1")) {
 			oneway = -1;
 		}
+	}
+	if(pair.first="waterway" && rc->getWaterwayArrows() > 0 && (
+		(rc->getZoom() >= 15 && pair.second="stream") ||
+		(rc->getZoom() >= 12 && pair.second="river") ||
+		(rc->getZoom() >= 14 && pair.second="canal")
+		)) {
+		oneway = 1;
 	}
 
 	rc->visible++;
