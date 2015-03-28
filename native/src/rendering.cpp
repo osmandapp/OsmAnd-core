@@ -321,7 +321,7 @@ void drawPolylineShadow(SkCanvas* cv, SkPaint* paint, RenderingContext* rc, SkPa
 SkPaint* oneWayPaint(){
     SkPaint* oneWay = new SkPaint;
     oneWay->setStyle(SkPaint::kStroke_Style);
-    oneWay->setColor(0xff6c70d5);
+    oneWay->setColor(0xff3a3e9c);
     oneWay->setAntiAlias(true);
     return oneWay;
 }
