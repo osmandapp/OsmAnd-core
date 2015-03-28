@@ -579,10 +579,10 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
     {
         if (coastline->points31.size() < 2)
         {
-            LogPrintf(LogSeverityLevel::Warning,
-                "MapObject %s is primitivised as coastline, but has %d vertices",
-                qPrintable(coastline->toString()),
-                coastline->points31.size());
+//            LogPrintf(LogSeverityLevel::Warning,
+//                "MapObject %s is primitivised as coastline, but has %d vertices",
+//                qPrintable(coastline->toString()),
+//                coastline->points31.size());
             continue;
         }
 
@@ -1415,24 +1415,24 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Perform checks on data
             if (mapObject->points31.size() <= 2)
             {
-                LogPrintf(LogSeverityLevel::Warning,
-                    "MapObject %s primitive is processed as polygon, but has only %d point(s)",
-                    qPrintable(mapObject->toString()),
-                    mapObject->points31.size());
+//                LogPrintf(LogSeverityLevel::Warning,
+//                    "MapObject %s primitive is processed as polygon, but has only %d point(s)",
+//                    qPrintable(mapObject->toString()),
+//                    mapObject->points31.size());
                 continue;
             }
             if (!mapObject->isClosedFigure())
             {
-                LogPrintf(LogSeverityLevel::Warning,
-                    "MapObject %s primitive is processed as polygon, but isn't closed",
-                    qPrintable(mapObject->toString()));
+//                LogPrintf(LogSeverityLevel::Warning,
+//                    "MapObject %s primitive is processed as polygon, but isn't closed",
+//                    qPrintable(mapObject->toString()));
                 continue;
             }
             if (!mapObject->isClosedFigure(true))
             {
-                LogPrintf(LogSeverityLevel::Warning,
-                    "MapObject %s primitive is processed as polygon, but isn't closed (inner)",
-                    qPrintable(mapObject->toString()));
+//                LogPrintf(LogSeverityLevel::Warning,
+//                    "MapObject %s primitive is processed as polygon, but isn't closed (inner)",
+//                    qPrintable(mapObject->toString()));
                 continue;
             }
 
@@ -1575,10 +1575,10 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Perform checks on data
             if (mapObject->points31.size() < 2)
             {
-                LogPrintf(LogSeverityLevel::Warning,
-                    "MapObject %s is processed as polyline, but has %d point(s)",
-                    qPrintable(mapObject->toString()),
-                    mapObject->points31.size());
+//                LogPrintf(LogSeverityLevel::Warning,
+//                    "MapObject %s is processed as polyline, but has %d point(s)",
+//                    qPrintable(mapObject->toString()),
+//                    mapObject->points31.size());
                 continue;
             }
 
@@ -1628,9 +1628,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Perform checks on data
             if (mapObject->points31.size() < 1)
             {
-                LogPrintf(LogSeverityLevel::Warning,
-                    "MapObject %s is processed as point, but has no point",
-                    qPrintable(mapObject->toString()));
+//                LogPrintf(LogSeverityLevel::Warning,
+//                    "MapObject %s is processed as point, but has no point",
+//                    qPrintable(mapObject->toString()));
                 continue;
             }
 
