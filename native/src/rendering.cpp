@@ -449,7 +449,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 			oneway = -1;
 		}
 	}
-	if(pair.first="waterway" && rc->getWaterwayArrows() > 0 && (
+	if(pair.first == "waterway" && rc->getWaterwayArrows() > 0 && (
 		(rc->getZoom() >= 15 && pair.second == "stream") ||
 		(rc->getZoom() >= 12 && pair.second == "river") ||
 		(rc->getZoom() >= 14 && pair.second == "canal")
