@@ -629,8 +629,8 @@ void OsmAnd::MapRasterizer_P::simplifyVertexToDirection(
     const PointF& vertexTo,
     PointF& res)
 {
-    const auto xShiftForSpacing = context.pixelArea.width() / 10;
-    const auto yShiftForSpacing = context.pixelArea.height() / 10;
+    const auto xShiftForSpacing = context.pixelArea.width() / 4;
+    const auto yShiftForSpacing = context.pixelArea.height() / 4;
 
     if (vertex.x > context.pixelArea.right() + xShiftForSpacing)
     {
