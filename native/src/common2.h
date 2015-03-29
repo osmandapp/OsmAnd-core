@@ -92,6 +92,8 @@ struct IconDrawInfo
 	SkBitmap* shield;
 	float x;
 	float y;
+	float shiftPx;
+	float shiftPy;
 	int order;
 	int secondOrder;
 	float iconSize;

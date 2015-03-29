@@ -251,6 +251,8 @@ public:
 	RenderingRuleProperty* R_ICON_ORDER;
 	RenderingRuleProperty* R_TEXT_MIN_DISTANCE;
 	RenderingRuleProperty* R_TEXT_ON_PATH;
+	RenderingRuleProperty* R_ICON_SHIFT_PX;
+	RenderingRuleProperty* R_ICON_SHIFT_PY;
 	RenderingRuleProperty* R_ICON_1;
 	RenderingRuleProperty* R_ICON;
 	RenderingRuleProperty* R_ICON2;
@@ -388,6 +390,8 @@ public:
 		R_TEXT_ON_PATH = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("textOnPath"));
 
 		// point
+		R_ICON_SHIFT_PX = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("icon_shift_px"));
+		R_ICON_SHIFT_PY = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("icon_shift_py"));
 		R_ICON_1 = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon__1"));
 		R_ICON = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon"));
 		R_ICON2 = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("icon_2"));

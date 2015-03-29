@@ -744,6 +744,8 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.bmp4 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON4));	
 		ico.bmp5 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON5));	
 		ico.shield = shield;
+		ico.shiftPy = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PY, 0);
+		ico.shiftPx = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PX, 0);
 		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
 		ico.secondOrder = ((mObj->id %10000) << 8) + ord;
@@ -786,10 +788,19 @@ bool iconOrder(IconDrawInfo text1, IconDrawInfo text2) {
 	return text1.order < text2.order;
 }
 
-SkRect makeRect(RenderingContext* rc,  IconDrawInfo& icon, SkBitmap* ico) {
+SkRect makeRect(RenderingContext* rc,  IconDrawInfo& icon, SkBitmap* ico, SkRect* rm) {
 	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
-	float left = icon.x -  ico->width() / 2 * coef;
-	float top = icon.y - ico->height() / 2 * coef; 
+	float cx = icon.x;
+	float cy = icon.y;
+	if(rm != NULL) {
+		cx = rm -> centerX();
+		cy = rm -> centerY();
+	} else {
+		cx +=  ico->shiftPx *  ico->width() / 2 * coef;
+		cy +=  ico->shiftPy *  ico->height() / 2 * coef;
+	}
+	float left = cx -  ico->width() / 2 * coef;
+	float top = cy - ico->height() / 2 * coef; 
 	SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
 			ico->height() * coef );
 	return r;
@@ -838,8 +849,8 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			SkRect rm = makeRect(rc, icon, ico);
 			if (!intersects) {
 				if(icon.shield != NULL) {
-					SkRect rt = makeRect(rc, icon, icon.shield);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.shield, (SkIRect*) NULL, rt, &p));
+					SkRect r = makeRect(rc, icon, icon.shield);
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.shield, (SkIRect*) NULL, r, &p));
 				}
 				if(icon.bmp_1 != NULL) {
 					SkRect r = makeRect(rc, icon, icon.bmp_1);
