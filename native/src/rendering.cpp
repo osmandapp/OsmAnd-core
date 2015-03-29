@@ -796,8 +796,8 @@ SkRect makeRect(RenderingContext* rc,  IconDrawInfo& icon, SkBitmap* ico, SkRect
 		cx = rm -> centerX();
 		cy = rm -> centerY();
 	} else {
-		cx +=  icon->shiftPx *  ico->width() / 2 * coef;
-		cy +=  icon->shiftPy *  ico->height() / 2 * coef;
+		cx +=  icon.shiftPx *  ico->width() / 2 * coef;
+		cy +=  icon.shiftPy *  ico->height() / 2 * coef;
 	}
 	float left = cx -  ico->width() / 2 * coef;
 	float top = cy - ico->height() / 2 * coef; 
