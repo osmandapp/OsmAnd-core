@@ -32,9 +32,6 @@ namespace OsmAnd
         static void read(
             const ObfReader_P& reader,
             const std::shared_ptr<ObfPoiSectionInfo>& section);
-        static void readBoundaries(
-            const ObfReader_P& reader,
-            const std::shared_ptr<ObfPoiSectionInfo>& section);
 
         static void readCategories(
             const ObfReader_P& reader,

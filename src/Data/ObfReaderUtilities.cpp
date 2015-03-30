@@ -169,16 +169,48 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
     }
 }
 
+void OsmAnd::ObfReaderUtilities::readTileBox(gpb::io::CodedInputStream* cis, AreaI& outArea)
+{
+    for (;;)
+    {
+        const auto tag = cis->ReadTag();
+        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        {
+            case 0:
+                if (!reachedDataEnd(cis))
+                    return;
+
+                return;
+            case OBF::OsmAndTileBox::kLeftFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&outArea.left()));
+                break;
+            case OBF::OsmAndTileBox::kRightFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&outArea.right()));
+                break;
+            case OBF::OsmAndTileBox::kTopFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&outArea.top()));
+                break;
+            case OBF::OsmAndTileBox::kBottomFieldNumber:
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&outArea.bottom()));
+                break;
+            default:
+                skipUnknownField(cis, tag);
+                break;
+        }
+    }
+}
+
 void OsmAnd::ObfReaderUtilities::skipUnknownField(gpb::io::CodedInputStream* cis, int tag)
 {
-    auto wireType = gpb::internal::WireFormatLite::GetTagWireType(tag);
+    const auto wireType = gpb::internal::WireFormatLite::GetTagWireType(tag);
     if (wireType == gpb::internal::WireFormatLite::WIRETYPE_FIXED32_LENGTH_DELIMITED)
     {
-        auto length = readBigEndianInt(cis);
+        const auto length = readBigEndianInt(cis);
         cis->Skip(length);
+        return;
     }
-    else
-        gpb::internal::WireFormatLite::SkipField(cis, tag);
+    
+    gpb::internal::WireFormatLite::SkipField(cis, tag);
 }
 
 void OsmAnd::ObfReaderUtilities::skipBlockWithLength(gpb::io::CodedInputStream* cis)

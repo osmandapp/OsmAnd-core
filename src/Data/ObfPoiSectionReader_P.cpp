@@ -51,7 +51,7 @@ void OsmAnd::ObfPoiSectionReader_P::read(
                 const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
-                readBoundaries(reader, section);
+                ObfReaderUtilities::readTileBox(cis, section->area31);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -78,41 +78,6 @@ void OsmAnd::ObfPoiSectionReader_P::read(
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
                 cis->Skip(cis->BytesUntilLimit());
                 return;
-            default:
-                ObfReaderUtilities::skipUnknownField(cis, tag);
-                break;
-        }
-    }
-}
-
-void OsmAnd::ObfPoiSectionReader_P::readBoundaries(
-    const ObfReader_P& reader,
-    const std::shared_ptr<ObfPoiSectionInfo>& section)
-{
-    const auto cis = reader.getCodedInputStream().get();
-
-    for (;;)
-    {
-        const auto tag = cis->ReadTag();
-        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
-        {
-            case 0:
-                if (!ObfReaderUtilities::reachedDataEnd(cis))
-                    return;
-
-                return;
-            case OBF::OsmAndTileBox::kLeftFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.left()));
-                break;
-            case OBF::OsmAndTileBox::kRightFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.right()));
-                break;
-            case OBF::OsmAndTileBox::kTopFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.top()));
-                break;
-            case OBF::OsmAndTileBox::kBottomFieldNumber:
-                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&section->area31.bottom()));
-                break;
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;

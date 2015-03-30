@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_MODEL_STREET_INTERSECTION_H_
-#define _OSMAND_CORE_MODEL_STREET_INTERSECTION_H_
+#ifndef _OSMAND_CORE_STREET_INTERSECTION_H_
+#define _OSMAND_CORE_STREET_INTERSECTION_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
@@ -9,27 +9,26 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 
-namespace OsmAnd {
+namespace OsmAnd
+{
+    class Street;
 
-    class ObfAddressSectionReader_P;
+    class OSMAND_CORE_API StreetIntersection Q_DECL_FINAL
+    {
+        Q_DISABLE_COPY_AND_MOVE(StreetIntersection);
 
-        class OSMAND_CORE_API StreetIntersection
-        {
-        private:
-        protected:
-            QString _name;
-            QString _latinName;
-            PointI _tile24;
-        public:
-            StreetIntersection();
-            virtual ~StreetIntersection();
+    private:
+    protected:
+    public:
+        StreetIntersection(const std::shared_ptr<const Street>& street);
+        virtual ~StreetIntersection();
 
-            const QString& name;
-            const QString& latinName;
-            const PointI& tile24;
+        const std::shared_ptr<const Street> street;
 
-        friend class OsmAnd::ObfAddressSectionReader_P;
-        };
-} // namespace OsmAnd
+        QString nativeName;
+        QHash<QString, QString> localizedNames;
+        PointI position31;
+    };
+}
 
-#endif // !defined(_OSMAND_CORE_MODEL_STREET_INTERSECTION_H_)
+#endif // !defined(_OSMAND_CORE_STREET_INTERSECTION_H_)

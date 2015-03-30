@@ -489,10 +489,13 @@ namespace OsmAnd
 #if !defined(SWIG)
         inline static AreaI64 boundingBox31FromAreaInMeters(const double radiusInMeters, const PointI center31)
         {
-            const auto x31r = metersToX31(radiusInMeters);
-            const auto y31r = metersToY31(radiusInMeters);
+            const auto metersPerUnit = getMetersPerTileUnit(
+                ZoomLevel31,
+                center31.y,
+                1);
+            const auto size = static_cast<int32_t>((radiusInMeters / metersPerUnit) * 2.0);
 
-            return AreaI64::fromCenterAndSize(center31.x, center31.y, x31r * 2, y31r * 2);
+            return AreaI64::fromCenterAndSize(center31.x, center31.y, size, size);
         }
 #endif // !defined(SWIG)
 

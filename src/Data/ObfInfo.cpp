@@ -3,6 +3,7 @@
 #include "ObfMapSectionInfo.h"
 #include "ObfRoutingSectionInfo.h"
 #include "ObfPoiSectionInfo.h"
+#include "ObfAddressSectionInfo.h"
 
 OsmAnd::ObfInfo::ObfInfo()
     : version(-1)
@@ -94,7 +95,28 @@ bool OsmAnd::ObfInfo::containsDataFor(
         }
     }
 
-    //TODO: ObfAddressSectionInfo
+    if (desiredDataTypes.isSet(ObfDataType::Address))
+    {
+        for (const auto& addressSection : constOf(addressSections))
+        {
+            bool accept = true;
+
+            // Check by area
+            if (pBbox31)
+            {
+                const auto fitsBBox =
+                    addressSection->area31.contains(*pBbox31) ||
+                    addressSection->area31.intersects(*pBbox31) ||
+                    pBbox31->contains(addressSection->area31);
+
+                accept = accept && fitsBBox;
+            }
+
+            if (accept)
+                return true;
+        }
+    }
+
     //TODO: ObfTransportSectionInfo
 
     return false;

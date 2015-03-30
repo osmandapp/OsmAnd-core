@@ -751,6 +751,14 @@ namespace OsmAnd
             return res;
         }
 
+        static AreaT largestPositive()
+        {
+            AreaT res;
+            res.top() = res.left() = static_cast<T>(0);
+            res.bottom() = res.right() = std::numeric_limits<T>::max();
+            return res;
+        }
+
         static AreaT fromCenterAndSize(const PointT& center, const PointT& size)
         {
             const T halfWidth = size.x / static_cast<T>(2);

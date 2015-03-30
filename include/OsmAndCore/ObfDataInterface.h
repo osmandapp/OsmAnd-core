@@ -14,6 +14,7 @@
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 #include <OsmAndCore/Data/ObfPoiSectionReader.h>
+#include <OsmAndCore/Data/ObfAddressSectionReader.h>
 
 namespace OsmAnd
 {
@@ -96,6 +97,43 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
+            const IQueryController* const controller = nullptr);
+
+        bool scanAddressesByName(
+            const QString& query,
+            QList< std::shared_ptr<const OsmAnd::Address> >* outAddresses,
+            const AreaI* const bbox31 = nullptr,
+            const ObfAddressStreetGroupTypesMask streetGroupTypesFilter = fullObfAddressStreetGroupTypesMask(),
+            const bool includeStreets = true,
+            const ObfAddressSectionReader::VisitorFunction visitor = nullptr,
+            const IQueryController* const controller = nullptr);
+
+        bool loadStreetGroups(
+            QList< std::shared_ptr<const StreetGroup> >* resultOut = nullptr,
+            const AreaI* const bbox31 = nullptr,
+            const ObfAddressStreetGroupTypesMask streetGroupTypesFilter = fullObfAddressStreetGroupTypesMask(),
+            const ObfAddressSectionReader::StreetGroupVisitorFunction visitor = nullptr,
+            const IQueryController* const controller = nullptr);
+
+        bool loadStreetsFromGroups(
+            const QList< std::shared_ptr<const StreetGroup> >& streetGroups,
+            QHash< std::shared_ptr<const StreetGroup>, QList< std::shared_ptr<const Street> > >* resultOut = nullptr,
+            const AreaI* const bbox31 = nullptr,
+            const ObfAddressSectionReader::StreetVisitorFunction visitor = nullptr,
+            const IQueryController* const controller = nullptr);
+
+        bool loadBuildingsFromStreets(
+            const QList< std::shared_ptr<const Street> >& streets,
+            QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const Building> > >* resultOut = nullptr,
+            const AreaI* const bbox31 = nullptr,
+            const ObfAddressSectionReader::BuildingVisitorFunction visitor = nullptr,
+            const IQueryController* const controller = nullptr);
+
+        bool loadIntersectionsFromStreets(
+            const QList< std::shared_ptr<const Street> >& streets,
+            QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const StreetIntersection> > >* resultOut = nullptr,
+            const AreaI* const bbox31 = nullptr,
+            const ObfAddressSectionReader::IntersectionVisitorFunction visitor = nullptr,
             const IQueryController* const controller = nullptr);
     };
 }

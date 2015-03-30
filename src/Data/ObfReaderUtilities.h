@@ -13,6 +13,7 @@
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
+#include "PointsAndAreas.h"
 
 namespace OsmAnd
 {
@@ -35,6 +36,7 @@ namespace OsmAnd
             QVector<uint32_t>& outValues,
             const QString& keysPrefix = QString::null,
             const int matchedCharactersCount = 0);
+        static void readTileBox(gpb::io::CodedInputStream* cis, AreaI& outArea);
 
         static void skipUnknownField(gpb::io::CodedInputStream* cis, int tag);
         static void skipBlockWithLength(gpb::io::CodedInputStream* cis);

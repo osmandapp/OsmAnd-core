@@ -1,9 +1,7 @@
-#include <StreetIntersection.h>
+#include "StreetIntersection.h"
 
-OsmAnd::StreetIntersection::StreetIntersection()
-    : name(_name)
-    , latinName(_name)
-    , tile24(_tile24)
+OsmAnd::StreetIntersection::StreetIntersection(const std::shared_ptr<const Street>& street_)
+    : street(street_)
 {
 }
 

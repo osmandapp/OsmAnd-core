@@ -1,10 +1,14 @@
-#include <Street.h>
+#include "Street.h"
 
-OsmAnd::Street::Street()
-    : id(_id)
-    , name(_name)
-    , latinName(_name)
-    , tile24(_tile24)
+#include "StreetGroup.h"
+
+OsmAnd::Street::Street(const std::shared_ptr<const StreetGroup>& streetGroup_)
+    : Address(streetGroup_->obfSection, AddressType::Street)
+    , streetGroup(streetGroup_)
+    , id(ObfObjectId::invalidId())
+    , offset(0)
+    , firstBuildingInnerOffset(0)
+    , firstIntersectionInnerOffset(0)
 {
 }
 

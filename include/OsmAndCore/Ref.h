@@ -89,9 +89,33 @@ namespace OsmAnd
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
+        inline bool operator==(const std::shared_ptr< const OtherType >& rObjectRef) const
+        {
+            return (_objectRef == rObjectRef);
+        }
+
+        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
+        inline bool operator==(const OtherType* const pObject) const
+        {
+            return (_objectRef.get() == pObject);
+        }
+
+        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
         inline bool operator!=(const Ref< OtherType >& r) const
         {
             return (_objectRef != r._objectRef);
+        }
+
+        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
+        inline bool operator!=(const std::shared_ptr< const OtherType >& rObjectRef) const
+        {
+            return (_objectRef != rObjectRef);
+        }
+
+        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
+        inline bool operator!=(const OtherType* const pObject) const
+        {
+            return (_objectRef.get() == pObject);
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>

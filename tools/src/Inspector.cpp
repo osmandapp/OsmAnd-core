@@ -314,24 +314,33 @@ void printAddressDetailedInfo(std::wostream& output, const OsmAndTools::Inspecto
 void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfAddressSectionInfo>& section)
 #endif
 {
-    OsmAnd::ObfAddressBlockType types[] = {
-        OsmAnd::ObfAddressBlockType::CitiesOrTowns,
-        OsmAnd::ObfAddressBlockType::Villages,
-        OsmAnd::ObfAddressBlockType::Postcodes,
+    OsmAnd::ObfAddressStreetGroupType types[] =
+    {
+        OsmAnd::ObfAddressStreetGroupType::CityOrTown,
+        OsmAnd::ObfAddressStreetGroupType::Village,
+        OsmAnd::ObfAddressStreetGroupType::Postcode,
     };
-    char* strTypes[] = {
+    const char* const strTypes[] =
+    {
         "Cities/Towns section",
         "Villages section",
         "Postcodes section",
     };
+
+    OsmAnd::AreaI bbox31;
+    bbox31.top() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.top());
+    bbox31.bottom() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
+    bbox31.left() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
+    bbox31.right() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
+
     for (int typeIdx = 0; typeIdx < sizeof(types) / sizeof(types[0]); typeIdx++)
     {
         auto type = types[typeIdx];
 
         QList< std::shared_ptr<const OsmAnd::StreetGroup> > streetGroups;
-        QSet<OsmAnd::ObfAddressBlockType> typeSet;
-        typeSet << types[typeIdx];
-        OsmAnd::ObfAddressSectionReader::loadStreetGroups(reader, section, &streetGroups, nullptr, nullptr, &typeSet);
+        OsmAnd::ObfAddressStreetGroupTypesMask typesMask;
+        typesMask.set(static_cast<OsmAnd::ObfAddressStreetGroupType>(types[typeIdx]));
+        OsmAnd::ObfAddressSectionReader::loadStreetGroups(reader, section, &streetGroups, &bbox31, typesMask);
 
         output << xT("\t") << strTypes[typeIdx] << xT(", ") << streetGroups.size() << xT(" group(s)");
         if (!cfg.verboseStreetGroups)
@@ -346,7 +355,14 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
 
             QList< std::shared_ptr<const OsmAnd::Street> > streets;
             OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(reader, g, &streets);
-            output << xT("\t\t'") << QStringToStlString(g->_latinName) << xT("' [") << g->_id << xT("], ") << streets.size() << xT(" street(s)");
+            output
+                << xT("\t\t'")
+                << QStringToStlString(g->nativeName)
+                << xT("' [")
+                << QStringToStlString(g->id.toString())
+                << xT("], ")
+                << streets.size()
+                << xT(" street(s)");
             if (!cfg.verboseStreets)
             {
                 output << std::endl;
@@ -369,7 +385,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
                 OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(reader, s, &buildings);
                 QList< std::shared_ptr<const OsmAnd::StreetIntersection> > intersections;
                 OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(reader, s, &intersections);
-                output << xT("\t\t\t'") << QStringToStlString(s->latinName) << xT("' [") << s->id << xT("], ") << buildings.size() << xT(" building(s), ") << intersections.size() << xT(" intersection(s)") << std::endl;
+                output << xT("\t\t\t'") << QStringToStlString(s->nativeName) << xT("' [") << s->id << xT("], ") << buildings.size() << xT(" building(s), ") << intersections.size() << xT(" intersection(s)") << std::endl;
                 if (cfg.verboseBuildings && buildings.size() > 0)
                 {
                     output << xT("\t\t\t\tBuildings:") << std::endl;
@@ -377,10 +393,10 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
                     {
                         auto building = *itBuilding;
 
-                        if (building->_interpolationInterval != 0)
+                        /*if (building->_interpolationInterval != 0)
                             output << xT("\t\t\t\t\t") << QStringToStlString(building->_latinName) << xT("-") << QStringToStlString(building->_latinName2) << xT(" (+") << building->_interpolationInterval << xT(") [") << building->_id << xT("]") << std::endl;
                         else if (building->_interpolation != OsmAnd::Building::Interpolation::Invalid)
-                            output << xT("\t\t\t\t\t") << QStringToStlString(building->_latinName) << xT("-") << QStringToStlString(building->_latinName2) << xT(" (") << building->_interpolation << xT(") [") << building->_id << xT("]") << std::endl;
+                            output << xT("\t\t\t\t\t") << QStringToStlString(building->_latinName) << xT("-") << QStringToStlString(building->_latinName2) << xT(" (") << building->_interpolation << xT(") [") << building->_id << xT("]") << std::endl;*/
                     }
                 }
                 if (cfg.verboseIntersections && intersections.size() > 0)
@@ -390,7 +406,7 @@ void printAddressDetailedInfo(std::ostream& output, const OsmAndTools::Inspector
                     {
                         auto intersection = *itIntersection;
 
-                        output << xT("\t\t\t\t\t") << QStringToStlString(intersection->latinName) << std::endl;
+                        output << xT("\t\t\t\t\t") << QStringToStlString(intersection->nativeName) << std::endl;
                     }
                 }
             }

@@ -178,7 +178,8 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoad(
 
 QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::RoadLocator_P::findRoadsInArea(
     const QList< std::shared_ptr<const Road> >& collection,
-    const PointI position31, const double radiusInMeters)
+    const PointI position31,
+    const double radiusInMeters)
 {
     return QList< std::shared_ptr<const Road> >();
 }

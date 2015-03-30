@@ -257,11 +257,34 @@ namespace OsmAnd
     static_assert(sizeof(ObfPoiCategoryId) == 4, "ObfPoiCategoryId must be 4 bytes in size");
 #endif // !defined(SWIG)
 
-    enum class ObfAddressBlockType
+    enum class ObfAddressStreetGroupType : int32_t
     {
-        CitiesOrTowns = 1,
-        Villages = 3,
-        Postcodes = 2,
+        CityOrTown = 1,
+        Village = 3,
+        Postcode = 2,
+    };
+
+    typedef Bitmask<ObfAddressStreetGroupType> ObfAddressStreetGroupTypesMask;
+
+    inline ObfAddressStreetGroupTypesMask fullObfAddressStreetGroupTypesMask()
+    {
+        return ObfAddressStreetGroupTypesMask()
+            .set(ObfAddressStreetGroupType::CityOrTown)
+            .set(ObfAddressStreetGroupType::Village)
+            .set(ObfAddressStreetGroupType::Postcode);
+    }
+
+    enum class ObfAddressStreetGroupSubtype : int32_t
+    {
+        Unknown = -1,
+
+        City = 0,
+        Town,
+        Village,
+        Hamlet,
+        Suburb,
+        District,
+        Neighbourhood
     };
 }
 

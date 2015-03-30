@@ -5,19 +5,26 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QHash>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/MemoryCommon.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API Building
+    class Street;
+    class StreetGroup;
+
+    class OSMAND_CORE_API Building Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(Building);
+
     public:
-        enum Interpolation
+        enum class Interpolation : int32_t
         {
-            Invalid = 0,
+            Disabled = 0,
             All = -1,
             Even = -2,
             Odd = -3,
@@ -27,23 +34,24 @@ namespace OsmAnd
     private:
     protected:
     public:
-        Building();
+        Building(const std::shared_ptr<const Street>& street);
+        Building(const std::shared_ptr<const StreetGroup>& streetGroup);
         virtual ~Building();
 
-        int64_t _id;
-        QString _name;
-        QString _latinName;
-        QString _name2; // WTF?
-        QString _latinName2; // WTF?
-        QString _postcode;
-        uint32_t _xTile24;
-        uint32_t _yTile24;
-        uint32_t _x2Tile24;
-        uint32_t _y2Tile24;
-        Interpolation _interpolation;
-        uint32_t _interpolationInterval;
-        uint32_t _offset;
+        const std::shared_ptr<const Street> street;
+        const std::shared_ptr<const StreetGroup> streetGroup;
+
+        ObfObjectId id;
+        QString nativeName;
+        QHash<QString, QString> localizedNames;
+        QString postcode;
+        PointI position31;
+
+        Interpolation interpolation;
+        QString interpolationNativeName;
+        QHash<QString, QString> interpolationLocalizedNames;
+        PointI interpolationPosition31;
     };
-} // namespace OsmAnd
+}
 
 #endif // !defined(_OSMAND_CORE_BUILDING_H_)

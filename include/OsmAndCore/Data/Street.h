@@ -1,40 +1,43 @@
-#ifndef _OSMAND_CORE_MODEL_STREET_H_
-#define _OSMAND_CORE_MODEL_STREET_H_
+#ifndef _OSMAND_CORE_STREET_H_
+#define _OSMAND_CORE_STREET_H_
 
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
+#include <QHash>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
+#include <OsmAndCore/Data/Address.h>
 
-namespace OsmAnd {
+namespace OsmAnd
+{
+    class StreetGroup;
 
-    class ObfAddressSectionReader_P;
+    class OSMAND_CORE_API Street Q_DECL_FINAL : public Address
+    {
+        Q_DISABLE_COPY_AND_MOVE(Street);
 
-    class OSMAND_CORE_API Street
-        {
-        private:
-        protected:
-            uint64_t _id;
-            QString _name;
-            QString _latinName;
-            PointI _tile24;
-            uint32_t _offset;
+    private:
+    protected:
+    public:
+        Street(const std::shared_ptr<const StreetGroup>& streetGroup);
+        virtual ~Street();
 
-            Street();
-        public:
-            virtual ~Street();
+        ObfObjectId id;
+        QString nativeName;
+        QHash<QString, QString> localizedNames;
+        PointI position31;
+        uint32_t offset;
+        uint32_t firstBuildingInnerOffset;
+        uint32_t firstIntersectionInnerOffset;
 
-            const uint64_t& id;
-            const QString& name;
-            const QString& latinName;
-            const PointI& tile24;
+        const std::shared_ptr<const StreetGroup> streetGroup;
+    };
+}
 
-        friend class OsmAnd::ObfAddressSectionReader_P;
-        };
+#endif // !defined(_OSMAND_CORE_STREET_H_)
 
-} // namespace OsmAnd
-
-#endif // !defined(_OSMAND_CORE_MODEL_STREET_H_)

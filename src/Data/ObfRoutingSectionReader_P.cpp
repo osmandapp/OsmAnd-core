@@ -86,8 +86,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeBbox31(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    outBbox31.topLeft.x = outBbox31.topLeft.y = 0;
-    outBbox31.bottomRight.x = outBbox31.bottomRight.y = std::numeric_limits<int>::max();
+    outBbox31 = AreaI::largestPositive();
 
     for (;;)
     {

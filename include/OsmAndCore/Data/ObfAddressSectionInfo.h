@@ -4,8 +4,8 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QList>
 #include <QHash>
+#include <QString>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -14,45 +14,41 @@
 namespace OsmAnd
 {
     class ObfAddressSectionReader_P;
-    class ObfReader_P;
-    class ObfAddressBlocksSectionInfo;
 
     class OSMAND_CORE_API ObfAddressSectionInfo : public ObfSectionInfo
     {
         Q_DISABLE_COPY_AND_MOVE(ObfAddressSectionInfo)
     private:
     protected:
-        ObfAddressSectionInfo(const std::shared_ptr<const ObfInfo>& container);
-
-        //NOTE:?
-        QString _latinName;
-
-        QList< std::shared_ptr<const ObfAddressBlocksSectionInfo> > _addressBlocksSections;
     public:
+        ObfAddressSectionInfo(const std::shared_ptr<const ObfInfo>& container);
         virtual ~ObfAddressSectionInfo();
 
-        const QList< std::shared_ptr<const ObfAddressBlocksSectionInfo> >& addressBlocksSections;
+        AreaI area31;
+        QHash<QString, QString> localizedNames;
 
-        friend class OsmAnd::ObfAddressSectionReader_P;
-        friend class OsmAnd::ObfReader_P;
+        uint32_t nameIndexInnerOffset;
+        uint32_t firstStreetGroupInnerOffset;
+
+    friend class OsmAnd::ObfAddressSectionReader_P;
     };
 
-    class OSMAND_CORE_API ObfAddressBlocksSectionInfo : public ObfSectionInfo
+    /*class OSMAND_CORE_API ObfAddressBlocksSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfAddressBlocksSectionInfo)
+    Q_DISABLE_COPY_AND_MOVE(ObfAddressBlocksSectionInfo)
     private:
     protected:
-        ObfAddressBlocksSectionInfo(const std::shared_ptr<const ObfAddressSectionInfo>& addressSection, const std::shared_ptr<const ObfInfo>& container);
+    ObfAddressBlocksSectionInfo(const std::shared_ptr<const ObfAddressSectionInfo>& addressSection, const std::shared_ptr<const ObfInfo>& container);
 
-        ObfAddressBlockType _type;
+    ObfAddressBlockType _type;
     public:
-        virtual ~ObfAddressBlocksSectionInfo();
+    virtual ~ObfAddressBlocksSectionInfo();
 
-        const ObfAddressBlockType& type;
+    const ObfAddressBlockType& type;
 
-        friend class OsmAnd::ObfAddressSectionReader_P;
-        friend class OsmAnd::ObfReader_P;
-    };
-} // namespace OsmAnd
+    friend class OsmAnd::ObfAddressSectionReader_P;
+    friend class OsmAnd::ObfReader_P;
+    };*/
+}
 
 #endif // !defined(_OSMAND_CORE_OBF_ADDRESS_SECTION_INFO_H_)
