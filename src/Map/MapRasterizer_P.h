@@ -116,7 +116,7 @@ namespace OsmAnd
 
         inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex);
         inline float lineEquation(float x1, float y1, float x2, float y2, float x);
-        inline void simplifyVertexToDirection(const Context& context, const PointF& vertex, const PointF& vertexTo, PointF& res);
+        inline void simplifyVertexToDirection(const Context& , const PointF& , const PointF& , PointF&);
         static bool containsHelper(const QVector< PointI >& points, const PointI& otherPoint);
 
         void initialize();

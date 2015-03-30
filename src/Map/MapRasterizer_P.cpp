@@ -459,7 +459,6 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
     auto pPoint = points31.constData();
     PointF pVertex;
     PointF tempVertex;
-    bool previousAdded = false;
     for (pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
     {
         const auto& point = *pPoint;
@@ -474,7 +473,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
         {
             if ((prevCross & cross) == 0)
             {
-                if (!previousAdded)
+                if (prevCross != 0 || !intersect)
                 {
                     simplifyVertexToDirection(context, pVertex, vertex, tempVertex);
                     path.moveTo(tempVertex.x, tempVertex.y);
@@ -482,11 +481,6 @@ void OsmAnd::MapRasterizer_P::rasterizePolyline(
                 simplifyVertexToDirection(context, vertex, pVertex, tempVertex);
                 path.lineTo(tempVertex.x, tempVertex.y);
                 intersect = true;
-                previousAdded = true;
-            }
-            else
-            {
-                previousAdded = false;
             }
         }
         prevCross = cross;
@@ -629,10 +623,10 @@ void OsmAnd::MapRasterizer_P::simplifyVertexToDirection(
     const PointF& vertexTo,
     PointF& res)
 {
-    const auto xShiftForSpacing = context.pixelArea.width() / 10;
-    const auto yShiftForSpacing = context.pixelArea.height() / 10;
+    const auto xShiftForSpacing = context.pixelArea.width() / 4;
+    const auto yShiftForSpacing = context.pixelArea.height() / 4;
 
-    if (vertex.x > context.pixelArea.right() + xShiftForSpacing)
+    if (vertex.x > context.pixelArea.right() + xShiftForSpacing )
     {
         res.x = context.pixelArea.right() + xShiftForSpacing;
         res.y = lineEquation(vertex.x, vertex.y, vertexTo.x, vertexTo.y, res.x);
