@@ -47,6 +47,7 @@ namespace OsmAndTools
             float symbolsScale;
             QString locale;
             QString styleDumpFilename;
+            bool metrics;
             bool verbose;
 
             static bool parseFromCommandLineArguments(

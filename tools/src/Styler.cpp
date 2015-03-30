@@ -175,9 +175,13 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         const std::shared_ptr<OsmAnd::MapPrimitiviser> primitiviser(new OsmAnd::MapPrimitiviser(mapPresentationEnvironment));
         if (configuration.verbose)
             output << xT("Going to primitivise map objects...") << std::endl;
+        OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects metrics;
         const auto primitivisedData = primitiviser->primitiviseAllMapObjects(
                 configuration.zoom,
-                mapObjects);
+                mapObjects,
+                nullptr,
+                nullptr,
+                configuration.metrics ? &metrics : nullptr);
         if (configuration.verbose)
         {
             output
@@ -529,6 +533,14 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             }
         }
 
+        if (configuration.metrics)
+        {
+            output
+                << xT("Metrics:\n")
+                << QStringToStlString(metrics.toString(false, QLatin1String("\t")))
+                << std::endl;
+        }
+
         break;
     }
 
@@ -568,6 +580,7 @@ OsmAndTools::Styler::Configuration::Configuration()
     , mapScale(1.0f)
     , symbolsScale(1.0f)
     , locale(QLatin1String("en"))
+    , metrics(false)
     , verbose(false)
 {
 }
@@ -738,15 +751,19 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
 
             outConfiguration.locale = value;
         }
-        else if (arg == QLatin1String("-verbose"))
-        {
-            outConfiguration.verbose = true;
-        }
         else if (arg.startsWith(QLatin1String("-styleDump=")))
         {
             const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-styleDump=")));
 
             outConfiguration.styleDumpFilename = value;
+        }
+        else if (arg == QLatin1String("-metrics"))
+        {
+            outConfiguration.metrics = true;
+        }
+        else if (arg == QLatin1String("-verbose"))
+        {
+            outConfiguration.verbose = true;
         }
         else
         {
