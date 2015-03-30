@@ -592,7 +592,7 @@ QList<OsmAnd::Utilities::ItemPointOnPath> OsmAnd::Utilities::calculateItemPoints
     }
     for (int priority = 0; priority < depth; priority++)
     {
-        int ln = (1 << (priority + 1));
+        int ln = (1u << (priority + 1));
         for (int i = 1; i < ln; i += 2)
         {
             const auto offset = (pathLength * static_cast<float>(i)) / static_cast<float>(ln);

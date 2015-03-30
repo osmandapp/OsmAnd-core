@@ -64,6 +64,8 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_ORDER, Output, Integer, "iconOrder", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIELD, Output, String, "shield", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_MIN_DISTANCE, Output, Float, "iconMinDistance", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_INTERSECTION_SIZE, Output, Float, "iconVisibleSize", true) //TODO: Obsolete, superseded by "intersectionSize"
+//DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIFT_PX, Output, Float, "icon_shift_px", false)
+//DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIFT_PY, Output, Float, "icon_shift_py", false)
 
 // polygon/way:
 

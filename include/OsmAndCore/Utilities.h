@@ -151,7 +151,7 @@ namespace OsmAnd
         inline static double getPowZoom(const float zoom)
         {
             if (zoom >= 0.0f && qFuzzyCompare(zoom, static_cast<uint8_t>(zoom)))
-                return 1 << static_cast<uint8_t>(zoom);
+                return 1u << static_cast<uint8_t>(zoom);
 
             return qPow(2, zoom);
         }
@@ -583,9 +583,9 @@ namespace OsmAnd
             output.top() = input.top() >> shift;
             output.left() = input.left() >> shift;
 
-            tail = input.bottom() & ((1 << shift) - 1);
+            tail = input.bottom() & ((1u << shift) - 1);
             output.bottom() = (input.bottom() >> shift) + (tail ? 1 : 0);
-            tail = input.right() & ((1 << shift) - 1);
+            tail = input.right() & ((1u << shift) - 1);
             output.right() = (input.right() >> shift) + (tail ? 1 : 0);
 
             assert(output.top() >= 0 && output.top() <= std::numeric_limits<int32_t>::max());

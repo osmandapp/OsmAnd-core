@@ -34,14 +34,14 @@ namespace OsmAnd
         enum PinIconAlignment : unsigned int
         {
             XAxisMask = 0x3,
-            Left = 0 << 0,
-            CenterHorizontal = 1 << 0,
-            Right = 2 << 0,
+            Left = 0u << 0,
+            CenterHorizontal = 1u << 0,
+            Right = 2u << 0,
 
             YAxisMask = 0xC,
-            Top = 0 << 2,
-            CenterVertical = 1 << 2,
-            Bottom = 2 << 2,
+            Top = 0u << 2,
+            CenterVertical = 1u << 2,
+            Bottom = 2u << 2,
 
             Center = CenterHorizontal | CenterVertical,
         };
