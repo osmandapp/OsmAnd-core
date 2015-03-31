@@ -236,14 +236,16 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d s:%d f:%d!", bitmapInfo.width, bitmapInfo.height, bitmapInfo.stride, bitmapInfo.format);
 
 	SkBitmap* bitmap = new SkBitmap();
+	SkImageInfo imageInfo;
+	int rowBytes;
 	if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-		int rowBytes = bitmapInfo.stride;
+		rowBytes = bitmapInfo.stride;
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGBA_8888 is %d", rowBytes);
-		bitmap->setConfig(SkBitmap::kARGB_8888_Config, bitmapInfo.width, bitmapInfo.height, rowBytes);
+		imageInfo = SkImageInfo::Make(kN32_SkColorType, bitmapInfo.width, bitmapInfo.height, kPremul_SkAlphaType);
 	} else if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565) {
-		int rowBytes = bitmapInfo.stride;
+		rowBytes = bitmapInfo.stride;
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGB_565 is %d", rowBytes);
-		bitmap->setConfig(SkBitmap::kRGB_565_Config, bitmapInfo.width, bitmapInfo.height, rowBytes);
+		imageInfo = SkImageInfo::Make(kRGB_565_SkColorType, bitmapInfo.width, bitmapInfo.height, kOpaque_SkAlphaType);
 	} else {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unknown target bitmap format");
 	}
@@ -254,7 +256,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	}
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Locked %d bytes at %p", bitmap->getSize(), lockedBitmapData);
 
-	bitmap->setPixels(lockedBitmapData);
+	bitmap->installPixels(imageInfo, lockedBitmapData, rowBytes);
 
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Initializing rendering");
 	OsmAnd::ElapsedTimer initObjects;
@@ -322,10 +324,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d!", rc.getWidth(), rc.getHeight());
 
 	SkBitmap* bitmap = new SkBitmap();
+	SkImageInfo imageInfo;
 	if (isTransparent == JNI_TRUE)
-		bitmap->setConfig(SkBitmap::kARGB_8888_Config, rc.getWidth(), rc.getHeight(), 0);
+		imageInfo = SkImageInfo::Make(kN32_SkColorType, rc.getWidth(), rc.getHeight(), kPremul_SkAlphaType);
 	else
-		bitmap->setConfig(SkBitmap::kRGB_565_Config, rc.getWidth(), rc.getHeight(), 0);
+		imageInfo = SkImageInfo::Make(kRGB_565_SkColorType, rc.getWidth(), rc.getHeight(), kOpaque_SkAlphaType);
 
 	if (bitmapData != NULL && bitmapDataSize != bitmap->getSize()) {
 		free(bitmapData);
@@ -338,7 +341,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Allocated %d bytes at %p", bitmapDataSize, bitmapData);
 	}
 
-	bitmap->setPixels(bitmapData);
+	bitmap->installPixels(imageInfo, bitmapData, bitmap->getSize() / rc.getHeight());
 	OsmAnd::ElapsedTimer initObjects;
 	initObjects.Start();
 
