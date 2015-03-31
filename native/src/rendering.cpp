@@ -12,6 +12,7 @@
 #include <SkShader.h>
 #include <SkBitmapProcShader.h>
 #include <SkPathEffect.h>
+#include <SkBlurMaskFilter.h>
 #include <SkBlurDrawLooper.h>
 #include <SkDashPathEffect.h>
 #include <SkPaint.h>
