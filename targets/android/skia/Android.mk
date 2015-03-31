@@ -234,7 +234,6 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/image/SkSurface_Raster.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/images/bmpdecoderhelper.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/images/SkDecodingImageGenerator.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/images/SkForceLinking.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/images/SkImageDecoder.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/images/SkImageDecoder_FactoryDefault.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/images/SkImageDecoder_FactoryRegistrar.cpp \
@@ -338,8 +337,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor_ASTC.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor_LATC.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor_R11EAC.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/ports/SkDiscardableMemory_none.cpp
+	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor_R11EAC.cpp
 
 # Android specific files
 LOCAL_SRC_FILES += \
