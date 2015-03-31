@@ -225,6 +225,7 @@ namespace OsmAnd
             virtual ~IconSymbol();
 
             QString resourceName;
+            PointF resourceOffsetFactor;
             QList<QString> underlayResourceNames;
             QList<QString> overlayResourceNames;
             QString shieldResourceName;

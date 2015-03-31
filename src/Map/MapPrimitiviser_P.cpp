@@ -2540,6 +2540,13 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_5, iconResourceName))
         icon->overlayResourceNames.push_back(qMove(iconResourceName));
 
+    primitive->evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PX,
+        icon->resourceOffsetFactor.x);
+    primitive->evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PY,
+        icon->resourceOffsetFactor.y);
+
     icon->order = 100;
     primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);
 

@@ -64,8 +64,8 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_ORDER, Output, Integer, "iconOrder", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIELD, Output, String, "shield", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_MIN_DISTANCE, Output, Float, "iconMinDistance", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_INTERSECTION_SIZE, Output, Float, "iconVisibleSize", true) //TODO: Obsolete, superseded by "intersectionSize"
-//DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIFT_PX, Output, Float, "icon_shift_px", false)
-//DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIFT_PY, Output, Float, "icon_shift_py", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIFT_PX, Output, Float, "icon_shift_px", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIFT_PY, Output, Float, "icon_shift_py", false)
 
 // polygon/way:
 
@@ -124,10 +124,5 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_RADIUS, Output, Float, "shadowRadius", tr
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_ICON, Output, String, "pathIcon", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_ICON_STEP, Output, Float, "pathIconStep", true)
-// Following can not be placed in any of current rule sections, since describes parameter of path itself, not primitive that was
-// created from this path
-//DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_PADDING, Output, Float, "pathPadding", true)
-//DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_SYMBOL_SPACING, Output, Float, "pathSymbolSpacing", true)
-//DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_BLOCK_SPACING, Output, Float, "pathBlockSpacing", true)
 
 #endif // DECLARE_BUILTIN_VALUEDEF

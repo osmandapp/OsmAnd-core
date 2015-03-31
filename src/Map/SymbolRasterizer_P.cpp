@@ -91,7 +91,8 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 {
                     env->obtainTextShield(textSymbol->shieldResourceName, style.backgroundBitmap);
 
-                    if (!qFuzzyCompare(textSymbol->scaleFactor, 1.0f) && style.backgroundBitmap) {
+                    if (!qFuzzyCompare(textSymbol->scaleFactor, 1.0f) && style.backgroundBitmap)
+                    {
                         style.backgroundBitmap = SkiaUtilities::scaleBitmap(
                             style.backgroundBitmap,
                             textSymbol->scaleFactor,
@@ -227,7 +228,15 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 std::shared_ptr<const SkBitmap> iconBitmap;
                 if (!env->obtainMapIcon(iconSymbol->resourceName, iconBitmap) || !iconBitmap)
                     continue;
-                if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f)) {
+                if (!qFuzzyIsNull(iconSymbol->resourceOffsetFactor.x) || !qFuzzyIsNull(iconSymbol->resourceOffsetFactor.y))
+                {
+                    iconBitmap = SkiaUtilities::offsetBitmap(
+                        iconBitmap,
+                        iconSymbol->resourceOffsetFactor.x * iconBitmap->width(),
+                        iconSymbol->resourceOffsetFactor.y * iconBitmap->height());
+                }
+                if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f))
+                {
                     iconBitmap = SkiaUtilities::scaleBitmap(
                         iconBitmap,
                         iconSymbol->scaleFactor,
@@ -235,10 +244,12 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 }
 
                 std::shared_ptr<const SkBitmap> backgroundBitmap;
-                if (!iconSymbol->shieldResourceName.isEmpty()) {
+                if (!iconSymbol->shieldResourceName.isEmpty())
+                {
                     env->obtainIconShield(iconSymbol->shieldResourceName, backgroundBitmap);
 
-                    if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f) && backgroundBitmap) {
+                    if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f) && backgroundBitmap)
+                    {
                         backgroundBitmap = SkiaUtilities::scaleBitmap(
                             backgroundBitmap,
                             iconSymbol->scaleFactor,

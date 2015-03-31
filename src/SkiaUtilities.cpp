@@ -19,8 +19,8 @@ OsmAnd::SkiaUtilities::~SkiaUtilities()
 
 std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::scaleBitmap(
     const std::shared_ptr<const SkBitmap>& original,
-    float xScale,
-    float yScale)
+    const float xScale,
+    const float yScale)
 {
     if (!original || original->width() <= 0 || original->height() <= 0)
         return nullptr;
@@ -42,6 +42,29 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::scaleBitmap(
     canvas.flush();
 
     return scaledBitmap;
+}
+
+std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::offsetBitmap(
+    const std::shared_ptr<const SkBitmap>& original,
+    const float xOffset,
+    const float yOffset)
+{
+    if (!original || original->width() <= 0 || original->height() <= 0)
+        return nullptr;
+
+    const auto newWidth = original->width() + qAbs(xOffset);
+    const auto newHeight = original->height() + qAbs(yOffset);
+
+    const std::shared_ptr<SkBitmap> newBitmap(new SkBitmap());
+    if (!newBitmap->tryAllocPixels(original->info().makeWH(newWidth, newHeight)))
+        return nullptr;
+    newBitmap->eraseColor(SK_ColorTRANSPARENT);
+
+    SkCanvas canvas(*newBitmap);
+    canvas.drawBitmap(*original, xOffset > 0.0f ? xOffset : 0, yOffset > 0.0f ? yOffset : 0, NULL);
+    canvas.flush();
+
+    return newBitmap;
 }
 
 SkTypeface* OsmAnd::SkiaUtilities::createTypefaceFromData(const QByteArray& data)
@@ -73,9 +96,7 @@ std::shared_ptr<SkBitmap> OsmAnd::SkiaUtilities::mergeBitmaps(const QList< std::
 
     const std::shared_ptr<SkBitmap> outputBitmap(new SkBitmap());
     if (!outputBitmap->tryAllocPixels(SkImageInfo::MakeN32Premul(maxWidth, maxHeight)))
-    {
         return nullptr;
-    }
     outputBitmap->eraseColor(SK_ColorTRANSPARENT);
 
     SkBitmapDevice target(*outputBitmap);
