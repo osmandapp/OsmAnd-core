@@ -90,6 +90,64 @@ namespace OsmAnd
         return result;
     }
 
+    template<typename KEY, typename VALUE>
+    inline QHash< KEY, VALUE > hashFrom(const QMap<KEY, VALUE>& input)
+    {
+        QHash< KEY, VALUE > result;
+
+        const auto citEnd = input.cend();
+        for (auto citEntry = input.cbegin(); citEntry != citEnd; ++citEntry)
+            result.insert(citEntry.key(), citEntry.value());
+
+        return result;
+    }
+
+    template<typename KEY, typename VALUE>
+    inline QHash< KEY, VALUE > mapFrom(const QList<VALUE>& input, const std::function<KEY(const VALUE& item)> keyGetter)
+    {
+        QMap< KEY, VALUE > result;
+
+        for (const auto& item : input)
+            result.insert(keyGetter(item), item);
+
+        return result;
+    }
+
+    template<typename KEY, typename VALUE>
+    inline QMap< KEY, VALUE > mapFrom(const QVector<VALUE>& input, const std::function<KEY(const VALUE& item)> keyGetter)
+    {
+        QMap< KEY, VALUE > result;
+
+        for (const auto& item : input)
+            result.insert(keyGetter(item), item);
+
+        return result;
+    }
+
+    template<typename KEY, typename VALUE>
+    inline QMap< KEY, VALUE > mapFrom(const QHash<KEY, VALUE>& input)
+    {
+        QMap< KEY, VALUE > result;
+
+        const auto citEnd = input.cend();
+        for (auto citEntry = input.cbegin(); citEntry != citEnd; ++citEntry)
+            result.insert(citEntry.key(), citEntry.value());
+
+        return result;
+    }
+
+    template<typename ITEM>
+    inline QVector<ITEM> vectorFrom(const QSet<ITEM>& input)
+    {
+        QVector<ITEM> result;
+        result.reserve(input.size());
+
+        for (const auto& item : input)
+            result.push_back(item);
+
+        return result;
+    }
+
     template<typename T>
     inline auto detachedOf(const T& input)
         -> typename std::enable_if <

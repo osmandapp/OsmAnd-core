@@ -359,7 +359,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    QVector<uint32_t> dataBoxesOffsets;
+    QSet<uint32_t> dataBoxesOffsetsSet;
+    QSet<ObfObjectId> processedObjectsSet;
 
     for (;;)
     {
@@ -379,7 +380,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
 
                 scanTiles(
                     reader,
-                    dataBoxesOffsets,
+                    dataBoxesOffsetsSet,
                     MinZoomLevel,
                     TileId::zero(),
                     minZoom,
@@ -396,6 +397,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
             }
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             {
+                auto dataBoxesOffsets = vectorFrom(dataBoxesOffsetsSet);
                 std::sort(dataBoxesOffsets);
 
                 auto pDataOffset = dataBoxesOffsets.constData();
@@ -412,6 +414,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     readAmenitiesDataBox(
                         reader,
                         section,
+                        processedObjectsSet,
                         outAmenities,
                         QString::null,
                         minZoom,
@@ -439,7 +442,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
 
 void OsmAnd::ObfPoiSectionReader_P::scanTiles(
     const ObfReader_P& reader,
-    QVector<uint32_t>& outDataOffsets,
+    QSet<uint32_t>& outDataOffsets,
     const ZoomLevel parentZoom,
     const TileId parentTileId,
     const ZoomLevel minZoom,
@@ -543,7 +546,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanTiles(
                 if (zoom < minZoom)
                     break;
 
-                outDataOffsets.push_back(dataOffset);
+                outDataOffsets.insert(dataOffset);
                 break;
             }
             default:
@@ -601,6 +604,7 @@ bool OsmAnd::ObfPoiSectionReader_P::scanTileForMatchingCategories(
 void OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
+    QSet<ObfObjectId>& processedObjects,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
     const QString& query,
     const ZoomLevel minZoom,
@@ -672,6 +676,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
 
                 if (!amenity)
                     break;
+
+                if (processedObjects.contains(amenity->id))
+                    break;
+                processedObjects.insert(amenity->id);
 
                 if (!visitor || visitor(amenity))
                 {
@@ -874,7 +882,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    QVector<uint32_t> dataBoxesOffsets;
+    QSet<uint32_t> dataBoxesOffsetsSet;
+    QSet<ObfObjectId> processedObjectsSet;
 
     for (;;)
     {
@@ -895,7 +904,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 scanNameIndex(
                     reader,
                     query,
-                    dataBoxesOffsets,
+                    dataBoxesOffsetsSet,
                     minZoom,
                     maxZoom,
                     bbox31);
@@ -909,6 +918,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 break;
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             {
+                auto dataBoxesOffsets = vectorFrom(dataBoxesOffsetsSet);
                 std::sort(dataBoxesOffsets);
 
                 auto pDataOffset = dataBoxesOffsets.constData();
@@ -925,6 +935,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     readAmenitiesDataBox(
                         reader,
                         section,
+                        processedObjectsSet,
                         outAmenities,
                         query,
                         minZoom,
@@ -953,7 +964,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     const ObfReader_P& reader,
     const QString& query,
-    QVector<uint32_t>& outDataOffsets,
+    QSet<uint32_t>& outDataOffsets,
     const ZoomLevel minZoom,
     const ZoomLevel maxZoom,
     const AreaI* const bbox31)
@@ -1019,7 +1030,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
 
 void OsmAnd::ObfPoiSectionReader_P::readNameIndexData(
     const ObfReader_P& reader,
-    QVector<uint32_t>& outDataOffsets,
+    QSet<uint32_t>& outDataOffsets,
     const ZoomLevel minZoom,
     const ZoomLevel maxZoom,
     const AreaI* const bbox31)
@@ -1057,7 +1068,7 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexData(
 
 void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
     const ObfReader_P& reader,
-    QVector<uint32_t>& outDataOffsets,
+    QSet<uint32_t>& outDataOffsets,
     const ZoomLevel minZoom,
     const ZoomLevel maxZoom,
     const AreaI* const bbox31)
@@ -1103,7 +1114,7 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
                 }
 
                 if (accept)
-                    outDataOffsets.push_back(dataOffset);
+                    outDataOffsets.insert(dataOffset);
                 break;
             }
             default:

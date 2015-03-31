@@ -5,6 +5,8 @@
 #include <google/protobuf/wire_format_lite.h>
 #include "restore_internal_warnings.h"
 
+#include "QtCommon.h"
+
 #include "OsmAndCore.h"
 #include "Common.h"
 #include "Nullable.h"
@@ -799,6 +801,13 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
+                const auto indexReferencesMap = mapFrom<uint32_t, AddressReference>(indexReferences,
+                    []
+                    (const AddressReference& addressReference) -> uint32_t
+                    {
+                        return addressReference.dataIndexOffset;
+                    });
+
                 for (const auto& indexReference : constOf(indexReferences))
                 {
                     std::shared_ptr<Address> address;
@@ -898,6 +907,8 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                         }
                         address = streetGroup;
                     }
+
+
 
                     if (address)
                     {

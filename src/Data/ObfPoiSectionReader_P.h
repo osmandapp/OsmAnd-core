@@ -69,7 +69,7 @@ namespace OsmAnd
             const IQueryController* const controller);
         static void scanTiles(
             const ObfReader_P& reader,
-            QVector<uint32_t>& outDataOffsets,
+            QSet<uint32_t>& outDataOffsets,
             const ZoomLevel parentZoom,
             const TileId parentTileId,
             const ZoomLevel minZoom,
@@ -94,19 +94,19 @@ namespace OsmAnd
         static void scanNameIndex(
             const ObfReader_P& reader,
             const QString& query,
-            QVector<uint32_t>& outDataOffsets,
+            QSet<uint32_t>& outDataOffsets,
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom,
             const AreaI* const bbox31);
         static void readNameIndexData(
             const ObfReader_P& reader,
-            QVector<uint32_t>& outDataOffsets,
+            QSet<uint32_t>& outDataOffsets,
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom,
             const AreaI* const bbox31);
         static void readNameIndexDataAtom(
             const ObfReader_P& reader,
-            QVector<uint32_t>& outDataOffsets,
+            QSet<uint32_t>& outDataOffsets,
             const ZoomLevel minZoom,
             const ZoomLevel maxZoom,
             const AreaI* const bbox31);
@@ -114,6 +114,7 @@ namespace OsmAnd
         static void readAmenitiesDataBox(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
+            QSet<ObfObjectId>& processedObjects,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
             const QString& query,
             const ZoomLevel minZoom,
