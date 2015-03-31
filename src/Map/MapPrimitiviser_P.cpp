@@ -2542,10 +2542,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     primitive->evaluationResult.getFloatValue(
         env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PX,
-        icon->resourceOffsetFactor.x);
+        icon->offsetFactor.x);
     primitive->evaluationResult.getFloatValue(
         env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PY,
-        icon->resourceOffsetFactor.y);
+        icon->offsetFactor.y);
 
     icon->order = 100;
     primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);

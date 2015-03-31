@@ -225,9 +225,9 @@ namespace OsmAnd
             virtual ~IconSymbol();
 
             QString resourceName;
-            PointF resourceOffsetFactor;
             QList<QString> underlayResourceNames;
             QList<QString> overlayResourceNames;
+            PointF offsetFactor;
             QString shieldResourceName;
 
             bool operator==(const IconSymbol& that) const;

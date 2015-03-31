@@ -228,13 +228,6 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 std::shared_ptr<const SkBitmap> iconBitmap;
                 if (!env->obtainMapIcon(iconSymbol->resourceName, iconBitmap) || !iconBitmap)
                     continue;
-                if (!qFuzzyIsNull(iconSymbol->resourceOffsetFactor.x) || !qFuzzyIsNull(iconSymbol->resourceOffsetFactor.y))
-                {
-                    iconBitmap = SkiaUtilities::offsetBitmap(
-                        iconBitmap,
-                        iconSymbol->resourceOffsetFactor.x * iconBitmap->width(),
-                        iconSymbol->resourceOffsetFactor.y * iconBitmap->height());
-                }
                 if (!qFuzzyCompare(iconSymbol->scaleFactor, 1.0f))
                 {
                     iconBitmap = SkiaUtilities::scaleBitmap(
@@ -295,6 +288,10 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 //  - height / 2
                 // This calculation is used only if this symbol is not first. Otherwise nothing is used.
                 PointI localOffset;
+                if (!qFuzzyIsNull(iconSymbol->offsetFactor.x))
+                    localOffset.x = qRound(iconSymbol->offsetFactor.x * rasterizedIcon->width());
+                if (!qFuzzyIsNull(iconSymbol->offsetFactor.y))
+                    localOffset.y = qRound(iconSymbol->offsetFactor.y * rasterizedIcon->height());
                 if (!group->symbols.isEmpty() && !iconSymbol->drawAlongPath)
                     localOffset.y += rasterizedIcon->height() / 2;
 
