@@ -238,7 +238,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
             shadowLayer = 0;
 
         if (shadowLayer > 0)
-            paint->setLooper(new SkBlurDrawLooper(shadowLayer, 0, 0, shadowColor))->unref();
+            paint->setLooper(SkBlurDrawLooper::Create(shadowColor, SkBlurMaskFilter::ConvertRadiusToSigma(shadowLayer), 0, 0))->unref();
     }
     return 1;
 }
@@ -302,7 +302,7 @@ void drawPolylineShadow(SkCanvas* cv, SkPaint* paint, RenderingContext* rc, SkPa
     if (rc->getShadowRenderingMode() == 2 && shadowRadius > 0) {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        paint->setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
+        paint->setLooper(SkBlurDrawLooper::Create(shadowColor, SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius), 0, 0))->unref();
         PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*path, *paint));
     }
 
