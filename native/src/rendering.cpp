@@ -99,7 +99,7 @@ SkPathEffect* getDashEffect(RenderingContext* rc, std::string input)
     if(pathEffects.find(hash) != pathEffects.end())
         return pathEffects[hash];
 
-    SkPathEffect* r = new SkDashPathEffect(&primFloats[0], primFloats.size(), 0);
+    SkPathEffect* r = SkDashPathEffect::Create(&primFloats[0], primFloats.size(), 0);
     pathEffects[hash] = r;
     return r;
 }
@@ -337,10 +337,10 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
             {0, 12 + 6 * rmin, 2 * rmin , 152 + 2 * rmin},
             {0, 12 + 6 * rmin, 1 * rmin, 152 + 3 * rmin}
         };
-		SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_oneway[0], 4, 0);
-		SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_oneway[1], 4, 1);
-		SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_oneway[2], 4, 1);
-		SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_oneway[3], 4, 1);
+		SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_oneway[0], 4, 0);
+		SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_oneway[1], 4, 1);
+		SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_oneway[2], 4, 1);
+		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_oneway[3], 4, 1);
 
 		SkPaint* p = oneWayPaint();
 		p->setStrokeWidth(rmin);
@@ -374,10 +374,10 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
                 {0, 12 + 2 * rmin, 2 * rmin, 152 + 6 * rmin},
                 {0, 12 + 3 * rmin, 1 * rmin, 152 + 6 * rmin}
             };            
-		SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_reverse[0], 4, 0);
-		SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_reverse[1], 4, 1);
-		SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_reverse[2], 4, 1);
-		SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_reverse[3], 4, 1);
+		SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_reverse[0], 4, 0);
+		SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_reverse[1], 4, 1);
+		SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_reverse[2], 4, 1);
+		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_reverse[3], 4, 1);
 		SkPaint* p = oneWayPaint();
 		p->setStrokeWidth(rmin * 1);
 		p->setPathEffect(arrowDashEffect1)->unref();
