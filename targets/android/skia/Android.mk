@@ -450,11 +450,14 @@ LOCAL_STATIC_LIBRARIES += \
 	osmand_ft2 \
 	osmand_png \
 	osmand_gif \
-	osmand_expat
+	osmand_expat \
+	cpufeatures
 
 LOCAL_LDLIBS += -lz -llog
 
 include $(BUILD_STATIC_LIBRARY)
+
+$(call import-module,android/cpufeatures)
 
 else
 	LOCAL_SRC_FILES := \
