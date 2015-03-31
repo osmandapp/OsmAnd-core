@@ -15,7 +15,7 @@ fi
 
 # Download
 echo "Downloading new upstream..."
-VERSION="chromium-26.0.1408.1"
+VERSION="chromium-40.0.2214.115"
 mkdir -p "$SRCLOC/upstream.original"
 (cd "$SRCLOC/upstream.original" && \
 	git init && \
