@@ -241,11 +241,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
 		rowBytes = bitmapInfo.stride;
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGBA_8888 is %d", rowBytes);
-		imageInfo = SkImageInfo::Make(kN32_SkColorType, bitmapInfo.width, bitmapInfo.height, kPremul_SkAlphaType);
+		imageInfo = SkImageInfo::Make(bitmapInfo.width, bitmapInfo.height, kN32_SkColorType, kPremul_SkAlphaType);
 	} else if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565) {
 		rowBytes = bitmapInfo.stride;
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGB_565 is %d", rowBytes);
-		imageInfo = SkImageInfo::Make(kRGB_565_SkColorType, bitmapInfo.width, bitmapInfo.height, kOpaque_SkAlphaType);
+		imageInfo = SkImageInfo::Make(bitmapInfo.width, bitmapInfo.height, kRGB_565_SkColorType, kOpaque_SkAlphaType);
 	} else {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unknown target bitmap format");
 	}
@@ -326,9 +326,9 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 	SkBitmap* bitmap = new SkBitmap();
 	SkImageInfo imageInfo;
 	if (isTransparent == JNI_TRUE)
-		imageInfo = SkImageInfo::Make(kN32_SkColorType, rc.getWidth(), rc.getHeight(), kPremul_SkAlphaType);
+		imageInfo = SkImageInfo::Make(rc.getWidth(), rc.getHeight(), kN32_SkColorType, kPremul_SkAlphaType);
 	else
-		imageInfo = SkImageInfo::Make(kRGB_565_SkColorType, rc.getWidth(), rc.getHeight(), kOpaque_SkAlphaType);
+		imageInfo = SkImageInfo::Make(rc.getWidth(), rc.getHeight(), kRGB_565_SkColorType, kOpaque_SkAlphaType);
 
 	if (bitmapData != NULL && bitmapDataSize != bitmap->getSize()) {
 		free(bitmapData);
