@@ -257,6 +257,8 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/lazy/SkDiscardablePixelRef.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/sfnt/SkOTTable_name.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/sfnt/SkOTUtils.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/fonts/SkGScalerContext.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/fonts/SkRemotableFontMgr.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/pathops/SkAddIntersections.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/pathops/SkDCubicIntersection.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/pathops/SkDCubicLineIntersection.cpp \
@@ -336,7 +338,8 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor_ASTC.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor_LATC.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor_R11EAC.cpp
+	$(OSMAND_SKIA_RELATIVE)/src/utils/SkTextureCompressor_R11EAC.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/ports/SkDiscardableMemory_none.cpp
 
 # Android specific files
 LOCAL_SRC_FILES += \
@@ -349,6 +352,7 @@ LOCAL_SRC_FILES += \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkOSFile_posix.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkTime_Unix.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkTLS_pthread.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/SkThreadUtils_pthread_other.cpp
 
 LOCAL_C_INCLUDES += \
