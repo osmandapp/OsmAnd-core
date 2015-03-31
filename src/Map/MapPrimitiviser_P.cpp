@@ -2502,10 +2502,12 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     const auto& env = context.env;
 
     //////////////////////////////////////////////////////////////////////////
-    //if (primitive->sourceObject->toString().contains("2380290737"))
+    //if (primitive->sourceObject->toString().contains("1333827773"))
     //{
     //    int i = 5;
     //}
+    //else
+    //    return;
     //////////////////////////////////////////////////////////////////////////
 
     if (primitive->evaluationResult.isEmpty())
@@ -2540,12 +2542,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_5, iconResourceName))
         icon->overlayResourceNames.push_back(qMove(iconResourceName));
 
-    primitive->evaluationResult.getFloatValue(
-        env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PX,
-        icon->offsetFactor.x);
-    primitive->evaluationResult.getFloatValue(
-        env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PY,
-        icon->offsetFactor.y);
+    if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PX, icon->offsetFactor.x))
+        icon->offsetFactor.x *= 0.5f;
+    if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PY, icon->offsetFactor.y))
+        icon->offsetFactor.y *= 0.5f;
 
     icon->order = 100;
     primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);

@@ -489,8 +489,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderBillboardRasterSymbol(
         .arg(symbol->group.lock()->toString())
         .arg(qPrintable(symbol->content)));
 
+    //////////////////////////////////////////////////////////////////////////
+    //if (symbol->content == "seamark_buoy_yellow_can")
+    //{
+    //    int i = 5;
+    //}
+    //////////////////////////////////////////////////////////////////////////
+
     // Set symbol offset from target
-    glUniform2f(_billboardRasterProgram.vs.param.symbolOffsetFromTarget, renderable->offsetFromTarget.x, renderable->offsetFromTarget.y);
+    glUniform2f(_billboardRasterProgram.vs.param.symbolOffsetFromTarget,
+        renderable->offsetFromTarget.x,
+        renderable->offsetFromTarget.y);
     GL_CHECK_RESULT;
 
     // Set symbol size

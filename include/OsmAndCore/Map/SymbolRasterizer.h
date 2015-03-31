@@ -70,8 +70,6 @@ namespace OsmAnd
             QString content;
             LanguageId languageId;
             float minDistance;
-            float pathPaddingLeft;
-            float pathPaddingRight;
         };
 
         class OSMAND_CORE_API RasterizedSpriteSymbol : public RasterizedSymbol

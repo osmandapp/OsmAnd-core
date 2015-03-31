@@ -59,7 +59,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
         const auto& symbolsGroup = symbolGroupEntry.value();
 
         //////////////////////////////////////////////////////////////////////////
-        //if (mapObject->toString().contains("2380290737"))
+        //if (mapObject->toString().contains("1333827773"))
         //{
         //    int i = 5;
         //}
