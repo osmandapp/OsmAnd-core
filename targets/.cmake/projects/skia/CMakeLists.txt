@@ -398,20 +398,9 @@ target_link_libraries(skia_osmand LINK_PUBLIC
 )
 	
 if(CMAKE_TARGET_OS STREQUAL "linux")
+	find_library(FONTCONFIG_LIBRARY fontconfig)
 	target_link_libraries(skia_osmand LINK_PUBLIC
 		pthread
-	)
-elseif(CMAKE_TARGET_OS STREQUAL "darwin")
-	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
-	find_library(CORE_TEXT_LIBRARY CoreText)
-	find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
-	target_link_libraries(skia_osmand LINK_PUBLIC
-		${CORE_FOUNDATION_LIBRARY}
-		${CORE_TEXT_LIBRARY}
-		${CORE_GRAPHICS_LIBRARY}
-	)	
-elseif(CMAKE_TARGET_OS STREQUAL "windows")
-	target_link_libraries(skia_osmand LINK_PUBLIC
-		Usp10
+		${FONTCONFIG_LIBRARY}
 	)
 endif()
