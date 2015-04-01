@@ -1,4 +1,6 @@
-#ifdef DECLARE_BUILTIN_VALUEDEF
+#if !defined(DECLARE_BUILTIN_VALUEDEF)
+#   define DECLARE_BUILTIN_VALUEDEF(varname, valueClass, dataType, name, isComplex)
+#endif // !defined(DECLARE_BUILTIN_VALUEDEF)
 
 DECLARE_BUILTIN_VALUEDEF(INPUT_TEST, Input, Boolean, "test", false)
 DECLARE_BUILTIN_VALUEDEF(INPUT_TAG, Input, String, "tag", false)
@@ -124,5 +126,3 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_RADIUS, Output, Float, "shadowRadius", tr
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_ICON, Output, String, "pathIcon", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_ICON_STEP, Output, Float, "pathIconStep", true)
-
-#endif // DECLARE_BUILTIN_VALUEDEF

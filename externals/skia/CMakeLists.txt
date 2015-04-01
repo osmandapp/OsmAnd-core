@@ -256,6 +256,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
+		"upstream.patched/src/utils/SkThreadUtils_pthread.cpp"
 		"upstream.patched/src/utils/SkThreadUtils_pthread_mach.cpp"
 		${src_utils_mac}
 		${src_gpu_gl_mac}
@@ -290,6 +291,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "ios")
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
+		"upstream.patched/src/utils/SkThreadUtils_pthread.cpp"
 		"upstream.patched/src/utils/SkThreadUtils_pthread_mach.cpp"
 		#${src_utils_ios}
 		"upstream.patched/src/utils/mac/SkCreateCGImageRef.cpp"
@@ -324,6 +326,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
+		"upstream.patched/src/utils/SkThreadUtils_pthread.cpp"
 		"upstream.patched/src/utils/SkThreadUtils_pthread_linux.cpp"
 		${src_gpu_gl_glx}
 	)
@@ -345,10 +348,6 @@ elseif (CMAKE_TARGET_OS STREQUAL "linux")
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "android")
 	file(GLOB src_gpu_gl_android "upstream.patched/src/gpu/gl/android/*")
-	# For the workaround in TextRasterizer_P.cpp
-	set(target_specific_include_dirs_public ${target_specific_include_dirs_public}
-		"upstream.patched/src/ports"
-	)
 	set(target_specific_sources "${target_specific_sources}"
 		"upstream.patched/src/ports/SkDebug_android.cpp"
 		"upstream.patched/src/ports/SkDiscardableMemory_none.cpp"
@@ -359,6 +358,7 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		"upstream.patched/src/ports/SkOSFile_posix.cpp"
 		"upstream.patched/src/ports/SkTime_Unix.cpp"
 		"upstream.patched/src/ports/SkTLS_pthread.cpp"
+		"upstream.patched/src/utils/SkThreadUtils_pthread.cpp"
 		"upstream.patched/src/utils/SkThreadUtils_pthread_other.cpp"
 		${src_gpu_gl_android}
 	)
@@ -393,7 +393,8 @@ file(GLOB src_images__remove
 	"upstream.patched/src/images/SkImageDecoder_ktx.*"
 	"upstream.patched/src/images/SkImageDecoder_libwebp.*"
 	"upstream.patched/src/images/SkImageDecoder_pkm.*"
-	"upstream.patched/src/images/SkImageRef_ashmem.*")
+	"upstream.patched/src/images/SkImageRef_ashmem.*"
+	"upstream.patched/src/images/SkForceLinking.*")
 list(REMOVE_ITEM src_images ${src_images__remove})
 file(GLOB src_lazy "upstream.patched/src/lazy/*")
 file(GLOB src_sfnt "upstream.patched/src/sfnt/*")

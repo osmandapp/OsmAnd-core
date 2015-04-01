@@ -1231,7 +1231,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     for (const auto& mapObject : constOf(source))
     {
         //////////////////////////////////////////////////////////////////////////
-        //if (mapObject->toString().contains("49048972"))
+        //if (mapObject->toString().contains("1333827773"))
         //{
         //    const auto t = mapObject->toString();
         //    int i = 5;
@@ -2542,6 +2542,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     if (primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_5, iconResourceName))
         icon->overlayResourceNames.push_back(qMove(iconResourceName));
 
+    //NOTE: Also divide by 2, since for some reason factor is calculated using half-size, not size
     if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PX, icon->offsetFactor.x))
         icon->offsetFactor.x *= 0.5f;
     if (primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIFT_PY, icon->offsetFactor.y))
