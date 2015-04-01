@@ -36,7 +36,7 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/externals/jpeg/upstream.patched"
 	"${OSMAND_ROOT}/externals/libpng/upstream.patched"
 )
-add_definitions(-DSK_RELEASE -DGR_RELEASE=1 -DNDEBUG -DSK_SUPPORT_GPU=0)
+add_definitions(-DSK_RELEASE -DSK_IGNORE_ETC1_SUPPORT -DSK_SUPPORT_GPU=0)
 set(target_specific_sources
 	"${UPSTREAM}/src/opts/SkBitmapProcState_opts_none.cpp"
 	"${UPSTREAM}/src/opts/SkBlitMask_opts_none.cpp"
