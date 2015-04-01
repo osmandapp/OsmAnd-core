@@ -249,6 +249,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	} else {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unknown target bitmap format");
 	}
+	bitmap->allocPixels(imageInfo);
 
 	void* lockedBitmapData = NULL;
 	if(dl_AndroidBitmap_lockPixels(ienv, targetBitmap, &lockedBitmapData) != ANDROID_BITMAP_RESUT_SUCCESS || !lockedBitmapData) {
@@ -256,7 +257,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	}
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Locked %d bytes at %p", bitmap->getSize(), lockedBitmapData);
 
-	bitmap->installPixels(imageInfo, lockedBitmapData, rowBytes);
+	bitmap->setPixels(lockedBitmapData);
 
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Initializing rendering");
 	OsmAnd::ElapsedTimer initObjects;
@@ -329,6 +330,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 		imageInfo = SkImageInfo::Make(rc.getWidth(), rc.getHeight(), kN32_SkColorType, kPremul_SkAlphaType);
 	else
 		imageInfo = SkImageInfo::Make(rc.getWidth(), rc.getHeight(), kRGB_565_SkColorType, kOpaque_SkAlphaType);
+	bitmap->allocPixels(imageInfo);
 
 	if (bitmapData != NULL && bitmapDataSize != bitmap->getSize()) {
 		free(bitmapData);
@@ -341,7 +343,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Allocated %d bytes at %p", bitmapDataSize, bitmapData);
 	}
 
-	bitmap->installPixels(imageInfo, bitmapData, bitmap->getSize() / rc.getHeight());
+	bitmap->setPixels(bitmapData);
 	OsmAnd::ElapsedTimer initObjects;
 	initObjects.Start();
 
