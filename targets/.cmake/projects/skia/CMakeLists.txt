@@ -227,6 +227,7 @@ add_library(skia_osmand STATIC
 	"${UPSTREAM}/src/effects/Sk1DPathEffect.cpp"
 	"${UPSTREAM}/src/effects/Sk2DPathEffect.cpp"
 	"${UPSTREAM}/src/effects/SkAlphaThresholdFilter.cpp"
+	"${UPSTREAM}/src/effects/SkArcToPathEffect.cpp"
 	"${UPSTREAM}/src/effects/SkArithmeticMode.cpp"
 	"${UPSTREAM}/src/effects/SkAvoidXfermode.cpp"
 	"${UPSTREAM}/src/effects/SkBitmapSource.cpp"

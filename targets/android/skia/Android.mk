@@ -180,6 +180,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/Sk1DPathEffect.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/Sk2DPathEffect.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkAlphaThresholdFilter.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/effects/SkArcToPathEffect.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkArithmeticMode.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkAvoidXfermode.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/effects/SkBitmapSource.cpp \
