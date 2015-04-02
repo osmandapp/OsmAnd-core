@@ -156,7 +156,6 @@ add_library(skia_osmand STATIC
 	"${UPSTREAM}/src/core/SkPaintPriv.cpp"
 	"${UPSTREAM}/src/core/SkPath.cpp"
 	"${UPSTREAM}/src/core/SkPathEffect.cpp"
-	"${UPSTREAM}/src/core/SkPathHeap.cpp"
 	"${UPSTREAM}/src/core/SkPathMeasure.cpp"
 	"${UPSTREAM}/src/core/SkPathRef.cpp"
 	"${UPSTREAM}/src/core/SkPicture.cpp"

@@ -109,7 +109,6 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPaintPriv.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPath.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPathEffect.cpp \
-	$(OSMAND_SKIA_RELATIVE)/src/core/SkPathHeap.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPathMeasure.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPathRef.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkPicture.cpp \
