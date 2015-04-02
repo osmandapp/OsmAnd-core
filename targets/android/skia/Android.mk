@@ -93,6 +93,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkImageGenerator.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkImageInfo.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkInstCnt.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/core/SkLayerInfo.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkLineClipper.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkLocalMatrixShader.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkMallocPixelRef.cpp \
@@ -166,6 +167,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkUtils.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkUtilsArm.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkValidatingReadBuffer.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/core/SkVarAlloc.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkVertState.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkWriteBuffer.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkWriter32.cpp \
