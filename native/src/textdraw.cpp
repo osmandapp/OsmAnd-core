@@ -63,7 +63,10 @@ void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, b
     		// If there's no best match, fallback to default typeface
     		if (bestMatchTypeface == nullptr)
     		{
-        		paint->setTypeface(def);
+				paint->setTypeface(def);
+				if (!paint->containsText(text.c_str(), text.length())) {
+					paint->setTypeface(nullptr);
+ 				}
 		
         		// Adjust to handle bold text
         		paint->setFakeBoldText(bold);
