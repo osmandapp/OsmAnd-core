@@ -606,7 +606,10 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
             break;
 
         mIconInstanceTransform.setConcat(mPinPoint, mIconTransform);
-        canvas.drawBitmapMatrix(*pathIcon, mIconInstanceTransform, &_defaultPaint);
+        canvas.save();
+        canvas.concat(mIconInstanceTransform);
+        canvas.drawBitmap(*pathIcon, 0, 0, &_defaultPaint);
+        canvas.restore();
     }
 }
 

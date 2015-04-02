@@ -403,7 +403,8 @@ file(GLOB src_pipe "upstream.patched/src/pipe/*")
 file(GLOB src_ports
 	"upstream.patched/src/ports/SkGlobalInitialization_default.cpp"
 	"upstream.patched/src/ports/SkMemory_malloc.cpp"
-	"upstream.patched/src/ports/SkOSFile_stdio.cpp")
+	"upstream.patched/src/ports/SkOSFile_stdio.cpp"
+	"upstream.patched/src/ports/SkImageGenerator_skia.cpp")
 file(GLOB src_gpu "upstream.patched/src/gpu/*")
 file(GLOB src_gpu_effects "upstream.patched/src/gpu/effects/*")
 file(GLOB src_gpu_gl "upstream.patched/src/gpu/gl/*")

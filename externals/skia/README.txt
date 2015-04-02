@@ -9,4 +9,4 @@ How to update SKIA to new release:
   'src/third_party/skia':
     (Var("git.chromium.org")) + '/skia.git@...',
 5. There will be the revision of SKIA included in the release. E.g. for 37.0.2062.103 it's 9112a5fed24da8442a5d263c634adbbf6b57862c
-6. Go to https://github.com/google/skia/ and find that revision and rebase to it, if available
+6. Check if available at https://github.com/google/skia/tree/9112a5fed24da8442a5d263c634adbbf6b57862c and rebase to it, if available
