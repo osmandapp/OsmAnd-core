@@ -50,6 +50,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkBuffer.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkCachedData.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkCanvas.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/core/SkCanvasDrawable.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkChunkAlloc.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkClipStack.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkColor.cpp \
@@ -127,6 +128,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkRasterClip.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkRasterizer.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkReadBuffer.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/core/SkRecord.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkRecordDraw.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkRecorder.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/core/SkRecordOpts.cpp \
