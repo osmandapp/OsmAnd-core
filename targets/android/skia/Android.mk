@@ -293,6 +293,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkGlobalInitialization_default.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkMemory_malloc.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/ports/SkOSFile_stdio.cpp \
+	$(OSMAND_SKIA_RELATIVE)/src/ports/SkImageGenerator_skia.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/debugger/SkDebugCanvas.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/debugger/SkDrawCommand.cpp \
 	$(OSMAND_SKIA_RELATIVE)/src/utils/debugger/SkObjectParser.cpp \

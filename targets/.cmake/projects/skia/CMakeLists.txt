@@ -340,6 +340,7 @@ add_library(skia_osmand STATIC
 	"${UPSTREAM}/src/ports/SkGlobalInitialization_default.cpp"
 	"${UPSTREAM}/src/ports/SkMemory_malloc.cpp"
 	"${UPSTREAM}/src/ports/SkOSFile_stdio.cpp"
+	"${UPSTREAM}/src/ports/SkImageGenerator_skia.cpp"
 	"${UPSTREAM}/src/utils/debugger/SkDebugCanvas.cpp"
 	"${UPSTREAM}/src/utils/debugger/SkDrawCommand.cpp"
 	"${UPSTREAM}/src/utils/debugger/SkObjectParser.cpp"
