@@ -1,13 +1,16 @@
 #include "TextRasterizer.h"
 #include "TextRasterizer_P.h"
-#include "TextRasterizer_private.h"
+#include "TextRasterizer_internal.h"
 
-#include "CoreFontsCollection.h"
+#include "EmbeddedFontFinder.h"
+#include "SystemFontFinder.h"
+#include "CachingFontFinder.h"
+#include "ChainedFontFinder.h"
 
 OsmAnd::TextRasterizer::TextRasterizer(
-    const std::shared_ptr<const IFontsCollection>& fontsCollection_)
+    const std::shared_ptr<const IFontFinder>& fontFinder_)
     : _p(new TextRasterizer_P(this))
-    , fontsCollection(fontsCollection_)
+    , fontFinder(fontFinder_)
 {
 }
 
@@ -57,12 +60,26 @@ std::shared_ptr<const OsmAnd::TextRasterizer> OsmAnd::TextRasterizer::getDefault
     return s_defaultTextRasterizer;
 }
 
+static std::shared_ptr<const OsmAnd::TextRasterizer> s_onlySystemFontsTextRasterizer;
+std::shared_ptr<const OsmAnd::TextRasterizer> OsmAnd::TextRasterizer::getOnlySystemFonts()
+{
+    return s_onlySystemFontsTextRasterizer;
+}
+
 void OsmAnd::TextRasterizer_initialize()
 {
-    s_defaultTextRasterizer.reset(new TextRasterizer(CoreFontsCollection::getDefaultInstance()));
+    s_defaultTextRasterizer.reset(new TextRasterizer(
+        std::shared_ptr<const IFontFinder>(new CachingFontFinder(
+            std::shared_ptr<const IFontFinder>(new ChainedFontFinder(
+                QList< std::shared_ptr<const IFontFinder> >()
+                    << EmbeddedFontFinder::getDefaultInstance()
+                    << std::shared_ptr<const IFontFinder>(new SystemFontFinder())))))));
+    s_onlySystemFontsTextRasterizer.reset(new TextRasterizer(std::shared_ptr<const IFontFinder>(new CachingFontFinder(
+        std::shared_ptr<const IFontFinder>(new SystemFontFinder())))));
 }
 
 void OsmAnd::TextRasterizer_release()
 {
     s_defaultTextRasterizer.reset();
+    s_onlySystemFontsTextRasterizer.reset();
 }

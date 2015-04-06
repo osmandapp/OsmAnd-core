@@ -1,0 +1,233 @@
+#include "EmbeddedFontFinder.h"
+#include "EmbeddedFontFinder_internal.h"
+
+#include "QtExtensions.h"
+#include "QtCommon.h"
+
+#include <SkTypeface.h>
+#include <SkPaint.h>
+
+#include "ICoreResourcesProvider.h"
+#include "SkiaUtilities.h"
+#include "Logging.h"
+
+OsmAnd::EmbeddedFontFinder::EmbeddedFontFinder(
+    const std::shared_ptr<const ICoreResourcesProvider>& coreResourcesProvider_ /*= getCoreResourcesProvider()*/)
+    : coreResourcesProvider(coreResourcesProvider_)
+{
+    for (const auto embeddedFontResource : constOf(resources))
+    {
+        const auto fontData = coreResourcesProvider->getResource(embeddedFontResource);
+        if (fontData.isNull())
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to load embedded font data for '%s'",
+                qPrintable(embeddedFontResource));
+            continue;
+        }
+
+        const auto font = SkiaUtilities::createTypefaceFromData(fontData);
+        if (!font)
+        {
+            LogPrintf(LogSeverityLevel::Error,
+                "Failed to create SkTypeface from embedded font data for '%s'",
+                qPrintable(embeddedFontResource));
+            continue;
+        }
+
+        _fonts.push_back(font);
+    }
+}
+
+OsmAnd::EmbeddedFontFinder::~EmbeddedFontFinder()
+{
+    for (const auto& font : constOf(_fonts))
+        font->unref();
+}
+
+SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
+    const uint32_t character,
+    const SkFontStyle style /*= SkFontStyle()*/) const
+{
+    SkPaint paint;
+    paint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+
+    SkTypeface* bestMatch = nullptr;
+    for (const auto font : constOf(_fonts))
+    {
+        paint.setTypeface(font);
+
+        if (!paint.containsText(&character, sizeof(uint32_t)))
+            continue;
+
+        if (!bestMatch)
+            bestMatch = font;
+
+        if (!(font->fontStyle() == style))
+            continue;
+        
+        bestMatch = font;
+        break;
+    }
+
+    if (bestMatch)
+        bestMatch->ref();
+    return bestMatch;
+}
+
+static std::shared_ptr<OsmAnd::EmbeddedFontFinder> s_embeddedFontFinderDefaultInstance;
+std::shared_ptr<const OsmAnd::EmbeddedFontFinder> OsmAnd::EmbeddedFontFinder::getDefaultInstance()
+{
+    return s_embeddedFontFinderDefaultInstance;
+}
+
+void OsmAnd::EmbeddedFontFinder_initialize()
+{
+    s_embeddedFontFinderDefaultInstance.reset(new EmbeddedFontFinder());
+}
+
+void OsmAnd::EmbeddedFontFinder_release()
+{
+    s_embeddedFontFinderDefaultInstance.reset();
+}
+
+const QStringList OsmAnd::EmbeddedFontFinder::resources = QStringList()
+    // OpenSans
+    << QLatin1String("map/fonts/OpenSans/OpenSans-Regular.ttf")
+    << QLatin1String("map/fonts/OpenSans/OpenSans-Italic.ttf")
+    << QLatin1String("map/fonts/OpenSans/OpenSans-Semibold.ttf")
+    << QLatin1String("map/fonts/OpenSans/OpenSans-SemiboldItalic.ttf")
+
+    // Noto Kufi Arabic
+    << QLatin1String("map/fonts/NotoKufi/NotoKufiArabic-Regular.ttf")
+    << QLatin1String("map/fonts/NotoKufi/NotoKufiArabic-Bold.ttf")
+
+    // Noto Naskh Arabic
+    << QLatin1String("map/fonts/NotoNaskh/NotoNaskhArabic-Regular.ttf")
+    << QLatin1String("map/fonts/NotoNaskh/NotoNaskhArabic-Bold.ttf")
+
+    // NotoSans family, all fonts support regular and italic
+    << qTransform<QStringList>(
+        QStringList()
+            << QLatin1String("Thai")
+            << QLatin1String("Devanagari")
+            << QLatin1String("Tamil")
+            << QLatin1String("Malayalam")
+            << QLatin1String("Bengali")
+            << QLatin1String("Telugu")
+            << QLatin1String("Kannada")
+            << QLatin1String("Khmer")
+            << QLatin1String("Lao")
+            << QLatin1String("Armenian")
+            << QLatin1String("Cham")
+            << QLatin1String("Ethiopic")
+            << QLatin1String("Georgian")
+            << QLatin1String("Gujarati")
+            << QLatin1String("Gurmukhi")
+            << QLatin1String("Hebrew"),
+        []
+        (const QString& input) -> QStringList
+        {
+            return QStringList()
+                << QString(QLatin1String("map/fonts/NotoSans/NotoSans%1-Regular.ttf")).arg(input)
+                << QString(QLatin1String("map/fonts/NotoSans/NotoSans%1-Bold.ttf")).arg(input);
+        })
+
+    // NotoSans extra
+    << qTransform<QStringList>(
+        QStringList()
+            << QLatin1String("Myanmar")
+            << QLatin1String("Sinhala"),
+        []
+        (const QString& input) -> QStringList
+        {
+            return QStringList()
+                << QString(QLatin1String("map/fonts/NotoSans-extra/NotoSans%1-Regular.ttf")).arg(input)
+                << QString(QLatin1String("map/fonts/NotoSans-extra/NotoSans%1-Bold.ttf")).arg(input);
+        })
+
+    // NotoSans extra (regular only)
+    << qTransform<QStringList>(
+        QStringList()
+            << QLatin1String("Avestan")
+            << QLatin1String("Balinese")
+            << QLatin1String("Bamum")
+            << QLatin1String("Batak")
+            << QLatin1String("Brahmi")
+            << QLatin1String("Buginese")
+            << QLatin1String("Buhid")
+            << QLatin1String("CanadianAboriginal")
+            << QLatin1String("Carian")
+            << QLatin1String("Cherokee")
+            << QLatin1String("Coptic")
+            << QLatin1String("Cuneiform")
+            << QLatin1String("Cypriot")
+            << QLatin1String("Deseret")
+            << QLatin1String("EgyptianHieroglyphs")
+            << QLatin1String("Glagolitic")
+            << QLatin1String("Gothic")
+            << QLatin1String("Hanunoo")
+            << QLatin1String("ImperialAramaic")
+            << QLatin1String("InscriptionalPahlavi")
+            << QLatin1String("InscriptionalParthian")
+            << QLatin1String("Javanese")
+            << QLatin1String("Kaithi")
+            << QLatin1String("KayahLi")
+            << QLatin1String("Kharoshthi")
+            << QLatin1String("Lepcha")
+            << QLatin1String("Limbu")
+            << QLatin1String("LinearB")
+            << QLatin1String("Lisu")
+            << QLatin1String("Lycian")
+            << QLatin1String("Lydian")
+            << QLatin1String("Mandaic")
+            << QLatin1String("MeeteiMayek")
+            << QLatin1String("Mongolian")
+            << QLatin1String("NKo")
+            << QLatin1String("NewTaiLue")
+            << QLatin1String("Ogham")
+            << QLatin1String("OlChiki")
+            << QLatin1String("OldItalic")
+            << QLatin1String("OldPersian")
+            << QLatin1String("OldSouthArabian")
+            << QLatin1String("OldTurkic")
+            << QLatin1String("Osmanya")
+            << QLatin1String("PhagsPa")
+            << QLatin1String("Phoenician")
+            << QLatin1String("Rejang")
+            << QLatin1String("Runic")
+            << QLatin1String("Samaritan")
+            << QLatin1String("Saurashtra")
+            << QLatin1String("Shavian")
+            << QLatin1String("Sundanese")
+            << QLatin1String("SylotiNagri")
+            << QLatin1String("SyriacEastern")
+            << QLatin1String("SyriacEstrangela")
+            << QLatin1String("SyriacWestern")
+            << QLatin1String("Tagalog")
+            << QLatin1String("Tagbanwa")
+            << QLatin1String("TaiLe")
+            << QLatin1String("TaiTham")
+            << QLatin1String("TaiViet")
+            << QLatin1String("Tifinagh")
+            << QLatin1String("Ugaritic")
+            << QLatin1String("Vai")
+            << QLatin1String("Yi"),
+        []
+        (const QString& input) -> QStringList
+        {
+            return QStringList()
+                << QString(QLatin1String("map/fonts/NotoSans-extra/NotoSans%1-Regular.ttf")).arg(input);
+        })
+
+    // Tinos (from the Noto pack)
+    << QLatin1String("map/fonts/Tinos/Tinos-Regular.ttf")
+    << QLatin1String("map/fonts/Tinos/Tinos-Italic.ttf")
+    << QLatin1String("map/fonts/Tinos/Tinos-Bold.ttf")
+    << QLatin1String("map/fonts/Tinos/Tinos-BoldItalic.ttf")
+
+    // DroidSans
+    << QLatin1String("map/fonts/DroidSansFallback.ttf")
+
+    // Misc
+    << QLatin1String("map/fonts/MTLmr3m.ttf");

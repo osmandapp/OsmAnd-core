@@ -9,8 +9,8 @@
 
 namespace OsmAnd
 {
-    void CoreFontsCollection_initialize();
-    void CoreFontsCollection_release();
+    void EmbeddedFontFinder_initialize();
+    void EmbeddedFontFinder_release();
 }
 
 #endif // !defined(_OSMAND_CORE_CORE_FONTS_COLLECTION_PRIVATE_H_)

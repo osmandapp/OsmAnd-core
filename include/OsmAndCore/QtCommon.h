@@ -299,6 +299,21 @@ namespace OsmAnd
 
         return itMaxElement;
     }
+
+    template<typename OUTPUT_CONTAINER, typename INPUT_CONTAINER>
+    inline OUTPUT_CONTAINER qTransform(
+        const INPUT_CONTAINER& input,
+        const std::function<OUTPUT_CONTAINER(const decltype(*std::begin(input))& item)> transform)
+    {
+        OUTPUT_CONTAINER output;
+
+        auto itItem = std::begin(input);
+        const auto itEnd = std::end(input);
+        for (++itItem; itItem != itEnd; ++itItem)
+            output = output + transform(*itItem);
+
+        return output;
+    }
 }
 
 #endif // !defined(_OSMAND_CORE_QT_COMMON_H_)

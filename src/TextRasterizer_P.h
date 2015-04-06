@@ -34,11 +34,62 @@ namespace OsmAnd
     private:
         SkPaint _defaultPaint;
 
-        void configurePaintForText(
-            SkPaint& paint,
-            const QString& text,
-            const bool bold,
-            const bool italic) const;
+        struct TextPaint
+        {
+            inline TextPaint()
+                : height(0)
+                , width(0)
+            {
+            }
+
+            QStringRef text;
+            SkPaint paint;
+            SkScalar height;
+            SkScalar width;
+            SkRect bounds;
+            SkRect positionedBounds;
+        };
+        struct LinePaint
+        {
+            inline LinePaint()
+                : maxFontHeight(0)
+                , minFontHeight(std::numeric_limits<SkScalar>::max())
+                , maxFontLineSpacing(0)
+                , minFontLineSpacing(std::numeric_limits<SkScalar>::max())
+                , maxFontTop(0)
+                , minFontTop(std::numeric_limits<SkScalar>::max())
+                , maxFontBottom(0)
+                , minFontBottom(std::numeric_limits<SkScalar>::max())
+                , maxBoundsTop(0)
+                , minBoundsTop(std::numeric_limits<SkScalar>::max())
+                , width(0)
+            {
+            }
+
+            QStringRef line;
+            QVector<TextPaint> textPaints;
+            SkScalar maxFontHeight;
+            SkScalar minFontHeight;
+            SkScalar maxFontLineSpacing;
+            SkScalar minFontLineSpacing;
+            SkScalar maxFontTop;
+            SkScalar minFontTop;
+            SkScalar maxFontBottom;
+            SkScalar minFontBottom;
+            SkScalar maxBoundsTop;
+            SkScalar minBoundsTop;
+            SkScalar width;
+        };
+        QVector<LinePaint> evaluatePaints(const QVector<QStringRef>& lineRefs, const Style& style) const;
+        void measureText(QVector<LinePaint>& paints, SkScalar& outMaxLineWidth) const;
+        void measureGlyphs(const QVector<LinePaint>& paints, QVector<SkScalar>& outGlyphWidths) const;
+        SkPaint getHaloPaint(const SkPaint& paint, const Style& style) const;
+        void measureHalo(const Style& style, QVector<LinePaint>& paints) const;
+        void measureHaloGlyphs(const Style& style, const QVector<LinePaint>& paints, QVector<SkScalar>& outGlyphWidths) const;
+        SkRect positionText(
+            QVector<LinePaint>& paints,
+            const SkScalar maxLineWidth,
+            const Style::TextAlignment textAlignment) const;
     protected:
         TextRasterizer_P(TextRasterizer* const owner);
     public:

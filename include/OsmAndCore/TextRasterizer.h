@@ -11,7 +11,7 @@
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/PrivateImplementation.h>
-#include <OsmAndCore/IFontsCollection.h>
+#include <OsmAndCore/IFontFinder.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 
@@ -140,10 +140,10 @@ namespace OsmAnd
     protected:
     public:
         TextRasterizer(
-            const std::shared_ptr<const IFontsCollection>& fontsCollection);
+            const std::shared_ptr<const IFontFinder>& fontFinder);
         virtual ~TextRasterizer();
 
-        const std::shared_ptr<const IFontsCollection> fontsCollection;
+        const std::shared_ptr<const IFontFinder> fontFinder;
 
         std::shared_ptr<SkBitmap> rasterize(
             const QString& text,
@@ -163,6 +163,7 @@ namespace OsmAnd
             float* const outLineSpacing = nullptr) const;
 
         static std::shared_ptr<const TextRasterizer> getDefault();
+        static std::shared_ptr<const TextRasterizer> getOnlySystemFonts();
     };
 }
 
