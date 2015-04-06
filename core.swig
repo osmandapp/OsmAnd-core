@@ -16,9 +16,11 @@
 #include <OsmAndCore/ObfDataInterface.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
 #include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
-#include <OsmAndCore/IFontsCollection.h>
-#include <OsmAndCore/CachingFontsCollection.h>
-#include <OsmAndCore/CoreFontsCollection.h>
+#include <OsmAndCore/IFontFinder.h>
+#include <OsmAndCore/CachingFontFinder.h>
+#include <OsmAndCore/ChainedFontFinder.h>
+#include <OsmAndCore/EmbeddedFontFinder.h>
+#include <OsmAndCore/SystemFontFinder.h>
 #include <OsmAndCore/TextRasterizer.h>
 #include <OsmAndCore/Logging.h>
 #include <OsmAndCore/ILogSink.h>
@@ -113,9 +115,11 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResourcesManager::OnlineTileSourcesMetadata)
 	%shared_ptr(OsmAnd::ICoreResourcesProvider)
 	%shared_ptr(OsmAnd::CoreResourcesEmbeddedBundle)
-	%shared_ptr(OsmAnd::IFontsCollection)
-	%shared_ptr(OsmAnd::CachingFontsCollection)
-	%shared_ptr(OsmAnd::CoreFontsCollection)
+	%shared_ptr(OsmAnd::IFontFinder)
+	%shared_ptr(OsmAnd::CachingFontFinder)
+	%shared_ptr(OsmAnd::ChainedFontFinder)
+	%shared_ptr(OsmAnd::EmbeddedFontFinder)
+	%shared_ptr(OsmAnd::SystemFontFinder)
 	%shared_ptr(OsmAnd::TextRasterizer)
 	%shared_ptr(OsmAnd::Logger)
 	%shared_ptr(OsmAnd::ILogSink)
@@ -250,9 +254,11 @@ using namespace OsmAnd;
 %include <OsmAndCore/ResourcesManager.h>
 %include <OsmAndCore/ICoreResourcesProvider.h>
 %include <OsmAndCore/CoreResourcesEmbeddedBundle.h>
-%include <OsmAndCore/IFontsCollection.h>
-%include <OsmAndCore/CachingFontsCollection.h>
-%include <OsmAndCore/CoreFontsCollection.h>
+%include <OsmAndCore/IFontFinder.h>
+%include <OsmAndCore/CachingFontFinder.h>
+%include <OsmAndCore/ChainedFontFinder.h>
+%include <OsmAndCore/EmbeddedFontFinder.h>
+%include <OsmAndCore/SystemFontFinder.h>
 %include <OsmAndCore/TextRasterizer.h>
 %include <OsmAndCore/Logging.h>
 %include <OsmAndCore/ILogSink.h>
