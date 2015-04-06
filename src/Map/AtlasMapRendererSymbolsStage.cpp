@@ -648,8 +648,6 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                         }
                     }
                 }
-
-                break;
             }
 
             // In case all instances of group was removed, erase the group
