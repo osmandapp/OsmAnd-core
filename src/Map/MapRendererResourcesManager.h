@@ -80,6 +80,8 @@ namespace OsmAnd
 
             virtual void requestCancellation();
         };
+        void setResourceWorkerThreadsLimit(const unsigned int limit);
+        void resetResourceWorkerThreadsLimit();
 
         // Each provider has a binded resource collection, and these are bindings:
         struct Binding

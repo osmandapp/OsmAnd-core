@@ -1673,6 +1673,16 @@ void OsmAnd::MapRenderer::setDebugSettings(const std::shared_ptr<const MapRender
     invalidateFrame();
 }
 
+void OsmAnd::MapRenderer::setResourceWorkerThreadsLimit(const unsigned int limit)
+{
+    _resources->setResourceWorkerThreadsLimit(limit);
+}
+
+void OsmAnd::MapRenderer::resetResourceWorkerThreadsLimit()
+{
+    _resources->resetResourceWorkerThreadsLimit();
+}
+
 unsigned int OsmAnd::MapRenderer::getActiveResourceRequestsCount() const
 {
     return static_cast<unsigned int>(_resources->_resourcesRequestTasksCounter.loadAcquire());

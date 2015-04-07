@@ -294,6 +294,8 @@ namespace OsmAnd
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings);
+        virtual void setResourceWorkerThreadsLimit(const unsigned int limit);
+        virtual void resetResourceWorkerThreadsLimit();
         virtual unsigned int getActiveResourceRequestsCount() const;
         virtual void dumpResourcesInfo() const;
 

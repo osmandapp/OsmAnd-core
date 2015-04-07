@@ -65,15 +65,7 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
     , processingTileStubs(_processingTileStubs)
     , unavailableTileStubs(_unavailableTileStubs)
 {
-#if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-    LogPrintf(LogSeverityLevel::Verbose,
-        "Map renderer will use only 1 concurrent worker to process requests");
-    _resourcesRequestWorkerPool.setMaxThreadCount(1);
-#else // !OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-    LogPrintf(LogSeverityLevel::Verbose,
-        "Map renderer will use %d concurrent worker(s) to process requests",
-        _resourcesRequestWorkerPool.maxThreadCount());
-#endif // OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
+    resetResourceWorkerThreadsLimit();
 
     // Start worker thread
     _workerThreadIsAlive = true;
@@ -402,6 +394,44 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QSet<TileId>& t
 
         // Wake up the worker
         _workerThreadWakeup.wakeAll();
+    }
+}
+
+void OsmAnd::MapRendererResourcesManager::setResourceWorkerThreadsLimit(const unsigned int limit)
+{
+    _resourcesRequestWorkerPool.setMaxThreadCount(limit);
+
+    if (_resourcesRequestWorkerPool.maxThreadCount() > 0)
+    {
+        LogPrintf(LogSeverityLevel::Verbose,
+            "Map renderer will use %d concurrent worker(s) to process requests",
+            _resourcesRequestWorkerPool.maxThreadCount());
+    }
+    else
+    {
+        LogPrintf(LogSeverityLevel::Verbose,
+            "Map renderer will use unlimited number of concurrent workers to process requests");
+    }
+}
+
+void OsmAnd::MapRendererResourcesManager::resetResourceWorkerThreadsLimit()
+{
+#if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
+    _resourcesRequestWorkerPool.setMaxThreadCount(1);
+#else // !OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
+    _resourcesRequestWorkerPool.setMaxThreadCount(QThread::idealThreadCount());
+#endif // OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
+
+    if (_resourcesRequestWorkerPool.maxThreadCount() > 0)
+    {
+        LogPrintf(LogSeverityLevel::Verbose,
+            "Map renderer will use %d concurrent worker(s) to process requests",
+            _resourcesRequestWorkerPool.maxThreadCount());
+    }
+    else
+    {
+        LogPrintf(LogSeverityLevel::Verbose,
+            "Map renderer will use unlimited number of concurrent workers to process requests");
     }
 }
 
