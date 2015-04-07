@@ -10,6 +10,11 @@
 #include "ICU.h"
 #include "CoreResourcesEmbeddedBundle.h"
 
+//#define OSMAND_LOG_CHARACTERS_WITHOUT_FONT 1
+#ifndef OSMAND_LOG_CHARACTERS_WITHOUT_FONT
+#   define OSMAND_LOG_CHARACTERS_WITHOUT_FONT 0
+#endif // !defined(OSMAND_LOG_CHARACTERS_WITHOUT_FONT)
+
 OsmAnd::TextRasterizer_P::TextRasterizer_P(TextRasterizer* const owner_)
     : owner(owner_)
 {
@@ -49,11 +54,12 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
         TextPaint* pTextPaint = nullptr;
         const auto pLine = lineRef.constData();
         const auto pEnd = pLine + lineRef.size();
-        auto pCharacter = pLine;
-        while (pCharacter != pEnd)
+        auto pNextCharacter = pLine;
+        while (pNextCharacter != pEnd)
         {
-            const auto position = pCharacter - pText;
-            const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pCharacter));
+            const auto pCharacter = pNextCharacter;
+            const auto position = pNextCharacter - pText;
+            const auto characterUCS4 = SkUTF16_NextUnichar(reinterpret_cast<const uint16_t**>(&pNextCharacter));
             
             // First of all check previous font if it contains this character
             auto font = pTextPaint ? pTextPaint->paint.getTypeface() : nullptr;
@@ -66,7 +72,19 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                     font = nullptr;
             }
             if (!font)
+            {
                 font = owner->fontFinder->findFontForCharacterUCS4(characterUCS4, fontStyle);
+
+#if OSMAND_LOG_CHARACTERS_WITHOUT_FONT
+                if (!font)
+                {
+                    LogPrintf(LogSeverityLevel::Warning,
+                        "UCS4 character 0x%08x (%u) has not been found in any font",
+                        characterUCS4,
+                        characterUCS4);
+                }
+#endif // OSMAND_LOG_CHARACTERS_WITHOUT_FONT
+            }
 
             if (pTextPaint == nullptr || pTextPaint->paint.getTypeface() != font)
             {
