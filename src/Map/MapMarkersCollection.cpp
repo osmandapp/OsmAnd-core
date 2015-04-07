@@ -57,8 +57,3 @@ bool OsmAnd::MapMarkersCollection::obtainData(
 
     return result;
 }
-
-OsmAnd::IMapDataProvider::SourceType OsmAnd::MapMarkersCollection::getSourceType() const
-{
-    return IMapDataProvider::SourceType::MiscDirect;
-}

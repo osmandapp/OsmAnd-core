@@ -59,8 +59,6 @@ namespace OsmAnd
             std::shared_ptr<Data>& outTiledData,
             ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric,
             const IQueryController* const queryController);
-
-        virtual SourceType getSourceType() const;
     };
 }
 

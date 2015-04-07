@@ -57,6 +57,7 @@
 
 OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* const owner_)
     : _taskHostBridge(this)
+    , _resourcesRequestWorkerPool(Concurrent::WorkerPool::Order::LIFO)
     , _workerThreadIsAlive(false)
     , _workerThreadId(nullptr)
     , _workerThread(new Concurrent::Thread(std::bind(&MapRendererResourcesManager::workerThreadProcedure, this)))
@@ -66,17 +67,12 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
 {
 #if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
     LogPrintf(LogSeverityLevel::Verbose,
-        "Map renderer will use only 1 concurrent worker to process requests for all source types");
-    for (auto& threadPool : _resourcesRequestWorkersPools)
-        threadPool.setMaxThreadCount(1);
+        "Map renderer will use only 1 concurrent worker to process requests");
+    _resourcesRequestWorkerPool.setMaxThreadCount(1);
 #else // !OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-    const auto maxConcurrentWorkersPerSourceType =
-        qMax(QThread::idealThreadCount() / IMapDataProvider::SourceTypesCount, 1);
     LogPrintf(LogSeverityLevel::Verbose,
-        "Map renderer will use %d concurrent workers to process requests for each source type",
-        maxConcurrentWorkersPerSourceType);
-    for (auto& threadPool : _resourcesRequestWorkersPools)
-        threadPool.setMaxThreadCount(maxConcurrentWorkersPerSourceType);
+        "Map renderer will use %d concurrent worker(s) to process requests",
+        _resourcesRequestWorkerPool.maxThreadCount());
 #endif // OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
 
     // Start worker thread
@@ -545,7 +541,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(const QSet<Tile
             if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
             {
                 requestNeededTiledResources(
-                    mapDataProvider->getSourceType(),
                     tiledResourcesCollection,
                     activeTiles,
                     activeZoom);
@@ -553,7 +548,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(const QSet<Tile
             else if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
             {
                 requestNeededKeyedResources(
-                    mapDataProvider->getSourceType(),
                     keyedResourcesCollection);
             }
         }
@@ -561,7 +555,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(const QSet<Tile
 }
 
 void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
-    const IMapDataProvider::SourceType sourceType,
     const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
     const QSet<TileId>& activeTiles,
     const ZoomLevel activeZoom)
@@ -573,17 +566,17 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
         std::shared_ptr<MapRendererBaseTiledResource> resource;
         const auto resourceType = resourcesCollection->type;
         resourcesCollection->obtainOrAllocateEntry(resource, activeTileId, activeZoom,
-            [this, resourceType, sourceType]
+            [this, resourceType]
             (const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
                 const TileId tileId,
                 const ZoomLevel zoom) -> MapRendererBaseTiledResource*
             {
                 if (resourceType == MapRendererResourceType::MapLayer)
-                    return new MapRendererRasterMapLayerResource(this, sourceType, collection, tileId, zoom);
+                    return new MapRendererRasterMapLayerResource(this, collection, tileId, zoom);
                 else if (resourceType == MapRendererResourceType::ElevationData)
-                    return new MapRendererElevationDataResource(this, sourceType, collection, tileId, zoom);
+                    return new MapRendererElevationDataResource(this, collection, tileId, zoom);
                 else if (resourceType == MapRendererResourceType::Symbols)
-                    return new MapRendererTiledSymbolsResource(this, sourceType, collection, tileId, zoom);
+                    return new MapRendererTiledSymbolsResource(this, collection, tileId, zoom);
                 else
                     return nullptr;
             });
@@ -593,7 +586,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
 }
 
 void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
-    const IMapDataProvider::SourceType sourceType,
     const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection)
 {
     // Get keyed provider
@@ -613,13 +605,13 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
         std::shared_ptr<MapRendererBaseKeyedResource> resource;
         const auto resourceType = resourcesCollection->type;
         resourcesCollection->obtainOrAllocateEntry(resource, resourceKey,
-            [this, resourceType, sourceType]
+            [this, resourceType]
             (const KeyedEntriesCollection<MapRendererKeyedResourcesCollection::Key,
                 MapRendererBaseKeyedResource>& collection,
                 MapRendererKeyedResourcesCollection::Key const key) -> MapRendererBaseKeyedResource*
             {
                 if (resourceType == MapRendererResourceType::Symbols)
-                    return new MapRendererKeyedSymbolsResource(this, sourceType, collection, key);
+                    return new MapRendererKeyedSymbolsResource(this, collection, key);
                 else
                     return nullptr;
             });
@@ -741,7 +733,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(const std::share
                     resource->setStateIf(MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath) ||
                     resource->setStateIf(MapRendererResourceState::RequestCanceledWhileBeingProcessed, MapRendererResourceState::JustBeforeDeath))
                 {
-                    LOG_RESOURCE_STATE_CHANGE(resource, ? , MapRendererResourceState::JustBeforeDeath);
+                    LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::JustBeforeDeath);
 
                     task->requestedResource->removeSelfFromCollection();
                 }
@@ -758,13 +750,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(const std::share
     LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
 
     // Finally start the request in a proper workers pool
-    auto& workersPool =
-#if OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-        _resourcesRequestWorkersPools[static_cast<int>(IMapDataProvider::SourceType::MiscGenerated)];
-#else // !OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-        _resourcesRequestWorkersPools[static_cast<int>(resource->sourceType)];
-#endif // OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER
-    workersPool.start(asyncTask);
+    _resourcesRequestWorkerPool.enqueue(asyncTask);
 }
 
 void OsmAnd::MapRendererResourcesManager::invalidateAllResources()
@@ -1864,4 +1850,19 @@ OsmAnd::MapRendererResourcesManager::ResourceRequestTask::ResourceRequestTask(
 OsmAnd::MapRendererResourcesManager::ResourceRequestTask::~ResourceRequestTask()
 {
     manager->_resourcesRequestTasksCounter.fetchAndSubOrdered(1);
+}
+
+void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::requestCancellation()
+{
+    Concurrent::HostedTask::requestCancellation();
+
+    // In case task was successfully dequeued, it means it will never get executed
+    const auto dequeued = manager->_resourcesRequestWorkerPool.dequeue(this);
+    if (dequeued)
+    {
+        if (postExecute)
+            postExecute(this, true);
+        if (autoDelete())
+            delete this;
+    }
 }

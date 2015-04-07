@@ -49,8 +49,6 @@ namespace OsmAnd
             std::shared_ptr<Metric>* pOutMetric = nullptr,
             const IQueryController* const queryController = nullptr);
 
-        virtual SourceType getSourceType() const;
-
     friend class OsmAnd::MapMarkerBuilder;
     friend class OsmAnd::MapMarkerBuilder_P;
     };

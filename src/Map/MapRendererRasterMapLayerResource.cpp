@@ -5,11 +5,10 @@
 
 OsmAnd::MapRendererRasterMapLayerResource::MapRendererRasterMapLayerResource(
     MapRendererResourcesManager* owner_,
-    const IMapDataProvider::SourceType sourceType_,
     const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
     const TileId tileId_,
     const ZoomLevel zoom_)
-    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::MapLayer, sourceType_, collection_, tileId_, zoom_)
+    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::MapLayer, collection_, tileId_, zoom_)
     , resourceInGPU(_resourceInGPU)
 {
 }

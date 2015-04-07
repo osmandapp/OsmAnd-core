@@ -17,7 +17,8 @@
 #include "CommonTypes.h"
 #include "MapCommonTypes.h"
 #include "MapRendererTypes_private.h"
-#include "Concurrent.h"
+#include "Thread.h"
+#include "Dispatcher.h"
 #include "IMapRenderer.h"
 #include "GPUAPI.h"
 #include "IMapTiledDataProvider.h"
@@ -293,6 +294,7 @@ namespace OsmAnd
         // Debug-related:
         virtual std::shared_ptr<MapRendererDebugSettings> getDebugSettings() const;
         virtual void setDebugSettings(const std::shared_ptr<const MapRendererDebugSettings>& debugSettings);
+        virtual unsigned int getActiveResourceRequestsCount() const;
         virtual void dumpResourcesInfo() const;
 
     friend struct OsmAnd::MapRendererInternalState;

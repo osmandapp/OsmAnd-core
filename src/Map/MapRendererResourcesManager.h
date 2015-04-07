@@ -9,7 +9,6 @@
 #include <QList>
 #include <QHash>
 #include <QSet>
-#include <QThreadPool>
 #include <QReadWriteLock>
 #include <QWaitCondition>
 
@@ -33,7 +32,10 @@
 #include "TiledEntriesCollection.h"
 #include "KeyedEntriesCollection.h"
 #include "SharedResourcesContainer.h"
-#include "Concurrent.h"
+#include "Thread.h"
+#include "TaskHost.h"
+#include "HostedTask.h"
+#include "WorkerPool.h"
 #include "IQueryController.h"
 
 namespace OsmAnd
@@ -50,12 +52,14 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(MapRendererResourcesManager);
 
     public:
-        typedef std::array< QList< std::shared_ptr<MapRendererBaseResourcesCollection> >, MapRendererResourceTypesCount > ResourcesStorage;
+        typedef std::array<
+            QList< std::shared_ptr<MapRendererBaseResourcesCollection> >,
+            MapRendererResourceTypesCount > ResourcesStorage;
 
     private:
         // Resource-requests related:
         const Concurrent::TaskHost::Bridge _taskHostBridge;
-        std::array<QThreadPool, IMapDataProvider::SourceTypesCount> _resourcesRequestWorkersPools;
+        mutable Concurrent::WorkerPool _resourcesRequestWorkerPool;
         mutable QAtomicInt _resourcesRequestTasksCounter;
         class ResourceRequestTask : public Concurrent::HostedTask
         {
@@ -73,6 +77,8 @@ namespace OsmAnd
 
             const MapRendererResourcesManager* const manager;
             const std::shared_ptr<MapRendererBaseResource> requestedResource;
+
+            virtual void requestCancellation();
         };
 
         // Each provider has a binded resource collection, and these are bindings:
@@ -120,12 +126,10 @@ namespace OsmAnd
         void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
         void requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         void requestNeededTiledResources(
-            const IMapDataProvider::SourceType sourceType,
             const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
             const QSet<TileId>& activeTiles,
             const ZoomLevel activeZoom);
         void requestNeededKeyedResources(
-            const IMapDataProvider::SourceType sourceType,
             const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection);
         void requestNeededResource(const std::shared_ptr<MapRendererBaseResource>& resource);
         void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);

@@ -15,7 +15,6 @@
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
 #include "ObfsCollection.h"
-#include "Concurrent.h"
 
 namespace OsmAnd
 {

@@ -13,10 +13,9 @@
 
 OsmAnd::MapRendererKeyedSymbolsResource::MapRendererKeyedSymbolsResource(
     MapRendererResourcesManager* owner_,
-    const IMapDataProvider::SourceType sourceType_,
     const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection_,
     const Key key_)
-    : MapRendererBaseKeyedResource(owner_, MapRendererResourceType::Symbols, sourceType_, collection_, key_)
+    : MapRendererBaseKeyedResource(owner_, MapRendererResourceType::Symbols, collection_, key_)
 {
 }
 

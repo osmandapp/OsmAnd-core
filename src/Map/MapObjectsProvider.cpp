@@ -34,8 +34,3 @@ bool OsmAnd::MapObjectsProvider::obtainData(
 
     return _p->obtainData(tileId, zoom, outTiledData, queryController);
 }
-
-OsmAnd::IMapDataProvider::SourceType OsmAnd::MapObjectsProvider::getSourceType() const
-{
-    return IMapDataProvider::SourceType::MiscDirect;
-}

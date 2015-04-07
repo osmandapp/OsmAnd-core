@@ -28,11 +28,10 @@
 
 OsmAnd::MapRendererTiledSymbolsResource::MapRendererTiledSymbolsResource(
     MapRendererResourcesManager* owner_,
-    const IMapDataProvider::SourceType sourceType_,
     const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
     const TileId tileId_,
     const ZoomLevel zoom_)
-    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::Symbols, sourceType_, collection_, tileId_, zoom_)
+    : MapRendererBaseTiledResource(owner_, MapRendererResourceType::Symbols, collection_, tileId_, zoom_)
 {
 }
 

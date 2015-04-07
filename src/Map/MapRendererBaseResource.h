@@ -8,7 +8,7 @@
 #include "OsmAndCore.h"
 #include "MapRendererResourceType.h"
 #include "MapRendererResourceState.h"
-#include "Concurrent.h"
+#include "Task.h"
 #include "IQueryController.h"
 #include "IMapDataProvider.h"
 
@@ -25,8 +25,7 @@ namespace OsmAnd
     protected:
         MapRendererBaseResource(
             MapRendererResourcesManager* const owner,
-            const MapRendererResourceType type,
-            const IMapDataProvider::SourceType sourceType);
+            const MapRendererResourceType type);
 
         Concurrent::Task* _requestTask;
 
@@ -49,7 +48,6 @@ namespace OsmAnd
 
         MapRendererResourcesManager* const resourcesManager;
         const MapRendererResourceType type;
-        const IMapDataProvider::SourceType sourceType;
 
         const bool& isJunk;
 

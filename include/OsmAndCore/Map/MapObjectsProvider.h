@@ -37,8 +37,6 @@ namespace OsmAnd
             std::shared_ptr<Data>& outTiledData,
             std::shared_ptr<Metric>* pOutMetric = nullptr,
             const IQueryController* const queryController = nullptr);
-
-        virtual SourceType getSourceType() const;
     };
 }
 

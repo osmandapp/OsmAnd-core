@@ -26,7 +26,6 @@ namespace OsmAnd
     protected:
         MapRendererKeyedSymbolsResource(
             MapRendererResourcesManager* owner,
-            const IMapDataProvider::SourceType sourceType,
             const KeyedEntriesCollection<Key, MapRendererBaseKeyedResource>& collection,
             const Key key);
 

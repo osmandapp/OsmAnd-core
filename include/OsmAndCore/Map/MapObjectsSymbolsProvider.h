@@ -85,8 +85,6 @@ namespace OsmAnd
             const IQueryController* const queryController = nullptr,
             const FilterCallback filterCallback = nullptr);
 #endif // !defined(SWIG)
-
-        virtual SourceType getSourceType() const;
     };
 }
 

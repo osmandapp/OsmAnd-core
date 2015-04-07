@@ -1673,6 +1673,11 @@ void OsmAnd::MapRenderer::setDebugSettings(const std::shared_ptr<const MapRender
     invalidateFrame();
 }
 
+unsigned int OsmAnd::MapRenderer::getActiveResourceRequestsCount() const
+{
+    return static_cast<unsigned int>(_resources->_resourcesRequestTasksCounter.loadAcquire());
+}
+
 void OsmAnd::MapRenderer::dumpResourcesInfo() const
 {
     getResources().dumpResourcesInfo();

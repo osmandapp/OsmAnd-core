@@ -91,8 +91,3 @@ OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getMaxZoom() const
 {
     return maxZoom;
 }
-
-OsmAnd::IMapDataProvider::SourceType OsmAnd::OnlineRasterMapLayerProvider::getSourceType() const
-{
-    return IMapDataProvider::SourceType::NetworkDirect;
-}

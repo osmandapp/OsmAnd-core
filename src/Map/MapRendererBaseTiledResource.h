@@ -10,7 +10,6 @@
 #include "MapRendererResourceState.h"
 #include "MapRendererBaseResource.h"
 #include "TiledEntriesCollection.h"
-#include "Concurrent.h"
 #include "IQueryController.h"
 
 namespace OsmAnd
@@ -28,7 +27,6 @@ namespace OsmAnd
         MapRendererBaseTiledResource(
             MapRendererResourcesManager* owner,
             const MapRendererResourceType type,
-            const IMapDataProvider::SourceType sourceType,
             const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
             const TileId tileId,
             const ZoomLevel zoom);

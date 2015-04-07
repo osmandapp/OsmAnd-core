@@ -3,11 +3,10 @@
 OsmAnd::MapRendererBaseTiledResource::MapRendererBaseTiledResource(
     MapRendererResourcesManager* owner_,
     const MapRendererResourceType type_,
-    const IMapDataProvider::SourceType sourceType_,
     const TiledEntriesCollection<MapRendererBaseTiledResource>& collection_,
     const TileId tileId_,
     const ZoomLevel zoom_)
-    : MapRendererBaseResource(owner_, type_, sourceType_)
+    : MapRendererBaseResource(owner_, type_)
     , TiledEntriesCollectionEntryWithState(collection_, tileId_, zoom_)
 {
 }

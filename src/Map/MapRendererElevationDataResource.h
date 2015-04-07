@@ -23,7 +23,6 @@ namespace OsmAnd
     protected:
         MapRendererElevationDataResource(
             MapRendererResourcesManager* owner,
-            const IMapDataProvider::SourceType sourceType,
             const TiledEntriesCollection<MapRendererBaseTiledResource>& collection,
             const TileId tileId,
             const ZoomLevel zoom);

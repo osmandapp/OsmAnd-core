@@ -13,23 +13,6 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(IMapDataProvider);
     public:
-        enum class SourceType
-        {
-            Unknown = -1,
-
-            LocalDirect,
-            LocalGenerated,
-            NetworkDirect,
-            NetworkGenerated,
-            MiscDirect,
-            MiscGenerated,
-
-            __LAST
-        };
-        enum {
-            SourceTypesCount = static_cast<int>(SourceType::__LAST)
-        };
-
         struct OSMAND_CORE_API RetainableCacheMetadata
         {
             virtual ~RetainableCacheMetadata() = 0;
@@ -55,8 +38,6 @@ namespace OsmAnd
         IMapDataProvider();
     public:
         virtual ~IMapDataProvider();
-
-        virtual SourceType getSourceType() const = 0;
     };
 }
 
