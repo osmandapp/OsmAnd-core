@@ -50,7 +50,7 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
     const SkFontStyle style /*= SkFontStyle()*/) const
 {
     SkPaint paint;
-    paint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
+    paint.setTextEncoding(SkPaint::kUTF32_TextEncoding);
 
     SkTypeface* bestMatch = nullptr;
     auto bestMatchDifference = std::numeric_limits<float>::quiet_NaN();
