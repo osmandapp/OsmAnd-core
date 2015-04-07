@@ -272,7 +272,7 @@ namespace OsmAnd
     }
 
     template<typename CONTAINER>
-    inline auto qMaxElement(CONTAINER container) -> decltype(*std::begin(container))
+    inline auto qMaxElement(CONTAINER container) -> decltype(std::begin(container))
     {
         auto itElement = std::begin(container);
         auto itMaxElement = itElement;
