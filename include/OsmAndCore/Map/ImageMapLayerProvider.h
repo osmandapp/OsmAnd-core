@@ -48,7 +48,7 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_METHOD(
             QByteArray,
             obtainImage,
-            /*SWIG_OMIT(const)*/ TileId tileId,
+            SWIG_OMIT(const) TileId tileId,
             const ZoomLevel zoom);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             uint32_t,

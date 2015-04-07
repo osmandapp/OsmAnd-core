@@ -70,8 +70,6 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
         break;
     }
 
-    if (bestMatch)
-        bestMatch->ref();
     return bestMatch;
 }
 

@@ -27,16 +27,11 @@ SkTypeface* OsmAnd::CachingFontFinder::findFontForCharacterUCS4(
 
     const auto citFont = _cache.constFind(cacheKey);
     if (citFont != _cache.cend())
-    {
-        const auto font = *citFont;
-        if (font)
-            font->ref();
-        return font;
-    }
+        return *citFont;
 
     const auto font = fontFinder->findFontForCharacterUCS4(character, style);
-    _cache.insert(cacheKey, font);
     if (font)
         font->ref();
+    _cache.insert(cacheKey, font);
     return font;
 }

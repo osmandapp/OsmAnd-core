@@ -36,7 +36,7 @@ namespace OsmAnd
             SkTypeface*,
             findFontForCharacterUCS4,
             const uint32_t character,
-            /*const*/ SkFontStyle style);
+            SWIG_OMIT(const) SkFontStyle style);
     SWIG_EMIT_DIRECTOR_END(IFontFinder);
 }
 
