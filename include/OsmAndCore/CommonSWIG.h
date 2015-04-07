@@ -50,9 +50,9 @@
 
 // SWIG_OMIT
 #if defined(SWIG)
-#   define SWIG_OMIT(x)
+#   define SWIG_OMIT(...)
 #else
-#   define SWIG_OMIT(x) x
+#   define SWIG_OMIT(...) __VA_ARGS__
 #endif
 
 // SWIG_CLARIFY

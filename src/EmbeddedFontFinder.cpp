@@ -53,21 +53,35 @@ SkTypeface* OsmAnd::EmbeddedFontFinder::findFontForCharacterUCS4(
     paint.setTextEncoding(SkPaint::kUTF16_TextEncoding);
 
     SkTypeface* bestMatch = nullptr;
+    auto bestMatchDifference = std::numeric_limits<float>::quiet_NaN();
     for (const auto font : constOf(_fonts))
     {
         paint.setTypeface(font);
 
+        // If font doesn't contain requested character, it should be completely ignored
         if (!paint.containsText(&character, sizeof(uint32_t)))
             continue;
 
-        if (!bestMatch)
-            bestMatch = font;
+        // Calculate difference between this font style and requested style
+        auto difference = 0.0f;
+        const auto fontStyle = font->fontStyle();
+        if (fontStyle.slant() != style.slant())
+            difference += 1.0f;
+        if (fontStyle.width() != style.width())
+            difference += static_cast<float>(qAbs(fontStyle.width() - style.width())) / SkFontStyle::kUltaExpanded_Width;
+        if (fontStyle.weight() != style.weight())
+            difference += static_cast<float>(qAbs(fontStyle.weight() - style.weight())) / SkFontStyle::kBlack_Weight;
 
-        if (!(font->fontStyle() == style))
+        // If there was previous best match, check if this match is better
+        if (bestMatch && bestMatchDifference < difference)
             continue;
         
         bestMatch = font;
-        break;
+        bestMatchDifference = difference;
+
+        // In case difference is 0, there won't be better match
+        if (qFuzzyIsNull(bestMatchDifference))
+            break;
     }
 
     return bestMatch;
