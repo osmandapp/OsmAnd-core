@@ -4,7 +4,6 @@ OsmAnd::MapRendererBaseResource::MapRendererBaseResource(
     MapRendererResourcesManager* const owner_,
     const MapRendererResourceType type_)
     : _isJunk(false)
-    , _requestTask(nullptr)
     , resourcesManager(owner_)
     , type(type_)
     , isJunk(_isJunk)

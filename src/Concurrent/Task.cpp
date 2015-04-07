@@ -5,16 +5,16 @@
 #include "Common.h"
 
 OsmAnd::Concurrent::Task::Task(
-    ExecuteSignature executeMethod,
-    PreExecuteSignature preExecuteMethod /*= nullptr*/,
-    PostExecuteSignature postExecuteMethod /*= nullptr*/)
+    ExecuteSignature executeFunctor_,
+    PreExecuteSignature preExecuteFunctor_ /*= nullptr*/,
+    PostExecuteSignature postExecuteFunctor_ /*= nullptr*/)
     : _cancellationRequestedByTask(false)
     , _cancellationRequestedByExternal(0)
-    , preExecute(preExecuteMethod)
-    , execute(executeMethod)
-    , postExecute(postExecuteMethod)
+    , preExecuteFunctor(preExecuteFunctor_)
+    , executeFunctor(executeFunctor_)
+    , postExecuteFunctor(postExecuteFunctor_)
 {
-    assert(executeMethod != nullptr);
+    assert(executeFunctor != nullptr);
 }
 
 OsmAnd::Concurrent::Task::~Task()
@@ -24,21 +24,21 @@ OsmAnd::Concurrent::Task::~Task()
 void OsmAnd::Concurrent::Task::run()
 {
     // Check if task wants to cancel itself
-    if (preExecute && _cancellationRequestedByExternal.loadAcquire() == 0)
+    if (preExecuteFunctor && _cancellationRequestedByExternal.loadAcquire() == 0)
     {
         bool cancellationRequestedByTask = false;
-        preExecute(this, cancellationRequestedByTask);
+        preExecuteFunctor(this, cancellationRequestedByTask);
         _cancellationRequestedByTask = cancellationRequestedByTask;
     }
 
     // If cancellation was not requested by task itself nor by
     // external call
     if (!_cancellationRequestedByTask && _cancellationRequestedByExternal.loadAcquire() == 0)
-        execute(this);
+        executeFunctor(this);
 
     // Report that execution had finished
-    if (postExecute)
-        postExecute(this, isCancellationRequested());
+    if (postExecuteFunctor)
+        postExecuteFunctor(this, isCancellationRequested());
 }
 
 void OsmAnd::Concurrent::Task::requestCancellation()

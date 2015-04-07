@@ -25,14 +25,14 @@ namespace OsmAnd
         public:
             HostedTask(
                 const TaskHost::Bridge& bridge,
-                ExecuteSignature executeMethod,
-                PreExecuteSignature preExecuteMethod = nullptr,
-                PostExecuteSignature postExecuteMethod = nullptr);
+                ExecuteSignature executeFunctor,
+                PreExecuteSignature preExecuteFunctor = nullptr,
+                PostExecuteSignature postExecuteFunctor = nullptr);
             virtual ~HostedTask();
 
             virtual void run();
 
-            const TaskHost::OwnerPtr& lockedOwner;
+            TaskHost::OwnerPtr& lockedOwner;
         };
     }
 }

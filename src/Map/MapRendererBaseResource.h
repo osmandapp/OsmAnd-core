@@ -2,13 +2,13 @@
 #define _OSMAND_CORE_MAP_RENDERER_BASE_RESOURCE_H_
 
 #include "stdlib_common.h"
+#include <functional>
 
 #include "QtExtensions.h"
 
 #include "OsmAndCore.h"
 #include "MapRendererResourceType.h"
 #include "MapRendererResourceState.h"
-#include "Task.h"
 #include "IQueryController.h"
 #include "IMapDataProvider.h"
 
@@ -20,6 +20,9 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(MapRendererBaseResource);
 
+    public:
+        typedef std::function<void()> CancelResourceRequestSignature;
+
     private:
         bool _isJunk;
     protected:
@@ -27,7 +30,7 @@ namespace OsmAnd
             MapRendererResourcesManager* const owner,
             const MapRendererResourceType type);
 
-        Concurrent::Task* _requestTask;
+        CancelResourceRequestSignature _cancelRequestCallback;
 
         std::shared_ptr<const IMapDataProvider::RetainableCacheMetadata> _retainableCacheMetadata;
 

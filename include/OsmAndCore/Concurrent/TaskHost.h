@@ -23,7 +23,7 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(TaskHost)
         public:
-            typedef const void* OwnerPtr;
+            typedef void* OwnerPtr;
 
             class OSMAND_CORE_API Bridge
             {

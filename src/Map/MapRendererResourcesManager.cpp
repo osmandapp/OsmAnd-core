@@ -658,129 +658,121 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(const std::share
     LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unknown, MapRendererResourceState::Requesting);
 
     // Create async-task that will obtain needed resource data
-    const auto executeProc =
-        [this]
-        (Concurrent::Task* task_)
+    const auto asyncTask = new ResourceRequestTask(resource, _taskHostBridge);
+
+    // Register resource as requested
+    resource->_cancelRequestCallback =
+        [asyncTask]
+        ()
         {
-            const auto task = static_cast<ResourceRequestTask*>(task_);
-            const auto resource = std::static_pointer_cast<MapRendererBaseTiledResource>(task->requestedResource);
-
-            // Only if resource entry has "Requested" state proceed to "ProcessingRequest" state
-            if (!resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::ProcessingRequest))
-            {
-                // This actually can happen in following situation(s):
-                //   - if request task was canceled before has started it's execution,
-                //     since in that case a state change "Requested => JustBeforeDeath" must have happend.
-                //     In this case entry will be removed in post-execute handler.
-                assert(resource->getState() == MapRendererResourceState::JustBeforeDeath);
-                return;
-            }
-            else
-            {
-                LOG_RESOURCE_STATE_CHANGE(
-                    resource,
-                    MapRendererResourceState::Requested,
-                    MapRendererResourceState::ProcessingRequest);
-            }
-
-            // Ask resource to obtain it's data
-            bool dataAvailable = false;
-            FunctorQueryController obtainDataQueryController(
-                [task_]
-                (const FunctorQueryController* const controller) -> bool
-                {
-                    return task_->isCancellationRequested();
-                });
-            const auto requestSucceeded =
-                resource->obtainData(dataAvailable, &obtainDataQueryController) &&
-                !task->isCancellationRequested();
-
-            // If failed to obtain resource data, remove resource entry to repeat try later
-            if (!requestSucceeded)
-            {
-                // It's safe to simply remove entry, since it's not yet uploaded
-                if (const auto link = resource->link.lock())
-                    link->collection.removeEntry(resource->tileId, resource->zoom);
-                return;
-            }
-
-            // Finalize execution of task
-            if (!resource->setStateIf(MapRendererResourceState::ProcessingRequest, dataAvailable ? MapRendererResourceState::Ready : MapRendererResourceState::Unavailable))
-            {
-                assert(resource->getState() == MapRendererResourceState::RequestCanceledWhileBeingProcessed);
-
-                // While request was processed, state may have changed to "RequestCanceledWhileBeingProcessed"
-                task->requestCancellation();
-                return;
-            }
-#if OSMAND_LOG_RESOURCE_STATE_CHANGE
-            else
-            {
-                if (dataAvailable)
-                {
-                    LOG_RESOURCE_STATE_CHANGE(
-                        resource,
-                        MapRendererResourceState::ProcessingRequest,
-                        MapRendererResourceState::Ready);
-                }
-                else
-                {
-                    LOG_RESOURCE_STATE_CHANGE(
-                        resource,
-                        MapRendererResourceState::ProcessingRequest,
-                        MapRendererResourceState::Unavailable);
-                }
-            }
-#endif // OSMAND_LOG_RESOURCE_STATE_CHANGE
-            resource->_requestTask = nullptr;
-
-            // There is data to upload to GPU, request uploading. Or just ask to show that resource is unavailable
-            if (dataAvailable)
-                requestResourcesUploadOrUnload();
-            else
-                notifyNewResourceAvailableForDrawing();
+            asyncTask->requestCancellation();
         };
-    const auto postExecuteProc =
-        [this]
-        (Concurrent::Task* task_, bool wasCancelled)
-        {
-            const auto task = static_cast<const ResourceRequestTask*>(task_);
-            const auto resource = std::static_pointer_cast<MapRendererBaseTiledResource>(task->requestedResource);
-
-            if (wasCancelled)
-            {
-                // If request task was canceled, if could have happened:
-                //  - before it has started it's execution.
-                //    In this case, state has to be "Requested", and it won't change. So just remove it
-                //  - during it's execution.
-                //    In this case, this handler will be called after execution was finished,
-                //    and state _should_ be "Ready" or "Unavailable", but in general it can be any:
-                //    Uploading, Uploaded, Unloading, Unloaded. In case state is "Ready" or "Unavailable",
-                //    change it to "JustBeforeDeath" and delete it.
-                if (
-                    resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath) ||
-                    resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::JustBeforeDeath) ||
-                    resource->setStateIf(MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath) ||
-                    resource->setStateIf(MapRendererResourceState::RequestCanceledWhileBeingProcessed, MapRendererResourceState::JustBeforeDeath))
-                {
-                    LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::JustBeforeDeath);
-
-                    task->requestedResource->removeSelfFromCollection();
-                }
-
-                // All other cases must be handled in other places, since here there is no access to GPU
-            }
-        };
-    const auto asyncTask = new ResourceRequestTask(resource, _taskHostBridge, executeProc, nullptr, postExecuteProc);
-
-    // Register tile as requested
-    resource->_requestTask = asyncTask;
     assert(resource->getState() == MapRendererResourceState::Requesting);
     resource->setState(MapRendererResourceState::Requested);
     LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
 
     // Finally start the request in a proper workers pool
     _resourcesRequestWorkerPool.enqueue(asyncTask);
+}
+
+bool OsmAnd::MapRendererResourcesManager::beginResourceRequestProcessing(
+    const std::shared_ptr<MapRendererBaseResource>& resource)
+{
+    // Only if resource entry has "Requested" state proceed to "ProcessingRequest" state
+    if (!resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::ProcessingRequest))
+    {
+        // This actually can happen in following situation(s):
+        //   - if request task was canceled before has started it's execution,
+        //     since in that case a state change "Requested => JustBeforeDeath" must have happend.
+        //     In this case entry will be removed in post-execute handler.
+        assert(resource->getState() == MapRendererResourceState::JustBeforeDeath);
+        return false;
+    }
+    else
+    {
+        LOG_RESOURCE_STATE_CHANGE(
+            resource,
+            MapRendererResourceState::Requested,
+            MapRendererResourceState::ProcessingRequest);
+    }
+
+    return true;
+}
+
+void OsmAnd::MapRendererResourcesManager::endResourceRequestProcessing(
+    const std::shared_ptr<MapRendererBaseResource>& resource,
+    const bool requestSucceeded,
+    const bool dataAvailable)
+{
+    // If failed to obtain resource data, remove resource entry to repeat try later
+    if (!requestSucceeded)
+    {
+        // It's safe to simply remove entry, since it's not yet uploaded
+        resource->removeSelfFromCollection();
+        return;
+    }
+
+    // Finalize execution of task
+    const auto nextState = dataAvailable ? MapRendererResourceState::Ready : MapRendererResourceState::Unavailable;
+    if (!resource->setStateIf(MapRendererResourceState::ProcessingRequest, nextState))
+    {
+        assert(resource->getState() == MapRendererResourceState::RequestCanceledWhileBeingProcessed);
+
+        // While request was processed, state may have changed to "RequestCanceledWhileBeingProcessed"
+        processResourceRequestCancellation(resource);
+        return;
+    }
+#if OSMAND_LOG_RESOURCE_STATE_CHANGE
+    else
+    {
+        if (dataAvailable)
+        {
+            LOG_RESOURCE_STATE_CHANGE(
+                resource,
+                MapRendererResourceState::ProcessingRequest,
+                MapRendererResourceState::Ready);
+        }
+        else
+        {
+            LOG_RESOURCE_STATE_CHANGE(
+                resource,
+                MapRendererResourceState::ProcessingRequest,
+                MapRendererResourceState::Unavailable);
+        }
+    }
+#endif // OSMAND_LOG_RESOURCE_STATE_CHANGE
+    resource->_cancelRequestCallback = nullptr;
+
+    // There is data to upload to GPU, request uploading. Or just ask to show that resource is unavailable
+    if (dataAvailable)
+        requestResourcesUploadOrUnload();
+    else
+        notifyNewResourceAvailableForDrawing();
+}
+
+void OsmAnd::MapRendererResourcesManager::processResourceRequestCancellation(
+    const std::shared_ptr<MapRendererBaseResource>& resource)
+{
+    // If request task was canceled, if could have happened:
+    //  - before it has started it's execution.
+    //    In this case, state has to be "Requested", and it won't change. So just remove it
+    //  - during it's execution.
+    //    In this case, this handler will be called after execution was finished,
+    //    and state _should_ be "Ready" or "Unavailable", but in general it can be any:
+    //    Uploading, Uploaded, Unloading, Unloaded. In case state is "Ready" or "Unavailable",
+    //    change it to "JustBeforeDeath" and delete it.
+    if (
+        resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath) ||
+        resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::JustBeforeDeath) ||
+        resource->setStateIf(MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath) ||
+        resource->setStateIf(MapRendererResourceState::RequestCanceledWhileBeingProcessed, MapRendererResourceState::JustBeforeDeath))
+    {
+        LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::JustBeforeDeath);
+
+        resource->removeSelfFromCollection();
+    }
+
+    // All other cases must be handled in other places, since here there is no access to GPU
 }
 
 void OsmAnd::MapRendererResourcesManager::invalidateAllResources()
@@ -1372,8 +1364,8 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
         // If resource was just requested, cancel its task and remove the entry.
 
         // Cancel the task
-        assert(resource->_requestTask != nullptr);
-        resource->_requestTask->requestCancellation();
+        assert(resource->_cancelRequestCallback != nullptr);
+        resource->_cancelRequestCallback();
 
         return true;
     }
@@ -1437,8 +1429,8 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                         MapRendererResourceState::JustBeforeDeath);
 
                     // Cancel the task
-                    assert(entry->_requestTask != nullptr);
-                    entry->_requestTask->requestCancellation();
+                    assert(entry->_cancelRequestCallback != nullptr);
+                    entry->_cancelRequestCallback();
 
                     return true;
                 }
@@ -1866,12 +1858,9 @@ void OsmAnd::MapRendererResourcesManager::dumpResourcesInfo() const
 
 OsmAnd::MapRendererResourcesManager::ResourceRequestTask::ResourceRequestTask(
     const std::shared_ptr<MapRendererBaseResource>& requestedResource_,
-    const Concurrent::TaskHost::Bridge& bridge_,
-    ExecuteSignature executeMethod_,
-    PreExecuteSignature preExecuteMethod_ /*= nullptr*/,
-    PostExecuteSignature postExecuteMethod_ /*= nullptr*/)
-    : HostedTask(bridge_, executeMethod_, preExecuteMethod_, postExecuteMethod_)
-    , manager(reinterpret_cast<const MapRendererResourcesManager*>(lockedOwner))
+    const Concurrent::TaskHost::Bridge& bridge_)
+    : HostedTask(bridge_, executeWrapper, nullptr, postExecuteWrapper)
+    , manager(reinterpret_cast<MapRendererResourcesManager*>(lockedOwner))
     , requestedResource(requestedResource_)
 {
     manager->_resourcesRequestTasksCounter.fetchAndAddOrdered(1);
@@ -1890,9 +1879,46 @@ void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::requestCancellati
     const auto dequeued = manager->_resourcesRequestWorkerPool.dequeue(this);
     if (dequeued)
     {
-        if (postExecute)
-            postExecute(this, true);
+        postExecute(true);
         if (autoDelete())
             delete this;
     }
+}
+
+void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::execute()
+{
+    if (!manager->beginResourceRequestProcessing(requestedResource))
+        return;
+
+    // Ask resource to obtain it's data
+    bool dataAvailable = false;
+    FunctorQueryController obtainDataQueryController(
+        [this]
+        (const FunctorQueryController* const controller) -> bool
+        {
+            return isCancellationRequested();
+        });
+    const auto requestSucceeded =
+        requestedResource->obtainData(dataAvailable, &obtainDataQueryController) &&
+        !isCancellationRequested();
+
+    manager->endResourceRequestProcessing(requestedResource, requestSucceeded, dataAvailable);
+}
+
+void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::postExecute(const bool wasCancelled)
+{
+    if (wasCancelled)
+        manager->processResourceRequestCancellation(requestedResource);
+}
+
+void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::executeWrapper(Task* const task_)
+{
+    const auto task = static_cast<ResourceRequestTask*>(task_);
+    task->execute();
+}
+
+void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::postExecuteWrapper(Task* const task_, const bool wasCancelled)
+{
+    const auto task = static_cast<ResourceRequestTask*>(task_);
+    task->postExecute(wasCancelled);
 }

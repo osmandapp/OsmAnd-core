@@ -2,10 +2,10 @@
 
 OsmAnd::Concurrent::HostedTask::HostedTask(
     const TaskHost::Bridge& bridge,
-    ExecuteSignature executeMethod_,
-    PreExecuteSignature preExecuteMethod_ /*= nullptr*/,
-    PostExecuteSignature postExecuteMethod_ /*= nullptr*/)
-    : Task(executeMethod_, preExecuteMethod_, postExecuteMethod_)
+    ExecuteSignature executeFunctor_,
+    PreExecuteSignature preExecuteFunctor_ /*= nullptr*/,
+    PostExecuteSignature postExecuteFunctor_ /*= nullptr*/)
+    : Task(executeFunctor_, preExecuteFunctor_, postExecuteFunctor_)
     , _host(bridge._host)
     , _lockedOwner(nullptr)
     , lockedOwner(_lockedOwner)

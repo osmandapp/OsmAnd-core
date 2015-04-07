@@ -18,23 +18,23 @@ namespace OsmAnd
         {
             Q_DISABLE_COPY_AND_MOVE(Task);
         public:
-            typedef std::function<void(Task* task, bool& requestCancellation)> PreExecuteSignature;
-            typedef std::function<void(Task* task)> ExecuteSignature;
-            typedef std::function<void(Task* task, bool wasCancelled)> PostExecuteSignature;
+            typedef std::function<void(Task* const task, bool& requestCancellation)> PreExecuteSignature;
+            typedef std::function<void(Task* const task)> ExecuteSignature;
+            typedef std::function<void(Task* const task, const bool wasCancelled)> PostExecuteSignature;
         private:
             bool _cancellationRequestedByTask;
             QAtomicInt _cancellationRequestedByExternal;
         protected:
         public:
             Task(
-                ExecuteSignature executeMethod,
-                PreExecuteSignature preExecuteMethod = nullptr,
-                PostExecuteSignature postExecuteMethod = nullptr);
+                ExecuteSignature executeFunctor,
+                PreExecuteSignature preExecuteFunctor = nullptr,
+                PostExecuteSignature postExecuteFunctor = nullptr);
             virtual ~Task();
 
-            const PreExecuteSignature preExecute;
-            const ExecuteSignature execute;
-            const PostExecuteSignature postExecute;
+            const PreExecuteSignature preExecuteFunctor;
+            const ExecuteSignature executeFunctor;
+            const PostExecuteSignature postExecuteFunctor;
 
             virtual void requestCancellation();
             bool isCancellationRequested() const;

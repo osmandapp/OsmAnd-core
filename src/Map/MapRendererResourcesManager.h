@@ -59,23 +59,25 @@ namespace OsmAnd
     private:
         // Resource-requests related:
         const Concurrent::TaskHost::Bridge _taskHostBridge;
-        mutable Concurrent::WorkerPool _resourcesRequestWorkerPool;
-        mutable QAtomicInt _resourcesRequestTasksCounter;
+        Concurrent::WorkerPool _resourcesRequestWorkerPool;
+        QAtomicInt _resourcesRequestTasksCounter;
         class ResourceRequestTask : public Concurrent::HostedTask
         {
             Q_DISABLE_COPY_AND_MOVE(ResourceRequestTask);
         private:
+            void execute();
+            void postExecute(const bool wasCancelled);
+
+            static void executeWrapper(Task* const task);
+            static void postExecuteWrapper(Task* const task, const bool wasCancelled);
         protected:
         public:
             ResourceRequestTask(
                 const std::shared_ptr<MapRendererBaseResource>& requestedResource,
-                const Concurrent::TaskHost::Bridge& bridge,
-                ExecuteSignature executeMethod,
-                PreExecuteSignature preExecuteMethod = nullptr,
-                PostExecuteSignature postExecuteMethod = nullptr);
+                const Concurrent::TaskHost::Bridge& bridge);
             virtual ~ResourceRequestTask();
 
-            const MapRendererResourcesManager* const manager;
+            MapRendererResourcesManager* const manager;
             const std::shared_ptr<MapRendererBaseResource> requestedResource;
 
             virtual void requestCancellation();
@@ -134,6 +136,12 @@ namespace OsmAnd
         void requestNeededKeyedResources(
             const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection);
         void requestNeededResource(const std::shared_ptr<MapRendererBaseResource>& resource);
+        bool beginResourceRequestProcessing(const std::shared_ptr<MapRendererBaseResource>& resource);
+        void endResourceRequestProcessing(
+            const std::shared_ptr<MapRendererBaseResource>& resource,
+            const bool requestSucceeded,
+            const bool dataAvailable);
+        void processResourceRequestCancellation(const std::shared_ptr<MapRendererBaseResource>& resource);
         void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
         bool cleanupJunkResource(const std::shared_ptr<MapRendererBaseResource>& resource, bool& needsResourcesUploadOrUnload);
         unsigned int unloadResources();
