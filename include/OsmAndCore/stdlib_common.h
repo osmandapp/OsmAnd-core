@@ -8,6 +8,7 @@
 #include <cassert>
 #include <algorithm>
 #include <numeric>
+#include <type_traits>
 
 namespace std
 {

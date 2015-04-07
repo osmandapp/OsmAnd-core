@@ -63,7 +63,6 @@ else()
 	set(HAVE_ZLIB ON)
 	unset(PTHREAD_CREATE_JOINABLE)
 	check_include_files("stdlib.h;stdarg.h;string.h;float.h" STDC_HEADERS)
-	set(_POSIX_SOURCE ON)
 	
 	restore(CMAKE_REQUIRED_FLAGS)
 

@@ -87,4 +87,6 @@
 #cmakedefine STDC_HEADERS 1
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
-#cmakedefine _POSIX_SOURCE
+#ifndef _POSIX_SOURCE
+#   define _POSIX_SOURCE 1
+#endif

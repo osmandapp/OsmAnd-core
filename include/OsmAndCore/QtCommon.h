@@ -6,6 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <functional>
+#include <iterator>
 #include <type_traits>
 
 #include <OsmAndCore/QtExtensions.h>
@@ -271,22 +272,7 @@ namespace OsmAnd
     }
 
     template<typename CONTAINER>
-    inline auto qMaxElement(const CONTAINER& container) -> typename CONTAINER::const_iterator
-    {
-        auto itElement = std::begin(container);
-        auto itMaxElement = itElement;
-        const auto itEnd = std::end(container);
-        for (++itElement; itElement != itEnd; ++itElement)
-        {
-            if (*itElement > *itMaxElement)
-                itMaxElement = itElement;
-        }
-
-        return itMaxElement;
-    }
-
-    template<typename CONTAINER>
-    inline auto qMaxElement(CONTAINER& container) -> typename CONTAINER::iterator
+    inline auto qMaxElement(std::add_lvalue_reference<CONTAINER> container) -> decltype(*std::begin(container))
     {
         auto itElement = std::begin(container);
         auto itMaxElement = itElement;
@@ -303,13 +289,12 @@ namespace OsmAnd
     template<typename OUTPUT_CONTAINER, typename INPUT_CONTAINER>
     inline OUTPUT_CONTAINER qTransform(
         const INPUT_CONTAINER& input,
-        const std::function<OUTPUT_CONTAINER(const decltype(*std::begin(input))& item)> transform)
+        const std::function<OUTPUT_CONTAINER(typename std::iterator_traits<decltype(std::begin(input))>::reference)> transform)
     {
         OUTPUT_CONTAINER output;
 
-        auto itItem = std::begin(input);
         const auto itEnd = std::end(input);
-        for (++itItem; itItem != itEnd; ++itItem)
+        for (auto itItem = std::begin(input); itItem != itEnd; ++itItem)
             output = output + transform(*itItem);
 
         return output;
