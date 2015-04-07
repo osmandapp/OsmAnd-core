@@ -27,9 +27,9 @@ namespace OsmAnd
         protected:
         public:
             Task(
-                ExecuteSignature executeFunctor,
-                PreExecuteSignature preExecuteFunctor = nullptr,
-                PostExecuteSignature postExecuteFunctor = nullptr);
+                const ExecuteSignature executeFunctor,
+                const PreExecuteSignature preExecuteFunctor = nullptr,
+                const PostExecuteSignature postExecuteFunctor = nullptr);
             virtual ~Task();
 
             const PreExecuteSignature preExecuteFunctor;

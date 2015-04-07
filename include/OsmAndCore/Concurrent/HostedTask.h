@@ -25,9 +25,9 @@ namespace OsmAnd
         public:
             HostedTask(
                 const TaskHost::Bridge& bridge,
-                ExecuteSignature executeFunctor,
-                PreExecuteSignature preExecuteFunctor = nullptr,
-                PostExecuteSignature postExecuteFunctor = nullptr);
+                const ExecuteSignature executeFunctor,
+                const PreExecuteSignature preExecuteFunctor = nullptr,
+                const PostExecuteSignature postExecuteFunctor = nullptr);
             virtual ~HostedTask();
 
             virtual void run();

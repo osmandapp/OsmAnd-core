@@ -232,12 +232,6 @@ const QStringList OsmAnd::EmbeddedFontFinder::resources = QStringList()
                 << QString(QLatin1String("map/fonts/NotoSans-extra/NotoSans%1-Regular.ttf")).arg(input);
         })
 
-    // Tinos (from the Noto pack)
-    << QLatin1String("map/fonts/Tinos/Tinos-Regular.ttf")
-    << QLatin1String("map/fonts/Tinos/Tinos-Italic.ttf")
-    << QLatin1String("map/fonts/Tinos/Tinos-Bold.ttf")
-    << QLatin1String("map/fonts/Tinos/Tinos-BoldItalic.ttf")
-
     // DroidSans
     << QLatin1String("map/fonts/DroidSansFallback.ttf")
 

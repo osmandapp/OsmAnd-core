@@ -5,9 +5,9 @@
 #include "Common.h"
 
 OsmAnd::Concurrent::Task::Task(
-    ExecuteSignature executeFunctor_,
-    PreExecuteSignature preExecuteFunctor_ /*= nullptr*/,
-    PostExecuteSignature postExecuteFunctor_ /*= nullptr*/)
+    const ExecuteSignature executeFunctor_,
+    const PreExecuteSignature preExecuteFunctor_ /*= nullptr*/,
+    const PostExecuteSignature postExecuteFunctor_ /*= nullptr*/)
     : _cancellationRequestedByTask(false)
     , _cancellationRequestedByExternal(0)
     , preExecuteFunctor(preExecuteFunctor_)

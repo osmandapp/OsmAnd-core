@@ -15,6 +15,11 @@
 #   define OSMAND_LOG_CHARACTERS_WITHOUT_FONT 0
 #endif // !defined(OSMAND_LOG_CHARACTERS_WITHOUT_FONT)
 
+//#define OSMAND_LOG_CHARACTERS_FONT 1
+#ifndef OSMAND_LOG_CHARACTERS_FONT
+#   define OSMAND_LOG_CHARACTERS_FONT 0
+#endif // !defined(OSMAND_LOG_CHARACTERS_FONT)
+
 OsmAnd::TextRasterizer_P::TextRasterizer_P(TextRasterizer* const owner_)
     : owner(owner_)
 {
@@ -70,6 +75,19 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                 paint.setTypeface(font);
                 if (!paint.containsText(&characterUCS4, sizeof(uint32_t)))
                     font = nullptr;
+#if OSMAND_LOG_CHARACTERS_FONT
+                else
+                {
+                    SkString fontName;
+                    font->getFamilyName(&fontName);
+
+                    LogPrintf(LogSeverityLevel::Warning,
+                        "UCS4 character 0x%08x (%u) has been found in '%s' font (reused)",
+                        characterUCS4,
+                        characterUCS4,
+                        fontName.c_str());
+                }
+#endif // OSMAND_LOG_CHARACTERS_FONT
             }
             if (!font)
             {
@@ -84,6 +102,20 @@ QVector<OsmAnd::TextRasterizer_P::LinePaint> OsmAnd::TextRasterizer_P::evaluateP
                         characterUCS4);
                 }
 #endif // OSMAND_LOG_CHARACTERS_WITHOUT_FONT
+
+#if OSMAND_LOG_CHARACTERS_FONT
+                if (font)
+                {
+                    SkString fontName;
+                    font->getFamilyName(&fontName);
+
+                    LogPrintf(LogSeverityLevel::Warning,
+                        "UCS4 character 0x%08x (%u) has been found in '%s' font",
+                        characterUCS4,
+                        characterUCS4,
+                        fontName.c_str());
+                }
+#endif // OSMAND_LOG_CHARACTERS_FONT
             }
 
             if (pTextPaint == nullptr || pTextPaint->paint.getTypeface() != font)
