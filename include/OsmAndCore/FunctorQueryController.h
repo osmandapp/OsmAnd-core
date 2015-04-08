@@ -26,7 +26,7 @@ namespace OsmAnd
         FunctorQueryController(const Callback callback);
         virtual ~FunctorQueryController();
 
-        virtual bool isAborted() const;
+        virtual bool isAborted() const Q_DECL_OVERRIDE;
     };
 }
 

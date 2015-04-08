@@ -73,10 +73,17 @@ namespace OsmAnd
             std::shared_ptr<Data>& outTiledPrimitives,
             MapPrimitivesProvider_Metrics::Metric_obtainData* metric = nullptr);
 
+        virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
             const IMapDataProvider::Request& request,
             std::shared_ptr<IMapDataProvider::Data>& outData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
+
+        virtual bool supportsNaturalObtainDataAsync() const Q_DECL_OVERRIDE;
+        virtual void obtainDataAsync(
+            const IMapDataProvider::Request& request,
+            const IMapDataProvider::ObtainDataAsyncCallback callback,
+            const bool collectMetric = false) Q_DECL_OVERRIDE;
     };
 }
 

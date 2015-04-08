@@ -33,12 +33,30 @@ uint32_t OsmAnd::MapRasterMetricsLayerProvider::getTileSize() const
     return tileSize;
 }
 
+bool OsmAnd::MapRasterMetricsLayerProvider::supportsNaturalObtainData() const
+{
+    return true;
+}
+
 bool OsmAnd::MapRasterMetricsLayerProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
     return _p->obtainData(request, outData, pOutMetric);
+}
+
+bool OsmAnd::MapRasterMetricsLayerProvider::supportsNaturalObtainDataAsync() const
+{
+    return false;
+}
+
+void OsmAnd::MapRasterMetricsLayerProvider::obtainDataAsync(
+    const IMapDataProvider::Request& request,
+    const IMapDataProvider::ObtainDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
 
 bool OsmAnd::MapRasterMetricsLayerProvider::obtainMetricsTile(

@@ -35,12 +35,30 @@ uint32_t OsmAnd::MapPrimitivesMetricsLayerProvider::getTileSize() const
     return tileSize;
 }
 
+bool OsmAnd::MapPrimitivesMetricsLayerProvider::supportsNaturalObtainData() const
+{
+    return true;
+}
+
 bool OsmAnd::MapPrimitivesMetricsLayerProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
     return _p->obtainData(request, outData, pOutMetric);
+}
+
+bool OsmAnd::MapPrimitivesMetricsLayerProvider::supportsNaturalObtainDataAsync() const
+{
+    return false;
+}
+
+void OsmAnd::MapPrimitivesMetricsLayerProvider::obtainDataAsync(
+    const IMapDataProvider::Request& request,
+    const IMapDataProvider::ObtainDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
 
 bool OsmAnd::MapPrimitivesMetricsLayerProvider::obtainMetricsTile(

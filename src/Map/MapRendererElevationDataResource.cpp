@@ -18,6 +18,23 @@ OsmAnd::MapRendererElevationDataResource::~MapRendererElevationDataResource()
     safeUnlink();
 }
 
+bool OsmAnd::MapRendererElevationDataResource::supportsObtainDataAsync() const
+{
+    bool ok = false;
+
+    std::shared_ptr<IMapDataProvider> provider;
+    if (const auto link_ = link.lock())
+    {
+        ok = resourcesManager->obtainProviderFor(
+            static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)),
+            provider);
+    }
+    if (!ok)
+        return false;
+
+    return provider->supportsNaturalObtainDataAsync();
+}
+
 bool OsmAnd::MapRendererElevationDataResource::obtainData(
     bool& dataAvailable,
     const std::shared_ptr<const IQueryController>& queryController)
@@ -52,6 +69,48 @@ bool OsmAnd::MapRendererElevationDataResource::obtainData(
         _sourceData = std::static_pointer_cast<IMapElevationDataProvider::Data>(tile);
 
     return true;
+}
+
+void OsmAnd::MapRendererElevationDataResource::obtainDataAsync(
+    const ObtainDataAsyncCallback callback,
+    const std::shared_ptr<const IQueryController>& queryController)
+{
+    bool ok = false;
+
+    // Get source of tile
+    std::shared_ptr<IMapDataProvider> provider_;
+    if (const auto link_ = link.lock())
+    {
+        ok = resourcesManager->obtainProviderFor(
+            static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)),
+            provider_);
+    }
+    if (!ok)
+    {
+        callback(false, false);
+        return;
+    }
+    const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
+
+    IMapElevationDataProvider::Request request;
+    request.tileId = tileId;
+    request.zoom = zoom;
+    request.queryController = queryController;
+    provider->obtainDataAsync(request,
+        [this, callback]
+        (const IMapDataProvider* const provider,
+            const bool requestSucceeded,
+            const std::shared_ptr<IMapDataProvider::Data>& data,
+            const std::shared_ptr<Metric>& metric)
+        {
+            const auto dataAvailable = static_cast<bool>(data);
+
+            // Store data
+            if (dataAvailable)
+                _sourceData = std::static_pointer_cast<IMapElevationDataProvider::Data>(data);
+
+            callback(requestSucceeded, dataAvailable);
+        });
 }
 
 bool OsmAnd::MapRendererElevationDataResource::uploadToGPU()

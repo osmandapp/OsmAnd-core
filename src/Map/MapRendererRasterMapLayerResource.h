@@ -29,11 +29,18 @@ namespace OsmAnd
         std::shared_ptr<IRasterMapLayerProvider::Data> _sourceData;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
-        virtual bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController);
-        virtual bool uploadToGPU();
-        virtual void unloadFromGPU();
-        virtual void lostDataInGPU();
-        virtual void releaseData();
+        virtual bool supportsObtainDataAsync() const Q_DECL_OVERRIDE;
+        virtual bool obtainData(
+            bool& dataAvailable,
+            const std::shared_ptr<const IQueryController>& queryController) Q_DECL_OVERRIDE;
+        virtual void obtainDataAsync(
+            const ObtainDataAsyncCallback callback,
+            const std::shared_ptr<const IQueryController>& queryController) Q_DECL_OVERRIDE;
+
+        virtual bool uploadToGPU() Q_DECL_OVERRIDE;
+        virtual void unloadFromGPU() Q_DECL_OVERRIDE;
+        virtual void lostDataInGPU() Q_DECL_OVERRIDE;
+        virtual void releaseData() Q_DECL_OVERRIDE;
     public:
         virtual ~MapRendererRasterMapLayerResource();
 

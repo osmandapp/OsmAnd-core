@@ -42,6 +42,12 @@ OsmAnd::IMapKeyedDataProvider::Request::Request(const IMapDataProvider::Request&
     copy(*this, that);
 }
 
+OsmAnd::IMapKeyedDataProvider::Request::Request(const Request& that)
+    : IMapDataProvider::Request(that)
+{
+    copy(*this, that);
+}
+
 OsmAnd::IMapKeyedDataProvider::Request::~Request()
 {
 }
@@ -51,4 +57,9 @@ void OsmAnd::IMapKeyedDataProvider::Request::copy(Request& dst, const IMapDataPr
     const auto& src = MapDataProviderHelpers::castRequest<Request>(src_);
 
     dst.key = src.key;
+}
+
+std::shared_ptr<OsmAnd::IMapDataProvider::Request> OsmAnd::IMapKeyedDataProvider::Request::clone() const
+{
+    return std::shared_ptr<IMapDataProvider::Request>(new Request(*this));
 }

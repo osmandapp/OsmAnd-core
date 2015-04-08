@@ -43,10 +43,18 @@ namespace OsmAnd
         virtual ZoomLevel getMaxZoom() const;
 
         virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
+
+        virtual bool supportsNaturalObtainData() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
             const IMapDataProvider::Request& request,
             std::shared_ptr<IMapDataProvider::Data>& outData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
+
+        virtual bool supportsNaturalObtainDataAsync() const Q_DECL_OVERRIDE;
+        virtual void obtainDataAsync(
+            const IMapDataProvider::Request& request,
+            const IMapDataProvider::ObtainDataAsyncCallback callback,
+            const bool collectMetric = false) Q_DECL_OVERRIDE;
 
     friend class OsmAnd::MapMarkerBuilder;
     friend class OsmAnd::MapMarkerBuilder_P;

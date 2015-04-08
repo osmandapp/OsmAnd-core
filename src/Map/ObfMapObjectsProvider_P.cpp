@@ -116,6 +116,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
 
     // Get bounding box that covers this tile
     const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
+    const auto zoom = request.zoom;
 
     // Obtain OBF data interface
     const Stopwatch obtainObfInterfaceStopwatch(metric != nullptr);
@@ -150,7 +151,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             &loadedNonSharedBinaryMapObjectsCounters,
             &allLoadedBinaryMapObjectsCounters,
             tileBBox31,
-            request,
+            zoom,
             metric]
         (const std::shared_ptr<const ObfMapSectionInfo>& section,
             const ObfObjectId id,
@@ -168,7 +169,7 @@ bool OsmAnd::ObfMapObjectsProvider_P::obtainTiledObfMapObjects(
             totalLoadCount++;
 
             // This map object may be shared only in case it crosses bounds of a tile
-            const auto canNotBeShared = requestedZoom == request.zoom && tileBBox31.contains(bbox);
+            const auto canNotBeShared = requestedZoom == zoom && tileBBox31.contains(bbox);
 
             // If map object can not be shared, just read it
             if (canNotBeShared)

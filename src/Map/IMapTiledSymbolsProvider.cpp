@@ -43,6 +43,12 @@ OsmAnd::IMapTiledSymbolsProvider::Request::Request(const IMapDataProvider::Reque
     copy(*this, that);
 }
 
+OsmAnd::IMapTiledSymbolsProvider::Request::Request(const Request& that)
+    : IMapTiledDataProvider::Request(that)
+{
+    copy(*this, that);
+}
+
 OsmAnd::IMapTiledSymbolsProvider::Request::~Request()
 {
 }
@@ -52,4 +58,9 @@ void OsmAnd::IMapTiledSymbolsProvider::Request::copy(Request& dst, const IMapDat
     const auto& src = MapDataProviderHelpers::castRequest<Request>(src_);
 
     dst.filterCallback = src.filterCallback;
+}
+
+std::shared_ptr<OsmAnd::IMapDataProvider::Request> OsmAnd::IMapTiledSymbolsProvider::Request::clone() const
+{
+    return std::shared_ptr<IMapDataProvider::Request>(new Request(*this));
 }

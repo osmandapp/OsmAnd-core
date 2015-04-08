@@ -44,6 +44,10 @@ namespace OsmAnd
             ZoomLevel zoom;
 
             static void copy(Request& dst, const IMapDataProvider::Request& src);
+            virtual std::shared_ptr<IMapDataProvider::Request> clone() const Q_DECL_OVERRIDE;
+
+        protected:
+            Request(const Request& that);
         };
 
     private:

@@ -39,7 +39,15 @@ namespace OsmAnd
         virtual bool updatesPresent();
         virtual bool checkForUpdatesAndApply();
         
-        virtual bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController = nullptr) = 0;
+        typedef std::function < void(const bool requestSucceeded, const bool dataAvailable) > ObtainDataAsyncCallback;
+        virtual bool supportsObtainDataAsync() const = 0;
+        virtual bool obtainData(
+            bool& dataAvailable,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) = 0;
+        virtual void obtainDataAsync(
+            const ObtainDataAsyncCallback callback,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) = 0;
+
         virtual bool uploadToGPU() = 0;
         virtual void unloadFromGPU() = 0;
         virtual void lostDataInGPU() = 0;

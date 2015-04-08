@@ -50,6 +50,11 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply()
     return updatesApplied;
 }
 
+bool OsmAnd::MapRendererKeyedSymbolsResource::supportsObtainDataAsync() const
+{
+    return false;
+}
+
 bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
     bool& dataAvailable,
     const std::shared_ptr<const IQueryController>& queryController)
@@ -113,6 +118,12 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
     resourcesManager->batchPublishMapSymbols(mapSymbolsToPublish);
 
     return true;
+}
+
+void OsmAnd::MapRendererKeyedSymbolsResource::obtainDataAsync(
+    const ObtainDataAsyncCallback callback,
+    const std::shared_ptr<const IQueryController>& queryController)
+{
 }
 
 bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()

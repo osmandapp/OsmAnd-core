@@ -24,6 +24,7 @@
 #include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
 #include "QCachingIterator.h"
+#include "SimpleQueryController.h"
 #include "Utilities.h"
 #include "Logging.h"
 
@@ -657,22 +658,56 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(const std::share
         return;
     LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unknown, MapRendererResourceState::Requesting);
 
-    // Create async-task that will obtain needed resource data
-    const auto asyncTask = new ResourceRequestTask(resource, _taskHostBridge);
+    if (resource->supportsObtainDataAsync())
+    {
+        // Since resource supports natural async, there's no need to use workers pool
 
-    // Register resource as requested
-    resource->_cancelRequestCallback =
-        [asyncTask]
-        ()
+        assert(resource->getState() == MapRendererResourceState::Requesting);
+        resource->setState(MapRendererResourceState::Requested);
+        LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
+
+        if (beginResourceRequestProcessing(resource))
         {
-            asyncTask->requestCancellation();
-        };
-    assert(resource->getState() == MapRendererResourceState::Requesting);
-    resource->setState(MapRendererResourceState::Requested);
-    LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
+            const std::shared_ptr<SimpleQueryController> queryController(new SimpleQueryController());
 
-    // Finally start the request in a proper workers pool
-    _resourcesRequestWorkerPool.enqueue(asyncTask);
+            resource->_cancelRequestCallback =
+                [queryController]
+                ()
+                {
+                    queryController->abort();
+                };
+
+            const MapRendererBaseResource::ObtainDataAsyncCallback callback =
+                [this, resource, queryController]
+                (const bool requestSucceeded, const bool dataAvailable)
+                {
+                    endResourceRequestProcessing(resource, requestSucceeded, dataAvailable);
+                    if (queryController->isAborted())
+                        processResourceRequestCancellation(resource);
+                };
+
+            resource->obtainDataAsync(callback, queryController);
+        }
+    }
+    else
+    {
+        // Create async-task that will obtain needed resource data
+        const auto asyncTask = new ResourceRequestTask(resource, _taskHostBridge);
+
+        // Register resource as requested
+        resource->_cancelRequestCallback =
+            [asyncTask]
+            ()
+            {
+                asyncTask->requestCancellation();
+            };
+        assert(resource->getState() == MapRendererResourceState::Requesting);
+        resource->setState(MapRendererResourceState::Requested);
+        LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
+
+        // Finally start the request in a proper workers pool
+        _resourcesRequestWorkerPool.enqueue(asyncTask);
+    }
 }
 
 bool OsmAnd::MapRendererResourcesManager::beginResourceRequestProcessing(

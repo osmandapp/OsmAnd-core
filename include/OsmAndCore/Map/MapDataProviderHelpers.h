@@ -36,6 +36,18 @@ namespace OsmAnd
         {
             return *dynamic_cast<const T*>(&request);
         }
+
+        static bool nonNaturalObtainData(
+            IMapDataProvider* const provider,
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
+
+        static void nonNaturalObtainDataAsync(
+            IMapDataProvider* const provider,
+            const IMapDataProvider::Request& request,
+            const IMapDataProvider::ObtainDataAsyncCallback callback,
+            const bool collectMetric = false);
     };
 }
 

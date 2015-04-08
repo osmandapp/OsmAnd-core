@@ -1,6 +1,7 @@
 #include "MapObjectsSymbolsProvider.h"
 #include "MapObjectsSymbolsProvider_P.h"
 
+#include "MapDataProviderHelpers.h"
 #include "MapPrimitivesProvider.h"
 #include "SymbolRasterizer.h"
 
@@ -29,12 +30,31 @@ OsmAnd::ZoomLevel OsmAnd::MapObjectsSymbolsProvider::getMaxZoom() const
     return primitivesProvider->getMaxZoom();
 }
 
+
+bool OsmAnd::MapObjectsSymbolsProvider::supportsNaturalObtainData() const
+{
+    return true;
+}
+
 bool OsmAnd::MapObjectsSymbolsProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
     return _p->obtainData(request, outData, pOutMetric);
+}
+
+bool OsmAnd::MapObjectsSymbolsProvider::supportsNaturalObtainDataAsync() const
+{
+    return false;
+}
+
+void OsmAnd::MapObjectsSymbolsProvider::obtainDataAsync(
+    const IMapDataProvider::Request& request,
+    const IMapDataProvider::ObtainDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
 
 OsmAnd::MapObjectsSymbolsProvider::Data::Data(

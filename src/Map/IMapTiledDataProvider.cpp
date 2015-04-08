@@ -45,6 +45,12 @@ OsmAnd::IMapTiledDataProvider::Request::Request(const IMapDataProvider::Request&
     copy(*this, that);
 }
 
+OsmAnd::IMapTiledDataProvider::Request::Request(const Request& that)
+    : IMapDataProvider::Request(that)
+{
+    copy(*this, that);
+}
+
 OsmAnd::IMapTiledDataProvider::Request::~Request()
 {
 }
@@ -55,4 +61,9 @@ void OsmAnd::IMapTiledDataProvider::Request::copy(Request& dst, const IMapDataPr
 
     dst.tileId = src.tileId;
     dst.zoom = src.zoom;
+}
+
+std::shared_ptr<OsmAnd::IMapDataProvider::Request> OsmAnd::IMapTiledDataProvider::Request::clone() const
+{
+    return std::shared_ptr<IMapDataProvider::Request>(new Request(*this));
 }

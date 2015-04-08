@@ -9,6 +9,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Map/MapSymbol.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
@@ -23,13 +24,12 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(IMapTiledSymbolsProvider);
 
     public:
-#if !defined(SWIG)
-        //NOTE: For some reason, produces 'SWIGTYPE_p_std__shared_ptrT_OsmAnd__MapSymbolsGroup_const_t'
+        //NOTE: 'SWIGTYPE_p_std__shared_ptrT_OsmAnd__MapSymbolsGroup_const_t' is produced
+        // due to director+shared_ptr is not supported in SWIG
         OSMAND_CALLABLE(FilterCallback,
             bool,
             const IMapTiledSymbolsProvider* const provider,
             const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup);
-#endif // !defined(SWIG)
 
         class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
         {
@@ -56,6 +56,10 @@ namespace OsmAnd
             FilterCallback filterCallback;
 
             static void copy(Request& dst, const IMapDataProvider::Request& src);
+            virtual std::shared_ptr<IMapDataProvider::Request> clone() const Q_DECL_OVERRIDE;
+
+        protected:
+            Request(const Request& that);
         };
 
     private:

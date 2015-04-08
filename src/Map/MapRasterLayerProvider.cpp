@@ -1,6 +1,7 @@
 #include "MapRasterLayerProvider.h"
 #include "MapRasterLayerProvider_P.h"
 
+#include "MapDataProviderHelpers.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitiviser.h"
 #include "MapPresentationEnvironment.h"
@@ -35,12 +36,30 @@ uint32_t OsmAnd::MapRasterLayerProvider::getTileSize() const
     return primitivesProvider->tileSize;
 }
 
+bool OsmAnd::MapRasterLayerProvider::supportsNaturalObtainData() const
+{
+    return true;
+}
+
 bool OsmAnd::MapRasterLayerProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
     return _p->obtainData(request, outData, pOutMetric);
+}
+
+bool OsmAnd::MapRasterLayerProvider::supportsNaturalObtainDataAsync() const
+{
+    return false;
+}
+
+void OsmAnd::MapRasterLayerProvider::obtainDataAsync(
+    const IMapDataProvider::Request& request,
+    const IMapDataProvider::ObtainDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
 
 bool OsmAnd::MapRasterLayerProvider::obtainRasterizedTile(

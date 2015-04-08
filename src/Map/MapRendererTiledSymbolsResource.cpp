@@ -40,6 +40,11 @@ OsmAnd::MapRendererTiledSymbolsResource::~MapRendererTiledSymbolsResource()
     safeUnlink();
 }
 
+bool OsmAnd::MapRendererTiledSymbolsResource::supportsObtainDataAsync() const
+{
+    return false;
+}
+
 bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     bool& dataAvailable,
     const std::shared_ptr<const IQueryController>& queryController)
@@ -232,6 +237,12 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     _sourceData.reset();
 
     return true;
+}
+
+void OsmAnd::MapRendererTiledSymbolsResource::obtainDataAsync(
+    const ObtainDataAsyncCallback callback,
+    const std::shared_ptr<const IQueryController>& queryController)
+{
 }
 
 bool OsmAnd::MapRendererTiledSymbolsResource::uploadToGPU()

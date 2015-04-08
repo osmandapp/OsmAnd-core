@@ -18,6 +18,23 @@ OsmAnd::MapRendererRasterMapLayerResource::~MapRendererRasterMapLayerResource()
     safeUnlink();
 }
 
+bool OsmAnd::MapRendererRasterMapLayerResource::supportsObtainDataAsync() const
+{
+    bool ok = false;
+
+    std::shared_ptr<IMapDataProvider> provider;
+    if (const auto link_ = link.lock())
+    {
+        ok = resourcesManager->obtainProviderFor(
+            static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)),
+            provider);
+    }
+    if (!ok)
+        return false;
+
+    return provider->supportsNaturalObtainDataAsync();
+}
+
 bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     bool& dataAvailable,
     const std::shared_ptr<const IQueryController>& queryController)
@@ -38,7 +55,7 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
 
     // Obtain tile from provider
     std::shared_ptr<IMapTiledDataProvider::Data> tiledData;
-    IMapElevationDataProvider::Request request;
+    IRasterMapLayerProvider::Request request;
     request.tileId = tileId;
     request.zoom = zoom;
     request.queryController = queryController;
@@ -60,6 +77,56 @@ bool OsmAnd::MapRendererRasterMapLayerResource::obtainData(
     }
 
     return true;
+}
+
+void OsmAnd::MapRendererRasterMapLayerResource::obtainDataAsync(
+    const ObtainDataAsyncCallback callback,
+    const std::shared_ptr<const IQueryController>& queryController)
+{
+    bool ok = false;
+
+    // Get source of tile
+    std::shared_ptr<IMapDataProvider> provider_;
+    if (const auto link_ = link.lock())
+    {
+        ok = resourcesManager->obtainProviderFor(
+            static_cast<MapRendererBaseResourcesCollection*>(static_cast<MapRendererTiledResourcesCollection*>(&link_->collection)),
+            provider_);
+    }
+    if (!ok)
+    {
+        callback(false, false);
+        return;
+    }
+    const auto provider = std::static_pointer_cast<IMapTiledDataProvider>(provider_);
+
+    IRasterMapLayerProvider::Request request;
+    request.tileId = tileId;
+    request.zoom = zoom;
+    request.queryController = queryController;
+    provider->obtainDataAsync(request,
+        [this, callback]
+        (const IMapDataProvider* const provider,
+            const bool requestSucceeded,
+            const std::shared_ptr<IMapDataProvider::Data>& data,
+            const std::shared_ptr<Metric>& metric)
+        {
+            const auto dataAvailable = static_cast<bool>(data);
+
+            // Store data
+            if (dataAvailable)
+                _sourceData = std::static_pointer_cast<IRasterMapLayerProvider::Data>(data);
+
+            // Convert data if such is present
+            if (_sourceData)
+            {
+                _sourceData->bitmap = resourcesManager->adjustBitmapToConfiguration(
+                    _sourceData->bitmap,
+                    _sourceData->alphaChannelPresence);
+            }
+
+            callback(requestSucceeded, dataAvailable);
+        });
 }
 
 bool OsmAnd::MapRendererRasterMapLayerResource::uploadToGPU()

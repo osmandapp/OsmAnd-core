@@ -4,6 +4,9 @@
 #include "QtExtensions.h"
 #include <QStandardPaths>
 
+#include "OsmAndCore.h"
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     const QString& name_,
     const QString& urlPattern_,
@@ -65,12 +68,31 @@ uint32_t OsmAnd::OnlineRasterMapLayerProvider::getTileSize() const
     return tileSize;
 }
 
+
+bool OsmAnd::OnlineRasterMapLayerProvider::supportsNaturalObtainData() const
+{
+    return true;
+}
+
 bool OsmAnd::OnlineRasterMapLayerProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
     return _p->obtainData(request, outData, pOutMetric);
+}
+
+bool OsmAnd::OnlineRasterMapLayerProvider::supportsNaturalObtainDataAsync() const
+{
+    return true;
+}
+
+void OsmAnd::OnlineRasterMapLayerProvider::obtainDataAsync(
+    const IMapDataProvider::Request& request,
+    const IMapDataProvider::ObtainDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
 
 OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getMinZoom() const

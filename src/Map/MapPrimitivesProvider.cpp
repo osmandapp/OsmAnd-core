@@ -1,6 +1,8 @@
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_P.h"
 
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::MapPrimitivesProvider::MapPrimitivesProvider(
     const std::shared_ptr<IMapObjectsProvider>& mapObjectsProvider_,
     const std::shared_ptr<MapPrimitiviser>& primitiviser_,
@@ -36,12 +38,30 @@ bool OsmAnd::MapPrimitivesProvider::obtainTiledPrimitives(
     return _p->obtainTiledPrimitives(request, outTiledPrimitives, metric);
 }
 
+bool OsmAnd::MapPrimitivesProvider::supportsNaturalObtainData() const
+{
+    return true;
+}
+
 bool OsmAnd::MapPrimitivesProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
     return _p->obtainData(request, outData, pOutMetric);
+}
+
+bool OsmAnd::MapPrimitivesProvider::supportsNaturalObtainDataAsync() const
+{
+    return false;
+}
+
+void OsmAnd::MapPrimitivesProvider::obtainDataAsync(
+    const IMapDataProvider::Request& request,
+    const IMapDataProvider::ObtainDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
 
 OsmAnd::MapPrimitivesProvider::Data::Data(

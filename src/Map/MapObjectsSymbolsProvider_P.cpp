@@ -56,13 +56,14 @@ bool OsmAnd::MapObjectsSymbolsProvider_P::obtainData(
     // Rasterize symbols and create symbols groups
     QList< std::shared_ptr<const SymbolRasterizer::RasterizedSymbolsGroup> > rasterizedSymbolsGroups;
     QHash< std::shared_ptr<const MapObject>, std::shared_ptr<MapObjectSymbolsGroup> > preallocatedSymbolsGroups;
+    const auto filterCallback = request.filterCallback;
     const auto rasterizationFilter =
-        [this, tileBBox31, request, &preallocatedSymbolsGroups]
+        [this, tileBBox31, filterCallback, &preallocatedSymbolsGroups]
         (const std::shared_ptr<const MapObject>& mapObject) -> bool
         {
             const std::shared_ptr<MapObjectSymbolsGroup> preallocatedGroup(new MapObjectSymbolsGroup(mapObject));
 
-            if (!request.filterCallback || request.filterCallback(owner, preallocatedGroup))
+            if (!filterCallback || filterCallback(owner, preallocatedGroup))
             {
                 preallocatedSymbolsGroups.insert(mapObject, qMove(preallocatedGroup));
                 return true;

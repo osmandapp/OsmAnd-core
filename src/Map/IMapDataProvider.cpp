@@ -43,6 +43,11 @@ OsmAnd::IMapDataProvider::Request::~Request()
 {
 }
 
+std::shared_ptr<OsmAnd::IMapDataProvider::Request> OsmAnd::IMapDataProvider::Request::clone() const
+{
+    return std::shared_ptr<IMapDataProvider::Request>(new Request(*this));
+}
+
 void OsmAnd::IMapDataProvider::Request::copy(Request& dst, const Request& src)
 {
     dst.queryController = src.queryController;

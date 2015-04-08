@@ -2,6 +2,7 @@
 #include "ObfMapObjectsProvider_P.h"
 
 #include "ObfMapObjectsProvider_Metrics.h"
+#include "MapDataProviderHelpers.h"
 
 OsmAnd::ObfMapObjectsProvider::ObfMapObjectsProvider(
     const std::shared_ptr<const IObfsCollection>& obfsCollection_,
@@ -16,12 +17,30 @@ OsmAnd::ObfMapObjectsProvider::~ObfMapObjectsProvider()
 {
 }
 
+bool OsmAnd::ObfMapObjectsProvider::supportsNaturalObtainData() const
+{
+    return true;
+}
+
 bool OsmAnd::ObfMapObjectsProvider::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
     return _p->obtainData(request, outData, pOutMetric);
+}
+
+bool OsmAnd::ObfMapObjectsProvider::supportsNaturalObtainDataAsync() const
+{
+    return false;
+}
+
+void OsmAnd::ObfMapObjectsProvider::obtainDataAsync(
+    const IMapDataProvider::Request& request,
+    const IMapDataProvider::ObtainDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }
 
 bool OsmAnd::ObfMapObjectsProvider::obtainTiledObfMapObjects(

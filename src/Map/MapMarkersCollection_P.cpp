@@ -1,6 +1,7 @@
 #include "MapMarkersCollection_P.h"
 #include "MapMarkersCollection.h"
 
+#include "MapDataProviderHelpers.h"
 #include "MapMarker.h"
 
 OsmAnd::MapMarkersCollection_P::MapMarkersCollection_P(MapMarkersCollection* const owner_)
@@ -58,7 +59,7 @@ bool OsmAnd::MapMarkersCollection_P::obtainData(
     const IMapDataProvider::Request& request_,
     std::shared_ptr<IMapDataProvider::Data>& outData)
 {
-    const IMapKeyedSymbolsProvider::Request request(request_);
+    const auto& request = MapDataProviderHelpers::castRequest<MapMarkersCollection::Request>(request_);
 
     QReadLocker scopedLocker(&_markersLock);
 

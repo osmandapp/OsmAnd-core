@@ -7,6 +7,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
+#include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Metrics.h>
 
 namespace OsmAnd
@@ -41,13 +42,23 @@ namespace OsmAnd
         struct OSMAND_CORE_API Request
         {
             Request();
-            Request(const Request& that);
             virtual ~Request();
 
             std::shared_ptr<const IQueryController> queryController;
 
+            virtual std::shared_ptr<Request> clone() const;
             static void copy(Request& dst, const Request& src);
+
+        protected:
+            Request(const Request& that);
         };
+
+        OSMAND_CALLABLE(ObtainDataAsyncCallback,
+            void,
+            const IMapDataProvider* const provider,
+            const bool requestSucceeded,
+            const std::shared_ptr<Data>& data,
+            const std::shared_ptr<Metric>& metric);
 
     private:
     protected:
@@ -55,14 +66,17 @@ namespace OsmAnd
     public:
         virtual ~IMapDataProvider();
 
+        virtual bool supportsNaturalObtainData() const = 0;
         virtual bool obtainData(
             const Request& request,
             std::shared_ptr<Data>& outData,
             std::shared_ptr<Metric>* const pOutMetric = nullptr) = 0;
-        /*virtual void obtainDataAsync(
+
+        virtual bool supportsNaturalObtainDataAsync() const = 0;
+        virtual void obtainDataAsync(
             const Request& request,
-            std::shared_ptr<Data>& outData,
-            std::shared_ptr<Metric>* const pOutMetric = nullptr) = 0;*/
+            const ObtainDataAsyncCallback callback,
+            const bool collectMetric = false) = 0;
     };
 }
 

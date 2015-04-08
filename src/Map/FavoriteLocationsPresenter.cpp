@@ -2,6 +2,7 @@
 #include "FavoriteLocationsPresenter_P.h"
 
 #include "CoreResourcesEmbeddedBundle.h"
+#include "MapDataProviderHelpers.h"
 
 OsmAnd::FavoriteLocationsPresenter::FavoriteLocationsPresenter(
     const std::shared_ptr<const IFavoriteLocationsCollection>& collection_,
@@ -39,6 +40,11 @@ QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::FavoriteLocationsPresenter:
     return _p->getProvidedDataKeys();
 }
 
+bool OsmAnd::FavoriteLocationsPresenter::supportsNaturalObtainData() const
+{
+    return true;
+}
+
 bool OsmAnd::FavoriteLocationsPresenter::obtainData(
     const IMapDataProvider::Request& request,
     std::shared_ptr<IMapDataProvider::Data>& outData,
@@ -48,4 +54,17 @@ bool OsmAnd::FavoriteLocationsPresenter::obtainData(
         pOutMetric->reset();
 
     return _p->obtainData(request, outData, pOutMetric);
+}
+
+bool OsmAnd::FavoriteLocationsPresenter::supportsNaturalObtainDataAsync() const
+{
+    return false;
+}
+
+void OsmAnd::FavoriteLocationsPresenter::obtainDataAsync(
+    const IMapDataProvider::Request& request,
+    const IMapDataProvider::ObtainDataAsyncCallback callback,
+    const bool collectMetric /*= false*/)
+{
+    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
 }

@@ -39,7 +39,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
     std::shared_ptr<IMapDataProvider::Data>& outData,
     std::shared_ptr<Metric>* const pOutMetric)
 {
-    const auto request = MapDataProviderHelpers::castRequest<MapRasterMetricsLayerProvider::Request>(request_);
+    const auto& request = MapDataProviderHelpers::castRequest<MapRasterMetricsLayerProvider::Request>(request_);
 
     if (pOutMetric)
         pOutMetric->reset();
