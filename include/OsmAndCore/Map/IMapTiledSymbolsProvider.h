@@ -26,10 +26,13 @@ namespace OsmAnd
     public:
         //NOTE: 'SWIGTYPE_p_std__shared_ptrT_OsmAnd__MapSymbolsGroup_const_t' is produced
         // due to director+shared_ptr is not supported in SWIG
-        OSMAND_CALLABLE(FilterCallback,
-            bool,
+        //OSMAND_CALLABLE(FilterCallback,
+        //    bool,
+        //    const IMapTiledSymbolsProvider* const provider,
+        //    const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup);
+        typedef std::function< bool(
             const IMapTiledSymbolsProvider* const provider,
-            const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup);
+            const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup)> FilterCallback;
 
         class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
         {
