@@ -1,5 +1,7 @@
 #include "IMapTiledSymbolsProvider.h"
 
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::IMapTiledSymbolsProvider::IMapTiledSymbolsProvider()
 {
 }
@@ -8,17 +10,12 @@ OsmAnd::IMapTiledSymbolsProvider::~IMapTiledSymbolsProvider()
 {
 }
 
-bool OsmAnd::IMapTiledSymbolsProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+bool OsmAnd::IMapTiledSymbolsProvider::obtainTiledSymbols(
+    const Request& request,
+    std::shared_ptr<Data>& outTiledSymbols,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    std::shared_ptr<Data> tiledData;
-    const auto result = obtainData(tileId, zoom, tiledData, pOutMetric, queryController, nullptr);
-    outTiledData = tiledData;
-    return result;
+    return MapDataProviderHelpers::obtainData(this, request, outTiledSymbols, pOutMetric);
 }
 
 OsmAnd::IMapTiledSymbolsProvider::Data::Data(
@@ -34,4 +31,25 @@ OsmAnd::IMapTiledSymbolsProvider::Data::Data(
 OsmAnd::IMapTiledSymbolsProvider::Data::~Data()
 {
     release();
+}
+
+OsmAnd::IMapTiledSymbolsProvider::Request::Request()
+{
+}
+
+OsmAnd::IMapTiledSymbolsProvider::Request::Request(const IMapDataProvider::Request& that)
+    : IMapTiledDataProvider::Request(that)
+{
+    copy(*this, that);
+}
+
+OsmAnd::IMapTiledSymbolsProvider::Request::~Request()
+{
+}
+
+void OsmAnd::IMapTiledSymbolsProvider::Request::copy(Request& dst, const IMapDataProvider::Request& src_)
+{
+    const auto& src = MapDataProviderHelpers::castRequest<Request>(src_);
+
+    dst.filterCallback = src.filterCallback;
 }

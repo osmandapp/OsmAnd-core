@@ -14,6 +14,7 @@
 #include <SkImageDecoder.h>
 #include "restore_internal_warnings.h"
 
+#include "MapDataProviderHelpers.h"
 #include "Logging.h"
 #include "Utilities.h"
 
@@ -28,27 +29,31 @@ OsmAnd::OnlineRasterMapLayerProvider_P::~OnlineRasterMapLayerProvider_P()
 }
 
 bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<OnlineRasterMapLayerProvider::Data>& outTiledData,
-    const IQueryController* const queryController)
+    const IMapDataProvider::Request& request_,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric)
 {
+    const auto& request = MapDataProviderHelpers::castRequest<OnlineRasterMapLayerProvider::Request>(request_);
+
+    if (pOutMetric)
+        pOutMetric->reset();
+
     // Check provider can supply this zoom level
-    if (zoom > owner->maxZoom || zoom < owner->minZoom)
+    if (request.zoom > owner->maxZoom || request.zoom < owner->minZoom)
     {
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
 
     // Check if requested tile is already being processed, and wait until that's done
     // to mark that as being processed.
-    lockTile(tileId, zoom);
+    lockTile(request.tileId, request.zoom);
 
     // Check if requested tile is already in local storage.
     const auto tileLocalRelativePath =
-        QString::number(zoom) + QDir::separator() +
-        QString::number(tileId.x) + QDir::separator() +
-        QString::number(tileId.y) + QLatin1String(".tile");
+        QString::number(request.zoom) + QDir::separator() +
+        QString::number(request.tileId.x) + QDir::separator() +
+        QString::number(request.tileId.y) + QLatin1String(".tile");
     QFileInfo localFile;
     {
         QMutexLocker scopedLocker(&_localCachePathMutex);
@@ -57,12 +62,12 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     if (localFile.exists())
     {
         // Since tile is in local storage, it's safe to unmark it as being processed
-        unlockTile(tileId, zoom);
+        unlockTile(request.tileId, request.zoom);
 
         // If local file is empty, it means that requested tile does not exist (has no data)
         if (localFile.size() == 0)
         {
-            outTiledData.reset();
+            outData.reset();
             return true;
         }
 
@@ -85,9 +90,9 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         assert(bitmap->width() == owner->tileSize);
 
         // Return tile
-        outTiledData.reset(new OnlineRasterMapLayerProvider::Data(
-            tileId,
-            zoom,
+        outData.reset(new OnlineRasterMapLayerProvider::Data(
+            request.tileId,
+            request.zoom,
             owner->alphaChannelPresence,
             owner->getTileDensityFactor(),
             bitmap));
@@ -101,20 +106,20 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     if (!_networkAccessAllowed)
     {
         // Before returning, unlock tile
-        unlockTile(tileId, zoom);
+        unlockTile(request.tileId, request.zoom);
 
         return false;
     }
 
     // Perform synchronous download
-    const auto tileSize = (1u << zoom);
+    const auto tileSize = (1u << request.zoom);
     const auto tileUrl = QString(owner->urlPattern)
-        .replace(QLatin1String("${osm_zoom}"), QString::number(zoom))
-        .replace(QLatin1String("${osm_x}"), QString::number(tileId.x))
-        .replace(QLatin1String("${osm_x_inv}"), QString::number(tileSize - tileId.x - 1))
-        .replace(QLatin1String("${osm_y}"), QString::number(tileId.y))
-        .replace(QLatin1String("${osm_y_inv}"), QString::number(tileSize - tileId.y - 1))
-        .replace(QLatin1String("${quadkey}"), Utilities::getQuadKey(tileId.x, tileId.y, zoom));
+        .replace(QLatin1String("${osm_zoom}"), QString::number(request.zoom))
+        .replace(QLatin1String("${osm_x}"), QString::number(request.tileId.x))
+        .replace(QLatin1String("${osm_x_inv}"), QString::number(tileSize - request.tileId.x - 1))
+        .replace(QLatin1String("${osm_y}"), QString::number(request.tileId.y))
+        .replace(QLatin1String("${osm_y_inv}"), QString::number(tileSize - request.tileId.y - 1))
+        .replace(QLatin1String("${quadkey}"), Utilities::getQuadKey(request.tileId.x, request.tileId.y, request.zoom));
     std::shared_ptr<const WebClient::RequestResult> requestResult;
     const auto& downloadResult = _downloadManager.downloadData(QUrl(tileUrl), &requestResult);
 
@@ -141,7 +146,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
                 tileFile.close();
 
                 // Unlock the tile
-                unlockTile(tileId, zoom);
+                unlockTile(request.tileId, request.zoom);
                 return true;
             }
             else
@@ -151,13 +156,13 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
                     qPrintable(localFile.absoluteFilePath()));
 
                 // Unlock the tile
-                unlockTile(tileId, zoom);
+                unlockTile(request.tileId, request.zoom);
                 return false;
             }
         }
 
         // Unlock the tile
-        unlockTile(tileId, zoom);
+        unlockTile(request.tileId, request.zoom);
         return false;
     }
 
@@ -186,7 +191,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     }
 
     // Unlock tile, since local storage work is done
-    unlockTile(tileId, zoom);
+    unlockTile(request.tileId, request.zoom);
 
     // Decode in-memory
     const std::shared_ptr<SkBitmap> bitmap(new SkBitmap());
@@ -207,9 +212,9 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     assert(bitmap->width() == owner->tileSize);
 
     // Return tile
-    outTiledData.reset(new OnlineRasterMapLayerProvider::Data(
-        tileId,
-        zoom,
+    outData.reset(new OnlineRasterMapLayerProvider::Data(
+        request.tileId,
+        request.zoom,
         owner->alphaChannelPresence,
         owner->getTileDensityFactor(),
         bitmap));

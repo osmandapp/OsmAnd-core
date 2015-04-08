@@ -18,10 +18,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimiti
     const ZoomLevel zoom,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric /*= nullptr*/)
 {
-    return _p->primitiviseAllMapObjects(zoom, objects, cache, controller, metric);
+    return _p->primitiviseAllMapObjects(zoom, objects, cache, queryController, metric);
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseAllMapObjects(
@@ -29,10 +29,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimiti
     const ZoomLevel zoom,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric /*= nullptr*/)
 {
-    return _p->primitiviseAllMapObjects(scaleDivisor31ToPixel, zoom, objects, cache, controller, metric);
+    return _p->primitiviseAllMapObjects(scaleDivisor31ToPixel, zoom, objects, cache, queryController, metric);
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseWithSurface(
@@ -42,10 +42,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimiti
     const MapSurfaceType surfaceType,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric /*= nullptr*/)
 {
-    return _p->primitiviseWithSurface(area31, areaSizeInPixels, zoom, surfaceType, objects, cache, controller, metric);
+    return _p->primitiviseWithSurface(area31, areaSizeInPixels, zoom, surfaceType, objects, cache, queryController, metric);
 }
 
 std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimitiviser::primitiviseWithoutSurface(
@@ -53,10 +53,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser::PrimitivisedObjects> OsmAnd::MapPrimiti
     const ZoomLevel zoom,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface* const metric /*= nullptr*/)
 {
-    return _p->primitiviseWithoutSurface(scaleDivisor31ToPixel, zoom, objects, cache, controller, metric);
+    return _p->primitiviseWithoutSurface(scaleDivisor31ToPixel, zoom, objects, cache, queryController, metric);
 }
 
 OsmAnd::MapPrimitiviser::CoastlineMapObject::CoastlineMapObject()

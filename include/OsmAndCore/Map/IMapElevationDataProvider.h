@@ -41,6 +41,11 @@ namespace OsmAnd
         virtual ~IMapElevationDataProvider();
 
         virtual unsigned int getTileSize() const = 0;
+
+        virtual bool obtainElevationData(
+            const Request& request,
+            std::shared_ptr<Data>& outElevationData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
     };
 }
 

@@ -30,7 +30,7 @@ namespace OsmAnd
         std::shared_ptr<IMapElevationDataProvider::Data> _sourceData;
         std::shared_ptr<const GPUAPI::ResourceInGPU> _resourceInGPU;
 
-        virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
+        virtual bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();
         virtual void lostDataInGPU();

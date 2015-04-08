@@ -309,7 +309,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
-            const IQueryController* const controller = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
             MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric = nullptr);
 
         std::shared_ptr<PrimitivisedObjects> primitiviseAllMapObjects(
@@ -317,7 +317,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
-            const IQueryController* const controller = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
             MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric = nullptr);
 
         std::shared_ptr<PrimitivisedObjects> primitiviseWithSurface(
@@ -327,7 +327,7 @@ namespace OsmAnd
             const MapSurfaceType surfaceType,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
-            const IQueryController* const controller = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
             MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric = nullptr);
 
         std::shared_ptr<PrimitivisedObjects> primitiviseWithoutSurface(
@@ -335,7 +335,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache = nullptr,
-            const IQueryController* const controller = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
             MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface* const metric = nullptr);
     };
 }

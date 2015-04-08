@@ -41,21 +41,10 @@ namespace OsmAnd
     public:
         virtual ~IMapObjectsProvider();
 
-        virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr);
-
-# if !defined(SWIG)
-        virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr) = 0;
-#endif // !defined(SWIG)
+        virtual bool obtainTiledMapObjects(
+            const Request& request,
+            std::shared_ptr<Data>& outMapObjects,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
     };
 }
 

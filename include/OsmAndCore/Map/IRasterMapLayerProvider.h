@@ -48,6 +48,11 @@ namespace OsmAnd
 
         virtual uint32_t getTileSize() const = 0;
         virtual float getTileDensityFactor() const = 0;
+
+        virtual bool obtainRasterTile(
+            const Request& request,
+            std::shared_ptr<Data>& outRasterTile,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
     };
 	
 //    SWIG_EMIT_DIRECTOR_BEGIN(IMapRasterBitmapTileProvider);
@@ -64,7 +69,7 @@ namespace OsmAnd
 //            /*SWIG_OMIT(const)*/ TileId tileId,
 //            const ZoomLevel zoom,
 //            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-//            const IQueryController* const queryController);
+//            const std::shared_ptr<const IQueryController>& queryController);
 //        SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
 //            uint32_t,
 //            getTileSize);

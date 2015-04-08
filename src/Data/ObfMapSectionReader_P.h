@@ -82,7 +82,7 @@ namespace OsmAnd
             MapSurfaceType& outChildrenSurfaceType,
             QList< std::shared_ptr<const ObfMapSectionLevelTreeNode> >* nodesWithData,
             const AreaI* bbox31,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
         typedef std::function < bool(
@@ -99,7 +99,7 @@ namespace OsmAnd
             const AreaI* bbox31,
             const FilterReadingByIdFunction filterById,
             const VisitorFunction visitor,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
         static void readMapObjectId(
@@ -134,7 +134,7 @@ namespace OsmAnd
             const VisitorFunction visitor,
             DataBlocksCache* cache,
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric);
 
     friend class OsmAnd::ObfMapSectionReader;

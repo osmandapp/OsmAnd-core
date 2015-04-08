@@ -35,11 +35,9 @@ OsmAnd::MapRasterLayerProvider_Software_P::~MapRasterLayerProvider_Software_P()
 }
 
 std::shared_ptr<SkBitmap> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
-    const TileId tileId,
-    const ZoomLevel zoom,
+    const MapRasterLayerProvider::Request& request,
     const std::shared_ptr<const MapPrimitivesProvider::Data>& primitivesTile,
-    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric_,
-    const IQueryController* const queryController)
+    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric_)
 {
 #if OSMAND_PERFORMANCE_METRICS
     MapRasterLayerProvider_Metrics::Metric_obtainData localMetric;
@@ -76,13 +74,13 @@ std::shared_ptr<SkBitmap> OsmAnd::MapRasterLayerProvider_Software_P::rasterize(
     if (!owner->fillBackground)
         canvas.clear(SK_ColorTRANSPARENT);
     _mapRasterizer->rasterize(
-        Utilities::tileBoundingBox31(tileId, zoom),
+        Utilities::tileBoundingBox31(request.tileId, request.zoom),
         primitivesTile->primitivisedObjects,
         canvas,
         owner->fillBackground,
         nullptr,
         metric ? metric->findOrAddSubmetricOfType<MapRasterizer_Metrics::Metric_rasterize>().get() : nullptr,
-        queryController);
+        request.queryController);
 
 #if OSMAND_PERFORMANCE_METRICS
 #if OSMAND_PERFORMANCE_METRICS <= 1

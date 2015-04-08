@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 125
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 126
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -50,11 +50,13 @@ elseif (CMAKE_TARGET_OS STREQUAL "android")
 		${dl_LIBRARY}
 	)
 elseif (CMAKE_TARGET_OS STREQUAL "windows")
-	# This is not done via find_library() since under Linux it won't find needed library
-	#find_library(ws2_32_LIBRARY ws2_32)
+	if (CMAKE_HOST_WIN32)
+		find_library(ws2_32_LIBRARY ws2_32)
+	else()
+		set(ws2_32_LIBRARY ws2_32)
+	endif()
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		#{ws2_32_LIBRARY}
-		ws2_32
+		${ws2_32_LIBRARY}
 	)
 endif()
 

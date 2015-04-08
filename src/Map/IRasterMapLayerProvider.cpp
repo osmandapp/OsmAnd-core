@@ -1,11 +1,21 @@
 #include "IRasterMapLayerProvider.h"
 
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::IRasterMapLayerProvider::IRasterMapLayerProvider()
 {
 }
 
 OsmAnd::IRasterMapLayerProvider::~IRasterMapLayerProvider()
 {
+}
+
+bool OsmAnd::IRasterMapLayerProvider::obtainRasterTile(
+    const Request& request,
+    std::shared_ptr<Data>& outRasterTile,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return MapDataProviderHelpers::obtainData(this, request, outRasterTile, pOutMetric);
 }
 
 OsmAnd::IRasterMapLayerProvider::Data::Data(

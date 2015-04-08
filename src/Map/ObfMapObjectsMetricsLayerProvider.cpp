@@ -1,6 +1,8 @@
 #include "ObfMapObjectsMetricsLayerProvider.h"
 #include "ObfMapObjectsMetricsLayerProvider_P.h"
 
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::ObfMapObjectsMetricsLayerProvider::ObfMapObjectsMetricsLayerProvider(
     const std::shared_ptr<ObfMapObjectsProvider>& dataProvider_,
     const uint32_t tileSize_ /*= 256*/,
@@ -32,20 +34,19 @@ uint32_t OsmAnd::ObfMapObjectsMetricsLayerProvider::getTileSize() const
 }
 
 bool OsmAnd::ObfMapObjectsMetricsLayerProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    if (pOutMetric)
-        pOutMetric->reset();
+    return _p->obtainData(request, outData, pOutMetric);
+}
 
-    std::shared_ptr<Data> tiledData;
-    const auto result = _p->obtainData(tileId, zoom, tiledData, queryController);
-    outTiledData = tiledData;
-
-    return result;
+bool OsmAnd::ObfMapObjectsMetricsLayerProvider::obtainMetricsTile(
+    const Request& request,
+    std::shared_ptr<Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return MapDataProviderHelpers::obtainData(this, request, outData, pOutMetric);
 }
 
 OsmAnd::ZoomLevel OsmAnd::ObfMapObjectsMetricsLayerProvider::getMinZoom() const

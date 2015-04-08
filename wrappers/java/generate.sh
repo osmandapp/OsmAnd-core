@@ -17,7 +17,6 @@ if [ -d "$OUTPUTDIR/gen" ]; then
 	rm -rf "$OUTPUTDIR/gen"
 fi
 mkdir -p "$OUTPUTDIR/gen/java/net/osmand/core/jni"
-echo "$OUTPUTDIR/gen/java/net/osmand/core/jni"
 mkdir -p "$OUTPUTDIR/gen/cpp"
 
 if [[ -z "$SWIG" ]]; then

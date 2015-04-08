@@ -32,7 +32,7 @@ namespace OsmAnd
         
         bool loadWorldRegions(
             QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
-            const IQueryController* const controller) const;
+            const std::shared_ptr<const IQueryController>& queryController) const;
 
     friend class OsmAnd::WorldRegions;
     };

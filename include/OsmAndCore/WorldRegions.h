@@ -64,7 +64,7 @@ namespace OsmAnd
 
         bool loadWorldRegions(
             QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
-            const IQueryController* const controller = nullptr) const;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
     };
 }
 

@@ -15,18 +15,18 @@ void OsmAnd::ObfPoiSectionReader::loadCategories(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const ObfPoiSectionCategories>& outCategories,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    ObfPoiSectionReader_P::loadCategories(*reader->_p, section, outCategories, controller);
+    ObfPoiSectionReader_P::loadCategories(*reader->_p, section, outCategories, queryController);
 }
 
 void OsmAnd::ObfPoiSectionReader::loadSubtypes(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const ObfPoiSectionSubtypes>& outSubtypes,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
-    ObfPoiSectionReader_P::loadSubtypes(*reader->_p, section, outSubtypes, controller);
+    ObfPoiSectionReader_P::loadSubtypes(*reader->_p, section, outSubtypes, queryController);
 }
 
 void OsmAnd::ObfPoiSectionReader::loadAmenities(
@@ -38,7 +38,7 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
     const AreaI* const bbox31 /*= nullptr*/,
     const QSet<ObfPoiCategoryId>* const categoriesFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfPoiSectionReader_P::loadAmenities(
         *reader->_p,
@@ -49,7 +49,7 @@ void OsmAnd::ObfPoiSectionReader::loadAmenities(
         bbox31,
         categoriesFilter,
         visitor,
-        controller);
+        queryController);
 }
 
 void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
@@ -61,7 +61,7 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
     const AreaI* const bbox31 /*= nullptr*/,
     const QSet<ObfPoiCategoryId>* const categoriesFilter /*= nullptr*/,
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfPoiSectionReader_P::scanAmenitiesByName(
         *reader->_p,
@@ -73,5 +73,5 @@ void OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
         bbox31,
         categoriesFilter,
         visitor,
-        controller);
+        queryController);
 }

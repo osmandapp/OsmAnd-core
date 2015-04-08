@@ -21,7 +21,7 @@ OsmAnd::WorldRegions_P::~WorldRegions_P()
 
 bool OsmAnd::WorldRegions_P::loadWorldRegions(
     QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
-    const IQueryController* const controller) const
+    const std::shared_ptr<const IQueryController>& queryController) const
 {
     const std::shared_ptr<QIODevice> ocbfFile(new QFile(owner->ocbfFileName));
     if (!ocbfFile->open(QIODevice::ReadOnly))
@@ -39,7 +39,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
     for(const auto& mapSection : constOf(obfInfo->mapSections))
     {
         // Check if request is aborted
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
         {
             ocbfFile->close();
 
@@ -152,7 +152,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
             worldRegionsCollector,
             nullptr, // No cache
             nullptr, // No cache
-            controller);
+            queryController);
     }
 
     ocbfFile->close();

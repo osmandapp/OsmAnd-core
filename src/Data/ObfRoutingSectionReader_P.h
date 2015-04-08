@@ -78,7 +78,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& treeNode,
             QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* outNodesWithData,
             const AreaI* bbox31,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric);
 
         static void readRoadsBlock(
@@ -89,7 +89,7 @@ namespace OsmAnd
             const AreaI* bbox31,
             const FilterRoadsByIdFunction filterById,
             const VisitorFunction visitor,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric);
 
         static void readRoadsBlockIdsTable(
@@ -123,7 +123,7 @@ namespace OsmAnd
             const VisitorFunction visitor,
             DataBlocksCache* cache,
             QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric);
 
     friend class OsmAnd::ObfRoutingSectionReader;

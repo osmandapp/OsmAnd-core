@@ -47,28 +47,27 @@ namespace OsmAnd
             QList< std::shared_ptr<MapSymbolsGroup> > symbolsGroups;
         };
 
+        struct OSMAND_CORE_API Request : public IMapTiledDataProvider::Request
+        {
+            Request();
+            Request(const IMapDataProvider::Request& that);
+            virtual ~Request();
+
+            FilterCallback filterCallback;
+
+            static void copy(Request& dst, const IMapDataProvider::Request& src);
+        };
+
     private:
     protected:
         IMapTiledSymbolsProvider();
     public:
         virtual ~IMapTiledSymbolsProvider();
 
-        virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr);
-
-# if !defined(SWIG)
-        virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr,
-            const FilterCallback filterCallback = nullptr) = 0;
-#endif // !defined(SWIG)
+        virtual bool obtainTiledSymbols(
+            const Request& request,
+            std::shared_ptr<Data>& outTiledSymbols,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
     };
 }
 

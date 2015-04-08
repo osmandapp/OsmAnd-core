@@ -6,12 +6,17 @@
 #include <OsmAndCore/QtExtensions.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Common.h>
+#include <OsmAndCore/Metrics.h>
 
 namespace OsmAnd
 {
+    class IQueryController;
+
     class OSMAND_CORE_API IMapDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapDataProvider);
+
     public:
         struct OSMAND_CORE_API RetainableCacheMetadata
         {
@@ -33,11 +38,31 @@ namespace OsmAnd
             std::shared_ptr<const RetainableCacheMetadata> retainableCacheMetadata;
         };
 
+        struct OSMAND_CORE_API Request
+        {
+            Request();
+            Request(const Request& that);
+            virtual ~Request();
+
+            std::shared_ptr<const IQueryController> queryController;
+
+            static void copy(Request& dst, const Request& src);
+        };
+
     private:
     protected:
         IMapDataProvider();
     public:
         virtual ~IMapDataProvider();
+
+        virtual bool obtainData(
+            const Request& request,
+            std::shared_ptr<Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) = 0;
+        /*virtual void obtainDataAsync(
+            const Request& request,
+            std::shared_ptr<Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) = 0;*/
     };
 }
 

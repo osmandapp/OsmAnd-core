@@ -14,6 +14,7 @@
 #include <SkImageEncoder.h>
 #include "restore_internal_warnings.h"
 
+#include "MapDataProviderHelpers.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
 #include "MapPrimitiviser_Metrics.h"
@@ -24,7 +25,8 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::MapPrimitivesMetricsLayerProvider_P::MapPrimitivesMetricsLayerProvider_P(MapPrimitivesMetricsLayerProvider* const owner_)
+OsmAnd::MapPrimitivesMetricsLayerProvider_P::MapPrimitivesMetricsLayerProvider_P(
+    MapPrimitivesMetricsLayerProvider* const owner_)
     : owner(owner_)
 {
 }
@@ -34,19 +36,22 @@ OsmAnd::MapPrimitivesMetricsLayerProvider_P::~MapPrimitivesMetricsLayerProvider_
 }
 
 bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<MapPrimitivesMetricsLayerProvider::Data>& outTiledData,
-    const IQueryController* const queryController)
+    const IMapDataProvider::Request& request_,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric)
 {
+    const auto& request = MapDataProviderHelpers::castRequest<MapPrimitivesMetricsLayerProvider::Request>(request_);
+    if (pOutMetric)
+        pOutMetric->reset();
+
     MapPrimitivesProvider_Metrics::Metric_obtainData obtainDataMetric;
 
     // Obtain offline map primitives tile
     std::shared_ptr<MapPrimitivesProvider::Data> primitivesTile;
-    owner->primitivesProvider->obtainData(tileId, zoom, primitivesTile, &obtainDataMetric, nullptr);
+    owner->primitivesProvider->obtainTiledPrimitives(request, primitivesTile, &obtainDataMetric);
     if (!primitivesTile)
     {
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
 
@@ -66,9 +71,9 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
 
     QString text;
     text += QString(QLatin1String("TILE   %1x%2@%3\n"))
-        .arg(tileId.x)
-        .arg(tileId.y)
-        .arg(zoom);
+        .arg(request.tileId.x)
+        .arg(request.tileId.y)
+        .arg(request.zoom);
     QString obtainBinaryMapObjectsElapsedTime(QLatin1String("?"));
     if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
@@ -129,9 +134,9 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
         topOffset += 1.25f * fontSize;
     }
 
-    outTiledData.reset(new MapPrimitivesMetricsLayerProvider::Data(
-        tileId,
-        zoom,
+    outData.reset(new MapPrimitivesMetricsLayerProvider::Data(
+        request.tileId,
+        request.zoom,
         AlphaChannelPresence::NotPresent,
         owner->densityFactor,
         bitmap,

@@ -1,5 +1,7 @@
 #include "IMapObjectsProvider.h"
 
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::IMapObjectsProvider::IMapObjectsProvider()
 {
 }
@@ -8,17 +10,12 @@ OsmAnd::IMapObjectsProvider::~IMapObjectsProvider()
 {
 }
 
-bool OsmAnd::IMapObjectsProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+bool OsmAnd::IMapObjectsProvider::obtainTiledMapObjects(
+    const Request& request,
+    std::shared_ptr<Data>& outMapObjects,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    std::shared_ptr<Data> tiledData;
-    const auto result = obtainData(tileId, zoom, tiledData, pOutMetric, queryController);
-    outTiledData = tiledData;
-    return result;
+    return MapDataProviderHelpers::obtainData(this, request, outMapObjects, pOutMetric);
 }
 
 OsmAnd::IMapObjectsProvider::Data::Data(

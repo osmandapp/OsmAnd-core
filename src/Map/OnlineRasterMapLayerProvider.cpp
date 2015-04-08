@@ -50,23 +50,6 @@ void OsmAnd::OnlineRasterMapLayerProvider::setNetworkAccessPermission(bool allow
     _p->_networkAccessAllowed = allowed;
 }
 
-bool OsmAnd::OnlineRasterMapLayerProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
-{
-    if (pOutMetric)
-        pOutMetric->reset();
-
-    std::shared_ptr<OnlineRasterMapLayerProvider::Data> tiledData;
-    const auto result = _p->obtainData(tileId, zoom, tiledData, queryController);
-    outTiledData = tiledData;
-
-    return result;
-}
-
 OsmAnd::MapStubStyle OsmAnd::OnlineRasterMapLayerProvider::getDesiredStubsStyle() const
 {
     return MapStubStyle::Unspecified;
@@ -80,6 +63,14 @@ float OsmAnd::OnlineRasterMapLayerProvider::getTileDensityFactor() const
 uint32_t OsmAnd::OnlineRasterMapLayerProvider::getTileSize() const
 {
     return tileSize;
+}
+
+bool OsmAnd::OnlineRasterMapLayerProvider::obtainData(
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return _p->obtainData(request, outData, pOutMetric);
 }
 
 OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getMinZoom() const

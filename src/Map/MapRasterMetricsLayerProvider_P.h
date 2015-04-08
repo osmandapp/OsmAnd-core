@@ -38,10 +38,9 @@ namespace OsmAnd
         ImplementationInterface<MapRasterMetricsLayerProvider> owner;
 
         bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<MapRasterMetricsLayerProvider::Data>& outTiledData,
-            const IQueryController* const queryController);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric);
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;

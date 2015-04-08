@@ -36,7 +36,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const ZoomLevel zoom,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
-    const IQueryController* const controller,
+    const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric)
 {
     return primitiviseAllMapObjects(
@@ -44,7 +44,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         zoom,
         objects,
         cache,
-        controller,
+        queryController,
         metric);
 }
 
@@ -53,7 +53,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const ZoomLevel zoom,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
-    const IQueryController* const controller,
+    const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric)
 {
     const Stopwatch totalStopwatch(metric != nullptr);
@@ -77,11 +77,11 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     MapStyleEvaluationResult evaluationResult;
 
     const Stopwatch obtainPrimitivesStopwatch(metric != nullptr);
-    obtainPrimitives(context, primitivisedObjects, objects, qMove(evaluationResult), cache, controller, metric);
+    obtainPrimitives(context, primitivisedObjects, objects, qMove(evaluationResult), cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitives += obtainPrimitivesStopwatch.elapsed();
     
-    if (controller && controller->isAborted())
+    if (queryController && queryController->isAborted())
         return nullptr;
 
     // Sort and filter primitives
@@ -92,12 +92,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, controller);
+    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, queryController);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
     // Cleanup if aborted
-    if (controller && controller->isAborted())
+    if (queryController && queryController->isAborted())
         return nullptr;
 
     if (metric)
@@ -113,7 +113,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const MapSurfaceType surfaceType_,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
-    const IQueryController* const controller,
+    const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric)
 {
     const Stopwatch totalStopwatch(metric != nullptr);
@@ -143,7 +143,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     bool roadsPresent = false;
     for (const auto& mapObject : constOf(objects))
     {
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
             break;
 
         //////////////////////////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 detailedmapMapObjects.push_back(mapObject);
         }
     }
-    if (controller && controller->isAborted())
+    if (queryController && queryController->isAborted())
         return nullptr;
 
     //////////////////////////////////////////////////////////////////////////
@@ -398,24 +398,45 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     MapStyleEvaluationResult evaluationResult;
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
-    obtainPrimitives(context, primitivisedObjects, detailedmapMapObjects, qMove(evaluationResult), cache, controller, metric);
+    obtainPrimitives(
+        context,
+        primitivisedObjects,
+        detailedmapMapObjects,
+        qMove(evaluationResult),
+        cache,
+        queryController,
+        metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
     if ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
-        obtainPrimitives(context, primitivisedObjects, basemapMapObjects, qMove(evaluationResult), cache, controller, metric);
+        obtainPrimitives(
+            context,
+            primitivisedObjects,
+            basemapMapObjects,
+            qMove(evaluationResult),
+            cache,
+            queryController,
+            metric);
         if (metric)
             metric->elapsedTimeForObtainingPrimitivesFromBasemap += obtainPrimitivesFromBasemapStopwatch.elapsed();
     }
 
     const Stopwatch obtainPrimitivesFromCoastlinesStopwatch(metric != nullptr);
-    obtainPrimitives(context, primitivisedObjects, polygonizedCoastlineObjects, qMove(evaluationResult), cache, controller, metric);
+    obtainPrimitives(
+        context,
+        primitivisedObjects,
+        polygonizedCoastlineObjects,
+        qMove(evaluationResult),
+        cache,
+        queryController,
+        metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromCoastlines += obtainPrimitivesFromCoastlinesStopwatch.elapsed();
 
-    if (controller && controller->isAborted())
+    if (queryController && queryController->isAborted())
         return nullptr;
 
     // Sort and filter primitives
@@ -426,12 +447,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, controller);
+    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, queryController);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
     // Cleanup if aborted
-    if (controller && controller->isAborted())
+    if (queryController && queryController->isAborted())
         return nullptr;
 
     if (metric)
@@ -445,7 +466,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     const ZoomLevel zoom,
     const QList< std::shared_ptr<const MapObject> >& objects,
     const std::shared_ptr<Cache>& cache,
-    const IQueryController* const controller,
+    const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface* const metric)
 {
     const Stopwatch totalStopwatch(metric != nullptr);
@@ -463,7 +484,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     QList< std::shared_ptr<const MapObject> > detailedmapMapObjects, basemapMapObjects;
     for (const auto& mapObject : constOf(objects))
     {
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
             break;
 
         // Check if this map object is from basemap
@@ -483,7 +504,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 detailedmapMapObjects.push_back(mapObject);
         }
     }
-    if (controller && controller->isAborted())
+    if (queryController && queryController->isAborted())
         return nullptr;
 
     if (metric)
@@ -507,19 +528,19 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     MapStyleEvaluationResult evaluationResult;
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
-    obtainPrimitives(context, primitivisedObjects, detailedmapMapObjects, qMove(evaluationResult), cache, controller, metric);
+    obtainPrimitives(context, primitivisedObjects, detailedmapMapObjects, qMove(evaluationResult), cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
     if ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
-        obtainPrimitives(context, primitivisedObjects, basemapMapObjects, qMove(evaluationResult), cache, controller, metric);
+        obtainPrimitives(context, primitivisedObjects, basemapMapObjects, qMove(evaluationResult), cache, queryController, metric);
         if (metric)
             metric->elapsedTimeForObtainingPrimitivesFromBasemap += obtainPrimitivesFromBasemapStopwatch.elapsed();
     }
 
-    if (controller && controller->isAborted())
+    if (queryController && queryController->isAborted())
         return nullptr;
 
     // Sort and filter primitives
@@ -530,12 +551,12 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, controller);
+    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, queryController);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
     // Cleanup if aborted
-    if (controller && controller->isAborted())
+    if (queryController && queryController->isAborted())
         return nullptr;
 
     if (metric)
@@ -1196,7 +1217,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     MapStyleEvaluationResult& evaluationResult,
 #endif // Q_COMPILER_RVALUE_REFS
     const std::shared_ptr<Cache>& cache,
-    const IQueryController* const controller,
+    const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
 {
     const auto& env = context.env;
@@ -1238,7 +1259,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
         //}
         //////////////////////////////////////////////////////////////////////////
 
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
             return;
 
         MapObject::SharingKey sharingKey;
@@ -1803,7 +1824,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     MapStyleEvaluationResult& evaluationResult,
 #endif // Q_COMPILER_RVALUE_REFS
     const std::shared_ptr<Cache>& cache,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     //NOTE: Em, I'm not sure this is still true
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
@@ -1812,7 +1833,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     QList< proper::shared_future< std::shared_ptr<const SymbolsGroup> > > futureSharedSymbolGroups;
     for (const auto& primitivesGroup : constOf(primitivisedObjects->primitivesGroups))
     {
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
             return;
 
         // If using shared context is allowed, check if this group was already processed
@@ -1864,7 +1885,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             PrimitivesType::Polygons,
             qMove(evaluationResult),
             constructedGroup->symbols,
-            controller);
+            queryController);
         */
         collectSymbolsFromPrimitives(
             context,
@@ -1873,7 +1894,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             PrimitivesType::Polylines,
             qMove(evaluationResult),
             group->symbols,
-            controller);
+            queryController);
         collectSymbolsFromPrimitives(
             context,
             primitivisedObjects,
@@ -1881,7 +1902,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             PrimitivesType::Points,
             qMove(evaluationResult),
             group->symbols,
-            controller);
+            queryController);
 
         // Add this group to shared cache
         if (pSharedSymbolGroups && canBeShared)
@@ -1913,7 +1934,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
     MapStyleEvaluationResult& evaluationResult,
 #endif // Q_COMPILER_RVALUE_REFS
     SymbolsCollection& outSymbols,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     assert(type != PrimitivesType::Polylines_ShadowOnly);
 
@@ -1929,7 +1950,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
         //    return;
         //////////////////////////////////////////////////////////////////////////
 
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
             return;
 
         if (type == PrimitivesType::Polygons)

@@ -18,7 +18,7 @@ void OsmAnd::ObfAddressSectionReader::loadStreetGroups(
     const AreaI* const bbox31 /*= nullptr*/,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter /*= fullObfAddressStreetGroupTypesMask()*/,
     const StreetGroupVisitorFunction visitor /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfAddressSectionReader_P::loadStreetGroups(
         *reader->_p,
@@ -27,7 +27,7 @@ void OsmAnd::ObfAddressSectionReader::loadStreetGroups(
         bbox31,
         streetGroupTypesFilter,
         visitor,
-        controller);
+        queryController);
 }
 
 void OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(
@@ -36,7 +36,7 @@ void OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(
     QList< std::shared_ptr<const Street> >* resultOut /*= nullptr*/,
     const AreaI* const bbox31 /*= nullptr*/,
     const StreetVisitorFunction visitor /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfAddressSectionReader_P::loadStreetsFromGroup(
         *reader->_p,
@@ -44,7 +44,7 @@ void OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(
         resultOut,
         bbox31,
         visitor,
-        controller);
+        queryController);
 }
 
 void OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
@@ -53,7 +53,7 @@ void OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
     QList< std::shared_ptr<const Building> >* resultOut /*= nullptr*/,
     const AreaI* const bbox31 /*= nullptr*/,
     const BuildingVisitorFunction visitor /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfAddressSectionReader_P::loadBuildingsFromStreet(
         *reader->_p,
@@ -61,7 +61,7 @@ void OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
         resultOut,
         bbox31,
         visitor,
-        controller);
+        queryController);
 }
 
 void OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
@@ -70,7 +70,7 @@ void OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
     QList< std::shared_ptr<const StreetIntersection> >* resultOut /*= nullptr*/,
     const AreaI* const bbox31 /*= nullptr*/,
     const IntersectionVisitorFunction visitor /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfAddressSectionReader_P::loadIntersectionsFromStreet(
         *reader->_p,
@@ -78,7 +78,7 @@ void OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
         resultOut,
         bbox31,
         visitor,
-        controller);
+        queryController);
 }
 
 void OsmAnd::ObfAddressSectionReader::scanAddressesByName(
@@ -90,7 +90,7 @@ void OsmAnd::ObfAddressSectionReader::scanAddressesByName(
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter /*= fullObfAddressStreetGroupTypesMask()*/,
     const bool includeStreets /*= true*/,
     const ObfAddressSectionReader::VisitorFunction visitor /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/)
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfAddressSectionReader_P::scanAddressesByName(
         *reader->_p,
@@ -101,5 +101,5 @@ void OsmAnd::ObfAddressSectionReader::scanAddressesByName(
         streetGroupTypesFilter,
         includeStreets,
         visitor,
-        controller);
+        queryController);
 }

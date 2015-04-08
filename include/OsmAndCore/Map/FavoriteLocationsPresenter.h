@@ -43,11 +43,11 @@ namespace OsmAnd
         static MapMarker::PinIconAlignment getDefaultFavoriteLocationPinIconAlignment();
 
         virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
+
         virtual bool obtainData(
-            const IMapKeyedDataProvider::Key key,
-            std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
     };
 }
 

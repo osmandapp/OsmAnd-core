@@ -40,22 +40,23 @@ namespace OsmAnd
         };
 
         virtual std::shared_ptr<SkBitmap> rasterize(
-            const TileId tileId,
-            const ZoomLevel zoom,
+            const MapRasterLayerProvider::Request& request,
             const std::shared_ptr<const MapPrimitivesProvider::Data>& primitivesTile,
-            MapRasterLayerProvider_Metrics::Metric_obtainData* const metric,
-            const IQueryController* const queryController) = 0;
+            MapRasterLayerProvider_Metrics::Metric_obtainData* const metric) = 0;
     public:
         virtual ~MapRasterLayerProvider_P();
 
         ImplementationInterface<MapRasterLayerProvider> owner;
 
         bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<MapRasterLayerProvider::Data>& outTiledData,
-            MapRasterLayerProvider_Metrics::Metric_obtainData* const metric,
-            const IQueryController* const queryController);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric);
+
+        bool obtainRasterizedTile(
+            const MapRasterLayerProvider::Request& request,
+            std::shared_ptr<MapRasterLayerProvider::Data>& outData,
+            MapRasterLayerProvider_Metrics::Metric_obtainData* const metric);
 
         ZoomLevel getMinZoom() const;
         ZoomLevel getMaxZoom() const;

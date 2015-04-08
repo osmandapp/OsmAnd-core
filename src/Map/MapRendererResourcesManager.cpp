@@ -1892,14 +1892,14 @@ void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::execute()
 
     // Ask resource to obtain it's data
     bool dataAvailable = false;
-    FunctorQueryController obtainDataQueryController(
+    const std::shared_ptr<FunctorQueryController> obtainDataQueryController(new FunctorQueryController(
         [this]
-        (const FunctorQueryController* const controller) -> bool
+        (const FunctorQueryController* const queryController) -> bool
         {
             return isCancellationRequested();
-        });
+        }));
     const auto requestSucceeded =
-        requestedResource->obtainData(dataAvailable, &obtainDataQueryController) &&
+        requestedResource->obtainData(dataAvailable, obtainDataQueryController) &&
         !isCancellationRequested();
 
     manager->endResourceRequestProcessing(requestedResource, requestSucceeded, dataAvailable);

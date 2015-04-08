@@ -1,6 +1,7 @@
 #include "MapObjectsProvider_P.h"
 #include "MapObjectsProvider.h"
 
+#include "MapDataProviderHelpers.h"
 #include "MapObject.h"
 #include "Utilities.h"
 
@@ -78,22 +79,26 @@ OsmAnd::ZoomLevel OsmAnd::MapObjectsProvider_P::getMaxZoom() const
 }
 
 bool OsmAnd::MapObjectsProvider_P::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<MapObjectsProvider::Data>& outTiledData,
-    const IQueryController* const queryController)
+    const IMapDataProvider::Request& request_,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric)
 {
+    const auto& request = MapDataProviderHelpers::castRequest<MapObjectsProvider::Request>(request_);
+
+    if (pOutMetric)
+        pOutMetric->reset();
+
     std::shared_ptr<TileEntry> tileEntry;
 
     for (;;)
     {
         // Try to obtain previous instance of tile
-        _tileReferences.obtainOrAllocateEntry(tileEntry, tileId, zoom,
+        _tileReferences.obtainOrAllocateEntry(tileEntry, request.tileId, request.zoom,
             []
-        (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
-        {
-            return new TileEntry(collection, tileId, zoom);
-        });
+            (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
+            {
+                return new TileEntry(collection, tileId, zoom);
+            });
 
         // If state is "Undefined", change it to "Loading" and proceed with loading
         if (tileEntry->setStateIf(TileState::Undefined, TileState::Loading))
@@ -112,27 +117,27 @@ bool OsmAnd::MapObjectsProvider_P::obtainData(
         if (!tileEntry->dataIsPresent)
         {
             // If there was no data, return same
-            outTiledData.reset();
+            outData.reset();
             return true;
         }
         else
         {
             // Otherwise, try to lock tile reference
-            outTiledData = tileEntry->dataWeakRef.lock();
+            outData = tileEntry->dataWeakRef.lock();
 
             // If successfully locked, just return it
-            if (outTiledData)
+            if (outData)
                 return true;
 
             // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
             // This will enable creation of new entry on next loop cycle
-            _tileReferences.removeEntry(tileId, zoom);
+            _tileReferences.removeEntry(request.tileId, request.zoom);
             tileEntry.reset();
         }
     }
 
     // Check if there's data for specified zoom level or there
-    if (zoom > _preparedData->maxZoom || zoom < _preparedData->minZoom)
+    if (request.zoom > _preparedData->maxZoom || request.zoom < _preparedData->minZoom)
     {
         // Store flag that there was no data and mark tile entry as 'Loaded'
         tileEntry->dataIsPresent = false;
@@ -144,10 +149,10 @@ bool OsmAnd::MapObjectsProvider_P::obtainData(
             tileEntry->loadedCondition.wakeAll();
         }
 
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
-    const auto citDataByZoom = _preparedData->dataByZoomLevel.constFind(zoom);
+    const auto citDataByZoom = _preparedData->dataByZoomLevel.constFind(request.zoom);
     if (citDataByZoom == _preparedData->dataByZoomLevel.cend())
     {
         // Store flag that there was no data and mark tile entry as 'Loaded'
@@ -160,24 +165,24 @@ bool OsmAnd::MapObjectsProvider_P::obtainData(
             tileEntry->loadedCondition.wakeAll();
         }
 
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
 
     const auto& dataByZoom = *citDataByZoom;
-    const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
+    const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
 
     // In case bbox31 entirely contains all data on given zoom level, return every object
     if (tileBBox31.contains(dataByZoom.bbox31))
     {
         const std::shared_ptr<MapObjectsProvider::Data> newTiledData(new MapObjectsProvider::Data(
-            tileId,
-            zoom,
+            request.tileId,
+            request.zoom,
             MapSurfaceType::Undefined,
             dataByZoom.mapObjectsList));
 
         // Publish new tile
-        outTiledData = newTiledData;
+        outData = newTiledData;
 
         // Store weak reference to new tile and mark it as 'Loaded'
         tileEntry->dataIsPresent = true;
@@ -200,7 +205,7 @@ bool OsmAnd::MapObjectsProvider_P::obtainData(
             tileEntry->loadedCondition.wakeAll();
         }
 
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
 
@@ -221,18 +226,18 @@ bool OsmAnd::MapObjectsProvider_P::obtainData(
             tileEntry->loadedCondition.wakeAll();
         }
 
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
 
     const std::shared_ptr<MapObjectsProvider::Data> newTiledData(new MapObjectsProvider::Data(
-        tileId,
-        zoom,
+        request.tileId,
+        request.zoom,
         MapSurfaceType::Undefined,
         mapObjectsInTileBBox));
 
     // Publish new tile
-    outTiledData = newTiledData;
+    outData = newTiledData;
 
     // Store weak reference to new tile and mark it as 'Loaded'
     tileEntry->dataIsPresent = true;

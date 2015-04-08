@@ -123,7 +123,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             const FilterByMapObject filter = nullptr,
-            const IQueryController* const controller = nullptr) const;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
     };
 }
 

@@ -56,7 +56,6 @@ namespace OsmAnd
             QQueue<WorkerThread*> _freeThreads;
             QQueue<WorkerThread*> _inactiveThreads;
             volatile bool _isBeingReset;
-            mutable QWaitCondition _threadExited;
             mutable QWaitCondition _threadFreed;
 
             unsigned int activeThreadCountNoLock() const;

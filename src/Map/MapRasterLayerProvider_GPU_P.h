@@ -26,11 +26,9 @@ namespace OsmAnd
         MapRasterLayerProvider_GPU_P(MapRasterLayerProvider_GPU* owner);
 
         virtual std::shared_ptr<SkBitmap> rasterize(
-            const TileId tileId,
-            const ZoomLevel zoom,
+            const MapRasterLayerProvider::Request& request,
             const std::shared_ptr<const MapPrimitivesProvider::Data>& primitivesTile,
-            MapRasterLayerProvider_Metrics::Metric_obtainData* const metric,
-            const IQueryController* const queryController);
+            MapRasterLayerProvider_Metrics::Metric_obtainData* const metric);
     public:
         virtual ~MapRasterLayerProvider_GPU_P();
 

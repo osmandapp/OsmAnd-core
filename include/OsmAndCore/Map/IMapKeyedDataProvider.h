@@ -8,13 +8,10 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/Metrics.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
 
 namespace OsmAnd
 {
-    class IQueryController;
-
     class OSMAND_CORE_API IMapKeyedDataProvider : public IMapDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapKeyedDataProvider);
@@ -34,6 +31,17 @@ namespace OsmAnd
             Key key;
         };
 
+        struct OSMAND_CORE_API Request : public IMapDataProvider::Request
+        {
+            Request();
+            Request(const IMapDataProvider::Request& that);
+            virtual ~Request();
+
+            Key key;
+
+            static void copy(Request& dst, const IMapDataProvider::Request& src);
+        };
+
     private:
     protected:
         IMapKeyedDataProvider();
@@ -41,11 +49,10 @@ namespace OsmAnd
         virtual ~IMapKeyedDataProvider();
 
         virtual QList<Key> getProvidedDataKeys() const = 0;
-        virtual bool obtainData(
-            const Key key,
+        virtual bool obtainKeyedData(
+            const Request& request,
             std::shared_ptr<Data>& outKeyedData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr) = 0;
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
     };
 }
 

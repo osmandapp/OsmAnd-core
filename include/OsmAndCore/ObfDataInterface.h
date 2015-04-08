@@ -36,7 +36,7 @@ namespace OsmAnd
 
         bool loadObfFiles(
             QList< std::shared_ptr<const ObfFile> >* outFiles = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadBinaryMapObjects(
             QList< std::shared_ptr<const OsmAnd::BinaryMapObject> >* resultOut,
@@ -46,7 +46,7 @@ namespace OsmAnd
             const ObfMapSectionReader::FilterByIdFunction filterById = nullptr,
             ObfMapSectionReader::DataBlocksCache* cache = nullptr,
             QList< std::shared_ptr<const ObfMapSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
-            const IQueryController* const controller = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric = nullptr);
 
         bool loadRoads(
@@ -57,7 +57,7 @@ namespace OsmAnd
             const ObfRoutingSectionReader::VisitorFunction visitor = nullptr,
             ObfRoutingSectionReader::DataBlocksCache* cache = nullptr,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedCacheEntries = nullptr,
-            const IQueryController* const controller = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric = nullptr);
 
         bool loadMapObjects(
@@ -72,14 +72,14 @@ namespace OsmAnd
             const FilterRoadsByIdFunction filterRoadsById = nullptr,
             ObfRoutingSectionReader::DataBlocksCache* roadsCache = nullptr,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* outReferencedRoadsCacheEntries = nullptr,
-            const IQueryController* const controller = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr,
             ObfMapSectionReader_Metrics::Metric_loadMapObjects* const binaryMapObjectsMetric = nullptr,
             ObfRoutingSectionReader_Metrics::Metric_loadRoads* const roadsMetric = nullptr);
 
         bool loadAmenityCategories(
             QHash<QString, QStringList>* outCategories,
             const AreaI* const pBbox31 = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadAmenities(
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
@@ -88,7 +88,7 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
         bool scanAmenitiesByName(
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
@@ -97,7 +97,7 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool scanAddressesByName(
             const QString& query,
@@ -106,35 +106,35 @@ namespace OsmAnd
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter = fullObfAddressStreetGroupTypesMask(),
             const bool includeStreets = true,
             const ObfAddressSectionReader::VisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadStreetGroups(
             QList< std::shared_ptr<const StreetGroup> >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter = fullObfAddressStreetGroupTypesMask(),
             const ObfAddressSectionReader::StreetGroupVisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadStreetsFromGroups(
             const QList< std::shared_ptr<const StreetGroup> >& streetGroups,
             QHash< std::shared_ptr<const StreetGroup>, QList< std::shared_ptr<const Street> > >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressSectionReader::StreetVisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadBuildingsFromStreets(
             const QList< std::shared_ptr<const Street> >& streets,
             QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const Building> > >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressSectionReader::BuildingVisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadIntersectionsFromStreets(
             const QList< std::shared_ptr<const Street> >& streets,
             QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const StreetIntersection> > >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressSectionReader::IntersectionVisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
     };
 }
 

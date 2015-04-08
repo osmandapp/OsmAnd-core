@@ -34,6 +34,18 @@ namespace OsmAnd
             ZoomLevel zoom;
         };
 
+        struct OSMAND_CORE_API Request : public IMapDataProvider::Request
+        {
+            Request();
+            Request(const IMapDataProvider::Request& that);
+            virtual ~Request();
+
+            TileId tileId;
+            ZoomLevel zoom;
+
+            static void copy(Request& dst, const IMapDataProvider::Request& src);
+        };
+
     private:
     protected:
         IMapTiledDataProvider();
@@ -43,12 +55,10 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const = 0;
         virtual ZoomLevel getMaxZoom() const = 0;
 
-        virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
+        virtual bool obtainTiledData(
+            const Request& request,
             std::shared_ptr<Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr) = 0;
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
     };
 }
 

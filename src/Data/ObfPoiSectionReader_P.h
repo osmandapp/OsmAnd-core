@@ -66,7 +66,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
         static void scanTiles(
             const ObfReader_P& reader,
             QSet<uint32_t>& outDataOffsets,
@@ -90,7 +90,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
         static void scanNameIndex(
             const ObfReader_P& reader,
             const QString& query,
@@ -122,7 +122,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
         static void readAmenity(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
@@ -132,19 +132,19 @@ namespace OsmAnd
             const TileId boxTileId,
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
     public:
         static void loadCategories(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const ObfPoiSectionCategories>& outCategories,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
 
         static void loadSubtypes(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const ObfPoiSectionSubtypes>& outSubtypes,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
 
         static void loadAmenities(
             const ObfReader_P& reader,
@@ -155,7 +155,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
 
         static void scanAmenitiesByName(
             const ObfReader_P& reader,
@@ -167,7 +167,7 @@ namespace OsmAnd
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const ObfPoiSectionReader::VisitorFunction visitor,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
 
     friend class OsmAnd::ObfReader_P;
     friend class OsmAnd::ObfPoiSectionReader;

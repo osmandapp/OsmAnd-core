@@ -75,16 +75,10 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
 
-#if !defined(SWIG)
-        //NOTE: For some reason, produces 'SWIGTYPE_p_std__shared_ptrT_OsmAnd__MapSymbolsGroup_const_t'
         virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<IMapTiledSymbolsProvider::Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr,
-            const FilterCallback filterCallback = nullptr);
-#endif // !defined(SWIG)
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
     };
 }
 

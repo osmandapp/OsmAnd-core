@@ -18,6 +18,7 @@ namespace OsmAnd
     class OSMAND_CORE_API HeightmapTileProvider : public IMapElevationDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(HeightmapTileProvider);
+
     private:
         PrivateImplementation<HeightmapTileProvider_P> _p;
     protected:
@@ -33,12 +34,11 @@ namespace OsmAnd
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
         virtual uint32_t getTileSize() const;
+
         virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
 
         static const QString defaultIndexFilename;
     };

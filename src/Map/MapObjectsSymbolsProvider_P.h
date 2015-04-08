@@ -74,11 +74,9 @@ namespace OsmAnd
         virtual ~MapObjectsSymbolsProvider_P();
 
         bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<MapObjectsSymbolsProvider::Data>& outTiledData,
-            const IQueryController* const queryController,
-            const FilterCallback filterCallback);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric);
 
     friend class OsmAnd::MapObjectsSymbolsProvider;
     };

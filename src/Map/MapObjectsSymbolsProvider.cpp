@@ -19,24 +19,6 @@ OsmAnd::MapObjectsSymbolsProvider::~MapObjectsSymbolsProvider()
 {
 }
 
-bool OsmAnd::MapObjectsSymbolsProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledSymbolsProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/,
-    const FilterCallback filterCallback /*= nullptr*/)
-{
-    if (pOutMetric)
-        pOutMetric->reset();
-
-    std::shared_ptr<Data> tiledData;
-    const auto result = _p->obtainData(tileId, zoom, tiledData, queryController, filterCallback);
-    outTiledData = tiledData;
-
-    return result;
-}
-
 OsmAnd::ZoomLevel OsmAnd::MapObjectsSymbolsProvider::getMinZoom() const
 {
     return primitivesProvider->getMinZoom();
@@ -45,6 +27,14 @@ OsmAnd::ZoomLevel OsmAnd::MapObjectsSymbolsProvider::getMinZoom() const
 OsmAnd::ZoomLevel OsmAnd::MapObjectsSymbolsProvider::getMaxZoom() const
 {
     return primitivesProvider->getMaxZoom();
+}
+
+bool OsmAnd::MapObjectsSymbolsProvider::obtainData(
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return _p->obtainData(request, outData, pOutMetric);
 }
 
 OsmAnd::MapObjectsSymbolsProvider::Data::Data(

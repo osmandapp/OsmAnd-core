@@ -65,11 +65,9 @@ namespace OsmAnd
         virtual uint32_t getTileSize() const;
 
         virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;

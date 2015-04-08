@@ -19,11 +19,6 @@ void OsmAnd::HeightmapTileProvider::rebuildTileDbIndex()
     _p->rebuildTileDbIndex();
 }
 
-uint32_t OsmAnd::HeightmapTileProvider::getTileSize() const
-{
-    return _p->getTileSize();
-}
-
 OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider::getMinZoom() const
 {
     return _p->getMinZoom();
@@ -34,19 +29,15 @@ OsmAnd::ZoomLevel OsmAnd::HeightmapTileProvider::getMaxZoom() const
     return _p->getMaxZoom();
 }
 
-bool OsmAnd::HeightmapTileProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+uint32_t OsmAnd::HeightmapTileProvider::getTileSize() const
 {
-    if (pOutMetric)
-        pOutMetric->reset();
+    return _p->getTileSize();
+}
 
-    std::shared_ptr<Data> tiledData;
-    const auto result = _p->obtainData(tileId, zoom, tiledData, queryController);
-    outTiledData = tiledData;
-
-    return result;
+bool OsmAnd::HeightmapTileProvider::obtainData(
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return _p->obtainData(request, outData, pOutMetric);
 }

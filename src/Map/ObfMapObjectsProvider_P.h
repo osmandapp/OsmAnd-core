@@ -134,11 +134,14 @@ namespace OsmAnd
         ImplementationInterface<ObfMapObjectsProvider> owner;
 
         bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<ObfMapObjectsProvider::Data>& outTiledData,
-            ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric,
-            const IQueryController* const queryController);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric);
+
+        bool obtainTiledObfMapObjects(
+            const ObfMapObjectsProvider::Request& request,
+            std::shared_ptr<ObfMapObjectsProvider::Data>& outMapObjects,
+            ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric);
 
     friend class OsmAnd::ObfMapObjectsProvider;
     };

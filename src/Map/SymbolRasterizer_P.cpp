@@ -46,13 +46,13 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     const FilterByMapObject filter,
-    const IQueryController* const controller) const
+    const std::shared_ptr<const IQueryController>& queryController) const
 {
     const auto& env = primitivisedObjects->mapPresentationEnvironment;
 
     for (const auto& symbolGroupEntry : rangeOf(constOf(primitivisedObjects->symbolsGroups)))
     {
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
             return;
 
         const auto& mapObject = symbolGroupEntry.key();
@@ -79,7 +79,7 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
 
         for (const auto& symbol : constOf(symbolsGroup->symbols))
         {
-            if (controller && controller->isAborted())
+            if (queryController && queryController->isAborted())
                 return;
 
             if (const auto& textSymbol = std::dynamic_pointer_cast<const MapPrimitiviser::TextSymbol>(symbol))

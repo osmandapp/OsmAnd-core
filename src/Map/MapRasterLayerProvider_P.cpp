@@ -6,6 +6,7 @@
 #   define OSMAND_PERFORMANCE_METRICS 0
 #endif // !defined(OSMAND_PERFORMANCE_METRICS)
 
+#include "MapDataProviderHelpers.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPrimitivesProvider_Metrics.h"
 #include "MapPrimitiviser.h"
@@ -21,27 +22,33 @@ OsmAnd::MapRasterLayerProvider_P::~MapRasterLayerProvider_P()
 {
 }
 
-void OsmAnd::MapRasterLayerProvider_P::initialize()
-{
-    _mapRasterizer.reset(new MapRasterizer(owner->primitivesProvider->primitiviser->environment));
-}
-
-OsmAnd::ZoomLevel OsmAnd::MapRasterLayerProvider_P::getMinZoom() const
-{
-    return owner->primitivesProvider->getMinZoom();
-}
-
-OsmAnd::ZoomLevel OsmAnd::MapRasterLayerProvider_P::getMaxZoom() const
-{
-    return owner->primitivesProvider->getMaxZoom();
-}
-
 bool OsmAnd::MapRasterLayerProvider_P::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<MapRasterLayerProvider::Data>& outTiledData,
-    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric_,
-    const IQueryController* const queryController)
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric)
+{
+    if (pOutMetric)
+    {
+        if (!pOutMetric->get() || !dynamic_cast<MapRasterLayerProvider_Metrics::Metric_obtainData*>(pOutMetric->get()))
+            pOutMetric->reset(new MapRasterLayerProvider_Metrics::Metric_obtainData());
+        else
+            pOutMetric->get()->reset();
+    }
+
+    std::shared_ptr<MapRasterLayerProvider::Data> data;
+    const auto result = obtainRasterizedTile(
+        MapDataProviderHelpers::castRequest<MapRasterLayerProvider::Request>(request),
+        data,
+        pOutMetric ? static_cast<MapRasterLayerProvider_Metrics::Metric_obtainData*>(pOutMetric->get()) : nullptr);
+    outData = data;
+
+    return result;
+}
+
+bool OsmAnd::MapRasterLayerProvider_P::obtainRasterizedTile(
+    const MapRasterLayerProvider::Request& request, 
+    std::shared_ptr<MapRasterLayerProvider::Data>& outData,
+    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric_)
 {
 #if OSMAND_PERFORMANCE_METRICS
     MapRasterLayerProvider_Metrics::Metric_obtainData localMetric;
@@ -60,15 +67,13 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
 
     // Obtain offline map primitives tile
     std::shared_ptr<MapPrimitivesProvider::Data> primitivesTile;
-    owner->primitivesProvider->obtainData(
-        tileId,
-        zoom,
+    owner->primitivesProvider->obtainTiledPrimitives(
+        request,
         primitivesTile,
-        metric ? metric->findOrAddSubmetricOfType<MapPrimitivesProvider_Metrics::Metric_obtainData>().get() : nullptr,
-        nullptr);
+        metric ? metric->findOrAddSubmetricOfType<MapPrimitivesProvider_Metrics::Metric_obtainData>().get() : nullptr);
     if (!primitivesTile || primitivesTile->primitivisedObjects->isEmpty())
     {
-        outTiledData.reset();
+        outData.reset();
 
         if (metric)
             metric->elapsedTime += totalStopwatch.elapsed();
@@ -77,7 +82,7 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
     }
 
     // Perform actual rasterization
-    const auto bitmap = rasterize(tileId, zoom, primitivesTile, metric, queryController);
+    const auto bitmap = rasterize(request, primitivesTile, metric);
     if (!bitmap)
     {
         if (metric)
@@ -87,9 +92,9 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
     }
 
     // Or supply newly rasterized tile
-    outTiledData.reset(new MapRasterLayerProvider::Data(
-        tileId,
-        zoom,
+    outData.reset(new MapRasterLayerProvider::Data(
+        request.tileId,
+        request.zoom,
         AlphaChannelPresence::NotPresent,
         owner->getTileDensityFactor(),
         bitmap,
@@ -100,6 +105,21 @@ bool OsmAnd::MapRasterLayerProvider_P::obtainData(
         metric->elapsedTime += totalStopwatch.elapsed();
 
     return true;
+}
+
+void OsmAnd::MapRasterLayerProvider_P::initialize()
+{
+    _mapRasterizer.reset(new MapRasterizer(owner->primitivesProvider->primitiviser->environment));
+}
+
+OsmAnd::ZoomLevel OsmAnd::MapRasterLayerProvider_P::getMinZoom() const
+{
+    return owner->primitivesProvider->getMinZoom();
+}
+
+OsmAnd::ZoomLevel OsmAnd::MapRasterLayerProvider_P::getMaxZoom() const
+{
+    return owner->primitivesProvider->getMaxZoom();
 }
 
 OsmAnd::MapRasterLayerProvider_P::RetainableCacheMetadata::RetainableCacheMetadata(

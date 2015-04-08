@@ -5,6 +5,8 @@
 #include <SkStream.h>
 #include "restore_internal_warnings.h"
 
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::ImageMapLayerProvider::ImageMapLayerProvider()
 {
 }
@@ -14,17 +16,17 @@ OsmAnd::ImageMapLayerProvider::~ImageMapLayerProvider()
 }
 
 bool OsmAnd::ImageMapLayerProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+    const IMapDataProvider::Request& request_,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
+    const auto& request = MapDataProviderHelpers::castRequest<Request>(request_);
+
     // Obtain image data
-    const auto image = obtainImage(tileId, zoom);
+    const auto image = obtainImage(request);
     if (image.isNull())
     {
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
 
@@ -33,11 +35,11 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     SkMemoryStream imageStream(image.constData(), image.length(), false);
     if (!SkImageDecoder::DecodeStream(&imageStream, bitmap.get(), SkColorType::kUnknown_SkColorType, SkImageDecoder::kDecodePixels_Mode))
         return false;
-    
+
     // Return tile
-    outTiledData.reset(new IRasterMapLayerProvider::Data(
-        tileId,
-        zoom,
+    outData.reset(new IRasterMapLayerProvider::Data(
+        request.tileId,
+        request.zoom,
         getAlphaChannelPresence(),
         getTileDensityFactor(),
         bitmap));

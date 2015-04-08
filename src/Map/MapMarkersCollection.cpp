@@ -43,17 +43,12 @@ QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::MapMarkersCollection::getPr
 }
 
 bool OsmAnd::MapMarkersCollection::obtainData(
-    const IMapKeyedDataProvider::Key key,
-    std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
     if (pOutMetric)
         pOutMetric->reset();
 
-    std::shared_ptr<Data> keyedData;
-    const auto result = _p->obtainData(key, keyedData, queryController);
-    outKeyedData = keyedData;
-
-    return result;
+    return _p->obtainData(request, outData);
 }

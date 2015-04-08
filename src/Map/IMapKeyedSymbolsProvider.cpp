@@ -1,11 +1,21 @@
 #include "IMapKeyedSymbolsProvider.h"
 
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::IMapKeyedSymbolsProvider::IMapKeyedSymbolsProvider()
 {
 }
 
 OsmAnd::IMapKeyedSymbolsProvider::~IMapKeyedSymbolsProvider()
 {
+}
+
+bool OsmAnd::IMapKeyedSymbolsProvider::obtainKeyedSymbols(
+    const Request& request,
+    std::shared_ptr<Data>& outKeyedSymbols,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return MapDataProviderHelpers::obtainData(this, request, outKeyedSymbols, pOutMetric);
 }
 
 OsmAnd::IMapKeyedSymbolsProvider::Data::Data(

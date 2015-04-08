@@ -34,7 +34,7 @@ namespace OsmAnd
             const NewResultEntryCallback newResultEntryCallback,
             const SearchCompletedCallback searchCompletedCallback,
             QThreadPool* const threadPool,
-            const IQueryController* const controller = nullptr) const;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
     };
 }
 

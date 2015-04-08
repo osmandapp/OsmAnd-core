@@ -21,7 +21,7 @@ void OsmAnd::ObfRoutingSectionReader::loadRoads(
     const VisitorFunction visitor /*= nullptr*/,
     DataBlocksCache* cache /*= nullptr*/,
     QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric /*= nullptr*/)
 {
     ObfRoutingSectionReader_P::loadRoads(
@@ -34,7 +34,7 @@ void OsmAnd::ObfRoutingSectionReader::loadRoads(
         visitor,
         cache,
         outReferencedCacheEntries,
-        controller,
+        queryController,
         metric);
 }
 

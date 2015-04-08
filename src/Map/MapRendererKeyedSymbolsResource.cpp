@@ -50,7 +50,9 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply()
     return updatesApplied;
 }
 
-bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
+    bool& dataAvailable,
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     // Obtain collection link and maintain it
     const auto link_ = link.lock();
@@ -67,7 +69,10 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(bool& dataAvailable, co
 
     // Obtain source data from provider
     std::shared_ptr<IMapKeyedDataProvider::Data> keyedData;
-    const auto requestSucceeded = provider->obtainData(key, keyedData);
+    IMapKeyedSymbolsProvider::Request request;
+    request.key = key;
+    request.queryController = queryController;
+    const auto requestSucceeded = provider->obtainKeyedData(request, keyedData);
     if (!requestSucceeded)
         return false;
 

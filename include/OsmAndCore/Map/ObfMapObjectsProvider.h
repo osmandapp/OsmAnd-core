@@ -20,7 +20,7 @@ namespace OsmAnd
     class IObfsCollection;
 
     class ObfMapObjectsProvider_P;
-    class OSMAND_CORE_API ObfMapObjectsProvider : public IMapObjectsProvider
+    class OSMAND_CORE_API ObfMapObjectsProvider Q_DECL_FINAL : public IMapObjectsProvider
     {
         Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsProvider);
     public:
@@ -47,18 +47,14 @@ namespace OsmAnd
         virtual ZoomLevel getMaxZoom() const;
 
         virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<IMapObjectsProvider::Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
 
-        bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<Data>& outTiledData,
-            ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric,
-            const IQueryController* const queryController);
+        bool obtainTiledObfMapObjects(
+            const Request& request,
+            std::shared_ptr<Data>& outMapObjects,
+            ObfMapObjectsProvider_Metrics::Metric_obtainData* const metric = nullptr);
     };
 }
 

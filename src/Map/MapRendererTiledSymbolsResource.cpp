@@ -40,7 +40,9 @@ OsmAnd::MapRendererTiledSymbolsResource::~MapRendererTiledSymbolsResource()
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
+    bool& dataAvailable,
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     // Obtain collection link and maintain it
     const auto link_ = link.lock();
@@ -62,7 +64,10 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
     QList< proper::shared_future< std::shared_ptr<SharedGroupResources> > > futureReferencedSharedGroupsResources;
     QSet< uint64_t > loadedSharedGroups;
     std::shared_ptr<IMapTiledSymbolsProvider::Data> tile;
-    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile, nullptr, nullptr, 
+    IMapTiledSymbolsProvider::Request request;
+    request.tileId = tileId;
+    request.zoom = zoom;
+    request.filterCallback =
         [this, provider, &sharedGroupsResources, &referencedSharedGroupsResources, &futureReferencedSharedGroupsResources, &loadedSharedGroups]
         (const IMapTiledSymbolsProvider*, const std::shared_ptr<const MapSymbolsGroup>& symbolsGroup) -> bool
         {
@@ -98,7 +103,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(bool& dataAvailable, co
             // Or load this shared group
             loadedSharedGroups.insert(sharingKey);
             return true;
-        });
+        };
+    const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
     if (!requestSucceeded)
         return false;
 

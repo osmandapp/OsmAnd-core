@@ -28,40 +28,20 @@ OsmAnd::ZoomLevel OsmAnd::MapPrimitivesProvider::getMaxZoom() const
     return mapObjectsProvider->getMaxZoom();
 }
 
-bool OsmAnd::MapPrimitivesProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+bool OsmAnd::MapPrimitivesProvider::obtainTiledPrimitives(
+    const Request& request,
+    std::shared_ptr<Data>& outTiledPrimitives,
+    MapPrimitivesProvider_Metrics::Metric_obtainData* metric /*= nullptr*/)
 {
-    if (pOutMetric)
-    {
-        if (!pOutMetric->get() || !dynamic_cast<MapPrimitivesProvider_Metrics::Metric_obtainData*>(pOutMetric->get()))
-            pOutMetric->reset(new MapPrimitivesProvider_Metrics::Metric_obtainData());
-        else
-            pOutMetric->get()->reset();
-    }
-
-    std::shared_ptr<Data> tiledData;
-    const auto result = _p->obtainData(
-        tileId,
-        zoom,
-        tiledData,
-        pOutMetric ? static_cast<MapPrimitivesProvider_Metrics::Metric_obtainData*>(pOutMetric->get()) : nullptr,
-        queryController);
-    outTiledData = tiledData;
-    return result;
+    return _p->obtainTiledPrimitives(request, outTiledPrimitives, metric);
 }
 
 bool OsmAnd::MapPrimitivesProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<Data>& outTiledData,
-    MapPrimitivesProvider_Metrics::Metric_obtainData* const metric,
-    const IQueryController* const queryController)
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    return _p->obtainData(tileId, zoom, outTiledData, metric, queryController);
+    return _p->obtainData(request, outData, pOutMetric);
 }
 
 OsmAnd::MapPrimitivesProvider::Data::Data(

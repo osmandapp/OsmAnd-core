@@ -36,10 +36,10 @@ void OsmAnd::BaseSearch::startSearch(
     const NewResultEntryCallback newResultEntryCallback,
     const SearchCompletedCallback searchCompletedCallback,
     QThreadPool* const threadPool,
-    const IQueryController* const controller /*= nullptr*/) const
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
     const auto runnable = new QRunnableFunctor(
-        [this, criteria, newResultEntryCallback, searchCompletedCallback, controller]
+        [this, criteria, newResultEntryCallback, searchCompletedCallback, queryController]
         (const QRunnableFunctor* const runnable)
         {
             QList<IResultEntry> results;
@@ -50,7 +50,7 @@ void OsmAnd::BaseSearch::startSearch(
                     results.push_back(resultEntry);
                     newResultEntryCallback(criteria, resultEntry);
                 };
-            performSearch(criteria, newResultEntryCallbackWrapper, controller);
+            performSearch(criteria, newResultEntryCallbackWrapper, queryController);
             searchCompletedCallback(criteria, results);
         });
     threadPool->start(runnable);

@@ -116,7 +116,7 @@ namespace OsmAnd
             MapStyleEvaluationResult& evaluationResult,
 #endif // Q_COMPILER_RVALUE_REFS
             const std::shared_ptr<Cache>& cache,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
 
         static std::shared_ptr<const PrimitivesGroup> obtainPrimitivesGroup(
@@ -151,7 +151,7 @@ namespace OsmAnd
             MapStyleEvaluationResult& evaluationResult,
 #endif // Q_COMPILER_RVALUE_REFS
             const std::shared_ptr<Cache>& cache,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
 
         static void collectSymbolsFromPrimitives(
             const Context& context,
@@ -164,7 +164,7 @@ namespace OsmAnd
             MapStyleEvaluationResult& evaluationResult,
 #endif // Q_COMPILER_RVALUE_REFS
             SymbolsCollection& outSymbols,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
 
         static void obtainSymbolsFromPolygon(
             const Context& context,
@@ -230,7 +230,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric);
 
         std::shared_ptr<PrimitivisedObjects> primitiviseAllMapObjects(
@@ -238,7 +238,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects* const metric);
 
         std::shared_ptr<PrimitivisedObjects> primitiviseWithSurface(
@@ -248,7 +248,7 @@ namespace OsmAnd
             const MapSurfaceType surfaceType,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitiviseWithSurface* const metric);
 
         std::shared_ptr<PrimitivisedObjects> primitiviseWithoutSurface(
@@ -256,7 +256,7 @@ namespace OsmAnd
             const ZoomLevel zoom,
             const QList< std::shared_ptr<const MapObject> >& objects,
             const std::shared_ptr<Cache>& cache,
-            const IQueryController* const controller,
+            const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitiviseWithoutSurface* const metric);
 
     friend class OsmAnd::MapPrimitiviser;

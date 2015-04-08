@@ -355,7 +355,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -390,7 +390,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
-                if (controller && controller->isAborted())
+                if (queryController && queryController->isAborted())
                     return;
 
                 break;
@@ -422,11 +422,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                         bbox31,
                         categoriesFilter,
                         visitor,
-                        controller);
+                        queryController);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
-                    if (controller && controller->isAborted())
+                    if (queryController && queryController->isAborted())
                         return;
                 }
 
@@ -612,7 +612,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -669,7 +669,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<const Amenity> amenity;
-                readAmenity(reader, section, amenity, query, zoom, tileId, bbox31, categoriesFilter, controller);
+                readAmenity(reader, section, amenity, query, zoom, tileId, bbox31, categoriesFilter, queryController);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -704,7 +704,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const TileId boxTileId,
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
     const auto baseOffset = cis->CurrentPosition();
@@ -878,7 +878,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
 
@@ -943,11 +943,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                         bbox31,
                         categoriesFilter,
                         visitor,
-                        controller);
+                        queryController);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
-                    if (controller && controller->isAborted())
+                    if (queryController && queryController->isAborted())
                         return;
                 }
 
@@ -1128,7 +1128,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadCategories(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const ObfPoiSectionCategories>& outCategories,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     ensureCategoriesLoaded(reader, section);
     outCategories = section->getCategories();
@@ -1138,7 +1138,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadSubtypes(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const ObfPoiSectionSubtypes>& outSubtypes,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     ensureSubtypesLoaded(reader, section);
     outSubtypes = section->getSubtypes();
@@ -1153,7 +1153,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
@@ -1163,7 +1163,7 @@ void OsmAnd::ObfPoiSectionReader_P::loadAmenities(
     auto oldLimit = cis->PushLimit(section->length);
     cis->Skip(section->firstBoxInnerOffset);
 
-    readAmenities(reader, section, outAmenities, minZoom, maxZoom, bbox31, categoriesFilter, visitor, controller);
+    readAmenities(reader, section, outAmenities, minZoom, maxZoom, bbox31, categoriesFilter, visitor, queryController);
 
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);
@@ -1179,7 +1179,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const ObfPoiSectionReader::VisitorFunction visitor,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     ensureCategoriesLoaded(reader, section);
     ensureSubtypesLoaded(reader, section);
@@ -1189,7 +1189,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     auto oldLimit = cis->PushLimit(section->length);
     cis->Skip(section->nameIndexInnerOffset);
 
-    readAmenitiesByName(reader, section, query, outAmenities, minZoom, maxZoom, bbox31, categoriesFilter, visitor, controller);
+    readAmenitiesByName(reader, section, query, outAmenities, minZoom, maxZoom, bbox31, categoriesFilter, visitor, queryController);
 
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);

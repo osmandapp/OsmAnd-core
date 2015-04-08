@@ -18,7 +18,9 @@ OsmAnd::MapRendererElevationDataResource::~MapRendererElevationDataResource()
     safeUnlink();
 }
 
-bool OsmAnd::MapRendererElevationDataResource::obtainData(bool& dataAvailable, const IQueryController* queryController)
+bool OsmAnd::MapRendererElevationDataResource::obtainData(
+    bool& dataAvailable,
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     bool ok = false;
 
@@ -36,7 +38,11 @@ bool OsmAnd::MapRendererElevationDataResource::obtainData(bool& dataAvailable, c
 
     // Obtain tile from provider
     std::shared_ptr<IMapTiledDataProvider::Data> tile;
-    const auto requestSucceeded = provider->obtainData(tileId, zoom, tile, nullptr, queryController);
+    IMapElevationDataProvider::Request request;
+    request.tileId = tileId;
+    request.zoom = zoom;
+    request.queryController = queryController;
+    const auto requestSucceeded = provider->obtainTiledData(request, tile);
     if (!requestSucceeded)
         return false;
     dataAvailable = static_cast<bool>(tile);

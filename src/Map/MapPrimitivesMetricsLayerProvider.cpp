@@ -1,6 +1,7 @@
 #include "MapPrimitivesMetricsLayerProvider.h"
 #include "MapPrimitivesMetricsLayerProvider_P.h"
 
+#include "MapDataProviderHelpers.h"
 #include "MapPrimitivesProvider.h"
 #include "MapPresentationEnvironment.h"
 
@@ -35,20 +36,19 @@ uint32_t OsmAnd::MapPrimitivesMetricsLayerProvider::getTileSize() const
 }
 
 bool OsmAnd::MapPrimitivesMetricsLayerProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    if (pOutMetric)
-        pOutMetric->reset();
+    return _p->obtainData(request, outData, pOutMetric);
+}
 
-    std::shared_ptr<MapPrimitivesMetricsLayerProvider::Data> tiledData;
-    const auto result = _p->obtainData(tileId, zoom, tiledData, queryController);
-    outTiledData = tiledData;
-
-    return result;
+bool OsmAnd::MapPrimitivesMetricsLayerProvider::obtainMetricsTile(
+    const Request& request,
+    std::shared_ptr<Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return MapDataProviderHelpers::obtainData(this, request, outData, pOutMetric);
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapPrimitivesMetricsLayerProvider::getMinZoom() const

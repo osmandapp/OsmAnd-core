@@ -1,11 +1,21 @@
 #include "IMapElevationDataProvider.h"
 
+#include "MapDataProviderHelpers.h"
+
 OsmAnd::IMapElevationDataProvider::IMapElevationDataProvider()
 {
 }
 
 OsmAnd::IMapElevationDataProvider::~IMapElevationDataProvider()
 {
+}
+
+bool OsmAnd::IMapElevationDataProvider::obtainElevationData(
+    const Request& request,
+    std::shared_ptr<Data>& outElevationData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
+{
+    return MapDataProviderHelpers::obtainData(this, request, outElevationData, pOutMetric);
 }
 
 OsmAnd::IMapElevationDataProvider::Data::Data(

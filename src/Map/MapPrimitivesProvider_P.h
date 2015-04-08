@@ -80,11 +80,13 @@ namespace OsmAnd
         ImplementationInterface<MapPrimitivesProvider> owner;
 
         bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<MapPrimitivesProvider::Data>& outTiledData,
-            MapPrimitivesProvider_Metrics::Metric_obtainData* const metric,
-            const IQueryController* const queryController);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric);
+        bool obtainTiledPrimitives(
+            const MapPrimitivesProvider::Request& request,
+            std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
+            MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_);
 
     friend class OsmAnd::MapPrimitivesProvider;
     };

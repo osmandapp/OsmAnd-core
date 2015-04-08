@@ -36,7 +36,7 @@ namespace OsmAnd
         virtual bool updatesPresent();
         virtual bool checkForUpdatesAndApply();
         
-        virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
+        virtual bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();
         virtual void lostDataInGPU();

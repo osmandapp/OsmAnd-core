@@ -376,7 +376,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
     const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& treeNode,
     QList< std::shared_ptr<const ObfRoutingSectionLevelTreeNode> >* outNodesWithData,
     const AreaI* bbox31,
-    const IQueryController* const controller,
+    const std::shared_ptr<const IQueryController>& queryController,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -432,7 +432,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readLevelTreeNodeChildren(
                     const auto oldLimit = cis->PushLimit(childNode->length);
 
                     cis->Skip(childNode->firstDataBoxInnerOffset);
-                    readLevelTreeNodeChildren(reader, section, childNode, outNodesWithData, bbox31, controller, metric);
+                    readLevelTreeNodeChildren(reader, section, childNode, outNodesWithData, bbox31, queryController, metric);
 
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
@@ -454,7 +454,7 @@ void OsmAnd::ObfRoutingSectionReader_P::readRoadsBlock(
     const AreaI* bbox31,
     const FilterRoadsByIdFunction filterById,
     const VisitorFunction visitor,
-    const IQueryController* const controller,
+    const std::shared_ptr<const IQueryController>& queryController,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
     QStringList roadsCaptionsTable;
@@ -887,7 +887,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
     const VisitorFunction visitor,
     DataBlocksCache* cache,
     QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries,
-    const IQueryController* const controller,
+    const std::shared_ptr<const IQueryController>& queryController,
     ObfRoutingSectionReader_Metrics::Metric_loadRoads* const metric)
 {
     const auto cis = reader.getCodedInputStream().get();
@@ -971,7 +971,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
             auto oldLimit = cis->PushLimit(rootNode->length);
 
             cis->Skip(rootNode->firstDataBoxInnerOffset);
-            readLevelTreeNodeChildren(reader, section, rootNode, &treeNodesWithData, bbox31, controller, metric);
+            readLevelTreeNodeChildren(reader, section, rootNode, &treeNodesWithData, bbox31, queryController, metric);
 
             ObfReaderUtilities::ensureAllDataWasRead(cis);
             cis->PopLimit(oldLimit);
@@ -996,7 +996,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
     QList< std::shared_ptr<const DataBlock> > danglingReferencedCacheEntries;
     for (const auto& treeNode : constOf(treeNodesWithData))
     {
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
             break;
 
         DataBlockId blockId;
@@ -1117,7 +1117,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
                 bbox31,
                 filterById,
                 visitor,
-                controller,
+                queryController,
                 metric);
 
             ObfReaderUtilities::ensureAllDataWasRead(cis);

@@ -25,17 +25,13 @@ namespace OsmAnd
     public:
         virtual ~ImageMapLayerProvider();
 
-        virtual AlphaChannelPresence getAlphaChannelPresence() const = 0;
-        virtual QByteArray obtainImage(
-            const TileId tileId,
-            const ZoomLevel zoom) = 0;
-
         virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr) Q_DECL_FINAL;
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE Q_DECL_FINAL;
+
+        virtual AlphaChannelPresence getAlphaChannelPresence() const = 0;
+        virtual QByteArray obtainImage(const Request& request) = 0;
     };
 
     SWIG_EMIT_DIRECTOR_BEGIN(ImageMapLayerProvider);
@@ -48,8 +44,7 @@ namespace OsmAnd
         SWIG_EMIT_DIRECTOR_METHOD(
             QByteArray,
             obtainImage,
-            SWIG_OMIT(const) TileId tileId,
-            const ZoomLevel zoom);
+            SWIG_OMIT(const) Request& request);
         SWIG_EMIT_DIRECTOR_CONST_METHOD_NO_ARGS(
             uint32_t,
             getTileSize);

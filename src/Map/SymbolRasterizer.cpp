@@ -16,9 +16,9 @@ void OsmAnd::SymbolRasterizer::rasterize(
     const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
     QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
     const FilterByMapObject filter /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/) const
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
-    _p->rasterize(primitivisedObjects, outSymbolsGroups, filter, controller);
+    _p->rasterize(primitivisedObjects, outSymbolsGroups, filter, queryController);
 }
 
 OsmAnd::SymbolRasterizer::RasterizedSymbolsGroup::RasterizedSymbolsGroup(const std::shared_ptr<const MapObject>& mapObject_)

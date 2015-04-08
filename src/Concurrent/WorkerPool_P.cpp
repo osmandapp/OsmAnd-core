@@ -84,8 +84,19 @@ void OsmAnd::Concurrent::WorkerPool_P::reset()
     QMutexLocker scopedLocker(&_mutex);
 
     dequeueAllNoLock();
-    _isBeingReset = true;
     REPEAT_UNTIL(waitForDoneNoLock(-1));
+    _isBeingReset = true;
+    while (!_allThreads.isEmpty())
+    {
+        const auto thread = _freeThreads.head();
+        scopedLocker.unlock();
+
+        thread->wakeup.wakeOne();
+        thread->wait();
+        delete thread;
+
+        scopedLocker.relock();
+    }
     _isBeingReset = false;
 }
 
@@ -180,19 +191,19 @@ bool OsmAnd::Concurrent::WorkerPool_P::waitForDoneNoLock(const int msecs) const
 {
     if (msecs < 0)
     {
-        while (!_allThreads.isEmpty() || !_queue.isEmpty())
-            REPEAT_UNTIL(_threadExited.wait(&_mutex));
+        while (activeThreadCountNoLock() != 0 || !_queue.isEmpty())
+            REPEAT_UNTIL(_threadFreed.wait(&_mutex));
     }
     else
     {
         QElapsedTimer waitTimer;
         waitTimer.start();
         int timeLeft;
-        while ((!_allThreads.isEmpty() || !_queue.isEmpty()) && ((timeLeft = msecs - waitTimer.elapsed()) > 0))
-            _threadExited.wait(&_mutex, timeLeft);
+        while ((activeThreadCountNoLock() != 0 || !_queue.isEmpty()) && ((timeLeft = msecs - waitTimer.elapsed()) > 0))
+            _threadFreed.wait(&_mutex, timeLeft);
     }
 
-    return _queue.isEmpty() && _allThreads.isEmpty();
+    return activeThreadCountNoLock() == 0 && _queue.isEmpty();
 }
 
 OsmAnd::Concurrent::WorkerPool_P::WorkerThread::WorkerThread(WorkerPool_P* const pool_)

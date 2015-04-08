@@ -55,7 +55,7 @@ void OsmAnd::MapRasterizer_P::rasterize(
     const bool fillBackground,
     const AreaI* const pDestinationArea,
     MapRasterizer_Metrics::Metric_rasterize* const metric,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     const Stopwatch totalStopwatch(metric != nullptr);
 
@@ -102,10 +102,10 @@ void OsmAnd::MapRasterizer_P::rasterize(
     }
 
     // Rasterize layers of map:
-    rasterizeMapPrimitives(context, canvas, primitivisedObjects->polygons, PrimitivesType::Polygons, controller);
+    rasterizeMapPrimitives(context, canvas, primitivisedObjects->polygons, PrimitivesType::Polygons, queryController);
     if (context.shadowMode != MapPresentationEnvironment::ShadowMode::NoShadow)
-        rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines_ShadowOnly, controller);
-    rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines, controller);
+        rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines_ShadowOnly, queryController);
+    rasterizeMapPrimitives(context, canvas, primitivisedObjects->polylines, PrimitivesType::Polylines, queryController);
 
     if (metric)
         metric->elapsedTime += totalStopwatch.elapsed();
@@ -116,13 +116,13 @@ void OsmAnd::MapRasterizer_P::rasterizeMapPrimitives(
     SkCanvas& canvas,
     const MapPrimitiviser::PrimitivesCollection& primitives,
     PrimitivesType type,
-    const IQueryController* const controller)
+    const std::shared_ptr<const IQueryController>& queryController)
 {
     assert(type != PrimitivesType::Points);
 
     for (const auto& primitive : constOf(primitives))
     {
-        if (controller && controller->isAborted())
+        if (queryController && queryController->isAborted())
             return;
 
         if (type == PrimitivesType::Polygons)

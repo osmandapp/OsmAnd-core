@@ -44,7 +44,7 @@ namespace OsmAnd
         virtual void performSearch(
             const ISearch::Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
-            const IQueryController* const controller = nullptr) const;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
     };
 }
 

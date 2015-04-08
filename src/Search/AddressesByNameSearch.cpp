@@ -16,7 +16,7 @@ OsmAnd::AddressesByNameSearch::~AddressesByNameSearch()
 void OsmAnd::AddressesByNameSearch::performSearch(
     const ISearch::Criteria& criteria_,
     const NewResultEntryCallback newResultEntryCallback,
-    const IQueryController* const controller /*= nullptr*/) const
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
@@ -40,7 +40,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
         criteria.streetGroupTypesMask,
         criteria.includeStreets,
         visitorFunction,
-        controller);
+        queryController);
 }
 
 OsmAnd::AddressesByNameSearch::Criteria::Criteria()

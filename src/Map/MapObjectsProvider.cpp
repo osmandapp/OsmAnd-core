@@ -23,14 +23,9 @@ OsmAnd::ZoomLevel OsmAnd::MapObjectsProvider::getMaxZoom() const
 }
 
 bool OsmAnd::MapObjectsProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    if (pOutMetric)
-        pOutMetric->reset();
-
-    return _p->obtainData(tileId, zoom, outTiledData, queryController);
+    return _p->obtainData(request, outData, pOutMetric);
 }

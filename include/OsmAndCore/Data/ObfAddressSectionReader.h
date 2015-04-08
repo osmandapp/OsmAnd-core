@@ -45,7 +45,7 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter = fullObfAddressStreetGroupTypesMask(),
             const StreetGroupVisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         static void loadStreetsFromGroup(
             const std::shared_ptr<const ObfReader>& reader,
@@ -53,7 +53,7 @@ namespace OsmAnd
             QList< std::shared_ptr<const Street> >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const StreetVisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         static void loadBuildingsFromStreet(
             const std::shared_ptr<const ObfReader>& reader,
@@ -61,7 +61,7 @@ namespace OsmAnd
             QList< std::shared_ptr<const Building> >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const BuildingVisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         static void loadIntersectionsFromStreet(
             const std::shared_ptr<const ObfReader>& reader,
@@ -69,7 +69,7 @@ namespace OsmAnd
             QList< std::shared_ptr<const StreetIntersection> >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const IntersectionVisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         static void scanAddressesByName(
             const std::shared_ptr<const ObfReader>& reader,
@@ -80,7 +80,7 @@ namespace OsmAnd
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter = fullObfAddressStreetGroupTypesMask(),
             const bool includeStreets = true,
             const ObfAddressSectionReader::VisitorFunction visitor = nullptr,
-            const IQueryController* const controller = nullptr);
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
     };
 }
 

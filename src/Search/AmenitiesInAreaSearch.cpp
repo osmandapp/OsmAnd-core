@@ -15,7 +15,7 @@ OsmAnd::AmenitiesInAreaSearch::~AmenitiesInAreaSearch()
 void OsmAnd::AmenitiesInAreaSearch::performSearch(
     const ISearch::Criteria& criteria_,
     const NewResultEntryCallback newResultEntryCallback,
-    const IQueryController* const controller /*= nullptr*/) const
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
@@ -39,7 +39,7 @@ void OsmAnd::AmenitiesInAreaSearch::performSearch(
         criteria.bbox31.getValuePtrOrNullptr(),
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
         visitorFunction,
-        controller);
+        queryController);
 }
 
 OsmAnd::AmenitiesInAreaSearch::Criteria::Criteria()

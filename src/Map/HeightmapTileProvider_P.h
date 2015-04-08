@@ -39,10 +39,14 @@ namespace OsmAnd
         ZoomLevel getMaxZoom() const;
         uint32_t getTileSize() const;
         bool obtainData(
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric);
+        bool obtainData(
             const TileId tileId,
             const ZoomLevel zoom,
             std::shared_ptr<HeightmapTileProvider::Data>& outTiledData,
-            const IQueryController* const queryController);
+            const std::shared_ptr<const IQueryController>& queryController);
 
     friend class OsmAnd::HeightmapTileProvider;
     };

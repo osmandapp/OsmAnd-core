@@ -36,40 +36,19 @@ uint32_t OsmAnd::MapRasterLayerProvider::getTileSize() const
 }
 
 bool OsmAnd::MapRasterLayerProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-    std::shared_ptr<Metric>* pOutMetric /*= nullptr*/,
-    const IQueryController* const queryController /*= nullptr*/)
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric /*= nullptr*/)
 {
-    if (pOutMetric)
-    {
-        if (!pOutMetric->get() || !dynamic_cast<MapRasterLayerProvider_Metrics::Metric_obtainData*>(pOutMetric->get()))
-            pOutMetric->reset(new MapRasterLayerProvider_Metrics::Metric_obtainData());
-        else
-            pOutMetric->get()->reset();
-    }
-
-    std::shared_ptr<Data> tiledData;
-    const auto result = _p->obtainData(
-        tileId,
-        zoom,
-        tiledData,
-        pOutMetric ? static_cast<MapRasterLayerProvider_Metrics::Metric_obtainData*>(pOutMetric->get()) : nullptr,
-        queryController);
-    outTiledData = tiledData;
-
-    return result;
+    return _p->obtainData(request, outData, pOutMetric);
 }
 
-bool OsmAnd::MapRasterLayerProvider::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<Data>& outTiledData,
-    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric,
-    const IQueryController* const queryController)
+bool OsmAnd::MapRasterLayerProvider::obtainRasterizedTile(
+    const Request& request,
+    std::shared_ptr<Data>& outData,
+    MapRasterLayerProvider_Metrics::Metric_obtainData* const metric /*= nullptr*/)
 {
-    return _p->obtainData(tileId, zoom, outTiledData, metric, queryController);
+    return _p->obtainRasterizedTile(request, outData, metric);
 }
 
 OsmAnd::ZoomLevel OsmAnd::MapRasterLayerProvider::getMinZoom() const

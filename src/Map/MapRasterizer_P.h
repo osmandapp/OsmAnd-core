@@ -87,7 +87,7 @@ namespace OsmAnd
             SkCanvas& canvas,
             const MapPrimitiviser::PrimitivesCollection& primitives,
             const PrimitivesType type,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
 
         void rasterizePolygon(
             const Context& context,
@@ -139,7 +139,7 @@ namespace OsmAnd
             const bool fillBackground,
             const AreaI* const destinationArea,
             MapRasterizer_Metrics::Metric_rasterize* const metric,
-            const IQueryController* const controller);
+            const std::shared_ptr<const IQueryController>& queryController);
 
     friend class OsmAnd::MapRasterizer;
     };

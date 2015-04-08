@@ -46,10 +46,9 @@ namespace OsmAnd
         ImplementationInterface<OnlineRasterMapLayerProvider> owner;
 
         bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<OnlineRasterMapLayerProvider::Data>& outTiledData,
-            const IQueryController* const queryController);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric);
 
     friend class OsmAnd::OnlineRasterMapLayerProvider;
     };

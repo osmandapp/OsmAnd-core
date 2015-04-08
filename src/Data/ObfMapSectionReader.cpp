@@ -22,7 +22,7 @@ void OsmAnd::ObfMapSectionReader::loadMapObjects(
     const VisitorFunction visitor /*= nullptr*/,
     DataBlocksCache* cache /*= nullptr*/,
     QList< std::shared_ptr<const DataBlock> >* outReferencedCacheEntries /*= nullptr*/,
-    const IQueryController* const controller /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/,
     ObfMapSectionReader_Metrics::Metric_loadMapObjects* const metric /*= nullptr*/)
 {
     ObfMapSectionReader_P::loadMapObjects(
@@ -36,7 +36,7 @@ void OsmAnd::ObfMapSectionReader::loadMapObjects(
         visitor,
         cache,
         outReferencedCacheEntries,
-        controller,
+        queryController,
         metric);
 }
 

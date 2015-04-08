@@ -55,14 +55,14 @@ namespace OsmAnd
         virtual void performSearch(
             const Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
-            const IQueryController* const controller = nullptr) const = 0;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
 
         virtual void startSearch(
             const Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
             const SearchCompletedCallback searchCompletedCallback,
             QThreadPool* const threadPool,
-            const IQueryController* const controller = nullptr) const = 0;
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const = 0;
     };
 }
 

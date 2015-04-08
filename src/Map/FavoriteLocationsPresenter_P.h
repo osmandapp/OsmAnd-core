@@ -45,9 +45,9 @@ namespace OsmAnd
 
         QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
         bool obtainData(
-            const IMapKeyedDataProvider::Key key,
-            std::shared_ptr<IMapKeyedDataProvider::Data>& outKeyedData,
-            const IQueryController* const queryController);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric);
 
     friend class OsmAnd::FavoriteLocationsPresenter;
     };

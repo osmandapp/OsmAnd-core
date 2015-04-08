@@ -47,9 +47,8 @@ namespace OsmAnd
 
         QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
         bool obtainData(
-            const IMapKeyedSymbolsProvider::Key key,
-            std::shared_ptr<IMapKeyedSymbolsProvider::Data>& outKeyedData,
-            const IQueryController* const queryController);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData);
 
     friend class OsmAnd::MapMarkersCollection;
     friend class OsmAnd::MapMarkerBuilder;

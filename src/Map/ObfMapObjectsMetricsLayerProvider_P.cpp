@@ -14,6 +14,7 @@
 #include <SkImageEncoder.h>
 #include "restore_internal_warnings.h"
 
+#include "MapDataProviderHelpers.h"
 #include "ObfMapObjectsProvider.h"
 #include "ObfMapObjectsProvider_Metrics.h"
 #include "ObfMapSectionReader_Metrics.h"
@@ -24,7 +25,8 @@
 #include "Utilities.h"
 #include "Logging.h"
 
-OsmAnd::ObfMapObjectsMetricsLayerProvider_P::ObfMapObjectsMetricsLayerProvider_P(ObfMapObjectsMetricsLayerProvider* const owner_)
+OsmAnd::ObfMapObjectsMetricsLayerProvider_P::ObfMapObjectsMetricsLayerProvider_P(
+    ObfMapObjectsMetricsLayerProvider* const owner_)
     : owner(owner_)
 {
 }
@@ -34,19 +36,23 @@ OsmAnd::ObfMapObjectsMetricsLayerProvider_P::~ObfMapObjectsMetricsLayerProvider_
 }
 
 bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<ObfMapObjectsMetricsLayerProvider::Data>& outTiledData,
-    const IQueryController* const queryController)
+    const IMapDataProvider::Request& request_,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric)
 {
+    const auto& request = MapDataProviderHelpers::castRequest<ObfMapObjectsMetricsLayerProvider::Request>(request_);
+
+    if (pOutMetric)
+        pOutMetric->reset();
+
     ObfMapObjectsProvider_Metrics::Metric_obtainData obtainDataMetric;
 
     // Obtain offline map data tile
     std::shared_ptr<ObfMapObjectsProvider::Data> binaryData;
-    owner->dataProvider->obtainData(tileId, zoom, binaryData, &obtainDataMetric, nullptr);
+    owner->dataProvider->obtainTiledObfMapObjects(request, binaryData, &obtainDataMetric);
     if (!binaryData)
     {
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
 
@@ -66,9 +72,9 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
 
     QString text;
     text += QString(QLatin1String("TILE   %1x%2@%3\n"))
-        .arg(tileId.x)
-        .arg(tileId.y)
-        .arg(zoom);
+        .arg(request.tileId.x)
+        .arg(request.tileId.y)
+        .arg(request.zoom);
     if (const auto loadMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapSectionReader_Metrics::Metric_loadMapObjects>(true))
     {
         text += QString(QLatin1String("BLOCKS r:%1+s:%2=%3\n"))
@@ -104,9 +110,9 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
         topOffset += 1.25f * fontSize;
     }
 
-    outTiledData.reset(new ObfMapObjectsMetricsLayerProvider::Data(
-        tileId,
-        zoom,
+    outData.reset(new ObfMapObjectsMetricsLayerProvider::Data(
+        request.tileId,
+        request.zoom,
         AlphaChannelPresence::NotPresent,
         owner->densityFactor,
         bitmap,

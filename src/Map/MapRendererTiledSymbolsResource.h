@@ -65,7 +65,7 @@ namespace OsmAnd
         mutable QReadWriteLock _symbolToResourceInGpuLUTLock;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _symbolToResourceInGpuLUT;
 
-        virtual bool obtainData(bool& dataAvailable, const IQueryController* queryController);
+        virtual bool obtainData(bool& dataAvailable, const std::shared_ptr<const IQueryController>& queryController);
         virtual bool uploadToGPU();
         virtual void unloadFromGPU();
         virtual void lostDataInGPU();

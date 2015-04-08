@@ -22,11 +22,31 @@ OsmAnd::MapPrimitivesProvider_P::~MapPrimitivesProvider_P()
 }
 
 bool OsmAnd::MapPrimitivesProvider_P::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<MapPrimitivesProvider::Data>& outTiledData,
-    MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_,
-    const IQueryController* const queryController)
+    const IMapDataProvider::Request& request,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric)
+{
+    if (pOutMetric)
+    {
+        if (!pOutMetric->get() || !dynamic_cast<MapPrimitivesProvider_Metrics::Metric_obtainData*>(pOutMetric->get()))
+            pOutMetric->reset(new MapPrimitivesProvider_Metrics::Metric_obtainData());
+        else
+            pOutMetric->get()->reset();
+    }
+
+    std::shared_ptr<MapPrimitivesProvider::Data> data;
+    const auto result = obtainTiledPrimitives(
+        request,
+        data,
+        pOutMetric ? static_cast<MapPrimitivesProvider_Metrics::Metric_obtainData*>(pOutMetric->get()) : nullptr);
+    outData = data;
+    return result;
+}
+
+bool OsmAnd::MapPrimitivesProvider_P::obtainTiledPrimitives(
+    const MapPrimitivesProvider::Request& request,
+    std::shared_ptr<MapPrimitivesProvider::Data>& outTiledPrimitives,
+    MapPrimitivesProvider_Metrics::Metric_obtainData* const metric_)
 {
 #if OSMAND_PERFORMANCE_METRICS
     MapPrimitivesProvider_Metrics::Metric_obtainData localMetric;
@@ -42,7 +62,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     for (;;)
     {
         // Try to obtain previous instance of tile
-        _tileReferences.obtainOrAllocateEntry(tileEntry, tileId, zoom,
+        _tileReferences.obtainOrAllocateEntry(tileEntry, request.tileId, request.zoom,
             []
             (const TiledEntriesCollection<TileEntry>& collection, const TileId tileId, const ZoomLevel zoom) -> TileEntry*
             {
@@ -66,21 +86,21 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
         if (!tileEntry->dataIsPresent)
         {
             // If there was no data, return same
-            outTiledData.reset();
+            outTiledPrimitives.reset();
             return true;
         }
         else
         {
             // Otherwise, try to lock tile reference
-            outTiledData = tileEntry->dataWeakRef.lock();
+            outTiledPrimitives = tileEntry->dataWeakRef.lock();
 
             // If successfully locked, just return it
-            if (outTiledData)
+            if (outTiledPrimitives)
                 return true;
 
             // Otherwise consider this tile entry as expired, remove it from collection (it's safe to do that right now)
             // This will enable creation of new entry on next loop cycle
-            _tileReferences.removeEntry(tileId, zoom);
+            _tileReferences.removeEntry(request.tileId, request.zoom);
             tileEntry.reset();
         }
     }
@@ -96,12 +116,10 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     // Obtain map objects data tile
     std::shared_ptr<IMapObjectsProvider::Data> dataTile;
     std::shared_ptr<Metric> submetric;
-    owner->mapObjectsProvider->obtainData(
-        tileId,
-        zoom,
+    owner->mapObjectsProvider->obtainTiledMapObjects(
+        request,
         dataTile,
-        metric ? &submetric : nullptr,
-        nullptr);
+        metric ? &submetric : nullptr);
     if (metric && submetric)
         metric->addOrReplaceSubmetric(submetric);
     if (!dataTile)
@@ -116,7 +134,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
             tileEntry->loadedCondition.wakeAll();
         }
 
-        outTiledData.reset();
+        outTiledPrimitives.reset();
         return true;
     }
 
@@ -125,7 +143,7 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     if (owner->mode == MapPrimitivesProvider::Mode::AllObjectsWithoutPolygonFiltering)
     {
         primitivisedObjects = owner->primitiviser->primitiviseAllMapObjects(
-            zoom,
+            request.zoom,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
@@ -136,8 +154,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     else if (owner->mode == MapPrimitivesProvider::Mode::AllObjectsWithPolygonFiltering)
     {
         primitivisedObjects = owner->primitiviser->primitiviseAllMapObjects(
-            Utilities::getScaleDivisor31ToPixel(PointI(owner->tileSize, owner->tileSize), zoom),
-            zoom,
+            Utilities::getScaleDivisor31ToPixel(PointI(owner->tileSize, owner->tileSize), request.zoom),
+            request.zoom,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
@@ -148,8 +166,8 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     else if (owner->mode == MapPrimitivesProvider::Mode::WithoutSurface)
     {
         primitivisedObjects = owner->primitiviser->primitiviseWithoutSurface(
-            Utilities::getScaleDivisor31ToPixel(PointI(owner->tileSize, owner->tileSize), zoom),
-            zoom,
+            Utilities::getScaleDivisor31ToPixel(PointI(owner->tileSize, owner->tileSize), request.zoom),
+            request.zoom,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
             //NOTE: Maybe a QuadTree-based cache with leaf-only locking will save up much. Or use supernodes, like DataBlock
@@ -159,11 +177,11 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
     }
     else // if (owner->mode == MapPrimitivesProvider::Mode::WithSurface)
     {
-        const auto tileBBox31 = Utilities::tileBoundingBox31(tileId, zoom);
+        const auto tileBBox31 = Utilities::tileBoundingBox31(request.tileId, request.zoom);
         primitivisedObjects = owner->primitiviser->primitiviseWithSurface(
             tileBBox31,
             PointI(owner->tileSize, owner->tileSize),
-            zoom,
+            request.zoom,
             dataTile->tileSurfaceType,
             dataTile->mapObjects,
             //NOTE: So far it's safe to turn off this cache. But it has to be rewritten. Since lock/unlock occurs too often, this kills entire performance
@@ -175,14 +193,14 @@ bool OsmAnd::MapPrimitivesProvider_P::obtainData(
 
     // Create tile
     const std::shared_ptr<MapPrimitivesProvider::Data> newTiledData(new MapPrimitivesProvider::Data(
-        tileId,
-        zoom,
+        request.tileId,
+        request.zoom,
         dataTile,
         primitivisedObjects,
         new RetainableCacheMetadata(tileEntry, dataTile->retainableCacheMetadata)));
 
     // Publish new tile
-    outTiledData = newTiledData;
+    outTiledPrimitives = newTiledData;
 
     // Store weak reference to new tile and mark it as 'Loaded'
     tileEntry->dataIsPresent = true;

@@ -14,6 +14,7 @@
 #include <SkImageEncoder.h>
 #include "restore_internal_warnings.h"
 
+#include "MapDataProviderHelpers.h"
 #include "MapRasterLayerProvider.h"
 #include "MapRasterLayerProvider_Metrics.h"
 #include "ObfMapObjectsProvider_Metrics.h"
@@ -34,19 +35,23 @@ OsmAnd::MapRasterMetricsLayerProvider_P::~MapRasterMetricsLayerProvider_P()
 }
 
 bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
-    const TileId tileId,
-    const ZoomLevel zoom,
-    std::shared_ptr<MapRasterMetricsLayerProvider::Data>& outTiledData,
-    const IQueryController* const queryController)
+    const IMapDataProvider::Request& request_,
+    std::shared_ptr<IMapDataProvider::Data>& outData,
+    std::shared_ptr<Metric>* const pOutMetric)
 {
+    const auto request = MapDataProviderHelpers::castRequest<MapRasterMetricsLayerProvider::Request>(request_);
+
+    if (pOutMetric)
+        pOutMetric->reset();
+
     MapRasterLayerProvider_Metrics::Metric_obtainData obtainDataMetric;
 
     // Obtain offline map primitives tile
     std::shared_ptr<MapRasterLayerProvider::Data> rasterizedTile;
-    owner->rasterBitmapTileProvider->obtainData(tileId, zoom, rasterizedTile, &obtainDataMetric, nullptr);
+    owner->rasterBitmapTileProvider->obtainRasterizedTile(request, rasterizedTile, &obtainDataMetric);
     if (!rasterizedTile)
     {
-        outTiledData.reset();
+        outData.reset();
         return true;
     }
 
@@ -66,9 +71,9 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
 
     QString text;
     text += QString(QLatin1String("TILE   %1x%2@%3\n"))
-        .arg(tileId.x)
-        .arg(tileId.y)
-        .arg(zoom);
+        .arg(request.tileId.x)
+        .arg(request.tileId.y)
+        .arg(request.zoom);
     if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
         text += QString(QLatin1String("obf read    %1s\n"))
@@ -107,9 +112,9 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
         topOffset += 1.25f * fontSize;
     }
 
-    outTiledData.reset(new MapRasterMetricsLayerProvider::Data(
-        tileId,
-        zoom,
+    outData.reset(new MapRasterMetricsLayerProvider::Data(
+        request.tileId,
+        request.zoom,
         AlphaChannelPresence::NotPresent,
         owner->densityFactor,
         bitmap, 

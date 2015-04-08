@@ -47,7 +47,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapPrimitiviser::PrimitivisedObjects>& primitivisedObjects,
             QList< std::shared_ptr<const RasterizedSymbolsGroup> >& outSymbolsGroups,
             const FilterByMapObject filter,
-            const IQueryController* const controller) const;
+            const std::shared_ptr<const IQueryController>& queryController) const;
 
     friend class OsmAnd::SymbolRasterizer;
     };

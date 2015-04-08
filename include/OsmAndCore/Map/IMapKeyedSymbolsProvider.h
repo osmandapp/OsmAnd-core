@@ -18,6 +18,7 @@ namespace OsmAnd
     class OSMAND_CORE_API IMapKeyedSymbolsProvider : public IMapKeyedDataProvider
     {
         Q_DISABLE_COPY_AND_MOVE(IMapKeyedSymbolsProvider);
+
     public:
         class OSMAND_CORE_API Data : public IMapKeyedDataProvider::Data
         {
@@ -38,6 +39,11 @@ namespace OsmAnd
         IMapKeyedSymbolsProvider();
     public:
         virtual ~IMapKeyedSymbolsProvider();
+
+        virtual bool obtainKeyedSymbols(
+            const Request& request,
+            std::shared_ptr<Data>& outKeyedSymbols,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
     };
 }
 

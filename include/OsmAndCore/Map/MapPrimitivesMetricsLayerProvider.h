@@ -18,7 +18,7 @@
 namespace OsmAnd
 {
     class MapPrimitivesMetricsLayerProvider_P;
-    class OSMAND_CORE_API MapPrimitivesMetricsLayerProvider : public IRasterMapLayerProvider
+    class OSMAND_CORE_API MapPrimitivesMetricsLayerProvider Q_DECL_FINAL : public IRasterMapLayerProvider
     {
         Q_DISABLE_COPY_AND_MOVE(MapPrimitivesMetricsLayerProvider);
     public:
@@ -61,11 +61,14 @@ namespace OsmAnd
         virtual uint32_t getTileSize() const;
 
         virtual bool obtainData(
-            const TileId tileId,
-            const ZoomLevel zoom,
-            std::shared_ptr<IMapTiledDataProvider::Data>& outTiledData,
-            std::shared_ptr<Metric>* pOutMetric = nullptr,
-            const IQueryController* const queryController = nullptr);
+            const IMapDataProvider::Request& request,
+            std::shared_ptr<IMapDataProvider::Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr) Q_DECL_OVERRIDE;
+
+        bool obtainMetricsTile(
+            const Request& request,
+            std::shared_ptr<Data>& outData,
+            std::shared_ptr<Metric>* const pOutMetric = nullptr);
 
         virtual ZoomLevel getMinZoom() const;
         virtual ZoomLevel getMaxZoom() const;
