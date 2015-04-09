@@ -19,7 +19,7 @@
 
 namespace OsmAnd
 {
-    namespace gpb = google::protobuf;
+    namespace gpb = google::obf_protobuf;
 
     class ObfFile;
 

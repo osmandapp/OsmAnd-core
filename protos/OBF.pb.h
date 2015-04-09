@@ -88,19 +88,19 @@ const OsmAndAddressIndex_CitiesIndex_CitiesType OsmAndAddressIndex_CitiesIndex_C
 const OsmAndAddressIndex_CitiesIndex_CitiesType OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesType_MAX = OsmAndAddressIndex_CitiesIndex_CitiesType_Villages;
 const int OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesType_ARRAYSIZE = OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesType_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor* OsmAndAddressIndex_CitiesIndex_CitiesType_descriptor();
+const ::google::obf_protobuf::EnumDescriptor* OsmAndAddressIndex_CitiesIndex_CitiesType_descriptor();
 inline const ::std::string& OsmAndAddressIndex_CitiesIndex_CitiesType_Name(OsmAndAddressIndex_CitiesIndex_CitiesType value) {
-  return ::google::protobuf::internal::NameOfEnum(
+  return ::google::obf_protobuf::internal::NameOfEnum(
     OsmAndAddressIndex_CitiesIndex_CitiesType_descriptor(), value);
 }
 inline bool OsmAndAddressIndex_CitiesIndex_CitiesType_Parse(
     const ::std::string& name, OsmAndAddressIndex_CitiesIndex_CitiesType* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<OsmAndAddressIndex_CitiesIndex_CitiesType>(
+  return ::google::obf_protobuf::internal::ParseNamedEnum<OsmAndAddressIndex_CitiesIndex_CitiesType>(
     OsmAndAddressIndex_CitiesIndex_CitiesType_descriptor(), name, value);
 }
 // ===================================================================
 
-class OsmAndStructure : public ::google::protobuf::Message {
+class OsmAndStructure : public ::google::obf_protobuf::Message {
  public:
   OsmAndStructure();
   virtual ~OsmAndStructure();
@@ -112,15 +112,15 @@ class OsmAndStructure : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndStructure& default_instance();
   
   void Swap(OsmAndStructure* other);
@@ -128,8 +128,8 @@ class OsmAndStructure : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndStructure* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndStructure& from);
   void MergeFrom(const OsmAndStructure& from);
   void Clear();
@@ -137,10 +137,10 @@ class OsmAndStructure : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -148,7 +148,7 @@ class OsmAndStructure : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -158,15 +158,15 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline bool has_version() const;
   inline void clear_version();
   static const int kVersionFieldNumber = 1;
-  inline ::google::protobuf::uint32 version() const;
-  inline void set_version(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 version() const;
+  inline void set_version(::google::obf_protobuf::uint32 value);
   
   // required int64 dateCreated = 18;
   inline bool has_datecreated() const;
   inline void clear_datecreated();
   static const int kDateCreatedFieldNumber = 18;
-  inline ::google::protobuf::int64 datecreated() const;
-  inline void set_datecreated(::google::protobuf::int64 value);
+  inline ::google::obf_protobuf::int64 datecreated() const;
+  inline void set_datecreated(::google::obf_protobuf::int64 value);
   
   // repeated .OsmAnd.OBF.OsmAndAddressIndex addressIndex = 7;
   inline int addressindex_size() const;
@@ -175,9 +175,9 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndAddressIndex& addressindex(int index) const;
   inline ::OsmAnd::OBF::OsmAndAddressIndex* mutable_addressindex(int index);
   inline ::OsmAnd::OBF::OsmAndAddressIndex* add_addressindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex >&
       addressindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex >*
       mutable_addressindex();
   
   // repeated .OsmAnd.OBF.OsmAndTransportIndex transportIndex = 4;
@@ -187,9 +187,9 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndTransportIndex& transportindex(int index) const;
   inline ::OsmAnd::OBF::OsmAndTransportIndex* mutable_transportindex(int index);
   inline ::OsmAnd::OBF::OsmAndTransportIndex* add_transportindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex >&
       transportindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex >*
       mutable_transportindex();
   
   // repeated .OsmAnd.OBF.OsmAndPoiIndex poiIndex = 8;
@@ -199,9 +199,9 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndPoiIndex& poiindex(int index) const;
   inline ::OsmAnd::OBF::OsmAndPoiIndex* mutable_poiindex(int index);
   inline ::OsmAnd::OBF::OsmAndPoiIndex* add_poiindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex >&
       poiindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex >*
       mutable_poiindex();
   
   // repeated .OsmAnd.OBF.OsmAndMapIndex mapIndex = 6;
@@ -211,9 +211,9 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndMapIndex& mapindex(int index) const;
   inline ::OsmAnd::OBF::OsmAndMapIndex* mutable_mapindex(int index);
   inline ::OsmAnd::OBF::OsmAndMapIndex* add_mapindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex >&
       mapindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex >*
       mutable_mapindex();
   
   // repeated .OsmAnd.OBF.OsmAndRoutingIndex routingIndex = 9;
@@ -223,17 +223,17 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndRoutingIndex& routingindex(int index) const;
   inline ::OsmAnd::OBF::OsmAndRoutingIndex* mutable_routingindex(int index);
   inline ::OsmAnd::OBF::OsmAndRoutingIndex* add_routingindex();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex >&
       routingindex() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex >*
       mutable_routingindex();
   
   // required uint32 versionConfirm = 32;
   inline bool has_versionconfirm() const;
   inline void clear_versionconfirm();
   static const int kVersionConfirmFieldNumber = 32;
-  inline ::google::protobuf::uint32 versionconfirm() const;
-  inline void set_versionconfirm(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 versionconfirm() const;
+  inline void set_versionconfirm(::google::obf_protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndStructure)
  private:
@@ -244,19 +244,19 @@ class OsmAndStructure : public ::google::protobuf::Message {
   inline void set_has_versionconfirm();
   inline void clear_has_versionconfirm();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int64 datecreated_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex > addressindex_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex > transportindex_;
-  ::google::protobuf::uint32 version_;
-  ::google::protobuf::uint32 versionconfirm_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex > poiindex_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex > mapindex_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex > routingindex_;
+  ::google::obf_protobuf::int64 datecreated_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex > addressindex_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex > transportindex_;
+  ::google::obf_protobuf::uint32 version_;
+  ::google::obf_protobuf::uint32 versionconfirm_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex > poiindex_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex > mapindex_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex > routingindex_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(8 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -267,7 +267,7 @@ class OsmAndStructure : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndTileBox : public ::google::protobuf::Message {
+class OsmAndTileBox : public ::google::obf_protobuf::Message {
  public:
   OsmAndTileBox();
   virtual ~OsmAndTileBox();
@@ -279,15 +279,15 @@ class OsmAndTileBox : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndTileBox& default_instance();
   
   void Swap(OsmAndTileBox* other);
@@ -295,8 +295,8 @@ class OsmAndTileBox : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndTileBox* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndTileBox& from);
   void MergeFrom(const OsmAndTileBox& from);
   void Clear();
@@ -304,10 +304,10 @@ class OsmAndTileBox : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -315,7 +315,7 @@ class OsmAndTileBox : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -325,29 +325,29 @@ class OsmAndTileBox : public ::google::protobuf::Message {
   inline bool has_left() const;
   inline void clear_left();
   static const int kLeftFieldNumber = 1;
-  inline ::google::protobuf::uint32 left() const;
-  inline void set_left(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 left() const;
+  inline void set_left(::google::obf_protobuf::uint32 value);
   
   // required uint32 right = 2;
   inline bool has_right() const;
   inline void clear_right();
   static const int kRightFieldNumber = 2;
-  inline ::google::protobuf::uint32 right() const;
-  inline void set_right(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 right() const;
+  inline void set_right(::google::obf_protobuf::uint32 value);
   
   // required uint32 top = 3;
   inline bool has_top() const;
   inline void clear_top();
   static const int kTopFieldNumber = 3;
-  inline ::google::protobuf::uint32 top() const;
-  inline void set_top(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 top() const;
+  inline void set_top(::google::obf_protobuf::uint32 value);
   
   // required uint32 bottom = 4;
   inline bool has_bottom() const;
   inline void clear_bottom();
   static const int kBottomFieldNumber = 4;
-  inline ::google::protobuf::uint32 bottom() const;
-  inline void set_bottom(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 bottom() const;
+  inline void set_bottom(::google::obf_protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndTileBox)
  private:
@@ -360,15 +360,15 @@ class OsmAndTileBox : public ::google::protobuf::Message {
   inline void set_has_bottom();
   inline void clear_has_bottom();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::uint32 left_;
-  ::google::protobuf::uint32 right_;
-  ::google::protobuf::uint32 top_;
-  ::google::protobuf::uint32 bottom_;
+  ::google::obf_protobuf::uint32 left_;
+  ::google::obf_protobuf::uint32 right_;
+  ::google::obf_protobuf::uint32 top_;
+  ::google::obf_protobuf::uint32 bottom_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -379,7 +379,7 @@ class OsmAndTileBox : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class StringTable : public ::google::protobuf::Message {
+class StringTable : public ::google::obf_protobuf::Message {
  public:
   StringTable();
   virtual ~StringTable();
@@ -391,15 +391,15 @@ class StringTable : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const StringTable& default_instance();
   
   void Swap(StringTable* other);
@@ -407,8 +407,8 @@ class StringTable : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   StringTable* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const StringTable& from);
   void MergeFrom(const StringTable& from);
   void Clear();
@@ -416,10 +416,10 @@ class StringTable : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -427,7 +427,7 @@ class StringTable : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -446,18 +446,18 @@ class StringTable : public ::google::protobuf::Message {
   inline void add_s(const ::std::string& value);
   inline void add_s(const char* value);
   inline void add_s(const char* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& s() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_s();
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& s() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_s();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.StringTable)
  private:
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedPtrField< ::std::string> s_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> s_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(1 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -468,7 +468,7 @@ class StringTable : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class IndexedStringTable : public ::google::protobuf::Message {
+class IndexedStringTable : public ::google::obf_protobuf::Message {
  public:
   IndexedStringTable();
   virtual ~IndexedStringTable();
@@ -480,15 +480,15 @@ class IndexedStringTable : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const IndexedStringTable& default_instance();
   
   void Swap(IndexedStringTable* other);
@@ -496,8 +496,8 @@ class IndexedStringTable : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   IndexedStringTable* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const IndexedStringTable& from);
   void MergeFrom(const IndexedStringTable& from);
   void Clear();
@@ -505,10 +505,10 @@ class IndexedStringTable : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -516,7 +516,7 @@ class IndexedStringTable : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -546,19 +546,19 @@ class IndexedStringTable : public ::google::protobuf::Message {
   inline void add_key(const ::std::string& value);
   inline void add_key(const char* value);
   inline void add_key(const char* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& key() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_key();
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& key() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_key();
   
   // repeated fixed32 val = 4;
   inline int val_size() const;
   inline void clear_val();
   static const int kValFieldNumber = 4;
-  inline ::google::protobuf::uint32 val(int index) const;
-  inline void set_val(int index, ::google::protobuf::uint32 value);
-  inline void add_val(::google::protobuf::uint32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+  inline ::google::obf_protobuf::uint32 val(int index) const;
+  inline void set_val(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_val(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
       val() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
       mutable_val();
   
   // repeated .OsmAnd.OBF.IndexedStringTable subtables = 5;
@@ -568,9 +568,9 @@ class IndexedStringTable : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::IndexedStringTable& subtables(int index) const;
   inline ::OsmAnd::OBF::IndexedStringTable* mutable_subtables(int index);
   inline ::OsmAnd::OBF::IndexedStringTable* add_subtables();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable >&
       subtables() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable >*
       mutable_subtables();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.IndexedStringTable)
@@ -578,15 +578,15 @@ class IndexedStringTable : public ::google::protobuf::Message {
   inline void set_has_prefix();
   inline void clear_has_prefix();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* prefix_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> key_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > val_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable > subtables_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> key_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > val_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable > subtables_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -597,7 +597,7 @@ class IndexedStringTable : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndMapIndex_MapEncodingRule : public ::google::protobuf::Message {
+class OsmAndMapIndex_MapEncodingRule : public ::google::obf_protobuf::Message {
  public:
   OsmAndMapIndex_MapEncodingRule();
   virtual ~OsmAndMapIndex_MapEncodingRule();
@@ -609,15 +609,15 @@ class OsmAndMapIndex_MapEncodingRule : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndMapIndex_MapEncodingRule& default_instance();
   
   void Swap(OsmAndMapIndex_MapEncodingRule* other);
@@ -625,8 +625,8 @@ class OsmAndMapIndex_MapEncodingRule : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndMapIndex_MapEncodingRule* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndMapIndex_MapEncodingRule& from);
   void MergeFrom(const OsmAndMapIndex_MapEncodingRule& from);
   void Clear();
@@ -634,10 +634,10 @@ class OsmAndMapIndex_MapEncodingRule : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -645,7 +645,7 @@ class OsmAndMapIndex_MapEncodingRule : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -677,22 +677,22 @@ class OsmAndMapIndex_MapEncodingRule : public ::google::protobuf::Message {
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 7;
-  inline ::google::protobuf::uint32 id() const;
-  inline void set_id(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 id() const;
+  inline void set_id(::google::obf_protobuf::uint32 value);
   
   // optional uint32 minZoom = 9;
   inline bool has_minzoom() const;
   inline void clear_minzoom();
   static const int kMinZoomFieldNumber = 9;
-  inline ::google::protobuf::uint32 minzoom() const;
-  inline void set_minzoom(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 minzoom() const;
+  inline void set_minzoom(::google::obf_protobuf::uint32 value);
   
   // optional uint32 type = 10;
   inline bool has_type() const;
   inline void clear_type();
   static const int kTypeFieldNumber = 10;
-  inline ::google::protobuf::uint32 type() const;
-  inline void set_type(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 type() const;
+  inline void set_type(::google::obf_protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndMapIndex.MapEncodingRule)
  private:
@@ -707,16 +707,16 @@ class OsmAndMapIndex_MapEncodingRule : public ::google::protobuf::Message {
   inline void set_has_type();
   inline void clear_has_type();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* tag_;
   ::std::string* value_;
-  ::google::protobuf::uint32 id_;
-  ::google::protobuf::uint32 minzoom_;
-  ::google::protobuf::uint32 type_;
+  ::google::obf_protobuf::uint32 id_;
+  ::google::obf_protobuf::uint32 minzoom_;
+  ::google::obf_protobuf::uint32 type_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(5 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -727,7 +727,7 @@ class OsmAndMapIndex_MapEncodingRule : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
+class OsmAndMapIndex_MapRootLevel : public ::google::obf_protobuf::Message {
  public:
   OsmAndMapIndex_MapRootLevel();
   virtual ~OsmAndMapIndex_MapRootLevel();
@@ -739,15 +739,15 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndMapIndex_MapRootLevel& default_instance();
   
   void Swap(OsmAndMapIndex_MapRootLevel* other);
@@ -755,8 +755,8 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndMapIndex_MapRootLevel* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndMapIndex_MapRootLevel& from);
   void MergeFrom(const OsmAndMapIndex_MapRootLevel& from);
   void Clear();
@@ -764,10 +764,10 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -775,7 +775,7 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -785,43 +785,43 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
   inline bool has_maxzoom() const;
   inline void clear_maxzoom();
   static const int kMaxZoomFieldNumber = 1;
-  inline ::google::protobuf::int32 maxzoom() const;
-  inline void set_maxzoom(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 maxzoom() const;
+  inline void set_maxzoom(::google::obf_protobuf::int32 value);
   
   // required int32 minZoom = 2;
   inline bool has_minzoom() const;
   inline void clear_minzoom();
   static const int kMinZoomFieldNumber = 2;
-  inline ::google::protobuf::int32 minzoom() const;
-  inline void set_minzoom(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 minzoom() const;
+  inline void set_minzoom(::google::obf_protobuf::int32 value);
   
   // required int32 left = 3;
   inline bool has_left() const;
   inline void clear_left();
   static const int kLeftFieldNumber = 3;
-  inline ::google::protobuf::int32 left() const;
-  inline void set_left(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 left() const;
+  inline void set_left(::google::obf_protobuf::int32 value);
   
   // required int32 right = 4;
   inline bool has_right() const;
   inline void clear_right();
   static const int kRightFieldNumber = 4;
-  inline ::google::protobuf::int32 right() const;
-  inline void set_right(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 right() const;
+  inline void set_right(::google::obf_protobuf::int32 value);
   
   // required int32 top = 5;
   inline bool has_top() const;
   inline void clear_top();
   static const int kTopFieldNumber = 5;
-  inline ::google::protobuf::int32 top() const;
-  inline void set_top(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 top() const;
+  inline void set_top(::google::obf_protobuf::int32 value);
   
   // required int32 bottom = 6;
   inline bool has_bottom() const;
   inline void clear_bottom();
   static const int kBottomFieldNumber = 6;
-  inline ::google::protobuf::int32 bottom() const;
-  inline void set_bottom(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 bottom() const;
+  inline void set_bottom(::google::obf_protobuf::int32 value);
   
   // repeated .OsmAnd.OBF.OsmAndMapIndex.MapDataBox boxes = 7;
   inline int boxes_size() const;
@@ -830,9 +830,9 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox& boxes(int index) const;
   inline ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox* mutable_boxes(int index);
   inline ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox* add_boxes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >&
       boxes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >*
       mutable_boxes();
   
   // repeated .OsmAnd.OBF.MapDataBlock blocks = 15;
@@ -842,9 +842,9 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::MapDataBlock& blocks(int index) const;
   inline ::OsmAnd::OBF::MapDataBlock* mutable_blocks(int index);
   inline ::OsmAnd::OBF::MapDataBlock* add_blocks();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock >&
       blocks() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock >*
       mutable_blocks();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndMapIndex.MapRootLevel)
@@ -862,19 +862,19 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
   inline void set_has_bottom();
   inline void clear_has_bottom();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int32 maxzoom_;
-  ::google::protobuf::int32 minzoom_;
-  ::google::protobuf::int32 left_;
-  ::google::protobuf::int32 right_;
-  ::google::protobuf::int32 top_;
-  ::google::protobuf::int32 bottom_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox > boxes_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock > blocks_;
+  ::google::obf_protobuf::int32 maxzoom_;
+  ::google::obf_protobuf::int32 minzoom_;
+  ::google::obf_protobuf::int32 left_;
+  ::google::obf_protobuf::int32 right_;
+  ::google::obf_protobuf::int32 top_;
+  ::google::obf_protobuf::int32 bottom_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox > boxes_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock > blocks_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(8 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -885,7 +885,7 @@ class OsmAndMapIndex_MapRootLevel : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
+class OsmAndMapIndex_MapDataBox : public ::google::obf_protobuf::Message {
  public:
   OsmAndMapIndex_MapDataBox();
   virtual ~OsmAndMapIndex_MapDataBox();
@@ -897,15 +897,15 @@ class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndMapIndex_MapDataBox& default_instance();
   
   void Swap(OsmAndMapIndex_MapDataBox* other);
@@ -913,8 +913,8 @@ class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndMapIndex_MapDataBox* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndMapIndex_MapDataBox& from);
   void MergeFrom(const OsmAndMapIndex_MapDataBox& from);
   void Clear();
@@ -922,10 +922,10 @@ class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -933,7 +933,7 @@ class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -943,36 +943,36 @@ class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
   inline bool has_left() const;
   inline void clear_left();
   static const int kLeftFieldNumber = 1;
-  inline ::google::protobuf::int32 left() const;
-  inline void set_left(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 left() const;
+  inline void set_left(::google::obf_protobuf::int32 value);
   
   // required sint32 right = 2;
   inline bool has_right() const;
   inline void clear_right();
   static const int kRightFieldNumber = 2;
-  inline ::google::protobuf::int32 right() const;
-  inline void set_right(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 right() const;
+  inline void set_right(::google::obf_protobuf::int32 value);
   
   // required sint32 top = 3;
   inline bool has_top() const;
   inline void clear_top();
   static const int kTopFieldNumber = 3;
-  inline ::google::protobuf::int32 top() const;
-  inline void set_top(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 top() const;
+  inline void set_top(::google::obf_protobuf::int32 value);
   
   // required sint32 bottom = 4;
   inline bool has_bottom() const;
   inline void clear_bottom();
   static const int kBottomFieldNumber = 4;
-  inline ::google::protobuf::int32 bottom() const;
-  inline void set_bottom(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 bottom() const;
+  inline void set_bottom(::google::obf_protobuf::int32 value);
   
   // optional fixed32 shiftToMapData = 5;
   inline bool has_shifttomapdata() const;
   inline void clear_shifttomapdata();
   static const int kShiftToMapDataFieldNumber = 5;
-  inline ::google::protobuf::uint32 shifttomapdata() const;
-  inline void set_shifttomapdata(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 shifttomapdata() const;
+  inline void set_shifttomapdata(::google::obf_protobuf::uint32 value);
   
   // optional bool ocean = 6;
   inline bool has_ocean() const;
@@ -988,9 +988,9 @@ class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox& boxes(int index) const;
   inline ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox* mutable_boxes(int index);
   inline ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox* add_boxes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >&
       boxes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >*
       mutable_boxes();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndMapIndex.MapDataBox)
@@ -1008,18 +1008,18 @@ class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
   inline void set_has_ocean();
   inline void clear_has_ocean();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int32 left_;
-  ::google::protobuf::int32 right_;
-  ::google::protobuf::int32 top_;
-  ::google::protobuf::int32 bottom_;
-  ::google::protobuf::uint32 shifttomapdata_;
+  ::google::obf_protobuf::int32 left_;
+  ::google::obf_protobuf::int32 right_;
+  ::google::obf_protobuf::int32 top_;
+  ::google::obf_protobuf::int32 bottom_;
+  ::google::obf_protobuf::uint32 shifttomapdata_;
   bool ocean_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox > boxes_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox > boxes_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(7 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -1030,7 +1030,7 @@ class OsmAndMapIndex_MapDataBox : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndMapIndex : public ::google::protobuf::Message {
+class OsmAndMapIndex : public ::google::obf_protobuf::Message {
  public:
   OsmAndMapIndex();
   virtual ~OsmAndMapIndex();
@@ -1042,15 +1042,15 @@ class OsmAndMapIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndMapIndex& default_instance();
   
   void Swap(OsmAndMapIndex* other);
@@ -1058,8 +1058,8 @@ class OsmAndMapIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndMapIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndMapIndex& from);
   void MergeFrom(const OsmAndMapIndex& from);
   void Clear();
@@ -1067,10 +1067,10 @@ class OsmAndMapIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -1078,7 +1078,7 @@ class OsmAndMapIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -1106,9 +1106,9 @@ class OsmAndMapIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule& rules(int index) const;
   inline ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule* mutable_rules(int index);
   inline ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule* add_rules();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule >&
       rules() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule >*
       mutable_rules();
   
   // repeated .OsmAnd.OBF.OsmAndMapIndex.MapRootLevel levels = 5;
@@ -1118,9 +1118,9 @@ class OsmAndMapIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel& levels(int index) const;
   inline ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel* mutable_levels(int index);
   inline ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel* add_levels();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel >&
       levels() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel >*
       mutable_levels();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndMapIndex)
@@ -1128,14 +1128,14 @@ class OsmAndMapIndex : public ::google::protobuf::Message {
   inline void set_has_name();
   inline void clear_has_name();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule > rules_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel > levels_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule > rules_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel > levels_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(3 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -1146,7 +1146,7 @@ class OsmAndMapIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class MapDataBlock : public ::google::protobuf::Message {
+class MapDataBlock : public ::google::obf_protobuf::Message {
  public:
   MapDataBlock();
   virtual ~MapDataBlock();
@@ -1158,15 +1158,15 @@ class MapDataBlock : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const MapDataBlock& default_instance();
   
   void Swap(MapDataBlock* other);
@@ -1174,8 +1174,8 @@ class MapDataBlock : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   MapDataBlock* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const MapDataBlock& from);
   void MergeFrom(const MapDataBlock& from);
   void Clear();
@@ -1183,10 +1183,10 @@ class MapDataBlock : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -1194,7 +1194,7 @@ class MapDataBlock : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -1204,8 +1204,8 @@ class MapDataBlock : public ::google::protobuf::Message {
   inline bool has_baseid() const;
   inline void clear_baseid();
   static const int kBaseIdFieldNumber = 10;
-  inline ::google::protobuf::uint64 baseid() const;
-  inline void set_baseid(::google::protobuf::uint64 value);
+  inline ::google::obf_protobuf::uint64 baseid() const;
+  inline void set_baseid(::google::obf_protobuf::uint64 value);
   
   // repeated .OsmAnd.OBF.MapData dataObjects = 12;
   inline int dataobjects_size() const;
@@ -1214,9 +1214,9 @@ class MapDataBlock : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::MapData& dataobjects(int index) const;
   inline ::OsmAnd::OBF::MapData* mutable_dataobjects(int index);
   inline ::OsmAnd::OBF::MapData* add_dataobjects();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData >&
       dataobjects() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData >*
       mutable_dataobjects();
   
   // optional .OsmAnd.OBF.StringTable stringTable = 15;
@@ -1234,14 +1234,14 @@ class MapDataBlock : public ::google::protobuf::Message {
   inline void set_has_stringtable();
   inline void clear_has_stringtable();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::uint64 baseid_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData > dataobjects_;
+  ::google::obf_protobuf::uint64 baseid_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData > dataobjects_;
   ::OsmAnd::OBF::StringTable* stringtable_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(3 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -1252,7 +1252,7 @@ class MapDataBlock : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class MapData : public ::google::protobuf::Message {
+class MapData : public ::google::obf_protobuf::Message {
  public:
   MapData();
   virtual ~MapData();
@@ -1264,15 +1264,15 @@ class MapData : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const MapData& default_instance();
   
   void Swap(MapData* other);
@@ -1280,8 +1280,8 @@ class MapData : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   MapData* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const MapData& from);
   void MergeFrom(const MapData& from);
   void Clear();
@@ -1289,10 +1289,10 @@ class MapData : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -1300,7 +1300,7 @@ class MapData : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -1341,8 +1341,8 @@ class MapData : public ::google::protobuf::Message {
   inline void add_polygoninnercoordinates(const ::std::string& value);
   inline void add_polygoninnercoordinates(const char* value);
   inline void add_polygoninnercoordinates(const void* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& polygoninnercoordinates() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_polygoninnercoordinates();
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& polygoninnercoordinates() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_polygoninnercoordinates();
   
   // optional bytes additionalTypes = 6;
   inline bool has_additionaltypes() const;
@@ -1381,8 +1381,8 @@ class MapData : public ::google::protobuf::Message {
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 12;
-  inline ::google::protobuf::int64 id() const;
-  inline void set_id(::google::protobuf::int64 value);
+  inline ::google::obf_protobuf::int64 id() const;
+  inline void set_id(::google::obf_protobuf::int64 value);
   
   // optional bytes rasterBytes = 15;
   inline bool has_rasterbytes() const;
@@ -1412,19 +1412,19 @@ class MapData : public ::google::protobuf::Message {
   inline void set_has_rasterbytes();
   inline void clear_has_rasterbytes();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* coordinates_;
   ::std::string* areacoordinates_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> polygoninnercoordinates_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> polygoninnercoordinates_;
   ::std::string* additionaltypes_;
   ::std::string* types_;
   ::std::string* stringnames_;
-  ::google::protobuf::int64 id_;
+  ::google::obf_protobuf::int64 id_;
   ::std::string* rasterbytes_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(8 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(8 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -1435,7 +1435,7 @@ class MapData : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
+class OsmAndAddressIndex_CitiesIndex : public ::google::obf_protobuf::Message {
  public:
   OsmAndAddressIndex_CitiesIndex();
   virtual ~OsmAndAddressIndex_CitiesIndex();
@@ -1447,15 +1447,15 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndAddressIndex_CitiesIndex& default_instance();
   
   void Swap(OsmAndAddressIndex_CitiesIndex* other);
@@ -1463,8 +1463,8 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndAddressIndex_CitiesIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndAddressIndex_CitiesIndex& from);
   void MergeFrom(const OsmAndAddressIndex_CitiesIndex& from);
   void Clear();
@@ -1472,10 +1472,10 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -1483,7 +1483,7 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -1500,7 +1500,7 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
     OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesType_MAX;
   static const int CitiesType_ARRAYSIZE =
     OsmAndAddressIndex_CitiesIndex_CitiesType_CitiesType_ARRAYSIZE;
-  static inline const ::google::protobuf::EnumDescriptor*
+  static inline const ::google::obf_protobuf::EnumDescriptor*
   CitiesType_descriptor() {
     return OsmAndAddressIndex_CitiesIndex_CitiesType_descriptor();
   }
@@ -1528,9 +1528,9 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::CityIndex& cities(int index) const;
   inline ::OsmAnd::OBF::CityIndex* mutable_cities(int index);
   inline ::OsmAnd::OBF::CityIndex* add_cities();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex >&
       cities() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex >*
       mutable_cities();
   
   // repeated .OsmAnd.OBF.CityBlockIndex blocks = 7;
@@ -1540,9 +1540,9 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::CityBlockIndex& blocks(int index) const;
   inline ::OsmAnd::OBF::CityBlockIndex* mutable_blocks(int index);
   inline ::OsmAnd::OBF::CityBlockIndex* add_blocks();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex >&
       blocks() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex >*
       mutable_blocks();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndAddressIndex.CitiesIndex)
@@ -1550,14 +1550,14 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
   inline void set_has_type();
   inline void clear_has_type();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex > cities_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex > blocks_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex > cities_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex > blocks_;
   int type_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(3 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -1568,7 +1568,7 @@ class OsmAndAddressIndex_CitiesIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndAddressIndex : public ::google::protobuf::Message {
+class OsmAndAddressIndex : public ::google::obf_protobuf::Message {
  public:
   OsmAndAddressIndex();
   virtual ~OsmAndAddressIndex();
@@ -1580,15 +1580,15 @@ class OsmAndAddressIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndAddressIndex& default_instance();
   
   void Swap(OsmAndAddressIndex* other);
@@ -1596,8 +1596,8 @@ class OsmAndAddressIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndAddressIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndAddressIndex& from);
   void MergeFrom(const OsmAndAddressIndex& from);
   void Clear();
@@ -1605,10 +1605,10 @@ class OsmAndAddressIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -1616,7 +1616,7 @@ class OsmAndAddressIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -1661,9 +1661,9 @@ class OsmAndAddressIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex& cities(int index) const;
   inline ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex* mutable_cities(int index);
   inline ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex* add_cities();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex >&
       cities() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex >*
       mutable_cities();
   
   // optional .OsmAnd.OBF.OsmAndAddressNameIndexData nameIndex = 7;
@@ -1685,16 +1685,16 @@ class OsmAndAddressIndex : public ::google::protobuf::Message {
   inline void set_has_nameindex();
   inline void clear_has_nameindex();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::std::string* name_en_;
   ::OsmAnd::OBF::OsmAndTileBox* boundaries_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex > cities_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex > cities_;
   ::OsmAnd::OBF::OsmAndAddressNameIndexData* nameindex_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(5 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -1705,7 +1705,7 @@ class OsmAndAddressIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobuf::Message {
+class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::obf_protobuf::Message {
  public:
   OsmAndAddressNameIndexData_AddressNameIndexData();
   virtual ~OsmAndAddressNameIndexData_AddressNameIndexData();
@@ -1717,15 +1717,15 @@ class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobu
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndAddressNameIndexData_AddressNameIndexData& default_instance();
   
   void Swap(OsmAndAddressNameIndexData_AddressNameIndexData* other);
@@ -1733,8 +1733,8 @@ class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobu
   // implements Message ----------------------------------------------
   
   OsmAndAddressNameIndexData_AddressNameIndexData* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndAddressNameIndexData_AddressNameIndexData& from);
   void MergeFrom(const OsmAndAddressNameIndexData_AddressNameIndexData& from);
   void Clear();
@@ -1742,10 +1742,10 @@ class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobu
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -1753,7 +1753,7 @@ class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobu
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -1766,20 +1766,20 @@ class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobu
   inline const ::OsmAnd::OBF::AddressNameIndexDataAtom& atom(int index) const;
   inline ::OsmAnd::OBF::AddressNameIndexDataAtom* mutable_atom(int index);
   inline ::OsmAnd::OBF::AddressNameIndexDataAtom* add_atom();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom >&
       atom() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom >*
       mutable_atom();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndAddressNameIndexData.AddressNameIndexData)
  private:
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom > atom_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom > atom_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(1 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -1790,7 +1790,7 @@ class OsmAndAddressNameIndexData_AddressNameIndexData : public ::google::protobu
 };
 // -------------------------------------------------------------------
 
-class OsmAndAddressNameIndexData : public ::google::protobuf::Message {
+class OsmAndAddressNameIndexData : public ::google::obf_protobuf::Message {
  public:
   OsmAndAddressNameIndexData();
   virtual ~OsmAndAddressNameIndexData();
@@ -1802,15 +1802,15 @@ class OsmAndAddressNameIndexData : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndAddressNameIndexData& default_instance();
   
   void Swap(OsmAndAddressNameIndexData* other);
@@ -1818,8 +1818,8 @@ class OsmAndAddressNameIndexData : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndAddressNameIndexData* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndAddressNameIndexData& from);
   void MergeFrom(const OsmAndAddressNameIndexData& from);
   void Clear();
@@ -1827,10 +1827,10 @@ class OsmAndAddressNameIndexData : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -1838,7 +1838,7 @@ class OsmAndAddressNameIndexData : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -1861,9 +1861,9 @@ class OsmAndAddressNameIndexData : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData& atom(int index) const;
   inline ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData* mutable_atom(int index);
   inline ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData* add_atom();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData >&
       atom() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData >*
       mutable_atom();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndAddressNameIndexData)
@@ -1871,13 +1871,13 @@ class OsmAndAddressNameIndexData : public ::google::protobuf::Message {
   inline void set_has_table();
   inline void clear_has_table();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::OsmAnd::OBF::IndexedStringTable* table_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData > atom_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData > atom_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(2 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -1888,7 +1888,7 @@ class OsmAndAddressNameIndexData : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class AddressNameIndexDataAtom : public ::google::protobuf::Message {
+class AddressNameIndexDataAtom : public ::google::obf_protobuf::Message {
  public:
   AddressNameIndexDataAtom();
   virtual ~AddressNameIndexDataAtom();
@@ -1900,15 +1900,15 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const AddressNameIndexDataAtom& default_instance();
   
   void Swap(AddressNameIndexDataAtom* other);
@@ -1916,8 +1916,8 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   AddressNameIndexDataAtom* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const AddressNameIndexDataAtom& from);
   void MergeFrom(const AddressNameIndexDataAtom& from);
   void Clear();
@@ -1925,10 +1925,10 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -1936,7 +1936,7 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -1968,31 +1968,31 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
   inline bool has_type() const;
   inline void clear_type();
   static const int kTypeFieldNumber = 3;
-  inline ::google::protobuf::uint32 type() const;
-  inline void set_type(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 type() const;
+  inline void set_type(::google::obf_protobuf::uint32 value);
   
   // repeated int32 shiftToIndex = 5;
   inline int shifttoindex_size() const;
   inline void clear_shifttoindex();
   static const int kShiftToIndexFieldNumber = 5;
-  inline ::google::protobuf::int32 shifttoindex(int index) const;
-  inline void set_shifttoindex(int index, ::google::protobuf::int32 value);
-  inline void add_shifttoindex(::google::protobuf::int32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+  inline ::google::obf_protobuf::int32 shifttoindex(int index) const;
+  inline void set_shifttoindex(int index, ::google::obf_protobuf::int32 value);
+  inline void add_shifttoindex(::google::obf_protobuf::int32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 >&
       shifttoindex() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 >*
       mutable_shifttoindex();
   
   // repeated int32 shiftToCityIndex = 6;
   inline int shifttocityindex_size() const;
   inline void clear_shifttocityindex();
   static const int kShiftToCityIndexFieldNumber = 6;
-  inline ::google::protobuf::int32 shifttocityindex(int index) const;
-  inline void set_shifttocityindex(int index, ::google::protobuf::int32 value);
-  inline void add_shifttocityindex(::google::protobuf::int32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+  inline ::google::obf_protobuf::int32 shifttocityindex(int index) const;
+  inline void set_shifttocityindex(int index, ::google::obf_protobuf::int32 value);
+  inline void add_shifttocityindex(::google::obf_protobuf::int32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 >&
       shifttocityindex() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 >*
       mutable_shifttocityindex();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.AddressNameIndexDataAtom)
@@ -2004,16 +2004,16 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
   inline void set_has_type();
   inline void clear_has_type();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::std::string* nameen_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > shifttoindex_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > shifttocityindex_;
-  ::google::protobuf::uint32 type_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 > shifttoindex_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 > shifttocityindex_;
+  ::google::obf_protobuf::uint32 type_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(5 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -2024,7 +2024,7 @@ class AddressNameIndexDataAtom : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class CityIndex : public ::google::protobuf::Message {
+class CityIndex : public ::google::obf_protobuf::Message {
  public:
   CityIndex();
   virtual ~CityIndex();
@@ -2036,15 +2036,15 @@ class CityIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const CityIndex& default_instance();
   
   void Swap(CityIndex* other);
@@ -2052,8 +2052,8 @@ class CityIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   CityIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const CityIndex& from);
   void MergeFrom(const CityIndex& from);
   void Clear();
@@ -2061,10 +2061,10 @@ class CityIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -2072,7 +2072,7 @@ class CityIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -2082,8 +2082,8 @@ class CityIndex : public ::google::protobuf::Message {
   inline bool has_city_type() const;
   inline void clear_city_type();
   static const int kCityTypeFieldNumber = 1;
-  inline ::google::protobuf::uint32 city_type() const;
-  inline void set_city_type(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 city_type() const;
+  inline void set_city_type(::google::obf_protobuf::uint32 value);
   
   // required string name = 2;
   inline bool has_name() const;
@@ -2111,29 +2111,29 @@ class CityIndex : public ::google::protobuf::Message {
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 4;
-  inline ::google::protobuf::uint64 id() const;
-  inline void set_id(::google::protobuf::uint64 value);
+  inline ::google::obf_protobuf::uint64 id() const;
+  inline void set_id(::google::obf_protobuf::uint64 value);
   
   // required uint32 x = 5;
   inline bool has_x() const;
   inline void clear_x();
   static const int kXFieldNumber = 5;
-  inline ::google::protobuf::uint32 x() const;
-  inline void set_x(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 x() const;
+  inline void set_x(::google::obf_protobuf::uint32 value);
   
   // required uint32 y = 6;
   inline bool has_y() const;
   inline void clear_y();
   static const int kYFieldNumber = 6;
-  inline ::google::protobuf::uint32 y() const;
-  inline void set_y(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 y() const;
+  inline void set_y(::google::obf_protobuf::uint32 value);
   
   // optional fixed32 shiftToCityBlockIndex = 10;
   inline bool has_shifttocityblockindex() const;
   inline void clear_shifttocityblockindex();
   static const int kShiftToCityBlockIndexFieldNumber = 10;
-  inline ::google::protobuf::uint32 shifttocityblockindex() const;
-  inline void set_shifttocityblockindex(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 shifttocityblockindex() const;
+  inline void set_shifttocityblockindex(::google::obf_protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.CityIndex)
  private:
@@ -2152,18 +2152,18 @@ class CityIndex : public ::google::protobuf::Message {
   inline void set_has_shifttocityblockindex();
   inline void clear_has_shifttocityblockindex();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::std::string* name_en_;
-  ::google::protobuf::uint32 city_type_;
-  ::google::protobuf::uint32 x_;
-  ::google::protobuf::uint64 id_;
-  ::google::protobuf::uint32 y_;
-  ::google::protobuf::uint32 shifttocityblockindex_;
+  ::google::obf_protobuf::uint32 city_type_;
+  ::google::obf_protobuf::uint32 x_;
+  ::google::obf_protobuf::uint64 id_;
+  ::google::obf_protobuf::uint32 y_;
+  ::google::obf_protobuf::uint32 shifttocityblockindex_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(7 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -2174,7 +2174,7 @@ class CityIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class CityBlockIndex : public ::google::protobuf::Message {
+class CityBlockIndex : public ::google::obf_protobuf::Message {
  public:
   CityBlockIndex();
   virtual ~CityBlockIndex();
@@ -2186,15 +2186,15 @@ class CityBlockIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const CityBlockIndex& default_instance();
   
   void Swap(CityBlockIndex* other);
@@ -2202,8 +2202,8 @@ class CityBlockIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   CityBlockIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const CityBlockIndex& from);
   void MergeFrom(const CityBlockIndex& from);
   void Clear();
@@ -2211,10 +2211,10 @@ class CityBlockIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -2222,7 +2222,7 @@ class CityBlockIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -2232,8 +2232,8 @@ class CityBlockIndex : public ::google::protobuf::Message {
   inline bool has_shifttocityindex() const;
   inline void clear_shifttocityindex();
   static const int kShiftToCityIndexFieldNumber = 4;
-  inline ::google::protobuf::uint32 shifttocityindex() const;
-  inline void set_shifttocityindex(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 shifttocityindex() const;
+  inline void set_shifttocityindex(::google::obf_protobuf::uint32 value);
   
   // repeated .OsmAnd.OBF.BuildingIndex buildings = 10;
   inline int buildings_size() const;
@@ -2242,9 +2242,9 @@ class CityBlockIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::BuildingIndex& buildings(int index) const;
   inline ::OsmAnd::OBF::BuildingIndex* mutable_buildings(int index);
   inline ::OsmAnd::OBF::BuildingIndex* add_buildings();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >&
       buildings() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >*
       mutable_buildings();
   
   // repeated .OsmAnd.OBF.StreetIndex streets = 12;
@@ -2254,9 +2254,9 @@ class CityBlockIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::StreetIndex& streets(int index) const;
   inline ::OsmAnd::OBF::StreetIndex* mutable_streets(int index);
   inline ::OsmAnd::OBF::StreetIndex* add_streets();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex >&
       streets() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex >*
       mutable_streets();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.CityBlockIndex)
@@ -2264,14 +2264,14 @@ class CityBlockIndex : public ::google::protobuf::Message {
   inline void set_has_shifttocityindex();
   inline void clear_has_shifttocityindex();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex > buildings_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex > streets_;
-  ::google::protobuf::uint32 shifttocityindex_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex > buildings_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex > streets_;
+  ::google::obf_protobuf::uint32 shifttocityindex_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(3 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -2282,7 +2282,7 @@ class CityBlockIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class StreetIndex : public ::google::protobuf::Message {
+class StreetIndex : public ::google::obf_protobuf::Message {
  public:
   StreetIndex();
   virtual ~StreetIndex();
@@ -2294,15 +2294,15 @@ class StreetIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const StreetIndex& default_instance();
   
   void Swap(StreetIndex* other);
@@ -2310,8 +2310,8 @@ class StreetIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   StreetIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const StreetIndex& from);
   void MergeFrom(const StreetIndex& from);
   void Clear();
@@ -2319,10 +2319,10 @@ class StreetIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -2330,7 +2330,7 @@ class StreetIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -2362,22 +2362,22 @@ class StreetIndex : public ::google::protobuf::Message {
   inline bool has_x() const;
   inline void clear_x();
   static const int kXFieldNumber = 3;
-  inline ::google::protobuf::int32 x() const;
-  inline void set_x(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 x() const;
+  inline void set_x(::google::obf_protobuf::int32 value);
   
   // required sint32 y = 4;
   inline bool has_y() const;
   inline void clear_y();
   static const int kYFieldNumber = 4;
-  inline ::google::protobuf::int32 y() const;
-  inline void set_y(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 y() const;
+  inline void set_y(::google::obf_protobuf::int32 value);
   
   // optional uint64 id = 6;
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 6;
-  inline ::google::protobuf::uint64 id() const;
-  inline void set_id(::google::protobuf::uint64 value);
+  inline ::google::obf_protobuf::uint64 id() const;
+  inline void set_id(::google::obf_protobuf::uint64 value);
   
   // repeated .OsmAnd.OBF.BuildingIndex buildings = 12;
   inline int buildings_size() const;
@@ -2386,9 +2386,9 @@ class StreetIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::BuildingIndex& buildings(int index) const;
   inline ::OsmAnd::OBF::BuildingIndex* mutable_buildings(int index);
   inline ::OsmAnd::OBF::BuildingIndex* add_buildings();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >&
       buildings() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >*
       mutable_buildings();
   
   // repeated .OsmAnd.OBF.StreetIntersection intersections = 5;
@@ -2398,9 +2398,9 @@ class StreetIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::StreetIntersection& intersections(int index) const;
   inline ::OsmAnd::OBF::StreetIntersection* mutable_intersections(int index);
   inline ::OsmAnd::OBF::StreetIntersection* add_intersections();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection >&
       intersections() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection >*
       mutable_intersections();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.StreetIndex)
@@ -2416,18 +2416,18 @@ class StreetIndex : public ::google::protobuf::Message {
   inline void set_has_id();
   inline void clear_has_id();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::std::string* name_en_;
-  ::google::protobuf::int32 x_;
-  ::google::protobuf::int32 y_;
-  ::google::protobuf::uint64 id_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex > buildings_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection > intersections_;
+  ::google::obf_protobuf::int32 x_;
+  ::google::obf_protobuf::int32 y_;
+  ::google::obf_protobuf::uint64 id_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex > buildings_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection > intersections_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(7 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -2438,7 +2438,7 @@ class StreetIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class StreetIntersection : public ::google::protobuf::Message {
+class StreetIntersection : public ::google::obf_protobuf::Message {
  public:
   StreetIntersection();
   virtual ~StreetIntersection();
@@ -2450,15 +2450,15 @@ class StreetIntersection : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const StreetIntersection& default_instance();
   
   void Swap(StreetIntersection* other);
@@ -2466,8 +2466,8 @@ class StreetIntersection : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   StreetIntersection* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const StreetIntersection& from);
   void MergeFrom(const StreetIntersection& from);
   void Clear();
@@ -2475,10 +2475,10 @@ class StreetIntersection : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -2486,7 +2486,7 @@ class StreetIntersection : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -2518,15 +2518,15 @@ class StreetIntersection : public ::google::protobuf::Message {
   inline bool has_intersectedx() const;
   inline void clear_intersectedx();
   static const int kIntersectedXFieldNumber = 4;
-  inline ::google::protobuf::int32 intersectedx() const;
-  inline void set_intersectedx(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 intersectedx() const;
+  inline void set_intersectedx(::google::obf_protobuf::int32 value);
   
   // required sint32 intersectedY = 5;
   inline bool has_intersectedy() const;
   inline void clear_intersectedy();
   static const int kIntersectedYFieldNumber = 5;
-  inline ::google::protobuf::int32 intersectedy() const;
-  inline void set_intersectedy(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 intersectedy() const;
+  inline void set_intersectedy(::google::obf_protobuf::int32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.StreetIntersection)
  private:
@@ -2539,15 +2539,15 @@ class StreetIntersection : public ::google::protobuf::Message {
   inline void set_has_intersectedy();
   inline void clear_has_intersectedy();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::std::string* name_en_;
-  ::google::protobuf::int32 intersectedx_;
-  ::google::protobuf::int32 intersectedy_;
+  ::google::obf_protobuf::int32 intersectedx_;
+  ::google::obf_protobuf::int32 intersectedy_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -2558,7 +2558,7 @@ class StreetIntersection : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class BuildingIndex : public ::google::protobuf::Message {
+class BuildingIndex : public ::google::obf_protobuf::Message {
  public:
   BuildingIndex();
   virtual ~BuildingIndex();
@@ -2570,15 +2570,15 @@ class BuildingIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const BuildingIndex& default_instance();
   
   void Swap(BuildingIndex* other);
@@ -2586,8 +2586,8 @@ class BuildingIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   BuildingIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const BuildingIndex& from);
   void MergeFrom(const BuildingIndex& from);
   void Clear();
@@ -2595,10 +2595,10 @@ class BuildingIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -2606,7 +2606,7 @@ class BuildingIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -2660,43 +2660,43 @@ class BuildingIndex : public ::google::protobuf::Message {
   inline bool has_interpolation() const;
   inline void clear_interpolation();
   static const int kInterpolationFieldNumber = 5;
-  inline ::google::protobuf::int32 interpolation() const;
-  inline void set_interpolation(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 interpolation() const;
+  inline void set_interpolation(::google::obf_protobuf::int32 value);
   
   // required sint32 x = 7;
   inline bool has_x() const;
   inline void clear_x();
   static const int kXFieldNumber = 7;
-  inline ::google::protobuf::int32 x() const;
-  inline void set_x(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 x() const;
+  inline void set_x(::google::obf_protobuf::int32 value);
   
   // required sint32 y = 8;
   inline bool has_y() const;
   inline void clear_y();
   static const int kYFieldNumber = 8;
-  inline ::google::protobuf::int32 y() const;
-  inline void set_y(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 y() const;
+  inline void set_y(::google::obf_protobuf::int32 value);
   
   // optional sint32 x2 = 9;
   inline bool has_x2() const;
   inline void clear_x2();
   static const int kX2FieldNumber = 9;
-  inline ::google::protobuf::int32 x2() const;
-  inline void set_x2(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 x2() const;
+  inline void set_x2(::google::obf_protobuf::int32 value);
   
   // optional sint32 y2 = 10;
   inline bool has_y2() const;
   inline void clear_y2();
   static const int kY2FieldNumber = 10;
-  inline ::google::protobuf::int32 y2() const;
-  inline void set_y2(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 y2() const;
+  inline void set_y2(::google::obf_protobuf::int32 value);
   
   // optional uint64 id = 13;
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 13;
-  inline ::google::protobuf::uint64 id() const;
-  inline void set_id(::google::protobuf::uint64 value);
+  inline ::google::obf_protobuf::uint64 id() const;
+  inline void set_id(::google::obf_protobuf::uint64 value);
   
   // optional string postcode = 14;
   inline bool has_postcode() const;
@@ -2734,22 +2734,22 @@ class BuildingIndex : public ::google::protobuf::Message {
   inline void set_has_postcode();
   inline void clear_has_postcode();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::std::string* name_en_;
   ::std::string* name2_;
   ::std::string* name_en2_;
-  ::google::protobuf::int32 interpolation_;
-  ::google::protobuf::int32 x_;
-  ::google::protobuf::int32 y_;
-  ::google::protobuf::int32 x2_;
-  ::google::protobuf::uint64 id_;
+  ::google::obf_protobuf::int32 interpolation_;
+  ::google::obf_protobuf::int32 x_;
+  ::google::obf_protobuf::int32 y_;
+  ::google::obf_protobuf::int32 x2_;
+  ::google::obf_protobuf::uint64 id_;
   ::std::string* postcode_;
-  ::google::protobuf::int32 y2_;
+  ::google::obf_protobuf::int32 y2_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(11 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(11 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -2760,7 +2760,7 @@ class BuildingIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class TransportRoutes : public ::google::protobuf::Message {
+class TransportRoutes : public ::google::obf_protobuf::Message {
  public:
   TransportRoutes();
   virtual ~TransportRoutes();
@@ -2772,15 +2772,15 @@ class TransportRoutes : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const TransportRoutes& default_instance();
   
   void Swap(TransportRoutes* other);
@@ -2788,8 +2788,8 @@ class TransportRoutes : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   TransportRoutes* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const TransportRoutes& from);
   void MergeFrom(const TransportRoutes& from);
   void Clear();
@@ -2797,10 +2797,10 @@ class TransportRoutes : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -2808,7 +2808,7 @@ class TransportRoutes : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -2821,20 +2821,20 @@ class TransportRoutes : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::TransportRoute& routes(int index) const;
   inline ::OsmAnd::OBF::TransportRoute* mutable_routes(int index);
   inline ::OsmAnd::OBF::TransportRoute* add_routes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute >&
       routes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute >*
       mutable_routes();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportRoutes)
  private:
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute > routes_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute > routes_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(1 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -2845,7 +2845,7 @@ class TransportRoutes : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class TransportRoute : public ::google::protobuf::Message {
+class TransportRoute : public ::google::obf_protobuf::Message {
  public:
   TransportRoute();
   virtual ~TransportRoute();
@@ -2857,15 +2857,15 @@ class TransportRoute : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const TransportRoute& default_instance();
   
   void Swap(TransportRoute* other);
@@ -2873,8 +2873,8 @@ class TransportRoute : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   TransportRoute* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const TransportRoute& from);
   void MergeFrom(const TransportRoute& from);
   void Clear();
@@ -2882,10 +2882,10 @@ class TransportRoute : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -2893,7 +2893,7 @@ class TransportRoute : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -2903,22 +2903,22 @@ class TransportRoute : public ::google::protobuf::Message {
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 1;
-  inline ::google::protobuf::uint64 id() const;
-  inline void set_id(::google::protobuf::uint64 value);
+  inline ::google::obf_protobuf::uint64 id() const;
+  inline void set_id(::google::obf_protobuf::uint64 value);
   
   // optional uint32 type = 3;
   inline bool has_type() const;
   inline void clear_type();
   static const int kTypeFieldNumber = 3;
-  inline ::google::protobuf::uint32 type() const;
-  inline void set_type(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 type() const;
+  inline void set_type(::google::obf_protobuf::uint32 value);
   
   // optional uint32 operator = 4;
   inline bool has_operator_() const;
   inline void clear_operator_();
   static const int kOperatorFieldNumber = 4;
-  inline ::google::protobuf::uint32 operator_() const;
-  inline void set_operator_(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 operator_() const;
+  inline void set_operator_(::google::obf_protobuf::uint32 value);
   
   // optional string ref = 5;
   inline bool has_ref() const;
@@ -2935,22 +2935,22 @@ class TransportRoute : public ::google::protobuf::Message {
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 6;
-  inline ::google::protobuf::uint32 name() const;
-  inline void set_name(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 name() const;
+  inline void set_name(::google::obf_protobuf::uint32 value);
   
   // optional uint32 name_en = 7;
   inline bool has_name_en() const;
   inline void clear_name_en();
   static const int kNameEnFieldNumber = 7;
-  inline ::google::protobuf::uint32 name_en() const;
-  inline void set_name_en(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 name_en() const;
+  inline void set_name_en(::google::obf_protobuf::uint32 value);
   
   // optional uint32 distance = 8;
   inline bool has_distance() const;
   inline void clear_distance();
   static const int kDistanceFieldNumber = 8;
-  inline ::google::protobuf::uint32 distance() const;
-  inline void set_distance(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 distance() const;
+  inline void set_distance(::google::obf_protobuf::uint32 value);
   
   // repeated .OsmAnd.OBF.TransportRouteStop directStops = 15;
   inline int directstops_size() const;
@@ -2959,9 +2959,9 @@ class TransportRoute : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::TransportRouteStop& directstops(int index) const;
   inline ::OsmAnd::OBF::TransportRouteStop* mutable_directstops(int index);
   inline ::OsmAnd::OBF::TransportRouteStop* add_directstops();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >&
       directstops() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >*
       mutable_directstops();
   
   // repeated .OsmAnd.OBF.TransportRouteStop reverseStops = 16;
@@ -2971,9 +2971,9 @@ class TransportRoute : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::TransportRouteStop& reversestops(int index) const;
   inline ::OsmAnd::OBF::TransportRouteStop* mutable_reversestops(int index);
   inline ::OsmAnd::OBF::TransportRouteStop* add_reversestops();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >&
       reversestops() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >*
       mutable_reversestops();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportRoute)
@@ -2993,20 +2993,20 @@ class TransportRoute : public ::google::protobuf::Message {
   inline void set_has_distance();
   inline void clear_has_distance();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::uint64 id_;
-  ::google::protobuf::uint32 type_;
-  ::google::protobuf::uint32 operator__;
+  ::google::obf_protobuf::uint64 id_;
+  ::google::obf_protobuf::uint32 type_;
+  ::google::obf_protobuf::uint32 operator__;
   ::std::string* ref_;
-  ::google::protobuf::uint32 name_;
-  ::google::protobuf::uint32 name_en_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > directstops_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > reversestops_;
-  ::google::protobuf::uint32 distance_;
+  ::google::obf_protobuf::uint32 name_;
+  ::google::obf_protobuf::uint32 name_en_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > directstops_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop > reversestops_;
+  ::google::obf_protobuf::uint32 distance_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(9 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(9 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3017,7 +3017,7 @@ class TransportRoute : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class TransportRouteStop : public ::google::protobuf::Message {
+class TransportRouteStop : public ::google::obf_protobuf::Message {
  public:
   TransportRouteStop();
   virtual ~TransportRouteStop();
@@ -3029,15 +3029,15 @@ class TransportRouteStop : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const TransportRouteStop& default_instance();
   
   void Swap(TransportRouteStop* other);
@@ -3045,8 +3045,8 @@ class TransportRouteStop : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   TransportRouteStop* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const TransportRouteStop& from);
   void MergeFrom(const TransportRouteStop& from);
   void Clear();
@@ -3054,10 +3054,10 @@ class TransportRouteStop : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -3065,7 +3065,7 @@ class TransportRouteStop : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -3075,36 +3075,36 @@ class TransportRouteStop : public ::google::protobuf::Message {
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 1;
-  inline ::google::protobuf::int64 id() const;
-  inline void set_id(::google::protobuf::int64 value);
+  inline ::google::obf_protobuf::int64 id() const;
+  inline void set_id(::google::obf_protobuf::int64 value);
   
   // required sint32 dx = 2;
   inline bool has_dx() const;
   inline void clear_dx();
   static const int kDxFieldNumber = 2;
-  inline ::google::protobuf::int32 dx() const;
-  inline void set_dx(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 dx() const;
+  inline void set_dx(::google::obf_protobuf::int32 value);
   
   // required sint32 dy = 3;
   inline bool has_dy() const;
   inline void clear_dy();
   static const int kDyFieldNumber = 3;
-  inline ::google::protobuf::int32 dy() const;
-  inline void set_dy(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 dy() const;
+  inline void set_dy(::google::obf_protobuf::int32 value);
   
   // required uint32 name = 6;
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 6;
-  inline ::google::protobuf::uint32 name() const;
-  inline void set_name(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 name() const;
+  inline void set_name(::google::obf_protobuf::uint32 value);
   
   // optional uint32 name_en = 7;
   inline bool has_name_en() const;
   inline void clear_name_en();
   static const int kNameEnFieldNumber = 7;
-  inline ::google::protobuf::uint32 name_en() const;
-  inline void set_name_en(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 name_en() const;
+  inline void set_name_en(::google::obf_protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportRouteStop)
  private:
@@ -3119,16 +3119,16 @@ class TransportRouteStop : public ::google::protobuf::Message {
   inline void set_has_name_en();
   inline void clear_has_name_en();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int64 id_;
-  ::google::protobuf::int32 dx_;
-  ::google::protobuf::int32 dy_;
-  ::google::protobuf::uint32 name_;
-  ::google::protobuf::uint32 name_en_;
+  ::google::obf_protobuf::int64 id_;
+  ::google::obf_protobuf::int32 dx_;
+  ::google::obf_protobuf::int32 dy_;
+  ::google::obf_protobuf::uint32 name_;
+  ::google::obf_protobuf::uint32 name_en_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(5 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3139,7 +3139,7 @@ class TransportRouteStop : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class TransportStop : public ::google::protobuf::Message {
+class TransportStop : public ::google::obf_protobuf::Message {
  public:
   TransportStop();
   virtual ~TransportStop();
@@ -3151,15 +3151,15 @@ class TransportStop : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const TransportStop& default_instance();
   
   void Swap(TransportStop* other);
@@ -3167,8 +3167,8 @@ class TransportStop : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   TransportStop* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const TransportStop& from);
   void MergeFrom(const TransportStop& from);
   void Clear();
@@ -3176,10 +3176,10 @@ class TransportStop : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -3187,7 +3187,7 @@ class TransportStop : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -3197,47 +3197,47 @@ class TransportStop : public ::google::protobuf::Message {
   inline bool has_dx() const;
   inline void clear_dx();
   static const int kDxFieldNumber = 1;
-  inline ::google::protobuf::int32 dx() const;
-  inline void set_dx(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 dx() const;
+  inline void set_dx(::google::obf_protobuf::int32 value);
   
   // required sint32 dy = 2;
   inline bool has_dy() const;
   inline void clear_dy();
   static const int kDyFieldNumber = 2;
-  inline ::google::protobuf::int32 dy() const;
-  inline void set_dy(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 dy() const;
+  inline void set_dy(::google::obf_protobuf::int32 value);
   
   // required sint64 id = 5;
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 5;
-  inline ::google::protobuf::int64 id() const;
-  inline void set_id(::google::protobuf::int64 value);
+  inline ::google::obf_protobuf::int64 id() const;
+  inline void set_id(::google::obf_protobuf::int64 value);
   
   // required uint32 name = 6;
   inline bool has_name() const;
   inline void clear_name();
   static const int kNameFieldNumber = 6;
-  inline ::google::protobuf::uint32 name() const;
-  inline void set_name(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 name() const;
+  inline void set_name(::google::obf_protobuf::uint32 value);
   
   // optional uint32 name_en = 7;
   inline bool has_name_en() const;
   inline void clear_name_en();
   static const int kNameEnFieldNumber = 7;
-  inline ::google::protobuf::uint32 name_en() const;
-  inline void set_name_en(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 name_en() const;
+  inline void set_name_en(::google::obf_protobuf::uint32 value);
   
   // repeated uint32 routes = 16;
   inline int routes_size() const;
   inline void clear_routes();
   static const int kRoutesFieldNumber = 16;
-  inline ::google::protobuf::uint32 routes(int index) const;
-  inline void set_routes(int index, ::google::protobuf::uint32 value);
-  inline void add_routes(::google::protobuf::uint32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+  inline ::google::obf_protobuf::uint32 routes(int index) const;
+  inline void set_routes(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_routes(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
       routes() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
       mutable_routes();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportStop)
@@ -3253,17 +3253,17 @@ class TransportStop : public ::google::protobuf::Message {
   inline void set_has_name_en();
   inline void clear_has_name_en();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int32 dx_;
-  ::google::protobuf::int32 dy_;
-  ::google::protobuf::int64 id_;
-  ::google::protobuf::uint32 name_;
-  ::google::protobuf::uint32 name_en_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > routes_;
+  ::google::obf_protobuf::int32 dx_;
+  ::google::obf_protobuf::int32 dy_;
+  ::google::obf_protobuf::int64 id_;
+  ::google::obf_protobuf::uint32 name_;
+  ::google::obf_protobuf::uint32 name_en_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > routes_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(6 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3274,7 +3274,7 @@ class TransportStop : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class TransportStopsTree : public ::google::protobuf::Message {
+class TransportStopsTree : public ::google::obf_protobuf::Message {
  public:
   TransportStopsTree();
   virtual ~TransportStopsTree();
@@ -3286,15 +3286,15 @@ class TransportStopsTree : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const TransportStopsTree& default_instance();
   
   void Swap(TransportStopsTree* other);
@@ -3302,8 +3302,8 @@ class TransportStopsTree : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   TransportStopsTree* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const TransportStopsTree& from);
   void MergeFrom(const TransportStopsTree& from);
   void Clear();
@@ -3311,10 +3311,10 @@ class TransportStopsTree : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -3322,7 +3322,7 @@ class TransportStopsTree : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -3332,29 +3332,29 @@ class TransportStopsTree : public ::google::protobuf::Message {
   inline bool has_left() const;
   inline void clear_left();
   static const int kLeftFieldNumber = 1;
-  inline ::google::protobuf::int32 left() const;
-  inline void set_left(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 left() const;
+  inline void set_left(::google::obf_protobuf::int32 value);
   
   // required sint32 right = 2;
   inline bool has_right() const;
   inline void clear_right();
   static const int kRightFieldNumber = 2;
-  inline ::google::protobuf::int32 right() const;
-  inline void set_right(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 right() const;
+  inline void set_right(::google::obf_protobuf::int32 value);
   
   // required sint32 top = 3;
   inline bool has_top() const;
   inline void clear_top();
   static const int kTopFieldNumber = 3;
-  inline ::google::protobuf::int32 top() const;
-  inline void set_top(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 top() const;
+  inline void set_top(::google::obf_protobuf::int32 value);
   
   // required sint32 bottom = 4;
   inline bool has_bottom() const;
   inline void clear_bottom();
   static const int kBottomFieldNumber = 4;
-  inline ::google::protobuf::int32 bottom() const;
-  inline void set_bottom(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 bottom() const;
+  inline void set_bottom(::google::obf_protobuf::int32 value);
   
   // repeated .OsmAnd.OBF.TransportStopsTree subtrees = 7;
   inline int subtrees_size() const;
@@ -3363,9 +3363,9 @@ class TransportStopsTree : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::TransportStopsTree& subtrees(int index) const;
   inline ::OsmAnd::OBF::TransportStopsTree* mutable_subtrees(int index);
   inline ::OsmAnd::OBF::TransportStopsTree* add_subtrees();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree >&
       subtrees() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree >*
       mutable_subtrees();
   
   // repeated .OsmAnd.OBF.TransportStop leafs = 8;
@@ -3375,17 +3375,17 @@ class TransportStopsTree : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::TransportStop& leafs(int index) const;
   inline ::OsmAnd::OBF::TransportStop* mutable_leafs(int index);
   inline ::OsmAnd::OBF::TransportStop* add_leafs();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop >&
       leafs() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop >*
       mutable_leafs();
   
   // optional uint64 baseId = 16;
   inline bool has_baseid() const;
   inline void clear_baseid();
   static const int kBaseIdFieldNumber = 16;
-  inline ::google::protobuf::uint64 baseid() const;
-  inline void set_baseid(::google::protobuf::uint64 value);
+  inline ::google::obf_protobuf::uint64 baseid() const;
+  inline void set_baseid(::google::obf_protobuf::uint64 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.TransportStopsTree)
  private:
@@ -3400,18 +3400,18 @@ class TransportStopsTree : public ::google::protobuf::Message {
   inline void set_has_baseid();
   inline void clear_has_baseid();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int32 left_;
-  ::google::protobuf::int32 right_;
-  ::google::protobuf::int32 top_;
-  ::google::protobuf::int32 bottom_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree > subtrees_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop > leafs_;
-  ::google::protobuf::uint64 baseid_;
+  ::google::obf_protobuf::int32 left_;
+  ::google::obf_protobuf::int32 right_;
+  ::google::obf_protobuf::int32 top_;
+  ::google::obf_protobuf::int32 bottom_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree > subtrees_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop > leafs_;
+  ::google::obf_protobuf::uint64 baseid_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(7 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3422,7 +3422,7 @@ class TransportStopsTree : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndTransportIndex : public ::google::protobuf::Message {
+class OsmAndTransportIndex : public ::google::obf_protobuf::Message {
  public:
   OsmAndTransportIndex();
   virtual ~OsmAndTransportIndex();
@@ -3434,15 +3434,15 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndTransportIndex& default_instance();
   
   void Swap(OsmAndTransportIndex* other);
@@ -3450,8 +3450,8 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndTransportIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndTransportIndex& from);
   void MergeFrom(const OsmAndTransportIndex& from);
   void Clear();
@@ -3459,10 +3459,10 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -3470,7 +3470,7 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -3522,7 +3522,7 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
   inline void set_has_stringtable();
   inline void clear_has_stringtable();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::OsmAnd::OBF::TransportRoutes* routes_;
@@ -3530,7 +3530,7 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
   ::OsmAnd::OBF::StringTable* stringtable_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3541,7 +3541,7 @@ class OsmAndTransportIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiIndex : public ::google::protobuf::Message {
+class OsmAndPoiIndex : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiIndex();
   virtual ~OsmAndPoiIndex();
@@ -3553,15 +3553,15 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiIndex& default_instance();
   
   void Swap(OsmAndPoiIndex* other);
@@ -3569,8 +3569,8 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndPoiIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiIndex& from);
   void MergeFrom(const OsmAndPoiIndex& from);
   void Clear();
@@ -3578,10 +3578,10 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -3589,7 +3589,7 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -3621,9 +3621,9 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndCategoryTable& categoriestable(int index) const;
   inline ::OsmAnd::OBF::OsmAndCategoryTable* mutable_categoriestable(int index);
   inline ::OsmAnd::OBF::OsmAndCategoryTable* add_categoriestable();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable >&
       categoriestable() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable >*
       mutable_categoriestable();
   
   // optional .OsmAnd.OBF.OsmAndPoiNameIndex nameIndex = 4;
@@ -3649,9 +3649,9 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndPoiBox& boxes(int index) const;
   inline ::OsmAnd::OBF::OsmAndPoiBox* mutable_boxes(int index);
   inline ::OsmAnd::OBF::OsmAndPoiBox* add_boxes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >&
       boxes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >*
       mutable_boxes();
   
   // repeated .OsmAnd.OBF.OsmAndPoiBoxData poiData = 9;
@@ -3661,9 +3661,9 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndPoiBoxData& poidata(int index) const;
   inline ::OsmAnd::OBF::OsmAndPoiBoxData* mutable_poidata(int index);
   inline ::OsmAnd::OBF::OsmAndPoiBoxData* add_poidata();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData >&
       poidata() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData >*
       mutable_poidata();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiIndex)
@@ -3677,18 +3677,18 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
   inline void set_has_subtypestable();
   inline void clear_has_subtypestable();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::OsmAnd::OBF::OsmAndTileBox* boundaries_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable > categoriestable_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable > categoriestable_;
   ::OsmAnd::OBF::OsmAndPoiNameIndex* nameindex_;
   ::OsmAnd::OBF::OsmAndSubtypesTable* subtypestable_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox > boxes_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData > poidata_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox > boxes_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData > poidata_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(7 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3699,7 +3699,7 @@ class OsmAndPoiIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::protobuf::Message {
+class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiNameIndex_OsmAndPoiNameIndexData();
   virtual ~OsmAndPoiNameIndex_OsmAndPoiNameIndexData();
@@ -3711,15 +3711,15 @@ class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::protobuf::Mes
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiNameIndex_OsmAndPoiNameIndexData& default_instance();
   
   void Swap(OsmAndPoiNameIndex_OsmAndPoiNameIndexData* other);
@@ -3727,8 +3727,8 @@ class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::protobuf::Mes
   // implements Message ----------------------------------------------
   
   OsmAndPoiNameIndex_OsmAndPoiNameIndexData* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiNameIndex_OsmAndPoiNameIndexData& from);
   void MergeFrom(const OsmAndPoiNameIndex_OsmAndPoiNameIndexData& from);
   void Clear();
@@ -3736,10 +3736,10 @@ class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::protobuf::Mes
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -3747,7 +3747,7 @@ class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::protobuf::Mes
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -3760,20 +3760,20 @@ class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::protobuf::Mes
   inline const ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom& atoms(int index) const;
   inline ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom* mutable_atoms(int index);
   inline ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom* add_atoms();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom >&
       atoms() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom >*
       mutable_atoms();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiNameIndex.OsmAndPoiNameIndexData)
  private:
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom > atoms_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom > atoms_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(1 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3784,7 +3784,7 @@ class OsmAndPoiNameIndex_OsmAndPoiNameIndexData : public ::google::protobuf::Mes
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiNameIndex : public ::google::protobuf::Message {
+class OsmAndPoiNameIndex : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiNameIndex();
   virtual ~OsmAndPoiNameIndex();
@@ -3796,15 +3796,15 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiNameIndex& default_instance();
   
   void Swap(OsmAndPoiNameIndex* other);
@@ -3812,8 +3812,8 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndPoiNameIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiNameIndex& from);
   void MergeFrom(const OsmAndPoiNameIndex& from);
   void Clear();
@@ -3821,10 +3821,10 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -3832,7 +3832,7 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -3855,9 +3855,9 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData& data(int index) const;
   inline ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData* mutable_data(int index);
   inline ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData* add_data();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData >&
       data() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData >*
       mutable_data();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiNameIndex)
@@ -3865,13 +3865,13 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
   inline void set_has_table();
   inline void clear_has_table();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::OsmAnd::OBF::IndexedStringTable* table_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData > data_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData > data_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(2 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3882,7 +3882,7 @@ class OsmAndPoiNameIndex : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
+class OsmAndPoiNameIndexDataAtom : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiNameIndexDataAtom();
   virtual ~OsmAndPoiNameIndexDataAtom();
@@ -3894,15 +3894,15 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiNameIndexDataAtom& default_instance();
   
   void Swap(OsmAndPoiNameIndexDataAtom* other);
@@ -3910,8 +3910,8 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndPoiNameIndexDataAtom* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiNameIndexDataAtom& from);
   void MergeFrom(const OsmAndPoiNameIndexDataAtom& from);
   void Clear();
@@ -3919,10 +3919,10 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -3930,7 +3930,7 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -3940,29 +3940,29 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
   inline bool has_zoom() const;
   inline void clear_zoom();
   static const int kZoomFieldNumber = 2;
-  inline ::google::protobuf::uint32 zoom() const;
-  inline void set_zoom(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 zoom() const;
+  inline void set_zoom(::google::obf_protobuf::uint32 value);
   
   // optional uint32 x = 3;
   inline bool has_x() const;
   inline void clear_x();
   static const int kXFieldNumber = 3;
-  inline ::google::protobuf::uint32 x() const;
-  inline void set_x(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 x() const;
+  inline void set_x(::google::obf_protobuf::uint32 value);
   
   // optional uint32 y = 4;
   inline bool has_y() const;
   inline void clear_y();
   static const int kYFieldNumber = 4;
-  inline ::google::protobuf::uint32 y() const;
-  inline void set_y(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 y() const;
+  inline void set_y(::google::obf_protobuf::uint32 value);
   
   // optional fixed32 shiftTo = 14;
   inline bool has_shiftto() const;
   inline void clear_shiftto();
   static const int kShiftToFieldNumber = 14;
-  inline ::google::protobuf::uint32 shiftto() const;
-  inline void set_shiftto(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 shiftto() const;
+  inline void set_shiftto(::google::obf_protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiNameIndexDataAtom)
  private:
@@ -3975,15 +3975,15 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
   inline void set_has_shiftto();
   inline void clear_has_shiftto();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::uint32 zoom_;
-  ::google::protobuf::uint32 x_;
-  ::google::protobuf::uint32 y_;
-  ::google::protobuf::uint32 shiftto_;
+  ::google::obf_protobuf::uint32 zoom_;
+  ::google::obf_protobuf::uint32 x_;
+  ::google::obf_protobuf::uint32 y_;
+  ::google::obf_protobuf::uint32 shiftto_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -3994,7 +3994,7 @@ class OsmAndPoiNameIndexDataAtom : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndCategoryTable : public ::google::protobuf::Message {
+class OsmAndCategoryTable : public ::google::obf_protobuf::Message {
  public:
   OsmAndCategoryTable();
   virtual ~OsmAndCategoryTable();
@@ -4006,15 +4006,15 @@ class OsmAndCategoryTable : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndCategoryTable& default_instance();
   
   void Swap(OsmAndCategoryTable* other);
@@ -4022,8 +4022,8 @@ class OsmAndCategoryTable : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndCategoryTable* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndCategoryTable& from);
   void MergeFrom(const OsmAndCategoryTable& from);
   void Clear();
@@ -4031,10 +4031,10 @@ class OsmAndCategoryTable : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -4042,7 +4042,7 @@ class OsmAndCategoryTable : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -4072,21 +4072,21 @@ class OsmAndCategoryTable : public ::google::protobuf::Message {
   inline void add_subcategories(const ::std::string& value);
   inline void add_subcategories(const char* value);
   inline void add_subcategories(const char* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& subcategories() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_subcategories();
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& subcategories() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_subcategories();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndCategoryTable)
  private:
   inline void set_has_category();
   inline void clear_has_category();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* category_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> subcategories_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> subcategories_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(2 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4097,7 +4097,7 @@ class OsmAndCategoryTable : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndSubtypesTable : public ::google::protobuf::Message {
+class OsmAndSubtypesTable : public ::google::obf_protobuf::Message {
  public:
   OsmAndSubtypesTable();
   virtual ~OsmAndSubtypesTable();
@@ -4109,15 +4109,15 @@ class OsmAndSubtypesTable : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndSubtypesTable& default_instance();
   
   void Swap(OsmAndSubtypesTable* other);
@@ -4125,8 +4125,8 @@ class OsmAndSubtypesTable : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndSubtypesTable* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndSubtypesTable& from);
   void MergeFrom(const OsmAndSubtypesTable& from);
   void Clear();
@@ -4134,10 +4134,10 @@ class OsmAndSubtypesTable : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -4145,7 +4145,7 @@ class OsmAndSubtypesTable : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -4158,20 +4158,20 @@ class OsmAndSubtypesTable : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndPoiSubtype& subtypes(int index) const;
   inline ::OsmAnd::OBF::OsmAndPoiSubtype* mutable_subtypes(int index);
   inline ::OsmAnd::OBF::OsmAndPoiSubtype* add_subtypes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype >&
       subtypes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype >*
       mutable_subtypes();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndSubtypesTable)
  private:
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype > subtypes_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype > subtypes_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(1 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4182,7 +4182,7 @@ class OsmAndSubtypesTable : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiSubtype : public ::google::protobuf::Message {
+class OsmAndPoiSubtype : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiSubtype();
   virtual ~OsmAndPoiSubtype();
@@ -4194,15 +4194,15 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiSubtype& default_instance();
   
   void Swap(OsmAndPoiSubtype* other);
@@ -4210,8 +4210,8 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndPoiSubtype* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiSubtype& from);
   void MergeFrom(const OsmAndPoiSubtype& from);
   void Clear();
@@ -4219,10 +4219,10 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -4230,7 +4230,7 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -4269,15 +4269,15 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
   inline bool has_frequency() const;
   inline void clear_frequency();
   static const int kFrequencyFieldNumber = 5;
-  inline ::google::protobuf::uint32 frequency() const;
-  inline void set_frequency(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 frequency() const;
+  inline void set_frequency(::google::obf_protobuf::uint32 value);
   
   // optional uint32 subtypeValuesSize = 6;
   inline bool has_subtypevaluessize() const;
   inline void clear_subtypevaluessize();
   static const int kSubtypeValuesSizeFieldNumber = 6;
-  inline ::google::protobuf::uint32 subtypevaluessize() const;
-  inline void set_subtypevaluessize(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 subtypevaluessize() const;
+  inline void set_subtypevaluessize(::google::obf_protobuf::uint32 value);
   
   // repeated string subtypeValue = 8;
   inline int subtypevalue_size() const;
@@ -4292,8 +4292,8 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
   inline void add_subtypevalue(const ::std::string& value);
   inline void add_subtypevalue(const char* value);
   inline void add_subtypevalue(const char* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& subtypevalue() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_subtypevalue();
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& subtypevalue() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_subtypevalue();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiSubtype)
  private:
@@ -4308,17 +4308,17 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
   inline void set_has_subtypevaluessize();
   inline void clear_has_subtypevaluessize();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::std::string* tagname_;
   bool istext_;
-  ::google::protobuf::uint32 frequency_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> subtypevalue_;
-  ::google::protobuf::uint32 subtypevaluessize_;
+  ::google::obf_protobuf::uint32 frequency_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> subtypevalue_;
+  ::google::obf_protobuf::uint32 subtypevaluessize_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(6 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4329,7 +4329,7 @@ class OsmAndPoiSubtype : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiBox : public ::google::protobuf::Message {
+class OsmAndPoiBox : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiBox();
   virtual ~OsmAndPoiBox();
@@ -4341,15 +4341,15 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiBox& default_instance();
   
   void Swap(OsmAndPoiBox* other);
@@ -4357,8 +4357,8 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndPoiBox* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiBox& from);
   void MergeFrom(const OsmAndPoiBox& from);
   void Clear();
@@ -4366,10 +4366,10 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -4377,7 +4377,7 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -4387,22 +4387,22 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   inline bool has_zoom() const;
   inline void clear_zoom();
   static const int kZoomFieldNumber = 1;
-  inline ::google::protobuf::uint32 zoom() const;
-  inline void set_zoom(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 zoom() const;
+  inline void set_zoom(::google::obf_protobuf::uint32 value);
   
   // required sint32 left = 2;
   inline bool has_left() const;
   inline void clear_left();
   static const int kLeftFieldNumber = 2;
-  inline ::google::protobuf::int32 left() const;
-  inline void set_left(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 left() const;
+  inline void set_left(::google::obf_protobuf::int32 value);
   
   // required sint32 top = 3;
   inline bool has_top() const;
   inline void clear_top();
   static const int kTopFieldNumber = 3;
-  inline ::google::protobuf::int32 top() const;
-  inline void set_top(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 top() const;
+  inline void set_top(::google::obf_protobuf::int32 value);
   
   // optional .OsmAnd.OBF.OsmAndPoiCategories categories = 4;
   inline bool has_categories() const;
@@ -4419,17 +4419,17 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndPoiBox& subboxes(int index) const;
   inline ::OsmAnd::OBF::OsmAndPoiBox* mutable_subboxes(int index);
   inline ::OsmAnd::OBF::OsmAndPoiBox* add_subboxes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >&
       subboxes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >*
       mutable_subboxes();
   
   // optional fixed32 shiftToData = 14;
   inline bool has_shifttodata() const;
   inline void clear_shifttodata();
   static const int kShiftToDataFieldNumber = 14;
-  inline ::google::protobuf::uint32 shifttodata() const;
-  inline void set_shifttodata(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 shifttodata() const;
+  inline void set_shifttodata(::google::obf_protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiBox)
  private:
@@ -4444,17 +4444,17 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
   inline void set_has_shifttodata();
   inline void clear_has_shifttodata();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::uint32 zoom_;
-  ::google::protobuf::int32 left_;
+  ::google::obf_protobuf::uint32 zoom_;
+  ::google::obf_protobuf::int32 left_;
   ::OsmAnd::OBF::OsmAndPoiCategories* categories_;
-  ::google::protobuf::int32 top_;
-  ::google::protobuf::uint32 shifttodata_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox > subboxes_;
+  ::google::obf_protobuf::int32 top_;
+  ::google::obf_protobuf::uint32 shifttodata_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox > subboxes_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(6 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4465,7 +4465,7 @@ class OsmAndPoiBox : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiCategories : public ::google::protobuf::Message {
+class OsmAndPoiCategories : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiCategories();
   virtual ~OsmAndPoiCategories();
@@ -4477,15 +4477,15 @@ class OsmAndPoiCategories : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiCategories& default_instance();
   
   void Swap(OsmAndPoiCategories* other);
@@ -4493,8 +4493,8 @@ class OsmAndPoiCategories : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndPoiCategories* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiCategories& from);
   void MergeFrom(const OsmAndPoiCategories& from);
   void Clear();
@@ -4502,10 +4502,10 @@ class OsmAndPoiCategories : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -4513,7 +4513,7 @@ class OsmAndPoiCategories : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -4523,36 +4523,36 @@ class OsmAndPoiCategories : public ::google::protobuf::Message {
   inline int categories_size() const;
   inline void clear_categories();
   static const int kCategoriesFieldNumber = 3;
-  inline ::google::protobuf::uint32 categories(int index) const;
-  inline void set_categories(int index, ::google::protobuf::uint32 value);
-  inline void add_categories(::google::protobuf::uint32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+  inline ::google::obf_protobuf::uint32 categories(int index) const;
+  inline void set_categories(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_categories(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
       categories() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
       mutable_categories();
   
   // repeated uint32 subcategories = 5;
   inline int subcategories_size() const;
   inline void clear_subcategories();
   static const int kSubcategoriesFieldNumber = 5;
-  inline ::google::protobuf::uint32 subcategories(int index) const;
-  inline void set_subcategories(int index, ::google::protobuf::uint32 value);
-  inline void add_subcategories(::google::protobuf::uint32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+  inline ::google::obf_protobuf::uint32 subcategories(int index) const;
+  inline void set_subcategories(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_subcategories(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
       subcategories() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
       mutable_subcategories();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiCategories)
  private:
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > categories_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > subcategories_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > categories_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > subcategories_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(2 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4563,7 +4563,7 @@ class OsmAndPoiCategories : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiBoxData : public ::google::protobuf::Message {
+class OsmAndPoiBoxData : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiBoxData();
   virtual ~OsmAndPoiBoxData();
@@ -4575,15 +4575,15 @@ class OsmAndPoiBoxData : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiBoxData& default_instance();
   
   void Swap(OsmAndPoiBoxData* other);
@@ -4591,8 +4591,8 @@ class OsmAndPoiBoxData : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndPoiBoxData* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiBoxData& from);
   void MergeFrom(const OsmAndPoiBoxData& from);
   void Clear();
@@ -4600,10 +4600,10 @@ class OsmAndPoiBoxData : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -4611,7 +4611,7 @@ class OsmAndPoiBoxData : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -4621,22 +4621,22 @@ class OsmAndPoiBoxData : public ::google::protobuf::Message {
   inline bool has_zoom() const;
   inline void clear_zoom();
   static const int kZoomFieldNumber = 1;
-  inline ::google::protobuf::uint32 zoom() const;
-  inline void set_zoom(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 zoom() const;
+  inline void set_zoom(::google::obf_protobuf::uint32 value);
   
   // optional uint32 x = 2;
   inline bool has_x() const;
   inline void clear_x();
   static const int kXFieldNumber = 2;
-  inline ::google::protobuf::uint32 x() const;
-  inline void set_x(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 x() const;
+  inline void set_x(::google::obf_protobuf::uint32 value);
   
   // optional uint32 y = 3;
   inline bool has_y() const;
   inline void clear_y();
   static const int kYFieldNumber = 3;
-  inline ::google::protobuf::uint32 y() const;
-  inline void set_y(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 y() const;
+  inline void set_y(::google::obf_protobuf::uint32 value);
   
   // repeated .OsmAnd.OBF.OsmAndPoiBoxDataAtom poiData = 5;
   inline int poidata_size() const;
@@ -4645,9 +4645,9 @@ class OsmAndPoiBoxData : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndPoiBoxDataAtom& poidata(int index) const;
   inline ::OsmAnd::OBF::OsmAndPoiBoxDataAtom* mutable_poidata(int index);
   inline ::OsmAnd::OBF::OsmAndPoiBoxDataAtom* add_poidata();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom >&
       poidata() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom >*
       mutable_poidata();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiBoxData)
@@ -4659,15 +4659,15 @@ class OsmAndPoiBoxData : public ::google::protobuf::Message {
   inline void set_has_y();
   inline void clear_has_y();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::uint32 zoom_;
-  ::google::protobuf::uint32 x_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom > poidata_;
-  ::google::protobuf::uint32 y_;
+  ::google::obf_protobuf::uint32 zoom_;
+  ::google::obf_protobuf::uint32 x_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom > poidata_;
+  ::google::obf_protobuf::uint32 y_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4678,7 +4678,7 @@ class OsmAndPoiBoxData : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
+class OsmAndPoiBoxDataAtom : public ::google::obf_protobuf::Message {
  public:
   OsmAndPoiBoxDataAtom();
   virtual ~OsmAndPoiBoxDataAtom();
@@ -4690,15 +4690,15 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndPoiBoxDataAtom& default_instance();
   
   void Swap(OsmAndPoiBoxDataAtom* other);
@@ -4706,8 +4706,8 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndPoiBoxDataAtom* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndPoiBoxDataAtom& from);
   void MergeFrom(const OsmAndPoiBoxDataAtom& from);
   void Clear();
@@ -4715,10 +4715,10 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -4726,7 +4726,7 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -4736,38 +4736,38 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline bool has_dx() const;
   inline void clear_dx();
   static const int kDxFieldNumber = 2;
-  inline ::google::protobuf::int32 dx() const;
-  inline void set_dx(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 dx() const;
+  inline void set_dx(::google::obf_protobuf::int32 value);
   
   // required sint32 dy = 3;
   inline bool has_dy() const;
   inline void clear_dy();
   static const int kDyFieldNumber = 3;
-  inline ::google::protobuf::int32 dy() const;
-  inline void set_dy(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 dy() const;
+  inline void set_dy(::google::obf_protobuf::int32 value);
   
   // repeated uint32 categories = 4;
   inline int categories_size() const;
   inline void clear_categories();
   static const int kCategoriesFieldNumber = 4;
-  inline ::google::protobuf::uint32 categories(int index) const;
-  inline void set_categories(int index, ::google::protobuf::uint32 value);
-  inline void add_categories(::google::protobuf::uint32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+  inline ::google::obf_protobuf::uint32 categories(int index) const;
+  inline void set_categories(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_categories(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
       categories() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
       mutable_categories();
   
   // repeated uint32 subcategories = 5;
   inline int subcategories_size() const;
   inline void clear_subcategories();
   static const int kSubcategoriesFieldNumber = 5;
-  inline ::google::protobuf::uint32 subcategories(int index) const;
-  inline void set_subcategories(int index, ::google::protobuf::uint32 value);
-  inline void add_subcategories(::google::protobuf::uint32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+  inline ::google::obf_protobuf::uint32 subcategories(int index) const;
+  inline void set_subcategories(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_subcategories(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
       subcategories() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
       mutable_subcategories();
   
   // optional string name = 6;
@@ -4796,8 +4796,8 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 8;
-  inline ::google::protobuf::uint64 id() const;
-  inline void set_id(::google::protobuf::uint64 value);
+  inline ::google::obf_protobuf::uint64 id() const;
+  inline void set_id(::google::obf_protobuf::uint64 value);
   
   // optional string openingHours = 10;
   inline bool has_openinghours() const;
@@ -4847,12 +4847,12 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline int textcategories_size() const;
   inline void clear_textcategories();
   static const int kTextCategoriesFieldNumber = 14;
-  inline ::google::protobuf::uint32 textcategories(int index) const;
-  inline void set_textcategories(int index, ::google::protobuf::uint32 value);
-  inline void add_textcategories(::google::protobuf::uint32 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+  inline ::google::obf_protobuf::uint32 textcategories(int index) const;
+  inline void set_textcategories(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_textcategories(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
       textcategories() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
       mutable_textcategories();
   
   // repeated string textValues = 15;
@@ -4868,8 +4868,8 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline void add_textvalues(const ::std::string& value);
   inline void add_textvalues(const char* value);
   inline void add_textvalues(const char* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& textvalues() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_textvalues();
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& textvalues() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_textvalues();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndPoiBoxDataAtom)
  private:
@@ -4892,24 +4892,24 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
   inline void set_has_note();
   inline void clear_has_note();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int32 dx_;
-  ::google::protobuf::int32 dy_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > categories_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > subcategories_;
+  ::google::obf_protobuf::int32 dx_;
+  ::google::obf_protobuf::int32 dy_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > categories_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > subcategories_;
   ::std::string* name_;
   ::std::string* nameen_;
-  ::google::protobuf::uint64 id_;
+  ::google::obf_protobuf::uint64 id_;
   ::std::string* openinghours_;
   ::std::string* site_;
   ::std::string* phone_;
   ::std::string* note_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > textcategories_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> textvalues_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > textcategories_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> textvalues_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(13 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(13 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -4920,7 +4920,7 @@ class OsmAndPoiBoxDataAtom : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class IdTable : public ::google::protobuf::Message {
+class IdTable : public ::google::obf_protobuf::Message {
  public:
   IdTable();
   virtual ~IdTable();
@@ -4932,15 +4932,15 @@ class IdTable : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const IdTable& default_instance();
   
   void Swap(IdTable* other);
@@ -4948,8 +4948,8 @@ class IdTable : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   IdTable* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const IdTable& from);
   void MergeFrom(const IdTable& from);
   void Clear();
@@ -4957,10 +4957,10 @@ class IdTable : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -4968,7 +4968,7 @@ class IdTable : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -4978,23 +4978,23 @@ class IdTable : public ::google::protobuf::Message {
   inline int routeid_size() const;
   inline void clear_routeid();
   static const int kRouteIdFieldNumber = 1;
-  inline ::google::protobuf::int64 routeid(int index) const;
-  inline void set_routeid(int index, ::google::protobuf::int64 value);
-  inline void add_routeid(::google::protobuf::int64 value);
-  inline const ::google::protobuf::RepeatedField< ::google::protobuf::int64 >&
+  inline ::google::obf_protobuf::int64 routeid(int index) const;
+  inline void set_routeid(int index, ::google::obf_protobuf::int64 value);
+  inline void add_routeid(::google::obf_protobuf::int64 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int64 >&
       routeid() const;
-  inline ::google::protobuf::RepeatedField< ::google::protobuf::int64 >*
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int64 >*
       mutable_routeid();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.IdTable)
  private:
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::RepeatedField< ::google::protobuf::int64 > routeid_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int64 > routeid_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(1 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -5005,7 +5005,7 @@ class IdTable : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class RestrictionData : public ::google::protobuf::Message {
+class RestrictionData : public ::google::obf_protobuf::Message {
  public:
   RestrictionData();
   virtual ~RestrictionData();
@@ -5017,15 +5017,15 @@ class RestrictionData : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const RestrictionData& default_instance();
   
   void Swap(RestrictionData* other);
@@ -5033,8 +5033,8 @@ class RestrictionData : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   RestrictionData* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const RestrictionData& from);
   void MergeFrom(const RestrictionData& from);
   void Clear();
@@ -5042,10 +5042,10 @@ class RestrictionData : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -5053,7 +5053,7 @@ class RestrictionData : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -5063,29 +5063,29 @@ class RestrictionData : public ::google::protobuf::Message {
   inline bool has_type() const;
   inline void clear_type();
   static const int kTypeFieldNumber = 1;
-  inline ::google::protobuf::int32 type() const;
-  inline void set_type(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 type() const;
+  inline void set_type(::google::obf_protobuf::int32 value);
   
   // required int32 from = 2;
   inline bool has_from() const;
   inline void clear_from();
   static const int kFromFieldNumber = 2;
-  inline ::google::protobuf::int32 from() const;
-  inline void set_from(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 from() const;
+  inline void set_from(::google::obf_protobuf::int32 value);
   
   // required int32 to = 3;
   inline bool has_to() const;
   inline void clear_to();
   static const int kToFieldNumber = 3;
-  inline ::google::protobuf::int32 to() const;
-  inline void set_to(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 to() const;
+  inline void set_to(::google::obf_protobuf::int32 value);
   
   // optional int32 via = 4;
   inline bool has_via() const;
   inline void clear_via();
   static const int kViaFieldNumber = 4;
-  inline ::google::protobuf::int32 via() const;
-  inline void set_via(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 via() const;
+  inline void set_via(::google::obf_protobuf::int32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.RestrictionData)
  private:
@@ -5098,15 +5098,15 @@ class RestrictionData : public ::google::protobuf::Message {
   inline void set_has_via();
   inline void clear_has_via();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int32 type_;
-  ::google::protobuf::int32 from_;
-  ::google::protobuf::int32 to_;
-  ::google::protobuf::int32 via_;
+  ::google::obf_protobuf::int32 type_;
+  ::google::obf_protobuf::int32 from_;
+  ::google::obf_protobuf::int32 to_;
+  ::google::obf_protobuf::int32 via_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -5117,7 +5117,7 @@ class RestrictionData : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class RouteData : public ::google::protobuf::Message {
+class RouteData : public ::google::obf_protobuf::Message {
  public:
   RouteData();
   virtual ~RouteData();
@@ -5129,15 +5129,15 @@ class RouteData : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const RouteData& default_instance();
   
   void Swap(RouteData* other);
@@ -5145,8 +5145,8 @@ class RouteData : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   RouteData* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const RouteData& from);
   void MergeFrom(const RouteData& from);
   void Clear();
@@ -5154,10 +5154,10 @@ class RouteData : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -5165,7 +5165,7 @@ class RouteData : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -5208,8 +5208,8 @@ class RouteData : public ::google::protobuf::Message {
   inline bool has_routeid() const;
   inline void clear_routeid();
   static const int kRouteIdFieldNumber = 12;
-  inline ::google::protobuf::int32 routeid() const;
-  inline void set_routeid(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 routeid() const;
+  inline void set_routeid(::google::obf_protobuf::int32 value);
   
   // optional bytes stringNames = 14;
   inline bool has_stringnames() const;
@@ -5235,16 +5235,16 @@ class RouteData : public ::google::protobuf::Message {
   inline void set_has_stringnames();
   inline void clear_has_stringnames();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* points_;
   ::std::string* pointtypes_;
   ::std::string* types_;
   ::std::string* stringnames_;
-  ::google::protobuf::int32 routeid_;
+  ::google::obf_protobuf::int32 routeid_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(5 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -5255,7 +5255,7 @@ class RouteData : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndRoutingIndex_RouteEncodingRule : public ::google::protobuf::Message {
+class OsmAndRoutingIndex_RouteEncodingRule : public ::google::obf_protobuf::Message {
  public:
   OsmAndRoutingIndex_RouteEncodingRule();
   virtual ~OsmAndRoutingIndex_RouteEncodingRule();
@@ -5267,15 +5267,15 @@ class OsmAndRoutingIndex_RouteEncodingRule : public ::google::protobuf::Message 
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndRoutingIndex_RouteEncodingRule& default_instance();
   
   void Swap(OsmAndRoutingIndex_RouteEncodingRule* other);
@@ -5283,8 +5283,8 @@ class OsmAndRoutingIndex_RouteEncodingRule : public ::google::protobuf::Message 
   // implements Message ----------------------------------------------
   
   OsmAndRoutingIndex_RouteEncodingRule* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndRoutingIndex_RouteEncodingRule& from);
   void MergeFrom(const OsmAndRoutingIndex_RouteEncodingRule& from);
   void Clear();
@@ -5292,10 +5292,10 @@ class OsmAndRoutingIndex_RouteEncodingRule : public ::google::protobuf::Message 
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -5303,7 +5303,7 @@ class OsmAndRoutingIndex_RouteEncodingRule : public ::google::protobuf::Message 
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -5335,8 +5335,8 @@ class OsmAndRoutingIndex_RouteEncodingRule : public ::google::protobuf::Message 
   inline bool has_id() const;
   inline void clear_id();
   static const int kIdFieldNumber = 7;
-  inline ::google::protobuf::uint32 id() const;
-  inline void set_id(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 id() const;
+  inline void set_id(::google::obf_protobuf::uint32 value);
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndRoutingIndex.RouteEncodingRule)
  private:
@@ -5347,14 +5347,14 @@ class OsmAndRoutingIndex_RouteEncodingRule : public ::google::protobuf::Message 
   inline void set_has_id();
   inline void clear_has_id();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* tag_;
   ::std::string* value_;
-  ::google::protobuf::uint32 id_;
+  ::google::obf_protobuf::uint32 id_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(3 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -5365,7 +5365,7 @@ class OsmAndRoutingIndex_RouteEncodingRule : public ::google::protobuf::Message 
 };
 // -------------------------------------------------------------------
 
-class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
+class OsmAndRoutingIndex_RouteDataBox : public ::google::obf_protobuf::Message {
  public:
   OsmAndRoutingIndex_RouteDataBox();
   virtual ~OsmAndRoutingIndex_RouteDataBox();
@@ -5377,15 +5377,15 @@ class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndRoutingIndex_RouteDataBox& default_instance();
   
   void Swap(OsmAndRoutingIndex_RouteDataBox* other);
@@ -5393,8 +5393,8 @@ class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndRoutingIndex_RouteDataBox* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndRoutingIndex_RouteDataBox& from);
   void MergeFrom(const OsmAndRoutingIndex_RouteDataBox& from);
   void Clear();
@@ -5402,10 +5402,10 @@ class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -5413,7 +5413,7 @@ class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -5423,36 +5423,36 @@ class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
   inline bool has_left() const;
   inline void clear_left();
   static const int kLeftFieldNumber = 1;
-  inline ::google::protobuf::int32 left() const;
-  inline void set_left(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 left() const;
+  inline void set_left(::google::obf_protobuf::int32 value);
   
   // required sint32 right = 2;
   inline bool has_right() const;
   inline void clear_right();
   static const int kRightFieldNumber = 2;
-  inline ::google::protobuf::int32 right() const;
-  inline void set_right(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 right() const;
+  inline void set_right(::google::obf_protobuf::int32 value);
   
   // required sint32 top = 3;
   inline bool has_top() const;
   inline void clear_top();
   static const int kTopFieldNumber = 3;
-  inline ::google::protobuf::int32 top() const;
-  inline void set_top(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 top() const;
+  inline void set_top(::google::obf_protobuf::int32 value);
   
   // required sint32 bottom = 4;
   inline bool has_bottom() const;
   inline void clear_bottom();
   static const int kBottomFieldNumber = 4;
-  inline ::google::protobuf::int32 bottom() const;
-  inline void set_bottom(::google::protobuf::int32 value);
+  inline ::google::obf_protobuf::int32 bottom() const;
+  inline void set_bottom(::google::obf_protobuf::int32 value);
   
   // optional fixed32 shiftToData = 5;
   inline bool has_shifttodata() const;
   inline void clear_shifttodata();
   static const int kShiftToDataFieldNumber = 5;
-  inline ::google::protobuf::uint32 shifttodata() const;
-  inline void set_shifttodata(::google::protobuf::uint32 value);
+  inline ::google::obf_protobuf::uint32 shifttodata() const;
+  inline void set_shifttodata(::google::obf_protobuf::uint32 value);
   
   // repeated .OsmAnd.OBF.OsmAndRoutingIndex.RouteDataBox boxes = 7;
   inline int boxes_size() const;
@@ -5461,9 +5461,9 @@ class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox& boxes(int index) const;
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* mutable_boxes(int index);
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* add_boxes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
       boxes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
       mutable_boxes();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndRoutingIndex.RouteDataBox)
@@ -5479,17 +5479,17 @@ class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
   inline void set_has_shifttodata();
   inline void clear_has_shifttodata();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
-  ::google::protobuf::int32 left_;
-  ::google::protobuf::int32 right_;
-  ::google::protobuf::int32 top_;
-  ::google::protobuf::int32 bottom_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox > boxes_;
-  ::google::protobuf::uint32 shifttodata_;
+  ::google::obf_protobuf::int32 left_;
+  ::google::obf_protobuf::int32 right_;
+  ::google::obf_protobuf::int32 top_;
+  ::google::obf_protobuf::int32 bottom_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox > boxes_;
+  ::google::obf_protobuf::uint32 shifttodata_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(6 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -5500,7 +5500,7 @@ class OsmAndRoutingIndex_RouteDataBox : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
+class OsmAndRoutingIndex_RouteDataBlock : public ::google::obf_protobuf::Message {
  public:
   OsmAndRoutingIndex_RouteDataBlock();
   virtual ~OsmAndRoutingIndex_RouteDataBlock();
@@ -5512,15 +5512,15 @@ class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndRoutingIndex_RouteDataBlock& default_instance();
   
   void Swap(OsmAndRoutingIndex_RouteDataBlock* other);
@@ -5528,8 +5528,8 @@ class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndRoutingIndex_RouteDataBlock* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndRoutingIndex_RouteDataBlock& from);
   void MergeFrom(const OsmAndRoutingIndex_RouteDataBlock& from);
   void Clear();
@@ -5537,10 +5537,10 @@ class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -5548,7 +5548,7 @@ class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -5569,9 +5569,9 @@ class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::RouteData& dataobjects(int index) const;
   inline ::OsmAnd::OBF::RouteData* mutable_dataobjects(int index);
   inline ::OsmAnd::OBF::RouteData* add_dataobjects();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData >&
       dataobjects() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData >*
       mutable_dataobjects();
   
   // repeated .OsmAnd.OBF.RestrictionData restrictions = 7;
@@ -5581,9 +5581,9 @@ class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::RestrictionData& restrictions(int index) const;
   inline ::OsmAnd::OBF::RestrictionData* mutable_restrictions(int index);
   inline ::OsmAnd::OBF::RestrictionData* add_restrictions();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData >&
       restrictions() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData >*
       mutable_restrictions();
   
   // optional .OsmAnd.OBF.StringTable stringTable = 8;
@@ -5601,15 +5601,15 @@ class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
   inline void set_has_stringtable();
   inline void clear_has_stringtable();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::OsmAnd::OBF::IdTable* idtable_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData > dataobjects_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData > restrictions_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData > dataobjects_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData > restrictions_;
   ::OsmAnd::OBF::StringTable* stringtable_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -5620,7 +5620,7 @@ class OsmAndRoutingIndex_RouteDataBlock : public ::google::protobuf::Message {
 };
 // -------------------------------------------------------------------
 
-class OsmAndRoutingIndex : public ::google::protobuf::Message {
+class OsmAndRoutingIndex : public ::google::obf_protobuf::Message {
  public:
   OsmAndRoutingIndex();
   virtual ~OsmAndRoutingIndex();
@@ -5632,15 +5632,15 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
     return *this;
   }
   
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+  inline const ::google::obf_protobuf::UnknownFieldSet& unknown_fields() const {
     return _unknown_fields_;
   }
   
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+  inline ::google::obf_protobuf::UnknownFieldSet* mutable_unknown_fields() {
     return &_unknown_fields_;
   }
   
-  static const ::google::protobuf::Descriptor* descriptor();
+  static const ::google::obf_protobuf::Descriptor* descriptor();
   static const OsmAndRoutingIndex& default_instance();
   
   void Swap(OsmAndRoutingIndex* other);
@@ -5648,8 +5648,8 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   // implements Message ----------------------------------------------
   
   OsmAndRoutingIndex* New() const;
-  void CopyFrom(const ::google::protobuf::Message& from);
-  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const ::google::obf_protobuf::Message& from);
+  void MergeFrom(const ::google::obf_protobuf::Message& from);
   void CopyFrom(const OsmAndRoutingIndex& from);
   void MergeFrom(const OsmAndRoutingIndex& from);
   void Clear();
@@ -5657,10 +5657,10 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   
   int ByteSize() const;
   bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input);
+      ::google::obf_protobuf::io::CodedInputStream* input);
   void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const;
-  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+      ::google::obf_protobuf::io::CodedOutputStream* output) const;
+  ::google::obf_protobuf::uint8* SerializeWithCachedSizesToArray(::google::obf_protobuf::uint8* output) const;
   int GetCachedSize() const { return _cached_size_; }
   private:
   void SharedCtor();
@@ -5668,7 +5668,7 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   void SetCachedSize(int size) const;
   public:
   
-  ::google::protobuf::Metadata GetMetadata() const;
+  ::google::obf_protobuf::Metadata GetMetadata() const;
   
   // nested types ----------------------------------------------------
   
@@ -5696,9 +5696,9 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule& rules(int index) const;
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule* mutable_rules(int index);
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule* add_rules();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule >&
       rules() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule >*
       mutable_rules();
   
   // repeated .OsmAnd.OBF.OsmAndRoutingIndex.RouteDataBox rootBoxes = 3;
@@ -5708,9 +5708,9 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox& rootboxes(int index) const;
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* mutable_rootboxes(int index);
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* add_rootboxes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
       rootboxes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
       mutable_rootboxes();
   
   // repeated .OsmAnd.OBF.OsmAndRoutingIndex.RouteDataBox basemapBoxes = 4;
@@ -5720,9 +5720,9 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox& basemapboxes(int index) const;
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* mutable_basemapboxes(int index);
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* add_basemapboxes();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
       basemapboxes() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
       mutable_basemapboxes();
   
   // repeated .OsmAnd.OBF.OsmAndRoutingIndex.RouteDataBlock blocks = 5;
@@ -5732,9 +5732,9 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   inline const ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock& blocks(int index) const;
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock* mutable_blocks(int index);
   inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock* add_blocks();
-  inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >&
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >&
       blocks() const;
-  inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >*
+  inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >*
       mutable_blocks();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndRoutingIndex)
@@ -5742,16 +5742,16 @@ class OsmAndRoutingIndex : public ::google::protobuf::Message {
   inline void set_has_name();
   inline void clear_has_name();
   
-  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule > rules_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox > rootboxes_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox > basemapboxes_;
-  ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock > blocks_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule > rules_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox > rootboxes_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox > basemapboxes_;
+  ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock > blocks_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::obf_protobuf::uint32 _has_bits_[(5 + 31) / 32];
   
   friend void  protobuf_AddDesc_OBF_2eproto();
   friend void protobuf_AssignDesc_OBF_2eproto();
@@ -5781,10 +5781,10 @@ inline void OsmAndStructure::clear_version() {
   version_ = 0u;
   clear_has_version();
 }
-inline ::google::protobuf::uint32 OsmAndStructure::version() const {
+inline ::google::obf_protobuf::uint32 OsmAndStructure::version() const {
   return version_;
 }
-inline void OsmAndStructure::set_version(::google::protobuf::uint32 value) {
+inline void OsmAndStructure::set_version(::google::obf_protobuf::uint32 value) {
   set_has_version();
   version_ = value;
 }
@@ -5803,10 +5803,10 @@ inline void OsmAndStructure::clear_datecreated() {
   datecreated_ = GOOGLE_LONGLONG(0);
   clear_has_datecreated();
 }
-inline ::google::protobuf::int64 OsmAndStructure::datecreated() const {
+inline ::google::obf_protobuf::int64 OsmAndStructure::datecreated() const {
   return datecreated_;
 }
-inline void OsmAndStructure::set_datecreated(::google::protobuf::int64 value) {
+inline void OsmAndStructure::set_datecreated(::google::obf_protobuf::int64 value) {
   set_has_datecreated();
   datecreated_ = value;
 }
@@ -5827,11 +5827,11 @@ inline ::OsmAnd::OBF::OsmAndAddressIndex* OsmAndStructure::mutable_addressindex(
 inline ::OsmAnd::OBF::OsmAndAddressIndex* OsmAndStructure::add_addressindex() {
   return addressindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex >&
 OsmAndStructure::addressindex() const {
   return addressindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex >*
 OsmAndStructure::mutable_addressindex() {
   return &addressindex_;
 }
@@ -5852,11 +5852,11 @@ inline ::OsmAnd::OBF::OsmAndTransportIndex* OsmAndStructure::mutable_transportin
 inline ::OsmAnd::OBF::OsmAndTransportIndex* OsmAndStructure::add_transportindex() {
   return transportindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex >&
 OsmAndStructure::transportindex() const {
   return transportindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndTransportIndex >*
 OsmAndStructure::mutable_transportindex() {
   return &transportindex_;
 }
@@ -5877,11 +5877,11 @@ inline ::OsmAnd::OBF::OsmAndPoiIndex* OsmAndStructure::mutable_poiindex(int inde
 inline ::OsmAnd::OBF::OsmAndPoiIndex* OsmAndStructure::add_poiindex() {
   return poiindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex >&
 OsmAndStructure::poiindex() const {
   return poiindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiIndex >*
 OsmAndStructure::mutable_poiindex() {
   return &poiindex_;
 }
@@ -5902,11 +5902,11 @@ inline ::OsmAnd::OBF::OsmAndMapIndex* OsmAndStructure::mutable_mapindex(int inde
 inline ::OsmAnd::OBF::OsmAndMapIndex* OsmAndStructure::add_mapindex() {
   return mapindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex >&
 OsmAndStructure::mapindex() const {
   return mapindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex >*
 OsmAndStructure::mutable_mapindex() {
   return &mapindex_;
 }
@@ -5927,11 +5927,11 @@ inline ::OsmAnd::OBF::OsmAndRoutingIndex* OsmAndStructure::mutable_routingindex(
 inline ::OsmAnd::OBF::OsmAndRoutingIndex* OsmAndStructure::add_routingindex() {
   return routingindex_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex >&
 OsmAndStructure::routingindex() const {
   return routingindex_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex >*
 OsmAndStructure::mutable_routingindex() {
   return &routingindex_;
 }
@@ -5950,10 +5950,10 @@ inline void OsmAndStructure::clear_versionconfirm() {
   versionconfirm_ = 0u;
   clear_has_versionconfirm();
 }
-inline ::google::protobuf::uint32 OsmAndStructure::versionconfirm() const {
+inline ::google::obf_protobuf::uint32 OsmAndStructure::versionconfirm() const {
   return versionconfirm_;
 }
-inline void OsmAndStructure::set_versionconfirm(::google::protobuf::uint32 value) {
+inline void OsmAndStructure::set_versionconfirm(::google::obf_protobuf::uint32 value) {
   set_has_versionconfirm();
   versionconfirm_ = value;
 }
@@ -5976,10 +5976,10 @@ inline void OsmAndTileBox::clear_left() {
   left_ = 0u;
   clear_has_left();
 }
-inline ::google::protobuf::uint32 OsmAndTileBox::left() const {
+inline ::google::obf_protobuf::uint32 OsmAndTileBox::left() const {
   return left_;
 }
-inline void OsmAndTileBox::set_left(::google::protobuf::uint32 value) {
+inline void OsmAndTileBox::set_left(::google::obf_protobuf::uint32 value) {
   set_has_left();
   left_ = value;
 }
@@ -5998,10 +5998,10 @@ inline void OsmAndTileBox::clear_right() {
   right_ = 0u;
   clear_has_right();
 }
-inline ::google::protobuf::uint32 OsmAndTileBox::right() const {
+inline ::google::obf_protobuf::uint32 OsmAndTileBox::right() const {
   return right_;
 }
-inline void OsmAndTileBox::set_right(::google::protobuf::uint32 value) {
+inline void OsmAndTileBox::set_right(::google::obf_protobuf::uint32 value) {
   set_has_right();
   right_ = value;
 }
@@ -6020,10 +6020,10 @@ inline void OsmAndTileBox::clear_top() {
   top_ = 0u;
   clear_has_top();
 }
-inline ::google::protobuf::uint32 OsmAndTileBox::top() const {
+inline ::google::obf_protobuf::uint32 OsmAndTileBox::top() const {
   return top_;
 }
-inline void OsmAndTileBox::set_top(::google::protobuf::uint32 value) {
+inline void OsmAndTileBox::set_top(::google::obf_protobuf::uint32 value) {
   set_has_top();
   top_ = value;
 }
@@ -6042,10 +6042,10 @@ inline void OsmAndTileBox::clear_bottom() {
   bottom_ = 0u;
   clear_has_bottom();
 }
-inline ::google::protobuf::uint32 OsmAndTileBox::bottom() const {
+inline ::google::obf_protobuf::uint32 OsmAndTileBox::bottom() const {
   return bottom_;
 }
-inline void OsmAndTileBox::set_bottom(::google::protobuf::uint32 value) {
+inline void OsmAndTileBox::set_bottom(::google::obf_protobuf::uint32 value) {
   set_has_bottom();
   bottom_ = value;
 }
@@ -6089,11 +6089,11 @@ inline void StringTable::add_s(const char* value) {
 inline void StringTable::add_s(const char* value, size_t size) {
   s_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>&
 StringTable::s() const {
   return s_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 StringTable::mutable_s() {
   return &s_;
 }
@@ -6113,7 +6113,7 @@ inline void IndexedStringTable::clear_has_prefix() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void IndexedStringTable::clear_prefix() {
-  if (prefix_ != &::google::protobuf::internal::kEmptyString) {
+  if (prefix_ != &::google::obf_protobuf::internal::kEmptyString) {
     prefix_->clear();
   }
   clear_has_prefix();
@@ -6123,39 +6123,39 @@ inline const ::std::string& IndexedStringTable::prefix() const {
 }
 inline void IndexedStringTable::set_prefix(const ::std::string& value) {
   set_has_prefix();
-  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+  if (prefix_ == &::google::obf_protobuf::internal::kEmptyString) {
     prefix_ = new ::std::string;
   }
   prefix_->assign(value);
 }
 inline void IndexedStringTable::set_prefix(const char* value) {
   set_has_prefix();
-  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+  if (prefix_ == &::google::obf_protobuf::internal::kEmptyString) {
     prefix_ = new ::std::string;
   }
   prefix_->assign(value);
 }
 inline void IndexedStringTable::set_prefix(const char* value, size_t size) {
   set_has_prefix();
-  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+  if (prefix_ == &::google::obf_protobuf::internal::kEmptyString) {
     prefix_ = new ::std::string;
   }
   prefix_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* IndexedStringTable::mutable_prefix() {
   set_has_prefix();
-  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+  if (prefix_ == &::google::obf_protobuf::internal::kEmptyString) {
     prefix_ = new ::std::string;
   }
   return prefix_;
 }
 inline ::std::string* IndexedStringTable::release_prefix() {
   clear_has_prefix();
-  if (prefix_ == &::google::protobuf::internal::kEmptyString) {
+  if (prefix_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = prefix_;
-    prefix_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    prefix_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -6195,11 +6195,11 @@ inline void IndexedStringTable::add_key(const char* value) {
 inline void IndexedStringTable::add_key(const char* value, size_t size) {
   key_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>&
 IndexedStringTable::key() const {
   return key_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 IndexedStringTable::mutable_key() {
   return &key_;
 }
@@ -6211,20 +6211,20 @@ inline int IndexedStringTable::val_size() const {
 inline void IndexedStringTable::clear_val() {
   val_.Clear();
 }
-inline ::google::protobuf::uint32 IndexedStringTable::val(int index) const {
+inline ::google::obf_protobuf::uint32 IndexedStringTable::val(int index) const {
   return val_.Get(index);
 }
-inline void IndexedStringTable::set_val(int index, ::google::protobuf::uint32 value) {
+inline void IndexedStringTable::set_val(int index, ::google::obf_protobuf::uint32 value) {
   val_.Set(index, value);
 }
-inline void IndexedStringTable::add_val(::google::protobuf::uint32 value) {
+inline void IndexedStringTable::add_val(::google::obf_protobuf::uint32 value) {
   val_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
 IndexedStringTable::val() const {
   return val_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
 IndexedStringTable::mutable_val() {
   return &val_;
 }
@@ -6245,11 +6245,11 @@ inline ::OsmAnd::OBF::IndexedStringTable* IndexedStringTable::mutable_subtables(
 inline ::OsmAnd::OBF::IndexedStringTable* IndexedStringTable::add_subtables() {
   return subtables_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable >&
 IndexedStringTable::subtables() const {
   return subtables_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::IndexedStringTable >*
 IndexedStringTable::mutable_subtables() {
   return &subtables_;
 }
@@ -6269,7 +6269,7 @@ inline void OsmAndMapIndex_MapEncodingRule::clear_has_tag() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndMapIndex_MapEncodingRule::clear_tag() {
-  if (tag_ != &::google::protobuf::internal::kEmptyString) {
+  if (tag_ != &::google::obf_protobuf::internal::kEmptyString) {
     tag_->clear();
   }
   clear_has_tag();
@@ -6279,39 +6279,39 @@ inline const ::std::string& OsmAndMapIndex_MapEncodingRule::tag() const {
 }
 inline void OsmAndMapIndex_MapEncodingRule::set_tag(const ::std::string& value) {
   set_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     tag_ = new ::std::string;
   }
   tag_->assign(value);
 }
 inline void OsmAndMapIndex_MapEncodingRule::set_tag(const char* value) {
   set_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     tag_ = new ::std::string;
   }
   tag_->assign(value);
 }
 inline void OsmAndMapIndex_MapEncodingRule::set_tag(const char* value, size_t size) {
   set_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     tag_ = new ::std::string;
   }
   tag_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndMapIndex_MapEncodingRule::mutable_tag() {
   set_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     tag_ = new ::std::string;
   }
   return tag_;
 }
 inline ::std::string* OsmAndMapIndex_MapEncodingRule::release_tag() {
   clear_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = tag_;
-    tag_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    tag_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -6327,7 +6327,7 @@ inline void OsmAndMapIndex_MapEncodingRule::clear_has_value() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void OsmAndMapIndex_MapEncodingRule::clear_value() {
-  if (value_ != &::google::protobuf::internal::kEmptyString) {
+  if (value_ != &::google::obf_protobuf::internal::kEmptyString) {
     value_->clear();
   }
   clear_has_value();
@@ -6337,39 +6337,39 @@ inline const ::std::string& OsmAndMapIndex_MapEncodingRule::value() const {
 }
 inline void OsmAndMapIndex_MapEncodingRule::set_value(const ::std::string& value) {
   set_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
   }
   value_->assign(value);
 }
 inline void OsmAndMapIndex_MapEncodingRule::set_value(const char* value) {
   set_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
   }
   value_->assign(value);
 }
 inline void OsmAndMapIndex_MapEncodingRule::set_value(const char* value, size_t size) {
   set_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
   }
   value_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndMapIndex_MapEncodingRule::mutable_value() {
   set_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
   }
   return value_;
 }
 inline ::std::string* OsmAndMapIndex_MapEncodingRule::release_value() {
   clear_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = value_;
-    value_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    value_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -6388,10 +6388,10 @@ inline void OsmAndMapIndex_MapEncodingRule::clear_id() {
   id_ = 0u;
   clear_has_id();
 }
-inline ::google::protobuf::uint32 OsmAndMapIndex_MapEncodingRule::id() const {
+inline ::google::obf_protobuf::uint32 OsmAndMapIndex_MapEncodingRule::id() const {
   return id_;
 }
-inline void OsmAndMapIndex_MapEncodingRule::set_id(::google::protobuf::uint32 value) {
+inline void OsmAndMapIndex_MapEncodingRule::set_id(::google::obf_protobuf::uint32 value) {
   set_has_id();
   id_ = value;
 }
@@ -6410,10 +6410,10 @@ inline void OsmAndMapIndex_MapEncodingRule::clear_minzoom() {
   minzoom_ = 0u;
   clear_has_minzoom();
 }
-inline ::google::protobuf::uint32 OsmAndMapIndex_MapEncodingRule::minzoom() const {
+inline ::google::obf_protobuf::uint32 OsmAndMapIndex_MapEncodingRule::minzoom() const {
   return minzoom_;
 }
-inline void OsmAndMapIndex_MapEncodingRule::set_minzoom(::google::protobuf::uint32 value) {
+inline void OsmAndMapIndex_MapEncodingRule::set_minzoom(::google::obf_protobuf::uint32 value) {
   set_has_minzoom();
   minzoom_ = value;
 }
@@ -6432,10 +6432,10 @@ inline void OsmAndMapIndex_MapEncodingRule::clear_type() {
   type_ = 0u;
   clear_has_type();
 }
-inline ::google::protobuf::uint32 OsmAndMapIndex_MapEncodingRule::type() const {
+inline ::google::obf_protobuf::uint32 OsmAndMapIndex_MapEncodingRule::type() const {
   return type_;
 }
-inline void OsmAndMapIndex_MapEncodingRule::set_type(::google::protobuf::uint32 value) {
+inline void OsmAndMapIndex_MapEncodingRule::set_type(::google::obf_protobuf::uint32 value) {
   set_has_type();
   type_ = value;
 }
@@ -6458,10 +6458,10 @@ inline void OsmAndMapIndex_MapRootLevel::clear_maxzoom() {
   maxzoom_ = 0;
   clear_has_maxzoom();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapRootLevel::maxzoom() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapRootLevel::maxzoom() const {
   return maxzoom_;
 }
-inline void OsmAndMapIndex_MapRootLevel::set_maxzoom(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapRootLevel::set_maxzoom(::google::obf_protobuf::int32 value) {
   set_has_maxzoom();
   maxzoom_ = value;
 }
@@ -6480,10 +6480,10 @@ inline void OsmAndMapIndex_MapRootLevel::clear_minzoom() {
   minzoom_ = 0;
   clear_has_minzoom();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapRootLevel::minzoom() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapRootLevel::minzoom() const {
   return minzoom_;
 }
-inline void OsmAndMapIndex_MapRootLevel::set_minzoom(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapRootLevel::set_minzoom(::google::obf_protobuf::int32 value) {
   set_has_minzoom();
   minzoom_ = value;
 }
@@ -6502,10 +6502,10 @@ inline void OsmAndMapIndex_MapRootLevel::clear_left() {
   left_ = 0;
   clear_has_left();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapRootLevel::left() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapRootLevel::left() const {
   return left_;
 }
-inline void OsmAndMapIndex_MapRootLevel::set_left(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapRootLevel::set_left(::google::obf_protobuf::int32 value) {
   set_has_left();
   left_ = value;
 }
@@ -6524,10 +6524,10 @@ inline void OsmAndMapIndex_MapRootLevel::clear_right() {
   right_ = 0;
   clear_has_right();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapRootLevel::right() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapRootLevel::right() const {
   return right_;
 }
-inline void OsmAndMapIndex_MapRootLevel::set_right(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapRootLevel::set_right(::google::obf_protobuf::int32 value) {
   set_has_right();
   right_ = value;
 }
@@ -6546,10 +6546,10 @@ inline void OsmAndMapIndex_MapRootLevel::clear_top() {
   top_ = 0;
   clear_has_top();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapRootLevel::top() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapRootLevel::top() const {
   return top_;
 }
-inline void OsmAndMapIndex_MapRootLevel::set_top(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapRootLevel::set_top(::google::obf_protobuf::int32 value) {
   set_has_top();
   top_ = value;
 }
@@ -6568,10 +6568,10 @@ inline void OsmAndMapIndex_MapRootLevel::clear_bottom() {
   bottom_ = 0;
   clear_has_bottom();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapRootLevel::bottom() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapRootLevel::bottom() const {
   return bottom_;
 }
-inline void OsmAndMapIndex_MapRootLevel::set_bottom(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapRootLevel::set_bottom(::google::obf_protobuf::int32 value) {
   set_has_bottom();
   bottom_ = value;
 }
@@ -6592,11 +6592,11 @@ inline ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox* OsmAndMapIndex_MapRootLevel::mu
 inline ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox* OsmAndMapIndex_MapRootLevel::add_boxes() {
   return boxes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >&
 OsmAndMapIndex_MapRootLevel::boxes() const {
   return boxes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >*
 OsmAndMapIndex_MapRootLevel::mutable_boxes() {
   return &boxes_;
 }
@@ -6617,11 +6617,11 @@ inline ::OsmAnd::OBF::MapDataBlock* OsmAndMapIndex_MapRootLevel::mutable_blocks(
 inline ::OsmAnd::OBF::MapDataBlock* OsmAndMapIndex_MapRootLevel::add_blocks() {
   return blocks_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock >&
 OsmAndMapIndex_MapRootLevel::blocks() const {
   return blocks_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapDataBlock >*
 OsmAndMapIndex_MapRootLevel::mutable_blocks() {
   return &blocks_;
 }
@@ -6644,10 +6644,10 @@ inline void OsmAndMapIndex_MapDataBox::clear_left() {
   left_ = 0;
   clear_has_left();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapDataBox::left() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapDataBox::left() const {
   return left_;
 }
-inline void OsmAndMapIndex_MapDataBox::set_left(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapDataBox::set_left(::google::obf_protobuf::int32 value) {
   set_has_left();
   left_ = value;
 }
@@ -6666,10 +6666,10 @@ inline void OsmAndMapIndex_MapDataBox::clear_right() {
   right_ = 0;
   clear_has_right();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapDataBox::right() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapDataBox::right() const {
   return right_;
 }
-inline void OsmAndMapIndex_MapDataBox::set_right(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapDataBox::set_right(::google::obf_protobuf::int32 value) {
   set_has_right();
   right_ = value;
 }
@@ -6688,10 +6688,10 @@ inline void OsmAndMapIndex_MapDataBox::clear_top() {
   top_ = 0;
   clear_has_top();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapDataBox::top() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapDataBox::top() const {
   return top_;
 }
-inline void OsmAndMapIndex_MapDataBox::set_top(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapDataBox::set_top(::google::obf_protobuf::int32 value) {
   set_has_top();
   top_ = value;
 }
@@ -6710,10 +6710,10 @@ inline void OsmAndMapIndex_MapDataBox::clear_bottom() {
   bottom_ = 0;
   clear_has_bottom();
 }
-inline ::google::protobuf::int32 OsmAndMapIndex_MapDataBox::bottom() const {
+inline ::google::obf_protobuf::int32 OsmAndMapIndex_MapDataBox::bottom() const {
   return bottom_;
 }
-inline void OsmAndMapIndex_MapDataBox::set_bottom(::google::protobuf::int32 value) {
+inline void OsmAndMapIndex_MapDataBox::set_bottom(::google::obf_protobuf::int32 value) {
   set_has_bottom();
   bottom_ = value;
 }
@@ -6732,10 +6732,10 @@ inline void OsmAndMapIndex_MapDataBox::clear_shifttomapdata() {
   shifttomapdata_ = 0u;
   clear_has_shifttomapdata();
 }
-inline ::google::protobuf::uint32 OsmAndMapIndex_MapDataBox::shifttomapdata() const {
+inline ::google::obf_protobuf::uint32 OsmAndMapIndex_MapDataBox::shifttomapdata() const {
   return shifttomapdata_;
 }
-inline void OsmAndMapIndex_MapDataBox::set_shifttomapdata(::google::protobuf::uint32 value) {
+inline void OsmAndMapIndex_MapDataBox::set_shifttomapdata(::google::obf_protobuf::uint32 value) {
   set_has_shifttomapdata();
   shifttomapdata_ = value;
 }
@@ -6778,11 +6778,11 @@ inline ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox* OsmAndMapIndex_MapDataBox::muta
 inline ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox* OsmAndMapIndex_MapDataBox::add_boxes() {
   return boxes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >&
 OsmAndMapIndex_MapDataBox::boxes() const {
   return boxes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapDataBox >*
 OsmAndMapIndex_MapDataBox::mutable_boxes() {
   return &boxes_;
 }
@@ -6802,7 +6802,7 @@ inline void OsmAndMapIndex::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndMapIndex::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -6812,39 +6812,39 @@ inline const ::std::string& OsmAndMapIndex::name() const {
 }
 inline void OsmAndMapIndex::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndMapIndex::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndMapIndex::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndMapIndex::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* OsmAndMapIndex::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -6865,11 +6865,11 @@ inline ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule* OsmAndMapIndex::mutable_ru
 inline ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule* OsmAndMapIndex::add_rules() {
   return rules_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule >&
 OsmAndMapIndex::rules() const {
   return rules_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapEncodingRule >*
 OsmAndMapIndex::mutable_rules() {
   return &rules_;
 }
@@ -6890,11 +6890,11 @@ inline ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel* OsmAndMapIndex::mutable_level
 inline ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel* OsmAndMapIndex::add_levels() {
   return levels_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel >&
 OsmAndMapIndex::levels() const {
   return levels_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndMapIndex_MapRootLevel >*
 OsmAndMapIndex::mutable_levels() {
   return &levels_;
 }
@@ -6917,10 +6917,10 @@ inline void MapDataBlock::clear_baseid() {
   baseid_ = GOOGLE_ULONGLONG(0);
   clear_has_baseid();
 }
-inline ::google::protobuf::uint64 MapDataBlock::baseid() const {
+inline ::google::obf_protobuf::uint64 MapDataBlock::baseid() const {
   return baseid_;
 }
-inline void MapDataBlock::set_baseid(::google::protobuf::uint64 value) {
+inline void MapDataBlock::set_baseid(::google::obf_protobuf::uint64 value) {
   set_has_baseid();
   baseid_ = value;
 }
@@ -6941,11 +6941,11 @@ inline ::OsmAnd::OBF::MapData* MapDataBlock::mutable_dataobjects(int index) {
 inline ::OsmAnd::OBF::MapData* MapDataBlock::add_dataobjects() {
   return dataobjects_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData >&
 MapDataBlock::dataobjects() const {
   return dataobjects_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::MapData >*
 MapDataBlock::mutable_dataobjects() {
   return &dataobjects_;
 }
@@ -6994,7 +6994,7 @@ inline void MapData::clear_has_coordinates() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void MapData::clear_coordinates() {
-  if (coordinates_ != &::google::protobuf::internal::kEmptyString) {
+  if (coordinates_ != &::google::obf_protobuf::internal::kEmptyString) {
     coordinates_->clear();
   }
   clear_has_coordinates();
@@ -7004,39 +7004,39 @@ inline const ::std::string& MapData::coordinates() const {
 }
 inline void MapData::set_coordinates(const ::std::string& value) {
   set_has_coordinates();
-  if (coordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (coordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     coordinates_ = new ::std::string;
   }
   coordinates_->assign(value);
 }
 inline void MapData::set_coordinates(const char* value) {
   set_has_coordinates();
-  if (coordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (coordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     coordinates_ = new ::std::string;
   }
   coordinates_->assign(value);
 }
 inline void MapData::set_coordinates(const void* value, size_t size) {
   set_has_coordinates();
-  if (coordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (coordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     coordinates_ = new ::std::string;
   }
   coordinates_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* MapData::mutable_coordinates() {
   set_has_coordinates();
-  if (coordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (coordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     coordinates_ = new ::std::string;
   }
   return coordinates_;
 }
 inline ::std::string* MapData::release_coordinates() {
   clear_has_coordinates();
-  if (coordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (coordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = coordinates_;
-    coordinates_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    coordinates_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7052,7 +7052,7 @@ inline void MapData::clear_has_areacoordinates() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void MapData::clear_areacoordinates() {
-  if (areacoordinates_ != &::google::protobuf::internal::kEmptyString) {
+  if (areacoordinates_ != &::google::obf_protobuf::internal::kEmptyString) {
     areacoordinates_->clear();
   }
   clear_has_areacoordinates();
@@ -7062,39 +7062,39 @@ inline const ::std::string& MapData::areacoordinates() const {
 }
 inline void MapData::set_areacoordinates(const ::std::string& value) {
   set_has_areacoordinates();
-  if (areacoordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (areacoordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     areacoordinates_ = new ::std::string;
   }
   areacoordinates_->assign(value);
 }
 inline void MapData::set_areacoordinates(const char* value) {
   set_has_areacoordinates();
-  if (areacoordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (areacoordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     areacoordinates_ = new ::std::string;
   }
   areacoordinates_->assign(value);
 }
 inline void MapData::set_areacoordinates(const void* value, size_t size) {
   set_has_areacoordinates();
-  if (areacoordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (areacoordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     areacoordinates_ = new ::std::string;
   }
   areacoordinates_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* MapData::mutable_areacoordinates() {
   set_has_areacoordinates();
-  if (areacoordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (areacoordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     areacoordinates_ = new ::std::string;
   }
   return areacoordinates_;
 }
 inline ::std::string* MapData::release_areacoordinates() {
   clear_has_areacoordinates();
-  if (areacoordinates_ == &::google::protobuf::internal::kEmptyString) {
+  if (areacoordinates_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = areacoordinates_;
-    areacoordinates_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    areacoordinates_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7134,11 +7134,11 @@ inline void MapData::add_polygoninnercoordinates(const char* value) {
 inline void MapData::add_polygoninnercoordinates(const void* value, size_t size) {
   polygoninnercoordinates_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>&
 MapData::polygoninnercoordinates() const {
   return polygoninnercoordinates_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 MapData::mutable_polygoninnercoordinates() {
   return &polygoninnercoordinates_;
 }
@@ -7154,7 +7154,7 @@ inline void MapData::clear_has_additionaltypes() {
   _has_bits_[0] &= ~0x00000008u;
 }
 inline void MapData::clear_additionaltypes() {
-  if (additionaltypes_ != &::google::protobuf::internal::kEmptyString) {
+  if (additionaltypes_ != &::google::obf_protobuf::internal::kEmptyString) {
     additionaltypes_->clear();
   }
   clear_has_additionaltypes();
@@ -7164,39 +7164,39 @@ inline const ::std::string& MapData::additionaltypes() const {
 }
 inline void MapData::set_additionaltypes(const ::std::string& value) {
   set_has_additionaltypes();
-  if (additionaltypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (additionaltypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     additionaltypes_ = new ::std::string;
   }
   additionaltypes_->assign(value);
 }
 inline void MapData::set_additionaltypes(const char* value) {
   set_has_additionaltypes();
-  if (additionaltypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (additionaltypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     additionaltypes_ = new ::std::string;
   }
   additionaltypes_->assign(value);
 }
 inline void MapData::set_additionaltypes(const void* value, size_t size) {
   set_has_additionaltypes();
-  if (additionaltypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (additionaltypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     additionaltypes_ = new ::std::string;
   }
   additionaltypes_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* MapData::mutable_additionaltypes() {
   set_has_additionaltypes();
-  if (additionaltypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (additionaltypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     additionaltypes_ = new ::std::string;
   }
   return additionaltypes_;
 }
 inline ::std::string* MapData::release_additionaltypes() {
   clear_has_additionaltypes();
-  if (additionaltypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (additionaltypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = additionaltypes_;
-    additionaltypes_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    additionaltypes_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7212,7 +7212,7 @@ inline void MapData::clear_has_types() {
   _has_bits_[0] &= ~0x00000010u;
 }
 inline void MapData::clear_types() {
-  if (types_ != &::google::protobuf::internal::kEmptyString) {
+  if (types_ != &::google::obf_protobuf::internal::kEmptyString) {
     types_->clear();
   }
   clear_has_types();
@@ -7222,39 +7222,39 @@ inline const ::std::string& MapData::types() const {
 }
 inline void MapData::set_types(const ::std::string& value) {
   set_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     types_ = new ::std::string;
   }
   types_->assign(value);
 }
 inline void MapData::set_types(const char* value) {
   set_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     types_ = new ::std::string;
   }
   types_->assign(value);
 }
 inline void MapData::set_types(const void* value, size_t size) {
   set_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     types_ = new ::std::string;
   }
   types_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* MapData::mutable_types() {
   set_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     types_ = new ::std::string;
   }
   return types_;
 }
 inline ::std::string* MapData::release_types() {
   clear_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = types_;
-    types_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    types_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7270,7 +7270,7 @@ inline void MapData::clear_has_stringnames() {
   _has_bits_[0] &= ~0x00000020u;
 }
 inline void MapData::clear_stringnames() {
-  if (stringnames_ != &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ != &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_->clear();
   }
   clear_has_stringnames();
@@ -7280,39 +7280,39 @@ inline const ::std::string& MapData::stringnames() const {
 }
 inline void MapData::set_stringnames(const ::std::string& value) {
   set_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_ = new ::std::string;
   }
   stringnames_->assign(value);
 }
 inline void MapData::set_stringnames(const char* value) {
   set_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_ = new ::std::string;
   }
   stringnames_->assign(value);
 }
 inline void MapData::set_stringnames(const void* value, size_t size) {
   set_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_ = new ::std::string;
   }
   stringnames_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* MapData::mutable_stringnames() {
   set_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_ = new ::std::string;
   }
   return stringnames_;
 }
 inline ::std::string* MapData::release_stringnames() {
   clear_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = stringnames_;
-    stringnames_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    stringnames_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7331,10 +7331,10 @@ inline void MapData::clear_id() {
   id_ = GOOGLE_LONGLONG(0);
   clear_has_id();
 }
-inline ::google::protobuf::int64 MapData::id() const {
+inline ::google::obf_protobuf::int64 MapData::id() const {
   return id_;
 }
-inline void MapData::set_id(::google::protobuf::int64 value) {
+inline void MapData::set_id(::google::obf_protobuf::int64 value) {
   set_has_id();
   id_ = value;
 }
@@ -7350,7 +7350,7 @@ inline void MapData::clear_has_rasterbytes() {
   _has_bits_[0] &= ~0x00000080u;
 }
 inline void MapData::clear_rasterbytes() {
-  if (rasterbytes_ != &::google::protobuf::internal::kEmptyString) {
+  if (rasterbytes_ != &::google::obf_protobuf::internal::kEmptyString) {
     rasterbytes_->clear();
   }
   clear_has_rasterbytes();
@@ -7360,39 +7360,39 @@ inline const ::std::string& MapData::rasterbytes() const {
 }
 inline void MapData::set_rasterbytes(const ::std::string& value) {
   set_has_rasterbytes();
-  if (rasterbytes_ == &::google::protobuf::internal::kEmptyString) {
+  if (rasterbytes_ == &::google::obf_protobuf::internal::kEmptyString) {
     rasterbytes_ = new ::std::string;
   }
   rasterbytes_->assign(value);
 }
 inline void MapData::set_rasterbytes(const char* value) {
   set_has_rasterbytes();
-  if (rasterbytes_ == &::google::protobuf::internal::kEmptyString) {
+  if (rasterbytes_ == &::google::obf_protobuf::internal::kEmptyString) {
     rasterbytes_ = new ::std::string;
   }
   rasterbytes_->assign(value);
 }
 inline void MapData::set_rasterbytes(const void* value, size_t size) {
   set_has_rasterbytes();
-  if (rasterbytes_ == &::google::protobuf::internal::kEmptyString) {
+  if (rasterbytes_ == &::google::obf_protobuf::internal::kEmptyString) {
     rasterbytes_ = new ::std::string;
   }
   rasterbytes_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* MapData::mutable_rasterbytes() {
   set_has_rasterbytes();
-  if (rasterbytes_ == &::google::protobuf::internal::kEmptyString) {
+  if (rasterbytes_ == &::google::obf_protobuf::internal::kEmptyString) {
     rasterbytes_ = new ::std::string;
   }
   return rasterbytes_;
 }
 inline ::std::string* MapData::release_rasterbytes() {
   clear_has_rasterbytes();
-  if (rasterbytes_ == &::google::protobuf::internal::kEmptyString) {
+  if (rasterbytes_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = rasterbytes_;
-    rasterbytes_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    rasterbytes_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7440,11 +7440,11 @@ inline ::OsmAnd::OBF::CityIndex* OsmAndAddressIndex_CitiesIndex::mutable_cities(
 inline ::OsmAnd::OBF::CityIndex* OsmAndAddressIndex_CitiesIndex::add_cities() {
   return cities_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex >&
 OsmAndAddressIndex_CitiesIndex::cities() const {
   return cities_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityIndex >*
 OsmAndAddressIndex_CitiesIndex::mutable_cities() {
   return &cities_;
 }
@@ -7465,11 +7465,11 @@ inline ::OsmAnd::OBF::CityBlockIndex* OsmAndAddressIndex_CitiesIndex::mutable_bl
 inline ::OsmAnd::OBF::CityBlockIndex* OsmAndAddressIndex_CitiesIndex::add_blocks() {
   return blocks_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex >&
 OsmAndAddressIndex_CitiesIndex::blocks() const {
   return blocks_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::CityBlockIndex >*
 OsmAndAddressIndex_CitiesIndex::mutable_blocks() {
   return &blocks_;
 }
@@ -7489,7 +7489,7 @@ inline void OsmAndAddressIndex::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndAddressIndex::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -7499,39 +7499,39 @@ inline const ::std::string& OsmAndAddressIndex::name() const {
 }
 inline void OsmAndAddressIndex::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndAddressIndex::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndAddressIndex::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndAddressIndex::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* OsmAndAddressIndex::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7547,7 +7547,7 @@ inline void OsmAndAddressIndex::clear_has_name_en() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void OsmAndAddressIndex::clear_name_en() {
-  if (name_en_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_en_->clear();
   }
   clear_has_name_en();
@@ -7557,39 +7557,39 @@ inline const ::std::string& OsmAndAddressIndex::name_en() const {
 }
 inline void OsmAndAddressIndex::set_name_en(const ::std::string& value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void OsmAndAddressIndex::set_name_en(const char* value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void OsmAndAddressIndex::set_name_en(const char* value, size_t size) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndAddressIndex::mutable_name_en() {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   return name_en_;
 }
 inline ::std::string* OsmAndAddressIndex::release_name_en() {
   clear_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_en_;
-    name_en_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_en_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7639,11 +7639,11 @@ inline ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex* OsmAndAddressIndex::mutabl
 inline ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex* OsmAndAddressIndex::add_cities() {
   return cities_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex >&
 OsmAndAddressIndex::cities() const {
   return cities_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex >*
 OsmAndAddressIndex::mutable_cities() {
   return &cities_;
 }
@@ -7697,11 +7697,11 @@ inline ::OsmAnd::OBF::AddressNameIndexDataAtom* OsmAndAddressNameIndexData_Addre
 inline ::OsmAnd::OBF::AddressNameIndexDataAtom* OsmAndAddressNameIndexData_AddressNameIndexData::add_atom() {
   return atom_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom >&
 OsmAndAddressNameIndexData_AddressNameIndexData::atom() const {
   return atom_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::AddressNameIndexDataAtom >*
 OsmAndAddressNameIndexData_AddressNameIndexData::mutable_atom() {
   return &atom_;
 }
@@ -7755,11 +7755,11 @@ inline ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData* OsmAndAdd
 inline ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData* OsmAndAddressNameIndexData::add_atom() {
   return atom_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData >&
 OsmAndAddressNameIndexData::atom() const {
   return atom_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressNameIndexData_AddressNameIndexData >*
 OsmAndAddressNameIndexData::mutable_atom() {
   return &atom_;
 }
@@ -7779,7 +7779,7 @@ inline void AddressNameIndexDataAtom::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void AddressNameIndexDataAtom::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -7789,39 +7789,39 @@ inline const ::std::string& AddressNameIndexDataAtom::name() const {
 }
 inline void AddressNameIndexDataAtom::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void AddressNameIndexDataAtom::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void AddressNameIndexDataAtom::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* AddressNameIndexDataAtom::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* AddressNameIndexDataAtom::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7837,7 +7837,7 @@ inline void AddressNameIndexDataAtom::clear_has_nameen() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void AddressNameIndexDataAtom::clear_nameen() {
-  if (nameen_ != &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ != &::google::obf_protobuf::internal::kEmptyString) {
     nameen_->clear();
   }
   clear_has_nameen();
@@ -7847,39 +7847,39 @@ inline const ::std::string& AddressNameIndexDataAtom::nameen() const {
 }
 inline void AddressNameIndexDataAtom::set_nameen(const ::std::string& value) {
   set_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     nameen_ = new ::std::string;
   }
   nameen_->assign(value);
 }
 inline void AddressNameIndexDataAtom::set_nameen(const char* value) {
   set_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     nameen_ = new ::std::string;
   }
   nameen_->assign(value);
 }
 inline void AddressNameIndexDataAtom::set_nameen(const char* value, size_t size) {
   set_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     nameen_ = new ::std::string;
   }
   nameen_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* AddressNameIndexDataAtom::mutable_nameen() {
   set_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     nameen_ = new ::std::string;
   }
   return nameen_;
 }
 inline ::std::string* AddressNameIndexDataAtom::release_nameen() {
   clear_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = nameen_;
-    nameen_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    nameen_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -7898,10 +7898,10 @@ inline void AddressNameIndexDataAtom::clear_type() {
   type_ = 0u;
   clear_has_type();
 }
-inline ::google::protobuf::uint32 AddressNameIndexDataAtom::type() const {
+inline ::google::obf_protobuf::uint32 AddressNameIndexDataAtom::type() const {
   return type_;
 }
-inline void AddressNameIndexDataAtom::set_type(::google::protobuf::uint32 value) {
+inline void AddressNameIndexDataAtom::set_type(::google::obf_protobuf::uint32 value) {
   set_has_type();
   type_ = value;
 }
@@ -7913,20 +7913,20 @@ inline int AddressNameIndexDataAtom::shifttoindex_size() const {
 inline void AddressNameIndexDataAtom::clear_shifttoindex() {
   shifttoindex_.Clear();
 }
-inline ::google::protobuf::int32 AddressNameIndexDataAtom::shifttoindex(int index) const {
+inline ::google::obf_protobuf::int32 AddressNameIndexDataAtom::shifttoindex(int index) const {
   return shifttoindex_.Get(index);
 }
-inline void AddressNameIndexDataAtom::set_shifttoindex(int index, ::google::protobuf::int32 value) {
+inline void AddressNameIndexDataAtom::set_shifttoindex(int index, ::google::obf_protobuf::int32 value) {
   shifttoindex_.Set(index, value);
 }
-inline void AddressNameIndexDataAtom::add_shifttoindex(::google::protobuf::int32 value) {
+inline void AddressNameIndexDataAtom::add_shifttoindex(::google::obf_protobuf::int32 value) {
   shifttoindex_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 >&
 AddressNameIndexDataAtom::shifttoindex() const {
   return shifttoindex_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 >*
 AddressNameIndexDataAtom::mutable_shifttoindex() {
   return &shifttoindex_;
 }
@@ -7938,20 +7938,20 @@ inline int AddressNameIndexDataAtom::shifttocityindex_size() const {
 inline void AddressNameIndexDataAtom::clear_shifttocityindex() {
   shifttocityindex_.Clear();
 }
-inline ::google::protobuf::int32 AddressNameIndexDataAtom::shifttocityindex(int index) const {
+inline ::google::obf_protobuf::int32 AddressNameIndexDataAtom::shifttocityindex(int index) const {
   return shifttocityindex_.Get(index);
 }
-inline void AddressNameIndexDataAtom::set_shifttocityindex(int index, ::google::protobuf::int32 value) {
+inline void AddressNameIndexDataAtom::set_shifttocityindex(int index, ::google::obf_protobuf::int32 value) {
   shifttocityindex_.Set(index, value);
 }
-inline void AddressNameIndexDataAtom::add_shifttocityindex(::google::protobuf::int32 value) {
+inline void AddressNameIndexDataAtom::add_shifttocityindex(::google::obf_protobuf::int32 value) {
   shifttocityindex_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 >&
 AddressNameIndexDataAtom::shifttocityindex() const {
   return shifttocityindex_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int32 >*
 AddressNameIndexDataAtom::mutable_shifttocityindex() {
   return &shifttocityindex_;
 }
@@ -7974,10 +7974,10 @@ inline void CityIndex::clear_city_type() {
   city_type_ = 0u;
   clear_has_city_type();
 }
-inline ::google::protobuf::uint32 CityIndex::city_type() const {
+inline ::google::obf_protobuf::uint32 CityIndex::city_type() const {
   return city_type_;
 }
-inline void CityIndex::set_city_type(::google::protobuf::uint32 value) {
+inline void CityIndex::set_city_type(::google::obf_protobuf::uint32 value) {
   set_has_city_type();
   city_type_ = value;
 }
@@ -7993,7 +7993,7 @@ inline void CityIndex::clear_has_name() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void CityIndex::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -8003,39 +8003,39 @@ inline const ::std::string& CityIndex::name() const {
 }
 inline void CityIndex::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void CityIndex::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void CityIndex::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* CityIndex::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* CityIndex::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8051,7 +8051,7 @@ inline void CityIndex::clear_has_name_en() {
   _has_bits_[0] &= ~0x00000004u;
 }
 inline void CityIndex::clear_name_en() {
-  if (name_en_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_en_->clear();
   }
   clear_has_name_en();
@@ -8061,39 +8061,39 @@ inline const ::std::string& CityIndex::name_en() const {
 }
 inline void CityIndex::set_name_en(const ::std::string& value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void CityIndex::set_name_en(const char* value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void CityIndex::set_name_en(const char* value, size_t size) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* CityIndex::mutable_name_en() {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   return name_en_;
 }
 inline ::std::string* CityIndex::release_name_en() {
   clear_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_en_;
-    name_en_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_en_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8112,10 +8112,10 @@ inline void CityIndex::clear_id() {
   id_ = GOOGLE_ULONGLONG(0);
   clear_has_id();
 }
-inline ::google::protobuf::uint64 CityIndex::id() const {
+inline ::google::obf_protobuf::uint64 CityIndex::id() const {
   return id_;
 }
-inline void CityIndex::set_id(::google::protobuf::uint64 value) {
+inline void CityIndex::set_id(::google::obf_protobuf::uint64 value) {
   set_has_id();
   id_ = value;
 }
@@ -8134,10 +8134,10 @@ inline void CityIndex::clear_x() {
   x_ = 0u;
   clear_has_x();
 }
-inline ::google::protobuf::uint32 CityIndex::x() const {
+inline ::google::obf_protobuf::uint32 CityIndex::x() const {
   return x_;
 }
-inline void CityIndex::set_x(::google::protobuf::uint32 value) {
+inline void CityIndex::set_x(::google::obf_protobuf::uint32 value) {
   set_has_x();
   x_ = value;
 }
@@ -8156,10 +8156,10 @@ inline void CityIndex::clear_y() {
   y_ = 0u;
   clear_has_y();
 }
-inline ::google::protobuf::uint32 CityIndex::y() const {
+inline ::google::obf_protobuf::uint32 CityIndex::y() const {
   return y_;
 }
-inline void CityIndex::set_y(::google::protobuf::uint32 value) {
+inline void CityIndex::set_y(::google::obf_protobuf::uint32 value) {
   set_has_y();
   y_ = value;
 }
@@ -8178,10 +8178,10 @@ inline void CityIndex::clear_shifttocityblockindex() {
   shifttocityblockindex_ = 0u;
   clear_has_shifttocityblockindex();
 }
-inline ::google::protobuf::uint32 CityIndex::shifttocityblockindex() const {
+inline ::google::obf_protobuf::uint32 CityIndex::shifttocityblockindex() const {
   return shifttocityblockindex_;
 }
-inline void CityIndex::set_shifttocityblockindex(::google::protobuf::uint32 value) {
+inline void CityIndex::set_shifttocityblockindex(::google::obf_protobuf::uint32 value) {
   set_has_shifttocityblockindex();
   shifttocityblockindex_ = value;
 }
@@ -8204,10 +8204,10 @@ inline void CityBlockIndex::clear_shifttocityindex() {
   shifttocityindex_ = 0u;
   clear_has_shifttocityindex();
 }
-inline ::google::protobuf::uint32 CityBlockIndex::shifttocityindex() const {
+inline ::google::obf_protobuf::uint32 CityBlockIndex::shifttocityindex() const {
   return shifttocityindex_;
 }
-inline void CityBlockIndex::set_shifttocityindex(::google::protobuf::uint32 value) {
+inline void CityBlockIndex::set_shifttocityindex(::google::obf_protobuf::uint32 value) {
   set_has_shifttocityindex();
   shifttocityindex_ = value;
 }
@@ -8228,11 +8228,11 @@ inline ::OsmAnd::OBF::BuildingIndex* CityBlockIndex::mutable_buildings(int index
 inline ::OsmAnd::OBF::BuildingIndex* CityBlockIndex::add_buildings() {
   return buildings_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >&
 CityBlockIndex::buildings() const {
   return buildings_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >*
 CityBlockIndex::mutable_buildings() {
   return &buildings_;
 }
@@ -8253,11 +8253,11 @@ inline ::OsmAnd::OBF::StreetIndex* CityBlockIndex::mutable_streets(int index) {
 inline ::OsmAnd::OBF::StreetIndex* CityBlockIndex::add_streets() {
   return streets_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex >&
 CityBlockIndex::streets() const {
   return streets_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIndex >*
 CityBlockIndex::mutable_streets() {
   return &streets_;
 }
@@ -8277,7 +8277,7 @@ inline void StreetIndex::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void StreetIndex::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -8287,39 +8287,39 @@ inline const ::std::string& StreetIndex::name() const {
 }
 inline void StreetIndex::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void StreetIndex::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void StreetIndex::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* StreetIndex::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* StreetIndex::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8335,7 +8335,7 @@ inline void StreetIndex::clear_has_name_en() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void StreetIndex::clear_name_en() {
-  if (name_en_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_en_->clear();
   }
   clear_has_name_en();
@@ -8345,39 +8345,39 @@ inline const ::std::string& StreetIndex::name_en() const {
 }
 inline void StreetIndex::set_name_en(const ::std::string& value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void StreetIndex::set_name_en(const char* value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void StreetIndex::set_name_en(const char* value, size_t size) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* StreetIndex::mutable_name_en() {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   return name_en_;
 }
 inline ::std::string* StreetIndex::release_name_en() {
   clear_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_en_;
-    name_en_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_en_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8396,10 +8396,10 @@ inline void StreetIndex::clear_x() {
   x_ = 0;
   clear_has_x();
 }
-inline ::google::protobuf::int32 StreetIndex::x() const {
+inline ::google::obf_protobuf::int32 StreetIndex::x() const {
   return x_;
 }
-inline void StreetIndex::set_x(::google::protobuf::int32 value) {
+inline void StreetIndex::set_x(::google::obf_protobuf::int32 value) {
   set_has_x();
   x_ = value;
 }
@@ -8418,10 +8418,10 @@ inline void StreetIndex::clear_y() {
   y_ = 0;
   clear_has_y();
 }
-inline ::google::protobuf::int32 StreetIndex::y() const {
+inline ::google::obf_protobuf::int32 StreetIndex::y() const {
   return y_;
 }
-inline void StreetIndex::set_y(::google::protobuf::int32 value) {
+inline void StreetIndex::set_y(::google::obf_protobuf::int32 value) {
   set_has_y();
   y_ = value;
 }
@@ -8440,10 +8440,10 @@ inline void StreetIndex::clear_id() {
   id_ = GOOGLE_ULONGLONG(0);
   clear_has_id();
 }
-inline ::google::protobuf::uint64 StreetIndex::id() const {
+inline ::google::obf_protobuf::uint64 StreetIndex::id() const {
   return id_;
 }
-inline void StreetIndex::set_id(::google::protobuf::uint64 value) {
+inline void StreetIndex::set_id(::google::obf_protobuf::uint64 value) {
   set_has_id();
   id_ = value;
 }
@@ -8464,11 +8464,11 @@ inline ::OsmAnd::OBF::BuildingIndex* StreetIndex::mutable_buildings(int index) {
 inline ::OsmAnd::OBF::BuildingIndex* StreetIndex::add_buildings() {
   return buildings_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >&
 StreetIndex::buildings() const {
   return buildings_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex >*
 StreetIndex::mutable_buildings() {
   return &buildings_;
 }
@@ -8489,11 +8489,11 @@ inline ::OsmAnd::OBF::StreetIntersection* StreetIndex::mutable_intersections(int
 inline ::OsmAnd::OBF::StreetIntersection* StreetIndex::add_intersections() {
   return intersections_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection >&
 StreetIndex::intersections() const {
   return intersections_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection >*
 StreetIndex::mutable_intersections() {
   return &intersections_;
 }
@@ -8513,7 +8513,7 @@ inline void StreetIntersection::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void StreetIntersection::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -8523,39 +8523,39 @@ inline const ::std::string& StreetIntersection::name() const {
 }
 inline void StreetIntersection::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void StreetIntersection::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void StreetIntersection::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* StreetIntersection::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* StreetIntersection::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8571,7 +8571,7 @@ inline void StreetIntersection::clear_has_name_en() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void StreetIntersection::clear_name_en() {
-  if (name_en_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_en_->clear();
   }
   clear_has_name_en();
@@ -8581,39 +8581,39 @@ inline const ::std::string& StreetIntersection::name_en() const {
 }
 inline void StreetIntersection::set_name_en(const ::std::string& value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void StreetIntersection::set_name_en(const char* value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void StreetIntersection::set_name_en(const char* value, size_t size) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* StreetIntersection::mutable_name_en() {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   return name_en_;
 }
 inline ::std::string* StreetIntersection::release_name_en() {
   clear_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_en_;
-    name_en_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_en_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8632,10 +8632,10 @@ inline void StreetIntersection::clear_intersectedx() {
   intersectedx_ = 0;
   clear_has_intersectedx();
 }
-inline ::google::protobuf::int32 StreetIntersection::intersectedx() const {
+inline ::google::obf_protobuf::int32 StreetIntersection::intersectedx() const {
   return intersectedx_;
 }
-inline void StreetIntersection::set_intersectedx(::google::protobuf::int32 value) {
+inline void StreetIntersection::set_intersectedx(::google::obf_protobuf::int32 value) {
   set_has_intersectedx();
   intersectedx_ = value;
 }
@@ -8654,10 +8654,10 @@ inline void StreetIntersection::clear_intersectedy() {
   intersectedy_ = 0;
   clear_has_intersectedy();
 }
-inline ::google::protobuf::int32 StreetIntersection::intersectedy() const {
+inline ::google::obf_protobuf::int32 StreetIntersection::intersectedy() const {
   return intersectedy_;
 }
-inline void StreetIntersection::set_intersectedy(::google::protobuf::int32 value) {
+inline void StreetIntersection::set_intersectedy(::google::obf_protobuf::int32 value) {
   set_has_intersectedy();
   intersectedy_ = value;
 }
@@ -8677,7 +8677,7 @@ inline void BuildingIndex::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void BuildingIndex::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -8687,39 +8687,39 @@ inline const ::std::string& BuildingIndex::name() const {
 }
 inline void BuildingIndex::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void BuildingIndex::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void BuildingIndex::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* BuildingIndex::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* BuildingIndex::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8735,7 +8735,7 @@ inline void BuildingIndex::clear_has_name_en() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void BuildingIndex::clear_name_en() {
-  if (name_en_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_en_->clear();
   }
   clear_has_name_en();
@@ -8745,39 +8745,39 @@ inline const ::std::string& BuildingIndex::name_en() const {
 }
 inline void BuildingIndex::set_name_en(const ::std::string& value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void BuildingIndex::set_name_en(const char* value) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(value);
 }
 inline void BuildingIndex::set_name_en(const char* value, size_t size) {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   name_en_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* BuildingIndex::mutable_name_en() {
   set_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en_ = new ::std::string;
   }
   return name_en_;
 }
 inline ::std::string* BuildingIndex::release_name_en() {
   clear_has_name_en();
-  if (name_en_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_en_;
-    name_en_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_en_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8793,7 +8793,7 @@ inline void BuildingIndex::clear_has_name2() {
   _has_bits_[0] &= ~0x00000004u;
 }
 inline void BuildingIndex::clear_name2() {
-  if (name2_ != &::google::protobuf::internal::kEmptyString) {
+  if (name2_ != &::google::obf_protobuf::internal::kEmptyString) {
     name2_->clear();
   }
   clear_has_name2();
@@ -8803,39 +8803,39 @@ inline const ::std::string& BuildingIndex::name2() const {
 }
 inline void BuildingIndex::set_name2(const ::std::string& value) {
   set_has_name2();
-  if (name2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
     name2_ = new ::std::string;
   }
   name2_->assign(value);
 }
 inline void BuildingIndex::set_name2(const char* value) {
   set_has_name2();
-  if (name2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
     name2_ = new ::std::string;
   }
   name2_->assign(value);
 }
 inline void BuildingIndex::set_name2(const char* value, size_t size) {
   set_has_name2();
-  if (name2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
     name2_ = new ::std::string;
   }
   name2_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* BuildingIndex::mutable_name2() {
   set_has_name2();
-  if (name2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
     name2_ = new ::std::string;
   }
   return name2_;
 }
 inline ::std::string* BuildingIndex::release_name2() {
   clear_has_name2();
-  if (name2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name2_;
-    name2_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name2_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8851,7 +8851,7 @@ inline void BuildingIndex::clear_has_name_en2() {
   _has_bits_[0] &= ~0x00000008u;
 }
 inline void BuildingIndex::clear_name_en2() {
-  if (name_en2_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_en2_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_en2_->clear();
   }
   clear_has_name_en2();
@@ -8861,39 +8861,39 @@ inline const ::std::string& BuildingIndex::name_en2() const {
 }
 inline void BuildingIndex::set_name_en2(const ::std::string& value) {
   set_has_name_en2();
-  if (name_en2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en2_ = new ::std::string;
   }
   name_en2_->assign(value);
 }
 inline void BuildingIndex::set_name_en2(const char* value) {
   set_has_name_en2();
-  if (name_en2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en2_ = new ::std::string;
   }
   name_en2_->assign(value);
 }
 inline void BuildingIndex::set_name_en2(const char* value, size_t size) {
   set_has_name_en2();
-  if (name_en2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en2_ = new ::std::string;
   }
   name_en2_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* BuildingIndex::mutable_name_en2() {
   set_has_name_en2();
-  if (name_en2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_en2_ = new ::std::string;
   }
   return name_en2_;
 }
 inline ::std::string* BuildingIndex::release_name_en2() {
   clear_has_name_en2();
-  if (name_en2_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_en2_;
-    name_en2_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_en2_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -8912,10 +8912,10 @@ inline void BuildingIndex::clear_interpolation() {
   interpolation_ = 0;
   clear_has_interpolation();
 }
-inline ::google::protobuf::int32 BuildingIndex::interpolation() const {
+inline ::google::obf_protobuf::int32 BuildingIndex::interpolation() const {
   return interpolation_;
 }
-inline void BuildingIndex::set_interpolation(::google::protobuf::int32 value) {
+inline void BuildingIndex::set_interpolation(::google::obf_protobuf::int32 value) {
   set_has_interpolation();
   interpolation_ = value;
 }
@@ -8934,10 +8934,10 @@ inline void BuildingIndex::clear_x() {
   x_ = 0;
   clear_has_x();
 }
-inline ::google::protobuf::int32 BuildingIndex::x() const {
+inline ::google::obf_protobuf::int32 BuildingIndex::x() const {
   return x_;
 }
-inline void BuildingIndex::set_x(::google::protobuf::int32 value) {
+inline void BuildingIndex::set_x(::google::obf_protobuf::int32 value) {
   set_has_x();
   x_ = value;
 }
@@ -8956,10 +8956,10 @@ inline void BuildingIndex::clear_y() {
   y_ = 0;
   clear_has_y();
 }
-inline ::google::protobuf::int32 BuildingIndex::y() const {
+inline ::google::obf_protobuf::int32 BuildingIndex::y() const {
   return y_;
 }
-inline void BuildingIndex::set_y(::google::protobuf::int32 value) {
+inline void BuildingIndex::set_y(::google::obf_protobuf::int32 value) {
   set_has_y();
   y_ = value;
 }
@@ -8978,10 +8978,10 @@ inline void BuildingIndex::clear_x2() {
   x2_ = 0;
   clear_has_x2();
 }
-inline ::google::protobuf::int32 BuildingIndex::x2() const {
+inline ::google::obf_protobuf::int32 BuildingIndex::x2() const {
   return x2_;
 }
-inline void BuildingIndex::set_x2(::google::protobuf::int32 value) {
+inline void BuildingIndex::set_x2(::google::obf_protobuf::int32 value) {
   set_has_x2();
   x2_ = value;
 }
@@ -9000,10 +9000,10 @@ inline void BuildingIndex::clear_y2() {
   y2_ = 0;
   clear_has_y2();
 }
-inline ::google::protobuf::int32 BuildingIndex::y2() const {
+inline ::google::obf_protobuf::int32 BuildingIndex::y2() const {
   return y2_;
 }
-inline void BuildingIndex::set_y2(::google::protobuf::int32 value) {
+inline void BuildingIndex::set_y2(::google::obf_protobuf::int32 value) {
   set_has_y2();
   y2_ = value;
 }
@@ -9022,10 +9022,10 @@ inline void BuildingIndex::clear_id() {
   id_ = GOOGLE_ULONGLONG(0);
   clear_has_id();
 }
-inline ::google::protobuf::uint64 BuildingIndex::id() const {
+inline ::google::obf_protobuf::uint64 BuildingIndex::id() const {
   return id_;
 }
-inline void BuildingIndex::set_id(::google::protobuf::uint64 value) {
+inline void BuildingIndex::set_id(::google::obf_protobuf::uint64 value) {
   set_has_id();
   id_ = value;
 }
@@ -9041,7 +9041,7 @@ inline void BuildingIndex::clear_has_postcode() {
   _has_bits_[0] &= ~0x00000400u;
 }
 inline void BuildingIndex::clear_postcode() {
-  if (postcode_ != &::google::protobuf::internal::kEmptyString) {
+  if (postcode_ != &::google::obf_protobuf::internal::kEmptyString) {
     postcode_->clear();
   }
   clear_has_postcode();
@@ -9051,39 +9051,39 @@ inline const ::std::string& BuildingIndex::postcode() const {
 }
 inline void BuildingIndex::set_postcode(const ::std::string& value) {
   set_has_postcode();
-  if (postcode_ == &::google::protobuf::internal::kEmptyString) {
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
     postcode_ = new ::std::string;
   }
   postcode_->assign(value);
 }
 inline void BuildingIndex::set_postcode(const char* value) {
   set_has_postcode();
-  if (postcode_ == &::google::protobuf::internal::kEmptyString) {
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
     postcode_ = new ::std::string;
   }
   postcode_->assign(value);
 }
 inline void BuildingIndex::set_postcode(const char* value, size_t size) {
   set_has_postcode();
-  if (postcode_ == &::google::protobuf::internal::kEmptyString) {
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
     postcode_ = new ::std::string;
   }
   postcode_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* BuildingIndex::mutable_postcode() {
   set_has_postcode();
-  if (postcode_ == &::google::protobuf::internal::kEmptyString) {
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
     postcode_ = new ::std::string;
   }
   return postcode_;
 }
 inline ::std::string* BuildingIndex::release_postcode() {
   clear_has_postcode();
-  if (postcode_ == &::google::protobuf::internal::kEmptyString) {
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = postcode_;
-    postcode_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    postcode_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -9108,11 +9108,11 @@ inline ::OsmAnd::OBF::TransportRoute* TransportRoutes::mutable_routes(int index)
 inline ::OsmAnd::OBF::TransportRoute* TransportRoutes::add_routes() {
   return routes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute >&
 TransportRoutes::routes() const {
   return routes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRoute >*
 TransportRoutes::mutable_routes() {
   return &routes_;
 }
@@ -9135,10 +9135,10 @@ inline void TransportRoute::clear_id() {
   id_ = GOOGLE_ULONGLONG(0);
   clear_has_id();
 }
-inline ::google::protobuf::uint64 TransportRoute::id() const {
+inline ::google::obf_protobuf::uint64 TransportRoute::id() const {
   return id_;
 }
-inline void TransportRoute::set_id(::google::protobuf::uint64 value) {
+inline void TransportRoute::set_id(::google::obf_protobuf::uint64 value) {
   set_has_id();
   id_ = value;
 }
@@ -9157,10 +9157,10 @@ inline void TransportRoute::clear_type() {
   type_ = 0u;
   clear_has_type();
 }
-inline ::google::protobuf::uint32 TransportRoute::type() const {
+inline ::google::obf_protobuf::uint32 TransportRoute::type() const {
   return type_;
 }
-inline void TransportRoute::set_type(::google::protobuf::uint32 value) {
+inline void TransportRoute::set_type(::google::obf_protobuf::uint32 value) {
   set_has_type();
   type_ = value;
 }
@@ -9179,10 +9179,10 @@ inline void TransportRoute::clear_operator_() {
   operator__ = 0u;
   clear_has_operator_();
 }
-inline ::google::protobuf::uint32 TransportRoute::operator_() const {
+inline ::google::obf_protobuf::uint32 TransportRoute::operator_() const {
   return operator__;
 }
-inline void TransportRoute::set_operator_(::google::protobuf::uint32 value) {
+inline void TransportRoute::set_operator_(::google::obf_protobuf::uint32 value) {
   set_has_operator_();
   operator__ = value;
 }
@@ -9198,7 +9198,7 @@ inline void TransportRoute::clear_has_ref() {
   _has_bits_[0] &= ~0x00000008u;
 }
 inline void TransportRoute::clear_ref() {
-  if (ref_ != &::google::protobuf::internal::kEmptyString) {
+  if (ref_ != &::google::obf_protobuf::internal::kEmptyString) {
     ref_->clear();
   }
   clear_has_ref();
@@ -9208,39 +9208,39 @@ inline const ::std::string& TransportRoute::ref() const {
 }
 inline void TransportRoute::set_ref(const ::std::string& value) {
   set_has_ref();
-  if (ref_ == &::google::protobuf::internal::kEmptyString) {
+  if (ref_ == &::google::obf_protobuf::internal::kEmptyString) {
     ref_ = new ::std::string;
   }
   ref_->assign(value);
 }
 inline void TransportRoute::set_ref(const char* value) {
   set_has_ref();
-  if (ref_ == &::google::protobuf::internal::kEmptyString) {
+  if (ref_ == &::google::obf_protobuf::internal::kEmptyString) {
     ref_ = new ::std::string;
   }
   ref_->assign(value);
 }
 inline void TransportRoute::set_ref(const char* value, size_t size) {
   set_has_ref();
-  if (ref_ == &::google::protobuf::internal::kEmptyString) {
+  if (ref_ == &::google::obf_protobuf::internal::kEmptyString) {
     ref_ = new ::std::string;
   }
   ref_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* TransportRoute::mutable_ref() {
   set_has_ref();
-  if (ref_ == &::google::protobuf::internal::kEmptyString) {
+  if (ref_ == &::google::obf_protobuf::internal::kEmptyString) {
     ref_ = new ::std::string;
   }
   return ref_;
 }
 inline ::std::string* TransportRoute::release_ref() {
   clear_has_ref();
-  if (ref_ == &::google::protobuf::internal::kEmptyString) {
+  if (ref_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = ref_;
-    ref_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    ref_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -9259,10 +9259,10 @@ inline void TransportRoute::clear_name() {
   name_ = 0u;
   clear_has_name();
 }
-inline ::google::protobuf::uint32 TransportRoute::name() const {
+inline ::google::obf_protobuf::uint32 TransportRoute::name() const {
   return name_;
 }
-inline void TransportRoute::set_name(::google::protobuf::uint32 value) {
+inline void TransportRoute::set_name(::google::obf_protobuf::uint32 value) {
   set_has_name();
   name_ = value;
 }
@@ -9281,10 +9281,10 @@ inline void TransportRoute::clear_name_en() {
   name_en_ = 0u;
   clear_has_name_en();
 }
-inline ::google::protobuf::uint32 TransportRoute::name_en() const {
+inline ::google::obf_protobuf::uint32 TransportRoute::name_en() const {
   return name_en_;
 }
-inline void TransportRoute::set_name_en(::google::protobuf::uint32 value) {
+inline void TransportRoute::set_name_en(::google::obf_protobuf::uint32 value) {
   set_has_name_en();
   name_en_ = value;
 }
@@ -9303,10 +9303,10 @@ inline void TransportRoute::clear_distance() {
   distance_ = 0u;
   clear_has_distance();
 }
-inline ::google::protobuf::uint32 TransportRoute::distance() const {
+inline ::google::obf_protobuf::uint32 TransportRoute::distance() const {
   return distance_;
 }
-inline void TransportRoute::set_distance(::google::protobuf::uint32 value) {
+inline void TransportRoute::set_distance(::google::obf_protobuf::uint32 value) {
   set_has_distance();
   distance_ = value;
 }
@@ -9327,11 +9327,11 @@ inline ::OsmAnd::OBF::TransportRouteStop* TransportRoute::mutable_directstops(in
 inline ::OsmAnd::OBF::TransportRouteStop* TransportRoute::add_directstops() {
   return directstops_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >&
 TransportRoute::directstops() const {
   return directstops_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >*
 TransportRoute::mutable_directstops() {
   return &directstops_;
 }
@@ -9352,11 +9352,11 @@ inline ::OsmAnd::OBF::TransportRouteStop* TransportRoute::mutable_reversestops(i
 inline ::OsmAnd::OBF::TransportRouteStop* TransportRoute::add_reversestops() {
   return reversestops_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >&
 TransportRoute::reversestops() const {
   return reversestops_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportRouteStop >*
 TransportRoute::mutable_reversestops() {
   return &reversestops_;
 }
@@ -9379,10 +9379,10 @@ inline void TransportRouteStop::clear_id() {
   id_ = GOOGLE_LONGLONG(0);
   clear_has_id();
 }
-inline ::google::protobuf::int64 TransportRouteStop::id() const {
+inline ::google::obf_protobuf::int64 TransportRouteStop::id() const {
   return id_;
 }
-inline void TransportRouteStop::set_id(::google::protobuf::int64 value) {
+inline void TransportRouteStop::set_id(::google::obf_protobuf::int64 value) {
   set_has_id();
   id_ = value;
 }
@@ -9401,10 +9401,10 @@ inline void TransportRouteStop::clear_dx() {
   dx_ = 0;
   clear_has_dx();
 }
-inline ::google::protobuf::int32 TransportRouteStop::dx() const {
+inline ::google::obf_protobuf::int32 TransportRouteStop::dx() const {
   return dx_;
 }
-inline void TransportRouteStop::set_dx(::google::protobuf::int32 value) {
+inline void TransportRouteStop::set_dx(::google::obf_protobuf::int32 value) {
   set_has_dx();
   dx_ = value;
 }
@@ -9423,10 +9423,10 @@ inline void TransportRouteStop::clear_dy() {
   dy_ = 0;
   clear_has_dy();
 }
-inline ::google::protobuf::int32 TransportRouteStop::dy() const {
+inline ::google::obf_protobuf::int32 TransportRouteStop::dy() const {
   return dy_;
 }
-inline void TransportRouteStop::set_dy(::google::protobuf::int32 value) {
+inline void TransportRouteStop::set_dy(::google::obf_protobuf::int32 value) {
   set_has_dy();
   dy_ = value;
 }
@@ -9445,10 +9445,10 @@ inline void TransportRouteStop::clear_name() {
   name_ = 0u;
   clear_has_name();
 }
-inline ::google::protobuf::uint32 TransportRouteStop::name() const {
+inline ::google::obf_protobuf::uint32 TransportRouteStop::name() const {
   return name_;
 }
-inline void TransportRouteStop::set_name(::google::protobuf::uint32 value) {
+inline void TransportRouteStop::set_name(::google::obf_protobuf::uint32 value) {
   set_has_name();
   name_ = value;
 }
@@ -9467,10 +9467,10 @@ inline void TransportRouteStop::clear_name_en() {
   name_en_ = 0u;
   clear_has_name_en();
 }
-inline ::google::protobuf::uint32 TransportRouteStop::name_en() const {
+inline ::google::obf_protobuf::uint32 TransportRouteStop::name_en() const {
   return name_en_;
 }
-inline void TransportRouteStop::set_name_en(::google::protobuf::uint32 value) {
+inline void TransportRouteStop::set_name_en(::google::obf_protobuf::uint32 value) {
   set_has_name_en();
   name_en_ = value;
 }
@@ -9493,10 +9493,10 @@ inline void TransportStop::clear_dx() {
   dx_ = 0;
   clear_has_dx();
 }
-inline ::google::protobuf::int32 TransportStop::dx() const {
+inline ::google::obf_protobuf::int32 TransportStop::dx() const {
   return dx_;
 }
-inline void TransportStop::set_dx(::google::protobuf::int32 value) {
+inline void TransportStop::set_dx(::google::obf_protobuf::int32 value) {
   set_has_dx();
   dx_ = value;
 }
@@ -9515,10 +9515,10 @@ inline void TransportStop::clear_dy() {
   dy_ = 0;
   clear_has_dy();
 }
-inline ::google::protobuf::int32 TransportStop::dy() const {
+inline ::google::obf_protobuf::int32 TransportStop::dy() const {
   return dy_;
 }
-inline void TransportStop::set_dy(::google::protobuf::int32 value) {
+inline void TransportStop::set_dy(::google::obf_protobuf::int32 value) {
   set_has_dy();
   dy_ = value;
 }
@@ -9537,10 +9537,10 @@ inline void TransportStop::clear_id() {
   id_ = GOOGLE_LONGLONG(0);
   clear_has_id();
 }
-inline ::google::protobuf::int64 TransportStop::id() const {
+inline ::google::obf_protobuf::int64 TransportStop::id() const {
   return id_;
 }
-inline void TransportStop::set_id(::google::protobuf::int64 value) {
+inline void TransportStop::set_id(::google::obf_protobuf::int64 value) {
   set_has_id();
   id_ = value;
 }
@@ -9559,10 +9559,10 @@ inline void TransportStop::clear_name() {
   name_ = 0u;
   clear_has_name();
 }
-inline ::google::protobuf::uint32 TransportStop::name() const {
+inline ::google::obf_protobuf::uint32 TransportStop::name() const {
   return name_;
 }
-inline void TransportStop::set_name(::google::protobuf::uint32 value) {
+inline void TransportStop::set_name(::google::obf_protobuf::uint32 value) {
   set_has_name();
   name_ = value;
 }
@@ -9581,10 +9581,10 @@ inline void TransportStop::clear_name_en() {
   name_en_ = 0u;
   clear_has_name_en();
 }
-inline ::google::protobuf::uint32 TransportStop::name_en() const {
+inline ::google::obf_protobuf::uint32 TransportStop::name_en() const {
   return name_en_;
 }
-inline void TransportStop::set_name_en(::google::protobuf::uint32 value) {
+inline void TransportStop::set_name_en(::google::obf_protobuf::uint32 value) {
   set_has_name_en();
   name_en_ = value;
 }
@@ -9596,20 +9596,20 @@ inline int TransportStop::routes_size() const {
 inline void TransportStop::clear_routes() {
   routes_.Clear();
 }
-inline ::google::protobuf::uint32 TransportStop::routes(int index) const {
+inline ::google::obf_protobuf::uint32 TransportStop::routes(int index) const {
   return routes_.Get(index);
 }
-inline void TransportStop::set_routes(int index, ::google::protobuf::uint32 value) {
+inline void TransportStop::set_routes(int index, ::google::obf_protobuf::uint32 value) {
   routes_.Set(index, value);
 }
-inline void TransportStop::add_routes(::google::protobuf::uint32 value) {
+inline void TransportStop::add_routes(::google::obf_protobuf::uint32 value) {
   routes_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
 TransportStop::routes() const {
   return routes_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
 TransportStop::mutable_routes() {
   return &routes_;
 }
@@ -9632,10 +9632,10 @@ inline void TransportStopsTree::clear_left() {
   left_ = 0;
   clear_has_left();
 }
-inline ::google::protobuf::int32 TransportStopsTree::left() const {
+inline ::google::obf_protobuf::int32 TransportStopsTree::left() const {
   return left_;
 }
-inline void TransportStopsTree::set_left(::google::protobuf::int32 value) {
+inline void TransportStopsTree::set_left(::google::obf_protobuf::int32 value) {
   set_has_left();
   left_ = value;
 }
@@ -9654,10 +9654,10 @@ inline void TransportStopsTree::clear_right() {
   right_ = 0;
   clear_has_right();
 }
-inline ::google::protobuf::int32 TransportStopsTree::right() const {
+inline ::google::obf_protobuf::int32 TransportStopsTree::right() const {
   return right_;
 }
-inline void TransportStopsTree::set_right(::google::protobuf::int32 value) {
+inline void TransportStopsTree::set_right(::google::obf_protobuf::int32 value) {
   set_has_right();
   right_ = value;
 }
@@ -9676,10 +9676,10 @@ inline void TransportStopsTree::clear_top() {
   top_ = 0;
   clear_has_top();
 }
-inline ::google::protobuf::int32 TransportStopsTree::top() const {
+inline ::google::obf_protobuf::int32 TransportStopsTree::top() const {
   return top_;
 }
-inline void TransportStopsTree::set_top(::google::protobuf::int32 value) {
+inline void TransportStopsTree::set_top(::google::obf_protobuf::int32 value) {
   set_has_top();
   top_ = value;
 }
@@ -9698,10 +9698,10 @@ inline void TransportStopsTree::clear_bottom() {
   bottom_ = 0;
   clear_has_bottom();
 }
-inline ::google::protobuf::int32 TransportStopsTree::bottom() const {
+inline ::google::obf_protobuf::int32 TransportStopsTree::bottom() const {
   return bottom_;
 }
-inline void TransportStopsTree::set_bottom(::google::protobuf::int32 value) {
+inline void TransportStopsTree::set_bottom(::google::obf_protobuf::int32 value) {
   set_has_bottom();
   bottom_ = value;
 }
@@ -9722,11 +9722,11 @@ inline ::OsmAnd::OBF::TransportStopsTree* TransportStopsTree::mutable_subtrees(i
 inline ::OsmAnd::OBF::TransportStopsTree* TransportStopsTree::add_subtrees() {
   return subtrees_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree >&
 TransportStopsTree::subtrees() const {
   return subtrees_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStopsTree >*
 TransportStopsTree::mutable_subtrees() {
   return &subtrees_;
 }
@@ -9747,11 +9747,11 @@ inline ::OsmAnd::OBF::TransportStop* TransportStopsTree::mutable_leafs(int index
 inline ::OsmAnd::OBF::TransportStop* TransportStopsTree::add_leafs() {
   return leafs_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop >&
 TransportStopsTree::leafs() const {
   return leafs_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::TransportStop >*
 TransportStopsTree::mutable_leafs() {
   return &leafs_;
 }
@@ -9770,10 +9770,10 @@ inline void TransportStopsTree::clear_baseid() {
   baseid_ = GOOGLE_ULONGLONG(0);
   clear_has_baseid();
 }
-inline ::google::protobuf::uint64 TransportStopsTree::baseid() const {
+inline ::google::obf_protobuf::uint64 TransportStopsTree::baseid() const {
   return baseid_;
 }
-inline void TransportStopsTree::set_baseid(::google::protobuf::uint64 value) {
+inline void TransportStopsTree::set_baseid(::google::obf_protobuf::uint64 value) {
   set_has_baseid();
   baseid_ = value;
 }
@@ -9793,7 +9793,7 @@ inline void OsmAndTransportIndex::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndTransportIndex::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -9803,39 +9803,39 @@ inline const ::std::string& OsmAndTransportIndex::name() const {
 }
 inline void OsmAndTransportIndex::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndTransportIndex::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndTransportIndex::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndTransportIndex::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* OsmAndTransportIndex::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -9942,7 +9942,7 @@ inline void OsmAndPoiIndex::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndPoiIndex::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -9952,39 +9952,39 @@ inline const ::std::string& OsmAndPoiIndex::name() const {
 }
 inline void OsmAndPoiIndex::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndPoiIndex::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndPoiIndex::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiIndex::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* OsmAndPoiIndex::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -10034,11 +10034,11 @@ inline ::OsmAnd::OBF::OsmAndCategoryTable* OsmAndPoiIndex::mutable_categoriestab
 inline ::OsmAnd::OBF::OsmAndCategoryTable* OsmAndPoiIndex::add_categoriestable() {
   return categoriestable_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable >&
 OsmAndPoiIndex::categoriestable() const {
   return categoriestable_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndCategoryTable >*
 OsmAndPoiIndex::mutable_categoriestable() {
   return &categoriestable_;
 }
@@ -10117,11 +10117,11 @@ inline ::OsmAnd::OBF::OsmAndPoiBox* OsmAndPoiIndex::mutable_boxes(int index) {
 inline ::OsmAnd::OBF::OsmAndPoiBox* OsmAndPoiIndex::add_boxes() {
   return boxes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >&
 OsmAndPoiIndex::boxes() const {
   return boxes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >*
 OsmAndPoiIndex::mutable_boxes() {
   return &boxes_;
 }
@@ -10142,11 +10142,11 @@ inline ::OsmAnd::OBF::OsmAndPoiBoxData* OsmAndPoiIndex::mutable_poidata(int inde
 inline ::OsmAnd::OBF::OsmAndPoiBoxData* OsmAndPoiIndex::add_poidata() {
   return poidata_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData >&
 OsmAndPoiIndex::poidata() const {
   return poidata_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxData >*
 OsmAndPoiIndex::mutable_poidata() {
   return &poidata_;
 }
@@ -10171,11 +10171,11 @@ inline ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom* OsmAndPoiNameIndex_OsmAndPoiNa
 inline ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom* OsmAndPoiNameIndex_OsmAndPoiNameIndexData::add_atoms() {
   return atoms_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom >&
 OsmAndPoiNameIndex_OsmAndPoiNameIndexData::atoms() const {
   return atoms_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndexDataAtom >*
 OsmAndPoiNameIndex_OsmAndPoiNameIndexData::mutable_atoms() {
   return &atoms_;
 }
@@ -10229,11 +10229,11 @@ inline ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData* OsmAndPoiNameIn
 inline ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData* OsmAndPoiNameIndex::add_data() {
   return data_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData >&
 OsmAndPoiNameIndex::data() const {
   return data_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiNameIndex_OsmAndPoiNameIndexData >*
 OsmAndPoiNameIndex::mutable_data() {
   return &data_;
 }
@@ -10256,10 +10256,10 @@ inline void OsmAndPoiNameIndexDataAtom::clear_zoom() {
   zoom_ = 0u;
   clear_has_zoom();
 }
-inline ::google::protobuf::uint32 OsmAndPoiNameIndexDataAtom::zoom() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiNameIndexDataAtom::zoom() const {
   return zoom_;
 }
-inline void OsmAndPoiNameIndexDataAtom::set_zoom(::google::protobuf::uint32 value) {
+inline void OsmAndPoiNameIndexDataAtom::set_zoom(::google::obf_protobuf::uint32 value) {
   set_has_zoom();
   zoom_ = value;
 }
@@ -10278,10 +10278,10 @@ inline void OsmAndPoiNameIndexDataAtom::clear_x() {
   x_ = 0u;
   clear_has_x();
 }
-inline ::google::protobuf::uint32 OsmAndPoiNameIndexDataAtom::x() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiNameIndexDataAtom::x() const {
   return x_;
 }
-inline void OsmAndPoiNameIndexDataAtom::set_x(::google::protobuf::uint32 value) {
+inline void OsmAndPoiNameIndexDataAtom::set_x(::google::obf_protobuf::uint32 value) {
   set_has_x();
   x_ = value;
 }
@@ -10300,10 +10300,10 @@ inline void OsmAndPoiNameIndexDataAtom::clear_y() {
   y_ = 0u;
   clear_has_y();
 }
-inline ::google::protobuf::uint32 OsmAndPoiNameIndexDataAtom::y() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiNameIndexDataAtom::y() const {
   return y_;
 }
-inline void OsmAndPoiNameIndexDataAtom::set_y(::google::protobuf::uint32 value) {
+inline void OsmAndPoiNameIndexDataAtom::set_y(::google::obf_protobuf::uint32 value) {
   set_has_y();
   y_ = value;
 }
@@ -10322,10 +10322,10 @@ inline void OsmAndPoiNameIndexDataAtom::clear_shiftto() {
   shiftto_ = 0u;
   clear_has_shiftto();
 }
-inline ::google::protobuf::uint32 OsmAndPoiNameIndexDataAtom::shiftto() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiNameIndexDataAtom::shiftto() const {
   return shiftto_;
 }
-inline void OsmAndPoiNameIndexDataAtom::set_shiftto(::google::protobuf::uint32 value) {
+inline void OsmAndPoiNameIndexDataAtom::set_shiftto(::google::obf_protobuf::uint32 value) {
   set_has_shiftto();
   shiftto_ = value;
 }
@@ -10345,7 +10345,7 @@ inline void OsmAndCategoryTable::clear_has_category() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndCategoryTable::clear_category() {
-  if (category_ != &::google::protobuf::internal::kEmptyString) {
+  if (category_ != &::google::obf_protobuf::internal::kEmptyString) {
     category_->clear();
   }
   clear_has_category();
@@ -10355,39 +10355,39 @@ inline const ::std::string& OsmAndCategoryTable::category() const {
 }
 inline void OsmAndCategoryTable::set_category(const ::std::string& value) {
   set_has_category();
-  if (category_ == &::google::protobuf::internal::kEmptyString) {
+  if (category_ == &::google::obf_protobuf::internal::kEmptyString) {
     category_ = new ::std::string;
   }
   category_->assign(value);
 }
 inline void OsmAndCategoryTable::set_category(const char* value) {
   set_has_category();
-  if (category_ == &::google::protobuf::internal::kEmptyString) {
+  if (category_ == &::google::obf_protobuf::internal::kEmptyString) {
     category_ = new ::std::string;
   }
   category_->assign(value);
 }
 inline void OsmAndCategoryTable::set_category(const char* value, size_t size) {
   set_has_category();
-  if (category_ == &::google::protobuf::internal::kEmptyString) {
+  if (category_ == &::google::obf_protobuf::internal::kEmptyString) {
     category_ = new ::std::string;
   }
   category_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndCategoryTable::mutable_category() {
   set_has_category();
-  if (category_ == &::google::protobuf::internal::kEmptyString) {
+  if (category_ == &::google::obf_protobuf::internal::kEmptyString) {
     category_ = new ::std::string;
   }
   return category_;
 }
 inline ::std::string* OsmAndCategoryTable::release_category() {
   clear_has_category();
-  if (category_ == &::google::protobuf::internal::kEmptyString) {
+  if (category_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = category_;
-    category_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    category_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -10427,11 +10427,11 @@ inline void OsmAndCategoryTable::add_subcategories(const char* value) {
 inline void OsmAndCategoryTable::add_subcategories(const char* value, size_t size) {
   subcategories_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>&
 OsmAndCategoryTable::subcategories() const {
   return subcategories_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 OsmAndCategoryTable::mutable_subcategories() {
   return &subcategories_;
 }
@@ -10456,11 +10456,11 @@ inline ::OsmAnd::OBF::OsmAndPoiSubtype* OsmAndSubtypesTable::mutable_subtypes(in
 inline ::OsmAnd::OBF::OsmAndPoiSubtype* OsmAndSubtypesTable::add_subtypes() {
   return subtypes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype >&
 OsmAndSubtypesTable::subtypes() const {
   return subtypes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiSubtype >*
 OsmAndSubtypesTable::mutable_subtypes() {
   return &subtypes_;
 }
@@ -10480,7 +10480,7 @@ inline void OsmAndPoiSubtype::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndPoiSubtype::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -10490,39 +10490,39 @@ inline const ::std::string& OsmAndPoiSubtype::name() const {
 }
 inline void OsmAndPoiSubtype::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndPoiSubtype::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndPoiSubtype::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiSubtype::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* OsmAndPoiSubtype::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -10538,7 +10538,7 @@ inline void OsmAndPoiSubtype::clear_has_tagname() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void OsmAndPoiSubtype::clear_tagname() {
-  if (tagname_ != &::google::protobuf::internal::kEmptyString) {
+  if (tagname_ != &::google::obf_protobuf::internal::kEmptyString) {
     tagname_->clear();
   }
   clear_has_tagname();
@@ -10548,39 +10548,39 @@ inline const ::std::string& OsmAndPoiSubtype::tagname() const {
 }
 inline void OsmAndPoiSubtype::set_tagname(const ::std::string& value) {
   set_has_tagname();
-  if (tagname_ == &::google::protobuf::internal::kEmptyString) {
+  if (tagname_ == &::google::obf_protobuf::internal::kEmptyString) {
     tagname_ = new ::std::string;
   }
   tagname_->assign(value);
 }
 inline void OsmAndPoiSubtype::set_tagname(const char* value) {
   set_has_tagname();
-  if (tagname_ == &::google::protobuf::internal::kEmptyString) {
+  if (tagname_ == &::google::obf_protobuf::internal::kEmptyString) {
     tagname_ = new ::std::string;
   }
   tagname_->assign(value);
 }
 inline void OsmAndPoiSubtype::set_tagname(const char* value, size_t size) {
   set_has_tagname();
-  if (tagname_ == &::google::protobuf::internal::kEmptyString) {
+  if (tagname_ == &::google::obf_protobuf::internal::kEmptyString) {
     tagname_ = new ::std::string;
   }
   tagname_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiSubtype::mutable_tagname() {
   set_has_tagname();
-  if (tagname_ == &::google::protobuf::internal::kEmptyString) {
+  if (tagname_ == &::google::obf_protobuf::internal::kEmptyString) {
     tagname_ = new ::std::string;
   }
   return tagname_;
 }
 inline ::std::string* OsmAndPoiSubtype::release_tagname() {
   clear_has_tagname();
-  if (tagname_ == &::google::protobuf::internal::kEmptyString) {
+  if (tagname_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = tagname_;
-    tagname_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    tagname_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -10621,10 +10621,10 @@ inline void OsmAndPoiSubtype::clear_frequency() {
   frequency_ = 0u;
   clear_has_frequency();
 }
-inline ::google::protobuf::uint32 OsmAndPoiSubtype::frequency() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiSubtype::frequency() const {
   return frequency_;
 }
-inline void OsmAndPoiSubtype::set_frequency(::google::protobuf::uint32 value) {
+inline void OsmAndPoiSubtype::set_frequency(::google::obf_protobuf::uint32 value) {
   set_has_frequency();
   frequency_ = value;
 }
@@ -10643,10 +10643,10 @@ inline void OsmAndPoiSubtype::clear_subtypevaluessize() {
   subtypevaluessize_ = 0u;
   clear_has_subtypevaluessize();
 }
-inline ::google::protobuf::uint32 OsmAndPoiSubtype::subtypevaluessize() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiSubtype::subtypevaluessize() const {
   return subtypevaluessize_;
 }
-inline void OsmAndPoiSubtype::set_subtypevaluessize(::google::protobuf::uint32 value) {
+inline void OsmAndPoiSubtype::set_subtypevaluessize(::google::obf_protobuf::uint32 value) {
   set_has_subtypevaluessize();
   subtypevaluessize_ = value;
 }
@@ -10686,11 +10686,11 @@ inline void OsmAndPoiSubtype::add_subtypevalue(const char* value) {
 inline void OsmAndPoiSubtype::add_subtypevalue(const char* value, size_t size) {
   subtypevalue_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>&
 OsmAndPoiSubtype::subtypevalue() const {
   return subtypevalue_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 OsmAndPoiSubtype::mutable_subtypevalue() {
   return &subtypevalue_;
 }
@@ -10713,10 +10713,10 @@ inline void OsmAndPoiBox::clear_zoom() {
   zoom_ = 0u;
   clear_has_zoom();
 }
-inline ::google::protobuf::uint32 OsmAndPoiBox::zoom() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiBox::zoom() const {
   return zoom_;
 }
-inline void OsmAndPoiBox::set_zoom(::google::protobuf::uint32 value) {
+inline void OsmAndPoiBox::set_zoom(::google::obf_protobuf::uint32 value) {
   set_has_zoom();
   zoom_ = value;
 }
@@ -10735,10 +10735,10 @@ inline void OsmAndPoiBox::clear_left() {
   left_ = 0;
   clear_has_left();
 }
-inline ::google::protobuf::int32 OsmAndPoiBox::left() const {
+inline ::google::obf_protobuf::int32 OsmAndPoiBox::left() const {
   return left_;
 }
-inline void OsmAndPoiBox::set_left(::google::protobuf::int32 value) {
+inline void OsmAndPoiBox::set_left(::google::obf_protobuf::int32 value) {
   set_has_left();
   left_ = value;
 }
@@ -10757,10 +10757,10 @@ inline void OsmAndPoiBox::clear_top() {
   top_ = 0;
   clear_has_top();
 }
-inline ::google::protobuf::int32 OsmAndPoiBox::top() const {
+inline ::google::obf_protobuf::int32 OsmAndPoiBox::top() const {
   return top_;
 }
-inline void OsmAndPoiBox::set_top(::google::protobuf::int32 value) {
+inline void OsmAndPoiBox::set_top(::google::obf_protobuf::int32 value) {
   set_has_top();
   top_ = value;
 }
@@ -10810,11 +10810,11 @@ inline ::OsmAnd::OBF::OsmAndPoiBox* OsmAndPoiBox::mutable_subboxes(int index) {
 inline ::OsmAnd::OBF::OsmAndPoiBox* OsmAndPoiBox::add_subboxes() {
   return subboxes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >&
 OsmAndPoiBox::subboxes() const {
   return subboxes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBox >*
 OsmAndPoiBox::mutable_subboxes() {
   return &subboxes_;
 }
@@ -10833,10 +10833,10 @@ inline void OsmAndPoiBox::clear_shifttodata() {
   shifttodata_ = 0u;
   clear_has_shifttodata();
 }
-inline ::google::protobuf::uint32 OsmAndPoiBox::shifttodata() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiBox::shifttodata() const {
   return shifttodata_;
 }
-inline void OsmAndPoiBox::set_shifttodata(::google::protobuf::uint32 value) {
+inline void OsmAndPoiBox::set_shifttodata(::google::obf_protobuf::uint32 value) {
   set_has_shifttodata();
   shifttodata_ = value;
 }
@@ -10852,20 +10852,20 @@ inline int OsmAndPoiCategories::categories_size() const {
 inline void OsmAndPoiCategories::clear_categories() {
   categories_.Clear();
 }
-inline ::google::protobuf::uint32 OsmAndPoiCategories::categories(int index) const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiCategories::categories(int index) const {
   return categories_.Get(index);
 }
-inline void OsmAndPoiCategories::set_categories(int index, ::google::protobuf::uint32 value) {
+inline void OsmAndPoiCategories::set_categories(int index, ::google::obf_protobuf::uint32 value) {
   categories_.Set(index, value);
 }
-inline void OsmAndPoiCategories::add_categories(::google::protobuf::uint32 value) {
+inline void OsmAndPoiCategories::add_categories(::google::obf_protobuf::uint32 value) {
   categories_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
 OsmAndPoiCategories::categories() const {
   return categories_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
 OsmAndPoiCategories::mutable_categories() {
   return &categories_;
 }
@@ -10877,20 +10877,20 @@ inline int OsmAndPoiCategories::subcategories_size() const {
 inline void OsmAndPoiCategories::clear_subcategories() {
   subcategories_.Clear();
 }
-inline ::google::protobuf::uint32 OsmAndPoiCategories::subcategories(int index) const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiCategories::subcategories(int index) const {
   return subcategories_.Get(index);
 }
-inline void OsmAndPoiCategories::set_subcategories(int index, ::google::protobuf::uint32 value) {
+inline void OsmAndPoiCategories::set_subcategories(int index, ::google::obf_protobuf::uint32 value) {
   subcategories_.Set(index, value);
 }
-inline void OsmAndPoiCategories::add_subcategories(::google::protobuf::uint32 value) {
+inline void OsmAndPoiCategories::add_subcategories(::google::obf_protobuf::uint32 value) {
   subcategories_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
 OsmAndPoiCategories::subcategories() const {
   return subcategories_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
 OsmAndPoiCategories::mutable_subcategories() {
   return &subcategories_;
 }
@@ -10913,10 +10913,10 @@ inline void OsmAndPoiBoxData::clear_zoom() {
   zoom_ = 0u;
   clear_has_zoom();
 }
-inline ::google::protobuf::uint32 OsmAndPoiBoxData::zoom() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiBoxData::zoom() const {
   return zoom_;
 }
-inline void OsmAndPoiBoxData::set_zoom(::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxData::set_zoom(::google::obf_protobuf::uint32 value) {
   set_has_zoom();
   zoom_ = value;
 }
@@ -10935,10 +10935,10 @@ inline void OsmAndPoiBoxData::clear_x() {
   x_ = 0u;
   clear_has_x();
 }
-inline ::google::protobuf::uint32 OsmAndPoiBoxData::x() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiBoxData::x() const {
   return x_;
 }
-inline void OsmAndPoiBoxData::set_x(::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxData::set_x(::google::obf_protobuf::uint32 value) {
   set_has_x();
   x_ = value;
 }
@@ -10957,10 +10957,10 @@ inline void OsmAndPoiBoxData::clear_y() {
   y_ = 0u;
   clear_has_y();
 }
-inline ::google::protobuf::uint32 OsmAndPoiBoxData::y() const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiBoxData::y() const {
   return y_;
 }
-inline void OsmAndPoiBoxData::set_y(::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxData::set_y(::google::obf_protobuf::uint32 value) {
   set_has_y();
   y_ = value;
 }
@@ -10981,11 +10981,11 @@ inline ::OsmAnd::OBF::OsmAndPoiBoxDataAtom* OsmAndPoiBoxData::mutable_poidata(in
 inline ::OsmAnd::OBF::OsmAndPoiBoxDataAtom* OsmAndPoiBoxData::add_poidata() {
   return poidata_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom >&
 OsmAndPoiBoxData::poidata() const {
   return poidata_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndPoiBoxDataAtom >*
 OsmAndPoiBoxData::mutable_poidata() {
   return &poidata_;
 }
@@ -11008,10 +11008,10 @@ inline void OsmAndPoiBoxDataAtom::clear_dx() {
   dx_ = 0;
   clear_has_dx();
 }
-inline ::google::protobuf::int32 OsmAndPoiBoxDataAtom::dx() const {
+inline ::google::obf_protobuf::int32 OsmAndPoiBoxDataAtom::dx() const {
   return dx_;
 }
-inline void OsmAndPoiBoxDataAtom::set_dx(::google::protobuf::int32 value) {
+inline void OsmAndPoiBoxDataAtom::set_dx(::google::obf_protobuf::int32 value) {
   set_has_dx();
   dx_ = value;
 }
@@ -11030,10 +11030,10 @@ inline void OsmAndPoiBoxDataAtom::clear_dy() {
   dy_ = 0;
   clear_has_dy();
 }
-inline ::google::protobuf::int32 OsmAndPoiBoxDataAtom::dy() const {
+inline ::google::obf_protobuf::int32 OsmAndPoiBoxDataAtom::dy() const {
   return dy_;
 }
-inline void OsmAndPoiBoxDataAtom::set_dy(::google::protobuf::int32 value) {
+inline void OsmAndPoiBoxDataAtom::set_dy(::google::obf_protobuf::int32 value) {
   set_has_dy();
   dy_ = value;
 }
@@ -11045,20 +11045,20 @@ inline int OsmAndPoiBoxDataAtom::categories_size() const {
 inline void OsmAndPoiBoxDataAtom::clear_categories() {
   categories_.Clear();
 }
-inline ::google::protobuf::uint32 OsmAndPoiBoxDataAtom::categories(int index) const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiBoxDataAtom::categories(int index) const {
   return categories_.Get(index);
 }
-inline void OsmAndPoiBoxDataAtom::set_categories(int index, ::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxDataAtom::set_categories(int index, ::google::obf_protobuf::uint32 value) {
   categories_.Set(index, value);
 }
-inline void OsmAndPoiBoxDataAtom::add_categories(::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxDataAtom::add_categories(::google::obf_protobuf::uint32 value) {
   categories_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
 OsmAndPoiBoxDataAtom::categories() const {
   return categories_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
 OsmAndPoiBoxDataAtom::mutable_categories() {
   return &categories_;
 }
@@ -11070,20 +11070,20 @@ inline int OsmAndPoiBoxDataAtom::subcategories_size() const {
 inline void OsmAndPoiBoxDataAtom::clear_subcategories() {
   subcategories_.Clear();
 }
-inline ::google::protobuf::uint32 OsmAndPoiBoxDataAtom::subcategories(int index) const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiBoxDataAtom::subcategories(int index) const {
   return subcategories_.Get(index);
 }
-inline void OsmAndPoiBoxDataAtom::set_subcategories(int index, ::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxDataAtom::set_subcategories(int index, ::google::obf_protobuf::uint32 value) {
   subcategories_.Set(index, value);
 }
-inline void OsmAndPoiBoxDataAtom::add_subcategories(::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxDataAtom::add_subcategories(::google::obf_protobuf::uint32 value) {
   subcategories_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
 OsmAndPoiBoxDataAtom::subcategories() const {
   return subcategories_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
 OsmAndPoiBoxDataAtom::mutable_subcategories() {
   return &subcategories_;
 }
@@ -11099,7 +11099,7 @@ inline void OsmAndPoiBoxDataAtom::clear_has_name() {
   _has_bits_[0] &= ~0x00000010u;
 }
 inline void OsmAndPoiBoxDataAtom::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -11109,39 +11109,39 @@ inline const ::std::string& OsmAndPoiBoxDataAtom::name() const {
 }
 inline void OsmAndPoiBoxDataAtom::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11157,7 +11157,7 @@ inline void OsmAndPoiBoxDataAtom::clear_has_nameen() {
   _has_bits_[0] &= ~0x00000020u;
 }
 inline void OsmAndPoiBoxDataAtom::clear_nameen() {
-  if (nameen_ != &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ != &::google::obf_protobuf::internal::kEmptyString) {
     nameen_->clear();
   }
   clear_has_nameen();
@@ -11167,39 +11167,39 @@ inline const ::std::string& OsmAndPoiBoxDataAtom::nameen() const {
 }
 inline void OsmAndPoiBoxDataAtom::set_nameen(const ::std::string& value) {
   set_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     nameen_ = new ::std::string;
   }
   nameen_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_nameen(const char* value) {
   set_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     nameen_ = new ::std::string;
   }
   nameen_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_nameen(const char* value, size_t size) {
   set_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     nameen_ = new ::std::string;
   }
   nameen_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::mutable_nameen() {
   set_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     nameen_ = new ::std::string;
   }
   return nameen_;
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::release_nameen() {
   clear_has_nameen();
-  if (nameen_ == &::google::protobuf::internal::kEmptyString) {
+  if (nameen_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = nameen_;
-    nameen_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    nameen_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11218,10 +11218,10 @@ inline void OsmAndPoiBoxDataAtom::clear_id() {
   id_ = GOOGLE_ULONGLONG(0);
   clear_has_id();
 }
-inline ::google::protobuf::uint64 OsmAndPoiBoxDataAtom::id() const {
+inline ::google::obf_protobuf::uint64 OsmAndPoiBoxDataAtom::id() const {
   return id_;
 }
-inline void OsmAndPoiBoxDataAtom::set_id(::google::protobuf::uint64 value) {
+inline void OsmAndPoiBoxDataAtom::set_id(::google::obf_protobuf::uint64 value) {
   set_has_id();
   id_ = value;
 }
@@ -11237,7 +11237,7 @@ inline void OsmAndPoiBoxDataAtom::clear_has_openinghours() {
   _has_bits_[0] &= ~0x00000080u;
 }
 inline void OsmAndPoiBoxDataAtom::clear_openinghours() {
-  if (openinghours_ != &::google::protobuf::internal::kEmptyString) {
+  if (openinghours_ != &::google::obf_protobuf::internal::kEmptyString) {
     openinghours_->clear();
   }
   clear_has_openinghours();
@@ -11247,39 +11247,39 @@ inline const ::std::string& OsmAndPoiBoxDataAtom::openinghours() const {
 }
 inline void OsmAndPoiBoxDataAtom::set_openinghours(const ::std::string& value) {
   set_has_openinghours();
-  if (openinghours_ == &::google::protobuf::internal::kEmptyString) {
+  if (openinghours_ == &::google::obf_protobuf::internal::kEmptyString) {
     openinghours_ = new ::std::string;
   }
   openinghours_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_openinghours(const char* value) {
   set_has_openinghours();
-  if (openinghours_ == &::google::protobuf::internal::kEmptyString) {
+  if (openinghours_ == &::google::obf_protobuf::internal::kEmptyString) {
     openinghours_ = new ::std::string;
   }
   openinghours_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_openinghours(const char* value, size_t size) {
   set_has_openinghours();
-  if (openinghours_ == &::google::protobuf::internal::kEmptyString) {
+  if (openinghours_ == &::google::obf_protobuf::internal::kEmptyString) {
     openinghours_ = new ::std::string;
   }
   openinghours_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::mutable_openinghours() {
   set_has_openinghours();
-  if (openinghours_ == &::google::protobuf::internal::kEmptyString) {
+  if (openinghours_ == &::google::obf_protobuf::internal::kEmptyString) {
     openinghours_ = new ::std::string;
   }
   return openinghours_;
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::release_openinghours() {
   clear_has_openinghours();
-  if (openinghours_ == &::google::protobuf::internal::kEmptyString) {
+  if (openinghours_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = openinghours_;
-    openinghours_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    openinghours_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11295,7 +11295,7 @@ inline void OsmAndPoiBoxDataAtom::clear_has_site() {
   _has_bits_[0] &= ~0x00000100u;
 }
 inline void OsmAndPoiBoxDataAtom::clear_site() {
-  if (site_ != &::google::protobuf::internal::kEmptyString) {
+  if (site_ != &::google::obf_protobuf::internal::kEmptyString) {
     site_->clear();
   }
   clear_has_site();
@@ -11305,39 +11305,39 @@ inline const ::std::string& OsmAndPoiBoxDataAtom::site() const {
 }
 inline void OsmAndPoiBoxDataAtom::set_site(const ::std::string& value) {
   set_has_site();
-  if (site_ == &::google::protobuf::internal::kEmptyString) {
+  if (site_ == &::google::obf_protobuf::internal::kEmptyString) {
     site_ = new ::std::string;
   }
   site_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_site(const char* value) {
   set_has_site();
-  if (site_ == &::google::protobuf::internal::kEmptyString) {
+  if (site_ == &::google::obf_protobuf::internal::kEmptyString) {
     site_ = new ::std::string;
   }
   site_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_site(const char* value, size_t size) {
   set_has_site();
-  if (site_ == &::google::protobuf::internal::kEmptyString) {
+  if (site_ == &::google::obf_protobuf::internal::kEmptyString) {
     site_ = new ::std::string;
   }
   site_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::mutable_site() {
   set_has_site();
-  if (site_ == &::google::protobuf::internal::kEmptyString) {
+  if (site_ == &::google::obf_protobuf::internal::kEmptyString) {
     site_ = new ::std::string;
   }
   return site_;
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::release_site() {
   clear_has_site();
-  if (site_ == &::google::protobuf::internal::kEmptyString) {
+  if (site_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = site_;
-    site_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    site_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11353,7 +11353,7 @@ inline void OsmAndPoiBoxDataAtom::clear_has_phone() {
   _has_bits_[0] &= ~0x00000200u;
 }
 inline void OsmAndPoiBoxDataAtom::clear_phone() {
-  if (phone_ != &::google::protobuf::internal::kEmptyString) {
+  if (phone_ != &::google::obf_protobuf::internal::kEmptyString) {
     phone_->clear();
   }
   clear_has_phone();
@@ -11363,39 +11363,39 @@ inline const ::std::string& OsmAndPoiBoxDataAtom::phone() const {
 }
 inline void OsmAndPoiBoxDataAtom::set_phone(const ::std::string& value) {
   set_has_phone();
-  if (phone_ == &::google::protobuf::internal::kEmptyString) {
+  if (phone_ == &::google::obf_protobuf::internal::kEmptyString) {
     phone_ = new ::std::string;
   }
   phone_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_phone(const char* value) {
   set_has_phone();
-  if (phone_ == &::google::protobuf::internal::kEmptyString) {
+  if (phone_ == &::google::obf_protobuf::internal::kEmptyString) {
     phone_ = new ::std::string;
   }
   phone_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_phone(const char* value, size_t size) {
   set_has_phone();
-  if (phone_ == &::google::protobuf::internal::kEmptyString) {
+  if (phone_ == &::google::obf_protobuf::internal::kEmptyString) {
     phone_ = new ::std::string;
   }
   phone_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::mutable_phone() {
   set_has_phone();
-  if (phone_ == &::google::protobuf::internal::kEmptyString) {
+  if (phone_ == &::google::obf_protobuf::internal::kEmptyString) {
     phone_ = new ::std::string;
   }
   return phone_;
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::release_phone() {
   clear_has_phone();
-  if (phone_ == &::google::protobuf::internal::kEmptyString) {
+  if (phone_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = phone_;
-    phone_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    phone_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11411,7 +11411,7 @@ inline void OsmAndPoiBoxDataAtom::clear_has_note() {
   _has_bits_[0] &= ~0x00000400u;
 }
 inline void OsmAndPoiBoxDataAtom::clear_note() {
-  if (note_ != &::google::protobuf::internal::kEmptyString) {
+  if (note_ != &::google::obf_protobuf::internal::kEmptyString) {
     note_->clear();
   }
   clear_has_note();
@@ -11421,39 +11421,39 @@ inline const ::std::string& OsmAndPoiBoxDataAtom::note() const {
 }
 inline void OsmAndPoiBoxDataAtom::set_note(const ::std::string& value) {
   set_has_note();
-  if (note_ == &::google::protobuf::internal::kEmptyString) {
+  if (note_ == &::google::obf_protobuf::internal::kEmptyString) {
     note_ = new ::std::string;
   }
   note_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_note(const char* value) {
   set_has_note();
-  if (note_ == &::google::protobuf::internal::kEmptyString) {
+  if (note_ == &::google::obf_protobuf::internal::kEmptyString) {
     note_ = new ::std::string;
   }
   note_->assign(value);
 }
 inline void OsmAndPoiBoxDataAtom::set_note(const char* value, size_t size) {
   set_has_note();
-  if (note_ == &::google::protobuf::internal::kEmptyString) {
+  if (note_ == &::google::obf_protobuf::internal::kEmptyString) {
     note_ = new ::std::string;
   }
   note_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::mutable_note() {
   set_has_note();
-  if (note_ == &::google::protobuf::internal::kEmptyString) {
+  if (note_ == &::google::obf_protobuf::internal::kEmptyString) {
     note_ = new ::std::string;
   }
   return note_;
 }
 inline ::std::string* OsmAndPoiBoxDataAtom::release_note() {
   clear_has_note();
-  if (note_ == &::google::protobuf::internal::kEmptyString) {
+  if (note_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = note_;
-    note_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    note_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11465,20 +11465,20 @@ inline int OsmAndPoiBoxDataAtom::textcategories_size() const {
 inline void OsmAndPoiBoxDataAtom::clear_textcategories() {
   textcategories_.Clear();
 }
-inline ::google::protobuf::uint32 OsmAndPoiBoxDataAtom::textcategories(int index) const {
+inline ::google::obf_protobuf::uint32 OsmAndPoiBoxDataAtom::textcategories(int index) const {
   return textcategories_.Get(index);
 }
-inline void OsmAndPoiBoxDataAtom::set_textcategories(int index, ::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxDataAtom::set_textcategories(int index, ::google::obf_protobuf::uint32 value) {
   textcategories_.Set(index, value);
 }
-inline void OsmAndPoiBoxDataAtom::add_textcategories(::google::protobuf::uint32 value) {
+inline void OsmAndPoiBoxDataAtom::add_textcategories(::google::obf_protobuf::uint32 value) {
   textcategories_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
 OsmAndPoiBoxDataAtom::textcategories() const {
   return textcategories_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
 OsmAndPoiBoxDataAtom::mutable_textcategories() {
   return &textcategories_;
 }
@@ -11518,11 +11518,11 @@ inline void OsmAndPoiBoxDataAtom::add_textvalues(const char* value) {
 inline void OsmAndPoiBoxDataAtom::add_textvalues(const char* value, size_t size) {
   textvalues_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>&
 OsmAndPoiBoxDataAtom::textvalues() const {
   return textvalues_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 OsmAndPoiBoxDataAtom::mutable_textvalues() {
   return &textvalues_;
 }
@@ -11538,20 +11538,20 @@ inline int IdTable::routeid_size() const {
 inline void IdTable::clear_routeid() {
   routeid_.Clear();
 }
-inline ::google::protobuf::int64 IdTable::routeid(int index) const {
+inline ::google::obf_protobuf::int64 IdTable::routeid(int index) const {
   return routeid_.Get(index);
 }
-inline void IdTable::set_routeid(int index, ::google::protobuf::int64 value) {
+inline void IdTable::set_routeid(int index, ::google::obf_protobuf::int64 value) {
   routeid_.Set(index, value);
 }
-inline void IdTable::add_routeid(::google::protobuf::int64 value) {
+inline void IdTable::add_routeid(::google::obf_protobuf::int64 value) {
   routeid_.Add(value);
 }
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::int64 >&
+inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int64 >&
 IdTable::routeid() const {
   return routeid_;
 }
-inline ::google::protobuf::RepeatedField< ::google::protobuf::int64 >*
+inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::int64 >*
 IdTable::mutable_routeid() {
   return &routeid_;
 }
@@ -11574,10 +11574,10 @@ inline void RestrictionData::clear_type() {
   type_ = 0;
   clear_has_type();
 }
-inline ::google::protobuf::int32 RestrictionData::type() const {
+inline ::google::obf_protobuf::int32 RestrictionData::type() const {
   return type_;
 }
-inline void RestrictionData::set_type(::google::protobuf::int32 value) {
+inline void RestrictionData::set_type(::google::obf_protobuf::int32 value) {
   set_has_type();
   type_ = value;
 }
@@ -11596,10 +11596,10 @@ inline void RestrictionData::clear_from() {
   from_ = 0;
   clear_has_from();
 }
-inline ::google::protobuf::int32 RestrictionData::from() const {
+inline ::google::obf_protobuf::int32 RestrictionData::from() const {
   return from_;
 }
-inline void RestrictionData::set_from(::google::protobuf::int32 value) {
+inline void RestrictionData::set_from(::google::obf_protobuf::int32 value) {
   set_has_from();
   from_ = value;
 }
@@ -11618,10 +11618,10 @@ inline void RestrictionData::clear_to() {
   to_ = 0;
   clear_has_to();
 }
-inline ::google::protobuf::int32 RestrictionData::to() const {
+inline ::google::obf_protobuf::int32 RestrictionData::to() const {
   return to_;
 }
-inline void RestrictionData::set_to(::google::protobuf::int32 value) {
+inline void RestrictionData::set_to(::google::obf_protobuf::int32 value) {
   set_has_to();
   to_ = value;
 }
@@ -11640,10 +11640,10 @@ inline void RestrictionData::clear_via() {
   via_ = 0;
   clear_has_via();
 }
-inline ::google::protobuf::int32 RestrictionData::via() const {
+inline ::google::obf_protobuf::int32 RestrictionData::via() const {
   return via_;
 }
-inline void RestrictionData::set_via(::google::protobuf::int32 value) {
+inline void RestrictionData::set_via(::google::obf_protobuf::int32 value) {
   set_has_via();
   via_ = value;
 }
@@ -11663,7 +11663,7 @@ inline void RouteData::clear_has_points() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void RouteData::clear_points() {
-  if (points_ != &::google::protobuf::internal::kEmptyString) {
+  if (points_ != &::google::obf_protobuf::internal::kEmptyString) {
     points_->clear();
   }
   clear_has_points();
@@ -11673,39 +11673,39 @@ inline const ::std::string& RouteData::points() const {
 }
 inline void RouteData::set_points(const ::std::string& value) {
   set_has_points();
-  if (points_ == &::google::protobuf::internal::kEmptyString) {
+  if (points_ == &::google::obf_protobuf::internal::kEmptyString) {
     points_ = new ::std::string;
   }
   points_->assign(value);
 }
 inline void RouteData::set_points(const char* value) {
   set_has_points();
-  if (points_ == &::google::protobuf::internal::kEmptyString) {
+  if (points_ == &::google::obf_protobuf::internal::kEmptyString) {
     points_ = new ::std::string;
   }
   points_->assign(value);
 }
 inline void RouteData::set_points(const void* value, size_t size) {
   set_has_points();
-  if (points_ == &::google::protobuf::internal::kEmptyString) {
+  if (points_ == &::google::obf_protobuf::internal::kEmptyString) {
     points_ = new ::std::string;
   }
   points_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* RouteData::mutable_points() {
   set_has_points();
-  if (points_ == &::google::protobuf::internal::kEmptyString) {
+  if (points_ == &::google::obf_protobuf::internal::kEmptyString) {
     points_ = new ::std::string;
   }
   return points_;
 }
 inline ::std::string* RouteData::release_points() {
   clear_has_points();
-  if (points_ == &::google::protobuf::internal::kEmptyString) {
+  if (points_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = points_;
-    points_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    points_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11721,7 +11721,7 @@ inline void RouteData::clear_has_pointtypes() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void RouteData::clear_pointtypes() {
-  if (pointtypes_ != &::google::protobuf::internal::kEmptyString) {
+  if (pointtypes_ != &::google::obf_protobuf::internal::kEmptyString) {
     pointtypes_->clear();
   }
   clear_has_pointtypes();
@@ -11731,39 +11731,39 @@ inline const ::std::string& RouteData::pointtypes() const {
 }
 inline void RouteData::set_pointtypes(const ::std::string& value) {
   set_has_pointtypes();
-  if (pointtypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (pointtypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     pointtypes_ = new ::std::string;
   }
   pointtypes_->assign(value);
 }
 inline void RouteData::set_pointtypes(const char* value) {
   set_has_pointtypes();
-  if (pointtypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (pointtypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     pointtypes_ = new ::std::string;
   }
   pointtypes_->assign(value);
 }
 inline void RouteData::set_pointtypes(const void* value, size_t size) {
   set_has_pointtypes();
-  if (pointtypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (pointtypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     pointtypes_ = new ::std::string;
   }
   pointtypes_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* RouteData::mutable_pointtypes() {
   set_has_pointtypes();
-  if (pointtypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (pointtypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     pointtypes_ = new ::std::string;
   }
   return pointtypes_;
 }
 inline ::std::string* RouteData::release_pointtypes() {
   clear_has_pointtypes();
-  if (pointtypes_ == &::google::protobuf::internal::kEmptyString) {
+  if (pointtypes_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = pointtypes_;
-    pointtypes_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    pointtypes_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11779,7 +11779,7 @@ inline void RouteData::clear_has_types() {
   _has_bits_[0] &= ~0x00000004u;
 }
 inline void RouteData::clear_types() {
-  if (types_ != &::google::protobuf::internal::kEmptyString) {
+  if (types_ != &::google::obf_protobuf::internal::kEmptyString) {
     types_->clear();
   }
   clear_has_types();
@@ -11789,39 +11789,39 @@ inline const ::std::string& RouteData::types() const {
 }
 inline void RouteData::set_types(const ::std::string& value) {
   set_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     types_ = new ::std::string;
   }
   types_->assign(value);
 }
 inline void RouteData::set_types(const char* value) {
   set_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     types_ = new ::std::string;
   }
   types_->assign(value);
 }
 inline void RouteData::set_types(const void* value, size_t size) {
   set_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     types_ = new ::std::string;
   }
   types_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* RouteData::mutable_types() {
   set_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     types_ = new ::std::string;
   }
   return types_;
 }
 inline ::std::string* RouteData::release_types() {
   clear_has_types();
-  if (types_ == &::google::protobuf::internal::kEmptyString) {
+  if (types_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = types_;
-    types_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    types_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11840,10 +11840,10 @@ inline void RouteData::clear_routeid() {
   routeid_ = 0;
   clear_has_routeid();
 }
-inline ::google::protobuf::int32 RouteData::routeid() const {
+inline ::google::obf_protobuf::int32 RouteData::routeid() const {
   return routeid_;
 }
-inline void RouteData::set_routeid(::google::protobuf::int32 value) {
+inline void RouteData::set_routeid(::google::obf_protobuf::int32 value) {
   set_has_routeid();
   routeid_ = value;
 }
@@ -11859,7 +11859,7 @@ inline void RouteData::clear_has_stringnames() {
   _has_bits_[0] &= ~0x00000010u;
 }
 inline void RouteData::clear_stringnames() {
-  if (stringnames_ != &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ != &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_->clear();
   }
   clear_has_stringnames();
@@ -11869,39 +11869,39 @@ inline const ::std::string& RouteData::stringnames() const {
 }
 inline void RouteData::set_stringnames(const ::std::string& value) {
   set_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_ = new ::std::string;
   }
   stringnames_->assign(value);
 }
 inline void RouteData::set_stringnames(const char* value) {
   set_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_ = new ::std::string;
   }
   stringnames_->assign(value);
 }
 inline void RouteData::set_stringnames(const void* value, size_t size) {
   set_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_ = new ::std::string;
   }
   stringnames_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* RouteData::mutable_stringnames() {
   set_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     stringnames_ = new ::std::string;
   }
   return stringnames_;
 }
 inline ::std::string* RouteData::release_stringnames() {
   clear_has_stringnames();
-  if (stringnames_ == &::google::protobuf::internal::kEmptyString) {
+  if (stringnames_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = stringnames_;
-    stringnames_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    stringnames_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11921,7 +11921,7 @@ inline void OsmAndRoutingIndex_RouteEncodingRule::clear_has_tag() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndRoutingIndex_RouteEncodingRule::clear_tag() {
-  if (tag_ != &::google::protobuf::internal::kEmptyString) {
+  if (tag_ != &::google::obf_protobuf::internal::kEmptyString) {
     tag_->clear();
   }
   clear_has_tag();
@@ -11931,39 +11931,39 @@ inline const ::std::string& OsmAndRoutingIndex_RouteEncodingRule::tag() const {
 }
 inline void OsmAndRoutingIndex_RouteEncodingRule::set_tag(const ::std::string& value) {
   set_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     tag_ = new ::std::string;
   }
   tag_->assign(value);
 }
 inline void OsmAndRoutingIndex_RouteEncodingRule::set_tag(const char* value) {
   set_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     tag_ = new ::std::string;
   }
   tag_->assign(value);
 }
 inline void OsmAndRoutingIndex_RouteEncodingRule::set_tag(const char* value, size_t size) {
   set_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     tag_ = new ::std::string;
   }
   tag_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndRoutingIndex_RouteEncodingRule::mutable_tag() {
   set_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     tag_ = new ::std::string;
   }
   return tag_;
 }
 inline ::std::string* OsmAndRoutingIndex_RouteEncodingRule::release_tag() {
   clear_has_tag();
-  if (tag_ == &::google::protobuf::internal::kEmptyString) {
+  if (tag_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = tag_;
-    tag_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    tag_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -11979,7 +11979,7 @@ inline void OsmAndRoutingIndex_RouteEncodingRule::clear_has_value() {
   _has_bits_[0] &= ~0x00000002u;
 }
 inline void OsmAndRoutingIndex_RouteEncodingRule::clear_value() {
-  if (value_ != &::google::protobuf::internal::kEmptyString) {
+  if (value_ != &::google::obf_protobuf::internal::kEmptyString) {
     value_->clear();
   }
   clear_has_value();
@@ -11989,39 +11989,39 @@ inline const ::std::string& OsmAndRoutingIndex_RouteEncodingRule::value() const 
 }
 inline void OsmAndRoutingIndex_RouteEncodingRule::set_value(const ::std::string& value) {
   set_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
   }
   value_->assign(value);
 }
 inline void OsmAndRoutingIndex_RouteEncodingRule::set_value(const char* value) {
   set_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
   }
   value_->assign(value);
 }
 inline void OsmAndRoutingIndex_RouteEncodingRule::set_value(const char* value, size_t size) {
   set_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
   }
   value_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndRoutingIndex_RouteEncodingRule::mutable_value() {
   set_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     value_ = new ::std::string;
   }
   return value_;
 }
 inline ::std::string* OsmAndRoutingIndex_RouteEncodingRule::release_value() {
   clear_has_value();
-  if (value_ == &::google::protobuf::internal::kEmptyString) {
+  if (value_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = value_;
-    value_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    value_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -12040,10 +12040,10 @@ inline void OsmAndRoutingIndex_RouteEncodingRule::clear_id() {
   id_ = 0u;
   clear_has_id();
 }
-inline ::google::protobuf::uint32 OsmAndRoutingIndex_RouteEncodingRule::id() const {
+inline ::google::obf_protobuf::uint32 OsmAndRoutingIndex_RouteEncodingRule::id() const {
   return id_;
 }
-inline void OsmAndRoutingIndex_RouteEncodingRule::set_id(::google::protobuf::uint32 value) {
+inline void OsmAndRoutingIndex_RouteEncodingRule::set_id(::google::obf_protobuf::uint32 value) {
   set_has_id();
   id_ = value;
 }
@@ -12066,10 +12066,10 @@ inline void OsmAndRoutingIndex_RouteDataBox::clear_left() {
   left_ = 0;
   clear_has_left();
 }
-inline ::google::protobuf::int32 OsmAndRoutingIndex_RouteDataBox::left() const {
+inline ::google::obf_protobuf::int32 OsmAndRoutingIndex_RouteDataBox::left() const {
   return left_;
 }
-inline void OsmAndRoutingIndex_RouteDataBox::set_left(::google::protobuf::int32 value) {
+inline void OsmAndRoutingIndex_RouteDataBox::set_left(::google::obf_protobuf::int32 value) {
   set_has_left();
   left_ = value;
 }
@@ -12088,10 +12088,10 @@ inline void OsmAndRoutingIndex_RouteDataBox::clear_right() {
   right_ = 0;
   clear_has_right();
 }
-inline ::google::protobuf::int32 OsmAndRoutingIndex_RouteDataBox::right() const {
+inline ::google::obf_protobuf::int32 OsmAndRoutingIndex_RouteDataBox::right() const {
   return right_;
 }
-inline void OsmAndRoutingIndex_RouteDataBox::set_right(::google::protobuf::int32 value) {
+inline void OsmAndRoutingIndex_RouteDataBox::set_right(::google::obf_protobuf::int32 value) {
   set_has_right();
   right_ = value;
 }
@@ -12110,10 +12110,10 @@ inline void OsmAndRoutingIndex_RouteDataBox::clear_top() {
   top_ = 0;
   clear_has_top();
 }
-inline ::google::protobuf::int32 OsmAndRoutingIndex_RouteDataBox::top() const {
+inline ::google::obf_protobuf::int32 OsmAndRoutingIndex_RouteDataBox::top() const {
   return top_;
 }
-inline void OsmAndRoutingIndex_RouteDataBox::set_top(::google::protobuf::int32 value) {
+inline void OsmAndRoutingIndex_RouteDataBox::set_top(::google::obf_protobuf::int32 value) {
   set_has_top();
   top_ = value;
 }
@@ -12132,10 +12132,10 @@ inline void OsmAndRoutingIndex_RouteDataBox::clear_bottom() {
   bottom_ = 0;
   clear_has_bottom();
 }
-inline ::google::protobuf::int32 OsmAndRoutingIndex_RouteDataBox::bottom() const {
+inline ::google::obf_protobuf::int32 OsmAndRoutingIndex_RouteDataBox::bottom() const {
   return bottom_;
 }
-inline void OsmAndRoutingIndex_RouteDataBox::set_bottom(::google::protobuf::int32 value) {
+inline void OsmAndRoutingIndex_RouteDataBox::set_bottom(::google::obf_protobuf::int32 value) {
   set_has_bottom();
   bottom_ = value;
 }
@@ -12154,10 +12154,10 @@ inline void OsmAndRoutingIndex_RouteDataBox::clear_shifttodata() {
   shifttodata_ = 0u;
   clear_has_shifttodata();
 }
-inline ::google::protobuf::uint32 OsmAndRoutingIndex_RouteDataBox::shifttodata() const {
+inline ::google::obf_protobuf::uint32 OsmAndRoutingIndex_RouteDataBox::shifttodata() const {
   return shifttodata_;
 }
-inline void OsmAndRoutingIndex_RouteDataBox::set_shifttodata(::google::protobuf::uint32 value) {
+inline void OsmAndRoutingIndex_RouteDataBox::set_shifttodata(::google::obf_protobuf::uint32 value) {
   set_has_shifttodata();
   shifttodata_ = value;
 }
@@ -12178,11 +12178,11 @@ inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* OsmAndRoutingIndex_RouteD
 inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* OsmAndRoutingIndex_RouteDataBox::add_boxes() {
   return boxes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
 OsmAndRoutingIndex_RouteDataBox::boxes() const {
   return boxes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
 OsmAndRoutingIndex_RouteDataBox::mutable_boxes() {
   return &boxes_;
 }
@@ -12236,11 +12236,11 @@ inline ::OsmAnd::OBF::RouteData* OsmAndRoutingIndex_RouteDataBlock::mutable_data
 inline ::OsmAnd::OBF::RouteData* OsmAndRoutingIndex_RouteDataBlock::add_dataobjects() {
   return dataobjects_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData >&
 OsmAndRoutingIndex_RouteDataBlock::dataobjects() const {
   return dataobjects_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RouteData >*
 OsmAndRoutingIndex_RouteDataBlock::mutable_dataobjects() {
   return &dataobjects_;
 }
@@ -12261,11 +12261,11 @@ inline ::OsmAnd::OBF::RestrictionData* OsmAndRoutingIndex_RouteDataBlock::mutabl
 inline ::OsmAnd::OBF::RestrictionData* OsmAndRoutingIndex_RouteDataBlock::add_restrictions() {
   return restrictions_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData >&
 OsmAndRoutingIndex_RouteDataBlock::restrictions() const {
   return restrictions_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::RestrictionData >*
 OsmAndRoutingIndex_RouteDataBlock::mutable_restrictions() {
   return &restrictions_;
 }
@@ -12314,7 +12314,7 @@ inline void OsmAndRoutingIndex::clear_has_name() {
   _has_bits_[0] &= ~0x00000001u;
 }
 inline void OsmAndRoutingIndex::clear_name() {
-  if (name_ != &::google::protobuf::internal::kEmptyString) {
+  if (name_ != &::google::obf_protobuf::internal::kEmptyString) {
     name_->clear();
   }
   clear_has_name();
@@ -12324,39 +12324,39 @@ inline const ::std::string& OsmAndRoutingIndex::name() const {
 }
 inline void OsmAndRoutingIndex::set_name(const ::std::string& value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndRoutingIndex::set_name(const char* value) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(value);
 }
 inline void OsmAndRoutingIndex::set_name(const char* value, size_t size) {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   name_->assign(reinterpret_cast<const char*>(value), size);
 }
 inline ::std::string* OsmAndRoutingIndex::mutable_name() {
   set_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     name_ = new ::std::string;
   }
   return name_;
 }
 inline ::std::string* OsmAndRoutingIndex::release_name() {
   clear_has_name();
-  if (name_ == &::google::protobuf::internal::kEmptyString) {
+  if (name_ == &::google::obf_protobuf::internal::kEmptyString) {
     return NULL;
   } else {
     ::std::string* temp = name_;
-    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    name_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
     return temp;
   }
 }
@@ -12377,11 +12377,11 @@ inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule* OsmAndRoutingIndex::
 inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule* OsmAndRoutingIndex::add_rules() {
   return rules_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule >&
 OsmAndRoutingIndex::rules() const {
   return rules_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteEncodingRule >*
 OsmAndRoutingIndex::mutable_rules() {
   return &rules_;
 }
@@ -12402,11 +12402,11 @@ inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* OsmAndRoutingIndex::mutab
 inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* OsmAndRoutingIndex::add_rootboxes() {
   return rootboxes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
 OsmAndRoutingIndex::rootboxes() const {
   return rootboxes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
 OsmAndRoutingIndex::mutable_rootboxes() {
   return &rootboxes_;
 }
@@ -12427,11 +12427,11 @@ inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* OsmAndRoutingIndex::mutab
 inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox* OsmAndRoutingIndex::add_basemapboxes() {
   return basemapboxes_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >&
 OsmAndRoutingIndex::basemapboxes() const {
   return basemapboxes_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBox >*
 OsmAndRoutingIndex::mutable_basemapboxes() {
   return &basemapboxes_;
 }
@@ -12452,11 +12452,11 @@ inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock* OsmAndRoutingIndex::mut
 inline ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock* OsmAndRoutingIndex::add_blocks() {
   return blocks_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >&
+inline const ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >&
 OsmAndRoutingIndex::blocks() const {
   return blocks_;
 }
-inline ::google::protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >*
+inline ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndRoutingIndex_RouteDataBlock >*
 OsmAndRoutingIndex::mutable_blocks() {
   return &blocks_;
 }

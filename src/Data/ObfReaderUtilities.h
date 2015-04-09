@@ -20,7 +20,7 @@ namespace OsmAnd
     class ObfSectionInfo;
     class ObfReader;
 
-    namespace gpb = google::protobuf;
+    namespace gpb = google::obf_protobuf;
 
     struct ObfReaderUtilities Q_DECL_FINAL
     {
