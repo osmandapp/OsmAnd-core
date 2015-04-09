@@ -6,6 +6,6 @@ if [ -z "$BASH_VERSION" ]; then
 	exit $?
 fi
 
-grep -rl 'namespace protobuf' . | xargs sed -i 's/namespace protobuf/namespace obf_protobuf/g'
-grep -rl 'protobuf::' . | xargs sed -i 's/protobuf::/obf_protobuf::/g'
-grep -rl '::protobuf' . | xargs sed -i 's/::protobuf/::obf_protobuf/g'
+grep -rl 'namespace protobuf' . | xargs sed -i '' 's/namespace protobuf/namespace obf_protobuf/g'
+grep -rl 'protobuf::' . | xargs sed -i '' 's/protobuf::/obf_protobuf::/g'
+grep -rl '::protobuf' . | xargs sed -i '' 's/::protobuf/::obf_protobuf/g'
