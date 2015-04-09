@@ -14,7 +14,6 @@ cleanupEnvironment
 # Verify input
 targetOS=$1
 compiler=$2
-targetArch=$3
 
 QTBASE_CONFIGURATION=$(echo "
 	-release -opensource -confirm-license -c++11 -static -largefile -no-accessibility -qt-sql-sqlite
@@ -61,7 +60,7 @@ if [[ "$targetOS" == "ios" ]]; then
 	}
 	
 	if [[ "$compiler" == "clang" ]]; then
-		echo "Going to build embedded Qt for ${targetOS}/${compiler}/${targetArch}"
+		echo "Going to build embedded Qt for ${targetOS}/${compiler}"
 		makeFlavor "ios.simulator.${compiler}.static" "macx-ios-${compiler}-simulator" "$QTBASE_CONFIGURATION -sdk iphonesimulator"
 		makeFlavor "ios.device.${compiler}.static" "macx-ios-${compiler}-device" "$QTBASE_CONFIGURATION -sdk iphoneos"
 	else
