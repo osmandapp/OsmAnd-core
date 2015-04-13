@@ -17,11 +17,12 @@
 #include <OsmAndCore/Map/UnresolvedMapStyle.h>
 #include <OsmAndCore/Map/MapStyleConstantValue.h>
 #include <OsmAndCore/Map/MapStyleValueDefinition.h>
+#include <OsmAndCore/Map/IMapStyle.h>
 
 namespace OsmAnd
 {
     class ResolvedMapStyle_P;
-    class OSMAND_CORE_API ResolvedMapStyle
+    class OSMAND_CORE_API ResolvedMapStyle : public IMapStyle
     {
         Q_DISABLE_COPY_AND_MOVE(ResolvedMapStyle);
     public:
@@ -158,6 +159,7 @@ namespace OsmAnd
 
         ValueDefinitionId getValueDefinitionIdByName(const QString& name) const;
         std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(const ValueDefinitionId id) const;
+        QList< std::shared_ptr<const MapStyleValueDefinition> > getValueDefinitions() const;
 
         bool parseValue(
             const QString& input,

@@ -443,6 +443,11 @@ std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle_
     return _valuesDefinitions[id];
 }
 
+QList< std::shared_ptr<const OsmAnd::MapStyleValueDefinition> > OsmAnd::ResolvedMapStyle_P::getValueDefinitions() const
+{
+    return detachedOf(_valuesDefinitions);
+}
+
 bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(
     const QString& input,
     const ValueDefinitionId valueDefintionId,

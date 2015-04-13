@@ -164,7 +164,9 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     inputValues[_builtinValueDefs->id_INPUT_VALUE].asUInt = valueStringId;
 
     IntermediateEvaluationResult intermediateEvaluationResult;
-    IntermediateEvaluationResult* const pIntermediateEvaluationResult = outResultStorage ? &intermediateEvaluationResult : nullptr;
+    IntermediateEvaluationResult* const pIntermediateEvaluationResult = outResultStorage ?
+        &intermediateEvaluationResult
+        : nullptr;
 
     bool wasDisabled = false;
     const auto success = evaluate(
@@ -373,8 +375,7 @@ void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
             intermediateResultEntry.value(),
             inputValues);
 
-        auto& postprocessedValue = outResultStorage.values[valueDefId];
-
+        QVariant postprocessedValue;
         switch (valueDef->dataType)
         {
             case MapStyleValueDataType::Boolean:
@@ -401,6 +402,8 @@ void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
                 postprocessedValue = constantRuleValue.asSimple.asUInt;
                 break;
         }
+
+        outResultStorage.setValue(valueDefId, postprocessedValue);
     }
 }
 

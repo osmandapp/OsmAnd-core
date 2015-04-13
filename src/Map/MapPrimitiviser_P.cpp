@@ -395,7 +395,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
 
     // Obtain primitives:
-    MapStyleEvaluationResult evaluationResult;
+    MapStyleEvaluationResult evaluationResult(context.env->resolvedStyle->getValueDefinitions().size());
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
     obtainPrimitives(
@@ -1373,6 +1373,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     {
         const auto& decodedType = decRules[*itTypeRuleId];
 
+        const auto layerType = mapObject->getLayerType();
+
         //////////////////////////////////////////////////////////////////////////
         //if (mapObject->toString().contains("49048972"))
         //{
@@ -1386,7 +1388,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         // Setup mapObject-specific input data
         orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
         orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-        orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(mapObject->getLayerType()));
+        orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
         orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_AREA, mapObject->isArea);
         orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
         orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
@@ -1608,7 +1610,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Setup mapObject-specific input data
             polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
             polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-            polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(mapObject->getLayerType()));
+            polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
 
             // Evaluate style for this primitive to check if it passes
             evaluationResult.clear();

@@ -12,7 +12,7 @@
 namespace OsmAnd
 {
     class MapObject;
-    struct MapStyleEvaluationResult;
+    class MapStyleEvaluationResult;
 
     class MapStyleEvaluator_P;
     class OSMAND_CORE_API MapStyleEvaluator Q_DECL_FINAL

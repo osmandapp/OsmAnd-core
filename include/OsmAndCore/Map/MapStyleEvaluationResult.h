@@ -6,9 +6,8 @@
 #include <utility>
 
 #include <OsmAndCore/QtExtensions.h>
-#include <QList>
+#include <QVector>
 #include <QVariant>
-#include <QHash>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
@@ -17,9 +16,14 @@
 
 namespace OsmAnd
 {
-    struct OSMAND_CORE_API MapStyleEvaluationResult Q_DECL_FINAL
+    class OSMAND_CORE_API MapStyleEvaluationResult Q_DECL_FINAL
     {
-        MapStyleEvaluationResult();
+    private:
+    protected:
+        QVector<QVariant> _storage;
+
+    public:
+        MapStyleEvaluationResult(const int size = 0);
         MapStyleEvaluationResult(const MapStyleEvaluationResult& that);
 #ifdef Q_COMPILER_RVALUE_REFS
         MapStyleEvaluationResult(MapStyleEvaluationResult&& that);
@@ -31,22 +35,29 @@ namespace OsmAnd
         MapStyleEvaluationResult& operator=(MapStyleEvaluationResult&& that);
 #endif // Q_COMPILER_RVALUE_REFS
 
-        QHash<ResolvedMapStyle::ValueDefinitionId, QVariant> values;
-
         bool contains(const ResolvedMapStyle::ValueDefinitionId valueDefId) const;
-    
-        bool getBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, bool& value) const;
-        bool getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, int& value) const;
-        bool getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, unsigned int& value) const;
-        bool getFloatValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, float& value) const;
-        bool getStringValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, QString& value) const;
 
+        void setValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const QVariant& value);
+        void setBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const bool& value);
+        void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const int& value);
+        void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const unsigned int& value);
+        void setFloatValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const float& value);
+        void setStringValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const QString& value);
+    
+        bool getValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, QVariant& outValue) const;
+        bool getBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, bool& outValue) const;
+        bool getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, int& outValue) const;
+        bool getIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, unsigned int& outValue) const;
+        bool getFloatValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, float& outValue) const;
+        bool getStringValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, QString& outValue) const;
+
+        void reset();
         void clear();
         bool isEmpty() const;
 
         typedef std::pair<ResolvedMapStyle::ValueDefinitionId, QVariant> PackedResultEntry;
         typedef QList<PackedResultEntry> PackedResult;
-        void pack(PackedResult& packedResult);
+        void pack(PackedResult& packedResult) const;
     };
 }
 

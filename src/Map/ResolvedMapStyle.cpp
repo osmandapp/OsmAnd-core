@@ -15,27 +15,41 @@ OsmAnd::ResolvedMapStyle::~ResolvedMapStyle()
 {
 }
 
-OsmAnd::ResolvedMapStyle::ValueDefinitionId OsmAnd::ResolvedMapStyle::getValueDefinitionIdByName(const QString& name) const
+OsmAnd::ResolvedMapStyle::ValueDefinitionId OsmAnd::ResolvedMapStyle::getValueDefinitionIdByName(
+    const QString& name) const
 {
     return _p->getValueDefinitionIdByName(name);
 }
 
-std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle::getValueDefinitionById(const ValueDefinitionId id) const
+std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle::getValueDefinitionById(
+    const ValueDefinitionId id) const
 {
     return _p->getValueDefinitionById(id);
 }
 
-bool OsmAnd::ResolvedMapStyle::parseValue(const QString& input, const ValueDefinitionId valueDefintionId, MapStyleConstantValue& outParsedValue) const
+QList< std::shared_ptr<const OsmAnd::MapStyleValueDefinition> > OsmAnd::ResolvedMapStyle::getValueDefinitions() const
+{
+    return _p->getValueDefinitions();
+}
+
+bool OsmAnd::ResolvedMapStyle::parseValue(
+    const QString& input,
+    const ValueDefinitionId valueDefintionId,
+    MapStyleConstantValue& outParsedValue) const
 {
     return _p->parseConstantValue(input, valueDefintionId, outParsedValue);
 }
 
-bool OsmAnd::ResolvedMapStyle::parseValue(const QString& input, const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion, MapStyleConstantValue& outParsedValue) const
+bool OsmAnd::ResolvedMapStyle::parseValue(
+    const QString& input,
+    const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion,
+    MapStyleConstantValue& outParsedValue) const
 {
     return _p->parseConstantValue(input, valueDefintion, outParsedValue);
 }
 
-std::shared_ptr<const OsmAnd::ResolvedMapStyle::Attribute> OsmAnd::ResolvedMapStyle::getAttribute(const QString& name) const
+std::shared_ptr<const OsmAnd::ResolvedMapStyle::Attribute> OsmAnd::ResolvedMapStyle::getAttribute(
+    const QString& name) const
 {
     return _p->getAttribute(name);
 }
@@ -57,7 +71,8 @@ QString OsmAnd::ResolvedMapStyle::dump(const QString& prefix /*= QString()*/) co
     return _p->dump(prefix);
 }
 
-std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResolvedMapStyle::resolveMapStylesChain(const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain)
+std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResolvedMapStyle::resolveMapStylesChain(
+    const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain)
 {
     const std::shared_ptr<ResolvedMapStyle> resolvedStyle(new ResolvedMapStyle(unresolvedMapStylesChain));
 
@@ -76,7 +91,8 @@ OsmAnd::ResolvedMapStyle::ResolvedValue::~ResolvedValue()
 {
 }
 
-OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue::fromConstantValue(const MapStyleConstantValue& input)
+OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue::fromConstantValue(
+    const MapStyleConstantValue& input)
 {
     ResolvedValue value;
     value.isDynamic = false;
@@ -84,7 +100,8 @@ OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue:
     return value;
 }
 
-OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue::fromAttribute(const std::shared_ptr<const Attribute>& attribute)
+OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue::fromAttribute(
+    const std::shared_ptr<const Attribute>& attribute)
 {
     ResolvedValue value;
     value.isDynamic = true;

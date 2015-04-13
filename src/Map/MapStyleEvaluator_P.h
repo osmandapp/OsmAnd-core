@@ -14,7 +14,7 @@
 
 namespace OsmAnd
 {
-    struct MapStyleEvaluationResult;
+    class MapStyleEvaluationResult;
     class MapStyleBuiltinValueDefinitions;
     class MapObject;
 
