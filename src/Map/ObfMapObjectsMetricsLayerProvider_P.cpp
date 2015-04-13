@@ -25,6 +25,8 @@
 #include "Utilities.h"
 #include "Logging.h"
 
+#define FORMAT_PRECISION 3
+
 OsmAnd::ObfMapObjectsMetricsLayerProvider_P::ObfMapObjectsMetricsLayerProvider_P(
     ObfMapObjectsMetricsLayerProvider* const owner_)
     : owner(owner_)
@@ -87,8 +89,8 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
         .arg(obtainDataMetric.sharedObjectsCount)
         .arg(obtainDataMetric.objectsCount);
     text += QString(QLatin1String("TIME   r:%1+?=%2s\n"))
-        .arg(QString::number(obtainDataMetric.elapsedTimeForRead, 'f', 2))
-        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 2));
+        .arg(QString::number(obtainDataMetric.elapsedTimeForRead, 'f', FORMAT_PRECISION))
+        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', FORMAT_PRECISION));
     text = text.trimmed();
 
     const auto fontSize = 16.0f * owner->densityFactor;

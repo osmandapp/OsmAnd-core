@@ -25,6 +25,8 @@
 #include "Utilities.h"
 #include "Logging.h"
 
+#define FORMAT_PRECISION 3
+
 OsmAnd::MapPrimitivesMetricsLayerProvider_P::MapPrimitivesMetricsLayerProvider_P(
     MapPrimitivesMetricsLayerProvider* const owner_)
     : owner(owner_)
@@ -77,7 +79,7 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
     QString obtainBinaryMapObjectsElapsedTime(QLatin1String("?"));
     if (const auto obtainBinaryMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapObjectsProvider_Metrics::Metric_obtainData>(true))
     {
-        obtainBinaryMapObjectsElapsedTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', 2);
+        obtainBinaryMapObjectsElapsedTime = QString::number(obtainBinaryMapObjectsMetric->elapsedTime, 'f', FORMAT_PRECISION);
     }
     QString primitiviseElapsedTime(QLatin1String("?"));
     if (const auto primitiviseMetric = obtainDataMetric.findSubmetricOfType<MapPrimitiviser_Metrics::Metric_primitiviseWithSurface>(true))
@@ -85,34 +87,34 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
         text += QString(QLatin1String("order  %1/-%2 %3s\n"))
             .arg(primitiviseMetric->orderEvaluations)
             .arg(primitiviseMetric->orderRejects)
-            .arg(QString::number(primitiviseMetric->elapsedTimeForOrderEvaluation, 'f', 2));
+            .arg(QString::number(primitiviseMetric->elapsedTimeForOrderEvaluation, 'f', FORMAT_PRECISION));
         text += QString(QLatin1String("polyg  %1/-%2(-%3) %4s\n"))
             .arg(primitiviseMetric->polygonEvaluations)
             .arg(primitiviseMetric->polygonRejects)
             .arg(primitiviseMetric->polygonsRejectedByArea)
-            .arg(QString::number(primitiviseMetric->elapsedTimeForPolygonEvaluation, 'f', 2));
+            .arg(QString::number(primitiviseMetric->elapsedTimeForPolygonEvaluation, 'f', FORMAT_PRECISION));
         text += QString(QLatin1String("polyl  %1/-%2 %3s\n"))
             .arg(primitiviseMetric->polylineEvaluations)
             .arg(primitiviseMetric->polylineRejects)
-            .arg(QString::number(primitiviseMetric->elapsedTimeForPolylineEvaluation, 'f', 2));
+            .arg(QString::number(primitiviseMetric->elapsedTimeForPolylineEvaluation, 'f', FORMAT_PRECISION));
         text += QString(QLatin1String("point  %1/-%2 %3s\n"))
             .arg(primitiviseMetric->pointEvaluations)
             .arg(primitiviseMetric->pointRejects)
-            .arg(QString::number(primitiviseMetric->elapsedTimeForPointEvaluation, 'f', 2));
+            .arg(QString::number(primitiviseMetric->elapsedTimeForPointEvaluation, 'f', FORMAT_PRECISION));
         text += QString(QLatin1String("groups %1s\n"))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups, 'f', 2));
+            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups, 'f', FORMAT_PRECISION));
         text += QString(QLatin1String("d/b/c  %1s/%2s/%3s\n"))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', 2))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromBasemap, 'f', 2))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromCoastlines, 'f', 2));
+            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', FORMAT_PRECISION))
+            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromBasemap, 'f', FORMAT_PRECISION))
+            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromCoastlines, 'f', FORMAT_PRECISION));
         text += QString(QLatin1String("sym    %1s\n"))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols, 'f', 2));
-        primitiviseElapsedTime = QString::number(primitiviseMetric->elapsedTime, 'f', 2);
+            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols, 'f', FORMAT_PRECISION));
+        primitiviseElapsedTime = QString::number(primitiviseMetric->elapsedTime, 'f', FORMAT_PRECISION);
     }
     text += QString(QLatin1String("TIME   r%1+p%2+?=%3s\n"))
         .arg(obtainBinaryMapObjectsElapsedTime)
         .arg(primitiviseElapsedTime)
-        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 2));
+        .arg(QString::number(obtainDataMetric.elapsedTime, 'f', FORMAT_PRECISION));
     text = text.trimmed();
 
     const auto fontSize = 16.0f * owner->densityFactor;
