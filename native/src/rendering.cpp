@@ -750,7 +750,8 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
 		ico.secondOrder = ((mObj->id %10000) << 8) + ord;
-		rc->iconsToDraw.push_back(ico);
+		if(ico.order >= 0) 
+			rc->iconsToDraw.push_back(ico);
 	}
 	if (renderTxt) {
 		renderText(mObj, req, rc, pair.first, pair.second, px, py, NULL);
