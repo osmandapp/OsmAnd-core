@@ -99,7 +99,7 @@ namespace OsmAnd
         private:
         protected:
         public:
-            Attribute(const StringId nameId);
+            Attribute(const SWIG_CLARIFY(IMapStyle, StringId) nameId);
             virtual ~Attribute();
 
             virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() Q_DECL_OVERRIDE;
@@ -123,7 +123,7 @@ namespace OsmAnd
                 const QString& title,
                 const QString& description,
                 const QString& category,
-                const StringId nameId,
+                const SWIG_CLARIFY(IMapStyle, StringId) nameId,
                 const MapStyleValueDataType dataType,
                 const QList<MapStyleConstantValue>& possibleValues);
             virtual ~Parameter();
