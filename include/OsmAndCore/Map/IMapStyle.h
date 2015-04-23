@@ -59,7 +59,7 @@ namespace OsmAnd
 
             virtual bool getIsSwitch() const = 0;
 
-            virtual QHash<ValueDefinitionId, Value> getValues() const = 0;
+            virtual QHash<SWIG_CLARIFY(IMapStyle, ValueDefinitionId), SWIG_CLARIFY(IMapStyle, Value)> getValues() const = 0;
             virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> > getOneOfConditionalSubnodes() const = 0;
             virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> > getApplySubnodes() const = 0;
         };
