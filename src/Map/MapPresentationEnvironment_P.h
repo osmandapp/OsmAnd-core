@@ -17,7 +17,6 @@
 #include "OsmAndCore.h"
 #include "CommonTypes.h"
 #include "PrivateImplementation.h"
-#include "ResolvedMapStyle.h"
 #include "MapStyleConstantValue.h"
 #include "MapRasterizer.h"
 #include "MapPresentationEnvironment.h"
@@ -45,31 +44,31 @@ namespace OsmAnd
         void initialize();
 
         mutable QMutex _settingsChangeMutex;
-        QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > _settings;
+        QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > _settings;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultBackgroundColorAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _defaultBackgroundColorAttribute;
         ColorARGB _defaultBackgroundColor;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _shadowOptionsAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _shadowOptionsAttribute;
         ShadowMode _shadowMode;
         ColorARGB _shadowColor;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _polygonMinSizeToDisplayAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _polygonMinSizeToDisplayAttribute;
         double _polygonMinSizeToDisplay;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _roadDensityZoomTileAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _roadDensityZoomTileAttribute;
         unsigned int _roadDensityZoomTile;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _roadsDensityLimitPerTileAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _roadsDensityLimitPerTileAttribute;
         unsigned int _roadsDensityLimitPerTile;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultSymbolPathSpacingAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _defaultSymbolPathSpacingAttribute;
         float _defaultSymbolPathSpacing;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _defaultBlockPathSpacingAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _defaultBlockPathSpacingAttribute;
         float _defaultBlockPathSpacing;
 
-        std::shared_ptr<const ResolvedMapStyle::Attribute> _globalPathPaddingAttribute;
+        std::shared_ptr<const IMapStyle::IAttribute> _globalPathPaddingAttribute;
         float _globalPathPadding;
 
         MapStubStyle _desiredStubsStyle;
@@ -92,8 +91,8 @@ namespace OsmAnd
 
         ImplementationInterface<MapPresentationEnvironment> owner;
 
-        QHash< ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
-        void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
+        QHash< IMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
+        void setSettings(const QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;

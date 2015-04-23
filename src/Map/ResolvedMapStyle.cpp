@@ -1,13 +1,12 @@
 #include "ResolvedMapStyle.h"
 #include "ResolvedMapStyle_P.h"
 
+#include "QtExtensions.h"
+#include "QtCommon.h"
+
 OsmAnd::ResolvedMapStyle::ResolvedMapStyle(const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain_)
     : _p(new ResolvedMapStyle_P(this))
     , unresolvedMapStylesChain(unresolvedMapStylesChain_)
-    , constants(_p->_constants)
-    , parameters(_p->_parameters)
-    , attributes(_p->_attributes)
-    , rulesets(_p->_rulesets)
 {
 }
 
@@ -15,7 +14,7 @@ OsmAnd::ResolvedMapStyle::~ResolvedMapStyle()
 {
 }
 
-OsmAnd::ResolvedMapStyle::ValueDefinitionId OsmAnd::ResolvedMapStyle::getValueDefinitionIdByName(
+OsmAnd::IMapStyle::ValueDefinitionId OsmAnd::ResolvedMapStyle::getValueDefinitionIdByName(
     const QString& name) const
 {
     return _p->getValueDefinitionIdByName(name);
@@ -48,17 +47,22 @@ bool OsmAnd::ResolvedMapStyle::parseValue(
     return _p->parseConstantValue(input, valueDefintion, outParsedValue);
 }
 
-std::shared_ptr<const OsmAnd::ResolvedMapStyle::Attribute> OsmAnd::ResolvedMapStyle::getAttribute(
+std::shared_ptr<const OsmAnd::IMapStyle::IParameter> OsmAnd::ResolvedMapStyle::getParameter(
+    const QString& name) const
+{
+    return _p->getParameter(name);
+}
+
+std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> OsmAnd::ResolvedMapStyle::getAttribute(
     const QString& name) const
 {
     return _p->getAttribute(name);
 }
 
-const QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::ResolvedMapStyle::Rule> >
-OsmAnd::ResolvedMapStyle::getRuleset(
+QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle::getRuleset(
     const MapStyleRulesetType rulesetType) const
 {
-    return _p->getRuleset(rulesetType);
+    return copyAs< TagValueId, std::shared_ptr<const IRule> >(_p->getRuleset(rulesetType));
 }
 
 QString OsmAnd::ResolvedMapStyle::getStringById(const StringId id) const
@@ -82,33 +86,6 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResolvedMapStyle::resolv
     return resolvedStyle;
 }
 
-OsmAnd::ResolvedMapStyle::ResolvedValue::ResolvedValue()
-    : isDynamic(false)
-{
-}
-
-OsmAnd::ResolvedMapStyle::ResolvedValue::~ResolvedValue()
-{
-}
-
-OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue::fromConstantValue(
-    const MapStyleConstantValue& input)
-{
-    ResolvedValue value;
-    value.isDynamic = false;
-    value.asConstantValue = input;
-    return value;
-}
-
-OsmAnd::ResolvedMapStyle::ResolvedValue OsmAnd::ResolvedMapStyle::ResolvedValue::fromAttribute(
-    const std::shared_ptr<const Attribute>& attribute)
-{
-    ResolvedValue value;
-    value.isDynamic = true;
-    value.asDynamicValue.attribute = attribute;
-    return value;
-}
-
 OsmAnd::ResolvedMapStyle::RuleNode::RuleNode(const bool isSwitch_)
     : isSwitch(isSwitch_)
 {
@@ -116,6 +93,28 @@ OsmAnd::ResolvedMapStyle::RuleNode::RuleNode(const bool isSwitch_)
 
 OsmAnd::ResolvedMapStyle::RuleNode::~RuleNode()
 {
+}
+
+bool OsmAnd::ResolvedMapStyle::RuleNode::getIsSwitch() const
+{
+    return isSwitch;
+}
+
+QHash<OsmAnd::IMapStyle::ValueDefinitionId, OsmAnd::IMapStyle::Value> OsmAnd::ResolvedMapStyle::RuleNode::getValues() const
+{
+    return values;
+}
+
+QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> >
+OsmAnd::ResolvedMapStyle::RuleNode::getOneOfConditionalSubnodes() const
+{
+    return copyAs< QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> > >(oneOfConditionalSubnodes);
+}
+
+QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> >
+OsmAnd::ResolvedMapStyle::RuleNode::getApplySubnodes() const
+{
+    return copyAs< QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> > >(applySubnodes);
 }
 
 OsmAnd::ResolvedMapStyle::BaseRule::BaseRule(RuleNode* const ruleNode_)
@@ -137,6 +136,21 @@ OsmAnd::ResolvedMapStyle::Rule::~Rule()
 {
 }
 
+std::shared_ptr<OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Rule::getRootNode()
+{
+    return rootNode;
+}
+
+std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Rule::getRootNode() const
+{
+    return rootNode;
+}
+
+OsmAnd::MapStyleRulesetType OsmAnd::ResolvedMapStyle::Rule::getRulesetType() const
+{
+    return rulesetType;
+}
+
 OsmAnd::ResolvedMapStyle::Attribute::Attribute(const StringId nameId_)
     : BaseRule(new RuleNode(false))
     , nameId(nameId_)
@@ -145,6 +159,21 @@ OsmAnd::ResolvedMapStyle::Attribute::Attribute(const StringId nameId_)
 
 OsmAnd::ResolvedMapStyle::Attribute::~Attribute()
 {
+}
+
+std::shared_ptr<OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Attribute::getRootNode()
+{
+    return rootNode;
+}
+
+std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Attribute::getRootNode() const
+{
+    return rootNode;
+}
+
+OsmAnd::IMapStyle::StringId OsmAnd::ResolvedMapStyle::Attribute::getNameId() const
+{
+    return nameId;
 }
 
 OsmAnd::ResolvedMapStyle::Parameter::Parameter(
@@ -165,6 +194,36 @@ OsmAnd::ResolvedMapStyle::Parameter::Parameter(
 
 OsmAnd::ResolvedMapStyle::Parameter::~Parameter()
 {
+}
+
+QString OsmAnd::ResolvedMapStyle::Parameter::getTitle() const
+{
+    return title;
+}
+
+QString OsmAnd::ResolvedMapStyle::Parameter::getDescription() const
+{
+    return description;
+}
+
+QString OsmAnd::ResolvedMapStyle::Parameter::getCategory() const
+{
+    return category;
+}
+
+unsigned int OsmAnd::ResolvedMapStyle::Parameter::getNameId() const
+{
+    return nameId;
+}
+
+OsmAnd::MapStyleValueDataType OsmAnd::ResolvedMapStyle::Parameter::getDataType() const
+{
+    return dataType;
+}
+
+QList<OsmAnd::MapStyleConstantValue> OsmAnd::ResolvedMapStyle::Parameter::getPossibleValues() const
+{
+    return possibleValues;
 }
 
 OsmAnd::ResolvedMapStyle::ParameterValueDefinition::ParameterValueDefinition(

@@ -14,7 +14,7 @@
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/ICoreResourcesProvider.h>
-#include <OsmAndCore/Map/ResolvedMapStyle.h>
+#include <OsmAndCore/Map/IMapStyle.h>
 
 class SkBitmap;
 
@@ -65,7 +65,7 @@ namespace OsmAnd
     protected:
     public:
         MapPresentationEnvironment(
-            const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle,
+            const std::shared_ptr<const IMapStyle>& mapStyle,
             const float displayDensityFactor = 1.0f,
             const float mapScaleFactor = 1.0f,
             const float symbolsScaleFactor = 1.0f,
@@ -76,7 +76,7 @@ namespace OsmAnd
 
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> styleBuiltinValueDefs;
 
-        const std::shared_ptr<const ResolvedMapStyle> resolvedStyle;
+        const std::shared_ptr<const IMapStyle> mapStyle;
         const float displayDensityFactor;
         const float mapScaleFactor;
         const float symbolsScaleFactor;
@@ -84,8 +84,8 @@ namespace OsmAnd
         const LanguagePreference languagePreference;
         const std::shared_ptr<const ICoreResourcesProvider> externalResourcesProvider;
 
-        QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
-        void setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
+        QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue > getSettings() const;
+        void setSettings(const QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings);
         void setSettings(const QHash< QString, QString >& newSettings);
 
         void applyTo(MapStyleEvaluator& evaluator) const;

@@ -395,7 +395,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
 
     // Obtain primitives:
-    MapStyleEvaluationResult evaluationResult(context.env->resolvedStyle->getValueDefinitions().size());
+    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitions().size());
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
     obtainPrimitives(
@@ -1224,25 +1224,25 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     const auto zoom = primitivisedObjects->zoom;
 
     // Initialize shared settings for order evaluation
-    MapStyleEvaluator orderEvaluator(env->resolvedStyle, env->displayDensityFactor * env->mapScaleFactor);
+    MapStyleEvaluator orderEvaluator(env->mapStyle, env->displayDensityFactor * env->mapScaleFactor);
     env->applyTo(orderEvaluator);
     orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
     // Initialize shared settings for polygon evaluation
-    MapStyleEvaluator polygonEvaluator(env->resolvedStyle, env->displayDensityFactor * env->mapScaleFactor);
+    MapStyleEvaluator polygonEvaluator(env->mapStyle, env->displayDensityFactor * env->mapScaleFactor);
     env->applyTo(polygonEvaluator);
     polygonEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     polygonEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
     // Initialize shared settings for polyline evaluation
-    MapStyleEvaluator polylineEvaluator(env->resolvedStyle, env->displayDensityFactor * env->mapScaleFactor);
+    MapStyleEvaluator polylineEvaluator(env->mapStyle, env->displayDensityFactor * env->mapScaleFactor);
     env->applyTo(polylineEvaluator);
     polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
 
     // Initialize shared settings for point evaluation
-    MapStyleEvaluator pointEvaluator(env->resolvedStyle, env->displayDensityFactor * env->mapScaleFactor);
+    MapStyleEvaluator pointEvaluator(env->mapStyle, env->displayDensityFactor * env->mapScaleFactor);
     env->applyTo(pointEvaluator);
     pointEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
     pointEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
@@ -2164,7 +2164,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const auto typeRuleId = mapObject->typesRuleIds[primitive->typeRuleIdIndex];
     const auto& decodedType = encDecRules->decodingRules[typeRuleId];
 
-    MapStyleEvaluator textEvaluator(env->resolvedStyle, env->displayDensityFactor * env->symbolsScaleFactor);
+    MapStyleEvaluator textEvaluator(env->mapStyle, env->displayDensityFactor * env->symbolsScaleFactor);
     env->applyTo(textEvaluator);
 
     // Get captions and their order

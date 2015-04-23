@@ -12,7 +12,6 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Map/UnresolvedMapStyle.h>
 #include <OsmAndCore/Map/MapStyleConstantValue.h>
@@ -26,32 +25,9 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(ResolvedMapStyle);
     public:
-        typedef unsigned int StringId;
-        enum : unsigned int {
-            EmptyStringId = 0u
-        };
-
-        typedef int ValueDefinitionId;
-        
         class Attribute;
 
-        struct OSMAND_CORE_API ResolvedValue Q_DECL_FINAL
-        {
-            ResolvedValue();
-            ~ResolvedValue();
-
-            bool isDynamic;
-            
-            MapStyleConstantValue asConstantValue;
-            struct {
-                std::shared_ptr<const Attribute> attribute;
-            } asDynamicValue;
-
-            static ResolvedValue fromConstantValue(const MapStyleConstantValue& input);
-            static ResolvedValue fromAttribute(const std::shared_ptr<const Attribute>& attribute);
-        };
-
-        class OSMAND_CORE_API RuleNode Q_DECL_FINAL
+        class OSMAND_CORE_API RuleNode Q_DECL_FINAL : public IMapStyle::IRuleNode
         {
             Q_DISABLE_COPY_AND_MOVE(RuleNode);
 
@@ -61,11 +37,20 @@ namespace OsmAnd
             RuleNode(const bool isSwitch);
             ~RuleNode();
 
+#if !defined(SWIG)
             const bool isSwitch;
+#endif // !defined(SWIG)
+            virtual bool getIsSwitch() const Q_DECL_OVERRIDE;
 
-            QHash<ValueDefinitionId, ResolvedValue> values;
-            QList< std::shared_ptr<SWIG_CLARIFY(ResolvedMapStyle, RuleNode)> > oneOfConditionalSubnodes;
-            QList< std::shared_ptr<SWIG_CLARIFY(ResolvedMapStyle, RuleNode)> > applySubnodes;
+#if !defined(SWIG)
+            QHash<ValueDefinitionId, Value> values;
+            QList< std::shared_ptr<const RuleNode> > oneOfConditionalSubnodes;
+            QList< std::shared_ptr<const RuleNode> > applySubnodes;
+#endif // !defined(SWIG)
+            virtual QHash<ValueDefinitionId, Value> getValues() const Q_DECL_OVERRIDE;
+            virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> >
+                getOneOfConditionalSubnodes() const Q_DECL_OVERRIDE;
+            virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> > getApplySubnodes() const Q_DECL_OVERRIDE;
         };
 
         class OSMAND_CORE_API BaseRule
@@ -78,10 +63,14 @@ namespace OsmAnd
         public:
             virtual ~BaseRule();
 
+#if !defined(SWIG)
             const std::shared_ptr<RuleNode> rootNode;
+#endif // !defined(SWIG)
         };
 
-        class OSMAND_CORE_API Rule Q_DECL_FINAL : public BaseRule
+        class OSMAND_CORE_API Rule Q_DECL_FINAL
+            : public BaseRule
+            , public IMapStyle::IRule
         {
             Q_DISABLE_COPY_AND_MOVE(Rule);
 
@@ -91,10 +80,18 @@ namespace OsmAnd
             Rule(const MapStyleRulesetType rulesetType);
             virtual ~Rule();
 
+            virtual std::shared_ptr<IRuleNode> getRootNode() Q_DECL_OVERRIDE;
+            virtual std::shared_ptr<const IRuleNode> getRootNode() const Q_DECL_OVERRIDE;
+
+#if !defined(SWIG)
             const MapStyleRulesetType rulesetType;
+#endif // !defined(SWIG)
+            virtual MapStyleRulesetType getRulesetType() const Q_DECL_OVERRIDE;
         };
 
-        class OSMAND_CORE_API Attribute Q_DECL_FINAL : public BaseRule
+        class OSMAND_CORE_API Attribute Q_DECL_FINAL
+            : public BaseRule
+            , public IMapStyle::IAttribute
         {
             Q_DISABLE_COPY_AND_MOVE(Attribute);
 
@@ -104,10 +101,17 @@ namespace OsmAnd
             Attribute(const StringId nameId);
             virtual ~Attribute();
 
+            virtual std::shared_ptr<IRuleNode> getRootNode() Q_DECL_OVERRIDE;
+            virtual std::shared_ptr<const IRuleNode> getRootNode() const Q_DECL_OVERRIDE;
+
+#if !defined(SWIG)
             const StringId nameId;
+#endif // !defined(SWIG)
+            virtual StringId getNameId() const Q_DECL_OVERRIDE;
         };
         
         class OSMAND_CORE_API Parameter Q_DECL_FINAL
+            : public IMapStyle::IParameter
         {
             Q_DISABLE_COPY_AND_MOVE(Parameter);
 
@@ -121,14 +125,22 @@ namespace OsmAnd
                 const unsigned int nameId,
                 const MapStyleValueDataType dataType,
                 const QList<MapStyleConstantValue>& possibleValues);
-            ~Parameter();
+            virtual ~Parameter();
 
+#if !defined(SWIG)
             QString title;
             QString description;
             QString category;
             unsigned int nameId;
             MapStyleValueDataType dataType;
             QList<MapStyleConstantValue> possibleValues;
+#endif // !defined(SWIG)
+            virtual QString getTitle() const Q_DECL_OVERRIDE;
+            virtual QString getDescription() const Q_DECL_OVERRIDE;
+            virtual QString getCategory() const Q_DECL_OVERRIDE;
+            virtual unsigned int getNameId() const Q_DECL_OVERRIDE;
+            virtual MapStyleValueDataType getDataType() const Q_DECL_OVERRIDE;
+            virtual QList<MapStyleConstantValue> getPossibleValues() const Q_DECL_OVERRIDE;
         };
 
         class OSMAND_CORE_API ParameterValueDefinition : public MapStyleValueDefinition
@@ -157,28 +169,27 @@ namespace OsmAnd
 
         const QList< std::shared_ptr<const UnresolvedMapStyle> > unresolvedMapStylesChain;
 
-        ValueDefinitionId getValueDefinitionIdByName(const QString& name) const;
-        std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(const ValueDefinitionId id) const;
-        QList< std::shared_ptr<const MapStyleValueDefinition> > getValueDefinitions() const;
+        virtual ValueDefinitionId getValueDefinitionIdByName(
+            const QString& name) const Q_DECL_OVERRIDE;
+        virtual std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(
+            const ValueDefinitionId id) const Q_DECL_OVERRIDE;
+        virtual QList< std::shared_ptr<const MapStyleValueDefinition> > getValueDefinitions() const Q_DECL_OVERRIDE;
 
-        bool parseValue(
+        virtual bool parseValue(
             const QString& input,
             const ValueDefinitionId valueDefintionId,
-            MapStyleConstantValue& outParsedValue) const;
-        bool parseValue(
+            MapStyleConstantValue& outParsedValue) const Q_DECL_OVERRIDE;
+        virtual bool parseValue(
             const QString& input,
             const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion,
-            MapStyleConstantValue& outParsedValue) const;
+            MapStyleConstantValue& outParsedValue) const Q_DECL_OVERRIDE;
 
-        const QHash<QString, QString>& constants;
-        const QHash<StringId, std::shared_ptr<const Parameter> >& parameters;
-        const QHash<StringId, std::shared_ptr<const Attribute> >& attributes;
-        const std::array< QHash<TagValueId, std::shared_ptr<const Rule> >, MapStyleRulesetTypesCount>& rulesets;
+        virtual std::shared_ptr<const IMapStyle::IParameter> getParameter(const QString& name) const Q_DECL_OVERRIDE;
+        virtual std::shared_ptr<const IMapStyle::IAttribute> getAttribute(const QString& name) const Q_DECL_OVERRIDE;
+        virtual QHash< TagValueId, std::shared_ptr<const IMapStyle::IRule> > getRuleset(
+            const MapStyleRulesetType rulesetType) const Q_DECL_OVERRIDE;
 
-        std::shared_ptr<const Attribute> getAttribute(const QString& name) const;
-        const QHash< TagValueId, std::shared_ptr<const Rule> > getRuleset(const MapStyleRulesetType rulesetType) const;
-
-        QString getStringById(const StringId id) const;
+        virtual QString getStringById(const StringId id) const Q_DECL_OVERRIDE;
 
         QString dump(const QString& prefix = QString()) const;
 

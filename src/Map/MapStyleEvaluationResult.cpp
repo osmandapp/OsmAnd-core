@@ -41,7 +41,7 @@ OsmAnd::MapStyleEvaluationResult& OsmAnd::MapStyleEvaluationResult::operator=(Ma
 }
 #endif // Q_COMPILER_RVALUE_REFS
 
-bool OsmAnd::MapStyleEvaluationResult::contains(const ResolvedMapStyle::ValueDefinitionId valueDefId) const
+bool OsmAnd::MapStyleEvaluationResult::contains(const IMapStyle::ValueDefinitionId valueDefId) const
 {
     if (valueDefId >= _storage.size())
         return false;
@@ -50,7 +50,7 @@ bool OsmAnd::MapStyleEvaluationResult::contains(const ResolvedMapStyle::ValueDef
 }
 
 void OsmAnd::MapStyleEvaluationResult::setValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     const QVariant& value)
 {
     if (valueDefId >= _storage.size())
@@ -60,42 +60,42 @@ void OsmAnd::MapStyleEvaluationResult::setValue(
 }
 
 void OsmAnd::MapStyleEvaluationResult::setBooleanValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     const bool& value)
 {
     setValue(valueDefId, QVariant(value));
 }
 
 void OsmAnd::MapStyleEvaluationResult::setIntegerValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     const int& value)
 {
     setValue(valueDefId, QVariant(value));
 }
 
 void OsmAnd::MapStyleEvaluationResult::setIntegerValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     const unsigned int& value)
 {
     setValue(valueDefId, QVariant(value));
 }
 
 void OsmAnd::MapStyleEvaluationResult::setFloatValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     const float& value)
 {
     setValue(valueDefId, QVariant(value));
 }
 
 void OsmAnd::MapStyleEvaluationResult::setStringValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     const QString& value)
 {
     setValue(valueDefId, QVariant(value));
 }
 
 bool OsmAnd::MapStyleEvaluationResult::getValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     QVariant& outValue) const
 {
     if (valueDefId >= _storage.size())
@@ -110,7 +110,7 @@ bool OsmAnd::MapStyleEvaluationResult::getValue(
 }
 
 bool OsmAnd::MapStyleEvaluationResult::getBooleanValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     bool& outValue) const
 {
     QVariant value;
@@ -122,7 +122,7 @@ bool OsmAnd::MapStyleEvaluationResult::getBooleanValue(
 }
 
 bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     int& outValue) const
 {
     QVariant value;
@@ -134,7 +134,7 @@ bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(
 }
 
 bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     unsigned int& outValue) const
 {
     QVariant value;
@@ -146,7 +146,7 @@ bool OsmAnd::MapStyleEvaluationResult::getIntegerValue(
 }
 
 bool OsmAnd::MapStyleEvaluationResult::getFloatValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     float& outValue) const
 {
     QVariant value;
@@ -158,7 +158,7 @@ bool OsmAnd::MapStyleEvaluationResult::getFloatValue(
 }
 
 bool OsmAnd::MapStyleEvaluationResult::getStringValue(
-    const ResolvedMapStyle::ValueDefinitionId valueDefId,
+    const IMapStyle::ValueDefinitionId valueDefId,
     QString& outValue) const
 {
     QVariant value;

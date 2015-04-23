@@ -344,7 +344,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
 
     for (auto rulesetTypeIdx = 0u; rulesetTypeIdx < MapStyleRulesetTypesCount; rulesetTypeIdx++)
     {
-        QHash<TagValueId, std::shared_ptr<Rule> > ruleset;
+        QHash<TagValueId, std::shared_ptr<const Rule> > ruleset;
 
         // Process styles chain in direct order. This will allow to process overriding correctly
         auto citUnresolvedMapStyle = iteratorOf(owner->unresolvedMapStylesChain);
@@ -398,7 +398,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
                 }
             }
 
-            _rulesets[rulesetTypeIdx] = copyAs< TagValueId, std::shared_ptr<const Rule> >(ruleset);
+            _rulesets[rulesetTypeIdx] = ruleset;
         }
     }
 
@@ -466,6 +466,15 @@ bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(
     return parseConstantValue(input, valueDefintion->dataType, valueDefintion->isComplex, outParsedValue);
 }
 
+std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Parameter> OsmAnd::ResolvedMapStyle_P::getParameter(const QString& name) const
+{
+    StringId nameId;
+    if (!resolveStringIdInLUT(name, nameId))
+        return nullptr;
+
+    return _parameters[nameId];
+}
+
 std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Attribute> OsmAnd::ResolvedMapStyle_P::getAttribute(const QString& name) const
 {
     StringId nameId;
@@ -475,9 +484,8 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Attribute> OsmAnd::ResolvedMap
     return _attributes[nameId];
 }
 
-const QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Rule> >
-OsmAnd::ResolvedMapStyle_P::getRuleset(
-const MapStyleRulesetType rulesetType) const
+QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Rule> > OsmAnd::ResolvedMapStyle_P::getRuleset(
+    const MapStyleRulesetType rulesetType) const
 {
     return _rulesets[static_cast<unsigned int>(rulesetType)];
 }
@@ -793,7 +801,7 @@ QString OsmAnd::ResolvedMapStyle_P::dumpResolvedValue(const ResolvedValue& value
     if (value.isDynamic)
     {
         const auto attributeName = QString(QLatin1String("attribute $%1"))
-            .arg(getStringById(value.asDynamicValue.attribute->nameId));
+            .arg(getStringById(value.asDynamicValue.attribute->getNameId()));
 
         switch (dataType)
         {

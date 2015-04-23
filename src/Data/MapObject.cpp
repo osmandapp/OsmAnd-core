@@ -302,7 +302,10 @@ void OsmAnd::MapObject::EncodingDecodingRules::createRequiredRules(uint32_t& las
     }
 }
 
-uint32_t OsmAnd::MapObject::EncodingDecodingRules::addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
+uint32_t OsmAnd::MapObject::EncodingDecodingRules::addRule(
+    const uint32_t ruleId,
+    const QString& ruleTag,
+    const QString& ruleValue)
 {
     // Insert encoding rule
     auto itEncodingRule = encodingRuleIds.find(ruleTag);

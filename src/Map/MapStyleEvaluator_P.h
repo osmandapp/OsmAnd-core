@@ -9,8 +9,9 @@
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
+#include "PrivateImplementation.h"
 #include "MapStyleConstantValue.h"
-#include "ResolvedMapStyle.h"
+#include "IMapStyle.h"
 
 namespace OsmAnd
 {
@@ -37,33 +38,33 @@ namespace OsmAnd
     private:
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
 
-        typedef QHash<ResolvedMapStyle::ValueDefinitionId, InputValue> InputValuesDictionary;
+        typedef QHash<IMapStyle::ValueDefinitionId, InputValue> InputValuesDictionary;
         InputValuesDictionary _inputValues;
 
-        typedef QHash<ResolvedMapStyle::ValueDefinitionId, ResolvedMapStyle::ResolvedValue> IntermediateEvaluationResult;
+        typedef QHash<IMapStyle::ValueDefinitionId, IMapStyle::Value> IntermediateEvaluationResult;
 
         MapStyleConstantValue evaluateConstantValue(
             const MapObject* const mapObject,
             const MapStyleValueDataType dataType,
-            const ResolvedMapStyle::ResolvedValue& resolvedValue,
+            const IMapStyle::Value& resolvedValue,
             const InputValuesDictionary& inputValues) const;
 
         bool evaluate(
             const MapObject* const mapObject,
-            const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
+            const std::shared_ptr<const IMapStyle::IRuleNode>& ruleNode,
             const InputValuesDictionary& inputValues,
             bool& outDisabled,
             IntermediateEvaluationResult* const outResultStorage) const;
 
         bool evaluate(
             const std::shared_ptr<const MapObject>& mapObject,
-            const QHash< TagValueId, std::shared_ptr<const ResolvedMapStyle::Rule> >& ruleset,
-            const ResolvedMapStyle::StringId tagStringId,
-            const ResolvedMapStyle::StringId valueStringId,
+            const QHash< TagValueId, std::shared_ptr<const IMapStyle::IRule> >& ruleset,
+            const IMapStyle::StringId tagStringId,
+            const IMapStyle::StringId valueStringId,
             MapStyleEvaluationResult* const outResultStorage) const;
 
         void fillResultFromRuleNode(
-            const std::shared_ptr<const ResolvedMapStyle::RuleNode>& ruleNode,
+            const std::shared_ptr<const IMapStyle::IRuleNode>& ruleNode,
             IntermediateEvaluationResult& outResultStorage,
             const bool allowOverride) const;
 
@@ -79,18 +80,18 @@ namespace OsmAnd
 
         ImplementationInterface<MapStyleEvaluator> owner;
 
-        void setBooleanValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const bool value);
-        void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const int value);
-        void setIntegerValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const unsigned int value);
-        void setFloatValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const float value);
-        void setStringValue(const ResolvedMapStyle::ValueDefinitionId valueDefId, const QString& value);
+        void setBooleanValue(const IMapStyle::ValueDefinitionId valueDefId, const bool value);
+        void setIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, const int value);
+        void setIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, const unsigned int value);
+        void setFloatValue(const IMapStyle::ValueDefinitionId valueDefId, const float value);
+        void setStringValue(const IMapStyle::ValueDefinitionId valueDefId, const QString& value);
 
         bool evaluate(
             const std::shared_ptr<const MapObject>& mapObject,
             const MapStyleRulesetType rulesetType,
             MapStyleEvaluationResult* const outResultStorage) const;
         bool evaluate(
-            const std::shared_ptr<const ResolvedMapStyle::Attribute>& attribute,
+            const std::shared_ptr<const IMapStyle::IAttribute>& attribute,
             MapStyleEvaluationResult* const outResultStorage) const;
 
     friend class OsmAnd::MapStyleEvaluator;

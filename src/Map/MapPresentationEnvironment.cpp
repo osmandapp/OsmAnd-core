@@ -4,7 +4,7 @@
 #include "MapStyleBuiltinValueDefinitions.h"
 
 OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
-    const std::shared_ptr<const ResolvedMapStyle>& resolvedStyle_,
+    const std::shared_ptr<const IMapStyle>& mapStyle_,
     const float displayDensityFactor_ /*= 1.0f*/,
     const float mapScaleFactor_ /*= 1.0f*/,
     const float symbolsScaleFactor_ /*= 1.0f*/,
@@ -13,7 +13,7 @@ OsmAnd::MapPresentationEnvironment::MapPresentationEnvironment(
     const std::shared_ptr<const ICoreResourcesProvider>& externalResourcesProvider_ /*= nullptr*/)
     : _p(new MapPresentationEnvironment_P(this))
     , styleBuiltinValueDefs(MapStyleBuiltinValueDefinitions::get())
-    , resolvedStyle(resolvedStyle_)
+    , mapStyle(mapStyle_)
     , displayDensityFactor(displayDensityFactor_)
     , mapScaleFactor(mapScaleFactor_)
     , symbolsScaleFactor(symbolsScaleFactor_)
@@ -28,12 +28,14 @@ OsmAnd::MapPresentationEnvironment::~MapPresentationEnvironment()
 {
 }
 
-QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue > OsmAnd::MapPresentationEnvironment::getSettings() const
+QHash< OsmAnd::IMapStyle::ValueDefinitionId, OsmAnd::MapStyleConstantValue >
+OsmAnd::MapPresentationEnvironment::getSettings() const
 {
     return _p->getSettings();
 }
 
-void OsmAnd::MapPresentationEnvironment::setSettings(const QHash< OsmAnd::ResolvedMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings)
+void OsmAnd::MapPresentationEnvironment::setSettings(
+    const QHash< OsmAnd::IMapStyle::ValueDefinitionId, MapStyleConstantValue >& newSettings)
 {
     _p->setSettings(newSettings);
 }
@@ -48,32 +50,44 @@ void OsmAnd::MapPresentationEnvironment::applyTo(MapStyleEvaluator& evaluator) c
     _p->applyTo(evaluator);
 }
 
-bool OsmAnd::MapPresentationEnvironment::obtainShaderBitmap(const QString& name, std::shared_ptr<const SkBitmap>& outShaderBitmap) const
+bool OsmAnd::MapPresentationEnvironment::obtainShaderBitmap(
+    const QString& name,
+    std::shared_ptr<const SkBitmap>& outShaderBitmap) const
 {
     return _p->obtainShaderBitmap(name, outShaderBitmap);
 }
 
-bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(const QString& name, std::shared_ptr<const SkBitmap>& outIcon) const
+bool OsmAnd::MapPresentationEnvironment::obtainMapIcon(
+    const QString& name,
+    std::shared_ptr<const SkBitmap>& outIcon) const
 {
     return _p->obtainMapIcon(name, outIcon);
 }
 
-bool OsmAnd::MapPresentationEnvironment::obtainTextShield(const QString& name, std::shared_ptr<const SkBitmap>& outTextShield) const
+bool OsmAnd::MapPresentationEnvironment::obtainTextShield(
+    const QString& name,
+    std::shared_ptr<const SkBitmap>& outTextShield) const
 {
     return _p->obtainTextShield(name, outTextShield);
 }
 
-bool OsmAnd::MapPresentationEnvironment::obtainIconShield(const QString& name, std::shared_ptr<const SkBitmap>& outIconShield) const
+bool OsmAnd::MapPresentationEnvironment::obtainIconShield(
+    const QString& name,
+    std::shared_ptr<const SkBitmap>& outIconShield) const
 {
     return _p->obtainIconShield(name, outIconShield);
 }
 
-OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getDefaultBackgroundColor(const ZoomLevel zoom) const
+OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment::getDefaultBackgroundColor(
+    const ZoomLevel zoom) const
 {
     return _p->getDefaultBackgroundColor(zoom);
 }
 
-void OsmAnd::MapPresentationEnvironment::obtainShadowOptions(const ZoomLevel zoom, ShadowMode& mode, ColorARGB& color) const
+void OsmAnd::MapPresentationEnvironment::obtainShadowOptions(
+    const ZoomLevel zoom,
+    ShadowMode& mode,
+    ColorARGB& color) const
 {
     _p->obtainShadowOptions(zoom, mode, color);
 }

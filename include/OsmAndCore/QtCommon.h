@@ -18,6 +18,8 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/QKeyIterator.h>
+#include <OsmAndCore/QKeyValueIterator.h>
 
 namespace OsmAnd
 {

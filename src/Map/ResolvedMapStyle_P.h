@@ -26,8 +26,8 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(ResolvedMapStyle_P);
     public:
         typedef ResolvedMapStyle::StringId StringId;
-        typedef ResolvedMapStyle::ValueDefinitionId ValueDefinitionId;
-        typedef ResolvedMapStyle::ResolvedValue ResolvedValue;
+        typedef IMapStyle::ValueDefinitionId ValueDefinitionId;
+        typedef ResolvedMapStyle::Value ResolvedValue;
         typedef ResolvedMapStyle::RuleNode RuleNode;
         typedef ResolvedMapStyle::BaseRule BaseRule;
         typedef ResolvedMapStyle::Rule Rule;
@@ -112,8 +112,10 @@ namespace OsmAnd
             const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion,
             MapStyleConstantValue& outParsedValue) const;
 
+        std::shared_ptr<const Parameter> getParameter(const QString& name) const;
         std::shared_ptr<const Attribute> getAttribute(const QString& name) const;
-        const QHash< TagValueId, std::shared_ptr<const Rule> > getRuleset(const MapStyleRulesetType rulesetType) const;
+        QHash< TagValueId, std::shared_ptr<const Rule> > getRuleset(
+            const MapStyleRulesetType rulesetType) const;
 
         QString getStringById(const StringId id) const;
 
