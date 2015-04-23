@@ -170,15 +170,15 @@ namespace OsmAnd
 
         const QList< std::shared_ptr<const UnresolvedMapStyle> > unresolvedMapStylesChain;
 
-        virtual ValueDefinitionId getValueDefinitionIdByName(
+        virtual SWIG_CLARIFY(IMapStyle, ValueDefinitionId) getValueDefinitionIdByName(
             const QString& name) const Q_DECL_OVERRIDE;
         virtual std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(
-            const ValueDefinitionId id) const Q_DECL_OVERRIDE;
+            const SWIG_CLARIFY(IMapStyle, ValueDefinitionId) id) const Q_DECL_OVERRIDE;
         virtual QList< std::shared_ptr<const MapStyleValueDefinition> > getValueDefinitions() const Q_DECL_OVERRIDE;
 
         virtual bool parseValue(
             const QString& input,
-            const ValueDefinitionId valueDefintionId,
+            const SWIG_CLARIFY(IMapStyle, ValueDefinitionId) valueDefintionId,
             MapStyleConstantValue& outParsedValue) const Q_DECL_OVERRIDE;
         virtual bool parseValue(
             const QString& input,

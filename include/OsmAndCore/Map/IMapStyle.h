@@ -118,13 +118,14 @@ namespace OsmAnd
     public:
         virtual ~IMapStyle();
 
-        virtual ValueDefinitionId getValueDefinitionIdByName(const QString& name) const = 0;
-        virtual std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(const ValueDefinitionId id) const = 0;
+        virtual SWIG_CLARIFY(IMapStyle, ValueDefinitionId) getValueDefinitionIdByName(const QString& name) const = 0;
+        virtual std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(
+            const SWIG_CLARIFY(IMapStyle, ValueDefinitionId) id) const = 0;
         virtual QList< std::shared_ptr<const MapStyleValueDefinition> > getValueDefinitions() const = 0;
 
         virtual bool parseValue(
             const QString& input,
-            const ValueDefinitionId valueDefintionId,
+            const SWIG_CLARIFY(IMapStyle, ValueDefinitionId) valueDefintionId,
             MapStyleConstantValue& outParsedValue) const = 0;
         virtual bool parseValue(
             const QString& input,
