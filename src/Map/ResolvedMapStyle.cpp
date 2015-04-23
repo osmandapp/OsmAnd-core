@@ -53,10 +53,20 @@ std::shared_ptr<const OsmAnd::IMapStyle::IParameter> OsmAnd::ResolvedMapStyle::g
     return _p->getParameter(name);
 }
 
+QList< std::shared_ptr<const OsmAnd::IMapStyle::IParameter> > OsmAnd::ResolvedMapStyle::getParameters() const
+{
+    return copyAs< QList< std::shared_ptr<const OsmAnd::IMapStyle::IParameter> > >(_p->getParameters());
+}
+
 std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> OsmAnd::ResolvedMapStyle::getAttribute(
     const QString& name) const
 {
     return _p->getAttribute(name);
+}
+
+QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > OsmAnd::ResolvedMapStyle::getAttributes() const
+{
+    return copyAs< QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > >(_p->getAttributes());
 }
 
 QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle::getRuleset(
@@ -68,11 +78,6 @@ QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > Osm
 QString OsmAnd::ResolvedMapStyle::getStringById(const StringId id) const
 {
     return _p->getStringById(id);
-}
-
-QString OsmAnd::ResolvedMapStyle::dump(const QString& prefix /*= QString()*/) const
-{
-    return _p->dump(prefix);
 }
 
 std::shared_ptr<const OsmAnd::ResolvedMapStyle> OsmAnd::ResolvedMapStyle::resolveMapStylesChain(

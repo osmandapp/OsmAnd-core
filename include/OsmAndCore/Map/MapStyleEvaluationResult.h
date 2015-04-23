@@ -51,6 +51,8 @@ namespace OsmAnd
         bool getFloatValue(const IMapStyle::ValueDefinitionId valueDefId, float& outValue) const;
         bool getStringValue(const IMapStyle::ValueDefinitionId valueDefId, QString& outValue) const;
 
+        QHash<IMapStyle::ValueDefinitionId, QVariant> getValues() const;
+
         void reset();
         void clear();
         bool isEmpty() const;

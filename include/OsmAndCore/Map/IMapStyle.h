@@ -132,7 +132,9 @@ namespace OsmAnd
             MapStyleConstantValue& outParsedValue) const = 0;
 
         virtual std::shared_ptr<const IParameter> getParameter(const QString& name) const = 0;
+        virtual QList< std::shared_ptr<const IParameter> > getParameters() const = 0;
         virtual std::shared_ptr<const IAttribute> getAttribute(const QString& name) const = 0;
+        virtual QList< std::shared_ptr<const IAttribute> > getAttributes() const = 0;
         virtual QHash< TagValueId, std::shared_ptr<const IRule> > getRuleset(const MapStyleRulesetType rulesetType) const = 0;
 
         virtual QString getStringById(const StringId id) const = 0;

@@ -93,18 +93,6 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             break;
         }
 
-        // Dump style if asked to do so
-        if (!configuration.styleDumpFilename.isEmpty())
-        {
-            const auto dumpContent = mapStyle->dump();
-            QFile dumpFile(configuration.styleDumpFilename);
-            if (dumpFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
-            {
-                QTextStream(&dumpFile) << dumpContent;
-                dumpFile.close();
-            }
-        }
-
         // Load all map objects
         const auto mapObjectsFilterById =
             [this]
@@ -312,7 +300,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     }
                     output << xT("\t\tZ order: ") << pointPrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << pointPrimitive->doubledArea << std::endl;
-                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(pointPrimitive->evaluationResult.values)))
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(pointPrimitive->evaluationResult.getValues())))
                     {
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
@@ -363,7 +351,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     }
                     output << xT("\t\tZ order: ") << polylinePrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << polylinePrimitive->doubledArea << std::endl;
-                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polylinePrimitive->evaluationResult.values)))
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polylinePrimitive->evaluationResult.getValues())))
                     {
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
@@ -415,7 +403,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     }
                     output << xT("\t\tZ order: ") << polygonPrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << polygonPrimitive->doubledArea << std::endl;
-                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polygonPrimitive->evaluationResult.values)))
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polygonPrimitive->evaluationResult.getValues())))
                     {
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
@@ -750,12 +738,6 @@ bool OsmAndTools::Styler::Configuration::parseFromCommandLineArguments(
             const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-locale=")));
 
             outConfiguration.locale = value;
-        }
-        else if (arg.startsWith(QLatin1String("-styleDump=")))
-        {
-            const auto value = Utilities::purifyArgumentValue(arg.mid(strlen("-styleDump=")));
-
-            outConfiguration.styleDumpFilename = value;
         }
         else if (arg == QLatin1String("-metrics"))
         {

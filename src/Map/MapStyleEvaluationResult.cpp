@@ -169,6 +169,25 @@ bool OsmAnd::MapStyleEvaluationResult::getStringValue(
     return true;
 }
 
+QHash<OsmAnd::IMapStyle::ValueDefinitionId, QVariant> OsmAnd::MapStyleEvaluationResult::getValues() const
+{
+    QHash<IMapStyle::ValueDefinitionId, QVariant> result;
+
+    const auto size = _storage.size();
+    auto pValue = _storage.constData();
+    int valuesCount = 0;
+    for (int index = 0; index < size; index++)
+    {
+        const auto& value = *(pValue++);
+        if (!value.isValid())
+            continue;
+
+        result.insert(static_cast<IMapStyle::ValueDefinitionId>(index), value);
+    }
+
+    return result;
+}
+
 void OsmAnd::MapStyleEvaluationResult::reset()
 {
     _storage.clear();

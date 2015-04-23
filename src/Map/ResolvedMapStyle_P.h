@@ -70,21 +70,6 @@ namespace OsmAnd
         bool mergeAndResolveParameters();
         bool mergeAndResolveAttributes();
         bool mergeAndResolveRulesets();
-
-        QString dumpRuleNode(
-            const std::shared_ptr<const RuleNode>& ruleNode,
-            const bool rejectSupported,
-            const QString& prefix) const;
-        QString dumpRuleNodeOutputValues(
-            const std::shared_ptr<const RuleNode>& ruleNode,
-            const QString& prefix,
-            const bool allowOverride) const;
-        QString dumpResolvedValue(
-            const ResolvedValue& value,
-            const MapStyleValueDataType dataType) const;
-        QString dumpConstantValue(
-            const MapStyleConstantValue& value,
-            const MapStyleValueDataType dataType) const;
     protected:
         ResolvedMapStyle_P(ResolvedMapStyle* const owner);
 
@@ -113,13 +98,13 @@ namespace OsmAnd
             MapStyleConstantValue& outParsedValue) const;
 
         std::shared_ptr<const Parameter> getParameter(const QString& name) const;
+        QList< std::shared_ptr<const Parameter> > getParameters() const;
         std::shared_ptr<const Attribute> getAttribute(const QString& name) const;
+        QList< std::shared_ptr<const Attribute> > getAttributes() const;
         QHash< TagValueId, std::shared_ptr<const Rule> > getRuleset(
             const MapStyleRulesetType rulesetType) const;
 
         QString getStringById(const StringId id) const;
-
-        QString dump(const QString& prefix) const;
 
     friend class OsmAnd::ResolvedMapStyle;
     };
