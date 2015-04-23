@@ -287,6 +287,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/UnresolvedMapStyle.h>
 %include <OsmAndCore/Map/MapStyleConstantValue.h>
 %include <OsmAndCore/Map/MapStyleValueDefinition.h>
+%include <OsmAndCore/Map/IMapStyle.h>
 %include <OsmAndCore/Map/ResolvedMapStyle.h>
 %include <OsmAndCore/Map/IMapStylesCollection.h>
 %include <OsmAndCore/Map/MapStylesCollection.h>
