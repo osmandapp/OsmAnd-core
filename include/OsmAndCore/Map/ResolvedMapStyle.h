@@ -185,11 +185,13 @@ namespace OsmAnd
             const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion,
             MapStyleConstantValue& outParsedValue) const Q_DECL_OVERRIDE;
 
-        virtual std::shared_ptr<const IParameter> getParameter(const QString& name) const Q_DECL_OVERRIDE;
-        virtual QList< std::shared_ptr<const IParameter> > getParameters() const Q_DECL_OVERRIDE;
-        virtual std::shared_ptr<const IAttribute> getAttribute(const QString& name) const Q_DECL_OVERRIDE;
-        virtual QList< std::shared_ptr<const IAttribute> > getAttributes() const Q_DECL_OVERRIDE;
-        virtual QHash< TagValueId, std::shared_ptr<const IMapStyle::IRule> > getRuleset(
+        virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IParameter)> getParameter(
+            const QString& name) const Q_DECL_OVERRIDE;
+        virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IParameter)> > getParameters() const Q_DECL_OVERRIDE;
+        virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAttribute)> getAttribute(
+            const QString& name) const Q_DECL_OVERRIDE;
+        virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IAttribute)> > getAttributes() const Q_DECL_OVERRIDE;
+        virtual QHash< TagValueId, std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRule)> > getRuleset(
             const MapStyleRulesetType rulesetType) const Q_DECL_OVERRIDE;
 
         virtual QString getStringById(const StringId id) const Q_DECL_OVERRIDE;
