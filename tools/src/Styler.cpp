@@ -300,7 +300,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     }
                     output << xT("\t\tZ order: ") << pointPrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << pointPrimitive->doubledArea << std::endl;
-                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(pointPrimitive->evaluationResult.getValues())))
+                    const auto& values = pointPrimitive->evaluationResult.getValues();
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(values))
                     {
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
@@ -351,7 +352,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     }
                     output << xT("\t\tZ order: ") << polylinePrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << polylinePrimitive->doubledArea << std::endl;
-                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polylinePrimitive->evaluationResult.getValues())))
+                    const auto& values = polylinePrimitive->evaluationResult.getValues();
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(values))
                     {
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
@@ -403,7 +405,8 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                     }
                     output << xT("\t\tZ order: ") << polygonPrimitive->zOrder << std::endl;
                     output << xT("\t\tArea*2: ") << polygonPrimitive->doubledArea << std::endl;
-                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(OsmAnd::constOf(polygonPrimitive->evaluationResult.getValues())))
+                    const auto& values = polygonPrimitive->evaluationResult.getValues();
+                    for (const auto& evaluatedValueEntry : OsmAnd::rangeOf(values))
                     {
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
