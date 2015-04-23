@@ -23,6 +23,11 @@
 #include "QCachingIterator.h"
 #include "Logging.h"
 
+//#define OSMAND_VERBOSE_MAP_PRIMITIVISER 1
+#if !defined(OSMAND_VERBOSE_MAP_PRIMITIVISER)
+#   define OSMAND_VERBOSE_MAP_PRIMITIVISER 0
+#endif // !defined(OSMAND_VERBOSE_MAP_PRIMITIVISER)
+
 OsmAnd::MapPrimitiviser_P::MapPrimitiviser_P(MapPrimitiviser* const owner_)
     : owner(owner_)
 {
@@ -358,12 +363,14 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             bgMapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalLand_encodingRuleId);
         else // if (surfaceType == SurfaceType::Undefined)
         {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
             LogPrintf(LogSeverityLevel::Warning, "Area [%d, %d, %d, %d]@%d has undefined surface type",
                 area31.top(),
                 area31.left(),
                 area31.bottom(),
                 area31.right(),
                 zoom);
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
 
             bgMapObject->isArea = false;
             bgMapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
@@ -600,10 +607,12 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
     {
         if (coastline->points31.size() < 2)
         {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
             LogPrintf(LogSeverityLevel::Warning,
                 "MapObject %s is primitivised as coastline, but has %d vertices",
                 qPrintable(coastline->toString()),
                 coastline->points31.size());
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
             continue;
         }
 
@@ -673,12 +682,14 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
 
     if (!coastlinePolylines.isEmpty())
     {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
         LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Invalid polylines found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
             area31.top(),
             area31.left(),
             area31.bottom(),
             area31.right(),
             zoom);
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
     }
 
     if (includeBrokenCoastlines)
@@ -738,12 +749,14 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
 
     if (fullWaterObjects == 0u && !coastlineCrossesBounds)
     {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
         LogPrintf(LogSeverityLevel::Warning, "Isolated islands found during primitivisation of coastlines in area [%d, %d, %d, %d]@%d",
             area31.top(),
             area31.left(),
             area31.bottom(),
             area31.right(),
             zoom);
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
 
         // Add complete water tile
         const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
@@ -1438,24 +1451,30 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Perform checks on data
             if (mapObject->points31.size() <= 2)
             {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
                 LogPrintf(LogSeverityLevel::Warning,
                     "MapObject %s primitive is processed as polygon, but has only %d point(s)",
                     qPrintable(mapObject->toString()),
                     mapObject->points31.size());
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
                 continue;
             }
             if (!mapObject->isClosedFigure())
             {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
                 LogPrintf(LogSeverityLevel::Warning,
                     "MapObject %s primitive is processed as polygon, but isn't closed",
                     qPrintable(mapObject->toString()));
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
                 continue;
             }
             if (!mapObject->isClosedFigure(true))
             {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
                 LogPrintf(LogSeverityLevel::Warning,
                     "MapObject %s primitive is processed as polygon, but isn't closed (inner)",
                     qPrintable(mapObject->toString()));
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
                 continue;
             }
 
@@ -1598,10 +1617,12 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Perform checks on data
             if (mapObject->points31.size() < 2)
             {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
                 LogPrintf(LogSeverityLevel::Warning,
                     "MapObject %s is processed as polyline, but has %d point(s)",
                     qPrintable(mapObject->toString()),
                     mapObject->points31.size());
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
                 continue;
             }
 
@@ -1651,9 +1672,11 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             // Perform checks on data
             if (mapObject->points31.size() < 1)
             {
+#if OSMAND_VERBOSE_MAP_PRIMITIVISER
                 LogPrintf(LogSeverityLevel::Warning,
                     "MapObject %s is processed as point, but has no point",
                     qPrintable(mapObject->toString()));
+#endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
                 continue;
             }
 
