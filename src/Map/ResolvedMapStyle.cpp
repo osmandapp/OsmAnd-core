@@ -185,7 +185,7 @@ OsmAnd::ResolvedMapStyle::Parameter::Parameter(
     const QString& title_,
     const QString& description_,
     const QString& category_,
-    const unsigned int nameId_,
+    const StringId nameId_,
     const MapStyleValueDataType dataType_,
     const QList<MapStyleConstantValue>& possibleValues_)
     : title(title_)
@@ -216,7 +216,7 @@ QString OsmAnd::ResolvedMapStyle::Parameter::getCategory() const
     return category;
 }
 
-unsigned int OsmAnd::ResolvedMapStyle::Parameter::getNameId() const
+OsmAnd::IMapStyle::StringId OsmAnd::ResolvedMapStyle::Parameter::getNameId() const
 {
     return nameId;
 }

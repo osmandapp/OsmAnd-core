@@ -74,8 +74,8 @@ namespace OsmAnd
         public:
             virtual ~IRule();
 
-            virtual std::shared_ptr<IRuleNode> getRootNode() = 0;
-            virtual std::shared_ptr<const IRuleNode> getRootNode() const = 0;
+            virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() = 0;
+            virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const = 0;
             virtual MapStyleRulesetType getRulesetType() const = 0;
         };
 
@@ -92,7 +92,7 @@ namespace OsmAnd
             virtual QString getTitle() const = 0;
             virtual QString getDescription() const = 0;
             virtual QString getCategory() const = 0;
-            virtual unsigned int getNameId() const = 0;
+            virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const = 0;
             virtual MapStyleValueDataType getDataType() const = 0;
             virtual QList<MapStyleConstantValue> getPossibleValues() const = 0;
         };
@@ -107,9 +107,9 @@ namespace OsmAnd
         public:
             virtual ~IAttribute();
 
-            virtual std::shared_ptr<IRuleNode> getRootNode() = 0;
-            virtual std::shared_ptr<const IRuleNode> getRootNode() const = 0;
-            virtual StringId getNameId() const = 0;
+            virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() = 0;
+            virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const = 0;
+            virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const = 0;
         };
 
     private:

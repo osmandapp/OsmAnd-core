@@ -81,8 +81,8 @@ namespace OsmAnd
             Rule(const MapStyleRulesetType rulesetType);
             virtual ~Rule();
 
-            virtual std::shared_ptr<IRuleNode> getRootNode() Q_DECL_OVERRIDE;
-            virtual std::shared_ptr<const IRuleNode> getRootNode() const Q_DECL_OVERRIDE;
+            virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() Q_DECL_OVERRIDE;
+            virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const Q_DECL_OVERRIDE;
 
 #if !defined(SWIG)
             const MapStyleRulesetType rulesetType;
@@ -102,13 +102,13 @@ namespace OsmAnd
             Attribute(const StringId nameId);
             virtual ~Attribute();
 
-            virtual std::shared_ptr<IRuleNode> getRootNode() Q_DECL_OVERRIDE;
-            virtual std::shared_ptr<const IRuleNode> getRootNode() const Q_DECL_OVERRIDE;
+            virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() Q_DECL_OVERRIDE;
+            virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const Q_DECL_OVERRIDE;
 
 #if !defined(SWIG)
             const StringId nameId;
 #endif // !defined(SWIG)
-            virtual StringId getNameId() const Q_DECL_OVERRIDE;
+            virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const Q_DECL_OVERRIDE;
         };
         
         class OSMAND_CORE_API Parameter Q_DECL_FINAL
@@ -123,7 +123,7 @@ namespace OsmAnd
                 const QString& title,
                 const QString& description,
                 const QString& category,
-                const unsigned int nameId,
+                const StringId nameId,
                 const MapStyleValueDataType dataType,
                 const QList<MapStyleConstantValue>& possibleValues);
             virtual ~Parameter();
@@ -132,14 +132,14 @@ namespace OsmAnd
             QString title;
             QString description;
             QString category;
-            unsigned int nameId;
+            StringId nameId;
             MapStyleValueDataType dataType;
             QList<MapStyleConstantValue> possibleValues;
 #endif // !defined(SWIG)
             virtual QString getTitle() const Q_DECL_OVERRIDE;
             virtual QString getDescription() const Q_DECL_OVERRIDE;
             virtual QString getCategory() const Q_DECL_OVERRIDE;
-            virtual unsigned int getNameId() const Q_DECL_OVERRIDE;
+            virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const Q_DECL_OVERRIDE;
             virtual MapStyleValueDataType getDataType() const Q_DECL_OVERRIDE;
             virtual QList<MapStyleConstantValue> getPossibleValues() const Q_DECL_OVERRIDE;
         };
