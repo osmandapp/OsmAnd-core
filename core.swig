@@ -43,6 +43,7 @@
 #include <OsmAndCore/Map/UnresolvedMapStyle.h>
 #include <OsmAndCore/Map/MapStyleConstantValue.h>
 #include <OsmAndCore/Map/MapStyleValueDefinition.h>
+#include <OsmAndCore/Map/IMapStyle.h>
 #include <OsmAndCore/Map/ResolvedMapStyle.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
@@ -142,6 +143,12 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::UnresolvedMapStyle::Parameter)
 	%shared_ptr(OsmAnd::MapStyleConstantValue)
 	%shared_ptr(OsmAnd::MapStyleValueDefinition)
+	%shared_ptr(OsmAnd::IMapStyle)
+	%shared_ptr(OsmAnd::IMapStyle::Value)
+	%shared_ptr(OsmAnd::IMapStyle::IRuleNode)
+	%shared_ptr(OsmAnd::IMapStyle::IRule)
+	%shared_ptr(OsmAnd::IMapStyle::IAttribute)
+	%shared_ptr(OsmAnd::IMapStyle::IParameter)
 	%shared_ptr(OsmAnd::ResolvedMapStyle)
 	%shared_ptr(OsmAnd::ResolvedMapStyle::ResolvedValue)
 	%shared_ptr(OsmAnd::ResolvedMapStyle::RuleNode)
