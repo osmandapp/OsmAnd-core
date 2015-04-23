@@ -139,7 +139,7 @@ namespace OsmAnd
         virtual QHash< TagValueId, std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRule)> > getRuleset(
             const MapStyleRulesetType rulesetType) const = 0;
 
-        virtual QString getStringById(const StringId id) const = 0;
+        virtual QString getStringById(const SWIG_CLARIFY(IMapStyle, StringId) id) const = 0;
     };
 }
 

@@ -194,7 +194,7 @@ namespace OsmAnd
         virtual QHash< TagValueId, std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRule)> > getRuleset(
             const MapStyleRulesetType rulesetType) const Q_DECL_OVERRIDE;
 
-        virtual QString getStringById(const StringId id) const Q_DECL_OVERRIDE;
+        virtual QString getStringById(const SWIG_CLARIFY(IMapStyle, StringId) id) const Q_DECL_OVERRIDE;
 
         static std::shared_ptr<const ResolvedMapStyle> resolveMapStylesChain(
             const QList< std::shared_ptr<const UnresolvedMapStyle> >& unresolvedMapStylesChain);
