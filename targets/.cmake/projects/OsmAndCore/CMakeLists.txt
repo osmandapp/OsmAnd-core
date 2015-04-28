@@ -9,6 +9,7 @@ include_directories(AFTER SYSTEM
 	"${OSMAND_ROOT}/externals/skia/upstream.patched/include/utils"
 	"${OSMAND_ROOT}/externals/skia/upstream.patched/include/config"
 	"${OSMAND_ROOT}/externals/skia/upstream.patched/include/effects"
+	"${OSMAND_ROOT}/externals/skia/upstream.patched/include/ports"
 	"${OSMAND_ROOT}/externals/skia/upstream.patched/include/utils/android"
 	"${OSMAND_ROOT}/externals/skia/upstream.patched/src/core"
 	"${OSMAND_ROOT}/externals/expat/upstream.patched/lib"

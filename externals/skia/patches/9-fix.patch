@@ -1,0 +1,47 @@
+diff -rupN upstream.original/src/image/SkImage_Gpu.cpp upstream.patched/src/image/SkImage_Gpu.cpp
+--- upstream.original/src/image/SkImage_Gpu.cpp	2015-04-02 12:15:02.422077300 +0300
++++ upstream.patched/src/image/SkImage_Gpu.cpp	2015-04-02 12:16:46.926778300 +0300
+@@ -13,6 +13,8 @@
+ #include "GrContext.h"
+ #include "GrTexture.h"
+ 
++#if SK_SUPPORT_GPU
++
+ class SkImage_Gpu : public SkImage_Base {
+ public:
+     SK_DECLARE_INST_COUNT(SkImage_Gpu)
+@@ -85,21 +87,33 @@ bool SkImage_Gpu::getROPixels(SkBitmap*
+ bool SkImage_Gpu::isOpaque() const {
+     return fBitmap.isOpaque();
+ }
+-
++#endif
+ ///////////////////////////////////////////////////////////////////////////////
+ 
+ SkImage* SkNewImageFromBitmapTexture(const SkBitmap& bitmap, int sampleCountForNewSurfaces) {
++	#if SK_SUPPORT_GPU
+     if (NULL == bitmap.getTexture()) {
+         return NULL;
+     }
+     return SkNEW_ARGS(SkImage_Gpu, (bitmap, sampleCountForNewSurfaces));
++	#else
++		return NULL;
++	#endif
+ }
+ 
+ SkImage* SkImage::NewTexture(const SkBitmap& bitmap) {
++	#if SK_SUPPORT_GPU
+     return SkNewImageFromBitmapTexture(bitmap, 0);
++	#else
++		return NULL;
++	#endif
+ }
+ 
+ GrTexture* SkTextureImageGetTexture(SkImage* image) {
++	#if SK_SUPPORT_GPU
+     return ((SkImage_Gpu*)image)->getTexture();
++	#else
++		return NULL;
++	#endif
+ }
+ 

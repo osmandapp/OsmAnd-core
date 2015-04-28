@@ -12,6 +12,7 @@
 #include <SkShader.h>
 #include <SkBitmapProcShader.h>
 #include <SkPathEffect.h>
+#include <SkBlurMaskFilter.h>
 #include <SkBlurDrawLooper.h>
 #include <SkDashPathEffect.h>
 #include <SkPaint.h>
@@ -99,7 +100,7 @@ SkPathEffect* getDashEffect(RenderingContext* rc, std::string input)
     if(pathEffects.find(hash) != pathEffects.end())
         return pathEffects[hash];
 
-    SkPathEffect* r = new SkDashPathEffect(&primFloats[0], primFloats.size(), 0);
+    SkPathEffect* r = SkDashPathEffect::Create(&primFloats[0], primFloats.size(), 0);
     pathEffects[hash] = r;
     return r;
 }
@@ -238,7 +239,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
             shadowLayer = 0;
 
         if (shadowLayer > 0)
-            paint->setLooper(new SkBlurDrawLooper(shadowLayer, 0, 0, shadowColor))->unref();
+            paint->setLooper(SkBlurDrawLooper::Create(shadowColor, SkBlurMaskFilter::ConvertRadiusToSigma(shadowLayer), 0, 0))->unref();
     }
     return 1;
 }
@@ -302,7 +303,7 @@ void drawPolylineShadow(SkCanvas* cv, SkPaint* paint, RenderingContext* rc, SkPa
     if (rc->getShadowRenderingMode() == 2 && shadowRadius > 0) {
         // simply draw shadow? difference from option 3 ?
         // paint->setColor(0xffffffff);
-        paint->setLooper(new SkBlurDrawLooper(shadowRadius, 0, 0, shadowColor))->unref();
+        paint->setLooper(SkBlurDrawLooper::Create(shadowColor, SkBlurMaskFilter::ConvertRadiusToSigma(shadowRadius), 0, 0))->unref();
         PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*path, *paint));
     }
 
@@ -337,10 +338,10 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
             {0, 12 + 6 * rmin, 2 * rmin , 152 + 2 * rmin},
             {0, 12 + 6 * rmin, 1 * rmin, 152 + 3 * rmin}
         };
-		SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_oneway[0], 4, 0);
-		SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_oneway[1], 4, 1);
-		SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_oneway[2], 4, 1);
-		SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_oneway[3], 4, 1);
+		SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_oneway[0], 4, 0);
+		SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_oneway[1], 4, 1);
+		SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_oneway[2], 4, 1);
+		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_oneway[3], 4, 1);
 
 		SkPaint* p = oneWayPaint();
 		p->setStrokeWidth(rmin);
@@ -374,10 +375,10 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
                 {0, 12 + 2 * rmin, 2 * rmin, 152 + 6 * rmin},
                 {0, 12 + 3 * rmin, 1 * rmin, 152 + 6 * rmin}
             };            
-		SkPathEffect* arrowDashEffect1 = new SkDashPathEffect(intervals_reverse[0], 4, 0);
-		SkPathEffect* arrowDashEffect2 = new SkDashPathEffect(intervals_reverse[1], 4, 1);
-		SkPathEffect* arrowDashEffect3 = new SkDashPathEffect(intervals_reverse[2], 4, 1);
-		SkPathEffect* arrowDashEffect4 = new SkDashPathEffect(intervals_reverse[3], 4, 1);
+		SkPathEffect* arrowDashEffect1 = SkDashPathEffect::Create(intervals_reverse[0], 4, 0);
+		SkPathEffect* arrowDashEffect2 = SkDashPathEffect::Create(intervals_reverse[1], 4, 1);
+		SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_reverse[2], 4, 1);
+		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_reverse[3], 4, 1);
 		SkPaint* p = oneWayPaint();
 		p->setStrokeWidth(rmin * 1);
 		p->setPathEffect(arrowDashEffect1)->unref();
@@ -749,7 +750,8 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
 		ico.secondOrder = ((mObj->id %10000) << 8) + ord;
-		rc->iconsToDraw.push_back(ico);
+		if(ico.order >= 0) 
+			rc->iconsToDraw.push_back(ico);
 	}
 	if (renderTxt) {
 		renderText(mObj, req, rc, pair.first, pair.second, px, py, NULL);

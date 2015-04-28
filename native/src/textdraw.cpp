@@ -8,6 +8,8 @@
 #include "SkCanvas.h"
 #include "SkPaint.h"
 #include "SkPath.h"
+#include "SkUtils.h"
+#include "SkFontMgr.h"
 
 #include "Common.h"
 #include "common2.h"
@@ -63,7 +65,17 @@ void FontRegistry::updateTypeface(SkPaint* paint, std::string text, bool bold, b
     		// If there's no best match, fallback to default typeface
     		if (bestMatchTypeface == nullptr)
     		{
-        		paint->setTypeface(def);
+				paint->setTypeface(def);
+				if (!paint->containsText(text.c_str(), text.length())) {
+					const auto fontMgr = SkFontMgr::RefDefault();
+					
+					const auto pText = text.c_str();
+					const auto unichar = SkUTF8_ToUnichar(pText);
+					const auto typeface = fontMgr->matchFamilyStyleCharacter(0, SkFontStyle(), nullptr, 0, unichar);
+					paint->setTypeface(typeface);
+					
+					fontMgr->unref();
+ 				}
 		
         		// Adjust to handle bold text
         		paint->setFakeBoldText(bold);

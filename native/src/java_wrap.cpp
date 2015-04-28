@@ -236,17 +236,20 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d s:%d f:%d!", bitmapInfo.width, bitmapInfo.height, bitmapInfo.stride, bitmapInfo.format);
 
 	SkBitmap* bitmap = new SkBitmap();
+	SkImageInfo imageInfo;
+	int rowBytes;
 	if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-		int rowBytes = bitmapInfo.stride;
+		rowBytes = bitmapInfo.stride;
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGBA_8888 is %d", rowBytes);
-		bitmap->setConfig(SkBitmap::kARGB_8888_Config, bitmapInfo.width, bitmapInfo.height, rowBytes);
+		imageInfo = SkImageInfo::Make(bitmapInfo.width, bitmapInfo.height, kN32_SkColorType, kPremul_SkAlphaType);
 	} else if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565) {
-		int rowBytes = bitmapInfo.stride;
+		rowBytes = bitmapInfo.stride;
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGB_565 is %d", rowBytes);
-		bitmap->setConfig(SkBitmap::kRGB_565_Config, bitmapInfo.width, bitmapInfo.height, rowBytes);
+		imageInfo = SkImageInfo::Make(bitmapInfo.width, bitmapInfo.height, kRGB_565_SkColorType, kOpaque_SkAlphaType);
 	} else {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unknown target bitmap format");
 	}
+	bitmap->allocPixels(imageInfo);
 
 	void* lockedBitmapData = NULL;
 	if(dl_AndroidBitmap_lockPixels(ienv, targetBitmap, &lockedBitmapData) != ANDROID_BITMAP_RESUT_SUCCESS || !lockedBitmapData) {
@@ -322,10 +325,12 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d!", rc.getWidth(), rc.getHeight());
 
 	SkBitmap* bitmap = new SkBitmap();
+	SkImageInfo imageInfo;
 	if (isTransparent == JNI_TRUE)
-		bitmap->setConfig(SkBitmap::kARGB_8888_Config, rc.getWidth(), rc.getHeight(), 0);
+		imageInfo = SkImageInfo::Make(rc.getWidth(), rc.getHeight(), kN32_SkColorType, kPremul_SkAlphaType);
 	else
-		bitmap->setConfig(SkBitmap::kRGB_565_Config, rc.getWidth(), rc.getHeight(), 0);
+		imageInfo = SkImageInfo::Make(rc.getWidth(), rc.getHeight(), kRGB_565_SkColorType, kOpaque_SkAlphaType);
+	bitmap->allocPixels(imageInfo);
 
 	if (bitmapData != NULL && bitmapDataSize != bitmap->getSize()) {
 		free(bitmapData);

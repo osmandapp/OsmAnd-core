@@ -1,9 +1,7 @@
-diff --git a/src/ports/FontHostConfiguration_android.cpp b/src/ports/FontHostConfiguration_android.cpp
-index 6d03414..0a7f093 100644
---- a/src/ports/FontHostConfiguration_android.cpp
-+++ b/src/ports/FontHostConfiguration_android.cpp
-@@ -281,6 +281,89 @@ void getFontFamilies(SkTDArray<FontFamily*> &fontFamilies) {
-     for (int i = 0; i < fallbackFonts.count(); ++i) {
+--- upstream.original/src/ports/SkFontConfigParser_android.cpp	2015-02-24 09:33:52.127984600 +0200
++++ upstream.patched/src/ports/SkFontConfigParser_android.cpp	2015-02-24 09:37:50.416468200 +0200
+@@ -530,6 +530,95 @@ void SkFontConfigParser::GetFontFamilies
+         fallbackFonts[i]->fIsFallbackFont = true;
          *fontFamilies.append() = fallbackFonts[i];
      }
 +
@@ -61,23 +59,29 @@ index 6d03414..0a7f093 100644
 +
 +        const FontInitRec* rec = gSystemFonts;
 +        FontFamily* newFontFamily = NULL;
++        int fontFileIndex = 0;
 +        for (size_t i = 0; i < SK_ARRAY_COUNT(gSystemFonts); i++) {
 +            // Marker that we're in the beginning of a new family
 +            if (rec[i].fNames != NULL) {
 +                if(newFontFamily != NULL)
 +                    *fontFamilies.append() = newFontFamily;
 +                newFontFamily = new FontFamily();
-+                newFontFamily->order = -1;
++                newFontFamily->fOrder = -1;
++
++                fontFileIndex = 0;
 +            }
 +
 +            // Append file name
-+            *(newFontFamily->fFileNames.append()) = rec[i].fFileName;
++            FontFileInfo fontFileInfo;
++            fontFileInfo.fFileName = rec[i].fFileName;
++            fontFileInfo.fIndex = fontFileIndex++;
++            newFontFamily->fFonts.push_back(fontFileInfo);
 +
 +            // Append names
 +            if(rec[i].fNames != NULL) {
 +                const char* const* names = rec[i].fNames;
 +                while (*names) {
-+                    *(newFontFamily->fNames.append()) = *names;
++                    newFontFamily->fNames.push_back() = SkString(*names);
 +                    names += 1;
 +                }
 +            }
@@ -91,4 +95,4 @@ index 6d03414..0a7f093 100644
 +    //}OSMAND
  }
  
- void getTestFontFamilies(SkTDArray<FontFamily*> &fontFamilies,
+ void SkFontConfigParser::GetTestFontFamilies(SkTDArray<FontFamily*> &fontFamilies,
