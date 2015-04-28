@@ -487,7 +487,7 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 }
 
 void drawShield(TextDrawInfo* textDrawInfo, std::string res, SkPaint* paintIcon,  
-	RenderingContext* rc, SkCanvas* cv, SkRect& r ) {
+	RenderingContext* rc, SkCanvas* cv, SkRect& r, SkPaint::FontMetrics& fm) {
 	if(res.length() == 0) {
 		return;
 	}
@@ -580,8 +580,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 						textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent) , paintText);
 				rc->nativeOperations.Start();
 			} else {
-				drawShield(textDrawInfo, textDrawInfo->shieldRes, &paintIcon, rc, cv, r);
-				drawShield(textDrawInfo, textDrawInfo->shieldResIcon, &paintIcon, rc, cv, r);
+				drawShield(textDrawInfo, textDrawInfo->shieldRes, &paintIcon, rc, cv, r, fm);
+				drawShield(textDrawInfo, textDrawInfo->shieldResIcon, &paintIcon, rc, cv, r, fm);
 				drawWrappedText(rc, cv, textDrawInfo, textSize, paintText);
 			}
 		}
