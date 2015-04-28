@@ -122,7 +122,7 @@ void fillTextProperties(RenderingContext* rc, TextDrawInfo* info, RenderingRuleS
 	info->bold = render->getIntPropertyValue(render->props()->R_TEXT_BOLD, 0) > 0;
 	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE);
 	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD);
-	info->shieldIconRes = req->getStringPropertyValue(req-> props()-> R_ICON);
+	info->shieldResIcon = req->getStringPropertyValue(req-> props()-> R_ICON);
 	info->textOrder = render->getIntPropertyValue(render->props()->R_TEXT_ORDER, 100);
 }
 
