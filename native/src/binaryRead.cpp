@@ -1769,7 +1769,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 		input.SetCloseOnDelete(false);
 		CodedInputStream cis(&input);
 		cis.SetTotalBytesLimit(INT_MAXIMUM, INT_MAXIMUM >> 1);
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warn, "File not initialized from cache : %s", inputName.c_str());
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "File not initialized from cache : %s", inputName.c_str());
 		if (!initMapStructure(&cis, mapFile)) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "File not initialised : %s", inputName.c_str());
 			delete mapFile;
