@@ -110,6 +110,7 @@ void fillTextProperties(RenderingContext* rc, TextDrawInfo* info, RenderingRuleS
 	info->bold = render->getIntPropertyValue(render->props()->R_TEXT_BOLD, 0) > 0;
 	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE);
 	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD);
+	info->shieldIconRes = req->getStringPropertyValue(req-> props()-> R_ICON);
 	info->textOrder = render->getIntPropertyValue(render->props()->R_TEXT_ORDER, 100);
 }
 
@@ -473,6 +474,25 @@ bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
 	return text1->textOrder < text2->textOrder;
 }
 
+void drawShield(TextDrawInfo* textDrawInfo, std::string res, SkPaint* paintIcon,  
+	RenderingContext* rc, SkCanvas* cv, SkRect& r ) {
+	if(res.length() == 0) {
+		return;
+	}
+	SkBitmap* ico = getCachedBitmap(rc, res);
+	if (ico != NULL) {
+		float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
+		float left = textDrawInfo->centerX - ico->width() / 2 * coef; 
+				- 0.5f;
+		float top = textDrawInfo->centerY - ico->height() / 2 * coef  
+				- fm.fDescent - 0.5f; 								
+		// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
+		SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
+					ico->height() * coef);
+		PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, paintIcon));
+	}
+}
+
 
 static SkTypeface* sDefaultTypeface = nullptr;
 
@@ -482,7 +502,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	quad_tree<TextDrawInfo*> boundsIntersect(r, 4, 0.6);
 
 #if defined(ANDROID)
-    //TODO: This is never released because of always +1 of reference counter
+    // This is never released because of always +1 of reference counter
     if(!sDefaultTypeface)
         sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
 #endif
@@ -504,7 +524,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	std::sort(rc->textToDraw.begin(), rc->textToDraw.end(), textOrder);
     for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
     {
-        auto textDrawInfo = *itdi;
+        TextDrawInfo* textDrawInfo = *itdi;
 
         // Skip empty text
 	    if(textDrawInfo->text.length() <= 0)
@@ -548,20 +568,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 						textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent) , paintText);
 				rc->nativeOperations.Start();
 			} else {
-				if (textDrawInfo->shieldRes.length() > 0) {
-					SkBitmap* ico = getCachedBitmap(rc, textDrawInfo->shieldRes);
-					if (ico != NULL) {
-						float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
-						float left = textDrawInfo->centerX - ico->width() / 2 * coef; 
-								- 0.5f;
-						float top = textDrawInfo->centerY - ico->height() / 2 * coef  
-								- fm.fDescent - 0.5f; 								
-						// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
-						SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
-						 		ico->height() * coef);
-						PROFILE_NATIVE_OPERATION(rc, cv->drawBitmapRect(*ico, (SkIRect*) NULL, r, &paintIcon));
-					}
-				}
+				drawShield(textDrawInfo, textDrawInfo->shieldRes, &paintIcon, rc, cv, r);
+				drawShield(textDrawInfo, textDrawInfo->shieldResIcon, &paintIcon, rc, cv, r);
 				drawWrappedText(rc, cv, textDrawInfo, textSize, paintText);
 			}
 		}

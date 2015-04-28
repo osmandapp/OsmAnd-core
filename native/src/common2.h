@@ -71,6 +71,7 @@ struct TextDrawInfo {
 	uint32_t textWrap;
 	bool bold;
 	std::string shieldRes;
+	std::string shieldIconRes;
 	int textOrder;
 	int secondOrder;
 
