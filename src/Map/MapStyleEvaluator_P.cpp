@@ -422,34 +422,6 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     //    int i = 5;
     //}
     //////////////////////////////////////////////////////////////////////////
-    if(rulesetType == MapStyleRulesetType::Order) {
-        if(outResultStorage != nullptr) {
-            bool area = false;
-            bool point = false;
-            bool cycle = false;
-            outResultStorage->getBooleanValue(_builtinValueDefs->id_INPUT_AREA, area);
-            outResultStorage->getBooleanValue(_builtinValueDefs->id_INPUT_CYCLE, cycle);
-            outResultStorage->getBooleanValue(_builtinValueDefs->id_INPUT_POINT, point);
-            if(point) {
-                outResultStorage->setIntegerValue(_builtinValueDefs->id_OUTPUT_ORDER, 128);
-                outResultStorage->setIntegerValue(_builtinValueDefs->id_OUTPUT_OBJECT_TYPE, 1);
-            } else if(area || cycle) {
-                outResultStorage->setIntegerValue(_builtinValueDefs->id_OUTPUT_ORDER, 5);
-                outResultStorage->setIntegerValue(_builtinValueDefs->id_OUTPUT_OBJECT_TYPE, 3);
-            } else {
-                int layer;
-                outResultStorage->getIntegerValue(_builtinValueDefs->id_INPUT_LAYER, layer);
-                if(layer == -1) {
-                    outResultStorage->setIntegerValue(_builtinValueDefs->id_OUTPUT_ORDER, 10);
-                } else {
-                    outResultStorage->setIntegerValue(_builtinValueDefs->id_OUTPUT_ORDER, 11);
-                }
-                outResultStorage->setIntegerValue(_builtinValueDefs->id_OUTPUT_OBJECT_TYPE, 2);
-            }
-        }
-                return true;
-    }
-
 
     const auto& ruleset = owner->mapStyle->getRuleset(rulesetType);
 
