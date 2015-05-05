@@ -50,8 +50,8 @@ namespace OsmAnd
                 _objectRef.reset(new T());
         }
     public:
-        inline OnDemand(const Allocator = nullptr)
-            : _allocator(_allocator)
+        inline OnDemand(const Allocator allocator = nullptr)
+            : _allocator(allocator)
         {
         }
 
