@@ -802,7 +802,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromBillboardSymbol(
         : billboardMapSymbol->getPosition31();
 
     // Test against visible frustum area (if allowed)
-    if (mapSymbol->allowFastCheckByFrustum && !internalState.globalFrustum2D31.test(position31))
+    if (!debugSettings->disableFastSymbolsCheckByFrustum &&
+        mapSymbol->allowFastCheckByFrustum &&
+        !internalState.globalFrustum2D31.test(position31))
     {
         if (metric)
             metric->billboardSymbolsRejectedByFrustum++;
@@ -945,7 +947,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnSurfaceSymbol(
         : onSurfaceMapSymbol->getDirection();
 
     // Test against visible frustum area (if allowed)
-    if (mapSymbol->allowFastCheckByFrustum && !internalState.globalFrustum2D31.test(position31))
+    if (!debugSettings->disableFastSymbolsCheckByFrustum &&
+        mapSymbol->allowFastCheckByFrustum &&
+        !internalState.globalFrustum2D31.test(position31))
     {
         if (metric)
             metric->onSurfaceSymbolsRejectedByFrustum++;
@@ -1057,7 +1061,9 @@ void OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderablesFromOnPathSymbol(
         : onPathMapSymbol->pinPointOnPath;
 
     // Test against visible frustum area (if allowed)
-    if (onPathMapSymbol->allowFastCheckByFrustum && !internalState.globalFrustum2D31.test(pinPointOnPath.point31))
+    if (!debugSettings->disableFastSymbolsCheckByFrustum &&
+        onPathMapSymbol->allowFastCheckByFrustum &&
+        !internalState.globalFrustum2D31.test(pinPointOnPath.point31))
     {
         if (metric)
             metric->onPathSymbolsRejectedByFrustum++;
