@@ -15,8 +15,8 @@
 
 #if !defined(Q_DISABLE_MOVE)
 #   if defined(Q_COMPILER_RVALUE_REFS)
-#       define Q_DISABLE_MOVE(Class)                                                        \
-            Class(Class &&) Q_DECL_EQ_DELETE;                                               \
+#       define Q_DISABLE_MOVE(Class)                                                                                            \
+            Class(Class &&) Q_DECL_EQ_DELETE;                                                                                   \
             Class &operator=(Class &&) Q_DECL_EQ_DELETE;
 #   else
 #       define Q_DISABLE_MOVE(Class)
@@ -24,14 +24,22 @@
 #endif
 
 #if !defined(Q_DISABLE_COPY_AND_MOVE)
-#   define Q_DISABLE_COPY_AND_MOVE(Class)                                                   \
-        Q_DISABLE_COPY(Class);                                                              \
+#   define Q_DISABLE_COPY_AND_MOVE(Class)                                                                                       \
+        Q_DISABLE_COPY(Class);                                                                                                  \
         Q_DISABLE_MOVE(Class);
 #endif // !defined(Q_DISABLE_COPY_AND_MOVE)
 
 #if !defined(Q_DISABLE_ASSIGN)
-#   define Q_DISABLE_ASSIGN(Class)                                                          \
+#   define Q_DISABLE_ASSIGN(Class)                                                                                              \
         Class &operator=(Class &) Q_DECL_EQ_DELETE;
 #endif // !defined(Q_DISABLE_ASSIGN)
+
+#if !defined(Q_MOVED)
+#   if defined(Q_COMPILER_RVALUE_REFS)
+#       define Q_MOVED(Type) Type&&
+#   else
+#       define Q_MOVED(Type) Type&
+#   endif
+#endif // !defined(Q_MOVED)
 
 #endif // !defined(_OSMAND_CORE_QT_EXTRA_DEFINITIONS_H_)

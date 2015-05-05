@@ -79,7 +79,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
 
     // Obtain primitives:
-    MapStyleEvaluationResult evaluationResult;
+    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitions().size());
 
     const Stopwatch obtainPrimitivesStopwatch(metric != nullptr);
     obtainPrimitives(context, primitivisedObjects, objects, qMove(evaluationResult), cache, queryController, metric);
@@ -532,7 +532,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
 
     // Obtain primitives:
-    MapStyleEvaluationResult evaluationResult;
+    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitions().size());
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
     obtainPrimitives(context, primitivisedObjects, detailedmapMapObjects, qMove(evaluationResult), cache, queryController, metric);
@@ -1224,11 +1224,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     const Context& context,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
     const QList< std::shared_ptr<const OsmAnd::MapObject> >& source,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     const std::shared_ptr<Cache>& cache,
     const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
@@ -1355,11 +1351,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     const Context& context,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const MapObject>& mapObject,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     MapStyleEvaluator& orderEvaluator,
     MapStyleEvaluator& polygonEvaluator,
     MapStyleEvaluator& polylineEvaluator,
@@ -1843,11 +1835,7 @@ void OsmAnd::MapPrimitiviser_P::filterOutHighwaysByDensity(
 void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     const Context& context,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     const std::shared_ptr<Cache>& cache,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -1953,11 +1941,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const PrimitivesCollection& primitives,
     const PrimitivesType type,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     SymbolsCollection& outSymbols,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -2012,11 +1996,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -2051,11 +2031,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -2079,11 +2055,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     SymbolsCollection& outSymbols)
 {
     //////////////////////////////////////////////////////////////////////////
@@ -2162,11 +2134,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     SymbolsCollection& outSymbols)
 {
     const auto& mapObject = primitive->sourceObject;
@@ -2538,11 +2506,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     const Context& context,
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
-#ifdef Q_COMPILER_RVALUE_REFS
-    MapStyleEvaluationResult&& evaluationResult,
-#else
-    MapStyleEvaluationResult& evaluationResult,
-#endif // Q_COMPILER_RVALUE_REFS
+    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
     SymbolsCollection& outSymbols)
 {
     const auto& env = context.env;

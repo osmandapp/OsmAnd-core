@@ -9,6 +9,8 @@
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
+#include "OnDemand.h"
+#include "ArrayMap.h"
 #include "PrivateImplementation.h"
 #include "MapStyleConstantValue.h"
 #include "IMapStyle.h"
@@ -41,27 +43,31 @@ namespace OsmAnd
         typedef QHash<IMapStyle::ValueDefinitionId, InputValue> InputValuesDictionary;
         InputValuesDictionary _inputValues;
 
-        typedef QHash<IMapStyle::ValueDefinitionId, IMapStyle::Value> IntermediateEvaluationResult;
-
+        typedef ArrayMap<IMapStyle::Value> IntermediateEvaluationResult;
+        ArrayMap<IMapStyle::Value>* allocateIntermediateEvaluationResult();
+        
         MapStyleConstantValue evaluateConstantValue(
             const MapObject* const mapObject,
             const MapStyleValueDataType dataType,
             const IMapStyle::Value& resolvedValue,
-            const InputValuesDictionary& inputValues) const;
+            const InputValuesDictionary& inputValues,
+            OnDemand<IntermediateEvaluationResult>& intermediateEvaluationResult) const;
 
         bool evaluate(
             const MapObject* const mapObject,
             const std::shared_ptr<const IMapStyle::IRuleNode>& ruleNode,
             const InputValuesDictionary& inputValues,
             bool& outDisabled,
-            IntermediateEvaluationResult* const outResultStorage) const;
+            IntermediateEvaluationResult* const outResultStorage,
+            OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const;
 
         bool evaluate(
             const std::shared_ptr<const MapObject>& mapObject,
             const QHash< TagValueId, std::shared_ptr<const IMapStyle::IRule> >& ruleset,
             const IMapStyle::StringId tagStringId,
             const IMapStyle::StringId valueStringId,
-            MapStyleEvaluationResult* const outResultStorage) const;
+            MapStyleEvaluationResult* const outResultStorage,
+            OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const;
 
         void fillResultFromRuleNode(
             const std::shared_ptr<const IMapStyle::IRuleNode>& ruleNode,
@@ -72,13 +78,16 @@ namespace OsmAnd
             const MapObject* const mapObject,
             const InputValuesDictionary& inputValues,
             const IntermediateEvaluationResult& intermediateResult,
-            MapStyleEvaluationResult& outResultStorage) const;
+            MapStyleEvaluationResult& outResultStorage,
+            OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const;
     protected:
         MapStyleEvaluator_P(MapStyleEvaluator* owner);
     public:
         ~MapStyleEvaluator_P();
 
         ImplementationInterface<MapStyleEvaluator> owner;
+
+        const OnDemand<IntermediateEvaluationResult>::Allocator intermediateEvaluationResultAllocator;
 
         void setBooleanValue(const IMapStyle::ValueDefinitionId valueDefId, const bool value);
         void setIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, const int value);

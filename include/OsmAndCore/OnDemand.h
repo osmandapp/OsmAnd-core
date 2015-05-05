@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_REF_H_
-#define _OSMAND_CORE_REF_H_
+#ifndef _OSMAND_CORE_ON_DEMAND_H_
+#define _OSMAND_CORE_ON_DEMAND_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <type_traits>
@@ -12,7 +12,7 @@
 namespace OsmAnd
 {
     template<typename T>
-    class Ref Q_DECL_FINAL
+    class OnDemand Q_DECL_FINAL
     {
     public:
         // Ensure that T is correct
@@ -25,65 +25,58 @@ namespace OsmAnd
 
         typedef T Type;
         typedef typename std::add_const<T>::type ConstType;
-        typedef Ref<T> RefT;
+        typedef OnDemand<T> OnDemandT;
+        typedef std::function<T*()> Allocator;
 
     private:
     protected:
         template<typename Type, typename OtherType>
         struct Check
         {
-            typedef typename std::enable_if<
+            typedef typename std::enable_if <
                 std::is_base_of<Type, OtherType>::value ||
                 std::is_same<Type, OtherType>::value, OtherType
-            >::type Valid;
+            > ::type Valid;
         };
 
         std::shared_ptr<Type> _objectRef;
+        Allocator _allocator;
+
+        void allocate()
+        {
+            if (_allocator)
+                _objectRef.reset(_allocator());
+            else
+                _objectRef.reset(new T());
+        }
     public:
-        inline Ref()
+        inline OnDemand(const Allocator = nullptr)
+            : _allocator(_allocator)
         {
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-            inline Ref(OtherType* const pObject)
-            : _objectRef(pObject)
-        {
-        }
-
-        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline Ref(const std::shared_ptr< OtherType >& objectRef)
-            : _objectRef(objectRef)
-        {
-        }
-
-#ifdef Q_COMPILER_RVALUE_REFS
-        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline Ref(std::shared_ptr< OtherType >&& objectRef)
-            : _objectRef(qMove(objectRef))
-        {
-        }
-#endif // defined(Q_COMPILER_RVALUE_REFS)
-
-        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline Ref(const Ref< OtherType >& that)
+        inline OnDemand(const OnDemand< OtherType >& that)
             : _objectRef(that._objectRef)
+            , _allocator(that._allocator)
         {
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline Ref(Ref< OtherType >&& that)
+        inline OnDemand(OnDemand< OtherType >&& that)
             : _objectRef(qMove(that._objectRef))
+            , _allocator(that._allocator)
         {
         }
 #endif // defined(Q_COMPILER_RVALUE_REFS)
 
-        inline ~Ref()
+        inline ~OnDemand()
         {
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline bool operator==(const Ref< OtherType >& r) const
+        inline bool operator==(const OnDemand< OtherType >& r) const
         {
             return (_objectRef == r._objectRef);
         }
@@ -101,7 +94,7 @@ namespace OsmAnd
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline bool operator!=(const Ref< OtherType >& r) const
+        inline bool operator!=(const OnDemand< OtherType >& r) const
         {
             return (_objectRef != r._objectRef);
         }
@@ -119,21 +112,21 @@ namespace OsmAnd
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline RefT& operator=(OtherType* const pObject)
+        inline OnDemandT& operator=(OtherType* const pObject)
         {
             _objectRef.reset(pObject);
             return *this;
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline RefT& operator=(const std::shared_ptr< OtherType >& objectRef)
+        inline OnDemandT& operator=(const std::shared_ptr< OtherType >& objectRef)
         {
             _objectRef = objectRef;
             return *this;
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
-        inline RefT& operator=(const Ref< OtherType >& that)
+        inline OnDemandT& operator=(const OnDemand< OtherType >& that)
         {
             _objectRef = that._objectRef;
             return *this;
@@ -146,31 +139,43 @@ namespace OsmAnd
 
         inline Type* operator->()
         {
+            if (!_objectRef)
+                allocate();
             return _objectRef.get();
         }
 
         inline Type* get()
         {
+            if (!_objectRef)
+                allocate();
             return _objectRef.get();
         }
 
         inline operator Type*()
         {
+            if (!_objectRef)
+                allocate();
             return _objectRef.get();
         }
 
         inline Type& operator*()
         {
+            if (!_objectRef)
+                allocate();
             return *_objectRef;
         }
 
         inline operator std::shared_ptr<Type>()
         {
+            if (!_objectRef)
+                allocate();
             return _objectRef;
         }
 
         inline std::shared_ptr<Type> shared_ptr()
         {
+            if (!_objectRef)
+                allocate();
             return _objectRef;
         }
 
@@ -205,8 +210,8 @@ namespace OsmAnd
         }
 
     template<typename OtherType>
-    friend class OsmAnd::Ref;
+    friend class OsmAnd::OnDemand;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_REF_H_)
+#endif // !defined(_OSMAND_CORE_ON_DEMAND_H_)
