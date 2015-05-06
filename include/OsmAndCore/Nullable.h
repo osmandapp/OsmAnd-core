@@ -74,7 +74,7 @@ namespace OsmAnd
             return *this;
         }
 
-        inline operator bool() const
+        explicit inline operator bool() const
         {
             return _isSet;
         }

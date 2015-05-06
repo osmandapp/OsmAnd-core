@@ -9,6 +9,7 @@
 #include "QtExtensions.h"
 #include "QtCommon.h"
 
+#include "Nullable.h"
 #include "ICU.h"
 #include "MapStyleEvaluator.h"
 #include "MapStyleEvaluationResult.h"
@@ -1372,6 +1373,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     //}
     //////////////////////////////////////////////////////////////////////////
 
+    double doubledPolygonArea31 = -1.0;
+    Nullable<bool> rejectByArea;
+
     // Setup mapObject-specific input data
     const auto layerType = mapObject->getLayerType();
     orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
@@ -1480,16 +1484,21 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             //////////////////////////////////////////////////////////////////////////
 
             // Check size of polygon
-            bool ignorePolygonArea = false;
-            evaluationResult.getBooleanValue(env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AREA, ignorePolygonArea);
-            bool ignorePolygonAsPointArea = false;
+            auto ignorePolygonArea = false;
+            evaluationResult.getBooleanValue(
+                env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AREA,
+                ignorePolygonArea);
+
+            auto ignorePolygonAsPointArea = false;
             evaluationResult.getBooleanValue(
                 env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AS_POINT_AREA,
                 ignorePolygonAsPointArea);
-            const auto doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
-            auto rejectByArea = false;
-            if (!ignorePolygonArea)
+
+            if ((!ignorePolygonArea || !ignorePolygonAsPointArea) && !rejectByArea.isSet())
             {
+                if (doubledPolygonArea31 < 0.0)
+                    doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
+
                 const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
                 const auto areaScaleDivisor31ToPixel =
                     primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y;
@@ -1502,7 +1511,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold;
             }
 
-            if (!rejectByArea)
+            if (!*rejectByArea || ignorePolygonArea)
             {
                 const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
@@ -1553,7 +1562,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     metric->polygonsRejectedByArea++;
             }
 
-            if (!rejectByArea || ignorePolygonAsPointArea)
+            if (!*rejectByArea || ignorePolygonAsPointArea)
             {
                 const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
