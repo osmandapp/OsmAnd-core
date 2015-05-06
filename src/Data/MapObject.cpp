@@ -219,7 +219,6 @@ OsmAnd::MapObject::EncodingDecodingRules::EncodingDecodingRules()
     , naturalLand_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , naturalCoastlineBroken_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , naturalCoastlineLine_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , highway_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , oneway_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , onewayReverse_encodingRuleId(std::numeric_limits<uint32_t>::max())
     , layerLowest_encodingRuleId(std::numeric_limits<uint32_t>::max())
@@ -275,12 +274,6 @@ void OsmAnd::MapObject::EncodingDecodingRules::createRequiredRules(uint32_t& las
     {
         addRule(lastUsedRuleId++,
             QLatin1String("natural"), QLatin1String("coastline_line"));
-    }
-
-    if (highway_encodingRuleId == std::numeric_limits<uint32_t>::max())
-    {
-        addRule(lastUsedRuleId++,
-            QLatin1String("highway"), QLatin1String("yes"));
     }
 
     if (oneway_encodingRuleId == std::numeric_limits<uint32_t>::max())
@@ -346,8 +339,6 @@ uint32_t OsmAnd::MapObject::EncodingDecodingRules::addRule(
         naturalCoastlineBroken_encodingRuleId = ruleId;
     else if (QLatin1String("natural") == ruleTag && QLatin1String("coastline_line") == ruleValue)
         naturalCoastlineLine_encodingRuleId = ruleId;
-    else if (QLatin1String("highway") == ruleTag && QLatin1String("yes") == ruleValue)
-        highway_encodingRuleId = ruleId;
     else if (QLatin1String("oneway") == ruleTag && QLatin1String("yes") == ruleValue)
         oneway_encodingRuleId = ruleId;
     else if (QLatin1String("oneway") == ruleTag && QLatin1String("-1") == ruleValue)

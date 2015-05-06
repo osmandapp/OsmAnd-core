@@ -93,9 +93,10 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(primitiviseMetric->polygonRejects)
             .arg(primitiviseMetric->polygonsRejectedByArea)
             .arg(QString::number(primitiviseMetric->elapsedTimeForPolygonEvaluation, 'f', FORMAT_PRECISION));
-        text += QString(QLatin1String("polyl  %1/-%2 %3s\n"))
+        text += QString(QLatin1String("polyl  %1/-%2(-%3) %4s\n"))
             .arg(primitiviseMetric->polylineEvaluations)
             .arg(primitiviseMetric->polylineRejects)
+            .arg(primitiviseMetric->polylineRejectedByDensity)
             .arg(QString::number(primitiviseMetric->elapsedTimeForPolylineEvaluation, 'f', FORMAT_PRECISION));
         text += QString(QLatin1String("point  %1/-%2 %3s\n"))
             .arg(primitiviseMetric->pointEvaluations)

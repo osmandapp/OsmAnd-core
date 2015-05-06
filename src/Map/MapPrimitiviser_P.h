@@ -128,11 +128,13 @@ namespace OsmAnd
 
         static void sortAndFilterPrimitives(
             const Context& context,
-            const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects);
+            const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
+            MapPrimitiviser_Metrics::Metric_primitivise* const metric);
 
         static void filterOutHighwaysByDensity(
             const Context& context,
-            const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects);
+            const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
+            MapPrimitiviser_Metrics::Metric_primitivise* const metric);
 
         static void obtainPrimitivesSymbols(
             const Context& context,

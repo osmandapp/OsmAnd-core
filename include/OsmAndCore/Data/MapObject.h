@@ -58,7 +58,6 @@ namespace OsmAnd
             uint32_t naturalLand_encodingRuleId;
             uint32_t naturalCoastlineBroken_encodingRuleId;
             uint32_t naturalCoastlineLine_encodingRuleId;
-            uint32_t highway_encodingRuleId;
             uint32_t oneway_encodingRuleId;
             uint32_t onewayReverse_encodingRuleId;
             uint32_t layerLowest_encodingRuleId;

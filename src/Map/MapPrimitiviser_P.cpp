@@ -92,7 +92,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Sort and filter primitives
     const Stopwatch sortAndFilterPrimitivesStopwatch(metric != nullptr);
-    sortAndFilterPrimitives(context, primitivisedObjects);
+    sortAndFilterPrimitives(context, primitivisedObjects, metric);
     if (metric)
         metric->elapsedTimeForSortingAndFilteringPrimitives += sortAndFilterPrimitivesStopwatch.elapsed();
 
@@ -449,7 +449,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Sort and filter primitives
     const Stopwatch sortAndFilterPrimitivesStopwatch(metric != nullptr);
-    sortAndFilterPrimitives(context, primitivisedObjects);
+    sortAndFilterPrimitives(context, primitivisedObjects, metric);
     if (metric)
         metric->elapsedTimeForSortingAndFilteringPrimitives += sortAndFilterPrimitivesStopwatch.elapsed();
 
@@ -553,7 +553,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Sort and filter primitives
     const Stopwatch sortAndFilterPrimitivesStopwatch(metric != nullptr);
-    sortAndFilterPrimitives(context, primitivisedObjects);
+    sortAndFilterPrimitives(context, primitivisedObjects, metric);
     if (metric)
         metric->elapsedTimeForSortingAndFilteringPrimitives += sortAndFilterPrimitivesStopwatch.elapsed();
 
@@ -1753,7 +1753,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
 void OsmAnd::MapPrimitiviser_P::sortAndFilterPrimitives(
     const Context& context,
-    const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects)
+    const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
+    MapPrimitiviser_Metrics::Metric_primitivise* const metric)
 {
     const MapObject::Comparator mapObjectsComparator;
     const auto privitivesSort =
@@ -1788,13 +1789,14 @@ void OsmAnd::MapPrimitiviser_P::sortAndFilterPrimitives(
 
     qSort(primitivisedObjects->polygons.begin(), primitivisedObjects->polygons.end(), privitivesSort);
     qSort(primitivisedObjects->polylines.begin(), primitivisedObjects->polylines.end(), privitivesSort);
-    filterOutHighwaysByDensity(context, primitivisedObjects);
+    filterOutHighwaysByDensity(context, primitivisedObjects, metric);
     qSort(primitivisedObjects->points.begin(), primitivisedObjects->points.end(), privitivesSort);
 }
 
 void OsmAnd::MapPrimitiviser_P::filterOutHighwaysByDensity(
     const Context& context,
-    const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects)
+    const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
+    MapPrimitiviser_Metrics::Metric_primitivise* const metric)
 {
     // Check if any filtering needed
     if (context.roadDensityZoomTile == 0 || context.roadsDensityLimitPerTile == 0)
@@ -1803,42 +1805,48 @@ void OsmAnd::MapPrimitiviser_P::filterOutHighwaysByDensity(
     const auto dZ = primitivisedObjects->zoom + context.roadDensityZoomTile;
     QHash< uint64_t, std::pair<uint32_t, double> > densityMap;
 
-    auto itLine = mutableIteratorOf(primitivisedObjects->polylines);
-    itLine.toBack();
-    while (itLine.hasPrevious())
+    auto itPolyline = mutableIteratorOf(primitivisedObjects->polylines);
+    itPolyline.toBack();
+    while (itPolyline.hasPrevious())
     {
-        const auto& line = itLine.previous();
+        const auto& polyline = itPolyline.previous();
+        const auto& sourceObject = polyline->sourceObject;
+        const auto& decRules = sourceObject->encodingDecodingRules->decodingRules;
 
-        auto accept = true;
-        if (line->sourceObject->typesRuleIds[line->typeRuleIdIndex] == line->sourceObject->encodingDecodingRules->highway_encodingRuleId)
+        // If polyline is not road, it should be accepted
+        const auto& decodedType = decRules[sourceObject->typesRuleIds[polyline->typeRuleIdIndex]];
+        if (decodedType.tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) != 0)
+            continue;
+
+        auto accept = false;
+        uint64_t prevId = 0;
+        const auto pointsCount = sourceObject->points31.size();
+        auto pPoint = sourceObject->points31.constData();
+        for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
         {
-            accept = false;
-
-            uint64_t prevId = 0;
-            const auto pointsCount = line->sourceObject->points31.size();
-            auto pPoint = line->sourceObject->points31.constData();
-            for (auto pointIdx = 0; pointIdx < pointsCount; pointIdx++, pPoint++)
+            auto x = pPoint->x >> (MaxZoomLevel - dZ);
+            auto y = pPoint->y >> (MaxZoomLevel - dZ);
+            uint64_t id = (static_cast<uint64_t>(x) << dZ) | y;
+            if (prevId != id)
             {
-                auto x = pPoint->x >> (31 - dZ);
-                auto y = pPoint->y >> (31 - dZ);
-                uint64_t id = (static_cast<uint64_t>(x) << dZ) | y;
-                if (prevId != id)
-                {
-                    prevId = id;
+                prevId = id;
 
-                    auto& mapEntry = densityMap[id];
-                    if (mapEntry.first < context.roadsDensityLimitPerTile /*&& p.second > o */)
-                    {
-                        accept = true;
-                        mapEntry.first += 1;
-                        mapEntry.second = line->zOrder;
-                    }
+                auto& mapEntry = densityMap[id];
+                if (mapEntry.first < context.roadsDensityLimitPerTile /*&& p.second > o */)
+                {
+                    accept = true;
+                    mapEntry.first += 1;
+                    mapEntry.second = polyline->zOrder;
                 }
             }
         }
-
         if (!accept)
-            itLine.remove();
+        {
+            if (metric)
+                metric->polylineRejectedByDensity++;
+
+            itPolyline.remove();
+        }
     }
 }
 

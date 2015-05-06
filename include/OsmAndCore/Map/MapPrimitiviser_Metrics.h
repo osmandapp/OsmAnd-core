@@ -51,8 +51,11 @@ namespace OsmAnd
         /* Number of polyline evaluations */                                                        \
         FIELD_ACTION(unsigned int, polylineEvaluations, "");                                        \
                                                                                                     \
-        /* Number of polyline evaluations */                                                        \
+        /* Number of polylines rejected by style */                                                 \
         FIELD_ACTION(unsigned int, polylineRejects, "");                                            \
+                                                                                                    \
+        /* Number of polylines rejected by density */                                               \
+        FIELD_ACTION(unsigned int, polylineRejectedByDensity, "");                                  \
                                                                                                     \
         /* Number of obtained polyline primitives */                                                \
         FIELD_ACTION(unsigned int, polylinePrimitives, "");                                         \
