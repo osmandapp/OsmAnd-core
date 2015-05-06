@@ -69,6 +69,11 @@ namespace OsmAnd
             return _storage[key].isSet();
         }
 
+        const VALUE& operator[](const KeyType key) const
+        {
+            return *_storage[key];
+        }
+
         VALUE& operator[](const KeyType key)
         {
             return *_storage[key];
@@ -93,6 +98,32 @@ namespace OsmAnd
 
             outValue = *value;
             return true;
+        }
+
+        const VALUE* getRef(const KeyType key) const
+        {
+            if (key >= _storage.size())
+                return nullptr;
+
+            const auto& value = _storage[key];
+            return value.getValuePtrOrNullptr();
+        }
+
+        VALUE* getRef(const KeyType key)
+        {
+            if (key >= _storage.size())
+                return nullptr;
+
+            auto& value = _storage[key];
+            return value.getValuePtrOrNullptr();
+        }
+
+        void reserve(const SizeType size)
+        {
+            if (_storage.size() >= size)
+                return;
+
+            _storage.resize(size);
         }
 
         void reset()

@@ -12,6 +12,7 @@ OsmAnd::MapStyleEvaluator::MapStyleEvaluator(
     , mapStyle(mapStyle_)
     , ptScaleFactor(ptScaleFactor_)
 {
+    _p->prepare();
 }
 
 OsmAnd::MapStyleEvaluator::~MapStyleEvaluator()

@@ -5,7 +5,6 @@
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
-#include <QMap>
 #include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
@@ -40,23 +39,29 @@ namespace OsmAnd
     private:
         const std::shared_ptr<const MapStyleBuiltinValueDefinitions> _builtinValueDefs;
 
-        typedef QHash<IMapStyle::ValueDefinitionId, InputValue> InputValuesDictionary;
-        InputValuesDictionary _inputValues;
+        typedef ArrayMap<InputValue> InputValues;
+        std::shared_ptr<InputValues> _inputValues;
+        std::shared_ptr<InputValues> _inputValuesShadow;
 
         typedef ArrayMap<IMapStyle::Value> IntermediateEvaluationResult;
+        std::shared_ptr<IntermediateEvaluationResult> _intermediateEvaluationResult;
+        std::shared_ptr<IntermediateEvaluationResult> _constantIntermediateEvaluationResult;
+
+        void prepare();
+
         ArrayMap<IMapStyle::Value>* allocateIntermediateEvaluationResult();
         
         MapStyleConstantValue evaluateConstantValue(
             const MapObject* const mapObject,
             const MapStyleValueDataType dataType,
             const IMapStyle::Value& resolvedValue,
-            const InputValuesDictionary& inputValues,
+            const std::shared_ptr<const InputValues>& inputValues,
             OnDemand<IntermediateEvaluationResult>& intermediateEvaluationResult) const;
 
         bool evaluate(
             const MapObject* const mapObject,
             const std::shared_ptr<const IMapStyle::IRuleNode>& ruleNode,
-            const InputValuesDictionary& inputValues,
+            const std::shared_ptr<const InputValues>& inputValues,
             bool& outDisabled,
             IntermediateEvaluationResult* const outResultStorage,
             OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const;
@@ -76,7 +81,7 @@ namespace OsmAnd
 
         void postprocessEvaluationResult(
             const MapObject* const mapObject,
-            const InputValuesDictionary& inputValues,
+            const std::shared_ptr<const InputValues>& inputValues,
             const IntermediateEvaluationResult& intermediateResult,
             MapStyleEvaluationResult& outResultStorage,
             OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const;

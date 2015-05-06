@@ -56,6 +56,26 @@ namespace OsmAnd
         }
 
         template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
+        inline OnDemand(OtherType* const pObject)
+            : _objectRef(pObject)
+        {
+        }
+
+        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
+        inline OnDemand(const std::shared_ptr< OtherType >& objectRef)
+            : _objectRef(objectRef)
+        {
+        }
+
+#ifdef Q_COMPILER_RVALUE_REFS
+        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
+        inline OnDemand(std::shared_ptr< OtherType >&& objectRef)
+            : _objectRef(qMove(objectRef))
+        {
+        }
+#endif // defined(Q_COMPILER_RVALUE_REFS)
+
+        template<typename OtherType, typename Check<Type, OtherType>::Valid* = nullptr>
         inline OnDemand(const OnDemand< OtherType >& that)
             : _objectRef(that._objectRef)
             , _allocator(that._allocator)
