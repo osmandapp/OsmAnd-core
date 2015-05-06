@@ -188,6 +188,14 @@ QHash<OsmAnd::IMapStyle::ValueDefinitionId, QVariant> OsmAnd::MapStyleEvaluation
     return result;
 }
 
+void OsmAnd::MapStyleEvaluationResult::reserve(const int size)
+{
+    if (_storage.size() >= size)
+        return;
+
+    _storage.resize(size);
+}
+
 void OsmAnd::MapStyleEvaluationResult::reset()
 {
     _storage.clear();

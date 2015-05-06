@@ -53,6 +53,7 @@ namespace OsmAnd
 
         QHash<IMapStyle::ValueDefinitionId, QVariant> getValues() const;
 
+        void reserve(const int size);
         void reset();
         void clear();
         bool isEmpty() const;

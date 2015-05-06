@@ -452,7 +452,7 @@ const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& OsmAnd::ResolvedMa
 
 QList< std::shared_ptr<const OsmAnd::MapStyleValueDefinition> > OsmAnd::ResolvedMapStyle_P::getValueDefinitions() const
 {
-    return detachedOf(_valuesDefinitions);
+    return _valuesDefinitions;
 }
 
 bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(

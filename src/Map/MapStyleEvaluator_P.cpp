@@ -28,10 +28,12 @@ OsmAnd::MapStyleEvaluator_P::~MapStyleEvaluator_P()
 
 void OsmAnd::MapStyleEvaluator_P::prepare()
 {
-    _inputValues.reset(new ArrayMap<InputValue>(owner->mapStyle->getValueDefinitions().size()));
-    _inputValuesShadow.reset(new ArrayMap<InputValue>(owner->mapStyle->getValueDefinitions().size()));
-    _intermediateEvaluationResult.reset(new ArrayMap<IMapStyle::Value>(owner->mapStyle->getValueDefinitions().size()));
-    _constantIntermediateEvaluationResult.reset(new ArrayMap<IMapStyle::Value>(owner->mapStyle->getValueDefinitions().size()));
+    const auto valueDefinitionsCount = owner->mapStyle->getValueDefinitions().size();
+
+    _inputValues.reset(new ArrayMap<InputValue>(valueDefinitionsCount));
+    _inputValuesShadow.reset(new ArrayMap<InputValue>(valueDefinitionsCount));
+    _intermediateEvaluationResult.reset(new ArrayMap<IMapStyle::Value>(valueDefinitionsCount));
+    _constantIntermediateEvaluationResult.reset(new ArrayMap<IMapStyle::Value>(valueDefinitionsCount));
 }
 
 OsmAnd::ArrayMap<OsmAnd::IMapStyle::Value>* OsmAnd::MapStyleEvaluator_P::allocateIntermediateEvaluationResult()
