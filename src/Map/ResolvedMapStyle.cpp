@@ -55,7 +55,7 @@ std::shared_ptr<const OsmAnd::IMapStyle::IParameter> OsmAnd::ResolvedMapStyle::g
 
 QList< std::shared_ptr<const OsmAnd::IMapStyle::IParameter> > OsmAnd::ResolvedMapStyle::getParameters() const
 {
-    return copyAs< QList< std::shared_ptr<const OsmAnd::IMapStyle::IParameter> > >(_p->getParameters());
+    return _p->getParameters();
 }
 
 std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> OsmAnd::ResolvedMapStyle::getAttribute(
@@ -66,7 +66,7 @@ std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> OsmAnd::ResolvedMapStyle::g
 
 QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > OsmAnd::ResolvedMapStyle::getAttributes() const
 {
-    return copyAs< QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > >(_p->getAttributes());
+    return _p->getAttributes();
 }
 
 QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle::getRuleset(
@@ -113,13 +113,13 @@ QHash<OsmAnd::IMapStyle::ValueDefinitionId, OsmAnd::IMapStyle::Value> OsmAnd::Re
 QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> >
 OsmAnd::ResolvedMapStyle::RuleNode::getOneOfConditionalSubnodes() const
 {
-    return copyAs< QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> > >(oneOfConditionalSubnodes);
+    return oneOfConditionalSubnodes;
 }
 
 QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> >
 OsmAnd::ResolvedMapStyle::RuleNode::getApplySubnodes() const
 {
-    return copyAs< QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> > >(applySubnodes);
+    return applySubnodes;
 }
 
 OsmAnd::ResolvedMapStyle::BaseRule::BaseRule(RuleNode* const ruleNode_)

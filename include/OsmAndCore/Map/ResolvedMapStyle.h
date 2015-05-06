@@ -44,8 +44,8 @@ namespace OsmAnd
 
 #if !defined(SWIG)
             QHash<ValueDefinitionId, Value> values;
-            QList< std::shared_ptr<const RuleNode> > oneOfConditionalSubnodes;
-            QList< std::shared_ptr<const RuleNode> > applySubnodes;
+            QList< std::shared_ptr<const IMapStyle::IRuleNode> > oneOfConditionalSubnodes;
+            QList< std::shared_ptr<const IMapStyle::IRuleNode> > applySubnodes;
 #endif // !defined(SWIG)
             virtual QHash<SWIG_CLARIFY(IMapStyle, ValueDefinitionId), SWIG_CLARIFY(IMapStyle, Value)>
                 getValues() const Q_DECL_OVERRIDE;
