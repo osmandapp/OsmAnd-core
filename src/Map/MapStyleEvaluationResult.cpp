@@ -223,7 +223,7 @@ bool OsmAnd::MapStyleEvaluationResult::isEmpty() const
     return true;
 }
 
-void OsmAnd::MapStyleEvaluationResult::pack(PackedResult& packedResult) const
+void OsmAnd::MapStyleEvaluationResult::pack(Packed& packed) const
 {
     const auto size = _storage.size();
 
@@ -235,8 +235,142 @@ void OsmAnd::MapStyleEvaluationResult::pack(PackedResult& packedResult) const
             valuesCount++;
     }
 
+    packed.entries.resize(valuesCount);
     pValue = _storage.constData();
-    packedResult.reserve(valuesCount);
-    for (int index = 0; index < size; index++)
-        packedResult.push_back(qMove(PackedResultEntry(index, *(pValue++))));
+    auto pPackedEntry = packed.entries.data();
+    for (int index = 0; index < size; index++, pValue++)
+    {
+        if (!pValue->isValid())
+            continue;
+
+        pPackedEntry->first = index;
+        pPackedEntry->second = *pValue;
+
+        pPackedEntry++;
+    }
+}
+
+OsmAnd::MapStyleEvaluationResult::Packed OsmAnd::MapStyleEvaluationResult::pack() const
+{
+    Packed packed;
+    pack(packed);
+    return packed;
+}
+
+OsmAnd::MapStyleEvaluationResult::Packed::Packed()
+{
+}
+
+OsmAnd::MapStyleEvaluationResult::Packed::~Packed()
+{
+}
+
+bool OsmAnd::MapStyleEvaluationResult::Packed::contains(const IMapStyle::ValueDefinitionId valueDefId) const
+{
+    const auto size = entries.size();
+    auto pEntry = entries.constData();
+    for (int index = 0; index < size; index++, pEntry++)
+    {
+        if (pEntry->first != valueDefId)
+            continue;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool OsmAnd::MapStyleEvaluationResult::Packed::getValue(
+    const IMapStyle::ValueDefinitionId valueDefId,
+    QVariant& outValue) const
+{
+    const auto size = entries.size();
+    auto pEntry = entries.constData();
+    for (int index = 0; index < size; index++, pEntry++)
+    {
+        if (pEntry->first != valueDefId)
+            continue;
+
+        outValue = pEntry->second;
+        return true;
+    }
+
+    return false;
+}
+
+bool OsmAnd::MapStyleEvaluationResult::Packed::getBooleanValue(
+    const IMapStyle::ValueDefinitionId valueDefId,
+    bool& outValue) const
+{
+    QVariant value;
+    if (!getValue(valueDefId, value))
+        return false;
+
+    outValue = value.toBool();
+    return true;
+}
+
+bool OsmAnd::MapStyleEvaluationResult::Packed::getIntegerValue(
+    const IMapStyle::ValueDefinitionId valueDefId,
+    int& outValue) const
+{
+    QVariant value;
+    if (!getValue(valueDefId, value))
+        return false;
+
+    outValue = value.toInt();
+    return true;
+}
+
+bool OsmAnd::MapStyleEvaluationResult::Packed::getIntegerValue(
+    const IMapStyle::ValueDefinitionId valueDefId,
+    unsigned int& outValue) const
+{
+    QVariant value;
+    if (!getValue(valueDefId, value))
+        return false;
+
+    outValue = value.toUInt();
+    return true;
+}
+
+bool OsmAnd::MapStyleEvaluationResult::Packed::getFloatValue(
+    const IMapStyle::ValueDefinitionId valueDefId,
+    float& outValue) const
+{
+    QVariant value;
+    if (!getValue(valueDefId, value))
+        return false;
+
+    outValue = value.toFloat();
+    return true;
+}
+
+bool OsmAnd::MapStyleEvaluationResult::Packed::getStringValue(
+    const IMapStyle::ValueDefinitionId valueDefId,
+    QString& outValue) const
+{
+    QVariant value;
+    if (!getValue(valueDefId, value))
+        return false;
+
+    outValue = value.toString();
+    return true;
+}
+
+QHash<OsmAnd::IMapStyle::ValueDefinitionId, QVariant> OsmAnd::MapStyleEvaluationResult::Packed::getValues() const
+{
+    QHash<IMapStyle::ValueDefinitionId, QVariant> result;
+
+    const auto size = entries.size();
+    auto pEntry = entries.constData();
+    for (int index = 0; index < size; index++, pEntry++)
+        result.insert(pEntry->first, pEntry->second);
+
+    return result;
+}
+
+bool OsmAnd::MapStyleEvaluationResult::Packed::isEmpty() const
+{
+    return entries.isEmpty();
 }

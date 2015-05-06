@@ -106,28 +106,11 @@ OsmAnd::MapPrimitiviser::Primitive::Primitive(
     , sourceObject(group_->sourceObject)
     , type(type_)
     , typeRuleIdIndex(typeRuleIdIndex_)
-    , evaluationResult(evaluationResult_)
+    , evaluationResult(evaluationResult_.pack())
     , zOrder(0)
     , doubledArea(-1)
 {
 }
-
-#ifdef Q_COMPILER_RVALUE_REFS
-OsmAnd::MapPrimitiviser::Primitive::Primitive(
-    const std::shared_ptr<const PrimitivesGroup>& group_,
-    const PrimitiveType type_,
-    const uint32_t typeRuleIdIndex_,
-    MapStyleEvaluationResult&& evaluationResult_)
-    : group(group_)
-    , sourceObject(group_->sourceObject)
-    , type(type_)
-    , typeRuleIdIndex(typeRuleIdIndex_)
-    , evaluationResult(qMove(evaluationResult_))
-    , zOrder(0)
-    , doubledArea(-1)
-{
-}
-#endif // Q_COMPILER_RVALUE_REFS
 
 OsmAnd::MapPrimitiviser::Primitive::~Primitive()
 {

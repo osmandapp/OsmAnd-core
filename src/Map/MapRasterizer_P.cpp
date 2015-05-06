@@ -146,7 +146,7 @@ void OsmAnd::MapRasterizer_P::rasterizeMapPrimitives(
 bool OsmAnd::MapRasterizer_P::updatePaint(
     const Context& context,
     SkPaint& paint,
-    const MapStyleEvaluationResult& evalResult,
+    const MapStyleEvaluationResult::Packed& evalResult,
     const PaintValuesSet valueSetSelector,
     const bool isArea)
 {
@@ -565,7 +565,7 @@ void OsmAnd::MapRasterizer_P::rasterizePolylineIcons(
     const Context& context,
     SkCanvas& canvas,
     const SkPath& path,
-    const MapStyleEvaluationResult& evalResult)
+    const MapStyleEvaluationResult::Packed& evalResult)
 {
     bool ok;
 

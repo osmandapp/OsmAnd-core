@@ -78,7 +78,7 @@ namespace OsmAnd
         bool updatePaint(
             const Context& context,
             SkPaint& paint,
-            const MapStyleEvaluationResult& evalResult,
+            const MapStyleEvaluationResult::Packed& evalResult,
             const PaintValuesSet valueSetSelector,
             const bool isArea);
 
@@ -112,7 +112,7 @@ namespace OsmAnd
             const Context& context,
             SkCanvas& canvas,
             const SkPath& path,
-            const MapStyleEvaluationResult& evalResult);
+            const MapStyleEvaluationResult::Packed& evalResult);
 
         inline void calculateVertex(const Context& context, const PointI& point31, PointF& vertex);
         inline float lineEquation(float x1, float y1, float x2, float y2, float x);

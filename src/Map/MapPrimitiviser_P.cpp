@@ -1840,6 +1840,15 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     const std::shared_ptr<Cache>& cache,
     const std::shared_ptr<const IQueryController>& queryController)
 {
+    const auto& env = context.env;
+    const auto zoom = primitivisedObjects->zoom;
+
+    // Initialize shared settings for text evaluation
+    MapStyleEvaluator textEvaluator(env->mapStyle, env->displayDensityFactor * env->symbolsScaleFactor);
+    env->applyTo(textEvaluator);
+    textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
+    textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, zoom);
+
     //NOTE: Em, I'm not sure this is still true
     //NOTE: Since 2 tiles with same MapObject may have different set of polylines, generated from it,
     //NOTE: then set of symbols also should differ, but it won't.
@@ -1898,6 +1907,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->polygons,
             PrimitivesType::Polygons,
             evaluationResult,
+            textEvaluator,
             constructedGroup->symbols,
             queryController);
         */
@@ -1907,6 +1917,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->polylines,
             PrimitivesType::Polylines,
             evaluationResult,
+            textEvaluator,
             group->symbols,
             queryController);
         collectSymbolsFromPrimitives(
@@ -1915,6 +1926,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivesGroup->points,
             PrimitivesType::Points,
             evaluationResult,
+            textEvaluator,
             group->symbols,
             queryController);
 
@@ -1943,6 +1955,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
     const PrimitivesCollection& primitives,
     const PrimitivesType type,
     MapStyleEvaluationResult& evaluationResult,
+    MapStyleEvaluator& textEvaluator,
     SymbolsCollection& outSymbols,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -1970,6 +1983,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 primitivisedObjects,
                 primitive,
                 evaluationResult,
+                textEvaluator,
                 outSymbols);
         }
         else if (type == PrimitivesType::Polylines)
@@ -1979,6 +1993,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 primitivisedObjects,
                 primitive,
                 evaluationResult,
+                textEvaluator,
                 outSymbols);
         }
         else if (type == PrimitivesType::Points)
@@ -1988,6 +2003,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 primitivisedObjects,
                 primitive,
                 evaluationResult,
+                textEvaluator,
                 outSymbols);
         }
     }
@@ -1998,6 +2014,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
     MapStyleEvaluationResult& evaluationResult,
+    MapStyleEvaluator& textEvaluator,
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -2025,6 +2042,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
         primitive,
         Utilities::normalizeCoordinates(center, ZoomLevel31),
         evaluationResult,
+        textEvaluator,
         outSymbols);
 }
 
@@ -2033,6 +2051,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
     MapStyleEvaluationResult& evaluationResult,
+    MapStyleEvaluator& textEvaluator,
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -2049,6 +2068,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
         primitive,
         center,
         evaluationResult,
+        textEvaluator,
         outSymbols);
 }
 
@@ -2057,6 +2077,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
     MapStyleEvaluationResult& evaluationResult,
+    MapStyleEvaluator& textEvaluator,
     SymbolsCollection& outSymbols)
 {
     //////////////////////////////////////////////////////////////////////////
@@ -2126,6 +2147,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
             primitive,
             center,
             evaluationResult,
+            textEvaluator,
             outSymbols);
     }
 }
@@ -2136,6 +2158,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
     MapStyleEvaluationResult& evaluationResult,
+    MapStyleEvaluator& textEvaluator,
     SymbolsCollection& outSymbols)
 {
     const auto& mapObject = primitive->sourceObject;
@@ -2156,8 +2179,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const auto typeRuleId = mapObject->typesRuleIds[primitive->typeRuleIdIndex];
     const auto& decodedType = encDecRules->decodingRules[typeRuleId];
 
-    MapStyleEvaluator textEvaluator(env->mapStyle, env->displayDensityFactor * env->symbolsScaleFactor);
-    env->applyTo(textEvaluator);
+    // Set common evaluator settings
+    textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
+    textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
     // Get captions and their order
     auto captions = mapObject->captions;
@@ -2341,10 +2365,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         }
 
         // Evaluate style to obtain text parameters
-        textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-        textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-        textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MINZOOM, primitivisedObjects->zoom);
-        textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_MAXZOOM, primitivisedObjects->zoom);
         textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
 
         // Get tag of rule, in case caption is not from a 'name[:*]'-tag

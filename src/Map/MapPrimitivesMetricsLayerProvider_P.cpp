@@ -101,8 +101,15 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(primitiviseMetric->pointEvaluations)
             .arg(primitiviseMetric->pointRejects)
             .arg(QString::number(primitiviseMetric->elapsedTimeForPointEvaluation, 'f', FORMAT_PRECISION));
-        text += QString(QLatin1String("groups %1s\n"))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups, 'f', FORMAT_PRECISION));
+        const auto deltaGroups =
+            primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups -
+            primitiviseMetric->elapsedTimeForOrderEvaluation -
+            primitiviseMetric->elapsedTimeForPolygonEvaluation -
+            primitiviseMetric->elapsedTimeForPolylineEvaluation -
+            primitiviseMetric->elapsedTimeForPointEvaluation;
+        text += QString(QLatin1String("groups %1s (- ^ = %2s)\n"))
+            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups, 'f', FORMAT_PRECISION))
+            .arg(QString::number(deltaGroups, 'f', FORMAT_PRECISION));
         text += QString(QLatin1String("d/b/c  %1s/%2s/%3s\n"))
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', FORMAT_PRECISION))
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromBasemap, 'f', FORMAT_PRECISION))

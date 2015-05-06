@@ -6,8 +6,11 @@
 #include <utility>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QVector>
+#include <QList>
 #include <QVariant>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
@@ -18,6 +21,29 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API MapStyleEvaluationResult Q_DECL_FINAL
     {
+    public:
+        struct Packed Q_DECL_FINAL
+        {
+            Packed();
+            ~Packed();
+
+            typedef std::pair<IMapStyle::ValueDefinitionId, QVariant> Entry;
+            QVector<Entry> entries;
+
+            bool contains(const IMapStyle::ValueDefinitionId valueDefId) const;
+
+            bool getValue(const IMapStyle::ValueDefinitionId valueDefId, QVariant& outValue) const;
+            bool getBooleanValue(const IMapStyle::ValueDefinitionId valueDefId, bool& outValue) const;
+            bool getIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, int& outValue) const;
+            bool getIntegerValue(const IMapStyle::ValueDefinitionId valueDefId, unsigned int& outValue) const;
+            bool getFloatValue(const IMapStyle::ValueDefinitionId valueDefId, float& outValue) const;
+            bool getStringValue(const IMapStyle::ValueDefinitionId valueDefId, QString& outValue) const;
+
+            QHash<IMapStyle::ValueDefinitionId, QVariant> getValues() const;
+
+            bool isEmpty() const;
+        };
+
     private:
     protected:
         QVector<QVariant> _storage;
@@ -58,9 +84,8 @@ namespace OsmAnd
         void clear();
         bool isEmpty() const;
 
-        typedef std::pair<IMapStyle::ValueDefinitionId, QVariant> PackedResultEntry;
-        typedef QList<PackedResultEntry> PackedResult;
-        void pack(PackedResult& packedResult) const;
+        void pack(Packed& packed) const;
+        Packed pack() const;
     };
 }
 

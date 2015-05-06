@@ -103,14 +103,6 @@ namespace OsmAnd
                 const PrimitiveType type,
                 const uint32_t typeRuleIdIndex,
                 const MapStyleEvaluationResult& evaluationResult);
-
-#ifdef Q_COMPILER_RVALUE_REFS
-            Primitive(
-                const std::shared_ptr<const PrimitivesGroup>& group,
-                const PrimitiveType type,
-                const uint32_t typeRuleIdIndex,
-                MapStyleEvaluationResult&& evaluationResult);
-#endif // Q_COMPILER_RVALUE_REFS
         public:
             ~Primitive();
 
@@ -119,7 +111,7 @@ namespace OsmAnd
 
             const PrimitiveType type;
             const uint32_t typeRuleIdIndex;
-            const MapStyleEvaluationResult evaluationResult;
+            const MapStyleEvaluationResult::Packed evaluationResult;
 
             int zOrder;
             int64_t doubledArea;
