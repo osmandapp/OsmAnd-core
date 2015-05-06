@@ -133,6 +133,7 @@ namespace OsmAnd
         virtual const std::shared_ptr<const MapStyleValueDefinition>& getValueDefinitionRefById(
             const SWIG_CLARIFY(IMapStyle, ValueDefinitionId) id) const = 0;
         virtual QList< std::shared_ptr<const MapStyleValueDefinition> > getValueDefinitions() const = 0;
+        virtual int getValueDefinitionsCount() const = 0;
 
         virtual bool parseValue(
             const QString& input,

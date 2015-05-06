@@ -37,6 +37,11 @@ QList< std::shared_ptr<const OsmAnd::MapStyleValueDefinition> > OsmAnd::Resolved
     return _p->getValueDefinitions();
 }
 
+int OsmAnd::ResolvedMapStyle::getValueDefinitionsCount() const
+{
+    return _p->getValueDefinitionsCount();
+}
+
 bool OsmAnd::ResolvedMapStyle::parseValue(
     const QString& input,
     const ValueDefinitionId valueDefintionId,

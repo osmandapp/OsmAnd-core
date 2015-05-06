@@ -88,6 +88,7 @@ namespace OsmAnd
         std::shared_ptr<const MapStyleValueDefinition> getValueDefinitionById(const ValueDefinitionId id) const;
         const std::shared_ptr<const MapStyleValueDefinition>& getValueDefinitionRefById(const ValueDefinitionId id) const;
         QList< std::shared_ptr<const MapStyleValueDefinition> > getValueDefinitions() const;
+        int getValueDefinitionsCount() const;
 
         bool parseConstantValue(
             const QString& input,

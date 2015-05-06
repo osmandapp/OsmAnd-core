@@ -79,10 +79,10 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
 
     // Obtain primitives:
-    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitions().size());
+    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitionsCount());
 
     const Stopwatch obtainPrimitivesStopwatch(metric != nullptr);
-    obtainPrimitives(context, primitivisedObjects, objects, qMove(evaluationResult), cache, queryController, metric);
+    obtainPrimitives(context, primitivisedObjects, objects, evaluationResult, cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitives += obtainPrimitivesStopwatch.elapsed();
     
@@ -97,7 +97,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, queryController);
+    obtainPrimitivesSymbols(context, primitivisedObjects, evaluationResult, cache, queryController);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -402,14 +402,14 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
 
     // Obtain primitives:
-    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitions().size());
+    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitionsCount());
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
     obtainPrimitives(
         context,
         primitivisedObjects,
         detailedmapMapObjects,
-        qMove(evaluationResult),
+        evaluationResult,
         cache,
         queryController,
         metric);
@@ -423,7 +423,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             context,
             primitivisedObjects,
             basemapMapObjects,
-            qMove(evaluationResult),
+            evaluationResult,
             cache,
             queryController,
             metric);
@@ -436,7 +436,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         context,
         primitivisedObjects,
         polygonizedCoastlineObjects,
-        qMove(evaluationResult),
+        evaluationResult,
         cache,
         queryController,
         metric);
@@ -454,7 +454,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, queryController);
+    obtainPrimitivesSymbols(context, primitivisedObjects, evaluationResult, cache, queryController);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -532,17 +532,17 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
     }
 
     // Obtain primitives:
-    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitions().size());
+    MapStyleEvaluationResult evaluationResult(context.env->mapStyle->getValueDefinitionsCount());
 
     const Stopwatch obtainPrimitivesFromDetailedmapStopwatch(metric != nullptr);
-    obtainPrimitives(context, primitivisedObjects, detailedmapMapObjects, qMove(evaluationResult), cache, queryController, metric);
+    obtainPrimitives(context, primitivisedObjects, detailedmapMapObjects, evaluationResult, cache, queryController, metric);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesFromDetailedmap += obtainPrimitivesFromDetailedmapStopwatch.elapsed();
 
     if ((zoom <= static_cast<ZoomLevel>(MapPrimitiviser::LastZoomToUseBasemap)) || detailedDataMissing)
     {
         const Stopwatch obtainPrimitivesFromBasemapStopwatch(metric != nullptr);
-        obtainPrimitives(context, primitivisedObjects, basemapMapObjects, qMove(evaluationResult), cache, queryController, metric);
+        obtainPrimitives(context, primitivisedObjects, basemapMapObjects, evaluationResult, cache, queryController, metric);
         if (metric)
             metric->elapsedTimeForObtainingPrimitivesFromBasemap += obtainPrimitivesFromBasemapStopwatch.elapsed();
     }
@@ -558,7 +558,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 
     // Obtain symbols from primitives
     const Stopwatch obtainPrimitivesSymbolsStopwatch(metric != nullptr);
-    obtainPrimitivesSymbols(context, primitivisedObjects, qMove(evaluationResult), cache, queryController);
+    obtainPrimitivesSymbols(context, primitivisedObjects, evaluationResult, cache, queryController);
     if (metric)
         metric->elapsedTimeForObtainingPrimitivesSymbols += obtainPrimitivesSymbolsStopwatch.elapsed();
 
@@ -1224,7 +1224,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     const Context& context,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
     const QList< std::shared_ptr<const OsmAnd::MapObject> >& source,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     const std::shared_ptr<Cache>& cache,
     const std::shared_ptr<const IQueryController>& queryController,
     MapPrimitiviser_Metrics::Metric_primitivise* const metric)
@@ -1307,7 +1307,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
             context,
             primitivisedObjects,
             mapObject,
-            qMove(evaluationResult),
+            evaluationResult,
             orderEvaluator,
             polygonEvaluator,
             polylineEvaluator,
@@ -1351,7 +1351,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     const Context& context,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const MapObject>& mapObject,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     MapStyleEvaluator& orderEvaluator,
     MapStyleEvaluator& polygonEvaluator,
     MapStyleEvaluator& polylineEvaluator,
@@ -1528,7 +1528,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                         group,
                         objectType,
                         typeRuleIdIndex,
-                        qMove(evaluationResult)));
+                        evaluationResult));
                     primitive->zOrder = (std::dynamic_pointer_cast<const SurfaceMapObject>(mapObject) || std::dynamic_pointer_cast<const CoastlineMapObject>(mapObject))
                         ? std::numeric_limits<int>::min()
                         : zOrder;
@@ -1584,7 +1584,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                             group,
                             PrimitiveType::Point,
                             typeRuleIdIndex,
-                            qMove(evaluationResult)));
+                            evaluationResult));
                     }
                     else
                     {
@@ -1650,7 +1650,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 group,
                 objectType,
                 typeRuleIdIndex,
-                qMove(evaluationResult)));
+                evaluationResult));
             primitive->zOrder = zOrder;
 
             // Accept this primitive
@@ -1708,7 +1708,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     group,
                     PrimitiveType::Point,
                     typeRuleIdIndex,
-                    qMove(evaluationResult)));
+                    evaluationResult));
             }
             else
             {
@@ -1836,7 +1836,7 @@ void OsmAnd::MapPrimitiviser_P::filterOutHighwaysByDensity(
 void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
     const Context& context,
     const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     const std::shared_ptr<Cache>& cache,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -1897,7 +1897,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivisedObjects,
             primitivesGroup->polygons,
             PrimitivesType::Polygons,
-            qMove(evaluationResult),
+            evaluationResult,
             constructedGroup->symbols,
             queryController);
         */
@@ -1906,7 +1906,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivisedObjects,
             primitivesGroup->polylines,
             PrimitivesType::Polylines,
-            qMove(evaluationResult),
+            evaluationResult,
             group->symbols,
             queryController);
         collectSymbolsFromPrimitives(
@@ -1914,7 +1914,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             primitivisedObjects,
             primitivesGroup->points,
             PrimitivesType::Points,
-            qMove(evaluationResult),
+            evaluationResult,
             group->symbols,
             queryController);
 
@@ -1942,7 +1942,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const PrimitivesCollection& primitives,
     const PrimitivesType type,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     SymbolsCollection& outSymbols,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -1969,7 +1969,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 context,
                 primitivisedObjects,
                 primitive,
-                qMove(evaluationResult),
+                evaluationResult,
                 outSymbols);
         }
         else if (type == PrimitivesType::Polylines)
@@ -1978,7 +1978,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 context,
                 primitivisedObjects,
                 primitive,
-                qMove(evaluationResult),
+                evaluationResult,
                 outSymbols);
         }
         else if (type == PrimitivesType::Points)
@@ -1987,7 +1987,7 @@ void OsmAnd::MapPrimitiviser_P::collectSymbolsFromPrimitives(
                 context,
                 primitivisedObjects,
                 primitive,
-                qMove(evaluationResult),
+                evaluationResult,
                 outSymbols);
         }
     }
@@ -1997,7 +1997,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -2024,7 +2024,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolygon(
         primitivisedObjects,
         primitive,
         Utilities::normalizeCoordinates(center, ZoomLevel31),
-        qMove(evaluationResult),
+        evaluationResult,
         outSymbols);
 }
 
@@ -2032,7 +2032,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     SymbolsCollection& outSymbols)
 {
     const auto& points31 = primitive->sourceObject->points31;
@@ -2048,7 +2048,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPolyline(
         primitivisedObjects,
         primitive,
         center,
-        qMove(evaluationResult),
+        evaluationResult,
         outSymbols);
 }
 
@@ -2056,7 +2056,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
     const Context& context,
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     SymbolsCollection& outSymbols)
 {
     //////////////////////////////////////////////////////////////////////////
@@ -2112,7 +2112,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
             context,
             primitive,
             center,
-            qMove(evaluationResult),
+            evaluationResult,
             outSymbols);
     }
 
@@ -2125,7 +2125,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
             primitivisedObjects,
             primitive,
             center,
-            qMove(evaluationResult),
+            evaluationResult,
             outSymbols);
     }
 }
@@ -2135,7 +2135,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     SymbolsCollection& outSymbols)
 {
     const auto& mapObject = primitive->sourceObject;
@@ -2507,7 +2507,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     const Context& context,
     const std::shared_ptr<const Primitive>& primitive,
     const PointI& location,
-    Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+    MapStyleEvaluationResult& evaluationResult,
     SymbolsCollection& outSymbols)
 {
     const auto& env = context.env;

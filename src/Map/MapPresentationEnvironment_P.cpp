@@ -293,7 +293,7 @@ OsmAnd::ColorARGB OsmAnd::MapPresentationEnvironment_P::getDefaultBackgroundColo
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
-        MapStyleEvaluationResult evalResult;
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_defaultBackgroundColorAttribute, &evalResult))
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_COLOR_VALUE, result.argb);
     }
@@ -313,7 +313,7 @@ void OsmAnd::MapPresentationEnvironment_P::obtainShadowOptions(const ZoomLevel z
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
-        MapStyleEvaluationResult evalResult;
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_shadowOptionsAttribute, &evalResult))
         {
             int modeValue = 0;
@@ -336,7 +336,7 @@ double OsmAnd::MapPresentationEnvironment_P::getPolygonAreaMinimalThreshold(cons
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
-        MapStyleEvaluationResult evalResult;
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_polygonMinSizeToDisplayAttribute, &evalResult))
         {
             int polygonMinSizeToDisplay;
@@ -358,7 +358,7 @@ unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadDensityZoomTile(const 
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
-        MapStyleEvaluationResult evalResult;
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_roadDensityZoomTileAttribute, &evalResult))
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, result);
     }
@@ -376,7 +376,7 @@ unsigned int OsmAnd::MapPresentationEnvironment_P::getRoadsDensityLimitPerTile(c
         applyTo(evaluator);
         evaluator.setIntegerValue(owner->styleBuiltinValueDefs->id_INPUT_MINZOOM, zoom);
 
-        MapStyleEvaluationResult evalResult;
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_roadsDensityLimitPerTileAttribute, &evalResult))
             evalResult.getIntegerValue(owner->styleBuiltinValueDefs->id_OUTPUT_ATTR_INT_VALUE, result);
     }
@@ -393,7 +393,7 @@ float OsmAnd::MapPresentationEnvironment_P::getDefaultSymbolPathSpacing() const
         MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
         applyTo(evaluator);
 
-        MapStyleEvaluationResult evalResult;
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_defaultSymbolPathSpacingAttribute, &evalResult))
         {
             float value = 0.0f;
@@ -414,7 +414,7 @@ float OsmAnd::MapPresentationEnvironment_P::getDefaultBlockPathSpacing() const
         MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
         applyTo(evaluator);
 
-        MapStyleEvaluationResult evalResult;
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_defaultBlockPathSpacingAttribute, &evalResult))
         {
             float value = 0.0f;
@@ -435,7 +435,7 @@ float OsmAnd::MapPresentationEnvironment_P::getGlobalPathPadding() const
         MapStyleEvaluator evaluator(owner->mapStyle, owner->displayDensityFactor * owner->symbolsScaleFactor);
         applyTo(evaluator);
 
-        MapStyleEvaluationResult evalResult;
+        MapStyleEvaluationResult evalResult(owner->mapStyle->getValueDefinitionsCount());
         if (evaluator.evaluate(_globalPathPaddingAttribute, &evalResult))
         {
             float value = 0.0f;

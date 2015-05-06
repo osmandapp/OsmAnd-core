@@ -28,7 +28,7 @@ OsmAnd::MapStyleEvaluator_P::~MapStyleEvaluator_P()
 
 void OsmAnd::MapStyleEvaluator_P::prepare()
 {
-    const auto valueDefinitionsCount = owner->mapStyle->getValueDefinitions().size();
+    const auto valueDefinitionsCount = owner->mapStyle->getValueDefinitionsCount();
 
     _inputValues.reset(new ArrayMap<InputValue>(valueDefinitionsCount));
     _inputValuesShadow.reset(new ArrayMap<InputValue>(valueDefinitionsCount));
@@ -38,7 +38,7 @@ void OsmAnd::MapStyleEvaluator_P::prepare()
 
 OsmAnd::ArrayMap<OsmAnd::IMapStyle::Value>* OsmAnd::MapStyleEvaluator_P::allocateIntermediateEvaluationResult()
 {
-    return new ArrayMap<IMapStyle::Value>(owner->mapStyle->getValueDefinitions().size());
+    return new ArrayMap<IMapStyle::Value>(owner->mapStyle->getValueDefinitionsCount());
 }
 
 OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue(

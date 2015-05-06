@@ -110,7 +110,7 @@ namespace OsmAnd
             const Context& context,
             const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
             const QList< std::shared_ptr<const OsmAnd::MapObject> >& source,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             const std::shared_ptr<Cache>& cache,
             const std::shared_ptr<const IQueryController>& queryController,
             MapPrimitiviser_Metrics::Metric_primitivise* const metric);
@@ -119,7 +119,7 @@ namespace OsmAnd
             const Context& context,
             const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const MapObject>& mapObject,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             MapStyleEvaluator& orderEvaluator,
             MapStyleEvaluator& polygonEvaluator,
             MapStyleEvaluator& polylineEvaluator,
@@ -137,7 +137,7 @@ namespace OsmAnd
         static void obtainPrimitivesSymbols(
             const Context& context,
             const std::shared_ptr<PrimitivisedObjects>& primitivisedObjects,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             const std::shared_ptr<Cache>& cache,
             const std::shared_ptr<const IQueryController>& queryController);
 
@@ -146,7 +146,7 @@ namespace OsmAnd
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const PrimitivesCollection& primitives,
             const PrimitivesType type,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             SymbolsCollection& outSymbols,
             const std::shared_ptr<const IQueryController>& queryController);
 
@@ -154,21 +154,21 @@ namespace OsmAnd
             const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const Primitive>& primitive,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             SymbolsCollection& outSymbols);
 
         static void obtainSymbolsFromPolyline(
             const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const Primitive>& primitive,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             SymbolsCollection& outSymbols);
 
         static void obtainSymbolsFromPoint(
             const Context& context,
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const Primitive>& primitive,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             SymbolsCollection& outSymbols);
 
         static void obtainPrimitiveTexts(
@@ -176,14 +176,14 @@ namespace OsmAnd
             const std::shared_ptr<const PrimitivisedObjects>& primitivisedObjects,
             const std::shared_ptr<const Primitive>& primitive,
             const PointI& location,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             SymbolsCollection& outSymbols);
 
         static void obtainPrimitiveIcon(
             const Context& context,
             const std::shared_ptr<const Primitive>& primitive,
             const PointI& location,
-            Q_MOVED(MapStyleEvaluationResult) evaluationResult,
+            MapStyleEvaluationResult& evaluationResult,
             SymbolsCollection& outSymbols);
     public:
         ~MapPrimitiviser_P();

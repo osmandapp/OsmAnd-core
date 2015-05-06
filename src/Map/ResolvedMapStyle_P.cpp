@@ -455,6 +455,11 @@ QList< std::shared_ptr<const OsmAnd::MapStyleValueDefinition> > OsmAnd::Resolved
     return _valuesDefinitions;
 }
 
+int OsmAnd::ResolvedMapStyle_P::getValueDefinitionsCount() const
+{
+    return _valuesDefinitions.size();
+}
+
 bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(
     const QString& input,
     const ValueDefinitionId valueDefintionId,
