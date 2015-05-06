@@ -153,7 +153,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     for (const auto& ruleValueEntry : rangeOf(constOf(ruleNodeValues)))
     {
         const auto valueDefId = ruleValueEntry.key();
-        const auto& valueDef = owner->mapStyle->getValueDefinitionById(valueDefId);
+        const auto& valueDef = owner->mapStyle->getValueDefinitionRefById(valueDefId);
 
         // Test only input values
         if (valueDef->valueClass != MapStyleValueDefinition::Class::Input)
@@ -330,7 +330,7 @@ void OsmAnd::MapStyleEvaluator_P::postprocessEvaluationResult(
             continue;
 
         const auto valueDefId = static_cast<IMapStyle::ValueDefinitionId>(idx);
-        const auto& valueDef = owner->mapStyle->getValueDefinitionById(valueDefId);
+        const auto& valueDef = owner->mapStyle->getValueDefinitionRefById(valueDefId);
 
         const auto constantRuleValue = evaluateConstantValue(
             mapObject,
