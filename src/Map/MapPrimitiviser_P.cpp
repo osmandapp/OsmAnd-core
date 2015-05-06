@@ -1372,13 +1372,19 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     //}
     //////////////////////////////////////////////////////////////////////////
 
+    // Setup mapObject-specific input data
+    const auto layerType = mapObject->getLayerType();
+    orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
+    orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_AREA, mapObject->isArea);
+    orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
+    orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
+    polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
+
     uint32_t typeRuleIdIndex = 0;
     const auto& decRules = mapObject->encodingDecodingRules->decodingRules;
     for (auto itTypeRuleId = cachingIteratorOf(constOf(mapObject->typesRuleIds)); itTypeRuleId; ++itTypeRuleId, typeRuleIdIndex++)
     {
         const auto& decodedType = decRules[*itTypeRuleId];
-
-        const auto layerType = mapObject->getLayerType();
 
         //////////////////////////////////////////////////////////////////////////
         //if (mapObject->toString().contains("49048972"))
@@ -1390,13 +1396,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
         const Stopwatch orderEvaluationStopwatch(metric != nullptr);
 
-        // Setup mapObject-specific input data
+        // Setup tag+value-specific input data
         orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
         orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-        orderEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
-        orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_AREA, mapObject->isArea);
-        orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_POINT, mapObject->points31.size() == 1);
-        orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
 
         evaluationResult.clear();
         ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &evaluationResult);
@@ -1504,7 +1506,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             {
                 const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
-                // Setup mapObject-specific input data (for Polygon)
+                // Setup tag+value-specific input data (for Polygon)
                 polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
                 polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
@@ -1555,7 +1557,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             {
                 const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
-                // Setup mapObject-specific input data (for Point)
+                // Setup tag+value-specific input data (for Point)
                 pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
                 pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
@@ -1620,10 +1622,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
             const Stopwatch polylineEvaluationStopwatch(metric != nullptr);
 
-            // Setup mapObject-specific input data
+            // Setup tag+value-specific input data
             polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
             polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
-            polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
 
             // Evaluate style for this primitive to check if it passes
             evaluationResult.clear();
@@ -1674,7 +1675,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
             const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
-            // Setup mapObject-specific input data
+            // Setup tag+value-specific input data
             pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
             pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
 
