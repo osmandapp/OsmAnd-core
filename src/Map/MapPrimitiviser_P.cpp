@@ -1494,11 +1494,11 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 env->styleBuiltinValueDefs->id_OUTPUT_IGNORE_POLYGON_AS_POINT_AREA,
                 ignorePolygonAsPointArea);
 
+            if (doubledPolygonArea31 < 0.0)
+                doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
+
             if ((!ignorePolygonArea || !ignorePolygonAsPointArea) && !rejectByArea.isSet())
             {
-                if (doubledPolygonArea31 < 0.0)
-                    doubledPolygonArea31 = Utilities::doubledPolygonArea(mapObject->points31);
-
                 const auto polygonArea31 = static_cast<double>(doubledPolygonArea31)* 0.5;
                 const auto areaScaleDivisor31ToPixel =
                     primitivisedObjects->scaleDivisor31ToPixel.x * primitivisedObjects->scaleDivisor31ToPixel.y;
