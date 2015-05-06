@@ -116,8 +116,20 @@ QHash<OsmAnd::IMapStyle::ValueDefinitionId, OsmAnd::IMapStyle::Value> OsmAnd::Re
     return values;
 }
 
+const QHash<OsmAnd::IMapStyle::ValueDefinitionId, OsmAnd::IMapStyle::Value>&
+OsmAnd::ResolvedMapStyle::RuleNode::getValuesRef() const
+{
+    return values;
+}
+
 QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> >
 OsmAnd::ResolvedMapStyle::RuleNode::getOneOfConditionalSubnodes() const
+{
+    return oneOfConditionalSubnodes;
+}
+
+const QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> >&
+OsmAnd::ResolvedMapStyle::RuleNode::getOneOfConditionalSubnodesRef() const
 {
     return oneOfConditionalSubnodes;
 }
@@ -128,8 +140,15 @@ OsmAnd::ResolvedMapStyle::RuleNode::getApplySubnodes() const
     return applySubnodes;
 }
 
+const QList< std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> >&
+OsmAnd::ResolvedMapStyle::RuleNode::getApplySubnodesRef() const
+{
+    return applySubnodes;
+}
+
 OsmAnd::ResolvedMapStyle::BaseRule::BaseRule(RuleNode* const ruleNode_)
     : rootNode(ruleNode_)
+    , constRootNode(rootNode)
 {
 }
 
@@ -152,9 +171,19 @@ std::shared_ptr<OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Rule::ge
     return rootNode;
 }
 
-std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Rule::getRootNode() const
+const std::shared_ptr<OsmAnd::IMapStyle::IRuleNode>& OsmAnd::ResolvedMapStyle::Rule::getRootNodeRef()
 {
     return rootNode;
+}
+
+std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Rule::getRootNode() const
+{
+    return constRootNode;
+}
+
+const std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode>& OsmAnd::ResolvedMapStyle::Rule::getRootNodeRef() const
+{
+    return constRootNode;
 }
 
 OsmAnd::MapStyleRulesetType OsmAnd::ResolvedMapStyle::Rule::getRulesetType() const
@@ -177,9 +206,19 @@ std::shared_ptr<OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Attribut
     return rootNode;
 }
 
-std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Attribute::getRootNode() const
+const std::shared_ptr<OsmAnd::IMapStyle::IRuleNode>& OsmAnd::ResolvedMapStyle::Attribute::getRootNodeRef()
 {
     return rootNode;
+}
+
+std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode> OsmAnd::ResolvedMapStyle::Attribute::getRootNode() const
+{
+    return constRootNode;
+}
+
+const std::shared_ptr<const OsmAnd::IMapStyle::IRuleNode>& OsmAnd::ResolvedMapStyle::Attribute::getRootNodeRef() const
+{
+    return constRootNode;
 }
 
 OsmAnd::IMapStyle::StringId OsmAnd::ResolvedMapStyle::Attribute::getNameId() const

@@ -49,9 +49,15 @@ namespace OsmAnd
 #endif // !defined(SWIG)
             virtual QHash<SWIG_CLARIFY(IMapStyle, ValueDefinitionId), SWIG_CLARIFY(IMapStyle, Value)>
                 getValues() const Q_DECL_OVERRIDE;
+            virtual const QHash<SWIG_CLARIFY(IMapStyle, ValueDefinitionId), SWIG_CLARIFY(IMapStyle, Value)>&
+                getValuesRef() const Q_DECL_OVERRIDE;
             virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> >
                 getOneOfConditionalSubnodes() const Q_DECL_OVERRIDE;
+            virtual const QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> >&
+                getOneOfConditionalSubnodesRef() const Q_DECL_OVERRIDE;
             virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> > getApplySubnodes() const Q_DECL_OVERRIDE;
+            virtual const QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> >&
+                getApplySubnodesRef() const Q_DECL_OVERRIDE;
         };
 
         class OSMAND_CORE_API BaseRule
@@ -66,6 +72,7 @@ namespace OsmAnd
 
 #if !defined(SWIG)
             const std::shared_ptr<RuleNode> rootNode;
+            const std::shared_ptr<const RuleNode> constRootNode;
 #endif // !defined(SWIG)
         };
 
@@ -82,7 +89,9 @@ namespace OsmAnd
             virtual ~Rule();
 
             virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() Q_DECL_OVERRIDE;
+            virtual const std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() Q_DECL_OVERRIDE;
             virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const Q_DECL_OVERRIDE;
+            virtual const std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() const Q_DECL_OVERRIDE;
 
 #if !defined(SWIG)
             const MapStyleRulesetType rulesetType;
@@ -103,7 +112,9 @@ namespace OsmAnd
             virtual ~Attribute();
 
             virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() Q_DECL_OVERRIDE;
+            virtual const std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() Q_DECL_OVERRIDE;
             virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const Q_DECL_OVERRIDE;
+            virtual const std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() const Q_DECL_OVERRIDE;
 
 #if !defined(SWIG)
             const StringId nameId;

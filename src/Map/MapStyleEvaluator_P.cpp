@@ -56,7 +56,7 @@ OsmAnd::MapStyleConstantValue OsmAnd::MapStyleEvaluator_P::evaluateConstantValue
     OnDemand<IntermediateEvaluationResult> innerConstantEvaluationResult(intermediateEvaluationResultAllocator);
     evaluate(
         mapObject,
-        resolvedValue.asDynamicValue.attribute->getRootNode(),
+        resolvedValue.asDynamicValue.attribute->getRootNodeRef(),
         inputValues,
         wasDisabled,
         intermediateEvaluationResult.get(),
@@ -121,7 +121,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     bool wasDisabled = false;
     const auto success = evaluate(
         mapObject.get(),
-        rule->getRootNode(),
+        rule->getRootNodeRef(),
         _inputValuesShadow,
         wasDisabled,
         _intermediateEvaluationResult.get(),
@@ -250,7 +250,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         fillResultFromRuleNode(ruleNode, *outResultStorage, true);
 
     bool atLeastOneConditionalMatched = false;
-    const auto& oneOfConditionalSubnodes = ruleNode->getOneOfConditionalSubnodes();
+    const auto& oneOfConditionalSubnodes = ruleNode->getOneOfConditionalSubnodesRef();
     for (const auto& oneOfConditionalSubnode : constOf(oneOfConditionalSubnodes))
     {
         const auto evaluationResult = evaluate(
@@ -276,7 +276,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
         fillResultFromRuleNode(ruleNode, *outResultStorage, false);
     }
 
-    const auto& applySubnodes = ruleNode->getApplySubnodes();
+    const auto& applySubnodes = ruleNode->getApplySubnodesRef();
     for (const auto& applySubnode : constOf(applySubnodes))
     {
         evaluate(
@@ -299,7 +299,7 @@ void OsmAnd::MapStyleEvaluator_P::fillResultFromRuleNode(
     IntermediateEvaluationResult& outResultStorage,
     const bool allowOverride) const
 {
-    const auto& values = ruleNode->getValues();
+    const auto& values = ruleNode->getValuesRef();
     for (const auto& ruleValueEntry : rangeOf(constOf(values)))
     {
         const auto valueDefId = ruleValueEntry.key();
@@ -498,7 +498,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     bool wasDisabled = false;
     const auto success = evaluate(
         nullptr,
-        attribute->getRootNode(),
+        attribute->getRootNodeRef(),
         _inputValues,
         wasDisabled,
         _intermediateEvaluationResult.get(),

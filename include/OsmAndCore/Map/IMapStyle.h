@@ -60,8 +60,13 @@ namespace OsmAnd
             virtual bool getIsSwitch() const = 0;
 
             virtual QHash<SWIG_CLARIFY(IMapStyle, ValueDefinitionId), SWIG_CLARIFY(IMapStyle, Value)> getValues() const = 0;
+            virtual const QHash<SWIG_CLARIFY(IMapStyle, ValueDefinitionId), SWIG_CLARIFY(IMapStyle, Value)>&
+                getValuesRef() const = 0;
             virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> > getOneOfConditionalSubnodes() const = 0;
+            virtual const QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> >&
+                getOneOfConditionalSubnodesRef() const = 0;
             virtual QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> > getApplySubnodes() const = 0;
+            virtual const QList< std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> >& getApplySubnodesRef() const = 0;
         };
 
         class OSMAND_CORE_API IRule
@@ -75,7 +80,9 @@ namespace OsmAnd
             virtual ~IRule();
 
             virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() = 0;
+            virtual const std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() = 0;
             virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const = 0;
+            virtual const std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() const = 0;
             virtual MapStyleRulesetType getRulesetType() const = 0;
         };
 
@@ -108,7 +115,9 @@ namespace OsmAnd
             virtual ~IAttribute();
 
             virtual std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() = 0;
+            virtual const std::shared_ptr<SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() = 0;
             virtual std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)> getRootNode() const = 0;
+            virtual const std::shared_ptr<const SWIG_CLARIFY(IMapStyle, IRuleNode)>& getRootNodeRef() const = 0;
             virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const = 0;
         };
 

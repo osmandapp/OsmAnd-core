@@ -480,7 +480,7 @@ QString OsmAndTools::CStyle::DebugEmitter::dumpRuleNode(
     if (!ruleNode->getIsSwitch())
         dump += dumpRuleNodeOutputValues(mapStyle, ruleNode, prefix, true);
 
-    const auto& oneOfConditionalSubnodes = ruleNode->getOneOfConditionalSubnodes();
+    const auto& oneOfConditionalSubnodes = ruleNode->getOneOfConditionalSubnodesRef();
     if (!oneOfConditionalSubnodes.isEmpty())
     {
         dump += prefix + QLatin1String("local atLeastOneConditionalMatched = false;\n");
@@ -503,7 +503,7 @@ QString OsmAndTools::CStyle::DebugEmitter::dumpRuleNode(
     if (ruleNode->getIsSwitch())
         dump += dumpRuleNodeOutputValues(mapStyle, ruleNode, prefix, false);
 
-    const auto& applySubnodes = ruleNode->getApplySubnodes();
+    const auto& applySubnodes = ruleNode->getApplySubnodesRef();
     if (!applySubnodes.isEmpty())
     {
         for (const auto& applySubnode : applySubnodes)
