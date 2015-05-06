@@ -287,20 +287,21 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveParameters()
             }
 
             // Create new resolved parameter
-            resolvedParameter.reset(new Parameter(
+            const std::shared_ptr<Parameter> newResolvedParameter(new Parameter(
                 unresolvedParameter->title,
                 unresolvedParameter->description,
                 unresolvedParameter->category,
                 nameId,
                 unresolvedParameter->dataType,
                 resolvedPossibleValues));
+            resolvedParameter = newResolvedParameter;
 
             // Register parameter as value definition
             const auto newValueDefId = _valuesDefinitions.size();
             const std::shared_ptr<ParameterValueDefinition> inputValueDefinition(new ParameterValueDefinition(
                 newValueDefId,
                 unresolvedParameter->name,
-                resolvedParameter));
+                newResolvedParameter));
             _valuesDefinitions.push_back(inputValueDefinition);
             _valuesDefinitionsIndicesByName.insert(unresolvedParameter->name, newValueDefId);
         }
@@ -333,7 +334,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAttributes()
         }
     }
 
-    _attributes = copyAs< StringId, std::shared_ptr<const Attribute> >(attributes);
+    _attributes = copyAs< StringId, std::shared_ptr<const IMapStyle::IAttribute> >(attributes);
 
     return true;
 }
@@ -398,7 +399,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveRulesets()
                 }
             }
 
-            _rulesets[rulesetTypeIdx] = ruleset;
+            _rulesets[rulesetTypeIdx] = copyAs< TagValueId, std::shared_ptr<const IMapStyle::IRule> >(ruleset);
         }
     }
 
@@ -466,7 +467,7 @@ bool OsmAnd::ResolvedMapStyle_P::parseConstantValue(
     return parseConstantValue(input, valueDefintion->dataType, valueDefintion->isComplex, outParsedValue);
 }
 
-std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Parameter> OsmAnd::ResolvedMapStyle_P::getParameter(const QString& name) const
+std::shared_ptr<const OsmAnd::IMapStyle::IParameter> OsmAnd::ResolvedMapStyle_P::getParameter(const QString& name) const
 {
     StringId nameId;
     if (!resolveStringIdInLUT(name, nameId))
@@ -475,12 +476,12 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Parameter> OsmAnd::ResolvedMap
     return _parameters[nameId];
 }
 
-QList< std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Parameter> > OsmAnd::ResolvedMapStyle_P::getParameters() const
+QList< std::shared_ptr<const OsmAnd::IMapStyle::IParameter> > OsmAnd::ResolvedMapStyle_P::getParameters() const
 {
     return _parameters.values();
 }
 
-std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Attribute> OsmAnd::ResolvedMapStyle_P::getAttribute(const QString& name) const
+std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> OsmAnd::ResolvedMapStyle_P::getAttribute(const QString& name) const
 {
     StringId nameId;
     if (!resolveStringIdInLUT(name, nameId))
@@ -489,12 +490,12 @@ std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Attribute> OsmAnd::ResolvedMap
     return _attributes[nameId];
 }
 
-QList< std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Attribute> > OsmAnd::ResolvedMapStyle_P::getAttributes() const
+QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > OsmAnd::ResolvedMapStyle_P::getAttributes() const
 {
     return _attributes.values();
 }
 
-QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::ResolvedMapStyle_P::Rule> > OsmAnd::ResolvedMapStyle_P::getRuleset(
+QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle_P::getRuleset(
     const MapStyleRulesetType rulesetType) const
 {
     return _rulesets[static_cast<unsigned int>(rulesetType)];

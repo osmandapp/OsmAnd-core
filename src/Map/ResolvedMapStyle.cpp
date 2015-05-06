@@ -72,7 +72,7 @@ QList< std::shared_ptr<const OsmAnd::IMapStyle::IAttribute> > OsmAnd::ResolvedMa
 QHash< OsmAnd::TagValueId, std::shared_ptr<const OsmAnd::IMapStyle::IRule> > OsmAnd::ResolvedMapStyle::getRuleset(
     const MapStyleRulesetType rulesetType) const
 {
-    return copyAs< TagValueId, std::shared_ptr<const IRule> >(_p->getRuleset(rulesetType));
+    return _p->getRuleset(rulesetType);
 }
 
 QString OsmAnd::ResolvedMapStyle::getStringById(const StringId id) const

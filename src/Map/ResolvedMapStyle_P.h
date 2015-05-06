@@ -76,9 +76,9 @@ namespace OsmAnd
         bool resolve();
         
         QHash<QString, QString> _constants;
-        QHash<StringId, std::shared_ptr<const Parameter> > _parameters;
-        QHash<StringId, std::shared_ptr<const Attribute> > _attributes;
-        std::array< QHash<TagValueId, std::shared_ptr<const Rule> >, MapStyleRulesetTypesCount> _rulesets;
+        QHash<StringId, std::shared_ptr<const IMapStyle::IParameter> > _parameters;
+        QHash<StringId, std::shared_ptr<const IMapStyle::IAttribute> > _attributes;
+        std::array< QHash<TagValueId, std::shared_ptr<const IMapStyle::IRule> >, MapStyleRulesetTypesCount> _rulesets;
     public:
         virtual ~ResolvedMapStyle_P();
 
@@ -97,11 +97,11 @@ namespace OsmAnd
             const std::shared_ptr<const MapStyleValueDefinition>& valueDefintion,
             MapStyleConstantValue& outParsedValue) const;
 
-        std::shared_ptr<const Parameter> getParameter(const QString& name) const;
-        QList< std::shared_ptr<const Parameter> > getParameters() const;
-        std::shared_ptr<const Attribute> getAttribute(const QString& name) const;
-        QList< std::shared_ptr<const Attribute> > getAttributes() const;
-        QHash< TagValueId, std::shared_ptr<const Rule> > getRuleset(
+        std::shared_ptr<const IMapStyle::IParameter> getParameter(const QString& name) const;
+        QList< std::shared_ptr<const IMapStyle::IParameter> > getParameters() const;
+        std::shared_ptr<const IMapStyle::IAttribute> getAttribute(const QString& name) const;
+        QList< std::shared_ptr<const IMapStyle::IAttribute> > getAttributes() const;
+        QHash< TagValueId, std::shared_ptr<const IMapStyle::IRule> > getRuleset(
             const MapStyleRulesetType rulesetType) const;
 
         QString getStringById(const StringId id) const;
