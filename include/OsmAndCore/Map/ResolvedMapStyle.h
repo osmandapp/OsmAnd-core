@@ -72,8 +72,9 @@ namespace OsmAnd
 
 #if !defined(SWIG)
             const std::shared_ptr<RuleNode> rootNode;
-            const std::shared_ptr<const RuleNode> constRootNode;
 #endif // !defined(SWIG)
+            const std::shared_ptr<IMapStyle::IRuleNode> rootNodeAsInterface;
+            const std::shared_ptr<const IMapStyle::IRuleNode> rootNodeAsConstInterface;
         };
 
         class OSMAND_CORE_API Rule Q_DECL_FINAL

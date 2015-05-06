@@ -151,7 +151,7 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
     OnDemand<IntermediateEvaluationResult>& constantEvaluationResult) const
 {
     // Check all values of a rule until all are checked.
-    const auto& ruleNodeValues = ruleNode->getValues();
+    const auto& ruleNodeValues = ruleNode->getValuesRef();
     for (const auto& ruleValueEntry : rangeOf(constOf(ruleNodeValues)))
     {
         const auto valueDefId = ruleValueEntry.key();
