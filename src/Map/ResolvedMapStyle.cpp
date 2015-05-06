@@ -26,6 +26,12 @@ std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle:
     return _p->getValueDefinitionById(id);
 }
 
+const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& OsmAnd::ResolvedMapStyle::getValueDefinitionRefById(
+    const ValueDefinitionId id) const
+{
+    return _p->getValueDefinitionRefById(id);
+}
+
 QList< std::shared_ptr<const OsmAnd::MapStyleValueDefinition> > OsmAnd::ResolvedMapStyle::getValueDefinitions() const
 {
     return _p->getValueDefinitions();

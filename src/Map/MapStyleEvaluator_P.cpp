@@ -301,7 +301,7 @@ void OsmAnd::MapStyleEvaluator_P::fillResultFromRuleNode(
     for (const auto& ruleValueEntry : rangeOf(constOf(values)))
     {
         const auto valueDefId = ruleValueEntry.key();
-        const auto& valueDef = owner->mapStyle->getValueDefinitionById(valueDefId);
+        const auto& valueDef = owner->mapStyle->getValueDefinitionRefById(valueDefId);
 
         // Skip all non-Output values
         if (valueDef->valueClass != MapStyleValueDefinition::Class::Output)

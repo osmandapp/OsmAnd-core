@@ -204,7 +204,7 @@ std::shared_ptr<OsmAnd::ResolvedMapStyle_P::RuleNode> OsmAnd::ResolvedMapStyle_P
 
         // Find value definition id and object
         const auto valueDefId = getValueDefinitionIdByName(name);
-        const auto valueDef = getValueDefinitionById(valueDefId);
+        const auto& valueDef = getValueDefinitionById(valueDefId);
         if (valueDefId < 0 || !valueDef)
         {
             LogPrintf(LogSeverityLevel::Warning,
@@ -441,6 +441,12 @@ std::shared_ptr<const OsmAnd::MapStyleValueDefinition> OsmAnd::ResolvedMapStyle_
 {
     if (id < 0 || id >= _valuesDefinitions.size())
         return nullptr;
+    return _valuesDefinitions[id];
+}
+
+const std::shared_ptr<const OsmAnd::MapStyleValueDefinition>& OsmAnd::ResolvedMapStyle_P::getValueDefinitionRefById(
+    const ValueDefinitionId id) const
+{
     return _valuesDefinitions[id];
 }
 

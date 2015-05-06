@@ -87,7 +87,7 @@ void OsmAnd::MapPresentationEnvironment_P::setSettings(const QHash< QString, QSt
 
         // Resolve input-value definition by name
         const auto valueDefId = owner->mapStyle->getValueDefinitionIdByName(name);
-        const auto valueDef = owner->mapStyle->getValueDefinitionById(valueDefId);
+        const auto& valueDef = owner->mapStyle->getValueDefinitionById(valueDefId);
         if (!valueDef || valueDef->valueClass != MapStyleValueDefinition::Class::Input)
         {
             LogPrintf(LogSeverityLevel::Warning,
@@ -131,7 +131,7 @@ void OsmAnd::MapPresentationEnvironment_P::applyTo(MapStyleEvaluator& evaluator)
         const auto& valueDefId = settingEntry.key();
         const auto& settingValue = settingEntry.value();
 
-        const auto valueDef = owner->mapStyle->getValueDefinitionById(valueDefId);
+        const auto& valueDef = owner->mapStyle->getValueDefinitionById(valueDefId);
         if (!valueDef)
             continue;
 

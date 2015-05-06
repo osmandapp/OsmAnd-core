@@ -306,7 +306,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
 
-                        const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
+                        const auto& valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
 
                         output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ");
                         if (valueDefinition->dataType == OsmAnd::MapStyleValueDataType::Color)
@@ -358,7 +358,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
 
-                        const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
+                        const auto& valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
 
                         output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ");
                         if (valueDefinition->dataType == OsmAnd::MapStyleValueDataType::Color)
@@ -411,7 +411,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                         const auto valueDefinitionId = evaluatedValueEntry.key();
                         const auto value = evaluatedValueEntry.value();
 
-                        const auto valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
+                        const auto& valueDefinition = mapStyle->getValueDefinitionById(valueDefinitionId);
 
                         output << xT("\t\t") << QStringToStlString(valueDefinition->name) << xT(" = ");
                         if (valueDefinition->dataType == OsmAnd::MapStyleValueDataType::Color)
