@@ -1082,7 +1082,7 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         }
 
         // Sort blocks by data offset to force forward-only seeking
-        qSort(treeNodesWithData.begin(), treeNodesWithData.end(),
+        std::sort(treeNodesWithData,
             []
             (const std::shared_ptr<const ObfMapSectionLevelTreeNode>& l, const std::shared_ptr<const ObfMapSectionLevelTreeNode>& r) -> bool
             {

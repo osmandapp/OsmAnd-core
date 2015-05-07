@@ -980,7 +980,7 @@ void OsmAnd::ObfRoutingSectionReader_P::loadRoads(
 
 
     // Sort blocks by data offset to force forward-only seeking
-    qSort(treeNodesWithData.begin(), treeNodesWithData.end(),
+    std::sort(treeNodesWithData,
         []
         (const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& l, const std::shared_ptr<const ObfRoutingSectionLevelTreeNode>& r) -> bool
         {

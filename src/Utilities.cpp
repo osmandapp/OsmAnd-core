@@ -515,7 +515,7 @@ QString OsmAnd::Utilities::stringifyZoomLevels(const QSet<ZoomLevel>& zoomLevels
     QString result;
 
     auto sortedZoomLevels = zoomLevels.values();
-    qSort(sortedZoomLevels.begin(), sortedZoomLevels.end());
+    std::sort(sortedZoomLevels);
     bool previousCaptured = false;
     ZoomLevel previousZoomLevel = sortedZoomLevels.first();
     bool range = false;

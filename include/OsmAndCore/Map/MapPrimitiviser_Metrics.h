@@ -78,6 +78,9 @@ namespace OsmAnd
         /* Time spent on obtaining primitives symbols */                                            \
         FIELD_ACTION(float, elapsedTimeForObtainingPrimitivesSymbols, "s");                         \
                                                                                                     \
+        /* Number of obtained symbols */                                                            \
+        FIELD_ACTION(float, obtainedSymbols, "");                                                   \
+                                                                                                    \
         /* Time spent totally */                                                                    \
         FIELD_ACTION(float, elapsedTime, "s");
 

@@ -48,7 +48,7 @@ bool OsmAnd::AtlasMapRenderer::updateInternalState(
     internalState->targetInTileOffsetN.y = static_cast<float>(inTileOffset.y) / tileSize31;
 
     // Sort visible tiles by distance from target
-    qSort(internalState->visibleTiles.begin(), internalState->visibleTiles.end(),
+    std::sort(internalState->visibleTiles,
         [internalState]
         (const TileId& l, const TileId& r) -> bool
         {
@@ -72,8 +72,18 @@ bool OsmAnd::AtlasMapRenderer::prePrepareFrame()
     // Get set of tiles that are unique: visible tiles may contain same tiles, but wrapped
     const auto internalState = static_cast<AtlasMapRendererInternalState*>(getInternalStateRef());
     _uniqueTiles.clear();
+    _uniqueSortedTiles.clear();
+    _uniqueSortedTiles.reserve(internalState->visibleTiles.size());
     for (const auto& tileId : constOf(internalState->visibleTiles))
-        _uniqueTiles.insert(Utilities::normalizeTileId(tileId, currentState.zoomLevel));
+    {
+        const auto normalizedTileId = Utilities::normalizeTileId(tileId, currentState.zoomLevel);
+
+        if (_uniqueTiles.contains(normalizedTileId))
+            continue;
+
+        _uniqueTiles.insert(normalizedTileId);
+        _uniqueSortedTiles.push_back(normalizedTileId);
+    }
 
     return true;
 }
@@ -84,7 +94,7 @@ bool OsmAnd::AtlasMapRenderer::postPrepareFrame()
         return false;
 
     // Notify resources manager about new active zone
-    getResources().updateActiveZone(_uniqueTiles, currentState.zoomLevel);
+    getResources().updateActiveZone(_uniqueSortedTiles, currentState.zoomLevel);
 
     return true;
 }

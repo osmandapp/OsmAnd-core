@@ -6,11 +6,14 @@
 #include <array>
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QList>
 #include <QHash>
 #include <QSet>
 #include <QReadWriteLock>
 #include <QWaitCondition>
+#include <QVector>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "MapRendererTypes_private.h"
@@ -123,15 +126,23 @@ namespace OsmAnd
         bool validateResourcesOfType(const MapRendererResourceType type);
 
         // Resources management:
-        QSet<TileId> _activeTiles;
+        QVector<TileId> _activeTiles;
         ZoomLevel _activeZoom;
         bool updatesPresent() const;
         bool checkForUpdatesAndApply() const;
-        void updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom);
-        void requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
+        void updateResources(const QVector<TileId>& tiles, const ZoomLevel zoom);
+        void requestNeededResources(const QVector<TileId>& activeTiles, const ZoomLevel activeZoom);
+        void requestNeededResources(
+            const MapRendererResourceType type,
+            const QVector<TileId>& activeTiles,
+            const ZoomLevel activeZoom);
+        void requestNeededResources(
+            const std::shared_ptr<MapRendererBaseResourcesCollection>& resourcesCollection,
+            const QVector<TileId>& activeTiles,
+            const ZoomLevel activeZoom);
         void requestNeededTiledResources(
             const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
-            const QSet<TileId>& activeTiles,
+            const QVector<TileId>& activeTiles,
             const ZoomLevel activeZoom);
         void requestNeededKeyedResources(
             const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection);
@@ -142,7 +153,7 @@ namespace OsmAnd
             const bool requestSucceeded,
             const bool dataAvailable);
         void processResourceRequestCancellation(const std::shared_ptr<MapRendererBaseResource>& resource);
-        void cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom);
+        void cleanupJunkResources(const QVector<TileId>& activeTiles, const ZoomLevel activeZoom);
         bool cleanupJunkResource(const std::shared_ptr<MapRendererBaseResource>& resource, bool& needsResourcesUploadOrUnload);
         unsigned int unloadResources();
         void unloadResourcesFrom(
@@ -188,7 +199,7 @@ namespace OsmAnd
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
         void updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);
-        void updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom);
+        void updateActiveZone(const QVector<TileId>& tiles, const ZoomLevel zoom);
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,
             bool* const outMoreUploadsThanLimitAvailable = nullptr,

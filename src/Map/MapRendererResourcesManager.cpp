@@ -377,7 +377,7 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
         _resourcesStoragesLock.unlock();
 }
 
-void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QSet<TileId>& tiles, const ZoomLevel zoom)
+void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QVector<TileId>& tiles, const ZoomLevel zoom)
 {
     // Check if update needed
     bool update = true; //NOTE: So far this won't work, since resources won't be updated
@@ -533,7 +533,7 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
     while (_workerThreadIsAlive)
     {
         // Local copy of active zone
-        QSet<TileId> activeTiles;
+        QVector<TileId> activeTiles;
         ZoomLevel activeZoom;
 
         // Wait until we're unblocked by host
@@ -555,39 +555,59 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
     _workerThreadId = nullptr;
 }
 
-void OsmAnd::MapRendererResourcesManager::requestNeededResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
+void OsmAnd::MapRendererResourcesManager::requestNeededResources(
+    const QVector<TileId>& activeTiles,
+    const ZoomLevel activeZoom)
 {
-    for (const auto& resourcesCollections : constOf(_storageByType))
+    // Priority is reversed, last request will be fulfilled first
+    requestNeededResources(MapRendererResourceType::Symbols, activeTiles, activeZoom);
+    requestNeededResources(MapRendererResourceType::ElevationData, activeTiles, activeZoom);
+    requestNeededResources(MapRendererResourceType::MapLayer, activeTiles, activeZoom);
+}
+
+void OsmAnd::MapRendererResourcesManager::requestNeededResources(
+    const MapRendererResourceType type,
+    const QVector<TileId>& activeTiles,
+    const ZoomLevel activeZoom)
+{
+    const auto& resourcesCollections = _storageByType[static_cast<int>(type)];
+
+    for (const auto& resourcesCollection : constOf(resourcesCollections))
     {
-        for (const auto& resourcesCollection : constOf(resourcesCollections))
-        {
-            if (!resourcesCollection)
-                continue;
+        if (!resourcesCollection)
+            continue;
 
-            // Skip resource types that do not have an available data source
-            std::shared_ptr<IMapDataProvider> mapDataProvider;
-            if (!obtainProviderFor(resourcesCollection.get(), mapDataProvider))
-                continue;
+        requestNeededResources(resourcesCollection, activeTiles, activeZoom);
+    }
+}
 
-            if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
-            {
-                requestNeededTiledResources(
-                    tiledResourcesCollection,
-                    activeTiles,
-                    activeZoom);
-            }
-            else if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
-            {
-                requestNeededKeyedResources(
-                    keyedResourcesCollection);
-            }
-        }
+void OsmAnd::MapRendererResourcesManager::requestNeededResources(
+    const std::shared_ptr<MapRendererBaseResourcesCollection>& resourcesCollection,
+    const QVector<TileId>& activeTiles,
+    const ZoomLevel activeZoom)
+{
+    // Skip resource types that do not have an available data source
+    std::shared_ptr<IMapDataProvider> mapDataProvider;
+    if (!obtainProviderFor(resourcesCollection.get(), mapDataProvider))
+        return;
+
+    if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
+    {
+        requestNeededTiledResources(
+            tiledResourcesCollection,
+            activeTiles,
+            activeZoom);
+    }
+    else if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
+    {
+        requestNeededKeyedResources(
+            keyedResourcesCollection);
     }
 }
 
 void OsmAnd::MapRendererResourcesManager::requestNeededTiledResources(
     const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
-    const QSet<TileId>& activeTiles,
+    const QVector<TileId>& activeTiles,
     const ZoomLevel activeZoom)
 {
     for (const auto& activeTileId : constOf(activeTiles))
@@ -953,7 +973,9 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply() const
     return (updatesApplied || updatesPresent);
 }
 
-void OsmAnd::MapRendererResourcesManager::updateResources(const QSet<TileId>& tiles, const ZoomLevel zoom)
+void OsmAnd::MapRendererResourcesManager::updateResources(
+    const QVector<TileId>& tiles,
+    const ZoomLevel zoom)
 {
     // Before requesting missing tiled resources, clean up cache to free some space
     if (!renderer->currentDebugSettings->disableJunkResourcesCleanup)
@@ -1118,7 +1140,9 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
     }
 }
 
-void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(const QSet<TileId>& activeTiles, const ZoomLevel activeZoom)
+void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
+    const QVector<TileId>& activeTiles,
+    const ZoomLevel activeZoom)
 {
     QWriteLocker scopedLocker(&_resourcesStoragesLock);
 

@@ -28,6 +28,7 @@ namespace OsmAnd
     private:
         // General:
         QSet<TileId> _uniqueTiles;
+        QVector<TileId> _uniqueSortedTiles;
     protected:
         AtlasMapRenderer(
             GPUAPI* const gpuAPI,
