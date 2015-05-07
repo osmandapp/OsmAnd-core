@@ -43,19 +43,29 @@ bool OsmAnd::Concurrent::WorkerPool::waitForDone(const int msecs /*= -1*/) const
     return _p->waitForDone(msecs);
 }
 
-void OsmAnd::Concurrent::WorkerPool::enqueue(QRunnable* const runnable)
+void OsmAnd::Concurrent::WorkerPool::enqueue(QRunnable* const runnable, const SortPredicate predicate /*= nullptr*/)
 {
-    _p->enqueue(runnable);
+    _p->enqueue(runnable, predicate);
 }
 
-bool OsmAnd::Concurrent::WorkerPool::dequeue(QRunnable* const runnable)
+void OsmAnd::Concurrent::WorkerPool::enqueue(const QVector<QRunnable*>& runnables, const SortPredicate predicate /*= nullptr*/)
 {
-    return _p->dequeue(runnable);
+    _p->enqueue(runnables, predicate);
+}
+
+bool OsmAnd::Concurrent::WorkerPool::dequeue(QRunnable* const runnable, const SortPredicate predicate /*= nullptr*/)
+{
+    return _p->dequeue(runnable, predicate);
 }
 
 void OsmAnd::Concurrent::WorkerPool::dequeueAll()
 {
     _p->dequeueAll();
+}
+
+void OsmAnd::Concurrent::WorkerPool::sortQueue(const SortPredicate predicate)
+{
+    _p->sortQueue(predicate);
 }
 
 void OsmAnd::Concurrent::WorkerPool::reset()

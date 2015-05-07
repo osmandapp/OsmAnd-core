@@ -31,7 +31,7 @@ namespace OsmAnd
     public:
         virtual ~IAtlasMapRenderer();
 
-        virtual QList<TileId> getVisibleTiles() const = 0;
+        virtual QVector<TileId> getVisibleTiles() const = 0;
         virtual unsigned int getVisibleTilesCount() const = 0;
 
         virtual float getCurrentTileSizeOnScreenInPixels() const = 0;

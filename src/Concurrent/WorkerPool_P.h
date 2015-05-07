@@ -4,6 +4,7 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QList>
 #include <QAtomicInt>
 #include <QWaitCondition>
@@ -11,6 +12,8 @@
 #include <QThread>
 #include <QSet>
 #include <QQueue>
+#include <QVector>
+#include "restore_internal_warnings.h"
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
@@ -26,6 +29,7 @@ namespace OsmAnd
 
         public:
             typedef WorkerPool::Order Order;
+            typedef WorkerPool::SortPredicate SortPredicate;
 
         private:
             class WorkerThread Q_DECL_FINAL : public QThread
@@ -51,7 +55,7 @@ namespace OsmAnd
             QAtomicInt _maxThreadCount;
 
             mutable QMutex _mutex;
-            QList<QRunnable*> _queue;
+            QVector<QRunnable*> _queue;
             QSet<WorkerThread*> _allThreads;
             QQueue<WorkerThread*> _freeThreads;
             QQueue<WorkerThread*> _inactiveThreads;
@@ -64,8 +68,9 @@ namespace OsmAnd
             void tryLaunchNextRunnables();
             QRunnable* takeNextRunnable();
             bool tooManyThreadsActive() const;
-            bool waitForDoneNoLock(const int msecs) const;
             void dequeueAllNoLock();
+            bool waitForDoneNoLock(const int msecs) const;
+            void sortQueueNoLock(const SortPredicate predicate);
         protected:
             WorkerPool_P(WorkerPool* const owner, const Order order, const int maxThreadCount);
         public:
@@ -82,9 +87,12 @@ namespace OsmAnd
 
             bool waitForDone(const int msecs) const;
 
-            void enqueue(QRunnable* const runnable);
-            bool dequeue(QRunnable* const runnable);
+            void enqueue(QRunnable* const runnable, const SortPredicate predicate);
+            void enqueue(const QVector<QRunnable*>& runnables, const SortPredicate predicate);
+            bool dequeue(QRunnable* const runnable, const SortPredicate predicate);
             void dequeueAll();
+
+            void sortQueue(const SortPredicate predicate);
 
             void reset();
 

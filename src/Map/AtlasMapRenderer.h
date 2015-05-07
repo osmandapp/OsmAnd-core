@@ -26,9 +26,6 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(AtlasMapRenderer);
 
     private:
-        // General:
-        QSet<TileId> _uniqueTiles;
-        QVector<TileId> _uniqueSortedTiles;
     protected:
         AtlasMapRenderer(
             GPUAPI* const gpuAPI,
@@ -85,7 +82,7 @@ namespace OsmAnd
         const std::shared_ptr<AtlasMapRendererSymbolsStage>& symbolsStage;
         const std::shared_ptr<AtlasMapRendererDebugStage>& debugStage;
 
-        virtual QList<TileId> getVisibleTiles() const;
+        virtual QVector<TileId> getVisibleTiles() const;
         virtual unsigned int getVisibleTilesCount() const;
 
         // Symbols-related

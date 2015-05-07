@@ -4,7 +4,9 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
-#include <QList>
+#include "ignore_warnings_on_external_includes.h"
+#include <QVector>
+#include "restore_internal_warnings.h"
 
 #include <glm/glm.hpp>
 
@@ -18,11 +20,13 @@ namespace OsmAnd
 {
     struct AtlasMapRendererInternalState : public MapRendererInternalState
     {
+        AtlasMapRendererInternalState();
         virtual ~AtlasMapRendererInternalState();
 
         TileId targetTileId;
         PointF targetInTileOffsetN;
-        QList<TileId> visibleTiles;
+        QVector<TileId> visibleTiles;
+        QVector<TileId> uniqueTiles;
 
         glm::vec4 glmViewport;
         glm::mat4 mOrthographicProjection;

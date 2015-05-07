@@ -68,6 +68,8 @@ OsmAnd::MapRendererResourcesManager::MapRendererResourcesManager(MapRenderer* co
 {
     resetResourceWorkerThreadsLimit();
 
+    _requestedResourcesTasks.reserve(1024);
+
     // Start worker thread
     _workerThreadIsAlive = true;
     _workerThread->start();
@@ -377,10 +379,14 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
         _resourcesStoragesLock.unlock();
 }
 
-void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QVector<TileId>& tiles, const ZoomLevel zoom)
+void OsmAnd::MapRendererResourcesManager::updateActiveZone(
+    const TileId centerTileId,
+    const QVector<TileId>& tiles,
+    const ZoomLevel zoom)
 {
     // Check if update needed
     bool update = true; //NOTE: So far this won't work, since resources won't be updated
+    update = update || (_centerTileId != centerTileId);
     update = update || (_activeZoom != zoom);
     update = update || (_activeTiles != tiles);
 
@@ -390,6 +396,7 @@ void OsmAnd::MapRendererResourcesManager::updateActiveZone(const QVector<TileId>
         QMutexLocker scopedLocker(&_workerThreadWakeupMutex);
 
         // Update active zone
+        _centerTileId = centerTileId;
         _activeTiles = tiles;
         _activeZoom = zoom;
 
@@ -533,6 +540,7 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
     while (_workerThreadIsAlive)
     {
         // Local copy of active zone
+        TileId centerTileId;
         QVector<TileId> activeTiles;
         ZoomLevel activeZoom;
 
@@ -542,6 +550,7 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
             REPEAT_UNTIL(_workerThreadWakeup.wait(&_workerThreadWakeupMutex));
 
             // Copy active zone to local copy
+            centerTileId = _centerTileId;
             activeTiles = _activeTiles;
             activeZoom = _activeZoom;
         }
@@ -549,20 +558,53 @@ void OsmAnd::MapRendererResourcesManager::workerThreadProcedure()
             break;
 
         // Update resources
-        updateResources(activeTiles, activeZoom);
+        updateResources(centerTileId, activeTiles, activeZoom);
     }
 
     _workerThreadId = nullptr;
 }
 
 void OsmAnd::MapRendererResourcesManager::requestNeededResources(
+    const TileId centerTileId,
     const QVector<TileId>& activeTiles,
     const ZoomLevel activeZoom)
 {
-    // Priority is reversed, last request will be fulfilled first
-    requestNeededResources(MapRendererResourceType::Symbols, activeTiles, activeZoom);
-    requestNeededResources(MapRendererResourceType::ElevationData, activeTiles, activeZoom);
-    requestNeededResources(MapRendererResourceType::MapLayer, activeTiles, activeZoom);
+    _requestedResourcesTasks.resize(0);
+    for (unsigned int type = 0; type < MapRendererResourceTypesCount; type++)
+        requestNeededResources(static_cast<MapRendererResourceType>(type), activeTiles, activeZoom);
+
+    //////////////////////////////////////////////////////////////////////////
+    LogPrintf(LogSeverityLevel::Debug, "Target %dx%d", centerTileId.x, centerTileId.y);
+    for (const auto task_ : constOf(_requestedResourcesTasks))
+    {
+        const auto task = static_cast<ResourceRequestTask*>(task_);
+        const auto tiledResource = std::dynamic_pointer_cast<MapRendererBaseTiledResource>(task->requestedResource);
+        if (!tiledResource)
+            continue;
+
+        const auto dx = tiledResource->tileId.x - centerTileId.x;
+        const auto dy = tiledResource->tileId.y - centerTileId.y;
+
+        const auto d = dx*dx + dy*dy;
+
+        LogPrintf(LogSeverityLevel::Debug, "Task %p %dx%d distance = %d", task_, tiledResource->tileId.x, tiledResource->tileId.y, d);
+    }
+    LogPrintf(LogSeverityLevel::Debug, "End target %dx%d", centerTileId.x, centerTileId.y);
+    //////////////////////////////////////////////////////////////////////////
+
+    _resourcesRequestWorkerPool.enqueue(
+        _requestedResourcesTasks,
+        [centerTileId, activeTiles, activeZoom]
+        (QRunnable* const l_, QRunnable* const r_) -> bool
+        {
+            const auto l = static_cast<ResourceRequestTask*>(l_);
+            const auto r = static_cast<ResourceRequestTask*>(r_);
+
+            const auto lPriority = l->calculatePriority(centerTileId, activeTiles, activeZoom);
+            const auto rPriority = r->calculatePriority(centerTileId, activeTiles, activeZoom);
+
+            return lPriority < rPriority;
+        });
 }
 
 void OsmAnd::MapRendererResourcesManager::requestNeededResources(
@@ -671,7 +713,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededKeyedResources(
     }
 }
 
-void OsmAnd::MapRendererResourcesManager::requestNeededResource(const std::shared_ptr<MapRendererBaseResource>& resource)
+void OsmAnd::MapRendererResourcesManager::requestNeededResource(
+    const std::shared_ptr<MapRendererBaseResource>& resource)
 {
     // Only if tile entry has "Unknown" state proceed to "Requesting" state
     if (!resource->setStateIf(MapRendererResourceState::Unknown, MapRendererResourceState::Requesting))
@@ -726,7 +769,7 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(const std::share
         LOG_RESOURCE_STATE_CHANGE(resource, ?, MapRendererResourceState::Requested);
 
         // Finally start the request in a proper workers pool
-        _resourcesRequestWorkerPool.enqueue(asyncTask);
+        _requestedResourcesTasks.push_back(asyncTask);
     }
 }
 
@@ -974,6 +1017,7 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply() const
 }
 
 void OsmAnd::MapRendererResourcesManager::updateResources(
+    const TileId centerTileId,
     const QVector<TileId>& tiles,
     const ZoomLevel zoom)
 {
@@ -984,7 +1028,7 @@ void OsmAnd::MapRendererResourcesManager::updateResources(
     // In the end of rendering processing, request tiled resources that are neither
     // present in requested list, nor in pending, nor in uploaded
     if (!renderer->currentDebugSettings->disableNeededResourcesRequests)
-        requestNeededResources(tiles, zoom);
+        requestNeededResources(centerTileId, tiles, zoom);
 }
 
 unsigned int OsmAnd::MapRendererResourcesManager::unloadResources()
@@ -1980,4 +2024,47 @@ void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::postExecuteWrappe
 {
     const auto task = static_cast<ResourceRequestTask*>(task_);
     task->postExecute(wasCancelled);
+}
+
+int64_t OsmAnd::MapRendererResourcesManager::ResourceRequestTask::calculatePriority(
+    const TileId centerTileId,
+    const QVector<TileId>& activeTiles,
+    const ZoomLevel activeZoom) const
+{
+    // Priority calculation does not need to be stable
+
+    // Keyed resources have minimal priority always
+    if (std::dynamic_pointer_cast<MapRendererBaseKeyedResource>(requestedResource))
+        return std::numeric_limits<int64_t>::min();
+
+    const auto tiledResource = std::dynamic_pointer_cast<MapRendererBaseTiledResource>(requestedResource);
+    if (!tiledResource)
+        return 0;
+
+    // The closer tiled resource coordinates are from center, the higher priority it has
+    int priority = std::numeric_limits<int64_t>::max();
+
+    switch (tiledResource->type)
+    {
+        case MapRendererResourceType::MapLayer:
+            // Do nothing, since MapLayer resources are most important
+            break;
+        case MapRendererResourceType::ElevationData:
+            priority -= 1000000000;
+            break;
+        case MapRendererResourceType::Symbols:
+            priority -= 2000000000;
+            break;
+        default:
+            priority -= 3000000000;
+            break;
+    }
+
+    priority -= qAbs(static_cast<int>(tiledResource->zoom) - static_cast<int>(activeZoom)) * 10000000;
+
+    const auto dX = tiledResource->tileId.x - centerTileId.x;
+    const auto dY = tiledResource->tileId.y - centerTileId.y;
+    priority -= dX*dX + dY*dY;
+
+    return priority;
 }

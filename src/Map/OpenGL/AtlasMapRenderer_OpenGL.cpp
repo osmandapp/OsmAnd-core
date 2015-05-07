@@ -464,7 +464,9 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
             }
         }
 
-        internalState->visibleTiles = visibleTiles.toList();
+        internalState->visibleTiles.resize(0);
+        for (const auto& tileId : constOf(visibleTiles))
+            internalState->visibleTiles.push_back(tileId);
     }
     /*
     //TODO: Find visible tiles using scanline fill
@@ -479,6 +481,28 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     _visibleTiles.insert(tileId);
     });
     */
+
+    // Normalize and make unique visible tiles
+    QSet<TileId> uniqueTiles;
+    for (const auto& tileId : constOf(internalState->visibleTiles))
+        uniqueTiles.insert(Utilities::normalizeTileId(tileId, state.zoomLevel));
+    internalState->uniqueTiles.resize(0);
+    for (const auto& tileId : constOf(uniqueTiles))
+        internalState->uniqueTiles.push_back(tileId);
+
+    // Sort visible tiles by distance from target
+    std::sort(internalState->uniqueTiles,
+        [internalState]
+        (const TileId& l, const TileId& r) -> bool
+        {
+            const auto lx = l.x - internalState->targetTileId.x;
+            const auto ly = l.y - internalState->targetTileId.y;
+
+            const auto rx = r.x - internalState->targetTileId.x;
+            const auto ry = r.y - internalState->targetTileId.y;
+
+            return (lx*lx + ly*ly) < (rx*rx + ry*ry);
+        });
 }
 
 OsmAnd::GPUAPI_OpenGL* OsmAnd::AtlasMapRenderer_OpenGL::getGPUAPI() const

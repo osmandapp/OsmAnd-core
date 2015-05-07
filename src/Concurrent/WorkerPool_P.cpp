@@ -12,6 +12,7 @@ OsmAnd::Concurrent::WorkerPool_P::WorkerPool_P(WorkerPool* const owner_, const O
     , _isBeingReset(false)
     , owner(owner_)
 {
+    _queue.reserve(1024);
 }
 
 OsmAnd::Concurrent::WorkerPool_P::~WorkerPool_P()
@@ -57,19 +58,38 @@ bool OsmAnd::Concurrent::WorkerPool_P::waitForDone(const int msecs) const
     return waitForDoneNoLock(msecs);
 }
 
-void OsmAnd::Concurrent::WorkerPool_P::enqueue(QRunnable* const runnable)
+void OsmAnd::Concurrent::WorkerPool_P::enqueue(QRunnable* const runnable, const SortPredicate predicate)
 {
     QMutexLocker scopedLocker(&_mutex);
     
     _queue.push_front(runnable);
+    if (predicate)
+        sortQueueNoLock(predicate);
+
     tryLaunchNextRunnable();
 }
 
-bool OsmAnd::Concurrent::WorkerPool_P::dequeue(QRunnable* const runnable)
+void OsmAnd::Concurrent::WorkerPool_P::enqueue(const QVector<QRunnable*>& runnables, const SortPredicate predicate)
+{
+    QMutexLocker scopedLocker(&_mutex);
+
+    for (const auto& runnable : constOf(runnables))
+        _queue.push_front(runnable);
+    if (predicate)
+        sortQueueNoLock(predicate);
+
+    tryLaunchNextRunnable();
+}
+
+bool OsmAnd::Concurrent::WorkerPool_P::dequeue(QRunnable* const runnable, const SortPredicate predicate)
 {
     QMutexLocker scopedLocker(&_mutex);
     
-    return _queue.removeOne(runnable);
+    const auto result = _queue.removeOne(runnable);
+    if (result && predicate)
+        sortQueueNoLock(predicate);
+
+    return result;
 }
 
 void OsmAnd::Concurrent::WorkerPool_P::dequeueAll()
@@ -77,6 +97,13 @@ void OsmAnd::Concurrent::WorkerPool_P::dequeueAll()
     QMutexLocker scopedLocker(&_mutex);
 
     dequeueAllNoLock();
+}
+
+void OsmAnd::Concurrent::WorkerPool_P::sortQueue(const SortPredicate predicate)
+{
+    QMutexLocker scopedLocker(&_mutex);
+
+    sortQueueNoLock(predicate);
 }
 
 void OsmAnd::Concurrent::WorkerPool_P::reset()
@@ -161,9 +188,9 @@ QRunnable* OsmAnd::Concurrent::WorkerPool_P::takeNextRunnable()
     switch (order())
     {
         case Order::FIFO:
-            return _queue.takeLast();
-        case Order::LIFO:
             return _queue.takeFirst();
+        case Order::LIFO:
+            return _queue.takeLast();
         case Order::Random:
             return _queue.takeAt(qrand() % _queue.size());
         default:
@@ -204,6 +231,11 @@ bool OsmAnd::Concurrent::WorkerPool_P::waitForDoneNoLock(const int msecs) const
     }
 
     return activeThreadCountNoLock() == 0 && _queue.isEmpty();
+}
+
+void OsmAnd::Concurrent::WorkerPool_P::sortQueueNoLock(const SortPredicate predicate)
+{
+    std::sort(_queue, predicate);
 }
 
 OsmAnd::Concurrent::WorkerPool_P::WorkerThread::WorkerThread(WorkerPool_P* const pool_)

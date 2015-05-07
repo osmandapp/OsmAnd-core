@@ -84,6 +84,11 @@ namespace OsmAnd
             const std::shared_ptr<MapRendererBaseResource> requestedResource;
 
             virtual void requestCancellation();
+
+            int64_t calculatePriority(
+                const TileId centerTileId,
+                const QVector<TileId>& activeTiles,
+                const ZoomLevel activeZoom) const;
         };
         void setResourceWorkerThreadsLimit(const unsigned int limit);
         void resetResourceWorkerThreadsLimit();
@@ -126,27 +131,36 @@ namespace OsmAnd
         bool validateResourcesOfType(const MapRendererResourceType type);
 
         // Resources management:
+        TileId _centerTileId;
         QVector<TileId> _activeTiles;
         ZoomLevel _activeZoom;
+        QVector<QRunnable*> _requestedResourcesTasks;
         bool updatesPresent() const;
         bool checkForUpdatesAndApply() const;
-        void updateResources(const QVector<TileId>& tiles, const ZoomLevel zoom);
-        void requestNeededResources(const QVector<TileId>& activeTiles, const ZoomLevel activeZoom);
+        void updateResources(
+            const TileId centerTileId,
+            const QVector<TileId>& tiles,
+            const ZoomLevel zoom);
+        void requestNeededResources(
+            const TileId centerTileId,
+            const QVector<TileId>& activeTiles,
+            const ZoomLevel activeZoom);
         void requestNeededResources(
             const MapRendererResourceType type,
-            const QVector<TileId>& activeTiles,
-            const ZoomLevel activeZoom);
+            const QVector<TileId>& tiles,
+            const ZoomLevel zoom);
         void requestNeededResources(
             const std::shared_ptr<MapRendererBaseResourcesCollection>& resourcesCollection,
-            const QVector<TileId>& activeTiles,
-            const ZoomLevel activeZoom);
+            const QVector<TileId>& tiles,
+            const ZoomLevel zoom);
         void requestNeededTiledResources(
             const std::shared_ptr<MapRendererTiledResourcesCollection>& resourcesCollection,
-            const QVector<TileId>& activeTiles,
-            const ZoomLevel activeZoom);
+            const QVector<TileId>& tiles,
+            const ZoomLevel zoom);
         void requestNeededKeyedResources(
             const std::shared_ptr<MapRendererKeyedResourcesCollection>& resourcesCollection);
-        void requestNeededResource(const std::shared_ptr<MapRendererBaseResource>& resource);
+        void requestNeededResource(
+            const std::shared_ptr<MapRendererBaseResource>& resource);
         bool beginResourceRequestProcessing(const std::shared_ptr<MapRendererBaseResource>& resource);
         void endResourceRequestProcessing(
             const std::shared_ptr<MapRendererBaseResource>& resource,
@@ -199,7 +213,7 @@ namespace OsmAnd
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
         void updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);
-        void updateActiveZone(const QVector<TileId>& tiles, const ZoomLevel zoom);
+        void updateActiveZone(const TileId centerTileId, const QVector<TileId>& tiles, const ZoomLevel zoom);
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,
             bool* const outMoreUploadsThanLimitAvailable = nullptr,

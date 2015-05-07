@@ -2,10 +2,14 @@
 #define _OSMAND_CORE_CONCURRENT_WORKER_POOL_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <QVector>
 #include <QRunnable>
 #include <QThread>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
@@ -27,6 +31,8 @@ namespace OsmAnd
                 Random
             };
 
+            typedef std::function<bool (QRunnable* const l, QRunnable* const r)> SortPredicate;
+
         private:
             PrivateImplementation<WorkerPool_P> _p;
         protected:
@@ -43,9 +49,12 @@ namespace OsmAnd
 
             bool waitForDone(const int msecs = -1) const;
 
-            void enqueue(QRunnable* const runnable);
-            bool dequeue(QRunnable* const runnable);
+            void enqueue(QRunnable* const runnable, const SortPredicate predicate = nullptr);
+            void enqueue(const QVector<QRunnable*>& runnables, const SortPredicate predicate = nullptr);
+            bool dequeue(QRunnable* const runnable, const SortPredicate predicate = nullptr);
             void dequeueAll();
+
+            void sortQueue(const SortPredicate predicate);
 
             void reset();
         };
