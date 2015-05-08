@@ -440,7 +440,63 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     p[2] += internalState->targetInTileOffsetN;
     p[3] += internalState->targetInTileOffsetN;
 
-    //NOTE: so far scanline does not work exactly as expected, so temporary switch to old implementation
+    // Determine visible tiles set
+    /*{
+        QSet<TileId> visibleTiles;
+        const PointI p0(qFloor(p[0].x), qFloor(p[0].y));
+        const PointI p1(qFloor(p[1].x), qFloor(p[1].y));
+        const PointI p2(qFloor(p[2].x), qFloor(p[2].y));
+        const PointI p3(qFloor(p[3].x), qFloor(p[3].y));
+
+        const auto xMin = qMin(qMin(p0.x, p1.x), qMin(p2.x, p3.x));
+        const auto xMax = qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x));
+        const auto yMin = qMin(qMin(p0.y, p1.y), qMin(p2.y, p3.y));
+        const auto yMax = qMax(qMax(p0.y, p1.y), qMax(p2.y, p3.y));
+        for (auto y = yMin; y <= yMax; y++)
+        {
+            auto xMin = std::numeric_limits<int32_t>::max();
+            auto xMax = std::numeric_limits<int32_t>::min();
+            int32_t x;
+            
+            if (Utilities::rayIntersectX(p0, p1, y, x))
+                xMin = qMin(xMin, x);
+
+            if (Utilities::rayIntersectX(p1, p2, y, x))
+                xMin = qMin(xMin, x);
+
+            if (Utilities::rayIntersectX(p2, p3, y, x))
+                xMin = qMin(xMin, x);
+
+            if (Utilities::rayIntersectX(p3, p0, y, x))
+                xMin = qMin(xMin, x);
+
+            if (Utilities::rayIntersectX(p0, p1, y, x))
+                xMax = qMax(xMax, x);
+
+            if (Utilities::rayIntersectX(p1, p2, y, x))
+                xMax = qMax(xMax, x);
+
+            if (Utilities::rayIntersectX(p2, p3, y, x))
+                xMax = qMax(xMax, x);
+
+            if (Utilities::rayIntersectX(p3, p0, y, x))
+                xMax = qMax(xMax, x);
+
+            for (auto x = xMin; x <= xMax; x++)
+            {
+                TileId tileId;
+                tileId.x = x + internalState->targetTileId.x;
+                tileId.y = y + internalState->targetTileId.y;
+                visibleTiles.insert(tileId);
+            }
+        }
+
+        internalState->visibleTiles.resize(0);
+        for (const auto& tileId : constOf(visibleTiles))
+            internalState->visibleTiles.push_back(tileId);
+    }*/
+
+    ////NOTE: so far scanline does not work exactly as expected, so temporary switch to old implementation
     {
         QSet<TileId> visibleTiles;
         PointI p0(qFloor(p[0].x), qFloor(p[0].y));
@@ -468,19 +524,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
         for (const auto& tileId : constOf(visibleTiles))
             internalState->visibleTiles.push_back(tileId);
     }
-    /*
-    //TODO: Find visible tiles using scanline fill
-    _visibleTiles.clear();
-    Utilities::scanlineFillPolygon(4, &p[0],
-    [this, pC](const PointI& point)
-    {
-    TileId tileId;
-    tileId.x = point.x;// + _targetTile.x;
-    tileId.y = point.y;// + _targetTile.y;
-
-    _visibleTiles.insert(tileId);
-    });
-    */
 
     // Normalize and make unique visible tiles
     QSet<TileId> uniqueTiles;
