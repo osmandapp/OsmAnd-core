@@ -10,17 +10,18 @@
 #include "Common.h"
 #include "QKeyIterator.h"
 #include "QKeyValueIterator.h"
+#include "Logging.h"
 
-std::shared_ptr<const OsmAnd::MapObject::EncodingDecodingRules> OsmAnd::MapObject::defaultEncodingDecodingRules(OsmAnd::modifyAndReturn(
-    std::shared_ptr<OsmAnd::MapObject::EncodingDecodingRules>(new OsmAnd::MapObject::EncodingDecodingRules()),
-    static_cast< std::function<void (std::shared_ptr<OsmAnd::MapObject::EncodingDecodingRules>& instance)> >([]
-    (std::shared_ptr<OsmAnd::MapObject::EncodingDecodingRules>& rules) -> void
+std::shared_ptr<const OsmAnd::MapObject::AttributeMapping> OsmAnd::MapObject::defaultAttributeMapping(OsmAnd::modifyAndReturn(
+    std::shared_ptr<OsmAnd::MapObject::AttributeMapping>(new OsmAnd::MapObject::AttributeMapping()),
+    static_cast< std::function<void (std::shared_ptr<OsmAnd::MapObject::AttributeMapping>& instance)> >([]
+    (std::shared_ptr<OsmAnd::MapObject::AttributeMapping>& mapping) -> void
     {
-        rules->verifyRequiredRulesExist();
+        mapping->verifyRequiredMappingRegistered();
     })));
 
 OsmAnd::MapObject::MapObject()
-    : encodingDecodingRules(defaultEncodingDecodingRules)
+    : attributeMapping(defaultAttributeMapping)
     , isArea(false)
 {
 }
@@ -130,61 +131,65 @@ bool OsmAnd::MapObject::intersectedOrContainedBy(const AreaI& area) const
     return false;
 }
 
-bool OsmAnd::MapObject::containsType(const uint32_t typeRuleId, bool checkAdditional /*= false*/) const
+bool OsmAnd::MapObject::containsAttribute(const uint32_t attributeId, const bool checkAdditional /*= false*/) const
 {
-    return (checkAdditional ? additionalTypesRuleIds : typesRuleIds).contains(typeRuleId);
+    return (checkAdditional ? additionalAttributeIds : attributeIds).contains(attributeId);
 }
 
-bool OsmAnd::MapObject::containsTypeSlow(const QString& tag, const QString& value, bool checkAdditional /*= false*/) const
+bool OsmAnd::MapObject::containsAttribute(
+    const QString& tag,
+    const QString& value,
+    const bool checkAdditional /*= false*/) const
 {
-    const auto citByTag = encodingDecodingRules->encodingRuleIds.constFind(tag);
-    if (citByTag == encodingDecodingRules->encodingRuleIds.cend())
-        return false;
-
-    const auto citByValue = citByTag->constFind(value);
-    if (citByValue == citByTag->cend())
-        return false;
-
-    const auto typeRuleId = *citByValue;
-    return (checkAdditional ? additionalTypesRuleIds : typesRuleIds).contains(typeRuleId);
+    return containsAttribute(&tag, &value, checkAdditional);
 }
 
-bool OsmAnd::MapObject::containsTagSlow(const QString& tag, bool checkAdditional /*= false*/) const
+bool OsmAnd::MapObject::containsAttribute(
+    const QStringRef& tagRef,
+    const QStringRef& valueRef,
+    const bool checkAdditional /*= false*/) const
 {
-    const auto citByTag = encodingDecodingRules->encodingRuleIds.constFind(tag);
-    if (citByTag == encodingDecodingRules->encodingRuleIds.cend())
+    const auto citTagsGroup = attributeMapping->encodeMap.constFind(tagRef);
+    if (citTagsGroup == attributeMapping->encodeMap.cend())
         return false;
 
-    for (const auto typeRuleId : constOf(*citByTag))
+    const auto citAttributeId = citTagsGroup->constFind(valueRef);
+    if (citAttributeId == citTagsGroup->cend())
+        return false;
+
+    return (checkAdditional ? additionalAttributeIds : attributeIds).contains(*citAttributeId);
+}
+
+bool OsmAnd::MapObject::containsTag(const QString& tag, const bool checkAdditional /*= false*/) const
+{
+    return containsTag(&tag, checkAdditional);
+}
+
+const OsmAnd::MapObject::AttributeMapping::TagValue* OsmAnd::MapObject::resolveAttributeByIndex(
+    const uint32_t index,
+    const bool additional /*= false*/) const
+{
+    const auto& ids = additional ? additionalAttributeIds : attributeIds;
+
+    if (index >= ids.size())
+        return nullptr;
+
+    return attributeMapping->decodeMap.getRef(ids[index]);
+}
+
+bool OsmAnd::MapObject::containsTag(const QStringRef& tagRef, const bool checkAdditional /*= false*/) const
+{
+    const auto citTagsGroup = attributeMapping->encodeMap.constFind(tagRef);
+    if (citTagsGroup == attributeMapping->encodeMap.cend())
+        return false;
+
+    for (const auto attributeId : constOf(*citTagsGroup))
     {
-        if ((checkAdditional ? additionalTypesRuleIds : typesRuleIds).contains(typeRuleId))
+        if ((checkAdditional ? additionalAttributeIds : attributeIds).contains(attributeId))
             return true;
     }
 
     return false;
-}
-
-bool OsmAnd::MapObject::obtainTagValueByTypeRuleIndex(
-    const uint32_t typeRuleIndex,
-    QString& outTag,
-    QString& outValue,
-    bool checkAdditional /*= false*/) const
-{
-    const auto& rulesIds = checkAdditional ? additionalTypesRuleIds : typesRuleIds;
-
-    if (typeRuleIndex >= rulesIds.size())
-        return false;
-    const auto typeRuleId = rulesIds[typeRuleIndex];
-
-    const auto citRule = encodingDecodingRules->decodingRules.constFind(typeRuleId);
-    if (citRule == encodingDecodingRules->decodingRules.cend())
-        return false;
-
-    const auto& rule = *citRule;
-    outTag = rule.tag;
-    outValue = rule.value;
-
-    return true;
 }
 
 OsmAnd::MapObject::LayerType OsmAnd::MapObject::getLayerType() const
@@ -194,7 +199,7 @@ OsmAnd::MapObject::LayerType OsmAnd::MapObject::getLayerType() const
 
 QString OsmAnd::MapObject::getCaptionInNativeLanguage() const
 {
-    const auto citName = captions.constFind(encodingDecodingRules->name_encodingRuleId);
+    const auto citName = captions.constFind(attributeMapping->nativeNameAttributeId);
     if (citName == captions.cend())
         return QString::null;
     return *citName;
@@ -202,160 +207,182 @@ QString OsmAnd::MapObject::getCaptionInNativeLanguage() const
 
 QString OsmAnd::MapObject::getCaptionInLanguage(const QString& lang) const
 {
-    const auto citNameId = encodingDecodingRules->localizedName_encodingRuleIds.constFind(lang);
-    if (citNameId == encodingDecodingRules->localizedName_encodingRuleIds.cend())
+    const auto citNameAttributeId = attributeMapping->localizedNameAttributes.constFind(&lang);
+    if (citNameAttributeId == attributeMapping->localizedNameAttributes.cend())
         return QString::null;
 
-    const auto citName = captions.constFind(*citNameId);
-    if (citName == captions.cend())
+    const auto citCaption = captions.constFind(*citNameAttributeId);
+    if (citCaption == captions.cend())
         return QString::null;
-    return *citName;
+    return *citCaption;
 }
 
-OsmAnd::MapObject::EncodingDecodingRules::EncodingDecodingRules()
-    : name_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , ref_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , naturalCoastline_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , naturalLand_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , naturalCoastlineBroken_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , naturalCoastlineLine_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , oneway_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , onewayReverse_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , layerLowest_encodingRuleId(std::numeric_limits<uint32_t>::max())
+OsmAnd::MapObject::AttributeMapping::AttributeMapping()
+    : nativeNameAttributeId(std::numeric_limits<uint32_t>::max())
+    , refAttributeId(std::numeric_limits<uint32_t>::max())
+    , naturalCoastlineAttributeId(std::numeric_limits<uint32_t>::max())
+    , naturalLandAttributeId(std::numeric_limits<uint32_t>::max())
+    , naturalCoastlineBrokenAttributeId(std::numeric_limits<uint32_t>::max())
+    , naturalCoastlineLineAttributeId(std::numeric_limits<uint32_t>::max())
+    , onewayAttributeId(std::numeric_limits<uint32_t>::max())
+    , onewayReverseAttributeId(std::numeric_limits<uint32_t>::max())
+    , layerLowestAttributeId(std::numeric_limits<uint32_t>::max())
 {
 }
 
-OsmAnd::MapObject::EncodingDecodingRules::~EncodingDecodingRules()
+OsmAnd::MapObject::AttributeMapping::~AttributeMapping()
 {
 }
 
-void OsmAnd::MapObject::EncodingDecodingRules::verifyRequiredRulesExist()
+void OsmAnd::MapObject::AttributeMapping::verifyRequiredMappingRegistered()
 {
     uint32_t lastUsedRuleId = 0u;
-    if (!decodingRules.isEmpty())
-        lastUsedRuleId = *qMaxElement(keysOf(constOf(decodingRules)));
-
-    createRequiredRules(lastUsedRuleId);
+    decodeMap.findMaxKey(lastUsedRuleId);
+    registerRequiredMapping(lastUsedRuleId);
+    decodeMap.squeeze();
 }
 
-void OsmAnd::MapObject::EncodingDecodingRules::createRequiredRules(uint32_t& lastUsedRuleId)
+void OsmAnd::MapObject::AttributeMapping::registerRequiredMapping(uint32_t& lastUsedEntryId)
 {
-    if (name_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("name"), QString::null);
     }
 
-    if (ref_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (refAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("ref"), QString::null);
     }
 
-    if (naturalCoastline_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (naturalCoastlineAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("natural"), QLatin1String("coastline"));
     }
 
-    if (naturalLand_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (naturalLandAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("natural"), QLatin1String("land"));
     }
 
-    if (naturalCoastlineBroken_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (naturalCoastlineBrokenAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("natural"), QLatin1String("coastline_broken"));
     }
 
-    if (naturalCoastlineLine_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (naturalCoastlineLineAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("natural"), QLatin1String("coastline_line"));
     }
 
-    if (oneway_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (onewayAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("oneway"), QLatin1String("yes"));
     }
 
-    if (onewayReverse_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (onewayReverseAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("oneway"), QLatin1String("-1"));
     }
 
-    if (layerLowest_encodingRuleId == std::numeric_limits<uint32_t>::max())
+    if (layerLowestAttributeId == std::numeric_limits<uint32_t>::max())
     {
-        addRule(lastUsedRuleId++,
+        registerMapping(++lastUsedEntryId,
             QLatin1String("layer"), QString::number(std::numeric_limits<int32_t>::min()));
     }
 }
 
-uint32_t OsmAnd::MapObject::EncodingDecodingRules::addRule(
-    const uint32_t ruleId,
-    const QString& ruleTag,
-    const QString& ruleValue)
+void OsmAnd::MapObject::AttributeMapping::registerMapping(
+    const uint32_t id,
+    const QString& tag,
+    const QString& value)
 {
-    // Insert encoding rule
-    auto itEncodingRule = encodingRuleIds.find(ruleTag);
-    if (itEncodingRule == encodingRuleIds.end())
-        itEncodingRule = encodingRuleIds.insert(ruleTag, QHash<QString, uint32_t>());
-    itEncodingRule->insert(ruleValue, ruleId);
-
-    // Insert decoding rule
-    if (!decodingRules.contains(ruleId))
+    // Create decode mapping
+    auto pDecode = decodeMap.getRef(id);
+    if (pDecode)
     {
-        DecodingRule rule;
-        rule.tag = ruleTag;
-        rule.value = ruleValue;
-
-        decodingRules.insert(ruleId, rule);
+        LogPrintf(LogSeverityLevel::Error,
+            "Decode attribute %s = %s (#%u) already defined. Definition of %s = %s ignored.",
+            qPrintable(pDecode->tag),
+            qPrintable(pDecode->value),
+            id,
+            qPrintable(tag),
+            qPrintable(value));
+        return;
     }
+    else
+    {
+        TagValue tagValueEntry;
+        tagValueEntry.tag = tag;
+        tagValueEntry.value = value;
+        pDecode = decodeMap.insert(id, tagValueEntry);
+    }
+    const QStringRef tagRef(&pDecode->tag);
+    const QStringRef valueRef(&pDecode->value);
+
+    // Insert encoding rule
+    auto itTagsGroup = encodeMap.find(tagRef);
+    if (itTagsGroup == encodeMap.end())
+        itTagsGroup = encodeMap.insert(tagRef, QHash<QStringRef, uint32_t>());
+    auto itEncode = itTagsGroup->find(valueRef);
+    if (itEncode != itTagsGroup->end())
+    {
+        LogPrintf(LogSeverityLevel::Error,
+            "Encode attribute %s = %s already has assigned identifier #%u. Redefinition to #%u ignored.",
+            qPrintable(pDecode->tag),
+            qPrintable(pDecode->value),
+            *itEncode,
+            id);
+        return;
+    }
+    else
+        itEncode = itTagsGroup->insert(valueRef, id);
 
     // Capture quick-access rules
-    if (QLatin1String("name") == ruleTag)
+    if (QLatin1String("name") == tag)
     {
-        name_encodingRuleId = ruleId;
-        namesRuleId.insert(ruleId);
+        nativeNameAttributeId = id;
+        nameAttributeIds.insert(id);
     }
-    else if (ruleTag.startsWith(QLatin1String("name:")))
+    else if (tag.startsWith(QLatin1String("name:")))
     {
-        const QString languageId = ruleTag.mid(QLatin1String("name:").size());
-        localizedName_encodingRuleIds.insert(languageId, ruleId);
-        localizedName_decodingRules.insert(ruleId, languageId);
-        namesRuleId.insert(ruleId);
+        const auto languageIdRef = tagRef.mid(QLatin1String("name:").size());
+        localizedNameAttributes.insert(languageIdRef, id);
+        localizedNameAttributeIds.insert(id, languageIdRef);
+        nameAttributeIds.insert(id);
     }
-    else if (QLatin1String("ref") == ruleTag)
-        ref_encodingRuleId = ruleId;
-    else if (QLatin1String("natural") == ruleTag && QLatin1String("coastline") == ruleValue)
-        naturalCoastline_encodingRuleId = ruleId;
-    else if (QLatin1String("natural") == ruleTag && QLatin1String("land") == ruleValue)
-        naturalLand_encodingRuleId = ruleId;
-    else if (QLatin1String("natural") == ruleTag && QLatin1String("coastline_broken") == ruleValue)
-        naturalCoastlineBroken_encodingRuleId = ruleId;
-    else if (QLatin1String("natural") == ruleTag && QLatin1String("coastline_line") == ruleValue)
-        naturalCoastlineLine_encodingRuleId = ruleId;
-    else if (QLatin1String("oneway") == ruleTag && QLatin1String("yes") == ruleValue)
-        oneway_encodingRuleId = ruleId;
-    else if (QLatin1String("oneway") == ruleTag && QLatin1String("-1") == ruleValue)
-        onewayReverse_encodingRuleId = ruleId;
-
-    return ruleId;
+    else if (QLatin1String("ref") == tag)
+        refAttributeId = id;
+    else if (QLatin1String("natural") == tag && QLatin1String("coastline") == value)
+        naturalCoastlineAttributeId = id;
+    else if (QLatin1String("natural") == tag && QLatin1String("land") == value)
+        naturalLandAttributeId = id;
+    else if (QLatin1String("natural") == tag && QLatin1String("coastline_broken") == value)
+        naturalCoastlineBrokenAttributeId = id;
+    else if (QLatin1String("natural") == tag && QLatin1String("coastline_line") == value)
+        naturalCoastlineLineAttributeId = id;
+    else if (QLatin1String("oneway") == tag && QLatin1String("yes") == value)
+        onewayAttributeId = id;
+    else if (QLatin1String("oneway") == tag && QLatin1String("-1") == value)
+        onewayReverseAttributeId = id;
 }
 
-OsmAnd::MapObject::EncodingDecodingRules::DecodingRule::DecodingRule()
+OsmAnd::MapObject::AttributeMapping::TagValue::TagValue()
 {
 }
 
-OsmAnd::MapObject::EncodingDecodingRules::DecodingRule::~DecodingRule()
+OsmAnd::MapObject::AttributeMapping::TagValue::~TagValue()
 {
 }
 
-QString OsmAnd::MapObject::EncodingDecodingRules::DecodingRule::toString() const
+QString OsmAnd::MapObject::AttributeMapping::TagValue::toString() const
 {
     return tag + QLatin1String("=") + value;
 }

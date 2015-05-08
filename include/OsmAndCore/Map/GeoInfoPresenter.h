@@ -29,31 +29,30 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(MapObject);
 
         public:
-            class OSMAND_CORE_API EncodingDecodingRules : public OsmAnd::MapObject::EncodingDecodingRules
+            class OSMAND_CORE_API AttributeMapping : public OsmAnd::MapObject::AttributeMapping
             {
-                Q_DISABLE_COPY_AND_MOVE(EncodingDecodingRules);
+                Q_DISABLE_COPY_AND_MOVE(AttributeMapping);
 
             private:
             protected:
-                virtual void createRequiredRules(uint32_t& lastUsedRuleId);
+                virtual void registerRequiredMapping(uint32_t& lastUsedEntryId);
             public:
-                EncodingDecodingRules();
-                virtual ~EncodingDecodingRules();
+                AttributeMapping();
+                virtual ~AttributeMapping();
 
-                // Quick-access rules
-                uint32_t waypoint_encodingRuleId;
-                uint32_t trackpoint_encodingRuleId;
-                uint32_t routepoint_encodingRuleId;
-                uint32_t trackline_encodingRuleId;
-                uint32_t routeline_encodingRuleId;
-                uint32_t waypointsPresent_encodingRuleId;
-                uint32_t waypointsNotPresent_encodingRuleId;
-                uint32_t trackpointsPresent_encodingRuleId;
-                uint32_t trackpointsNotPresent_encodingRuleId;
-                uint32_t routepointsPresent_encodingRuleId;
-                uint32_t routepointsNotPresent_encodingRuleId;
+                uint32_t waypointAttributeId;
+                uint32_t trackpointAttributeId;
+                uint32_t routepointAttributeId;
+                uint32_t tracklineAttributeId;
+                uint32_t routelineAttributeId;
+                uint32_t waypointsPresentAttributeId;
+                uint32_t waypointsNotPresentAttributeId;
+                uint32_t trackpointsPresentAttributeId;
+                uint32_t trackpointsNotPresentAttributeId;
+                uint32_t routepointsPresentAttributeId;
+                uint32_t routepointsNotPresentAttributeId;
 
-                virtual uint32_t addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
+                virtual void registerMapping(const uint32_t id, const QString& tag, const QString& value);
             };
 
         private:
@@ -65,7 +64,7 @@ namespace OsmAnd
             const std::shared_ptr<const GeoInfoDocument> geoInfoDocument;
 
             // Default encoding-decoding rules
-            static std::shared_ptr<const EncodingDecodingRules> defaultEncodingDecodingRules;
+            static std::shared_ptr<const AttributeMapping> defaultAttributeMapping;
         };
 
         class OSMAND_CORE_API WaypointMapObject : public MapObject

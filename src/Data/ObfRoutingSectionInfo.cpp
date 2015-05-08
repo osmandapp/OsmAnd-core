@@ -14,9 +14,9 @@ OsmAnd::ObfRoutingSectionInfo::~ObfRoutingSectionInfo()
 {
 }
 
-std::shared_ptr<const OsmAnd::ObfRoutingSectionEncodingDecodingRules> OsmAnd::ObfRoutingSectionInfo::getEncodingDecodingRules() const
+std::shared_ptr<const OsmAnd::ObfRoutingSectionAttributeMapping> OsmAnd::ObfRoutingSectionInfo::getAttributeMapping() const
 {
-    return _p->getEncodingDecodingRules();
+    return _p->getAttributeMapping();
 }
 
 OsmAnd::ObfRoutingSectionLevel::ObfRoutingSectionLevel(const RoutingDataLevel dataLevel_)
@@ -43,11 +43,12 @@ OsmAnd::ObfRoutingSectionLevelTreeNode::~ObfRoutingSectionLevelTreeNode()
 {
 }
 
-OsmAnd::ObfRoutingSectionEncodingDecodingRules::ObfRoutingSectionEncodingDecodingRules()
+OsmAnd::ObfRoutingSectionAttributeMapping::ObfRoutingSectionAttributeMapping()
 {
+    decodeMap.reserve(4096);
 }
 
-OsmAnd::ObfRoutingSectionEncodingDecodingRules::~ObfRoutingSectionEncodingDecodingRules()
+OsmAnd::ObfRoutingSectionAttributeMapping::~ObfRoutingSectionAttributeMapping()
 {
 }
 

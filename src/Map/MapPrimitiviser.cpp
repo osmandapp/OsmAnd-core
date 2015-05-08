@@ -91,7 +91,7 @@ OsmAnd::MapPrimitiviser::Primitive::Primitive(
     : group(group_)
     , sourceObject(group_->sourceObject)
     , type(type_)
-    , typeRuleIdIndex(typeRuleIdIndex_)
+    , attributeIdIndex(typeRuleIdIndex_)
     , zOrder(0)
     , doubledArea(-1)
 {
@@ -105,7 +105,7 @@ OsmAnd::MapPrimitiviser::Primitive::Primitive(
     : group(group_)
     , sourceObject(group_->sourceObject)
     , type(type_)
-    , typeRuleIdIndex(typeRuleIdIndex_)
+    , attributeIdIndex(typeRuleIdIndex_)
     , evaluationResult(evaluationResult_.pack())
     , zOrder(0)
     , doubledArea(-1)

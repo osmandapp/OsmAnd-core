@@ -30,9 +30,9 @@ namespace OsmAnd
     protected:
         ObfRoutingSectionInfo_P(ObfRoutingSectionInfo* owner);
 
-        mutable QAtomicInt _encodingDecodingRulesLoaded;
-        mutable std::shared_ptr<ObfRoutingSectionEncodingDecodingRules> _encodingDecodingRules;
-        mutable QMutex _encodingDecodingRulesLoadMutex;
+        mutable QAtomicInt _attributeMappingLoaded;
+        mutable std::shared_ptr<ObfRoutingSectionAttributeMapping> _attributeMapping;
+        mutable QMutex _attributeMappingLoadMutex;
 
         struct LevelContainer
         {
@@ -45,7 +45,7 @@ namespace OsmAnd
 
         ImplementationInterface<ObfRoutingSectionInfo> owner;
 
-        std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> getEncodingDecodingRules() const;
+        std::shared_ptr<const ObfRoutingSectionAttributeMapping> getAttributeMapping() const;
 
     friend class OsmAnd::ObfRoutingSectionInfo;
     friend class OsmAnd::ObfRoutingSectionReader_P;

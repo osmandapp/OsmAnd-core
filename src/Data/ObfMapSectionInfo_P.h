@@ -22,7 +22,7 @@
 namespace OsmAnd
 {
     class ObfMapSectionLevel;
-    class ObfMapSectionDecodingEncodingRules;
+    class ObfMapSectionAttributeMapping;
     class ObfMapSectionReader_P;
 
     class ObfMapSectionLevelTreeNode
@@ -73,15 +73,15 @@ namespace OsmAnd
     protected:
         ObfMapSectionInfo_P(ObfMapSectionInfo* owner);
 
-        mutable std::shared_ptr<ObfMapSectionDecodingEncodingRules> _encodingDecodingRules;
-        mutable QAtomicInt _encodingDecodingRulesLoaded;
-        mutable QMutex _encodingDecodingRulesLoadMutex;
+        mutable std::shared_ptr<ObfMapSectionAttributeMapping> _attributeMapping;
+        mutable QAtomicInt _attributeMappingLoaded;
+        mutable QMutex _attributeMappingLoadMutex;
     public:
         virtual ~ObfMapSectionInfo_P();
 
         ImplementationInterface<ObfMapSectionInfo> owner;
 
-        std::shared_ptr<const ObfMapSectionDecodingEncodingRules> getEncodingDecodingRules() const;
+        std::shared_ptr<const ObfMapSectionAttributeMapping> getAttributeMapping() const;
 
     friend class OsmAnd::ObfMapSectionInfo;
     friend class OsmAnd::ObfMapSectionReader_P;

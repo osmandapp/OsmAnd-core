@@ -15,6 +15,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/ListMap.h>
 
 namespace OsmAnd
 {
@@ -22,14 +23,14 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(MapObject);
     public:
-        class OSMAND_CORE_API EncodingDecodingRules
+        class OSMAND_CORE_API AttributeMapping
         {
-            Q_DISABLE_COPY_AND_MOVE(EncodingDecodingRules);
+            Q_DISABLE_COPY_AND_MOVE(AttributeMapping);
         public:
-            struct OSMAND_CORE_API DecodingRule Q_DECL_FINAL
+            struct OSMAND_CORE_API TagValue Q_DECL_FINAL
             {
-                DecodingRule();
-                ~DecodingRule();
+                TagValue();
+                ~TagValue();
 
                 QString tag;
                 QString value;
@@ -39,31 +40,29 @@ namespace OsmAnd
 
         private:
         protected:
-            virtual void createRequiredRules(uint32_t& lastUsedRuleId);
+            virtual void registerRequiredMapping(uint32_t& lastUsedEntryId);
         public:
-            EncodingDecodingRules();
-            virtual ~EncodingDecodingRules();
+            AttributeMapping();
+            virtual ~AttributeMapping();
 
-            // All rules
-            QHash< QString, QHash<QString, uint32_t> > encodingRuleIds;
-            QHash< uint32_t, DecodingRule > decodingRules;
+            ListMap< TagValue > decodeMap;
+            QHash< QStringRef, QHash<QStringRef, uint32_t> > encodeMap;
 
-            // Quick-access rules
-            uint32_t name_encodingRuleId;
-            QHash< QString, uint32_t > localizedName_encodingRuleIds;
-            QHash< uint32_t, QString> localizedName_decodingRules;
-            QSet< uint32_t > namesRuleId;
-            uint32_t ref_encodingRuleId;
-            uint32_t naturalCoastline_encodingRuleId;
-            uint32_t naturalLand_encodingRuleId;
-            uint32_t naturalCoastlineBroken_encodingRuleId;
-            uint32_t naturalCoastlineLine_encodingRuleId;
-            uint32_t oneway_encodingRuleId;
-            uint32_t onewayReverse_encodingRuleId;
-            uint32_t layerLowest_encodingRuleId;
+            uint32_t nativeNameAttributeId;
+            QHash< QStringRef, uint32_t > localizedNameAttributes;
+            QHash< uint32_t, QStringRef> localizedNameAttributeIds;
+            QSet< uint32_t > nameAttributeIds;
+            uint32_t refAttributeId;
+            uint32_t naturalCoastlineAttributeId;
+            uint32_t naturalLandAttributeId;
+            uint32_t naturalCoastlineBrokenAttributeId;
+            uint32_t naturalCoastlineLineAttributeId;
+            uint32_t onewayAttributeId;
+            uint32_t onewayReverseAttributeId;
+            uint32_t layerLowestAttributeId;
 
-            virtual uint32_t addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
-            void verifyRequiredRulesExist();
+            virtual void registerMapping(const uint32_t id, const QString& tag, const QString& value);
+            void verifyRequiredMappingRegistered();
         };
 
         typedef uint64_t SharingKey;
@@ -97,7 +96,7 @@ namespace OsmAnd
         // General information
         virtual bool obtainSharingKey(SharingKey& outKey) const;
         virtual bool obtainSortingKey(SortingKey& outKey) const;
-        std::shared_ptr<const EncodingDecodingRules> encodingDecodingRules;
+        std::shared_ptr<const AttributeMapping> attributeMapping;
         virtual ZoomLevel getMinZoomLevel() const;
         virtual ZoomLevel getMaxZoomLevel() const;
         virtual QString toString() const;
@@ -111,17 +110,18 @@ namespace OsmAnd
         virtual void computeBBox31();
         virtual bool intersectedOrContainedBy(const AreaI& area) const;
 
-        // Rules
-        QVector< uint32_t > typesRuleIds;
-        QVector< uint32_t > additionalTypesRuleIds;
-        virtual bool containsType(const uint32_t typeRuleId, bool checkAdditional = false) const;
-        virtual bool containsTypeSlow(const QString& tag, const QString& value, bool checkAdditional = false) const;
-        virtual bool containsTagSlow(const QString& tag, bool checkAdditional = false) const;
-        virtual bool obtainTagValueByTypeRuleIndex(
-            const uint32_t typeRuleIndex,
-            QString& outTag,
-            QString& outValue,
-            bool checkAdditional = false) const;
+        // Attributes
+        QVector< uint32_t > attributeIds;
+        QVector< uint32_t > additionalAttributeIds;
+        bool containsAttribute(const uint32_t attributeId, const bool checkAdditional = false) const;
+        bool containsAttribute(const QString& tag, const QString& value, const bool checkAdditional = false) const;
+        bool containsAttribute(
+            const QStringRef& tagRef,
+            const QStringRef& valueRef,
+            const bool checkAdditional = false) const;
+        bool containsTag(const QString& tag, const bool checkAdditional = false) const;
+        bool containsTag(const QStringRef& tagRef, const bool checkAdditional = false) const;
+        const AttributeMapping::TagValue* resolveAttributeByIndex(const uint32_t index, const bool additional = false) const;
 
         // Layers
         virtual LayerType getLayerType() const;
@@ -133,7 +133,7 @@ namespace OsmAnd
         virtual QString getCaptionInLanguage(const QString& lang) const;
 
         // Default encoding-decoding rules
-        static std::shared_ptr<const EncodingDecodingRules> defaultEncodingDecodingRules;
+        static std::shared_ptr<const AttributeMapping> defaultAttributeMapping;
     };
 }
 

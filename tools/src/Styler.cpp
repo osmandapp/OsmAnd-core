@@ -185,7 +185,7 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         {
             const auto& mapObject = primitivisedGroup->sourceObject;
             const auto binaryMapObject = std::dynamic_pointer_cast<const OsmAnd::BinaryMapObject>(mapObject);
-            const auto& encDecRules = mapObject->encodingDecodingRules;
+            const auto& attributeMapping = mapObject->attributeMapping;
 
             // Skip objects that were not requested
             if (!configuration.mapObjectsIds.isEmpty() &&
@@ -200,12 +200,12 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             output << QStringToStlString(QString(80, QLatin1Char('-'))) << std::endl;
             output << QStringToStlString(mapObject->toString()) << std::endl;
 
-            for (const auto& typeRuleId : OsmAnd::constOf(mapObject->typesRuleIds))
+            for (const auto& attributeId : OsmAnd::constOf(mapObject->attributeIds))
             {
-                const auto itTypeRule = encDecRules->decodingRules.constFind(typeRuleId);
-                if (itTypeRule != encDecRules->decodingRules.cend())
+                const auto itAttribute = attributeMapping->decodeMap.constFind(attributeId);
+                if (itAttribute != attributeMapping->decodeMap.cend())
                 {
-                    const auto& typeRule = *itTypeRule;
+                    const auto& typeRule = *itAttribute;
 
                     output
                         << xT("\tType: ")
@@ -216,16 +216,16 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 }
                 else
                 {
-                    output << xT("\tType: #") << typeRuleId << xT(" (UNRESOLVED)") << std::endl;
+                    output << xT("\tType: #") << attributeId << xT(" (UNRESOLVED)") << std::endl;
                 }
             }
 
-            for (const auto& typeRuleId : OsmAnd::constOf(mapObject->additionalTypesRuleIds))
+            for (const auto& attributeId : OsmAnd::constOf(mapObject->additionalAttributeIds))
             {
-                const auto itTypeRule = encDecRules->decodingRules.constFind(typeRuleId);
-                if (itTypeRule != encDecRules->decodingRules.cend())
+                const auto itAttribute = attributeMapping->decodeMap.constFind(attributeId);
+                if (itAttribute != attributeMapping->decodeMap.cend())
                 {
-                    const auto& typeRule = *itTypeRule;
+                    const auto& typeRule = *itAttribute;
 
                     output
                         << xT("\tExtra type: ")
@@ -236,27 +236,27 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 }
                 else
                 {
-                    output << xT("\tExtra type: #") << typeRuleId << xT(" (UNRESOLVED)") << std::endl;
+                    output << xT("\tExtra type: #") << attributeId << xT(" (UNRESOLVED)") << std::endl;
                 }
             }
 
-            for (const auto& captionTagId : OsmAnd::constOf(mapObject->captionsOrder))
+            for (const auto& captionAttributeId : OsmAnd::constOf(mapObject->captionsOrder))
             {
-                const auto& captionValue = mapObject->captions[captionTagId];
+                const auto& captionValue = mapObject->captions[captionAttributeId];
 
-                if (encDecRules->name_encodingRuleId == captionTagId)
+                if (attributeMapping->nativeNameAttributeId == captionAttributeId)
                     output << xT("\tCaption: ") << QStringToStlString(captionValue) << std::endl;
-                else if (encDecRules->ref_encodingRuleId == captionTagId)
+                else if (attributeMapping->refAttributeId == captionAttributeId)
                     output << xT("\tRef: ") << QStringToStlString(captionValue) << std::endl;
                 else
                 {
-                    const auto itCaptionTagAsLocalizedName = encDecRules->localizedName_decodingRules.constFind(captionTagId);
-                    const auto itCaptionTagRule = encDecRules->decodingRules.constFind(captionTagId);
+                    const auto itCaptionTagAsLocalizedName = attributeMapping->localizedNameAttributeIds.constFind(captionAttributeId);
+                    const auto itCaptionTagRule = attributeMapping->decodeMap.constFind(captionAttributeId);
 
                     QString captionTag(QLatin1String("UNRESOLVED"));
-                    if (itCaptionTagAsLocalizedName != encDecRules->localizedName_decodingRules.cend())
-                        captionTag = *itCaptionTagAsLocalizedName;
-                    if (itCaptionTagRule != encDecRules->decodingRules.cend())
+                    if (itCaptionTagAsLocalizedName != attributeMapping->localizedNameAttributeIds.cend())
+                        captionTag = itCaptionTagAsLocalizedName->toString();
+                    if (itCaptionTagRule != attributeMapping->decodeMap.cend())
                         captionTag = itCaptionTagRule->tag;
                     output
                         << xT("\tCaption [")
@@ -275,26 +275,21 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 for (const auto& pointPrimitive : OsmAnd::constOf(primitivisedGroup->points))
                 {
                     output << xT("\tPoint #") << pointPrimitiveIndex << std::endl;
-                    QString ruleTag;
-                    QString ruleValue;
-                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(
-                        pointPrimitive->typeRuleIdIndex,
-                        ruleTag,
-                        ruleValue);
-                    if (typeRuleResolved)
+                    const auto attribute = mapObject->resolveAttributeByIndex(pointPrimitive->attributeIdIndex);
+                    if (attribute)
                     {
                         output
-                            << xT("\t\tTag/value: ")
-                            << QStringToStlString(ruleTag)
+                            << xT("\t\tAttribute: ")
+                            << QStringToStlString(attribute->tag)
                             << xT(" = ")
-                            << QStringToStlString(ruleValue)
+                            << QStringToStlString(attribute->value)
                             << std::endl;
                     }
                     else
                     {
                         output
-                            << xT("\t\tTag/value: ")
-                            << pointPrimitive->typeRuleIdIndex
+                            << xT("\t\tAttribute: ")
+                            << pointPrimitive->attributeIdIndex
                             << xT(" (failed to resolve)")
                             << std::endl;
                     }
@@ -328,25 +323,20 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 for (const auto& polylinePrimitive : OsmAnd::constOf(primitivisedGroup->polylines))
                 {
                     output << xT("\tPolyline #") << polylinePrimitiveIndex << std::endl;
-                    QString ruleTag;
-                    QString ruleValue;
-                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(
-                        polylinePrimitive->typeRuleIdIndex,
-                        ruleTag,
-                        ruleValue);
-                    if (typeRuleResolved)
+                    const auto attribute = mapObject->resolveAttributeByIndex(polylinePrimitive->attributeIdIndex);
+                    if (attribute)
                     {
                         output
-                            << xT("\t\tTag/value: ")
-                            << QStringToStlString(ruleTag)
+                            << xT("\t\tAttribute: ")
+                            << QStringToStlString(attribute->tag)
                             << xT(" = ")
-                            << QStringToStlString(ruleValue) << std::endl;
+                            << QStringToStlString(attribute->value) << std::endl;
                     }
                     else
                     {
                         output
-                            << xT("\t\tTag/value: ")
-                            << polylinePrimitive->typeRuleIdIndex
+                            << xT("\t\tAttribute: ")
+                            << polylinePrimitive->attributeIdIndex
                             << xT(" (failed to resolve)")
                             << std::endl;
                     }
@@ -380,26 +370,21 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 for (const auto& polygonPrimitive : OsmAnd::constOf(primitivisedGroup->polygons))
                 {
                     output << xT("\tPolygon #") << polygonPrimitiveIndex << std::endl;
-                    QString ruleTag;
-                    QString ruleValue;
-                    const auto typeRuleResolved = mapObject->obtainTagValueByTypeRuleIndex(
-                        polygonPrimitive->typeRuleIdIndex,
-                        ruleTag,
-                        ruleValue);
-                    if (typeRuleResolved)
+                    const auto attribute = mapObject->resolveAttributeByIndex(polygonPrimitive->attributeIdIndex);
+                    if (attribute)
                     {
                         output
-                            << xT("\t\tTag/value: ")
-                            << QStringToStlString(ruleTag)
+                            << xT("\t\tAttribute: ")
+                            << QStringToStlString(attribute->tag)
                             << xT(" = ")
-                            << QStringToStlString(ruleValue)
+                            << QStringToStlString(attribute->value)
                             << std::endl;
                     }
                     else
                     {
                         output
-                            << xT("\t\tTag/value: ")
-                            << polygonPrimitive->typeRuleIdIndex
+                            << xT("\t\tAttribute: ")
+                            << polygonPrimitive->attributeIdIndex
                             << xT(" (failed to resolve)")
                             << std::endl;
                     }

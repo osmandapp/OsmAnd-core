@@ -167,7 +167,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         //////////////////////////////////////////////////////////////////////////
         
         if(!mapObject->intersectedOrContainedBy(area31) &&
-           !mapObject->containsType(mapObject->encodingDecodingRules->naturalCoastline_encodingRuleId))
+           !mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
         {
             continue;
         }
@@ -187,7 +187,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
             roadsPresent = true;
         }
 
-        if (mapObject->containsType(mapObject->encodingDecodingRules->naturalCoastline_encodingRuleId))
+        if (mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
         {
             if (isBasemapObject)
                 basemapCoastlineObjects.push_back(mapObject);
@@ -359,9 +359,9 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
         bgMapObject->points31.push_back(bgMapObject->points31.first());
         bgMapObject->bbox31 = area31;
         if (surfaceType == MapSurfaceType::FullWater)
-            bgMapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastline_encodingRuleId);
+            bgMapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
         else if (surfaceType == MapSurfaceType::FullLand || surfaceType == MapSurfaceType::Mixed)
-            bgMapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalLand_encodingRuleId);
+            bgMapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalLandAttributeId);
         else // if (surfaceType == SurfaceType::Undefined)
         {
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
@@ -374,9 +374,9 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
 #endif // OSMAND_VERBOSE_MAP_PRIMITIVISER
 
             bgMapObject->isArea = false;
-            bgMapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
+            bgMapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineBrokenAttributeId);
         }
-        bgMapObject->additionalTypesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->layerLowest_encodingRuleId);
+        bgMapObject->additionalAttributeIds.push_back(MapObject::defaultAttributeMapping->layerLowestAttributeId);
 
         assert(bgMapObject->isClosedFigure());
         polygonizedCoastlineObjects.push_back(qMove(bgMapObject));
@@ -504,7 +504,7 @@ std::shared_ptr<OsmAnd::MapPrimitiviser_P::PrimitivisedObjects> OsmAnd::MapPrimi
                 continue;
         }
 
-        if (!mapObject->containsType(mapObject->encodingDecodingRules->naturalCoastline_encodingRuleId))
+        if (!mapObject->containsAttribute(mapObject->attributeMapping->naturalCoastlineAttributeId))
         {
             if (isBasemapObject)
                 basemapMapObjects.push_back(mapObject);
@@ -655,7 +655,7 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
         const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
         mapObject->isArea = false;
         mapObject->points31 = polyline;
-        mapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastlineLine_encodingRuleId);
+        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineLineAttributeId);
 
         outVectorized.push_back(qMove(mapObject));
     }
@@ -673,7 +673,7 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
         mapObject->bbox31 = area31;
         convertCoastlinePolylinesToPolygons(area31, coastlinePolylines, mapObject->innerPolygonsPoints31);
 
-        mapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastline_encodingRuleId);
+        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
         mapObject->isArea = true;
 
         assert(mapObject->isClosedFigure());
@@ -700,7 +700,7 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
             const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
             mapObject->isArea = false;
             mapObject->points31 = polygon;
-            mapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastlineBroken_encodingRuleId);
+            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineBrokenAttributeId);
 
             outVectorized.push_back(qMove(mapObject));
         }
@@ -712,7 +712,7 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
         const std::shared_ptr<MapObject> mapObject(new CoastlineMapObject());
         mapObject->isArea = false;
         mapObject->points31 = polygon;
-        mapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastlineLine_encodingRuleId);
+        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineLineAttributeId);
 
         outVectorized.push_back(qMove(mapObject));
     }
@@ -734,12 +734,12 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
         mapObject->points31 = qMove(polygon);
         if (clockwise)
         {
-            mapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastline_encodingRuleId);
+            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
             fullWaterObjects++;
         }
         else
         {
-            mapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalLand_encodingRuleId);
+            mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalLandAttributeId);
             fullLandObjects++;
         }
         mapObject->isArea = true;
@@ -768,7 +768,7 @@ bool OsmAnd::MapPrimitiviser_P::polygonizeCoastlines(
         mapObject->points31.push_back(mapObject->points31.first());
         mapObject->bbox31 = area31;
 
-        mapObject->typesRuleIds.push_back(MapObject::defaultEncodingDecodingRules->naturalCoastline_encodingRuleId);
+        mapObject->attributeIds.push_back(MapObject::defaultAttributeMapping->naturalCoastlineAttributeId);
         mapObject->isArea = true;
 
         assert(mapObject->isClosedFigure());
@@ -1384,11 +1384,12 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
     orderEvaluator.setBooleanValue(env->styleBuiltinValueDefs->id_INPUT_CYCLE, mapObject->isClosedFigure());
     polylineEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_LAYER, static_cast<int>(layerType));
 
-    uint32_t typeRuleIdIndex = 0;
-    const auto& decRules = mapObject->encodingDecodingRules->decodingRules;
-    for (auto itTypeRuleId = cachingIteratorOf(constOf(mapObject->typesRuleIds)); itTypeRuleId; ++itTypeRuleId, typeRuleIdIndex++)
+    const auto& decRules = mapObject->attributeMapping->decodeMap;
+    auto pAttributeId = mapObject->attributeIds.constData();
+    const auto attributeIdsCount = mapObject->attributeIds.size();
+    for (auto attributeIdIndex = 0; attributeIdIndex < attributeIdsCount; attributeIdIndex++, pAttributeId++)
     {
-        const auto& decodedType = decRules[*itTypeRuleId];
+        const auto& decodedAttribute = decRules[*pAttributeId];
 
         //////////////////////////////////////////////////////////////////////////
         //if (mapObject->toString().contains("49048972"))
@@ -1401,8 +1402,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         const Stopwatch orderEvaluationStopwatch(metric != nullptr);
 
         // Setup tag+value-specific input data
-        orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-        orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+        orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
+        orderEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
 
         evaluationResult.clear();
         ok = orderEvaluator.evaluate(mapObject, MapStyleRulesetType::Order, &evaluationResult);
@@ -1516,8 +1517,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
                 // Setup tag+value-specific input data (for Polygon)
-                polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-                polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+                polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
+                polygonEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
 
                 // Evaluate style for this primitive to check if it passes (for Polygon)
                 evaluationResult.clear();
@@ -1536,7 +1537,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     const std::shared_ptr<Primitive> primitive(new Primitive(
                         group,
                         objectType,
-                        typeRuleIdIndex,
+                        attributeIdIndex,
                         evaluationResult));
                     primitive->zOrder = (std::dynamic_pointer_cast<const SurfaceMapObject>(mapObject) || std::dynamic_pointer_cast<const CoastlineMapObject>(mapObject))
                         ? std::numeric_limits<int>::min()
@@ -1567,8 +1568,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
                 // Setup tag+value-specific input data (for Point)
-                pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-                pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+                pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
+                pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
 
                 // Evaluate Point rules
                 evaluationResult.clear();
@@ -1592,7 +1593,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                         pointPrimitive.reset(new Primitive(
                             group,
                             PrimitiveType::Point,
-                            typeRuleIdIndex,
+                            attributeIdIndex,
                             evaluationResult));
                     }
                     else
@@ -1600,7 +1601,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                         pointPrimitive.reset(new Primitive(
                             group,
                             PrimitiveType::Point,
-                            typeRuleIdIndex));
+                            attributeIdIndex));
                     }
                     pointPrimitive->zOrder = (std::dynamic_pointer_cast<const SurfaceMapObject>(mapObject) || std::dynamic_pointer_cast<const CoastlineMapObject>(mapObject))
                         ? std::numeric_limits<int>::min()
@@ -1632,8 +1633,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             const Stopwatch polylineEvaluationStopwatch(metric != nullptr);
 
             // Setup tag+value-specific input data
-            polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-            polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+            polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
+            polylineEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
 
             // Evaluate style for this primitive to check if it passes
             evaluationResult.clear();
@@ -1658,7 +1659,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             const std::shared_ptr<Primitive> primitive(new Primitive(
                 group,
                 objectType,
-                typeRuleIdIndex,
+                attributeIdIndex,
                 evaluationResult));
             primitive->zOrder = zOrder;
 
@@ -1685,8 +1686,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
             // Setup tag+value-specific input data
-            pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-            pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+            pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
+            pointEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
 
             // Evaluate Point rules
             evaluationResult.clear();
@@ -1716,7 +1717,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 primitive.reset(new Primitive(
                     group,
                     PrimitiveType::Point,
-                    typeRuleIdIndex,
+                    attributeIdIndex,
                     evaluationResult));
             }
             else
@@ -1724,7 +1725,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 primitive.reset(new Primitive(
                     group,
                     PrimitiveType::Point,
-                    typeRuleIdIndex));
+                    attributeIdIndex));
             }
             primitive->zOrder = zOrder;
 
@@ -1770,11 +1771,11 @@ void OsmAnd::MapPrimitiviser_P::sortAndFilterPrimitives(
                 return l->doubledArea > r->doubledArea;
 
             // Then sort by tag=value ordering (this is possible only inside same object)
-            if (l->typeRuleIdIndex != r->typeRuleIdIndex && l->sourceObject == r->sourceObject)
+            if (l->attributeIdIndex != r->attributeIdIndex && l->sourceObject == r->sourceObject)
             {
                 if (l->type == PrimitiveType::Polygon)
-                    return l->typeRuleIdIndex > r->typeRuleIdIndex;
-                return l->typeRuleIdIndex < r->typeRuleIdIndex;
+                    return l->attributeIdIndex > r->attributeIdIndex;
+                return l->attributeIdIndex < r->attributeIdIndex;
             }
 
             // Then sort by number of points
@@ -1811,11 +1812,9 @@ void OsmAnd::MapPrimitiviser_P::filterOutHighwaysByDensity(
     {
         const auto& polyline = itPolyline.previous();
         const auto& sourceObject = polyline->sourceObject;
-        const auto& decRules = sourceObject->encodingDecodingRules->decodingRules;
 
         // If polyline is not road, it should be accepted
-        const auto& decodedType = decRules[sourceObject->typesRuleIds[polyline->typeRuleIdIndex]];
-        if (decodedType.tag.compare(QLatin1String("highway"), Qt::CaseInsensitive) != 0)
+        if (!sourceObject->containsTag(QLatin1String("highway")))
             continue;
 
         auto accept = false;
@@ -2170,7 +2169,7 @@ void OsmAnd::MapPrimitiviser_P::obtainSymbolsFromPoint(
 
     // Obtain texts for this symbol
     //HACK: (only in case it's first tag)
-    if (primitive->typeRuleIdIndex == 0)
+    if (primitive->attributeIdIndex == 0)
     {
         obtainPrimitiveTexts(
             context,
@@ -2208,13 +2207,13 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     if (mapObject->captions.isEmpty())
         return;
 
-    const auto& encDecRules = mapObject->encodingDecodingRules;
-    const auto typeRuleId = mapObject->typesRuleIds[primitive->typeRuleIdIndex];
-    const auto& decodedType = encDecRules->decodingRules[typeRuleId];
+    const auto& attributeMapping = mapObject->attributeMapping;
+    const auto attributeId = mapObject->attributeIds[primitive->attributeIdIndex];
+    const auto& decodedAttribute = attributeMapping->decodeMap[attributeId];
 
     // Set common evaluator settings
-    textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedType.tag);
-    textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedType.value);
+    textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_TAG, decodedAttribute.tag);
+    textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_VALUE, decodedAttribute.value);
 
     // Get captions and their order
     auto captions = mapObject->captions;
@@ -2229,17 +2228,17 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
         // Look for native name
         const auto citNativeName =
-            (encDecRules->name_encodingRuleId == std::numeric_limits<uint32_t>::max())
+            (attributeMapping->nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
             ? citCaptionsEnd
-            : captions.constFind(encDecRules->name_encodingRuleId);
+            : captions.constFind(attributeMapping->nativeNameAttributeId);
         hasNativeName = (citNativeName != citCaptionsEnd);
         auto nativeNameOrder = hasNativeName
             ? captionsOrder.indexOf(citNativeName.key())
             : -1;
 
         // Look for localized name
-        const auto citLocalizedNameRuleId = encDecRules->localizedName_encodingRuleIds.constFind(env->localeLanguageId);
-        if (citLocalizedNameRuleId != encDecRules->localizedName_encodingRuleIds.cend())
+        const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&env->localeLanguageId);
+        if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
             localizedNameRuleId = *citLocalizedNameRuleId;
         const auto citLocalizedName =
             (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
@@ -2271,8 +2270,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 // Only one should be shown, thus remove native if localized exist
                 if (hasLocalizedName && hasNativeName)
                 {
-                    captions.remove(encDecRules->name_encodingRuleId);
-                    captionsOrder.removeOne(encDecRules->name_encodingRuleId);
+                    captions.remove(attributeMapping->nativeNameAttributeId);
+                    captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
                     hasNativeName = false;
                     nativeNameOrder = -1;
                 }
@@ -2303,7 +2302,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                     const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
 
                     captions.insert(localizedNameRuleId, latinNameValue);
-                    localizedNameOrder = captionsOrder.indexOf(encDecRules->name_encodingRuleId) + 1;
+                    localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId) + 1;
                     captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                     hasLocalizedName = true;
                 }
@@ -2334,7 +2333,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                     const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
 
                     captions.insert(localizedNameRuleId, latinNameValue);
-                    localizedNameOrder = captionsOrder.indexOf(encDecRules->name_encodingRuleId);
+                    localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
                     captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                     hasLocalizedName = true;
                 }
@@ -2364,8 +2363,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 }
                 else // if (localizedNameOrder < nativeNameOrder)
                 {
-                    captions.remove(encDecRules->name_encodingRuleId);
-                    captionsOrder.removeOne(encDecRules->name_encodingRuleId);
+                    captions.remove(attributeMapping->nativeNameAttributeId);
+                    captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
                     hasNativeName = false;
                     nativeNameOrder = -1;
                 }
@@ -2377,22 +2376,22 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
     bool ok;
     bool extraCaptionTextAdded = false;
     uint32_t extraCaptionRuleId = std::numeric_limits<uint32_t>::max();
-    for (const auto& captionRuleId : constOf(captionsOrder))
+    for (const auto& captionAttributeId : constOf(captionsOrder))
     {
-        const auto& caption = constOf(captions)[captionRuleId];
+        const auto& caption = constOf(captions)[captionAttributeId];
 
         // If it's empty, it can not be primitivised
         if (caption.isEmpty())
             continue;
 
         // In case this tag was already processed as extra caption, no need to duplicate it
-        if (extraCaptionTextAdded && captionRuleId == extraCaptionRuleId)
+        if (extraCaptionTextAdded && captionAttributeId == extraCaptionRuleId)
             continue;
 
         // Skip captions that are from 'name[:*]'-tags but not of 'native' or 'localized' language
-        if (captionRuleId != encDecRules->name_encodingRuleId &&
-            captionRuleId != localizedNameRuleId &&
-            encDecRules->namesRuleId.contains(captionRuleId))
+        if (captionAttributeId != attributeMapping->nativeNameAttributeId &&
+            captionAttributeId != localizedNameRuleId &&
+            attributeMapping->nameAttributeIds.contains(captionAttributeId))
         {
             continue;
         }
@@ -2400,11 +2399,11 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         // Evaluate style to obtain text parameters
         textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
 
-        // Get tag of rule, in case caption is not from a 'name[:*]'-tag
-        QString captionRuleTag;
-        if (captionRuleId != encDecRules->name_encodingRuleId && captionRuleId != localizedNameRuleId)
-            captionRuleTag = encDecRules->decodingRules[captionRuleId].tag;
-        textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, captionRuleTag);
+        // Get tag of the attribute, in case caption is not from a 'name[:*]'-attribute
+        QString captionAttributeTag;
+        if (captionAttributeId != attributeMapping->nativeNameAttributeId && captionAttributeId != localizedNameRuleId)
+            captionAttributeTag = attributeMapping->decodeMap[captionAttributeId].tag;
+        textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, captionAttributeTag);
 
         evaluationResult.clear();
         if (!textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult))
@@ -2418,9 +2417,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
         // Determine language of this text
         auto languageId = LanguageId::Invariant;
-        if (hasNativeName && captionRuleId == encDecRules->name_encodingRuleId)
+        if (hasNativeName && captionAttributeId == attributeMapping->nativeNameAttributeId)
             languageId = LanguageId::Native;
-        else if (hasLocalizedName && captionRuleId == localizedNameRuleId)
+        else if (hasLocalizedName && captionAttributeId == localizedNameRuleId)
             languageId = LanguageId::Localized;
 
         // Create primitive
@@ -2437,14 +2436,14 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_NAME_TAG2, nameTag2);
             if (ok && !nameTag2.isEmpty())
             {
-                const auto citNameTag2RulesGroup = encDecRules->encodingRuleIds.constFind(nameTag2);
-                if (citNameTag2RulesGroup != encDecRules->encodingRuleIds.constEnd())
+                const auto citNameTag2AttributesGroup = attributeMapping->encodeMap.constFind(&nameTag2);
+                if (citNameTag2AttributesGroup != attributeMapping->encodeMap.constEnd())
                 {
-                    const auto& nameTag2RulesGroup = *citNameTag2RulesGroup;
-                    for (const auto& nameTag2RuleEntry : rangeOf(constOf(nameTag2RulesGroup)))
+                    const auto& nameTag2AttributesGroup = *citNameTag2AttributesGroup;
+                    for (const auto& nameTag2AttributeEntry : rangeOf(constOf(nameTag2AttributesGroup)))
                     {
-                        const auto ruleId = nameTag2RuleEntry.value();
-                        const auto citExtraCaption = mapObject->captions.constFind(ruleId);
+                        const auto attributeId = nameTag2AttributeEntry.value();
+                        const auto citExtraCaption = mapObject->captions.constFind(attributeId);
 
                         if (citExtraCaption == mapObject->captions.constEnd())
                             continue;
@@ -2459,7 +2458,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                         text->value += QString(QLatin1String(" (%1)")).arg(extraCaption);
 
                         extraCaptionTextAdded = true;
-                        extraCaptionRuleId = ruleId;
+                        extraCaptionRuleId = attributeId;
                         break;
                     }
                 }
@@ -2517,23 +2516,31 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
         QString intersectsWith;
-        ok = evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
+        ok = evaluationResult.getStringValue(
+            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH,
+            intersectsWith);
         if (!ok)
             intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
         text->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
         float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
-        ok = evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, intersectionSizeFactor);
+        ok = evaluationResult.getFloatValue(
+            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR,
+            intersectionSizeFactor);
         if (ok)
             text->intersectionSizeFactor = intersectionSizeFactor;
 
         float intersectionSize = std::numeric_limits<float>::quiet_NaN();
-        ok = !ok && evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, intersectionSize);
+        ok = !ok && evaluationResult.getFloatValue(
+            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE,
+            intersectionSize);
         if (ok)
             text->intersectionSize = intersectionSize;
 
         float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
-        ok = !ok && evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, intersectionMargin);
+        ok = !ok && evaluationResult.getFloatValue(
+            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN,
+            intersectionMargin);
         if (ok)
             text->intersectionMargin = intersectionMargin;
 
@@ -2623,23 +2630,31 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIELD, icon->shieldResourceName);
 
     QString intersectsWith;
-    ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, intersectsWith);
+    ok = primitive->evaluationResult.getStringValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH,
+        intersectsWith);
     if (!ok)
         intersectsWith = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
     icon->intersectsWith = intersectsWith.split(QLatin1Char(','), QString::SkipEmptyParts).toSet();
 
     float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
-    ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, intersectionSizeFactor);
+    ok = primitive->evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR,
+        intersectionSizeFactor);
     if (ok)
         icon->intersectionSizeFactor = intersectionSizeFactor;
 
     float intersectionSize = std::numeric_limits<float>::quiet_NaN();
-    ok = !ok && primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, intersectionSize);
+    ok = !ok && primitive->evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE,
+        intersectionSize);
     if (ok)
         icon->intersectionSize = intersectionSize;
 
     float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
-    ok = !ok && primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, intersectionMargin);
+    ok = !ok && primitive->evaluationResult.getFloatValue(
+        env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN,
+        intersectionMargin);
     if (ok)
         icon->intersectionMargin = intersectionMargin;
 
@@ -2647,7 +2662,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
     if (!ok)
     {
         float iconIntersectionSize = std::numeric_limits<float>::quiet_NaN();
-        ok = primitive->evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_INTERSECTION_SIZE, iconIntersectionSize);
+        ok = primitive->evaluationResult.getFloatValue(
+            env->styleBuiltinValueDefs->id_OUTPUT_ICON_INTERSECTION_SIZE,
+            iconIntersectionSize);
         if (ok)
             icon->intersectionSize = iconIntersectionSize;
     }

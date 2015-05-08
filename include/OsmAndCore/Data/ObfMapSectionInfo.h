@@ -50,25 +50,24 @@ namespace OsmAnd
     friend class OsmAnd::ObfMapSectionReader_P;
     };
 
-    class OSMAND_CORE_API ObfMapSectionDecodingEncodingRules : public MapObject::EncodingDecodingRules
+    class OSMAND_CORE_API ObfMapSectionAttributeMapping : public MapObject::AttributeMapping
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfMapSectionDecodingEncodingRules);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapSectionAttributeMapping);
     private:
     protected:
-        virtual void createRequiredRules(uint32_t& lastUsedRuleId);
+        virtual void registerRequiredMapping(uint32_t& lastUsedEntryId);
     public:
-        ObfMapSectionDecodingEncodingRules();
-        virtual ~ObfMapSectionDecodingEncodingRules();
+        ObfMapSectionAttributeMapping();
+        virtual ~ObfMapSectionAttributeMapping();
 
-        // Quick-access rules
-        uint32_t tunnel_encodingRuleId;
-        uint32_t bridge_encodingRuleId;
+        uint32_t tunnelAttributeId;
+        uint32_t bridgeAttributeId;
 
-        QSet<uint32_t> positiveLayers_encodingRuleIds;
-        QSet<uint32_t> zeroLayers_encodingRuleIds;
-        QSet<uint32_t> negativeLayers_encodingRuleIds;
+        QSet<uint32_t> positiveLayerAttributeIds;
+        QSet<uint32_t> zeroLayerAttributeIds;
+        QSet<uint32_t> negativeLayerAttributeIds;
 
-        virtual uint32_t addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue);
+        virtual void registerMapping(const uint32_t id, const QString& tag, const QString& value);
     };
 
     class ObfMapSectionInfo_P;
@@ -82,7 +81,7 @@ namespace OsmAnd
         ObfMapSectionInfo(const std::shared_ptr<const ObfInfo>& container);
         virtual ~ObfMapSectionInfo();
 
-        std::shared_ptr<const ObfMapSectionDecodingEncodingRules> getEncodingDecodingRules() const;
+        std::shared_ptr<const ObfMapSectionAttributeMapping> getAttributeMapping() const;
 
         bool isBasemap;
         bool isBasemapWithCoastlines;

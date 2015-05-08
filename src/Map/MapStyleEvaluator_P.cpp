@@ -193,12 +193,12 @@ bool OsmAnd::MapStyleEvaluator_P::evaluate(
                 auto equalSignIdx = valueString.indexOf(QLatin1Char('='));
                 if (equalSignIdx >= 0)
                 {
-                    const auto& tag = valueString.mid(0, equalSignIdx);
-                    const auto& value = valueString.mid(equalSignIdx + 1);
-                    evaluationResult = mapObject->containsTypeSlow(tag, value, true);
+                    const auto& tagRef = valueString.midRef(0, equalSignIdx);
+                    const auto& valueRef = valueString.midRef(equalSignIdx + 1);
+                    evaluationResult = mapObject->containsAttribute(tagRef, valueRef, true);
                 }
                 else
-                    evaluationResult = mapObject->containsTagSlow(valueString, true);
+                    evaluationResult = mapObject->containsTag(valueString, true);
             }
         }
         else if (valueDefId == _builtinValueDefs->id_INPUT_TEST)

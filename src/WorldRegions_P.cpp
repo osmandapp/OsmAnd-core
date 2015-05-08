@@ -58,20 +58,25 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
             [&outRegions, &idsCaptured, &nameId, &idId, &downloadNameId, &regionPrefixId, &regionSuffixId, localizedNameTagPrefix, localizedNameTagPrefixLen]
             (const std::shared_ptr<const OsmAnd::BinaryMapObject>& worldRegionMapObject) -> bool
             {
-                const auto& rules = worldRegionMapObject->encodingDecodingRules;
+                const QString keyNameTag(QLatin1String("key_name"));
+                const QString downloadNameTag(QLatin1String("download_name"));
+                const QString regionPrefixTag(QLatin1String("region_prefix"));
+                const QString regionSuffixTag(QLatin1String("region_suffix"));
+
+                const auto& encodeMap = worldRegionMapObject->attributeMapping->encodeMap;
                 if (!idsCaptured)
                 {
-                    nameId = rules->name_encodingRuleId;
+                    nameId = worldRegionMapObject->attributeMapping->nativeNameAttributeId;
 
-                    QHash< QString, QHash<QString, uint32_t> >::const_iterator citRule;
-                    if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("key_name"))) != rules->encodingRuleIds.cend())
-                        idId = citRule->constBegin().value();
-                    if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("download_name"))) != rules->encodingRuleIds.cend())
-                        downloadNameId = citRule->constBegin().value();
-                    if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("region_prefix"))) != rules->encodingRuleIds.cend())
-                        regionPrefixId = citRule->constBegin().value();
-                    if ((citRule = rules->encodingRuleIds.constFind(QLatin1String("region_suffix"))) != rules->encodingRuleIds.cend())
-                        regionSuffixId = citRule->constBegin().value();
+                    QHash< QStringRef, QHash<QStringRef, uint32_t> >::const_iterator citAttributes;
+                    if ((citAttributes = encodeMap.constFind(&keyNameTag)) != encodeMap.cend())
+                        idId = citAttributes->constBegin().value();
+                    if ((citAttributes = encodeMap.constFind(&downloadNameTag)) != encodeMap.cend())
+                        downloadNameId = citAttributes->constBegin().value();
+                    if ((citAttributes = encodeMap.constFind(&regionPrefixTag)) != encodeMap.cend())
+                        regionPrefixId = citAttributes->constBegin().value();
+                    if ((citAttributes = encodeMap.constFind(&regionSuffixTag)) != encodeMap.cend())
+                        regionSuffixId = citAttributes->constBegin().value();
 
                     idsCaptured = true;
                 }
@@ -111,7 +116,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                         continue;
                     }
 
-                    const auto& nameTag = rules->decodingRules[captionEntry.key()].tag;
+                    const auto& nameTag = worldRegionMapObject->attributeMapping->decodeMap[captionEntry.key()].tag;
                     if (!nameTag.startsWith(localizedNameTagPrefix))
                         continue;
                     const auto languageId = nameTag.mid(localizedNameTagPrefixLen).toLower();

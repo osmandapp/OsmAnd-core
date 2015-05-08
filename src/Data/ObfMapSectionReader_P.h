@@ -21,7 +21,7 @@ namespace OsmAnd
     class ObfReader_P;
     class ObfMapSectionInfo;
     class ObfMapSectionLevel;
-    class ObfMapSectionDecodingEncodingRules;
+    class ObfMapSectionAttributeMapping;
     class ObfMapSectionLevelTreeNode;
     class BinaryMapObject;
     class IQueryController;
@@ -53,15 +53,15 @@ namespace OsmAnd
             const ObfReader_P& reader,
             const std::shared_ptr<ObfMapSectionLevel>& level);
 
-        static void readEncodingDecodingRules(
+        static void readAttributeMapping(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfMapSectionInfo>& section,
-            const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
+            const std::shared_ptr<ObfMapSectionAttributeMapping>& attributeMapping);
 
-        static void readEncodingDecodingRule(
+        static void readAttributeMappingEntry(
             const ObfReader_P& reader,
-            uint32_t defaultId,
-            const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules);
+            const uint32_t naturalId,
+            const std::shared_ptr<ObfMapSectionAttributeMapping>& attributeMapping);
 
         static void readMapLevelTreeNodes(
             const ObfReader_P& reader,

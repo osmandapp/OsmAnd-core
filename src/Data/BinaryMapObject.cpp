@@ -10,7 +10,7 @@ OsmAnd::BinaryMapObject::BinaryMapObject(
     , section(section_)
     , level(level_)
 {
-    encodingDecodingRules = section->getEncodingDecodingRules();
+    attributeMapping = section->getAttributeMapping();
 }
 
 OsmAnd::BinaryMapObject::~BinaryMapObject()
@@ -46,15 +46,15 @@ OsmAnd::ZoomLevel OsmAnd::BinaryMapObject::getMaxZoomLevel() const
 
 OsmAnd::MapObject::LayerType OsmAnd::BinaryMapObject::getLayerType() const
 {
-    const auto& encDecRules = std::static_pointer_cast<const ObfMapSectionDecodingEncodingRules>(encodingDecodingRules);
+    const auto& obfAttributeMapping = std::static_pointer_cast<const ObfMapSectionAttributeMapping>(attributeMapping);
 
-    for (const auto& typeRuleId : constOf(additionalTypesRuleIds))
+    for (const auto& additionalAttributeId : constOf(additionalAttributeIds))
     {
-        if (encDecRules->positiveLayers_encodingRuleIds.contains(typeRuleId))
+        if (obfAttributeMapping->positiveLayerAttributeIds.contains(additionalAttributeId))
             return LayerType::Positive;
-        else if (encDecRules->negativeLayers_encodingRuleIds.contains(typeRuleId))
+        else if (obfAttributeMapping->negativeLayerAttributeIds.contains(additionalAttributeId))
             return LayerType::Negative;
-        else if (encDecRules->zeroLayers_encodingRuleIds.contains(typeRuleId))
+        else if (obfAttributeMapping->zeroLayerAttributeIds.contains(additionalAttributeId))
             return LayerType::Zero;
     }
 

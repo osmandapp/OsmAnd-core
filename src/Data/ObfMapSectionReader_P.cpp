@@ -77,15 +77,15 @@ void OsmAnd::ObfMapSectionReader_P::read(
     }
 }
 
-void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
+void OsmAnd::ObfMapSectionReader_P::readAttributeMapping(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfMapSectionInfo>& section,
-    const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
+    const std::shared_ptr<ObfMapSectionAttributeMapping>& attributeMapping)
 {
     const auto cis = reader.getCodedInputStream().get();
 
     bool atLeastOneRuleWasRead = false;
-    uint32_t defaultId = 1;
+    uint32_t naturalId = 1;
     for (;;)
     {
         gpb::uint32 tag = cis->ReadTag();
@@ -95,7 +95,7 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
-                encodingDecodingRules->verifyRequiredRulesExist();
+                attributeMapping->verifyRequiredMappingRegistered();
                 return;
             case OBF::OsmAndMapIndex::kRulesFieldNumber:
             {
@@ -104,7 +104,7 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
                 const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
-                readEncodingDecodingRule(reader, defaultId++, encodingDecodingRules);
+                readAttributeMappingEntry(reader, naturalId++, attributeMapping);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -115,7 +115,7 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
             default:
                 if (atLeastOneRuleWasRead)
                 {
-                    encodingDecodingRules->verifyRequiredRulesExist();
+                    attributeMapping->verifyRequiredMappingRegistered();
                     return;
                 }
                 ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -124,16 +124,16 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRules(
     }
 }
 
-void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
+void OsmAnd::ObfMapSectionReader_P::readAttributeMappingEntry(
     const ObfReader_P& reader,
-    uint32_t defaultId,
-    const std::shared_ptr<ObfMapSectionDecodingEncodingRules>& encodingDecodingRules)
+    const uint32_t naturalId,
+    const std::shared_ptr<ObfMapSectionAttributeMapping>& attributeMapping)
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    gpb::uint32 ruleId = defaultId;
-    QString ruleTag;
-    QString ruleValue;
+    uint32_t entryId = naturalId;
+    QString entryTag;
+    QString entryValue;
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -143,16 +143,16 @@ void OsmAnd::ObfMapSectionReader_P::readEncodingDecodingRule(
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
-                encodingDecodingRules->addRule(ruleId, ruleTag, ruleValue);
+                attributeMapping->registerMapping(entryId, entryTag, entryValue);
                 return;
             case OBF::OsmAndMapIndex_MapEncodingRule::kValueFieldNumber:
-                ObfReaderUtilities::readQString(cis, ruleValue);
+                ObfReaderUtilities::readQString(cis, entryValue);
                 break;
             case OBF::OsmAndMapIndex_MapEncodingRule::kTagFieldNumber:
-                ObfReaderUtilities::readQString(cis, ruleTag);
+                ObfReaderUtilities::readQString(cis, entryTag);
                 break;
             case OBF::OsmAndMapIndex_MapEncodingRule::kIdFieldNumber:
-                cis->ReadVarint32(&ruleId);
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&entryId));
                 break;
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
@@ -848,27 +848,27 @@ void OsmAnd::ObfMapSectionReader_P::readMapObject(
                 if (!mapObject)
                     mapObject.reset(new OsmAnd::BinaryMapObject(section, treeNode->level));
 
-                auto& typesRuleIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber)
-                    ? mapObject->additionalTypesRuleIds
-                    : mapObject->typesRuleIds;
+                auto& attributeIds = (tgn == OBF::MapData::kAdditionalTypesFieldNumber)
+                    ? mapObject->additionalAttributeIds
+                    : mapObject->attributeIds;
 
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
                 auto oldLimit = cis->PushLimit(length);
 
                 // Preallocate space
-                typesRuleIds.reserve(cis->BytesUntilLimit());
+                attributeIds.reserve(cis->BytesUntilLimit());
 
                 while (cis->BytesUntilLimit() > 0)
                 {
-                    gpb::uint32 ruleId;
-                    cis->ReadVarint32(&ruleId);
+                    gpb::uint32 attributeId;
+                    cis->ReadVarint32(&attributeId);
 
-                    typesRuleIds.push_back(ruleId);
+                    attributeIds.push_back(attributeId);
                 }
 
                 // Shrink preallocated space
-                typesRuleIds.squeeze();
+                attributeIds.squeeze();
 
                 cis->PopLimit(oldLimit);
 
@@ -949,22 +949,22 @@ void OsmAnd::ObfMapSectionReader_P::loadMapObjects(
         };
 
     // Ensure encoding/decoding rules are read
-    if (section->_p->_encodingDecodingRulesLoaded.loadAcquire() == 0)
+    if (section->_p->_attributeMappingLoaded.loadAcquire() == 0)
     {
-        QMutexLocker scopedLocker(&section->_p->_encodingDecodingRulesLoadMutex);
-        if (!section->_p->_encodingDecodingRules)
+        QMutexLocker scopedLocker(&section->_p->_attributeMappingLoadMutex);
+        if (!section->_p->_attributeMapping)
         {
             // Read encoding/decoding rules
             cis->Seek(section->offset);
             auto oldLimit = cis->PushLimit(section->length);
 
-            const std::shared_ptr<ObfMapSectionDecodingEncodingRules> encodingDecodingRules(new ObfMapSectionDecodingEncodingRules());
-            readEncodingDecodingRules(reader, section, encodingDecodingRules);
-            section->_p->_encodingDecodingRules = encodingDecodingRules;
+            const std::shared_ptr<ObfMapSectionAttributeMapping> attributeMapping(new ObfMapSectionAttributeMapping());
+            readAttributeMapping(reader, section, attributeMapping);
+            section->_p->_attributeMapping = attributeMapping;
 
             cis->PopLimit(oldLimit);
 
-            section->_p->_encodingDecodingRulesLoaded.storeRelease(1);
+            section->_p->_attributeMappingLoaded.storeRelease(1);
         }
     }
 

@@ -59,10 +59,10 @@ namespace OsmAnd
         uint32_t dataOffset;
     };
 
-    struct OSMAND_CORE_API ObfRoutingSectionEncodingDecodingRules : public MapObject::EncodingDecodingRules
+    struct OSMAND_CORE_API ObfRoutingSectionAttributeMapping : public MapObject::AttributeMapping
     {
-        ObfRoutingSectionEncodingDecodingRules();
-        virtual ~ObfRoutingSectionEncodingDecodingRules();
+        ObfRoutingSectionAttributeMapping();
+        virtual ~ObfRoutingSectionAttributeMapping();
     };
 
     class ObfRoutingSectionInfo_P;
@@ -76,7 +76,7 @@ namespace OsmAnd
         ObfRoutingSectionInfo(const std::shared_ptr<const ObfInfo>& container);
         virtual ~ObfRoutingSectionInfo();
 
-        std::shared_ptr<const ObfRoutingSectionEncodingDecodingRules> getEncodingDecodingRules() const;
+        std::shared_ptr<const ObfRoutingSectionAttributeMapping> getAttributeMapping() const;
 
         AreaI area31;
 

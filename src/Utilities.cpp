@@ -55,7 +55,7 @@ double OsmAnd::Utilities::parseSpeed(const QString& value, double defValue, bool
         return defValue;
     }
     bool ok;
-    auto result = value.mid(first, last - first + 1).toDouble(&ok);
+    auto result = value.midRef(first, last - first + 1).toDouble(&ok);
     if (wasParsed)
         *wasParsed = ok;
     if (!ok)
@@ -75,7 +75,7 @@ double OsmAnd::Utilities::parseLength(const QString& value, double defValue, boo
     if (!extractFirstNumberPosition(value, first, last, false, true))
         return defValue;
     bool ok;
-    auto result = value.mid(first, last - first + 1).toDouble(&ok);
+    auto result = value.midRef(first, last - first + 1).toDouble(&ok);
     if (!ok)
         return defValue;
 
@@ -94,7 +94,7 @@ double OsmAnd::Utilities::parseLength(const QString& value, double defValue, boo
             return defValue;
         }
         bool ok;
-        auto inches = inchesSubstr.mid(first, last - first + 1).toDouble(&ok);
+        auto inches = inchesSubstr.midRef(first, last - first + 1).toDouble(&ok);
         if (ok)
             result += inches * 0.0254;
     }
@@ -109,7 +109,7 @@ double OsmAnd::Utilities::parseWeight(const QString& value, double defValue, boo
     if (!extractFirstNumberPosition(value, first, last, false, true))
         return defValue;
     bool ok;
-    auto result = value.mid(first, last - first + 1).toDouble(&ok);
+    auto result = value.midRef(first, last - first + 1).toDouble(&ok);
     if (!ok)
         return defValue;
 
@@ -129,7 +129,7 @@ OsmAnd::ColorARGB OsmAnd::Utilities::parseColor(const QString& value, const Colo
 		return defValue;
 
 	ColorARGB result;
-	result.argb = value.mid(1).toUInt(nullptr, 16);
+    result.argb = value.midRef(1).toUInt(nullptr, 16);
 	if (value.size() <= 7)
 		result.setAlpha(0xFF);
 
@@ -147,7 +147,7 @@ int OsmAnd::Utilities::parseArbitraryInt(const QString& value, int defValue, boo
     if (!extractFirstNumberPosition(value, first, last, true, false))
         return defValue;
     bool ok;
-    auto result = value.mid(first, last - first + 1).toInt(&ok);
+    auto result = value.midRef(first, last - first + 1).toInt(&ok);
     if (!ok)
         return defValue;
 
@@ -164,7 +164,7 @@ long OsmAnd::Utilities::parseArbitraryLong(const QString& value, long defValue, 
     if (!extractFirstNumberPosition(value, first, last, true, false))
         return defValue;
     bool ok;
-    auto result = value.mid(first, last - first + 1).toLong(&ok);
+    auto result = value.midRef(first, last - first + 1).toLong(&ok);
     if (!ok)
         return defValue;
 
@@ -181,7 +181,7 @@ unsigned int OsmAnd::Utilities::parseArbitraryUInt(const QString& value, unsigne
     if (!extractFirstNumberPosition(value, first, last, false, false))
         return defValue;
     bool ok;
-    auto result = value.mid(first, last - first + 1).toUInt(&ok);
+    auto result = value.midRef(first, last - first + 1).toUInt(&ok);
     if (!ok)
         return defValue;
 
@@ -198,7 +198,7 @@ unsigned long OsmAnd::Utilities::parseArbitraryULong(const QString& value, unsig
     if (!extractFirstNumberPosition(value, first, last, false, false))
         return defValue;
     bool ok;
-    auto result = value.mid(first, last - first + 1).toULong(&ok);
+    auto result = value.midRef(first, last - first + 1).toULong(&ok);
     if (!ok)
         return defValue;
 
@@ -215,7 +215,7 @@ float OsmAnd::Utilities::parseArbitraryFloat(const QString& value, float defValu
     if (!extractFirstNumberPosition(value, first, last, true, true))
         return defValue;
     bool ok;
-    auto result = value.mid(first, last - first + 1).toFloat(&ok);
+    auto result = value.midRef(first, last - first + 1).toFloat(&ok);
     if (!ok)
         return defValue;
 

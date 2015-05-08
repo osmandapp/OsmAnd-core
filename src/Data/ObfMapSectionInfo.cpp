@@ -11,9 +11,9 @@ OsmAnd::ObfMapSectionInfo::~ObfMapSectionInfo()
 {
 }
 
-std::shared_ptr<const OsmAnd::ObfMapSectionDecodingEncodingRules> OsmAnd::ObfMapSectionInfo::getEncodingDecodingRules() const
+std::shared_ptr<const OsmAnd::ObfMapSectionAttributeMapping> OsmAnd::ObfMapSectionInfo::getAttributeMapping() const
 {
-    return _p->getEncodingDecodingRules();
+    return _p->getAttributeMapping();
 }
 
 OsmAnd::ObfMapSectionLevel::ObfMapSectionLevel()
@@ -26,50 +26,53 @@ OsmAnd::ObfMapSectionLevel::~ObfMapSectionLevel()
 {
 }
 
-OsmAnd::ObfMapSectionDecodingEncodingRules::ObfMapSectionDecodingEncodingRules()
-    : tunnel_encodingRuleId(std::numeric_limits<uint32_t>::max())
-    , bridge_encodingRuleId(std::numeric_limits<uint32_t>::max())
+OsmAnd::ObfMapSectionAttributeMapping::ObfMapSectionAttributeMapping()
+    : tunnelAttributeId(std::numeric_limits<uint32_t>::max())
+    , bridgeAttributeId(std::numeric_limits<uint32_t>::max())
 {
-    positiveLayers_encodingRuleIds.reserve(2);
-    zeroLayers_encodingRuleIds.reserve(1);
-    negativeLayers_encodingRuleIds.reserve(2);
+    decodeMap.reserve(4096);
+
+    positiveLayerAttributeIds.reserve(2);
+    zeroLayerAttributeIds.reserve(1);
+    negativeLayerAttributeIds.reserve(2);
 }
 
-OsmAnd::ObfMapSectionDecodingEncodingRules::~ObfMapSectionDecodingEncodingRules()
+OsmAnd::ObfMapSectionAttributeMapping::~ObfMapSectionAttributeMapping()
 {
 }
 
-uint32_t OsmAnd::ObfMapSectionDecodingEncodingRules::addRule(const uint32_t ruleId, const QString& ruleTag, const QString& ruleValue)
+void OsmAnd::ObfMapSectionAttributeMapping::registerMapping(
+    const uint32_t id,
+    const QString& tag,
+    const QString& value)
 {
-    MapObject::EncodingDecodingRules::addRule(ruleId, ruleTag, ruleValue);
+    MapObject::AttributeMapping::registerMapping(id, tag, value);
 
-    if (QLatin1String("tunnel") == ruleTag && QLatin1String("yes") == ruleValue)
+    if (QLatin1String("tunnel") == tag && QLatin1String("yes") == value)
     {
-        tunnel_encodingRuleId = ruleId;
-        negativeLayers_encodingRuleIds.insert(ruleId);
+        tunnelAttributeId = id;
+        negativeLayerAttributeIds.insert(id);
     }
-    else if (QLatin1String("bridge") == ruleTag && QLatin1String("yes") == ruleValue)
+    else if (QLatin1String("bridge") == tag && QLatin1String("yes") == value)
     {
-        bridge_encodingRuleId = ruleId;
-        positiveLayers_encodingRuleIds.insert(ruleId);
+        bridgeAttributeId = id;
+        positiveLayerAttributeIds.insert(id);
     }
-    else if (QLatin1String("layer") == ruleTag)
+    else if (QLatin1String("layer") == tag)
     {
-        if (!ruleValue.isEmpty() && ruleValue != QLatin1String("0"))
+        if (!value.isEmpty() && value != QLatin1String("0"))
         {
-            if (ruleValue[0] == QLatin1Char('-'))
-                negativeLayers_encodingRuleIds.insert(ruleId);
-            else if (ruleValue[0] == QLatin1Char('0'))
-                zeroLayers_encodingRuleIds.insert(ruleId);
+            if (value[0] == QLatin1Char('-'))
+                negativeLayerAttributeIds.insert(id);
+            else if (value[0] == QLatin1Char('0'))
+                zeroLayerAttributeIds.insert(id);
             else
-                positiveLayers_encodingRuleIds.insert(ruleId);
+                positiveLayerAttributeIds.insert(id);
         }
     }
-
-    return ruleId;
 }
 
-void OsmAnd::ObfMapSectionDecodingEncodingRules::createRequiredRules(uint32_t& lastUsedRuleId)
+void OsmAnd::ObfMapSectionAttributeMapping::registerRequiredMapping(uint32_t& lastUsedEntryId)
 {
-    MapObject::EncodingDecodingRules::createRequiredRules(lastUsedRuleId);
+    MapObject::AttributeMapping::registerRequiredMapping(lastUsedEntryId);
 }

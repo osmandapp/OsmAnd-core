@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_ARRAY_MAP_H_
-#define _OSMAND_CORE_ARRAY_MAP_H_
+#ifndef _OSMAND_CORE_LIST_MAP_H_
+#define _OSMAND_CORE_LIST_MAP_H_
 
 #include <OsmAndCore/stdlib_common.h>
 #include <vector>
@@ -8,45 +8,45 @@
 #include <QtGlobal>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Nullable.h>
+#include <OsmAndCore/PinnedNullable.h>
 
 namespace OsmAnd
 {
     template<typename VALUE>
-    class ArrayMap Q_DECL_FINAL
+    class ListMap Q_DECL_FINAL
     {
     public:
-        typedef ArrayMap<VALUE> ArrayMapT;
-        typedef Nullable<VALUE> NullableT;
-        typedef typename std::vector<NullableT>::size_type KeyType;
-        typedef typename std::vector<NullableT>::size_type SizeType;
+        typedef ListMap<VALUE> ListMapT;
+        typedef PinnedNullable<VALUE> PinnedNullableT;
+        typedef typename std::vector<PinnedNullableT>::size_type KeyType;
+        typedef typename std::vector<PinnedNullableT>::size_type SizeType;
 
     private:
     protected:
-        std::vector<NullableT> _storage;
+        std::vector<PinnedNullableT> _storage;
     public:
-        inline ArrayMap(const SizeType size = 0)
+        inline ListMap(const SizeType size = 0)
         {
             _storage.reserve(size);
         }
 
-        inline ArrayMap(const ArrayMapT& that)
+        inline ListMap(const ListMapT& that)
             : _storage(that._storage)
         {
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
-        inline ArrayMap(ArrayMapT&& that)
+        inline ListMap(ListMapT&& that)
             : _storage(qMove(that._storage))
         {
         }
 #endif // Q_COMPILER_RVALUE_REFS
 
-        inline ~ArrayMap()
+        inline ~ListMap()
         {
         }
 
-        inline ArrayMapT& operator=(const ArrayMapT& that)
+        inline ListMapT& operator=(const ListMapT& that)
         {
             if (this != &that)
                 _storage = that._storage;
@@ -54,7 +54,7 @@ namespace OsmAnd
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
-        inline ArrayMapT& operator=(ArrayMapT&& that)
+        inline ListMapT& operator=(ListMapT&& that)
         {
             if (this != &that)
                 _storage = qMove(that._storage);
@@ -201,4 +201,4 @@ namespace OsmAnd
     };
 }
 
-#endif // !defined(_OSMAND_CORE_ARRAY_MAP_H_)
+#endif // !defined(_OSMAND_CORE_LIST_MAP_H_)

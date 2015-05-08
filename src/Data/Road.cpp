@@ -7,7 +7,7 @@ OsmAnd::Road::Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section_)
     : ObfMapObject(section_)
     , section(section_)
 {
-    encodingDecodingRules = section->getEncodingDecodingRules();
+    attributeMapping = section->getAttributeMapping();
 }
 
 //OsmAnd::Road::Road( const std::shared_ptr<const Road>& that, int insertIdx, uint32_t x31, uint32_t y31 )

@@ -573,25 +573,6 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
     for (unsigned int type = 0; type < MapRendererResourceTypesCount; type++)
         requestNeededResources(static_cast<MapRendererResourceType>(type), activeTiles, activeZoom);
 
-    //////////////////////////////////////////////////////////////////////////
-    LogPrintf(LogSeverityLevel::Debug, "Target %dx%d", centerTileId.x, centerTileId.y);
-    for (const auto task_ : constOf(_requestedResourcesTasks))
-    {
-        const auto task = static_cast<ResourceRequestTask*>(task_);
-        const auto tiledResource = std::dynamic_pointer_cast<MapRendererBaseTiledResource>(task->requestedResource);
-        if (!tiledResource)
-            continue;
-
-        const auto dx = tiledResource->tileId.x - centerTileId.x;
-        const auto dy = tiledResource->tileId.y - centerTileId.y;
-
-        const auto d = dx*dx + dy*dy;
-
-        LogPrintf(LogSeverityLevel::Debug, "Task %p %dx%d distance = %d", task_, tiledResource->tileId.x, tiledResource->tileId.y, d);
-    }
-    LogPrintf(LogSeverityLevel::Debug, "End target %dx%d", centerTileId.x, centerTileId.y);
-    //////////////////////////////////////////////////////////////////////////
-
     _resourcesRequestWorkerPool.enqueue(
         _requestedResourcesTasks,
         [centerTileId, activeTiles, activeZoom]

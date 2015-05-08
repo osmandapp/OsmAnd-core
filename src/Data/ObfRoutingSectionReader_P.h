@@ -52,15 +52,15 @@ namespace OsmAnd
             const ObfReader_P& reader,
             AreaI& outBbox31);
 
-        static void readEncodingDecodingRules(
+        static void readAttributeMapping(
             const ObfReader_P& reader,
             const std::shared_ptr<const ObfRoutingSectionInfo>& section,
-            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules);
+            const std::shared_ptr<ObfRoutingSectionAttributeMapping>& attributeMapping);
 
-        static void readEncodingDecodingRule(
+        static void readAttributeMappingEntry(
             const ObfReader_P& reader,
-            const std::shared_ptr<ObfRoutingSectionEncodingDecodingRules>& encodingDecodingRules,
-            const uint32_t defaultId);
+            const uint32_t naturalId,
+            const std::shared_ptr<ObfRoutingSectionAttributeMapping>& attributeMapping);
 
         static void readLevelTreeNodes(
             const ObfReader_P& reader,

@@ -1,8 +1,8 @@
 #include "ObfRoutingSectionInfo_P.h"
 
 OsmAnd::ObfRoutingSectionInfo_P::ObfRoutingSectionInfo_P(ObfRoutingSectionInfo* owner_)
-    : _encodingDecodingRules()
-    , _encodingDecodingRulesLoaded(0)
+    : _attributeMapping()
+    , _attributeMappingLoaded(0)
     , owner(owner_)
 {
 }
@@ -11,16 +11,16 @@ OsmAnd::ObfRoutingSectionInfo_P::~ObfRoutingSectionInfo_P()
 {
 }
 
-std::shared_ptr<const OsmAnd::ObfRoutingSectionEncodingDecodingRules> OsmAnd::ObfRoutingSectionInfo_P::getEncodingDecodingRules() const
+std::shared_ptr<const OsmAnd::ObfRoutingSectionAttributeMapping> OsmAnd::ObfRoutingSectionInfo_P::getAttributeMapping() const
 {
-    if (_encodingDecodingRulesLoaded.loadAcquire() != 0)
+    if (_attributeMappingLoaded.loadAcquire() != 0)
     {
-        if (!_encodingDecodingRules)
+        if (!_attributeMapping)
         {
-            QMutexLocker scopedLocker(&_encodingDecodingRulesLoadMutex);
-            return _encodingDecodingRules;
+            QMutexLocker scopedLocker(&_attributeMappingLoadMutex);
+            return _attributeMapping;
         }
-        return _encodingDecodingRules;
+        return _attributeMapping;
     }
     return nullptr;
 }

@@ -2,8 +2,7 @@
 #include "ObfMapSectionInfo.h"
 
 OsmAnd::ObfMapSectionInfo_P::ObfMapSectionInfo_P(ObfMapSectionInfo* owner_)
-    : _encodingDecodingRules()
-    , _encodingDecodingRulesLoaded(0)
+    : _attributeMappingLoaded(0)
     , owner(owner_)
 {
 }
@@ -12,16 +11,16 @@ OsmAnd::ObfMapSectionInfo_P::~ObfMapSectionInfo_P()
 {
 }
 
-std::shared_ptr<const OsmAnd::ObfMapSectionDecodingEncodingRules> OsmAnd::ObfMapSectionInfo_P::getEncodingDecodingRules() const
+std::shared_ptr<const OsmAnd::ObfMapSectionAttributeMapping> OsmAnd::ObfMapSectionInfo_P::getAttributeMapping() const
 {
-    if (_encodingDecodingRulesLoaded.loadAcquire() != 0)
+    if (_attributeMappingLoaded.loadAcquire() != 0)
     {
-        if (!_encodingDecodingRules)
+        if (!_attributeMapping)
         {
-            QMutexLocker scopedLocker(&_encodingDecodingRulesLoadMutex);
-            return _encodingDecodingRules;
+            QMutexLocker scopedLocker(&_attributeMappingLoadMutex);
+            return _attributeMapping;
         }
-        return _encodingDecodingRules;
+        return _attributeMapping;
     }
     return nullptr;
 }

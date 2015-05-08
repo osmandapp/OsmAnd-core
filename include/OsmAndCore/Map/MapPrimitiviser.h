@@ -110,7 +110,7 @@ namespace OsmAnd
             const std::shared_ptr<const MapObject> sourceObject;
 
             const PrimitiveType type;
-            const uint32_t typeRuleIdIndex;
+            const uint32_t attributeIdIndex;
             const MapStyleEvaluationResult::Packed evaluationResult;
 
             int zOrder;
