@@ -202,16 +202,14 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
 
             for (const auto& attributeId : OsmAnd::constOf(mapObject->attributeIds))
             {
-                const auto itAttribute = attributeMapping->decodeMap.constFind(attributeId);
-                if (itAttribute != attributeMapping->decodeMap.cend())
+                const auto attribute = attributeMapping->decodeMap.getRef(attributeId);
+                if (attribute)
                 {
-                    const auto& typeRule = *itAttribute;
-
                     output
                         << xT("\tType: ")
-                        << QStringToStlString(typeRule.tag)
+                        << QStringToStlString(attribute->tag)
                         << xT(" = ")
-                        << QStringToStlString(typeRule.value)
+                        << QStringToStlString(attribute->value)
                         << std::endl;
                 }
                 else
@@ -222,16 +220,14 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
 
             for (const auto& attributeId : OsmAnd::constOf(mapObject->additionalAttributeIds))
             {
-                const auto itAttribute = attributeMapping->decodeMap.constFind(attributeId);
-                if (itAttribute != attributeMapping->decodeMap.cend())
+                const auto attribute = attributeMapping->decodeMap.getRef(attributeId);
+                if (attribute)
                 {
-                    const auto& typeRule = *itAttribute;
-
                     output
                         << xT("\tExtra type: ")
-                        << QStringToStlString(typeRule.tag)
+                        << QStringToStlString(attribute->tag)
                         << xT(" = ")
-                        << QStringToStlString(typeRule.value)
+                        << QStringToStlString(attribute->value)
                         << std::endl;
                 }
                 else
@@ -251,13 +247,13 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                 else
                 {
                     const auto itCaptionTagAsLocalizedName = attributeMapping->localizedNameAttributeIds.constFind(captionAttributeId);
-                    const auto itCaptionTagRule = attributeMapping->decodeMap.constFind(captionAttributeId);
+                    const auto attribute = attributeMapping->decodeMap.getRef(captionAttributeId);
 
                     QString captionTag(QLatin1String("UNRESOLVED"));
                     if (itCaptionTagAsLocalizedName != attributeMapping->localizedNameAttributeIds.cend())
                         captionTag = itCaptionTagAsLocalizedName->toString();
-                    if (itCaptionTagRule != attributeMapping->decodeMap.cend())
-                        captionTag = itCaptionTagRule->tag;
+                    if (attribute)
+                        captionTag = attribute->tag;
                     output
                         << xT("\tCaption [")
                         << QStringToStlString(captionTag)
