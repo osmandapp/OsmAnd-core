@@ -24,7 +24,7 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , mapLayersBatchingForbidden(false)
     , disableJunkResourcesCleanup(false)
     , disableNeededResourcesRequests(false)
-    , disableFastSymbolsCheckByFrustum(false)
+    , disableSymbolsFastCheckByFrustum(false)
 {
 }
 
@@ -57,7 +57,7 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.mapLayersBatchingForbidden = mapLayersBatchingForbidden;
     other.disableJunkResourcesCleanup = disableJunkResourcesCleanup;
     other.disableNeededResourcesRequests = disableNeededResourcesRequests;
-    other.disableFastSymbolsCheckByFrustum = disableFastSymbolsCheckByFrustum;
+    other.disableSymbolsFastCheckByFrustum = disableSymbolsFastCheckByFrustum;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const
