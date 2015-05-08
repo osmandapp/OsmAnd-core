@@ -8,7 +8,6 @@
 #include <QtGlobal>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/PinnedNullable.h>
 
 namespace OsmAnd
 {
@@ -17,13 +16,12 @@ namespace OsmAnd
     {
     public:
         typedef ListMap<VALUE> ListMapT;
-        typedef PinnedNullable<VALUE> PinnedNullableT;
-        typedef typename std::vector<PinnedNullableT>::size_type KeyType;
-        typedef typename std::vector<PinnedNullableT>::size_type SizeType;
+        typedef typename std::vector< std::shared_ptr<VALUE> >::size_type KeyType;
+        typedef typename std::vector< std::shared_ptr<VALUE> >::size_type SizeType;
 
     private:
     protected:
-        std::vector<PinnedNullableT> _storage;
+        std::vector< std::shared_ptr<VALUE> > _storage;
     public:
         inline ListMap(const SizeType size = 0)
         {
@@ -31,8 +29,14 @@ namespace OsmAnd
         }
 
         inline ListMap(const ListMapT& that)
-            : _storage(that._storage)
         {
+            _storage.reserve(that._storage.size());
+            for (const auto& thatItem : that._storage)
+            {
+                const auto thisItem = std::make_shared<VALUE>();
+                *thisItem = *thatItem;
+                _storage.push_back(thisItem);
+            }
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -49,7 +53,16 @@ namespace OsmAnd
         inline ListMapT& operator=(const ListMapT& that)
         {
             if (this != &that)
-                _storage = that._storage;
+            {
+                _storage.clear();
+                _storage.reserve(that._storage.size());
+                for (const auto& thatItem : that._storage)
+                {
+                    const auto thisItem = std::make_shared<VALUE>();
+                    *thisItem = *thatItem;
+                    _storage.push_back(thisItem);
+                }
+            }
             return *this;
         }
 
@@ -66,7 +79,7 @@ namespace OsmAnd
         {
             if (key >= _storage.size())
                 return false;
-            return _storage[key].isSet();
+            return _storage[key];
         }
 
         inline const VALUE& operator[](const KeyType key) const
@@ -84,7 +97,10 @@ namespace OsmAnd
             if (key >= _storage.size())
                 _storage.resize(key + 1);
 
-            _storage[key] = value;
+            auto& entry = _storage[key];
+            if (!entry)
+                entry = std::make_shared<VALUE>();
+            *entry = value;
         }
 
         inline VALUE* insert(const KeyType key, const VALUE& value)
@@ -93,8 +109,10 @@ namespace OsmAnd
                 _storage.resize(key + 1);
 
             auto& entry = _storage[key];
-            entry = value;
-            return entry.getValuePtrOrNullptr();
+            if (!entry)
+                entry = std::make_shared<VALUE>();
+            *entry = value;
+            return entry.get();
         }
 
         inline bool get(const KeyType key, VALUE& outValue) const
@@ -102,11 +120,11 @@ namespace OsmAnd
             if (key >= _storage.size())
                 return false;
 
-            const auto& value = _storage[key];
-            if (!value.isSet())
+            const auto& entry = _storage[key];
+            if (!entry)
                 return false;
 
-            outValue = *value;
+            outValue = *entry;
             return true;
         }
 
@@ -115,7 +133,7 @@ namespace OsmAnd
             if (key >= _storage.size())
                 return nullptr;
 
-            return _storage[key].getValuePtrOrNullptr();
+            return _storage[key].get();
         }
 
         inline VALUE* getRef(const KeyType key)
@@ -123,7 +141,7 @@ namespace OsmAnd
             if (key >= _storage.size())
                 return nullptr;
 
-            return _storage[key].getValuePtrOrNullptr();
+            return _storage[key].get();
         }
 
         inline void reserve(const SizeType size)
@@ -144,7 +162,7 @@ namespace OsmAnd
             const auto size = _storage.size();
             auto pValue = _storage.data();
             for (SizeType index = 0; index < size; index++)
-                (pValue++)->unset();
+                (pValue++)->reset();
         }
 
         inline SizeType size() const
@@ -170,10 +188,10 @@ namespace OsmAnd
         inline bool findMinKey(KeyType& outKey) const
         {
             const auto size = _storage.size();
-            auto pValue = _storage.constData();
+            auto pEntry = _storage.constData();
             for (SizeType index = 0; index < size; index++)
             {
-                if (!(pValue++)->isSet())
+                if (!*(pEntry++))
                     continue;
 
                 outKey = index;
@@ -186,10 +204,10 @@ namespace OsmAnd
         inline bool findMaxKey(KeyType& outKey) const
         {
             const auto size = _storage.size();
-            auto pValue = _storage.data() + (size - 1);
+            auto pEntry = _storage.data() + (size - 1);
             for (SizeType index = 0; index < size; index++)
             {
-                if (!(pValue--)->isSet())
+                if (!*(pEntry--))
                     continue;
 
                 outKey = size - index - 1;

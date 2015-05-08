@@ -4,9 +4,11 @@
 #include "stdlib_common.h"
 
 #include "QtExtensions.h"
+#include "ignore_warnings_on_external_includes.h"
 #include <QString>
 #include <QStringList>
 #include <QVector>
+#include "restore_internal_warnings.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include <google/protobuf/io/coded_stream.h>
