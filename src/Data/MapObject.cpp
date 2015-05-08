@@ -236,9 +236,11 @@ OsmAnd::MapObject::AttributeMapping::~AttributeMapping()
 
 void OsmAnd::MapObject::AttributeMapping::verifyRequiredMappingRegistered()
 {
-    uint32_t lastUsedRuleId = 0u;
-    decodeMap.findMaxKey(lastUsedRuleId);
-    registerRequiredMapping(lastUsedRuleId);
+    ListMap< TagValue >::KeyType maxKey = 0;
+    decodeMap.findMaxKey(maxKey);
+
+    registerRequiredMapping(static_cast<uint32_t>(maxKey));
+
     decodeMap.squeeze();
 }
 

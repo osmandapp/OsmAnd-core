@@ -53,7 +53,7 @@ namespace OsmAnd
             , _isSet(that._isSet)
         {
             if (that._isSet)
-                valueRef() = that.valueRef();
+                valueRef() = *that._pValue;
         }
 
 #ifdef Q_COMPILER_RVALUE_REFS
@@ -88,7 +88,7 @@ namespace OsmAnd
                 return false;
             if (_pValue == r._pValue)
                 return true;
-            return (valueRef() == r.valueRef());
+            return (*_pValue == *r._pValue);
         }
 
         inline bool operator!=(const PinnedNullableT& r) const
@@ -102,7 +102,7 @@ namespace OsmAnd
             {
                 _isSet = that._isSet;
                 if (that._isSet)
-                    valueRef() = that.valueRef();
+                    valueRef() = *that._pValue;
             }
             return *this;
         }
