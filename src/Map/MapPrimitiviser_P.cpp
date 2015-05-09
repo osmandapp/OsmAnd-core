@@ -1233,6 +1233,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     const auto& env = context.env;
     const auto zoom = primitivisedObjects->zoom;
 
+    const Stopwatch obtainPrimitivesStopwatch(metric != nullptr);
+
     // Initialize shared settings for order evaluation
     MapStyleEvaluator orderEvaluator(env->mapStyle, env->displayDensityFactor * env->mapScaleFactor);
     env->applyTo(orderEvaluator);
@@ -1346,6 +1348,9 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitives(
     }
     if (metric)
         metric->elapsedTimeForFutureSharedPrimitivesGroups += futureSharedPrimitivesGroupsStopwatch.elapsed();
+
+    if (metric)
+        metric->elapsedTimeForPrimitives += obtainPrimitivesStopwatch.elapsed();
 }
 
 std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPrimitiviser_P::obtainPrimitivesGroup(
@@ -2591,7 +2596,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     QString iconResourceName;
     ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
-
     if (!ok || iconResourceName.isEmpty())
         return;
 

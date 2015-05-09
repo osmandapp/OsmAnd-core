@@ -39,6 +39,9 @@ namespace OsmAnd
         bool disableJunkResourcesCleanup;
         bool disableNeededResourcesRequests;
         bool disableSymbolsFastCheckByFrustum;
+        bool disableSkyStage;
+        bool disableMapLayersStage;
+        bool disableSymbolsStage;
         
         virtual void copyTo(MapRendererDebugSettings& other) const;
         virtual std::shared_ptr<MapRendererDebugSettings> createCopy() const;

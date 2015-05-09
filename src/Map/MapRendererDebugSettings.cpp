@@ -25,6 +25,9 @@ OsmAnd::MapRendererDebugSettings::MapRendererDebugSettings()
     , disableJunkResourcesCleanup(false)
     , disableNeededResourcesRequests(false)
     , disableSymbolsFastCheckByFrustum(false)
+    , disableSkyStage(false)
+    , disableMapLayersStage(false)
+    , disableSymbolsStage(false)
 {
 }
 
@@ -58,6 +61,9 @@ void OsmAnd::MapRendererDebugSettings::copyTo(MapRendererDebugSettings& other) c
     other.disableJunkResourcesCleanup = disableJunkResourcesCleanup;
     other.disableNeededResourcesRequests = disableNeededResourcesRequests;
     other.disableSymbolsFastCheckByFrustum = disableSymbolsFastCheckByFrustum;
+    other.disableSkyStage = disableSkyStage;
+    other.disableMapLayersStage = disableMapLayersStage;
+    other.disableSymbolsStage = disableSymbolsStage;
 }
 
 std::shared_ptr<OsmAnd::MapRendererDebugSettings> OsmAnd::MapRendererDebugSettings::createCopy() const

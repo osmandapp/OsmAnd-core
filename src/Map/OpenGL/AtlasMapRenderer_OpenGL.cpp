@@ -122,22 +122,28 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
     GL_CHECK_RESULT;
 
     // Render the sky
-    Stopwatch skyStageStopwatch(metric != nullptr);
-    if (!_skyStage->render(metric))
-        ok = false;
-    if (metric)
-        metric->elapsedTimeForSkyStage = skyStageStopwatch.elapsed();
+    if (!currentDebugSettings->disableSkyStage)
+    {
+        Stopwatch skyStageStopwatch(metric != nullptr);
+        if (!_skyStage->render(metric))
+            ok = false;
+        if (metric)
+            metric->elapsedTimeForSkyStage = skyStageStopwatch.elapsed();
+    }
 
     // Change depth test function prior to raster map stage and further stages
     glDepthFunc(GL_LEQUAL);
     GL_CHECK_RESULT;
 
     // Raster map stage is rendered without blending, since it's done in fragment shader
-    Stopwatch mapLayersStageStopwatch(metric != nullptr);
-    if (!_mapLayersStage->render(metric))
-        ok = false;
-    if (metric)
-        metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
+    if (!currentDebugSettings->disableMapLayersStage)
+    {
+        Stopwatch mapLayersStageStopwatch(metric != nullptr);
+        if (!_mapLayersStage->render(metric))
+            ok = false;
+        if (metric)
+            metric->elapsedTimeForMapLayersStage = mapLayersStageStopwatch.elapsed();
+    }
 
     // Turn on blending since now objects with transparency are going to be rendered
     glEnable(GL_BLEND);
@@ -145,15 +151,18 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::doRenderFrame(IMapRenderer_Metrics::Metric
 
     // Render map symbols without writing depth buffer, since symbols use own sorting and intersection checking
     //NOTE: Currently map symbols are incompatible with height-maps
-    Stopwatch symbolsStageStopwatch(metric != nullptr);
-    glDepthMask(GL_FALSE);
-    GL_CHECK_RESULT;
-    if (!_symbolsStage->render(metric))
-        ok = false;
-    glDepthMask(GL_TRUE);
-    GL_CHECK_RESULT;
-    if (metric)
-        metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
+    if (!currentDebugSettings->disableSymbolsStage)
+    {
+        Stopwatch symbolsStageStopwatch(metric != nullptr);
+        glDepthMask(GL_FALSE);
+        GL_CHECK_RESULT;
+        if (!_symbolsStage->render(metric))
+            ok = false;
+        glDepthMask(GL_TRUE);
+        GL_CHECK_RESULT;
+        if (metric)
+            metric->elapsedTimeForSymbolsStage = symbolsStageStopwatch.elapsed();
+    }
 
     // Restore straight color blending
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

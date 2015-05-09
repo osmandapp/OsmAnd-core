@@ -15,6 +15,9 @@ namespace OsmAnd
     namespace MapPrimitiviser_Metrics
     {
 #define OsmAnd__MapPrimitiviser_Metrics__Metric_primitivise__FIELDS(FIELD_ACTION)                   \
+        /* Time spent on obtaining primitives */                                                    \
+        FIELD_ACTION(float, elapsedTimeForPrimitives, "s");                                         \
+                                                                                                    \
         /* Time spent on obtaining all primitives groups */                                         \
         FIELD_ACTION(float, elapsedTimeForObtainingPrimitivesGroups, "s");                          \
                                                                                                     \
