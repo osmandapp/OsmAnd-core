@@ -446,8 +446,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     // In-tile normalized position is added, since all tiles are going to be
     // translated in opposite direction during rendering
     for(int i = 0; i < 4; i++) {
-        p[i].x += internalState->targetInTileOffsetN.x + internalState->targetTileId.x - 0.5;
-        p[i].y += internalState->targetInTileOffsetN.y + internalState->targetTileId.y - 0.5;
+        p[i].x += internalState->targetInTileOffsetN.x + internalState->targetTileId.x;
+        p[i].y += internalState->targetInTileOffsetN.y + internalState->targetTileId.y;
     }
 
     // Determine visible tiles set
@@ -455,6 +455,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
         QSet<TileId> visibleTiles;
         const int yMin = qFloor(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
         const int yMax = qFloor(qMax(qMax(p[0].y + 1, p[1].y + 1), qMax(p[2].y + 1, p[3].y + 1)));
+        //const int xgMin = qFloor(qMin(qMin(p[0].x, p[1].x), qMin(p[2].x, p[3].x)));
+        //const int xgMax = qFloor(qMax(qMax(p[0].x + 1, p[1].x + 1), qMax(p[2].x + 1, p[3].x + 1)));
         int pxMin = std::numeric_limits<int32_t>::max();
         int pxMax = std::numeric_limits<int32_t>::min();
         float x;
@@ -471,10 +473,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
                 }
             }
             for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
+            //for (auto x = xgMin; x <= xgMax; x++) // whole bbox
             {
                 TileId tileId;
                 tileId.x = x ;
-                tileId.y = y ;
+                tileId.y = y - 1 ;
                 visibleTiles.insert(tileId);
             }
             pxMin = xMin;
