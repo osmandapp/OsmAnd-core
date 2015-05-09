@@ -1082,8 +1082,7 @@ OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    const auto copy = _requestedState;
-    return copy;
+    return _requestedState;
 }
 
 bool OsmAnd::MapRenderer::isFrameInvalidated() const
