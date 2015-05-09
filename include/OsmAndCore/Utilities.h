@@ -778,8 +778,6 @@ namespace OsmAnd
         static void findFiles(const QDir& origin, const QStringList& masks, QFileInfoList& files, const bool recursively = true);
         static void findDirectories(const QDir& origin, const QStringList& masks, QFileInfoList& directories, const bool recursively = true);
 
-        static void scanlineFillPolygon(const unsigned int verticesCount, const PointF* const vertices, std::function<void(const PointI&)> fillPoint);
-
         inline static QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to)
         {
             QSet<ZoomLevel> result;

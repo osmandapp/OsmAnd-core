@@ -146,12 +146,12 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(QString::number(primitiviseMetric->elapsedTimeForIconSymbolsProcessing, 'f', 2))
             .arg(static_cast<int>(primitiviseMetric->elapsedTimeForIconSymbolsProcessing * 1000000.0f / (primitiviseMetric->obtainedIconSymbols + primitiviseMetric->rejectedIconSymbols)));
         const auto deltaSymbols =
-            primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols -
+            primitiviseMetric->elapsedTimeForSymbolsGroupsProcessing -
             primitiviseMetric->elapsedTimeForTextSymbolsEvaluation -
             primitiviseMetric->elapsedTimeForTextSymbolsProcessing -
             primitiviseMetric->elapsedTimeForIconSymbolsProcessing;
         text += QString(QLatin1String("sym %1s(-^=%2s) %3->%4\n"))
-            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols, 'f', 2))
+            .arg(QString::number(primitiviseMetric->elapsedTimeForSymbolsGroupsProcessing, 'f', 2))
             .arg(QString::number(deltaSymbols, 'f', 2))
             .arg(primitiviseMetric->symbolsGroupsProcessed)
             .arg(primitiviseMetric->obtainedTextSymbols + primitiviseMetric->obtainedIconSymbols);

@@ -450,82 +450,53 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     p[3] += internalState->targetInTileOffsetN;
 
     // Determine visible tiles set
-    /*{
+    {
         QSet<TileId> visibleTiles;
-        const auto& p0 = p[0];
-        const auto& p1 = p[1];
-        const auto& p2 = p[2];
-        const auto& p3 = p[3];
-
-        const auto xMin = qFloor(qMin(qMin(p0.x, p1.x), qMin(p2.x, p3.x)));
-        const auto xMax = qFloor(qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x)) + 1);
-        const auto yMin = qFloor(qMin(qMin(p0.y, p1.y), qMin(p2.y, p3.y)));
-        const auto yMax = qFloor(qMax(qMax(p0.y, p1.y), qMax(p2.y, p3.y)) + 1);
+        const auto yMin = qFloor(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
+        const auto yMax = qFloor(qMax(qMax(p[0].y, p[1].y), qMax(p[2].y, p[3].y)));
         for (auto y = yMin; y <= yMax; y++)
         {
             auto xMin = std::numeric_limits<int32_t>::max();
             auto xMax = std::numeric_limits<int32_t>::min();
             float x;
-            
-            if (Utilities::rayIntersectX(p0, p1, y, x))
+
+            if (Utilities::rayIntersectX(p[0], p[1], y, x))
                 xMin = qMin(xMin, qFloor(x));
 
-            if (Utilities::rayIntersectX(p1, p2, y, x))
+            if (Utilities::rayIntersectX(p[1], p[2], y, x))
                 xMin = qMin(xMin, qFloor(x));
 
-            if (Utilities::rayIntersectX(p2, p3, y, x))
+            if (Utilities::rayIntersectX(p[2], p[3], y, x))
                 xMin = qMin(xMin, qFloor(x));
 
-            if (Utilities::rayIntersectX(p3, p0, y, x))
+            if (Utilities::rayIntersectX(p[3], p[0], y, x))
                 xMin = qMin(xMin, qFloor(x));
 
-            if (Utilities::rayIntersectX(p0, p1, y, x))
+            if (Utilities::rayIntersectX(p[0], p[1], y, x))
                 xMax = qMax(xMax, qFloor(x));
 
-            if (Utilities::rayIntersectX(p1, p2, y, x))
+            if (Utilities::rayIntersectX(p[1], p[2], y, x))
                 xMax = qMax(xMax, qFloor(x));
 
-            if (Utilities::rayIntersectX(p2, p3, y, x))
+            if (Utilities::rayIntersectX(p[2], p[3], y, x))
                 xMax = qMax(xMax, qFloor(x));
 
-            if (Utilities::rayIntersectX(p3, p0, y, x))
+            if (Utilities::rayIntersectX(p[3], p[0], y, x))
                 xMax = qMax(xMax, qFloor(x));
 
+            const auto firstPass = visibleTiles.isEmpty();
             for (auto x = xMin; x <= xMax; x++)
             {
                 TileId tileId;
                 tileId.x = x + internalState->targetTileId.x;
                 tileId.y = y + internalState->targetTileId.y;
                 visibleTiles.insert(tileId);
-            }
-        }
 
-        internalState->visibleTiles.resize(0);
-        for (const auto& tileId : constOf(visibleTiles))
-            internalState->visibleTiles.push_back(tileId);
-    }*/
-
-    //NOTE: so far scanline does not work exactly as expected, so temporary switch to old implementation
-    {
-        QSet<TileId> visibleTiles;
-        PointI p0(qFloor(p[0].x), qFloor(p[0].y));
-        PointI p1(qFloor(p[1].x), qFloor(p[1].y));
-        PointI p2(qFloor(p[2].x), qFloor(p[2].y));
-        PointI p3(qFloor(p[3].x), qFloor(p[3].y));
-
-        const auto xMin = qMin(qMin(p0.x, p1.x), qMin(p2.x, p3.x));
-        const auto xMax = qMax(qMax(p0.x, p1.x), qMax(p2.x, p3.x));
-        const auto yMin = qMin(qMin(p0.y, p1.y), qMin(p2.y, p3.y));
-        const auto yMax = qMax(qMax(p0.y, p1.y), qMax(p2.y, p3.y));
-        for (auto x = xMin; x <= xMax; x++)
-        {
-            for (auto y = yMin; y <= yMax; y++)
-            {
-                TileId tileId;
-                tileId.x = x + internalState->targetTileId.x;
-                tileId.y = y + internalState->targetTileId.y;
-
-                visibleTiles.insert(tileId);
+                if (firstPass)
+                {
+                    tileId.y -= 1;
+                    visibleTiles.insert(tileId);
+                }
             }
         }
 
