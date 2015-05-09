@@ -297,6 +297,44 @@ namespace OsmAnd
             return static_cast<double>(doubledPolygonArea(points))* 0.5;
         }
 
+        inline static bool rayIntersectX(const PointD& v0_, const PointD& v1_, double mY, double& mX)
+        {
+            // prev node above line
+            // x,y node below line
+
+            const auto& v0 = (v0_.y > v1_.y) ? v1_ : v0_;
+            const auto& v1 = (v0_.y > v1_.y) ? v0_ : v1_;
+
+            if (qFuzzyCompare(v1.y, mY) || qFuzzyCompare(v0.y, mY))
+                mY -= 1.0;
+
+            if (v0.y > mY || v1.y < mY)
+                return false;
+
+            if (v1 == v0)
+            {
+                // the node on the boundary !!!
+                mX = v1.x;
+                return true;
+            }
+
+            // that tested on all cases (left/right)
+            mX = v1.x + (mY - v1.y) * (v1.x - v0.x) / (v1.y - v0.y);
+            return true;
+        }
+
+        inline static bool rayIntersect(const PointD& v0, const PointD& v1, const PointD& v)
+        {
+            double t;
+            if (!rayIntersectX(v0, v1, v.y, t))
+                return false;
+
+            if (t < v.x)
+                return true;
+
+            return false;
+        }
+
         inline static bool rayIntersectX(const PointF& v0_, const PointF& v1_, float mY, float& mX)
         {
             // prev node above line
