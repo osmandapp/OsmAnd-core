@@ -116,9 +116,13 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
         const auto deltaGroups =
             primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups -
             primitiviseMetric->elapsedTimeForOrderEvaluation -
+            primitiviseMetric->elapsedTimeForOrderProcessing -
             primitiviseMetric->elapsedTimeForPolygonEvaluation -
+            primitiviseMetric->elapsedTimeForPolygonProcessing -
             primitiviseMetric->elapsedTimeForPolylineEvaluation -
-            primitiviseMetric->elapsedTimeForPointEvaluation;
+            primitiviseMetric->elapsedTimeForPolylineProcessing -
+            primitiviseMetric->elapsedTimeForPointEvaluation -
+            primitiviseMetric->elapsedTimeForPointProcessing;
         text += QString(QLatin1String("grp %1s (-^=%2s)\n"))
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups, 'f', 2))
             .arg(QString::number(deltaGroups, 'f', 2));
