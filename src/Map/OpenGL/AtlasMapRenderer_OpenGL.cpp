@@ -472,7 +472,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
             for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
             {
                 TileId tileId;
-                tileId.x = x + internalState->targetTileId.x;
+                tileId.x = x + internalState->targetTileId.x - 1;
                 tileId.y = y + internalState->targetTileId.y - 1;
                 visibleTiles.insert(tileId);
             }
