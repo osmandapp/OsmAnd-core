@@ -130,14 +130,16 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', 2))
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromBasemap, 'f', 2))
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromCoastlines, 'f', 2));
-        text += QString(QLatin1String("txt %1(-%2) ~%3us/e ~%4us/p\n"))
+        text += QString(QLatin1String("txt %1(-%2) %3s ~%4us/e ~%5us/p\n"))
             .arg(primitiviseMetric->obtainedTextSymbols)
             .arg(primitiviseMetric->rejectedTextSymbols)
+            .arg(primitiviseMetric->elapsedTimeForTextSymbolsEvaluation + primitiviseMetric->elapsedTimeForTextSymbolsProcessing)
             .arg(static_cast<int>(primitiviseMetric->elapsedTimeForTextSymbolsEvaluation * 1000000.0f / primitiviseMetric->textSymbolsEvaluations))
             .arg(static_cast<int>(primitiviseMetric->elapsedTimeForTextSymbolsProcessing * 1000000.0f / (primitiviseMetric->obtainedTextSymbols + primitiviseMetric->rejectedTextSymbols)));
-        text += QString(QLatin1String("icn %1(-%2) ~%3us/p\n"))
+        text += QString(QLatin1String("icn %1(-%2) %3s ~%4us/p\n"))
             .arg(primitiviseMetric->obtainedIconSymbols)
             .arg(primitiviseMetric->rejectedIconSymbols)
+            .arg(primitiviseMetric->elapsedTimeForIconSymbolsProcessing)
             .arg(static_cast<int>(primitiviseMetric->elapsedTimeForIconSymbolsProcessing * 1000000.0f / (primitiviseMetric->obtainedIconSymbols + primitiviseMetric->rejectedIconSymbols)));
         const auto deltaSymbols =
             primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols -
