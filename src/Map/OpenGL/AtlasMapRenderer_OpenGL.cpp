@@ -440,14 +440,15 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     p[1] = internalState->frustum2D.p1 / TileSize3D;
     p[2] = internalState->frustum2D.p2 / TileSize3D;
     p[3] = internalState->frustum2D.p3 / TileSize3D;
+    
 
     // "Round"-up tile indices
     // In-tile normalized position is added, since all tiles are going to be
     // translated in opposite direction during rendering
-    p[0] += internalState->targetInTileOffsetN;
-    p[1] += internalState->targetInTileOffsetN;
-    p[2] += internalState->targetInTileOffsetN;
-    p[3] += internalState->targetInTileOffsetN;
+    for(int i = 0; i < 4; i++) {
+        p[i].x += internalState->targetInTileOffsetN.x + internalState->targetTileId.x - 0.5;
+        p[i].y += internalState->targetInTileOffsetN.y + internalState->targetTileId.y - 0.5;
+    }
 
     // Determine visible tiles set
     {
@@ -472,8 +473,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
             for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
             {
                 TileId tileId;
-                tileId.x = x + internalState->targetTileId.x - 1;
-                tileId.y = y + internalState->targetTileId.y - 1;
+                tileId.x = x ;
+                tileId.y = y ;
                 visibleTiles.insert(tileId);
             }
             pxMin = xMin;
