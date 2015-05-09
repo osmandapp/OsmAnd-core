@@ -452,52 +452,32 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     // Determine visible tiles set
     {
         QSet<TileId> visibleTiles;
-        const auto yMin = qFloor(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
-        const auto yMax = qFloor(qMax(qMax(p[0].y, p[1].y), qMax(p[2].y, p[3].y)));
-        for (auto y = yMin; y <= yMax; y++)
+        const int yMin = qFloor(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
+        const int yMax = qFloor(qMax(qMax(p[0].y + 1, p[1].y + 1), qMax(p[2].y + 1, p[3].y + 1)));
+        int pxMin = std::numeric_limits<int32_t>::max();
+        int pxMax = std::numeric_limits<int32_t>::min();
+        float x;
+        for (int y = yMin; y <= yMax; y++)
         {
-            auto xMin = std::numeric_limits<int32_t>::max();
-            auto xMax = std::numeric_limits<int32_t>::min();
-            float x;
-
-            if (Utilities::rayIntersectX(p[0], p[1], y, x))
-                xMin = qMin(xMin, qFloor(x));
-
-            if (Utilities::rayIntersectX(p[1], p[2], y, x))
-                xMin = qMin(xMin, qFloor(x));
-
-            if (Utilities::rayIntersectX(p[2], p[3], y, x))
-                xMin = qMin(xMin, qFloor(x));
-
-            if (Utilities::rayIntersectX(p[3], p[0], y, x))
-                xMin = qMin(xMin, qFloor(x));
-
-            if (Utilities::rayIntersectX(p[0], p[1], y, x))
-                xMax = qMax(xMax, qFloor(x));
-
-            if (Utilities::rayIntersectX(p[1], p[2], y, x))
-                xMax = qMax(xMax, qFloor(x));
-
-            if (Utilities::rayIntersectX(p[2], p[3], y, x))
-                xMax = qMax(xMax, qFloor(x));
-
-            if (Utilities::rayIntersectX(p[3], p[0], y, x))
-                xMax = qMax(xMax, qFloor(x));
-
-            const auto firstPass = visibleTiles.isEmpty();
-            for (auto x = xMin; x <= xMax; x++)
+            int xMin = std::numeric_limits<int32_t>::max();
+            int xMax = std::numeric_limits<int32_t>::min();
+            for(int k = 0; k < 4; k++)
+            {
+                if (Utilities::rayIntersectX(p[k % 4], p[(k + 1)% 4], y, x))
+                {
+                    xMin = qMin(xMin, qFloor(x));
+                    xMax = qMax(xMax, qFloor(x + 1));
+                }
+            }
+            for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
             {
                 TileId tileId;
                 tileId.x = x + internalState->targetTileId.x;
-                tileId.y = y + internalState->targetTileId.y;
+                tileId.y = y + internalState->targetTileId.y - 1;
                 visibleTiles.insert(tileId);
-
-                if (firstPass)
-                {
-                    tileId.y -= 1;
-                    visibleTiles.insert(tileId);
-                }
             }
+            pxMin = xMin;
+            pxMax = xMax;
         }
 
         internalState->visibleTiles.resize(0);
