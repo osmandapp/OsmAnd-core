@@ -93,17 +93,26 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(primitiviseMetric->polygonsRejectedByArea)
             .arg(QString::number(primitiviseMetric->elapsedTimeForPolygonEvaluation, 'f', 2))
             .arg(static_cast<int>(primitiviseMetric->elapsedTimeForPolygonEvaluation * 1000000.0f / primitiviseMetric->polygonEvaluations));
+        text += QString(QLatin1String("%1s ~%2us/p\n"))
+            .arg(QString::number(primitiviseMetric->elapsedTimeForPolygonProcessing, 'f', 2))
+            .arg(static_cast<int>(primitiviseMetric->elapsedTimeForPolygonProcessing * 1000000.0f / primitiviseMetric->polygonPrimitives));
         text += QString(QLatin1String("polyl %1/-%2(-%3) %4s ~%5us/e\n"))
             .arg(primitiviseMetric->polylineEvaluations)
             .arg(primitiviseMetric->polylineRejects)
             .arg(primitiviseMetric->polylineRejectedByDensity)
             .arg(QString::number(primitiviseMetric->elapsedTimeForPolylineEvaluation, 'f', 2))
             .arg(static_cast<int>(primitiviseMetric->elapsedTimeForPolylineEvaluation * 1000000.0f / primitiviseMetric->polylineEvaluations));
+        text += QString(QLatin1String("%1s ~%2us/p\n"))
+            .arg(QString::number(primitiviseMetric->elapsedTimeForPolylineProcessing, 'f', 2))
+            .arg(static_cast<int>(primitiviseMetric->elapsedTimeForPolylineProcessing * 1000000.0f / primitiviseMetric->polylinePrimitives));
         text += QString(QLatin1String("point %1/-%2 %3s ~%4us/e\n"))
             .arg(primitiviseMetric->pointEvaluations)
             .arg(primitiviseMetric->pointRejects)
             .arg(QString::number(primitiviseMetric->elapsedTimeForPointEvaluation, 'f', 2))
             .arg(static_cast<int>(primitiviseMetric->elapsedTimeForPointEvaluation * 1000000.0f / primitiviseMetric->pointEvaluations));
+        text += QString(QLatin1String("%1s ~%2us/p\n"))
+            .arg(QString::number(primitiviseMetric->elapsedTimeForPointProcessing, 'f', 2))
+            .arg(static_cast<int>(primitiviseMetric->elapsedTimeForPointProcessing * 1000000.0f / primitiviseMetric->pointPrimitives));
         const auto deltaGroups =
             primitiviseMetric->elapsedTimeForObtainingPrimitivesGroups -
             primitiviseMetric->elapsedTimeForOrderEvaluation -
@@ -121,19 +130,34 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromDetailedmap, 'f', 2))
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromBasemap, 'f', 2))
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesFromCoastlines, 'f', 2));
-        text += QString(QLatin1String("sym %1 %2s ~%3us/e\n"))
-            .arg(primitiviseMetric->obtainedSymbols)
+        text += QString(QLatin1String("txt %1(-%2) ~%3us/e ~%4us/p\n"))
+            .arg(primitiviseMetric->obtainedTextSymbols)
+            .arg(primitiviseMetric->rejectedTextSymbols)
+            .arg(static_cast<int>(primitiviseMetric->elapsedTimeForTextSymbolsEvaluation * 1000000.0f / primitiviseMetric->textSymbolsEvaluations))
+            .arg(static_cast<int>(primitiviseMetric->elapsedTimeForTextSymbolsProcessing * 1000000.0f / (primitiviseMetric->obtainedTextSymbols + primitiviseMetric->rejectedTextSymbols)));
+        text += QString(QLatin1String("icn %1(-%2) ~%3us/p\n"))
+            .arg(primitiviseMetric->obtainedIconSymbols)
+            .arg(primitiviseMetric->rejectedIconSymbols)
+            .arg(static_cast<int>(primitiviseMetric->elapsedTimeForIconSymbolsProcessing * 1000000.0f / (primitiviseMetric->obtainedIconSymbols + primitiviseMetric->rejectedIconSymbols)));
+        const auto deltaSymbols =
+            primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols -
+            primitiviseMetric->elapsedTimeForTextSymbolsEvaluation -
+            primitiviseMetric->elapsedTimeForTextSymbolsProcessing -
+            primitiviseMetric->elapsedTimeForIconSymbolsProcessing;
+        text += QString(QLatin1String("sym %1s(-^=%2s) %3->%4\n"))
             .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols, 'f', 2))
-            .arg(static_cast<int>(primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols * 1000000.0f / primitiviseMetric->obtainedSymbols));
+            .arg(QString::number(primitiviseMetric->elapsedTimeForObtainingPrimitivesSymbols - deltaSymbols, 'f', 2))
+            .arg(primitiviseMetric->symbolsGroupsProcessed)
+            .arg(primitiviseMetric->obtainedTextSymbols + primitiviseMetric->obtainedIconSymbols);
         primitiviseElapsedTime = QString::number(primitiviseMetric->elapsedTime, 'f', 2);
     }
-    text += QString(QLatin1String("TIME   r%1+p%2+?=%3s\n"))
+    text += QString(QLatin1String("total r%1+p%2+?=%3s\n"))
         .arg(obtainBinaryMapObjectsElapsedTime)
         .arg(primitiviseElapsedTime)
         .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 2));
     text = text.trimmed();
 
-    const auto fontSize = 16.0f * owner->densityFactor;
+    const auto fontSize = 14.0f * owner->densityFactor;
 
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
@@ -149,7 +173,7 @@ bool OsmAnd::MapPrimitivesMetricsLayerProvider_P::obtainData(
             line.constData(), line.length()*sizeof(QChar),
             5, topOffset,
             textPaint);
-        topOffset += 1.25f * fontSize;
+        topOffset += 1.15f * fontSize;
     }
 
     outData.reset(new MapPrimitivesMetricsLayerProvider::Data(

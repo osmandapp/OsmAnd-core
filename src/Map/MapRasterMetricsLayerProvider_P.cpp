@@ -93,7 +93,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
         .arg(QString::number(obtainDataMetric.elapsedTime, 'f', 3));
     text = text.trimmed();
 
-    const auto fontSize = 16.0f * owner->densityFactor;
+    const auto fontSize = 14.0f * owner->densityFactor;
 
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
@@ -109,7 +109,7 @@ bool OsmAnd::MapRasterMetricsLayerProvider_P::obtainData(
             line.constData(), line.length()*sizeof(QChar),
             5, topOffset,
             textPaint);
-        topOffset += 1.25f * fontSize;
+        topOffset += 1.15f * fontSize;
     }
 
     outData.reset(new MapRasterMetricsLayerProvider::Data(

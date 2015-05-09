@@ -1419,11 +1419,16 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             metric->orderEvaluations++;
         }
 
+        const Stopwatch orderProcessingStopwatch(metric != nullptr);
+
         // If evaluation failed, skip
         if (!ok)
         {
             if (metric)
+            {
+                metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
                 metric->orderRejects++;
+            }
 
             continue;
         }
@@ -1432,7 +1437,10 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_OBJECT_TYPE, objectType_))
         {
             if (metric)
+            {
+                metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
                 metric->orderRejects++;
+            }
 
             continue;
         }
@@ -1442,7 +1450,10 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
         if (!evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ORDER, zOrder) || zOrder < 0)
         {
             if (metric)
+            {
+                metric->elapsedTimeForOrderProcessing += orderProcessingStopwatch.elapsed();
                 metric->orderRejects++;
+            }
 
             continue;
         }
@@ -1452,9 +1463,14 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
         if (objectType == PrimitiveType::Polygon)
         {
+            const Stopwatch polygonProcessingStopwatch(metric != nullptr);
+
             // Perform checks on data
             if (mapObject->points31.size() <= 2)
             {
+                if (metric)
+                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
                 LogPrintf(LogSeverityLevel::Warning,
                     "MapObject %s primitive is processed as polygon, but has only %d point(s)",
@@ -1465,6 +1481,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             }
             if (!mapObject->isClosedFigure())
             {
+                if (metric)
+                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
                 LogPrintf(LogSeverityLevel::Warning,
                     "MapObject %s primitive is processed as polygon, but isn't closed",
@@ -1474,6 +1493,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             }
             if (!mapObject->isClosedFigure(true))
             {
+                if (metric)
+                    metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+
 #if OSMAND_VERBOSE_MAP_PRIMITIVISER
                 LogPrintf(LogSeverityLevel::Warning,
                     "MapObject %s primitive is processed as polygon, but isn't closed (inner)",
@@ -1568,6 +1590,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     metric->polygonsRejectedByArea++;
             }
 
+            if (metric)
+                metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
+
             if (!*rejectByArea || ignorePolygonAsPointArea)
             {
                 const Stopwatch pointEvaluationStopwatch(metric != nullptr);
@@ -1586,6 +1611,8 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     metric->elapsedTimeForPointEvaluation += pointEvaluationStopwatch.elapsed();
                     metric->pointEvaluations++;
                 }
+
+                const Stopwatch pointProcessingStopwatch(metric != nullptr);
 
                 // Create point primitive only in case polygon has any content
                 if (!mapObject->captions.isEmpty() || hasIcon)
@@ -1619,6 +1646,9 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     if (metric)
                         metric->pointPrimitives++;
                 }
+
+                if (metric)
+                    metric->elapsedTimeForPointProcessing += pointProcessingStopwatch.elapsed();
             }
         }
         else if (objectType == PrimitiveType::Polyline)
@@ -1651,11 +1681,16 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 metric->polylineEvaluations++;
             }
 
+            const Stopwatch polylineProcessingStopwatch(metric != nullptr);
+
             // If evaluation failed, skip
             if (!ok)
             {
                 if (metric)
+                {
+                    metric->elapsedTimeForPolylineProcessing += polylineProcessingStopwatch.elapsed();
                     metric->polylineRejects++;
+                }
 
                 continue;
             }
@@ -1673,7 +1708,10 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
             // Update metric
             if (metric)
+            {
+                metric->elapsedTimeForPolylineProcessing += polylineProcessingStopwatch.elapsed();
                 metric->polylinePrimitives++;
+            }
         }
         else if (objectType == PrimitiveType::Point)
         {
@@ -1705,11 +1743,16 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                 metric->pointEvaluations++;
             }
 
+            const Stopwatch pointProcessingStopwatch(metric != nullptr);
+
             // Create point primitive only in case polygon has any content
             if (mapObject->captions.isEmpty() && !hasIcon)
             {
                 if (metric)
+                {
+                    metric->elapsedTimeForPointProcessing += pointProcessingStopwatch.elapsed();
                     metric->pointRejects++;
+                }
 
                 continue;
             }
@@ -1739,7 +1782,10 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
 
             // Update metric
             if (metric)
+            {
+                metric->elapsedTimeForPointProcessing += pointProcessingStopwatch.elapsed();
                 metric->pointPrimitives++;
+            }
         }
         else
         {
@@ -1916,6 +1962,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             }
         }
 
+        const Stopwatch symbolsGroupsProcessingStopwatch(metric != nullptr);
+
         // Create a symbols group
         const std::shared_ptr<SymbolsGroup> group(new SymbolsGroup(
             primitivesGroup->sourceObject));
@@ -1954,6 +2002,13 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitivesSymbols(
             group->symbols,
             queryController,
             metric);
+
+        // Update metric
+        if (metric)
+        {
+            metric->elapsedTimeForSymbolsGroupsProcessing += symbolsGroupsProcessingStopwatch.elapsed();
+            metric->symbolsGroupsProcessed++;
+        }
 
         // Add this group to shared cache
         if (pSharedSymbolGroups && canBeShared)
@@ -2401,6 +2456,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
             continue;
         }
 
+        const Stopwatch textEvaluationStopwatch(metric != nullptr);
+
         // Evaluate style to obtain text parameters
         textEvaluator.setIntegerValue(env->styleBuiltinValueDefs->id_INPUT_TEXT_LENGTH, caption.length());
 
@@ -2411,7 +2468,15 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         textEvaluator.setStringValue(env->styleBuiltinValueDefs->id_INPUT_NAME_TAG, captionAttributeTag);
 
         evaluationResult.clear();
-        if (!textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult))
+        ok = textEvaluator.evaluate(mapObject, MapStyleRulesetType::Text, &evaluationResult);
+
+        if (metric)
+        {
+            metric->elapsedTimeForTextSymbolsEvaluation += textEvaluationStopwatch.elapsed();
+            metric->textSymbolsEvaluations++;
+        }
+
+        if (!ok)
             continue;
 
         // Skip text that doesn't have valid size
@@ -2419,6 +2484,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SIZE, textSize);
         if (!ok || textSize == 0)
             continue;
+
+        const Stopwatch textProcessingStopwatch(metric != nullptr);
 
         // Determine language of this text
         auto languageId = LanguageId::Invariant;
@@ -2562,11 +2629,22 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 return false;
             });
         if (hasTwin)
+        {
+            if (metric)
+            {
+                metric->elapsedTimeForTextSymbolsProcessing += textProcessingStopwatch.elapsed();
+                metric->rejectedTextSymbols++;
+            }
+
             continue;
+        }
 
         outSymbols.push_back(qMove(text));
         if (metric)
-            metric->obtainedSymbols++;
+        {
+            metric->elapsedTimeForTextSymbolsProcessing += textProcessingStopwatch.elapsed();
+            metric->obtainedTextSymbols++;
+        }
     }
 }
 
@@ -2594,10 +2672,17 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     bool ok;
 
+    const Stopwatch iconProcessingStopwatch(metric != nullptr);
+
     QString iconResourceName;
     ok = primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON, iconResourceName);
     if (!ok || iconResourceName.isEmpty())
+    {
+        if (metric)
+            metric->elapsedTimeForIconSymbolsProcessing += iconProcessingStopwatch.elapsed();
+
         return;
+    }
 
     const std::shared_ptr<IconSymbol> icon(new IconSymbol(primitive));
     icon->drawAlongPath = (primitive->type == PrimitiveType::Polyline);
@@ -2686,12 +2771,23 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
             return false;
         });
     if (hasTwin)
+    {
+        if (metric)
+        {
+            metric->elapsedTimeForIconSymbolsProcessing += iconProcessingStopwatch.elapsed();
+            metric->rejectedIconSymbols++;
+        }
+
         return;
+    }
 
     // Icons are always first
     outSymbols.prepend(qMove(icon));
     if (metric)
-        metric->obtainedSymbols++;
+    {
+        metric->elapsedTimeForIconSymbolsProcessing += iconProcessingStopwatch.elapsed();
+        metric->obtainedIconSymbols++;
+    }
 }
 
 OsmAnd::MapPrimitiviser_P::Context::Context(

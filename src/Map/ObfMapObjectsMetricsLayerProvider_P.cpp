@@ -79,21 +79,21 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
         .arg(request.zoom);
     if (const auto loadMapObjectsMetric = obtainDataMetric.findSubmetricOfType<ObfMapSectionReader_Metrics::Metric_loadMapObjects>(true))
     {
-        text += QString(QLatin1String("BLOCKS r:%1+s:%2=%3\n"))
+        text += QString(QLatin1String("blocks r:%1+s:%2=%3\n"))
             .arg(loadMapObjectsMetric->mapObjectsBlocksRead)
             .arg(loadMapObjectsMetric->mapObjectsBlocksReferenced)
             .arg(loadMapObjectsMetric->mapObjectsBlocksProcessed);
     }
-    text += QString(QLatin1String("OBJS   u:%1+s:%2=%3\n"))
+    text += QString(QLatin1String("objects u:%1+s:%2=%3\n"))
         .arg(obtainDataMetric.uniqueObjectsCount)
         .arg(obtainDataMetric.sharedObjectsCount)
         .arg(obtainDataMetric.objectsCount);
-    text += QString(QLatin1String("TIME   r:%1+?=%2s\n"))
+    text += QString(QLatin1String("total r:%1+?=%2s\n"))
         .arg(QString::number(obtainDataMetric.elapsedTimeForRead, 'f', FORMAT_PRECISION))
         .arg(QString::number(obtainDataMetric.elapsedTime, 'f', FORMAT_PRECISION));
     text = text.trimmed();
 
-    const auto fontSize = 16.0f * owner->densityFactor;
+    const auto fontSize = 14.0f * owner->densityFactor;
 
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
@@ -109,7 +109,7 @@ bool OsmAnd::ObfMapObjectsMetricsLayerProvider_P::obtainData(
             line.constData(), line.length()*sizeof(QChar),
             5, topOffset,
             textPaint);
-        topOffset += 1.25f * fontSize;
+        topOffset += 1.15f * fontSize;
     }
 
     outData.reset(new ObfMapObjectsMetricsLayerProvider::Data(
