@@ -453,7 +453,7 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     // Determine visible tiles set
     {
         QSet<TileId> visibleTiles;
-        const int yMin = qCeil(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
+        const int yMin = qCeil(qMin(qMin(p[0].y, p[1].y ), qMin(p[2].y, p[3].y)));
         const int yMax = qFloor(qMax(qMax(p[0].y + 1, p[1].y + 1), qMax(p[2].y + 1, p[3].y + 1)));
        // const int xgMin = qFloor(qMin(qMin(p[0].x, p[1].x), qMin(p[2].x, p[3].x)));
        // const int xgMax = qFloor(qMax(qMax(p[0].x + 1, p[1].x + 1), qMax(p[2].x + 1, p[3].x + 1)));
@@ -470,6 +470,11 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
                 {
                     xMin = qMin(xMin, qFloor(x));
                     xMax = qMax(xMax, qFloor(x));
+                }
+                if(p[k % 4].y > y -1 && p[k % 4].y < y)
+                {
+                    xMin = qMin(xMin, qFloor(p[k % 4].x));
+                    xMax = qMax(xMax, qFloor(p[k % 4].x));
                 }
             }
             for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
