@@ -18,8 +18,8 @@ namespace OsmAnd
     public:
         typedef ArrayMap<VALUE> ArrayMapT;
         typedef Nullable<VALUE> NullableT;
-        typedef typename QVector<NullableT>::size_type KeyType;
-        typedef typename QVector<NullableT>::size_type SizeType;
+        typedef typename std::vector<NullableT>::size_type KeyType;
+        typedef typename std::vector<NullableT>::size_type SizeType;
 
     private:
     protected:
