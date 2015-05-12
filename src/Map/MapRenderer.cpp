@@ -1071,7 +1071,15 @@ bool OsmAnd::MapRenderer::suspendSymbolsUpdate()
 
 bool OsmAnd::MapRenderer::resumeSymbolsUpdate()
 {
-    const auto prevCounter = _suspendSymbolsUpdateCounter.fetchAndAddOrdered(-1);
+    auto prevCounter = _suspendSymbolsUpdateCounter.loadAcquire();
+    while (prevCounter > 0)
+    {
+        if (_suspendSymbolsUpdateCounter.testAndSetOrdered(prevCounter, prevCounter - 1))
+            break;
+
+        prevCounter = _suspendSymbolsUpdateCounter.loadAcquire();
+    }
+
     if (prevCounter == 1)
         invalidateFrame();
 
