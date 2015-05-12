@@ -42,13 +42,13 @@ namespace OsmAnd
             BatchedLayerResource(
                 const std::shared_ptr<const GPUAPI::ResourceInGPU>& resourceInGPU,
                 const int zoomShift = 0,
-                const PointF nOffsetInTile = PointF(0.0f, 0.0f),
-                const PointF nSizeInTile = PointF(1.0f, 1.0f));
+                const PointF texCoordsOffset = PointF(0.0f, 0.0f),
+                const PointF texCoordsScale = PointF(1.0f, 1.0f));
 
             std::shared_ptr<const GPUAPI::ResourceInGPU> resourceInGPU;
             int zoomShift;
-            PointF nOffsetInTile;
-            PointF nSizeInTile;
+            PointF texCoordsOffset;
+            PointF texCoordsScale;
 
             bool canBeBatchedWith(const BatchedLayerResource& that) const;
 
@@ -122,8 +122,8 @@ namespace OsmAnd
                     // Per-tile-per-layer data
                     struct VsPerTilePerLayerParameters
                     {
-                        GLlocation nOffsetInTile;
-                        GLlocation nSizeInTile;
+                        GLlocation texCoordsOffset;
+                        GLlocation texCoordsScale;
                     };
                     VsPerTilePerLayerParameters elevationDataLayer;
                     QVector<VsPerTilePerLayerParameters> rasterTileLayers;

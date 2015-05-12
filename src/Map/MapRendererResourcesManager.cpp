@@ -614,14 +614,16 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
     if (!obtainProviderFor(resourcesCollection.get(), mapDataProvider))
         return;
 
-    if (const auto tiledResourcesCollection = std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
+    if (const auto tiledResourcesCollection =
+            std::dynamic_pointer_cast<MapRendererTiledResourcesCollection>(resourcesCollection))
     {
         requestNeededTiledResources(
             tiledResourcesCollection,
             activeTiles,
             activeZoom);
     }
-    else if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
+    else if (
+        const auto keyedResourcesCollection =std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
     {
         requestNeededKeyedResources(
             keyedResourcesCollection);
@@ -931,7 +933,8 @@ bool OsmAnd::MapRendererResourcesManager::updatesPresent() const
             const auto collectionSnapshot = resourcesCollection->getCollectionSnapshot();
 
             // Also check if keyed collection has same keys as respective provider
-            if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection::Snapshot>(collectionSnapshot))
+            if (const auto keyedResourcesCollection =
+                    std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection::Snapshot>(collectionSnapshot))
             {
                 std::shared_ptr<IMapDataProvider> provider_;
                 if (obtainProviderFor(resourcesCollection.get(), provider_))
@@ -971,7 +974,8 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply() const
             const auto collectionSnapshot = resourcesCollection->getCollectionSnapshot();
 
             // Also check if keyed collection has same keys as respective provider
-            if (const auto keyedResourcesCollection = std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection::Snapshot>(collectionSnapshot))
+            if (const auto keyedResourcesCollection =
+                    std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection::Snapshot>(collectionSnapshot))
             {
                 std::shared_ptr<IMapDataProvider> provider_;
                 if (obtainProviderFor(resourcesCollection.get(), provider_))
@@ -1352,13 +1356,40 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     // giving preference to underscaled resource
                     for (int absZoomShift = 1; absZoomShift <= MapRenderer::MaxMissingDataZoomShift; absZoomShift++)
                     {
-                        //TODO: Try to find underscaled first (that is, currentState.zoomLevel + 1). Only full match is accepted
+                        // Look for underscaled first. Only full match is accepted
+                        const auto underscaledZoom = static_cast<int>(activeZoom)+absZoomShift;
+                        if (underscaledZoom <= static_cast<int>(MaxZoomLevel))
+                        {
+                            const auto underscaledTileIdsN = Utilities::getTileIdsUnderscaledByZoomShift(
+                                activeTileId,
+                                absZoomShift);
 
+                            bool atLeastOnePresent = false;
+                            const auto tilesCount = underscaledTileIdsN.size();
+                            auto pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                            for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
+                            {
+                                const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+
+                                neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
+
+                                atLeastOnePresent = atLeastOnePresent || tiledResourcesCollection->containsResource(
+                                    underscaledTileId,
+                                    static_cast<ZoomLevel>(underscaledZoom),
+                                    isUsableAndNotUnavailableResource);
+                            }
+
+                            if (atLeastOnePresent)
+                                break;
+                        }
+                            
                         // If underscaled was not found, look for overscaled (surely, if such zoom level exists at all)
                         const auto overscaleZoom = static_cast<int>(activeZoom) - absZoomShift;
                         if (overscaleZoom >= static_cast<int>(MinZoomLevel))
                         {
-                            const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(activeTileId, -absZoomShift);
+                            const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
+                                activeTileId,
+                                absZoomShift);
                             neededTilesMap[static_cast<ZoomLevel>(overscaleZoom)].insert(overscaledTileId);
                             if (tiledResourcesCollection->containsResource(
                                     overscaledTileId,

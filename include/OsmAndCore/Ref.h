@@ -204,6 +204,22 @@ namespace OsmAnd
             return _objectRef;
         }
 
+#if !defined(SWIG)
+#   ifdef Q_COMPILER_RVALUE_REFS
+        template<typename... Args>
+        static inline RefT New(Args&&... args)
+        {
+            return RefT(new T(std::forward<Args>(args)...));
+        }
+#   else
+        template<typename... Args>
+        static inline RefT New(const Args&... args)
+        {
+            return RefT(new T(args...));
+        }
+#   endif
+#endif // !defined(SWIG)
+
     template<typename OtherType>
     friend class OsmAnd::Ref;
     };

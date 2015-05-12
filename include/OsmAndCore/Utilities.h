@@ -584,19 +584,67 @@ namespace OsmAnd
             return roundedBBox31;
         }
 
+        inline static uint32_t interleaveBy1(const uint16_t input)
+        {
+            auto output = static_cast<uint32_t>(input);
+            output = (output ^ (output << 8)) & 0x00ff00ff;
+            output = (output ^ (output << 4)) & 0x0f0f0f0f;
+            output = (output ^ (output << 2)) & 0x33333333;
+            output = (output ^ (output << 1)) & 0x55555555;
+            return output;
+        }
+
+        inline static uint32_t encodeMortonCode(const uint16_t x, const uint16_t y)
+        {
+            return interleaveBy1(x) | (interleaveBy1(y) << 1);
+        }
+
+        inline static uint16_t deinterleaveBy1(const uint32_t input)
+        {
+            auto output = input & 0x55555555;
+            output = (output ^ (output >> 1)) & 0x33333333;
+            output = (output ^ (output >> 2)) & 0x0f0f0f0f;
+            output = (output ^ (output >> 4)) & 0x00ff00ff;
+            output = (output ^ (output >> 8)) & 0x0000ffff;
+            return static_cast<uint16_t>(output);
+        }
+
+        inline static void decodeMortonCode(const uint32_t code, uint16_t& outX, uint16_t& outY)
+        {
+            outX = deinterleaveBy1(code);
+            outY = deinterleaveBy1(code >> 1);
+        }
+
+        static QVector<TileId> getTileIdsUnderscaledByZoomShift(
+            const TileId tileId,
+            const unsigned int absZoomShift)
+        {
+            const auto resultingTilesPerSideCount = (1u << absZoomShift);
+            const auto resultingTilesCount = resultingTilesPerSideCount * resultingTilesPerSideCount;
+            assert(resultingTilesCount <= std::numeric_limits<uint16_t>::max());
+
+            TileId originTileId = tileId;
+            originTileId.x <<= absZoomShift;
+            originTileId.y <<= absZoomShift;
+            QVector<TileId> resultingTiles(resultingTilesCount);
+            const auto pResultingTiles = resultingTiles.data();
+            for (auto x = 0u; x < resultingTilesPerSideCount; x++)
+                for (auto y = 0u; y < resultingTilesPerSideCount; y++)
+                    pResultingTiles[encodeMortonCode(x, y)] = originTileId + TileId::fromXY(x, y);
+
+            return resultingTiles;
+        }
+
         inline static TileId getTileIdOverscaledByZoomShift(
             const TileId tileId,
-            const int zoomShift,
+            const unsigned int absZoomShift,
             PointF* outNOffsetInTile = nullptr,
             PointF* outNSizeInTile = nullptr)
         {
-            assert(zoomShift < 0);
-
             TileId shiftedTileId = tileId;
             PointF nOffsetInTile;
             PointF nSizeInTile;
-            const auto absZoomShift = -zoomShift;
-            auto appliedAbsZoomShift = 0;
+            auto appliedAbsZoomShift = 0u;
             while (appliedAbsZoomShift < absZoomShift)
             {
                 nOffsetInTile.x = 0.5f * (static_cast<float>(shiftedTileId.x % 2) + nOffsetInTile.x);
