@@ -441,7 +441,6 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     p[2] = internalState->frustum2D.p2 / TileSize3D;
     p[3] = internalState->frustum2D.p3 / TileSize3D;
     
-
     // "Round"-up tile indices
     // In-tile normalized position is added, since all tiles are going to be
     // translated in opposite direction during rendering
@@ -453,10 +452,8 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
     // Determine visible tiles set
     {
         QSet<TileId> visibleTiles;
-        const int yMin = qCeil(qMin(qMin(p[0].y, p[1].y ), qMin(p[2].y, p[3].y)));
+        const int yMin = qCeil(qMin(qMin(p[0].y, p[1].y), qMin(p[2].y, p[3].y)));
         const int yMax = qFloor(qMax(qMax(p[0].y + 1, p[1].y + 1), qMax(p[2].y + 1, p[3].y + 1)));
-       // const int xgMin = qFloor(qMin(qMin(p[0].x, p[1].x), qMin(p[2].x, p[3].x)));
-       // const int xgMax = qFloor(qMax(qMax(p[0].x + 1, p[1].x + 1), qMax(p[2].x + 1, p[3].x + 1)));
         int pxMin = std::numeric_limits<int32_t>::max();
         int pxMax = std::numeric_limits<int32_t>::min();
         float x;
@@ -464,21 +461,20 @@ void OsmAnd::AtlasMapRenderer_OpenGL::computeVisibleTileset(InternalState* inter
         {
             int xMin = std::numeric_limits<int32_t>::max();
             int xMax = std::numeric_limits<int32_t>::min();
-            for(int k = 0; k < 4; k++)
+            for (int k = 0; k < 4; k++)
             {
-                if (Utilities::rayIntersectX(p[k % 4], p[(k + 1)% 4], y, x))
+                if (Utilities::rayIntersectX(p[k % 4], p[(k + 1) % 4], y, x))
                 {
                     xMin = qMin(xMin, qFloor(x));
                     xMax = qMax(xMax, qFloor(x));
                 }
-                if(p[k % 4].y > y -1 && p[k % 4].y < y)
+                if (p[k % 4].y > y - 1 && p[k % 4].y < y)
                 {
                     xMin = qMin(xMin, qFloor(p[k % 4].x));
                     xMax = qMax(xMax, qFloor(p[k % 4].x));
                 }
             }
             for (auto x = qMin(xMin, pxMin); x <= qMax(xMax, pxMax); x++)
-            //for (auto x = xgMin; x <= xgMax; x++) // whole bbox
             {
                 TileId tileId;
                 tileId.x = x + internalState->targetTileId.x;
