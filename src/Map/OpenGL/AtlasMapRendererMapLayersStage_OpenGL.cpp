@@ -803,7 +803,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
 
         // Now perform multi-pass rendering of subtiles to form the tile
         const auto subtilesCount = layer->resourcesInGPU.size();
-        const auto indicesPerSubtile = _rasterTileIndicesCount >> (1u << layer->resourcesInGPU.first()->zoomShift);
+        const auto indicesPerSubtile = _rasterTileIndicesCount / subtilesCount;
         auto subtilesRendered = 0u;
         for (const auto& batchedResourceInGPU : constOf(layer->resourcesInGPU))
         {
