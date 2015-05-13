@@ -207,45 +207,9 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
             wasLocked = true;
         }
 
-        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::ElevationData)];
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationData)];
-
-        // Clean-up and unbind gone providers and their resources
-        auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
-        while (itBindedProvider.hasNext())
-        {
-            itBindedProvider.next();
-
-            // Skip binding if it's still active
-            if (itBindedProvider.key() == state.elevationDataProvider)
-                continue;
-
-            // Clean-up resources (deferred)
-            _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
-
-            // Remove resources collection
-            resources.removeOne(itBindedProvider.value());
-
-            // Remove binding
-            bindings.collectionsToProviders.remove(itBindedProvider.value());
-            itBindedProvider.remove();
-        }
-
-        // Create new binding and storage
-        if (state.elevationDataProvider && !bindings.providersToCollections.contains(state.elevationDataProvider))
-        {
-            // Create new resources collection
-            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(
-                new MapRendererTiledResourcesCollection(MapRendererResourceType::ElevationData));
-
-            // Add binding
-            bindings.providersToCollections.insert(state.elevationDataProvider, newResourcesCollection);
-            bindings.collectionsToProviders.insert(newResourcesCollection, state.elevationDataProvider);
-
-            // Add resources collection
-            resources.push_back(qMove(newResourcesCollection));
-        }
+        updateElevationDataProviderBindings(state);
     }
+
     if (updatedMask.isSet(MapRendererStateChange::MapLayers_Providers))
     {
         if (!wasLocked)
@@ -254,53 +218,9 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
             wasLocked = true;
         }
 
-        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::MapLayer)];
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::MapLayer)];
-
-        // Clean-up and unbind gone providers and their resources
-        auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
-        while (itBindedProvider.hasNext())
-        {
-            itBindedProvider.next();
-
-            const auto provider = std::dynamic_pointer_cast<IMapLayerProvider>(itBindedProvider.key());
-
-            // Skip binding if it's still active
-            if (std::contains(state.mapLayersProviders, provider))
-                continue;
-
-            // Clean-up resources (deferred)
-            _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
-
-            // Reset reference to resources collection, but keep the space in array
-            std::find(resources, itBindedProvider.value())->reset();
-
-            // Remove binding
-            bindings.collectionsToProviders.remove(itBindedProvider.value());
-            itBindedProvider.remove();
-        }
-
-        // Create new binding and storage
-        for (const auto& provider_ : constOf(state.mapLayersProviders))
-        {
-            const auto provider = std::dynamic_pointer_cast<IMapDataProvider>(provider_);
-
-            // If binding already exists, skip creation
-            if (bindings.providersToCollections.contains(provider))
-                continue;
-
-            // Create new resources collection
-            const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(
-                new MapRendererTiledResourcesCollection(MapRendererResourceType::MapLayer));
-
-            // Add binding
-            bindings.providersToCollections.insert(provider, newResourcesCollection);
-            bindings.collectionsToProviders.insert(newResourcesCollection, provider);
-
-            // Add resources collection
-            resources.push_back(qMove(newResourcesCollection));
-        }
+        updateMapLayerProviderBindings(state);
     }
+
     if (updatedMask.isSet(MapRendererStateChange::Symbols_Providers))
     {
         if (!wasLocked)
@@ -309,74 +229,173 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
             wasLocked = true;
         }
 
-        auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::Symbols)];
-        auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::Symbols)];
-
-        // Clean-up and unbind gone providers and their resources
-        auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
-        while (itBindedProvider.hasNext())
-        {
-            itBindedProvider.next();
-
-            const auto provider = itBindedProvider.key();
-
-            // Skip binding if it's still active
-            if (state.tiledSymbolsProviders.contains(std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider)) ||
-                state.keyedSymbolsProviders.contains(std::dynamic_pointer_cast<IMapKeyedSymbolsProvider>(provider)))
-            {
-                continue;
-            }
-
-            // Clean-up resources (deferred)
-            _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
-
-            // Remove resources collection
-            resources.removeOne(itBindedProvider.value());
-
-            // Remove binding
-            bindings.collectionsToProviders.remove(itBindedProvider.value());
-            itBindedProvider.remove();
-        }
-
-        // Create new binding and storage
-        for (const auto& provider : constOf(state.tiledSymbolsProviders))
-        {
-            // If binding already exists, skip creation
-            if (bindings.providersToCollections.contains(provider))
-                continue;
-
-            // Create new resources collection
-            const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
-                static_cast<MapRendererBaseResourcesCollection*>(new MapRendererTiledSymbolsResourcesCollection()));
-
-            // Add binding
-            bindings.providersToCollections.insert(provider, newResourcesCollection);
-            bindings.collectionsToProviders.insert(newResourcesCollection, provider);
-
-            // Add resources collection
-            resources.push_back(qMove(newResourcesCollection));
-        }
-        for (const auto& provider : constOf(state.keyedSymbolsProviders))
-        {
-            // If binding already exists, skip creation
-            if (bindings.providersToCollections.contains(provider))
-                continue;
-
-            // Create new resources collection
-            const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
-                static_cast<MapRendererBaseResourcesCollection*>(new MapRendererKeyedResourcesCollection(MapRendererResourceType::Symbols)));
-
-            // Add binding
-            bindings.providersToCollections.insert(provider, newResourcesCollection);
-            bindings.collectionsToProviders.insert(newResourcesCollection, provider);
-
-            // Add resources collection
-            resources.push_back(qMove(newResourcesCollection));
-        }
+        updateSymbolProviderBindings(state);
     }
 
     if (wasLocked)
         _resourcesStoragesLock.unlock();
+}
+
+void OsmAnd::MapRendererResourcesManager::updateElevationDataProviderBindings(const MapRendererState& state)
+{
+    auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::ElevationData)];
+    auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::ElevationData)];
+
+    // Clean-up and unbind gone providers and their resources
+    auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
+    while (itBindedProvider.hasNext())
+    {
+        itBindedProvider.next();
+
+        // Skip binding if it's still active
+        if (itBindedProvider.key() == state.elevationDataProvider)
+            continue;
+
+        // Clean-up resources (deferred)
+        _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
+
+        // Remove resources collection
+        resources.removeOne(itBindedProvider.value());
+
+        // Remove binding
+        bindings.collectionsToProviders.remove(itBindedProvider.value());
+        itBindedProvider.remove();
+    }
+
+    // Create new binding and storage
+    if (state.elevationDataProvider && !bindings.providersToCollections.contains(state.elevationDataProvider))
+    {
+        // Create new resources collection
+        const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(
+            new MapRendererTiledResourcesCollection(MapRendererResourceType::ElevationData));
+
+        // Add binding
+        bindings.providersToCollections.insert(state.elevationDataProvider, newResourcesCollection);
+        bindings.collectionsToProviders.insert(newResourcesCollection, state.elevationDataProvider);
+
+        // Add resources collection
+        resources.push_back(qMove(newResourcesCollection));
+    }
+}
+
+void OsmAnd::MapRendererResourcesManager::updateMapLayerProviderBindings(const MapRendererState& state)
+{
+    auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::MapLayer)];
+    auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::MapLayer)];
+
+    // Clean-up and unbind gone providers and their resources
+    auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
+    while (itBindedProvider.hasNext())
+    {
+        itBindedProvider.next();
+
+        const auto provider = std::dynamic_pointer_cast<IMapLayerProvider>(itBindedProvider.key());
+        if (!provider)
+            continue;
+
+        // Skip binding if it's still active
+        if (std::contains(state.mapLayersProviders, provider))
+            continue;
+
+        // Clean-up resources (deferred)
+        _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
+
+        // Reset reference to resources collection, but keep the space in array
+        std::find(resources, itBindedProvider.value())->reset();
+
+        // Remove binding
+        bindings.collectionsToProviders.remove(itBindedProvider.value());
+        itBindedProvider.remove();
+    }
+
+    // Create new binding and storage
+    for (const auto& provider_ : constOf(state.mapLayersProviders))
+    {
+        const auto provider = std::static_pointer_cast<IMapDataProvider>(provider_);
+
+        // If binding already exists, skip creation
+        if (bindings.providersToCollections.contains(provider))
+            continue;
+
+        // Create new resources collection
+        const std::shared_ptr< MapRendererTiledResourcesCollection > newResourcesCollection(
+            new MapRendererTiledResourcesCollection(MapRendererResourceType::MapLayer));
+
+        // Add binding
+        bindings.providersToCollections.insert(provider, newResourcesCollection);
+        bindings.collectionsToProviders.insert(newResourcesCollection, provider);
+
+        // Add resources collection
+        resources.push_back(qMove(newResourcesCollection));
+    }
+}
+
+void OsmAnd::MapRendererResourcesManager::updateSymbolProviderBindings(const MapRendererState& state)
+{
+    auto& bindings = _bindings[static_cast<int>(MapRendererResourceType::Symbols)];
+    auto& resources = _storageByType[static_cast<int>(MapRendererResourceType::Symbols)];
+
+    // Clean-up and unbind gone providers and their resources
+    auto itBindedProvider = mutableIteratorOf(bindings.providersToCollections);
+    while (itBindedProvider.hasNext())
+    {
+        itBindedProvider.next();
+
+        const auto provider = itBindedProvider.key();
+
+        // Skip binding if it's still active
+        if (state.tiledSymbolsProviders.contains(std::dynamic_pointer_cast<IMapTiledSymbolsProvider>(provider)) ||
+            state.keyedSymbolsProviders.contains(std::dynamic_pointer_cast<IMapKeyedSymbolsProvider>(provider)))
+        {
+            continue;
+        }
+
+        // Clean-up resources (deferred)
+        _pendingRemovalResourcesCollections.push_back(itBindedProvider.value());
+
+        // Remove resources collection
+        resources.removeOne(itBindedProvider.value());
+
+        // Remove binding
+        bindings.collectionsToProviders.remove(itBindedProvider.value());
+        itBindedProvider.remove();
+    }
+
+    // Create new binding and storage
+    for (const auto& provider : constOf(state.tiledSymbolsProviders))
+    {
+        // If binding already exists, skip creation
+        if (bindings.providersToCollections.contains(provider))
+            continue;
+
+        // Create new resources collection
+        const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
+            static_cast<MapRendererBaseResourcesCollection*>(new MapRendererTiledSymbolsResourcesCollection()));
+
+        // Add binding
+        bindings.providersToCollections.insert(provider, newResourcesCollection);
+        bindings.collectionsToProviders.insert(newResourcesCollection, provider);
+
+        // Add resources collection
+        resources.push_back(qMove(newResourcesCollection));
+    }
+    for (const auto& provider : constOf(state.keyedSymbolsProviders))
+    {
+        // If binding already exists, skip creation
+        if (bindings.providersToCollections.contains(provider))
+            continue;
+
+        // Create new resources collection
+        const std::shared_ptr< MapRendererBaseResourcesCollection > newResourcesCollection(
+            static_cast<MapRendererBaseResourcesCollection*>(new MapRendererKeyedResourcesCollection(MapRendererResourceType::Symbols)));
+
+        // Add binding
+        bindings.providersToCollections.insert(provider, newResourcesCollection);
+        bindings.collectionsToProviders.insert(newResourcesCollection, provider);
+
+        // Add resources collection
+        resources.push_back(qMove(newResourcesCollection));
+    }
 }
 
 void OsmAnd::MapRendererResourcesManager::updateActiveZone(
@@ -447,6 +466,15 @@ bool OsmAnd::MapRendererResourcesManager::obtainProviderFor(
     MapRendererBaseResourcesCollection* const resourcesRef,
     std::shared_ptr<IMapDataProvider>& provider) const
 {
+    QReadLocker scopedLocker(&_resourcesStoragesLock);
+
+    return noLockObtainProviderFor(resourcesRef, provider);
+}
+
+bool OsmAnd::MapRendererResourcesManager::noLockObtainProviderFor(
+    MapRendererBaseResourcesCollection* const resourcesRef,
+    std::shared_ptr<IMapDataProvider>& provider) const
+{
     assert(resourcesRef != nullptr);
 
     const auto& bindings = _bindings[static_cast<int>(resourcesRef->type)];
@@ -469,6 +497,8 @@ bool OsmAnd::MapRendererResourcesManager::obtainProviderFor(
 bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(
     const std::shared_ptr<MapRendererBaseResourcesCollection>& collection) const
 {
+    assert(QThread::currentThreadId() != renderer->_renderThreadId);
+
     const auto& binding = _bindings[static_cast<int>(collection->type)];
 
     return binding.collectionsToProviders.contains(collection);
@@ -622,8 +652,8 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResources(
             activeTiles,
             activeZoom);
     }
-    else if (
-        const auto keyedResourcesCollection =std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
+    else if (const auto keyedResourcesCollection =
+            std::dynamic_pointer_cast<MapRendererKeyedResourcesCollection>(resourcesCollection))
     {
         requestNeededKeyedResources(
             keyedResourcesCollection);
@@ -895,6 +925,8 @@ bool OsmAnd::MapRendererResourcesManager::validateResources()
 
 bool OsmAnd::MapRendererResourcesManager::validateResourcesOfType(const MapRendererResourceType type)
 {
+    QReadLocker scopedLocker(&_resourcesStoragesLock);
+
     const auto& resourcesCollections = _storageByType[static_cast<int>(type)];
     const auto& bindings = _bindings[static_cast<int>(type)];
 
@@ -1208,7 +1240,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
             // Get data provider
             std::shared_ptr<IMapDataProvider> dataProvider;
-            const auto dataSourceAvailable = obtainProviderFor(resourcesCollection.get(), dataProvider);
+            const auto dataSourceAvailable = noLockObtainProviderFor(resourcesCollection.get(), dataProvider);
 
             // Regular checks common for all resources
             resourcesCollection->removeResources(
@@ -1720,6 +1752,8 @@ void OsmAnd::MapRendererResourcesManager::requestResourcesUploadOrUnload()
 
 void OsmAnd::MapRendererResourcesManager::releaseAllResources(const bool gpuContextLost)
 {
+    QWriteLocker scopedLocker(&_resourcesStoragesLock);
+
     // Release all resources
     for (const auto& resourcesCollections : _storageByType)
     {
@@ -1765,11 +1799,15 @@ std::shared_ptr<const OsmAnd::MapRendererBaseResourcesCollection> OsmAnd::MapRen
     const MapRendererResourceType type,
     const std::shared_ptr<IMapDataProvider>& provider) const
 {
+    QReadLocker scopedLocker(&_resourcesStoragesLock);
+
     return _bindings[static_cast<int>(type)].providersToCollections[provider];
 }
 
 bool OsmAnd::MapRendererResourcesManager::updateCollectionsSnapshots() const
 {
+    QReadLocker scopedLocker(&_resourcesStoragesLock);
+
     bool allSuccessful = true;
 
     for (const auto& binding : constOf(_bindings))
@@ -1786,6 +1824,8 @@ bool OsmAnd::MapRendererResourcesManager::updateCollectionsSnapshots() const
 
 bool OsmAnd::MapRendererResourcesManager::collectionsSnapshotsInvalidated() const
 {
+    QReadLocker scopedLocker(&_resourcesStoragesLock);
+
     bool atLeastOneInvalidated = false;
 
     for (const auto& binding : constOf(_bindings))

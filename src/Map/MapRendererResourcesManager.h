@@ -100,7 +100,12 @@ namespace OsmAnd
             QHash< std::shared_ptr<MapRendererBaseResourcesCollection>, std::shared_ptr<IMapDataProvider> > collectionsToProviders;
         };
         std::array< Binding, MapRendererResourceTypesCount > _bindings;
-        bool obtainProviderFor(MapRendererBaseResourcesCollection* const resourcesRef, std::shared_ptr<IMapDataProvider>& provider) const;
+        bool obtainProviderFor(
+            MapRendererBaseResourcesCollection* const resourcesRef,
+            std::shared_ptr<IMapDataProvider>& provider) const;
+        bool noLockObtainProviderFor(
+            MapRendererBaseResourcesCollection* const resourcesRef,
+            std::shared_ptr<IMapDataProvider>& provider) const;
         bool isDataSourceAvailableFor(const std::shared_ptr<MapRendererBaseResourcesCollection>& collection) const;
 
         // Resources storages:
@@ -213,6 +218,10 @@ namespace OsmAnd
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
         void updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);
+        void updateElevationDataProviderBindings(const MapRendererState& state);
+        void updateMapLayerProviderBindings(const MapRendererState& state);
+        void updateSymbolProviderBindings(const MapRendererState& state);
+
         void updateActiveZone(const TileId centerTileId, const QVector<TileId>& tiles, const ZoomLevel zoom);
         void syncResourcesInGPU(
             const unsigned int limitUploads = 0u,
