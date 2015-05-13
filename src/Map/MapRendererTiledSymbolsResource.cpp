@@ -70,6 +70,7 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     QSet< uint64_t > loadedSharedGroups;
     std::shared_ptr<IMapTiledSymbolsProvider::Data> tile;
     IMapTiledSymbolsProvider::Request request;
+    request.queryController = queryController;
     request.tileId = tileId;
     request.zoom = zoom;
     request.filterCallback =
@@ -110,9 +111,11 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
             return true;
         };
     const auto requestSucceeded = provider->obtainTiledSymbols(request, tile);
+    if (queryController && queryController->isAborted())
+        return false;
     if (!requestSucceeded)
         return false;
-
+    
     // Store data
     _sourceData = tile;
     dataAvailable = static_cast<bool>(tile);
@@ -124,8 +127,14 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     // Convert data
     for (const auto& symbolsGroup : constOf(_sourceData->symbolsGroups))
     {
+        if (queryController && queryController->isAborted())
+            break;
+
         for (const auto& mapSymbol : constOf(symbolsGroup->symbols))
         {
+            if (queryController && queryController->isAborted())
+                break;
+
             const auto rasterMapSymbol = std::dynamic_pointer_cast<RasterMapSymbol>(mapSymbol);
             if (!rasterMapSymbol)
                 continue;
@@ -135,6 +144,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
                 AlphaChannelPresence::Present);
         }
     }
+    if (queryController && queryController->isAborted())
+        return false;
 
     // Move referenced shared groups
     _referencedSharedGroupsResources = referencedSharedGroupsResources;
@@ -142,6 +153,9 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     // tile->symbolsGroups contains groups that derived from unique symbols, or loaded shared groups
     for (const auto& symbolsGroup : constOf(_sourceData->symbolsGroups))
     {
+        if (queryController && queryController->isAborted())
+            break;
+
         MapSymbolsGroup::SharingKey sharingKey;
         if (symbolsGroup->obtainSharingKey(sharingKey))
         {
@@ -176,10 +190,15 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
             _uniqueGroupsResources.push_back(qMove(groupResources));
         }
     }
+    if (queryController && queryController->isAborted())
+        return false;
 
     // Wait for future referenced shared groups
     for (auto& futureGroup : futureReferencedSharedGroupsResources)
     {
+        if (queryController && queryController->isAborted())
+            break;
+
         auto groupResources = futureGroup.get();
 
         _referencedSharedGroupsResources.push_back(qMove(groupResources));
@@ -195,12 +214,17 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
             sharedGroupsResources.getReferencesCount(symbolsGroupWithId->getId()));
 #endif // OSMAND_LOG_SHARED_MAP_SYMBOLS_GROUPS_LIFECYCLE
     }
+    if (queryController && queryController->isAborted())
+        return false;
 
     // Register all obtained symbols
     const auto& self = shared_from_this();
     QList< PublishOrUnpublishMapSymbol > mapSymbolsToPublish;
     for (const auto& groupResources : constOf(_uniqueGroupsResources))
     {
+        if (queryController && queryController->isAborted())
+            break;
+
         const auto& symbolsGroup = groupResources->group;
         auto& publishedMapSymbols = _publishedMapSymbolsByGroup[symbolsGroup];
         mapSymbolsToPublish.reserve(mapSymbolsToPublish.size() + symbolsGroup->symbols.size());
@@ -216,6 +240,9 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
     }
     for (const auto& groupResources : constOf(_referencedSharedGroupsResources))
     {
+        if (queryController && queryController->isAborted())
+            break;
+
         const auto& symbolsGroup = groupResources->group;
         auto& publishedMapSymbols = _publishedMapSymbolsByGroup[symbolsGroup];
         mapSymbolsToPublish.reserve(mapSymbolsToPublish.size() + symbolsGroup->symbols.size());
@@ -229,6 +256,8 @@ bool OsmAnd::MapRendererTiledSymbolsResource::obtainData(
             publishedMapSymbols.push_back(mapSymbol);
         }
     }
+    if (queryController && queryController->isAborted())
+        return false;
     resourcesManager->batchPublishMapSymbols(mapSymbolsToPublish);
 
     // Since there's a copy of references to map symbols groups and symbols themselves,
