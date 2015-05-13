@@ -1437,8 +1437,6 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 {
                                     const auto& underscaledTileId = *(pUnderscaledTileIdN++);
 
-                                    neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
-
                                     atLeastOnePresent = atLeastOnePresent || tiledResourcesCollection->containsResource(
                                         underscaledTileId,
                                         static_cast<ZoomLevel>(underscaledZoom),
@@ -1446,7 +1444,17 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 }
 
                                 if (atLeastOnePresent)
+                                {
+                                    pUnderscaledTileIdN = underscaledTileIdsN.constData();
+                                    for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
+                                    {
+                                        const auto& underscaledTileId = *(pUnderscaledTileIdN++);
+
+                                        neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
+                                    }
+
                                     break;
+                                }
                             }
                         }
 
@@ -1459,12 +1467,14 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 const auto overscaledTileId = Utilities::getTileIdOverscaledByZoomShift(
                                     activeTileId,
                                     absZoomShift);
-                                neededTilesMap[static_cast<ZoomLevel>(overscaleZoom)].insert(overscaledTileId);
                                 if (tiledResourcesCollection->containsResource(
                                     overscaledTileId,
                                     static_cast<ZoomLevel>(overscaleZoom),
                                     isUsableAndNotUnavailableResource))
                                 {
+                                    // It's needed only if present and ready
+                                    neededTilesMap[static_cast<ZoomLevel>(overscaleZoom)].insert(overscaledTileId);
+
                                     break;
                                 }
                             }
