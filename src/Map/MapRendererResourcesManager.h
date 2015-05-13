@@ -113,6 +113,9 @@ namespace OsmAnd
         QList< std::shared_ptr<MapRendererBaseResourcesCollection> > _pendingRemovalResourcesCollections;
         ResourcesStorage _storageByType;
         QList< std::shared_ptr<MapRendererBaseResourcesCollection> > safeGetAllResourcesCollections() const;
+        void safeGetAllResourcesCollections(
+            QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& outPendingRemovalResourcesCollections,
+            QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& outOtherResourcesCollections) const;
 
         // Symbols-related:
         void publishMapSymbol(
@@ -147,13 +150,10 @@ namespace OsmAnd
             const QVector<TileId>& tiles,
             const ZoomLevel zoom);
         void requestNeededResources(
+            const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections,
             const TileId centerTileId,
             const QVector<TileId>& activeTiles,
             const ZoomLevel activeZoom);
-        void requestNeededResources(
-            const MapRendererResourceType type,
-            const QVector<TileId>& tiles,
-            const ZoomLevel zoom);
         void requestNeededResources(
             const std::shared_ptr<MapRendererBaseResourcesCollection>& resourcesCollection,
             const QVector<TileId>& tiles,
@@ -172,8 +172,14 @@ namespace OsmAnd
             const bool requestSucceeded,
             const bool dataAvailable);
         void processResourceRequestCancellation(const std::shared_ptr<MapRendererBaseResource>& resource);
-        void cleanupJunkResources(const QVector<TileId>& activeTiles, const ZoomLevel activeZoom);
-        bool cleanupJunkResource(const std::shared_ptr<MapRendererBaseResource>& resource, bool& needsResourcesUploadOrUnload);
+        void cleanupJunkResources(
+            const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& pendingRemovalResourcesCollections,
+            const QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& resourcesCollections,
+            const QVector<TileId>& activeTiles,
+            const ZoomLevel activeZoom);
+        bool cleanupJunkResource(
+            const std::shared_ptr<MapRendererBaseResource>& resource,
+            bool& needsResourcesUploadOrUnload);
         unsigned int unloadResources();
         void unloadResourcesFrom(
             const std::shared_ptr<MapRendererBaseResourcesCollection>& collection,
