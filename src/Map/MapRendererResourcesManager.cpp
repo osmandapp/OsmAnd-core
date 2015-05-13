@@ -196,7 +196,7 @@ void OsmAnd::MapRendererResourcesManager::releaseGpuUploadableDataFrom(const std
     }
 }
 
-void OsmAnd::MapRendererResourcesManager::updateBindings(
+bool OsmAnd::MapRendererResourcesManager::updateBindings(
     const MapRendererState& state,
     const MapRendererStateChanges updatedMask)
 {
@@ -208,7 +208,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
     {
         if (!wasLocked)
         {
-            _resourcesStoragesLock.lockForWrite();
+            if (!_resourcesStoragesLock.tryLockForWrite())
+                return false;
             wasLocked = true;
         }
 
@@ -219,7 +220,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
     {
         if (!wasLocked)
         {
-            _resourcesStoragesLock.lockForWrite();
+            if (!_resourcesStoragesLock.tryLockForWrite())
+                return false;
             wasLocked = true;
         }
 
@@ -230,7 +232,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
     {
         if (!wasLocked)
         {
-            _resourcesStoragesLock.lockForWrite();
+            if (!_resourcesStoragesLock.tryLockForWrite())
+                return false;
             wasLocked = true;
         }
 
@@ -239,6 +242,8 @@ void OsmAnd::MapRendererResourcesManager::updateBindings(
 
     if (wasLocked)
         _resourcesStoragesLock.unlock();
+
+    return true;
 }
 
 void OsmAnd::MapRendererResourcesManager::updateElevationDataProviderBindings(const MapRendererState& state)

@@ -443,7 +443,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     if (!_isRenderingInitialized)
         return false;
 
-    bool ok;
+    bool ok = true;
 
     // Update debug settings if needed
     const auto currentDebugSettingsInvalidatedCounter = _currentDebugSettingsInvalidatedCounter.fetchAndAddOrdered(0);
@@ -472,9 +472,7 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
         if (!ok)
         {
             _currentConfigurationInvalidatedMask.fetchAndOrOrdered(currentConfigurationInvalidatedMask);
-
             invalidateFrame();
-
             return false;
         }
     }
@@ -492,7 +490,13 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     if (requestedStateUpdatedMask != 0)
     {
         // Process updating of providers
-        _resources->updateBindings(_currentState, requestedStateUpdatedMask);
+        ok = _resources->updateBindings(_currentState, requestedStateUpdatedMask);
+        if (!ok)
+        {
+            _requestedStateUpdatedMask.fetchAndOrOrdered(requestedStateUpdatedMask);
+            invalidateFrame();
+            return false;
+        }
     }
 
     // Update internal state, that is derived from current state and configuration

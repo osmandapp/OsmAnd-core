@@ -223,7 +223,7 @@ namespace OsmAnd
             const AlphaChannelPresence alphaChannelPresence) const;
         void releaseGpuUploadableDataFrom(const std::shared_ptr<MapSymbol>& mapSymbol);
 
-        void updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);
+        bool updateBindings(const MapRendererState& state, const MapRendererStateChanges updatedMask);
         void updateElevationDataProviderBindings(const MapRendererState& state);
         void updateMapLayerProviderBindings(const MapRendererState& state);
         void updateSymbolProviderBindings(const MapRendererState& state);
