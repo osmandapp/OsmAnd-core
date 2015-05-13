@@ -1413,7 +1413,8 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                 if (tiledResourcesCollection->containsResource(activeTileId, activeZoom, isUsableResource))
                     continue;
 
-                if (resourcesCollection->getType() == MapRendererResourceType::MapLayer)
+                if (resourcesCollection->getType() == MapRendererResourceType::MapLayer/* ||
+                    resourcesCollection->getType() == MapRendererResourceType::Symbols*/)
                 {
                     // Exact match was not found, so now try to look for overscaled/underscaled resources, taking into account
                     // MaxMissingDataZoomShift and active zoom. It's better to show Z-"nearest" resource available,
@@ -1437,24 +1438,20 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                                 {
                                     const auto& underscaledTileId = *(pUnderscaledTileIdN++);
 
-                                    atLeastOnePresent = atLeastOnePresent || tiledResourcesCollection->containsResource(
+                                    const auto underscaledTilePresent = tiledResourcesCollection->containsResource(
                                         underscaledTileId,
                                         static_cast<ZoomLevel>(underscaledZoom),
                                         isUsableAndNotUnavailableResource);
+                                    if (underscaledTilePresent)
+                                    {
+                                        neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
+
+                                        atLeastOnePresent = true;
+                                    }
                                 }
 
                                 if (atLeastOnePresent)
-                                {
-                                    pUnderscaledTileIdN = underscaledTileIdsN.constData();
-                                    for (auto tileIdx = 0; tileIdx < tilesCount; tileIdx++)
-                                    {
-                                        const auto& underscaledTileId = *(pUnderscaledTileIdN++);
-
-                                        neededTilesMap[static_cast<ZoomLevel>(underscaledZoom)].insert(underscaledTileId);
-                                    }
-
                                     break;
-                                }
                             }
                         }
 
