@@ -330,8 +330,8 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtype(
             case OBF::OsmAndPoiSubtype::kFrequencyFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&subtype->frequency));
                 break;
-            case OBF::OsmAndPoiSubtype::kSubtypeValuesSizeFieldNumber:
-                break;
+            //case OBF::OsmAndPoiSubtype::kSubtypeValuesSizeFieldNumber:
+            //    break;
             case OBF::OsmAndPoiSubtype::kSubtypeValueFieldNumber:
             {
                 QString value;
