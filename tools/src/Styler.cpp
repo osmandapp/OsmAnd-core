@@ -97,11 +97,11 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
         const auto mapObjectsFilterById =
             [this]
             (const std::shared_ptr<const OsmAnd::ObfMapSectionInfo>& section,
-            const uint64_t mapObjectId,
-            const OsmAnd::AreaI& bbox,
-            const OsmAnd::ZoomLevel firstZoomLevel,
-            const OsmAnd::ZoomLevel lastZoomLevel,
-            const OsmAnd::ZoomLevel requestedZoom) -> bool
+                const uint64_t mapObjectId,
+                const OsmAnd::AreaI& bbox,
+                const OsmAnd::ZoomLevel firstZoomLevel,
+                const OsmAnd::ZoomLevel lastZoomLevel,
+                const OsmAnd::ZoomLevel requestedZoom) -> bool
             {
                 return configuration.mapObjectsIds.contains(mapObjectId);
             };
@@ -165,11 +165,11 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
             output << xT("Going to primitivise map objects...") << std::endl;
         OsmAnd::MapPrimitiviser_Metrics::Metric_primitiviseAllMapObjects metrics;
         const auto primitivisedData = primitiviser->primitiviseAllMapObjects(
-                configuration.zoom,
-                mapObjects,
-                nullptr,
-                nullptr,
-                configuration.metrics ? &metrics : nullptr);
+            configuration.zoom,
+            mapObjects,
+            nullptr,
+            nullptr,
+            configuration.metrics ? &metrics : nullptr);
         if (configuration.verbose)
         {
             output
@@ -487,12 +487,18 @@ bool OsmAndTools::Styler::evaluate(EvaluatedMapObjects& outEvaluatedMapObjects, 
                             << xT("\t\tShield resource name: ")
                             << QStringToStlString(textSymbol->shieldResourceName)
                             << std::endl;
+                        output
+                            << xT("\t\tUnderlay icon name: ")
+                            << QStringToStlString(textSymbol->underlayIconResourceName)
+                            << std::endl;
                     }
                     else if (iconSymbol)
                     {
                         output << xT("\t\tIcon resource name: ") << QStringToStlString(iconSymbol->resourceName) << std::endl;
-                        for (const auto& overlayResoucreName : iconSymbol->overlayResourceNames)
-                            output << xT("\t\tOverlay resource name: ") << QStringToStlString(overlayResoucreName) << std::endl;
+                        output
+                            << xT("\t\tOverlay resource names: ")
+                            << QStringToStlString(QStringList(iconSymbol->overlayResourceNames).join(QLatin1String(", ")))
+                            << std::endl;
                         output
                             << xT("\t\tShield resource name: ")
                             << QStringToStlString(iconSymbol->shieldResourceName)

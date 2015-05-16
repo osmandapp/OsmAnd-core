@@ -87,18 +87,33 @@ void OsmAnd::SymbolRasterizer_P::rasterize(
                 TextRasterizer::Style style;
                 if (!textSymbol->drawOnPath && textSymbol->shieldResourceName.isEmpty())
                     style.wrapWidth = textSymbol->wrapWidth;
+
+                QList< std::shared_ptr<const SkBitmap> > backgroundLayers;
                 if (!textSymbol->shieldResourceName.isEmpty())
                 {
-                    env->obtainTextShield(textSymbol->shieldResourceName, style.backgroundBitmap);
+                    std::shared_ptr<const SkBitmap> shield;
+                    env->obtainTextShield(textSymbol->shieldResourceName, shield);
 
-                    if (!qFuzzyCompare(textSymbol->scaleFactor, 1.0f) && style.backgroundBitmap)
-                    {
-                        style.backgroundBitmap = SkiaUtilities::scaleBitmap(
-                            style.backgroundBitmap,
-                            textSymbol->scaleFactor,
-                            textSymbol->scaleFactor);
-                    }
+                    if (shield)
+                        backgroundLayers.push_back(shield);
                 }
+                if (!textSymbol->underlayIconResourceName.isEmpty())
+                {
+                    std::shared_ptr<const SkBitmap> icon;
+                    env->obtainMapIcon(textSymbol->underlayIconResourceName, icon);
+                    if (icon)
+                        backgroundLayers.push_back(icon);
+                }
+
+                style.backgroundBitmap = SkiaUtilities::mergeBitmaps(backgroundLayers);
+                if (!qFuzzyCompare(textSymbol->scaleFactor, 1.0f) && style.backgroundBitmap)
+                {
+                    style.backgroundBitmap = SkiaUtilities::scaleBitmap(
+                        style.backgroundBitmap,
+                        textSymbol->scaleFactor,
+                        textSymbol->scaleFactor);
+                }
+
                 style
                     .setBold(textSymbol->isBold)
                     .setItalic(textSymbol->isItalic)

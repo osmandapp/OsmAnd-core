@@ -219,7 +219,8 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::operator==(const TextSymbol& that) con
         this->wrapWidth == that.wrapWidth &&
         this->isBold == that.isBold &&
         this->isItalic == that.isItalic &&
-        this->shieldResourceName == that.shieldResourceName;
+        this->shieldResourceName == that.shieldResourceName &&
+        this->underlayIconResourceName == that.underlayIconResourceName;
 }
 
 bool OsmAnd::MapPrimitiviser::TextSymbol::operator!=(const TextSymbol& that) const
@@ -237,7 +238,8 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::operator!=(const TextSymbol& that) con
         this->wrapWidth != that.wrapWidth ||
         this->isBold != that.isBold ||
         this->isItalic != that.isItalic ||
-        this->shieldResourceName != that.shieldResourceName;
+        this->shieldResourceName != that.shieldResourceName ||
+        this->underlayIconResourceName != that.underlayIconResourceName;
 }
 
 bool OsmAnd::MapPrimitiviser::TextSymbol::hasSameContentAs(const TextSymbol& that) const
@@ -254,7 +256,8 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::hasSameContentAs(const TextSymbol& tha
         this->wrapWidth == that.wrapWidth &&
         this->isBold == that.isBold &&
         this->isItalic == that.isItalic &&
-        this->shieldResourceName == that.shieldResourceName;
+        this->shieldResourceName == that.shieldResourceName &&
+        this->underlayIconResourceName == that.underlayIconResourceName;
 }
 
 bool OsmAnd::MapPrimitiviser::TextSymbol::hasDifferentContentAs(const TextSymbol& that) const
@@ -271,7 +274,8 @@ bool OsmAnd::MapPrimitiviser::TextSymbol::hasDifferentContentAs(const TextSymbol
         this->wrapWidth != that.wrapWidth ||
         this->isBold != that.isBold ||
         this->isItalic != that.isItalic ||
-        this->shieldResourceName != that.shieldResourceName;
+        this->shieldResourceName != that.shieldResourceName ||
+        this->underlayIconResourceName != that.underlayIconResourceName;
 }
 
 OsmAnd::MapPrimitiviser::IconSymbol::IconSymbol(const std::shared_ptr<const Primitive>& primitive_)
