@@ -20,6 +20,7 @@ include_directories(AFTER SYSTEM
 	"${UPSTREAM}/src/opts"
 	"${UPSTREAM}/include/core"
 	"${UPSTREAM}/include/lazy"
+	"${UPSTREAM}/include/utils/mac"
 	"${UPSTREAM}/include/pathops"
 	"${UPSTREAM}/src/core"
 	"${UPSTREAM}/include/config"
@@ -47,6 +48,30 @@ set(target_specific_sources
 	"${UPSTREAM}/src/opts/SkUtils_opts_none.cpp"
 	"${UPSTREAM}/src/opts/SkXfermode_opts_none.cpp"
 )
+
+if(CMAKE_TARGET_OS STREQUAL "darwin")
+	file(GLOB src_utils_mac "${UPSTREAM}/src/utils/mac/*")
+        set(target_specific_sources "${target_specific_sources}"
+       #          "${UPSTREAM}/src/fonts/SkFontMgr_fontconfig.cpp"
+                "${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
+                "${UPSTREAM}/src/ports/SkDiscardableMemory_none.cpp"
+       #       "${UPSTREAM}/src/ports/SkFontConfigInterface_direct.cpp"
+       #       "${UPSTREAM}/src/ports/SkFontHost_fontconfig.cpp"
+       #       "${UPSTREAM}/src/ports/SkFontHost_FreeType_common.cpp"
+       #        "${UPSTREAM}/src/ports/SkFontHost_FreeType.cpp"
+       #        "${UPSTREAM}/src/ports/SkFontHost_linux.cpp"
+		"${UPSTREAM}/src/ports/SkImageDecoder_CG.cpp"
+		"${UPSTREAM}/src/ports/SkFontHost_mac.cpp"
+                "${UPSTREAM}/src/ports/SkOSFile_posix.cpp"
+                "${UPSTREAM}/src/ports/SkTime_Unix.cpp"
+                "${UPSTREAM}/src/ports/SkTLS_pthread.cpp"
+                "${UPSTREAM}/src/utils/SkThreadUtils_pthread.cpp"
+                "${UPSTREAM}/src/utils/SkThreadUtils_pthread_mach.cpp"
+		${src_utils_mac}
+        )
+        add_definitions(-DSK_BUILD_FOR_MACOS -DSK_USE_POSIX_THREADS   -DSK_FONTHOST_USES_FONTMGR)
+endif()
+
 
 if(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
@@ -409,3 +434,18 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 		${FONTCONFIG_LIBRARY}
 	)
 endif()
+if(CMAKE_TARGET_OS STREQUAL "darwin")
+   	find_library(CORE_FOUNDATION_LIBRARY CoreFoundation)
+        find_library(CORE_TEXT_LIBRARY CoreText)
+        find_library(CORE_GRAPHICS_LIBRARY CoreGraphics)
+        find_library(FONTCONFIG_LIBRARY fontconfig)
+        target_link_libraries(skia_osmand LINK_PUBLIC
+                pthread
+                ${FONTCONFIG_LIBRARY}
+                "${CORE_FOUNDATION_LIBRARY}/CoreFoundation"
+                "${CORE_TEXT_LIBRARY}/CoreText"
+                "${CORE_GRAPHICS_LIBRARY}/CoreGraphics"
+ 
+        )
+endif()
+
