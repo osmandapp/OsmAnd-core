@@ -966,7 +966,6 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 					obj->additionalTypes.push_back(t);
 				}
 			}
-
 		}
 		if (add) {
 			for (uint32_t s = 0; s < r->pointsX.size(); s++) {
@@ -975,8 +974,9 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			obj->id = r->id;
 			UNORDERED(map)<int, std::string >::iterator nameIterator = r->names.begin();
 			for (; nameIterator != r->names.end(); nameIterator++) {
-				std::string ruleId = r->region->decodingRules[nameIterator->first].first;
+				std::string ruleId = r->region->decodingRules[nameIterator->first].first;				
 				obj->objectNames[ruleId] = nameIterator->second;
+				obj->namesOrder.push_back(ruleId);
 			}
 			obj->area = false;
 			if(renderedState < 2 && checkObjectBounds(q, obj)) {
