@@ -34,6 +34,10 @@ OsmAnd::ObfPoiSectionCategories::~ObfPoiSectionCategories()
 }
 
 OsmAnd::ObfPoiSectionSubtypes::ObfPoiSectionSubtypes()
+    : openingHoursSubtypeIndex(-1)
+    , websiteSubtypeIndex(-1)
+    , phoneSubtypeIndex(-1)
+    , descriptionSubtypeIndex(-1)
 {
 }
 

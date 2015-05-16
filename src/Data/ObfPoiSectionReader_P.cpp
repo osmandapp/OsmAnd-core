@@ -260,6 +260,27 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtypesStructure(
                 readSubtype(reader, subtype);
                 subtypes->subtypes.push_back(subtype);
 
+                if (subtype->tagName == QLatin1String("opening_hours"))
+                {
+                    subtypes->openingHoursSubtypeIndex = subtypes->subtypes.size() - 1;
+                    subtypes->openingHoursSubtype = subtype;
+                }
+                else if (subtype->tagName == QLatin1String("website"))
+                {
+                    subtypes->websiteSubtypeIndex = subtypes->subtypes.size() - 1;
+                    subtypes->websiteSubtype = subtype;
+                }
+                else if (subtype->tagName == QLatin1String("phone"))
+                {
+                    subtypes->phoneSubtypeIndex = subtypes->subtypes.size() - 1;
+                    subtypes->phoneSubtype = subtype;
+                }
+                else if (subtype->tagName == QLatin1String("description"))
+                {
+                    subtypes->descriptionSubtypeIndex = subtypes->subtypes.size() - 1;
+                    subtypes->descriptionSubtype = subtype;
+                }
+
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 break;
@@ -277,6 +298,8 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtype(
 {
     const auto cis = reader.getCodedInputStream().get();
 
+    bool tagNamePresent = false;
+
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -286,12 +309,16 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtype(
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
+                if (!tagNamePresent)
+                    subtype->tagName = subtype->name;
+
                 return;
             case OBF::OsmAndPoiSubtype::kNameFieldNumber:
                 ObfReaderUtilities::readQString(cis, subtype->name);
                 break;
             case OBF::OsmAndPoiSubtype::kTagnameFieldNumber:
                 ObfReaderUtilities::readQString(cis, subtype->tagName);
+                tagNamePresent = true;
                 break;
             case OBF::OsmAndPoiSubtype::kIsTextFieldNumber:
             {
@@ -303,8 +330,8 @@ void OsmAnd::ObfPoiSectionReader_P::readSubtype(
             case OBF::OsmAndPoiSubtype::kFrequencyFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&subtype->frequency));
                 break;
-            //case OBF::OsmAndPoiSubtype::kSubtypeValuesSizeFieldNumber:
-            //    break;
+            case OBF::OsmAndPoiSubtype::kSubtypeValuesSizeFieldNumber:
+                break;
             case OBF::OsmAndPoiSubtype::kSubtypeValueFieldNumber:
             {
                 QString value;
@@ -709,6 +736,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const auto cis = reader.getCodedInputStream().get();
     const auto baseOffset = cis->CurrentPosition();
 
+    const auto subtypes = section->_p->_subtypes;
+
     ObfObjectId id;
     bool autogenerateId = true;
     std::shared_ptr<Amenity> amenity;
@@ -859,6 +888,38 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 const auto subtypeIndex = textValueSubtypeIndices[stringValues.size()];
                 stringValues.insert(subtypeIndex, valueString);
 
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kOpeningHoursFieldNumber:
+            {
+                QString valueString;
+                ObfReaderUtilities::readQString(cis, valueString);
+
+                stringValues.insert(subtypes->openingHoursSubtypeIndex, valueString);
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kSiteFieldNumber:
+            {
+                QString valueString;
+                ObfReaderUtilities::readQString(cis, valueString);
+
+                stringValues.insert(subtypes->websiteSubtypeIndex, valueString);
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kPhoneFieldNumber:
+            {
+                QString valueString;
+                ObfReaderUtilities::readQString(cis, valueString);
+
+                stringValues.insert(subtypes->phoneSubtypeIndex, valueString);
+                break;
+            }
+            case OBF::OsmAndPoiBoxDataAtom::kNoteFieldNumber:
+            {
+                QString valueString;
+                ObfReaderUtilities::readQString(cis, valueString);
+
+                stringValues.insert(subtypes->descriptionSubtypeIndex, valueString);
                 break;
             }
             default:
@@ -1189,7 +1250,17 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     auto oldLimit = cis->PushLimit(section->length);
     cis->Skip(section->nameIndexInnerOffset);
 
-    readAmenitiesByName(reader, section, query, outAmenities, minZoom, maxZoom, bbox31, categoriesFilter, visitor, queryController);
+    readAmenitiesByName(
+        reader,
+        section,
+        query,
+        outAmenities,
+        minZoom,
+        maxZoom,
+        bbox31,
+        categoriesFilter,
+        visitor,
+        queryController);
 
     ObfReaderUtilities::ensureAllDataWasRead(cis);
     cis->PopLimit(oldLimit);

@@ -56,6 +56,22 @@ namespace OsmAnd
 
         QList< std::shared_ptr<const ObfPoiSectionSubtype> > subtypes;
 
+        // "opening_hours" OSM tag
+        int openingHoursSubtypeIndex;
+        std::shared_ptr<const ObfPoiSectionSubtype> openingHoursSubtype;
+
+        // "website" OSM tag
+        int websiteSubtypeIndex;
+        std::shared_ptr<const ObfPoiSectionSubtype> websiteSubtype;
+
+        // "phone" OSM tag
+        int phoneSubtypeIndex;
+        std::shared_ptr<const ObfPoiSectionSubtype> phoneSubtype;
+
+        // "description" OSM tag
+        int descriptionSubtypeIndex;
+        std::shared_ptr<const ObfPoiSectionSubtype> descriptionSubtype;
+
     friend class OsmAnd::ObfPoiSectionReader_P;
     };
 
