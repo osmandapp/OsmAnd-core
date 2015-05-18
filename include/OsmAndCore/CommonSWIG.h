@@ -260,4 +260,11 @@
 #   define SWIG_TEMPLATE(name, ...)
 #endif
 
+// SWIG_IGNORE
+#if defined(SWIG)
+#   define SWIG_IGNORE(name) %ignore name
+#else
+#   define SWIG_IGNORE(name)
+#endif
+
 #endif // !defined(_OSMAND_CORE_COMMON_SWIG_H_)
