@@ -2137,7 +2137,7 @@ int64_t OsmAnd::MapRendererResourcesManager::ResourceRequestTask::calculatePrior
         return 0;
 
     // The closer tiled resource coordinates are from center, the higher priority it has
-    int priority = std::numeric_limits<int64_t>::max();
+    auto priority = std::numeric_limits<int64_t>::max();
 
     switch (tiledResource->type)
     {
