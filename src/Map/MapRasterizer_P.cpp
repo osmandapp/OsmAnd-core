@@ -256,12 +256,12 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
 
         QString join;
         evalResult.getStringValue(valueDefId_join, join);
-        if (join.compare(QLatin1String("round"), Qt::CaseInsensitive) == 0)
-            paint.setStrokeJoin(SkPaint::kRound_Join);
+        if (join.compare(QLatin1String("miter"), Qt::CaseInsensitive) == 0)
+            paint.setStrokeJoin(SkPaint::kMiter_Join);
         else if (join.compare(QLatin1String("bevel"), Qt::CaseInsensitive) == 0)
             paint.setStrokeJoin(SkPaint::kBevel_Join);
         else
-            paint.setStrokeJoin(SkPaint::kMiter_Join);
+            paint.setStrokeJoin(SkPaint::kRound_Join);
 
         QString encodedPathEffect;
         ok = evalResult.getStringValue(valueDefId_pathEffect, encodedPathEffect);
