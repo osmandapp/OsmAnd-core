@@ -1865,7 +1865,10 @@ void OsmAnd::MapPrimitiviser_P::filterOutHighwaysByDensity(
         const auto& sourceObject = polyline->sourceObject;
 
         // If polyline is not road, it should be accepted
-        if (!sourceObject->containsTag(QLatin1String("highway")))
+        const auto pPrimitiveAttribute = sourceObject->resolveAttributeByIndex(polyline->attributeIdIndex);
+        if (!pPrimitiveAttribute)
+            continue;
+        if (pPrimitiveAttribute->tag != QLatin1String("highway"))
             continue;
 
         auto accept = false;
