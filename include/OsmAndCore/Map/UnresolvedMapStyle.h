@@ -124,7 +124,9 @@ namespace OsmAnd
         const QHash<QString, QString>& constants;
         const QList< std::shared_ptr<const Parameter> >& parameters;
         const QList< std::shared_ptr<const Attribute> >& attributes;
+#if !defined(SWIG)
         const std::array<RulesByTagValueCollection, MapStyleRulesetTypesCount>& rulesets;
+#endif // !defined(SWIG)
 
         bool isStandalone() const;
 
