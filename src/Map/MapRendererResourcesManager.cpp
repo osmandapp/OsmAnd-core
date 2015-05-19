@@ -517,7 +517,7 @@ bool OsmAnd::MapRendererResourcesManager::isDataSourceAvailableFor(
 QList< std::shared_ptr<OsmAnd::MapRendererBaseResourcesCollection> >
 OsmAnd::MapRendererResourcesManager::safeGetAllResourcesCollections() const
 {
-    QReadLocker scopedLocker(&_resourcesStoragesLock);
+    QConditionalReadLocker scopedLocker(&_resourcesStoragesLock, !renderer->isInRenderThread());
 
     QList< std::shared_ptr<MapRendererBaseResourcesCollection> > result;
 
@@ -543,7 +543,7 @@ void OsmAnd::MapRendererResourcesManager::safeGetAllResourcesCollections(
     QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& outPendingRemovalResourcesCollections,
     QList< std::shared_ptr<MapRendererBaseResourcesCollection> >& outOtherResourcesCollections) const
 {
-    QReadLocker scopedLocker(&_resourcesStoragesLock);
+    QConditionalReadLocker scopedLocker(&_resourcesStoragesLock, !renderer->isInRenderThread());
 
     outPendingRemovalResourcesCollections = detachedOf(_pendingRemovalResourcesCollections);
 
