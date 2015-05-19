@@ -83,8 +83,10 @@ namespace OsmAnd
                     break;
 
                 case TimingFunction::Victor_ReverseExponentialZoomOut:
+                        value =  static_cast<T>(1 / qPow(2.0f, - t / duration) *properCast(delta) - properCast(delta) ) + initial;
                     break;
                 case TimingFunction::Victor_ReverseExponentialZoomIn:
+                        value = static_cast<T>(1 / qPow(2.0f, t / duration) * (- 2) * properCast(delta) + 2 * properCast(delta)) + initial;
                     break;
 
 #define _DECLARE_USE(name)                                                                                                          \
