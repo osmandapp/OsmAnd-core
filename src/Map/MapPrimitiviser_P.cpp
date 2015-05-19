@@ -2588,7 +2588,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_SHIELD, text->shieldResourceName);
 
         evaluationResult.getStringValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_UNDERLAY_ICON,
+            env->styleBuiltinValueDefs->id_OUTPUT_ICON,
             text->underlayIconResourceName);
 
         QString intersectsWith;
