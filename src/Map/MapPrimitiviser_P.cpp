@@ -2593,7 +2593,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
         QString intersectsWith;
         ok = evaluationResult.getStringValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH,
+            env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTS_WITH,
             intersectsWith);
         if (!ok)
             intersectsWith = QLatin1String("text"); // To simulate original behavior, texts should intersect only other texts
@@ -2601,21 +2601,21 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
 
         float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
         ok = evaluationResult.getFloatValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR,
+            env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_SIZE_FACTOR,
             intersectionSizeFactor);
         if (ok)
             text->intersectionSizeFactor = intersectionSizeFactor;
 
         float intersectionSize = std::numeric_limits<float>::quiet_NaN();
         ok = !ok && evaluationResult.getFloatValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE,
+            env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_SIZE,
             intersectionSize);
         if (ok)
             text->intersectionSize = intersectionSize;
 
         float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
         ok = !ok && evaluationResult.getFloatValue(
-            env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN,
+            env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_MARGIN,
             intersectionMargin);
         if (ok)
             text->intersectionMargin = intersectionMargin;
@@ -2720,11 +2720,11 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_MIN_DISTANCE, icon->minDistance);
 
-    primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_SHIELD, icon->shieldResourceName);
+    primitive->evaluationResult.getStringValue(env->styleBuiltinValueDefs->id_OUTPUT_SHIELD, icon->shieldResourceName);
 
     QString intersectsWith;
     ok = primitive->evaluationResult.getStringValue(
-        env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH,
+        env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTS_WITH,
         intersectsWith);
     if (!ok)
         intersectsWith = QLatin1String("icon"); // To simulate original behavior, icons should intersect only other icons
@@ -2732,21 +2732,21 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     float intersectionSizeFactor = std::numeric_limits<float>::quiet_NaN();
     ok = primitive->evaluationResult.getFloatValue(
-        env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR,
+        env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_SIZE_FACTOR,
         intersectionSizeFactor);
     if (ok)
         icon->intersectionSizeFactor = intersectionSizeFactor;
 
     float intersectionSize = std::numeric_limits<float>::quiet_NaN();
     ok = !ok && primitive->evaluationResult.getFloatValue(
-        env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE,
+        env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_SIZE,
         intersectionSize);
     if (ok)
         icon->intersectionSize = intersectionSize;
 
     float intersectionMargin = std::numeric_limits<float>::quiet_NaN();
     ok = !ok && primitive->evaluationResult.getFloatValue(
-        env->styleBuiltinValueDefs->id_OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN,
+        env->styleBuiltinValueDefs->id_OUTPUT_INTERSECTION_MARGIN,
         intersectionMargin);
     if (ok)
         icon->intersectionMargin = intersectionMargin;

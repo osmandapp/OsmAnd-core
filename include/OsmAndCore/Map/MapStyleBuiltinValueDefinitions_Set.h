@@ -34,10 +34,11 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_IGNORE_POLYGON_AS_POINT_AREA, Output, Boolean, "
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADOW_LEVEL, Output, Integer, "shadowLevel", false)
 
 // Text&Icon properties
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTS_WITH, Output, String, "intersectsWith", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", true)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_SIZE, Output, Float, "intersectionSize", true)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_OR_ICON_INTERSECTION_MARGIN, Output, Float, "intersectionMargin", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTS_WITH, Output, String, "intersectsWith", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE_FACTOR, Output, Float, "intersectionSizeFactor", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_SIZE, Output, Float, "intersectionSize", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_INTERSECTION_MARGIN, Output, Float, "intersectionMargin", true)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
 
 // Text properties
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_WRAP_WIDTH, Output, Integer, "textWrapWidth", false)
@@ -57,13 +58,12 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_TEXT_ON_PATH, Output, Boolean, "textOnPath", fal
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__3, Output, String, "icon__3", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__2, Output, String, "icon__2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON__1, Output, String, "icon__1", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON, Output, String, "icon", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_2, Output, String, "icon_2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_3, Output, String, "icon_3", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_4, Output, String, "icon_4", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_5, Output, String, "icon_5", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_ORDER, Output, Integer, "iconOrder", false)
-DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIELD, Output, String, "shield", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHIELD, Output, String, "shield", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_MIN_DISTANCE, Output, Float, "iconMinDistance", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_INTERSECTION_SIZE, Output, Float, "iconVisibleSize", true) //TODO: Obsolete, superseded by "intersectionSize"
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_ICON_SHIFT_PX, Output, Float, "icon_shift_px", false)
@@ -76,48 +76,56 @@ DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR__2, Output, Color, "color__2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH__2, Output, Float, "strokeWidth__2", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT__2, Output, String, "pathEffect__2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP__2, Output, String, "cap__2", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN__2, Output, String, "join__2", false)
 
 // - Layer_minus1
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR__1, Output, Color, "color__1", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH__1, Output, Float, "strokeWidth__1", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT__1, Output, String, "pathEffect__1", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP__1, Output, String, "cap__1", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN__1, Output, String, "join__1", false)
 
 // - Layer_0
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_0, Output, Color, "color_0", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_0, Output, Float, "strokeWidth_0", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_0, Output, String, "pathEffect_0", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_0, Output, String, "cap_0", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_0, Output, String, "join_0", false)
 
 // - Layer_1
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR, Output, Color, "color", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH, Output, Float, "strokeWidth", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT, Output, String, "pathEffect", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP, Output, String, "cap", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN, Output, String, "join", false)
 
 // - Layer_2
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_2, Output, Color, "color_2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_2, Output, Float, "strokeWidth_2", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_2, Output, String, "pathEffect_2", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_2, Output, String, "cap_2", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_2, Output, String, "join_2", false)
 
 // - Layer_3
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_3, Output, Color, "color_3", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_3, Output, Float, "strokeWidth_3", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_3, Output, String, "pathEffect_3", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_3, Output, String, "cap_3", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_3, Output, String, "join_3", false)
 
 // - Layer_4
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_4, Output, Color, "color_4", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_4, Output, Float, "strokeWidth_4", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_4, Output, String, "pathEffect_4", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_4, Output, String, "cap_4", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_4, Output, String, "join_4", false)
 
 // - Layer_5
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_COLOR_5, Output, Color, "color_5", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_STROKE_WIDTH_5, Output, Float, "strokeWidth_5", true)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_PATH_EFFECT_5, Output, String, "pathEffect_5", false)
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_CAP_5, Output, String, "cap_5", false)
+DECLARE_BUILTIN_VALUEDEF(OUTPUT_JOIN_5, Output, String, "join_5", false)
 
 DECLARE_BUILTIN_VALUEDEF(OUTPUT_SHADER, Output, String, "shader", false)
 

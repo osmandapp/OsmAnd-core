@@ -157,6 +157,7 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
     int valueDefId_color = -1;
     int valueDefId_strokeWidth = -1;
     int valueDefId_cap = -1;
+    int valueDefId_join = -1;
     int valueDefId_pathEffect = -1;
     switch (valueSetSelector)
     {
@@ -164,48 +165,56 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR__2;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH__2;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP__2;
+            valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN__2;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT__2;
             break;
         case PaintValuesSet::Layer_minus1:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR__1;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH__1;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP__1;
+            valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN__1;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT__1;
             break;
         case PaintValuesSet::Layer_0:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_0;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_0;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_0;
+            valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_0;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_0;
             break;
         case PaintValuesSet::Layer_1:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP;
+            valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT;
             break;
         case PaintValuesSet::Layer_2:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_2;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_2;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_2;
+            valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_2;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_2;
             break;
         case PaintValuesSet::Layer_3:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_3;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_3;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_3;
+            valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_3;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_3;
             break;
         case PaintValuesSet::Layer_4:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_4;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_4;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_4;
+            valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_4;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_4;
             break;
         case PaintValuesSet::Layer_5:
             valueDefId_color = env->styleBuiltinValueDefs->id_OUTPUT_COLOR_5;
             valueDefId_strokeWidth = env->styleBuiltinValueDefs->id_OUTPUT_STROKE_WIDTH_5;
             valueDefId_cap = env->styleBuiltinValueDefs->id_OUTPUT_CAP_5;
+            valueDefId_join = env->styleBuiltinValueDefs->id_OUTPUT_JOIN_5;
             valueDefId_pathEffect = env->styleBuiltinValueDefs->id_OUTPUT_PATH_EFFECT_5;
             break;
         default:
@@ -237,15 +246,22 @@ bool OsmAnd::MapRasterizer_P::updatePaint(
         paint.setStrokeWidth(stroke);
 
         QString cap;
-        ok = evalResult.getStringValue(valueDefId_cap, cap);
-        if (!ok || cap.isEmpty() || cap.compare(QLatin1String("BUTT"), Qt::CaseInsensitive) == 0)
-            paint.setStrokeCap(SkPaint::kButt_Cap);
-        else if (cap.compare(QLatin1String("ROUND"), Qt::CaseInsensitive) == 0)
+        evalResult.getStringValue(valueDefId_cap, cap);
+        if (cap.compare(QLatin1String("round"), Qt::CaseInsensitive) == 0)
             paint.setStrokeCap(SkPaint::kRound_Cap);
-        else if (cap.compare(QLatin1String("SQUARE"), Qt::CaseInsensitive) == 0)
+        else if (cap.compare(QLatin1String("square"), Qt::CaseInsensitive) == 0)
             paint.setStrokeCap(SkPaint::kSquare_Cap);
         else
             paint.setStrokeCap(SkPaint::kButt_Cap);
+
+        QString join;
+        evalResult.getStringValue(valueDefId_join, join);
+        if (join.compare(QLatin1String("round"), Qt::CaseInsensitive) == 0)
+            paint.setStrokeJoin(SkPaint::kRound_Join);
+        else if (join.compare(QLatin1String("bevel"), Qt::CaseInsensitive) == 0)
+            paint.setStrokeJoin(SkPaint::kBevel_Join);
+        else
+            paint.setStrokeJoin(SkPaint::kMiter_Join);
 
         QString encodedPathEffect;
         ok = evalResult.getStringValue(valueDefId_pathEffect, encodedPathEffect);
