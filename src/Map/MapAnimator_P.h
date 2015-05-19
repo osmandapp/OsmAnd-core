@@ -82,6 +82,11 @@ namespace OsmAnd
                     value = initial + static_cast<T>(linearTween(t, properCast(delta), duration));
                     break;
 
+                case TimingFunction::Victor_ReverseExponentialZoomOut:
+                    break;
+                case TimingFunction::Victor_ReverseExponentialZoomIn:
+                    break;
+
 #define _DECLARE_USE(name)                                                                                                          \
     case TimingFunction::EaseIn##name:                                                                                              \
         value = initial + static_cast<T>(easeIn_##name(t, properCast(delta), duration));                                            \

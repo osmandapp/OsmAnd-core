@@ -26,7 +26,9 @@ namespace OsmAnd
         {
             Invalid = -1,
 
-            Linear = 0,
+            Linear,
+            Victor_ReverseExponentialZoomOut,
+            Victor_ReverseExponentialZoomIn,
 
 #define _DECLARE_TIMING_FUNCTION(name)                                                                  \
     EaseIn##name,                                                                                       \
