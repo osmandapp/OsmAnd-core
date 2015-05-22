@@ -89,6 +89,7 @@ namespace OsmAnd
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
         bool scanAmenitiesByName(
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
@@ -97,6 +98,19 @@ namespace OsmAnd
             const AreaI* const bbox31 = nullptr,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        bool findAmenityById(
+            const ObfObjectId id,
+            std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
+            const ZoomLevel minZoom = MinZoomLevel,
+            const ZoomLevel maxZoom = MaxZoomLevel,
+            const AreaI* const bbox31 = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        bool findAmenityForObfMapObject(
+            const std::shared_ptr<const OsmAnd::ObfMapObject>& obfMapObject,
+            std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool scanAddressesByName(

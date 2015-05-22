@@ -15,9 +15,12 @@
 #include "ObfPoiSectionInfo.h"
 #include "ObfAddressSectionReader.h"
 #include "ObfAddressSectionInfo.h"
+#include "ObfMapObject.h"
+#include "Amenity.h"
 #include "StreetGroup.h"
 #include "Street.h"
 #include "IQueryController.h"
+#include "FunctorQueryController.h"
 #include "QKeyValueIterator.h"
 
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
@@ -613,6 +616,91 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     return true;
 }
 
+bool OsmAnd::ObfDataInterface::findAmenityById(
+    const ObfObjectId id,
+    std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
+    const ZoomLevel minZoom /*= MinZoomLevel*/,
+    const ZoomLevel maxZoom /*= MaxZoomLevel*/,
+    const AreaI* const pBbox31 /*= nullptr*/,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
+    std::shared_ptr<const OsmAnd::Amenity> foundAmenity;
+
+    const auto visitor =
+        [id, &foundAmenity]
+        (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
+        {
+            if (amenity->id == id)
+                foundAmenity = amenity;
+
+            return false;
+        };
+
+    const auto subQueryController = std::make_shared<FunctorQueryController>(
+        [&foundAmenity]
+        (const FunctorQueryController* const queryController) -> bool
+        {
+            return static_cast<bool>(foundAmenity);
+        });
+
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        if (queryController && queryController->isAborted())
+            return false;
+
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& poiSection : constOf(obfInfo->poiSections))
+        {
+            if (queryController && queryController->isAborted())
+                return false;
+
+            if (pBbox31)
+            {
+                bool accept = false;
+                accept = accept || poiSection->area31.contains(*pBbox31);
+                accept = accept || poiSection->area31.intersects(*pBbox31);
+                accept = accept || pBbox31->contains(poiSection->area31);
+
+                if (!accept)
+                    continue;
+            }
+
+            OsmAnd::ObfPoiSectionReader::loadAmenities(
+                obfReader,
+                poiSection,
+                nullptr,
+                minZoom,
+                maxZoom,
+                pBbox31,
+                nullptr,
+                visitor,
+                subQueryController);
+
+            if (foundAmenity)
+            {
+                if (outAmenity)
+                    *outAmenity = foundAmenity;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool OsmAnd::ObfDataInterface::findAmenityForObfMapObject(
+    const std::shared_ptr<const OsmAnd::ObfMapObject>& obfMapObject,
+    std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
+    return findAmenityById(
+        obfMapObject->id,
+        outAmenity,
+        obfMapObject->getMinZoomLevel(),
+        obfMapObject->getMaxZoomLevel(),
+        &obfMapObject->bbox31,
+        queryController);
+}
 
 bool OsmAnd::ObfDataInterface::scanAddressesByName(
     const QString& query,
