@@ -693,12 +693,19 @@ bool OsmAnd::ObfDataInterface::findAmenityForObfMapObject(
     std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
+    const auto alignMask = (1u << 7) - 1;
+    auto alignedBBox = obfMapObject->bbox31;
+    alignedBBox.top() &= ~alignMask;
+    alignedBBox.left() &= ~alignMask;
+    alignedBBox.bottom() |= alignMask;
+    alignedBBox.right() |= alignMask;
+
     return findAmenityById(
         obfMapObject->id,
         outAmenity,
         obfMapObject->getMinZoomLevel(),
         obfMapObject->getMaxZoomLevel(),
-        &obfMapObject->bbox31,
+        &alignedBBox,
         queryController);
 }
 

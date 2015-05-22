@@ -418,7 +418,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
                 if (queryController && queryController->isAborted())
+                {
+                    cis->Skip(cis->BytesUntilLimit());
                     return;
+                }
 
                 break;
             }
@@ -454,7 +457,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenities(
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
                     if (queryController && queryController->isAborted())
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
                         return;
+                    }
                 }
 
                 cis->Skip(cis->BytesUntilLimit());
@@ -1009,7 +1015,10 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
                     cis->PopLimit(oldLimit);
                     if (queryController && queryController->isAborted())
+                    {
+                        cis->Skip(cis->BytesUntilLimit());
                         return;
+                    }
                 }
 
                 cis->Skip(cis->BytesUntilLimit());
