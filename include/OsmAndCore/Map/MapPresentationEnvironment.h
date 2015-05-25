@@ -49,7 +49,10 @@ namespace OsmAnd
             LocalizedAndNative,
 
             // ( "name:$locale" or transliterate("name") ) and "name"
-            LocalizedOrTransliteratedAndNative
+            LocalizedOrTransliteratedAndNative,
+
+            // ( "name:$locale" or transliterate("name") )
+            LocalizedOrTransliterated,
         };
 
         enum class ShadowMode

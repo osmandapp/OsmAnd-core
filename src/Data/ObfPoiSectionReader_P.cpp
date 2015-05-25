@@ -802,6 +802,14 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     amenity->id = id;
                 amenity->values = detachedOf(intValues).unite(stringValues);
                 outAmenity = amenity;
+
+                //////////////////////////////////////////////////////////////////////////
+                //if (amenity->id.getOsmId() == 582502308u)
+                //{
+                //    int i = 5;
+                //}
+                //////////////////////////////////////////////////////////////////////////
+
                 return;
             }
             case OBF::OsmAndPoiBoxDataAtom::kDxFieldNumber:

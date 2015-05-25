@@ -2290,7 +2290,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         const auto citCaptionsEnd = captions.cend();
 
         // Look for native name
-        const auto citNativeName =
+        auto citNativeName =
             (attributeMapping->nativeNameAttributeId == std::numeric_limits<uint32_t>::max())
             ? citCaptionsEnd
             : captions.constFind(attributeMapping->nativeNameAttributeId);
@@ -2303,7 +2303,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         const auto citLocalizedNameRuleId = attributeMapping->localizedNameAttributes.constFind(&env->localeLanguageId);
         if (citLocalizedNameRuleId != attributeMapping->localizedNameAttributes.cend())
             localizedNameRuleId = *citLocalizedNameRuleId;
-        const auto citLocalizedName =
+        auto citLocalizedName =
             (localizedNameRuleId == std::numeric_limits<uint32_t>::max())
             ? citCaptionsEnd
             : captions.constFind(localizedNameRuleId);
@@ -2323,6 +2323,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                     captions.remove(localizedNameRuleId);
                     captionsOrder.removeOne(localizedNameRuleId);
                     hasLocalizedName = false;
+                    citLocalizedName = citCaptionsEnd;
                     localizedNameOrder = -1;
                 }
                 break;
@@ -2336,6 +2337,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                     captions.remove(attributeMapping->nativeNameAttributeId);
                     captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
                     hasNativeName = false;
+                    citNativeName = citCaptionsEnd;
                     nativeNameOrder = -1;
                 }
                 break;
@@ -2364,7 +2366,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 {
                     const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
 
-                    captions.insert(localizedNameRuleId, latinNameValue);
+                    citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
                     localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId) + 1;
                     captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                     hasLocalizedName = true;
@@ -2395,10 +2397,35 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                 {
                     const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
 
-                    captions.insert(localizedNameRuleId, latinNameValue);
+                    citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
                     localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
                     captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
                     hasLocalizedName = true;
+                }
+                break;
+            }
+
+            case MapPresentationEnvironment::LanguagePreference::LocalizedOrTransliterated:
+            {
+                // If there's no localized name, transliterate native name (if exists)
+                if (!hasLocalizedName && hasNativeName)
+                {
+                    const auto latinNameValue = ICU::transliterateToLatin(citNativeName.value());
+
+                    citLocalizedName = captions.insert(localizedNameRuleId, latinNameValue);
+                    localizedNameOrder = captionsOrder.indexOf(attributeMapping->nativeNameAttributeId);
+                    captionsOrder.insert(localizedNameOrder, localizedNameRuleId);
+                    hasLocalizedName = true;
+                }
+                
+                // Only one should be shown, thus remove native if localized exist
+                if (hasLocalizedName && hasNativeName)
+                {
+                    captions.remove(attributeMapping->nativeNameAttributeId);
+                    captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
+                    hasNativeName = false;
+                    citNativeName = citCaptionsEnd;
+                    nativeNameOrder = -1;
                 }
                 break;
             }
@@ -2411,7 +2438,10 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         // In case both languages are present, but they are equal (without accents and diacritics)
         if (hasNativeName && hasLocalizedName)
         {
+            assert(citNativeName != citCaptionsEnd);
             const auto pureNativeName = ICU::stripAccentsAndDiacritics(citNativeName.value());
+
+            assert(citLocalizedName != citCaptionsEnd);
             const auto pureLocalizedName = ICU::stripAccentsAndDiacritics(citLocalizedName.value());
 
             if (pureNativeName.compare(pureLocalizedName, Qt::CaseInsensitive) == 0)
@@ -2422,6 +2452,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                     captions.remove(localizedNameRuleId);
                     captionsOrder.removeOne(localizedNameRuleId);
                     hasLocalizedName = false;
+                    citLocalizedName = citCaptionsEnd;
                     localizedNameOrder = -1;
                 }
                 else // if (localizedNameOrder < nativeNameOrder)
@@ -2429,6 +2460,7 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
                     captions.remove(attributeMapping->nativeNameAttributeId);
                     captionsOrder.removeOne(attributeMapping->nativeNameAttributeId);
                     hasNativeName = false;
+                    citNativeName = citCaptionsEnd;
                     nativeNameOrder = -1;
                 }
             }
