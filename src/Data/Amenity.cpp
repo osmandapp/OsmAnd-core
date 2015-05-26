@@ -2,6 +2,7 @@
 
 #include "ObfPoiSectionInfo.h"
 #include "QKeyValueIterator.h"
+#include "zlibUtilities.h"
 #include "Logging.h"
 
 OsmAnd::Amenity::Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection_)
@@ -100,6 +101,14 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValues() const
             case QVariant::String:
             {
                 const auto stringValue = value.toString();
+
+                result.insert(subtype->name, stringValue);
+                break;
+            }
+            case QVariant::ByteArray:
+            {
+                const auto dataValue = value.toByteArray();
+                const auto stringValue = QString::fromUtf8(zlibUtilities::gzipDecompress(dataValue));
 
                 result.insert(subtype->name, stringValue);
                 break;

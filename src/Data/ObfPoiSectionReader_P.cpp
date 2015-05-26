@@ -753,7 +753,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     QList<ObfPoiCategoryId> categories;
     QVector<int> textValueSubtypeIndices;
     QHash<int, QVariant> intValues;
-    QHash<int, QVariant> stringValues;
+    QHash<int, QVariant> stringOrDataValues;
     auto categoriesFilterChecked = false;
 
     for (;;)
@@ -800,7 +800,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                     amenity->id = ObfObjectId::generateUniqueId(baseOffset, section);
                 else
                     amenity->id = id;
-                amenity->values = detachedOf(intValues).unite(stringValues);
+                amenity->values = detachedOf(intValues).unite(stringOrDataValues);
                 outAmenity = amenity;
 
                 //////////////////////////////////////////////////////////////////////////
@@ -894,13 +894,39 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             }
             case OBF::OsmAndPoiBoxDataAtom::kTextValuesFieldNumber:
             {
-                QString valueString;
-                ObfReaderUtilities::readQString(cis, valueString);
-                if (stringValues.size() >= textValueSubtypeIndices.size())
+                std::string value;
+                if (!gpb::internal::WireFormatLite::ReadString(cis, &value))
+                    break;
+                if (stringOrDataValues.size() >= textValueSubtypeIndices.size())
                     break;
 
-                const auto subtypeIndex = textValueSubtypeIndices[stringValues.size()];
-                stringValues.insert(subtypeIndex, valueString);
+                const std::string dataPrefix(" gz ");
+                const auto subtypeIndex = textValueSubtypeIndices[stringOrDataValues.size()];
+                if (value.compare(0, dataPrefix.size(), dataPrefix) == 0 && value.size() >= 4)
+                {
+                    const auto dataSize = value.size() - 4;
+                    QByteArray data(dataSize, Qt::Initialization::Uninitialized);
+
+                    auto pSrc = reinterpret_cast<const int8_t*>(value.data()) + 4;
+                    auto pDst = reinterpret_cast<uint8_t*>(data.data());
+                    for (auto idx = 0u; idx < dataSize; idx++)
+                    {
+                        const auto src = *pSrc++;
+                        const auto dst = static_cast<int>(src) - 128 - 32;
+                        *pDst++ = static_cast<uint8_t>(dst);
+                    }
+
+                    /*
+                    auto pSrc = value.data() + 4;
+                    auto pDst = reinterpret_cast<uint8_t*>(data.data());
+                    for (auto idx = 0u; idx < dataSize; idx++)
+                    *pDst++ = static_cast<int>(*pSrc++) - 128 - 32;
+                    */
+
+                    stringOrDataValues.insert(subtypeIndex, QVariant(data));
+                }
+                else
+                    stringOrDataValues.insert(subtypeIndex, QString::fromUtf8(value.c_str(), value.size()));
 
                 break;
             }
@@ -909,7 +935,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
 
-                stringValues.insert(subtypes->openingHoursSubtypeIndex, valueString);
+                stringOrDataValues.insert(subtypes->openingHoursSubtypeIndex, valueString);
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kSiteFieldNumber:
@@ -917,7 +943,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
 
-                stringValues.insert(subtypes->websiteSubtypeIndex, valueString);
+                stringOrDataValues.insert(subtypes->websiteSubtypeIndex, valueString);
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kPhoneFieldNumber:
@@ -925,7 +951,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
 
-                stringValues.insert(subtypes->phoneSubtypeIndex, valueString);
+                stringOrDataValues.insert(subtypes->phoneSubtypeIndex, valueString);
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kNoteFieldNumber:
@@ -933,7 +959,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
 
-                stringValues.insert(subtypes->descriptionSubtypeIndex, valueString);
+                stringOrDataValues.insert(subtypes->descriptionSubtypeIndex, valueString);
                 break;
             }
             default:

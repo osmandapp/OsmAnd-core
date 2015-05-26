@@ -1,6 +1,6 @@
 project(OsmAndCore)
 
-# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 132
+# Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 133
 
 set(target_specific_sources "")
 set(target_specific_public_definitions "")
@@ -186,6 +186,7 @@ set(merged_dependencies
 	gdal_static
 	icu4c_static
 	archive_static
+	z_static
 	${target_specific_dependencies}
 )
 set(merged_compile_definitions_public
