@@ -894,39 +894,30 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             }
             case OBF::OsmAndPoiBoxDataAtom::kTextValuesFieldNumber:
             {
-                std::string value;
-                if (!gpb::internal::WireFormatLite::ReadString(cis, &value))
-                    break;
+                QString valueString;
+                ObfReaderUtilities::readQString(cis, valueString);
                 if (stringOrDataValues.size() >= textValueSubtypeIndices.size())
                     break;
 
-                const std::string dataPrefix(" gz ");
                 const auto subtypeIndex = textValueSubtypeIndices[stringOrDataValues.size()];
-                if (value.compare(0, dataPrefix.size(), dataPrefix) == 0 && value.size() >= 4)
+                if (valueString.startsWith(QLatin1String(" gz ")) && valueString.size() >= 4)
                 {
-                    const auto dataSize = value.size() - 4;
+                    const auto dataSize = valueString.size() - 4;
                     QByteArray data(dataSize, Qt::Initialization::Uninitialized);
 
-                    auto pSrc = reinterpret_cast<const int8_t*>(value.data()) + 4;
+                    auto pSrc = valueString.data() + 4;
                     auto pDst = reinterpret_cast<uint8_t*>(data.data());
                     for (auto idx = 0u; idx < dataSize; idx++)
                     {
                         const auto src = *pSrc++;
-                        const auto dst = static_cast<int>(src) - 128 - 32;
+                        const auto dst = src.unicode() - 128 - 32;
                         *pDst++ = static_cast<uint8_t>(dst);
                     }
-
-                    /*
-                    auto pSrc = value.data() + 4;
-                    auto pDst = reinterpret_cast<uint8_t*>(data.data());
-                    for (auto idx = 0u; idx < dataSize; idx++)
-                    *pDst++ = static_cast<int>(*pSrc++) - 128 - 32;
-                    */
 
                     stringOrDataValues.insert(subtypeIndex, QVariant(data));
                 }
                 else
-                    stringOrDataValues.insert(subtypeIndex, QString::fromUtf8(value.c_str(), value.size()));
+                    stringOrDataValues.insert(subtypeIndex, valueString);
 
                 break;
             }
