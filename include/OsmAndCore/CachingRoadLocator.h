@@ -39,14 +39,14 @@ namespace OsmAnd
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
-            const bool onlyNamedRoads = false,
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr) const;
         virtual QList< std::shared_ptr<const Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
-            const bool onlyNamedRoads = false) const;
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr) const;
 
         void clearCache();
         void clearCacheConditional(

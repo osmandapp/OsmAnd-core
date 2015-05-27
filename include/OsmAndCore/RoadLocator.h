@@ -37,20 +37,20 @@ namespace OsmAnd
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
-            const bool onlyNamedRoads = false,
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr) const;
         virtual QList< std::shared_ptr<const Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
-            const bool onlyNamedRoads = false) const;
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr) const;
 
         std::shared_ptr<const Road> findNearestRoadEx(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
-            const bool onlyNamedRoads = false,
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries = nullptr) const;
@@ -58,27 +58,27 @@ namespace OsmAnd
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
-            const bool onlyNamedRoads = false,
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries = nullptr) const;
 
         static std::shared_ptr<const Road> findNearestRoad(
             const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
             const double radiusInMeters,
-            const bool onlyNamedRoads = false,
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr);
         static std::shared_ptr<const Road> findNearestRoad(
             const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
-            const bool onlyNamedRoads = false,
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr);
         static QList< std::shared_ptr<const Road> > findRoadsInArea(
             const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
             const double radiusInMeters,
-            const bool onlyNamedRoads = false);
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr);
     };
 }
 

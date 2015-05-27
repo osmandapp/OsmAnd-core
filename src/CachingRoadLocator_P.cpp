@@ -22,7 +22,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::CachingRoadLocator_P::findNearestRoa
     const PointI position31,
     const double radiusInMeters,
     const RoutingDataLevel dataLevel,
-    const bool onlyNamedRoads,
+    const ObfRoutingSectionReader::VisitorFunction filter,
     int* const outNearestRoadPointIndex,
     double* const outDistanceToNearestRoadPoint) const
 {
@@ -57,7 +57,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::CachingRoadLocator_P::findNearestRoa
         roadsInBBox,
         position31,
         radiusInMeters,
-        onlyNamedRoads,
+        filter,
         outNearestRoadPointIndex,
         outDistanceToNearestRoadPoint);
 }
@@ -66,7 +66,7 @@ QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::CachingRoadLocator_P::findR
     const PointI position31,
     const double radiusInMeters,
     const RoutingDataLevel dataLevel,
-    const bool onlyNamedRoads) const
+    const ObfRoutingSectionReader::VisitorFunction filter) const
 {
     QList< std::shared_ptr<const Road> > roadsInBBox;
 
@@ -99,7 +99,7 @@ QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::CachingRoadLocator_P::findR
         roadsInBBox,
         position31,
         radiusInMeters,
-        onlyNamedRoads);
+        filter);
 }
 
 void OsmAnd::CachingRoadLocator_P::clearCache()
