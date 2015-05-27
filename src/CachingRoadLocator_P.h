@@ -37,7 +37,9 @@ namespace OsmAnd
         mutable Cache _cache;
 
         mutable QMutex _referencedDataBlocksMapMutex;
-        mutable QHash< const ObfRoutingSectionReader::DataBlock*, QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> > > _referencedDataBlocksMap;
+        mutable QHash<
+            const ObfRoutingSectionReader::DataBlock*,
+            QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> > > _referencedDataBlocksMap;
     public:
         ~CachingRoadLocator_P();
 
@@ -47,19 +49,22 @@ namespace OsmAnd
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
+            const bool onlyNamedRoads,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint) const;
         QList< std::shared_ptr<const Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
-            const RoutingDataLevel dataLevel) const;
+            const RoutingDataLevel dataLevel,
+            const bool onlyNamedRoads) const;
 
         void clearCache();
-        void clearCacheConditional(const std::function<bool (const std::shared_ptr<const ObfRoutingSectionReader::DataBlock>& dataBlock)> shouldRemoveFromCacheFunctor);
+        void clearCacheConditional(
+            const std::function<bool (const std::shared_ptr<const ObfRoutingSectionReader::DataBlock>& dataBlock)> shouldRemoveFromCacheFunctor);
         void clearCacheInBBox(const AreaI bbox31, const bool checkAlsoIntersection);
-        void clearCacheInTiles(const QSet<TileId> tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection);
+        void clearCacheInTiles(const QSet<TileId>& tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection);
         void clearCacheNotInBBox(const AreaI bbox31, const bool checkAlsoIntersection);
-        void clearCacheNotInTiles(const QSet<TileId> tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection);
+        void clearCacheNotInTiles(const QSet<TileId>& tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection);
 
     friend class OsmAnd::CachingRoadLocator;
     };

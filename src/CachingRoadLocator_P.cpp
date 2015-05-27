@@ -22,6 +22,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::CachingRoadLocator_P::findNearestRoa
     const PointI position31,
     const double radiusInMeters,
     const RoutingDataLevel dataLevel,
+    const bool onlyNamedRoads,
     int* const outNearestRoadPointIndex,
     double* const outDistanceToNearestRoadPoint) const
 {
@@ -52,13 +53,20 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::CachingRoadLocator_P::findNearestRoa
             _referencedDataBlocksMap[referencedBlock.get()].push_back(qMove(referencedBlock));
     }
     
-    return RoadLocator::findNearestRoad(roadsInBBox, position31, radiusInMeters, outNearestRoadPointIndex, outDistanceToNearestRoadPoint);
+    return RoadLocator::findNearestRoad(
+        roadsInBBox,
+        position31,
+        radiusInMeters,
+        onlyNamedRoads,
+        outNearestRoadPointIndex,
+        outDistanceToNearestRoadPoint);
 }
 
 QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::CachingRoadLocator_P::findRoadsInArea(
     const PointI position31,
     const double radiusInMeters,
-    const RoutingDataLevel dataLevel) const
+    const RoutingDataLevel dataLevel,
+    const bool onlyNamedRoads) const
 {
     QList< std::shared_ptr<const Road> > roadsInBBox;
 
@@ -87,7 +95,11 @@ QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::CachingRoadLocator_P::findR
             _referencedDataBlocksMap[referencedBlock.get()].push_back(qMove(referencedBlock));
     }
 
-    return RoadLocator::findRoadsInArea(roadsInBBox, position31, radiusInMeters);
+    return RoadLocator::findRoadsInArea(
+        roadsInBBox,
+        position31,
+        radiusInMeters,
+        onlyNamedRoads);
 }
 
 void OsmAnd::CachingRoadLocator_P::clearCache()
@@ -102,7 +114,8 @@ void OsmAnd::CachingRoadLocator_P::clearCache()
     _referencedDataBlocksMap.clear();
 }
 
-void OsmAnd::CachingRoadLocator_P::clearCacheConditional(const std::function<bool (const std::shared_ptr<const ObfRoutingSectionReader::DataBlock>& dataBlock)> shouldRemoveFromCacheFunctor)
+void OsmAnd::CachingRoadLocator_P::clearCacheConditional(
+    const std::function<bool (const std::shared_ptr<const ObfRoutingSectionReader::DataBlock>& dataBlock)> shouldRemoveFromCacheFunctor)
 {
     QMutexLocker scopedLocker(&_referencedDataBlocksMapMutex);
 
@@ -137,7 +150,10 @@ void OsmAnd::CachingRoadLocator_P::clearCacheInBBox(const AreaI bbox31, const bo
         });
 }
 
-void OsmAnd::CachingRoadLocator_P::clearCacheInTiles(const QSet<TileId> tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection)
+void OsmAnd::CachingRoadLocator_P::clearCacheInTiles(
+    const QSet<TileId>& tiles,
+    const ZoomLevel zoomLevel,
+    const bool checkAlsoIntersection)
 {
     for (const auto& tileId : constOf(tiles))
         clearCacheInBBox(Utilities::tileBoundingBox31(tileId, zoomLevel), checkAlsoIntersection);
@@ -157,7 +173,10 @@ void OsmAnd::CachingRoadLocator_P::clearCacheNotInBBox(const AreaI bbox31, const
         });
 }
 
-void OsmAnd::CachingRoadLocator_P::clearCacheNotInTiles(const QSet<TileId> tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection)
+void OsmAnd::CachingRoadLocator_P::clearCacheNotInTiles(
+    const QSet<TileId>& tiles,
+    const ZoomLevel zoomLevel,
+    const bool checkAlsoIntersection)
 {
     clearCacheConditional(
         [tiles, zoomLevel, checkAlsoIntersection]

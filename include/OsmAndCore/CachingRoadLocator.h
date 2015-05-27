@@ -21,6 +21,11 @@ namespace OsmAnd
     class OSMAND_CORE_API CachingRoadLocator : public IRoadLocator
     {
         Q_DISABLE_COPY_AND_MOVE(CachingRoadLocator);
+
+    public:
+        typedef std::function<bool(const std::shared_ptr<const ObfRoutingSectionReader::DataBlock>& dataBlock)>
+            DataBlockSelector;
+
     private:
         PrivateImplementation<CachingRoadLocator_P> _p;
     protected:
@@ -34,19 +39,22 @@ namespace OsmAnd
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
+            const bool onlyNamedRoads = false,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr) const;
         virtual QList< std::shared_ptr<const Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
-            const RoutingDataLevel dataLevel) const;
+            const RoutingDataLevel dataLevel,
+            const bool onlyNamedRoads = false) const;
 
         void clearCache();
-        void clearCacheConditional(const std::function<bool (const std::shared_ptr<const ObfRoutingSectionReader::DataBlock>& dataBlock)> shouldRemoveFromCacheFunctor);
+        void clearCacheConditional(
+            const DataBlockSelector shouldRemoveFromCacheFunctor);
         void clearCacheInBBox(const AreaI bbox31, const bool checkAlsoIntersection);
-        void clearCacheInTiles(const QSet<TileId> tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection);
+        void clearCacheInTiles(const QSet<TileId>& tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection);
         void clearCacheNotInBBox(const AreaI bbox31, const bool checkAlsoIntersection);
-        void clearCacheNotInTiles(const QSet<TileId> tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection);
+        void clearCacheNotInTiles(const QSet<TileId>& tiles, const ZoomLevel zoomLevel, const bool checkAlsoIntersection);
     };
 }
 

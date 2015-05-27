@@ -29,12 +29,14 @@ namespace OsmAnd
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
+            const bool onlyNamedRoads = false,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr) const = 0;
         virtual QList< std::shared_ptr<const Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
-            const RoutingDataLevel dataLevel) const = 0;
+            const RoutingDataLevel dataLevel,
+            const bool onlyNamedRoads = false) const = 0;
     };
 }
 

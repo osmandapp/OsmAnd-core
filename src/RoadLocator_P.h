@@ -32,6 +32,7 @@ namespace OsmAnd
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
+            const bool onlyNamedRoads,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const;
@@ -39,23 +40,27 @@ namespace OsmAnd
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
+            const bool onlyNamedRoads,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const;
 
         static std::shared_ptr<const Road> findNearestRoad(
             const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
             const double radiusInMeters,
+            const bool onlyNamedRoads,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint);
         static std::shared_ptr<const Road> findNearestRoad(
             const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
+            const bool onlyNamedRoads,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint);
         static QList< std::shared_ptr<const Road> > findRoadsInArea(
             const QList< std::shared_ptr<const Road> >& collection,
             const PointI position31,
-            const double radiusInMeters);
+            const double radiusInMeters,
+            const bool onlyNamedRoads);
 
     friend class OsmAnd::RoadLocator;
     };
