@@ -13004,7 +13004,7 @@ OsmAndRoutingIndex::mutable_blocks() {
 
 #ifndef SWIG
 namespace google {
-namespace protobuf {
+namespace obf_protobuf {
 
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex_CitiesType>() {
@@ -13012,7 +13012,7 @@ inline const EnumDescriptor* GetEnumDescriptor< ::OsmAnd::OBF::OsmAndAddressInde
 }
 
 }  // namespace google
-}  // namespace protobuf
+}  // namespace obf_protobuf
 #endif  // SWIG
 
 // @@protoc_insertion_point(global_scope)
