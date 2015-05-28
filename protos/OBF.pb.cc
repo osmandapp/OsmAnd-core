@@ -353,12 +353,13 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(MapData));
   OsmAndAddressIndex_descriptor_ = file->message_type(7);
-  static const int OsmAndAddressIndex_offsets_[5] = {
+  static const int OsmAndAddressIndex_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndAddressIndex, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndAddressIndex, name_en_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndAddressIndex, boundaries_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndAddressIndex, cities_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndAddressIndex, nameindex_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(OsmAndAddressIndex, attributetagstable_),
   };
   OsmAndAddressIndex_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -440,10 +441,12 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(AddressNameIndexDataAtom));
   CityIndex_descriptor_ = file->message_type(10);
-  static const int CityIndex_offsets_[7] = {
+  static const int CityIndex_offsets_[9] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CityIndex, city_type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CityIndex, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CityIndex, name_en_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CityIndex, attributetagids_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CityIndex, attributevalues_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CityIndex, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CityIndex, x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(CityIndex, y_),
@@ -478,9 +481,11 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(CityBlockIndex));
   StreetIndex_descriptor_ = file->message_type(12);
-  static const int StreetIndex_offsets_[7] = {
+  static const int StreetIndex_offsets_[9] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIndex, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIndex, name_en_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIndex, attributetagids_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIndex, attributevalues_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIndex, x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIndex, y_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIndex, id_),
@@ -499,9 +504,11 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(StreetIndex));
   StreetIntersection_descriptor_ = file->message_type(13);
-  static const int StreetIntersection_offsets_[4] = {
+  static const int StreetIntersection_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIntersection, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIntersection, name_en_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIntersection, attributetagids_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIntersection, attributevalues_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIntersection, intersectedx_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(StreetIntersection, intersectedy_),
   };
@@ -517,11 +524,15 @@ void protobuf_AssignDesc_OBF_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(StreetIntersection));
   BuildingIndex_descriptor_ = file->message_type(14);
-  static const int BuildingIndex_offsets_[11] = {
+  static const int BuildingIndex_offsets_[15] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, name_en_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, attributetagids_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, attributevalues_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, name2_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, name_en2_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, attributetagids2_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, attributevalues2_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, interpolation_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BuildingIndex, y_),
@@ -1224,127 +1235,135 @@ void protobuf_AddDesc_OBF_2eproto() {
     "s\030\002 \001(\014\022\037\n\027polygonInnerCoordinates\030\004 \003(\014"
     "\022\027\n\017additionalTypes\030\006 \001(\014\022\r\n\005types\030\007 \002(\014"
     "\022\023\n\013stringNames\030\n \001(\014\022\n\n\002id\030\014 \002(\022\022\023\n\013ras"
-    "terBytes\030\017 \001(\014\"\277\003\n\022OsmAndAddressIndex\022\014\n"
+    "terBytes\030\017 \001(\014\"\364\003\n\022OsmAndAddressIndex\022\014\n"
     "\004name\030\001 \002(\t\022\017\n\007name_en\030\002 \001(\t\022-\n\nboundari"
     "es\030\003 \001(\0132\031.OsmAnd.OBF.OsmAndTileBox\022:\n\006c"
     "ities\030\006 \003(\0132*.OsmAnd.OBF.OsmAndAddressIn"
     "dex.CitiesIndex\0229\n\tnameIndex\030\007 \001(\0132&.Osm"
-    "And.OBF.OsmAndAddressNameIndexData\032\343\001\n\013C"
-    "itiesIndex\022C\n\004type\030\002 \002(\01625.OsmAnd.OBF.Os"
-    "mAndAddressIndex.CitiesIndex.CitiesType\022"
-    "%\n\006cities\030\005 \003(\0132\025.OsmAnd.OBF.CityIndex\022*"
-    "\n\006blocks\030\007 \003(\0132\032.OsmAnd.OBF.CityBlockInd"
-    "ex\"<\n\nCitiesType\022\021\n\rCitiesOrTowns\020\001\022\r\n\tP"
-    "ostcodes\020\002\022\014\n\010Villages\020\003\"\342\001\n\032OsmAndAddre"
-    "ssNameIndexData\022-\n\005table\030\004 \002(\0132\036.OsmAnd."
-    "OBF.IndexedStringTable\022I\n\004atom\030\007 \003(\0132;.O"
-    "smAnd.OBF.OsmAndAddressNameIndexData.Add"
-    "ressNameIndexData\032J\n\024AddressNameIndexDat"
-    "a\0222\n\004atom\030\004 \003(\0132$.OsmAnd.OBF.AddressName"
-    "IndexDataAtom\"v\n\030AddressNameIndexDataAto"
-    "m\022\014\n\004name\030\001 \001(\t\022\016\n\006nameEn\030\002 \001(\t\022\014\n\004type\030"
-    "\003 \002(\r\022\024\n\014shiftToIndex\030\005 \003(\005\022\030\n\020shiftToCi"
-    "tyIndex\030\006 \003(\005\"~\n\tCityIndex\022\021\n\tcity_type\030"
-    "\001 \001(\r\022\014\n\004name\030\002 \002(\t\022\017\n\007name_en\030\003 \001(\t\022\n\n\002"
-    "id\030\004 \001(\004\022\t\n\001x\030\005 \002(\r\022\t\n\001y\030\006 \002(\r\022\035\n\025shiftT"
-    "oCityBlockIndex\030\n \001(\007\"\202\001\n\016CityBlockIndex"
-    "\022\030\n\020shiftToCityIndex\030\004 \001(\007\022,\n\tbuildings\030"
-    "\n \003(\0132\031.OsmAnd.OBF.BuildingIndex\022(\n\007stre"
-    "ets\030\014 \003(\0132\027.OsmAnd.OBF.StreetIndex\"\263\001\n\013S"
-    "treetIndex\022\014\n\004name\030\001 \002(\t\022\017\n\007name_en\030\002 \001("
-    "\t\022\t\n\001x\030\003 \002(\021\022\t\n\001y\030\004 \002(\021\022\n\n\002id\030\006 \001(\004\022,\n\tb"
-    "uildings\030\014 \003(\0132\031.OsmAnd.OBF.BuildingInde"
-    "x\0225\n\rintersections\030\005 \003(\0132\036.OsmAnd.OBF.St"
-    "reetIntersection\"_\n\022StreetIntersection\022\014"
-    "\n\004name\030\002 \002(\t\022\017\n\007name_en\030\003 \001(\t\022\024\n\014interse"
-    "ctedX\030\004 \002(\021\022\024\n\014intersectedY\030\005 \002(\021\"\262\001\n\rBu"
-    "ildingIndex\022\014\n\004name\030\001 \002(\t\022\017\n\007name_en\030\002 \001"
-    "(\t\022\r\n\005name2\030\003 \001(\t\022\020\n\010name_en2\030\004 \001(\t\022\025\n\ri"
-    "nterpolation\030\005 \001(\021\022\t\n\001x\030\007 \002(\021\022\t\n\001y\030\010 \002(\021"
-    "\022\n\n\002x2\030\t \001(\021\022\n\n\002y2\030\n \001(\021\022\n\n\002id\030\r \001(\004\022\020\n\010"
-    "postcode\030\016 \001(\t\"=\n\017TransportRoutes\022*\n\006rou"
-    "tes\030\006 \003(\0132\032.OsmAnd.OBF.TransportRoute\"\345\001"
-    "\n\016TransportRoute\022\n\n\002id\030\001 \002(\004\022\014\n\004type\030\003 \001"
-    "(\r\022\020\n\010operator\030\004 \001(\r\022\013\n\003ref\030\005 \001(\t\022\014\n\004nam"
-    "e\030\006 \001(\r\022\017\n\007name_en\030\007 \001(\r\022\020\n\010distance\030\010 \001"
-    "(\r\0223\n\013directStops\030\017 \003(\0132\036.OsmAnd.OBF.Tra"
-    "nsportRouteStop\0224\n\014reverseStops\030\020 \003(\0132\036."
-    "OsmAnd.OBF.TransportRouteStop\"W\n\022Transpo"
-    "rtRouteStop\022\n\n\002id\030\001 \002(\022\022\n\n\002dx\030\002 \002(\021\022\n\n\002d"
-    "y\030\003 \002(\021\022\014\n\004name\030\006 \002(\r\022\017\n\007name_en\030\007 \001(\r\"b"
-    "\n\rTransportStop\022\n\n\002dx\030\001 \002(\021\022\n\n\002dy\030\002 \002(\021\022"
-    "\n\n\002id\030\005 \002(\022\022\014\n\004name\030\006 \002(\r\022\017\n\007name_en\030\007 \001"
-    "(\r\022\016\n\006routes\030\020 \003(\r\"\272\001\n\022TransportStopsTre"
-    "e\022\014\n\004left\030\001 \002(\021\022\r\n\005right\030\002 \002(\021\022\013\n\003top\030\003 "
-    "\002(\021\022\016\n\006bottom\030\004 \002(\021\0220\n\010subtrees\030\007 \003(\0132\036."
-    "OsmAnd.OBF.TransportStopsTree\022(\n\005leafs\030\010"
-    " \003(\0132\031.OsmAnd.OBF.TransportStop\022\016\n\006baseI"
-    "d\030\020 \001(\004\"\256\001\n\024OsmAndTransportIndex\022\014\n\004name"
-    "\030\001 \001(\t\022+\n\006routes\030\003 \001(\0132\033.OsmAnd.OBF.Tran"
-    "sportRoutes\022-\n\005stops\030\006 \001(\0132\036.OsmAnd.OBF."
-    "TransportStopsTree\022,\n\013stringTable\030\t \002(\0132"
-    "\027.OsmAnd.OBF.StringTable\"\312\002\n\016OsmAndPoiIn"
-    "dex\022\014\n\004name\030\001 \002(\t\022-\n\nboundaries\030\002 \002(\0132\031."
-    "OsmAnd.OBF.OsmAndTileBox\0228\n\017categoriesTa"
-    "ble\030\003 \003(\0132\037.OsmAnd.OBF.OsmAndCategoryTab"
-    "le\0221\n\tnameIndex\030\004 \001(\0132\036.OsmAnd.OBF.OsmAn"
-    "dPoiNameIndex\0226\n\rsubtypesTable\030\005 \001(\0132\037.O"
-    "smAnd.OBF.OsmAndSubtypesTable\022\'\n\005boxes\030\006"
-    " \003(\0132\030.OsmAnd.OBF.OsmAndPoiBox\022-\n\007poiDat"
-    "a\030\t \003(\0132\034.OsmAnd.OBF.OsmAndPoiBoxData\"\331\001"
-    "\n\022OsmAndPoiNameIndex\022-\n\005table\030\003 \002(\0132\036.Os"
-    "mAnd.OBF.IndexedStringTable\022C\n\004data\030\005 \003("
-    "\01325.OsmAnd.OBF.OsmAndPoiNameIndex.OsmAnd"
-    "PoiNameIndexData\032O\n\026OsmAndPoiNameIndexDa"
-    "ta\0225\n\005atoms\030\003 \003(\0132&.OsmAnd.OBF.OsmAndPoi"
-    "NameIndexDataAtom\"Q\n\032OsmAndPoiNameIndexD"
-    "ataAtom\022\014\n\004zoom\030\002 \001(\r\022\t\n\001x\030\003 \001(\r\022\t\n\001y\030\004 "
-    "\001(\r\022\017\n\007shiftTo\030\016 \001(\007\">\n\023OsmAndCategoryTa"
-    "ble\022\020\n\010category\030\001 \002(\t\022\025\n\rsubcategories\030\003"
-    " \003(\t\"E\n\023OsmAndSubtypesTable\022.\n\010subtypes\030"
-    "\004 \003(\0132\034.OsmAnd.OBF.OsmAndPoiSubtype\"\205\001\n\020"
-    "OsmAndPoiSubtype\022\014\n\004name\030\001 \002(\t\022\017\n\007tagnam"
-    "e\030\002 \001(\t\022\016\n\006isText\030\003 \002(\010\022\021\n\tfrequency\030\005 \001"
-    "(\r\022\031\n\021subtypeValuesSize\030\006 \001(\r\022\024\n\014subtype"
-    "Value\030\010 \003(\t\"\255\001\n\014OsmAndPoiBox\022\014\n\004zoom\030\001 \002"
-    "(\r\022\014\n\004left\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\0223\n\ncategor"
-    "ies\030\004 \001(\0132\037.OsmAnd.OBF.OsmAndPoiCategori"
-    "es\022*\n\010subBoxes\030\n \003(\0132\030.OsmAnd.OBF.OsmAnd"
-    "PoiBox\022\023\n\013shiftToData\030\016 \001(\007\"@\n\023OsmAndPoi"
-    "Categories\022\022\n\ncategories\030\003 \003(\r\022\025\n\rsubcat"
-    "egories\030\005 \003(\r\"i\n\020OsmAndPoiBoxData\022\014\n\004zoo"
-    "m\030\001 \001(\r\022\t\n\001x\030\002 \001(\r\022\t\n\001y\030\003 \001(\r\0221\n\007poiData"
-    "\030\005 \003(\0132 .OsmAnd.OBF.OsmAndPoiBoxDataAtom"
-    "\"\360\001\n\024OsmAndPoiBoxDataAtom\022\n\n\002dx\030\002 \002(\021\022\n\n"
-    "\002dy\030\003 \002(\021\022\022\n\ncategories\030\004 \003(\r\022\025\n\rsubcate"
-    "gories\030\005 \003(\r\022\014\n\004name\030\006 \001(\t\022\016\n\006nameEn\030\007 \001"
-    "(\t\022\n\n\002id\030\010 \001(\004\022\024\n\014openingHours\030\n \001(\t\022\014\n\004"
-    "site\030\013 \001(\t\022\r\n\005phone\030\014 \001(\t\022\014\n\004note\030\r \001(\t\022"
-    "\026\n\016textCategories\030\016 \003(\r\022\022\n\ntextValues\030\017 "
-    "\003(\t\"\032\n\007IdTable\022\017\n\007routeId\030\001 \003(\022\"F\n\017Restr"
-    "ictionData\022\014\n\004type\030\001 \002(\005\022\014\n\004from\030\002 \002(\005\022\n"
-    "\n\002to\030\003 \002(\005\022\013\n\003via\030\004 \001(\005\"d\n\tRouteData\022\016\n\006"
-    "points\030\001 \002(\014\022\022\n\npointTypes\030\004 \001(\014\022\r\n\005type"
-    "s\030\007 \002(\014\022\017\n\007routeId\030\014 \002(\005\022\023\n\013stringNames\030"
-    "\016 \001(\014\"\304\005\n\022OsmAndRoutingIndex\022\014\n\004name\030\001 \002"
-    "(\t\022\?\n\005rules\030\002 \003(\01320.OsmAnd.OBF.OsmAndRou"
-    "tingIndex.RouteEncodingRule\022>\n\trootBoxes"
-    "\030\003 \003(\0132+.OsmAnd.OBF.OsmAndRoutingIndex.R"
-    "outeDataBox\022A\n\014basemapBoxes\030\004 \003(\0132+.OsmA"
-    "nd.OBF.OsmAndRoutingIndex.RouteDataBox\022="
-    "\n\006blocks\030\005 \003(\0132-.OsmAnd.OBF.OsmAndRoutin"
-    "gIndex.RouteDataBlock\032;\n\021RouteEncodingRu"
-    "le\022\013\n\003tag\030\003 \002(\t\022\r\n\005value\030\005 \002(\t\022\n\n\002id\030\007 \001"
-    "(\r\032\231\001\n\014RouteDataBox\022\014\n\004left\030\001 \002(\021\022\r\n\005rig"
-    "ht\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\022\016\n\006bottom\030\004 \002(\021\022\023\n"
-    "\013shiftToData\030\005 \001(\007\022:\n\005boxes\030\007 \003(\0132+.OsmA"
-    "nd.OBF.OsmAndRoutingIndex.RouteDataBox\032\303"
-    "\001\n\016RouteDataBlock\022$\n\007idTable\030\005 \001(\0132\023.Osm"
-    "And.OBF.IdTable\022*\n\013dataObjects\030\006 \003(\0132\025.O"
-    "smAnd.OBF.RouteData\0221\n\014restrictions\030\007 \003("
-    "\0132\033.OsmAnd.OBF.RestrictionData\022,\n\013string"
-    "Table\030\010 \001(\0132\027.OsmAnd.OBF.StringTableB\036\n\021"
-    "net.osmand.binaryB\tOsmandOdb", 6308);
+    "And.OBF.OsmAndAddressNameIndexData\0223\n\022at"
+    "tributeTagsTable\030\010 \001(\0132\027.OsmAnd.OBF.Stri"
+    "ngTable\032\343\001\n\013CitiesIndex\022C\n\004type\030\002 \002(\01625."
+    "OsmAnd.OBF.OsmAndAddressIndex.CitiesInde"
+    "x.CitiesType\022%\n\006cities\030\005 \003(\0132\025.OsmAnd.OB"
+    "F.CityIndex\022*\n\006blocks\030\007 \003(\0132\032.OsmAnd.OBF"
+    ".CityBlockIndex\"<\n\nCitiesType\022\021\n\rCitiesO"
+    "rTowns\020\001\022\r\n\tPostcodes\020\002\022\014\n\010Villages\020\003\"\342\001"
+    "\n\032OsmAndAddressNameIndexData\022-\n\005table\030\004 "
+    "\002(\0132\036.OsmAnd.OBF.IndexedStringTable\022I\n\004a"
+    "tom\030\007 \003(\0132;.OsmAnd.OBF.OsmAndAddressName"
+    "IndexData.AddressNameIndexData\032J\n\024Addres"
+    "sNameIndexData\0222\n\004atom\030\004 \003(\0132$.OsmAnd.OB"
+    "F.AddressNameIndexDataAtom\"v\n\030AddressNam"
+    "eIndexDataAtom\022\014\n\004name\030\001 \001(\t\022\016\n\006nameEn\030\002"
+    " \001(\t\022\014\n\004type\030\003 \002(\r\022\024\n\014shiftToIndex\030\005 \003(\005"
+    "\022\030\n\020shiftToCityIndex\030\006 \003(\005\"\260\001\n\tCityIndex"
+    "\022\021\n\tcity_type\030\001 \001(\r\022\014\n\004name\030\002 \002(\t\022\017\n\007nam"
+    "e_en\030\003 \001(\t\022\027\n\017attributeTagIds\030\013 \003(\r\022\027\n\017a"
+    "ttributeValues\030\014 \003(\t\022\n\n\002id\030\004 \001(\004\022\t\n\001x\030\005 "
+    "\002(\r\022\t\n\001y\030\006 \002(\r\022\035\n\025shiftToCityBlockIndex\030"
+    "\n \001(\007\"\202\001\n\016CityBlockIndex\022\030\n\020shiftToCityI"
+    "ndex\030\004 \001(\007\022,\n\tbuildings\030\n \003(\0132\031.OsmAnd.O"
+    "BF.BuildingIndex\022(\n\007streets\030\014 \003(\0132\027.OsmA"
+    "nd.OBF.StreetIndex\"\345\001\n\013StreetIndex\022\014\n\004na"
+    "me\030\001 \002(\t\022\017\n\007name_en\030\002 \001(\t\022\027\n\017attributeTa"
+    "gIds\030\r \003(\r\022\027\n\017attributeValues\030\016 \003(\t\022\t\n\001x"
+    "\030\003 \002(\021\022\t\n\001y\030\004 \002(\021\022\n\n\002id\030\006 \001(\004\022,\n\tbuildin"
+    "gs\030\014 \003(\0132\031.OsmAnd.OBF.BuildingIndex\0225\n\ri"
+    "ntersections\030\005 \003(\0132\036.OsmAnd.OBF.StreetIn"
+    "tersection\"\221\001\n\022StreetIntersection\022\014\n\004nam"
+    "e\030\002 \002(\t\022\017\n\007name_en\030\003 \001(\t\022\027\n\017attributeTag"
+    "Ids\030\006 \003(\r\022\027\n\017attributeValues\030\007 \003(\t\022\024\n\014in"
+    "tersectedX\030\004 \002(\021\022\024\n\014intersectedY\030\005 \002(\021\"\230"
+    "\002\n\rBuildingIndex\022\014\n\004name\030\001 \002(\t\022\017\n\007name_e"
+    "n\030\002 \001(\t\022\027\n\017attributeTagIds\030\017 \003(\r\022\027\n\017attr"
+    "ibuteValues\030\020 \003(\t\022\r\n\005name2\030\003 \001(\t\022\020\n\010name"
+    "_en2\030\004 \001(\t\022\030\n\020attributeTagIds2\030\021 \003(\r\022\030\n\020"
+    "attributeValues2\030\022 \003(\t\022\025\n\rinterpolation\030"
+    "\005 \001(\021\022\t\n\001x\030\007 \002(\021\022\t\n\001y\030\010 \002(\021\022\n\n\002x2\030\t \001(\021\022"
+    "\n\n\002y2\030\n \001(\021\022\n\n\002id\030\r \001(\004\022\020\n\010postcode\030\016 \001("
+    "\t\"=\n\017TransportRoutes\022*\n\006routes\030\006 \003(\0132\032.O"
+    "smAnd.OBF.TransportRoute\"\345\001\n\016TransportRo"
+    "ute\022\n\n\002id\030\001 \002(\004\022\014\n\004type\030\003 \001(\r\022\020\n\010operato"
+    "r\030\004 \001(\r\022\013\n\003ref\030\005 \001(\t\022\014\n\004name\030\006 \001(\r\022\017\n\007na"
+    "me_en\030\007 \001(\r\022\020\n\010distance\030\010 \001(\r\0223\n\013directS"
+    "tops\030\017 \003(\0132\036.OsmAnd.OBF.TransportRouteSt"
+    "op\0224\n\014reverseStops\030\020 \003(\0132\036.OsmAnd.OBF.Tr"
+    "ansportRouteStop\"W\n\022TransportRouteStop\022\n"
+    "\n\002id\030\001 \002(\022\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022\014\n\004na"
+    "me\030\006 \002(\r\022\017\n\007name_en\030\007 \001(\r\"b\n\rTransportSt"
+    "op\022\n\n\002dx\030\001 \002(\021\022\n\n\002dy\030\002 \002(\021\022\n\n\002id\030\005 \002(\022\022\014"
+    "\n\004name\030\006 \002(\r\022\017\n\007name_en\030\007 \001(\r\022\016\n\006routes\030"
+    "\020 \003(\r\"\272\001\n\022TransportStopsTree\022\014\n\004left\030\001 \002"
+    "(\021\022\r\n\005right\030\002 \002(\021\022\013\n\003top\030\003 \002(\021\022\016\n\006bottom"
+    "\030\004 \002(\021\0220\n\010subtrees\030\007 \003(\0132\036.OsmAnd.OBF.Tr"
+    "ansportStopsTree\022(\n\005leafs\030\010 \003(\0132\031.OsmAnd"
+    ".OBF.TransportStop\022\016\n\006baseId\030\020 \001(\004\"\256\001\n\024O"
+    "smAndTransportIndex\022\014\n\004name\030\001 \001(\t\022+\n\006rou"
+    "tes\030\003 \001(\0132\033.OsmAnd.OBF.TransportRoutes\022-"
+    "\n\005stops\030\006 \001(\0132\036.OsmAnd.OBF.TransportStop"
+    "sTree\022,\n\013stringTable\030\t \002(\0132\027.OsmAnd.OBF."
+    "StringTable\"\312\002\n\016OsmAndPoiIndex\022\014\n\004name\030\001"
+    " \002(\t\022-\n\nboundaries\030\002 \002(\0132\031.OsmAnd.OBF.Os"
+    "mAndTileBox\0228\n\017categoriesTable\030\003 \003(\0132\037.O"
+    "smAnd.OBF.OsmAndCategoryTable\0221\n\tnameInd"
+    "ex\030\004 \001(\0132\036.OsmAnd.OBF.OsmAndPoiNameIndex"
+    "\0226\n\rsubtypesTable\030\005 \001(\0132\037.OsmAnd.OBF.Osm"
+    "AndSubtypesTable\022\'\n\005boxes\030\006 \003(\0132\030.OsmAnd"
+    ".OBF.OsmAndPoiBox\022-\n\007poiData\030\t \003(\0132\034.Osm"
+    "And.OBF.OsmAndPoiBoxData\"\331\001\n\022OsmAndPoiNa"
+    "meIndex\022-\n\005table\030\003 \002(\0132\036.OsmAnd.OBF.Inde"
+    "xedStringTable\022C\n\004data\030\005 \003(\01325.OsmAnd.OB"
+    "F.OsmAndPoiNameIndex.OsmAndPoiNameIndexD"
+    "ata\032O\n\026OsmAndPoiNameIndexData\0225\n\005atoms\030\003"
+    " \003(\0132&.OsmAnd.OBF.OsmAndPoiNameIndexData"
+    "Atom\"Q\n\032OsmAndPoiNameIndexDataAtom\022\014\n\004zo"
+    "om\030\002 \001(\r\022\t\n\001x\030\003 \001(\r\022\t\n\001y\030\004 \001(\r\022\017\n\007shiftT"
+    "o\030\016 \001(\007\">\n\023OsmAndCategoryTable\022\020\n\010catego"
+    "ry\030\001 \002(\t\022\025\n\rsubcategories\030\003 \003(\t\"E\n\023OsmAn"
+    "dSubtypesTable\022.\n\010subtypes\030\004 \003(\0132\034.OsmAn"
+    "d.OBF.OsmAndPoiSubtype\"\205\001\n\020OsmAndPoiSubt"
+    "ype\022\014\n\004name\030\001 \002(\t\022\017\n\007tagname\030\002 \001(\t\022\016\n\006is"
+    "Text\030\003 \002(\010\022\021\n\tfrequency\030\005 \001(\r\022\031\n\021subtype"
+    "ValuesSize\030\006 \001(\r\022\024\n\014subtypeValue\030\010 \003(\t\"\255"
+    "\001\n\014OsmAndPoiBox\022\014\n\004zoom\030\001 \002(\r\022\014\n\004left\030\002 "
+    "\002(\021\022\013\n\003top\030\003 \002(\021\0223\n\ncategories\030\004 \001(\0132\037.O"
+    "smAnd.OBF.OsmAndPoiCategories\022*\n\010subBoxe"
+    "s\030\n \003(\0132\030.OsmAnd.OBF.OsmAndPoiBox\022\023\n\013shi"
+    "ftToData\030\016 \001(\007\"@\n\023OsmAndPoiCategories\022\022\n"
+    "\ncategories\030\003 \003(\r\022\025\n\rsubcategories\030\005 \003(\r"
+    "\"i\n\020OsmAndPoiBoxData\022\014\n\004zoom\030\001 \001(\r\022\t\n\001x\030"
+    "\002 \001(\r\022\t\n\001y\030\003 \001(\r\0221\n\007poiData\030\005 \003(\0132 .OsmA"
+    "nd.OBF.OsmAndPoiBoxDataAtom\"\360\001\n\024OsmAndPo"
+    "iBoxDataAtom\022\n\n\002dx\030\002 \002(\021\022\n\n\002dy\030\003 \002(\021\022\022\n\n"
+    "categories\030\004 \003(\r\022\025\n\rsubcategories\030\005 \003(\r\022"
+    "\014\n\004name\030\006 \001(\t\022\016\n\006nameEn\030\007 \001(\t\022\n\n\002id\030\010 \001("
+    "\004\022\024\n\014openingHours\030\n \001(\t\022\014\n\004site\030\013 \001(\t\022\r\n"
+    "\005phone\030\014 \001(\t\022\014\n\004note\030\r \001(\t\022\026\n\016textCatego"
+    "ries\030\016 \003(\r\022\022\n\ntextValues\030\017 \003(\t\"\032\n\007IdTabl"
+    "e\022\017\n\007routeId\030\001 \003(\022\"F\n\017RestrictionData\022\014\n"
+    "\004type\030\001 \002(\005\022\014\n\004from\030\002 \002(\005\022\n\n\002to\030\003 \002(\005\022\013\n"
+    "\003via\030\004 \001(\005\"d\n\tRouteData\022\016\n\006points\030\001 \002(\014\022"
+    "\022\n\npointTypes\030\004 \001(\014\022\r\n\005types\030\007 \002(\014\022\017\n\007ro"
+    "uteId\030\014 \002(\005\022\023\n\013stringNames\030\016 \001(\014\"\304\005\n\022Osm"
+    "AndRoutingIndex\022\014\n\004name\030\001 \002(\t\022\?\n\005rules\030\002"
+    " \003(\01320.OsmAnd.OBF.OsmAndRoutingIndex.Rou"
+    "teEncodingRule\022>\n\trootBoxes\030\003 \003(\0132+.OsmA"
+    "nd.OBF.OsmAndRoutingIndex.RouteDataBox\022A"
+    "\n\014basemapBoxes\030\004 \003(\0132+.OsmAnd.OBF.OsmAnd"
+    "RoutingIndex.RouteDataBox\022=\n\006blocks\030\005 \003("
+    "\0132-.OsmAnd.OBF.OsmAndRoutingIndex.RouteD"
+    "ataBlock\032;\n\021RouteEncodingRule\022\013\n\003tag\030\003 \002"
+    "(\t\022\r\n\005value\030\005 \002(\t\022\n\n\002id\030\007 \001(\r\032\231\001\n\014RouteD"
+    "ataBox\022\014\n\004left\030\001 \002(\021\022\r\n\005right\030\002 \002(\021\022\013\n\003t"
+    "op\030\003 \002(\021\022\016\n\006bottom\030\004 \002(\021\022\023\n\013shiftToData\030"
+    "\005 \001(\007\022:\n\005boxes\030\007 \003(\0132+.OsmAnd.OBF.OsmAnd"
+    "RoutingIndex.RouteDataBox\032\303\001\n\016RouteDataB"
+    "lock\022$\n\007idTable\030\005 \001(\0132\023.OsmAnd.OBF.IdTab"
+    "le\022*\n\013dataObjects\030\006 \003(\0132\025.OsmAnd.OBF.Rou"
+    "teData\0221\n\014restrictions\030\007 \003(\0132\033.OsmAnd.OB"
+    "F.RestrictionData\022,\n\013stringTable\030\010 \001(\0132\027"
+    ".OsmAnd.OBF.StringTableB\036\n\021net.osmand.bi"
+    "naryB\tOsmandOdb", 6615);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "OBF.proto", &protobuf_RegisterTypes);
   OsmAndStructure::default_instance_ = new OsmAndStructure();
@@ -5656,6 +5675,7 @@ const int OsmAndAddressIndex::kNameEnFieldNumber;
 const int OsmAndAddressIndex::kBoundariesFieldNumber;
 const int OsmAndAddressIndex::kCitiesFieldNumber;
 const int OsmAndAddressIndex::kNameIndexFieldNumber;
+const int OsmAndAddressIndex::kAttributeTagsTableFieldNumber;
 #endif  // !_MSC_VER
 
 OsmAndAddressIndex::OsmAndAddressIndex()
@@ -5666,6 +5686,7 @@ OsmAndAddressIndex::OsmAndAddressIndex()
 void OsmAndAddressIndex::InitAsDefaultInstance() {
   boundaries_ = const_cast< ::OsmAnd::OBF::OsmAndTileBox*>(&::OsmAnd::OBF::OsmAndTileBox::default_instance());
   nameindex_ = const_cast< ::OsmAnd::OBF::OsmAndAddressNameIndexData*>(&::OsmAnd::OBF::OsmAndAddressNameIndexData::default_instance());
+  attributetagstable_ = const_cast< ::OsmAnd::OBF::StringTable*>(&::OsmAnd::OBF::StringTable::default_instance());
 }
 
 OsmAndAddressIndex::OsmAndAddressIndex(const OsmAndAddressIndex& from)
@@ -5680,6 +5701,7 @@ void OsmAndAddressIndex::SharedCtor() {
   name_en_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   boundaries_ = NULL;
   nameindex_ = NULL;
+  attributetagstable_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -5697,6 +5719,7 @@ void OsmAndAddressIndex::SharedDtor() {
   if (this != default_instance_) {
     delete boundaries_;
     delete nameindex_;
+    delete attributetagstable_;
   }
 }
 
@@ -5737,6 +5760,9 @@ void OsmAndAddressIndex::Clear() {
     }
     if (has_nameindex()) {
       if (nameindex_ != NULL) nameindex_->::OsmAnd::OBF::OsmAndAddressNameIndexData::Clear();
+    }
+    if (has_attributetagstable()) {
+      if (attributetagstable_ != NULL) attributetagstable_->::OsmAnd::OBF::StringTable::Clear();
     }
   }
   cities_.Clear();
@@ -5822,6 +5848,20 @@ bool OsmAndAddressIndex::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(66)) goto parse_attributeTagsTable;
+        break;
+      }
+      
+      // optional .OsmAnd.OBF.StringTable attributeTagsTable = 8;
+      case 8: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_attributeTagsTable:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_attributetagstable()));
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -5880,6 +5920,12 @@ void OsmAndAddressIndex::SerializeWithCachedSizes(
       7, this->nameindex(), output);
   }
   
+  // optional .OsmAnd.OBF.StringTable attributeTagsTable = 8;
+  if (has_attributetagstable()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      8, this->attributetagstable(), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -5929,6 +5975,13 @@ void OsmAndAddressIndex::SerializeWithCachedSizes(
         7, this->nameindex(), target);
   }
   
+  // optional .OsmAnd.OBF.StringTable attributeTagsTable = 8;
+  if (has_attributetagstable()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        8, this->attributetagstable(), target);
+  }
+  
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -5966,6 +6019,13 @@ int OsmAndAddressIndex::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->nameindex());
+    }
+    
+    // optional .OsmAnd.OBF.StringTable attributeTagsTable = 8;
+    if (has_attributetagstable()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->attributetagstable());
     }
     
   }
@@ -6016,6 +6076,9 @@ void OsmAndAddressIndex::MergeFrom(const OsmAndAddressIndex& from) {
     if (from.has_nameindex()) {
       mutable_nameindex()->::OsmAnd::OBF::OsmAndAddressNameIndexData::MergeFrom(from.nameindex());
     }
+    if (from.has_attributetagstable()) {
+      mutable_attributetagstable()->::OsmAnd::OBF::StringTable::MergeFrom(from.attributetagstable());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -6054,6 +6117,7 @@ void OsmAndAddressIndex::Swap(OsmAndAddressIndex* other) {
     std::swap(boundaries_, other->boundaries_);
     cities_.Swap(&other->cities_);
     std::swap(nameindex_, other->nameindex_);
+    std::swap(attributetagstable_, other->attributetagstable_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -6954,6 +7018,8 @@ void AddressNameIndexDataAtom::Swap(AddressNameIndexDataAtom* other) {
 const int CityIndex::kCityTypeFieldNumber;
 const int CityIndex::kNameFieldNumber;
 const int CityIndex::kNameEnFieldNumber;
+const int CityIndex::kAttributeTagIdsFieldNumber;
+const int CityIndex::kAttributeValuesFieldNumber;
 const int CityIndex::kIdFieldNumber;
 const int CityIndex::kXFieldNumber;
 const int CityIndex::kYFieldNumber;
@@ -7037,8 +7103,12 @@ void CityIndex::Clear() {
     id_ = GOOGLE_ULONGLONG(0);
     x_ = 0u;
     y_ = 0u;
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     shifttocityblockindex_ = 0u;
   }
+  attributetagids_.Clear();
+  attributevalues_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -7158,6 +7228,46 @@ bool CityIndex::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(88)) goto parse_attributeTagIds;
+        break;
+      }
+      
+      // repeated uint32 attributeTagIds = 11;
+      case 11: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_attributeTagIds:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 88, input, this->mutable_attributetagids())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_LENGTH_DELIMITED) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_attributetagids())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(88)) goto parse_attributeTagIds;
+        if (input->ExpectTag(98)) goto parse_attributeValues;
+        break;
+      }
+      
+      // repeated string attributeValues = 12;
+      case 12: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_attributeValues:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_attributevalues()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->attributevalues(0).data(), this->attributevalues(0).length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(98)) goto parse_attributeValues;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -7223,6 +7333,21 @@ void CityIndex::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFixed32(10, this->shifttocityblockindex(), output);
   }
   
+  // repeated uint32 attributeTagIds = 11;
+  for (int i = 0; i < this->attributetagids_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
+      11, this->attributetagids(i), output);
+  }
+  
+  // repeated string attributeValues = 12;
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    this->attributevalues(i).data(), this->attributevalues(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      12, this->attributevalues(i), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -7274,6 +7399,21 @@ void CityIndex::SerializeWithCachedSizes(
   // optional fixed32 shiftToCityBlockIndex = 10;
   if (has_shifttocityblockindex()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteFixed32ToArray(10, this->shifttocityblockindex(), target);
+  }
+  
+  // repeated uint32 attributeTagIds = 11;
+  for (int i = 0; i < this->attributetagids_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteUInt32ToArray(11, this->attributetagids(i), target);
+  }
+  
+  // repeated string attributeValues = 12;
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->attributevalues(i).data(), this->attributevalues(i).length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(12, this->attributevalues(i), target);
   }
   
   if (!unknown_fields().empty()) {
@@ -7329,12 +7469,31 @@ int CityIndex::ByteSize() const {
           this->y());
     }
     
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     // optional fixed32 shiftToCityBlockIndex = 10;
     if (has_shifttocityblockindex()) {
       total_size += 1 + 4;
     }
     
   }
+  // repeated uint32 attributeTagIds = 11;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->attributetagids_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->attributetagids(i));
+    }
+    total_size += 1 * this->attributetagids_size() + data_size;
+  }
+  
+  // repeated string attributeValues = 12;
+  total_size += 1 * this->attributevalues_size();
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->attributevalues(i));
+  }
+  
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -7360,6 +7519,8 @@ void CityIndex::MergeFrom(const ::google::protobuf::Message& from) {
 
 void CityIndex::MergeFrom(const CityIndex& from) {
   GOOGLE_CHECK_NE(&from, this);
+  attributetagids_.MergeFrom(from.attributetagids_);
+  attributevalues_.MergeFrom(from.attributevalues_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_city_type()) {
       set_city_type(from.city_type());
@@ -7379,6 +7540,8 @@ void CityIndex::MergeFrom(const CityIndex& from) {
     if (from.has_y()) {
       set_y(from.y());
     }
+  }
+  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     if (from.has_shifttocityblockindex()) {
       set_shifttocityblockindex(from.shifttocityblockindex());
     }
@@ -7399,7 +7562,7 @@ void CityIndex::CopyFrom(const CityIndex& from) {
 }
 
 bool CityIndex::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000032) != 0x00000032) return false;
+  if ((_has_bits_[0] & 0x000000c2) != 0x000000c2) return false;
   
   return true;
 }
@@ -7409,6 +7572,8 @@ void CityIndex::Swap(CityIndex* other) {
     std::swap(city_type_, other->city_type_);
     std::swap(name_, other->name_);
     std::swap(name_en_, other->name_en_);
+    attributetagids_.Swap(&other->attributetagids_);
+    attributevalues_.Swap(&other->attributevalues_);
     std::swap(id_, other->id_);
     std::swap(x_, other->x_);
     std::swap(y_, other->y_);
@@ -7724,6 +7889,8 @@ void CityBlockIndex::Swap(CityBlockIndex* other) {
 #ifndef _MSC_VER
 const int StreetIndex::kNameFieldNumber;
 const int StreetIndex::kNameEnFieldNumber;
+const int StreetIndex::kAttributeTagIdsFieldNumber;
+const int StreetIndex::kAttributeValuesFieldNumber;
 const int StreetIndex::kXFieldNumber;
 const int StreetIndex::kYFieldNumber;
 const int StreetIndex::kIdFieldNumber;
@@ -7806,6 +7973,8 @@ void StreetIndex::Clear() {
     y_ = 0;
     id_ = GOOGLE_ULONGLONG(0);
   }
+  attributetagids_.Clear();
+  attributevalues_.Clear();
   buildings_.Clear();
   intersections_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
@@ -7925,6 +8094,46 @@ bool StreetIndex::MergePartialFromCodedStream(
           goto handle_uninterpreted;
         }
         if (input->ExpectTag(98)) goto parse_buildings;
+        if (input->ExpectTag(104)) goto parse_attributeTagIds;
+        break;
+      }
+      
+      // repeated uint32 attributeTagIds = 13;
+      case 13: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_attributeTagIds:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 104, input, this->mutable_attributetagids())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_LENGTH_DELIMITED) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_attributetagids())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(104)) goto parse_attributeTagIds;
+        if (input->ExpectTag(114)) goto parse_attributeValues;
+        break;
+      }
+      
+      // repeated string attributeValues = 14;
+      case 14: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_attributeValues:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_attributevalues()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->attributevalues(0).data(), this->attributevalues(0).length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(114)) goto parse_attributeValues;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -7992,6 +8201,21 @@ void StreetIndex::SerializeWithCachedSizes(
       12, this->buildings(i), output);
   }
   
+  // repeated uint32 attributeTagIds = 13;
+  for (int i = 0; i < this->attributetagids_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
+      13, this->attributetagids(i), output);
+  }
+  
+  // repeated string attributeValues = 14;
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    this->attributevalues(i).data(), this->attributevalues(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      14, this->attributevalues(i), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -8049,6 +8273,21 @@ void StreetIndex::SerializeWithCachedSizes(
         12, this->buildings(i), target);
   }
   
+  // repeated uint32 attributeTagIds = 13;
+  for (int i = 0; i < this->attributetagids_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteUInt32ToArray(13, this->attributetagids(i), target);
+  }
+  
+  // repeated string attributeValues = 14;
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->attributevalues(i).data(), this->attributevalues(i).length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(14, this->attributevalues(i), target);
+  }
+  
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -8096,6 +8335,23 @@ int StreetIndex::ByteSize() const {
     }
     
   }
+  // repeated uint32 attributeTagIds = 13;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->attributetagids_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->attributetagids(i));
+    }
+    total_size += 1 * this->attributetagids_size() + data_size;
+  }
+  
+  // repeated string attributeValues = 14;
+  total_size += 1 * this->attributevalues_size();
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->attributevalues(i));
+  }
+  
   // repeated .OsmAnd.OBF.BuildingIndex buildings = 12;
   total_size += 1 * this->buildings_size();
   for (int i = 0; i < this->buildings_size(); i++) {
@@ -8137,6 +8393,8 @@ void StreetIndex::MergeFrom(const ::google::protobuf::Message& from) {
 
 void StreetIndex::MergeFrom(const StreetIndex& from) {
   GOOGLE_CHECK_NE(&from, this);
+  attributetagids_.MergeFrom(from.attributetagids_);
+  attributevalues_.MergeFrom(from.attributevalues_);
   buildings_.MergeFrom(from.buildings_);
   intersections_.MergeFrom(from.intersections_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
@@ -8172,7 +8430,7 @@ void StreetIndex::CopyFrom(const StreetIndex& from) {
 }
 
 bool StreetIndex::IsInitialized() const {
-  if ((_has_bits_[0] & 0x0000000d) != 0x0000000d) return false;
+  if ((_has_bits_[0] & 0x00000031) != 0x00000031) return false;
   
   for (int i = 0; i < buildings_size(); i++) {
     if (!this->buildings(i).IsInitialized()) return false;
@@ -8187,6 +8445,8 @@ void StreetIndex::Swap(StreetIndex* other) {
   if (other != this) {
     std::swap(name_, other->name_);
     std::swap(name_en_, other->name_en_);
+    attributetagids_.Swap(&other->attributetagids_);
+    attributevalues_.Swap(&other->attributevalues_);
     std::swap(x_, other->x_);
     std::swap(y_, other->y_);
     std::swap(id_, other->id_);
@@ -8212,6 +8472,8 @@ void StreetIndex::Swap(StreetIndex* other) {
 #ifndef _MSC_VER
 const int StreetIntersection::kNameFieldNumber;
 const int StreetIntersection::kNameEnFieldNumber;
+const int StreetIntersection::kAttributeTagIdsFieldNumber;
+const int StreetIntersection::kAttributeValuesFieldNumber;
 const int StreetIntersection::kIntersectedXFieldNumber;
 const int StreetIntersection::kIntersectedYFieldNumber;
 #endif  // !_MSC_VER
@@ -8289,6 +8551,8 @@ void StreetIntersection::Clear() {
     intersectedx_ = 0;
     intersectedy_ = 0;
   }
+  attributetagids_.Clear();
+  attributevalues_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -8360,6 +8624,46 @@ bool StreetIntersection::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(48)) goto parse_attributeTagIds;
+        break;
+      }
+      
+      // repeated uint32 attributeTagIds = 6;
+      case 6: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_attributeTagIds:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 48, input, this->mutable_attributetagids())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_LENGTH_DELIMITED) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_attributetagids())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(48)) goto parse_attributeTagIds;
+        if (input->ExpectTag(58)) goto parse_attributeValues;
+        break;
+      }
+      
+      // repeated string attributeValues = 7;
+      case 7: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_attributeValues:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_attributevalues()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->attributevalues(0).data(), this->attributevalues(0).length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(58)) goto parse_attributeValues;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -8410,6 +8714,21 @@ void StreetIntersection::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteSInt32(5, this->intersectedy(), output);
   }
   
+  // repeated uint32 attributeTagIds = 6;
+  for (int i = 0; i < this->attributetagids_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
+      6, this->attributetagids(i), output);
+  }
+  
+  // repeated string attributeValues = 7;
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    this->attributevalues(i).data(), this->attributevalues(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      7, this->attributevalues(i), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -8446,6 +8765,21 @@ void StreetIntersection::SerializeWithCachedSizes(
   // required sint32 intersectedY = 5;
   if (has_intersectedy()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteSInt32ToArray(5, this->intersectedy(), target);
+  }
+  
+  // repeated uint32 attributeTagIds = 6;
+  for (int i = 0; i < this->attributetagids_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteUInt32ToArray(6, this->attributetagids(i), target);
+  }
+  
+  // repeated string attributeValues = 7;
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->attributevalues(i).data(), this->attributevalues(i).length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(7, this->attributevalues(i), target);
   }
   
   if (!unknown_fields().empty()) {
@@ -8488,6 +8822,23 @@ int StreetIntersection::ByteSize() const {
     }
     
   }
+  // repeated uint32 attributeTagIds = 6;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->attributetagids_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->attributetagids(i));
+    }
+    total_size += 1 * this->attributetagids_size() + data_size;
+  }
+  
+  // repeated string attributeValues = 7;
+  total_size += 1 * this->attributevalues_size();
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->attributevalues(i));
+  }
+  
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -8513,6 +8864,8 @@ void StreetIntersection::MergeFrom(const ::google::protobuf::Message& from) {
 
 void StreetIntersection::MergeFrom(const StreetIntersection& from) {
   GOOGLE_CHECK_NE(&from, this);
+  attributetagids_.MergeFrom(from.attributetagids_);
+  attributevalues_.MergeFrom(from.attributevalues_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_name()) {
       set_name(from.name());
@@ -8543,7 +8896,7 @@ void StreetIntersection::CopyFrom(const StreetIntersection& from) {
 }
 
 bool StreetIntersection::IsInitialized() const {
-  if ((_has_bits_[0] & 0x0000000d) != 0x0000000d) return false;
+  if ((_has_bits_[0] & 0x00000031) != 0x00000031) return false;
   
   return true;
 }
@@ -8552,6 +8905,8 @@ void StreetIntersection::Swap(StreetIntersection* other) {
   if (other != this) {
     std::swap(name_, other->name_);
     std::swap(name_en_, other->name_en_);
+    attributetagids_.Swap(&other->attributetagids_);
+    attributevalues_.Swap(&other->attributevalues_);
     std::swap(intersectedx_, other->intersectedx_);
     std::swap(intersectedy_, other->intersectedy_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
@@ -8574,8 +8929,12 @@ void StreetIntersection::Swap(StreetIntersection* other) {
 #ifndef _MSC_VER
 const int BuildingIndex::kNameFieldNumber;
 const int BuildingIndex::kNameEnFieldNumber;
+const int BuildingIndex::kAttributeTagIdsFieldNumber;
+const int BuildingIndex::kAttributeValuesFieldNumber;
 const int BuildingIndex::kName2FieldNumber;
 const int BuildingIndex::kNameEn2FieldNumber;
+const int BuildingIndex::kAttributeTagIds2FieldNumber;
+const int BuildingIndex::kAttributeValues2FieldNumber;
 const int BuildingIndex::kInterpolationFieldNumber;
 const int BuildingIndex::kXFieldNumber;
 const int BuildingIndex::kYFieldNumber;
@@ -8681,12 +9040,12 @@ void BuildingIndex::Clear() {
         name_en2_->clear();
       }
     }
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     interpolation_ = 0;
     x_ = 0;
     y_ = 0;
     x2_ = 0;
-  }
-  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     y2_ = 0;
     id_ = GOOGLE_ULONGLONG(0);
     if (has_postcode()) {
@@ -8695,6 +9054,10 @@ void BuildingIndex::Clear() {
       }
     }
   }
+  attributetagids_.Clear();
+  attributevalues_.Clear();
+  attributetagids2_.Clear();
+  attributevalues2_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -8881,6 +9244,86 @@ bool BuildingIndex::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(120)) goto parse_attributeTagIds;
+        break;
+      }
+      
+      // repeated uint32 attributeTagIds = 15;
+      case 15: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_attributeTagIds:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 1, 120, input, this->mutable_attributetagids())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_LENGTH_DELIMITED) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_attributetagids())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(120)) goto parse_attributeTagIds;
+        if (input->ExpectTag(130)) goto parse_attributeValues;
+        break;
+      }
+      
+      // repeated string attributeValues = 16;
+      case 16: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_attributeValues:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_attributevalues()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->attributevalues(0).data(), this->attributevalues(0).length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(130)) goto parse_attributeValues;
+        if (input->ExpectTag(136)) goto parse_attributeTagIds2;
+        break;
+      }
+      
+      // repeated uint32 attributeTagIds2 = 17;
+      case 17: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+         parse_attributeTagIds2:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 2, 136, input, this->mutable_attributetagids2())));
+        } else if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag)
+                   == ::google::protobuf::internal::WireFormatLite::
+                      WIRETYPE_LENGTH_DELIMITED) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, this->mutable_attributetagids2())));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(136)) goto parse_attributeTagIds2;
+        if (input->ExpectTag(146)) goto parse_attributeValues2;
+        break;
+      }
+      
+      // repeated string attributeValues2 = 18;
+      case 18: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_attributeValues2:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_attributevalues2()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->attributevalues2(0).data(), this->attributevalues2(0).length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(146)) goto parse_attributeValues2;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -8978,6 +9421,36 @@ void BuildingIndex::SerializeWithCachedSizes(
       14, this->postcode(), output);
   }
   
+  // repeated uint32 attributeTagIds = 15;
+  for (int i = 0; i < this->attributetagids_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
+      15, this->attributetagids(i), output);
+  }
+  
+  // repeated string attributeValues = 16;
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    this->attributevalues(i).data(), this->attributevalues(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      16, this->attributevalues(i), output);
+  }
+  
+  // repeated uint32 attributeTagIds2 = 17;
+  for (int i = 0; i < this->attributetagids2_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
+      17, this->attributetagids2(i), output);
+  }
+  
+  // repeated string attributeValues2 = 18;
+  for (int i = 0; i < this->attributevalues2_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    this->attributevalues2(i).data(), this->attributevalues2(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      18, this->attributevalues2(i), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -9066,6 +9539,36 @@ void BuildingIndex::SerializeWithCachedSizes(
         14, this->postcode(), target);
   }
   
+  // repeated uint32 attributeTagIds = 15;
+  for (int i = 0; i < this->attributetagids_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteUInt32ToArray(15, this->attributetagids(i), target);
+  }
+  
+  // repeated string attributeValues = 16;
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->attributevalues(i).data(), this->attributevalues(i).length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(16, this->attributevalues(i), target);
+  }
+  
+  // repeated uint32 attributeTagIds2 = 17;
+  for (int i = 0; i < this->attributetagids2_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteUInt32ToArray(17, this->attributetagids2(i), target);
+  }
+  
+  // repeated string attributeValues2 = 18;
+  for (int i = 0; i < this->attributevalues2_size(); i++) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->attributevalues2(i).data(), this->attributevalues2(i).length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(18, this->attributevalues2(i), target);
+  }
+  
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -9105,6 +9608,8 @@ int BuildingIndex::ByteSize() const {
           this->name_en2());
     }
     
+  }
+  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     // optional sint32 interpolation = 5;
     if (has_interpolation()) {
       total_size += 1 +
@@ -9133,8 +9638,6 @@ int BuildingIndex::ByteSize() const {
           this->x2());
     }
     
-  }
-  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     // optional sint32 y2 = 10;
     if (has_y2()) {
       total_size += 1 +
@@ -9157,6 +9660,40 @@ int BuildingIndex::ByteSize() const {
     }
     
   }
+  // repeated uint32 attributeTagIds = 15;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->attributetagids_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->attributetagids(i));
+    }
+    total_size += 1 * this->attributetagids_size() + data_size;
+  }
+  
+  // repeated string attributeValues = 16;
+  total_size += 2 * this->attributevalues_size();
+  for (int i = 0; i < this->attributevalues_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->attributevalues(i));
+  }
+  
+  // repeated uint32 attributeTagIds2 = 17;
+  {
+    int data_size = 0;
+    for (int i = 0; i < this->attributetagids2_size(); i++) {
+      data_size += ::google::protobuf::internal::WireFormatLite::
+        UInt32Size(this->attributetagids2(i));
+    }
+    total_size += 2 * this->attributetagids2_size() + data_size;
+  }
+  
+  // repeated string attributeValues2 = 18;
+  total_size += 2 * this->attributevalues2_size();
+  for (int i = 0; i < this->attributevalues2_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->attributevalues2(i));
+  }
+  
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -9182,6 +9719,10 @@ void BuildingIndex::MergeFrom(const ::google::protobuf::Message& from) {
 
 void BuildingIndex::MergeFrom(const BuildingIndex& from) {
   GOOGLE_CHECK_NE(&from, this);
+  attributetagids_.MergeFrom(from.attributetagids_);
+  attributevalues_.MergeFrom(from.attributevalues_);
+  attributetagids2_.MergeFrom(from.attributetagids2_);
+  attributevalues2_.MergeFrom(from.attributevalues2_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_name()) {
       set_name(from.name());
@@ -9195,6 +9736,8 @@ void BuildingIndex::MergeFrom(const BuildingIndex& from) {
     if (from.has_name_en2()) {
       set_name_en2(from.name_en2());
     }
+  }
+  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     if (from.has_interpolation()) {
       set_interpolation(from.interpolation());
     }
@@ -9207,8 +9750,6 @@ void BuildingIndex::MergeFrom(const BuildingIndex& from) {
     if (from.has_x2()) {
       set_x2(from.x2());
     }
-  }
-  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
     if (from.has_y2()) {
       set_y2(from.y2());
     }
@@ -9235,7 +9776,7 @@ void BuildingIndex::CopyFrom(const BuildingIndex& from) {
 }
 
 bool BuildingIndex::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000061) != 0x00000061) return false;
+  if ((_has_bits_[0] & 0x00000601) != 0x00000601) return false;
   
   return true;
 }
@@ -9244,8 +9785,12 @@ void BuildingIndex::Swap(BuildingIndex* other) {
   if (other != this) {
     std::swap(name_, other->name_);
     std::swap(name_en_, other->name_en_);
+    attributetagids_.Swap(&other->attributetagids_);
+    attributevalues_.Swap(&other->attributevalues_);
     std::swap(name2_, other->name2_);
     std::swap(name_en2_, other->name_en2_);
+    attributetagids2_.Swap(&other->attributetagids2_);
+    attributevalues2_.Swap(&other->attributevalues2_);
     std::swap(interpolation_, other->interpolation_);
     std::swap(x_, other->x_);
     std::swap(y_, other->y_);
