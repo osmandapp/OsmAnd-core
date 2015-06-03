@@ -21,26 +21,16 @@ OsmAnd::WorldRegions::~WorldRegions()
 }
 
 bool OsmAnd::WorldRegions::loadWorldRegions(
-    QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
+    QList< std::shared_ptr<const WorldRegion> >* const outRegions,
+    const bool keepMapObjects /*= false*/,
+    const AreaI* const bbox31 /*= nullptr*/,
+    const VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
-    return _p->loadWorldRegions(outRegions, queryController);
-}
-
-OsmAnd::WorldRegions::WorldRegion::WorldRegion(
-    const QString& id_,
-    const QString& downloadId_,
-    const QString& name_,
-    const QHash<QString, QString>& localizedNames_,
-    const QString& parentId_ /*= QString::null*/)
-    : id(id_)
-    , downloadId(downloadId_)
-    , name(name_)
-    , localizedNames(localizedNames_)
-    , parentId(parentId_)
-{
-}
-
-OsmAnd::WorldRegions::WorldRegion::~WorldRegion()
-{
+    return _p->loadWorldRegions(
+        outRegions,
+        keepMapObjects,
+        bbox31,
+        visitor,
+        queryController);
 }

@@ -19,19 +19,23 @@ namespace OsmAnd
     class WorldRegions_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(WorldRegions_P)
+
     public:
-        typedef WorldRegions::WorldRegion WorldRegion;
+        typedef WorldRegions::VisitorFunction VisitorFunction;
 
     private:
     protected:
         WorldRegions_P(WorldRegions* const owner);
     public:
-        virtual ~WorldRegions_P();
+        ~WorldRegions_P();
 
         ImplementationInterface<WorldRegions> owner;
         
         bool loadWorldRegions(
-            QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
+            QList< std::shared_ptr<const WorldRegion> >* const outRegions,
+            const bool keepMapObjects,
+            const AreaI* const bbox31,
+            const VisitorFunction visitor,
             const std::shared_ptr<const IQueryController>& queryController) const;
 
     friend class OsmAnd::WorldRegions;

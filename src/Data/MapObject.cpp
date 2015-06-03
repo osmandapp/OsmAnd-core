@@ -217,6 +217,24 @@ QString OsmAnd::MapObject::getCaptionInLanguage(const QString& lang) const
     return *citCaption;
 }
 
+QHash<QString, QString> OsmAnd::MapObject::getCaptionsInAllLanguages() const
+{
+    QHash<QString, QString> result;
+
+    for (const auto& localizedNameAttributeEntry : rangeOf(constOf(attributeMapping->localizedNameAttributes)))
+    {
+        const auto& attributeId = localizedNameAttributeEntry.value();
+
+        const auto citCaption = captions.constFind(attributeId);
+        if (citCaption == captions.cend())
+            continue;
+
+        result.insert(localizedNameAttributeEntry.key().toString(), *citCaption);
+    }
+
+    return result;
+}
+
 OsmAnd::MapObject::AttributeMapping::AttributeMapping()
     : nativeNameAttributeId(std::numeric_limits<uint32_t>::max())
     , refAttributeId(std::numeric_limits<uint32_t>::max())

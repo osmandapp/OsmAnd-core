@@ -131,6 +131,7 @@ namespace OsmAnd
         QList<uint32_t> captionsOrder;
         virtual QString getCaptionInNativeLanguage() const;
         virtual QString getCaptionInLanguage(const QString& lang) const;
+        virtual QHash<QString, QString> getCaptionsInAllLanguages() const;
 
         // Default encoding-decoding rules
         static std::shared_ptr<const AttributeMapping> defaultAttributeMapping;

@@ -14,35 +14,15 @@
 
 namespace OsmAnd
 {
+    struct WorldRegion;
+
     class WorldRegions_P;
     class OSMAND_CORE_API WorldRegions
     {
         Q_DISABLE_COPY_AND_MOVE(WorldRegions)
+
     public:
-        class OSMAND_CORE_API WorldRegion
-        {
-            Q_DISABLE_COPY_AND_MOVE(WorldRegion)
-        private:
-        protected:
-            WorldRegion(
-                const QString& id,
-                const QString& downloadId,
-                const QString& name,
-                const QHash<QString, QString>& localizedNames,
-                const QString& parentId = QString::null);
-        public:
-            virtual ~WorldRegion();
-
-            const QString parentId;
-
-            const QString id;
-            const QString downloadId;
-            const QString name;
-            const QHash<QString, QString> localizedNames;
-
-        friend class OsmAnd::WorldRegions_P;
-        friend class OsmAnd::WorldRegions;
-        };
+        typedef std::function<bool(const std::shared_ptr<const OsmAnd::WorldRegion>& worldRegion)> VisitorFunction;
 
     private:
         PrivateImplementation<WorldRegions_P> _p;
@@ -63,7 +43,10 @@ namespace OsmAnd
         static const QString SouthAmericaRegionId;
 
         bool loadWorldRegions(
-            QHash< QString, std::shared_ptr<const WorldRegion> >& outRegions,
+            QList< std::shared_ptr<const WorldRegion> >* const outRegions,
+            const bool keepMapObjects = false,
+            const AreaI* const bbox31 = nullptr,
+            const VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
     };
 }
