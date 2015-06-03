@@ -861,8 +861,16 @@ namespace OsmAnd
         static bool parseArbitraryBool(const QString& value, const bool defValue, bool* wasParsed = nullptr);
 
         static int javaDoubleCompare(const double l, const double r);
-        static void findFiles(const QDir& origin, const QStringList& masks, QFileInfoList& files, const bool recursively = true);
-        static void findDirectories(const QDir& origin, const QStringList& masks, QFileInfoList& directories, const bool recursively = true);
+        static void findFiles(
+            const QDir& origin,
+            const QStringList& masks,
+            QFileInfoList& files,
+            const bool recursively = true);
+        static void findDirectories(
+            const QDir& origin,
+            const QStringList& masks,
+            QFileInfoList& directories,
+            const bool recursively = true);
 
         inline static QSet<ZoomLevel> enumerateZoomLevels(const ZoomLevel from, const ZoomLevel to)
         {

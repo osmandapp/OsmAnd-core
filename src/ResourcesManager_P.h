@@ -61,6 +61,37 @@ namespace OsmAnd
             const bool isUnmanagedStorage,
             QHash< QString, std::shared_ptr<const LocalResource> >& outResult) const;
 
+        void loadLocalResourcesFromPath_MapRegion(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_RoadMapRegion(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_SrtmMapRegion(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_WikiMapRegion(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_OBF(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_OnlineTileSourcesResource(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_MapStylesPresetsResource(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_MapStyleResource(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        void loadLocalResourcesFromPath_VoicePack(
+            const QString& storagePath,
+            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+        //void loadLocalResourcesFromPath_HillshadeRegion(
+        //    const QString& storagePath,
+        //    QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
+
         std::shared_ptr<const ObfFile> _miniBasemapObfFile;
 
         mutable QReadWriteLock _resourcesInRepositoryLock;
@@ -73,6 +104,7 @@ namespace OsmAnd
         bool uninstallMapRegion(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallRoadMapRegion(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallSrtmMapRegion(const std::shared_ptr<const InstalledResource>& resource);
+        bool uninstallWikiMapRegion(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallVoicePack(const std::shared_ptr<const InstalledResource>& resource);
 
         bool installMapRegionFromFile(
@@ -90,6 +122,11 @@ namespace OsmAnd
             const QString& filePath,
             std::shared_ptr<const InstalledResource>& outResource,
             const QString& localPath = QString::null);
+        bool installWikiMapRegionFromFile(
+            const QString& id,
+            const QString& filePath,
+            std::shared_ptr<const InstalledResource>& outResource,
+            const QString& localPath = QString::null);
         bool installVoicePackFromFile(
             const QString& id,
             const QString& filePath,
@@ -99,6 +136,7 @@ namespace OsmAnd
         bool updateMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateRoadMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateSrtmMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
+        bool updateWikiMapRegionFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
         bool updateVoicePackFromFile(std::shared_ptr<const InstalledResource>& resource, const QString& filePath);
 
         class OnlineTileSourcesProxy : public IOnlineTileSources

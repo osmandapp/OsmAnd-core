@@ -40,6 +40,7 @@ namespace OsmAnd
             MapRegion,
             RoadMapRegion,
             SrtmMapRegion,
+            WikiMapRegion,
             VoicePack,
             MapStyle,
             MapStylesPresets,
