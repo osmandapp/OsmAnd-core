@@ -730,7 +730,7 @@ bool OsmAnd::ResourcesManager_P::parseRepository(
         else if (resourceTypeValue == QLatin1String("srtm_map"))
             resourceType = ResourceType::SrtmMapRegion;
         else if (resourceTypeValue == QLatin1String("wikimap"))
-            resourceType = ResourceType::SrtmMapRegion;
+            resourceType = ResourceType::WikiMapRegion;
         else if (resourceTypeValue == QLatin1String("voice"))
             resourceType = ResourceType::VoicePack;
         else
