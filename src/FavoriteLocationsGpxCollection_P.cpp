@@ -79,6 +79,11 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::saveTo(QXmlStreamWriter& writer) 
         // <name>
         writer.writeTextElement(QLatin1String("name"), item->getTitle());
 
+        // <desc>
+        const auto description = item->getDescription();
+        if (!description.isEmpty())
+            writer.writeTextElement(QLatin1String("desc"), description);
+
         const auto group = item->getGroup();
         if (!group.isEmpty())
         {
@@ -160,6 +165,16 @@ bool OsmAnd::FavoriteLocationsGpxCollection_P::loadFrom(QXmlStreamReader& xmlRea
                 }
 
                 newItem->setTitle(xmlReader.readElementText());
+            }
+            else if (tagName == QLatin1String("desc"))
+            {
+                if (!newItem)
+                {
+                    LogPrintf(LogSeverityLevel::Warning, "Malformed favorites GPX file: unpaired <desc>");
+                    return false;
+                }
+
+                newItem->setDescription(xmlReader.readElementText());
             }
             else if (tagName == QLatin1String("category") || tagName == QLatin1String("type"))
             {

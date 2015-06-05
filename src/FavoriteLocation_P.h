@@ -34,6 +34,7 @@ namespace OsmAnd
 
         bool _isHidden;
         QString _title;
+        QString _description;
         QString _group;
         ColorRGB _color;
 
@@ -49,6 +50,9 @@ namespace OsmAnd
 
         QString getTitle() const;
         void setTitle(const QString& newTitle);
+
+        QString getDescription() const;
+        void setDescription(const QString& newDescription);
 
         QString getGroup() const;
         void setGroup(const QString& newGroup);

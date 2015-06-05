@@ -30,6 +30,7 @@ namespace OsmAnd
             const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const PointI position31,
             const QString& title,
+            const QString& description,
             const QString& group,
             const ColorRGB color);
 
@@ -37,6 +38,7 @@ namespace OsmAnd
             const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink,
             const LatLon latLon,
             const QString& title,
+            const QString& description,
             const QString& group,
             const ColorRGB color);
 
@@ -61,6 +63,9 @@ namespace OsmAnd
 
         virtual QString getTitle() const;
         virtual void setTitle(const QString& newTitle);
+
+        virtual QString getDescription() const;
+        virtual void setDescription(const QString& newDescription);
 
         virtual QString getGroup() const;
         virtual void setGroup(const QString& newGroup);

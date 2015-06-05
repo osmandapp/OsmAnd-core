@@ -7,6 +7,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
 	const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
 	const PointI position31_,
 	const QString& title_,
+    const QString& description_,
 	const QString& group_,
 	const ColorRGB color_)
 	: _p(new FavoriteLocation_P(this))
@@ -15,6 +16,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     , latLon(Utilities::convert31ToLatLon(position31_))
 {
 	setTitle(title_);
+    setDescription(description_);
     setGroup(group_);
     setColor(color_);
 	attach(containerLink_);
@@ -24,6 +26,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     const std::shared_ptr< Link<FavoriteLocationsCollection*> >& containerLink_,
     const LatLon latLon_,
     const QString& title_,
+    const QString& description_,
     const QString& group_,
     const ColorRGB color_)
     : _p(new FavoriteLocation_P(this))
@@ -32,6 +35,7 @@ OsmAnd::FavoriteLocation::FavoriteLocation(
     , latLon(latLon_)
 {
     setTitle(title_);
+    setDescription(description_);
     setGroup(group_);
     setColor(color_);
     attach(containerLink_);
@@ -91,6 +95,16 @@ QString OsmAnd::FavoriteLocation::getTitle() const
 void OsmAnd::FavoriteLocation::setTitle(const QString& newTitle)
 {
     _p->setTitle(newTitle);
+}
+
+QString OsmAnd::FavoriteLocation::getDescription() const
+{
+    return _p->getDescription();
+}
+
+void OsmAnd::FavoriteLocation::setDescription(const QString& newDescription)
+{
+    _p->setDescription(newDescription);
 }
 
 QString OsmAnd::FavoriteLocation::getGroup() const

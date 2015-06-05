@@ -48,6 +48,23 @@ void OsmAnd::FavoriteLocation_P::setTitle(const QString& newTitle)
 		link->_p->notifyFavoriteLocationChanged(owner);
 }
 
+QString OsmAnd::FavoriteLocation_P::getDescription() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _description;
+}
+
+void OsmAnd::FavoriteLocation_P::setDescription(const QString& newDescription)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _description = newDescription;
+
+    if (const auto link = _weakLink.lock())
+        link->_p->notifyFavoriteLocationChanged(owner);
+}
+
 QString OsmAnd::FavoriteLocation_P::getGroup() const
 {
 	QReadLocker scopedLocker(&_lock);

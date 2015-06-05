@@ -41,6 +41,9 @@ namespace OsmAnd
         virtual QString getTitle() const = 0;
         virtual void setTitle(const QString& newTitle) = 0;
 
+        virtual QString getDescription() const = 0;
+        virtual void setDescription(const QString& newDescription) = 0;
+
         virtual QString getGroup() const = 0;
         virtual void setGroup(const QString& newGroup) = 0;
 
