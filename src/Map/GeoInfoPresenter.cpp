@@ -19,15 +19,6 @@ std::shared_ptr<OsmAnd::IMapObjectsProvider> OsmAnd::GeoInfoPresenter::createMap
     return _p->createMapObjectsProvider();
 }
 
-std::shared_ptr<const OsmAnd::GeoInfoPresenter::MapObject::AttributeMapping>
-OsmAnd::GeoInfoPresenter::MapObject::defaultAttributeMapping(OsmAnd::modifyAndReturn(
-    std::shared_ptr<OsmAnd::GeoInfoPresenter::MapObject::AttributeMapping>(new OsmAnd::GeoInfoPresenter::MapObject::AttributeMapping()),
-    static_cast< std::function<void(std::shared_ptr<OsmAnd::GeoInfoPresenter::MapObject::AttributeMapping>& instance)> >([]
-    (std::shared_ptr<OsmAnd::GeoInfoPresenter::MapObject::AttributeMapping>& rules) -> void
-    {
-        rules->verifyRequiredMappingRegistered();
-    })));
-
 OsmAnd::GeoInfoPresenter::MapObject::AttributeMapping::AttributeMapping()
     : waypointAttributeId(std::numeric_limits<uint32_t>::max())
     , trackpointAttributeId(std::numeric_limits<uint32_t>::max())
@@ -154,22 +145,50 @@ void OsmAnd::GeoInfoPresenter::MapObject::AttributeMapping::registerMapping(
 }
 
 OsmAnd::GeoInfoPresenter::MapObject::MapObject(
-    const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_)
+    const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
+    const std::shared_ptr<const GeoInfoDocument::ExtraData>& extraData /*= nullptr*/)
     : geoInfoDocument(geoInfoDocument_)
 {
-    attributeMapping = defaultAttributeMapping;
+    const auto mapping = std::make_shared<AttributeMapping>();
+    attributeMapping = mapping;
+    
+    if (extraData)
+    {
+        auto lastUsedRuleId = 0;
+
+        const auto values = extraData->getValues();
+        for (const auto valueEntry : rangeOf(constOf(values)))
+        {
+            const auto& tag = valueEntry.key();
+            auto value = valueEntry.value().toString();
+
+            if (tag == QLatin1String("color"))
+                value = Utilities::resolveColorFromPalette(value, false);
+
+            uint32_t attributeId;
+            if (!mapping->encodeTagValue(tag, value, &attributeId))
+            {
+                attributeId = ++lastUsedRuleId;
+                mapping->registerMapping(attributeId, tag, value);
+            }
+
+            additionalAttributeIds.append(attributeId);
+        }
+    }
+
+    mapping->verifyRequiredMappingRegistered();
 
     additionalAttributeIds.append(geoInfoDocument->locationMarks.isEmpty()
-        ? defaultAttributeMapping->waypointsNotPresentAttributeId
-        : defaultAttributeMapping->waypointsPresentAttributeId);
+        ? mapping->waypointsNotPresentAttributeId
+        : mapping->waypointsPresentAttributeId);
 
     additionalAttributeIds.append(geoInfoDocument->tracks.isEmpty()
-        ? defaultAttributeMapping->trackpointsNotPresentAttributeId
-        : defaultAttributeMapping->trackpointsPresentAttributeId);
+        ? mapping->trackpointsNotPresentAttributeId
+        : mapping->trackpointsPresentAttributeId);
 
     additionalAttributeIds.append(geoInfoDocument->routes.isEmpty()
-        ? defaultAttributeMapping->routepointsNotPresentAttributeId
-        : defaultAttributeMapping->routepointsPresentAttributeId);
+        ? mapping->routepointsNotPresentAttributeId
+        : mapping->routepointsPresentAttributeId);
 }
 
 OsmAnd::GeoInfoPresenter::MapObject::~MapObject()
@@ -179,7 +198,7 @@ OsmAnd::GeoInfoPresenter::MapObject::~MapObject()
 OsmAnd::GeoInfoPresenter::WaypointMapObject::WaypointMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::LocationMark>& waypoint_)
-    : MapObject(geoInfoDocument_)
+    : MapObject(geoInfoDocument_, waypoint_->extraData)
     , waypoint(waypoint_)
 {
     const auto position31 = Utilities::convertLatLonTo31(waypoint->position);
@@ -188,11 +207,11 @@ OsmAnd::GeoInfoPresenter::WaypointMapObject::WaypointMapObject(
 
     if (!waypoint->name.isEmpty())
     {
-        captionsOrder.push_back(defaultAttributeMapping->nativeNameAttributeId);
-        captions[defaultAttributeMapping->nativeNameAttributeId] = waypoint->name;
+        captionsOrder.push_back(attributeMapping->nativeNameAttributeId);
+        captions[attributeMapping->nativeNameAttributeId] = waypoint->name;
     }
 
-    attributeIds.append(defaultAttributeMapping->waypointAttributeId);
+    attributeIds.append(std::static_pointer_cast<const AttributeMapping>(attributeMapping)->waypointAttributeId);
 }
 
 OsmAnd::GeoInfoPresenter::WaypointMapObject::~WaypointMapObject()
@@ -204,7 +223,7 @@ OsmAnd::GeoInfoPresenter::TrackpointMapObject::TrackpointMapObject(
     const std::shared_ptr<const GeoInfoDocument::Track>& track_,
     const std::shared_ptr<const GeoInfoDocument::TrackSegment>& trackSegment_,
     const std::shared_ptr<const GeoInfoDocument::LocationMark>& trackpoint_)
-    : MapObject(geoInfoDocument_)
+    : MapObject(geoInfoDocument_, trackpoint_->extraData)
     , track(track_)
     , trackSegment(trackSegment_)
     , trackpoint(trackpoint_)
@@ -215,11 +234,11 @@ OsmAnd::GeoInfoPresenter::TrackpointMapObject::TrackpointMapObject(
 
     if (!trackpoint->name.isEmpty())
     {
-        captionsOrder.push_back(defaultAttributeMapping->nativeNameAttributeId);
-        captions[defaultAttributeMapping->nativeNameAttributeId] = trackpoint->name;
+        captionsOrder.push_back(attributeMapping->nativeNameAttributeId);
+        captions[attributeMapping->nativeNameAttributeId] = trackpoint->name;
     }
 
-    attributeIds.append(defaultAttributeMapping->trackpointAttributeId);
+    attributeIds.append(std::static_pointer_cast<const AttributeMapping>(attributeMapping)->trackpointAttributeId);
 }
 
 OsmAnd::GeoInfoPresenter::TrackpointMapObject::~TrackpointMapObject()
@@ -230,7 +249,7 @@ OsmAnd::GeoInfoPresenter::TracklineMapObject::TracklineMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Track>& track_,
     const std::shared_ptr<const GeoInfoDocument::TrackSegment>& trackSegment_)
-    : MapObject(geoInfoDocument_)
+    : MapObject(geoInfoDocument_, trackSegment_->extraData)
     , track(track_)
     , trackSegment(trackSegment_)
 {
@@ -242,11 +261,11 @@ OsmAnd::GeoInfoPresenter::TracklineMapObject::TracklineMapObject(
     
     if (!track->name.isEmpty())
     {
-        captionsOrder.push_back(defaultAttributeMapping->nativeNameAttributeId);
-        captions[defaultAttributeMapping->nativeNameAttributeId] = track->name;
+        captionsOrder.push_back(attributeMapping->nativeNameAttributeId);
+        captions[attributeMapping->nativeNameAttributeId] = track->name;
     }
 
-    attributeIds.append(defaultAttributeMapping->tracklineAttributeId);
+    attributeIds.append(std::static_pointer_cast<const AttributeMapping>(attributeMapping)->tracklineAttributeId);
 }
 
 OsmAnd::GeoInfoPresenter::TracklineMapObject::~TracklineMapObject()
@@ -257,7 +276,7 @@ OsmAnd::GeoInfoPresenter::RoutepointMapObject::RoutepointMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Route>& route_,
     const std::shared_ptr<const GeoInfoDocument::LocationMark   >& routepoint_)
-    : MapObject(geoInfoDocument_)
+    : MapObject(geoInfoDocument_, routepoint_->extraData)
     , route(route_)
     , routepoint(routepoint_)
 {
@@ -267,11 +286,11 @@ OsmAnd::GeoInfoPresenter::RoutepointMapObject::RoutepointMapObject(
 
     if (!routepoint->name.isEmpty())
     {
-        captionsOrder.push_back(defaultAttributeMapping->nativeNameAttributeId);
-        captions[defaultAttributeMapping->nativeNameAttributeId] = routepoint->name;
+        captionsOrder.push_back(attributeMapping->nativeNameAttributeId);
+        captions[attributeMapping->nativeNameAttributeId] = routepoint->name;
     }
 
-    attributeIds.append(defaultAttributeMapping->routepointAttributeId);
+    attributeIds.append(std::static_pointer_cast<const AttributeMapping>(attributeMapping)->routepointAttributeId);
 }
 
 OsmAnd::GeoInfoPresenter::RoutepointMapObject::~RoutepointMapObject()
@@ -281,7 +300,7 @@ OsmAnd::GeoInfoPresenter::RoutepointMapObject::~RoutepointMapObject()
 OsmAnd::GeoInfoPresenter::RoutelineMapObject::RoutelineMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Route>& route_)
-    : MapObject(geoInfoDocument_)
+    : MapObject(geoInfoDocument_, route_->extraData)
     , route(route_)
 {
     points31.resize(route->points.size());
@@ -292,11 +311,11 @@ OsmAnd::GeoInfoPresenter::RoutelineMapObject::RoutelineMapObject(
 
     if (!route->name.isEmpty())
     {
-        captionsOrder.push_back(defaultAttributeMapping->nativeNameAttributeId);
-        captions[defaultAttributeMapping->nativeNameAttributeId] = route->name;
+        captionsOrder.push_back(attributeMapping->nativeNameAttributeId);
+        captions[attributeMapping->nativeNameAttributeId] = route->name;
     }
 
-    attributeIds.append(defaultAttributeMapping->routelineAttributeId);
+    attributeIds.append(std::static_pointer_cast<const AttributeMapping>(attributeMapping)->routelineAttributeId);
 }
 
 OsmAnd::GeoInfoPresenter::RoutelineMapObject::~RoutelineMapObject()

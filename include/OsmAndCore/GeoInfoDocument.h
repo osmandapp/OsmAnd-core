@@ -9,6 +9,8 @@
 #include <QList>
 #include <QDateTime>
 #include <QUrl>
+#include <QHash>
+#include <QVariant>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -27,6 +29,8 @@ namespace OsmAnd
         {
             ExtraData();
             virtual ~ExtraData();
+
+            virtual QHash<QString, QVariant> getValues(const bool recursive = true) const = 0;
         };
 
         struct OSMAND_CORE_API Link

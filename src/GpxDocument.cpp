@@ -2171,12 +2171,56 @@ OsmAnd::GpxDocument::GpxExtension::~GpxExtension()
 {
 }
 
+QHash<QString, QVariant> OsmAnd::GpxDocument::GpxExtension::getValues(const bool recursive /*= true*/) const
+{
+    QHash<QString, QVariant> values;
+
+    if (!value.isEmpty())
+        values.insert(name, value);
+
+    const auto prefix = name + QLatin1String(":");
+
+    for (const auto attributeEntry : rangeOf(constOf(attributes)))
+        values.insert(prefix + attributeEntry.key(), attributeEntry.value());
+
+    if (recursive)
+    {
+        for (const auto& subextension : constOf(subextensions))
+        {
+            const auto subvalues = subextension->getValues();
+            for (const auto attributeEntry : rangeOf(constOf(subvalues)))
+                values.insert(prefix + attributeEntry.key(), attributeEntry.value());
+        }
+    }
+
+    return values;
+}
+
 OsmAnd::GpxDocument::GpxExtensions::GpxExtensions()
 {
 }
 
 OsmAnd::GpxDocument::GpxExtensions::~GpxExtensions()
 {
+}
+
+QHash<QString, QVariant> OsmAnd::GpxDocument::GpxExtensions::getValues(const bool recursive /*= true*/) const
+{
+    QHash<QString, QVariant> values;
+
+    if (!value.isEmpty())
+        values.insert(QString::null, value);
+
+    for (const auto attributeEntry : rangeOf(constOf(attributes)))
+        values.insert(attributeEntry.key(), attributeEntry.value());
+
+    if (recursive)
+    {
+        for (const auto& subextension : constOf(extensions))
+            values.unite(subextension->getValues());
+    }
+
+    return values;
 }
 
 OsmAnd::GpxDocument::GpxLink::GpxLink()

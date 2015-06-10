@@ -263,6 +263,33 @@ void OsmAnd::MapObject::AttributeMapping::verifyRequiredMappingRegistered()
     decodeMap.squeeze();
 }
 
+
+bool OsmAnd::MapObject::AttributeMapping::encodeTagValue(
+    const QStringRef& tagRef,
+    const QStringRef& valueRef,
+    uint32_t* const pOutAttributeId /*= nullptr*/) const
+{
+    const auto citTagsGroup = encodeMap.constFind(tagRef);
+    if (citTagsGroup == encodeMap.cend())
+        return false;
+    const auto citEncode = citTagsGroup->constFind(valueRef);
+    if (citEncode == citTagsGroup->cend())
+        return false;
+
+    if (pOutAttributeId)
+        *pOutAttributeId = *citEncode;
+
+    return true;
+}
+
+bool OsmAnd::MapObject::AttributeMapping::encodeTagValue(
+    const QString& tag,
+    const QString& value,
+    uint32_t* const pOutAttributeId /*= nullptr*/) const
+{
+    return encodeTagValue(&tag, &value, pOutAttributeId);
+}
+
 void OsmAnd::MapObject::AttributeMapping::registerRequiredMapping(uint32_t& lastUsedEntryId)
 {
     if (nativeNameAttributeId == std::numeric_limits<uint32_t>::max())

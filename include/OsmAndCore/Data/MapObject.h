@@ -63,6 +63,15 @@ namespace OsmAnd
 
             virtual void registerMapping(const uint32_t id, const QString& tag, const QString& value);
             void verifyRequiredMappingRegistered();
+
+            bool encodeTagValue(
+                const QStringRef& tagRef,
+                const QStringRef& valueRef,
+                uint32_t* const pOutAttributeId = nullptr) const;
+            bool encodeTagValue(
+                const QString& tag,
+                const QString& value,
+                uint32_t* const pOutAttributeId = nullptr) const;
         };
 
         typedef uint64_t SharingKey;

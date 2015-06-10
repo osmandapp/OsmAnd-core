@@ -245,6 +245,8 @@ namespace OsmAnd
         }
     };
 
+    union ColorHSV;
+
     union ColorRGB
     {
         inline ColorRGB()
@@ -344,6 +346,38 @@ namespace OsmAnd
                 (static_cast<uint32_t>(b) << 0);
             return QLatin1Char('#') + QString::number(value, 16).right(6);
         }
+
+        ColorHSV toHSV() const;
+    };
+
+    union ColorHSV
+    {
+        inline ColorHSV()
+            : h(0)
+            , s(0)
+            , v(100)
+        {
+        }
+
+        inline ColorHSV(const double h_, const double s_, const double v_)
+            : h(h_)
+            , s(s_)
+            , v(v_)
+        {
+        }
+
+#if !defined(SWIG)
+        float value[3];
+        struct
+        {
+            float h;
+            float s;
+            float v;
+        };
+#else
+        // Fake unwrap for SWIG
+        float h, s, v;
+#endif // !defined(SWIG)
     };
 }
 

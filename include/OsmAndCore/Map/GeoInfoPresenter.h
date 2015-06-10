@@ -57,14 +57,13 @@ namespace OsmAnd
 
         private:
         protected:
-            MapObject(const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument);
+            MapObject(
+                const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument,
+                const std::shared_ptr<const GeoInfoDocument::ExtraData>& extraData = nullptr);
         public:
             virtual ~MapObject();
 
             const std::shared_ptr<const GeoInfoDocument> geoInfoDocument;
-
-            // Default encoding-decoding rules
-            static std::shared_ptr<const AttributeMapping> defaultAttributeMapping;
         };
 
         class OSMAND_CORE_API WaypointMapObject : public MapObject

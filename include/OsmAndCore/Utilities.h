@@ -904,6 +904,8 @@ namespace OsmAnd
             const float itemLength,
             const float padding = 0.0f,
             const float spacing = 0.0f);
+
+        static QString resolveColorFromPalette(const QString& input, const bool usePalette6);
     private:
         Utilities();
         ~Utilities();

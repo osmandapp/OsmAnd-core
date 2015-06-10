@@ -41,12 +41,12 @@ namespace OsmAnd
             RoadMapRegion,
             SrtmMapRegion,
             WikiMapRegion,
+            HillshadeRegion,
+            HeightmapRegion,
             VoicePack,
             MapStyle,
             MapStylesPresets,
             OnlineTileSources,
-            //HillshadeRegion,
-            //HeightmapRegion
         };
 
         enum class ResourceOrigin
@@ -275,7 +275,9 @@ namespace OsmAnd
         bool uninstallResource(const QString& id);
         bool installFromFile(const QString& filePath, const ResourceType resourceType);
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
-        bool installFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
+        bool installFromRepository(
+            const QString& id,
+            const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
         bool installFromRepository(const QString& id, const QString& filePath);
 
         // Updates:
@@ -283,7 +285,9 @@ namespace OsmAnd
         QHash< QString, std::shared_ptr<const LocalResource> > getOutdatedInstalledResources() const;
         bool updateFromFile(const QString& filePath);
         bool updateFromFile(const QString& id, const QString& filePath);
-        bool updateFromRepository(const QString& id, const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
+        bool updateFromRepository(
+            const QString& id,
+            const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
         bool updateFromRepository(const QString& id, const QString& filePath);
 
         // Observables

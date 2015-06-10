@@ -31,6 +31,8 @@ namespace OsmAnd
             QString value;
             QHash<QString, QString> attributes;
             QList< Ref<GpxExtension> > subextensions;
+
+            virtual QHash<QString, QVariant> getValues(const bool recursive = true) const Q_DECL_OVERRIDE;
         };
 
         struct OSMAND_CORE_API GpxExtensions : public ExtraData
@@ -41,6 +43,8 @@ namespace OsmAnd
             QHash<QString, QString> attributes;
             QString value;
             QList< Ref<GpxExtension> > extensions;
+
+            virtual QHash<QString, QVariant> getValues(const bool recursive = true) const Q_DECL_OVERRIDE;
         };
 
         struct OSMAND_CORE_API GpxLink : public Link

@@ -389,3 +389,163 @@ QList<OsmAnd::Utilities::ItemPointOnPath> OsmAnd::Utilities::calculateItemPoints
 
     return itemPoints;
 }
+
+QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const bool usePalette6)
+{
+    auto value = input.toLower();
+
+    bool colorWasParsed = false;
+    const auto parsedColor = parseColor(input, ColorARGB(), &colorWasParsed);
+    ColorHSV hsv;
+    if (colorWasParsed)
+        hsv = ColorRGB(parsedColor).toHSV();
+    const auto h = hsv.h;
+    const auto s = hsv.s;
+    const auto v = hsv.v;
+
+    if ((h < 16 && s > 25 && v > 30) ||
+        (h > 326 && s > 25 && v > 30) ||
+        (h < 16 && s > 10 && s < 25 && v > 90) ||
+        (h > 326 && s > 10 && s < 25 && v > 90) ||
+        value == QLatin1String("pink") ||
+        value.contains("red") ||
+        value == QLatin1String("pink/white") ||
+        value == QLatin1String("white-red") ||
+        value == QLatin1String("ff0000") ||
+        value == QLatin1String("800000") ||
+        value == QLatin1String("red/tan") ||
+        value == QLatin1String("tan/red") ||
+        value == QLatin1String("rose"))
+    {
+        value = QLatin1String("red");
+    }
+    else if (
+        (h >= 16 && h < 50 && s > 25 && v > 20 && v < 60) ||
+        value == QLatin1String("brown") ||
+        value == QLatin1String("darkbrown") ||
+        value == QLatin1String("tan/brown") ||
+        value == QLatin1String("tan_brown") ||
+        value == QLatin1String("brown/tan") ||
+        value == QLatin1String("light_brown") ||
+        value == QLatin1String("brown/white") ||
+        value == QLatin1String("tan"))
+    {
+        value = QLatin1String(usePalette6 ? "red" : "brown");
+    }
+    else if (
+        (h >= 16 && h < 45 && v > 60) ||
+        value == QLatin1String("orange") ||
+        value == QLatin1String("cream") ||
+        value == QLatin1String("gold") ||
+        value == QLatin1String("yellow-red") ||
+        value == QLatin1String("ff8c00") ||
+        value == QLatin1String("peach"))
+    {
+        value = QLatin1String(usePalette6 ? "red" : "orange");
+    }
+    else if (
+        (h >= 46 && h < 73 && s > 30 && v > 80) ||
+        value == QLatin1String("yellow") ||
+        value == QLatin1String("gelb") ||
+        value == QLatin1String("ffff00") ||
+        value == QLatin1String("beige") ||
+        value == QLatin1String("lightyellow") ||
+        value == QLatin1String("jaune"))
+    {
+        value = QLatin1String("yellow");
+    }
+    else if ((h >= 46 && h < 73 && s > 30 && v > 60 && v < 80))
+    {
+        value = QLatin1String(usePalette6 ? "yellow" : "darkyellow");
+    }
+    else if ((h >= 74 && h < 150 && s > 30 && v > 77) ||
+        value == QLatin1String("lightgreen") ||
+        value == QLatin1String("lime") ||
+        value == QLatin1String("seagreen") ||
+        value == QLatin1String("00ff00") ||
+        value == QLatin1String("yellow/green"))
+    {
+        value = QLatin1String(usePalette6 ? "green" : "lightgreen");
+    }
+    else if (
+        (h >= 74 && h < 174 && s > 30 && v > 30 && v < 77) ||
+        value.contains("green") ||
+        value == QLatin1String("darkgreen") ||
+        value == QLatin1String("natural") ||
+        value == QLatin1String("natur") ||
+        value == QLatin1String("mediumseagreen") ||
+        value == QLatin1String("green/white") ||
+        value == QLatin1String("white/green") ||
+        value == QLatin1String("blue/yellow") ||
+        value == QLatin1String("vert") ||
+        value == QLatin1String("green/blue") ||
+        value == QLatin1String("olive"))
+    {
+        value = QLatin1String("green");
+    }
+    else if (
+        (h >= 174 && h < 215 && s > 15 && v > 50) ||
+        value == QLatin1String("lightblue") ||
+        value == QLatin1String("aqua") ||
+        value == QLatin1String("cyan") ||
+        value == QLatin1String("87ceeb") ||
+        value == QLatin1String("turquoise"))
+    {
+        value = QLatin1String(usePalette6 ? "blue" : "lightblue");
+    }
+    else if (
+        (h >= 215 && h < 239 && s > 40 && v > 30) ||
+        value.contains("blue") ||
+        value == QLatin1String("0000ff") ||
+        value == QLatin1String("teal") ||
+        value == QLatin1String("darkblue") ||
+        value == QLatin1String("blu") ||
+        value == QLatin1String("navy"))
+    {
+        value = QLatin1String("blue");
+    }
+    else if (
+        (h >= 239 && h < 325 && s > 15 && v > 45) ||
+        (h > 250 && h < 325 && s > 10 && s < 25 && v > 90) ||
+        value == QLatin1String("purple") ||
+        value == QLatin1String("violet") ||
+        value == QLatin1String("magenta") ||
+        value == QLatin1String("maroon") ||
+        value == QLatin1String("fuchsia") ||
+        value == QLatin1String("800080"))
+    {
+        value = QLatin1String(usePalette6 ? "blue" : "purple");
+    }
+    else if (
+        (colorWasParsed && v < 20) ||
+        value.contains("black") ||
+        value == QLatin1String("darkgrey"))
+    {
+        value = QLatin1String("black");
+    }
+    else if (
+        (s < 5 && v > 30 && v < 90) ||
+        value == QLatin1String("gray") ||
+        value == QLatin1String("grey") ||
+        value == QLatin1String("grey/tan") ||
+        value == QLatin1String("silver") ||
+        value == QLatin1String("srebrny") ||
+        value == QLatin1String("lightgrey") ||
+        value == QLatin1String("lightgray") ||
+        value == QLatin1String("metal"))
+    {
+        value = QLatin1String( usePalette6 ? "white" : "gray");
+    }
+    else if (
+        (s < 5 && v > 95) ||
+        value.contains("white") /*|| value == QLatin1String("white/tan")*/)
+    {
+        value = QLatin1String("white");
+    }
+    else if (colorWasParsed)
+    {
+        value = QLatin1String("gray");
+    }
+
+    return value;
+}
