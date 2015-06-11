@@ -247,7 +247,7 @@ namespace OsmAnd
 
     union ColorHSV;
 
-    union ColorRGB
+    union OSMAND_CORE_API ColorRGB
     {
         inline ColorRGB()
             : r(255)
@@ -257,7 +257,7 @@ namespace OsmAnd
         }
 
 #if !defined(SWIG)
-        static ColorRGB fromSkColor(const SkColor skColor)
+        inline static ColorRGB fromSkColor(const SkColor skColor)
         {
             return ColorRGB(
                 SkColorGetR(skColor),
