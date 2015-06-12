@@ -101,13 +101,15 @@ OsmAnd::UnresolvedMapStyle::Parameter::Parameter(
     const QString& category_,
     const QString& name_,
     const MapStyleValueDataType dataType_,
-    const QStringList& possibleValues_)
+    const QStringList& possibleValues_,
+    const QString& defaultValueDescription_)
     : title(title_)
     , description(description_)
     , category(category_)
     , name(name_)
     , dataType(dataType_)
     , possibleValues(possibleValues_)
+    , defaultValueDescription(defaultValueDescription_)
 {
 }
 

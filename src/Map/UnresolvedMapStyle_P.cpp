@@ -144,35 +144,37 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
             {
                 const auto& attribs = xmlReader.attributes();
 
-                const auto titleAttribValue = attribs.value(QLatin1String("name")).toString();
-                const auto descriptionAttribValue = attribs.value(QLatin1String("description")).toString();
-                const auto categoryAttribValue = attribs.value(QLatin1String("category")).toString();
-                const auto nameAttribValue = attribs.value(QLatin1String("attr")).toString();
-                const auto typeAttribValue = attribs.value(QLatin1String("type")).toString();
+                const auto title = attribs.value(QLatin1String("name")).toString();
+                const auto description = attribs.value(QLatin1String("description")).toString();
+                const auto category = attribs.value(QLatin1String("category")).toString();
+                const auto name = attribs.value(QLatin1String("attr")).toString();
+                const auto valueType = attribs.value(QLatin1String("type")).toString();
                 const auto possibleValues = attribs.value(QLatin1String("possibleValues")).toString()
                     .split(QLatin1Char(','), QString::SkipEmptyParts);
+                const auto defaultValueDescription = attribs.value(QLatin1String("defaultValueDescription")).toString();
 
                 MapStyleValueDataType dataType;
-                if (typeAttribValue == QLatin1String("string"))
+                if (valueType == QLatin1String("string"))
                     dataType = MapStyleValueDataType::String;
-                else if (typeAttribValue == QLatin1String("boolean"))
+                else if (valueType == QLatin1String("boolean"))
                     dataType = MapStyleValueDataType::Boolean;
                 else
                 {
                     LogPrintf(LogSeverityLevel::Error,
                         "'%s' type is not supported (%s)",
-                        qPrintable(typeAttribValue),
-                        qPrintable(nameAttribValue));
+                        qPrintable(valueType),
+                        qPrintable(name));
                     return false;
                 }
 
                 const std::shared_ptr<const Parameter> newParameter(new Parameter(
-                    titleAttribValue,
-                    descriptionAttribValue,
-                    categoryAttribValue,
-                    nameAttribValue,
+                    title,
+                    description,
+                    category,
+                    name,
                     dataType,
-                    possibleValues));
+                    possibleValues,
+                    defaultValueDescription));
                 parameters.push_back(qMove(newParameter));
             }
             else if (xmlReader.isEndElement())
