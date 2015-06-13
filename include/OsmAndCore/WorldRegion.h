@@ -22,6 +22,7 @@ namespace OsmAnd
         QString fullRegionName;
         QString parentRegionName;
         QString regionName;
+        bool boundary;
 
         QString downloadName;
 
