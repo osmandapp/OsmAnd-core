@@ -49,6 +49,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
         auto downloadNameAttributeId = std::numeric_limits<uint32_t>::max();
         auto regionFullNameAttributeId = std::numeric_limits<uint32_t>::max();
         auto regionParentNameAttributeId = std::numeric_limits<uint32_t>::max();
+        auto osmandRegionId = std::numeric_limits<uint32_t>::max();
 
         bool attributesLocated = false;
         const auto worldRegionsCollector =
@@ -68,6 +69,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     const QString downloadNameAttribute(QLatin1String("download_name"));
                     const QString regionFullNameAttribute(QLatin1String("region_full_name"));
                     const QString regionParentNameAttribute(QLatin1String("region_parent_name"));
+                    const QString osmandRegionAttribute(QLatin1String("osmand_region"));
 
                     const auto& encodeMap = mapObject->attributeMapping->encodeMap;
                     auto citAttributes = encodeMap.cend();
@@ -83,6 +85,9 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
 
                     if ((citAttributes = encodeMap.constFind(&regionParentNameAttribute)) != encodeMap.cend())
                         regionParentNameAttributeId = citAttributes->constBegin().value();
+                    
+                    if ((citAttributes = encodeMap.constFind(&osmandRegionAttribute)) != encodeMap.cend())
+                        osmandRegionId = citAttributes->constBegin().value();
 
                     attributesLocated = true;
                 }
@@ -104,6 +109,10 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     else if (attributeId == regionFullNameAttributeId)
                     {
                         worldRegion->fullRegionName = value;
+                    }
+                    else if (attributeId == osmandRegionId)
+                    {
+                        worldRegion->boundary = value != "yes";
                     }
                     else if (attributeId == regionParentNameAttributeId)
                     {
