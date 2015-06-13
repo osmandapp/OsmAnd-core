@@ -94,6 +94,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                 }
 
                 auto worldRegion = std::make_shared<WorldRegion>();
+                worldRegion->boundary = mapObject->containsAttribute("osmand_region", "boundary");
                 for (const auto& captionEntry : rangeOf(constOf(mapObject->captions)))
                 {
                     const auto& attributeId = captionEntry.key();
@@ -110,10 +111,6 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     else if (attributeId == regionFullNameAttributeId)
                     {
                         worldRegion->fullRegionName = value;
-                    }
-                    else if (attributeId == osmandRegionId)
-                    {
-                        worldRegion->boundary = value != "yes";
                     }
                     else if (attributeId == regionParentNameAttributeId)
                     {
