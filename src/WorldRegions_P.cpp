@@ -60,6 +60,7 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                 &keyNameAttributeId,
                 &downloadNameAttributeId,
                 &regionFullNameAttributeId,
+                &osmandRegionId,
                 &regionParentNameAttributeId]
             (const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject) -> bool
             {
