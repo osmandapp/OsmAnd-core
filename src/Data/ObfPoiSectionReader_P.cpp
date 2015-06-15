@@ -766,6 +766,19 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
+                auto itStringOrDataValue = mutableIteratorOf(stringOrDataValues);
+                while (itStringOrDataValue.hasNext())
+                {
+                    const auto& entry = itStringOrDataValue.next();
+
+                    const auto& tag = subtypes->subtypes[entry.key()]->tagName;
+                    if (!tag.startsWith(QLatin1String("name:")))
+                        continue;
+
+                    localizedNames.insert(tag.mid(5), entry.value().toString());
+                    itStringOrDataValue.remove();
+                }
+
                 if (!query.isNull())
                 {
                     bool accept = false;
@@ -794,19 +807,6 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
 
                 amenity->nativeName = qMove(nativeName);
                 amenity->localizedNames = qMove(localizedNames);
-                auto itStringOrDataValue = mutableIteratorOf(stringOrDataValues);
-                while (itStringOrDataValue.hasNext())
-                {
-                    const auto& entry = itStringOrDataValue.next();
-
-                    const auto& tag = subtypes->subtypes[entry.key()]->tagName;
-                    if (!tag.startsWith(QLatin1String("name:")))
-                        continue;
-
-                    amenity->localizedNames.insert(tag.mid(5), entry.value().toString());
-                    itStringOrDataValue.remove();
-                }
-
                 amenity->position31 = position31;
                 amenity->categories = qMove(categories);
                 if (autogenerateId)
