@@ -238,13 +238,15 @@ OsmAnd::ResolvedMapStyle::Parameter::Parameter(
     const QString& category_,
     const StringId nameId_,
     const MapStyleValueDataType dataType_,
-    const QList<MapStyleConstantValue>& possibleValues_)
+    const QList<MapStyleConstantValue>& possibleValues_,
+    const QString& defaultValueDescription_)
     : title(title_)
     , description(description_)
     , category(category_)
     , nameId(nameId_)
     , dataType(dataType_)
     , possibleValues(possibleValues_)
+    , defaultValueDescription(defaultValueDescription_)
 {
 }
 
@@ -280,6 +282,11 @@ OsmAnd::MapStyleValueDataType OsmAnd::ResolvedMapStyle::Parameter::getDataType()
 QList<OsmAnd::MapStyleConstantValue> OsmAnd::ResolvedMapStyle::Parameter::getPossibleValues() const
 {
     return possibleValues;
+}
+
+QString OsmAnd::ResolvedMapStyle::Parameter::getDefaultValueDescription() const
+{
+    return defaultValueDescription;
 }
 
 OsmAnd::ResolvedMapStyle::ParameterValueDefinition::ParameterValueDefinition(

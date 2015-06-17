@@ -102,6 +102,7 @@ namespace OsmAnd
             virtual SWIG_CLARIFY(IMapStyle, StringId) getNameId() const = 0;
             virtual MapStyleValueDataType getDataType() const = 0;
             virtual QList<MapStyleConstantValue> getPossibleValues() const = 0;
+            virtual QString getDefaultValueDescription() const = 0;
         };
 
         class OSMAND_CORE_API IAttribute

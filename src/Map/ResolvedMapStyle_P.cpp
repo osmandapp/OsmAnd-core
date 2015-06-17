@@ -293,7 +293,8 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveParameters()
                 unresolvedParameter->category,
                 nameId,
                 unresolvedParameter->dataType,
-                resolvedPossibleValues));
+                resolvedPossibleValues,
+                unresolvedParameter->defaultValueDescription));
             resolvedParameter = newResolvedParameter;
 
             // Register parameter as value definition
