@@ -19,7 +19,6 @@
 #include "IOnlineTileSources.h"
 #include "ObfDataInterface.h"
 #include "IMapStylesCollection.h"
-#include "IMapStylesPresetsCollection.h"
 #include "IObfsCollection.h"
 
 namespace OsmAnd
@@ -38,7 +37,6 @@ namespace OsmAnd
 
         typedef ResourcesManager::ObfMetadata ObfMetadata;
         typedef ResourcesManager::MapStyleMetadata MapStyleMetadata;
-        typedef ResourcesManager::MapStylesPresetsMetadata MapStylesPresetsMetadata;
         typedef ResourcesManager::OnlineTileSourcesMetadata OnlineTileSourcesMetadata;
 
     private:
@@ -78,9 +76,6 @@ namespace OsmAnd
             const QString& storagePath,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
         void loadLocalResourcesFromPath_OnlineTileSourcesResource(
-            const QString& storagePath,
-            QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
-        void loadLocalResourcesFromPath_MapStylesPresetsResource(
             const QString& storagePath,
             QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const;
         void loadLocalResourcesFromPath_MapStyleResource(
@@ -198,23 +193,6 @@ namespace OsmAnd
 
         friend class OsmAnd::ResourcesManager_P;
         };
-
-        class MapStylesPresetsCollectionProxy : public IMapStylesPresetsCollection
-        {
-        private:
-        protected:
-            MapStylesPresetsCollectionProxy(ResourcesManager_P* owner);
-        public:
-            virtual ~MapStylesPresetsCollectionProxy();
-
-            ResourcesManager_P* const owner;
-
-            virtual QList< std::shared_ptr<const MapStylePreset> > getCollection() const;
-            virtual QList< std::shared_ptr<const MapStylePreset> > getCollectionFor(const QString& styleName) const;
-            virtual std::shared_ptr<const MapStylePreset> getPreset(const QString& styleName, const QString& presetName) const;
-
-        friend class OsmAnd::ResourcesManager_P;
-        };
     protected:
         ResourcesManager_P(ResourcesManager* owner);
 
@@ -269,7 +247,6 @@ namespace OsmAnd
 
         const std::shared_ptr<const IOnlineTileSources> onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection> mapStylesCollection;
-        const std::shared_ptr<const IMapStylesPresetsCollection> mapStylesPresetsCollection;
         const std::shared_ptr<const IObfsCollection> obfsCollection;
 
     friend class OsmAnd::ResourcesManager;

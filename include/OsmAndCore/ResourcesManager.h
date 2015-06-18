@@ -22,10 +22,8 @@ namespace OsmAnd
 {
     class IOnlineTileSources;
     class IMapStylesCollection;
-    class IMapStylesPresetsCollection;
     class IObfsCollection;
     class UnresolvedMapStyle;
-    class MapStylesPresetsCollection;
     class OnlineTileSources;
 
     class ResourcesManager_P;
@@ -208,17 +206,6 @@ namespace OsmAnd
             Q_DISABLE_COPY_AND_MOVE(MapStyleMetadata);
         };
 
-        struct OSMAND_CORE_API MapStylesPresetsMetadata : public Resource::Metadata
-        {
-            MapStylesPresetsMetadata(const std::shared_ptr<const MapStylesPresetsCollection>& presets);
-            virtual ~MapStylesPresetsMetadata();
-
-            const std::shared_ptr<const MapStylesPresetsCollection> presets;
-
-        private:
-            Q_DISABLE_COPY_AND_MOVE(MapStylesPresetsMetadata);
-        };
-
         struct OSMAND_CORE_API OnlineTileSourcesMetadata : public Resource::Metadata
         {
             OnlineTileSourcesMetadata(const std::shared_ptr<const OnlineTileSources>& sources);
@@ -303,7 +290,6 @@ namespace OsmAnd
 
         const std::shared_ptr<const IOnlineTileSources>& onlineTileSources;
         const std::shared_ptr<const IMapStylesCollection>& mapStylesCollection;
-        const std::shared_ptr<const IMapStylesPresetsCollection>& mapStylesPresetsCollection;
         const std::shared_ptr<const IObfsCollection>& obfsCollection;
     };
 }

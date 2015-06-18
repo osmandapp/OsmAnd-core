@@ -18,7 +18,6 @@
 #include "ObfDataInterface.h"
 #include "ResolvedMapStyle.h"
 #include "UnresolvedMapStyle.h"
-#include "MapStylesPresetsCollection.h"
 #include "OnlineTileSources.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
@@ -31,7 +30,6 @@ OsmAnd::ResourcesManager_P::ResourcesManager_P(ResourcesManager* owner_)
     , _resourcesInRepositoryLoaded(false)
     , onlineTileSources(new OnlineTileSourcesProxy(this))
     , mapStylesCollection(new MapStylesCollectionProxy(this))
-    , mapStylesPresetsCollection(new MapStylesPresetsCollectionProxy(this))
     , obfsCollection(new ObfsCollectionProxy(this))
 {
     _fileSystemWatcher->moveToThread(gMainThread);
@@ -115,16 +113,6 @@ void OsmAnd::ResourcesManager_P::inflateBuiltInResources()
         ResourceType::MapStyle,
         std::shared_ptr<const Resource::Metadata>(new MapStyleMetadata(defaultMapStyle))));
     _builtinResources.insert(defaultMapStyleResource->id, defaultMapStyleResource);
-
-    // Built-in presets for "default" map style
-    const std::shared_ptr<MapStylesPresetsCollection> defaultMapStylesPresets(new MapStylesPresetsCollection());
-    defaultMapStylesPresets->loadFrom(getCoreResourcesProvider()->getResource(
-        QLatin1String("map/presets/default.map_styles_presets.xml")));
-    std::shared_ptr<const BuiltinResource> defaultMapStylesPresetsResource(new BuiltinResource(
-        QLatin1String("default.map_styles_presets.xml"),
-        ResourceType::MapStylesPresets,
-        std::shared_ptr<const Resource::Metadata>(new MapStylesPresetsMetadata(defaultMapStylesPresets))));
-    _builtinResources.insert(defaultMapStylesPresetsResource->id, defaultMapStylesPresetsResource);
 
     // Built-in online tile sources
     const std::shared_ptr<const BuiltinResource> defaultOnlineTileSourcesResource(new BuiltinResource(
@@ -336,10 +324,6 @@ bool OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath(
     // Find ResourceType::MapStyleResource -> "*.render.xml" files (only in unmanaged storage)
     if (isUnmanagedStorage)
         loadLocalResourcesFromPath_MapStyleResource(storagePath, outResult);
-
-    // Find ResourceType::MapStylesPresetsResource -> "*.map_styles_presets.xml" files (only in unmanaged storage)
-    if (isUnmanagedStorage)
-        loadLocalResourcesFromPath_MapStylesPresetsResource(storagePath, outResult);
 
     // Find ResourceType::OnlineTileSourcesResource -> "*.online_tile_sources.xml" files (only in unmanaged storage)
     if (isUnmanagedStorage)
@@ -617,44 +601,6 @@ void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_MapStyleResource(
             fileSize,
             fileName);
         pLocalResource->_metadata.reset(new MapStyleMetadata(mapStyle));
-        std::shared_ptr<const LocalResource> localResource(pLocalResource);
-        outResult.insert(resourceId, qMove(localResource));
-    }
-}
-
-void OsmAnd::ResourcesManager_P::loadLocalResourcesFromPath_MapStylesPresetsResource(
-    const QString& storagePath,
-    QHash< QString, std::shared_ptr<const LocalResource> > &outResult) const
-{
-    QFileInfoList mapStylesPresetsFileInfos;
-    Utilities::findFiles(
-        storagePath,
-        QStringList() << QLatin1String("*.map_styles_presets.xml"),
-        mapStylesPresetsFileInfos,
-        false);
-    for (const auto& mapStylesPresetsFileInfo : constOf(mapStylesPresetsFileInfos))
-    {
-        const auto filePath = mapStylesPresetsFileInfo.absoluteFilePath();
-        const auto fileSize = mapStylesPresetsFileInfo.size();
-
-        // Load resource
-        const std::shared_ptr<MapStylesPresetsCollection> presets(new MapStylesPresetsCollection());
-        if (!presets->loadFrom(filePath))
-        {
-            LogPrintf(LogSeverityLevel::Warning, "Failed to load map styles presets from '%s'", qPrintable(filePath));
-            continue;
-        }
-
-        // Create local resource entry
-        const auto fileName = mapStylesPresetsFileInfo.fileName();
-        const auto resourceId = fileName.toLower();
-        const auto pLocalResource = new UnmanagedResource(
-            resourceId,
-            ResourceType::MapStylesPresets,
-            filePath,
-            fileSize,
-            fileName);
-        pLocalResource->_metadata.reset(new MapStylesPresetsMetadata(presets));
         std::shared_ptr<const LocalResource> localResource(pLocalResource);
         outResult.insert(resourceId, qMove(localResource));
     }
@@ -1919,106 +1865,4 @@ QString OsmAnd::ResourcesManager_P::MapStylesCollectionProxy::normalizeStyleName
     if (!styleName.endsWith(QLatin1String(".render.xml")))
         styleName.append(QLatin1String(".render.xml"));
     return styleName;
-}
-
-OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::MapStylesPresetsCollectionProxy(ResourcesManager_P* owner_)
-    : owner(owner_)
-{
-}
-
-OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::~MapStylesPresetsCollectionProxy()
-{
-}
-
-QList< std::shared_ptr<const OsmAnd::MapStylePreset> >
-OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getCollection() const
-{
-    QList< std::shared_ptr<const MapStylePreset> > result;
-
-    {
-        QReadLocker scopedLocker(&owner->_localResourcesLock);
-
-        for (const auto& localResource : constOf(owner->_localResources))
-        {
-            if (localResource->type != ResourceType::MapStylesPresets)
-                continue;
-
-            const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(localResource->_metadata)->presets;
-            result << presets->getCollection();
-        }
-    }
-
-    for (const auto& builtinResource : constOf(owner->_builtinResources))
-    {
-        if (builtinResource->type != ResourceType::MapStylesPresets)
-            continue;
-
-        const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(builtinResource->_metadata)->presets;
-        result << presets->getCollection();
-    }
-
-    return result;
-}
-
-QList< std::shared_ptr<const OsmAnd::MapStylePreset> >
-OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getCollectionFor(const QString& styleName) const
-{
-    QList< std::shared_ptr<const MapStylePreset> > result;
-
-    {
-        QReadLocker scopedLocker(&owner->_localResourcesLock);
-
-        for (const auto& localResource : constOf(owner->_localResources))
-        {
-            if (localResource->type != ResourceType::MapStylesPresets)
-                continue;
-
-            const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(localResource->_metadata)->presets;
-            result << presets->getCollectionFor(styleName);
-        }
-    }
-
-    for (const auto& builtinResource : constOf(owner->_builtinResources))
-    {
-        if (builtinResource->type != ResourceType::MapStylesPresets)
-            continue;
-
-        const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(builtinResource->_metadata)->presets;
-        result << presets->getCollectionFor(styleName);
-    }
-
-    return result;
-}
-
-std::shared_ptr<const OsmAnd::MapStylePreset> OsmAnd::ResourcesManager_P::MapStylesPresetsCollectionProxy::getPreset(
-    const QString& styleName,
-    const QString& presetName) const
-{
-    {
-        QReadLocker scopedLocker(&owner->_localResourcesLock);
-
-        for (const auto& localResource : constOf(owner->_localResources))
-        {
-            if (localResource->type != ResourceType::MapStylesPresets)
-                continue;
-
-            const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(localResource->_metadata)->presets;
-            const auto preset = presets->getPreset(styleName, presetName);
-            if (preset)
-                return preset;
-        }
-    }
-
-    for (const auto& builtinResource : constOf(owner->_builtinResources))
-    {
-        if (builtinResource->type != ResourceType::MapStylesPresets)
-            continue;
-
-        const auto& presets = std::static_pointer_cast<const MapStylesPresetsMetadata>(builtinResource->_metadata)->presets;
-        const auto preset = presets->getPreset(styleName, presetName);
-        if (preset)
-            return preset;
-    }
-
-    return nullptr;
 }

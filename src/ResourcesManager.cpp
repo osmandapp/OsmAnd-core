@@ -24,7 +24,6 @@ OsmAnd::ResourcesManager::ResourcesManager(
     , repositoryBaseUrl(repositoryBaseUrl_)
     , onlineTileSources(_p->onlineTileSources)
     , mapStylesCollection(_p->mapStylesCollection)
-    , mapStylesPresetsCollection(_p->mapStylesPresetsCollection)
     , obfsCollection(_p->obfsCollection)
 {
     QDir(localStoragePath).mkpath(QLatin1String("."));
@@ -298,16 +297,6 @@ OsmAnd::ResourcesManager::MapStyleMetadata::MapStyleMetadata(const std::shared_p
 }
 
 OsmAnd::ResourcesManager::MapStyleMetadata::~MapStyleMetadata()
-{
-}
-
-OsmAnd::ResourcesManager::MapStylesPresetsMetadata::MapStylesPresetsMetadata(
-    const std::shared_ptr<const MapStylesPresetsCollection>& presets_)
-    : presets(presets_)
-{
-}
-
-OsmAnd::ResourcesManager::MapStylesPresetsMetadata::~MapStylesPresetsMetadata()
 {
 }
 
