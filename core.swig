@@ -47,9 +47,6 @@
 #include <OsmAndCore/Map/ResolvedMapStyle.h>
 #include <OsmAndCore/Map/MapStylesCollection.h>
 #include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
-#include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
-#include <OsmAndCore/Map/MapStylesPresetsCollection.h>
-#include <OsmAndCore/Map/MapStylePreset.h>
 #include <OsmAndCore/Map/MapPresentationEnvironment.h>
 #include <OsmAndCore/Map/MapRendererState.h>
 #include <OsmAndCore/Map/MapRendererSetupOptions.h>
@@ -112,7 +109,6 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResourcesManager::UnmanagedResource)
 	%shared_ptr(OsmAnd::ResourcesManager::ObfMetadata)
 	%shared_ptr(OsmAnd::ResourcesManager::MapStyleMetadata)
-	%shared_ptr(OsmAnd::ResourcesManager::MapStylesPresetsMetadata)
 	%shared_ptr(OsmAnd::ResourcesManager::OnlineTileSourcesMetadata)
 	%shared_ptr(OsmAnd::ICoreResourcesProvider)
 	%shared_ptr(OsmAnd::CoreResourcesEmbeddedBundle)
@@ -159,11 +155,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ResolvedMapStyle::ParameterValueDefinition)
 	%shared_ptr(OsmAnd::IMapStylesCollection)
 	%shared_ptr(OsmAnd::MapStylesCollection)
-	%shared_ptr(OsmAnd::IMapStylesPresetsCollection)
-	%shared_ptr(OsmAnd::MapStylesPresetsCollection)
 	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions)
 	%shared_ptr(OsmAnd::MapStyleBuiltinValueDefinitions::MapStyleBuiltinValueDefinition)
-	%shared_ptr(OsmAnd::MapStylePreset)
 	%shared_ptr(OsmAnd::MapPresentationEnvironment)
 	%shared_ptr(OsmAnd::MapRendererSetupOptions)
 	%shared_ptr(OsmAnd::MapRendererConfiguration)
@@ -291,10 +284,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/ResolvedMapStyle.h>
 %include <OsmAndCore/Map/IMapStylesCollection.h>
 %include <OsmAndCore/Map/MapStylesCollection.h>
-%include <OsmAndCore/Map/IMapStylesPresetsCollection.h>
-%include <OsmAndCore/Map/MapStylesPresetsCollection.h>
 %include <OsmAndCore/Map/MapStyleBuiltinValueDefinitions.h>
-%include <OsmAndCore/Map/MapStylePreset.h>
 %include <OsmAndCore/Map/MapPresentationEnvironment.h>
 %include <OsmAndCore/Map/MapRendererState.h>
 %include <OsmAndCore/Map/MapRendererSetupOptions.h>
