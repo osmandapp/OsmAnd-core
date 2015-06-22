@@ -777,7 +777,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     else
     {
         // Underscale is not compatible with batching, so there has to be only 1 batched layer
-        assert(batchedLayersCount == 1);
+        //assert(batchedLayersCount == 1);
 
         const auto& layer = batch->layers.first();
         const auto samplerIndex = 0;
