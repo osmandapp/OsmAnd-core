@@ -684,105 +684,14 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
         currentAlphaChannelType = AlphaChannelType::Premultiplied;
     }
 
-    // Single pass tile rendering is possible for exact-scale and overscale cases
-    if (batch->layers.first()->resourcesInGPU.size() == 1)
+    // Perform rendering of exact-scale, overscale and underscale cases. All cases support batching
+    for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
     {
-        // Set uniform variables for each raster layer
-        for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
-        {
-            const auto& layer = batch->layers[layerIndexInBatch];
-            const auto samplerIndex = layerIndexInBatch;
+        const auto& layer = batch->layers[layerIndexInBatch];
+        const auto samplerIndex = layerIndexInBatch;
 
-            const auto& perTile_vs = program.vs.param.rasterTileLayers[layerIndexInBatch];
-            const auto& perTile_fs = program.fs.param.rasterTileLayers[layerIndexInBatch];
-
-            const auto citMapLayerConfiguration = currentState.mapLayersConfigurations.constFind(layer->layerIndex);
-            if (citMapLayerConfiguration == currentState.mapLayersConfigurations.cend() ||
-                layer->layerIndex == currentState.mapLayersProviders.firstKey())
-            {
-                glUniform1f(perTile_fs.opacityFactor, 1.0f);
-                GL_CHECK_RESULT;
-            }
-            else
-            {
-                const auto& layerConfiguration = *citMapLayerConfiguration;
-                glUniform1f(perTile_fs.opacityFactor, layerConfiguration.opacityFactor);
-                GL_CHECK_RESULT;
-            }
-
-            // Since it's single-pass tile rendering, there's only one resource per layer
-            const auto& batchedResourceInGPU = layer->resourcesInGPU.first();
-
-            switch (gpuAPI->getGpuResourceAlphaChannelType(batchedResourceInGPU->resourceInGPU))
-            {
-                case AlphaChannelType::Premultiplied:
-                    glUniform1f(perTile_fs.isPremultipliedAlpha, 1.0f);
-                    GL_CHECK_RESULT;
-                    break;
-                case AlphaChannelType::Straight:
-                    glUniform1f(perTile_fs.isPremultipliedAlpha, 0.0f);
-                    GL_CHECK_RESULT;
-                    break;
-                default:
-                    break;
-            }
-
-            glActiveTexture(GL_TEXTURE0 + samplerIndex);
-            GL_CHECK_RESULT;
-
-            glBindTexture(GL_TEXTURE_2D,
-                static_cast<GLuint>(reinterpret_cast<intptr_t>(batchedResourceInGPU->resourceInGPU->refInGPU)));
-            GL_CHECK_RESULT;
-
-            gpuAPI->applyTextureBlockToTexture(GL_TEXTURE_2D, GL_TEXTURE0 + samplerIndex);
-
-            if (batchedResourceInGPU->resourceInGPU->type == GPUAPI::ResourceInGPU::Type::SlotOnAtlasTexture)
-            {
-                const auto tileOnAtlasTexture =
-                    std::static_pointer_cast<const GPUAPI::SlotOnAtlasTextureInGPU>(batchedResourceInGPU->resourceInGPU);
-                const auto rowIndex = tileOnAtlasTexture->slotIndex / tileOnAtlasTexture->atlasTexture->slotsPerSide;
-                const auto colIndex = tileOnAtlasTexture->slotIndex - rowIndex * tileOnAtlasTexture->atlasTexture->slotsPerSide;
-                const auto tileSizeN = tileOnAtlasTexture->atlasTexture->tileSizeN;
-                const auto tilePaddingN = tileOnAtlasTexture->atlasTexture->tilePaddingN;
-                const auto nSizeInAtlas = tileSizeN - 2.0f * tilePaddingN;
-                PointF texCoordsOffset(
-                    colIndex * tileSizeN + tilePaddingN,
-                    rowIndex * tileSizeN + tilePaddingN);
-
-                texCoordsOffset += batchedResourceInGPU->texCoordsOffset * nSizeInAtlas;
-                const auto texCoordsScale = batchedResourceInGPU->texCoordsScale * nSizeInAtlas;
-
-                glUniform2f(perTile_vs.texCoordsOffset, texCoordsOffset.x,texCoordsOffset.y);
-                GL_CHECK_RESULT;
-                glUniform2f(perTile_vs.texCoordsScale, texCoordsScale.x, texCoordsScale.y);
-                GL_CHECK_RESULT;
-            }
-            else // if (resourceInGPU->type == GPUAPI::ResourceInGPU::Type::Texture)
-            {
-                glUniform2f(perTile_vs.texCoordsOffset,
-                    batchedResourceInGPU->texCoordsOffset.x,
-                    batchedResourceInGPU->texCoordsOffset.y);
-                GL_CHECK_RESULT;
-                glUniform2f(perTile_vs.texCoordsScale,
-                    batchedResourceInGPU->texCoordsScale.x,
-                    batchedResourceInGPU->texCoordsScale.y);
-                GL_CHECK_RESULT;
-            }
-        }
-
-        // Single-pass tile rendering always processes full tile
-        glDrawElements(GL_TRIANGLES, _rasterTileIndicesCount, GL_UNSIGNED_SHORT, nullptr);
-        GL_CHECK_RESULT;
-    }
-    else
-    {
-        // Underscale is not compatible with batching, so there has to be only 1 batched layer
-        assert(batchedLayersCount == 1);
-
-        const auto& layer = batch->layers.first();
-        const auto samplerIndex = 0;
-        const auto& perTile_vs = program.vs.param.rasterTileLayers.first();
-        const auto& perTile_fs = program.fs.param.rasterTileLayers.first();
+        const auto& perTile_vs = program.vs.param.rasterTileLayers[layerIndexInBatch];
+        const auto& perTile_fs = program.fs.param.rasterTileLayers[layerIndexInBatch];
 
         const auto citMapLayerConfiguration = currentState.mapLayersConfigurations.constFind(layer->layerIndex);
         if (citMapLayerConfiguration == currentState.mapLayersConfigurations.cend() ||
@@ -860,7 +769,7 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 GL_CHECK_RESULT;
             }
 
-            // Since it's multi-pass rendering, submit subtile to GPU
+            // Perform drawing of a subtile
             glDrawElements(
                 GL_TRIANGLES,
                 indicesPerSubtile,
@@ -1588,8 +1497,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 canBeBatched = canBeBatched && (batch->layers.size() < _maxNumberOfRasterMapLayersInBatch);
 
                 // Batching is possible only if all BatchedLayerResources are compatible
-                if (canBeBatched)
-                    canBeBatched = (batchedLayer->resourcesInGPU.size() == lastBatchedLayer->resourcesInGPU.size());
+                canBeBatched = canBeBatched && (batchedLayer->resourcesInGPU.size() == lastBatchedLayer->resourcesInGPU.size());
                 if (canBeBatched)
                 {
                     for (const auto& batchedLayerResource : constOf(batchedLayer->resourcesInGPU))
