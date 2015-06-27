@@ -1500,16 +1500,20 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 canBeBatched = canBeBatched && (batchedLayer->resourcesInGPU.size() == lastBatchedLayer->resourcesInGPU.size());
                 if (canBeBatched)
                 {
-                    for (const auto& batchedLayerResource : constOf(batchedLayer->resourcesInGPU))
+                    const auto resourcesCount = batchedLayer->resourcesInGPU.size();
+                    auto itResource1 = batchedLayer->resourcesInGPU.cbegin();
+                    auto itResource2 = lastBatchedLayer->resourcesInGPU.cbegin();
+
+                    for (auto resourceIndex = 0; resourceIndex < resourcesCount; resourceIndex++)
                     {
-                        canBeBatched = std::any_of(lastBatchedLayer->resourcesInGPU,
-                            [batchedLayerResource]
-                            (const Ref<BatchedLayerResource>& otherBatchedLayerResource)
-                            {
-                                return batchedLayerResource->canBeBatchedWith(*otherBatchedLayerResource);
-                            });
-                        if (!canBeBatched)
+                        const auto& resource1 = *(itResource1++);
+                        const auto& resource2 = *(itResource2++);
+
+                        if (!resource1->canBeBatchedWith(*resource2) || !resource2->canBeBatchedWith(*resource1))
+                        {
+                            canBeBatched = false;
                             break;
+                        }
                     }
                 }
             }
