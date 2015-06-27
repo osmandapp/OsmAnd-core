@@ -685,37 +685,36 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
     }
 
     // Perform rendering of exact-scale, overscale and underscale cases. All cases support batching
-    for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
+    const auto subtilesPerTile = batch->layers.first()->resourcesInGPU.size();
+    const auto indicesPerSubtile = _rasterTileIndicesCount / subtilesPerTile;
+    for (auto subtileIndex = 0; subtileIndex < subtilesPerTile; subtileIndex++)
     {
-        const auto& layer = batch->layers[layerIndexInBatch];
-        const auto samplerIndex = layerIndexInBatch;
-
-        const auto& perTile_vs = program.vs.param.rasterTileLayers[layerIndexInBatch];
-        const auto& perTile_fs = program.fs.param.rasterTileLayers[layerIndexInBatch];
-
-        const auto citMapLayerConfiguration = currentState.mapLayersConfigurations.constFind(layer->layerIndex);
-        if (citMapLayerConfiguration == currentState.mapLayersConfigurations.cend() ||
-            layer->layerIndex == currentState.mapLayersProviders.firstKey())
+        for (int layerIndexInBatch = 0; layerIndexInBatch < batchedLayersCount; layerIndexInBatch++)
         {
-            glUniform1f(perTile_fs.opacityFactor, 1.0f);
+            const auto& layer = batch->layers[layerIndexInBatch];
+            const auto samplerIndex = layerIndexInBatch;
+
+            const auto& perTile_vs = program.vs.param.rasterTileLayers[layerIndexInBatch];
+            const auto& perTile_fs = program.fs.param.rasterTileLayers[layerIndexInBatch];
+
+            const auto citMapLayerConfiguration = currentState.mapLayersConfigurations.constFind(layer->layerIndex);
+            if (citMapLayerConfiguration == currentState.mapLayersConfigurations.cend() ||
+                layer->layerIndex == currentState.mapLayersProviders.firstKey())
+            {
+                glUniform1f(perTile_fs.opacityFactor, 1.0f);
+                GL_CHECK_RESULT;
+            }
+            else
+            {
+                const auto& layerConfiguration = *citMapLayerConfiguration;
+                glUniform1f(perTile_fs.opacityFactor, layerConfiguration.opacityFactor);
+                GL_CHECK_RESULT;
+            }
+
+            glActiveTexture(GL_TEXTURE0 + samplerIndex);
             GL_CHECK_RESULT;
-        }
-        else
-        {
-            const auto& layerConfiguration = *citMapLayerConfiguration;
-            glUniform1f(perTile_fs.opacityFactor, layerConfiguration.opacityFactor);
-            GL_CHECK_RESULT;
-        }
 
-        glActiveTexture(GL_TEXTURE0 + samplerIndex);
-        GL_CHECK_RESULT;
-
-        // Now perform multi-pass rendering of subtiles to form the tile
-        const auto subtilesCount = layer->resourcesInGPU.size();
-        const auto indicesPerSubtile = _rasterTileIndicesCount / subtilesCount;
-        auto subtilesRendered = 0u;
-        for (const auto& batchedResourceInGPU : constOf(layer->resourcesInGPU))
-        {
+            const auto& batchedResourceInGPU = layer->resourcesInGPU[subtileIndex];
             switch (gpuAPI->getGpuResourceAlphaChannelType(batchedResourceInGPU->resourceInGPU))
             {
                 case AlphaChannelType::Premultiplied:
@@ -774,10 +773,8 @@ bool OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::renderRasterLayersBatch(
                 GL_TRIANGLES,
                 indicesPerSubtile,
                 GL_UNSIGNED_SHORT,
-                reinterpret_cast<const void*>(sizeof(uint16_t) * indicesPerSubtile * subtilesRendered));
+                reinterpret_cast<const void*>(sizeof(uint16_t) * indicesPerSubtile * subtileIndex));
             GL_CHECK_RESULT;
-
-            subtilesRendered++;
         }
     }
 
