@@ -294,7 +294,7 @@ void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
     bbox31.bottom() = OsmAnd::Utilities::get31TileNumberY(cfg.bbox.bottom());
     bbox31.left() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.left());
     bbox31.right() = OsmAnd::Utilities::get31TileNumberX(cfg.bbox.right());
-    OsmAnd::ObfPoiSectionReader::loadAmenities(reader, section, &amenities, cfg.zoom, cfg.zoom, &bbox31);
+    OsmAnd::ObfPoiSectionReader::loadAmenities(reader, section, &amenities, &bbox31);
     output << xT("\tAmenities, ") << amenities.count() << xT(" item(s)");
     if (!cfg.verboseAmenities)
     {
