@@ -2,6 +2,7 @@
 #define _OSMAND_CORE_COMMON_TYPES_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <functional>
 
 #include <QtGlobal>
 #include <QtMath>
@@ -121,6 +122,8 @@ namespace OsmAnd
     enum {
         ZoomLevelsCount = static_cast<unsigned>(ZoomLevel::MaxZoomLevel) + 1u
     };
+
+    typedef std::function<bool(const TileId tileId, const ZoomLevel zoomLevel)> TileAcceptorFunction;
 
     enum class LanguageId
     {

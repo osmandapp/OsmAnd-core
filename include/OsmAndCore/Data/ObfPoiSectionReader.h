@@ -46,9 +46,9 @@ namespace OsmAnd
             const std::shared_ptr<const ObfReader>& reader,
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
-            const ZoomLevel minZoom = MinZoomLevel,
-            const ZoomLevel maxZoom = MaxZoomLevel,
             const AreaI* const bbox31 = nullptr,
+            const TileAcceptorFunction tileFilter = nullptr,
+            const ZoomLevel zoomFilter = InvalidZoomLevel,
             const QSet<ObfPoiCategoryId>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
@@ -58,9 +58,8 @@ namespace OsmAnd
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
-            const ZoomLevel minZoom = MinZoomLevel,
-            const ZoomLevel maxZoom = MaxZoomLevel,
             const AreaI* const bbox31 = nullptr,
+            const TileAcceptorFunction tileFilter = nullptr,
             const QSet<ObfPoiCategoryId>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);

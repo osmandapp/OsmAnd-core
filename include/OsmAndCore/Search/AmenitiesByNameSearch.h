@@ -4,10 +4,15 @@
 #include <OsmAndCore/stdlib_common.h>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
 #include <QHash>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Nullable.h>
+
 #include <OsmAndCore/IObfsCollection.h>
 #include <OsmAndCore/Search/BaseSearch.h>
 
@@ -24,6 +29,9 @@ namespace OsmAnd
             Criteria();
             virtual ~Criteria();
 
+            IObfsCollection::AcceptorFunction sourceFilter;
+            Nullable<AreaI> bbox31;
+            TileAcceptorFunction tileFilter;
             QString name;
             QHash<QString, QStringList> categoriesFilter;
         };

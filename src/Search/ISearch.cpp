@@ -9,8 +9,6 @@ OsmAnd::ISearch::~ISearch()
 }
 
 OsmAnd::ISearch::Criteria::Criteria()
-    : minZoomLevel(MinZoomLevel)
-    , maxZoomLevel(MaxZoomLevel)
 {
 }
 

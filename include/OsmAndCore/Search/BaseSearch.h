@@ -19,10 +19,6 @@ namespace OsmAnd
     private:
     protected:
         BaseSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection);
-
-        std::shared_ptr<ObfDataInterface> obtainDataInterface(
-            const Criteria& criteria,
-            const ObfDataTypesMask desiredDataTypes) const;
     public:
         virtual ~BaseSearch();
 

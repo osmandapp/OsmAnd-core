@@ -19,7 +19,12 @@ void OsmAnd::AmenitiesByNameSearch::performSearch(
 {
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
-    const auto dataInterface = obtainDataInterface(criteria, ObfDataTypesMask().set(ObfDataType::POI));
+    const auto dataInterface = obfsCollection->obtainDataInterface(
+        criteria.bbox31.getValuePtrOrNullptr(),
+        MinZoomLevel,
+        MaxZoomLevel,
+        ObfDataTypesMask().set(ObfDataType::POI),
+        criteria.sourceFilter);
 
     const ObfPoiSectionReader::VisitorFunction visitorFunction =
         [newResultEntryCallback, criteria_]
@@ -29,15 +34,14 @@ void OsmAnd::AmenitiesByNameSearch::performSearch(
             resultEntry.amenity = amenity;
             newResultEntryCallback(criteria_, resultEntry);
 
-            return false;
+            return true;
         };
 
     dataInterface->scanAmenitiesByName(
         criteria.name,
         nullptr,
-        criteria.minZoomLevel,
-        criteria.maxZoomLevel,
         criteria.bbox31.getValuePtrOrNullptr(),
+        criteria.tileFilter,
         criteria.categoriesFilter.isEmpty() ? nullptr : &criteria.categoriesFilter,
         visitorFunction,
         queryController);

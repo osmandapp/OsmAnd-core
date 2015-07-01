@@ -534,7 +534,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value == QLatin1String("lightgray") ||
         value == QLatin1String("metal"))
     {
-        value = QLatin1String( usePalette6 ? "white" : "gray");
+        value = QLatin1String(usePalette6 ? "white" : "gray");
     }
     else if (
         (s < 5 && v > 95) ||

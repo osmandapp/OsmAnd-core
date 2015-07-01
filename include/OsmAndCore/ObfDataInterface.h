@@ -83,9 +83,9 @@ namespace OsmAnd
 
         bool loadAmenities(
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
-            const ZoomLevel minZoom = MinZoomLevel,
-            const ZoomLevel maxZoom = MaxZoomLevel,
             const AreaI* const bbox31 = nullptr,
+            const TileAcceptorFunction tileFilter = nullptr,
+            const ZoomLevel zoomFilter = InvalidZoomLevel,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
@@ -93,9 +93,8 @@ namespace OsmAnd
         bool scanAmenitiesByName(
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
-            const ZoomLevel minZoom = MinZoomLevel,
-            const ZoomLevel maxZoom = MaxZoomLevel,
             const AreaI* const bbox31 = nullptr,
+            const TileAcceptorFunction tileFilter = nullptr,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,
             const ObfPoiSectionReader::VisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
@@ -103,9 +102,9 @@ namespace OsmAnd
         bool findAmenityById(
             const ObfObjectId id,
             std::shared_ptr<const OsmAnd::Amenity>* const outAmenity,
-            const ZoomLevel minZoom = MinZoomLevel,
-            const ZoomLevel maxZoom = MaxZoomLevel,
             const AreaI* const bbox31 = nullptr,
+            const TileAcceptorFunction tileFilter = nullptr,
+            const ZoomLevel zoomFilter = InvalidZoomLevel,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool findAmenityForObfMapObject(

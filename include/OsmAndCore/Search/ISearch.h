@@ -5,9 +5,11 @@
 #include <functional>
 
 #include <OsmAndCore/QtExtensions.h>
+#include <OsmAndCore/ignore_warnings_on_external_includes.h>
+#include <QList>
+#include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/IObfsCollection.h>
 
 class QThreadPool;
@@ -26,11 +28,6 @@ namespace OsmAnd
             Criteria();
         public:
             virtual ~Criteria();
-
-            IObfsCollection::AcceptorFunction sourceFilter;
-            ZoomLevel minZoomLevel;
-            ZoomLevel maxZoomLevel;
-            Nullable<AreaI> bbox31;
         };
 
         struct OSMAND_CORE_API IResultEntry

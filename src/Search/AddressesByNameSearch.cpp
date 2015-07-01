@@ -20,7 +20,12 @@ void OsmAnd::AddressesByNameSearch::performSearch(
 {
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
-    const auto dataInterface = obtainDataInterface(criteria, ObfDataTypesMask().set(ObfDataType::Address));
+    const auto dataInterface = obfsCollection->obtainDataInterface(
+        criteria.bbox31.getValuePtrOrNullptr(),
+        MinZoomLevel,
+        MaxZoomLevel,
+        ObfDataTypesMask().set(ObfDataType::Address),
+        criteria.sourceFilter);
 
     const ObfAddressSectionReader::VisitorFunction visitorFunction =
         [newResultEntryCallback, criteria_]
@@ -30,7 +35,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
             resultEntry.address = address;
             newResultEntryCallback(criteria_, resultEntry);
 
-            return false;
+            return true;
         };
 
     dataInterface->scanAddressesByName(
