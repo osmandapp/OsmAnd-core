@@ -118,6 +118,8 @@ QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
             default:
                 break;
         }
+
+        result.push_back(decodedValue);
     }
 
     return result;
