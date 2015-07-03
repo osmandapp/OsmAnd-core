@@ -7,7 +7,6 @@
 
 OsmAnd::Amenity::Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection_)
     : obfSection(obfSection_)
-    , zoomLevel(InvalidZoomLevel)
     , id(ObfObjectId::invalidId())
 {
 }
@@ -16,9 +15,9 @@ OsmAnd::Amenity::~Amenity()
 {
 }
 
-QHash<QString, QStringList> OsmAnd::Amenity::getDecodedCategories() const
+QList<OsmAnd::Amenity::DecodedCategory> OsmAnd::Amenity::getDecodedCategories() const
 {
-    QHash<QString, QStringList> result;
+    QList<DecodedCategory> result;
 
     const auto sectionCategories = obfSection->getCategories();
     if (!sectionCategories)
@@ -53,18 +52,18 @@ QHash<QString, QStringList> OsmAnd::Amenity::getDecodedCategories() const
         }
         const auto& subCategory = subCategories[subCategoryIndex];
         
-        auto itResultEntry = result.find(mainCategory);
-        if (itResultEntry == result.cend())
-            itResultEntry = result.insert(mainCategory, QStringList());
-        itResultEntry.value().push_back(subCategory);
+        DecodedCategory decodedCategory;
+        decodedCategory.category = mainCategory;
+        decodedCategory.subcategory = subCategory;
+        result.push_back(decodedCategory);
     }
 
     return result;
 }
 
-QHash<QString, QString> OsmAnd::Amenity::getDecodedValues() const
+QList<OsmAnd::Amenity::DecodedValue> OsmAnd::Amenity::getDecodedValues() const
 {
-    QHash<QString, QString> result;
+    QList<DecodedValue> result;
 
     const auto sectionSubtypes = obfSection->getSubtypes();
     if (!sectionSubtypes)
@@ -86,6 +85,9 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValues() const
         const auto& subtype = sectionSubtypes->subtypes[subtypeIndex];
         const auto& value = valueEntry.value();
 
+        DecodedValue decodedValue;
+        decodedValue.declaration = subtype;
+
         switch (value.type())
         {
             case QVariant::Int:
@@ -93,16 +95,16 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValues() const
                 const auto intValue = value.toInt();
 
                 if (subtype->isText && subtype->possibleValues.size() > intValue)
-                    result.insert(subtype->name, subtype->possibleValues[intValue]);
+                    decodedValue.value = subtype->possibleValues[intValue];
                 else
-                    result.insert(subtype->name, QString::number(intValue));
+                    decodedValue.value = QString::number(intValue);
                 break;
             }
             case QVariant::String:
             {
                 const auto stringValue = value.toString();
 
-                result.insert(subtype->name, stringValue);
+                decodedValue.value = stringValue;
                 break;
             }
             case QVariant::ByteArray:
@@ -110,7 +112,7 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValues() const
                 const auto dataValue = value.toByteArray();
                 const auto stringValue = QString::fromUtf8(zlibUtilities::gzipDecompress(dataValue));
 
-                result.insert(subtype->name, stringValue);
+                decodedValue.value = stringValue;
                 break;
             }
             default:
@@ -124,21 +126,32 @@ QHash<QString, QString> OsmAnd::Amenity::getDecodedValues() const
 QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > > > OsmAnd::Amenity::groupByCategories(
     const QList< std::shared_ptr<const OsmAnd::Amenity> >& input)
 {
-    QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > > > result;
+    QHash< QString, QHash<QString, QList< std::shared_ptr<const Amenity> > > > result;
 
     for (const auto& amenity : constOf(input))
     {
-        const auto& categories = amenity->getDecodedCategories();
-
-        for (const auto& itCategoriesEntry : rangeOf(constOf(categories)))
+        const auto& decodedCategories = amenity->getDecodedCategories();
+        for (const auto& decodedCategory : constOf(decodedCategories))
         {
-            const auto& mainCategory = itCategoriesEntry.key();
-            auto& groupedAmenities = result[mainCategory];
-
-            for (const auto& subCategory : constOf(itCategoriesEntry.value()))
-                groupedAmenities[subCategory].push_back(amenity);
+            result[decodedCategory.category][decodedCategory.subcategory].push_back(amenity);
         }
     }
 
     return result;
+}
+
+OsmAnd::Amenity::DecodedCategory::DecodedCategory()
+{
+}
+
+OsmAnd::Amenity::DecodedCategory::~DecodedCategory()
+{
+}
+
+OsmAnd::Amenity::DecodedValue::DecodedValue()
+{
+}
+
+OsmAnd::Amenity::DecodedValue::~DecodedValue()
+{
 }

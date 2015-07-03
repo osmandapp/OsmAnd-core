@@ -770,7 +770,16 @@ bool OsmAnd::ObfPoiSectionReader_P::readAmenitiesDataBox(
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<const Amenity> amenity;
-                readAmenity(reader, section, amenity, query, zoom, tileId, bbox31, categoriesFilter, queryController);
+                readAmenity(
+                    reader, 
+                    section,
+                    amenity,
+                    query,
+                    tileId,
+                    zoom,
+                    bbox31,
+                    categoriesFilter,
+                    queryController);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -828,8 +837,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     std::shared_ptr<const Amenity>& outAmenity,
     const QString& query,
-    const ZoomLevel zoom,
     const TileId boxTileId,
+    const ZoomLevel boxZoom,
     const AreaI* const bbox31,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
     const std::shared_ptr<const IQueryController>& queryController)
@@ -924,14 +933,14 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 assert(d >= 0);
-                position31.x = ((boxTileId.x << (24 - zoom)) + d) << 7;
+                position31.x = ((boxTileId.x << (24 - boxZoom)) + d) << 7;
                 break;
             }
             case OBF::OsmAndPoiBoxDataAtom::kDyFieldNumber:
             {
                 const auto d = ObfReaderUtilities::readSInt32(cis);
                 assert(d >= 0);
-                position31.y = ((boxTileId.y << (24 - zoom)) + d) << 7;
+                position31.y = ((boxTileId.y << (24 - boxZoom)) + d) << 7;
 
                 if (bbox31 && !bbox31->contains(position31))
                 {

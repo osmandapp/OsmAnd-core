@@ -271,11 +271,16 @@ void printMapDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Conf
     }
 }
 
+
+void printPOIDetailInfo(
 #if defined(_UNICODE) || defined(UNICODE)
-void printPOIDetailInfo(std::wostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section)
+    std::wostream& output,
 #else
-void printPOIDetailInfo(std::ostream& output, const OsmAndTools::Inspector::Configuration& cfg, const std::shared_ptr<OsmAnd::ObfReader>& reader, const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section)
+    std::ostream& output,
 #endif
+    const OsmAndTools::Inspector::Configuration& cfg,
+    const std::shared_ptr<OsmAnd::ObfReader>& reader,
+    const std::shared_ptr<const OsmAnd::ObfPoiSectionInfo>& section)
 {
     output << xT("\tBounds ") << formatBounds(section->area31.left(), section->area31.right(), section->area31.top(), section->area31.bottom()) << std::endl;
     std::shared_ptr<const OsmAnd::ObfPoiSectionCategories> categories;

@@ -134,8 +134,8 @@ namespace OsmAnd
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             std::shared_ptr<const Amenity>& outAmenity,
             const QString& query,
-            const ZoomLevel zoom,
             const TileId boxTileId,
+            const ZoomLevel boxZoom,
             const AreaI* const bbox31,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
             const std::shared_ptr<const IQueryController>& queryController);

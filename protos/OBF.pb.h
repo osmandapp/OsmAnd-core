@@ -1654,6 +1654,14 @@ class OsmAndAddressIndex : public ::google::obf_protobuf::Message {
   inline ::OsmAnd::OBF::OsmAndTileBox* mutable_boundaries();
   inline ::OsmAnd::OBF::OsmAndTileBox* release_boundaries();
   
+  // optional .OsmAnd.OBF.StringTable attributeTagsTable = 4;
+  inline bool has_attributetagstable() const;
+  inline void clear_attributetagstable();
+  static const int kAttributeTagsTableFieldNumber = 4;
+  inline const ::OsmAnd::OBF::StringTable& attributetagstable() const;
+  inline ::OsmAnd::OBF::StringTable* mutable_attributetagstable();
+  inline ::OsmAnd::OBF::StringTable* release_attributetagstable();
+  
   // repeated .OsmAnd.OBF.OsmAndAddressIndex.CitiesIndex cities = 6;
   inline int cities_size() const;
   inline void clear_cities();
@@ -1674,14 +1682,6 @@ class OsmAndAddressIndex : public ::google::obf_protobuf::Message {
   inline ::OsmAnd::OBF::OsmAndAddressNameIndexData* mutable_nameindex();
   inline ::OsmAnd::OBF::OsmAndAddressNameIndexData* release_nameindex();
   
-  // optional .OsmAnd.OBF.StringTable attributeTagsTable = 8;
-  inline bool has_attributetagstable() const;
-  inline void clear_attributetagstable();
-  static const int kAttributeTagsTableFieldNumber = 8;
-  inline const ::OsmAnd::OBF::StringTable& attributetagstable() const;
-  inline ::OsmAnd::OBF::StringTable* mutable_attributetagstable();
-  inline ::OsmAnd::OBF::StringTable* release_attributetagstable();
-  
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.OsmAndAddressIndex)
  private:
   inline void set_has_name();
@@ -1690,19 +1690,19 @@ class OsmAndAddressIndex : public ::google::obf_protobuf::Message {
   inline void clear_has_name_en();
   inline void set_has_boundaries();
   inline void clear_has_boundaries();
-  inline void set_has_nameindex();
-  inline void clear_has_nameindex();
   inline void set_has_attributetagstable();
   inline void clear_has_attributetagstable();
+  inline void set_has_nameindex();
+  inline void clear_has_nameindex();
   
   ::google::obf_protobuf::UnknownFieldSet _unknown_fields_;
   
   ::std::string* name_;
   ::std::string* name_en_;
   ::OsmAnd::OBF::OsmAndTileBox* boundaries_;
+  ::OsmAnd::OBF::StringTable* attributetagstable_;
   ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::OsmAndAddressIndex_CitiesIndex > cities_;
   ::OsmAnd::OBF::OsmAndAddressNameIndexData* nameindex_;
-  ::OsmAnd::OBF::StringTable* attributetagstable_;
   
   mutable int _cached_size_;
   ::google::obf_protobuf::uint32 _has_bits_[(6 + 31) / 32];
@@ -2118,34 +2118,6 @@ class CityIndex : public ::google::obf_protobuf::Message {
   inline ::std::string* mutable_name_en();
   inline ::std::string* release_name_en();
   
-  // repeated uint32 attributeTagIds = 11;
-  inline int attributetagids_size() const;
-  inline void clear_attributetagids();
-  static const int kAttributeTagIdsFieldNumber = 11;
-  inline ::google::obf_protobuf::uint32 attributetagids(int index) const;
-  inline void set_attributetagids(int index, ::google::obf_protobuf::uint32 value);
-  inline void add_attributetagids(::google::obf_protobuf::uint32 value);
-  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
-      attributetagids() const;
-  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
-      mutable_attributetagids();
-  
-  // repeated string attributeValues = 12;
-  inline int attributevalues_size() const;
-  inline void clear_attributevalues();
-  static const int kAttributeValuesFieldNumber = 12;
-  inline const ::std::string& attributevalues(int index) const;
-  inline ::std::string* mutable_attributevalues(int index);
-  inline void set_attributevalues(int index, const ::std::string& value);
-  inline void set_attributevalues(int index, const char* value);
-  inline void set_attributevalues(int index, const char* value, size_t size);
-  inline ::std::string* add_attributevalues();
-  inline void add_attributevalues(const ::std::string& value);
-  inline void add_attributevalues(const char* value);
-  inline void add_attributevalues(const char* value, size_t size);
-  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues() const;
-  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues();
-  
   // optional uint64 id = 4;
   inline bool has_id() const;
   inline void clear_id();
@@ -2166,6 +2138,34 @@ class CityIndex : public ::google::obf_protobuf::Message {
   static const int kYFieldNumber = 6;
   inline ::google::obf_protobuf::uint32 y() const;
   inline void set_y(::google::obf_protobuf::uint32 value);
+  
+  // repeated uint32 attributeTagIds = 7;
+  inline int attributetagids_size() const;
+  inline void clear_attributetagids();
+  static const int kAttributeTagIdsFieldNumber = 7;
+  inline ::google::obf_protobuf::uint32 attributetagids(int index) const;
+  inline void set_attributetagids(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_attributetagids(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
+      attributetagids() const;
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
+      mutable_attributetagids();
+  
+  // repeated string attributeValues = 8;
+  inline int attributevalues_size() const;
+  inline void clear_attributevalues();
+  static const int kAttributeValuesFieldNumber = 8;
+  inline const ::std::string& attributevalues(int index) const;
+  inline ::std::string* mutable_attributevalues(int index);
+  inline void set_attributevalues(int index, const ::std::string& value);
+  inline void set_attributevalues(int index, const char* value);
+  inline void set_attributevalues(int index, const char* value, size_t size);
+  inline ::std::string* add_attributevalues();
+  inline void add_attributevalues(const ::std::string& value);
+  inline void add_attributevalues(const char* value);
+  inline void add_attributevalues(const char* value, size_t size);
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues();
   
   // optional fixed32 shiftToCityBlockIndex = 10;
   inline bool has_shifttocityblockindex() const;
@@ -2195,13 +2195,13 @@ class CityIndex : public ::google::obf_protobuf::Message {
   
   ::std::string* name_;
   ::std::string* name_en_;
-  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids_;
   ::google::obf_protobuf::uint32 city_type_;
   ::google::obf_protobuf::uint32 x_;
-  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues_;
   ::google::obf_protobuf::uint64 id_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids_;
   ::google::obf_protobuf::uint32 y_;
   ::google::obf_protobuf::uint32 shifttocityblockindex_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues_;
   
   mutable int _cached_size_;
   ::google::obf_protobuf::uint32 _has_bits_[(9 + 31) / 32];
@@ -2399,34 +2399,6 @@ class StreetIndex : public ::google::obf_protobuf::Message {
   inline ::std::string* mutable_name_en();
   inline ::std::string* release_name_en();
   
-  // repeated uint32 attributeTagIds = 13;
-  inline int attributetagids_size() const;
-  inline void clear_attributetagids();
-  static const int kAttributeTagIdsFieldNumber = 13;
-  inline ::google::obf_protobuf::uint32 attributetagids(int index) const;
-  inline void set_attributetagids(int index, ::google::obf_protobuf::uint32 value);
-  inline void add_attributetagids(::google::obf_protobuf::uint32 value);
-  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
-      attributetagids() const;
-  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
-      mutable_attributetagids();
-  
-  // repeated string attributeValues = 14;
-  inline int attributevalues_size() const;
-  inline void clear_attributevalues();
-  static const int kAttributeValuesFieldNumber = 14;
-  inline const ::std::string& attributevalues(int index) const;
-  inline ::std::string* mutable_attributevalues(int index);
-  inline void set_attributevalues(int index, const ::std::string& value);
-  inline void set_attributevalues(int index, const char* value);
-  inline void set_attributevalues(int index, const char* value, size_t size);
-  inline ::std::string* add_attributevalues();
-  inline void add_attributevalues(const ::std::string& value);
-  inline void add_attributevalues(const char* value);
-  inline void add_attributevalues(const char* value, size_t size);
-  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues() const;
-  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues();
-  
   // required sint32 x = 3;
   inline bool has_x() const;
   inline void clear_x();
@@ -2447,6 +2419,34 @@ class StreetIndex : public ::google::obf_protobuf::Message {
   static const int kIdFieldNumber = 6;
   inline ::google::obf_protobuf::uint64 id() const;
   inline void set_id(::google::obf_protobuf::uint64 value);
+  
+  // repeated uint32 attributeTagIds = 7;
+  inline int attributetagids_size() const;
+  inline void clear_attributetagids();
+  static const int kAttributeTagIdsFieldNumber = 7;
+  inline ::google::obf_protobuf::uint32 attributetagids(int index) const;
+  inline void set_attributetagids(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_attributetagids(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
+      attributetagids() const;
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
+      mutable_attributetagids();
+  
+  // repeated string attributeValues = 8;
+  inline int attributevalues_size() const;
+  inline void clear_attributevalues();
+  static const int kAttributeValuesFieldNumber = 8;
+  inline const ::std::string& attributevalues(int index) const;
+  inline ::std::string* mutable_attributevalues(int index);
+  inline void set_attributevalues(int index, const ::std::string& value);
+  inline void set_attributevalues(int index, const char* value);
+  inline void set_attributevalues(int index, const char* value, size_t size);
+  inline ::std::string* add_attributevalues();
+  inline void add_attributevalues(const ::std::string& value);
+  inline void add_attributevalues(const char* value);
+  inline void add_attributevalues(const char* value, size_t size);
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues();
   
   // repeated .OsmAnd.OBF.BuildingIndex buildings = 12;
   inline int buildings_size() const;
@@ -2489,11 +2489,11 @@ class StreetIndex : public ::google::obf_protobuf::Message {
   
   ::std::string* name_;
   ::std::string* name_en_;
-  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids_;
-  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues_;
   ::google::obf_protobuf::int32 x_;
   ::google::obf_protobuf::int32 y_;
   ::google::obf_protobuf::uint64 id_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues_;
   ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::BuildingIndex > buildings_;
   ::google::obf_protobuf::RepeatedPtrField< ::OsmAnd::OBF::StreetIntersection > intersections_;
   
@@ -2585,34 +2585,6 @@ class StreetIntersection : public ::google::obf_protobuf::Message {
   inline ::std::string* mutable_name_en();
   inline ::std::string* release_name_en();
   
-  // repeated uint32 attributeTagIds = 6;
-  inline int attributetagids_size() const;
-  inline void clear_attributetagids();
-  static const int kAttributeTagIdsFieldNumber = 6;
-  inline ::google::obf_protobuf::uint32 attributetagids(int index) const;
-  inline void set_attributetagids(int index, ::google::obf_protobuf::uint32 value);
-  inline void add_attributetagids(::google::obf_protobuf::uint32 value);
-  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
-      attributetagids() const;
-  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
-      mutable_attributetagids();
-  
-  // repeated string attributeValues = 7;
-  inline int attributevalues_size() const;
-  inline void clear_attributevalues();
-  static const int kAttributeValuesFieldNumber = 7;
-  inline const ::std::string& attributevalues(int index) const;
-  inline ::std::string* mutable_attributevalues(int index);
-  inline void set_attributevalues(int index, const ::std::string& value);
-  inline void set_attributevalues(int index, const char* value);
-  inline void set_attributevalues(int index, const char* value, size_t size);
-  inline ::std::string* add_attributevalues();
-  inline void add_attributevalues(const ::std::string& value);
-  inline void add_attributevalues(const char* value);
-  inline void add_attributevalues(const char* value, size_t size);
-  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues() const;
-  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues();
-  
   // required sint32 intersectedX = 4;
   inline bool has_intersectedx() const;
   inline void clear_intersectedx();
@@ -2626,6 +2598,34 @@ class StreetIntersection : public ::google::obf_protobuf::Message {
   static const int kIntersectedYFieldNumber = 5;
   inline ::google::obf_protobuf::int32 intersectedy() const;
   inline void set_intersectedy(::google::obf_protobuf::int32 value);
+  
+  // repeated uint32 attributeTagIds = 7;
+  inline int attributetagids_size() const;
+  inline void clear_attributetagids();
+  static const int kAttributeTagIdsFieldNumber = 7;
+  inline ::google::obf_protobuf::uint32 attributetagids(int index) const;
+  inline void set_attributetagids(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_attributetagids(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
+      attributetagids() const;
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
+      mutable_attributetagids();
+  
+  // repeated string attributeValues = 8;
+  inline int attributevalues_size() const;
+  inline void clear_attributevalues();
+  static const int kAttributeValuesFieldNumber = 8;
+  inline const ::std::string& attributevalues(int index) const;
+  inline ::std::string* mutable_attributevalues(int index);
+  inline void set_attributevalues(int index, const ::std::string& value);
+  inline void set_attributevalues(int index, const char* value);
+  inline void set_attributevalues(int index, const char* value, size_t size);
+  inline ::std::string* add_attributevalues();
+  inline void add_attributevalues(const ::std::string& value);
+  inline void add_attributevalues(const char* value);
+  inline void add_attributevalues(const char* value, size_t size);
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues();
   
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.StreetIntersection)
  private:
@@ -2642,10 +2642,10 @@ class StreetIntersection : public ::google::obf_protobuf::Message {
   
   ::std::string* name_;
   ::std::string* name_en_;
-  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids_;
-  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues_;
   ::google::obf_protobuf::int32 intersectedx_;
   ::google::obf_protobuf::int32 intersectedy_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues_;
   
   mutable int _cached_size_;
   ::google::obf_protobuf::uint32 _has_bits_[(6 + 31) / 32];
@@ -2735,34 +2735,6 @@ class BuildingIndex : public ::google::obf_protobuf::Message {
   inline ::std::string* mutable_name_en();
   inline ::std::string* release_name_en();
   
-  // repeated uint32 attributeTagIds = 15;
-  inline int attributetagids_size() const;
-  inline void clear_attributetagids();
-  static const int kAttributeTagIdsFieldNumber = 15;
-  inline ::google::obf_protobuf::uint32 attributetagids(int index) const;
-  inline void set_attributetagids(int index, ::google::obf_protobuf::uint32 value);
-  inline void add_attributetagids(::google::obf_protobuf::uint32 value);
-  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
-      attributetagids() const;
-  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
-      mutable_attributetagids();
-  
-  // repeated string attributeValues = 16;
-  inline int attributevalues_size() const;
-  inline void clear_attributevalues();
-  static const int kAttributeValuesFieldNumber = 16;
-  inline const ::std::string& attributevalues(int index) const;
-  inline ::std::string* mutable_attributevalues(int index);
-  inline void set_attributevalues(int index, const ::std::string& value);
-  inline void set_attributevalues(int index, const char* value);
-  inline void set_attributevalues(int index, const char* value, size_t size);
-  inline ::std::string* add_attributevalues();
-  inline void add_attributevalues(const ::std::string& value);
-  inline void add_attributevalues(const char* value);
-  inline void add_attributevalues(const char* value, size_t size);
-  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues() const;
-  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues();
-  
   // optional string name2 = 3;
   inline bool has_name2() const;
   inline void clear_name2();
@@ -2784,34 +2756,6 @@ class BuildingIndex : public ::google::obf_protobuf::Message {
   inline void set_name_en2(const char* value, size_t size);
   inline ::std::string* mutable_name_en2();
   inline ::std::string* release_name_en2();
-  
-  // repeated uint32 attributeTagIds2 = 17;
-  inline int attributetagids2_size() const;
-  inline void clear_attributetagids2();
-  static const int kAttributeTagIds2FieldNumber = 17;
-  inline ::google::obf_protobuf::uint32 attributetagids2(int index) const;
-  inline void set_attributetagids2(int index, ::google::obf_protobuf::uint32 value);
-  inline void add_attributetagids2(::google::obf_protobuf::uint32 value);
-  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
-      attributetagids2() const;
-  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
-      mutable_attributetagids2();
-  
-  // repeated string attributeValues2 = 18;
-  inline int attributevalues2_size() const;
-  inline void clear_attributevalues2();
-  static const int kAttributeValues2FieldNumber = 18;
-  inline const ::std::string& attributevalues2(int index) const;
-  inline ::std::string* mutable_attributevalues2(int index);
-  inline void set_attributevalues2(int index, const ::std::string& value);
-  inline void set_attributevalues2(int index, const char* value);
-  inline void set_attributevalues2(int index, const char* value, size_t size);
-  inline ::std::string* add_attributevalues2();
-  inline void add_attributevalues2(const ::std::string& value);
-  inline void add_attributevalues2(const char* value);
-  inline void add_attributevalues2(const char* value, size_t size);
-  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues2() const;
-  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues2();
   
   // optional sint32 interpolation = 5;
   inline bool has_interpolation() const;
@@ -2866,6 +2810,62 @@ class BuildingIndex : public ::google::obf_protobuf::Message {
   inline ::std::string* mutable_postcode();
   inline ::std::string* release_postcode();
   
+  // repeated uint32 attributeTagIds = 15;
+  inline int attributetagids_size() const;
+  inline void clear_attributetagids();
+  static const int kAttributeTagIdsFieldNumber = 15;
+  inline ::google::obf_protobuf::uint32 attributetagids(int index) const;
+  inline void set_attributetagids(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_attributetagids(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
+      attributetagids() const;
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
+      mutable_attributetagids();
+  
+  // repeated string attributeValues = 16;
+  inline int attributevalues_size() const;
+  inline void clear_attributevalues();
+  static const int kAttributeValuesFieldNumber = 16;
+  inline const ::std::string& attributevalues(int index) const;
+  inline ::std::string* mutable_attributevalues(int index);
+  inline void set_attributevalues(int index, const ::std::string& value);
+  inline void set_attributevalues(int index, const char* value);
+  inline void set_attributevalues(int index, const char* value, size_t size);
+  inline ::std::string* add_attributevalues();
+  inline void add_attributevalues(const ::std::string& value);
+  inline void add_attributevalues(const char* value);
+  inline void add_attributevalues(const char* value, size_t size);
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues();
+  
+  // repeated uint32 attributeTagIds2 = 17;
+  inline int attributetagids2_size() const;
+  inline void clear_attributetagids2();
+  static const int kAttributeTagIds2FieldNumber = 17;
+  inline ::google::obf_protobuf::uint32 attributetagids2(int index) const;
+  inline void set_attributetagids2(int index, ::google::obf_protobuf::uint32 value);
+  inline void add_attributetagids2(::google::obf_protobuf::uint32 value);
+  inline const ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >&
+      attributetagids2() const;
+  inline ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 >*
+      mutable_attributetagids2();
+  
+  // repeated string attributeValues2 = 18;
+  inline int attributevalues2_size() const;
+  inline void clear_attributevalues2();
+  static const int kAttributeValues2FieldNumber = 18;
+  inline const ::std::string& attributevalues2(int index) const;
+  inline ::std::string* mutable_attributevalues2(int index);
+  inline void set_attributevalues2(int index, const ::std::string& value);
+  inline void set_attributevalues2(int index, const char* value);
+  inline void set_attributevalues2(int index, const char* value, size_t size);
+  inline ::std::string* add_attributevalues2();
+  inline void add_attributevalues2(const ::std::string& value);
+  inline void add_attributevalues2(const char* value);
+  inline void add_attributevalues2(const char* value, size_t size);
+  inline const ::google::obf_protobuf::RepeatedPtrField< ::std::string>& attributevalues2() const;
+  inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>* mutable_attributevalues2();
+  
   // @@protoc_insertion_point(class_scope:OsmAnd.OBF.BuildingIndex)
  private:
   inline void set_has_name();
@@ -2895,18 +2895,18 @@ class BuildingIndex : public ::google::obf_protobuf::Message {
   
   ::std::string* name_;
   ::std::string* name_en_;
-  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids_;
-  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues_;
   ::std::string* name2_;
   ::std::string* name_en2_;
-  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids2_;
-  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues2_;
   ::google::obf_protobuf::int32 interpolation_;
   ::google::obf_protobuf::int32 x_;
   ::google::obf_protobuf::int32 y_;
   ::google::obf_protobuf::int32 x2_;
   ::google::obf_protobuf::uint64 id_;
   ::std::string* postcode_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues_;
+  ::google::obf_protobuf::RepeatedField< ::google::obf_protobuf::uint32 > attributetagids2_;
+  ::google::obf_protobuf::RepeatedPtrField< ::std::string> attributevalues2_;
   ::google::obf_protobuf::int32 y2_;
   
   mutable int _cached_size_;
@@ -7784,6 +7784,35 @@ inline ::OsmAnd::OBF::OsmAndTileBox* OsmAndAddressIndex::release_boundaries() {
   return temp;
 }
 
+// optional .OsmAnd.OBF.StringTable attributeTagsTable = 4;
+inline bool OsmAndAddressIndex::has_attributetagstable() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void OsmAndAddressIndex::set_has_attributetagstable() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void OsmAndAddressIndex::clear_has_attributetagstable() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void OsmAndAddressIndex::clear_attributetagstable() {
+  if (attributetagstable_ != NULL) attributetagstable_->::OsmAnd::OBF::StringTable::Clear();
+  clear_has_attributetagstable();
+}
+inline const ::OsmAnd::OBF::StringTable& OsmAndAddressIndex::attributetagstable() const {
+  return attributetagstable_ != NULL ? *attributetagstable_ : *default_instance_->attributetagstable_;
+}
+inline ::OsmAnd::OBF::StringTable* OsmAndAddressIndex::mutable_attributetagstable() {
+  set_has_attributetagstable();
+  if (attributetagstable_ == NULL) attributetagstable_ = new ::OsmAnd::OBF::StringTable;
+  return attributetagstable_;
+}
+inline ::OsmAnd::OBF::StringTable* OsmAndAddressIndex::release_attributetagstable() {
+  clear_has_attributetagstable();
+  ::OsmAnd::OBF::StringTable* temp = attributetagstable_;
+  attributetagstable_ = NULL;
+  return temp;
+}
+
 // repeated .OsmAnd.OBF.OsmAndAddressIndex.CitiesIndex cities = 6;
 inline int OsmAndAddressIndex::cities_size() const {
   return cities_.size();
@@ -7811,13 +7840,13 @@ OsmAndAddressIndex::mutable_cities() {
 
 // optional .OsmAnd.OBF.OsmAndAddressNameIndexData nameIndex = 7;
 inline bool OsmAndAddressIndex::has_nameindex() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
 inline void OsmAndAddressIndex::set_has_nameindex() {
-  _has_bits_[0] |= 0x00000010u;
+  _has_bits_[0] |= 0x00000020u;
 }
 inline void OsmAndAddressIndex::clear_has_nameindex() {
-  _has_bits_[0] &= ~0x00000010u;
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void OsmAndAddressIndex::clear_nameindex() {
   if (nameindex_ != NULL) nameindex_->::OsmAnd::OBF::OsmAndAddressNameIndexData::Clear();
@@ -7835,35 +7864,6 @@ inline ::OsmAnd::OBF::OsmAndAddressNameIndexData* OsmAndAddressIndex::release_na
   clear_has_nameindex();
   ::OsmAnd::OBF::OsmAndAddressNameIndexData* temp = nameindex_;
   nameindex_ = NULL;
-  return temp;
-}
-
-// optional .OsmAnd.OBF.StringTable attributeTagsTable = 8;
-inline bool OsmAndAddressIndex::has_attributetagstable() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void OsmAndAddressIndex::set_has_attributetagstable() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void OsmAndAddressIndex::clear_has_attributetagstable() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void OsmAndAddressIndex::clear_attributetagstable() {
-  if (attributetagstable_ != NULL) attributetagstable_->::OsmAnd::OBF::StringTable::Clear();
-  clear_has_attributetagstable();
-}
-inline const ::OsmAnd::OBF::StringTable& OsmAndAddressIndex::attributetagstable() const {
-  return attributetagstable_ != NULL ? *attributetagstable_ : *default_instance_->attributetagstable_;
-}
-inline ::OsmAnd::OBF::StringTable* OsmAndAddressIndex::mutable_attributetagstable() {
-  set_has_attributetagstable();
-  if (attributetagstable_ == NULL) attributetagstable_ = new ::OsmAnd::OBF::StringTable;
-  return attributetagstable_;
-}
-inline ::OsmAnd::OBF::StringTable* OsmAndAddressIndex::release_attributetagstable() {
-  clear_has_attributetagstable();
-  ::OsmAnd::OBF::StringTable* temp = attributetagstable_;
-  attributetagstable_ = NULL;
   return temp;
 }
 
@@ -8288,7 +8288,73 @@ inline ::std::string* CityIndex::release_name_en() {
   }
 }
 
-// repeated uint32 attributeTagIds = 11;
+// optional uint64 id = 4;
+inline bool CityIndex::has_id() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void CityIndex::set_has_id() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void CityIndex::clear_has_id() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void CityIndex::clear_id() {
+  id_ = GOOGLE_ULONGLONG(0);
+  clear_has_id();
+}
+inline ::google::obf_protobuf::uint64 CityIndex::id() const {
+  return id_;
+}
+inline void CityIndex::set_id(::google::obf_protobuf::uint64 value) {
+  set_has_id();
+  id_ = value;
+}
+
+// required uint32 x = 5;
+inline bool CityIndex::has_x() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void CityIndex::set_has_x() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void CityIndex::clear_has_x() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void CityIndex::clear_x() {
+  x_ = 0u;
+  clear_has_x();
+}
+inline ::google::obf_protobuf::uint32 CityIndex::x() const {
+  return x_;
+}
+inline void CityIndex::set_x(::google::obf_protobuf::uint32 value) {
+  set_has_x();
+  x_ = value;
+}
+
+// required uint32 y = 6;
+inline bool CityIndex::has_y() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void CityIndex::set_has_y() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void CityIndex::clear_has_y() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void CityIndex::clear_y() {
+  y_ = 0u;
+  clear_has_y();
+}
+inline ::google::obf_protobuf::uint32 CityIndex::y() const {
+  return y_;
+}
+inline void CityIndex::set_y(::google::obf_protobuf::uint32 value) {
+  set_has_y();
+  y_ = value;
+}
+
+// repeated uint32 attributeTagIds = 7;
 inline int CityIndex::attributetagids_size() const {
   return attributetagids_.size();
 }
@@ -8313,7 +8379,7 @@ CityIndex::mutable_attributetagids() {
   return &attributetagids_;
 }
 
-// repeated string attributeValues = 12;
+// repeated string attributeValues = 8;
 inline int CityIndex::attributevalues_size() const {
   return attributevalues_.size();
 }
@@ -8355,72 +8421,6 @@ CityIndex::attributevalues() const {
 inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 CityIndex::mutable_attributevalues() {
   return &attributevalues_;
-}
-
-// optional uint64 id = 4;
-inline bool CityIndex::has_id() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void CityIndex::set_has_id() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void CityIndex::clear_has_id() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void CityIndex::clear_id() {
-  id_ = GOOGLE_ULONGLONG(0);
-  clear_has_id();
-}
-inline ::google::obf_protobuf::uint64 CityIndex::id() const {
-  return id_;
-}
-inline void CityIndex::set_id(::google::obf_protobuf::uint64 value) {
-  set_has_id();
-  id_ = value;
-}
-
-// required uint32 x = 5;
-inline bool CityIndex::has_x() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void CityIndex::set_has_x() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void CityIndex::clear_has_x() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void CityIndex::clear_x() {
-  x_ = 0u;
-  clear_has_x();
-}
-inline ::google::obf_protobuf::uint32 CityIndex::x() const {
-  return x_;
-}
-inline void CityIndex::set_x(::google::obf_protobuf::uint32 value) {
-  set_has_x();
-  x_ = value;
-}
-
-// required uint32 y = 6;
-inline bool CityIndex::has_y() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void CityIndex::set_has_y() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void CityIndex::clear_has_y() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void CityIndex::clear_y() {
-  y_ = 0u;
-  clear_has_y();
-}
-inline ::google::obf_protobuf::uint32 CityIndex::y() const {
-  return y_;
-}
-inline void CityIndex::set_y(::google::obf_protobuf::uint32 value) {
-  set_has_y();
-  y_ = value;
 }
 
 // optional fixed32 shiftToCityBlockIndex = 10;
@@ -8641,7 +8641,73 @@ inline ::std::string* StreetIndex::release_name_en() {
   }
 }
 
-// repeated uint32 attributeTagIds = 13;
+// required sint32 x = 3;
+inline bool StreetIndex::has_x() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void StreetIndex::set_has_x() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void StreetIndex::clear_has_x() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void StreetIndex::clear_x() {
+  x_ = 0;
+  clear_has_x();
+}
+inline ::google::obf_protobuf::int32 StreetIndex::x() const {
+  return x_;
+}
+inline void StreetIndex::set_x(::google::obf_protobuf::int32 value) {
+  set_has_x();
+  x_ = value;
+}
+
+// required sint32 y = 4;
+inline bool StreetIndex::has_y() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void StreetIndex::set_has_y() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void StreetIndex::clear_has_y() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void StreetIndex::clear_y() {
+  y_ = 0;
+  clear_has_y();
+}
+inline ::google::obf_protobuf::int32 StreetIndex::y() const {
+  return y_;
+}
+inline void StreetIndex::set_y(::google::obf_protobuf::int32 value) {
+  set_has_y();
+  y_ = value;
+}
+
+// optional uint64 id = 6;
+inline bool StreetIndex::has_id() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void StreetIndex::set_has_id() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void StreetIndex::clear_has_id() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void StreetIndex::clear_id() {
+  id_ = GOOGLE_ULONGLONG(0);
+  clear_has_id();
+}
+inline ::google::obf_protobuf::uint64 StreetIndex::id() const {
+  return id_;
+}
+inline void StreetIndex::set_id(::google::obf_protobuf::uint64 value) {
+  set_has_id();
+  id_ = value;
+}
+
+// repeated uint32 attributeTagIds = 7;
 inline int StreetIndex::attributetagids_size() const {
   return attributetagids_.size();
 }
@@ -8666,7 +8732,7 @@ StreetIndex::mutable_attributetagids() {
   return &attributetagids_;
 }
 
-// repeated string attributeValues = 14;
+// repeated string attributeValues = 8;
 inline int StreetIndex::attributevalues_size() const {
   return attributevalues_.size();
 }
@@ -8708,72 +8774,6 @@ StreetIndex::attributevalues() const {
 inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 StreetIndex::mutable_attributevalues() {
   return &attributevalues_;
-}
-
-// required sint32 x = 3;
-inline bool StreetIndex::has_x() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void StreetIndex::set_has_x() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void StreetIndex::clear_has_x() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void StreetIndex::clear_x() {
-  x_ = 0;
-  clear_has_x();
-}
-inline ::google::obf_protobuf::int32 StreetIndex::x() const {
-  return x_;
-}
-inline void StreetIndex::set_x(::google::obf_protobuf::int32 value) {
-  set_has_x();
-  x_ = value;
-}
-
-// required sint32 y = 4;
-inline bool StreetIndex::has_y() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void StreetIndex::set_has_y() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void StreetIndex::clear_has_y() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void StreetIndex::clear_y() {
-  y_ = 0;
-  clear_has_y();
-}
-inline ::google::obf_protobuf::int32 StreetIndex::y() const {
-  return y_;
-}
-inline void StreetIndex::set_y(::google::obf_protobuf::int32 value) {
-  set_has_y();
-  y_ = value;
-}
-
-// optional uint64 id = 6;
-inline bool StreetIndex::has_id() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void StreetIndex::set_has_id() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void StreetIndex::clear_has_id() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void StreetIndex::clear_id() {
-  id_ = GOOGLE_ULONGLONG(0);
-  clear_has_id();
-}
-inline ::google::obf_protobuf::uint64 StreetIndex::id() const {
-  return id_;
-}
-inline void StreetIndex::set_id(::google::obf_protobuf::uint64 value) {
-  set_has_id();
-  id_ = value;
 }
 
 // repeated .OsmAnd.OBF.BuildingIndex buildings = 12;
@@ -8946,7 +8946,51 @@ inline ::std::string* StreetIntersection::release_name_en() {
   }
 }
 
-// repeated uint32 attributeTagIds = 6;
+// required sint32 intersectedX = 4;
+inline bool StreetIntersection::has_intersectedx() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void StreetIntersection::set_has_intersectedx() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void StreetIntersection::clear_has_intersectedx() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void StreetIntersection::clear_intersectedx() {
+  intersectedx_ = 0;
+  clear_has_intersectedx();
+}
+inline ::google::obf_protobuf::int32 StreetIntersection::intersectedx() const {
+  return intersectedx_;
+}
+inline void StreetIntersection::set_intersectedx(::google::obf_protobuf::int32 value) {
+  set_has_intersectedx();
+  intersectedx_ = value;
+}
+
+// required sint32 intersectedY = 5;
+inline bool StreetIntersection::has_intersectedy() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void StreetIntersection::set_has_intersectedy() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void StreetIntersection::clear_has_intersectedy() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void StreetIntersection::clear_intersectedy() {
+  intersectedy_ = 0;
+  clear_has_intersectedy();
+}
+inline ::google::obf_protobuf::int32 StreetIntersection::intersectedy() const {
+  return intersectedy_;
+}
+inline void StreetIntersection::set_intersectedy(::google::obf_protobuf::int32 value) {
+  set_has_intersectedy();
+  intersectedy_ = value;
+}
+
+// repeated uint32 attributeTagIds = 7;
 inline int StreetIntersection::attributetagids_size() const {
   return attributetagids_.size();
 }
@@ -8971,7 +9015,7 @@ StreetIntersection::mutable_attributetagids() {
   return &attributetagids_;
 }
 
-// repeated string attributeValues = 7;
+// repeated string attributeValues = 8;
 inline int StreetIntersection::attributevalues_size() const {
   return attributevalues_.size();
 }
@@ -9013,50 +9057,6 @@ StreetIntersection::attributevalues() const {
 inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 StreetIntersection::mutable_attributevalues() {
   return &attributevalues_;
-}
-
-// required sint32 intersectedX = 4;
-inline bool StreetIntersection::has_intersectedx() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void StreetIntersection::set_has_intersectedx() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void StreetIntersection::clear_has_intersectedx() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void StreetIntersection::clear_intersectedx() {
-  intersectedx_ = 0;
-  clear_has_intersectedx();
-}
-inline ::google::obf_protobuf::int32 StreetIntersection::intersectedx() const {
-  return intersectedx_;
-}
-inline void StreetIntersection::set_intersectedx(::google::obf_protobuf::int32 value) {
-  set_has_intersectedx();
-  intersectedx_ = value;
-}
-
-// required sint32 intersectedY = 5;
-inline bool StreetIntersection::has_intersectedy() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void StreetIntersection::set_has_intersectedy() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void StreetIntersection::clear_has_intersectedy() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void StreetIntersection::clear_intersectedy() {
-  intersectedy_ = 0;
-  clear_has_intersectedy();
-}
-inline ::google::obf_protobuf::int32 StreetIntersection::intersectedy() const {
-  return intersectedy_;
-}
-inline void StreetIntersection::set_intersectedy(::google::obf_protobuf::int32 value) {
-  set_has_intersectedy();
-  intersectedy_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -9179,6 +9179,312 @@ inline ::std::string* BuildingIndex::release_name_en() {
   }
 }
 
+// optional string name2 = 3;
+inline bool BuildingIndex::has_name2() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void BuildingIndex::set_has_name2() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void BuildingIndex::clear_has_name2() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void BuildingIndex::clear_name2() {
+  if (name2_ != &::google::obf_protobuf::internal::kEmptyString) {
+    name2_->clear();
+  }
+  clear_has_name2();
+}
+inline const ::std::string& BuildingIndex::name2() const {
+  return *name2_;
+}
+inline void BuildingIndex::set_name2(const ::std::string& value) {
+  set_has_name2();
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    name2_ = new ::std::string;
+  }
+  name2_->assign(value);
+}
+inline void BuildingIndex::set_name2(const char* value) {
+  set_has_name2();
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    name2_ = new ::std::string;
+  }
+  name2_->assign(value);
+}
+inline void BuildingIndex::set_name2(const char* value, size_t size) {
+  set_has_name2();
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    name2_ = new ::std::string;
+  }
+  name2_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* BuildingIndex::mutable_name2() {
+  set_has_name2();
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    name2_ = new ::std::string;
+  }
+  return name2_;
+}
+inline ::std::string* BuildingIndex::release_name2() {
+  clear_has_name2();
+  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = name2_;
+    name2_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// optional string name_en2 = 4;
+inline bool BuildingIndex::has_name_en2() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void BuildingIndex::set_has_name_en2() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void BuildingIndex::clear_has_name_en2() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void BuildingIndex::clear_name_en2() {
+  if (name_en2_ != &::google::obf_protobuf::internal::kEmptyString) {
+    name_en2_->clear();
+  }
+  clear_has_name_en2();
+}
+inline const ::std::string& BuildingIndex::name_en2() const {
+  return *name_en2_;
+}
+inline void BuildingIndex::set_name_en2(const ::std::string& value) {
+  set_has_name_en2();
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    name_en2_ = new ::std::string;
+  }
+  name_en2_->assign(value);
+}
+inline void BuildingIndex::set_name_en2(const char* value) {
+  set_has_name_en2();
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    name_en2_ = new ::std::string;
+  }
+  name_en2_->assign(value);
+}
+inline void BuildingIndex::set_name_en2(const char* value, size_t size) {
+  set_has_name_en2();
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    name_en2_ = new ::std::string;
+  }
+  name_en2_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* BuildingIndex::mutable_name_en2() {
+  set_has_name_en2();
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    name_en2_ = new ::std::string;
+  }
+  return name_en2_;
+}
+inline ::std::string* BuildingIndex::release_name_en2() {
+  clear_has_name_en2();
+  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = name_en2_;
+    name_en2_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
+// optional sint32 interpolation = 5;
+inline bool BuildingIndex::has_interpolation() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void BuildingIndex::set_has_interpolation() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void BuildingIndex::clear_has_interpolation() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void BuildingIndex::clear_interpolation() {
+  interpolation_ = 0;
+  clear_has_interpolation();
+}
+inline ::google::obf_protobuf::int32 BuildingIndex::interpolation() const {
+  return interpolation_;
+}
+inline void BuildingIndex::set_interpolation(::google::obf_protobuf::int32 value) {
+  set_has_interpolation();
+  interpolation_ = value;
+}
+
+// required sint32 x = 7;
+inline bool BuildingIndex::has_x() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void BuildingIndex::set_has_x() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void BuildingIndex::clear_has_x() {
+  _has_bits_[0] &= ~0x00000020u;
+}
+inline void BuildingIndex::clear_x() {
+  x_ = 0;
+  clear_has_x();
+}
+inline ::google::obf_protobuf::int32 BuildingIndex::x() const {
+  return x_;
+}
+inline void BuildingIndex::set_x(::google::obf_protobuf::int32 value) {
+  set_has_x();
+  x_ = value;
+}
+
+// required sint32 y = 8;
+inline bool BuildingIndex::has_y() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void BuildingIndex::set_has_y() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void BuildingIndex::clear_has_y() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void BuildingIndex::clear_y() {
+  y_ = 0;
+  clear_has_y();
+}
+inline ::google::obf_protobuf::int32 BuildingIndex::y() const {
+  return y_;
+}
+inline void BuildingIndex::set_y(::google::obf_protobuf::int32 value) {
+  set_has_y();
+  y_ = value;
+}
+
+// optional sint32 x2 = 9;
+inline bool BuildingIndex::has_x2() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void BuildingIndex::set_has_x2() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void BuildingIndex::clear_has_x2() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void BuildingIndex::clear_x2() {
+  x2_ = 0;
+  clear_has_x2();
+}
+inline ::google::obf_protobuf::int32 BuildingIndex::x2() const {
+  return x2_;
+}
+inline void BuildingIndex::set_x2(::google::obf_protobuf::int32 value) {
+  set_has_x2();
+  x2_ = value;
+}
+
+// optional sint32 y2 = 10;
+inline bool BuildingIndex::has_y2() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void BuildingIndex::set_has_y2() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void BuildingIndex::clear_has_y2() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void BuildingIndex::clear_y2() {
+  y2_ = 0;
+  clear_has_y2();
+}
+inline ::google::obf_protobuf::int32 BuildingIndex::y2() const {
+  return y2_;
+}
+inline void BuildingIndex::set_y2(::google::obf_protobuf::int32 value) {
+  set_has_y2();
+  y2_ = value;
+}
+
+// optional uint64 id = 13;
+inline bool BuildingIndex::has_id() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+inline void BuildingIndex::set_has_id() {
+  _has_bits_[0] |= 0x00000200u;
+}
+inline void BuildingIndex::clear_has_id() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+inline void BuildingIndex::clear_id() {
+  id_ = GOOGLE_ULONGLONG(0);
+  clear_has_id();
+}
+inline ::google::obf_protobuf::uint64 BuildingIndex::id() const {
+  return id_;
+}
+inline void BuildingIndex::set_id(::google::obf_protobuf::uint64 value) {
+  set_has_id();
+  id_ = value;
+}
+
+// optional string postcode = 14;
+inline bool BuildingIndex::has_postcode() const {
+  return (_has_bits_[0] & 0x00000400u) != 0;
+}
+inline void BuildingIndex::set_has_postcode() {
+  _has_bits_[0] |= 0x00000400u;
+}
+inline void BuildingIndex::clear_has_postcode() {
+  _has_bits_[0] &= ~0x00000400u;
+}
+inline void BuildingIndex::clear_postcode() {
+  if (postcode_ != &::google::obf_protobuf::internal::kEmptyString) {
+    postcode_->clear();
+  }
+  clear_has_postcode();
+}
+inline const ::std::string& BuildingIndex::postcode() const {
+  return *postcode_;
+}
+inline void BuildingIndex::set_postcode(const ::std::string& value) {
+  set_has_postcode();
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
+    postcode_ = new ::std::string;
+  }
+  postcode_->assign(value);
+}
+inline void BuildingIndex::set_postcode(const char* value) {
+  set_has_postcode();
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
+    postcode_ = new ::std::string;
+  }
+  postcode_->assign(value);
+}
+inline void BuildingIndex::set_postcode(const char* value, size_t size) {
+  set_has_postcode();
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
+    postcode_ = new ::std::string;
+  }
+  postcode_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* BuildingIndex::mutable_postcode() {
+  set_has_postcode();
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
+    postcode_ = new ::std::string;
+  }
+  return postcode_;
+}
+inline ::std::string* BuildingIndex::release_postcode() {
+  clear_has_postcode();
+  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = postcode_;
+    postcode_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+
 // repeated uint32 attributeTagIds = 15;
 inline int BuildingIndex::attributetagids_size() const {
   return attributetagids_.size();
@@ -9248,122 +9554,6 @@ BuildingIndex::mutable_attributevalues() {
   return &attributevalues_;
 }
 
-// optional string name2 = 3;
-inline bool BuildingIndex::has_name2() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void BuildingIndex::set_has_name2() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void BuildingIndex::clear_has_name2() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void BuildingIndex::clear_name2() {
-  if (name2_ != &::google::obf_protobuf::internal::kEmptyString) {
-    name2_->clear();
-  }
-  clear_has_name2();
-}
-inline const ::std::string& BuildingIndex::name2() const {
-  return *name2_;
-}
-inline void BuildingIndex::set_name2(const ::std::string& value) {
-  set_has_name2();
-  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    name2_ = new ::std::string;
-  }
-  name2_->assign(value);
-}
-inline void BuildingIndex::set_name2(const char* value) {
-  set_has_name2();
-  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    name2_ = new ::std::string;
-  }
-  name2_->assign(value);
-}
-inline void BuildingIndex::set_name2(const char* value, size_t size) {
-  set_has_name2();
-  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    name2_ = new ::std::string;
-  }
-  name2_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* BuildingIndex::mutable_name2() {
-  set_has_name2();
-  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    name2_ = new ::std::string;
-  }
-  return name2_;
-}
-inline ::std::string* BuildingIndex::release_name2() {
-  clear_has_name2();
-  if (name2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    return NULL;
-  } else {
-    ::std::string* temp = name2_;
-    name2_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
-    return temp;
-  }
-}
-
-// optional string name_en2 = 4;
-inline bool BuildingIndex::has_name_en2() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void BuildingIndex::set_has_name_en2() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void BuildingIndex::clear_has_name_en2() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void BuildingIndex::clear_name_en2() {
-  if (name_en2_ != &::google::obf_protobuf::internal::kEmptyString) {
-    name_en2_->clear();
-  }
-  clear_has_name_en2();
-}
-inline const ::std::string& BuildingIndex::name_en2() const {
-  return *name_en2_;
-}
-inline void BuildingIndex::set_name_en2(const ::std::string& value) {
-  set_has_name_en2();
-  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    name_en2_ = new ::std::string;
-  }
-  name_en2_->assign(value);
-}
-inline void BuildingIndex::set_name_en2(const char* value) {
-  set_has_name_en2();
-  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    name_en2_ = new ::std::string;
-  }
-  name_en2_->assign(value);
-}
-inline void BuildingIndex::set_name_en2(const char* value, size_t size) {
-  set_has_name_en2();
-  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    name_en2_ = new ::std::string;
-  }
-  name_en2_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* BuildingIndex::mutable_name_en2() {
-  set_has_name_en2();
-  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    name_en2_ = new ::std::string;
-  }
-  return name_en2_;
-}
-inline ::std::string* BuildingIndex::release_name_en2() {
-  clear_has_name_en2();
-  if (name_en2_ == &::google::obf_protobuf::internal::kEmptyString) {
-    return NULL;
-  } else {
-    ::std::string* temp = name_en2_;
-    name_en2_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
-    return temp;
-  }
-}
-
 // repeated uint32 attributeTagIds2 = 17;
 inline int BuildingIndex::attributetagids2_size() const {
   return attributetagids2_.size();
@@ -9431,196 +9621,6 @@ BuildingIndex::attributevalues2() const {
 inline ::google::obf_protobuf::RepeatedPtrField< ::std::string>*
 BuildingIndex::mutable_attributevalues2() {
   return &attributevalues2_;
-}
-
-// optional sint32 interpolation = 5;
-inline bool BuildingIndex::has_interpolation() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
-}
-inline void BuildingIndex::set_has_interpolation() {
-  _has_bits_[0] |= 0x00000100u;
-}
-inline void BuildingIndex::clear_has_interpolation() {
-  _has_bits_[0] &= ~0x00000100u;
-}
-inline void BuildingIndex::clear_interpolation() {
-  interpolation_ = 0;
-  clear_has_interpolation();
-}
-inline ::google::obf_protobuf::int32 BuildingIndex::interpolation() const {
-  return interpolation_;
-}
-inline void BuildingIndex::set_interpolation(::google::obf_protobuf::int32 value) {
-  set_has_interpolation();
-  interpolation_ = value;
-}
-
-// required sint32 x = 7;
-inline bool BuildingIndex::has_x() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
-}
-inline void BuildingIndex::set_has_x() {
-  _has_bits_[0] |= 0x00000200u;
-}
-inline void BuildingIndex::clear_has_x() {
-  _has_bits_[0] &= ~0x00000200u;
-}
-inline void BuildingIndex::clear_x() {
-  x_ = 0;
-  clear_has_x();
-}
-inline ::google::obf_protobuf::int32 BuildingIndex::x() const {
-  return x_;
-}
-inline void BuildingIndex::set_x(::google::obf_protobuf::int32 value) {
-  set_has_x();
-  x_ = value;
-}
-
-// required sint32 y = 8;
-inline bool BuildingIndex::has_y() const {
-  return (_has_bits_[0] & 0x00000400u) != 0;
-}
-inline void BuildingIndex::set_has_y() {
-  _has_bits_[0] |= 0x00000400u;
-}
-inline void BuildingIndex::clear_has_y() {
-  _has_bits_[0] &= ~0x00000400u;
-}
-inline void BuildingIndex::clear_y() {
-  y_ = 0;
-  clear_has_y();
-}
-inline ::google::obf_protobuf::int32 BuildingIndex::y() const {
-  return y_;
-}
-inline void BuildingIndex::set_y(::google::obf_protobuf::int32 value) {
-  set_has_y();
-  y_ = value;
-}
-
-// optional sint32 x2 = 9;
-inline bool BuildingIndex::has_x2() const {
-  return (_has_bits_[0] & 0x00000800u) != 0;
-}
-inline void BuildingIndex::set_has_x2() {
-  _has_bits_[0] |= 0x00000800u;
-}
-inline void BuildingIndex::clear_has_x2() {
-  _has_bits_[0] &= ~0x00000800u;
-}
-inline void BuildingIndex::clear_x2() {
-  x2_ = 0;
-  clear_has_x2();
-}
-inline ::google::obf_protobuf::int32 BuildingIndex::x2() const {
-  return x2_;
-}
-inline void BuildingIndex::set_x2(::google::obf_protobuf::int32 value) {
-  set_has_x2();
-  x2_ = value;
-}
-
-// optional sint32 y2 = 10;
-inline bool BuildingIndex::has_y2() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
-}
-inline void BuildingIndex::set_has_y2() {
-  _has_bits_[0] |= 0x00001000u;
-}
-inline void BuildingIndex::clear_has_y2() {
-  _has_bits_[0] &= ~0x00001000u;
-}
-inline void BuildingIndex::clear_y2() {
-  y2_ = 0;
-  clear_has_y2();
-}
-inline ::google::obf_protobuf::int32 BuildingIndex::y2() const {
-  return y2_;
-}
-inline void BuildingIndex::set_y2(::google::obf_protobuf::int32 value) {
-  set_has_y2();
-  y2_ = value;
-}
-
-// optional uint64 id = 13;
-inline bool BuildingIndex::has_id() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
-}
-inline void BuildingIndex::set_has_id() {
-  _has_bits_[0] |= 0x00002000u;
-}
-inline void BuildingIndex::clear_has_id() {
-  _has_bits_[0] &= ~0x00002000u;
-}
-inline void BuildingIndex::clear_id() {
-  id_ = GOOGLE_ULONGLONG(0);
-  clear_has_id();
-}
-inline ::google::obf_protobuf::uint64 BuildingIndex::id() const {
-  return id_;
-}
-inline void BuildingIndex::set_id(::google::obf_protobuf::uint64 value) {
-  set_has_id();
-  id_ = value;
-}
-
-// optional string postcode = 14;
-inline bool BuildingIndex::has_postcode() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
-}
-inline void BuildingIndex::set_has_postcode() {
-  _has_bits_[0] |= 0x00004000u;
-}
-inline void BuildingIndex::clear_has_postcode() {
-  _has_bits_[0] &= ~0x00004000u;
-}
-inline void BuildingIndex::clear_postcode() {
-  if (postcode_ != &::google::obf_protobuf::internal::kEmptyString) {
-    postcode_->clear();
-  }
-  clear_has_postcode();
-}
-inline const ::std::string& BuildingIndex::postcode() const {
-  return *postcode_;
-}
-inline void BuildingIndex::set_postcode(const ::std::string& value) {
-  set_has_postcode();
-  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
-    postcode_ = new ::std::string;
-  }
-  postcode_->assign(value);
-}
-inline void BuildingIndex::set_postcode(const char* value) {
-  set_has_postcode();
-  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
-    postcode_ = new ::std::string;
-  }
-  postcode_->assign(value);
-}
-inline void BuildingIndex::set_postcode(const char* value, size_t size) {
-  set_has_postcode();
-  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
-    postcode_ = new ::std::string;
-  }
-  postcode_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* BuildingIndex::mutable_postcode() {
-  set_has_postcode();
-  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
-    postcode_ = new ::std::string;
-  }
-  return postcode_;
-}
-inline ::std::string* BuildingIndex::release_postcode() {
-  clear_has_postcode();
-  if (postcode_ == &::google::obf_protobuf::internal::kEmptyString) {
-    return NULL;
-  } else {
-    ::std::string* temp = postcode_;
-    postcode_ = const_cast< ::std::string*>(&::google::obf_protobuf::internal::kEmptyString);
-    return temp;
-  }
 }
 
 // -------------------------------------------------------------------

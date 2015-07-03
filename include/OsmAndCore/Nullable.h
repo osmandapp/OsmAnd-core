@@ -19,9 +19,11 @@ namespace OsmAnd
         T _value;
         bool _isSet;
     public:
-        inline Nullable()
-            : _isSet(false)
+        inline Nullable(const T* const pValue = nullptr)
+            : _isSet(pValue != nullptr)
         {
+            if (pValue != nullptr)
+                _value = *pValue;
         }
 
         inline Nullable(const T& value)
