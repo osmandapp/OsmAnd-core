@@ -1604,7 +1604,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 					}
 				}
 			}
-			for(uint k = 0; (*dobj)->pointNameIds.size(); k++) {
+			for(uint k = 0; k < (*dobj)->pointNameIds.size(); k++) {
 				std::vector<uint32_t> vec = (*dobj)->pointNameIds[k];
 				std::vector<std::string> res;
 				for(uint kl = 0; kl < vec.size(); kl++) {

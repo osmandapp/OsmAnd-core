@@ -772,8 +772,8 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 			}
 		}
 	
-		ienv->SetObjectField(robj, jfield_RouteDataObject_pointTypes, pointNameTypes);
-		ienv->DeleteLocalRef(pointNameTypes);
+		ienv->SetObjectField(robj, jfield_RouteDataObject_pointNameTypes, pointNameTypes);
+		ienv->DeleteLocalRef(pointNameTypes); 
 	}
 
 	if(route->pointNames.size() > 0) {
@@ -784,7 +784,6 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 				jobjectArray nameStrings = ienv->NewObjectArray(ts.size(), jclassString, NULL);
 				jsize sz = 0;
 				for (uint p = 0; p < ts.size(); p++, sz++) {
-					std::string name = itNames->second;
 					jstring js = ienv->NewStringUTF(ts[p].c_str());
 					ienv->SetObjectArrayElement(nameStrings, sz, js);
 					ienv->DeleteLocalRef(js);
@@ -793,7 +792,7 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 				ienv->DeleteLocalRef(nameStrings);
 			}	
 		}
-		ienv->SetObjectField(robj, jfield_RouteDataObject_pointTypes, pointNames);
+		ienv->SetObjectField(robj, jfield_RouteDataObject_pointNames, pointNames);
 		ienv->DeleteLocalRef(pointNames);
 	}
 
