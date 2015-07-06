@@ -207,7 +207,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		return true;
 	}
 	int len = p->path->countPoints();
-    SkPoint* points= new SkPoint[len];
+	SkPoint* points = new SkPoint[len];
 	p->path->getPoints(points, len);
 
 
@@ -247,7 +247,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		prevInside = inside;
 	}
 	if (textw >= roadLength) {
-		delete points;
+		delete[] points;
 		return false;
 	}
 	int startInd = 0;
@@ -365,7 +365,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 			p->path = path;
 		}
 	}
-	delete points;
+	delete[] points;
 	return true;
 }
 
