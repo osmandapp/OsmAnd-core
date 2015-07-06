@@ -32,7 +32,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 	loadJniRenderingContext(globalJniEnv);
 	loadJniRenderingRules(globalJniEnv);
 	jclassIntArray = findGlobalClass(globalJniEnv, "[I");
-	jclassStringArray = findGlobalClass(globalJniEnv, "[java/lang/String");
+	jclassStringArray = findGlobalClass(globalJniEnv, "[Ljava/lang/String;");
 	jclassString = findGlobalClass(globalJniEnv, "java/lang/String");
 
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "JNI_OnLoad completed");
