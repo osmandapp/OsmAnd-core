@@ -107,6 +107,9 @@ struct RouteDataObject {
 	std::vector<uint32_t> pointsY ;
 	std::vector<uint64_t> restrictions ;
 	std::vector<std::vector<uint32_t> > pointTypes;
+	std::vector<std::vector<uint32_t> > pointNameTypes;
+	std::vector<std::vector<uint32_t> > pointNameIds;
+	std::vector<std::vector<std::string> > pointNames;
 	int64_t id;
 
 	UNORDERED(map)<int, std::string > names;
@@ -132,6 +135,14 @@ struct RouteDataObject {
 		std::vector<std::vector<uint32_t> >::iterator t = pointTypes.begin();
 		for(;t!=pointTypes.end(); t++) {
 			s+= (*t).capacity() * sizeof(uint32_t);
+		}
+		t = pointNameTypes.begin();
+		for(;t!=pointNameTypes.end(); t++) {
+			s+= (*t).capacity() * sizeof(uint32_t);
+		}
+		std::vector<std::vector<std::string> >::iterator ts = pointNames.begin();
+		for(;ts!=pointNames.end(); ts++) {
+			s+= (*ts).capacity() *10;
 		}
 		s += namesIds.capacity()*sizeof(pair<uint32_t, uint32_t>);
 		s += names.size()*sizeof(pair<int, string>)*10;

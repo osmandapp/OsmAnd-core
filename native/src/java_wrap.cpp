@@ -19,6 +19,7 @@ void loadJniRenderingContext(JNIEnv* env);
 void loadJniRenderingRules(JNIEnv* env);
 jclass jclassIntArray ;
 jclass jclassString;
+jclass jclassStringArray;
 jmethodID jmethod_Object_toString = NULL;
 
 
@@ -31,6 +32,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 	loadJniRenderingContext(globalJniEnv);
 	loadJniRenderingRules(globalJniEnv);
 	jclassIntArray = findGlobalClass(globalJniEnv, "[I");
+	jclassStringArray = findGlobalClass(globalJniEnv, "[java/lang/String");
 	jclassString = findGlobalClass(globalJniEnv, "java/lang/String");
 
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "JNI_OnLoad completed");
@@ -499,6 +501,8 @@ jfieldID jfield_RouteDataObject_pointsX = NULL;
 jfieldID jfield_RouteDataObject_pointsY = NULL;
 jfieldID jfield_RouteDataObject_restrictions = NULL;
 jfieldID jfield_RouteDataObject_pointTypes = NULL;
+jfieldID jfield_RouteDataObject_pointNames = NULL;
+jfieldID jfield_RouteDataObject_pointNameTypes = NULL;
 jfieldID jfield_RouteDataObject_id = NULL;
 jmethodID jmethod_RouteDataObject_init = NULL;
 
@@ -650,6 +654,8 @@ void loadJniRenderingContext(JNIEnv* env)
     jfield_RouteDataObject_pointsY = getFid(env,  jclass_RouteDataObject, "pointsY", "[I" );
     jfield_RouteDataObject_restrictions = getFid(env,  jclass_RouteDataObject, "restrictions", "[J" );
     jfield_RouteDataObject_pointTypes = getFid(env,  jclass_RouteDataObject, "pointTypes", "[[I" );
+    jfield_RouteDataObject_pointNameTypes = getFid(env,  jclass_RouteDataObject, "pointNameTypes", "[[I" );
+    jfield_RouteDataObject_pointNames = getFid(env,  jclass_RouteDataObject, "pointNames", "[[Ljava/lang/String;" );
     jfield_RouteDataObject_id = getFid(env,  jclass_RouteDataObject, "id", "J" );
     jmethod_RouteDataObject_init = env->GetMethodID(jclass_RouteDataObject, "<init>", "(Lnet/osmand/binary/BinaryMapRouteReaderAdapter$RouteRegion;[I[Ljava/lang/String;)V");
 
@@ -753,6 +759,44 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 
 	ienv->SetObjectField(robj, jfield_RouteDataObject_pointTypes, pointTypes);
 	ienv->DeleteLocalRef(pointTypes);
+
+	if(route->pointNameTypes.size() > 0) {
+		jobjectArray pointNameTypes = ienv->NewObjectArray(route->pointNameTypes.size(), jclassIntArray, NULL);
+		for (uint k = 0; k < route->pointNameTypes.size(); k++) {
+			std::vector<uint32_t> ts = route->pointNameTypes[k];
+			if (ts.size() > 0) {
+				jintArray tos = ienv->NewIntArray(ts.size());
+				ienv->SetIntArrayRegion(tos, 0, ts.size(), (jint*) &ts[0]);
+				ienv->SetObjectArrayElement(pointNameTypes, k, tos);
+				ienv->DeleteLocalRef(tos);
+			}
+		}
+	
+		ienv->SetObjectField(robj, jfield_RouteDataObject_pointTypes, pointNameTypes);
+		ienv->DeleteLocalRef(pointNameTypes);
+	}
+
+	if(route->pointNames.size() > 0) {
+		jobjectArray pointNames = ienv->NewObjectArray(route->pointNames.size(), jclassStringArray, NULL);
+		for (uint k = 0; k < route->pointNames.size(); k++) {
+			std::vector<std::string> ts = route->pointNames[k];
+			if(ts.size() > 0 ) {
+				jobjectArray nameStrings = ienv->NewObjectArray(ts.size(), jclassString, NULL);
+				jsize sz = 0;
+				for (uint p = 0; p < ts.size(); p++, sz++) {
+					std::string name = itNames->second;
+					jstring js = ienv->NewStringUTF(ts[p].c_str());
+					ienv->SetObjectArrayElement(nameStrings, sz, js);
+					ienv->DeleteLocalRef(js);
+				}
+				ienv->SetObjectArrayElement(pointNames, k, nameStrings);
+				ienv->DeleteLocalRef(nameStrings);
+			}	
+		}
+		ienv->SetObjectField(robj, jfield_RouteDataObject_pointTypes, pointNames);
+		ienv->DeleteLocalRef(pointNames);
+	}
+
 	return robj;
 }
 

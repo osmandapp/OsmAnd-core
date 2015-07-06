@@ -1399,6 +1399,31 @@ bool readRouteDataObject(CodedInputStream* input, uint32_t left, uint32_t top, R
 			input->PopLimit(oldLimit)	;
 			break;
 		}
+		case RouteData::kPointNamesFieldNumber: {
+			uint32_t length;
+			DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
+			int oldLimit = input->PushLimit(length);
+			while (input->BytesUntilLimit() > 0) {
+				uint32_t pointInd;
+				uint32_t nameType;
+				uint32_t name;
+				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &pointInd)));
+				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &nameType)));
+				DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &name)));
+				if (obj->pointNameTypes.size() <= pointInd) {
+					obj->pointNameTypes.resize(pointInd + 1, std::vector<uint32_t>());
+				}
+				obj->pointNameTypes[pointInd].push_back(nameType);
+				if (obj->pointNameIds.size() <= pointInd) {
+					obj->pointNameIds.resize(pointInd + 1, std::vector<uint32_t>());
+				}
+				obj->pointNameIds[pointInd].push_back(name);
+			}
+			input->PopLimit(oldLimit);
+			break;
+		}
+
+
 		case RouteData::kPointTypesFieldNumber: {
 			uint32_t length;
 			DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
@@ -1580,6 +1605,18 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 						(*dobj)->names[(int) (*itnames).first] = stringTable[(*itnames).second];
 					}
 				}
+			}
+			for(uint k = 0; (*dobj)->pointNameIds.size(); k++) {
+				std::vector<uint32_t> vec = (*dobj)->pointNameIds[k];
+				std::vector<std::string> res;
+				for(uint kl = 0; kl < vec.size(); kl++) {
+					if(vec[kl] >= stringTable.size()) {
+						OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "ERROR VALUE string table %d", (*itnames).second );
+					} else {
+						res.push_back(stringTable[vec[kl]]);
+					}
+				}
+				(*dobj)->pointNames.push_back(res);
 			}
 		}
 	}
