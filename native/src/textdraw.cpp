@@ -207,7 +207,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		return true;
 	}
 	int len = p->path->countPoints();
-    SkPoint* points= new SkPoint[len];
+	SkPoint* points = new SkPoint[len];
 	p->path->getPoints(points, len);
 
 
@@ -247,7 +247,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		prevInside = inside;
 	}
 	if (textw >= roadLength) {
-		delete points;
+		delete[] points;
 		return false;
 	}
 	int startInd = 0;
@@ -365,7 +365,7 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 			p->path = path;
 		}
 	}
-	delete points;
+	delete[] points;
 	return true;
 }
 
@@ -494,10 +494,8 @@ void drawShield(TextDrawInfo* textDrawInfo, std::string res, SkPaint* paintIcon,
 	SkBitmap* ico = getCachedBitmap(rc, res);
 	if (ico != NULL) {
 		float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
-		float left = textDrawInfo->centerX - ico->width() / 2 * coef; 
-				- 0.5f;
-		float top = textDrawInfo->centerY - ico->height() / 2 * coef  
-				- fm.fDescent - 0.5f; 								
+		float left = textDrawInfo->centerX - ico->width() / 2 * coef - 0.5f;
+		float top = textDrawInfo->centerY - ico->height() / 2 * coef - fm.fDescent - 0.5f;
 		// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
 		SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
 					ico->height() * coef);
@@ -523,7 +521,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	paintIcon.setStyle(SkPaint::kStroke_Style);
 	paintIcon.setStrokeWidth(1);
 	paintIcon.setColor(0xff000000);
-	paintIcon.setFilterBitmap(true);
+	paintIcon.setFilterLevel(SkPaint::kLow_FilterLevel);
 	SkPaint paintText;
 	paintText.setStyle(SkPaint::kFill_Style);
 	paintText.setStrokeWidth(1);

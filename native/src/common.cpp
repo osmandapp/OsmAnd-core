@@ -63,6 +63,7 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Open file %s", fl.c_str());
 			SkBitmap* bmp = new SkBitmap();
 			if (!SkImageDecoder::DecodeFile(fl.c_str(), bmp)) {
+				delete bmp;
 				return NULL;
 			}
 			return bmp;

@@ -817,7 +817,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 	size_t ji = 0;
 	SkPaint p;
 	p.setStyle(SkPaint::kStroke_Style);
-	p.setFilterBitmap(true);
+	p.setFilterLevel(SkPaint::kLow_FilterLevel);
 	vector<SkRect> searchText;
 	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 	for(;ji< rc->iconsToDraw.size(); ji++)
