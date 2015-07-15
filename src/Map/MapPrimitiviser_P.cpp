@@ -2582,8 +2582,6 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveTexts(
         // By default, text order is treated as 100
         text->order = 100;
         ok = evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_TEXT_ORDER, text->order);
-        //NOTE: a magic shifting of text order. This is needed to keep text more important than anything else
-        text->order += 100000;
 
         if (primitive->type == PrimitiveType::Point ||
             primitive->type == PrimitiveType::Polygon)
@@ -2752,6 +2750,8 @@ void OsmAnd::MapPrimitiviser_P::obtainPrimitiveIcon(
 
     icon->order = 100;
     primitive->evaluationResult.getIntegerValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_ORDER, icon->order);
+    //NOTE: a magic shifting of icon order. This is needed to keep icons less important than anything else
+    icon->order += 1000000;
 
     evaluationResult.getFloatValue(env->styleBuiltinValueDefs->id_OUTPUT_ICON_MIN_DISTANCE, icon->minDistance);
 

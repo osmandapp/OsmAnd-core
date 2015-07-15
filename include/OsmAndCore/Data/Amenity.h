@@ -20,7 +20,7 @@
 namespace OsmAnd
 {
     class ObfPoiSectionInfo;
-    class ObfPoiSectionSubtype;
+    struct ObfPoiSectionSubtype;
 
     class OSMAND_CORE_API Amenity Q_DECL_FINAL
     {

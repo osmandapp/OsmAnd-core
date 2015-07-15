@@ -14,6 +14,7 @@
 #include <QHash>
 #include <QMap>
 #include <QList>
+#include <QLinkedList>
 #include <QVector>
 #include <OsmAndCore/restore_internal_warnings.h>
 
@@ -42,6 +43,12 @@ namespace OsmAnd
     }
 
     template<typename T>
+    inline Q_DECL_CONSTEXPR QMutableLinkedListIterator<T> mutableIteratorOf(QLinkedList<T>& container)
+    {
+        return QMutableLinkedListIterator<T>(container);
+    }
+
+    template<typename T>
     inline Q_DECL_CONSTEXPR QMutableVectorIterator<T> mutableIteratorOf(QVector<T>& container)
     {
         return QMutableVectorIterator<T>(container);
@@ -63,6 +70,12 @@ namespace OsmAnd
     inline Q_DECL_CONSTEXPR QListIterator<T> iteratorOf(const QList<T>& container)
     {
         return QListIterator<T>(container);
+    }
+
+    template<typename T>
+    inline Q_DECL_CONSTEXPR QLinkedListIterator<T> iteratorOf(const QLinkedList<T>& container)
+    {
+        return QLinkedListIterator<T>(container);
     }
 
     template<typename T>

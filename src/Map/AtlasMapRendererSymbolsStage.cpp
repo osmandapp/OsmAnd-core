@@ -317,8 +317,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
     QHash< std::shared_ptr<const MapSymbolsGroup>, PlottedSymbolsRefGroupInstances> plottedSymbolsMapByGroupAndInstance;
 
     // Iterate over map symbols layer sorted by "order" in ascending direction.
-    // This means that map symbols with smaller order value are more important than map symbols with
-    // larger order value.
+    // This means that map symbols with smaller order value are more important than map symbols with larger order value.
+    // Also this means that map symbols with smaller order value are rendered after map symbols with larger order value.
     // Tree depth should satisfy following condition:
     // (max(width, height) / 2^depth) >= 64
     const auto viewportMaxDimension = qMax(currentState.viewport.height(), currentState.viewport.width());
@@ -330,6 +330,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
         const auto order = mapSymbolsByOrderEntry.key();
         const auto& mapSymbols = mapSymbolsByOrderEntry.value();
         MapRenderer::PublishedMapSymbolsByGroup* pAcceptedMapSymbols = nullptr;
+
+        const auto itPlottedSymbolsInsertPosition = plottedSymbols.begin();
 
         // Iterate over all groups in proper order (proper order is maintained during publishing)
         for (const auto& mapSymbolsEntry : constOf(mapSymbols))
@@ -412,7 +414,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             atLeastOnePlotted = true;
                         }
 
-                        const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderableSymbol);
+                        const auto itPlottedSymbol = plottedSymbols.insert(itPlottedSymbolsInsertPosition, renderableSymbol);
                         PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol };
 
                         plottedSymbolsMapByGroupAndInstance[mapSymbolsGroup]
@@ -473,7 +475,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
                             atLeastOnePlotted = true;
                         }
 
-                        const auto itPlottedSymbol = plottedSymbols.insert(plottedSymbols.end(), renderableSymbol);
+                        const auto itPlottedSymbol = plottedSymbols.insert(itPlottedSymbolsInsertPosition, renderableSymbol);
                         PlottedSymbolRef plottedSymbolRef = { itPlottedSymbol, renderableSymbol };
 
                         plottedSymbolsMapByGroupAndInstance[mapSymbolsGroup]
