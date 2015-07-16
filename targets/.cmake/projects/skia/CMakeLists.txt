@@ -21,6 +21,7 @@ include_directories(AFTER SYSTEM
 	"${UPSTREAM}/include/core"
 	"${UPSTREAM}/include/lazy"
 	"${UPSTREAM}/include/utils/mac"
+	"${UPSTREAM}/include/utils/win"
 	"${UPSTREAM}/include/pathops"
 	"${UPSTREAM}/src/core"
 	"${UPSTREAM}/include/config"
@@ -54,7 +55,6 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
         set(target_specific_sources "${target_specific_sources}"
        #          "${UPSTREAM}/src/fonts/SkFontMgr_fontconfig.cpp"
                 "${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
-                "${UPSTREAM}/src/ports/SkDiscardableMemory_none.cpp"
        #       "${UPSTREAM}/src/ports/SkFontConfigInterface_direct.cpp"
        #       "${UPSTREAM}/src/ports/SkFontHost_fontconfig.cpp"
        #       "${UPSTREAM}/src/ports/SkFontHost_FreeType_common.cpp"
@@ -72,12 +72,10 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
         add_definitions(-DSK_BUILD_FOR_MACOS -DSK_USE_POSIX_THREADS   -DSK_FONTHOST_USES_FONTMGR)
 endif()
 
-
 if(CMAKE_TARGET_OS STREQUAL "linux")
 	set(target_specific_sources "${target_specific_sources}"
 		"${UPSTREAM}/src/fonts/SkFontMgr_fontconfig.cpp"
 		"${UPSTREAM}/src/ports/SkDebug_stdio.cpp"
-		"${UPSTREAM}/src/ports/SkDiscardableMemory_none.cpp"
 		"${UPSTREAM}/src/ports/SkFontConfigInterface_direct.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_fontconfig.cpp"
 		"${UPSTREAM}/src/ports/SkFontHost_FreeType_common.cpp"
@@ -91,6 +89,28 @@ if(CMAKE_TARGET_OS STREQUAL "linux")
 	)
 	add_definitions(-DSK_BUILD_FOR_UNIX -DSK_USE_POSIX_THREADS)
 endif()
+
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	set(target_specific_sources "${target_specific_sources}"
+		"${UPSTREAM}/src/fonts/SkFontMgr_indirect.cpp"
+		"${UPSTREAM}/src/ports/SkDebug_win.cpp"
+		"${UPSTREAM}/src/ports/SkOSFile_win.cpp"
+		"${UPSTREAM}/src/ports/SkTime_win.cpp"
+		"${UPSTREAM}/src/ports/SkTLS_win.cpp"
+		"${UPSTREAM}/src/utils/SkThreadUtils_win.cpp"
+		"${UPSTREAM}/src/utils/win/SkAutoCoInitialize.cpp"
+		"${UPSTREAM}/src/utils/win/SkHRESULT.cpp"
+		"${UPSTREAM}/src/utils/win/SkIStream.cpp"
+		"${UPSTREAM}/src/ports/SkFontHost_win.cpp"
+		"${UPSTREAM}/src/ports/SkFontMgr_default_gdi.cpp"
+	)
+	add_definitions(
+		-DSK_BUILD_FOR_WIN32
+		-DSK_FONTHOST_USES_FONTMGR
+		-D_CRT_SECURE_NO_WARNINGS
+		-DGR_GL_FUNCTION_TYPE=__stdcall)
+endif()
+
 if(CMAKE_COMPILER_FAMILY STREQUAL "gcc" OR CMAKE_COMPILER_FAMILY STREQUAL "clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-rtti -fno-exceptions")
 endif()
@@ -370,6 +390,7 @@ add_library(skia_osmand STATIC
 	"${UPSTREAM}/src/ports/SkMemory_malloc.cpp"
 	"${UPSTREAM}/src/ports/SkOSFile_stdio.cpp"
 	"${UPSTREAM}/src/ports/SkImageGenerator_skia.cpp"
+	"${UPSTREAM}/src/ports/SkDiscardableMemory_none.cpp"
 	"${UPSTREAM}/src/utils/debugger/SkDebugCanvas.cpp"
 	"${UPSTREAM}/src/utils/debugger/SkDrawCommand.cpp"
 	"${UPSTREAM}/src/utils/debugger/SkObjectParser.cpp"
@@ -448,4 +469,8 @@ if(CMAKE_TARGET_OS STREQUAL "darwin")
  
         )
 endif()
-
+if(CMAKE_TARGET_OS STREQUAL "windows")
+	target_link_libraries(skia_osmand LINK_PUBLIC
+		usp10
+	)
+endif()
