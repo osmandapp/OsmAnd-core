@@ -857,8 +857,9 @@ bool readMapDataBlocks(CodedInputStream* input, SearchQuery* req, MapTreeBounds*
 			MapDataObject* mapObject = readMapDataObject(input, tree, req, root, baseId);
 			if (mapObject != NULL) {
 				mapObject->id += baseId;
-				req->publish(mapObject);
-				results.push_back(mapObject);
+				if(req->publish(mapObject)) {
+					results.push_back(mapObject);
+				}
 			}
 			input->Skip(input->BytesUntilLimit());
 			input->PopLimit(oldLimit);
@@ -1155,7 +1156,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		if (q->req != NULL) {
 			q->req->clearState();
 		}
-		q->publisher->result.clear();
+		q->publisher->clear();
 		if((renderRouteDataFile == 1 || q->zoom < zoomOnlyForBasemaps) && !file->isBasemap()) {
 			continue;
 		} else if (!q->publisher->isCancelled()) {
@@ -1227,7 +1228,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 				if (q->req != NULL) {
 					q->req->clearState();
 				}
-				q->publisher->result.clear();
+				q->publisher->clear();
 				uint sz = tempResult.size();
 				readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids, renderedState);
 				objectsFromRoutingSectionRead = tempResult.size() != sz;
@@ -1297,7 +1298,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		} else {
 			deleteObjects(basemapResult);
 		}
-		q->publisher->result.clear();
+		q->publisher->clear();
 		q->publisher->publish(tempResult);
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 				"Search : tree - read( %d), accept( %d), objs - visit( %d), accept(%d), in result(%d) ",
