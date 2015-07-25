@@ -351,7 +351,7 @@ struct ResultPublisher {
 	UNORDERED(set)<uint64_t > ids;
 
 	bool publish(MapDataObject* r) {
-		if(!ids.insert(r->id).second) {
+		if(r->id > 0 && !ids.insert(r->id).second) {
 			return false;
 		}
 		result.push_back(r);
