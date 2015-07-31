@@ -1188,55 +1188,25 @@ bool OsmAnd::ResourcesManager_P::installSQLiteDBFromFile(
 {
     assert(id.endsWith(".sqlitedb"));
 
-    return false;
+    // Copy that file
+    const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(id) : localPath_;
+    if (!QFile::copy(filePath, localFileName))
+    {
+        QFile(localFileName).remove();
+        return false;
+    }
 
-    //ArchiveReader archive(filePath);
+    // Create local resource entry
+    const auto pLocalResource = new InstalledResource(
+        id,
+        resourceType,
+        localFileName,
+        QFile(localFileName).size(),
+        std::numeric_limits<uint64_t>::max()); //NOTE: This resource will never update
+    outResource.reset(pLocalResource);
+    _localResources.insert(id, outResource);
 
-    //// List items
-    //bool ok = false;
-    //const auto archiveItems = archive.getItems(&ok);
-    //if (!ok)
-    //    return false;
-
-    //// Find the OBF file
-    //ArchiveReader::Item obfArchiveItem;
-    //for (const auto& archiveItem : constOf(archiveItems))
-    //{
-    //    if (!archiveItem.isValid() || !archiveItem.name.endsWith(QLatin1String(".obf")))
-    //        continue;
-
-    //    obfArchiveItem = archiveItem;
-    //    break;
-    //}
-    //if (!obfArchiveItem.isValid())
-    //    return false;
-
-    //// Extract that file without keeping directory structure
-    //const auto localFileName = localPath_.isNull() ? QDir(owner->localStoragePath).absoluteFilePath(id) : localPath_;
-    //if (!archive.extractItemToFile(obfArchiveItem.name, localFileName))
-    //    return false;
-
-    //// Read information from OBF
-    //const std::shared_ptr<const ObfFile> obfFile(new ObfFile(localFileName));
-    //if (!ObfReader(obfFile).obtainInfo())
-    //{
-    //    LogPrintf(LogSeverityLevel::Warning, "Failed to open OBF '%s'", qPrintable(localFileName));
-    //    QFile(filePath).remove();
-    //    return false;
-    //}
-
-    //// Create local resource entry
-    //const auto pLocalResource = new InstalledResource(
-    //    id,
-    //    resourceType,
-    //    localFileName,
-    //    obfFile->fileSize,
-    //    obfFile->obfInfo->creationTimestamp);
-    //outResource.reset(pLocalResource);
-    //pLocalResource->_metadata.reset(new ObfMetadata(obfFile));
-    //_localResources.insert(id, outResource);
-
-    //return true;
+    return true;
 }
 
 bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(

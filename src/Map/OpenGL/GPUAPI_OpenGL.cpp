@@ -109,10 +109,10 @@ GLuint OsmAnd::GPUAPI_OpenGL::compileShader(GLenum shaderType, const char* sourc
     const auto compilationResult = GL_GET_AND_CHECK_RESULT;
 
     // Check if compiled
-    GLint didCompile;
+    GLint didCompile = GL_FALSE;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &didCompile);
     GL_CHECK_RESULT;
-    if (didCompile == GL_FALSE || didCompile != GL_TRUE) // This check looks odd, but some drivers just don't deserve any trust
+    if (didCompile != GL_TRUE)
     {
         GLint logBufferSize = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logBufferSize);
