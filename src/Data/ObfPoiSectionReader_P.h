@@ -33,7 +33,7 @@ namespace OsmAnd
         ~ObfPoiSectionReader_P();
     protected:
         enum {
-            ZoomToSkipFilterRead = 6,
+            ZoomToSkipFilterRead = 5,
             ZoomToSkipFilter = 3,
         };
 
