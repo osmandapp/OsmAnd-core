@@ -30,6 +30,7 @@ namespace OsmAnd
 
         virtual std::shared_ptr<SkBitmap> getIcon(
             const std::shared_ptr<const Amenity>& amenity,
+            const ZoomLevel zoomLevel,
             const bool largeIcon = false) const = 0;
     };
 }

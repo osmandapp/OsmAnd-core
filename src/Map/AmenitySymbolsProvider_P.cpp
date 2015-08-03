@@ -45,14 +45,15 @@ bool OsmAnd::AmenitySymbolsProvider_P::obtainData(
         ObfDataTypesMask().set(ObfDataType::POI));
 
     QList< std::shared_ptr<MapSymbolsGroup> > mapSymbolsGroups;
+    const auto requestedZoom = request.zoom;
     const auto visitorFunction =
-        [this, &mapSymbolsGroups]
+        [this, requestedZoom, &mapSymbolsGroups]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
             if (owner->amentitiesFilter && !owner->amentitiesFilter(amenity))
                 return false;
 
-            const auto icon = owner->amenityIconProvider->getIcon(amenity, false);
+            const auto icon = owner->amenityIconProvider->getIcon(amenity, requestedZoom, false);
             if (!icon)
                 return false;
 

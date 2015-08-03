@@ -20,6 +20,7 @@ OsmAnd::CoreResourcesAmenityIconProvider::~CoreResourcesAmenityIconProvider()
 
 std::shared_ptr<SkBitmap> OsmAnd::CoreResourcesAmenityIconProvider::getIcon(
     const std::shared_ptr<const Amenity>& amenity,
+    const ZoomLevel zoomLevel,
     const bool largeIcon /*= false*/) const
 {
     const auto& decodedCategories = amenity->getDecodedCategories();
