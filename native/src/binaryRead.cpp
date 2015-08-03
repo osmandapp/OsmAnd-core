@@ -1137,7 +1137,7 @@ void readMapObjects(SearchQuery* q, BinaryMapFile* file) {
 
 void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & basemapResult, std::vector<MapDataObject*>& tempResult,
 		std::vector<MapDataObject*>& coastLines,std::vector<MapDataObject*>& basemapCoastLines,
-		int& count, bool& basemapExists, int& renderRouteDataFile, int& renderedState) {
+		int& count, bool& basemapExists, int& renderedState) {
 	vector< BinaryMapFile*>::iterator i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = *i;
@@ -1150,9 +1150,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 			q->req->clearState();
 		}
 		q->publisher->clear();
-		if((renderRouteDataFile == 1 || q->zoom < zoomOnlyForBasemaps) && !file->isBasemap()) {
-			continue;
-		} else if (!q->publisher->isCancelled()) {
+		if (!q->publisher->isCancelled()) {
 			bool basemap = file->isBasemap();
 			readMapObjects(q, file);
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
@@ -1191,7 +1189,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 	}
 }
 
-ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, int renderRouteDataFile, std::string msgNothingFound,
+ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, std::string msgNothingFound,
 	 int& renderedState) {
 	int count = 0;
 	std::vector<MapDataObject*> basemapResult;
@@ -1201,16 +1199,16 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 
 	bool basemapExists = false;
 	readMapObjectsForRendering(q, basemapResult, tempResult, coastLines, basemapCoastLines, count,
-			basemapExists, renderRouteDataFile, renderedState);
+			basemapExists, renderedState);
 
 	bool objectsFromMapSectionRead = tempResult.size() > 0;
 	bool objectsFromRoutingSectionRead = false;
-	if (renderRouteDataFile >= 0 && q->zoom >= zoomOnlyForBasemaps) {
+	if (q->zoom >= zoomOnlyForBasemaps) {
 		vector<BinaryMapFile*>::iterator i = openFiles.begin();
 		for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 			BinaryMapFile* file = *i;
 			// false positive case when we have 2 sep maps Country-roads & Country
-			if(file->mapIndexes.size() == 0 || renderRouteDataFile == 1) {
+			if(file->isRoadOnly()) {
 				if (q->req != NULL) {
 					q->req->clearState();
 				}
@@ -1798,6 +1796,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 		}
 	}
 	mapFile->inputName = inputName;
+	mapFile->roadOnly = inputName.find(".road") != string::npos;
 	openFiles.push_back(mapFile);
 	return mapFile;
 }
