@@ -25,7 +25,7 @@ using google::protobuf::internal::WireFormatLite;
 //using namespace google::protobuf::internal;
 #define INT_MAXIMUM 0x7fffffff
 
-static uint zoomForBaseRouteRendering  = 14;
+static uint zoomForBaseRouteRendering  = 13;
 static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
 std::map< std::string, BinaryMapFile* > openFiles;
