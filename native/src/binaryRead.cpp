@@ -28,7 +28,7 @@ using google::protobuf::internal::WireFormatLite;
 static uint zoomForBaseRouteRendering  = 13;
 static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
-std::map< std::string, BinaryMapFile* > openFiles;
+std::vector<BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
 typedef UNORDERED(set)<long long> IDS_SET;
 
@@ -857,8 +857,9 @@ bool readMapDataBlocks(CodedInputStream* input, SearchQuery* req, MapTreeBounds*
 			MapDataObject* mapObject = readMapDataObject(input, tree, req, root, baseId);
 			if (mapObject != NULL) {
 				mapObject->id += baseId;
-				req->publish(mapObject);
-				results.push_back(mapObject);
+				if(req->publish(mapObject)) {
+					results.push_back(mapObject);
+				}
 			}
 			input->Skip(input->BytesUntilLimit());
 			input->PopLimit(oldLimit);
@@ -937,7 +938,7 @@ void searchMapData(CodedInputStream* input, MapRoot* root, MapIndex* ind, Search
 
 
 void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObject*>& list, std::vector<MapDataObject*>& tempResult,
-		bool skipDuplicates, IDS_SET& ids, int& renderedState) {
+		int& renderedState) {
 	std::vector<RouteDataObject*>::iterator rIterator = list.begin();
 	tempResult.reserve((size_t) (list.size() + tempResult.size()));
 	for (; rIterator != list.end(); rIterator++) {
@@ -946,12 +947,12 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			continue;
 		}
 
-		if (skipDuplicates && r->id > 0) {
-			if (ids.find(r->id) != ids.end()) {
-				continue;
-			}
-			ids.insert(r->id);
-		}
+		// if (skipDuplicates && r->id > 0) {
+		// 	if (ids.find(r->id) != ids.end()) {
+		// 		continue;
+		// 	}
+		// 	ids.insert(r->id);
+		// }
 		MapDataObject* obj = new MapDataObject;
 		bool add = true;
 		std::vector<uint32_t>::iterator typeIt = r->types.begin();
@@ -1007,9 +1008,9 @@ void checkAndInitRouteRegionRules(int fileInd, RoutingIndex* routingIndex){
 }
 
 void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResult, bool basemap) {
-	map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
+	vector<BinaryMapFile*>::iterator i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
-		BinaryMapFile* file = i->second;
+		BinaryMapFile* file = *i;
 		std::vector<RoutingIndex*>::iterator routeIndex = file->routingIndexes.begin();
 		for (; routeIndex != file->routingIndexes.end(); routeIndex++) {
 			bool contains = false;
@@ -1034,8 +1035,7 @@ void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResu
 }
 
 void readRouteMapObjects(SearchQuery* q, BinaryMapFile* file, vector<RouteSubregion>& found,
-		RoutingIndex* routeIndex, std::vector<MapDataObject*>& tempResult, bool skipDuplicates,
-		IDS_SET& ids, int& renderedState) {
+		RoutingIndex* routeIndex, std::vector<MapDataObject*>& tempResult, int& renderedState) {
 	sort(found.begin(), found.end(), sortRouteRegions);
 	lseek(file->fd, 0, SEEK_SET);
 	FileInputStream input(file->fd);
@@ -1050,12 +1050,12 @@ void readRouteMapObjects(SearchQuery* q, BinaryMapFile* file, vector<RouteSubreg
 		uint32_t old = cis.PushLimit(length);
 		readRouteTreeData(&cis, &(*sub), list, routeIndex);
 		cis.PopLimit(old);
-		convertRouteDataObjecToMapObjects(q, list, tempResult, skipDuplicates, ids, renderedState);
+		convertRouteDataObjecToMapObjects(q, list, tempResult, renderedState);
 	}
 }
 
 void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<MapDataObject*>& tempResult,
-		bool skipDuplicates, IDS_SET& ids, int& renderedState) {
+		int& renderedState) {
 	std::vector<RoutingIndex*>::iterator routeIndex = file->routingIndexes.begin();
 	for (; routeIndex != file->routingIndexes.end(); routeIndex++) {
 		if (q->publisher->isCancelled()) {
@@ -1081,7 +1081,7 @@ void readRouteDataAsMapObjects(SearchQuery* q, BinaryMapFile* file, std::vector<
 			if ( cis != NULL) { delete cis; }
 			if ( nt != NULL) { delete nt; }
 			checkAndInitRouteRegionRules(file->fd, (*routeIndex));
-			readRouteMapObjects(q, file, found, (*routeIndex), tempResult, skipDuplicates, ids, renderedState);
+			readRouteMapObjects(q, file, found, (*routeIndex), tempResult, renderedState);
 		}
 	}
 }
@@ -1137,40 +1137,26 @@ void readMapObjects(SearchQuery* q, BinaryMapFile* file) {
 
 void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & basemapResult, std::vector<MapDataObject*>& tempResult,
 		std::vector<MapDataObject*>& coastLines,std::vector<MapDataObject*>& basemapCoastLines,
-		int& count, bool& basemapExists, int& renderRouteDataFile, bool skipDuplicates, int& renderedState) {
-	if (skipDuplicates) {
-		// override it for now
-		// TODO skip duplicates doesn't work correctly with basemap ?
-		skipDuplicates = false;
-	}
-	map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
+		int& count, bool& basemapExists, int& renderedState) {
+	vector< BinaryMapFile*>::iterator i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
-		BinaryMapFile* file = i->second;
+		BinaryMapFile* file = *i;
 		basemapExists |= file->isBasemap();
 	}
-	IDS_SET ids;
 	i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
-		BinaryMapFile* file = i->second;
+		BinaryMapFile* file = *i;
 		if (q->req != NULL) {
 			q->req->clearState();
 		}
-		q->publisher->result.clear();
-		if((renderRouteDataFile == 1 || q->zoom < zoomOnlyForBasemaps) && !file->isBasemap()) {
-			continue;
-		} else if (!q->publisher->isCancelled()) {
-			bool basemap = i->second->isBasemap();
+		q->publisher->clear();
+		if (!q->publisher->isCancelled()) {
+			bool basemap = file->isBasemap();
 			readMapObjects(q, file);
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
 
 			for (; r != q->publisher->result.end(); r++) {				
-				if (skipDuplicates && (*r)->id > 0) {
-					if (ids.find((*r)->id) != ids.end()) {
-						continue;
-					}
-					ids.insert((*r)->id);
-				}				
 				if(basemap) {
 					if(renderedState % 2 == 0 && checkObjectBounds(q, *r)) {
 						renderedState |= 1;
@@ -1203,7 +1189,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 	}
 }
 
-ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, int renderRouteDataFile, std::string msgNothingFound,
+ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, std::string msgNothingFound,
 	 int& renderedState) {
 	int count = 0;
 	std::vector<MapDataObject*> basemapResult;
@@ -1213,23 +1199,22 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 
 	bool basemapExists = false;
 	readMapObjectsForRendering(q, basemapResult, tempResult, coastLines, basemapCoastLines, count,
-			basemapExists, renderRouteDataFile, skipDuplicates, renderedState);
+			basemapExists, renderedState);
 
 	bool objectsFromMapSectionRead = tempResult.size() > 0;
 	bool objectsFromRoutingSectionRead = false;
-	if (renderRouteDataFile >= 0 && q->zoom >= zoomOnlyForBasemaps) {
-		IDS_SET ids;
-		map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
+	if (q->zoom >= zoomOnlyForBasemaps) {
+		vector<BinaryMapFile*>::iterator i = openFiles.begin();
 		for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
-			BinaryMapFile* file = i->second;
+			BinaryMapFile* file = *i;
 			// false positive case when we have 2 sep maps Country-roads & Country
-			if(file->mapIndexes.size() == 0 || renderRouteDataFile == 1) {
+			if(file->isRoadOnly()) {
 				if (q->req != NULL) {
 					q->req->clearState();
 				}
-				q->publisher->result.clear();
+				q->publisher->clear();
 				uint sz = tempResult.size();
-				readRouteDataAsMapObjects(q, file, tempResult, skipDuplicates, ids, renderedState);
+				readRouteDataAsMapObjects(q, file, tempResult, renderedState);
 				objectsFromRoutingSectionRead = tempResult.size() != sz;
 			}
 		}
@@ -1297,7 +1282,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		} else {
 			deleteObjects(basemapResult);
 		}
-		q->publisher->result.clear();
+		q->publisher->clear();
 		q->publisher->publish(tempResult);
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 				"Search : tree - read( %d), accept( %d), objs - visit( %d), accept(%d), in result(%d) ",
@@ -1644,11 +1629,11 @@ void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  Rou
 }
 
 void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub){
-	map<std::string, BinaryMapFile*>::iterator i = openFiles.begin();
+	vector< BinaryMapFile*>::iterator i = openFiles.begin();
 	RoutingIndex* rs = sub->routingIndex;
 	IDS_SET ids;
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
-		BinaryMapFile* file = i->second;
+		BinaryMapFile* file = *i;
 		for (std::vector<RoutingIndex*>::iterator routingIndex = file->routingIndexes.begin();
 				routingIndex != file->routingIndexes.end(); routingIndex++) {
 			if (q->publisher->isCancelled()) {
@@ -1667,11 +1652,13 @@ void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& 
 
 
 bool closeBinaryMapFile(std::string inputName) {
-	std::map<std::string, BinaryMapFile*>::iterator iterator;
-	if ((iterator = openFiles.find(inputName)) != openFiles.end()) {
-		delete iterator->second;
-		openFiles.erase(iterator);
-		return true;
+	std::vector< BinaryMapFile*>::iterator iterator = openFiles.begin();
+	for (;iterator != openFiles.end();iterator++) {
+		if((*iterator)->inputName == inputName) {
+			delete *iterator;
+			openFiles.erase(iterator);
+			return true;
+		}
 	}
 	return false;
 }
@@ -1714,10 +1701,7 @@ bool hasEnding (std::string const &fullString, std::string const &ending)
 BinaryMapFile* initBinaryMapFile(std::string inputName) {
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 	std::map<std::string, BinaryMapFile*>::iterator iterator;
-	if ((iterator = openFiles.find(inputName)) != openFiles.end()) {
-		delete iterator->second;
-		openFiles.erase(iterator);
-	}
+	closeBinaryMapFile(inputName);
 
 #if defined(_WIN32)
 	int fileDescriptor = open(inputName.c_str(), O_RDONLY | O_BINARY);
@@ -1812,6 +1796,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 		}
 	}
 	mapFile->inputName = inputName;
-	openFiles.insert(std::pair<std::string, BinaryMapFile*>(inputName, mapFile));
+	mapFile->roadOnly = inputName.find(".road") != string::npos;
+	openFiles.push_back(mapFile);
 	return mapFile;
 }

@@ -124,7 +124,8 @@ RenderingRuleSearchRequest* initSearchRequest(JNIEnv* env, jobject renderingRule
 
 extern "C" JNIEXPORT jlong JNICALL Java_net_osmand_NativeLibrary_searchNativeObjectsForRendering(JNIEnv* ienv,
 		jobject obj, jint sleft, jint sright, jint stop, jint sbottom, jint zoom,
-		jobject renderingRuleSearchRequest, bool skipDuplicates, int renderRouteDataFile,
+		jobject renderingRuleSearchRequest, bool skipDuplicates,
+		int renderRouteDataFile , // deprecated parameter
 		jobject objInterrupted, jstring msgNothingFound) {
 	RenderingRuleSearchRequest* req = initSearchRequest(ienv, renderingRuleSearchRequest);
 	jfieldID interruptedField = 0;
@@ -146,7 +147,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_net_osmand_NativeLibrary_searchNativeObj
 	q.zoom = zoom;
 
 
-	/*ResultPublisher* res =*/ searchObjectsForRendering(&q, skipDuplicates, renderRouteDataFile, getString(ienv, msgNothingFound), renderedState);
+	/*ResultPublisher* res =*/ searchObjectsForRendering(&q, skipDuplicates, getString(ienv, msgNothingFound), renderedState);
 	if(objInterrupted != NULL) {
 		ienv->SetIntField(objInterrupted, renderedStateField, renderedState);
 	}

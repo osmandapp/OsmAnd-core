@@ -335,10 +335,16 @@ struct BinaryMapFile {
 	int fd;
 	int routefd;
 	bool basemap;
+	bool roadOnly;
 
 	bool isBasemap(){
 		return basemap;
 	}
+
+	bool isRoadOnly(){
+		return roadOnly;
+	}
+
 
 	~BinaryMapFile() {
 		close(fd);
@@ -348,15 +354,27 @@ struct BinaryMapFile {
 
 struct ResultPublisher {
 	std::vector< MapDataObject*> result;
+	UNORDERED(set)<uint64_t > ids;
 
 	bool publish(MapDataObject* r) {
+		if(r->id > 0 && !ids.insert(r->id).second) {
+			return false;
+		}
 		result.push_back(r);
 		return true;
 	}
 	bool publish(std::vector<MapDataObject*> r) {
-		result.insert(result.begin(), r.begin(), r.end());
+		for(uint i = 0; i < r.size(); i++) {
+			publish(r[i]);
+		}
 		return true;
 	}
+
+	void clear() {
+		result.clear();
+		ids.clear();
+	}
+
 	bool isCancelled() {
 		return false;
 	}
@@ -405,7 +423,7 @@ void searchRouteSubregions(SearchQuery* q, std::vector<RouteSubregion>& tempResu
 
 void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub);
 
-ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, int renderRouteDataFile, std::string msgNothingFound, int& renderedState);
+ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, std::string msgNothingFound, int& renderedState);
 
 BinaryMapFile* initBinaryMapFile(std::string inputName);
 
