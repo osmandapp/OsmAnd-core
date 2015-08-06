@@ -1,10 +1,13 @@
 #include "ObfDataInterface.h"
 
+#include "stdlib_common.h"
+
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
 #include <QSet>
 #include "restore_internal_warnings.h"
 
+#include "Ref.h"
 #include "ObfReader.h"
 #include "ObfInfo.h"
 #include "ObfMapSectionReader.h"
@@ -537,16 +540,21 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     const ObfPoiSectionReader::VisitorFunction visitor /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
+    typedef std::pair< std::shared_ptr<const ObfReader>, Ref<ObfPoiSectionInfo> > OrderedSection;
+    std::vector< OrderedSection > orderedSections;
     for (const auto& obfReader : constOf(obfReaders))
     {
         if (queryController && queryController->isAborted())
             return false;
 
-        const auto& obfInfo = obfReader->obtainInfo();
+        const auto &obfInfo = obfReader->obtainInfo();
         for (const auto& poiSection : constOf(obfInfo->poiSections))
         {
             if (queryController && queryController->isAborted())
+            {
                 return false;
+            }
+
 
             if (pBbox31)
             {
@@ -556,59 +564,92 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
                 accept = accept || pBbox31->contains(poiSection->area31);
 
                 if (!accept)
-                    continue;
-            }
-
-            QSet<ObfPoiCategoryId> categoriesFilterById;
-            if (categoriesFilter)
-            {
-                std::shared_ptr<const ObfPoiSectionCategories> categories;
-                OsmAnd::ObfPoiSectionReader::loadCategories(
-                    obfReader,
-                    poiSection,
-                    categories,
-                    queryController);
-
-                if (!categories)
-                    continue;
-
-                for (const auto& categoriesFilterEntry : rangeOf(constOf(*categoriesFilter)))
                 {
-                    const auto mainCategoryIndex = categories->mainCategories.indexOf(categoriesFilterEntry.key());
-                    if (mainCategoryIndex < 0)
-                        continue;
-
-                    const auto& subcategories = categories->subCategories[mainCategoryIndex];
-                    if (categoriesFilterEntry.value().isEmpty())
-                    {
-                        for (auto subCategoryIndex = 0; subCategoryIndex < subcategories.size(); subCategoryIndex++)
-                            categoriesFilterById.insert(ObfPoiCategoryId::create(mainCategoryIndex, subCategoryIndex));
-                    }
-                    else
-                    {
-                        for (const auto& subcategory : constOf(categoriesFilterEntry.value()))
-                        {
-                            const auto subCategoryIndex = subcategories.indexOf(subcategory);
-                            if (subCategoryIndex < 0)
-                                continue;
-
-                            categoriesFilterById.insert(ObfPoiCategoryId::create(mainCategoryIndex, subCategoryIndex));
-                        }
-                    }
+                    continue;
                 }
             }
 
-            OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
+            orderedSections.push_back(OrderedSection(obfReader, poiSection));
+        }
+    }
+
+    if (pBbox31)
+    {
+        const auto bboxCenter = pBbox31->center();
+
+        // Sort blocks by data offset to force forward-only seeking
+        std::sort(
+            orderedSections,
+            [bboxCenter]
+            (const OrderedSection& l, const OrderedSection& r) -> bool
+            {
+                const auto lCenter = l.second->area31.center();
+                const auto lSqDistance = (lCenter - bboxCenter).squareNorm();
+
+                const auto rCenter = r.second->area31.center();
+                const auto rSqDistance = (rCenter - bboxCenter).squareNorm();
+
+                return lSqDistance < rSqDistance;
+            });
+    }
+
+    for (const auto& orderedSection : constOf(orderedSections))
+    {
+        if (queryController && queryController->isAborted())
+            return false;
+
+        const auto& obfReader = orderedSection.first;
+        const auto& poiSection = orderedSection.second;
+
+        QSet<ObfPoiCategoryId> categoriesFilterById;
+        if (categoriesFilter)
+        {
+            std::shared_ptr<const ObfPoiSectionCategories> categories;
+            OsmAnd::ObfPoiSectionReader::loadCategories(
                 obfReader,
                 poiSection,
-                query,
-                outAmenities,
-                pBbox31,
-                tileFilter,
-                categoriesFilter ? &categoriesFilterById : nullptr,
-                visitor,
+                categories,
                 queryController);
+
+            if (!categories)
+                continue;
+
+            for (const auto& categoriesFilterEntry : rangeOf(constOf(*categoriesFilter)))
+            {
+                const auto mainCategoryIndex = categories->mainCategories.indexOf(categoriesFilterEntry.key());
+                if (mainCategoryIndex < 0)
+                    continue;
+
+                const auto& subcategories = categories->subCategories[mainCategoryIndex];
+                if (categoriesFilterEntry.value().isEmpty())
+                {
+                    for (auto subCategoryIndex = 0; subCategoryIndex < subcategories.size(); subCategoryIndex++)
+                        categoriesFilterById.insert(ObfPoiCategoryId::create(mainCategoryIndex, subCategoryIndex));
+                }
+                else
+                {
+                    for (const auto& subcategory : constOf(categoriesFilterEntry.value()))
+                    {
+                        const auto subCategoryIndex = subcategories.indexOf(subcategory);
+                        if (subCategoryIndex < 0)
+                            continue;
+
+                        categoriesFilterById.insert(ObfPoiCategoryId::create(mainCategoryIndex, subCategoryIndex));
+                    }
+                }
+            }
         }
+
+        OsmAnd::ObfPoiSectionReader::scanAmenitiesByName(
+            obfReader,
+            poiSection,
+            query,
+            outAmenities,
+            pBbox31,
+            tileFilter,
+            categoriesFilter ? &categoriesFilterById : nullptr,
+            visitor,
+            queryController);
     }
 
     return true;
