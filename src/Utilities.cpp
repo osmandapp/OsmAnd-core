@@ -400,8 +400,8 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
     if (colorWasParsed)
         hsv = ColorRGB(parsedColor).toHSV();
     const auto h = hsv.h;
-    const auto s = hsv.s;
-    const auto v = hsv.v;
+    const auto s = hsv.s * 100.0f;
+    const auto v = hsv.v * 100.0f;
 
     if ((h < 16 && s > 25 && v > 30) ||
         (h > 326 && s > 25 && v > 30) ||
