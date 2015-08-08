@@ -196,20 +196,24 @@ void OsmAnd::MapRendererKeyedSymbolsResource::lostDataInGPU()
 
 void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
 {
-    // Unregister all obtained symbols
     const auto self = shared_from_this();
-    QList< PublishOrUnpublishMapSymbol > mapSymbolsToUnpublish;
-    mapSymbolsToUnpublish.reserve(_mapSymbolsGroup->symbols.size());
-    for (const auto& symbol : constOf(_mapSymbolsGroup->symbols))
-    {
-        PublishOrUnpublishMapSymbol mapSymbolToUnpublish = {
-            _mapSymbolsGroup,
-            std::static_pointer_cast<const MapSymbol>(symbol),
-            self };
-        mapSymbolsToUnpublish.push_back(mapSymbolToUnpublish);
-    }
-    resourcesManager->batchUnpublishMapSymbols(mapSymbolsToUnpublish);
 
+    // Unregister all obtained symbols, if it was ever published.
+    if (_mapSymbolsGroup)
+    {
+        QList<PublishOrUnpublishMapSymbol> mapSymbolsToUnpublish;
+        mapSymbolsToUnpublish.reserve(_mapSymbolsGroup->symbols.size());
+        for (const auto &symbol : constOf(_mapSymbolsGroup->symbols))
+        {
+            PublishOrUnpublishMapSymbol mapSymbolToUnpublish = {
+                _mapSymbolsGroup,
+                std::static_pointer_cast<const MapSymbol>(symbol),
+                self
+            };
+            mapSymbolsToUnpublish.push_back(mapSymbolToUnpublish);
+        }
+        resourcesManager->batchUnpublishMapSymbols(mapSymbolsToUnpublish);
+    }
     _mapSymbolsGroup.reset();
 
     _retainableCacheMetadata.reset();

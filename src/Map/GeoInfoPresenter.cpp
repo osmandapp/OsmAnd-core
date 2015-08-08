@@ -275,7 +275,7 @@ OsmAnd::GeoInfoPresenter::TracklineMapObject::~TracklineMapObject()
 OsmAnd::GeoInfoPresenter::RoutepointMapObject::RoutepointMapObject(
     const std::shared_ptr<const GeoInfoDocument>& geoInfoDocument_,
     const std::shared_ptr<const GeoInfoDocument::Route>& route_,
-    const std::shared_ptr<const GeoInfoDocument::LocationMark   >& routepoint_)
+    const std::shared_ptr<const GeoInfoDocument::LocationMark>& routepoint_)
     : MapObject(geoInfoDocument_, routepoint_->extraData)
     , route(route_)
     , routepoint(routepoint_)

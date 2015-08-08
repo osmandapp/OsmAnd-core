@@ -33,7 +33,7 @@ OsmAnd::MapRendererResourceState OsmAnd::MapRendererBaseKeyedResource::getState(
 
 void OsmAnd::MapRendererBaseKeyedResource::setState(const MapRendererResourceState newState)
 {
-    return BaseKeyedEntriesCollectionEntryWithState::setState(newState);
+    BaseKeyedEntriesCollectionEntryWithState::setState(newState);
 }
 
 bool OsmAnd::MapRendererBaseKeyedResource::setStateIf(
