@@ -68,7 +68,6 @@ uint32_t OsmAnd::OnlineRasterMapLayerProvider::getTileSize() const
     return tileSize;
 }
 
-
 bool OsmAnd::OnlineRasterMapLayerProvider::supportsNaturalObtainData() const
 {
     return true;

@@ -24,6 +24,13 @@ bool OsmAnd::ImageMapLayerProvider::obtainData(
     if (pOutMetric)
         pOutMetric->reset();
 
+    // Check provider can supply this zoom level
+    if (request.zoom > getMaxZoom() || request.zoom < getMinZoom())
+    {
+        outData.reset();
+        return true;
+    }
+
     if (!supportsNaturalObtainData())
         return MapDataProviderHelpers::nonNaturalObtainData(this, request, outData, pOutMetric);
 
