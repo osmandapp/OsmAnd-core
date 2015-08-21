@@ -1402,7 +1402,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
                     if (entry->isJunk)
                         return false;
 
-                    // Only resources in GPU are usable, or Unavailable
+                    // Only resources in GPU are usable and not Unavailable
                     const auto state = entry->getState();
                     return state == MapRendererResourceState::Uploaded;
                 };
@@ -1410,7 +1410,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
             {
                 // If resources have exact match for this tile, use only that
                 neededTilesMap[activeZoom].insert(activeTileId);
-                if (tiledResourcesCollection->containsResource(activeTileId, activeZoom, isUsableResource))
+                if (tiledResourcesCollection->containsResource(activeTileId, activeZoom, /*isUsableResource*/isUsableAndNotUnavailableResource))
                     continue;
 
                 if (resourcesCollection->getType() == MapRendererResourceType::MapLayer/* ||

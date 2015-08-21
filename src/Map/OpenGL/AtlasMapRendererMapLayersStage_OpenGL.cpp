@@ -1360,7 +1360,7 @@ OsmAnd::AtlasMapRendererMapLayersStage_OpenGL::batchLayersByTiles(const AtlasMap
                 // Exact match, no zoom shift or offset
                 batchedLayer->resourcesInGPU.push_back(Ref<BatchedLayerResource>::New(exactMatchGpuResource));
             }
-            else if (resourceState != MapRendererResourceState::Unavailable)
+            else //if (resourceState != MapRendererResourceState::Unavailable)
             {
                 // Exact match was not found, so now try to look for overscaled/underscaled resources, taking into account
                 // MaxMissingDataZoomShift and current zoom. It's better to show Z-"nearest" resource available,
