@@ -61,7 +61,9 @@ bool OsmAnd::MapRendererTiledResourcesCollection::containsResource(
     if (!obtainEntry(resource, tileId, zoomLevel))
         return false;
 
-    return filter(resource);
+    return filter
+        ? filter(resource)
+        : true;
 }
 
 int OsmAnd::MapRendererTiledResourcesCollection::getResourcesCount() const
