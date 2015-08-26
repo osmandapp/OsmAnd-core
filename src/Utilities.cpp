@@ -433,7 +433,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value = QLatin1String(usePalette6 ? "red" : "brown");
     }
     else if (
-        (h >= 16 && h < 45 && v > 60) ||
+        (h >= 14 && h < 42 && v > 60) ||
         value == QLatin1String("orange") ||
         value == QLatin1String("cream") ||
         value == QLatin1String("gold") ||
@@ -444,7 +444,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value = QLatin1String(usePalette6 ? "red" : "orange");
     }
     else if (
-        (h >= 46 && h < 73 && s > 30 && v > 80) ||
+        (h >= 42 && h < 73 && s > 30 && v > 80) ||
         value == QLatin1String("yellow") ||
         value == QLatin1String("gelb") ||
         value == QLatin1String("ffff00") ||
@@ -454,7 +454,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
     {
         value = QLatin1String("yellow");
     }
-    else if ((h >= 46 && h < 73 && s > 30 && v > 60 && v < 80))
+    else if ((h >= 42 && h < 73 && s > 30 && v > 60 && v < 80))
     {
         value = QLatin1String(usePalette6 ? "yellow" : "darkyellow");
     }
@@ -484,7 +484,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value = QLatin1String("green");
     }
     else if (
-        (h >= 174 && h < 215 && s > 15 && v > 50) ||
+        (h >= 174 && h < 215 && s > 32 && v > 50) ||
         value == QLatin1String("lightblue") ||
         value == QLatin1String("aqua") ||
         value == QLatin1String("cyan") ||
@@ -524,7 +524,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value = QLatin1String("black");
     }
     else if (
-        (s < 5 && v > 30 && v < 90) ||
+        (s < 32 && v > 30 && v < 90) ||
         value == QLatin1String("gray") ||
         value == QLatin1String("grey") ||
         value == QLatin1String("grey/tan") ||
