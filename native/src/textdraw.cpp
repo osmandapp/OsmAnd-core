@@ -106,22 +106,22 @@ inline float absFloat(float a){
 void fillTextProperties(RenderingContext* rc, TextDrawInfo* info, RenderingRuleSearchRequest* render, float cx, float cy) {
 	info->centerX = cx;
 	// used only for draw on path where centerY doesn't play role
-	info->vOffset = getDensityValue(rc, render, render->props()->R_TEXT_DY);
+	info->vOffset = getDensityValue(rc, render, render->props()->R_TEXT_DY) * rc->getTextScale() ;
 	info->centerY = cy + info->vOffset;
 	info->textColor = render->getIntPropertyValue(render->props()->R_TEXT_COLOR);
 	if (info->textColor == 0) {
 		info->textColor = 0xff000000;
 	}
-	info->textSize = getDensityValue(rc, render, render->props()->R_TEXT_SIZE);
-	info->textShadow = getDensityValue(rc, render, render->props()->R_TEXT_HALO_RADIUS);
+	info->textSize = getDensityValue(rc, render, render->props()->R_TEXT_SIZE) * rc->getTextScale();
+	info->textShadow = getDensityValue(rc, render, render->props()->R_TEXT_HALO_RADIUS) * rc->getTextScale();
 	info->textShadowColor = render->getIntPropertyValue(render->props()->R_TEXT_HALO_COLOR);
 	if (info->textShadowColor == 0) {
 		info->textShadowColor = 0xffffffff;
 	}
-	info->textWrap = getDensityValue(rc, render, render->props()->R_TEXT_WRAP_WIDTH);
+	info->textWrap = getDensityValue(rc, render, render->props()->R_TEXT_WRAP_WIDTH) * rc->getTextScale();
 	info->bold = render->getIntPropertyValue(render->props()->R_TEXT_BOLD, 0) > 0;
-	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE);
-	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD);
+	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE) * rc->getTextScale();
+	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD) ;
 	info->shieldResIcon = render->getStringPropertyValue(render-> props()-> R_ICON);
 	info->textOrder = render->getIntPropertyValue(render->props()->R_TEXT_ORDER, 100);
 }
@@ -546,7 +546,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
         globalFontRegistry.updateTypeface(&paintText, 
 			textDrawInfo->text, textDrawInfo->bold, false, sDefaultTypeface); //textDrawInfo->italic
    		// sest text size before finding intersection (it is used there)
-		float textSize = textDrawInfo->textSize  * rc->getTextScale() ;
+		float textSize = textDrawInfo->textSize ;
 		paintText.setTextSize(textSize);
 		
 		//paintText.setFakeBoldText(textDrawInfo->bold);
