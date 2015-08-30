@@ -246,6 +246,7 @@ public:
 	RenderingRuleProperty* R_COLOR__1;
 	RenderingRuleProperty* R_COLOR__2;
 	
+	RenderingRuleProperty* R_TEXT_ITALIC;
 	RenderingRuleProperty* R_TEXT_BOLD;
 	RenderingRuleProperty* R_TEXT_ORDER;
 	RenderingRuleProperty* R_ICON_ORDER;
@@ -387,6 +388,7 @@ public:
 
 		R_TEXT_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("textColor"));
 		R_TEXT_BOLD = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("textBold"));
+		R_TEXT_BOLD = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("textItalic"));
 		R_TEXT_ON_PATH = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("textOnPath"));
 
 		// point

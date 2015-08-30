@@ -507,6 +507,9 @@ void drawShield(TextDrawInfo* textDrawInfo, std::string res, SkPaint* paintIcon,
 
 
 static SkTypeface* sDefaultTypeface = nullptr;
+static SkTypeface* sItalicTypeface = nullptr;
+static SkTypeface* sBoldTypeface = nullptr;
+static SkTypeface* sBoldItalicTypeface = nullptr;
 
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
@@ -517,6 +520,12 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
     // This is never released because of always +1 of reference counter
     if(!sDefaultTypeface)
         sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
+    if(!sBoldTypeface)
+        sBoldTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kBold);
+    if(!sItalicTypeface)
+        sItalicTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kItalic);
+    if(!sBoldItalicTypeface)
+        sBoldItalicTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kBoldItalic);
 #endif
 
 	SkPaint paintIcon;
@@ -544,7 +553,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 
         // Prepare font
         globalFontRegistry.updateTypeface(&paintText, 
-			textDrawInfo->text, textDrawInfo->bold, false, sDefaultTypeface); //textDrawInfo->italic
+			textDrawInfo->text, textDrawInfo->bold, textDrawInfo->italic, sDefaultTypeface); 
    		// sest text size before finding intersection (it is used there)
 		float textSize = textDrawInfo->textSize ;
 		paintText.setTextSize(textSize);

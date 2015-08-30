@@ -70,6 +70,7 @@ struct TextDrawInfo {
 	int textShadowColor;
 	uint32_t textWrap;
 	bool bold;
+	bool italic;
 	std::string shieldRes;
 	std::string shieldResIcon;
 	int textOrder;
