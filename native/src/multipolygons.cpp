@@ -24,7 +24,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		if (len < 2) {
 			continue;
 		}
-		dbId = o->id >> 1;
+		dbId = -(o->id >> 1);
 		coordinates* cs = new coordinates();
 		int px = o->points.at(0).first;
 		int py = o->points.at(0).second;
@@ -90,7 +90,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		 	landFound ++;
 			o->types.push_back(tag_value("natural", "land"));
 		}
-		o->id = dbId;
+		o->id = dbId--;
 		o->area = true;
 		res.push_back(o);
 	}
@@ -104,7 +104,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		o->points.push_back(int_pair(rightX, bottomY));
 		o->points.push_back(int_pair(leftX, bottomY));
 		o->points.push_back(int_pair(leftX, topY));
-		o->id = dbId;
+		o->id = dbId--;
 		o->types.push_back(tag_value("natural", "coastline"));
 		res.push_back(o);
 
