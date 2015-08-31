@@ -388,7 +388,7 @@ public:
 
 		R_TEXT_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("textColor"));
 		R_TEXT_BOLD = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("textBold"));
-		R_TEXT_BOLD = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("textItalic"));
+		R_TEXT_ITALIC = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("textItalic"));
 		R_TEXT_ON_PATH = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("textOnPath"));
 
 		// point
