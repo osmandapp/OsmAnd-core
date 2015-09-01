@@ -403,7 +403,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
     const auto s = hsv.s * 100.0f;
     const auto v = hsv.v * 100.0f;
 
-    if ((h < 16 && s > 25 && v > 30) ||
+    if ((h < 14 && s > 25 && v > 30) ||
         (h > 326 && s > 25 && v > 30) ||
         (h < 16 && s > 10 && s < 25 && v > 90) ||
         (h > 326 && s > 10 && s < 25 && v > 90) ||
