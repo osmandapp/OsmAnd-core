@@ -519,11 +519,11 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
     if(!sDefaultTypeface)
         sDefaultTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kNormal);
     if(!sBoldTypeface)
-        sBoldTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kBold);
+        sBoldTypeface = SkTypeface::CreateFromName("", SkTypeface::kBold);
     if(!sItalicTypeface)
-        sItalicTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kItalic);
+        sItalicTypeface = SkTypeface::CreateFromName("", SkTypeface::kItalic);
     if(!sBoldItalicTypeface)
-        sBoldItalicTypeface = SkTypeface::CreateFromName("Droid Serif", SkTypeface::kBoldItalic);
+        sBoldItalicTypeface = SkTypeface::CreateFromName("", SkTypeface::kBoldItalic);
 #endif
 
 	SkPaint paintIcon;
