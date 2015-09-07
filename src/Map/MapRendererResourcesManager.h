@@ -83,8 +83,6 @@ namespace OsmAnd
             MapRendererResourcesManager* const manager;
             const std::shared_ptr<MapRendererBaseResource> requestedResource;
 
-            virtual void requestCancellation();
-
             int64_t calculatePriority(
                 const TileId centerTileId,
                 const QVector<TileId>& activeTiles,

@@ -41,13 +41,12 @@
 #   define OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER 0
 #endif // !defined(OSMAND_SINGLE_MAP_RENDERER_RESOURCES_WORKER)
 
-#if OSMAND_LOG_RESOURCE_STATE_CHANGE
-#   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)                                                              \
-    if (const auto tiledResource = std::dynamic_pointer_cast<const BaseTiledResource>(resource))                                \
+#define FORCE_LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)                                                           \
+    if (const auto tiledResource = std::dynamic_pointer_cast<const MapRendererBaseTiledResource>(resource))                     \
     {                                                                                                                           \
         LogPrintf(LogSeverityLevel::Debug,                                                                                      \
             "Tile resource %p %dx%d@%d state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),  \
-            resource.get(), tiledResource.tileId.x, tiledResource.tileId.y, tiledResource.zoom);                                \
+            resource.get(), tiledResource->tileId.x, tiledResource->tileId.y, tiledResource->zoom);                             \
     }                                                                                                                           \
     else                                                                                                                        \
     {                                                                                                                           \
@@ -55,6 +54,9 @@
             "Resource %p state change '" #oldState "'->'" #newState "' at " __FILE__ ":" QT_STRINGIFY(__LINE__),                \
             resource.get());                                                                                                    \
     }
+
+#if OSMAND_LOG_RESOURCE_STATE_CHANGE
+#   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState) FORCE_LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)
 #else
 #   define LOG_RESOURCE_STATE_CHANGE(resource, oldState, newState)
 #endif
@@ -963,13 +965,26 @@ void OsmAnd::MapRendererResourcesManager::requestNeededResource(
     {
         // Create async-task that will obtain needed resource data
         const auto asyncTask = new ResourceRequestTask(resource, _taskHostBridge);
+        const auto weakAsyncTaskCancellator = asyncTask->obtainCancellator();
 
         // Register resource as requested
         resource->_cancelRequestCallback =
-            [asyncTask]
+            [this, weakAsyncTaskCancellator, asyncTask]
             ()
             {
-                asyncTask->requestCancellation();
+                if (const auto asyncTaskCancellator = weakAsyncTaskCancellator.lock())
+                {
+                    asyncTaskCancellator->requestCancellation();
+
+                    // In case task was successfully dequeued, it means it will never get executed
+                    const auto dequeued = _resourcesRequestWorkerPool.dequeue(asyncTask);
+                    if (dequeued)
+                    {
+                        asyncTask->run();
+                        if (asyncTask->autoDelete())
+                            delete asyncTask;
+                    }
+                }
             };
         assert(resource->getState() == MapRendererResourceState::Requesting);
         resource->setState(MapRendererResourceState::Requested);
@@ -1683,14 +1698,14 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
 {
     if (resource->setStateIf(MapRendererResourceState::Unloaded, MapRendererResourceState::JustBeforeDeath))
     {
-        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Unloaded, MapRendererResourceState::JustBeforeDeath);
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unloaded, MapRendererResourceState::JustBeforeDeath);
 
         // If resource was unloaded from GPU, remove the entry.
         return true;
     }
     else if (resource->setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPending))
     {
-        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPending);
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPending);
 
         // If resource is not needed anymore, change its state to "UnloadPending",
         // but keep the resource entry, since it must be unload from GPU in another place
@@ -1701,7 +1716,7 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
     else if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::JustBeforeDeath))
     {
         LOG_RESOURCE_STATE_CHANGE(
-            entry,
+            resource,
             MapRendererResourceState::Ready,
             MapRendererResourceState::JustBeforeDeath);
 
@@ -1711,7 +1726,7 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
     else if (resource->setStateIf(MapRendererResourceState::ProcessingRequest, MapRendererResourceState::RequestCanceledWhileBeingProcessed))
     {
         LOG_RESOURCE_STATE_CHANGE(
-            entry,
+            resource,
             MapRendererResourceState::ProcessingRequest,
             MapRendererResourceState::RequestCanceledWhileBeingProcessed);
 
@@ -1721,7 +1736,7 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
     }
     else if (resource->setStateIf(MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath))
     {
-        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath);
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Requested, MapRendererResourceState::JustBeforeDeath);
 
         // If resource was just requested, cancel its task and remove the entry.
 
@@ -1733,7 +1748,7 @@ bool OsmAnd::MapRendererResourcesManager::cleanupJunkResource(
     }
     else if (resource->setStateIf(MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath))
     {
-        LOG_RESOURCE_STATE_CHANGE(entry, MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath);
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unavailable, MapRendererResourceState::JustBeforeDeath);
 
         // If resource was never available, just remove the entry
         return true;
@@ -2237,20 +2252,6 @@ OsmAnd::MapRendererResourcesManager::ResourceRequestTask::ResourceRequestTask(
 OsmAnd::MapRendererResourcesManager::ResourceRequestTask::~ResourceRequestTask()
 {
     manager->_resourcesRequestTasksCounter.fetchAndSubOrdered(1);
-}
-
-void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::requestCancellation()
-{
-    Concurrent::HostedTask::requestCancellation();
-
-    // In case task was successfully dequeued, it means it will never get executed
-    const auto dequeued = manager->_resourcesRequestWorkerPool.dequeue(this);
-    if (dequeued)
-    {
-        postExecute(true);
-        if (autoDelete())
-            delete this;
-    }
 }
 
 void OsmAnd::MapRendererResourcesManager::ResourceRequestTask::execute()
