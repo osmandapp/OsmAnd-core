@@ -115,7 +115,7 @@ void fillTextProperties(RenderingContext* rc, TextDrawInfo* info, RenderingRuleS
 	if (info->textShadowColor == 0) {
 		info->textShadowColor = 0xffffffff;
 	}
-	info->textWrap = getDensityValue(rc, render, render->props()->R_TEXT_WRAP_WIDTH) * rc->getTextScale();
+	info->textWrap = render->getIntPropertyValue(render->props()->R_TEXT_WRAP_WIDTH);	
 	info->bold = render->getIntPropertyValue(render->props()->R_TEXT_BOLD, 0) > 0;
 	info->italic = render->getIntPropertyValue(render->props()->R_TEXT_ITALIC, 0) > 0;
 	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE) * rc->getTextScale();
