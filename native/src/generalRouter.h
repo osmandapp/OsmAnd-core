@@ -137,6 +137,11 @@ public:
 	RouteAttributeContext(GeneralRouter* r) : router(r) {
 	}
 
+	~RouteAttributeContext() {
+		for (uint k = 0; k < rules.size(); k++) {
+			delete rules[k];
+		}
+	}
 
 	void registerParams(vector<string>& keys, vector<string>& vls) {
 		for(uint i = 0; i < keys.size(); i++) {
@@ -214,7 +219,7 @@ class GeneralRouter {
 	friend class RouteAttributeEvalRule;
 	friend class RouteAttributeExpression;
 private:
-	vector<RouteAttributeContext> objectAttributes;
+	vector<RouteAttributeContext*> objectAttributes;
 	MAP_STR_STR attributes;
 	UNORDERED(map)<string, RoutingParameter> parameters; 
 	MAP_STR_INT universalRules;
@@ -236,13 +241,18 @@ public:
 	UNORDERED(set)<long> impassableRoadIds;
 
 	GeneralRouter() : _restrictionsAware(true), minDefaultSpeed(10), maxDefaultSpeed(10) {
+	}
 
+	~GeneralRouter() {
+		for (uint k = 0; k < objectAttributes.size(); k++) {
+			delete objectAttributes[k];
+		}
 	}
 
 	RouteAttributeContext* newRouteAttributeContext() {
-		RouteAttributeContext c(this);
+		RouteAttributeContext *c = new RouteAttributeContext(this);
 		objectAttributes.push_back(c);
-		return &objectAttributes[objectAttributes.size() - 1];
+		return objectAttributes[objectAttributes.size() - 1];
 	}
 
 	void addAttribute(string k, string v) ;
@@ -322,7 +332,7 @@ public:
 	void printRules() {
 		for (uint k = 0; k < objectAttributes.size(); k++) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "RouteAttributeContext  %d", k + 1);
-			objectAttributes[k].printRules();
+			objectAttributes[k]->printRules();
 		}
 	}
 private :
@@ -335,7 +345,7 @@ private :
 		return objectAttributes.size() > (unsigned int)a;
 	}
 	RouteAttributeContext& getObjContext(RouteDataObjectAttribute a) {
-		return objectAttributes[(unsigned int)a];
+		return *objectAttributes[(unsigned int)a];
 	}
 
 };
