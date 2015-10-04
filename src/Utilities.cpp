@@ -494,7 +494,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value = QLatin1String(usePalette6 ? "blue" : "lightblue");
     }
     else if (
-        (h >= 215 && h < 239 && s > 40 && v > 30) ||
+        (h >= 215 && h < 265 && s > 40 && v > 30) ||
         value.contains("blue") ||
         value == QLatin1String("0000ff") ||
         value == QLatin1String("teal") ||
@@ -505,7 +505,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value = QLatin1String("blue");
     }
     else if (
-        (h >= 239 && h < 325 && s > 15 && v > 45) ||
+        (h >= 265 && h < 325 && s > 15 && v > 45) ||
         (h > 250 && h < 325 && s > 10 && s < 25 && v > 90) ||
         value == QLatin1String("purple") ||
         value == QLatin1String("violet") ||
