@@ -505,7 +505,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value = QLatin1String("blue");
     }
     else if (
-        (h >= 265 && h < 325 && s > 15 && v > 45) ||
+        (h >= 265 && h < 325 && s > 15 && v >= 27) ||
         (h > 250 && h < 325 && s > 10 && s < 25 && v > 90) ||
         value == QLatin1String("purple") ||
         value == QLatin1String("violet") ||
@@ -517,7 +517,7 @@ QString OsmAnd::Utilities::resolveColorFromPalette(const QString& input, const b
         value = QLatin1String(usePalette6 ? "blue" : "purple");
     }
     else if (
-        (colorWasParsed && v < 20) ||
+        (colorWasParsed && v < 27) ||
         value.contains("black") ||
         value == QLatin1String("darkgrey"))
     {
