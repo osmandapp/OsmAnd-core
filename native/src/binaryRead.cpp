@@ -1448,7 +1448,7 @@ bool readRouteDataObject(CodedInputStream* input, uint32_t left, uint32_t top, R
 }
 
 const static int RESTRICTION_SHIFT = 3;
-const static int RESTRICTION_MASK = 7;
+const static uint64_t RESTRICTION_MASK = 7;
 bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<RouteDataObject*>& dataObjects, RoutingIndex* routingIndex) {
 	int tag;
 	std::vector<int64_t> idTables;
@@ -1567,8 +1567,8 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 		if (fromr != NULL) {
 			fromr->restrictions = itRestrictions->second;
 			for (uint i = 0; i < fromr->restrictions.size(); i++) {
-				uint32_t to = fromr->restrictions[i] >> RESTRICTION_SHIFT;
-				uint64_t valto = (idTables[to] << RESTRICTION_SHIFT) | ((long) fromr->restrictions[i] & RESTRICTION_MASK);
+				uint64_t to = fromr->restrictions[i] >> RESTRICTION_SHIFT;
+				uint64_t valto = (idTables[to] << RESTRICTION_SHIFT) | (fromr->restrictions[i] & RESTRICTION_MASK);
 				fromr->restrictions[i] = valto;
 			}
 		}
