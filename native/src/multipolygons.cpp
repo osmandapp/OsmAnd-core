@@ -147,11 +147,11 @@ bool isClockwiseWay(std::vector<int_pair>& c) {
 	}
 
 	// calculate middle Y
-	long long middleY = 0;
+	int64_t middleY = 0;
 	for (size_t i = 0; i < c.size(); i++) {
 		middleY += c.at(i).second;
 	}
-	middleY /= (long long) c.size();
+	middleY /= c.size();
 
 	double clockwiseSum = 0;
 
