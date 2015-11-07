@@ -213,7 +213,11 @@ void loadModuleJNIGraphics(){
 		}
 		if(!module_libjnigraphics) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "jnigraphics was not loaded in default location");
+#if (__x86_64__ || __aarch64__)
+			module_libjnigraphics = dlopen("/system/lib64/libjnigraphics.so", RTLD_NOW);
+#else
 			module_libjnigraphics = dlopen("/system/lib/libjnigraphics.so", RTLD_NOW);
+#endif
 		}
 		if(!module_libjnigraphics)
 		{
