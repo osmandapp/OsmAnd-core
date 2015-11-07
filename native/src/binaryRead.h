@@ -101,6 +101,9 @@ struct RoutingIndex : BinaryPartIndex {
 };
 
 struct RouteDataObject {
+	const static int RESTRICTION_SHIFT = 3;
+	const static uint64_t RESTRICTION_MASK = 7;
+
 	RoutingIndex* region;
 	std::vector<uint32_t> types ;
 	std::vector<uint32_t> pointsX ;
