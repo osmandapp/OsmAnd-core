@@ -17,7 +17,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 	std::vector<coordinates> completedRings;
 	std::vector<coordinates > uncompletedRings;
 	std::vector<MapDataObject*>::iterator val = coastLines.begin();
-	long long dbId = 0;
+	int64_t dbId = 0;
 	for (; val != coastLines.end(); val++) {
 		MapDataObject* o = *val;
 		int len = o->points.size();
@@ -254,7 +254,7 @@ int safelyAddDelta(int number, int delta) {
 }
 
 void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std::vector<std::vector<int_pair> >& completedRings,
-		int leftX, int rightX, int bottomY, int topY, long dbId, int zoom) {
+		int leftX, int rightX, int bottomY, int topY, int64_t dbId, int zoom) {
 	std::set<int> nonvisitedRings;
 	std::vector<coordinates > incompletedRings(toProccess);
 	toProccess.clear();
