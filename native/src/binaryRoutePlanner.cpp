@@ -515,9 +515,9 @@ bool checkViaRestrictions(SHARED_PTR<RouteSegment> from, SHARED_PTR<RouteSegment
     if(from.get() != NULL && to.get() != NULL) {
         int64_t fid = to->getRoad()->getId();
         for(uint i = 0; i < from->getRoad()->restrictions.size(); i++) {
-            long id = from->getRoad()->restrictions[i] >> 3;
+            int64_t id = from->getRoad()->restrictions[i] >> RouteDataObject::RESTRICTION_SHIFT;
             if(fid == id) {
-                int tp = from->getRoad()->restrictions[i] & 7;
+                int tp = from->getRoad()->restrictions[i] & RouteDataObject::RESTRICTION_MASK;
                 if(tp == RESTRICTION_NO_LEFT_TURN || 
                    tp == RESTRICTION_NO_RIGHT_TURN || 
                    tp == RESTRICTION_NO_STRAIGHT_ON || 
@@ -668,15 +668,15 @@ void processRestriction(RoutingContext* ctx, SHARED_PTR<RouteSegment> inputNext,
 		int type = -1;
 		if (!reverseWay) {
 			for (uint i = 0; i < road->restrictions.size(); i++) {
-				if ((road->restrictions[i] >> 3) == next->road->id) {
-					type = road->restrictions[i] & 7;
+				if ((road->restrictions[i] >> RouteDataObject::RESTRICTION_SHIFT) == next->road->id) {
+					type = road->restrictions[i] & RouteDataObject::RESTRICTION_MASK;
 					break;
 				}
 			}
 		} else {
 			for (uint i = 0; i < next->road->restrictions.size(); i++) {
-				int rt = next->road->restrictions[i] & 7;
-				int64_t restrictedTo = next->road->restrictions[i] >> 3;
+				int rt = next->road->restrictions[i] & RouteDataObject::RESTRICTION_MASK;
+				int64_t restrictedTo = next->road->restrictions[i] >> RouteDataObject::RESTRICTION_SHIFT;
 				if (restrictedTo == road->id) {					
 					type = rt;
 					break;
