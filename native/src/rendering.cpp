@@ -479,6 +479,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		)) {
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
+		}
 	}
 
 	rc->visible++;
