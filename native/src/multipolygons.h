@@ -20,7 +20,7 @@ void combineMultipolygonLine(std::vector<coordinates>& completedRings, std::vect
 			coordinates& coordinates);
 
 void unifyIncompletedRings(std::vector<std::vector<int_pair> >& incompletedRings, std::vector<std::vector<int_pair> >& completedRings,
-			int leftX, int rightX, int bottomY, int topY, long dbId, int zoom);
+			int leftX, int rightX, int bottomY, int topY, int64_t dbId, int zoom);
 
 
 bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int rightX, int bottomY, int topY, int zoom,

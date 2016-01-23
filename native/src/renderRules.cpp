@@ -30,11 +30,10 @@ float getDensityValue(RenderingContext* rc, RenderingRuleSearchRequest* render, 
  */
 int parseColor(string colorString) {
 	if (colorString[0] == '#') {
-		// Use a long to avoid rollovers on #ffXXXXXX
-		long color = strtol(colorString.c_str() + 1, NULL, 16);
+		int color = strtol(colorString.c_str() + 1, NULL, 16);
 		if (colorString.size() == 7) {
 			// Set the alpha value
-			color |= 0x00000000ff000000;
+			color |= 0xff000000U;
 		} else if (colorString.size() != 9) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unknown color %s", colorString.c_str());
 		}

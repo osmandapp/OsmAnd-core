@@ -281,7 +281,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 				if(tagName2 != "") {
 					std::string tv = obj->objectNames[tagName2];
 					if(tv != "") {
-						info->text = name + " " + tv;
+						info->text = name + " (" + tv+ ")";
 					}
 				}
 				info->drawOnPath = (path != NULL) && (req->getIntPropertyValue(req->props()->R_TEXT_ON_PATH, 0) > 0);
@@ -840,7 +840,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 	size_t ji = 0;
 	SkPaint p;
 	p.setStyle(SkPaint::kStroke_Style);
-	p.setFilterBitmap(true);
+	p.setFilterLevel(SkPaint::kLow_FilterLevel);
 	vector<SkRect> searchText;
 	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 	for(;ji< rc->iconsToDraw.size(); ji++)

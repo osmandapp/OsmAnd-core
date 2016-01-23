@@ -30,7 +30,6 @@ static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
 std::vector<BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
-typedef UNORDERED(set)<long long> IDS_SET;
 
 void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  RoutingIndex* routingIndex, RouteSubregion* sub);
 void searchRouteRegion(CodedInputStream** input, 
@@ -1447,8 +1446,6 @@ bool readRouteDataObject(CodedInputStream* input, uint32_t left, uint32_t top, R
 	return true;
 }
 
-const static int RESTRICTION_SHIFT = 3;
-const static int RESTRICTION_MASK = 7;
 bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<RouteDataObject*>& dataObjects, RoutingIndex* routingIndex) {
 	int tag;
 	std::vector<int64_t> idTables;
@@ -1517,7 +1514,7 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 				}
 				}
 			}
-			restrictions[from].push_back((to << RESTRICTION_SHIFT) + type);
+			restrictions[from].push_back((to << RouteDataObject::RESTRICTION_SHIFT) + type);
 			input->PopLimit(oldLimit);
 			break;
 		}
@@ -1567,8 +1564,9 @@ bool readRouteTreeData(CodedInputStream* input, RouteSubregion* s, std::vector<R
 		if (fromr != NULL) {
 			fromr->restrictions = itRestrictions->second;
 			for (uint i = 0; i < fromr->restrictions.size(); i++) {
-				uint32_t to = fromr->restrictions[i] >> RESTRICTION_SHIFT;
-				uint64_t valto = (idTables[to] << RESTRICTION_SHIFT) | ((long) fromr->restrictions[i] & RESTRICTION_MASK);
+				uint64_t to = fromr->restrictions[i] >> RouteDataObject::RESTRICTION_SHIFT;
+				uint64_t valto = (idTables[to] << RouteDataObject::RESTRICTION_SHIFT)
+					| (fromr->restrictions[i] & RouteDataObject::RESTRICTION_MASK);
 				fromr->restrictions[i] = valto;
 			}
 		}
@@ -1631,7 +1629,6 @@ void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  Rou
 void searchRouteDataForSubRegion(SearchQuery* q, std::vector<RouteDataObject*>& list, RouteSubregion* sub){
 	vector< BinaryMapFile*>::iterator i = openFiles.begin();
 	RoutingIndex* rs = sub->routingIndex;
-	IDS_SET ids;
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = *i;
 		for (std::vector<RoutingIndex*>::iterator routingIndex = file->routingIndexes.begin();

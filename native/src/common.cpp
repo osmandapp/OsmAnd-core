@@ -63,6 +63,7 @@ SkBitmap* RenderingContext::getCachedBitmap(const std::string& bitmapResource) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Open file %s", fl.c_str());
 			SkBitmap* bmp = new SkBitmap();
 			if (!SkImageDecoder::DecodeFile(fl.c_str(), bmp)) {
+				delete bmp;
 				return NULL;
 			}
 			return bmp;
@@ -170,7 +171,7 @@ double checkLatitude(double latitude) {
 
 int get31TileNumberX(double longitude){
 	longitude = checkLongitude(longitude);
-	long long int l =  1;
+	int64_t l =  1;
 	l <<= 31;
 	return (int)((longitude + 180)/360 * l);
 }
@@ -178,7 +179,7 @@ int get31TileNumberX(double longitude){
 int get31TileNumberY(double latitude) {
 	latitude = checkLatitude(latitude);
 	double eval = log(tan(toRadians(latitude)) + 1 / cos(toRadians(latitude)));
-	long long int l =  1;
+	int64_t l =  1;
 	l <<= 31;
 	if (eval > M_PI) {
 		eval = M_PI;

@@ -213,7 +213,11 @@ void loadModuleJNIGraphics(){
 		}
 		if(!module_libjnigraphics) {
 			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "jnigraphics was not loaded in default location");
+#if (__x86_64__ || __aarch64__)
+			module_libjnigraphics = dlopen("/system/lib64/libjnigraphics.so", RTLD_NOW);
+#else
 			module_libjnigraphics = dlopen("/system/lib/libjnigraphics.so", RTLD_NOW);
+#endif
 		}
 		if(!module_libjnigraphics)
 		{
@@ -240,27 +244,23 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 
 	SkBitmap* bitmap = new SkBitmap();
 	SkImageInfo imageInfo;
-	int rowBytes;
 	if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
-		rowBytes = bitmapInfo.stride;
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGBA_8888 is %d", rowBytes);
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGBA_8888 is %d", bitmapInfo.stride);
 		imageInfo = SkImageInfo::Make(bitmapInfo.width, bitmapInfo.height, kN32_SkColorType, kPremul_SkAlphaType);
 	} else if(bitmapInfo.format == ANDROID_BITMAP_FORMAT_RGB_565) {
-		rowBytes = bitmapInfo.stride;
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGB_565 is %d", rowBytes);
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Row bytes for RGB_565 is %d", bitmapInfo.stride);
 		imageInfo = SkImageInfo::Make(bitmapInfo.width, bitmapInfo.height, kRGB_565_SkColorType, kOpaque_SkAlphaType);
 	} else {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Unknown target bitmap format");
 	}
-	bitmap->allocPixels(imageInfo);
 
 	void* lockedBitmapData = NULL;
 	if(dl_AndroidBitmap_lockPixels(ienv, targetBitmap, &lockedBitmapData) != ANDROID_BITMAP_RESUT_SUCCESS || !lockedBitmapData) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to execute AndroidBitmap_lockPixels");
 	}
-	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Locked %d bytes at %p", bitmap->getSize(), lockedBitmapData);
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Locked %d bytes at %p", bitmapInfo.stride * bitmapInfo.height, lockedBitmapData);
 
-	bitmap->setPixels(lockedBitmapData);
+	bitmap->installPixels(imageInfo, lockedBitmapData, bitmapInfo.stride);
 
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Initializing rendering");
 	OsmAnd::ElapsedTimer initObjects;
@@ -333,20 +333,20 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 		imageInfo = SkImageInfo::Make(rc.getWidth(), rc.getHeight(), kN32_SkColorType, kPremul_SkAlphaType);
 	else
 		imageInfo = SkImageInfo::Make(rc.getWidth(), rc.getHeight(), kRGB_565_SkColorType, kOpaque_SkAlphaType);
-	bitmap->allocPixels(imageInfo);
+	size_t reqDataSize = imageInfo.minRowBytes() * rc.getHeight();
 
-	if (bitmapData != NULL && bitmapDataSize != bitmap->getSize()) {
+	if (bitmapData != NULL && bitmapDataSize != reqDataSize) {
 		free(bitmapData);
 		bitmapData = NULL;
 		bitmapDataSize = 0;
 	}
 	if (bitmapData == NULL && bitmapDataSize == 0) {
-		bitmapDataSize = bitmap->getSize();
+		bitmapDataSize = reqDataSize;
 		bitmapData = malloc(bitmapDataSize);
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Allocated %d bytes at %p", bitmapDataSize, bitmapData);
 	}
 
-	bitmap->setPixels(bitmapData);
+	bitmap->installPixels(imageInfo, bitmapData, imageInfo.minRowBytes());
 	OsmAnd::ElapsedTimer initObjects;
 	initObjects.Start();
 
