@@ -459,7 +459,9 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	}
 	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
 		{
-		oneway = 1;
+		if (mObj->!containsAdditional("oneway", "no")) {
+			oneway = 1;
+		}
 	}
 	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
 		pair.second == "chair_lift" ||
@@ -469,7 +471,9 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		pair.second == "magic_carpet" ||
 		pair.second == "rope_tow"
 		)) {
-		oneway = 1;
+		if (mObj->!containsAdditional("oneway", "no")) {
+			oneway = 1;
+		}
 	}
 	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
 		pair.second == "gondola" ||
