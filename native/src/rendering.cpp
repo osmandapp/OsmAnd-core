@@ -457,6 +457,29 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		)) {
 		oneway = 1;
 	}
+	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
+		{
+		oneway = 1;
+	}
+	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
+		pair.second == "chair_lift" ||
+		pair.second == "t-bar" ||
+		pair.second == "j-bar" ||
+		pair.second == "platter" ||
+		pair.second == "magic_carpet" ||
+		pair.second == "rope_tow"
+		)) {
+		oneway = 1;
+	}
+	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
+		pair.second == "gondola" ||
+		pair.second == "cable_car" ||
+		pair.second == "mixed_lift" ||
+		pair.second == "drag_lift"
+		)) {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+	}
 
 	rc->visible++;
 	SkPath path;
