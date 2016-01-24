@@ -457,7 +457,8 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		)) {
 		oneway = 1;
 	}
-	if(pair.first == "piste:type" && pair.second == "downhill" && (rc->getZoom() >= 14))
+	if((pair.first == "piste:type" && (rc->getZoom() >= 14)) &&
+		(pair.second == "downhill" || pair.second == "sled"))
 		{
 		if (!(mObj->containsAdditional("oneway", "no"))) {
 			oneway = 1;
