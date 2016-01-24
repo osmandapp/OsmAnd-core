@@ -457,9 +457,15 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		)) {
 		oneway = 1;
 	}
+	if(pair.first == "piste:type" && pair.second == "downhill" && (rc->getZoom() >= 14))
+		{
+		if (!(mObj->containsAdditional("oneway", "no"))) {
+			oneway = 1;
+		}
+	}
 	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
 		{
-		if ( !(mObj->containsAdditional("oneway", "no"))) {
+		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
 		}
 	}
@@ -471,7 +477,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		pair.second == "magic_carpet" ||
 		pair.second == "rope_tow"
 		)) {
-		if ( !(mObj->containsAdditional("oneway", "no"))) {
+		if (!(mObj->containsAdditional("oneway", "no"))) {
 			oneway = 1;
 		}
 	}
