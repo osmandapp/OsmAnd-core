@@ -405,12 +405,12 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway,
 	}
 	if (oneway > 0) {
 		for (size_t i = 0; i < rc->oneWayPaints.size(); i++) {
-			rc->oneWayPaints.at(i)->setColor(color);
+			rc->oneWayPaints.at(i).setColor(color);
 			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, rc->oneWayPaints.at(i)));
 		}
 	} else {
 		for (size_t i = 0; i < rc->reverseWayPaints.size(); i++) {
-			rc->oneWayPaints.at(i)->setColor(color);
+			rc->oneWayPaints.at(i).setColor(color);
 			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, rc->reverseWayPaints.at(i)));
 		}
 	}
