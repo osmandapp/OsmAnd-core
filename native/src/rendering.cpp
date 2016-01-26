@@ -326,7 +326,7 @@ SkPaint* oneWayPaint(){
     oneWay->setAntiAlias(true);
     return oneWay;
 }
-void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway) {
+void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway, int color) {
 	float rmin = rc->getDensityValue(1);
 	if(rmin > 1) {
 		rmin = rmin * 2 / 3;
@@ -405,10 +405,12 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
 	}
 	if (oneway > 0) {
 		for (size_t i = 0; i < rc->oneWayPaints.size(); i++) {
+			rc->oneWayPaints.at(i)->setColor(color);
 			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, rc->oneWayPaints.at(i)));
 		}
 	} else {
 		for (size_t i = 0; i < rc->reverseWayPaints.size(); i++) {
+			rc->oneWayPaints.at(i)->setColor(color);
 			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, rc->reverseWayPaints.at(i)));
 		}
 	}
@@ -440,6 +442,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		shadowColor = rc->getShadowRenderingColor();
 	}
 	int oneway = 0;
+	int onewayColor = 0xffff3e9c;
 	if (	
 		(rc->getZoom() >= 16 && pair.first == "highway") || 
 		(rc->getZoom() >= 15 && pair.first == "route" && pair.second == "ferry") 
@@ -462,12 +465,14 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		{
 		if (!(mObj->containsAdditional("oneway", "no"))) {
 			oneway = 1;
+			 onewayColor = 0xffaa3e9c;
 		}
 	}
 	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
 		{
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
+			onewayColor = 0xffaa3e9c;
 		}
 	}
 	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
@@ -498,6 +503,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	SkPoint middlePoint;
 	bool intersect = false;
 	uint prevCross = 0;
+	
 	uint middle = length / 2;
 	uint i = 0;
 	for (; i < length; i++) {
@@ -564,7 +570,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			}
 			if (oneway && !drawOnlyShadow) {
-				drawOneWayPaints(rc, cv, &path, oneway);
+				drawOneWayPaints(rc, cv, &path, oneway, onewayColor);
 			}
 			if (!drawOnlyShadow) {
 				renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path);
