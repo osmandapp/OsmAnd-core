@@ -344,25 +344,25 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway,
 		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_oneway[3], 4, 1);
 
 		SkPaint* p = oneWayPaint();
-		p->setStrokeWidth(rmin);
+		p->setStrokeWidth(rmin * 2);
 		p->setPathEffect(arrowDashEffect1)->unref();
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 2);
+		p->setStrokeWidth(rmin * 4);
 		p->setPathEffect(arrowDashEffect2)->unref();
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 3);
+		p->setStrokeWidth(rmin * 6);
 		p->setPathEffect(arrowDashEffect3)->unref();
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 4);
+		p->setStrokeWidth(rmin * 8);
 		p->setPathEffect(arrowDashEffect4)->unref();
 		rc->oneWayPaints.push_back(*p);
 		delete p;
@@ -380,25 +380,25 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway,
 		SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_reverse[2], 4, 1);
 		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_reverse[3], 4, 1);
 		SkPaint* p = oneWayPaint();
-		p->setStrokeWidth(rmin * 1);
+		p->setStrokeWidth(rmin * 2);
 		p->setPathEffect(arrowDashEffect1)->unref();
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 2);
+		p->setStrokeWidth(rmin * 4);
 		p->setPathEffect(arrowDashEffect2)->unref();
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 3);
+		p->setStrokeWidth(rmin * 6);
 		p->setPathEffect(arrowDashEffect3)->unref();
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 4);
+		p->setStrokeWidth(rmin * 8);
 		p->setPathEffect(arrowDashEffect4)->unref();
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
@@ -481,22 +481,22 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		pair.second == "j-bar" ||
 		pair.second == "platter" ||
 		pair.second == "magic_carpet" ||
-		pair.second == "rope_tow"
+		pair.second == "rope_tow" ||
+		pair.second == "drag_lift"
 		)) {
 		if (!(mObj->containsAdditional("oneway", "no"))) {
 			oneway = 1;
-			onewayColor = 0xffb6b6ff;
+			onewayColor = 0xff5959ff;
 		}
 	}
 	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
 		pair.second == "gondola" ||
 		pair.second == "cable_car" ||
-		pair.second == "mixed_lift" ||
-		pair.second == "drag_lift"
+		pair.second == "mixed_lift"
 		)) {
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
-			onewayColor = 0xffb6b6ff;
+			onewayColor = 0xff5959ff;
 		}
 	}
 
