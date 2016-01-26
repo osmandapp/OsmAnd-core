@@ -442,7 +442,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		shadowColor = rc->getShadowRenderingColor();
 	}
 	int oneway = 0;
-	int onewayColor = 0xffff3e9c;
+	int onewayColor = 0xff3a3e9c;
 	if (	
 		(rc->getZoom() >= 16 && pair.first == "highway") || 
 		(rc->getZoom() >= 15 && pair.first == "route" && pair.second == "ferry") 
@@ -465,14 +465,14 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		{
 		if (!(mObj->containsAdditional("oneway", "no"))) {
 			oneway = 1;
-			 onewayColor = 0xffaa3e9c;
+			onewayColor = 0xff000000;
 		}
 	}
 	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
 		{
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
-			onewayColor = 0xffaa3e9c;
+			onewayColor = 0xff000000;
 		}
 	}
 	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
@@ -485,6 +485,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		)) {
 		if (!(mObj->containsAdditional("oneway", "no"))) {
 			oneway = 1;
+			onewayColor = 0xffb6b6ff;
 		}
 	}
 	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
@@ -495,6 +496,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		)) {
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
+			onewayColor = 0xffb6b6ff;
 		}
 	}
 
