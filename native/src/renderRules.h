@@ -209,6 +209,7 @@ public:
 	RenderingRuleProperty* R_SHADOW_RADIUS;
 	RenderingRuleProperty* R_SHADOW_COLOR;
 	RenderingRuleProperty* R_SHADER;
+	RenderingRuleProperty* R_ONEWAY_ARROWS_COLOR;
 
 	RenderingRuleProperty* R_CAP_5;
 	RenderingRuleProperty* R_CAP_4;
@@ -444,6 +445,7 @@ public:
 		R_SHADER = registerRuleInternal(RenderingRuleProperty::createOutputStringProperty("shader"));
 		R_SHADOW_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("shadowColor"));
 		R_SHADOW_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("shadowRadius"));
+		R_ONEWAY_ARROWS_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("onewayArrowsColor"));
 	}
 
 };

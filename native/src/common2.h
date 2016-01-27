@@ -119,6 +119,7 @@ private :
 	int height;
 	int defaultColor;
 	int waterwayArrows;
+	int noHighwayOnewayArrows;
 
 	int zoom;
 	float rotate;
@@ -238,7 +239,12 @@ public:
 	int getWaterwayArrows() {
 		return waterwayArrows;
 	}
-
+	void setNoHighwayOnewayArrows(int noarrows) {
+		noHighwayOnewayArrows = noarrows;
+	}
+	int getNoHighwayOnewayArrows() {
+		return noHighwayOnewayArrows;
+	}
 	inline int getWidth(){
 		return width;
 	}

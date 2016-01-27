@@ -443,37 +443,61 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	}
 	int oneway = 0;
 	int onewayColor = 0xff3a3e9c;
-	if (	
-		(rc->getZoom() >= 16 && pair.first == "highway") || 
-		(rc->getZoom() >= 15 && pair.first == "route" && pair.second == "ferry") 
-		) {
+	if (rc->getZoom() >= 16 && pair.first == "highway" && rc->getNoHighwayOnewayArrows() < 1) {
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			}
 		} else if (mObj->containsAdditional("oneway", "-1")) {
 			oneway = -1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			}
 		}
 	}
+
+	if(rc->getZoom() >= 15 && pair.first == "route" && pair.second == "ferry") {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			}
+		} else if (mObj->containsAdditional("oneway", "-1")) {
+			oneway = -1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			}
+		}
+	}
+
 	if(pair.first == "waterway" && rc->getWaterwayArrows() > 0 && (
 		(rc->getZoom() >= 15 && pair.second == "stream") ||
 		(rc->getZoom() >= 12 && pair.second == "river") ||
 		(rc->getZoom() >= 14 && pair.second == "canal")
 		)) {
-		oneway = 1;
-		onewayColor = 0xff6286FF;
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff6286ff;
 	}
 	if((pair.first == "piste:type" && (rc->getZoom() >= 14)) &&
 		(pair.second == "downhill" || pair.second == "sled"))
 		{
 		if (!(mObj->containsAdditional("oneway", "no"))) {
 			oneway = 1;
-			onewayColor = 0xff000000;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff000000;
 		}
 	}
 	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
 		{
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
-			onewayColor = 0xff000000;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff000000;
 		}
 	}
 	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
@@ -487,7 +511,9 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		)) {
 		if (!(mObj->containsAdditional("oneway", "no"))) {
 			oneway = 1;
-			onewayColor = 0xff5959ff;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff5959ff;
 		}
 	}
 	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
@@ -497,7 +523,9 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		)) {
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
-			onewayColor = 0xff5959ff;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff5959ff;
 		}
 	}
 

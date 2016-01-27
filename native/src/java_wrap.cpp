@@ -168,6 +168,9 @@ void fillRenderingAttributes(JNIRenderingContext& rc, RenderingRuleSearchRequest
 	if (req->searchRenderingAttribute("waterwayArrows")) {
 		rc.setWaterwayArrows(req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE));
 	}
+	if (req->searchRenderingAttribute("noHighwayOnewayArrows")) {
+		rc.setNoHighwayOnewayArrows(req->getIntPropertyValue(req->props()->R_ATTR_INT_VALUE));
+	}
 	req->clearState();
 	req->setIntFilter(req->props()->R_MINZOOM, rc.getZoom());
 	if (req->searchRenderingAttribute("shadowRendering")) {
