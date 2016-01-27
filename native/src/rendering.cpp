@@ -459,6 +459,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		(rc->getZoom() >= 14 && pair.second == "canal")
 		)) {
 		oneway = 1;
+		onewayColor = 0xff6286FF;
 	}
 	if((pair.first == "piste:type" && (rc->getZoom() >= 14)) &&
 		(pair.second == "downhill" || pair.second == "sled"))
