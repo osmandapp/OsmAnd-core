@@ -436,7 +436,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDraw
 	int text1Line = text->text.length() > textWrap  && !text->drawOnPath ? textWrap : text->text.length();
 	paintText->measureText(text->text.c_str(), text1Line, &text->bounds);
 	// make wider and multiline
-	text->bounds.inset(-rc->getDensityValue( 3), -(rc->getDensityValue(10) +
+	text->bounds.inset(-rc->getDensityValue( 3), -(rc->getDensityValue(5) +
 		((text->text.length() - 1) / text1Line) * text->bounds.height()));
 	bool display = calculatePathToRotate(rc, text);
 	if (!display) {
