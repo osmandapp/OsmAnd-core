@@ -432,10 +432,12 @@ inline float max(float a, float b) {
 bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDrawInfo*>& boundIntersections, TextDrawInfo* text,
 		SkPaint* paintText, SkPaint* paintIcon) {
 	vector<TextDrawInfo*> searchText;
-	paintText->measureText(text->text.c_str(), text->text.length(), &text->bounds);
-	// make wider
-	text->bounds.inset(-rc->getDensityValue( 3), -rc->getDensityValue(10));
-
+	int textWrap = text->textWrap == 0 ? 25 : text->textWrap;
+	int text1Line = text->text.length() > textWrap  && !text->drawOnPath ? textWrap : text->text.length();
+	paintText->measureText(text->text.c_str(), text1Line, &text->bounds);
+	// make wider and multiline
+	text->bounds.inset(-rc->getDensityValue( 3), -(rc->getDensityValue(10) +
+		((text->text.length() - 1) / text1Line) * text->bounds.height()));
 	bool display = calculatePathToRotate(rc, text);
 	if (!display) {
 		return true;
