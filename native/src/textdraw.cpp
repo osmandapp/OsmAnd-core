@@ -278,9 +278,15 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 
 		float px = 0;
 		float py = 0;
+		float dx = 0;
+		float dy = 0;
 		for (i = startInd; i < endInd; i++) {
 			px += points[i].fX ;
 			py += points[i].fY;
+			if( i > 0 ) {
+				dx += points[i].fX - points[i - 1].fX;
+				dy += points[i].fY - points[i - 1].fY;
+			}
 		}
 		px /= (endInd - startInd);
 		py /= (endInd - startInd);
@@ -297,7 +303,12 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		}
 		p->centerX = cx;
 		p->centerY = cy;
-		p->pathRotate = atan2(py, px);		
+
+		float rot = dy == 0 && dx == 0 ? 0 : atan2(dy, dx);
+		if (rot < 0) {
+			rot += M_PI * 2;
+		}
+		p->pathRotate = rot;		
 		p->hOffset = 0;
 	} else {
 		// shrink path to display more text
@@ -331,8 +342,9 @@ bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
 		float oy = px;
 		if (plen > 0 ) {
 			float rot = atan2(py, px);
-			if (rot < 0)
+			if (rot < 0) {
 				rot += M_PI * 2;
+			}
 			if (rot > M_PI_2 && rot < 3 * M_PI_2) {
 				rot += M_PI;
 				inverse = true;
