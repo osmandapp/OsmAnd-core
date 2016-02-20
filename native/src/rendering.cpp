@@ -326,7 +326,7 @@ SkPaint* oneWayPaint(){
     oneWay->setAntiAlias(true);
     return oneWay;
 }
-void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway) {
+void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway, int color) {
 	float rmin = rc->getDensityValue(1);
 	if(rmin > 1) {
 		rmin = rmin * 2 / 3;
@@ -344,25 +344,25 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
 		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_oneway[3], 4, 1);
 
 		SkPaint* p = oneWayPaint();
-		p->setStrokeWidth(rmin);
+		p->setStrokeWidth(rmin * 2);
 		p->setPathEffect(arrowDashEffect1)->unref();
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 2);
+		p->setStrokeWidth(rmin * 4);
 		p->setPathEffect(arrowDashEffect2)->unref();
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 3);
+		p->setStrokeWidth(rmin * 6);
 		p->setPathEffect(arrowDashEffect3)->unref();
 		rc->oneWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 4);
+		p->setStrokeWidth(rmin * 8);
 		p->setPathEffect(arrowDashEffect4)->unref();
 		rc->oneWayPaints.push_back(*p);
 		delete p;
@@ -380,35 +380,37 @@ void drawOneWayPaints(RenderingContext* rc, SkCanvas* cv, SkPath* p, int oneway)
 		SkPathEffect* arrowDashEffect3 = SkDashPathEffect::Create(intervals_reverse[2], 4, 1);
 		SkPathEffect* arrowDashEffect4 = SkDashPathEffect::Create(intervals_reverse[3], 4, 1);
 		SkPaint* p = oneWayPaint();
-		p->setStrokeWidth(rmin * 1);
+		p->setStrokeWidth(rmin * 2);
 		p->setPathEffect(arrowDashEffect1)->unref();
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 2);
+		p->setStrokeWidth(rmin * 4);
 		p->setPathEffect(arrowDashEffect2)->unref();
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 3);
+		p->setStrokeWidth(rmin * 6);
 		p->setPathEffect(arrowDashEffect3)->unref();
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 
 		p = oneWayPaint();
-		p->setStrokeWidth(rmin * 4);
+		p->setStrokeWidth(rmin * 8);
 		p->setPathEffect(arrowDashEffect4)->unref();
 		rc->reverseWayPaints.push_back(*p);
 		delete p;
 	}
 	if (oneway > 0) {
 		for (size_t i = 0; i < rc->oneWayPaints.size(); i++) {
+			rc->oneWayPaints.at(i).setColor(color);
 			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, rc->oneWayPaints.at(i)));
 		}
 	} else {
 		for (size_t i = 0; i < rc->reverseWayPaints.size(); i++) {
+			rc->oneWayPaints.at(i).setColor(color);
 			PROFILE_NATIVE_OPERATION(rc, cv->drawPath(*p, rc->reverseWayPaints.at(i)));
 		}
 	}
@@ -440,22 +442,91 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 		shadowColor = rc->getShadowRenderingColor();
 	}
 	int oneway = 0;
-	if (	
-		(rc->getZoom() >= 16 && pair.first == "highway") || 
-		(rc->getZoom() >= 15 && pair.first == "route" && pair.second == "ferry") 
-		) {
+	int onewayColor = 0xff3a3e9c;
+	if (rc->getZoom() >= 16 && pair.first == "highway" && rc->getNoHighwayOnewayArrows() < 1) {
 		if (mObj->containsAdditional("oneway", "yes")) {
 			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			}
 		} else if (mObj->containsAdditional("oneway", "-1")) {
 			oneway = -1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			}
 		}
 	}
+
+	if(rc->getZoom() >= 15 && pair.first == "route" && pair.second == "ferry") {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			}
+		} else if (mObj->containsAdditional("oneway", "-1")) {
+			oneway = -1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			}
+		}
+	}
+
 	if(pair.first == "waterway" && rc->getWaterwayArrows() > 0 && (
 		(rc->getZoom() >= 15 && pair.second == "stream") ||
 		(rc->getZoom() >= 12 && pair.second == "river") ||
 		(rc->getZoom() >= 14 && pair.second == "canal")
 		)) {
-		oneway = 1;
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff6286ff;
+	}
+	if((pair.first == "piste:type" && (rc->getZoom() >= 14)) &&
+		(pair.second == "downhill" || pair.second == "sled"))
+		{
+		if (!(mObj->containsAdditional("oneway", "no"))) {
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff000000;
+		}
+	}
+	if(pair.first == "piste:type" && (rc->getZoom() >= 14))
+		{
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff000000;
+		}
+	}
+	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
+		pair.second == "chair_lift" ||
+		pair.second == "t-bar" ||
+		pair.second == "j-bar" ||
+		pair.second == "platter" ||
+		pair.second == "magic_carpet" ||
+		pair.second == "rope_tow" ||
+		pair.second == "drag_lift"
+		)) {
+		if (!(mObj->containsAdditional("oneway", "no"))) {
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff5959ff;
+		}
+	}
+	if(pair.first == "aerialway" && rc->getZoom() >= 14 && (
+		pair.second == "gondola" ||
+		pair.second == "cable_car" ||
+		pair.second == "mixed_lift"
+		)) {
+		if (mObj->containsAdditional("oneway", "yes")) {
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff5959ff;
+		}
 	}
 
 	rc->visible++;
@@ -463,6 +534,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 	SkPoint middlePoint;
 	bool intersect = false;
 	uint prevCross = 0;
+	
 	uint middle = length / 2;
 	uint i = 0;
 	for (; i < length; i++) {
@@ -529,7 +601,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 				PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 			}
 			if (oneway && !drawOnlyShadow) {
-				drawOneWayPaints(rc, cv, &path, oneway);
+				drawOneWayPaints(rc, cv, &path, oneway, onewayColor);
 			}
 			if (!drawOnlyShadow) {
 				renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path);

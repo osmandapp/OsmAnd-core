@@ -119,6 +119,7 @@ private :
 	int height;
 	int defaultColor;
 	int waterwayArrows;
+	int noHighwayOnewayArrows;
 
 	int zoom;
 	float rotate;
@@ -175,7 +176,7 @@ public:
 			// tileDivisor, cosRotateTileSize, sinRotateTileSize,  calcX, calcY
 			// textToDraw, iconsToDraw,
 			shadowLevelMin(256), shadowLevelMax(0), polygonMinSizeToDisplay(0),
-			roadDensityZoomTile(0), roadsDensityLimitPerTile(0) 
+			roadDensityZoomTile(0), roadsDensityLimitPerTile(0), noHighwayOnewayArrows(0)
 	{
 		
 	}
@@ -238,7 +239,12 @@ public:
 	int getWaterwayArrows() {
 		return waterwayArrows;
 	}
-
+	void setNoHighwayOnewayArrows(int noarrows) {
+		noHighwayOnewayArrows = noarrows;
+	}
+	int getNoHighwayOnewayArrows() {
+		return noHighwayOnewayArrows;
+	}
 	inline int getWidth(){
 		return width;
 	}
