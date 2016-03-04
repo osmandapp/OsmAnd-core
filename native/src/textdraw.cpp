@@ -464,8 +464,8 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDraw
 	} else {
 		text->bounds.offset(text->centerX - text->bounds.width()/2, text->centerY - text->bounds.height()/2);
 	}
-	text->bounds.inset(-text->interesectionMargin, -text->interesectionMargin);
-	float cf = text->interesectionSizeFactor - 1;
+	text->bounds.inset(-text->intersectionMargin, -text->intersectionMargin);
+	float cf = text->intersectionSizeFactor - 1;
 	text->bounds.inset(- cf * text->bounds.width() / 2, - cf * text->bounds.height() / 2);
 
 	// for text purposes
