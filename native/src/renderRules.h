@@ -262,6 +262,8 @@ public:
 	RenderingRuleProperty* R_ICON4;
 	RenderingRuleProperty* R_ICON5;
 	RenderingRuleProperty* R_ICON_VISIBLE_SIZE;
+	RenderingRuleProperty* R_INTERSECTION_MARGIN;
+	RenderingRuleProperty* R_INTERSECTION_SIZE_FACTOR;
 	RenderingRuleProperty* R_LAYER;
 	RenderingRuleProperty* R_ORDER;
 	RenderingRuleProperty* R_TAG;
@@ -361,6 +363,8 @@ public:
 		R_POINT = registerRuleInternal(RenderingRuleProperty::createInputBooleanProperty("point"));
 		R_AREA = registerRuleInternal(RenderingRuleProperty::createInputBooleanProperty("area"));
 		R_CYCLE = registerRuleInternal(RenderingRuleProperty::createInputBooleanProperty("cycle"));
+		R_INTERSECTION_MARGIN = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("intersectionMargin"));
+		R_INTERSECTION_SIZE_FACTOR = registerRuleInternal(RenderingRuleProperty::createOutputFloatProperty("intersectionSizeFactor"));
 
 		R_TEXT_LENGTH = registerRuleInternal(RenderingRuleProperty::createInputIntProperty("textLength"));
 		R_NAME_TAG = registerRuleInternal(RenderingRuleProperty::createInputStringProperty("nameTag"));

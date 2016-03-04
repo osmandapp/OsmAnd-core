@@ -81,6 +81,8 @@ struct TextDrawInfo {
 	float pathRotate;
 	float vOffset;
 	float hOffset;
+	float interesectionMargin;
+	float interesectionSizeFactor;
 };
 
 struct IconDrawInfo
@@ -99,6 +101,8 @@ struct IconDrawInfo
 	int order;
 	int secondOrder;
 	float iconSize;
+	float interesectionMargin;
+	float interesectionSizeFactor;
 
 	IconDrawInfo();
 };

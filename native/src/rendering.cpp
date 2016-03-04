@@ -821,6 +821,8 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico.shiftPx = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PX, 0);
 		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
 		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
+		ico.interesectionSizeFactor = req->getFloatPropertyValue(req->props()-> R_INTERSECTION_SIZE_FACTOR, 1);
+		ico.interesectionMargin = getDensityValue(rc, req, req->props()->R_INTERSECTION_MARGIN);
 		ico.secondOrder = ((mObj->id %10000) << 8) + ord;
 		if(ico.order >= 0) 
 			rc->iconsToDraw.push_back(ico);

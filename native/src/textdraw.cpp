@@ -110,6 +110,8 @@ void fillTextProperties(RenderingContext* rc, TextDrawInfo* info, RenderingRuleS
 		info->textColor = 0xff000000;
 	}
 	info->textSize = getDensityValue(rc, render, render->props()->R_TEXT_SIZE) * rc->getTextScale();
+	info->interesectionSizeFactor = render->getFloatPropertyValue(render-> props()-> R_INTERSECTION_SIZE_FACTOR, 1);
+	info->interesectionMargin = getDensityValue(rc, render, render->props()->R_INTERSECTION_MARGIN);
 	info->textShadow = getDensityValue(rc, render, render->props()->R_TEXT_HALO_RADIUS) * rc->getTextScale();
 	info->textShadowColor = render->getIntPropertyValue(render->props()->R_TEXT_HALO_COLOR);
 	if (info->textShadowColor == 0) {
