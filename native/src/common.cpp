@@ -22,8 +22,8 @@ TextDrawInfo::TextDrawInfo(std::string itext)
 	, drawOnPath(false)
 	, path(NULL)
 	, pathRotate(0)
-	, interesectionMargin(0)
-	, interesectionSizeFactor(1)
+	, intersectionMargin(0)
+	, intersectionSizeFactor(1)
 {
 }
 
@@ -35,7 +35,7 @@ TextDrawInfo::~TextDrawInfo()
 
 IconDrawInfo::IconDrawInfo()
 	: bmp_1(NULL), bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL),
-	  shield(NULL), interesectionMargin(0), interesectionSizeFactor(1)
+	  shield(NULL), intersectionMargin(0), intersectionSizeFactor(1)
 {
 
 }
