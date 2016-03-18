@@ -1715,6 +1715,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 	mapFile->fd = fileDescriptor;
 
 	mapFile->routefd = routeDescriptor;
+	mapFile->liveMap = inputName.find("live/") != string::npos;
 	FileIndex* fo = NULL;
 	if (cache != NULL) {
 		struct stat stat;
@@ -1754,7 +1755,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 			mapFile->indexes.push_back(&mapFile->mapIndexes.back());
 		}
 
-		for (int i = 0; i < fo->routingindex_size(); i++) {
+		for (int i = 0; i < fo->routingindex_size() && !mapFile->liveMap; i++) {
 			RoutingIndex *mi = new RoutingIndex();
 			RoutingPart mp = fo->routingindex(i);
 			mi->filePointer = mp.offset();

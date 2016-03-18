@@ -339,11 +339,15 @@ struct BinaryMapFile {
 	int routefd;
 	bool basemap;
 	bool roadOnly;
+	bool liveMap;
 
 	bool isBasemap(){
 		return basemap;
 	}
 
+	bool isLiveMap(){
+		return liveMap;
+	}
 	bool isRoadOnly(){
 		return roadOnly;
 	}
