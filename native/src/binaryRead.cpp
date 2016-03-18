@@ -475,8 +475,10 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 			readRoutingIndex(input, routingIndex, false);
 			input->PopLimit(oldLimit);
 			input->Seek(routingIndex->filePointer + routingIndex->length);
-			file->routingIndexes.push_back(routingIndex);
-			file->indexes.push_back(file->routingIndexes.back());
+			if(!file->liveMap) {
+				file->routingIndexes.push_back(routingIndex);
+				file->indexes.push_back(file->routingIndexes.back());
+			}
 			break;
 		}
 		case OsmAnd::OBF::OsmAndStructure::kVersionConfirmFieldNumber: {
