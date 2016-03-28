@@ -12,8 +12,9 @@ OsmAnd::ResourcesManager::ResourcesManager(
     const QList<QString>& readonlyExternalStoragePaths_ /*= QList<QString>()*/,
     const QString& miniBasemapFilename_ /*= QString::null*/,
     const QString& localTemporaryPath_ /*= QString::null*/,
-    const QString& repositoryBaseUrl_ /*= QLatin1String("http://download.osmand.net")*/)
-    : _p(new ResourcesManager_P(this))
+    const QString& repositoryBaseUrl_ /*= QLatin1String("http://download.osmand.net")*/,
+    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
+    : _p(new ResourcesManager_P(this, webClient))
     , localStoragePath(localStoragePath_)
     , userStoragePath(userStoragePath_)
     , readonlyExternalStoragePaths(readonlyExternalStoragePaths_)

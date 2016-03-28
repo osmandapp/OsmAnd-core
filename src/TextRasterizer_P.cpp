@@ -199,6 +199,22 @@ void OsmAnd::TextRasterizer_P::measureGlyphs(const QVector<LinePaint>& paints, Q
                 pWidth);
 
             *pWidth += -textPaint.bounds.left();
+
+            ///////
+            const float totalWidth = textPaint.paint.measureText(
+                textPaint.text.constData(),
+                textPaint.text.length()*sizeof(QChar));
+
+            auto widthsSum = 0.0f;
+            for (int idx = 0; idx < glyphsCount; idx++)
+                widthsSum += pWidth[idx];
+
+            if (widthsSum > totalWidth)
+            {
+                LogPrintf(LogSeverityLevel::Error, "totalWidth = %f, widthsSum = %f", totalWidth, widthsSum);
+                int i = 5;
+            }
+            ////////
         }
     }
 }

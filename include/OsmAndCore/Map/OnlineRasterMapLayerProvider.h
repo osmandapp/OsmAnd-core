@@ -10,6 +10,8 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/IWebClient.h>
+#include <OsmAndCore/WebClient.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/IRasterMapLayerProvider.h>
 
@@ -31,7 +33,8 @@ namespace OsmAnd
             const unsigned int maxConcurrentDownloads = 1,
             const unsigned int tileSize = 256,
             const AlphaChannelPresence alphaChannelPresence = AlphaChannelPresence::Unknown,
-            const float tileDensityFactor = 1.0f);
+            const float tileDensityFactor = 1.0f,
+            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
         virtual ~OnlineRasterMapLayerProvider();
 
         const QString name;

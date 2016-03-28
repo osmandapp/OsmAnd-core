@@ -15,8 +15,9 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     const uint32_t maxConcurrentDownloads_ /*= 1*/,
     const uint32_t tileSize_ /*= 256*/,
     const AlphaChannelPresence alphaChannelPresence_ /*= AlphaChannelPresence::Undefined*/,
-    const float tileDensityFactor_ /*= 1.0f*/)
-    : _p(new OnlineRasterMapLayerProvider_P(this))
+    const float tileDensityFactor_ /*= 1.0f*/,
+    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
+    : _p(new OnlineRasterMapLayerProvider_P(this, webClient))
     , localCachePath(_p->_localCachePath)
     , networkAccessAllowed(_p->_networkAccessAllowed)
     , name(name_)

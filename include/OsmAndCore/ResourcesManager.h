@@ -13,6 +13,7 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Observable.h>
+#include <OsmAndCore/IWebClient.h>
 #include <OsmAndCore/WebClient.h>
 #include <OsmAndCore/AccessLockCounter.h>
 #include <OsmAndCore/Data/ObfFile.h>
@@ -226,7 +227,8 @@ namespace OsmAnd
             const QList<QString>& readonlyExternalStoragePaths = QList<QString>(),
             const QString& miniBasemapFilename = QString::null,
             const QString& localTemporaryPath = QString::null,
-            const QString& repositoryBaseUrl = QLatin1String("http://download.osmand.net"));
+            const QString& repositoryBaseUrl = QLatin1String("http://download.osmand.net"),
+            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient()));
         virtual ~ResourcesManager();
 
         const QString localStoragePath;
@@ -264,7 +266,7 @@ namespace OsmAnd
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
         bool installFromRepository(
             const QString& id,
-            const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
+            const IWebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
         bool installFromRepository(const QString& id, const QString& filePath);
 
         // Updates:
@@ -274,7 +276,7 @@ namespace OsmAnd
         bool updateFromFile(const QString& id, const QString& filePath);
         bool updateFromRepository(
             const QString& id,
-            const WebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
+            const IWebClient::RequestProgressCallbackSignature downloadProgressCallback = nullptr);
         bool updateFromRepository(const QString& id, const QString& filePath);
 
         // Observables

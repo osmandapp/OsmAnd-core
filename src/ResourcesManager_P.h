@@ -14,7 +14,7 @@
 
 #include "OsmAndCore.h"
 #include "PrivateImplementation.h"
-#include "WebClient.h"
+#include "IWebClient.h"
 #include "ResourcesManager.h"
 #include "IOnlineTileSources.h"
 #include "ObfDataInterface.h"
@@ -94,7 +94,7 @@ namespace OsmAnd
             QXmlStreamReader& xmlReader,
             QList< std::shared_ptr<const ResourceInRepository> >& repository) const;
 
-        mutable WebClient _webClient;
+        const std::shared_ptr<const IWebClient> _webClient;
 
         bool uninstallObf(const std::shared_ptr<const InstalledResource>& resource);
         bool uninstallSQLiteDB(const std::shared_ptr<const InstalledResource>& resource);
@@ -194,7 +194,9 @@ namespace OsmAnd
         friend class OsmAnd::ResourcesManager_P;
         };
     protected:
-        ResourcesManager_P(ResourcesManager* owner);
+        ResourcesManager_P(
+            ResourcesManager* owner,
+            const std::shared_ptr<const IWebClient>& webClient);
 
         void initialize();
         void loadRepositoryFromCache();
@@ -232,7 +234,7 @@ namespace OsmAnd
         bool installFromFile(const QString& id, const QString& filePath, const ResourceType resourceType);
         bool installFromRepository(
             const QString& id,
-            const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
+            const IWebClient::RequestProgressCallbackSignature downloadProgressCallback);
         bool installFromRepository(const QString& id, const QString& filePath);
 
         // Updates:
@@ -242,7 +244,7 @@ namespace OsmAnd
         bool updateFromFile(const QString& id, const QString& filePath);
         bool updateFromRepository(
             const QString& id,
-            const WebClient::RequestProgressCallbackSignature downloadProgressCallback);
+            const IWebClient::RequestProgressCallbackSignature downloadProgressCallback);
         bool updateFromRepository(const QString& id, const QString& filePath);
 
         const std::shared_ptr<const IOnlineTileSources> onlineTileSources;

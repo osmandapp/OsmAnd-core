@@ -1,5 +1,5 @@
-#ifndef _OSMAND_CORE_DOWNLOAD_MANAGER_P_H_
-#define _OSMAND_CORE_DOWNLOAD_MANAGER_P_H_
+#ifndef _OSMAND_CORE_WEB_CLIENT_P_H_
+#define _OSMAND_CORE_WEB_CLIENT_P_H_
 
 #include "stdlib_common.h"
 #include <functional>
@@ -45,7 +45,7 @@ namespace OsmAnd
         mutable QAtomicInt _retriesLimit;
         mutable QAtomicInt _followRedirects;
 
-        QThreadPool _threadPool;
+        mutable QThreadPool _threadPool;
 
         class Request : QRunnable
         {
@@ -114,20 +114,20 @@ namespace OsmAnd
         // Operations:
         QByteArray downloadData(
             const QNetworkRequest& networkRequest,
-            std::shared_ptr<const RequestResult>* const requestResult,
-            const RequestProgressCallbackSignature progressCallback);
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+            const IWebClient::RequestProgressCallbackSignature progressCallback) const;
         QString downloadString(
             const QNetworkRequest& networkRequest,
-            std::shared_ptr<const RequestResult>* const requestResult,
-            const RequestProgressCallbackSignature progressCallback);
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+            const IWebClient::RequestProgressCallbackSignature progressCallback) const;
         bool downloadFile(
             const QNetworkRequest& networkRequest,
             const QString& fileName,
-            std::shared_ptr<const RequestResult>* const requestResult,
-            const RequestProgressCallbackSignature progressCallback);
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+            const IWebClient::RequestProgressCallbackSignature progressCallback) const;
 
     friend class OsmAnd::WebClient;
     };
 }
 
-#endif // !defined(_OSMAND_CORE_DOWNLOAD_MANAGER_P_H_)
+#endif // !defined(_OSMAND_CORE_WEB_CLIENT_P_H_)

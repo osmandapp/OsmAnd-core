@@ -18,7 +18,7 @@
 #include "PrivateImplementation.h"
 #include "IRasterMapLayerProvider.h"
 #include "OnlineRasterMapLayerProvider.h"
-#include "WebClient.h"
+#include "IWebClient.h"
 
 namespace OsmAnd
 {
@@ -26,7 +26,11 @@ namespace OsmAnd
     {
     private:
     protected:
-        OnlineRasterMapLayerProvider_P(OnlineRasterMapLayerProvider* owner);
+        OnlineRasterMapLayerProvider_P(
+            OnlineRasterMapLayerProvider* owner,
+            const std::shared_ptr<const IWebClient>& downloadManager);
+
+        const std::shared_ptr<const IWebClient> _downloadManager;
 
         mutable QMutex _localCachePathMutex;
         QString _localCachePath;
@@ -35,8 +39,6 @@ namespace OsmAnd
         mutable QMutex _tilesInProcessMutex;
         std::array< QSet< TileId >, ZoomLevelsCount > _tilesInProcess;
         QWaitCondition _waitUntilAnyTileIsProcessed;
-
-        WebClient _downloadManager;
 
         void lockTile(const TileId tileId, const ZoomLevel zoom);
         void unlockTile(const TileId tileId, const ZoomLevel zoom);

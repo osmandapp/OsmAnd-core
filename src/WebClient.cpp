@@ -56,50 +56,50 @@ void OsmAnd::WebClient::setFollowRedirects(const bool followRedirects)
 
 QByteArray OsmAnd::WebClient::downloadData(
     const QNetworkRequest& networkRequest,
-    std::shared_ptr<const RequestResult>* const requestResult /*= nullptr*/,
-    const RequestProgressCallbackSignature progressCallback /*= nullptr*/)
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult /*= nullptr*/,
+    const IWebClient::RequestProgressCallbackSignature progressCallback /*= nullptr*/) const
 {
     return _p->downloadData(networkRequest, requestResult, progressCallback);
 }
 
+QString OsmAnd::WebClient::downloadString(
+    const QNetworkRequest& networkRequest,
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult /*= nullptr*/,
+    const IWebClient::RequestProgressCallbackSignature progressCallback /*= nullptr*/) const
+{
+    return _p->downloadString(networkRequest, requestResult, progressCallback);
+}
+
+bool OsmAnd::WebClient::downloadFile(
+    const QNetworkRequest& networkRequest,
+    const QString& fileName,
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult /*= nullptr*/,
+    const IWebClient::RequestProgressCallbackSignature progressCallback /*= nullptr*/) const
+{
+    return _p->downloadFile(networkRequest, fileName, requestResult, progressCallback);
+}
+
 QByteArray OsmAnd::WebClient::downloadData(
-    const QUrl& url,
-    std::shared_ptr<const RequestResult>* const requestResult /*= nullptr*/,
-    const RequestProgressCallbackSignature progressCallback /*= nullptr*/)
+    const QString& url,
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult /*= nullptr*/,
+    const IWebClient::RequestProgressCallbackSignature progressCallback /*= nullptr*/) const
 {
     return downloadData(QNetworkRequest(url), requestResult, progressCallback);
 }
 
 QString OsmAnd::WebClient::downloadString(
-    const QNetworkRequest& networkRequest,
-    std::shared_ptr<const RequestResult>* const requestResult /*= nullptr*/,
-    const RequestProgressCallbackSignature progressCallback /*= nullptr*/)
-{
-    return _p->downloadString(networkRequest, requestResult, progressCallback);
-}
-
-QString OsmAnd::WebClient::downloadString(
-    const QUrl& url,
-    std::shared_ptr<const RequestResult>* const requestResult /*= nullptr*/,
-    const RequestProgressCallbackSignature progressCallback /*= nullptr*/)
+    const QString& url,
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult /*= nullptr*/,
+    const IWebClient::RequestProgressCallbackSignature progressCallback /*= nullptr*/) const
 {
     return downloadString(QNetworkRequest(url), requestResult, progressCallback);
 }
 
 bool OsmAnd::WebClient::downloadFile(
-    const QNetworkRequest& networkRequest,
+    const QString& url,
     const QString& fileName,
-    std::shared_ptr<const RequestResult>* const requestResult /*= nullptr*/,
-    const RequestProgressCallbackSignature progressCallback /*= nullptr*/)
-{
-    return _p->downloadFile(networkRequest, fileName, requestResult, progressCallback);
-}
-
-bool OsmAnd::WebClient::downloadFile(
-    const QUrl& url,
-    const QString& fileName,
-    std::shared_ptr<const RequestResult>* const requestResult /*= nullptr*/,
-    const RequestProgressCallbackSignature progressCallback /*= nullptr*/)
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult /*= nullptr*/,
+    const IWebClient::RequestProgressCallbackSignature progressCallback /*= nullptr*/) const
 {
     return downloadFile(QNetworkRequest(url), fileName, requestResult, progressCallback);
 }
@@ -113,11 +113,6 @@ OsmAnd::WebClient::RequestResult::~RequestResult()
 {
 }
 
-bool OsmAnd::WebClient::RequestResult::isSuccessful() const
-{
-    return (errorCode == QNetworkReply::NoError);
-}
-
 OsmAnd::WebClient::HttpRequestResult::HttpRequestResult(const QNetworkReply* const networkReply)
     : RequestResult(networkReply)
     , httpStatusCode(networkReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toUInt())
@@ -126,4 +121,14 @@ OsmAnd::WebClient::HttpRequestResult::HttpRequestResult(const QNetworkReply* con
 
 OsmAnd::WebClient::HttpRequestResult::~HttpRequestResult()
 {
+}
+
+bool OsmAnd::WebClient::HttpRequestResult::isSuccessful() const
+{
+    return (errorCode == QNetworkReply::NoError);
+}
+
+unsigned int OsmAnd::WebClient::HttpRequestResult::getHttpStatusCode() const
+{
+    return httpStatusCode;
 }

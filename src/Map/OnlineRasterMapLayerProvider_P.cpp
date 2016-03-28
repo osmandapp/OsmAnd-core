@@ -18,8 +18,11 @@
 #include "Logging.h"
 #include "Utilities.h"
 
-OsmAnd::OnlineRasterMapLayerProvider_P::OnlineRasterMapLayerProvider_P(OnlineRasterMapLayerProvider* owner_)
+OsmAnd::OnlineRasterMapLayerProvider_P::OnlineRasterMapLayerProvider_P(
+    OnlineRasterMapLayerProvider* owner_,
+    const std::shared_ptr<const IWebClient>& downloadManager_)
     : owner(owner_)
+    , _downloadManager(downloadManager_)
     , _networkAccessAllowed(true)
 {
 }
@@ -120,8 +123,8 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
         .replace(QLatin1String("${osm_y}"), QString::number(request.tileId.y))
         .replace(QLatin1String("${osm_y_inv}"), QString::number(tileSize - request.tileId.y - 1))
         .replace(QLatin1String("${quadkey}"), Utilities::getQuadKey(request.tileId.x, request.tileId.y, request.zoom));
-    std::shared_ptr<const WebClient::RequestResult> requestResult;
-    const auto& downloadResult = _downloadManager.downloadData(QUrl(tileUrl), &requestResult);
+    std::shared_ptr<const IWebClient::IRequestResult> requestResult;
+    const auto& downloadResult = _downloadManager->downloadData(tileUrl, &requestResult);
 
     // Ensure that all directories are created in path to local tile
     localFile.dir().mkpath(QLatin1String("."));
@@ -129,7 +132,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
     // If there was error, check what the error was
     if (!requestResult->isSuccessful())
     {
-        const auto httpStatus = std::dynamic_pointer_cast<const WebClient::HttpRequestResult>(requestResult)->httpStatusCode;
+        const auto httpStatus = std::dynamic_pointer_cast<const IWebClient::IHttpRequestResult>(requestResult)->getHttpStatusCode();
 
         LogPrintf(LogSeverityLevel::Warning,
             "Failed to download tile from %s (HTTP status %d)",

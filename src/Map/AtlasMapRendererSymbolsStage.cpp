@@ -1988,14 +1988,14 @@ double OsmAnd::AtlasMapRendererSymbolsStage::computeDistanceBetweenCameraToPath(
 
 QVector<OsmAnd::AtlasMapRendererSymbolsStage::RenderableOnPathSymbol::GlyphPlacement>
 OsmAnd::AtlasMapRendererSymbolsStage::computePlacementOfGlyphsOnPath(
-const bool is2D,
-const QVector<glm::vec2>& path,
-const QVector<float>& pathSegmentsLengths,
-const unsigned int startPathPointIndex,
-const float offsetFromStartPathPoint,
-const unsigned int endPathPointIndex,
-const glm::vec2& directionOnScreen,
-const QVector<float>& glyphsWidths) const
+    const bool is2D,
+    const QVector<glm::vec2>& path,
+    const QVector<float>& pathSegmentsLengths,
+    const unsigned int startPathPointIndex,
+    const float offsetFromStartPathPoint,
+    const unsigned int endPathPointIndex,
+    const glm::vec2& directionOnScreen,
+    const QVector<float>& glyphsWidths) const
 {
     const auto& internalState = getInternalState();
 
@@ -2033,7 +2033,7 @@ const QVector<float>& glyphsWidths) const
     for (int glyphIdx = 0; glyphIdx < glyphsCount; glyphIdx++, pGlyphWidth += glyphWidthIncrement)
     {
         // Get current glyph anchor offset and provide offset for next glyph
-        const auto& glyphWidth = *pGlyphWidth;
+        const auto glyphWidth = *pGlyphWidth;
         const auto glyphWidthScaled = glyphWidth * projectionScale;
         const auto anchorOffset = prevGlyphOffset + glyphWidthScaled / 2.0f;
         prevGlyphOffset += glyphWidthScaled;
@@ -2045,7 +2045,50 @@ const QVector<float>& glyphsWidths) const
             {
                 // Wow! This shouldn't happen ever, since it means that glyphs doesn't fit into the provided path!
                 // And this means that path calculation above gave error!
-                assert(false);
+                LogPrintf(LogSeverityLevel::Error,
+                    "computePlacementOfGlyphsOnPath() failed:\n"
+                    "\t%d glyphs;\n"
+                    "\tfailed on glyph #%d;\n"
+                    "\tstartPathPointIndex = %d;\n"
+                    "\tendPathPointIndex = %d;\n"
+                    "\tsegmentScanIndex = %d;\n"
+                    "\tanchorOffset = %f;\n"
+                    "\tscannedSegmentsLength = %f;\n"
+                    "\tprojectionScale = %f;\n"
+                    "\toffsetFromStartPathPoint = %f;\n"
+                    "\tpathSegmentsLengths = %s;\n"
+                    "\tglyphsWidths = %s;\n"
+                    "\tglyphsWidths (scaled) = %s;",
+                    glyphsCount,
+                    glyphIdx,
+                    startPathPointIndex,
+                    endPathPointIndex,
+                    segmentScanIndex,
+                    anchorOffset,
+                    scannedSegmentsLength,
+                    projectionScale,
+                    offsetFromStartPathPoint,
+                    qPrintable(qTransform<QStringList>(
+                        pathSegmentsLengths,
+                        []
+                        (const float& value) -> QStringList
+                        {
+                            return QStringList() << QString::number(value);
+                        }).join(QLatin1String(", "))),
+                    qPrintable(qTransform<QStringList>(
+                        glyphsWidths,
+                        []
+                        (const float& value) -> QStringList
+                        {
+                            return QStringList() << QString::number(value);
+                        }).join(QLatin1String(", "))),
+                    qPrintable(qTransform<QStringList>(
+                        glyphsWidths,
+                        [projectionScale]
+                        (const float& value) -> QStringList
+                        {
+                            return QStringList() << QString::number(value * projectionScale);
+                        }).join(QLatin1String(", "))));
                 glyphsPlacement.clear();
                 return glyphsPlacement;
             }

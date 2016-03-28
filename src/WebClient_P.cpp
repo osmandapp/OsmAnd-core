@@ -77,8 +77,8 @@ void OsmAnd::WebClient_P::setFollowRedirects(const bool followRedirects)
 
 QByteArray OsmAnd::WebClient_P::downloadData(
     const QNetworkRequest& networkRequest,
-    std::shared_ptr<const RequestResult>* const requestResult,
-    const RequestProgressCallbackSignature progressCallback)
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+    const IWebClient::RequestProgressCallbackSignature progressCallback) const
 {
     QByteArray data;
 
@@ -121,8 +121,8 @@ QByteArray OsmAnd::WebClient_P::downloadData(
 
 QString OsmAnd::WebClient_P::downloadString(
     const QNetworkRequest& networkRequest,
-    std::shared_ptr<const RequestResult>* const requestResult,
-    const RequestProgressCallbackSignature progressCallback)
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+    const IWebClient::RequestProgressCallbackSignature progressCallback) const
 {
     QByteArray data;
 
@@ -183,8 +183,8 @@ QString OsmAnd::WebClient_P::downloadString(
 bool OsmAnd::WebClient_P::downloadFile(
     const QNetworkRequest& networkRequest,
     const QString& fileName,
-    std::shared_ptr<const RequestResult>* const requestResult,
-    const RequestProgressCallbackSignature progressCallback)
+    std::shared_ptr<const IWebClient::IRequestResult>* const requestResult,
+    const IWebClient::RequestProgressCallbackSignature progressCallback) const
 {
     QFile file(fileName);
 

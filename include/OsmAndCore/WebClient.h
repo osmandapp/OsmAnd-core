@@ -14,17 +14,16 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/IWebClient.h>
 
 namespace OsmAnd
 {
     class WebClient_P;
-    class OSMAND_CORE_API WebClient
+    class OSMAND_CORE_API WebClient : public IWebClient
     {
         Q_DISABLE_COPY_AND_MOVE(WebClient);
 
     public:
-        typedef std::function<void(const uint64_t transferredBytes, const uint64_t totalBytes)> RequestProgressCallbackSignature;
-
         class OSMAND_CORE_API RequestResult
         {
             Q_DISABLE_COPY_AND_MOVE(RequestResult);
@@ -36,11 +35,11 @@ namespace OsmAnd
             virtual ~RequestResult();
 
             const QNetworkReply::NetworkError errorCode;
-
-            virtual bool isSuccessful() const;
         };
         
-        class OSMAND_CORE_API HttpRequestResult : public RequestResult
+        class OSMAND_CORE_API HttpRequestResult
+            : public RequestResult
+            , public IWebClient::IHttpRequestResult
         {
             Q_DISABLE_COPY_AND_MOVE(HttpRequestResult);
 
@@ -51,6 +50,9 @@ namespace OsmAnd
             virtual ~HttpRequestResult();
 
             const unsigned int httpStatusCode;
+
+            virtual bool isSuccessful() const;
+            virtual unsigned int getHttpStatusCode() const;
 
         friend class OsmAnd::WebClient_P;
         };
@@ -66,49 +68,45 @@ namespace OsmAnd
             const bool followRedirects = true);
         virtual ~WebClient();
 
-        // "User-Agent" setting:
         QString getUserAgent() const;
         void setUserAgent(const QString& userAgent);
 
-        // Concurrent requests limit:
         unsigned int getConcurrentRequestsLimit() const;
         void setConcurrentRequestsLimit(const unsigned int newLimit);
 
-        // Retries limit:
         unsigned int getRetriesLimit() const;
         void setRetriesLimit(const unsigned int newLimit);
 
-        // Redirects following:
         bool getFollowRedirects() const;
         void setFollowRedirects(const bool followRedirects);
 
-        // Operations:
         QByteArray downloadData(
             const QNetworkRequest& networkRequest,
-            std::shared_ptr<const RequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr);
-        QByteArray downloadData(
-            const QUrl& url,
-            std::shared_ptr<const RequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr);
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
+            const IWebClient::RequestProgressCallbackSignature progressCallback = nullptr) const;
         QString downloadString(
             const QNetworkRequest& networkRequest,
-            std::shared_ptr<const RequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr);
-        QString downloadString(
-            const QUrl& url,
-            std::shared_ptr<const RequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr);
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
+            const IWebClient::RequestProgressCallbackSignature progressCallback = nullptr) const;
         bool downloadFile(
             const QNetworkRequest& networkRequest,
             const QString& fileName,
-            std::shared_ptr<const RequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr);
-        bool downloadFile(
-            const QUrl& url,
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
+            const IWebClient::RequestProgressCallbackSignature progressCallback = nullptr) const;
+
+        virtual QByteArray downloadData(
+            const QString& url,
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
+            const IWebClient::RequestProgressCallbackSignature progressCallback = nullptr) const;
+        virtual QString downloadString(
+            const QString& url,
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
+            const IWebClient::RequestProgressCallbackSignature progressCallback = nullptr) const;
+        virtual bool downloadFile(
+            const QString& url,
             const QString& fileName,
-            std::shared_ptr<const RequestResult>* const requestResult = nullptr,
-            const RequestProgressCallbackSignature progressCallback = nullptr);
+            std::shared_ptr<const IWebClient::IRequestResult>* const requestResult = nullptr,
+            const IWebClient::RequestProgressCallbackSignature progressCallback = nullptr) const;
     };
 }
 

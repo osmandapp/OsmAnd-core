@@ -23,11 +23,14 @@
 #include "Logging.h"
 #include "Utilities.h"
 
-OsmAnd::ResourcesManager_P::ResourcesManager_P(ResourcesManager* owner_)
+OsmAnd::ResourcesManager_P::ResourcesManager_P(
+    ResourcesManager* owner_,
+    const std::shared_ptr<const IWebClient>& webClient_)
     : owner(owner_)
     , _fileSystemWatcher(new QFileSystemWatcher())
     , _localResourcesLock(QReadWriteLock::Recursive)
     , _resourcesInRepositoryLoaded(false)
+    , _webClient(webClient_)
     , onlineTileSources(new OnlineTileSourcesProxy(this))
     , mapStylesCollection(new MapStylesCollectionProxy(this))
     , obfsCollection(new ObfsCollectionProxy(this))
@@ -934,9 +937,9 @@ bool OsmAnd::ResourcesManager_P::updateRepository() const
     QWriteLocker scopedLocker(&_resourcesInRepositoryLock);
 
     // Download content of the index
-    std::shared_ptr<const WebClient::RequestResult> requestResult;
-    const auto& downloadResult = WebClient().downloadData(
-        QUrl(owner->repositoryBaseUrl + QLatin1String("/get_indexes.php")),
+    std::shared_ptr<const IWebClient::IRequestResult> requestResult;
+    const auto& downloadResult = _webClient->downloadData(
+        owner->repositoryBaseUrl + QLatin1String("/get_indexes.php"),
         &requestResult);
     if (downloadResult.isNull() || !requestResult->isSuccessful())
         return false;
@@ -1271,7 +1274,7 @@ bool OsmAnd::ResourcesManager_P::installVoicePackFromFile(
 
 bool OsmAnd::ResourcesManager_P::installFromRepository(
     const QString& id,
-    const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
+    const IWebClient::RequestProgressCallbackSignature downloadProgressCallback)
 {
     if (isResourceInstalled(id))
         return false;
@@ -1284,7 +1287,7 @@ bool OsmAnd::ResourcesManager_P::installFromRepository(
         .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 
-    bool ok = _webClient.downloadFile(resourceInRepository->url, tmpFilePath, nullptr, downloadProgressCallback);
+    bool ok = _webClient->downloadFile(resourceInRepository->url.url(), tmpFilePath, nullptr, downloadProgressCallback);
     if (!ok)
         return false;
 
@@ -1452,7 +1455,7 @@ bool OsmAnd::ResourcesManager_P::updateFromFile(
 
 bool OsmAnd::ResourcesManager_P::updateFromRepository(
     const QString& id,
-    const WebClient::RequestProgressCallbackSignature downloadProgressCallback)
+    const IWebClient::RequestProgressCallbackSignature downloadProgressCallback)
 {
     const auto& resourceInRepository = getResourceInRepository(id);
     if (!resourceInRepository)
@@ -1462,7 +1465,7 @@ bool OsmAnd::ResourcesManager_P::updateFromRepository(
         .arg(QString(QCryptographicHash::hash(id.toLocal8Bit(), QCryptographicHash::Md5).toHex()))
         .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
 
-    bool ok = _webClient.downloadFile(resourceInRepository->url, tmpFilePath, nullptr, downloadProgressCallback);
+    bool ok = _webClient->downloadFile(resourceInRepository->url.url(), tmpFilePath, nullptr, downloadProgressCallback);
     if (!ok)
         return false;
 
