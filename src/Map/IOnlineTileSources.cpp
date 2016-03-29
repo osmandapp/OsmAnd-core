@@ -11,7 +11,8 @@ OsmAnd::IOnlineTileSources::~IOnlineTileSources()
 }
 
 std::shared_ptr<OsmAnd::OnlineRasterMapLayerProvider> OsmAnd::IOnlineTileSources::createProviderFor(
-    const QString& sourceName) const
+    const QString& sourceName,
+    const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/) const
 {
     const auto source = getSourceByName(sourceName);
     if (!source)
@@ -25,7 +26,8 @@ std::shared_ptr<OsmAnd::OnlineRasterMapLayerProvider> OsmAnd::IOnlineTileSources
         source->maxConcurrentDownloads,
         source->tileSize,
         source->alphaChannelPresence,
-        source->tileDensityFactor));
+        source->tileDensityFactor,
+        webClient));
 }
 
 OsmAnd::IOnlineTileSources::Source::Source(const QString& name_)

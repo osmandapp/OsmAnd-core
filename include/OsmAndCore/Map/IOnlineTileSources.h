@@ -13,6 +13,7 @@
 #include <OsmAndCore/CommonSWIG.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/WebClient.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 
 namespace OsmAnd
@@ -51,7 +52,9 @@ namespace OsmAnd
         virtual QHash< QString, std::shared_ptr<const Source> > getCollection() const = 0;
         virtual std::shared_ptr<const Source> getSourceByName(const QString& sourceName) const = 0;
 
-        virtual std::shared_ptr<OnlineRasterMapLayerProvider> createProviderFor(const QString& sourceName) const;
+        virtual std::shared_ptr<OnlineRasterMapLayerProvider> createProviderFor(
+            const QString& sourceName,
+            const std::shared_ptr<const IWebClient>& webClient = std::shared_ptr<const IWebClient>(new WebClient())) const;
     };
 }
 
