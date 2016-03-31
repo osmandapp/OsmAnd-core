@@ -25,30 +25,30 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 			continue;
 		}
 		dbId = -(o->id >> 1);
-		coordinates* cs = new coordinates();
+		coordinates cs;
 		int px = o->points.at(0).first;
 		int py = o->points.at(0).second;
 		int x = px;
 		int y = py;
 		bool pinside = leftX <= x && x <= rightX && y >= topY && y <= bottomY;
 		if (pinside) {
-			cs->push_back(int_pair(x, y));
+			cs.push_back(int_pair(x, y));
 		}
 		for (int i = 1; i < len; i++) {
 			x = o->points.at(i).first;
 			y = o->points.at(i).second;
 			bool inside = leftX <= x && x <= rightX && y >= topY && y <= bottomY;
-			bool lineEnded = calculateLineCoordinates(inside, x, y, pinside, px, py, leftX, rightX, bottomY, topY, *cs);
+			bool lineEnded = calculateLineCoordinates(inside, x, y, pinside, px, py, leftX, rightX, bottomY, topY, cs);
 			if (lineEnded) {
-				combineMultipolygonLine(completedRings, uncompletedRings, *cs);
+				combineMultipolygonLine(completedRings, uncompletedRings, cs);
 				// create new line if it goes outside
-				cs = new coordinates();
+				cs.clear();
 			}
 			px = x;
 			py = y;
 			pinside = inside;
 		}
-		combineMultipolygonLine(completedRings, uncompletedRings, *cs);
+		combineMultipolygonLine(completedRings, uncompletedRings, cs);
 	}
 	if (completedRings.size() == 0 && uncompletedRings.size() == 0) {
 		return false;
