@@ -373,7 +373,11 @@ void unifyIncompletedRings(std::vector<std::vector<int_pair> >& toProccess, std:
 
 			} // END go clockwise around rectangle
 			if (nextRingIndex == -1) {
-				// it is impossible (current start should always be found)
+				// error - current start should always be found
+				OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Could not find next ring");
+				ir->push_back(ir->at(0));
+				nonvisitedRings.erase(j);
+				break;
 			} else if (nextRingIndex == j) {
 				ir->push_back(ir->at(0));
 				nonvisitedRings.erase(j);
