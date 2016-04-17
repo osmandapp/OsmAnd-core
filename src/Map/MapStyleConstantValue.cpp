@@ -48,7 +48,7 @@ bool OsmAnd::MapStyleConstantValue::parse(
             }
             else
             {
-                assert(!input.contains(':'));
+                //assert(!input.contains(':'));
                 output.asSimple.asInt = Utilities::parseArbitraryInt(input, -1);
             }
             return true;

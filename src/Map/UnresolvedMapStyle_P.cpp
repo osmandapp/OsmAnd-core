@@ -161,10 +161,10 @@ bool OsmAnd::UnresolvedMapStyle_P::parse(QXmlStreamReader& xmlReader)
                 else
                 {
                     LogPrintf(LogSeverityLevel::Error,
-                        "'%s' type is not supported (%s)",
+                        "'%s' type is not supported (%s) - skip it",
                         qPrintable(valueType),
                         qPrintable(name));
-                    return false;
+                    continue;
                 }
 
                 const std::shared_ptr<const Parameter> newParameter(new Parameter(
