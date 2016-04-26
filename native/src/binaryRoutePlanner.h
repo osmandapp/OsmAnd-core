@@ -122,6 +122,7 @@ struct RoutingSubregionTile {
 	int loaded;
 	uint size ;
 	UNORDERED(map)<int64_t, SHARED_PTR<RouteSegment> > routes;
+	UNORDERED(set)<int64_t > excludedIds;
 
 	RoutingSubregionTile(RouteSubregion& sub) : subregion(sub), access(0), loaded(0) {
 		size = sizeof(RoutingSubregionTile);
@@ -366,21 +367,38 @@ struct RoutingContext {
 		if(gc) {
 			unloadUnusedTiles(config->memoryLimitation);
 		}
+		bool load = false;
 		for(uint j = 0; j<subregions.size(); j++) {
 			if(!subregions[j]->isLoaded()) {
-				loadedTiles++;
-				subregions[j]->setLoaded();
-				SearchQuery q;
-				vector<RouteDataObject*> res;
-				searchRouteDataForSubRegion(&q, res, &subregions[j]->subregion);
-				vector<RouteDataObject*>::iterator i = res.begin();
-				for(;i!=res.end(); i++) {
-					if(*i != NULL) {
-						SHARED_PTR<RouteDataObject> o(*i);
-						if(acceptLine(o)) {
-							subregions[j]->add(o);
+				load = true;
+			}
+		}
+		if(load) {
+			UNORDERED(set)<int64_t > excludedIds;
+			for(uint j = 0; j<subregions.size(); j++) {
+				if(!subregions[j]->isLoaded()) {
+					loadedTiles++;
+					subregions[j]->setLoaded();
+					SearchQuery q;
+					vector<RouteDataObject*> res;
+					searchRouteDataForSubRegion(&q, res, &subregions[j]->subregion);
+					vector<RouteDataObject*>::iterator i = res.begin();
+					for(;i!=res.end(); i++) {
+						if(*i != NULL) {
+							SHARED_PTR<RouteDataObject> o(*i);
+							if(acceptLine(o)) {
+								if(excludedIds.find(o->getId()) == excludedIds.end()) {
+									subregions[j]->add(o);
+								}
+							} else if(o->getId() > 0) {
+								excludedIds.insert(o->getId());
+								subregions[j]->excludedIds.insert(o->getId());
+							}
 						}
 					}
+				} else {
+					excludedIds.insert(
+						subregions[j]->excludedIds.begin(), subregions[j]->excludedIds.end());
 				}
 			}
 		}
