@@ -669,6 +669,7 @@ bool OsmAnd::ObfDataInterface::findAmenityById(
         [id, &foundAmenity]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
+            // todo: wrong IF since mapObject->id != amenity->id
             //if (amenity->id == id)
                 foundAmenity = amenity;
 
