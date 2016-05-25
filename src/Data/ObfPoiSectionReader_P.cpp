@@ -1015,10 +1015,11 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
             {
                 QString valueString;
                 ObfReaderUtilities::readQString(cis, valueString);
-                if (stringOrDataValues.size() >= textValueSubtypeIndices.size())
+                if (textValueSubtypeIndices.size() == 0)
                     break;
 
-                const auto subtypeIndex = textValueSubtypeIndices[stringOrDataValues.size()];
+                const auto subtypeIndex = textValueSubtypeIndices[0];
+                textValueSubtypeIndices.pop_front();
                 if (valueString.startsWith(QLatin1String(" gz ")) && valueString.size() >= 4)
                 {
                     const auto dataSize = valueString.size() - 4;

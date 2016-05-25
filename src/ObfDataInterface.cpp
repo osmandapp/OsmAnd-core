@@ -669,7 +669,7 @@ bool OsmAnd::ObfDataInterface::findAmenityById(
         [id, &foundAmenity]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
-            if (amenity->id == id)
+            //if (amenity->id == id)
                 foundAmenity = amenity;
 
             return false;
