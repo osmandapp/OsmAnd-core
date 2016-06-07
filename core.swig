@@ -75,6 +75,7 @@
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+#include <OsmAndCore/IQueryController.h>
 #include <OsmAndCore/Search/ISearch.h>
 #include <OsmAndCore/Search/AmenitiesByNameSearch.h>
 #include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
@@ -103,6 +104,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IObfsCollection)
 	%shared_ptr(OsmAnd::ObfsCollection)
 	%shared_ptr(OsmAnd::ObfDataInterface)
+	%shared_ptr(OsmAnd::IQueryController)
 	%shared_ptr(OsmAnd::AmenitiesInAreaSearch)
 	%shared_ptr(OsmAnd::AmenitiesByNameSearch::Criteria)
 	%shared_ptr(OsmAnd::AmenitiesInAreaSearch)
@@ -319,6 +321,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IOnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+%include <OsmAndCore/IQueryController.h>
 %include <OsmAndCore/Search/ISearch.h>
 %include <OsmAndCore/Search/AmenitiesByNameSearch.h>
 %include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
