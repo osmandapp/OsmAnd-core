@@ -58,8 +58,6 @@ namespace OsmAnd
     public:
         virtual ~ISearch();
 
-        virtual std::shared_ptr<const IObfsCollection> getObfsCollection() const = 0;
-
         virtual void performSearch(
             const Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,

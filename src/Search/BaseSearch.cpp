@@ -14,11 +14,6 @@ OsmAnd::BaseSearch::~BaseSearch()
 {
 }
 
-std::shared_ptr<const OsmAnd::IObfsCollection> OsmAnd::BaseSearch::getObfsCollection() const
-{
-    return obfsCollection;
-}
-
 void OsmAnd::BaseSearch::startSearch(
     const Criteria& criteria,
     const NewResultEntryCallback newResultEntryCallback,

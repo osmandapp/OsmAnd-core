@@ -23,7 +23,6 @@ namespace OsmAnd
         virtual ~BaseSearch();
 
         const std::shared_ptr<const IObfsCollection> obfsCollection;
-        virtual std::shared_ptr<const IObfsCollection> getObfsCollection() const;
 
         virtual void startSearch(
             const Criteria& criteria,
