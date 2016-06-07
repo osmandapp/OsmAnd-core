@@ -75,6 +75,7 @@
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+#include <OsmAndCore/Search/BaseSearch.h>
 #include <OsmAndCore/IQueryController.h>
 #include <OsmAndCore/Search/ISearch.h>
 #include <OsmAndCore/Search/AmenitiesByNameSearch.h>
@@ -322,6 +323,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
 %include <OsmAndCore/IQueryController.h>
+%include <OsmAndCore/Search/BaseSearch.h>
 %include <OsmAndCore/Search/ISearch.h>
 %include <OsmAndCore/Search/AmenitiesByNameSearch.h>
 %include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
