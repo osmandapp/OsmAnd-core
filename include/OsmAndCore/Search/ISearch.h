@@ -10,6 +10,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Callable.h>
 #include <OsmAndCore/IObfsCollection.h>
 
 class QThreadPool;
@@ -38,8 +39,18 @@ namespace OsmAnd
             virtual ~IResultEntry();
         };
 
-        typedef std::function<void(const Criteria& criteria, const IResultEntry& resultEntry)> NewResultEntryCallback;
-        typedef std::function<void(const Criteria& criteria, const QList<IResultEntry>& resultEntry)> SearchCompletedCallback;
+        //typedef std::function<void(const Criteria& criteria, const IResultEntry& resultEntry)> NewResultEntryCallback;
+        //typedef std::function<void(const Criteria& criteria, const QList<IResultEntry>& resultEntry)> SearchCompletedCallback;
+        
+        OSMAND_CALLABLE(NewResultEntryCallback,
+                        void,
+                        const Criteria& criteria,
+                        const IResultEntry& resultEntry);
+
+        OSMAND_CALLABLE(SearchCompletedCallback,
+                        void,
+                        const Criteria& criteria,
+                        const QList<IResultEntry>& resultEntry);
 
     private:
     protected:
