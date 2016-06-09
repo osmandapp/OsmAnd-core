@@ -35,6 +35,7 @@
 #include <OsmAndCore/Data/ObfMapObject.h>
 #include <OsmAndCore/Data/BinaryMapObject.h>
 #include <OsmAndCore/Data/Road.h>
+#include <OsmAndCore/Data/ObfSectionInfo.h>
 #include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 #include <OsmAndCore/Data/Amenity.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
@@ -108,8 +109,12 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ObfsCollection)
 	%shared_ptr(OsmAnd::ObfDataInterface)
 	%shared_ptr(OsmAnd::Amenity)
+	%shared_ptr(OsmAnd::ObfSectionInfo)
+	%shared_ptr(OsmAnd::ObfPoiSectionCategories)
+	%shared_ptr(OsmAnd::ObfPoiSectionSubtypes)
 	%shared_ptr(OsmAnd::ObfPoiSectionSubtype)
 	%shared_ptr(OsmAnd::IQueryController)
+	%shared_ptr(OsmAnd::ISearch)
 	%shared_ptr(OsmAnd::BaseSearch)
 	%shared_ptr(OsmAnd::AmenitiesByNameSearch)
 	%shared_ptr(OsmAnd::AmenitiesByNameSearch::Criteria)
@@ -288,6 +293,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/ObfMapObject.h>
 %include <OsmAndCore/Data/BinaryMapObject.h>
 %include <OsmAndCore/Data/Road.h>
+%include <OsmAndCore/Data/ObfSectionInfo.h>
 %include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 %include <OsmAndCore/Data/Amenity.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
