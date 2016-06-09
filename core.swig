@@ -5,7 +5,6 @@
 
 %{
 #include <OsmAndCore.h>
-#include <OsmAndCore/IMemoryManager.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/PointsAndAreas.h>
@@ -89,6 +88,8 @@
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
 using namespace OsmAnd;
 %}
+
+%feature("director") IQueryController;
 
 #if defined(SWIG_JAVA) || defined(SWIG_CSHARP)
 	%include <enums.swg>
@@ -228,6 +229,9 @@ using namespace OsmAnd;
 #ifdef SWIG_JAVA
 	%include <swig/java/QList.i>
 		%template(QStringList) QList<QString>;
+		%template(ObfPoiCategoryIdList) QList<ObfPoiCategoryId>;
+		%template(DecodedCategoryList) QList<DecodedCategory>;
+		%template(DecodedValue List) QList<DecodedValue>;
 	%include <swig/java/QVector.i>
 #endif
 %include <std_map.i>
@@ -237,6 +241,8 @@ using namespace OsmAnd;
 #endif
 %template(QStringStringHash) QHash<QString, QString>;
 %template(QStringStringMap) QMap<QString, QString>;
+%template(QVariantIntHash) QHash<int, QVariant>;
+
 #ifdef SWIG_JAVA
 	%include <swig/java/byteArrays.i>
 #endif
@@ -249,7 +255,6 @@ using namespace OsmAnd;
 %include <swig/OsmAndCore_Stubs.h>
 %include <swig/SwigUtilities.h>
 %include <OsmAndCore.h>
-%include <OsmAndCore/IMemoryManager.h>
 %include <OsmAndCore/CommonSWIG.h>
 %include <OsmAndCore/QuickAccessors.h>
 %include <OsmAndCore/Observable.h>
