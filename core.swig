@@ -5,6 +5,7 @@
 
 %{
 #include <OsmAndCore.h>
+#include <OsmAndCore/IMemoryManager.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/PointsAndAreas.h>
