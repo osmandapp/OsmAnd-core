@@ -229,9 +229,6 @@ using namespace OsmAnd;
 #ifdef SWIG_JAVA
 	%include <swig/java/QList.i>
 		%template(QStringList) QList<QString>;
-		%template(ObfPoiCategoryIdList) QList<ObfPoiCategoryId>;
-		%template(DecodedCategoryList) QList<OsmAnd::Amenity::DecodedCategory>;
-		%template(DecodedValueList) QList<OsmAnd:Amenity::DecodedValue>;
 	%include <swig/java/QVector.i>
 #endif
 %include <std_map.i>
@@ -305,6 +302,9 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/ObfSectionInfo.h>
 %include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 %include <OsmAndCore/Data/Amenity.h>
+	%template(ObfPoiCategoryIdList) QList<ObfPoiCategoryId>;
+	%template(DecodedCategoryList) QList<OsmAnd::Amenity::DecodedCategory>;
+	%template(DecodedValueList) QList<OsmAnd:Amenity::DecodedValue>;
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
