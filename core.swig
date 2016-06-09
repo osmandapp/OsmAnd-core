@@ -231,7 +231,7 @@ using namespace OsmAnd;
 		%template(QStringList) QList<QString>;
 		%template(ObfPoiCategoryIdList) QList<ObfPoiCategoryId>;
 		%template(DecodedCategoryList) QList<DecodedCategory>;
-		%template(DecodedValue List) QList<DecodedValue>;
+		%template(DecodedValueList) QList<DecodedValue>;
 	%include <swig/java/QVector.i>
 #endif
 %include <std_map.i>
