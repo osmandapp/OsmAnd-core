@@ -230,8 +230,8 @@ using namespace OsmAnd;
 	%include <swig/java/QList.i>
 		%template(QStringList) QList<QString>;
 		%template(ObfPoiCategoryIdList) QList<ObfPoiCategoryId>;
-		%template(DecodedCategoryList) QList<DecodedCategory>;
-		%template(DecodedValueList) QList<DecodedValue>;
+		%template(DecodedCategoryList) QList<OsmAnd::Amenity::DecodedCategory>;
+		%template(DecodedValueList) QList<OsmAnd:Amenity::DecodedValue>;
 	%include <swig/java/QVector.i>
 #endif
 %include <std_map.i>
