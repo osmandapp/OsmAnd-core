@@ -27,7 +27,7 @@ namespace OsmAnd
 
         OSMAND_CALLABLE(AcceptorFunction,
                         bool,
-                        const std::shared_ptr<const ObfInfo>& obfInfo);
+                        const ObfInfo* const obfInfo);
 
     private:
     protected:
