@@ -107,6 +107,7 @@ using namespace OsmAnd;
 	%pointer_class(float, FloatPtr);
 	%pointer_class(double, DoublePtr);
 %include <std_shared_ptr.i>
+	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::IObfsCollection)
 	%shared_ptr(OsmAnd::ObfsCollection)
 	%shared_ptr(OsmAnd::ObfDataInterface)
@@ -147,7 +148,6 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::DefaultLogSink)
 	%shared_ptr(OsmAnd::QIODeviceLogSink)
 	%shared_ptr(OsmAnd::ObfFile)
-	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::MapObject)
 	%shared_ptr(OsmAnd::ObfMapObject)
 	%shared_ptr(OsmAnd::BinaryMapObject)
