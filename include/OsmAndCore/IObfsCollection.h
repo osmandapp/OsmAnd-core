@@ -14,11 +14,11 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
-#include <OsmAndCore/Data/ObfInfo.h>
 
 namespace OsmAnd
 {
     class ObfDataInterface;
+    class ObfInfo;
 
     class OSMAND_CORE_API IObfsCollection
     {
