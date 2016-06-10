@@ -9,6 +9,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Callable.h>
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
@@ -22,7 +23,11 @@ namespace OsmAnd
     {
         Q_DISABLE_COPY_AND_MOVE(IObfsCollection);
     public:
-        typedef std::function<bool(const std::shared_ptr<const ObfInfo>& obfInfo)> AcceptorFunction;
+        //typedef std::function<bool(const std::shared_ptr<const ObfInfo>& obfInfo)> AcceptorFunction;
+
+        OSMAND_CALLABLE(AcceptorFunction,
+                        bool,
+                        const std::shared_ptr<const ObfInfo>& obfInfo);
 
     private:
     protected:
