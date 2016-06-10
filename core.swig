@@ -108,6 +108,10 @@ using namespace OsmAnd;
 	%pointer_class(double, DoublePtr);
 %include <std_shared_ptr.i>
 	%shared_ptr(OsmAnd::ObfInfo)
+		%typemap(javadirectorin) std::shared_ptr<OsmAnd::ObfInfo> "new $typemap(jstype, OsmAnd::ObfInfo)($1,false)";
+		%typemap(directorin,descriptor="L$typemap(jstype, OsmAnd::ObfInfo);") std::shared_ptr<OsmAnd::ObfInfo> %{ 
+  			*($&1_type*)&j$1 = &$1;
+		%}
 	%shared_ptr(OsmAnd::IObfsCollection)
 	%shared_ptr(OsmAnd::ObfsCollection)
 	%shared_ptr(OsmAnd::ObfDataInterface)
