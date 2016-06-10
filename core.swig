@@ -5,7 +5,6 @@
 
 %{
 #include <OsmAndCore.h>
-#include <OsmAndCore/IMemoryManager.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/PointsAndAreas.h>
@@ -253,7 +252,6 @@ using namespace OsmAnd;
 %include <swig/OsmAndCore_Stubs.h>
 %include <swig/SwigUtilities.h>
 %include <OsmAndCore.h>
-%include <OsmAndCore/IMemoryManager.h>
 %include <OsmAndCore/CommonSWIG.h>
 %include <OsmAndCore/QuickAccessors.h>
 %include <OsmAndCore/Observable.h>
