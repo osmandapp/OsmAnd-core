@@ -27,7 +27,7 @@ namespace OsmAnd
 
         OSMAND_CALLABLE(AcceptorFunction,
                         bool,
-                        const ObfInfo* const obfInfo);
+                        const ObfInfo& obfInfo);
 
     private:
     protected:
