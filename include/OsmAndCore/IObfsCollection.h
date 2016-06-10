@@ -14,6 +14,7 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
+#include <OsmAndCore/Data/ObfInfo.h>
 
 namespace OsmAnd
 {
