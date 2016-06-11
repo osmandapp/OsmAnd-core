@@ -1652,7 +1652,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         if (!obfMetadata->obfFile->obfInfo->isBasemap && !obfMetadata->obfFile->obfInfo->isBasemapWithCoastlines)
         {
             bool accept = obfMetadata->obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
-            accept = accept && (!acceptor || acceptor(*obfMetadata->obfFile->obfInfo.get()));
+            accept = accept && (!acceptor || acceptor(obfMetadata->obfFile->obfInfo.get()));
             if (!accept)
                 continue;
         }
