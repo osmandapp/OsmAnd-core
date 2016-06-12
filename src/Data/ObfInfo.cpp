@@ -4,6 +4,7 @@
 #include "ObfRoutingSectionInfo.h"
 #include "ObfPoiSectionInfo.h"
 #include "ObfAddressSectionInfo.h"
+#include <Logging.h>
 
 OsmAnd::ObfInfo::ObfInfo()
     : version(-1)
@@ -19,13 +20,37 @@ OsmAnd::ObfInfo::~ObfInfo()
 
 bool OsmAnd::ObfInfo::containsPOIFor(const AreaI pBbox31) const
 {
+    LogPrintf(LogSeverityLevel::Debug,
+              "=== containsPOIFor poiSections.size=%d",
+              poiSections.size());
+
     for (const auto& poiSection : constOf(poiSections))
     {
-        const auto fitsBBox =
-        poiSection->area31.contains(pBbox31) ||
-        poiSection->area31.intersects(pBbox31) ||
-        pBbox31.contains(poiSection->area31);
+        LogPrintf(LogSeverityLevel::Debug,
+                  "=== poiSection is %s",
+                  poiSection != nullptr ? "OK" : "NULL");
+
+        LogPrintf(LogSeverityLevel::Debug,
+                  "=== poiSection->area31.contains(pBbox31) is %s",
+                  poiSection->area31.contains(pBbox31) ? "TRUE" : "FALSE");
+
+        LogPrintf(LogSeverityLevel::Debug,
+                  "=== poiSection->area31.intersects(pBbox31) is %s",
+                  poiSection->area31.intersects(pBbox31) ? "TRUE" : "FALSE");
+
+        LogPrintf(LogSeverityLevel::Debug,
+                  "=== pBbox31.contains(poiSection->area31) is %s",
+                  pBbox31.contains(poiSection->area31) ? "TRUE" : "FALSE");
+
+        bool fitsBBox =
+            poiSection->area31.contains(pBbox31) ||
+            poiSection->area31.intersects(pBbox31) ||
+            pBbox31.contains(poiSection->area31);
         
+        LogPrintf(LogSeverityLevel::Debug,
+                  "=== fitsBBox is %s",
+                  fitsBBox ? "TRUE" : "FALSE");
+
         bool accept = fitsBBox;
         if (accept)
             return true;
