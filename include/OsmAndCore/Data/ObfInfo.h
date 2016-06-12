@@ -46,7 +46,8 @@ namespace OsmAnd
             const ZoomLevel maxZoomLevel,
             const ObfDataTypesMask desiredDataTypes) const;
 
-        bool containsPOIFor(const AreaI* const pBbox31) const;
+        bool containsPOIFor(const AreaI pBbox31) const;
+        bool containsAddressFor(const AreaI pBbox31) const;
 
     };
 }

@@ -17,9 +17,42 @@ OsmAnd::ObfInfo::~ObfInfo()
 {
 }
 
-bool OsmAnd::ObfInfo::containsPOIFor(const AreaI* const pBbox31) const
+bool OsmAnd::ObfInfo::containsPOIFor(const AreaI pBbox31) const
 {
-    return containsDataFor(pBbox31, OsmAnd::ZoomLevel::MinZoomLevel, OsmAnd::ZoomLevel::MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::POI));
+    for (const auto& poiSection : constOf(poiSections))
+    {
+        const auto fitsBBox =
+        poiSection->area31.contains(pBbox31) ||
+        poiSection->area31.intersects(pBbox31) ||
+        pBbox31.contains(poiSection->area31);
+        
+        bool accept = fitsBBox;
+        if (accept)
+            return true;
+    }
+
+    return false;
+
+    //return containsDataFor(pBbox31, OsmAnd::ZoomLevel::MinZoomLevel, OsmAnd::ZoomLevel::MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::POI));
+}
+
+bool OsmAnd::ObfInfo::containsAddressFor(const AreaI pBbox31) const
+{
+    for (const auto& addressSection : constOf(addressSections))
+    {
+        const auto fitsBBox =
+        addressSection->area31.contains(pBbox31) ||
+        addressSection->area31.intersects(pBbox31) ||
+        pBbox31.contains(addressSection->area31);
+        
+        bool accept = fitsBBox;
+        if (accept)
+            return true;
+    }
+    
+    return false;
+    
+    //return containsDataFor(pBbox31, OsmAnd::ZoomLevel::MinZoomLevel, OsmAnd::ZoomLevel::MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::POI));
 }
 
 bool OsmAnd::ObfInfo::containsDataFor(
@@ -88,8 +121,8 @@ bool OsmAnd::ObfInfo::containsDataFor(
             if (pBbox31)
             {
                 const auto fitsBBox =
-                    //poiSection->area31.contains(*pBbox31) ||
-                    //poiSection->area31.intersects(*pBbox31) ||
+                    poiSection->area31.contains(*pBbox31) ||
+                    poiSection->area31.intersects(*pBbox31) ||
                     pBbox31->contains(poiSection->area31);
 
                 accept = accept && fitsBBox;
