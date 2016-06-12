@@ -2,5 +2,6 @@
 <resources>
     <string name="app_name">OsmAnd Core API sample 1 for Android OS</string>
     <string name="title_activity_main">OsmAnd Core Sample 1</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="zoomIn">Zoom in</string>
+    <string name="zoomOut">Zoom out</string>
 </resources>
