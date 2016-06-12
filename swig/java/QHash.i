@@ -45,5 +45,23 @@ template<class K, class T> class QHash {
 			QHash<K,T >::iterator i = self->find(key);
 			return i != self->end();
 		}
+
+		// create_iterator_begin() and get_next_key() work together to provide a collection of keys to C#
+		%apply void *VOID_INT_PTR { std::map< K, T >::iterator *create_iterator_begin }
+		%apply void *VOID_INT_PTR { std::map< K, T >::iterator *swigiterator }
+
+		std::map< K, T >::iterator *create_iterator_begin() {
+			return new std::map< K, T >::iterator($self->begin());
+		}
+
+		const key_type& get_next_key(std::map< K, T >::iterator *swigiterator) throw (std::out_of_range) {
+			std::map< K, T >::iterator iter = *swigiterator;
+			if (iter == $self->end()) {
+				delete swigiterator;
+				throw std::out_of_range("no more map elements");
+			}
+			(*swigiterator)++;
+			return (*iter).first;
+		}
 	}
 };

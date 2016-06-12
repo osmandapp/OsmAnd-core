@@ -88,8 +88,8 @@ bool OsmAnd::ObfInfo::containsDataFor(
             if (pBbox31)
             {
                 const auto fitsBBox =
-                    poiSection->area31.contains(*pBbox31) ||
-                    poiSection->area31.intersects(*pBbox31) ||
+                    //poiSection->area31.contains(*pBbox31) ||
+                    //poiSection->area31.intersects(*pBbox31) ||
                     pBbox31->contains(poiSection->area31);
 
                 accept = accept && fitsBBox;

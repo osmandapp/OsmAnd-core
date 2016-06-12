@@ -303,7 +303,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/ObfSectionInfo.h>
 %include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 %include <OsmAndCore/Data/Amenity.h>
-	%template(ObfPoiCategoryIdList) QList<ObfPoiCategoryId>;
+	%template(ObfPoiCategoryIdList) QList<OsmAnd::ObfPoiCategoryId>;
 	%template(DecodedCategoryList) QList<OsmAnd::Amenity::DecodedCategory>;
 	%template(DecodedValueList) QList<OsmAnd::Amenity::DecodedValue>;
 %include <OsmAndCore/Map/MapCommonTypes.h>
