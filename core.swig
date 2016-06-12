@@ -304,8 +304,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 %include <OsmAndCore/Data/Amenity.h>
 	%template(ObfPoiCategoryIdList) QList<ObfPoiCategoryId>;
-	%template(DecodedCategoryList) QList<Amenity::DecodedCategory>;
-	%template(DecodedValueList) QList<Amenity::DecodedValue>;
+	%template(DecodedCategoryList) QList<OsmAnd::Amenity::DecodedCategory>;
+	%template(DecodedValueList) QList<OsmAnd::Amenity::DecodedValue>;
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>

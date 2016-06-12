@@ -204,7 +204,7 @@ namespace OsmAnd
         const ObfObjectId roadId,
         const AreaI& bbox) > FilterRoadsByIdFunction;
 
-    union ObfPoiCategoryId
+    union OSMAND_CORE_API ObfPoiCategoryId
     {
         uint32_t value;
 
