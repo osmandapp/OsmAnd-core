@@ -17,6 +17,11 @@ OsmAnd::ObfInfo::~ObfInfo()
 {
 }
 
+bool OsmAnd::ObfInfo::containsPOIFor(const AreaI* const pBbox31) const
+{
+    return containsDataFor(pBbox31, OsmAnd::ZoomLevel::MinZoomLevel, OsmAnd::ZoomLevel::MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::POI));
+}
+
 bool OsmAnd::ObfInfo::containsDataFor(
     const AreaI* const pBbox31,
     const ZoomLevel minZoomLevel,

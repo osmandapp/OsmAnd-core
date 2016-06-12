@@ -9,7 +9,7 @@
 namespace OsmAnd
 {
     template<typename FLAGS_ENUM, typename STORAGE = unsigned int>
-    class Bitmask Q_DECL_FINAL
+    class OSMAND_CORE_API Bitmask Q_DECL_FINAL
     {
         static_assert(std::is_integral<STORAGE>::value, "STORAGE has to be integral type");
 
