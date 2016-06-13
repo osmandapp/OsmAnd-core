@@ -110,10 +110,6 @@ public class MultiTouchSupport {
 					centerPoint = new PointF((x1 + x2) / 2, (y1 + y2) / 2);
 					firstFingerStart = new PointF(x1, y1);
 					secondFingerStart = new PointF(x2, y2);
-					initialDistance = distance;
-					initialAngle = angle;
-					rotation = 0;
-					isRotating = false;
 					listener.onGestureInit(x1, y1, x2, y2);
 					return true;
 				}
@@ -133,8 +129,8 @@ public class MultiTouchSupport {
 							float a = MapUtils.unifyRotationTo360(angle - initialAngle);
 							if (!isRotating && Math.abs(a) > ROTATION_THRESHOLD_DEG) {
 								isRotating = true;
-							}
-							if (isRotating) {
+								initialAngle = angle;
+							} else if (isRotating) {
 								rotation = a;
 							}
 						}
@@ -158,13 +154,18 @@ public class MultiTouchSupport {
 								&& dy1 > TILT_Y_THRESHOLD_PX && dy2 > TILT_Y_THRESHOLD_PX
 								&& startDy < TILT_Y_THRESHOLD_PX * 6
 								&& Math.abs(dy2 - dy1) < TILT_DY_THRESHOLD_PX) {
-							inTiltMode = true;
 							listener.onChangeViewAngleStarted();
+							inTiltMode = true;
 
 						} else if (dx1 > TILT_X_THRESHOLD_PX || dx2 > TILT_X_THRESHOLD_PX
 								|| Math.abs(dy2 - dy1) > TILT_DY_THRESHOLD_PX
 								|| Math.abs(dy1 - dy2) > TILT_DY_THRESHOLD_PX) {
 							listener.onZoomStarted(centerPoint);
+							initialDistance = distance;
+							initialAngle = angle;
+							rotation = 0;
+							scale = 0;
+							isRotating = false;
 							inZoomMode = true;
 						}
 					}

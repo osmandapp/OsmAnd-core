@@ -1,6 +1,8 @@
 package net.osmand.core.samples.android.sample1;
 
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Environment;
@@ -10,7 +12,6 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -44,7 +45,6 @@ import net.osmand.core.jni.QStringList;
 import net.osmand.core.jni.QStringStringHash;
 import net.osmand.core.jni.ResolvedMapStyle;
 import net.osmand.core.jni.Utilities;
-import net.osmand.core.jni.ZoomLevel;
 import net.osmand.core.samples.android.sample1.MultiTouchSupport.MultiTouchZoomListener;
 
 public class MainActivity extends ActionBarActivity {
@@ -70,8 +70,7 @@ public class MainActivity extends ActionBarActivity {
 	private ImageButton azimuthNorthButton;
 
 	private GestureDetector gestureDetector;
-	private int xI;
-	private int yI;
+	private PointI target31;
 	private float zoom;
 	private float azimuth;
 	private float elevationAngle;
@@ -86,11 +85,19 @@ public class MainActivity extends ActionBarActivity {
 	//private final static float INIT_LAT = 50.450117f;
 	//private final static float INIT_LON = 30.524142f;
 	private final static float INIT_ZOOM = 6.0f;
+	private final static float INIT_AZIMUTH = 0.0f;
+	private final static float INIT_ELEVATION_ANGLE = 90.0f;
 	private final static int MIN_ZOOM_LEVEL = 2;
 	private final static int MAX_ZOOM_LEVEL = 22;
 	private int resCount = 0;
 
-    @Override
+	private static final String PREF_MAP_CENTER_LAT = "MAP_CENTER_LAT";
+	private static final String PREF_MAP_CENTER_LON = "MAP_CENTER_LON";
+	private static final String PREF_MAP_AZIMUTH = "MAP_AZIMUTH";
+	private static final String PREF_MAP_ZOOM = "MAP_ZOOM";
+	private static final String PREF_MAP_ELEVATION_ANGLE = "MAP_ELEVATION_ANGLE";
+
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -187,10 +194,7 @@ public class MainActivity extends ActionBarActivity {
         _mapView.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
         _mapView.addSymbolsProvider(_mapObjectsSymbolsProvider);
 
-        setAzimuth(0.0f);
-        setElevationAngle(90.0f);
-		setTarget(Utilities.convertLatLonTo31(new LatLon(INIT_LAT, INIT_LON)));
-		setZoom(INIT_ZOOM);
+		restoreMapState();
 
         _mapLayerProvider0 = new MapRasterLayerProvider_Software(_mapPrimitivesProvider);
         _mapView.setMapLayerProvider(0, _mapLayerProvider0);
@@ -209,6 +213,7 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onPause() {
+		saveMapState();
         _mapView.handleOnPause();
 
         super.onPause();
@@ -221,9 +226,34 @@ public class MainActivity extends ActionBarActivity {
         super.onDestroy();
     }
 
+	public void saveMapState() {
+		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+		Editor edit = prefs.edit();
+		LatLon latLon = Utilities.convert31ToLatLon(target31);
+		edit.putFloat(PREF_MAP_CENTER_LAT, (float)latLon.getLatitude());
+		edit.putFloat(PREF_MAP_CENTER_LON, (float)latLon.getLongitude());
+		edit.putFloat(PREF_MAP_AZIMUTH, azimuth);
+		edit.putFloat(PREF_MAP_ZOOM, zoom);
+		edit.putFloat(PREF_MAP_ELEVATION_ANGLE, elevationAngle);
+		edit.commit();
+	}
+
+	public void restoreMapState() {
+		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+		float prefLat = prefs.getFloat(PREF_MAP_CENTER_LAT, INIT_LAT);
+		float prefLon = prefs.getFloat(PREF_MAP_CENTER_LON, INIT_LON);
+		float prefAzimuth = prefs.getFloat(PREF_MAP_AZIMUTH, INIT_AZIMUTH);
+		float prefZoom = prefs.getFloat(PREF_MAP_ZOOM, INIT_ZOOM);
+		float prefElevationAngle = prefs.getFloat(PREF_MAP_ELEVATION_ANGLE, INIT_ELEVATION_ANGLE);
+
+		setAzimuth(prefAzimuth);
+		setElevationAngle(prefElevationAngle);
+		setTarget(Utilities.convertLatLonTo31(new LatLon(prefLat, prefLon)));
+		setZoom(prefZoom);
+	}
+
 	public boolean setTarget(PointI pointI) {
-		xI = pointI.getX();
-		yI = pointI.getY();
+		target31 = pointI;
 		return _mapView.setTarget(pointI);
 	}
 
@@ -367,13 +397,12 @@ public class MainActivity extends ActionBarActivity {
 
 		@Override
 		public void onGestureInit(float x1, float y1, float x2, float y2) {
-			initialZoom = zoom;
-			initialAzimuth = azimuth;
-			initialElevation = elevationAngle;
 		}
 
 		@Override
 		public void onZoomStarted(PointF centerPoint) {
+			initialZoom = zoom;
+			initialAzimuth = azimuth;
 			this.centerPoint = centerPoint;
 		}
 
@@ -395,7 +424,7 @@ public class MainActivity extends ActionBarActivity {
 					centerLocationAfter.getX() - centerLocationBefore.getX(),
 					centerLocationAfter.getY() - centerLocationBefore.getY());
 
-			setTarget(new PointI(xI - centerLocationDelta.getX(), yI - centerLocationDelta.getY()));
+			setTarget(new PointI(target31.getX() - centerLocationDelta.getX(), target31.getY() - centerLocationDelta.getY()));
 
 			/*
 			// Convert point from screen to location
@@ -421,6 +450,7 @@ public class MainActivity extends ActionBarActivity {
 
 		@Override
 		public void onChangeViewAngleStarted() {
+			initialElevation = elevationAngle;
 		}
 
 		@Override
