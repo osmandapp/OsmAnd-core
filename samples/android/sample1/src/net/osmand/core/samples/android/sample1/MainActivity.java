@@ -1,6 +1,7 @@
 package net.osmand.core.samples.android.sample1;
 
 import android.annotation.SuppressLint;
+import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
@@ -9,7 +10,9 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import net.osmand.core.android.AtlasMapRendererView;
@@ -41,9 +44,8 @@ import net.osmand.core.jni.QStringList;
 import net.osmand.core.jni.QStringStringHash;
 import net.osmand.core.jni.ResolvedMapStyle;
 import net.osmand.core.jni.Utilities;
-
-import java.text.Format;
-import java.util.Formatter;
+import net.osmand.core.jni.ZoomLevel;
+import net.osmand.core.samples.android.sample1.MultiTouchSupport.MultiTouchZoomListener;
 
 public class MainActivity extends ActionBarActivity {
     private static final String TAG = "OsmAndCoreSample";
@@ -63,18 +65,29 @@ public class MainActivity extends ActionBarActivity {
     private IMapLayerProvider _mapLayerProvider1;
     private QIODeviceLogSink _fileLogSink;
 
+	private AtlasMapRendererView _mapView;
 	private TextView textZoom;
+	private ImageButton azimuthNorthButton;
 
 	private GestureDetector gestureDetector;
-	private float xI;
-	private float yI;
+	private int xI;
+	private int yI;
 	private float zoom;
+	private float azimuth;
+	private float elevationAngle;
+	private MultiTouchSupport multiTouchSupport;
 
 	private final static int MAX_RESULTS = 10;
 
-	private final static float INIT_LAT = 50.450117f;
-	private final static float INIT_LON = 30.524142f;
-	private final static float INIT_ZOOM = 10.0f;
+	// Germany
+	private final static float INIT_LAT = 49.353953f;
+	private final static float INIT_LON = 11.214384f;
+	// Kyiv
+	//private final static float INIT_LAT = 50.450117f;
+	//private final static float INIT_LON = 30.524142f;
+	private final static float INIT_ZOOM = 6.0f;
+	private final static int MIN_ZOOM_LEVEL = 2;
+	private final static int MAX_ZOOM_LEVEL = 22;
 	private int resCount = 0;
 
     @Override
@@ -82,6 +95,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
 		gestureDetector = new GestureDetector(this, new MapViewOnGestureListener());
+		multiTouchSupport = new MultiTouchSupport(this, new MapViewMultiTouchZoomListener());
 
         long startTime = System.currentTimeMillis();
 
@@ -89,7 +103,7 @@ public class MainActivity extends ActionBarActivity {
         if (NativeCore.isAvailable() && !NativeCore.isLoaded())
             NativeCore.load(CoreResourcesFromAndroidAssets.loadFromCurrentApplication(this));
 
-		Logger.get().setSeverityLevelThreshold(LogSeverityLevel.Verbose);
+		Logger.get().setSeverityLevelThreshold(LogSeverityLevel.Debug);
 
         // Inflate views
         setContentView(R.layout.activity_main);
@@ -98,6 +112,14 @@ public class MainActivity extends ActionBarActivity {
         _mapView = (AtlasMapRendererView) findViewById(R.id.mapRendererView);
 
 		textZoom = (TextView) findViewById(R.id.text_zoom);
+		azimuthNorthButton = (ImageButton) findViewById(R.id.map_azimuth_north_button);
+
+		azimuthNorthButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				setAzimuth(0f);
+			}
+		});
 
 		findViewById(R.id.map_zoom_in_button).setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -163,11 +185,10 @@ public class MainActivity extends ActionBarActivity {
                 _rasterTileSize);
 
         _mapView.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
-
         _mapView.addSymbolsProvider(_mapObjectsSymbolsProvider);
-        _mapView.setAzimuth(0.0f);
-        _mapView.setElevationAngle(90.0f);
 
+        setAzimuth(0.0f);
+        setElevationAngle(90.0f);
 		setTarget(Utilities.convertLatLonTo31(new LatLon(INIT_LAT, INIT_LON)));
 		setZoom(INIT_ZOOM);
 
@@ -178,8 +199,6 @@ public class MainActivity extends ActionBarActivity {
 
 		//runSearch();
 	}
-
-    private AtlasMapRendererView _mapView;
 
     @Override
     protected void onResume() {
@@ -210,13 +229,41 @@ public class MainActivity extends ActionBarActivity {
 
 	@SuppressLint("DefaultLocale")
 	public boolean setZoom(float zoom) {
+		if (zoom < MIN_ZOOM_LEVEL) {
+			zoom = MIN_ZOOM_LEVEL;
+		} else if (zoom > MAX_ZOOM_LEVEL) {
+			zoom = MAX_ZOOM_LEVEL;
+		}
 		this.zoom = zoom;
 		textZoom.setText(String.format("%.0f", zoom));
 		return _mapView.setZoom(zoom);
 	}
 
+	public void setAzimuth(float angle) {
+		angle = MapUtils.unifyRotationTo360(angle);
+		this.azimuth = angle;
+		_mapView.setAzimuth(angle);
+
+		if (angle == 0f && azimuthNorthButton.getVisibility() == View.VISIBLE) {
+			azimuthNorthButton.setVisibility(View.INVISIBLE);
+		} else if (angle != 0f && azimuthNorthButton.getVisibility() == View.INVISIBLE) {
+			azimuthNorthButton.setVisibility(View.VISIBLE);
+		}
+	}
+
+	public void setElevationAngle(float angle) {
+		if (angle < 35f) {
+			angle = 35f;
+		} else if (angle > 90f) {
+			angle = 90f;
+		}
+		this.elevationAngle = angle;
+		_mapView.setElevationAngle(angle);
+	}
+
 	public boolean onTouchEvent(MotionEvent event) {
-		return gestureDetector.onTouchEvent(event);
+		return multiTouchSupport.onTouchEvent(event)
+				|| gestureDetector.onTouchEvent(event);
 	}
 
 	private void runSearch() {
@@ -244,7 +291,7 @@ public class MainActivity extends ActionBarActivity {
 			@Override
 			public boolean method(ObfInfo obfInfo) {
 
-				boolean res = true;//obfInfo.containsPOIFor(visibleArea);
+				boolean res = obfInfo.containsPOIFor(visibleArea);
 				return res && resCount < MAX_RESULTS;
 			}
 		};
@@ -304,6 +351,81 @@ public class MainActivity extends ActionBarActivity {
 			setTarget(newTarget);
 
 			return true;
+		}
+	}
+
+	private class MapViewMultiTouchZoomListener implements MultiTouchZoomListener {
+
+		private float initialZoom;
+		private float initialAzimuth;
+		private float initialElevation;
+		private PointF centerPoint;
+
+		@Override
+		public void onGestureFinished(float scale, float rotation) {
+		}
+
+		@Override
+		public void onGestureInit(float x1, float y1, float x2, float y2) {
+			initialZoom = zoom;
+			initialAzimuth = azimuth;
+			initialElevation = elevationAngle;
+		}
+
+		@Override
+		public void onZoomStarted(PointF centerPoint) {
+			this.centerPoint = centerPoint;
+		}
+
+		@Override
+		public void onZoomingOrRotating(float scale, float rotation) {
+
+			PointI centerLocationBefore = new PointI();
+			_mapView.getLocationFromScreenPoint(
+					new PointI((int)centerPoint.x, (int)centerPoint.y), centerLocationBefore);
+
+			// Change zoom
+			setZoom(initialZoom + (float)(Math.log(scale) / Math.log(2)));
+
+			// Adjust current target position to keep touch center the same
+			PointI centerLocationAfter = new PointI();
+			_mapView.getLocationFromScreenPoint(
+					new PointI((int)centerPoint.x, (int)centerPoint.y), centerLocationAfter);
+			PointI centerLocationDelta = new PointI(
+					centerLocationAfter.getX() - centerLocationBefore.getX(),
+					centerLocationAfter.getY() - centerLocationBefore.getY());
+
+			setTarget(new PointI(xI - centerLocationDelta.getX(), yI - centerLocationDelta.getY()));
+
+			/*
+			// Convert point from screen to location
+			PointI centerLocation = new PointI();
+			_mapView.getLocationFromScreenPoint(
+					new PointI((int)centerPoint.x, (int)centerPoint.y), centerLocation);
+
+			// Rotate current target around center location
+			PointI target = new PointI(xI - centerLocation.getX(), yI - centerLocation.getY());
+			double cosAngle = Math.cos(-Math.toRadians(rotation));
+			double sinAngle = Math.sin(-Math.toRadians(rotation));
+
+			PointI newTarget = new PointI(
+					(int)(target.getX() * cosAngle - target.getY() * sinAngle + centerLocation.getX()),
+					(int)(target.getX() * sinAngle + target.getY() * cosAngle + centerLocation.getY()));
+
+			setTarget(newTarget);
+			*/
+
+			// Set rotation
+			setAzimuth(initialAzimuth - rotation);
+		}
+
+		@Override
+		public void onChangeViewAngleStarted() {
+		}
+
+		@Override
+		public void onChangingViewAngle(float angle) {
+			setElevationAngle(initialElevation - angle);
 		}
 	}
 }

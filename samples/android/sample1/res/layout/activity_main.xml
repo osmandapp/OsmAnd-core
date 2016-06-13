@@ -2,10 +2,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="net.osmand.core.samples.android.sample1.MainActivity">
 
     <net.osmand.core.android.AtlasMapRendererView
@@ -16,7 +12,26 @@
     <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right">
+        android:layout_gravity="top|right"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp">
+
+        <ImageButton
+            android:id="@+id/map_azimuth_north_button"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/btn_circle"
+            android:contentDescription="@string/azimuthNorth"
+            android:src="@drawable/map_compass_niu"/>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="10dp">
 
         <LinearLayout
             android:layout_width="wrap_content"

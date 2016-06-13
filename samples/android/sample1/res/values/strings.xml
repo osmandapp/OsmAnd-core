@@ -4,4 +4,5 @@
     <string name="title_activity_main">OsmAnd Core Sample 1</string>
     <string name="zoomIn">Zoom in</string>
     <string name="zoomOut">Zoom out</string>
+    <string name="azimuthNorth">Azimuth to North</string>
 </resources>
