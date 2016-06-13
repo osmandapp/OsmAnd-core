@@ -5,4 +5,6 @@
     <string name="zoomIn">Zoom in</string>
     <string name="zoomOut">Zoom out</string>
     <string name="azimuthNorth">Azimuth to North</string>
+    <string name="search_hint">Type and Search</string>
+    <string name="shared_string_close">Close</string>
 </resources>

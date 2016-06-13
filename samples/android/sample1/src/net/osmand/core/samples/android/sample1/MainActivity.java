@@ -1,19 +1,27 @@
 package net.osmand.core.samples.android.sample1;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.app.ActionBarActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import net.osmand.core.android.AtlasMapRendererView;
@@ -21,7 +29,6 @@ import net.osmand.core.android.CoreResourcesFromAndroidAssets;
 import net.osmand.core.android.NativeCore;
 import net.osmand.core.jni.AmenitiesByNameSearch;
 import net.osmand.core.jni.Amenity;
-import net.osmand.core.jni.AreaI;
 import net.osmand.core.jni.IMapLayerProvider;
 import net.osmand.core.jni.IMapStylesCollection;
 import net.osmand.core.jni.IObfsCollection;
@@ -41,13 +48,19 @@ import net.osmand.core.jni.ObfMapObjectsProvider;
 import net.osmand.core.jni.ObfsCollection;
 import net.osmand.core.jni.PointI;
 import net.osmand.core.jni.QIODeviceLogSink;
-import net.osmand.core.jni.QStringList;
-import net.osmand.core.jni.QStringStringHash;
 import net.osmand.core.jni.ResolvedMapStyle;
 import net.osmand.core.jni.Utilities;
 import net.osmand.core.samples.android.sample1.MultiTouchSupport.MultiTouchZoomListener;
+import net.osmand.core.samples.android.sample1.SearchUIHelper.AmenityListItem;
+import net.osmand.core.samples.android.sample1.SearchUIHelper.SearchListAdapter;
+import net.osmand.core.samples.android.sample1.SearchUIHelper.SearchListItem;
 
-public class MainActivity extends ActionBarActivity {
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+
+public class MainActivity extends Activity {
     private static final String TAG = "OsmAndCoreSample";
 
     private float _displayDensityFactor;
@@ -76,7 +89,9 @@ public class MainActivity extends ActionBarActivity {
 	private float elevationAngle;
 	private MultiTouchSupport multiTouchSupport;
 
-	private final static int MAX_RESULTS = 10;
+	private ListView searchListView;
+	private ArrayAdapter<SearchListItem> adapter;
+	private final static int MAX_SEARCH_RESULTS = 50;
 
 	// Germany
 	private final static float INIT_LAT = 49.353953f;
@@ -172,12 +187,16 @@ public class MainActivity extends ActionBarActivity {
         _obfsCollection.addDirectory(Environment.getExternalStorageDirectory() + "/osmand", false);
 
         Log.i(TAG, "Going to prepare all resources for renderer");
+		String lang = Locale.getDefault().getLanguage();
+		if (lang.isEmpty()) {
+			lang = "en";
+		}
         _mapPresentationEnvironment = new MapPresentationEnvironment(
                 _mapStyle,
                 _displayDensityFactor,
                 1.0f,
                 1.0f,
-                "en"); //TODO: here should be current locale
+				lang);
         //mapPresentationEnvironment->setSettings(configuration.styleSettings);
         _mapPrimitiviser = new MapPrimitiviser(
                 _mapPresentationEnvironment);
@@ -201,10 +220,64 @@ public class MainActivity extends ActionBarActivity {
 
 		System.out.println("NATIVE_INITIALIZED = " + (System.currentTimeMillis() - startTime) / 1000f);
 
-		//runSearch();
+		//Setup search
+		final EditText searchEditText = (EditText) findViewById(R.id.searchEditText);
+		searchEditText.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if (adapter.getCount() > 0 && isSearchListHidden()) {
+					showSearchList();
+				}
+			}
+		});
+		searchEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				if (s.length() > 2) {
+					runSearch(s.toString());
+				} else if (s.length() == 0 && !isSearchListHidden()) {
+					hideSearchList();
+				}
+			}
+		});
+		ImageButton clearButton = (ImageButton) findViewById(R.id.clearButton);
+		clearButton.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				searchEditText.setText("");
+				adapter.clear();
+				adapter.notifyDataSetChanged();
+				hideSearchList();
+				hideSoftKeyboard();
+			}
+		});
+
+		searchListView = (ListView) findViewById(android.R.id.list);
+		adapter = new SearchListAdapter(this);
+		searchListView.setAdapter(adapter);
+		searchListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				hideSearchList();
+				hideSoftKeyboard();
+				SearchListItem item = adapter.getItem(position);
+				PointI target = Utilities.convertLatLonTo31(new LatLon(item.getLatitude(), item.getLongitude()));
+				setTarget(target);
+				setZoom(17f);
+			}
+		});
+
 	}
 
-    @Override
+	@Override
     protected void onResume() {
         super.onResume();
 
@@ -225,6 +298,26 @@ public class MainActivity extends ActionBarActivity {
 
         super.onDestroy();
     }
+
+	private boolean isSearchListHidden() {
+		return searchListView.getVisibility() != View.VISIBLE;
+	}
+
+	private void showSearchList() {
+		searchListView.setVisibility(View.VISIBLE);
+	}
+
+	private void hideSearchList() {
+		searchListView.setVisibility(View.GONE);
+	}
+
+	private void hideSoftKeyboard() {
+		View view = getCurrentFocus();
+		if (view != null) {
+			InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+			imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+		}
+	}
 
 	public void saveMapState() {
 		SharedPreferences prefs = getPreferences(MODE_PRIVATE);
@@ -296,13 +389,15 @@ public class MainActivity extends ActionBarActivity {
 				|| gestureDetector.onTouchEvent(event);
 	}
 
-	private void runSearch() {
+	private void runSearch(String keyword) {
 		System.out.println("=== Start search");
 		resCount = 0;
 
+		final List<SearchListItem> listItems = new ArrayList<>();
+
 		AmenitiesByNameSearch byNameSearch = new AmenitiesByNameSearch(_obfsCollection);
 		AmenitiesByNameSearch.Criteria criteria = new AmenitiesByNameSearch.Criteria();
-		criteria.setName("bank");
+		criteria.setName(keyword);
 
 		/*
 		PointI topLeftPoint = new PointI();
@@ -312,17 +407,19 @@ public class MainActivity extends ActionBarActivity {
 		*/
 
 		// Kyiv
+		/*
 		PointI topLeftPoint = Utilities.convertLatLonTo31(new LatLon(50.498509, 30.445950));
 		PointI bottomRightPoint = Utilities.convertLatLonTo31(new LatLon(50.400741, 30.577443));
 
 		final AreaI visibleArea = new AreaI(topLeftPoint, bottomRightPoint);
+		*/
 
 		IObfsCollection.IAcceptorFunction acceptorFunction = new IObfsCollection.IAcceptorFunction() {
 			@Override
 			public boolean method(ObfInfo obfInfo) {
 
-				boolean res = obfInfo.containsPOIFor(visibleArea);
-				return res && resCount < MAX_RESULTS;
+				boolean res = true;//obfInfo.containsPOIFor(visibleArea);
+				return res && resCount < MAX_SEARCH_RESULTS;
 			}
 		};
 
@@ -332,7 +429,10 @@ public class MainActivity extends ActionBarActivity {
 			@Override
 			public void method(ISearch.Criteria criteria, ISearch.IResultEntry resultEntry) {
 				Amenity amenity = new ResultEntry(resultEntry).getAmenity();
+				listItems.add(new AmenityListItem(amenity));
 				System.out.println("Poi found === " + amenity.getNativeName());
+				resCount++;
+				/*
 				QStringStringHash locNames = amenity.getLocalizedNames();
 				if (locNames.size() > 0) {
 					QStringList keys = locNames.keys();
@@ -343,16 +443,31 @@ public class MainActivity extends ActionBarActivity {
 					}
 					System.out.println(sb.toString());
 				}
-				resCount++;
+				*/
 			}
 		};
 
 		byNameSearch.performSearch(criteria, newResultEntryCallback.getBinding(), new IQueryController() {
 			@Override
 			public boolean isAborted() {
-				return resCount >= MAX_RESULTS;
+				return resCount >= MAX_SEARCH_RESULTS;
 			}
 		});
+
+		adapter.clear();
+		adapter.sort(new Comparator<SearchListItem>() {
+			@Override
+			public int compare(SearchListItem lhs, SearchListItem rhs) {
+				return lhs.getName().compareToIgnoreCase(rhs.getName());
+			}
+		});
+		adapter.addAll(listItems);
+		adapter.notifyDataSetChanged();
+		if (adapter.getCount() > 0) {
+			searchListView.setSelection(0);
+		}
+
+		showSearchList();
 
 		System.out.println("=== Finish search");
 	}
