@@ -274,7 +274,7 @@ using namespace OsmAnd;
 	%template(OOBBF) OsmAnd::OOBB<float>;
 	%template(OOBBD) OsmAnd::OOBB<double>;
 %include <OsmAndCore/Nullable.h>
-	%template(NullableAreaI) Osmand::Nullable<OsmAnd::Area<int32_t>>;
+	%template(NullableAreaI) OsmAnd::Nullable<OsmAnd::Area<int32_t>>;
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Bitmask.h>
 	%template(MapRendererStateChanges) OsmAnd::Bitmask<OsmAnd::MapRendererStateChange, unsigned int>;
