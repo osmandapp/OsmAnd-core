@@ -26,8 +26,7 @@ namespace OsmAnd
     class OSMAND_CORE_API ObfDataInterface
     {
         Q_DISABLE_COPY_AND_MOVE(ObfDataInterface);
-    private:
-    protected:
+
     public:
         ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders);
         virtual ~ObfDataInterface();
