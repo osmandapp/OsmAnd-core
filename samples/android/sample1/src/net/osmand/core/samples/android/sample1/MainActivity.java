@@ -2,12 +2,13 @@ package net.osmand.core.samples.android.sample1;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.view.ViewCompat;
+import android.support.v4.view.ViewPropertyAnimatorListener;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
@@ -16,7 +17,6 @@ import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -27,13 +27,9 @@ import android.widget.TextView;
 import net.osmand.core.android.AtlasMapRendererView;
 import net.osmand.core.android.CoreResourcesFromAndroidAssets;
 import net.osmand.core.android.NativeCore;
-import net.osmand.core.jni.AmenitiesByNameSearch;
-import net.osmand.core.jni.Amenity;
+import net.osmand.core.jni.AreaI;
 import net.osmand.core.jni.IMapLayerProvider;
 import net.osmand.core.jni.IMapStylesCollection;
-import net.osmand.core.jni.IObfsCollection;
-import net.osmand.core.jni.IQueryController;
-import net.osmand.core.jni.ISearch;
 import net.osmand.core.jni.LatLon;
 import net.osmand.core.jni.LogSeverityLevel;
 import net.osmand.core.jni.Logger;
@@ -43,7 +39,6 @@ import net.osmand.core.jni.MapPrimitivesProvider;
 import net.osmand.core.jni.MapPrimitiviser;
 import net.osmand.core.jni.MapRasterLayerProvider_Software;
 import net.osmand.core.jni.MapStylesCollection;
-import net.osmand.core.jni.ObfInfo;
 import net.osmand.core.jni.ObfMapObjectsProvider;
 import net.osmand.core.jni.ObfsCollection;
 import net.osmand.core.jni.PointI;
@@ -51,34 +46,32 @@ import net.osmand.core.jni.QIODeviceLogSink;
 import net.osmand.core.jni.ResolvedMapStyle;
 import net.osmand.core.jni.Utilities;
 import net.osmand.core.samples.android.sample1.MultiTouchSupport.MultiTouchZoomListener;
-import net.osmand.core.samples.android.sample1.SearchUIHelper.AmenityListItem;
+import net.osmand.core.samples.android.sample1.SearchAPI.SearchAPICallback;
+import net.osmand.core.samples.android.sample1.SearchAPI.SearchItem;
 import net.osmand.core.samples.android.sample1.SearchUIHelper.SearchListAdapter;
-import net.osmand.core.samples.android.sample1.SearchUIHelper.SearchListItem;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 public class MainActivity extends Activity {
     private static final String TAG = "OsmAndCoreSample";
 
-    private float _displayDensityFactor;
-    private int _referenceTileSize;
-    private int _rasterTileSize;
-    private IMapStylesCollection _mapStylesCollection;
-    private ResolvedMapStyle _mapStyle;
-    private ObfsCollection _obfsCollection;
-    private MapPresentationEnvironment _mapPresentationEnvironment;
-    private MapPrimitiviser _mapPrimitiviser;
-    private ObfMapObjectsProvider _obfMapObjectsProvider;
-    private MapPrimitivesProvider _mapPrimitivesProvider;
-    private MapObjectsSymbolsProvider _mapObjectsSymbolsProvider;
-    private IMapLayerProvider _mapLayerProvider0;
-    private IMapLayerProvider _mapLayerProvider1;
-    private QIODeviceLogSink _fileLogSink;
+    private float displayDensityFactor;
+    private int referenceTileSize;
+    private int rasterTileSize;
+    private IMapStylesCollection mapStylesCollection;
+    private ResolvedMapStyle mapStyle;
+    private ObfsCollection obfsCollection;
+    private MapPresentationEnvironment mapPresentationEnvironment;
+    private MapPrimitiviser mapPrimitiviser;
+    private ObfMapObjectsProvider obfMapObjectsProvider;
+    private MapPrimitivesProvider mapPrimitivesProvider;
+    private MapObjectsSymbolsProvider mapObjectsSymbolsProvider;
+    private IMapLayerProvider mapLayerProvider0;
+    private IMapLayerProvider mapLayerProvider1;
+    private QIODeviceLogSink fileLogSink;
 
-	private AtlasMapRendererView _mapView;
+	private AtlasMapRendererView mapView;
 	private TextView textZoom;
 	private ImageButton azimuthNorthButton;
 
@@ -89,8 +82,9 @@ public class MainActivity extends Activity {
 	private float elevationAngle;
 	private MultiTouchSupport multiTouchSupport;
 
+	private SearchAPI searchAPI;
 	private ListView searchListView;
-	private ArrayAdapter<SearchListItem> adapter;
+	private ArrayAdapter<SearchItem> adapter;
 	private final static int MAX_SEARCH_RESULTS = 50;
 
 	// Germany
@@ -104,7 +98,6 @@ public class MainActivity extends Activity {
 	private final static float INIT_ELEVATION_ANGLE = 90.0f;
 	private final static int MIN_ZOOM_LEVEL = 2;
 	private final static int MAX_ZOOM_LEVEL = 22;
-	private int resCount = 0;
 
 	private static final String PREF_MAP_CENTER_LAT = "MAP_CENTER_LAT";
 	private static final String PREF_MAP_CENTER_LON = "MAP_CENTER_LON";
@@ -131,7 +124,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         // Get map view
-        _mapView = (AtlasMapRendererView) findViewById(R.id.mapRendererView);
+        mapView = (AtlasMapRendererView) findViewById(R.id.mapRendererView);
 
 		textZoom = (TextView) findViewById(R.id.text_zoom);
 		azimuthNorthButton = (ImageButton) findViewById(R.id.map_azimuth_north_button);
@@ -158,78 +151,69 @@ public class MainActivity extends Activity {
 		});
 
         // Additional log sink
-        _fileLogSink = QIODeviceLogSink.createFileLogSink(
+        fileLogSink = QIODeviceLogSink.createFileLogSink(
                 Environment.getExternalStorageDirectory() + "/osmand/osmandcore.log");
-        Logger.get().addLogSink(_fileLogSink);
+        Logger.get().addLogSink(fileLogSink);
 
         // Get device display density factor
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        _displayDensityFactor = displayMetrics.densityDpi / 160.0f;
-        _referenceTileSize = (int)(256 * _displayDensityFactor);
-        _rasterTileSize = Integer.highestOneBit(_referenceTileSize - 1) * 2;
-        Log.i(TAG, "displayDensityFactor = " + _displayDensityFactor);
-        Log.i(TAG, "referenceTileSize = " + _referenceTileSize);
-        Log.i(TAG, "rasterTileSize = " + _rasterTileSize);
+        displayDensityFactor = displayMetrics.densityDpi / 160.0f;
+        referenceTileSize = (int)(256 * displayDensityFactor);
+        rasterTileSize = Integer.highestOneBit(referenceTileSize - 1) * 2;
+        Log.i(TAG, "displayDensityFactor = " + displayDensityFactor);
+        Log.i(TAG, "referenceTileSize = " + referenceTileSize);
+        Log.i(TAG, "rasterTileSize = " + rasterTileSize);
 
         Log.i(TAG, "Going to resolve default embedded style...");
-        _mapStylesCollection = new MapStylesCollection();
-        _mapStyle = _mapStylesCollection.getResolvedStyleByName("default");
-        if (_mapStyle == null)
+        mapStylesCollection = new MapStylesCollection();
+        mapStyle = mapStylesCollection.getResolvedStyleByName("default");
+        if (mapStyle == null)
         {
             Log.e(TAG, "Failed to resolve style 'default'");
             System.exit(0);
         }
 
         Log.i(TAG, "Going to prepare OBFs collection");
-        _obfsCollection = new ObfsCollection();
+        obfsCollection = new ObfsCollection();
         Log.i(TAG, "Will load OBFs from " + Environment.getExternalStorageDirectory() + "/osmand");
-        _obfsCollection.addDirectory(Environment.getExternalStorageDirectory() + "/osmand", false);
+        obfsCollection.addDirectory(Environment.getExternalStorageDirectory() + "/osmand", false);
 
         Log.i(TAG, "Going to prepare all resources for renderer");
-		String lang = Locale.getDefault().getLanguage();
-		if (lang.isEmpty()) {
-			lang = "en";
-		}
-        _mapPresentationEnvironment = new MapPresentationEnvironment(
-                _mapStyle,
-                _displayDensityFactor,
+        mapPresentationEnvironment = new MapPresentationEnvironment(
+				mapStyle,
+				displayDensityFactor,
                 1.0f,
                 1.0f,
-				lang);
+				MapUtils.LANGUAGE);
         //mapPresentationEnvironment->setSettings(configuration.styleSettings);
-        _mapPrimitiviser = new MapPrimitiviser(
-                _mapPresentationEnvironment);
-        _obfMapObjectsProvider = new ObfMapObjectsProvider(
-                _obfsCollection);
-        _mapPrimitivesProvider = new MapPrimitivesProvider(
-                _obfMapObjectsProvider,
-                _mapPrimitiviser,
-                _rasterTileSize);
-        _mapObjectsSymbolsProvider = new MapObjectsSymbolsProvider(
-                _mapPrimitivesProvider,
-                _rasterTileSize);
+        mapPrimitiviser = new MapPrimitiviser(
+				mapPresentationEnvironment);
+        obfMapObjectsProvider = new ObfMapObjectsProvider(
+				obfsCollection);
+        mapPrimitivesProvider = new MapPrimitivesProvider(
+				obfMapObjectsProvider,
+				mapPrimitiviser,
+				rasterTileSize);
+        mapObjectsSymbolsProvider = new MapObjectsSymbolsProvider(
+				mapPrimitivesProvider,
+				rasterTileSize);
 
-        _mapView.setReferenceTileSizeOnScreenInPixels(_referenceTileSize);
-        _mapView.addSymbolsProvider(_mapObjectsSymbolsProvider);
+        mapView.setReferenceTileSizeOnScreenInPixels(referenceTileSize);
+        mapView.addSymbolsProvider(mapObjectsSymbolsProvider);
 
 		restoreMapState();
 
-        _mapLayerProvider0 = new MapRasterLayerProvider_Software(_mapPrimitivesProvider);
-        _mapView.setMapLayerProvider(0, _mapLayerProvider0);
+        mapLayerProvider0 = new MapRasterLayerProvider_Software(mapPrimitivesProvider);
+        mapView.setMapLayerProvider(0, mapLayerProvider0);
 
 		System.out.println("NATIVE_INITIALIZED = " + (System.currentTimeMillis() - startTime) / 1000f);
 
 		//Setup search
+
+		searchAPI = new SearchAPI(obfsCollection);
+
 		final EditText searchEditText = (EditText) findViewById(R.id.searchEditText);
-		searchEditText.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				if (adapter.getCount() > 0 && isSearchListHidden()) {
-					showSearchList();
-				}
-			}
-		});
 		searchEditText.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -242,12 +226,21 @@ public class MainActivity extends Activity {
 			@Override
 			public void afterTextChanged(Editable s) {
 				if (s.length() > 2) {
-					runSearch(s.toString());
+					runSearch(getScreenBounds31(), s.toString());
 				} else if (s.length() == 0 && !isSearchListHidden()) {
 					hideSearchList();
 				}
 			}
 		});
+		searchEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+			@Override
+			public void onFocusChange(View v, boolean hasFocus) {
+				if (hasFocus && adapter.getCount() > 0 && isSearchListHidden()) {
+					showSearchList();
+				}
+			}
+		});
+
 		ImageButton clearButton = (ImageButton) findViewById(R.id.clearButton);
 		clearButton.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -256,7 +249,6 @@ public class MainActivity extends Activity {
 				adapter.clear();
 				adapter.notifyDataSetChanged();
 				hideSearchList();
-				hideSoftKeyboard();
 			}
 		});
 
@@ -267,8 +259,8 @@ public class MainActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				hideSearchList();
-				hideSoftKeyboard();
-				SearchListItem item = adapter.getItem(position);
+				mapView.requestFocus();
+				SearchItem item = adapter.getItem(position);
 				PointI target = Utilities.convertLatLonTo31(new LatLon(item.getLatitude(), item.getLongitude()));
 				setTarget(target);
 				setZoom(17f);
@@ -281,42 +273,61 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
 
-        _mapView.handleOnResume();
+        mapView.handleOnResume();
     }
 
     @Override
     protected void onPause() {
 		saveMapState();
-        _mapView.handleOnPause();
+        mapView.handleOnPause();
 
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
-        _mapView.handleOnDestroy();
+        mapView.handleOnDestroy();
 
         super.onDestroy();
     }
+
+	private AreaI getScreenBounds31() {
+		PointI topLeftPoint = new PointI();
+		PointI bottomRightPoint = new PointI();
+		mapView.getLocationFromScreenPoint(new PointI(0, 0), topLeftPoint);
+		mapView.getLocationFromScreenPoint(new PointI(mapView.getWidth(), mapView.getHeight()), bottomRightPoint);
+		return new AreaI(topLeftPoint, bottomRightPoint);
+	}
 
 	private boolean isSearchListHidden() {
 		return searchListView.getVisibility() != View.VISIBLE;
 	}
 
 	private void showSearchList() {
-		searchListView.setVisibility(View.VISIBLE);
+		if (isSearchListHidden()) {
+			ViewCompat.setAlpha(searchListView, 0f);
+			searchListView.setVisibility(View.VISIBLE);
+			ViewCompat.animate(searchListView).alpha(1f).setListener(null);
+		}
 	}
 
 	private void hideSearchList() {
-		searchListView.setVisibility(View.GONE);
-	}
+		ViewCompat.animate(searchListView).alpha(0f).setListener(new ViewPropertyAnimatorListener() {
+			@Override
+			public void onAnimationStart(View view) {
 
-	private void hideSoftKeyboard() {
-		View view = getCurrentFocus();
-		if (view != null) {
-			InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-			imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-		}
+			}
+
+			@Override
+			public void onAnimationEnd(View view) {
+				searchListView.setVisibility(View.GONE);
+			}
+
+			@Override
+			public void onAnimationCancel(View view) {
+				searchListView.setVisibility(View.GONE);
+			}
+		});
 	}
 
 	public void saveMapState() {
@@ -347,7 +358,7 @@ public class MainActivity extends Activity {
 
 	public boolean setTarget(PointI pointI) {
 		target31 = pointI;
-		return _mapView.setTarget(pointI);
+		return mapView.setTarget(pointI);
 	}
 
 	@SuppressLint("DefaultLocale")
@@ -359,13 +370,13 @@ public class MainActivity extends Activity {
 		}
 		this.zoom = zoom;
 		textZoom.setText(String.format("%.0f", zoom));
-		return _mapView.setZoom(zoom);
+		return mapView.setZoom(zoom);
 	}
 
 	public void setAzimuth(float angle) {
 		angle = MapUtils.unifyRotationTo360(angle);
 		this.azimuth = angle;
-		_mapView.setAzimuth(angle);
+		mapView.setAzimuth(angle);
 
 		if (angle == 0f && azimuthNorthButton.getVisibility() == View.VISIBLE) {
 			azimuthNorthButton.setVisibility(View.INVISIBLE);
@@ -381,7 +392,7 @@ public class MainActivity extends Activity {
 			angle = 90f;
 		}
 		this.elevationAngle = angle;
-		_mapView.setElevationAngle(angle);
+		mapView.setElevationAngle(angle);
 	}
 
 	public boolean onTouchEvent(MotionEvent event) {
@@ -389,96 +400,39 @@ public class MainActivity extends Activity {
 				|| gestureDetector.onTouchEvent(event);
 	}
 
-	private void runSearch(String keyword) {
-		System.out.println("=== Start search");
-		resCount = 0;
+	private void runSearch(AreaI bounds31, String keyword) {
 
-		final List<SearchListItem> listItems = new ArrayList<>();
-
-		AmenitiesByNameSearch byNameSearch = new AmenitiesByNameSearch(_obfsCollection);
-		AmenitiesByNameSearch.Criteria criteria = new AmenitiesByNameSearch.Criteria();
-		criteria.setName(keyword);
-
-		/*
-		PointI topLeftPoint = new PointI();
-		PointI bottomRightPoint = new PointI();
-		_mapView.getLocationFromScreenPoint(new PointI(0, 0), topLeftPoint);
-		_mapView.getLocationFromScreenPoint(new PointI(_mapView.getWidth(), _mapView.getHeight()), bottomRightPoint);
-		*/
-
-		// Kyiv
-		/*
-		PointI topLeftPoint = Utilities.convertLatLonTo31(new LatLon(50.498509, 30.445950));
-		PointI bottomRightPoint = Utilities.convertLatLonTo31(new LatLon(50.400741, 30.577443));
-
-		final AreaI visibleArea = new AreaI(topLeftPoint, bottomRightPoint);
-		*/
-
-		IObfsCollection.IAcceptorFunction acceptorFunction = new IObfsCollection.IAcceptorFunction() {
+		searchAPI.setSearchableArea(bounds31);
+		searchAPI.startSearch(keyword, MAX_SEARCH_RESULTS, new SearchAPICallback() {
 			@Override
-			public boolean method(ObfInfo obfInfo) {
-
-				boolean res = true;//obfInfo.containsPOIFor(visibleArea);
-				return res && resCount < MAX_SEARCH_RESULTS;
-			}
-		};
-
-		criteria.setSourceFilter(acceptorFunction.getBinding());
-
-		ISearch.INewResultEntryCallback newResultEntryCallback = new ISearch.INewResultEntryCallback() {
-			@Override
-			public void method(ISearch.Criteria criteria, ISearch.IResultEntry resultEntry) {
-				Amenity amenity = new ResultEntry(resultEntry).getAmenity();
-				listItems.add(new AmenityListItem(amenity));
-				System.out.println("Poi found === " + amenity.getNativeName());
-				resCount++;
-				/*
-				QStringStringHash locNames = amenity.getLocalizedNames();
-				if (locNames.size() > 0) {
-					QStringList keys = locNames.keys();
-					StringBuilder sb = new StringBuilder("=== Localized names: ");
-					for (int i = 0; i < keys.size(); i++) {
-						String key = keys.get(i);
-						sb.append(key).append("=").append(locNames.get(key)).append(" | ");
+			public void onSearchFinished(List<SearchItem> searchItems, boolean cancelled) {
+				if (searchItems != null && !cancelled) {
+					adapter.clear();
+					adapter.addAll(searchItems);
+					adapter.sort(new Comparator<SearchItem>() {
+						@Override
+						public int compare(SearchItem lhs, SearchItem rhs) {
+							return lhs.getLocalizedName().compareToIgnoreCase(rhs.getLocalizedName());
+						}
+					});
+					adapter.notifyDataSetChanged();
+					if (adapter.getCount() > 0) {
+						searchListView.setSelection(0);
 					}
-					System.out.println(sb.toString());
+
+					showSearchList();
 				}
-				*/
-			}
-		};
-
-		byNameSearch.performSearch(criteria, newResultEntryCallback.getBinding(), new IQueryController() {
-			@Override
-			public boolean isAborted() {
-				return resCount >= MAX_SEARCH_RESULTS;
 			}
 		});
-
-		adapter.clear();
-		adapter.sort(new Comparator<SearchListItem>() {
-			@Override
-			public int compare(SearchListItem lhs, SearchListItem rhs) {
-				return lhs.getName().compareToIgnoreCase(rhs.getName());
-			}
-		});
-		adapter.addAll(listItems);
-		adapter.notifyDataSetChanged();
-		if (adapter.getCount() > 0) {
-			searchListView.setSelection(0);
-		}
-
-		showSearchList();
-
-		System.out.println("=== Finish search");
-	}
-
-	private static class ResultEntry extends AmenitiesByNameSearch.ResultEntry {
-		protected ResultEntry(ISearch.IResultEntry resultEntry) {
-			super(ISearch.IResultEntry.getCPtr(resultEntry), false);
-		}
 	}
 
 	private class MapViewOnGestureListener extends SimpleOnGestureListener {
+
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			mapView.requestFocus();
+			return true;
+		}
 
 		@Override
 		public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
@@ -491,10 +445,11 @@ public class MainActivity extends Activity {
 			float dy = (fromY - toY);
 
 			PointI newTarget = new PointI();
-			_mapView.getLocationFromScreenPoint(new PointI(_mapView.getWidth() / 2 + (int)dx, _mapView.getHeight() / 2 + (int)dy), newTarget);
+			mapView.getLocationFromScreenPoint(new PointI(mapView.getWidth() / 2 + (int)dx, mapView.getHeight() / 2 + (int)dy), newTarget);
 
 			setTarget(newTarget);
 
+			mapView.requestFocus();
 			return true;
 		}
 	}
@@ -525,7 +480,7 @@ public class MainActivity extends Activity {
 		public void onZoomingOrRotating(float scale, float rotation) {
 
 			PointI centerLocationBefore = new PointI();
-			_mapView.getLocationFromScreenPoint(
+			mapView.getLocationFromScreenPoint(
 					new PointI((int)centerPoint.x, (int)centerPoint.y), centerLocationBefore);
 
 			// Change zoom
@@ -533,7 +488,7 @@ public class MainActivity extends Activity {
 
 			// Adjust current target position to keep touch center the same
 			PointI centerLocationAfter = new PointI();
-			_mapView.getLocationFromScreenPoint(
+			mapView.getLocationFromScreenPoint(
 					new PointI((int)centerPoint.x, (int)centerPoint.y), centerLocationAfter);
 			PointI centerLocationDelta = new PointI(
 					centerLocationAfter.getX() - centerLocationBefore.getX(),
@@ -544,7 +499,7 @@ public class MainActivity extends Activity {
 			/*
 			// Convert point from screen to location
 			PointI centerLocation = new PointI();
-			_mapView.getLocationFromScreenPoint(
+			mapView.getLocationFromScreenPoint(
 					new PointI((int)centerPoint.x, (int)centerPoint.y), centerLocation);
 
 			// Rotate current target around center location

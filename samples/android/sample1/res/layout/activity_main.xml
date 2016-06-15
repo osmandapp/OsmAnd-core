@@ -41,6 +41,8 @@
 
         <net.osmand.core.android.AtlasMapRendererView
             android:id="@+id/mapRendererView"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
