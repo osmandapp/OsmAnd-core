@@ -240,7 +240,7 @@ using namespace OsmAnd;
 %template(QStringStringHash) QHash<QString, QString>;
 %template(QStringStringMap) QMap<QString, QString>;
 %template(QVariantIntHash) QHash<int, QVariant>;
-%template(QStringStringListHash) QHash<QString, QStringList>
+%template(QStringStringListHash) QHash<QString, QStringList>;
 
 #ifdef SWIG_JAVA
 	%include <swig/java/byteArrays.i>
