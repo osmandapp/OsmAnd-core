@@ -24,6 +24,11 @@ android {
     lintOptions {
         abortOnError false
     }
+
+	aaptOptions {
+		// Don't compress any resources
+		noCompress "qz", "png"
+	}
 }
 
 // OsmAndCore JNI build task

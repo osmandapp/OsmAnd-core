@@ -26,6 +26,12 @@ android {
     lintOptions {
         abortOnError false
     }
+
+	aaptOptions {
+		// Don't compress any resources
+		noCompress "qz", "png"
+	}
+
 }
 
 // OsmAnd libraries tasks
