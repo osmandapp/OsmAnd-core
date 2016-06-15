@@ -18,7 +18,6 @@ import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -49,7 +48,9 @@ import net.osmand.core.samples.android.sample1.MultiTouchSupport.MultiTouchZoomL
 import net.osmand.core.samples.android.sample1.SearchAPI.SearchAPICallback;
 import net.osmand.core.samples.android.sample1.SearchAPI.SearchItem;
 import net.osmand.core.samples.android.sample1.SearchUIHelper.SearchListAdapter;
+import net.osmand.core.samples.android.sample1.SearchUIHelper.SearchRow;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -84,7 +85,7 @@ public class MainActivity extends Activity {
 
 	private SearchAPI searchAPI;
 	private ListView searchListView;
-	private ArrayAdapter<SearchItem> adapter;
+	private SearchListAdapter adapter;
 	private final static int MAX_SEARCH_RESULTS = 50;
 
 	// Germany
@@ -227,8 +228,6 @@ public class MainActivity extends Activity {
 			public void afterTextChanged(Editable s) {
 				if (s.length() > 2) {
 					runSearch(getScreenBounds31(), s.toString());
-				} else if (s.length() == 0 && !isSearchListHidden()) {
-					hideSearchList();
 				}
 			}
 		});
@@ -237,6 +236,9 @@ public class MainActivity extends Activity {
 			public void onFocusChange(View v, boolean hasFocus) {
 				if (hasFocus && adapter.getCount() > 0 && isSearchListHidden()) {
 					showSearchList();
+					LatLon latLon = Utilities.convert31ToLatLon(target31);
+					adapter.updateDistance(latLon.getLatitude(), latLon.getLongitude());
+					adapter.notifyDataSetChanged();
 				}
 			}
 		});
@@ -260,7 +262,7 @@ public class MainActivity extends Activity {
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				hideSearchList();
 				mapView.requestFocus();
-				SearchItem item = adapter.getItem(position);
+				SearchRow item = adapter.getItem(position);
 				PointI target = Utilities.convertLatLonTo31(new LatLon(item.getLatitude(), item.getLongitude()));
 				setTarget(target);
 				setZoom(17f);
@@ -407,12 +409,25 @@ public class MainActivity extends Activity {
 			@Override
 			public void onSearchFinished(List<SearchItem> searchItems, boolean cancelled) {
 				if (searchItems != null && !cancelled) {
+					LatLon latLon = Utilities.convert31ToLatLon(target31);
+					List<SearchRow> rows = new ArrayList<>();
+					for (SearchItem item : searchItems) {
+						SearchRow row = new SearchRow(item);
+						rows.add(row);
+					}
+
 					adapter.clear();
-					adapter.addAll(searchItems);
-					adapter.sort(new Comparator<SearchItem>() {
+					adapter.addAll(rows);
+					adapter.updateDistance(latLon.getLatitude(), latLon.getLongitude());
+					adapter.sort(new Comparator<SearchRow>() {
 						@Override
-						public int compare(SearchItem lhs, SearchItem rhs) {
-							return lhs.getLocalizedName().compareToIgnoreCase(rhs.getLocalizedName());
+						public int compare(SearchRow lhs, SearchRow rhs) {
+							int res = Double.compare(lhs.getDistance(), rhs.getDistance());
+							if (res == 0) {
+								return lhs.getSearchItem().getLocalizedName().compareToIgnoreCase(rhs.getSearchItem().getLocalizedName());
+							} else {
+								return res;
+							}
 						}
 					});
 					adapter.notifyDataSetChanged();

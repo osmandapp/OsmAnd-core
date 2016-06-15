@@ -13,6 +13,7 @@ import net.osmand.core.jni.ISearch;
 import net.osmand.core.jni.LatLon;
 import net.osmand.core.jni.ObfInfo;
 import net.osmand.core.jni.ObfsCollection;
+import net.osmand.core.jni.PointI;
 import net.osmand.core.jni.QStringStringHash;
 import net.osmand.core.jni.Utilities;
 
@@ -201,7 +202,18 @@ public class SearchAPI {
 
 	public static abstract class SearchItem {
 
-		public SearchItem() {
+		protected double latitude;
+		protected double longitude;
+
+		public SearchItem(double latitude, double longitude) {
+			this.latitude = latitude;
+			this.longitude = longitude;
+		}
+
+		public SearchItem(PointI location31) {
+			LatLon latLon = Utilities.convert31ToLatLon(location31);
+			latitude = latLon.getLatitude();
+			longitude = latLon.getLongitude();
 		}
 
 		public abstract String getNativeName();
@@ -212,9 +224,13 @@ public class SearchAPI {
 
 		public abstract String getSubTypeName();
 
-		public abstract double getLatitude();
+		public double getLatitude() {
+			return latitude;
+		}
 
-		public abstract double getLongitude();
+		public double getLongitude() {
+			return longitude;
+		}
 
 		@Override
 		public String toString() {
@@ -228,10 +244,10 @@ public class SearchAPI {
 		private String localizedName;
 		private String category;
 		private String subcategory;
-		private double latitude;
-		private double longitude;
 
 		public AmenitySearchItem(Amenity amenity) {
+			super(amenity.getPosition31());
+
 			nativeName = amenity.getNativeName();
 			QStringStringHash locNames = amenity.getLocalizedNames();
 			if (locNames.has_key(MapUtils.LANGUAGE)) {
@@ -253,10 +269,6 @@ public class SearchAPI {
 				category = decodedCategory.getCategory();
 				subcategory = decodedCategory.getSubcategory();
 			}
-
-			LatLon latLon = Utilities.convert31ToLatLon(amenity.getPosition31());
-			latitude = latLon.getLatitude();
-			longitude = latLon.getLongitude();
 		}
 
 		@Override
