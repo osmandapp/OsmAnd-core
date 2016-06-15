@@ -6,6 +6,7 @@
 %{
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/Color.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/LatLon.h>
@@ -239,6 +240,7 @@ using namespace OsmAnd;
 %template(QStringStringHash) QHash<QString, QString>;
 %template(QStringStringMap) QMap<QString, QString>;
 %template(QVariantIntHash) QHash<int, QVariant>;
+%template(QStringStringListHash) QHash<QString, QStringList>
 
 #ifdef SWIG_JAVA
 	%include <swig/java/byteArrays.i>
@@ -271,6 +273,8 @@ using namespace OsmAnd;
 //	%template(OOBBI64) OsmAnd::OOBB<int64_t>;
 	%template(OOBBF) OsmAnd::OOBB<float>;
 	%template(OOBBD) OsmAnd::OOBB<double>;
+%include <OsmAndCore/Nullable.h>
+	%template(NullableAreaI) Osmand::Nullable<OsmAnd::Area<int32_t>>;
 %include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Bitmask.h>
 	%template(MapRendererStateChanges) OsmAnd::Bitmask<OsmAnd::MapRendererStateChange, unsigned int>;
