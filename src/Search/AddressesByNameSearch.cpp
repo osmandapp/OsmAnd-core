@@ -21,11 +21,10 @@ void OsmAnd::AddressesByNameSearch::performSearch(
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
     const auto dataInterface = obfsCollection->obtainDataInterface(
-        criteria.bbox31.getValuePtrOrNullptr(),
+        criteria.obfInfoAreaFilter.getValuePtrOrNullptr(),
         MinZoomLevel,
         MaxZoomLevel,
-        ObfDataTypesMask().set(ObfDataType::Address),
-        criteria.sourceFilter);
+        ObfDataTypesMask().set(ObfDataType::Address));
 
     const ObfAddressSectionReader::VisitorFunction visitorFunction =
         [newResultEntryCallback, criteria_]

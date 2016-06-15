@@ -29,8 +29,8 @@ namespace OsmAnd
             Criteria();
             virtual ~Criteria();
 
-            IObfsCollection::AcceptorFunction sourceFilter;
             Nullable<AreaI> bbox31;
+            Nullable<AreaI> obfInfoAreaFilter;
             TileAcceptorFunction tileFilter;
             QString name;
             QHash<QString, QStringList> categoriesFilter;

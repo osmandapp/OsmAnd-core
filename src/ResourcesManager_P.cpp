@@ -1626,8 +1626,7 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
     const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
     const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,
-    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/,
-    const AcceptorFunction acceptor /*= nullptr*/) const
+    const ObfDataTypesMask desiredDataTypes /*= fullObfDataTypesMask()*/) const
 {
     QReadLocker scopedLocker(&owner->_localResourcesLock);
 
@@ -1652,7 +1651,6 @@ std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollec
         if (!obfMetadata->obfFile->obfInfo->isBasemap && !obfMetadata->obfFile->obfInfo->isBasemapWithCoastlines)
         {
             bool accept = obfMetadata->obfFile->obfInfo->containsDataFor(pBbox31, minZoomLevel, maxZoomLevel, desiredDataTypes);
-            accept = accept && (!acceptor || acceptor(obfMetadata->obfFile->obfInfo.get()));
             if (!accept)
                 continue;
         }

@@ -29,8 +29,8 @@ namespace OsmAnd
             Criteria();
             virtual ~Criteria();
 
-            IObfsCollection::AcceptorFunction sourceFilter;
             Nullable<AreaI> bbox31;
+            Nullable<AreaI> obfInfoAreaFilter;
             QString name;
             ObfAddressStreetGroupTypesMask streetGroupTypesMask;
             bool includeStreets;
