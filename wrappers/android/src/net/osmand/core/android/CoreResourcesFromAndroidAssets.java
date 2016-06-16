@@ -161,10 +161,19 @@ public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProv
         ResourceData resourceData = resourceDataEntry.getValue();
         Log.d(TAG, "Using ddf=" + resourceDataEntry.getKey() + " while looking for " + displayDensityFactor + " of '" + name + "'");
 
-        final SWIGTYPE_p_QByteArray data = SwigUtilities.qDecompress(SwigUtilities.readPartOfFile(
-            _bundleFilename,
-            resourceData.offset,
-            resourceData.size));
+        final SWIGTYPE_p_QByteArray data;
+		if (!name.endsWith(".png")) {
+			data = SwigUtilities.qDecompress(SwigUtilities.readPartOfFile(
+					_bundleFilename,
+					resourceData.offset,
+					resourceData.size));
+		} else {
+			data = SwigUtilities.readPartOfFile(
+					_bundleFilename,
+					resourceData.offset,
+					resourceData.size);
+		}
+
         if (data == null) {
             Log.e(TAG, "Failed to load data of '" + name + "'");
             if (ok != null)
@@ -196,10 +205,18 @@ public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProv
             return SwigUtilities.emptyQByteArray();
         }
 
-        final SWIGTYPE_p_QByteArray data = SwigUtilities.qDecompress(SwigUtilities.readPartOfFile(
-            _bundleFilename,
-            resourceEntry.defaultVariant.offset,
-            resourceEntry.defaultVariant.size));
+        final SWIGTYPE_p_QByteArray data;
+		if (!name.endsWith(".png")) {
+			data = SwigUtilities.qDecompress(SwigUtilities.readPartOfFile(
+					_bundleFilename,
+					resourceEntry.defaultVariant.offset,
+					resourceEntry.defaultVariant.size));
+		} else {
+			data = SwigUtilities.readPartOfFile(
+					_bundleFilename,
+					resourceEntry.defaultVariant.offset,
+					resourceEntry.defaultVariant.size);
+		}
         if (data == null) {
             Log.e(TAG, "Failed to load data of '" + name + "'");
             if (ok != null)
