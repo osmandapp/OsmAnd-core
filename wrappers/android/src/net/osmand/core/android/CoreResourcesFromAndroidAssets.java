@@ -79,7 +79,7 @@ public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProv
             long size;
             long offset;
             try {
-                final AssetFileDescriptor resourceFd = assetManager.openFd("OsmAndCore_ResourcesBundle/" + resourceInBundle + (resourceInBundle.endsWith(".png") ? "" : ".qz");
+                final AssetFileDescriptor resourceFd = assetManager.openFd("OsmAndCore_ResourcesBundle/" + resourceInBundle + (resourceInBundle.endsWith(".png") ? "" : ".qz"));
                 declaredSize = resourceFd.getDeclaredLength();
                 size = resourceFd.getLength();
                 offset = resourceFd.getStartOffset();
