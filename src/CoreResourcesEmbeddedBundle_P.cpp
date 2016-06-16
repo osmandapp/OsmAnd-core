@@ -235,7 +235,10 @@ QByteArray OsmAnd::CoreResourcesEmbeddedBundle_P::getResource(const QString& nam
         {
             if (ok)
                 *ok = true;
-            return qUncompress(resourceData.data, resourceData.size);
+            if (!name.endsWith(QString(".png")))
+                return qUncompress(resourceData.data, resourceData.size);
+            else
+                return QByteArray(reinterpret_cast<const char*>(resourceData.data), resourceData.size);
         }
     }
 
@@ -263,7 +266,10 @@ QByteArray OsmAnd::CoreResourcesEmbeddedBundle_P::getResource(const QString& nam
 
     if (ok)
         *ok = true;
-    return qUncompress(resourceEntry.defaultVariant.data, resourceEntry.defaultVariant.size);
+    if (!name.endsWith(QString(".png")))
+        return qUncompress(resourceEntry.defaultVariant.data, resourceEntry.defaultVariant.size);
+    else
+        return QByteArray(reinterpret_cast<const char*>(resourceEntry.defaultVariant.data), resourceEntry.defaultVariant.size);
 }
 
 bool OsmAnd::CoreResourcesEmbeddedBundle_P::containsResource(const QString& name, const float displayDensityFactor) const
