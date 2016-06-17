@@ -39,8 +39,9 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadFromCurrentExecutable()
     _bundleLibrary = dlopen(NULL, RTLD_NOW | RTLD_GLOBAL);
     if (_bundleLibrary == NULL)
     {
+        const auto error = dlerror();
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to open main program executable as library");
+            "Failed to open main program executable as library: %s", error ? error : "unknown");
         return false;
     }
 #endif
