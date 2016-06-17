@@ -4,6 +4,7 @@
 #include "binaryRead.h"
 #include "binaryRoutePlanner.h"
 #include <functional>
+#include <cmath>
 
 #include "Logging.h"
 
@@ -271,16 +272,16 @@ void initQueuesWithStartEnd(RoutingContext* ctx,  SHARED_PTR<RouteSegment> start
 
 
 		// for start : f(start) = g(start) + h(start) = 0 + h(start) = h(start)
-		if(ctx->config->initialDirection > -180 && ctx->config->initialDirection < 180) {
+		if (ctx->config->initialDirection > -180 && ctx->config->initialDirection < 180) {
 			ctx->firstRoadId = (start->road->id << ROUTE_POINTS) + start->getSegmentStart();
 			double plusDir = start->road->directionRoute(start->getSegmentStart(), true);
 			double diff = plusDir - ctx->config->initialDirection;
-			if(abs(alignAngleDifference(diff)) <= M_PI / 3) {
-				if(startNeg.get() != NULL) {
+			if (abs(alignAngleDifference(diff)) <= M_PI / 3) {
+				if (startNeg.get() != NULL) {
 					startNeg->distanceFromStart += 500;
 				}
-			} else if(abs(alignAngleDifference(diff - M_PI )) <= M_PI / 3) {
-				if(startPos.get() != NULL) {
+			} else if (abs(alignAngleDifference(diff - M_PI )) <= M_PI / 3) {
+				if (startPos.get() != NULL) {
 					startPos->distanceFromStart += 500;
 				}
 			}

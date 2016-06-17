@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <cmath>
 #include <time.h>
 
 #include <SkTypes.h>
@@ -970,7 +971,7 @@ double polygonArea(MapDataObject* obj, float mult) {
 		area += (y.first + ((float) x.first) )* (y.second- ((float)x.second));
 		j = i;
 	}
-	return std::abs(area) * mult * mult * .5;
+	return abs(area) * mult * mult * .5;
 }
 
 void filterLinesByDensity(RenderingContext* rc, std::vector<MapDataObjectPrimitive>&  linesResArray,

@@ -3,6 +3,8 @@
 #include "generalRouter.h"
 #include "binaryRoutePlanner.h"
 #include <sstream>
+#include <cmath>
+
 const int RouteAttributeExpression::LESS_EXPRESSION = 1;
 const int RouteAttributeExpression::GREAT_EXPRESSION = 1;
 
