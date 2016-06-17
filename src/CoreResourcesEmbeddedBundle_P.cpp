@@ -71,8 +71,11 @@ bool OsmAnd::CoreResourcesEmbeddedBundle_P::loadFromLibrary(const QString& libra
     _bundleLibrary = dlopen(qPrintable(libraryNameOrFilename), RTLD_NOW | RTLD_GLOBAL);
     if (_bundleLibrary == NULL)
     {
+        const auto error = dlerror();
         LogPrintf(LogSeverityLevel::Error,
-            "Failed to load library from '%s'", qPrintable(libraryNameOrFilename));
+            "Failed to load library from '%s': %s",
+            qPrintable(libraryNameOrFilename),
+            error ? error : "unknown");
         return false;
     }
 #endif
