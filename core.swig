@@ -39,6 +39,8 @@
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 #include <OsmAndCore/Data/ObfPoiSectionInfo.h>
 #include <OsmAndCore/Data/Amenity.h>
+#include <OsmAndCore/Data/ObfAddressSectionInfo.h>
+#include <OsmAndCore/Data/Address.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
@@ -84,6 +86,7 @@
 #include <OsmAndCore/Search/BaseSearch.h>
 #include <OsmAndCore/Search/AmenitiesByNameSearch.h>
 #include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
+#include <OsmAndCore/Search/AddressesByNameSearch.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -113,11 +116,13 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ObfsCollection)
 	%shared_ptr(OsmAnd::ObfDataInterface)
 	%shared_ptr(OsmAnd::Amenity)
+    %shared_ptr(OsmAnd::Address)
 	%shared_ptr(OsmAnd::ObfSectionInfo)
 	%shared_ptr(OsmAnd::ObfPoiSectionInfo)
 	%shared_ptr(OsmAnd::ObfPoiSectionCategories)
 	%shared_ptr(OsmAnd::ObfPoiSectionSubtypes)
 	%shared_ptr(OsmAnd::ObfPoiSectionSubtype)
+    %shared_ptr(OsmAnd::ObfAddressSectionInfo)
 	%shared_ptr(OsmAnd::IQueryController)
 	%shared_ptr(OsmAnd::ISearch)
 	%shared_ptr(OsmAnd::ISearch::Criteria)
@@ -126,6 +131,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::AmenitiesByNameSearch::Criteria)
 	%shared_ptr(OsmAnd::AmenitiesInAreaSearch)
 	%shared_ptr(OsmAnd::AmenitiesInAreaSearch::Criteria)
+    %shared_ptr(OsmAnd::AddressesByNameSearch)
+    %shared_ptr(OsmAnd::AddressesByNameSearch::Criteria)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource::Metadata)
 	%shared_ptr(OsmAnd::ResourcesManager::BuiltinResource)
@@ -310,6 +317,8 @@ using namespace OsmAnd;
 	%template(ObfPoiCategoryIdList) QList<OsmAnd::ObfPoiCategoryId>;
 	%template(DecodedCategoryList) QList<OsmAnd::Amenity::DecodedCategory>;
 	%template(DecodedValueList) QList<OsmAnd::Amenity::DecodedValue>;
+%include <OsmAndCore/Data/ObfAddressSectionInfo.h>
+%include <OsmAndCore/Data/Address.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
@@ -354,3 +363,4 @@ using namespace OsmAnd;
 %include <OsmAndCore/Search/BaseSearch.h>
 %include <OsmAndCore/Search/AmenitiesByNameSearch.h>
 %include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
+%include <OsmAndCore/Search/AddressesByNameSearch.h>
