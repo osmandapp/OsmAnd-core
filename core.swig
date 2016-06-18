@@ -118,15 +118,15 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ObfsCollection)
 	%shared_ptr(OsmAnd::ObfDataInterface)
 	%shared_ptr(OsmAnd::Amenity)
-    %shared_ptr(OsmAnd::Address)
-    %shared_ptr(OsmAnd::StreetGroup)
-    %shared_ptr(OsmAnd::Street)
+	%shared_ptr(OsmAnd::Address)
+	%shared_ptr(OsmAnd::StreetGroup)
+	%shared_ptr(OsmAnd::Street)
 	%shared_ptr(OsmAnd::ObfSectionInfo)
 	%shared_ptr(OsmAnd::ObfPoiSectionInfo)
 	%shared_ptr(OsmAnd::ObfPoiSectionCategories)
 	%shared_ptr(OsmAnd::ObfPoiSectionSubtypes)
 	%shared_ptr(OsmAnd::ObfPoiSectionSubtype)
-    %shared_ptr(OsmAnd::ObfAddressSectionInfo)
+	%shared_ptr(OsmAnd::ObfAddressSectionInfo)
 	%shared_ptr(OsmAnd::IQueryController)
 	%shared_ptr(OsmAnd::ISearch)
 	%shared_ptr(OsmAnd::ISearch::Criteria)
@@ -135,8 +135,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::AmenitiesByNameSearch::Criteria)
 	%shared_ptr(OsmAnd::AmenitiesInAreaSearch)
 	%shared_ptr(OsmAnd::AmenitiesInAreaSearch::Criteria)
-    %shared_ptr(OsmAnd::AddressesByNameSearch)
-    %shared_ptr(OsmAnd::AddressesByNameSearch::Criteria)
+	%shared_ptr(OsmAnd::AddressesByNameSearch)
+	%shared_ptr(OsmAnd::AddressesByNameSearch::Criteria)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource::Metadata)
 	%shared_ptr(OsmAnd::ResourcesManager::BuiltinResource)
@@ -290,7 +290,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Bitmask.h>
 	%template(MapRendererStateChanges) OsmAnd::Bitmask<OsmAnd::MapRendererStateChange, unsigned int>;
 	%template(ObfDataTypesMask) OsmAnd::Bitmask<OsmAnd::ObfDataType, unsigned int>;
-    %template(ObfAddressStreetGroupTypesMask) OsmAnd::Bitmask<OsmAnd::ObfAddressStreetGroupType, unsigned int>;
+	%template(ObfAddressStreetGroupTypesMask) OsmAnd::Bitmask<OsmAnd::ObfAddressStreetGroupType, unsigned int>;
 %include <OsmAndCore/IObfsCollection.h>
 %include <OsmAndCore/ObfsCollection.h>
 %include <OsmAndCore/ObfDataInterface.h>
@@ -371,3 +371,4 @@ using namespace OsmAnd;
 %include <OsmAndCore/Search/AmenitiesByNameSearch.h>
 %include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
 %include <OsmAndCore/Search/AddressesByNameSearch.h>
+

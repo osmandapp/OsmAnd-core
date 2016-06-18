@@ -42,7 +42,7 @@ namespace OsmAnd
             ~DecodedValue();
 
             std::shared_ptr<const ObfPoiSectionSubtype> declaration;
-            QVariant value;
+            QString value;
         };
 
     private:
