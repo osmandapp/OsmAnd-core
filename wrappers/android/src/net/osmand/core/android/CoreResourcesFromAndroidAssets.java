@@ -276,7 +276,7 @@ public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProv
 				return new BitmapDrawable(_context.getResources(), bitmap);
 
 			} catch (Exception e) {
-				Log.e(TAG, "Failed to read file: " + dataPath, e);
+				Log.e(TAG, "Failed to read icon: " + name, e);
 			}
 		}
 		return null;
