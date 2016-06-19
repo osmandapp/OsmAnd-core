@@ -74,10 +74,6 @@ namespace OsmAnd
             return qUncompress(compressedData);
         }
         
-        inline static const char *BYTE getDataFromQByteArray(const QByteArray& byteArray) {
-            return reinterpret_cast<const uchar*>(byteArray.constData());
-        }
-
 #ifdef SWIG
         %apply (char *BYTE, size_t LENGTH) { (const char* const pBuffer, const size_t bufferSize) }
 #endif // SWIG
