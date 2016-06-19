@@ -74,6 +74,9 @@ namespace OsmAnd
             return qUncompress(compressedData);
         }
         
+#ifdef SWIG
+        %apply signed char[ANY] {const char*}
+#endif // SWIG
         inline static const char* getDataFromQByteArray(const QByteArray& byteArray) {
             return byteArray.constData();
         }
