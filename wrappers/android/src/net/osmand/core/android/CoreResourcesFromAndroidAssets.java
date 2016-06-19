@@ -1,5 +1,6 @@
 package net.osmand.core.android;
 
+import java.io.FileInputStream;
 import java.lang.String;
 import java.lang.Float;
 import java.io.InputStream;
@@ -22,6 +23,10 @@ import android.content.res.Resources;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ApplicationInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import net.osmand.core.jni.*;
@@ -146,20 +151,14 @@ public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProv
     @Override
     public SWIGTYPE_p_QByteArray getResource(String name, float displayDensityFactor, SWIGTYPE_p_bool ok_) {
         final BoolPtr ok = BoolPtr.frompointer(ok_);
-        
-        final ResourceEntry resourceEntry = _resources.get(name);
-        if (resourceEntry == null || resourceEntry.variantsByDisplayDensityFactor == null) {
+
+		ResourceData resourceData = getResourceData(name, displayDensityFactor);
+        if (resourceData == null) {
             Log.w(TAG, "Requested resource [ddf=" + displayDensityFactor + "]'" + name + "' was not found");
             if (ok != null)
                 ok.assign(false);
             return SwigUtilities.emptyQByteArray();
         }
-
-        Map.Entry<Float, ResourceData> resourceDataEntry = resourceEntry.variantsByDisplayDensityFactor.ceilingEntry(displayDensityFactor);
-        if (resourceDataEntry == null)
-            resourceDataEntry = resourceEntry.variantsByDisplayDensityFactor.lastEntry();
-        ResourceData resourceData = resourceDataEntry.getValue();
-        Log.d(TAG, "Using ddf=" + resourceDataEntry.getKey() + " while looking for " + displayDensityFactor + " of '" + name + "'");
 
         final SWIGTYPE_p_QByteArray data;
 		if (!name.endsWith(".png")) {
@@ -250,6 +249,43 @@ public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProv
 
         return true;
     }
+
+	public ResourceData getResourceData(String name, float displayDensityFactor) {
+		final ResourceEntry resourceEntry = _resources.get(name);
+		if (resourceEntry == null || resourceEntry.variantsByDisplayDensityFactor == null) {
+			return null;
+		}
+
+		Map.Entry<Float, ResourceData> resourceDataEntry = resourceEntry.variantsByDisplayDensityFactor.ceilingEntry(displayDensityFactor);
+		if (resourceDataEntry == null)
+			resourceDataEntry = resourceEntry.variantsByDisplayDensityFactor.lastEntry();
+		Log.d(TAG, "Using ddf=" + resourceDataEntry.getKey() + " while looking for " + displayDensityFactor + " of '" + name + "'");
+		return resourceDataEntry.getValue();
+	}
+
+	public Drawable getIcon(String name, float displayDensityFactor) {
+		ResourceData resourceData = getResourceData(name, displayDensityFactor);
+		if (resourceData != null) {
+			final String dataPath = resourceData.path.getAbsolutePath();
+			if (resourceData.offset == 0 && resourceData.size == resourceData.path.length()) {
+				return BitmapDrawable.createFromPath(dataPath);
+			} else {
+				try {
+					byte[] array = new byte[(int)resourceData.size];
+					FileInputStream fis = new FileInputStream(dataPath);
+					fis.skip((int)resourceData.offset);
+					fis.read(array, 0, (int)resourceData.size);
+					fis.close();
+					Bitmap bitmap = BitmapFactory.decodeByteArray(array, 0, (int)resourceData.size);
+					return new BitmapDrawable(_context.getResources(), bitmap);
+
+				} catch (IOException e) {
+					Log.d(TAG, "Cannot read file: " + dataPath);
+				}
+			}
+		}
+		return null;
+	}
 
     public static CoreResourcesFromAndroidAssets loadFromCurrentApplication(final Context context) {
         final CoreResourcesFromAndroidAssets bundle = new CoreResourcesFromAndroidAssets(context);
