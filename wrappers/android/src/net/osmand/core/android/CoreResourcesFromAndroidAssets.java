@@ -266,22 +266,17 @@ public class CoreResourcesFromAndroidAssets extends interface_ICoreResourcesProv
 	public Drawable getIcon(String name, float displayDensityFactor) {
 		ResourceData resourceData = getResourceData(name, displayDensityFactor);
 		if (resourceData != null) {
-			final String dataPath = resourceData.path.getAbsolutePath();
-			if (resourceData.offset == 0 && resourceData.size == resourceData.path.length()) {
-				return BitmapDrawable.createFromPath(dataPath);
-			} else {
-				try {
-					byte[] array = new byte[(int)resourceData.size];
-					FileInputStream fis = new FileInputStream(dataPath);
-					fis.skip((int)resourceData.offset);
-					fis.read(array, 0, (int)resourceData.size);
-					fis.close();
-					Bitmap bitmap = BitmapFactory.decodeByteArray(array, 0, (int)resourceData.size);
-					return new BitmapDrawable(_context.getResources(), bitmap);
+			try {
+				byte[] array = new byte[(int) resourceData.size];
+				FileInputStream fis = new FileInputStream(_bundleFilename);
+				fis.skip((int) resourceData.offset);
+				fis.read(array, 0, (int) resourceData.size);
+				fis.close();
+				Bitmap bitmap = BitmapFactory.decodeByteArray(array, 0, (int) resourceData.size);
+				return new BitmapDrawable(_context.getResources(), bitmap);
 
-				} catch (IOException e) {
-					Log.d(TAG, "Cannot read file: " + dataPath);
-				}
+			} catch (Exception e) {
+				Log.e(TAG, "Failed to read file: " + dataPath, e);
 			}
 		}
 		return null;
