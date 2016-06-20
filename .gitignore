@@ -16,3 +16,9 @@
 # XCode
 *.pbxuser
 xcuserdata
+
+# QtCreator
+*.autosave
+
+**/*build*/
+**/*debug*/
