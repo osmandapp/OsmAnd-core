@@ -7,7 +7,7 @@
 #include <QUrl>
 #include <QUrlQuery>
 
-QUrl OsmAnd::CoordinateSearch::toUrl(QString s)
+QUrl OsmAnd::CoordinateSearch::toUrl(QString const &s)
 {
     if (s.startsWith("http://") || s.startsWith("https://"))
     {
@@ -18,31 +18,32 @@ QUrl OsmAnd::CoordinateSearch::toUrl(QString s)
     return QUrl();
 }
 
-QString OsmAnd::CoordinateSearch::withoutPrefix(QString query)
+QString OsmAnd::CoordinateSearch::withoutPrefix(QString const &query)
 {
+    QString result = query;
     auto prefixes = QList<QString>({"geo:", "loc:"});
     for (auto prefix : prefixes)
         if (query.startsWith(prefix))
         {
-            query = query.replace(prefix, "");
+            result = result.replace(prefix, "");
             QString coordinates = "";
-            for (QChar ch : query)
-            {
+            for (QChar ch : result)
                 if (ch.isNumber() || ch == '-' || ch == ',' || ch == '.')
                     coordinates.append(ch);
                 else
                     break;
-            }
-            query = coordinates;
+            result = coordinates;
         }
+    return result;
 }
 
-OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString query)
+OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
 {
     OsmAnd::LatLon result = OsmAnd::LatLon();
-    query = query.simplified();
+    QString q = query;
+    q = q.simplified();
 
-    QUrl url = toUrl(query);
+    QUrl url = toUrl(q);
     if (!url.isEmpty())
     {
         // Extract coordinates from urls
@@ -60,9 +61,6 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString query)
                 lonItemName = names[1];
                 break;
             }
-//            QString latItemName = "lat", lonItemName = "lon";
-//        if (!urlQuery.hasQueryItem(latItemName) || !urlQuery.hasQueryItem(lonItemName))
-//            latItemName = "mlat", lonItemName = "mlon";
         if (!latItemName.isNull() && !lonItemName.isNull())
         {
             QString latitude = urlQuery.queryItemValue(latItemName);
@@ -96,12 +94,27 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString query)
         if (converted.size() == 2)
             return OsmAnd::LatLon(converted[0], converted[1]);
 
-        // saddr daddr q c
+        for (auto itemName : QList<QString>({"saddr", "daddr", "q", "c"}))
+        {
+            QString part = withoutPrefix(urlQuery.queryItemValue(itemName));
+            if (!part.isEmpty() && part.contains(','))
+            {
+                q = part;
+                break;
+            }
+        }
+    } else {
+        q = withoutPrefix(q);
     }
 
-    query = withoutPrefix(query);
-
     GeographicLib::GeoCoords geoCoords;
-    geoCoords.Reset(query.toStdString());
-    return LatLon(geoCoords.Latitude(), geoCoords.Longitude());
+    try
+    {
+        geoCoords.Reset(q.toStdString());
+        return LatLon(geoCoords.Latitude(), geoCoords.Longitude());
+    }
+    catch(GeographicLib::GeographicErr err)
+    {
+        return LatLon(0.0, 0.0);  // Probably add property "empty" to LatLon?
+    }
 }

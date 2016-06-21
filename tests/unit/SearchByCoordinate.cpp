@@ -1,1 +1,0 @@
-/mnt/data_ssd/osmand/irv/search/SearchByCoordinate.cpp

@@ -9,14 +9,15 @@
 
 namespace OsmAnd
 {
-
-    class CoordinateSearch
+    class OSMAND_CORE_API CoordinateSearch
     {
+        Q_DISABLE_COPY_AND_MOVE(CoordinateSearch);
+
     public:
-        static LatLon search(QString query);
+        static LatLon search(QString const &query);
     private:
-        static QUrl toUrl(QString s);
-        static QString withoutPrefix(QString query);
+        static QUrl toUrl(QString const &s);
+        static QString withoutPrefix(QString const &query);
     };
 
 }

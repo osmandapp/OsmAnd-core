@@ -2,10 +2,9 @@ import qbs
 
 Module {
     Depends { name: "cpp" }
-    property string OsmAnd_root: "/mnt/data_ssd/osmand/"  // FIXME
+    property string OsmAnd_root: "../../../"
     property string root: OsmAnd_root + "/core/externals/skia/"
     property string includeRoot: root + "/upstream.patched/include/"
-//    cpp.dynamicLibraries: "skia"
     cpp.includePaths: [
         includeRoot,
         includeRoot + "/animator/",
@@ -25,5 +24,4 @@ Module {
         includeRoot + "/views/",
         includeRoot + "/xml/",
     ]
-//    cpp.libraryPaths: root + "/binaries/linux/gcc-amd64/Debug/"  // FIXME
 }
