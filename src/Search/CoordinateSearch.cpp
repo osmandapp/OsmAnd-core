@@ -2,14 +2,9 @@
 #include <GeographicLib/GeoCoords.hpp>
 
 #include <QString>
+#include <QStringList>
 #include <QUrl>
 #include <QUrlQuery>
-
-OsmAnd::LatLon OsmAnd::CoordinateSearch::search_simple(QString query)
-{
-    QStringList l = query.split(" ");
-    return LatLon(l[0].toDouble(), l[1].toDouble());
-}
 
 QUrl OsmAnd::CoordinateSearch::toUrl(QString s)
 {
@@ -44,7 +39,7 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString query)
         // https://www.openstreetmap.org/#map=15/50.9307/4.7201
         QString fragment = url.fragment();
         auto converted = QList<double>();
-        for (QString part : fragment.split("/"))
+        for (auto part : fragment.split("/"))
         {
             bool ok;
             double d = part.toDouble(&ok);
