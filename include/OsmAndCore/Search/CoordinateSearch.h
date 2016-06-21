@@ -16,6 +16,7 @@ namespace OsmAnd
         static LatLon search(QString query);
     private:
         static QUrl toUrl(QString s);
+        static QString withoutPrefix(QString query);
     };
 
 }
