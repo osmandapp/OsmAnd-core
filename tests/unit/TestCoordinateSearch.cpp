@@ -278,6 +278,8 @@ void TestSearchByCoordinate::search_data()
     QTest::newRow("latlon degrees letters") << "N83d37.6668 W32d39.8586" << latlon;
     QTest::newRow("latlon minutes seconds") << "83°37'40.008\"N 032°39'51.5\"W" << latlon;
     QTest::newRow("latlon minutes seconds colon") << "83:37:40.008 32:39:51.5\"W" << latlon;
+    QTest::newRow("latlon minutes seconds single quotes separator") << "83'37'40.008 32'39'51.5\"W" << latlon;
+    QTest::newRow("latlon minutes seconds double quotes separator") << "83\"37\"40.008 -32\"39\"51.5" << latlon;
     QTest::newRow("MGRS") << "25XEN0415986552" << latlon;
     QTest::newRow("UTM/UPS") << "25n 504160 9286553" << LatLon(83.62778, -32.66427);
 }
