@@ -240,7 +240,7 @@ using namespace OsmAnd;
 %include <std_vector.i>
 #ifdef SWIG_JAVA
 	%include <swig/java/QList.i>
-		%apply QStringList { QList<QString> };
+		%template(QStringList) QList<QString>;
 	%include <swig/java/QVector.i>
 #endif
 %include <std_map.i>
