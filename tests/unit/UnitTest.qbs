@@ -1,9 +1,7 @@
 import qbs
 
 CppApplication {
-    name: "TestCoordinateSearch"
     type: ["application", "autotest"]
-    files: ["TestCoordinateSearch.cpp"]
 
     Depends { name: "cpp" }
     Depends { name: "Qt.core" }
