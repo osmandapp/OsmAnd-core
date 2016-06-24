@@ -1,5 +1,7 @@
 project(OsmAndCore)
 
+include(ExternalProject)
+
 # Bump this number each time a new source file is committed to repository, source file removed from repository or renamed: 139
 
 set(target_specific_sources "")
@@ -233,9 +235,8 @@ set(merged_link_libs_public
 	icu4c_static
 	archive_static
 	glm_headers_only
-    geographiclib_headers_only
-    geographiclib_static
-    boost_static_precompiled
+	${GeographicLib_LIBRARIES}
+	boost_static_precompiled
 	${target_specific_public_libraries}
 )
 
@@ -253,6 +254,8 @@ else()
 	find_package(Qt5Network REQUIRED)
 	find_package(Qt5Sql REQUIRED)
 endif()
+
+find_package(GeographicLib 1.46 CONFIG REQUIRED)
 
 if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 	# 'OsmAndCore_shared' - linking to Qt shared libraries (or any if not own-shipped), OsmAndCore shared

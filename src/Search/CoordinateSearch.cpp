@@ -7,6 +7,47 @@
 #include <QUrl>
 #include <QUrlQuery>
 
+#include <cmath>
+
+
+OsmAnd::LatLon decodeShortLinkString(QString s)
+{
+    QString intToBase64 = QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_~");
+    // convert old shortlink format to current one
+    s = s.replace("@", "~");
+    int i = 0;
+    long x = 0;
+    long y = 0;
+    int z = -8;
+
+    for (i = 0; i < s.length(); i++)
+    {
+        QChar c = s.at(i);
+        int digit = intToBase64.indexOf(c);
+        if (digit < 0)
+            break;
+        // distribute 6 bits into x and y
+        x <<= 3;
+        y <<= 3;
+        for (int j = 2; j >= 0; j--)
+        {
+            x |= ((digit & (1 << (j + j + 1))) == 0 ? 0 : (1 << j));
+            y |= ((digit & (1 << (j + j    ))) == 0 ? 0 : (1 << j));
+        }
+        z += 3;
+    }
+    double lon = x * std::pow(2, 2 - 3 * i) * 90.0 - 180;
+    double lat = y * std::pow(2, 2 - 3 * i) * 45.0 -  90;
+    // adjust z
+    if (i < s.length() && s[i] == '-')
+    {
+        z -= 2;
+        if (i + 1 < s.length() && s[i + 1] == '-')
+            z++;
+    }
+    return OsmAnd::LatLon(lat, lon);
+}
+
 QUrl OsmAnd::CoordinateSearch::toUrl(QString const &s)
 {
     if (s.startsWith("http://") || s.startsWith("https://"))
@@ -47,6 +88,14 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
     if (!url.isEmpty())
     {
         // Extract coordinates from urls
+
+        QString host = url.host();
+        QString path = url.path();
+
+        if (host == "osm.org" || host.endsWith("openstreetmap.org"))
+            if (path.startsWith("/go/")) // short URL form
+                return decodeShortLinkString(path.replace(R"(^/go/)", ""));
+
 
         // http://osmand.net/go?lat=34&lon=-106&z=11
         QUrlQuery urlQuery = QUrlQuery(url);
@@ -94,7 +143,13 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         if (converted.size() == 2)
             return OsmAnd::LatLon(converted[0], converted[1]);
 
-        for (auto itemName : QList<QString>({"saddr", "daddr", "q", "c"}))
+        for (auto itemName : QList<QString>(
+            {
+             "q",               // Google Maps query
+             "saddr", "daddr",  // Google Maps directions search
+             "c",               // Baidu
+             "ll"               // Yandex.Maps
+        }))
         {
             QString part = withoutPrefix(urlQuery.queryItemValue(itemName));
             if (!part.isEmpty() && part.contains(','))
