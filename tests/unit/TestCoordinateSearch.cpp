@@ -7,7 +7,7 @@
 using namespace OsmAnd;
 Q_DECLARE_METATYPE(LatLon)
 
-class TestSearchByCoordinate : public QObject
+class TestCoordinateSearch : public QObject
 {
     Q_OBJECT
 
@@ -18,7 +18,7 @@ private slots:
     void search();
 };
 
-void TestSearchByCoordinate::search_data()
+void TestCoordinateSearch::search_data()
 {
     QTest::addColumn<QString>("query");
     QTest::addColumn<LatLon>("result");
@@ -83,33 +83,25 @@ void TestSearchByCoordinate::search_data()
     // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=11/34.99393/-106.61568
     QTest::newRow("openstreetmap.org marker") << "https://www.openstreetmap.org/?mlat=" + sLongLat + "&mlon=" + sLongLon + "#map=" + sz + "/" + sdLat + "/" + sdLon << LatLon(dLat, dLon);
 
-    // http://maps.yandex.ru/?ll=34,-106&z=11 ### Doesn't work!
+    // https://wiki.openstreetmap.org/wiki/Shortlink
+
+    // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
+    QTest::newRow("openstreetmap.org shortlink long double") << "http://osm.org/go/TyFSutZ-?m="  << LatLon(dLat, dLon);
+
+    // http://www.openstreetmap.org/#map=3/34.99/-106.70
+    QTest::newRow("openstreetmap.org shortlink double") << "http://osm.org/go/TyFS--"  << LatLon(dLat, dLon);
+
+    // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
+    QTest::newRow("openstreetmap.org shortlink long double with ~") << "http://osm.org/go/TyFYuF6P~~-?m"  << LatLon(dLat, dLon);
+
+    // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
+    QTest::newRow("openstreetmap.org shortlink long double deprecated shortlink format with @") << "http://osm.org/go/TyFYuF6P@@--?m"  << LatLon(dLat, dLon);
+
+    // http://maps.yandex.ru/?ll=34,-106&z=11
     QTest::newRow("maps.yandex.ru int") << "http://maps.yandex.ru/?ll=" + siLat + "," + siLon + "&z=" + "11" << LatLon(iLat, iLon);
 
     // http://maps.yandex.ru/?ll=34.99393,-106.61568&z=11
     QTest::newRow("maps.yandex.ru double") << "http://maps.yandex.ru/?ll=" + sdLat + "," + sdLon + "&z=" + "11" << LatLon(dLat, dLon);
-
-//            // https://wiki.openstreetmap.org/wiki/Shortlink
-
-//            // http://osm.org/go/TyFSutZ-?m=
-//            // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
-//            z = 15;
-//            url = "http://osm.org/go/TyFYuF6P--?m=";
-
-//            // http://osm.org/go/TyFS--
-//            // http://www.openstreetmap.org/#map=3/34.99/-106.70
-//            z = 3;
-//            url = "http://osm.org/go/TyFS--";
-
-//            // http://osm.org/go/TyFYuF6P~~-?m // current shortlink format with "~"
-//            // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
-//            z = 20;
-//            url = "http://osm.org/go/TyFYuF6P~~-?m";
-
-//            // http://osm.org/go/TyFYuF6P@@--?m= // old, deprecated shortlink format with "@"
-//            // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
-//            z = 21;
-//            url = "http://osm.org/go/TyFYuF6P@@--?m=";
 
 //            // http://openstreetmap.de/zoom=11&lat=34&lon=-106
 //            z = 11;
@@ -284,18 +276,18 @@ void TestSearchByCoordinate::search_data()
     QTest::newRow("UTM/UPS") << "25n 504160 9286553" << LatLon(83.62778, -32.66427);
 }
 
-QString TestSearchByCoordinate::LatLonToQString(LatLon const &latlon)
+QString TestCoordinateSearch::LatLonToQString(LatLon const &latlon)
 {
     return QString::number(latlon.latitude, 'g', 7) + " " + QString::number(latlon.longitude, 'g', 7);
 }
 
-void TestSearchByCoordinate::search()
+void TestCoordinateSearch::search()
 {
     QFETCH(QString, query);
     QFETCH(LatLon, result);
     LatLon actual = CoordinateSearch::search(query);
-    QCOMPARE(LatLonToQString(result), LatLonToQString(actual));
+    QCOMPARE(LatLonToQString(actual), LatLonToQString(result));
 }
 
-QTEST_MAIN(TestSearchByCoordinate)
+QTEST_MAIN(TestCoordinateSearch)
 #include "TestCoordinateSearch.moc"
