@@ -247,7 +247,19 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroup(
                     outStreetGroup->id = ObfObjectId::generateUniqueId(groupOffset, section);
                 else
                     outStreetGroup->id = id;
-                outStreetGroup->type = streetGroupType;
+                
+                if(streetGroupType == ObfAddressStreetGroupType::Unknown) {
+                    // make assumption based on the data
+                    if(subtype == ObfAddressStreetGroupSubtype::City || subtype == ObfAddressStreetGroupSubtype::Town) {
+                        outStreetGroup->type = ObfAddressStreetGroupType::CityOrTown;
+                    } else if(subtype == ObfAddressStreetGroupSubtype::Unknown) {
+                        outStreetGroup->type = ObfAddressStreetGroupType::Postcode;
+                    } else {
+                        outStreetGroup->type = ObfAddressStreetGroupType::Village;
+                    }
+                } else {
+                    outStreetGroup->type = streetGroupType;
+                }
                 outStreetGroup->subtype = subtype;
                 outStreetGroup->nativeName = nativeName;
                 outStreetGroup->localizedNames = localizedNames;
@@ -825,7 +837,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                             readStreetGroup(
                                 reader,
                                 section,
-                                static_cast<ObfAddressStreetGroupType>(indexReference.addressType),
+                                static_cast<ObfAddressStreetGroupType>(ObfAddressStreetGroupType::Unknown),
                                 offset,
                                 streetGroup,
                                 nullptr,

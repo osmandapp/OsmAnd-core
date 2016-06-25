@@ -259,6 +259,7 @@ namespace OsmAnd
 
     enum class ObfAddressStreetGroupType : int32_t
     {
+        Unknown = 0,
         CityOrTown = 1,
         Village = 3,
         Postcode = 2,
