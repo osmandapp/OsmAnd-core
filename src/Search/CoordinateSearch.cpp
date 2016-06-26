@@ -50,7 +50,7 @@ OsmAnd::LatLon decodeShortLinkString(QString s)
 
 QUrl OsmAnd::CoordinateSearch::toUrl(QString const &s)
 {
-    if (s.startsWith("http://") || s.startsWith("https://"))
+    if (s.startsWith(QStringLiteral("http://")) || s.startsWith(QStringLiteral("https://")))
     {
         QUrl result = QUrl(s);
         if (result.isValid())
@@ -63,7 +63,7 @@ QString OsmAnd::CoordinateSearch::withoutPrefix(QString const &query)
 {
     QString result = query;
     int numberCount = 0;
-    auto prefixes = QStringList({"geo:", "loc:"});
+    auto prefixes = QStringList({QStringLiteral("geo:"), QStringLiteral("loc:")});
     for (auto prefix : prefixes)
         if (query.startsWith(prefix))
         {
@@ -99,13 +99,13 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         QString host = url.host();
         QString path = url.path();
 
-        bool isOsmSite = host == "osm.org" || host.endsWith("openstreetmap.org");
+        bool isOsmSite = host == QStringLiteral("osm.org") || host.endsWith(QStringLiteral("openstreetmap.org"));
         if (isOsmSite)
         {
-            bool isOsmShortLink =  path.startsWith("/go/");
+            bool isOsmShortLink =  path.startsWith(QStringLiteral("/go/"));
             if (isOsmShortLink)
             {
-                QString shortLinkString = path.replace("/go/", "");
+                QString shortLinkString = path.replace(QStringLiteral("/go/"), "");
                 return decodeShortLinkString(shortLinkString);
             }
         }
@@ -114,9 +114,9 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         // http://osmand.net/go?lat=34&lon=-106&z=11
         QUrlQuery urlQuery = QUrlQuery(url);
         QString latItemName, lonItemName;
-        for (auto names : QList<QStringList>({QStringLiteral("lat lon").split(" "),
-                                              QStringLiteral("mlat mlon").split(" "),
-                                              QStringLiteral("y x").split(" ")}))
+        for (auto names : QList<QStringList>({{QStringLiteral("lat"),  QStringLiteral("lon")},
+                                              {QStringLiteral("mlat"), QStringLiteral("mlon")},
+                                              {QStringLiteral("y"),    QStringLiteral("x")}}))
             if (urlQuery.hasQueryItem(names[0]) && urlQuery.hasQueryItem(names[1]))
             {
                 latItemName = names[0];
@@ -138,7 +138,7 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         // http://share.here.com/l/52.5134272,13.3778416,Hannah-Arendt-Stra%C3%9Fe?z=16.0&t=normal
         for (auto fragment : QStringList({url.fragment(), path}))
         {
-            auto parts = fragment.split(QRegExp("/|,"));
+            auto parts = fragment.split(QRegExp(QStringLiteral("/|,")));
             // Special case: https://www.openstreetmap.org/#15/50.9307/4.7201
             if (isOsmSite)
             {
@@ -169,17 +169,18 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
 
         for (auto itemName : QStringList(
         {
-             "q",               // Google Maps query
-             "saddr", "daddr",  // Google Maps directions search
-             "c",               // Baidu
-             "ll",              // Yandex.Maps
-             "map",             // Here Maps
+             QStringLiteral("q"),               // Google Maps query
+             QStringLiteral("saddr"),           // Google Maps directions search
+             QStringLiteral("daddr"),
+             QStringLiteral("c"),               // Baidu
+             QStringLiteral("ll"),              // Yandex.Maps
+             QStringLiteral("map"),             // Here Maps
         }))
         {
             QString part = withoutPrefix(urlQuery.queryItemValue(itemName));
             if (!part.isEmpty() && part.contains(','))
             {
-                QRegExp reBeforeSecondComma("[^,]*,[^,]*");
+                QRegExp reBeforeSecondComma(QStringLiteral("[^,]*,[^,]*"));
                 reBeforeSecondComma.indexIn(part);
                 q = reBeforeSecondComma.cap();
                 break;
