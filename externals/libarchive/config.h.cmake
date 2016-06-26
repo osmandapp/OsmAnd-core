@@ -419,10 +419,11 @@
 #cmakedefine HAVE_LIBEXPAT 1
 
 /* Define to 1 if you have the `lzma' library (-llzma). */
-#cmakedefine HAVE_LIBLZMA 1
+#undef HAVE_LIBLZMA
 
 /* Define to 1 if you have the `lzmadec' library (-llzmadec). */
-#cmakedefine HAVE_LIBLZMADEC 1
+#undef HAVE_LIBLZMADEC
+
 
 /* Define to 1 if you have the `lzo2' library (-llzo2). */
 #cmakedefine HAVE_LIBLZO2 1
@@ -516,10 +517,10 @@
 #cmakedefine HAVE_LUTIMES 1
 
 /* Define to 1 if you have the <lzmadec.h> header file. */
-#cmakedefine HAVE_LZMADEC_H 1
+#undef HAVE_LZMADEC_H
 
 /* Define to 1 if you have the <lzma.h> header file. */
-#cmakedefine HAVE_LZMA_H 1
+#undef HAVE_LZMA_H
 
 /* Define to 1 if you have the <lzo/lzo1x.h> header file. */
 #cmakedefine HAVE_LZO_LZO1X_H 1
