@@ -23,85 +23,48 @@ void TestCoordinateSearch::search_data()
     QTest::addColumn<QString>("query");
     QTest::addColumn<LatLon>("result");
 
-    QTest::newRow("latlon int") << "12 56" << LatLon(12, 56);
-    QTest::newRow("latlon double") << "12.34 56.78" << LatLon(12.34, 56.78);
-    QTest::newRow("zeros") << "0.0 0.0" << LatLon(0.0, 0.0);
-    QTest::newRow("without leading zero") << ".1 .2" << LatLon(0.1, 0.2);
-    QTest::newRow("osm url") << "https://www.openstreetmap.org/#map=15/50.9307/4.7201" << LatLon(50.9307, 4.7201);
+    QTest::newRow("zeros")                                                            << "0.0 0.0"                                                                                                    << LatLon(0.0, 0.0);
+    QTest::newRow("latlon int")                                                       << "12 56"                                                                                                      << LatLon(12, 56);
+    QTest::newRow("latlon double")                                                    << "12.34 56.78"                                                                                                << LatLon(12.34, 56.78);
+    QTest::newRow("latlon double without leading zero")                               << ".1 .2"                                                                                                      << LatLon(0.1, 0.2);
+    QTest::newRow("latlon")                                                           << "83.62778 -32.66431"                                                                                         << LatLon(83.62778, -32.66431);
+    QTest::newRow("latlon degrees letters")                                           << "N83d37.6668 W32d39.8586"                                                                                    << LatLon(83.62778, -32.66431);
+    QTest::newRow("latlon minutes seconds")                                           << "83°37'40.008\"N 032°39'51.5\"W"                                                                             << LatLon(83.62778, -32.66431);
+    QTest::newRow("latlon minutes seconds colon")                                     << "83:37:40.008 32:39:51.5\"W"                                                                                 << LatLon(83.62778, -32.66431);
+    QTest::newRow("latlon minutes seconds single quotes separator")                   << "83'37'40.008 32'39'51.5\"W"                                                                                 << LatLon(83.62778, -32.66431);
+    QTest::newRow("latlon minutes seconds double quotes separator")                   << "83\"37\"40.008 -32\"39\"51.5"                                                                               << LatLon(83.62778, -32.66431);
+    QTest::newRow("MGRS")                                                             << "25XEN0415986552"                                                                                            << LatLon(83.62778, -32.66431);
+    QTest::newRow("UTM/UPS")                                                          << "25n 504160 9286553"                                                                                         << LatLon(83.62778, -32.66427);
+    QTest::newRow("geo int")                                                          << "geo:34,-106"                                                                                                << LatLon(34, -106);
+    QTest::newRow("geo double")                                                       << "geo:34.99393,-106.61568"                                                                                    << LatLon(34.99393, -106.61568);
+    QTest::newRow("geo double zoom")                                                  << "geo:34.99393,-106.61568?z=11"                                                                               << LatLon(34.99393, -106.61568);
+    QTest::newRow("geo double name")                                                  << "geo:34.99393,-106.61568 (Treasure Island)"                                                                  << LatLon(34.99393, -106.61568);
+    QTest::newRow("geo double zoom name")                                             << "geo:34.99393,-106.61568?z=11 (Treasure Island)"                                                             << LatLon(34.99393, -106.61568);
+    QTest::newRow("geo double query name")                                            << "geo:34.99393,-106.61568?q=34.99393%2C-106.61568 (Treasure Island)"                                          << LatLon(34.99393, -106.61568);
+    QTest::newRow("download.osmand.net")                                              << "http://download.osmand.net/go?lat=34&lon=-106&z=11"                                                         << LatLon(34, -106);
+    QTest::newRow("osmand.net int")                                                   << "http://osmand.net/go?lat=34&lon=-106&z=11"                                                                  << LatLon(34, -106);
+    QTest::newRow("osmand.net double")                                                << "http://www.osmand.net/go?lat=34.99393&lon=-106.61568&z=11"                                                  << LatLon(34.99393, -106.61568);
+    QTest::newRow("openstreetmap.org")                                                << "https://www.openstreetmap.org/#map=15/50.9307/4.7201"                                                       << LatLon(50.9307, 4.7201);
+    QTest::newRow("openstreetmap.org map int")                                        << "http://openstreetmap.org/#map=11/34/-106"                                                                   << LatLon(34, -106);
+    QTest::newRow("openstreetmap.org map double")                                     << "http://openstreetmap.org/#map=11/34.99393/-106.61568"                                                       << LatLon(34.99393, -106.61568);
+    QTest::newRow("openstreetmap.org zoom first")                                     << "http://openstreetmap.org/#11/34.99393/-106.61568"                                                           << LatLon(34.99393, -106.61568);
+    QTest::newRow("openstreetmap.org marker")                                         << "https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=11/34.99393/-106.61568" << LatLon(34.99393, -106.61568);
+    QTest::newRow("openstreetmap.org shortlink long double")                          << "http://osm.org/go/TyFYuF6P-?m"                                                                              << LatLon(34.99389, -106.6210);  // http://www.openstreetmap.org/?mlat=34.99390108510852&mlon=-106.62102732807398#map=19/34.99390/-106.62103
+    QTest::newRow("openstreetmap.org shortlink double")                               << "http://osm.org/go/TyFS--"                                                                                   << LatLon(34.98047, -106.7871);  // http://www.openstreetmap.org/#map=3/34.98/-106.79
+    QTest::newRow("openstreetmap.org shortlink long double with ~")                   << "http://osm.org/go/TyFYuF6P~~-?m"                                                                            << LatLon(34.99390, -106.6210);  // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
+    QTest::newRow("openstreetmap.org shortlink long double deprecated format with @") << "http://osm.org/go/TyFYuF6P@@--?m"                                                                           << LatLon(34.99390, -106.6210);  // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
+    QTest::newRow("maps.yandex.ru int")                                               << "http://maps.yandex.ru/?ll=34,-106&z=11"                                                                     << LatLon(34, -106);
+    QTest::newRow("maps.yandex.ru double")                                            << "http://maps.yandex.ru/?ll=34.99393,-106.61568&z=11"                                                         << LatLon(34.99393, -106.61568);
+    QTest::newRow("maps.google.com")                                                  << "http://maps.google.com/maps?q=N34.99393,E-106.6157"                                                         << LatLon(34.99393, -106.61568);
+    QTest::newRow("maps.apple.com")                                                   << "http://maps.apple.com/?ll=34.99393,-106.61568"                                                              << LatLon(34.99393, -106.61568); // https://developer.apple.com/library/ios/featuredarticles/iPhoneURLScheme_Reference/MapLinks/MapLinks.html
+    QTest::newRow("map.wap.qq.com")                                                   << "http://map.wap.qq.com/loc/detail.jsp?sid=ATBcz9TgirTZhWPWJtR3AhmD&g_ut=2&y=39.91082&x=116.48177"            << LatLon(39.91082, 116.48177);
+    QTest::newRow("here.com")                                                         << "https://www.here.com/location?map=52.5134272,13.3778416,16,normal&msg=Hannah-Arendt-Stra%C3%9Fe"            << LatLon(52.5134272, 13.3778416);
+    QTest::newRow("here.com")                                                         << "https://www.here.com/?map=48.23145,16.38454,15,normal"                                                      << LatLon(48.23145, 16.38454);
+//            //
 
-    // Geo intent tests
-    int const iLat = 34, iLon = -106;
-    double const dLat = 34.99393, dLon = -106.61568;
-    double const longLat = 34.993933029174805, longLon = -106.615680694580078;
-    int const z = 11;
-
-    QString const siLat = QString::number(iLat), siLon = QString::number(iLon);
-    QString const sdLat = QString::number(dLat, 'g', 7), sdLon = QString::number(dLon, 'g', 8);
-    QString const sLongLat = QString::number(longLat, 'g', 17), sLongLon = QString::number(longLon, 'g', 18);
-    QString const sz = QString::number(z);
-
-    QString const name = "Treasure Island";
-
-    // geo:34,-106
-    QTest::newRow("geo int") << "geo:" + siLat + "," +  siLon << LatLon(iLat, iLon);
-
-    // geo:34.99393,-106.61568
-    QTest::newRow("geo double") << "geo:" + sdLat + "," + sdLon << LatLon(dLat, dLon);
-
-    // geo:34.99393,-106.61568?z=11
-    QTest::newRow("geo double zoom") << "geo:" + sdLat + "," + sdLon + "?z=" + sz << LatLon(dLat, dLon);
-
-    // geo:34.99393,-106.61568 (Treasure Island)
-    QTest::newRow("geo double name") << "geo:" + sdLat + "," + sdLon + " (" + name + ")" << LatLon(dLat, dLon);
-
-    // geo:34.99393,-106.61568?z=11 (Treasure Island)
-    QTest::newRow("geo double zoom name") << "geo:" + sdLat + "," + sdLon + "?z=" + sz + " (" + name + ")" << LatLon(dLat, dLon);
-
-    // geo:34.99393,-106.61568?q=34.99393%2C-106.61568 (Treasure Island)
-    QTest::newRow("geo double query name") << "geo:" + sdLat + "," + sdLon + "?z=" + sz + " (" + name + ")" << LatLon(dLat, dLon);
-
-
-    // Url tests
-    // http://download.osmand.net/go?lat=34&lon=-106&z=11
-    QTest::newRow("download.osmand.net") << "http://download.osmand.net/go?lat=" + siLat + "&lon=" + siLon + "&z=" + sz << LatLon(iLat, iLon);
-
-    // http://osmand.net/go?lat=34&lon=-106&z=11
-    QTest::newRow("osmand.net int") << "http://www.osmand.net/go.html?lat=" + siLat + "&lon=" + siLon + "&z=" + sz << LatLon(iLat, iLon);
-
-    // http://www.osmand.net/go?lat=34.99393&lon=-106.61568&z=11
-    QTest::newRow("osmand.net double") << "http://www.osmand.net/go.html?lat=" + sdLat + "&lon=" + sdLon + "&z=" + sz << LatLon(dLat, dLon);
-
-    // http://openstreetmap.org/#map=11/34/-106
-    QTest::newRow("openstreetmap.org map int") << "http://openstreetmap.org/#map=" + sz + "/" + siLat + "/" + siLon << LatLon(iLat, iLon);
-
-    // http://openstreetmap.org/#map=11/34.99393/-106.61568
-    QTest::newRow("openstreetmap.org map double") << "http://openstreetmap.org/#map=" + sz + "/" + sdLat + "/" + sdLon << LatLon(dLat, dLon);
-
-    // http://openstreetmap.org/#11/34.99393/-106.61568  ### Doesn't work!
-    QTest::newRow("openstreetmap.org zoom first") << "http://openstreetmap.org/#" + sz + "/" + sdLat + "/" + sdLon << LatLon(dLat, dLon);
-
-    // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=11/34.99393/-106.61568
-    QTest::newRow("openstreetmap.org marker") << "https://www.openstreetmap.org/?mlat=" + sLongLat + "&mlon=" + sLongLon + "#map=" + sz + "/" + sdLat + "/" + sdLon << LatLon(dLat, dLon);
-
-    // https://wiki.openstreetmap.org/wiki/Shortlink
-
-    // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
-    QTest::newRow("openstreetmap.org shortlink long double") << "http://osm.org/go/TyFSutZ-?m="  << LatLon(dLat, dLon);
-
-    // http://www.openstreetmap.org/#map=3/34.99/-106.70
-    QTest::newRow("openstreetmap.org shortlink double") << "http://osm.org/go/TyFS--"  << LatLon(dLat, dLon);
-
-    // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
-    QTest::newRow("openstreetmap.org shortlink long double with ~") << "http://osm.org/go/TyFYuF6P~~-?m"  << LatLon(dLat, dLon);
-
-    // https://www.openstreetmap.org/?mlat=34.993933029174805&mlon=-106.61568069458008#map=15/34.99393/-106.61568
-    QTest::newRow("openstreetmap.org shortlink long double deprecated shortlink format with @") << "http://osm.org/go/TyFYuF6P@@--?m"  << LatLon(dLat, dLon);
-
-    // http://maps.yandex.ru/?ll=34,-106&z=11
-    QTest::newRow("maps.yandex.ru int") << "http://maps.yandex.ru/?ll=" + siLat + "," + siLon + "&z=" + "11" << LatLon(iLat, iLon);
-
-    // http://maps.yandex.ru/?ll=34.99393,-106.61568&z=11
-    QTest::newRow("maps.yandex.ru double") << "http://maps.yandex.ru/?ll=" + sdLat + "," + sdLon + "&z=" + "11" << LatLon(dLat, dLon);
+//            // http://map.qq.com/AppBox/print/?t=&c=%7B%22base%22%3A%7B%22l%22%3A11%2C%22lat%22%3A39.90403%2C%22lng%22%3A116.407526%7D%7D
+//            z = 11;
+//            url = "http://map.qq.com/AppBox/print/?t=&c=%7B%22base%22%3A%7B%22l%22%3A11%2C%22lat%22%3A" + dlat + "%2C%22lng%22%3A" + dlon + "%7D%7D";
 
 //            // http://openstreetmap.de/zoom=11&lat=34&lon=-106
 //            z = 11;
@@ -237,43 +200,6 @@ void TestCoordinateSearch::search_data()
 //            url = "http://share.here.com/l/" + dlat + "," + dlon + ",Hannah-Arendt-Stra%C3%9Fe?z=" + z + "&t=normal";
 //            System.out.println("url: " + url);
 
-//            // https://www.here.com/location?map=52.5134272,13.3778416,16,normal&msg=Hannah-Arendt-Stra%C3%9Fe
-//            z = 16;
-//            url = "https://www.here.com/location?map=" + dlat + "," + dlon + "," + z + ",normal&msg=Hannah-Arendt-Stra%C3%9Fe";
-//            System.out.println("url: " + url);
-
-//            // https://www.here.com/?map=48.23145,16.38454,15,normal
-//            z = 16;
-//            url = "https://www.here.com/?map=" + dlat + "," + dlon + "," + z + ",normal";
-
-//            // http://map.wap.qq.com/loc/detail.jsp?sid=AU8f3ck87L6XDmytunBm4iWg&g_ut=2&city=%E5%8C%97%E4%BA%AC&key=NOBU%20Beijing&x=116.48177&y=39.91082&md=10461366113386140862
-//            z = GeoParsedPoint.NO_ZOOM;
-//            url = "http://map.wap.qq.com/loc/detail.jsp?sid=AU8f3ck87L6XDmytunBm4iWg&g_ut=2&city=%E5%8C%97%E4%BA%AC&key=NOBU%20Beijing&x=" + dlon + "&y=" + dlat + "&md=10461366113386140862";
-
-//            // http://map.qq.com/AppBox/print/?t=&c=%7B%22base%22%3A%7B%22l%22%3A11%2C%22lat%22%3A39.90403%2C%22lng%22%3A116.407526%7D%7D
-//            z = 11;
-//            url = "http://map.qq.com/AppBox/print/?t=&c=%7B%22base%22%3A%7B%22l%22%3A11%2C%22lat%22%3A" + dlat + "%2C%22lng%22%3A" + dlon + "%7D%7D";
-
-//            // https://developer.apple.com/library/ios/featuredarticles/iPhoneURLScheme_Reference/MapLinks/MapLinks.html
-
-//            // http://maps.apple.com/?ll=
-//            z = 11;
-//            url = "http://maps.apple.com/?ll=" + dlat + "," + dlon + "&z=" + z;
-
-    // http://maps.google.com/maps?q=N34.939,E-106
-    QTest::newRow("maps.google.com") << "http://maps.google.com/maps?q=N" + sdLat + ",E" + siLon << LatLon(dLat, iLon);
-
-    // Various coordinate systems testing
-    // Taken from http://geographiclib.sourceforge.net/cgi-bin/GeoConvert
-    LatLon latlon = LatLon(83.62778, -32.66431);
-    QTest::newRow("latlon") << "83.62778 -32.66431" << latlon;
-    QTest::newRow("latlon degrees letters") << "N83d37.6668 W32d39.8586" << latlon;
-    QTest::newRow("latlon minutes seconds") << "83°37'40.008\"N 032°39'51.5\"W" << latlon;
-    QTest::newRow("latlon minutes seconds colon") << "83:37:40.008 32:39:51.5\"W" << latlon;
-    QTest::newRow("latlon minutes seconds single quotes separator") << "83'37'40.008 32'39'51.5\"W" << latlon;
-    QTest::newRow("latlon minutes seconds double quotes separator") << "83\"37\"40.008 -32\"39\"51.5" << latlon;
-    QTest::newRow("MGRS") << "25XEN0415986552" << latlon;
-    QTest::newRow("UTM/UPS") << "25n 504160 9286553" << LatLon(83.62778, -32.66427);
 }
 
 QString TestCoordinateSearch::LatLonToQString(LatLon const &latlon)

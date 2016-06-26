@@ -62,17 +62,24 @@ QUrl OsmAnd::CoordinateSearch::toUrl(QString const &s)
 QString OsmAnd::CoordinateSearch::withoutPrefix(QString const &query)
 {
     QString result = query;
-    auto prefixes = QList<QString>({"geo:", "loc:"});
+    int numberCount = 0;
+    auto prefixes = QStringList({"geo:", "loc:"});
     for (auto prefix : prefixes)
         if (query.startsWith(prefix))
         {
             result = result.replace(prefix, "");
             QString coordinates = "";
             for (QChar ch : result)
-                if (ch.isNumber() || ch == '-' || ch == ',' || ch == '.')
+                if (ch.isNumber() || ch == '-' || ch == '.' || (ch == ',' && numberCount == 0))
+                {
                     coordinates.append(ch);
+                    if (ch == ',')
+                        numberCount++;
+                }
                 else
+                {
                     break;
+                }
             result = coordinates;
         }
     return result;
@@ -92,18 +99,24 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         QString host = url.host();
         QString path = url.path();
 
-        if (host == "osm.org" || host.endsWith("openstreetmap.org"))
-            if (path.startsWith("/go/")) // short URL form
-                return decodeShortLinkString(path.replace(R"(^/go/)", ""));
+        bool isOsmSite = host == "osm.org" || host.endsWith("openstreetmap.org");
+        if (isOsmSite)
+        {
+            bool isOsmShortLink =  path.startsWith("/go/");
+            if (isOsmShortLink)
+            {
+                QString shortLinkString = path.replace("/go/", "");
+                return decodeShortLinkString(shortLinkString);
+            }
+        }
 
 
         // http://osmand.net/go?lat=34&lon=-106&z=11
         QUrlQuery urlQuery = QUrlQuery(url);
         QString latItemName, lonItemName;
-        for (auto names : QList<QList<QString>>({
-                                                QList<QString>({"lat", "lon"}),
-                                                QList<QString>({"mlat", "mlon"}
-                                                               )}))
+        for (auto names : QList<QStringList>({QStringLiteral("lat lon").split(" "),
+                                              QStringLiteral("mlat mlon").split(" "),
+                                              QStringLiteral("y x").split(" ")}))
             if (urlQuery.hasQueryItem(names[0]) && urlQuery.hasQueryItem(names[1]))
             {
                 latItemName = names[0];
@@ -124,6 +137,14 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         // https://www.openstreetmap.org/#map=15/50.9307/4.7201
         QString fragment = url.fragment();
         auto parts = fragment.split(QRegExp("/|,"));
+        // Special case: https://www.openstreetmap.org/#15/50.9307/4.7201
+        if (isOsmSite)
+        {
+                bool isZoomFirstInFragment;
+                parts[0].toInt(&isZoomFirstInFragment);
+                if (isZoomFirstInFragment)
+                    parts.removeFirst();
+        }
         QStringListIterator i(parts);
         QList<double> converted;
         bool hasCoordinates = true, okPrev = false, ok;
@@ -143,18 +164,21 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         if (converted.size() == 2)
             return OsmAnd::LatLon(converted[0], converted[1]);
 
-        for (auto itemName : QList<QString>(
-            {
+        for (auto itemName : QStringList(
+        {
              "q",               // Google Maps query
              "saddr", "daddr",  // Google Maps directions search
              "c",               // Baidu
-             "ll"               // Yandex.Maps
+             "ll",              // Yandex.Maps
+             "map",             // Here Maps
         }))
         {
             QString part = withoutPrefix(urlQuery.queryItemValue(itemName));
             if (!part.isEmpty() && part.contains(','))
             {
-                q = part;
+                QRegExp reBeforeSecondComma("[^,]*,[^,]*");
+                reBeforeSecondComma.indexIn(part);
+                q = reBeforeSecondComma.cap();
                 break;
             }
         }
