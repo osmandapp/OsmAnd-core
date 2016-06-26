@@ -135,34 +135,37 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         }
 
         // https://www.openstreetmap.org/#map=15/50.9307/4.7201
-        QString fragment = url.fragment();
-        auto parts = fragment.split(QRegExp("/|,"));
-        // Special case: https://www.openstreetmap.org/#15/50.9307/4.7201
-        if (isOsmSite)
+        // http://share.here.com/l/52.5134272,13.3778416,Hannah-Arendt-Stra%C3%9Fe?z=16.0&t=normal
+        for (auto fragment : QStringList({url.fragment(), path}))
         {
+            auto parts = fragment.split(QRegExp("/|,"));
+            // Special case: https://www.openstreetmap.org/#15/50.9307/4.7201
+            if (isOsmSite)
+            {
                 bool isZoomFirstInFragment;
                 parts[0].toInt(&isZoomFirstInFragment);
                 if (isZoomFirstInFragment)
                     parts.removeFirst();
-        }
-        QStringListIterator i(parts);
-        QList<double> converted;
-        bool hasCoordinates = true, okPrev = false, ok;
-        while (hasCoordinates && i.hasNext())
-        {
-            double d = i.next().toDouble(&ok);
-            if (ok)
-            {
-                okPrev = true;
-                converted.append(d);
-                if (converted.size() > 2)
-                    hasCoordinates = false;
-            } else if (okPrev) {
-                hasCoordinates = false;
             }
+            QStringListIterator i(parts);
+            QList<double> converted;
+            bool hasCoordinates = true, okPrev = false, ok;
+            while (hasCoordinates && i.hasNext())
+            {
+                double d = i.next().toDouble(&ok);
+                if (ok)
+                {
+                    okPrev = true;
+                    converted.append(d);
+                    if (converted.size() > 2)
+                        hasCoordinates = false;
+                } else if (okPrev) {
+                    hasCoordinates = false;
+                }
+            }
+            if (converted.size() == 2)
+                return OsmAnd::LatLon(converted[0], converted[1]);
         }
-        if (converted.size() == 2)
-            return OsmAnd::LatLon(converted[0], converted[1]);
 
         for (auto itemName : QStringList(
         {
