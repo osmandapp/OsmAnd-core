@@ -20,17 +20,29 @@ if (CMAKE_TARGET_OS STREQUAL "linux")
 elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(objc_LIBRARY objc)
 	find_library(Cocoa_LIBRARY Cocoa)
+	find_library(CoreGraphics_LIBRARY CoreGraphics)
+	find_library(CoreText_LIBRARY CoreText)
+	find_library(CoreFoundation_LIBRARY CoreFoundation)
 	find_library(CoreServices_LIBRARY CoreServices)
 	find_library(SystemConfiguration_LIBRARY SystemConfiguration)
 	find_library(CFNetwork_LIBRARY CFNetwork)
 	find_library(Security_LIBRARY Security)
 	find_library(z_LIBRARY z)
+	set(library_suffix_tbd "")
+
+	if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+		set(library_suffix_tbd ".tbd")
+	endif()
+	message("LIBRARY SUFFIX ${library_suffix_tbd}")
 	set(target_specific_public_libraries ${target_specific_public_libraries}
-		"${Cocoa_LIBRARY}/Cocoa"
-		"${CoreServices_LIBRARY}/CoreServices"
-		"${SystemConfiguration_LIBRARY}/SystemConfiguration"
-		"${CFNetwork_LIBRARY}/CFNetwork"
-		"${Security_LIBRARY}/Security"
+		"${Cocoa_LIBRARY}/Cocoa${library_suffix_tbd}"
+		"${CoreServices_LIBRARY}/CoreServices${library_suffix_tbd}"
+		"${CoreText_LIBRARY}/CoreText${library_suffix_tbd}"
+		"${CoreGraphics_LIBRARY}/CoreGraphics${library_suffix_tbd}"
+		"${CoreFoundation_LIBRARY}/CoreFoundation${library_suffix_tbd}"
+		"${SystemConfiguration_LIBRARY}/SystemConfiguration${library_suffix_tbd}"
+		"${CFNetwork_LIBRARY}/CFNetwork${library_suffix_tbd}"
+		"${Security_LIBRARY}/Security${library_suffix_tbd}"
 		${z_LIBRARY}
 		${objc_LIBRARY}
 	)
