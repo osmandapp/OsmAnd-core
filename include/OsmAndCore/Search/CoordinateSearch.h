@@ -16,7 +16,7 @@ namespace OsmAnd
     public:
         static LatLon search(QString const &query);
     private:
-        static QUrl toUrl(QString const &s);
+        static QUrl toHttpUrl(QString const &s);
         static QString withoutPrefix(QString const &query);
     };
 

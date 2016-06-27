@@ -6,15 +6,16 @@
 #include <QStringList>
 #include <QUrl>
 #include <QUrlQuery>
+#include <QVector>
 
 #include <cmath>
 
 
 OsmAnd::LatLon decodeShortLinkString(QString s)
 {
-    QString intToBase64 = QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_~");
+    auto intToBase64{QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_~")};
     // convert old shortlink format to current one
-    s = s.replace("@", "~");
+    s = s.replace('@', '~');
     int i = 0;
     long x = 0;
     long y = 0;
@@ -45,25 +46,25 @@ OsmAnd::LatLon decodeShortLinkString(QString s)
         if (i + 1 < s.length() && s[i + 1] == '-')
             z++;
     }
-    return OsmAnd::LatLon(lat, lon);
+    return {lat, lon};
 }
 
-QUrl OsmAnd::CoordinateSearch::toUrl(QString const &s)
+QUrl OsmAnd::CoordinateSearch::toHttpUrl(QString const &s)
 {
-    if (s.startsWith(QStringLiteral("http://")) || s.startsWith(QStringLiteral("https://")))
+    if (s.startsWith(QLatin1String("http://")) || s.startsWith(QLatin1String("https://")))
     {
-        QUrl result = QUrl(s);
+        QUrl result{s};
         if (result.isValid())
             return result;
     }
-    return QUrl();
+    return QUrl{};
 }
 
 QString OsmAnd::CoordinateSearch::withoutPrefix(QString const &query)
 {
     QString result = query;
     int numberCount = 0;
-    auto prefixes = QStringList({QStringLiteral("geo:"), QStringLiteral("loc:")});
+    QVector<QString> prefixes{QStringLiteral("geo:"), QStringLiteral("loc:")};
     for (auto prefix : prefixes)
         if (query.startsWith(prefix))
         {
@@ -87,11 +88,11 @@ QString OsmAnd::CoordinateSearch::withoutPrefix(QString const &query)
 
 OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
 {
-    OsmAnd::LatLon result = OsmAnd::LatLon();
+    LatLon result{};
     QString q = query;
     q = q.simplified();
 
-    QUrl url = toUrl(q);
+    QUrl url = toHttpUrl(q);
     if (!url.isEmpty())
     {
         // Extract coordinates from urls
@@ -99,34 +100,37 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
         QString host = url.host();
         QString path = url.path();
 
-        bool isOsmSite = host == QStringLiteral("osm.org") || host.endsWith(QStringLiteral("openstreetmap.org"));
+        bool isOsmSite = host == QLatin1String("osm.org") || host.endsWith(QLatin1String("openstreetmap.org"));
         if (isOsmSite)
         {
-            bool isOsmShortLink =  path.startsWith(QStringLiteral("/go/"));
+            bool isOsmShortLink =  path.startsWith(QLatin1String("/go/"));
             if (isOsmShortLink)
             {
-                QString shortLinkString = path.replace(QStringLiteral("/go/"), "");
+                QString shortLinkString = path.replace(QLatin1String("/go/"), "");
                 return decodeShortLinkString(shortLinkString);
             }
         }
 
 
         // http://osmand.net/go?lat=34&lon=-106&z=11
-        QUrlQuery urlQuery = QUrlQuery(url);
+        QUrlQuery urlQuery{url};
         QString latItemName, lonItemName;
-        for (auto names : QList<QStringList>({{QStringLiteral("lat"),  QStringLiteral("lon")},
-                                              {QStringLiteral("mlat"), QStringLiteral("mlon")},
-                                              {QStringLiteral("y"),    QStringLiteral("x")}}))
-            if (urlQuery.hasQueryItem(names[0]) && urlQuery.hasQueryItem(names[1]))
+        QVector<QVector<QString>> latLonKeyNames{
+            {QStringLiteral("lat"),  QStringLiteral("lon")},
+            {QStringLiteral("mlat"), QStringLiteral("mlon")},
+            {QStringLiteral("y"),    QStringLiteral("x")}
+        };
+        for (auto keyNames : latLonKeyNames)
+            if (urlQuery.hasQueryItem(keyNames[0]) && urlQuery.hasQueryItem(keyNames[1]))
             {
-                latItemName = names[0];
-                lonItemName = names[1];
+                latItemName = keyNames[0];
+                lonItemName = keyNames[1];
                 break;
             }
         if (!latItemName.isNull() && !lonItemName.isNull())
         {
-            QString latitude = urlQuery.queryItemValue(latItemName);
-            QString longitude = urlQuery.queryItemValue(lonItemName);
+            auto latitude = urlQuery.queryItemValue(latItemName);
+            auto longitude = urlQuery.queryItemValue(lonItemName);
             bool latitudeOk, longitudeOk;
             result.latitude = latitude.toDouble(&latitudeOk);
             result.longitude = longitude.toDouble(&longitudeOk);
@@ -136,9 +140,9 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
 
         // https://www.openstreetmap.org/#map=15/50.9307/4.7201
         // http://share.here.com/l/52.5134272,13.3778416,Hannah-Arendt-Stra%C3%9Fe?z=16.0&t=normal
-        for (auto fragment : QStringList({url.fragment(), path}))
+        for (auto fragment : QVector<QString>({url.fragment(), path}))
         {
-            auto parts = fragment.split(QRegExp(QStringLiteral("/|,")));
+            auto parts = fragment.split(QRegExp{QLatin1String("/|,")});
             // Special case: https://www.openstreetmap.org/#15/50.9307/4.7201
             if (isOsmSite)
             {
@@ -148,7 +152,7 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
                     parts.removeFirst();
             }
             QStringListIterator i(parts);
-            QList<double> converted;
+            QVector<double> converted;
             bool hasCoordinates = true, okPrev = false, ok;
             while (hasCoordinates && i.hasNext())
             {
@@ -159,34 +163,37 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
                     converted.append(d);
                     if (converted.size() > 2)
                         hasCoordinates = false;
-                } else if (okPrev) {
+                }
+                else if (okPrev)
+                {
                     hasCoordinates = false;
                 }
             }
             if (converted.size() == 2)
-                return OsmAnd::LatLon(converted[0], converted[1]);
+                return {converted[0], converted[1]};
         }
-
-        for (auto itemName : QStringList(
-        {
+        QVector<QString> latLonSignleKeyNames {
              QStringLiteral("q"),               // Google Maps query
              QStringLiteral("saddr"),           // Google Maps directions search
              QStringLiteral("daddr"),
              QStringLiteral("c"),               // Baidu
              QStringLiteral("ll"),              // Yandex.Maps
-             QStringLiteral("map"),             // Here Maps
-        }))
+             QStringLiteral("map")              // Here Maps
+        };
+        for (auto keyName : latLonSignleKeyNames)
         {
-            QString part = withoutPrefix(urlQuery.queryItemValue(itemName));
+            QString part = withoutPrefix(urlQuery.queryItemValue(keyName));
             if (!part.isEmpty() && part.contains(','))
             {
-                QRegExp reBeforeSecondComma(QStringLiteral("[^,]*,[^,]*"));
+                QRegExp reBeforeSecondComma{QLatin1String("[^,]*,[^,]*")};
                 reBeforeSecondComma.indexIn(part);
                 q = reBeforeSecondComma.cap();
                 break;
             }
         }
-    } else {
+    }
+    else
+    {
         q = withoutPrefix(q);
     }
 
@@ -194,10 +201,10 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
     try
     {
         geoCoords.Reset(q.toStdString());
-        return LatLon(geoCoords.Latitude(), geoCoords.Longitude());
+        return {geoCoords.Latitude(), geoCoords.Longitude()};
     }
     catch(GeographicLib::GeographicErr err)
     {
-        return LatLon(0.0, 0.0);  // Probably add property "empty" to LatLon?
+        return {};
     }
 }
