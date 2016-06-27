@@ -42,9 +42,12 @@ void OsmAnd::ObfRoutingSectionReader_P::read(
             case 0:
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
-
-                section->area31 = *bbox31;
-
+                if(bbox31.isSet())  {
+                    section->area31 = *bbox31;
+                } else {
+                    AreaI empty;
+                    section->area31 = empty;
+                }
                 return;
             case OBF::OsmAndRoutingIndex::kNameFieldNumber:
                 ObfReaderUtilities::readQString(cis, section->name);
