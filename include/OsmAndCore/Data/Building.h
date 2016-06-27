@@ -7,10 +7,10 @@
 #include <QString>
 #include <QHash>
 
-#include <Address.h>
 #include <OsmAndCore.h>
 #include <OsmAndCore/MemoryCommon.h>
 #include <OsmAndCore/PointsAndAreas.h>
+#include <OsmAndCore/Data/Address.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 
 namespace OsmAnd
