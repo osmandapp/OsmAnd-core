@@ -7,6 +7,7 @@
 #include <OsmAndCore/ignore_warnings_on_external_includes.h>
 #include <QString>
 #include <QHash>
+#include <QList>
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
@@ -19,6 +20,7 @@
 namespace OsmAnd
 {
     class Address;
+    class Building;
 
     class OSMAND_CORE_API AddressesByNameSearch Q_DECL_FINAL : public BaseSearch
     {
@@ -34,6 +36,8 @@ namespace OsmAnd
             QString name;
             ObfAddressStreetGroupTypesMask streetGroupTypesMask;
             bool includeStreets;
+            QString postcode;
+            QList<std::shared_ptr<const Address>> addressFilter;
         };
 
         struct OSMAND_CORE_API ResultEntry : public IResultEntry
@@ -42,6 +46,7 @@ namespace OsmAnd
             virtual ~ResultEntry();
 
             std::shared_ptr<const Address> address;
+            std::shared_ptr<const Building> building;
         };
 
     private:

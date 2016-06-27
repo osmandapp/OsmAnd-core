@@ -43,6 +43,7 @@
 #include <OsmAndCore/Data/Address.h>
 #include <OsmAndCore/Data/StreetGroup.h>
 #include <OsmAndCore/Data/Street.h>
+#include <OsmAndCore/Data/Building.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
@@ -121,6 +122,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::Address)
 	%shared_ptr(OsmAnd::StreetGroup)
 	%shared_ptr(OsmAnd::Street)
+    %shared_ptr(OsmAnd::Building)
 	%shared_ptr(OsmAnd::ObfSectionInfo)
 	%shared_ptr(OsmAnd::ObfPoiSectionInfo)
 	%shared_ptr(OsmAnd::ObfPoiSectionCategories)
@@ -326,6 +328,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/Address.h>
 %include <OsmAndCore/Data/StreetGroup.h>
 %include <OsmAndCore/Data/Street.h>
+%include <OsmAndCore/Data/Building.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
