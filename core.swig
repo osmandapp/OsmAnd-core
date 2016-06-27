@@ -44,6 +44,7 @@
 #include <OsmAndCore/Data/StreetGroup.h>
 #include <OsmAndCore/Data/Street.h>
 #include <OsmAndCore/Data/Building.h>
+#include <OsmAndCore/Data/StreetIntersection.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
@@ -123,6 +124,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::StreetGroup)
 	%shared_ptr(OsmAnd::Street)
     %shared_ptr(OsmAnd::Building)
+    %shared_ptr(OsmAnd::StreetIntersection)
 	%shared_ptr(OsmAnd::ObfSectionInfo)
 	%shared_ptr(OsmAnd::ObfPoiSectionInfo)
 	%shared_ptr(OsmAnd::ObfPoiSectionCategories)
@@ -326,10 +328,10 @@ using namespace OsmAnd;
 	%template(DecodedValueList) QList<OsmAnd::Amenity::DecodedValue>;
 %include <OsmAndCore/Data/ObfAddressSectionInfo.h>
 %include <OsmAndCore/Data/Address.h>
-    %template(AddressList) QList<OsmAnd::Address>;
 %include <OsmAndCore/Data/StreetGroup.h>
 %include <OsmAndCore/Data/Street.h>
 %include <OsmAndCore/Data/Building.h>
+%include <OsmAndCore/Data/StreetIntersection.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
