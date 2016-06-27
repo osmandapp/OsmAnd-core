@@ -37,7 +37,7 @@ namespace OsmAnd
             ObfAddressStreetGroupTypesMask streetGroupTypesMask;
             bool includeStreets;
             QString postcode;
-            QList<std::shared_ptr<const Address>> addressFilter;
+            std::shared_ptr<const Address> addressFilter;
         };
 
         struct OSMAND_CORE_API ResultEntry : public IResultEntry
@@ -46,7 +46,6 @@ namespace OsmAnd
             virtual ~ResultEntry();
 
             std::shared_ptr<const Address> address;
-            std::shared_ptr<const Building> building;
         };
 
     private:

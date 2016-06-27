@@ -8,12 +8,13 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Data/Address.h>
 
 namespace OsmAnd
 {
     class Street;
 
-    class OSMAND_CORE_API StreetIntersection Q_DECL_FINAL
+    class OSMAND_CORE_API StreetIntersection Q_DECL_FINAL : public Address
     {
         Q_DISABLE_COPY_AND_MOVE(StreetIntersection);
 
