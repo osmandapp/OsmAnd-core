@@ -75,12 +75,12 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                 }
             };
             
-            bool res = dataInterface->loadStreetsFromGroups(
-                                                            streetGroupsList,
-                                                            nullptr,
-                                                            criteria.bbox31.getValuePtrOrNullptr(),
-                                                            visitorFunction,
-                                                            queryController);
+            dataInterface->loadStreetsFromGroups(
+                                                 streetGroupsList,
+                                                 nullptr,
+                                                 criteria.bbox31.getValuePtrOrNullptr(),
+                                                 visitorFunction,
+                                                 queryController);
         }
         else if (!streetsList.isEmpty())
         {
@@ -117,12 +117,12 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                 }
             };
             
-            bool res = dataInterface->loadBuildingsFromStreets(
-                                                            streetsList,
-                                                            nullptr,
-                                                            criteria.bbox31.getValuePtrOrNullptr(),
-                                                            visitorFunction,
-                                                            queryController);
+            dataInterface->loadBuildingsFromStreets(
+                                                    streetsList,
+                                                    nullptr,
+                                                    criteria.bbox31.getValuePtrOrNullptr(),
+                                                    visitorFunction,
+                                                    queryController);
         }
     }
     else

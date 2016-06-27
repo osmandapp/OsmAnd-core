@@ -326,6 +326,7 @@ using namespace OsmAnd;
 	%template(DecodedValueList) QList<OsmAnd::Amenity::DecodedValue>;
 %include <OsmAndCore/Data/ObfAddressSectionInfo.h>
 %include <OsmAndCore/Data/Address.h>
+    %template(AddressList) QList<OsmAnd::Address>;
 %include <OsmAndCore/Data/StreetGroup.h>
 %include <OsmAndCore/Data/Street.h>
 %include <OsmAndCore/Data/Building.h>
