@@ -7,6 +7,7 @@
 #include <QString>
 #include <QHash>
 
+#include <Address.h>
 #include <OsmAndCore.h>
 #include <OsmAndCore/MemoryCommon.h>
 #include <OsmAndCore/PointsAndAreas.h>
@@ -17,7 +18,7 @@ namespace OsmAnd
     class Street;
     class StreetGroup;
 
-    class OSMAND_CORE_API Building Q_DECL_FINAL
+    class OSMAND_CORE_API Building Q_DECL_FINAL: public Address
     {
         Q_DISABLE_COPY_AND_MOVE(Building);
 

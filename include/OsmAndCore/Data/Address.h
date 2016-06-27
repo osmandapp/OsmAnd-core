@@ -21,6 +21,7 @@ namespace OsmAnd
     {
         StreetGroup,
         Street,
+        Building
     };
 
     class OSMAND_CORE_API Address
