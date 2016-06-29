@@ -16,16 +16,13 @@ OsmAnd::RoadLocator_P::~RoadLocator_P()
 {
 }
 
-std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoadEx(
+QList<std::shared_ptr<const OsmAnd::Road>> OsmAnd::RoadLocator_P::roadsInRadius(
     const PointI position31,
     const double radiusInMeters,
     const RoutingDataLevel dataLevel,
-    const ObfRoutingSectionReader::VisitorFunction filter,
-    int* const outNearestRoadPointIndex,
-    double* const outDistanceToNearestRoadPoint,
-    QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const
+    QList<std::shared_ptr<const ObfRoutingSectionReader::DataBlock>>* const outReferencedCacheEntries) const
 {
-    QList< std::shared_ptr<const Road> > roadsInBBox;
+    QList< std::shared_ptr<const Road>> result;
 
     const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
     const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(
@@ -36,7 +33,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoadEx(
     obfDataInterface->loadRoads(
         dataLevel,
         &bbox31,
-        &roadsInBBox,
+        &result,
         nullptr,
         nullptr,
         owner->cache.get(),
@@ -44,6 +41,20 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoadEx(
         nullptr,
         nullptr);
 
+    return result;
+}
+
+
+std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoadEx(
+    const PointI position31,
+    const double radiusInMeters,
+    const RoutingDataLevel dataLevel,
+    const ObfRoutingSectionReader::VisitorFunction filter,
+    int* const outNearestRoadPointIndex,
+    double* const outDistanceToNearestRoadPoint,
+    QList<std::shared_ptr<const ObfRoutingSectionReader::DataBlock>>* const outReferencedCacheEntries) const
+{
+    auto roadsInBBox = roadsInRadius(position31, radiusInMeters, dataLevel, outReferencedCacheEntries);
     return findNearestRoad(
         roadsInBBox,
         position31,
@@ -53,32 +64,29 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoadEx(
         outDistanceToNearestRoadPoint);
 }
 
-QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::RoadLocator_P::findRoadsInAreaEx(
+QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLocator_P::findNearestRoads(
+        const OsmAnd::PointI position31,
+        const double radiusInMeters,
+        const OsmAnd::RoutingDataLevel dataLevel,
+        const OsmAnd::ObfRoutingSectionReader::VisitorFunction filter,
+        QList<std::shared_ptr<const OsmAnd::ObfRoutingSectionReader::DataBlock>>* const outReferencedCacheEntries) const
+{
+    auto roadsInBBox = roadsInRadius(position31, radiusInMeters, dataLevel, outReferencedCacheEntries);
+    return sortedRoadsByDistance(
+                roadsInBBox,
+                position31,
+                radiusInMeters,
+                filter);
+}
+
+QList<std::shared_ptr<const OsmAnd::Road>> OsmAnd::RoadLocator_P::findRoadsInAreaEx(
     const PointI position31,
     const double radiusInMeters,
     const RoutingDataLevel dataLevel,
     const ObfRoutingSectionReader::VisitorFunction filter,
     QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const
 {
-    QList< std::shared_ptr<const Road> > roadsInBBox;
-
-    const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
-    const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(
-        &bbox31,
-        MinZoomLevel,
-        MaxZoomLevel,
-        ObfDataTypesMask().set(ObfDataType::Routing));
-    obfDataInterface->loadRoads(
-        dataLevel,
-        &bbox31,
-        &roadsInBBox,
-        nullptr,
-        nullptr,
-        owner->cache.get(),
-        outReferencedCacheEntries,
-        nullptr,
-        nullptr);
-
+    auto roadsInBBox = roadsInRadius(position31, radiusInMeters, dataLevel, outReferencedCacheEntries);
     return findRoadsInArea(
         roadsInBBox,
         position31,
@@ -136,7 +144,6 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoad(
     std::shared_ptr<const Road> minDistanceRoad;
     int minDistancePointIdx = -1;
     double minSqDistance = std::numeric_limits<double>::max();
-    uint32_t min31x, min31y;
 
     for (const auto& road : constOf(collection))
     {
@@ -182,8 +189,6 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoad(
                 minDistanceRoad = road;
                 minDistancePointIdx = idx;
                 minSqDistance = sqDistance;
-                min31x = rx31;
-                min31y = ry31;
             }
         }
     }
@@ -197,6 +202,82 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoad(
     }
 
     return minDistanceRoad;
+}
+
+QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double> > OsmAnd::RoadLocator_P::sortedRoadsByDistance(
+    QList<std::shared_ptr<const Road>>& collection,
+    const PointI position31,
+    const double radiusInMeters,
+    const ObfRoutingSectionReader::VisitorFunction filter)
+{
+//    ObfRoutingSectionReader::VisitorFunction filterAndInRadiusFilter = [](const std::shared_ptr<const OsmAnd::Road>& road) {
+//        return (distanceToNearestRoadPoint > radiusInMeters) ? false : filter(road);
+//    };
+//    sortRoadsByDistance(collection, position31, [radiusInMeters, &filter](const std::shared_ptr<const OsmAnd::Road>& road) {
+//        return (distanceToNearestRoadPoint > radiusInMeters) ? false : filter(road);
+//    });
+    auto result = sortedRoadsByDistance(collection, position31, filter);
+    result.erase(std::remove_if(result.begin(), result.end(), [radiusInMeters](std::pair<std::shared_ptr<const Road>, double> roadAndDistance) {
+         return roadAndDistance.second > radiusInMeters;
+    }), result.end());
+    return result;
+//    collection.erase(std::remove_if)
+}
+
+QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLocator_P::sortedRoadsByDistance(
+    QList<std::shared_ptr<const Road>>& collection,
+    const PointI position31,
+    const ObfRoutingSectionReader::VisitorFunction filter)
+{
+    QVector<std::pair<std::shared_ptr<const Road>, double>> result{};
+    auto sqDistance = [position31](std::shared_ptr<const Road> road) {
+        const auto& points31 = road->points31;
+        double minSqDistance = std::numeric_limits<double>::max();
+        for (auto idx = 1, count = points31.size(); idx < count; idx++)
+        {
+            const auto& cpx31 = points31[idx].x;
+            const auto& cpy31 = points31[idx].y;
+            const auto& ppx31 = points31[idx - 1].x;
+            const auto& ppy31 = points31[idx - 1].y;
+
+            auto sqDistance = Utilities::squareDistance31(cpx31, cpy31, ppx31, ppy31);
+
+            uint32_t rx31;
+            uint32_t ry31;
+            auto projection = Utilities::projection31(ppx31, ppy31, cpx31, cpy31, position31.x, position31.y);
+            if (projection < 0)
+            {
+                rx31 = ppx31;
+                ry31 = ppy31;
+            }
+            else if (projection >= sqDistance)
+            {
+                rx31 = cpx31;
+                ry31 = cpy31;
+            }
+            else
+            {
+                const auto& factor = projection / sqDistance;
+                rx31 = ppx31 + (cpx31 - ppx31) * factor;
+                ry31 = ppy31 + (cpy31 - ppy31) * factor;
+            }
+            sqDistance = Utilities::squareDistance31(rx31, ry31, position31.x, position31.y);
+
+            if (sqDistance < minSqDistance)
+                minSqDistance = sqDistance;
+        }
+        return minSqDistance;
+    };
+    for (auto road : collection)
+        if (!(road->points31.size() <= 1) || (filter && !filter(road)))
+            result.append(std::make_pair(road, sqDistance(road)));
+//    collection.erase(std::remove_if(collection.begin(), collection.end(), [filter](std::shared_ptr<const Road> road) {
+//        return (road->points31.size() <= 1) || (filter && !filter(road));
+//    }), collection.end());
+    std::sort(result.begin(), result.end(), [](std::pair<std::shared_ptr<const Road>, double> a, std::pair<std::shared_ptr<const Road>, double> b) {
+        return a.second > b.second;
+    });
+    return result;
 }
 
 QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::RoadLocator_P::findRoadsInArea(

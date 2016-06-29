@@ -17,7 +17,7 @@ OsmAnd::RoadLocator::~RoadLocator()
 std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator::findNearestRoad(
     const PointI position31,
     const double radiusInMeters,
-    const RoutingDataLevel dataLevel,
+    const RoutingDataLevel dataLevel /*= RoutingDataLevel::Detailed*/,
     const ObfRoutingSectionReader::VisitorFunction filter /*= nullptr*/,
     int* const outNearestRoadPointIndex /*= nullptr*/,
     double* const outDistanceToNearestRoadPoint /*= nullptr*/) const
@@ -28,13 +28,29 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator::findNearestRoad(
         dataLevel,
         filter,
         outNearestRoadPointIndex,
-        outDistanceToNearestRoadPoint);
+                outDistanceToNearestRoadPoint);
+}
+
+QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLocator::findNearestRoads(
+    const OsmAnd::PointI position31,
+    const double radiusInMeters,
+    const OsmAnd::RoutingDataLevel dataLevel /*= RoutingDataLevel::Detailed*/,
+    const OsmAnd::ObfRoutingSectionReader::VisitorFunction filter,
+    QList<std::shared_ptr<const ObfRoutingSectionReader::DataBlock>>* const outReferencedCacheEntries /*= nullptr*/) const
+{
+    return _p->findNearestRoads(
+        position31,
+        radiusInMeters,
+        dataLevel,
+        filter,
+        outReferencedCacheEntries
+    );
 }
 
 QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::RoadLocator::findRoadsInArea(
     const PointI position31,
     const double radiusInMeters,
-    const RoutingDataLevel dataLevel,
+    const RoutingDataLevel dataLevel /*= RoutingDataLevel::Detailed*/,
     const ObfRoutingSectionReader::VisitorFunction filter /*= nullptr*/) const
 {
     return findRoadsInAreaEx(
@@ -47,7 +63,7 @@ QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::RoadLocator::findRoadsInAre
 std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator::findNearestRoadEx(
     const PointI position31,
     const double radiusInMeters,
-    const RoutingDataLevel dataLevel,
+    const RoutingDataLevel dataLevel /*= RoutingDataLevel::Detailed*/,
     const ObfRoutingSectionReader::VisitorFunction filter /*= nullptr*/,
     int* const outNearestRoadPointIndex /*= nullptr*/,
     double* const outDistanceToNearestRoadPoint /*= nullptr*/,
@@ -66,7 +82,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator::findNearestRoadEx(
 QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::RoadLocator::findRoadsInAreaEx(
     const PointI position31,
     const double radiusInMeters,
-    const RoutingDataLevel dataLevel,
+    const RoutingDataLevel dataLevel /*= RoutingDataLevel::Detailed*/,
     const ObfRoutingSectionReader::VisitorFunction filter /*= nullptr*/,
     QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries /*= nullptr*/) const
 {
