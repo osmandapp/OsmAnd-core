@@ -770,6 +770,8 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
     }
 }
 
+
+
 void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfAddressSectionInfo>& section,
@@ -813,16 +815,14 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
 
-                const auto indexReferencesMap = mapFrom<uint32_t, AddressReference>(indexReferences,
-                    []
-                    (const AddressReference& addressReference) -> uint32_t
-                    {
-                        return addressReference.dataIndexOffset;
-                    });
-
+                qSort(indexReferences.begin(), indexReferences.end(), ObfAddressSectionReader_P::dereferencedLessThan);
+                uint32_t dataIndexOffset = 0;
                 for (const auto& indexReference : constOf(indexReferences))
                 {
                     std::shared_ptr<Address> address;
+                    if(dataIndexOffset == indexReference.dataIndexOffset) {
+                        continue;
+                    }
                     if (indexReference.addressType == AddressNameIndexDataAtomType::Street)
                     {
                         std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
@@ -886,8 +886,8 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                         cis->Seek(indexReference.dataIndexOffset);
 
                         gpb::uint32 length;
-                        cis->ReadVarint32(&length);
                         const auto offset = cis->CurrentPosition();
+                        cis->ReadVarint32(&length);
                         const auto oldLimit = cis->PushLimit(length);
 
                         readStreetGroup(

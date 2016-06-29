@@ -17,6 +17,8 @@ namespace OsmAnd
     class ObfReader_P;
     class ObfAddressSectionInfo;
     
+    
+    
     class ObfAddressSectionReader_P Q_DECL_FINAL
     {
     public:
@@ -32,6 +34,8 @@ namespace OsmAnd
             Postcode = static_cast<int>(ObfAddressStreetGroupType::Postcode),
             Street = 4
         };
+        
+
 
         struct AddressReference
         {
@@ -45,6 +49,13 @@ namespace OsmAnd
             uint32_t dataIndexOffset;
             uint32_t containerIndexOffset;
         };
+
+        static bool dereferencedLessThan(AddressReference& o1, AddressReference& o2) {
+//            if(o1.addressType < o2.addressType) {
+//                return true;
+//            }
+            return o1.dataIndexOffset < o2.dataIndexOffset;
+        }
 
     private:
         ObfAddressSectionReader_P();
