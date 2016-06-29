@@ -1,0 +1,32 @@
+--- ./src/DMS.cpp	2016-02-15 03:29:47.000000000 +0300
++++ ./src/DMS.cpp	2016-06-21 18:25:51.380937608 +0300
+@@ -10,6 +10,8 @@
+ #include <GeographicLib/DMS.hpp>
+ #include <GeographicLib/Utility.hpp>
+ 
++#include <map>
++
+ #if defined(_MSC_VER)
+ // Squelch warnings about constant conditional expressions
+ #  pragma warning (disable: 4127)
+@@ -64,7 +66,19 @@ namespace GeographicLib {
+       // Find next sign
+       pb = min(dmsa.find_first_of(signs_, pa), end);
+       flag ind2 = NONE;
+-      v += InternalDecode(dmsa.substr(p, pb - p), ind2);
++      std::string internal = dmsa.substr(p, pb - p);
++      // Convert 1*2*3 -> 1:2:3, where * — any special symbol
++      std::map<char, int> chars;
++      for (char c : internal)
++          if (!isalnum(c) && c != ':')
++              chars[c] = chars[c] + 1;
++      for (auto const &e : chars)
++          if (e.second > 1)
++          {
++              replace(internal, std::string(1, e.first), ':');
++              break;
++          }
++      v += InternalDecode(internal, ind2);
+       if (ind1 == NONE)
+         ind1 = ind2;
+       else if (!(ind2 == NONE || ind1 == ind2))

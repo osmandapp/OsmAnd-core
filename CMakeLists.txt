@@ -11,13 +11,14 @@ set(target_specific_dependencies "")
 
 include(ExternalProject)
 
-set(GeographicLib_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/geographiclib-prefix")
-# PATCH_COMMAND patch src/DMS.cpp < ${CMAKE_CURRENT_LIST_DIR}/geographiclib/0-custom-delimiters.patch
-
+set(GeographicLib_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/externals/geographiclib")
 ExternalProject_Add(geographiclib
+	PREFIX ${GeographicLib_PREFIX}
 	URL http://builder.osmand.net/dependencies-mirror/geographiclib-1.46.tar.gz  # Source: https://sourceforge.net/projects/geographiclib/files/distrib/GeographicLib-1.46.tar.gz/download	
+	PATCH_COMMAND patch src/DMS.cpp < ${CMAKE_CURRENT_LIST_DIR}/externals/geographiclib/0-custom-delimiters.patch
 	CMAKE_ARGS
-		-DBUILD_SHARED_LIBS:BOOL=ON
+		-DBUILD_SHARED_LIBS:BOOL=OFF
+		-DCMAKE_DEBUG_POSTFIX=
 		-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
 		-DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
 		-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}
@@ -26,6 +27,18 @@ ExternalProject_Add(geographiclib
 		-DGEOGRAPHICLIB_DOCUMENTATION:BOOL=OFF
 		-DGEOGRAPHICLIB_LIB_TYPE:STRING=STATIC
 )
+#set (GeographicLib_Include ${GeographicLib_PREFIX}/src/geographiclib/include/)
+set (GeographicLib_Include ${CMAKE_BINARY_DIR}/include/)
+set(library_debug_suffix "")
+if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(library_debug_suffix "_d")
+	endif()
+endif()
+
+set (GeographicLib_Archive ${CMAKE_BINARY_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}Geographic${library_debug_suffix}${CMAKE_STATIC_LIBRARY_SUFFIX})
+message("GEOGRAPHICLIB ARCHIVE ${GeographicLib_Archive}")
+message("GEOGRAPHICLIB INCLUDE ${GeographicLib_Include}")
 
 # Target specific
 if (CMAKE_TARGET_OS STREQUAL "linux")
@@ -205,6 +218,7 @@ set(merged_sources
 	"protos/OBF.pb.h"
 )
 set(merged_dependencies
+	geographiclib
 	skia_static
 	protobuf_static
 	gdal_static
@@ -236,6 +250,7 @@ set(merged_include_dirs_private
 )
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
+	${GeographicLib_Include}
 	${target_specific_public_includes}
 )
 set(merged_link_libs_public
@@ -246,6 +261,7 @@ set(merged_link_libs_public
 	archive_static
 	glm_headers_only
 	boost_static_precompiled
+	${GeographicLib_Archive}
 	${target_specific_public_libraries}
 )
 
