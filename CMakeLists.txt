@@ -9,6 +9,24 @@ set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")
 set(target_specific_dependencies "")
 
+include(ExternalProject)
+
+set(GeographicLib_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/geographiclib-prefix")
+# PATCH_COMMAND patch src/DMS.cpp < ${CMAKE_CURRENT_LIST_DIR}/geographiclib/0-custom-delimiters.patch
+
+ExternalProject_Add(geographiclib
+	URL http://builder.osmand.net/dependencies-mirror/geographiclib-1.46.tar.gz  # Source: https://sourceforge.net/projects/geographiclib/files/distrib/GeographicLib-1.46.tar.gz/download	
+	CMAKE_ARGS
+		-DBUILD_SHARED_LIBS:BOOL=ON
+		-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+		-DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
+		-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}
+		-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
+		-DBUILD_NETGEOGRAPHICLIB:BOOL=OFF
+		-DGEOGRAPHICLIB_DOCUMENTATION:BOOL=OFF
+		-DGEOGRAPHICLIB_LIB_TYPE:STRING=STATIC
+)
+
 # Target specific
 if (CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(dl_LIBRARY dl)
@@ -20,9 +38,6 @@ if (CMAKE_TARGET_OS STREQUAL "linux")
 elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(objc_LIBRARY objc)
 	find_library(Cocoa_LIBRARY Cocoa)
-	find_library(CoreGraphics_LIBRARY CoreGraphics)
-	find_library(CoreText_LIBRARY CoreText)
-	find_library(CoreFoundation_LIBRARY CoreFoundation)
 	find_library(CoreServices_LIBRARY CoreServices)
 	find_library(SystemConfiguration_LIBRARY SystemConfiguration)
 	find_library(CFNetwork_LIBRARY CFNetwork)
@@ -33,13 +48,10 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 		set(library_suffix_tbd ".tbd")
 	endif()
-	message("LIBRARY SUFFIX ${library_suffix_tbd}")
+	
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		"${Cocoa_LIBRARY}/Cocoa${library_suffix_tbd}"
 		"${CoreServices_LIBRARY}/CoreServices${library_suffix_tbd}"
-		"${CoreText_LIBRARY}/CoreText${library_suffix_tbd}"
-		"${CoreGraphics_LIBRARY}/CoreGraphics${library_suffix_tbd}"
-		"${CoreFoundation_LIBRARY}/CoreFoundation${library_suffix_tbd}"
 		"${SystemConfiguration_LIBRARY}/SystemConfiguration${library_suffix_tbd}"
 		"${CFNetwork_LIBRARY}/CFNetwork${library_suffix_tbd}"
 		"${Security_LIBRARY}/Security${library_suffix_tbd}"
@@ -422,3 +434,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 			${merged_link_libs_public}
 	)
 endif()
+
+
+

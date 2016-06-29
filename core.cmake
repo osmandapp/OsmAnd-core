@@ -35,6 +35,7 @@ if (CMAKE_TARGET_OS STREQUAL "linux" OR
 	add_subdirectory("${OSMAND_ROOT}/core/externals/glew" "core/externals/glew")
 endif()
 
+
 # External: ICU4C
 add_subdirectory("${OSMAND_ROOT}/core/externals/icu4c" "core/externals/icu4c")
 
