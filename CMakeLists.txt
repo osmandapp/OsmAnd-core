@@ -9,6 +9,37 @@ set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")
 set(target_specific_dependencies "")
 
+include(ExternalProject)
+
+set(GeographicLib_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/externals/geographiclib")
+ExternalProject_Add(geographiclib
+	PREFIX ${GeographicLib_PREFIX}
+	URL http://builder.osmand.net/dependencies-mirror/geographiclib-1.46.tar.gz  # Source: https://sourceforge.net/projects/geographiclib/files/distrib/GeographicLib-1.46.tar.gz/download	
+	PATCH_COMMAND patch src/DMS.cpp < ${CMAKE_CURRENT_LIST_DIR}/externals/geographiclib/0-custom-delimiters.patch
+	CMAKE_ARGS
+		-DBUILD_SHARED_LIBS:BOOL=OFF
+		-DCMAKE_DEBUG_POSTFIX=
+		-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+		-DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
+		-DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}
+		-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
+		-DBUILD_NETGEOGRAPHICLIB:BOOL=OFF
+		-DGEOGRAPHICLIB_DOCUMENTATION:BOOL=OFF
+		-DGEOGRAPHICLIB_LIB_TYPE:STRING=STATIC
+)
+#set (GeographicLib_Include ${GeographicLib_PREFIX}/src/geographiclib/include/)
+set (GeographicLib_Include ${CMAKE_BINARY_DIR}/include/)
+set(library_debug_suffix "")
+if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(library_debug_suffix "_d")
+	endif()
+endif()
+
+set (GeographicLib_Archive ${CMAKE_BINARY_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}Geographic${library_debug_suffix}${CMAKE_STATIC_LIBRARY_SUFFIX})
+message("GEOGRAPHICLIB ARCHIVE ${GeographicLib_Archive}")
+message("GEOGRAPHICLIB INCLUDE ${GeographicLib_Include}")
+
 # Target specific
 if (CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(dl_LIBRARY dl)
@@ -20,9 +51,6 @@ if (CMAKE_TARGET_OS STREQUAL "linux")
 elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	find_library(objc_LIBRARY objc)
 	find_library(Cocoa_LIBRARY Cocoa)
-	find_library(CoreGraphics_LIBRARY CoreGraphics)
-	find_library(CoreText_LIBRARY CoreText)
-	find_library(CoreFoundation_LIBRARY CoreFoundation)
 	find_library(CoreServices_LIBRARY CoreServices)
 	find_library(SystemConfiguration_LIBRARY SystemConfiguration)
 	find_library(CFNetwork_LIBRARY CFNetwork)
@@ -33,13 +61,10 @@ elseif (CMAKE_TARGET_OS STREQUAL "macosx")
 	if (CMAKE_TARGET_BUILD_TOOL STREQUAL "xcode")
 		set(library_suffix_tbd ".tbd")
 	endif()
-	message("LIBRARY SUFFIX ${library_suffix_tbd}")
+	
 	set(target_specific_public_libraries ${target_specific_public_libraries}
 		"${Cocoa_LIBRARY}/Cocoa${library_suffix_tbd}"
 		"${CoreServices_LIBRARY}/CoreServices${library_suffix_tbd}"
-		"${CoreText_LIBRARY}/CoreText${library_suffix_tbd}"
-		"${CoreGraphics_LIBRARY}/CoreGraphics${library_suffix_tbd}"
-		"${CoreFoundation_LIBRARY}/CoreFoundation${library_suffix_tbd}"
 		"${SystemConfiguration_LIBRARY}/SystemConfiguration${library_suffix_tbd}"
 		"${CFNetwork_LIBRARY}/CFNetwork${library_suffix_tbd}"
 		"${Security_LIBRARY}/Security${library_suffix_tbd}"
@@ -193,6 +218,7 @@ set(merged_sources
 	"protos/OBF.pb.h"
 )
 set(merged_dependencies
+	geographiclib
 	skia_static
 	protobuf_static
 	gdal_static
@@ -224,6 +250,7 @@ set(merged_include_dirs_private
 )
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
+	${GeographicLib_Include}
 	${target_specific_public_includes}
 )
 set(merged_link_libs_public
@@ -234,6 +261,7 @@ set(merged_link_libs_public
 	archive_static
 	glm_headers_only
 	boost_static_precompiled
+	${GeographicLib_Archive}
 	${target_specific_public_libraries}
 )
 
@@ -422,3 +450,6 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 			${merged_link_libs_public}
 	)
 endif()
+
+
+
