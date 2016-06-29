@@ -1194,7 +1194,7 @@ void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
     cis->ReadVarint32(&length);
     
     const auto oldLimit = cis->PushLimit(length);
-    cis->Skip(street->firstBuildingInnerOffset + (cis->CurrentPosition() - street->offset));
+    cis->Skip(street->firstBuildingInnerOffset - (cis->CurrentPosition() - street->offset));
 
     readBuildingsFromStreet(reader, street, resultOut, bbox31, visitor, queryController);
 
@@ -1217,7 +1217,7 @@ void OsmAnd::ObfAddressSectionReader_P::loadIntersectionsFromStreet(
     gpb::uint32 length;
     cis->ReadVarint32(&length);
     const auto oldLimit = cis->PushLimit(length);
-    cis->Skip(street->firstIntersectionInnerOffset + (cis->CurrentPosition() - street->offset));
+    cis->Skip(street->firstIntersectionInnerOffset - (cis->CurrentPosition() - street->offset));
 
     readIntersectionsFromStreet(reader, street, resultOut, bbox31, visitor, queryController);
 
