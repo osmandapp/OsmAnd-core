@@ -68,7 +68,6 @@ void OsmAnd::ObfAddressSectionReader_P::read(
             {
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
                 auto oldLimit = cis->PushLimit(length);
 
                 AreaI bbox31;
@@ -180,8 +179,8 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroupsFromBlock(
             case OBF::OsmAndAddressIndex_CitiesIndex::kCitiesFieldNumber:
             {
                 gpb::uint32 length;
-                cis->ReadVarint32(&length);
                 const auto offset = cis->CurrentPosition();
+                cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
@@ -326,8 +325,8 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetsFromGroup(
             case OBF::CityBlockIndex::kStreetsFieldNumber:
             {
                 gpb::uint32 length;
-                cis->ReadVarint32(&length);
                 const auto offset = cis->CurrentPosition();
+                cis->ReadVarint32(&length);
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<Street> street;
@@ -468,9 +467,9 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
                 return;
             case OBF::StreetIndex::kBuildingsFieldNumber:
             {
+                const auto offset = cis->CurrentPosition();
                 gpb::uint32 length;
                 cis->ReadVarint32(&length);
-                const auto offset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<Building> building;
@@ -831,14 +830,13 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
 
                             gpb::uint32 length;
                             cis->ReadVarint32(&length);
-                            const auto offset = cis->CurrentPosition();
                             const auto oldLimit = cis->PushLimit(length);
 
                             readStreetGroup(
                                 reader,
                                 section,
                                 static_cast<ObfAddressStreetGroupType>(ObfAddressStreetGroupType::Unknown),
-                                offset,
+                                indexReference.containerIndexOffset,
                                 streetGroup,
                                 nullptr,
                                 queryController);
@@ -850,13 +848,11 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                         std::shared_ptr<Street> street;
                         {
                             cis->Seek(indexReference.dataIndexOffset);
-
                             gpb::uint32 length;
                             cis->ReadVarint32(&length);
-                            const auto offset = cis->CurrentPosition();
                             const auto oldLimit = cis->PushLimit(length);
 
-                            readStreet(reader, streetGroup, offset, street, bbox31, queryController);
+                            readStreet(reader, streetGroup, indexReference.dataIndexOffset, street, bbox31, queryController);
 
                             ObfReaderUtilities::ensureAllDataWasRead(cis);
                             cis->PopLimit(oldLimit);
@@ -1194,10 +1190,7 @@ void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
     const std::shared_ptr<const IQueryController>& queryController)
 {
     const auto cis = reader.getCodedInputStream().get();
-    cis->Seek(street->streetGroup->obfSection->offset);
-    const auto oldLimit = cis->PushLimit(street->streetGroup->obfSection->length);
-    const auto innerOffset = street->offset - street->streetGroup->obfSection->offset;
-    cis->Skip(innerOffset);
+    cis->Seek(street->offset);
 
     {
         gpb::uint32 length;
@@ -1210,8 +1203,6 @@ void OsmAnd::ObfAddressSectionReader_P::loadBuildingsFromStreet(
         ObfReaderUtilities::ensureAllDataWasRead(cis);
         cis->PopLimit(oldLimit);
     }
-
-    cis->PopLimit(oldLimit);
 }
 
 void OsmAnd::ObfAddressSectionReader_P::loadIntersectionsFromStreet(
