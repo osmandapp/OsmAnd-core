@@ -210,18 +210,11 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double> > OsmAnd::RoadLoc
     const double radiusInMeters,
     const ObfRoutingSectionReader::VisitorFunction filter)
 {
-//    ObfRoutingSectionReader::VisitorFunction filterAndInRadiusFilter = [](const std::shared_ptr<const OsmAnd::Road>& road) {
-//        return (distanceToNearestRoadPoint > radiusInMeters) ? false : filter(road);
-//    };
-//    sortRoadsByDistance(collection, position31, [radiusInMeters, &filter](const std::shared_ptr<const OsmAnd::Road>& road) {
-//        return (distanceToNearestRoadPoint > radiusInMeters) ? false : filter(road);
-//    });
     auto result = sortedRoadsByDistance(collection, position31, filter);
     result.erase(std::remove_if(result.begin(), result.end(), [radiusInMeters](std::pair<std::shared_ptr<const Road>, double> roadAndDistance) {
          return roadAndDistance.second > radiusInMeters;
     }), result.end());
     return result;
-//    collection.erase(std::remove_if)
 }
 
 QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLocator_P::sortedRoadsByDistance(
@@ -271,11 +264,8 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLoca
     for (auto road : collection)
         if (!(road->points31.size() <= 1) || (filter && !filter(road)))
             result.append(std::make_pair(road, sqDistance(road)));
-//    collection.erase(std::remove_if(collection.begin(), collection.end(), [filter](std::shared_ptr<const Road> road) {
-//        return (road->points31.size() <= 1) || (filter && !filter(road));
-//    }), collection.end());
     std::sort(result.begin(), result.end(), [](std::pair<std::shared_ptr<const Road>, double> a, std::pair<std::shared_ptr<const Road>, double> b) {
-        return a.second > b.second;
+        return a.second < b.second;
     });
     return result;
 }

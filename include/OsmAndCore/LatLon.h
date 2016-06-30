@@ -12,7 +12,6 @@
 #include <QString>
 #include <QStringBuilder>
 
- 
 namespace OsmAnd
 {
     struct LatLon
@@ -37,10 +36,10 @@ namespace OsmAnd
             this->longitude = longitude;
         }
 
-		inline QString toQString() const
-		{
-			return QString::number(latitude) % ", " % QString::number(longitude);
-		}
+        inline QString toQString() const
+        {
+            return QString::number(latitude) % ", " % QString::number(longitude);
+        }
 
 #if !defined(SWIG)
         inline bool operator==(const LatLon& r) const

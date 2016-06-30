@@ -28,15 +28,16 @@ namespace OsmAnd
         virtual std::shared_ptr<const Road> findNearestRoad(
             const PointI position31,
             const double radiusInMeters,
-            const RoutingDataLevel dataLevel,
+            const RoutingDataLevel dataLevel = RoutingDataLevel::Detailed,
             const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr) const = 0;
         virtual QVector<std::pair<std::shared_ptr<const Road>, double>> findNearestRoads(
             const PointI position31,
             const double radiusInMeters,
-            const RoutingDataLevel dataLevel,
-            const ObfRoutingSectionReader::VisitorFunction filter = nullptr) const = 0;
+            const RoutingDataLevel dataLevel = RoutingDataLevel::Detailed,
+            const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
+            QList<std::shared_ptr<const ObfRoutingSectionReader::DataBlock>> * const outReferencedCacheEntries = nullptr) const = 0;
         virtual QList< std::shared_ptr<const Road> > findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
