@@ -15,7 +15,7 @@
 
 OsmAnd::LatLon decodeShortLinkString(QString s)
 {
-    auto intToBase64{QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_~")};
+    QString intToBase64{QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_~")};
     // convert old shortlink format to current one
     s = s.replace('@', '~');
     int i = 0;
