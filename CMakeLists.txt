@@ -234,6 +234,7 @@ set(merged_link_libs_public
 	archive_static
 	glm_headers_only
 	boost_static_precompiled
+	GeographicLib_STATIC
 	${target_specific_public_libraries}
 )
 
