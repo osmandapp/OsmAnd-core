@@ -9,8 +9,6 @@ set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")
 set(target_specific_dependencies "")
 
-find_package (GeographicLib 1.46 CONFIG REQUIRED)
-
 # Target specific
 if (CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(dl_LIBRARY dl)
@@ -235,8 +233,8 @@ set(merged_link_libs_public
 	icu4c_static
 	archive_static
 	glm_headers_only
-	${GeographicLib_LIBRARIES}
 	boost_static_precompiled
+	GeographicLib_STATIC
 	${target_specific_public_libraries}
 )
 

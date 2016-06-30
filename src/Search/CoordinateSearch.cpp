@@ -1,4 +1,6 @@
-#include <OsmAndCore/Search/CoordinateSearch.h>
+#include "CoordinateSearch.h"
+#include "Logging.h"
+
 #include <GeographicLib/GeoCoords.hpp>
 
 #include <QRegExp>
@@ -205,6 +207,8 @@ OsmAnd::LatLon OsmAnd::CoordinateSearch::search(QString const &query)
     }
     catch(GeographicLib::GeographicErr err)
     {
+        auto errString = QStringLiteral("Error occured during coordinate parsing: ") + err.what();
+        LogPrintf(LogSeverityLevel::Info, errString.toLatin1());
         return {};
     }
 }

@@ -1,3 +1,6 @@
+# External : geographiclib
+add_subdirectory("${OSMAND_ROOT}/core/externals/geographiclib" "core/externals/geographiclib")
+
 # External : z
 add_subdirectory("${OSMAND_ROOT}/core/externals/zlib" "core/externals/zlib")
 

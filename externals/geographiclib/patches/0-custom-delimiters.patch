@@ -1,5 +1,5 @@
---- upstream.original/src/DMS.cpp	2016-02-15 03:29:47.000000000 +0300
-+++ upstream.patched/src/DMS.cpp	2016-06-21 18:25:51.380937608 +0300
+--- ./src/DMS.cpp	2016-02-15 03:29:47.000000000 +0300
++++ ./src/DMS.cpp	2016-06-21 18:25:51.380937608 +0300
 @@ -10,6 +10,8 @@
  #include <GeographicLib/DMS.hpp>
  #include <GeographicLib/Utility.hpp>
@@ -18,7 +18,7 @@
 +      // Convert 1*2*3 -> 1:2:3, where * — any special symbol
 +      std::map<char, int> chars;
 +      for (char c : internal)
-+          if (!isalnum(c))
++          if (!isalnum(c) && c != ':')
 +              chars[c] = chars[c] + 1;
 +      for (auto const &e : chars)
 +          if (e.second > 1)
