@@ -33,7 +33,6 @@ void TestCoordinateSearch::search_data()
     QTest::newRow("latlon minutes seconds colon")                                     << "83:37:40.008 32:39:51.5\"W"                                                                                 << LatLon(83.62778, -32.66431);
     QTest::newRow("latlon minutes seconds single quotes separator")                   << "83'37'40.008 32'39'51.5\"W"                                                                                 << LatLon(83.62778, -32.66431);
     QTest::newRow("latlon minutes seconds double quotes separator")                   << "83\"37\"40.008 -32\"39\"51.5"                                                                               << LatLon(83.62778, -32.66431);
-    QTest::newRow("user bug")                                                         << "5747300 614452 31U"                                                                                         << LatLon(51.1455599, 6.1073498);
     QTest::newRow("MGRS")                                                             << "25XEN0415986552"                                                                                            << LatLon(83.62778, -32.66431);
     QTest::newRow("UTM/UPS")                                                          << "25n 504160 9286553"                                                                                         << LatLon(83.62778, -32.66427);
     QTest::newRow("geo int")                                                          << "geo:34,-106"                                                                                                << LatLon(34, -106);
@@ -62,8 +61,6 @@ void TestCoordinateSearch::search_data()
     QTest::newRow("here.com")                                                         << "https://www.here.com/location?map=52.5134272,13.3778416,16,normal&msg=Hannah-Arendt-Stra%C3%9Fe"            << LatLon(52.5134272, 13.3778416);
     QTest::newRow("here.com")                                                         << "https://www.here.com/?map=48.23145,16.38454,15,normal"                                                      << LatLon(48.23145, 16.38454);
     QTest::newRow("here.com")                                                         << "http://share.here.com/l/52.5134272,13.3778416,Hannah-Arendt-Stra%C3%9Fe?z=16.0&t=normal"                    << LatLon(52.5134272, 13.3778416);
-
-//            //
 
 //            // http://map.qq.com/AppBox/print/?t=&c=%7B%22base%22%3A%7B%22l%22%3A11%2C%22lat%22%3A39.90403%2C%22lng%22%3A116.407526%7D%7D
 //            z = 11;
@@ -198,9 +195,6 @@ void TestCoordinateSearch::search_data()
 //            z = GeoParsedPoint.NO_ZOOM;
 //            url = "http://www.amap.com/?q=" + dlat + "," + dlon + ",%E4%B8%8A%E6%B5v%B7%E5%B8%82%E6%B5%A6%E4%B8%9C%E6%96%B0%E5%8C%BA%E4%BA%91%E5%8F%B0%E8%B7%AF8086";
 //            System.out.println("\nurl: " + url);
-
-//
-
 }
 
 QString TestCoordinateSearch::LatLonToQString(LatLon const &latlon)
