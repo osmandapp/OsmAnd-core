@@ -32,7 +32,7 @@ void OsmAnd::ReverseGeocoder::performSearch(
     if (!criteria.latLon.isSet() && !criteria.position31.isSet())
         return;
     auto position31 = criteria.position31.isSet() ? *criteria.position31 : Utilities::convertLatLonTo31(*criteria.latLon);
-    auto roads = roadLocator->findNearestRoads(position31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS);
+    auto roads = roadLocator->findNearestRoads(position31, std::pow(STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS, 2));
     double distSquare = 0;
     QSet<ObfObjectId> set{};
     for (auto p : roads)
@@ -50,10 +50,10 @@ void OsmAnd::ReverseGeocoder::performSearch(
             ResultEntry result{road.getCaptionInNativeLanguage() % " (" % QString::number(std::sqrt(roadDistSquare)) % " m)"};
             newResultEntryCallback(criteria_, result);
         }
-        if (roadDistSquare > STOP_SEARCHING_STREET_WITH_MULTIPLIER_RADIUS * STOP_SEARCHING_STREET_WITH_MULTIPLIER_RADIUS &&
+        if (roadDistSquare > std::pow(STOP_SEARCHING_STREET_WITH_MULTIPLIER_RADIUS, 2) &&
                 distSquare != 0 && roadDistSquare > THRESHOLD_MULTIPLIER_SKIP_STREETS_AFTER * distSquare)
             break;
-        if (roadDistSquare > STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS)
+        if (roadDistSquare > std::pow(STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS, 2))
             break;
     }
 }

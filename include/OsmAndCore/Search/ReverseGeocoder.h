@@ -37,13 +37,13 @@ namespace OsmAnd
         struct OSMAND_CORE_API ResultEntry : public IResultEntry
         {
             ResultEntry(const QString address);
+
             QString address;
         };
 
         ReverseGeocoder(
                 const std::shared_ptr<const IObfsCollection>& obfsCollection,
                 const std::shared_ptr<const OsmAnd::IRoadLocator> &roadLocator);
-        virtual ~ReverseGeocoder();
 
         virtual void performSearch(
             const ISearch::Criteria& criteria,
