@@ -24,3 +24,8 @@ OsmAnd::Building::Building(const std::shared_ptr<const StreetGroup>& streetGroup
 OsmAnd::Building::~Building()
 {
 }
+
+QString OsmAnd::Building::toString() const
+{
+    return nativeName;
+}

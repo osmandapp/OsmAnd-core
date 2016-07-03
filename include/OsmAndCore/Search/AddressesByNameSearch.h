@@ -51,7 +51,7 @@ namespace OsmAnd
     private:
     protected:
     public:
-        AddressesByNameSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection);
+        explicit AddressesByNameSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection);
         virtual ~AddressesByNameSearch();
 
         virtual void performSearch(

@@ -20,6 +20,7 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
+#include <OsmAndCore/Nullable.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/LatLon.h>
@@ -234,6 +235,16 @@ namespace OsmAnd
                 qSin(dLon / 2.0) * qSin(dLon / 2.0);
             double c = 2.0 * qAtan2(qSqrt(a), qSqrt(1.0 - a));
             return R * c * 1000.0;
+        }
+
+        inline static double distance(const LatLon& a, const LatLon& b)
+        {
+            return distance(a.longitude, a.latitude, b.longitude, b.longitude);
+        }
+
+        inline static double distance(const Nullable<LatLon>& a, const Nullable<LatLon>& b)
+        {
+            return (a.isSet() && b.isSet()) ? distance(*a, *b) : NAN;
         }
 
         inline static double projection31(const int32_t x31a, const int32_t y31a, const int32_t x31b, const int32_t y31b, const int32_t x31c, const int32_t y31c)

@@ -9,3 +9,8 @@ OsmAnd::Address::Address(const std::shared_ptr<const ObfAddressSectionInfo>& obf
 OsmAnd::Address::~Address()
 {
 }
+
+QString OsmAnd::Address::toString() const
+{
+    return ADDRESS_TYPE_NAMES[addressType];
+}

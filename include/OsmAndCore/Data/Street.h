@@ -26,6 +26,7 @@ namespace OsmAnd
     public:
         Street(const std::shared_ptr<const StreetGroup>& streetGroup);
         virtual ~Street();
+        virtual QString toString() const;
 
         ObfObjectId id;
         QString nativeName;

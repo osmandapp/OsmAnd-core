@@ -2,6 +2,8 @@
 
 #include "StreetGroup.h"
 
+#include <QStringBuilder>
+
 OsmAnd::Street::Street(const std::shared_ptr<const StreetGroup>& streetGroup_)
     : Address(streetGroup_->obfSection, AddressType::Street)
     , streetGroup(streetGroup_)
@@ -14,4 +16,9 @@ OsmAnd::Street::Street(const std::shared_ptr<const StreetGroup>& streetGroup_)
 
 OsmAnd::Street::~Street()
 {
+}
+
+QString OsmAnd::Street::toString() const
+{
+    return QStringLiteral("str. ") % nativeName;
 }

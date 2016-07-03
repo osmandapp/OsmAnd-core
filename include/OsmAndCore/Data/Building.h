@@ -38,6 +38,7 @@ namespace OsmAnd
         Building(const std::shared_ptr<const Street>& street);
         Building(const std::shared_ptr<const StreetGroup>& streetGroup);
         virtual ~Building();
+        virtual QString toString() const;
 
         const std::shared_ptr<const Street> street;
         const std::shared_ptr<const StreetGroup> streetGroup;

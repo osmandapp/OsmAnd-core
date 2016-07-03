@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QHash>
+#include <QMap>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
@@ -25,6 +26,13 @@ namespace OsmAnd
         StreetIntersection
     };
 
+    static const QMap<AddressType, QString> ADDRESS_TYPE_NAMES{
+            {AddressType::StreetGroup, "Street group"},
+            {AddressType::Street, "Street"},
+            {AddressType::Building, "Building"},
+            {AddressType::StreetIntersection, "Street intersection"},
+    };
+
     class OSMAND_CORE_API Address
     {
         Q_DISABLE_COPY_AND_MOVE(Address);
@@ -34,6 +42,7 @@ namespace OsmAnd
         Address(const std::shared_ptr<const ObfAddressSectionInfo>& obfSection, const AddressType addressType);
     public:
         virtual ~Address();
+        virtual QString toString() const;
 
         const std::shared_ptr<const ObfAddressSectionInfo> obfSection;
         const AddressType addressType;

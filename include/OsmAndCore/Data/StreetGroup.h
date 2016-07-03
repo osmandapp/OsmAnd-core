@@ -26,6 +26,7 @@ namespace OsmAnd
     public:
         StreetGroup(const std::shared_ptr<const ObfAddressSectionInfo>& obfSection);
         virtual ~StreetGroup();
+        virtual QString toString() const;
 
         ObfObjectId id;
         ObfAddressStreetGroupType type;
