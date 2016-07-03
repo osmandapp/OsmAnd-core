@@ -91,6 +91,7 @@
 #include <OsmAndCore/Search/AmenitiesByNameSearch.h>
 #include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
 #include <OsmAndCore/Search/AddressesByNameSearch.h>
+#include <OsmAndCore/Search/ReverseGeocoder.h>
 #include "SwigUtilities.h"
 
 // To omit 'OsmAnd::' prefixes inside namespace itself in headers, use that namespace for SWIG
@@ -141,6 +142,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::AmenitiesInAreaSearch::Criteria)
 	%shared_ptr(OsmAnd::AddressesByNameSearch)
 	%shared_ptr(OsmAnd::AddressesByNameSearch::Criteria)
+    %shared_ptr(OsmAnd::ReverseGeocoder)
+    %shared_ptr(OsmAnd::ReverseGeocoder::Criteria)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource::Metadata)
 	%shared_ptr(OsmAnd::ResourcesManager::BuiltinResource)
@@ -377,4 +380,6 @@ using namespace OsmAnd;
 %include <OsmAndCore/Search/AmenitiesByNameSearch.h>
 %include <OsmAndCore/Search/AmenitiesInAreaSearch.h>
 %include <OsmAndCore/Search/AddressesByNameSearch.h>
+%include <OsmAndCore/Search/ReverseGeocoder.h>
+
 
