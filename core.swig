@@ -45,6 +45,7 @@
 #include <OsmAndCore/Data/Street.h>
 #include <OsmAndCore/Data/Building.h>
 #include <OsmAndCore/Data/StreetIntersection.h>
+#include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
@@ -85,6 +86,8 @@
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+#include <OsmAndCore/IRoadLocator.h>
+#include <OsmAndCore/RoadLocator.h>
 #include <OsmAndCore/IQueryController.h>
 #include <OsmAndCore/Search/ISearch.h>
 #include <OsmAndCore/Search/BaseSearch.h>
@@ -132,6 +135,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ObfPoiSectionSubtypes)
 	%shared_ptr(OsmAnd::ObfPoiSectionSubtype)
 	%shared_ptr(OsmAnd::ObfAddressSectionInfo)
+    %shared_ptr(OsmAnd::IRoadLocator)
+    %shared_ptr(OsmAnd::RoadLocator)
 	%shared_ptr(OsmAnd::IQueryController)
 	%shared_ptr(OsmAnd::ISearch)
 	%shared_ptr(OsmAnd::ISearch::Criteria)
@@ -336,6 +341,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/Street.h>
 %include <OsmAndCore/Data/Building.h>
 %include <OsmAndCore/Data/StreetIntersection.h>
+%include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
@@ -375,6 +381,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IOnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+%include <OsmAndCore/IRoadLocator.h>
+%include <OsmAndCore/RoadLocator.h>
 %include <OsmAndCore/IQueryController.h>
 %include <OsmAndCore/Search/ISearch.h>
 %include <OsmAndCore/Search/BaseSearch.h>
