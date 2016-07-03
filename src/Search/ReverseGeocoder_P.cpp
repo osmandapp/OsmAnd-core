@@ -61,18 +61,18 @@ void OsmAnd::ReverseGeocoder_P::performSearch(
     const ISearch::NewResultEntryCallback newResultEntryCallback,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
 {
-    const auto criteria = *dynamic_cast<const ReverseGeocoder::Criteria*>(&criteria_);
+    const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
     if (!criteria.latLon.isSet() && !criteria.position31.isSet())
         return;
     auto searchPoint = criteria.latLon.isSet() ? *criteria.latLon : Utilities::convert31ToLatLon(*criteria.position31);
-    QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> roads = reverseGeocodeToRoads(searchPoint);
-    std::shared_ptr<const ReverseGeocoder::ResultEntry> result = justifyResult(roads);
+    QVector<std::shared_ptr<const ResultEntry>> roads = reverseGeocodeToRoads(searchPoint);
+    std::shared_ptr<const ResultEntry> result = justifyResult(roads);
     newResultEntryCallback(criteria, *result);
 }
 
 bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
-        const std::shared_ptr<const ReverseGeocoder::ResultEntry>& a,
-        const std::shared_ptr<const ReverseGeocoder::ResultEntry>& b)
+        const std::shared_ptr<const ResultEntry>& a,
+        const std::shared_ptr<const ResultEntry>& b)
 {
     return a->getDistance() > b->getDistance();
 }
@@ -101,8 +101,8 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>& road,
         double knownMinBuildingDistance) const
 {
-    QVector<std::shared_ptr<ReverseGeocoder::ResultEntry>> streetList{};
-    QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> result{};
+    QVector<std::shared_ptr<ResultEntry>> streetList{};
+    QVector<std::shared_ptr<const ResultEntry>> result{};
     QStringList streetNamePacked = splitToWordsOrderedByLength(road->streetName);
     if (!streetNamePacked.isEmpty())
     {
@@ -124,7 +124,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             {
 ////                double d = Utilities::distance31(street->position31, position31);
 ////                if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
-                const std::shared_ptr<ReverseGeocoder::ResultEntry> rs = std::make_shared<ReverseGeocoder::ResultEntry>();
+                const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
                 rs->searchPoint = road->searchPoint;
                 rs->street = street;
                 // set connection point to sort
@@ -146,14 +146,14 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     {
         std::sort(streetList.begin(), streetList.end(), DISTANCE_COMPARATOR);
         double streetDistance = 0;
-        for (const std::shared_ptr<ReverseGeocoder::ResultEntry> street : streetList)
+        for (const std::shared_ptr<ResultEntry> street : streetList)
         {
             if (streetDistance == 0)
                 streetDistance = street->getDistance();
             else if (street->getDistance() > streetDistance + DISTANCE_STREET_FROM_CLOSEST_WITH_SAME_NAME)
                 continue;
             street->connectionPoint = road->connectionPoint;
-            QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> streetBuildings = loadStreetBuildings(road, street);
+            QVector<std::shared_ptr<const ResultEntry>> streetBuildings = loadStreetBuildings(road, street);
             std::sort(streetBuildings.begin(), streetBuildings.end(), DISTANCE_COMPARATOR);
             if (!streetBuildings.isEmpty())
             {
@@ -163,7 +163,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                     result.append(streetBuildings[0]);
                 }
                 std::find_if(std::next(streetBuildings.begin()), streetBuildings.end(),
-                             [&result, &knownMinBuildingDistance](const std::shared_ptr<const ReverseGeocoder::ResultEntry>& building){
+                             [&result, &knownMinBuildingDistance](const std::shared_ptr<const ResultEntry>& building){
                     bool stop = building->getDistance() > knownMinBuildingDistance * THRESHOLD_MULTIPLIER_SKIP_BUILDINGS_AFTER;
                     if (!stop)
                         result.append(building);
@@ -192,7 +192,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> road,
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> street) const
 {
-    QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> result{};
+    QVector<std::shared_ptr<const ResultEntry>> result{};
     const AreaI bbox{road->searchBbox()};
     auto const& dataInterface = owner->obfsCollection->obtainDataInterface(&bbox);
     QList<std::shared_ptr<const Street>> streets{street->street};
@@ -202,13 +202,13 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     for (const std::shared_ptr<const Building> b : buildings)
     {
         auto makeResult = [b, street, &result](){
-            auto bld = std::make_shared<ReverseGeocoder::ResultEntry>();
+            auto bld = std::make_shared<ResultEntry>();
             bld->searchPoint = street->searchPoint;
             bld->street = street->street;
             bld->streetGroup = street->streetGroup;
             bld->building = b;
             bld->connectionPoint = Utilities::convert31ToLatLon(b->position31);
-            result.append(std::static_pointer_cast<const ReverseGeocoder::ResultEntry>(bld));
+            result.append(std::static_pointer_cast<const ResultEntry>(bld));
             return bld;
         };
 
@@ -256,7 +256,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::ReverseGeocoder_P::reverseGeocodeToRoads(
         const LatLon searchPoint) const
 {
-    QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> result{};
+    QVector<std::shared_ptr<const ResultEntry>> result{};
     auto searchPoint31 = Utilities::convertLatLonTo31(searchPoint);
     auto roads = roadLocator->findNearestRoads(searchPoint31, std::pow(STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS, 2));
     double distSquare = 0;
@@ -273,7 +273,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         {
             if (distSquare == 0 || distSquare > roadDistSquare)
                 distSquare = roadDistSquare;
-            std::shared_ptr<ReverseGeocoder::ResultEntry> entry = std::make_shared<ReverseGeocoder::ResultEntry>();
+            std::shared_ptr<ResultEntry> entry = std::make_shared<ResultEntry>();
             entry->streetName = road->toString();
             entry->searchPoint = searchPoint;
             entry->dist = std::sqrt(roadDistSquare);
@@ -291,11 +291,11 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeocoder_P::justifyResult(
         QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> res) const
 {
-    QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> complete{};
+    QVector<std::shared_ptr<const ResultEntry>> complete{};
     double minBuildingDistance = 0;
-    for (std::shared_ptr<const ReverseGeocoder::ResultEntry> r : res)
+    for (std::shared_ptr<const ResultEntry> r : res)
     {
-        QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> justified = justifyReverseGeocodingSearch(r, minBuildingDistance);
+        QVector<std::shared_ptr<const ResultEntry>> justified = justifyReverseGeocodingSearch(r, minBuildingDistance);
         if (!justified.isEmpty())
         {
             double md = justified[0]->getDistance();
@@ -311,5 +311,5 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
         }
     }
     std::sort(complete.begin(), complete.end(), DISTANCE_COMPARATOR);
-    return !complete.isEmpty() ? complete[0] : std::make_shared<ReverseGeocoder::ResultEntry>();
+    return !complete.isEmpty() ? complete[0] : std::make_shared<ResultEntry>();
 }

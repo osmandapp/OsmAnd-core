@@ -11,41 +11,40 @@
 #include <QVector>
 #include <OsmAndCore/restore_internal_warnings.h>
 
-#include <OsmAndCore.h>
-#include <OsmAndCore/Data/StreetGroup.h>
-#include <OsmAndCore/Data/Street.h>
-#include <OsmAndCore/IObfsCollection.h>
-#include <OsmAndCore/IRoadLocator.h>
-#include <OsmAndCore/LatLon.h>
-#include <OsmAndCore/Nullable.h>
-#include <OsmAndCore/PointsAndAreas.h>
-#include <OsmAndCore/Search/AddressesByNameSearch.h>
-#include <OsmAndCore/Search/BaseSearch.h>
-#include <OsmAndCore/Search/ISearch.h>
-#include <OsmAndCore/Search/ReverseGeocoder.h>
+#include "OsmAndCore.h"
+#include "PrivateImplementation.h"
+#include "IRoadLocator.h"
+#include "LatLon.h"
+#include "AddressesByNameSearch.h"
+#include "ISearch.h"
+#include "ReverseGeocoder.h"
 
 namespace OsmAnd
 {
     class ReverseGeocoder_P Q_DECL_FINAL
     {
         Q_DISABLE_COPY_AND_MOVE(ReverseGeocoder_P)
+
+        using ResultEntry = ReverseGeocoder::ResultEntry;
+        using Criteria = ReverseGeocoder::Criteria;
+
     private:
         const std::shared_ptr<const IRoadLocator> roadLocator;
         AddressesByNameSearch* addressByNameSearch;
 
         static bool DISTANCE_COMPARATOR(
-                const std::shared_ptr<const ReverseGeocoder::ResultEntry> &a,
-                const std::shared_ptr<const ReverseGeocoder::ResultEntry> &b);
+                const std::shared_ptr<const ResultEntry> &a,
+                const std::shared_ptr<const ResultEntry> &b);
 
-        std::shared_ptr<const ReverseGeocoder::ResultEntry> justifyResult(
-                QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> res) const;
-        QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> justifyReverseGeocodingSearch(
-                const std::shared_ptr<const ReverseGeocoder::ResultEntry> &road,
+        std::shared_ptr<const ResultEntry> justifyResult(
+                QVector<std::shared_ptr<const ResultEntry>> res) const;
+        QVector<std::shared_ptr<const ResultEntry>> justifyReverseGeocodingSearch(
+                const std::shared_ptr<const ResultEntry> &road,
                 double knownMinBuildingDistance) const;
-        QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> loadStreetBuildings(
-                const std::shared_ptr<const ReverseGeocoder::ResultEntry> road,
-                const std::shared_ptr<const ReverseGeocoder::ResultEntry> street) const;
-        QVector<std::shared_ptr<const ReverseGeocoder::ResultEntry>> reverseGeocodeToRoads(
+        QVector<std::shared_ptr<const ResultEntry>> loadStreetBuildings(
+                const std::shared_ptr<const ResultEntry> road,
+                const std::shared_ptr<const ResultEntry> street) const;
+        QVector<std::shared_ptr<const ResultEntry>> reverseGeocodeToRoads(
                 const LatLon searchPoint) const;
     protected:
         ImplementationInterface<ReverseGeocoder> owner;
