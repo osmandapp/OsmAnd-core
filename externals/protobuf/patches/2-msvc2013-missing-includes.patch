@@ -1,17 +1,17 @@
 diff -rupN upstream.original/src/google/protobuf/io/zero_copy_stream_impl_lite.cc upstream.patched/src/google/protobuf/io/zero_copy_stream_impl_lite.cc
---- upstream.original/src/google/protobuf/io/zero_copy_stream_impl_lite.cc	2011-04-30 20:22:04.000000000 +0300
-+++ upstream.patched/src/google/protobuf/io/zero_copy_stream_impl_lite.cc	2014-04-17 10:45:48.580816600 +0300
+--- upstream.original/src/google/protobuf/io/zero_copy_stream_impl_lite.cc	2016-07-03 17:23:28.000000000 +0200
++++ upstream.patched/src/google/protobuf/io/zero_copy_stream_impl_lite.cc	2016-07-03 17:23:05.000000000 +0200
 @@ -32,6 +32,7 @@
  //  Based on original Protocol Buffers design by
  //  Sanjay Ghemawat, Jeff Dean, and others.
  
 +#include <algorithm>
- #include <google/protobuf/io/zero_copy_stream_impl.h>
+ #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
  #include <google/protobuf/stubs/common.h>
- #include <google/protobuf/stubs/stl_util-inl.h>
+ #include <google/protobuf/stubs/stl_util.h>
 diff -rupN upstream.original/src/google/protobuf/wire_format_lite_inl.h upstream.patched/src/google/protobuf/wire_format_lite_inl.h
---- upstream.original/src/google/protobuf/wire_format_lite_inl.h	2011-04-30 20:22:04.000000000 +0300
-+++ upstream.patched/src/google/protobuf/wire_format_lite_inl.h	2014-04-17 10:44:50.630266900 +0300
+--- upstream.original/src/google/protobuf/wire_format_lite_inl.h	2016-07-03 17:23:55.000000000 +0200
++++ upstream.patched/src/google/protobuf/wire_format_lite_inl.h	2016-07-03 17:18:39.000000000 +0200
 @@ -37,6 +37,7 @@
  #define GOOGLE_PROTOBUF_WIRE_FORMAT_LITE_INL_H__
  
