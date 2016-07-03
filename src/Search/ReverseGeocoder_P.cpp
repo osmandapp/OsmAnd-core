@@ -47,8 +47,9 @@ OsmAnd::ReverseGeocoder_P::ReverseGeocoder_P(
         const std::shared_ptr<const OsmAnd::IRoadLocator> &roadLocator_)
     : owner(owner_)
     , roadLocator(roadLocator_)
+    , addressByNameSearch(std::make_shared<AddressesByNameSearch>(owner_->obfsCollection))
 {
-    addressByNameSearch = new AddressesByNameSearch(owner_->obfsCollection);
+
 }
 
 OsmAnd::ReverseGeocoder_P::~ReverseGeocoder_P()
@@ -77,12 +78,12 @@ bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
     return a->getDistance() > b->getDistance();
 }
 
-QStringList splitToWordsOrderedByLength(const QString &streenName)
+QStringList splitToWordsOrderedByLength(const QString &streetName)
 {
-    QStringList result = streenName.split("[ ()]");
+    QStringList result = streetName.split("[ ()]");
     result.erase(std::remove_if(result.begin(), result.end(), [](const QString& word){
         return DEFAULT_SUFFIXES.contains(word);
-    }));
+    }), result.end());
     std::sort(result.begin(), result.end(), [](const QString& a, const QString& b){
         return (a.length() != b.length()) ? (a.length() > b.length()) : (a > b);
     });
@@ -274,7 +275,8 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             if (distSquare == 0 || distSquare > roadDistSquare)
                 distSquare = roadDistSquare;
             std::shared_ptr<ResultEntry> entry = std::make_shared<ResultEntry>();
-            entry->streetName = road->toString();
+            if (!road->captions.isEmpty())
+                entry->streetName = road->captions.values()[0];
             entry->searchPoint = searchPoint;
             entry->dist = std::sqrt(roadDistSquare);
             result.append(entry);

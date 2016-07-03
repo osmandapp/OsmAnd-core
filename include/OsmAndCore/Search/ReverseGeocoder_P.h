@@ -30,7 +30,7 @@ namespace OsmAnd
 
     private:
         const std::shared_ptr<const IRoadLocator> roadLocator;
-        AddressesByNameSearch* addressByNameSearch;
+        const std::shared_ptr<const AddressesByNameSearch> addressByNameSearch;
 
         static bool DISTANCE_COMPARATOR(
                 const std::shared_ptr<const ResultEntry> &a,
