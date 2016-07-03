@@ -43,20 +43,33 @@ const QStringList DEFAULT_SUFFIXES {
         QStringLiteral("вулиця")
 };
 
+OsmAnd::ReverseGeocoder::ReverseGeocoder(
+        const std::shared_ptr<const OsmAnd::IObfsCollection> &obfsCollection,
+        const std::shared_ptr<const OsmAnd::IRoadLocator> &roadLocator_)
+    : BaseSearch(obfsCollection), roadLocator(roadLocator_)
+{
+    addressByNameSearch = new AddressesByNameSearch(obfsCollection);
+}
+
+void OsmAnd::ReverseGeocoder::performSearch(
+    const ISearch::Criteria& criteria_,
+    const NewResultEntryCallback newResultEntryCallback,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
+{
+    const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
+    if (!criteria.latLon.isSet() && !criteria.position31.isSet())
+        return;
+    auto searchPoint = criteria.latLon.isSet() ? *criteria.latLon : Utilities::convert31ToLatLon(*criteria.position31);
+    QVector<std::shared_ptr<const ResultEntry>> roads = reverseGeocodeToRoads(searchPoint);
+    std::shared_ptr<const ResultEntry> result = justifyResult(roads);
+    newResultEntryCallback(criteria, *result);
+}
+
 bool OsmAnd::ReverseGeocoder::DISTANCE_COMPARATOR(
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>& a,
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>& b)
 {
     return a->getDistance() > b->getDistance();
-}
-
-OsmAnd::ReverseGeocoder::ReverseGeocoder(
-        const std::shared_ptr<const OsmAnd::IObfsCollection> &obfsCollection,
-        const std::shared_ptr<const OsmAnd::IRoadLocator> &roadLocator_)
-    : BaseSearch(obfsCollection),
-      roadLocator(roadLocator_)
-{
-    addressByNameSearch = new AddressesByNameSearch(obfsCollection);
 }
 
 QStringList splitToWordsOrderedByLength(const QString &streenName)
@@ -79,7 +92,7 @@ QString extractMainWord(const QStringList &streetNamePacked)
     return streetNamePacked[0];
 }
 
-std::shared_ptr<const OsmAnd::AreaI> OsmAnd::ReverseGeocoder::ResultEntry::searchBbox() const
+OsmAnd::AreaI OsmAnd::ReverseGeocoder::ResultEntry::searchBbox() const
 {
     LatLon topLeft = LatLon(
                 searchPoint->latitude - DISTANCE_STREET_NAME_PROXIMITY_BY_NAME,
@@ -87,7 +100,7 @@ std::shared_ptr<const OsmAnd::AreaI> OsmAnd::ReverseGeocoder::ResultEntry::searc
     LatLon bottomRight = LatLon(
                 searchPoint->latitude + DISTANCE_STREET_NAME_PROXIMITY_BY_NAME,
                 searchPoint->longitude + DISTANCE_STREET_NAME_PROXIMITY_BY_NAME);
-    return std::make_shared<const AreaI>(Utilities::convertLatLonTo31(topLeft), Utilities::convertLatLonTo31(bottomRight));
+    return AreaI(Utilities::convertLatLonTo31(topLeft), Utilities::convertLatLonTo31(bottomRight));
 }
 
 OsmAnd::Nullable<OsmAnd::PointI> OsmAnd::ReverseGeocoder::ResultEntry::searchPoint31() const
@@ -111,7 +124,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         criteria.name = mainWord;
         criteria.includeStreets = true;
         criteria.streetGroupTypesMask = OsmAnd::ObfAddressStreetGroupTypesMask{};
-        criteria.bbox31 = *road->searchBbox();
+        criteria.bbox31 = road->searchBbox();
         addressByNameSearch->performSearch(
                     criteria,
                     [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
@@ -191,7 +204,8 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> street) const
 {
     QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> result{};
-    auto const& dataInterface = obfsCollection->obtainDataInterface(road->searchBbox().get());
+    const AreaI bbox{road->searchBbox()};
+    auto const& dataInterface = obfsCollection->obtainDataInterface(&bbox);
     QList<std::shared_ptr<const Street>> streets{street->street};
     QHash<std::shared_ptr<const Street>, QList<std::shared_ptr<const Building>>> buildingsForStreet{};
     dataInterface->loadBuildingsFromStreets(streets, &buildingsForStreet);
@@ -286,7 +300,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 }
 
 std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeocoder::justifyResult(
-        QVector<std::shared_ptr<OsmAnd::ReverseGeocoder::ResultEntry>> res) const
+        QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> res) const
 {
     QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> complete{};
     double minBuildingDistance = 0;
@@ -309,19 +323,6 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
     }
     std::sort(complete.begin(), complete.end(), DISTANCE_COMPARATOR);
     return !complete.isEmpty() ? complete[0] : std::make_shared<ResultEntry>();
-}
-
-void OsmAnd::ReverseGeocoder::performSearch(
-    const ISearch::Criteria& criteria_,
-    const NewResultEntryCallback newResultEntryCallback,
-    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/) const
-{
-    const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
-    if (!criteria.latLon.isSet() && !criteria.position31.isSet())
-        return;
-    auto searchPoint = criteria.latLon.isSet() ? *criteria.latLon : Utilities::convert31ToLatLon(*criteria.position31);
-    QVector<std::shared_ptr<const ResultEntry>> roads = reverseGeocodeToRoads(searchPoint);
-
 }
 
 double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const

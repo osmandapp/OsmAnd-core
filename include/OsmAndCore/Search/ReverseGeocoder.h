@@ -11,16 +11,15 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/Data/Street.h>
 #include <OsmAndCore/Data/StreetGroup.h>
-#include <OsmAndCore/PointsAndAreas.h>
-#include <OsmAndCore/Nullable.h>
+#include <OsmAndCore/Data/Street.h>
 #include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/IRoadLocator.h>
+#include <OsmAndCore/LatLon.h>
+#include <OsmAndCore/Nullable.h>
+#include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Search/AddressesByNameSearch.h>
 #include <OsmAndCore/Search/BaseSearch.h>
-#include <OsmAndCore/LatLon.h>
-#include <OsmAndCore/IRoadLocator.h>
-
 
 namespace OsmAnd
 {
@@ -51,7 +50,7 @@ namespace OsmAnd
             std::shared_ptr<const StreetGroup> streetGroup;
 
             double getDistance() const;
-            std::shared_ptr<const AreaI> searchBbox() const;
+            AreaI searchBbox() const;
             Nullable<PointI> searchPoint31() const;
             void setDistance(double dist);
             QString toString() const;
@@ -69,7 +68,7 @@ namespace OsmAnd
             double dist = NAN;
         };
 
-        ReverseGeocoder(
+        explicit ReverseGeocoder(
                 const std::shared_ptr<const IObfsCollection>& obfsCollection,
                 const std::shared_ptr<const OsmAnd::IRoadLocator> &roadLocator);
 
@@ -85,8 +84,7 @@ namespace OsmAnd
                 const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> &b);
 
         AddressesByNameSearch* addressByNameSearch;
-        std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> justifyResult(
-                QVector<std::shared_ptr<OsmAnd::ReverseGeocoder::ResultEntry>> res) const;
+        std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> justifyResult(QVector<std::shared_ptr<const ResultEntry> > res) const;
         QVector<std::shared_ptr<const ResultEntry> > justifyReverseGeocodingSearch(
                 const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> &road,
                 double knownMinBuildingDistance) const;
