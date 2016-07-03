@@ -144,6 +144,7 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::AddressesByNameSearch::Criteria)
     %shared_ptr(OsmAnd::ReverseGeocoder)
     %shared_ptr(OsmAnd::ReverseGeocoder::Criteria)
+    %shared_ptr(OsmAnd::ReverseGeocoder::ResultEntry)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource::Metadata)
 	%shared_ptr(OsmAnd::ResourcesManager::BuiltinResource)
