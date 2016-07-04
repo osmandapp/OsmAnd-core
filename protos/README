@@ -1,0 +1,3 @@
+Execute
+../../resources/protos/proto_generate.sh
+../externals/protobuf/patches/3-rename-namespace.sh 
