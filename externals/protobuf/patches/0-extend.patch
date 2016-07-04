@@ -1,7 +1,7 @@
 diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.patched/src/google/protobuf/io/coded_stream.cc
 --- upstream.original/src/google/protobuf/io/coded_stream.cc  2011-04-30 20:22:04.000000000 +0300
 +++ upstream.patched/src/google/protobuf/io/coded_stream.cc  2012-11-21 03:23:18.872394600 +0200
-@@ -175,6 +175,20 @@ void CodedInputStream::PrintTotalBytesLi
+@@ -175,6 +175,21 @@ void CodedInputStream::PrintTotalBytesLi
                  "in google/protobuf/io/coded_stream.h.";
  }
  
@@ -12,8 +12,9 @@ diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.pat
 +  } else {
 +    buffer_ = NULL;
 +    buffer_end_ = NULL;
++    buffer_size_after_limit_ = 0;
 +    input_->BackUp(total_bytes_read_ - filePointer);
-+    total_bytes_read_ -= filePointer;
++    total_bytes_read_ = filePointer;
 +    return Refresh();
 +  }
 +}
@@ -22,7 +23,7 @@ diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.pat
  bool CodedInputStream::Skip(int count) {
    if (count < 0) return false;  // security: count is often user-supplied
  
-@@ -419,6 +433,12 @@ uint32 CodedInputStream::ReadTagFallback
+@@ -419,6 +434,12 @@ uint32 CodedInputStream::ReadTagFallback
    }
  }
  
