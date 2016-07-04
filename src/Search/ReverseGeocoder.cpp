@@ -28,6 +28,14 @@ void OsmAnd::ReverseGeocoder::performSearch(
     return _p->performSearch(criteria_, newResultEntryCallback, queryController);
 }
 
+OsmAnd::ReverseGeocoder::ResultEntry::ResultEntry()
+{
+}
+
+OsmAnd::ReverseGeocoder::ResultEntry::~ResultEntry()
+{
+}
+
 OsmAnd::AreaI OsmAnd::ReverseGeocoder::ResultEntry::searchBbox() const
 {
     LatLon topLeft = LatLon(
@@ -42,11 +50,6 @@ OsmAnd::AreaI OsmAnd::ReverseGeocoder::ResultEntry::searchBbox() const
 OsmAnd::Nullable<OsmAnd::PointI> OsmAnd::ReverseGeocoder::ResultEntry::searchPoint31() const
 {
     return searchPoint.isSet() ? Nullable<PointI>(Utilities::convertLatLonTo31(*searchPoint)) : Nullable<PointI>();
-}
-
-OsmAnd::ReverseGeocoder::ResultEntry::ResultEntry()
-{
-
 }
 
 double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
@@ -68,3 +71,12 @@ QString OsmAnd::ReverseGeocoder::ResultEntry::toString() const
             (streetGroup ?           QStringLiteral(" ") % streetGroup->toString() : QString()) %
             (!isnan(getDistance()) ? QStringLiteral(" dist=") % QString::number(getDistance()) : QString());
 }
+
+OsmAnd::ReverseGeocoder::Criteria::Criteria()
+{
+}
+
+OsmAnd::ReverseGeocoder::Criteria::~Criteria()
+{
+}
+

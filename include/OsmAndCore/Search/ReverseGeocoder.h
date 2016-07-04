@@ -33,6 +33,9 @@ namespace OsmAnd
     public:
         struct OSMAND_CORE_API Criteria : public BaseSearch::Criteria
         {
+            Criteria();
+            virtual ~Criteria();
+
             Nullable<LatLon> latLon;
             Nullable<PointI> position31;
         };
@@ -41,6 +44,7 @@ namespace OsmAnd
         {
         public:
             ResultEntry();
+            virtual ~ResultEntry();
 
             Nullable<LatLon> searchPoint;
 

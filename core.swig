@@ -149,7 +149,6 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::AddressesByNameSearch::Criteria)
     %shared_ptr(OsmAnd::ReverseGeocoder)
     %shared_ptr(OsmAnd::ReverseGeocoder::Criteria)
-    %shared_ptr(OsmAnd::ReverseGeocoder::ResultEntry)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource)
 	%shared_ptr(OsmAnd::ResourcesManager::Resource::Metadata)
 	%shared_ptr(OsmAnd::ResourcesManager::BuiltinResource)
@@ -297,9 +296,11 @@ using namespace OsmAnd;
 //	%template(OOBBI64) OsmAnd::OOBB<int64_t>;
 	%template(OOBBF) OsmAnd::OOBB<float>;
 	%template(OOBBD) OsmAnd::OOBB<double>;
+%include <OsmAndCore/LatLon.h>
 %include <OsmAndCore/Nullable.h>
 	%template(NullableAreaI) OsmAnd::Nullable<OsmAnd::Area<int32_t>>;
-%include <OsmAndCore/LatLon.h>
+    %template(NullablePointI) OsmAnd::Nullable<OsmAnd::Point<int32_t>>;
+    %template(NullableLatLon) OsmAnd::Nullable<OsmAnd::LatLon>;
 %include <OsmAndCore/Bitmask.h>
 	%template(MapRendererStateChanges) OsmAnd::Bitmask<OsmAnd::MapRendererStateChange, unsigned int>;
 	%template(ObfDataTypesMask) OsmAnd::Bitmask<OsmAnd::ObfDataType, unsigned int>;
