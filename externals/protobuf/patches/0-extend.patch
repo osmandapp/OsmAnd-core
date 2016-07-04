@@ -14,7 +14,7 @@ diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.pat
 +    buffer_end_ = NULL;
 +    buffer_size_after_limit_ = 0;
 +    input_->BackUp(total_bytes_read_ - filePointer);
-+    total_bytes_read_ -= filePointer;
++    total_bytes_read_ = filePointer;
 +    return Refresh();
 +  }
 +}
