@@ -80,7 +80,8 @@ add_library(protobuf_static STATIC
 	"upstream.patched/src/google/protobuf/repeated_field.cc"
 	"upstream.patched/src/google/protobuf/stubs/common.cc"
 	"upstream.patched/src/google/protobuf/stubs/once.cc"
-	"upstream.patched/src/google/protobuf/wire_format_lite.cc"
+	"upstream.patched/src/google/protobuf/stubs/atomicops_internals_x86_gcc.cc"
+	"upstream.patched/src/google/protobuf/wire_format_lite.cc"	
 )
 
 set(target_specific_private_definitions "")
