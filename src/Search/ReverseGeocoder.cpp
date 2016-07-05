@@ -78,4 +78,3 @@ OsmAnd::ReverseGeocoder::Criteria::Criteria()
 OsmAnd::ReverseGeocoder::Criteria::~Criteria()
 {
 }
-
