@@ -4,8 +4,6 @@
 #include "AddressesByNameSearch.h"
 #include "Utilities.h"
 
-const float DISTANCE_STREET_NAME_PROXIMITY_BY_NAME = 15000;
-
 OsmAnd::ReverseGeocoder::ReverseGeocoder(
         const std::shared_ptr<const OsmAnd::IObfsCollection> &obfsCollection,
         const std::shared_ptr<const OsmAnd::IRoadLocator> &roadLocator_)

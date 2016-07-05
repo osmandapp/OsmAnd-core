@@ -52,7 +52,13 @@ namespace OsmAnd
             const ObfRoutingSectionReader::VisitorFunction filter,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint) const;
-        QList< std::shared_ptr<const Road> > findRoadsInArea(
+        QVector<std::pair<std::shared_ptr<const Road>, double>> findNearestRoads(
+            const PointI position31,
+            const double radiusInMeters,
+            const RoutingDataLevel dataLevel,
+            const ObfRoutingSectionReader::VisitorFunction filter,
+            QList<std::shared_ptr<const ObfRoutingSectionReader::DataBlock>>* const outReferencedCacheEntries) const;
+        QList<std::shared_ptr<const Road>> findRoadsInArea(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,

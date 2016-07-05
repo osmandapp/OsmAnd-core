@@ -58,7 +58,6 @@ namespace OsmAnd
             std::shared_ptr<const StreetGroup> streetGroup;
 
             double getDistance() const;
-            AreaI searchBbox() const;
             Nullable<PointI> searchPoint31() const;
             void setDistance(double dist);
             QString toString() const;

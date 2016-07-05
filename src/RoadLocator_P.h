@@ -57,7 +57,7 @@ namespace OsmAnd
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const;
 
         static std::shared_ptr<const Road> findNearestRoad(
-            const QList< std::shared_ptr<const Road> >& collection,
+            const QList<std::shared_ptr<const Road>>& collection,
             const PointI position31,
             const double radiusInMeters,
             const ObfRoutingSectionReader::VisitorFunction filter,

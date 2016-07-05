@@ -15,6 +15,7 @@ const float STOP_SEARCHING_STREET_WITH_MULTIPLIER_RADIUS = 250;
 const float STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS = 400;
 
 const float DISTANCE_STREET_FROM_CLOSEST_WITH_SAME_NAME = 1000;
+const float DISTANCE_STREET_NAME_PROXIMITY_BY_NAME = 15000;
 
 const float THRESHOLD_MULTIPLIER_SKIP_BUILDINGS_AFTER = 1.5f;
 const float DISTANCE_BUILDING_PROXIMITY = 100;
@@ -114,7 +115,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         criteria.name = mainWord;
         criteria.includeStreets = true;
         criteria.streetGroupTypesMask = OsmAnd::ObfAddressStreetGroupTypesMask{};
-        criteria.bbox31 = road->searchBbox();
+        criteria.bbox31 = Nullable<AreaI>(Utilities::boundingBox31FromAreaInMeters<AreaI>(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31()));
         addressByNameSearch->performSearch(
                     criteria,
                     [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
@@ -194,7 +195,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> street) const
 {
     QVector<std::shared_ptr<const ResultEntry>> result{};
-    const AreaI bbox{road->searchBbox()};
+    const AreaI bbox = Utilities::boundingBox31FromAreaInMeters<AreaI>(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31());
     auto const& dataInterface = owner->obfsCollection->obtainDataInterface(&bbox);
     QList<std::shared_ptr<const Street>> streets{street->street};
     QHash<std::shared_ptr<const Street>, QList<std::shared_ptr<const Building>>> buildingsForStreet{};
