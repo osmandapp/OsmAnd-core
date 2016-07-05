@@ -34,17 +34,6 @@ OsmAnd::ReverseGeocoder::ResultEntry::~ResultEntry()
 {
 }
 
-OsmAnd::AreaI OsmAnd::ReverseGeocoder::ResultEntry::searchBbox() const
-{
-    LatLon topLeft = LatLon(
-                searchPoint->latitude - DISTANCE_STREET_NAME_PROXIMITY_BY_NAME,
-                searchPoint->longitude - DISTANCE_STREET_NAME_PROXIMITY_BY_NAME);
-    LatLon bottomRight = LatLon(
-                searchPoint->latitude + DISTANCE_STREET_NAME_PROXIMITY_BY_NAME,
-                searchPoint->longitude + DISTANCE_STREET_NAME_PROXIMITY_BY_NAME);
-    return AreaI(Utilities::convertLatLonTo31(topLeft), Utilities::convertLatLonTo31(bottomRight));
-}
-
 OsmAnd::Nullable<OsmAnd::PointI> OsmAnd::ReverseGeocoder::ResultEntry::searchPoint31() const
 {
     return searchPoint.isSet() ? Nullable<PointI>(Utilities::convertLatLonTo31(*searchPoint)) : Nullable<PointI>();
