@@ -536,8 +536,7 @@ namespace OsmAnd
         }
         
 #if !defined(SWIG)
-        template<typename T>
-        inline static T boundingBox31FromAreaInMeters(const double radiusInMeters, const PointI center31)
+        inline static AreaI64 boundingBox31FromAreaInMeters(const double radiusInMeters, const PointI center31)
         {
             const auto metersPerUnit = getMetersPerTileUnit(
                 ZoomLevel31,
@@ -545,7 +544,7 @@ namespace OsmAnd
                 1);
             const auto size = static_cast<int32_t>((radiusInMeters / metersPerUnit) * 2.0);
 
-            return T::fromCenterAndSize(center31.x, center31.y, size, size);
+            return AreaI64::fromCenterAndSize(center31.x, center31.y, size, size);
         }
 #endif // !defined(SWIG)
 

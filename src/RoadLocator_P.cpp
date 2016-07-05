@@ -24,7 +24,7 @@ QList<std::shared_ptr<const OsmAnd::Road>> OsmAnd::RoadLocator_P::roadsInRadius(
 {
     QList<std::shared_ptr<const Road>> result;
 
-    const auto bbox31 = Utilities::boundingBox31FromAreaInMeters<AreaI>(radiusInMeters, position31);
+    const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
     const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(
         &bbox31,
         MinZoomLevel,

@@ -28,7 +28,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::CachingRoadLocator_P::findNearestRoa
 {
     QList< std::shared_ptr<const Road> > roadsInBBox;
 
-    const auto bbox31 = Utilities::boundingBox31FromAreaInMeters<AreaI>(radiusInMeters, position31);
+    const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
     const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(
         &bbox31,
         MinZoomLevel,
@@ -80,7 +80,7 @@ QList< std::shared_ptr<const OsmAnd::Road> > OsmAnd::CachingRoadLocator_P::findR
 {
     QList< std::shared_ptr<const Road> > roadsInBBox;
 
-    const auto bbox31 = Utilities::boundingBox31FromAreaInMeters<AreaI>(radiusInMeters, position31);
+    const auto bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(radiusInMeters, position31);
     const auto obfDataInterface = owner->obfsCollection->obtainDataInterface(
         &bbox31,
         MinZoomLevel,

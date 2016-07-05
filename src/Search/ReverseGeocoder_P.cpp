@@ -115,7 +115,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         criteria.name = mainWord;
         criteria.includeStreets = true;
         criteria.streetGroupTypesMask = OsmAnd::ObfAddressStreetGroupTypesMask{};
-        criteria.bbox31 = Nullable<AreaI>(Utilities::boundingBox31FromAreaInMeters<AreaI>(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31()));
+        criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31()));
         addressByNameSearch->performSearch(
                     criteria,
                     [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
@@ -195,7 +195,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> street) const
 {
     QVector<std::shared_ptr<const ResultEntry>> result{};
-    const AreaI bbox = Utilities::boundingBox31FromAreaInMeters<AreaI>(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31());
+    const AreaI bbox = (AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31());
     auto const& dataInterface = owner->obfsCollection->obtainDataInterface(&bbox);
     QList<std::shared_ptr<const Street>> streets{street->street};
     QHash<std::shared_ptr<const Street>, QList<std::shared_ptr<const Building>>> buildingsForStreet{};
