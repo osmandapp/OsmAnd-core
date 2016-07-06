@@ -842,6 +842,9 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                             cis->PopLimit(oldLimit);
                         }
                         
+                        if (!streetGroup)
+                            continue;
+
                         std::shared_ptr<Street> street;
                         {
                             cis->Seek(indexReference.dataIndexOffset);
@@ -855,6 +858,9 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                             cis->PopLimit(oldLimit);
                         }
 
+                        if (!street)
+                            continue;
+                        
                         if (!query.isNull())
                         {
                             bool accept = false;
