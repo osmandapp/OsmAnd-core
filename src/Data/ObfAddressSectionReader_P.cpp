@@ -816,7 +816,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                 for (const auto& indexReference : constOf(indexReferences))
                 {
                     std::shared_ptr<Address> address;
-                    if(dataIndexOffset == indexReference.dataIndexOffset) {
+                    if (dataIndexOffset == indexReference.dataIndexOffset) {
                         continue;
                     }
                     if (indexReference.addressType == AddressNameIndexDataAtomType::Street)

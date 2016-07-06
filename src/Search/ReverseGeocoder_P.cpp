@@ -302,14 +302,7 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
         if (!justified.isEmpty())
         {
             double md = justified[0]->getDistance();
-            if (minBuildingDistance == 0)
-            {
-                minBuildingDistance = md;
-            }
-            else
-            {
-                minBuildingDistance = std::min(md, minBuildingDistance);
-            }
+            minBuildingDistance = (minBuildingDistance == 0) ? md : std::min(md, minBuildingDistance);
             complete << justified;
         }
     }
