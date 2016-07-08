@@ -546,6 +546,11 @@ namespace OsmAnd
 
             return AreaI64::fromCenterAndSize(center31.x, center31.y, size, size);
         }
+
+        inline static AreaI boundingBox31FromLatLon(const LatLon topLeft, const LatLon bottomRight)
+        {
+            return AreaI(Utilities::convertLatLonTo31(topLeft), Utilities::convertLatLonTo31(bottomRight));
+        }
 #endif // !defined(SWIG)
 
         inline static AreaI tileBoundingBox31(const TileId tileId, const ZoomLevel zoom)

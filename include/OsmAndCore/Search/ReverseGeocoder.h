@@ -72,9 +72,11 @@ namespace OsmAnd
         virtual ~ReverseGeocoder();
 
         virtual void performSearch(
-            const ISearch::Criteria& criteria,
-            const NewResultEntryCallback newResultEntryCallback,
+                const ISearch::Criteria& criteria,
+                const NewResultEntryCallback newResultEntryCallback,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
+        QVector<OsmAnd::ReverseGeocoder::ResultEntry> performSearch(
+                const Criteria &criteria) const;
     };
 }
 

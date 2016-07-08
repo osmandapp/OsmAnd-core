@@ -44,6 +44,15 @@ namespace OsmAnd
         {
             ResultEntry();
             virtual ~ResultEntry();
+            inline bool operator ==(const ResultEntry& other) const
+            {
+                return this->address == other.address;
+            }
+
+            inline bool operator !=(const ResultEntry& other) const
+            {
+                return !(*this == other);
+            }
 
             std::shared_ptr<const Address> address;
         };
@@ -58,6 +67,8 @@ namespace OsmAnd
             const ISearch::Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,
             const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
+        QVector<ResultEntry> performSearch(
+                const Criteria &criteria) const;
     };
 }
 

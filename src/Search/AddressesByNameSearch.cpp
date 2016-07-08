@@ -179,6 +179,19 @@ void OsmAnd::AddressesByNameSearch::performSearch(
     }
 }
 
+QVector<OsmAnd::AddressesByNameSearch::ResultEntry> OsmAnd::AddressesByNameSearch::performSearch(
+        const OsmAnd::AddressesByNameSearch::Criteria& criteria) const
+{
+    QVector<ResultEntry> result{};
+    performSearch(
+                criteria,
+                [&result](const OsmAnd::ISearch::Criteria& criteria, const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
+        result.append(static_cast<const ResultEntry&>(resultEntry));
+    });
+    return result;
+
+}
+
 OsmAnd::AddressesByNameSearch::Criteria::Criteria()
     : streetGroupTypesMask(fullObfAddressStreetGroupTypesMask())
     , includeStreets(true)
