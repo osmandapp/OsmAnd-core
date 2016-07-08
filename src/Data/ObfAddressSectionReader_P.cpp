@@ -881,25 +881,29 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                     else
                     {
                         std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
+                        {
+                            cis->Seek(indexReference.dataIndexOffset);
 
-                        cis->Seek(indexReference.dataIndexOffset);
+                            gpb::uint32 length;
+                            const auto offset = cis->CurrentPosition();
+                            cis->ReadVarint32(&length);
+                            const auto oldLimit = cis->PushLimit(length);
 
-                        gpb::uint32 length;
-                        const auto offset = cis->CurrentPosition();
-                        cis->ReadVarint32(&length);
-                        const auto oldLimit = cis->PushLimit(length);
+                            readStreetGroup(
+                                reader,
+                                section,
+                                static_cast<ObfAddressStreetGroupType>(indexReference.addressType),
+                                offset,
+                                streetGroup,
+                                bbox31,
+                                queryController);
 
-                        readStreetGroup(
-                            reader,
-                            section,
-                            static_cast<ObfAddressStreetGroupType>(indexReference.addressType),
-                            offset,
-                            streetGroup,
-                            bbox31,
-                            queryController);
+                            ObfReaderUtilities::ensureAllDataWasRead(cis);
+                            cis->PopLimit(oldLimit);
+                        }
 
-                        ObfReaderUtilities::ensureAllDataWasRead(cis);
-                        cis->PopLimit(oldLimit);
+                        if (!streetGroup)
+                            continue;
 
                         if (!query.isNull())
                         {
