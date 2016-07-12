@@ -9,6 +9,16 @@ set(target_specific_public_libraries "")
 set(target_specific_private_definitions "")
 set(target_specific_dependencies "")
 
+
+#set(Boost_USE_STATIC_LIBS        ON) # only find static libs
+set(Boost_USE_MULTITHREADED      ON)
+set(Boost_USE_STATIC_RUNTIME    OFF)
+find_package(Boost 1.61.0 COMPONENTS atomic context coroutine system thread)
+if (Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+endif()
+
+
 # Target specific
 if (CMAKE_TARGET_OS STREQUAL "linux")
 	find_library(dl_LIBRARY dl)
@@ -235,6 +245,7 @@ set(merged_link_libs_public
 	glm_headers_only
 	boost_static_precompiled
 	GeographicLib_STATIC
+    ${Boost_LIBRARIES}
 	${target_specific_public_libraries}
 )
 

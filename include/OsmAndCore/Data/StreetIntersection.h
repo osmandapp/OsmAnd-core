@@ -12,7 +12,7 @@
 
 namespace OsmAnd
 {
-    class Street;
+    class ObfStreet;
 
     class OSMAND_CORE_API StreetIntersection Q_DECL_FINAL : public Address
     {
@@ -21,10 +21,10 @@ namespace OsmAnd
     private:
     protected:
     public:
-        StreetIntersection(const std::shared_ptr<const Street>& street);
+        StreetIntersection(const std::shared_ptr<const ObfStreet>& street);
         virtual ~StreetIntersection();
 
-        const std::shared_ptr<const Street> street;
+        const std::shared_ptr<const ObfStreet> street;
 
         QString nativeName;
         QHash<QString, QString> localizedNames;

@@ -11,6 +11,7 @@
 #include <google/protobuf/wire_format_lite.h>
 #include "restore_internal_warnings.h"
 
+#include "ObfAddressSectionReader.h"
 #include "ObfSectionInfo.h"
 #include "Logging.h"
 
@@ -85,7 +86,7 @@ void OsmAnd::ObfReaderUtilities::readStringTable(gpb::io::CodedInputStream* cis,
 
 int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
     gpb::io::CodedInputStream* cis,
-    const QString& query,
+    const ObfAddressSectionReader::Filter& filter,
     QVector<uint32_t>& outValues,
     const QString& keysPrefix /*= QString::null*/,
     const int matchedCharactersCount_ /*= 0*/)
@@ -109,19 +110,19 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 if (!keysPrefix.isEmpty())
                     key.prepend(keysPrefix);
 
-                if (key.startsWith(query, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                if (filter.matches(key, OsmAnd::STARTS_WITH)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
                 {
-                    if (query.size() > matchedCharactersCount)
+                    if (filter.name().size() > matchedCharactersCount)
                     {
-                        matchedCharactersCount = query.length();
+                        matchedCharactersCount = filter.name().length();
                         outValues.clear();
                     }
-                    else if (query.size() < matchedCharactersCount)
+                    else if (filter.name().size() < matchedCharactersCount)
                     {
-                        key = QString::null;
+                        key = QString{};
                     }
                 }
-                else if (query.startsWith(key, Qt::CaseInsensitive)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                else if (filter.matches(key, OsmAnd::STARTS_WITH)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
                 {
                     if (key.size() > matchedCharactersCount)
                     {
@@ -130,12 +131,12 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                     }
                     else if (key.size() < matchedCharactersCount)
                     {
-                        key = QString::null;
+                        key = QString{};
                     }
                 }
                 else
                 {
-                    key = QString::null;
+                    key = QString{};
                 }
                 break;
             }
@@ -153,7 +154,7 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 const auto oldLimit = cis->PushLimit(length);
 
                 if (!key.isNull())
-                    matchedCharactersCount = scanIndexedStringTable(cis, query, outValues, key, matchedCharactersCount);
+                    matchedCharactersCount = scanIndexedStringTable(cis, filter, outValues, key, matchedCharactersCount);
                 else
                     cis->Skip(cis->BytesUntilLimit());
 

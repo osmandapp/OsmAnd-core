@@ -15,7 +15,7 @@
 
 namespace OsmAnd
 {
-    class Street;
+    class ObfStreet;
     class StreetGroup;
 
     class OSMAND_CORE_API Building Q_DECL_FINAL: public Address
@@ -35,12 +35,12 @@ namespace OsmAnd
     private:
     protected:
     public:
-        Building(const std::shared_ptr<const Street>& street);
+        Building(const std::shared_ptr<const ObfStreet>& street);
         Building(const std::shared_ptr<const StreetGroup>& streetGroup);
         virtual ~Building();
         virtual QString toString() const;
 
-        const std::shared_ptr<const Street> street;
+        const std::shared_ptr<const ObfStreet> street;
         const std::shared_ptr<const StreetGroup> streetGroup;
 
         ObfObjectId id;

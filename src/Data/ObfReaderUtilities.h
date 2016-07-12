@@ -14,6 +14,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include "restore_internal_warnings.h"
 
+#include "ObfAddressSectionReader.h"
 #include "OsmAndCore.h"
 #include "PointsAndAreas.h"
 
@@ -34,9 +35,9 @@ namespace OsmAnd
         static void readStringTable(gpb::io::CodedInputStream* cis, QStringList& stringTableOut);
         static int scanIndexedStringTable(
             gpb::io::CodedInputStream* cis,
-            const QString& query,
+            const ObfAddressSectionReader::Filter& filter,
             QVector<uint32_t>& outValues,
-            const QString& keysPrefix = QString::null,
+            const QString& keysPrefix = QString{},
             const int matchedCharactersCount = 0);
         static void readTileBox(gpb::io::CodedInputStream* cis, AreaI& outArea);
 

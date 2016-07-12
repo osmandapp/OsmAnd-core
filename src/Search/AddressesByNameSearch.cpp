@@ -42,7 +42,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                     {
                         bool accept = criteria.name.isEmpty();
                         accept = accept || street->nativeName.contains(criteria.name, Qt::CaseInsensitive);
-                        for (const auto& localizedName : constOf(street->localizedNames))
+                        for (const auto& localizedName : constOf(street->localizedNames()))
                         {
                             accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
                             if (accept)
@@ -146,7 +146,6 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                     
                     dataInterface->loadIntersectionsFromStreets(
                                                                 streets,
-                                                                nullptr,
                                                                 criteria.bbox31.getValuePtrOrNullptr(),
                                                                 intersectionVisitorFunction,
                                                                 queryController);

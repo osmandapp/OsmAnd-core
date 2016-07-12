@@ -5,6 +5,7 @@
 #include "Logging.h"
 #include "ObfDataInterface.h"
 #include "Road.h"
+#include "ObfStreet.h"
 #include "Utilities.h"
 
 #include <QStringBuilder>
@@ -121,7 +122,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                     [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
                     const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
             auto const& address = static_cast<const OsmAnd::AddressesByNameSearch::ResultEntry&>(resultEntry).address;
-            auto const& street = std::static_pointer_cast<const OsmAnd::Street>(address);
+            auto const& street = std::static_pointer_cast<const OsmAnd::ObfStreet>(address);
             if (splitToWordsOrderedByLength(street->nativeName) == streetNamePacked)
             {
 ////                double d = Utilities::distance31(street->position31, position31);

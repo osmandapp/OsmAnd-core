@@ -1,9 +1,9 @@
 #include "Building.h"
 
-#include "Street.h"
+#include "ObfStreet.h"
 #include "StreetGroup.h"
 
-OsmAnd::Building::Building(const std::shared_ptr<const Street>& street_)
+OsmAnd::Building::Building(const std::shared_ptr<const ObfStreet>& street_)
     : Address(street_ -> obfSection, AddressType::Building)
     , street(street_)
     , streetGroup(street->streetGroup)
