@@ -17,20 +17,10 @@ namespace OsmAnd
 {
     class StreetGroup;
 
-    class OSMAND_CORE_API Street Q_DECL_FINAL
+    class OSMAND_CORE_API Street Q_DECL_FINAL : public Address
     {
-    private:
-        QString _nativeName;
-        QHash<QString, QString> _localizedNames;
-        PointI _position31;
-
     public:
-        Street(QString nativeName, QHash<QString, QString> localizedNames, PointI position31);
         virtual QString toString() const;
-
-        QString nativeName() const;
-        QHash<QString, QString> localizedNames() const;
-        PointI position31() const;
     };
 }
 

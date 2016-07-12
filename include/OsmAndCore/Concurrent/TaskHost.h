@@ -21,13 +21,13 @@ namespace OsmAnd
         class HostedTask;
         class OSMAND_CORE_API TaskHost : public std::enable_shared_from_this < TaskHost >
         {
-            Q_DISABLE_COPY_AND_MOVE(TaskHost)
+            Q_DISABLE_COPY_AND_MOVE(TaskHost);
         public:
             typedef void* OwnerPtr;
 
             class OSMAND_CORE_API Bridge
             {
-                Q_DISABLE_COPY_AND_MOVE(Bridge)
+                Q_DISABLE_COPY_AND_MOVE(Bridge);
             private:
             protected:
                 std::shared_ptr<TaskHost> _host;

@@ -8,6 +8,7 @@
 #include "ObfStreet.h"
 #include "Utilities.h"
 
+#include <QRegularExpression>
 #include <QStringBuilder>
 
 // Location to test parameters http://www.openstreetmap.org/#map=18/53.896473/27.540071 (hno 44)
@@ -29,6 +30,7 @@ const QStringList SUFFIXES {
         QStringLiteral("пр."),
         QStringLiteral("заул."),
         QStringLiteral("проспект"),
+        QStringLiteral("праспект"),
         QStringLiteral("переул."),
         QStringLiteral("бул."),
         QStringLiteral("бульвар"),
@@ -82,7 +84,7 @@ bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
 
 QStringList splitToWordsOrderedByLength(const QString &streetName)
 {
-    QStringList result = streetName.split("[ ()]");
+    QStringList result = streetName.split(QRegularExpression("[ ()]"));
     result.erase(std::remove_if(result.begin(), result.end(), [](const QString& word){
         return DEFAULT_SUFFIXES.contains(word);
     }), result.end());
@@ -109,14 +111,15 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     QStringList streetNamePacked = splitToWordsOrderedByLength(road->streetName);
     if (!streetNamePacked.isEmpty())
     {
-        QString log = QStringLiteral("Search street by name ") % road->streetName % QStringLiteral(" ") % streetNamePacked.join(",");
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, log.toLatin1());
+        QString log = QStringLiteral("Search street by name ") % road->streetName % QStringLiteral(" (original name: ") % streetNamePacked.join(",") % QStringLiteral(")");
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, log.toLatin1());
         QString mainWord = extractMainWord(streetNamePacked);
         OsmAnd::AddressesByNameSearch::Criteria criteria;
         criteria.name = mainWord;
         criteria.includeStreets = true;
         criteria.streetGroupTypesMask = OsmAnd::ObfAddressStreetGroupTypesMask{};
-        criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31()));
+        criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(
+                                              std::pow(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, 2), *road->searchPoint31()));
         addressByNameSearch->performSearch(
                     criteria,
                     [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,

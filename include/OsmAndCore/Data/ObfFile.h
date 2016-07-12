@@ -18,7 +18,7 @@ namespace OsmAnd
     class ObfFile_P;
     class OSMAND_CORE_API ObfFile
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfFile)
+        Q_DISABLE_COPY_AND_MOVE(ObfFile);
     private:
         PrivateImplementation<ObfFile_P> _p;
     protected:

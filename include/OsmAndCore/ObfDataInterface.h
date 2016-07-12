@@ -15,6 +15,7 @@
 #include <OsmAndCore/Data/ObfPoiSectionReader.h>
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 #include <OsmAndCore/Data/ObfStreet.h>
+#include <OsmAndCore/Data/ObfStreetGroup.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 
 namespace OsmAnd
@@ -115,28 +116,29 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool scanAddressesByName(
-            const Filter& filter,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+                const Filter& filter,
+                const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadStreetGroups(
-            const Filter& filter = Filter{},
-            QList< std::shared_ptr<const StreetGroup> >* resultOut = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+                const Filter& filter = Filter{},
+                QList< std::shared_ptr<const ObfStreetGroup> >* resultOut = nullptr,
+                const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadStreetsFromGroups(
-            const QList<std::shared_ptr<const StreetGroup>>& streetGroups,
-            const Filter& filter,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+                const QList<std::shared_ptr<const ObfStreetGroup> > &streetGroups,
+                const Filter& filter,
+                const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadBuildingsFromStreets(
-            const QList<std::shared_ptr<const ObfStreet>> &streets,
-            const Filter& filter,
-            QHash<std::shared_ptr<const ObfStreet>, QList<std::shared_ptr<const Building>>>* resultOut = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+                const QList<std::shared_ptr<const ObfStreet>> &streets,
+                const Filter& filter,
+                QHash<std::shared_ptr<const ObfStreet>, QList<std::shared_ptr<const Building>>>* resultOut = nullptr,
+                const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool loadIntersectionsFromStreets(const QList<std::shared_ptr<const ObfStreet> > &streets,
-            const Filter& filter = Filter{},
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+        bool loadIntersectionsFromStreets(
+                const QList<std::shared_ptr<const ObfStreet> > &streets,
+                const Filter& filter = Filter{},
+                const std::shared_ptr<const IQueryController>& queryController = nullptr);
     };
 }
 

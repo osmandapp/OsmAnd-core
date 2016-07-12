@@ -13,7 +13,7 @@ namespace OsmAnd
     class AccessLockCounter_P;
     class OSMAND_CORE_API AccessLockCounter
     {
-        Q_DISABLE_COPY_AND_MOVE(AccessLockCounter)
+        Q_DISABLE_COPY_AND_MOVE(AccessLockCounter);
     private:
         PrivateImplementation<AccessLockCounter_P> _p;
     protected:

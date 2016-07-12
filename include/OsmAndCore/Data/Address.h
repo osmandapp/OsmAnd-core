@@ -16,8 +16,6 @@
 
 namespace OsmAnd
 {
-    class ObfAddressSectionInfo;
-
     enum class AddressType
     {
         StreetGroup,
@@ -35,17 +33,24 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Address
     {
-        Q_DISABLE_COPY_AND_MOVE(Address);
-
-    private:
-    protected:
-        Address(const std::shared_ptr<const ObfAddressSectionInfo>& obfSection, const AddressType addressType);
     public:
-        virtual ~Address();
+        Address(const Address&) = default;
+        Address(Address&&) = default;
+        Address& operator=(const Address&) = default;
+        Address& operator=(Address&&) = default;
+        virtual ~Address() = default;
+
+        Address(
+                AddressType addressType,
+                QString nativeName,
+                QHash<QString, QString> localizedNames,
+                PointI position31);
         virtual QString toString() const;
 
-        const std::shared_ptr<const ObfAddressSectionInfo> obfSection;
         const AddressType addressType;
+        const QString nativeName;
+        const QHash<QString, QString> localizedNames;
+        const PointI position31;
     };
 }
 

@@ -452,7 +452,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuildingsFromStreet(
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<Building> building;
-                readBuilding(reader, street, street->streetGroup, offset, building, bbox31, queryController);
+                readBuilding(reader, street, street->streetGroup, offset, building, query, bbox31, queryController);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -477,6 +477,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
     const std::shared_ptr<const StreetGroup>& streetGroup,
     const uint32_t buildingOffset,
     std::shared_ptr<Building>& outBuilding,
+    const QString& query,
     const AreaI* const bbox31,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -655,7 +656,7 @@ void OsmAnd::ObfAddressSectionReader_P::readIntersectionsFromStreet(
                 const auto oldLimit = cis->PushLimit(length);
 
                 std::shared_ptr<StreetIntersection> streetIntersection;
-                readStreetIntersection(reader, street, streetIntersection, bbox31, queryController);
+                readStreetIntersection(reader, street, streetIntersection, query, bbox31, queryController);
 
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
                 cis->PopLimit(oldLimit);
@@ -677,6 +678,7 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
     const ObfReader_P& reader,
     const std::shared_ptr<const Street>& street,
     std::shared_ptr<StreetIntersection>& outIntersection,
+    const QString& query,
     const AreaI* const bbox31,
     const std::shared_ptr<const IQueryController>& queryController)
 {
@@ -713,7 +715,6 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
                 ObfReaderUtilities::readQString(cis, value);
 
                 localizedNames.insert(QLatin1String("en"), value);
-
                 break;
             }
             case OBF::StreetIntersection::kIntersectedXFieldNumber:
@@ -1058,6 +1059,15 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
             case OBF::AddressNameIndexDataAtom::kShiftToCityIndexFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&addressReference.containerIndexOffset));
                 break;
+            case OBF::AddressNameIndexDataAtom::kXy16FieldNumber:
+            {
+                gpb::uint32 xy16;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&xy16));
+                PointI position31((xy16 >> 16) << 15, (xy16 & ((1 << 16) - 1)) << 15);
+                if (!bbox31->contains(position31))
+                    cis->Skip(cis->BytesUntilLimit());
+                break;
+            }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;

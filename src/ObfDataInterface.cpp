@@ -7,25 +7,26 @@
 #include <QSet>
 #include "restore_internal_warnings.h"
 
-#include "Ref.h"
-#include "ObfStreet.h"
-#include "ObfReader.h"
-#include "ObfInfo.h"
-#include "ObfMapSectionReader.h"
-#include "ObfMapSectionInfo.h"
-#include "ObfRoutingSectionReader.h"
-#include "ObfRoutingSectionInfo.h"
-#include "ObfPoiSectionReader.h"
-#include "ObfPoiSectionInfo.h"
-#include "ObfAddressSectionReader.h"
-#include "ObfAddressSectionInfo.h"
-#include "ObfMapObject.h"
 #include "Amenity.h"
-#include "StreetGroup.h"
-#include "Street.h"
-#include "IQueryController.h"
 #include "FunctorQueryController.h"
+#include "IQueryController.h"
+#include "ObfAddressSectionInfo.h"
+#include "ObfAddressSectionReader.h"
+#include "ObfInfo.h"
+#include "ObfMapObject.h"
+#include "ObfMapSectionInfo.h"
+#include "ObfMapSectionReader.h"
+#include "ObfPoiSectionInfo.h"
+#include "ObfPoiSectionReader.h"
+#include "ObfReader.h"
+#include "ObfRoutingSectionInfo.h"
+#include "ObfRoutingSectionReader.h"
+#include "ObfStreetGroup.h"
+#include "ObfStreet.h"
 #include "QKeyValueIterator.h"
+#include "Ref.h"
+#include "Street.h"
+
 
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
     : obfReaders(obfReaders_)
@@ -781,7 +782,7 @@ bool OsmAnd::ObfDataInterface::scanAddressesByName(
 
 bool OsmAnd::ObfDataInterface::loadStreetGroups(
     const Filter& filter,
-    QList< std::shared_ptr<const StreetGroup> >* resultOut /*= nullptr*/,
+    QList< std::shared_ptr<const ObfStreetGroup> >* resultOut /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
@@ -811,7 +812,7 @@ bool OsmAnd::ObfDataInterface::loadStreetGroups(
 }
 
 bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
-        const QList<std::shared_ptr<const StreetGroup>>& streetGroups,
+        const QList<std::shared_ptr<const ObfStreetGroup>>& streetGroups,
         const Filter& filter,
         const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {

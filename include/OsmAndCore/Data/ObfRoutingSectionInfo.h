@@ -68,7 +68,7 @@ namespace OsmAnd
     class ObfRoutingSectionInfo_P;
     class OSMAND_CORE_API ObfRoutingSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionInfo)
+        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionInfo);
     private:
         PrivateImplementation<ObfRoutingSectionInfo_P> _p;
     protected:

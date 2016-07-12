@@ -23,7 +23,7 @@ namespace OsmAnd
 {
     class ReverseGeocoder_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ReverseGeocoder_P)
+        Q_DISABLE_COPY_AND_MOVE(ReverseGeocoder_P);
 
         using ResultEntry = ReverseGeocoder::ResultEntry;
         using Criteria = ReverseGeocoder::Criteria;

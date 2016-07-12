@@ -18,7 +18,7 @@ namespace OsmAnd
     class ObfFile;
     class ObfFile_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfFile_P)
+        Q_DISABLE_COPY_AND_MOVE(ObfFile_P);
     private:
     protected:
         ObfFile_P(ObfFile* owner);
