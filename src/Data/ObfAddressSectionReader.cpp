@@ -154,12 +154,6 @@ OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter
     return *this;
 }
 
-//bool OsmAnd::ObfAddressSectionReader::Filter::matches(
-//        const QString &name, const OsmAnd::ObfAddressSectionReader::StringMatcherFunction &matcher) const
-//{
-//    return matcher(_name, name);
-//}
-
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const QString &name,
         const QHash<QString, QString> &names,
