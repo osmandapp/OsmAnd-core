@@ -22,6 +22,7 @@ namespace OsmAnd
     class Building;
     class IQueryController;
     class ObfAddressSectionInfo;
+    class ObfBuilding;
     class ObfReader;
     class ObfStreet;
     class ObfStreetGroup;
@@ -38,6 +39,7 @@ namespace OsmAnd
         using BuildingVisitorFunction = std::function<void(const OsmAnd::Building& building)>;
         using IntersectionVisitorFunction = std::function<void(const OsmAnd::StreetIntersection& streetIntersection)>;
         using StringMatcherFunction = std::function<bool(const QString&, const QString&)>;
+        using BinaryBoolFunction = std::function<bool(bool, bool)>;
 
         class Filter
         {
@@ -46,39 +48,43 @@ namespace OsmAnd
             Nullable<AreaI> _bbox31;
             Bitmask<AddressType> _addressTypes;
             ObfAddressStreetGroupTypesMask _streetGroupTypes = fullObfAddressStreetGroupTypesMask();
-            QVector<const Filter> _filters;
+            QVector<Filter> _filters;
 
+            StringMatcherFunction _stringMatcher = OsmAnd::MATCHES;
             VisitorFunction _addressVisitor;
             StreetGroupVisitorFunction _streetGroupVisitor;
             StreetVisitorFunction _streetVisitor;
             BuildingVisitorFunction _buildingVisitor;
             IntersectionVisitorFunction _intersectionVisitor;
 
-            const std::function<bool(bool, bool)> _op;
+            const BinaryBoolFunction _op;
 
         public:
-            Filter(std::function<bool(bool, bool)> op = AND);
+            Filter(BinaryBoolFunction op = AND);
 
             QString name() const;
             Filter& setName(const QString& name);
             Filter& setBbox(const AreaI& bbox31);
             Filter& setAddressStreetGroupTypes(const ObfAddressStreetGroupTypesMask& streetGroupTypes);
-            Filter& setFilters(QVector<const Filter&> filters);
+            Filter& setFilters(QVector<Filter> filters);
+            Filter& setStringMatcherFunction(StringMatcherFunction stringMatcher);
             Filter& setVisitor(VisitorFunction visitor);
             Filter& setVisitor(StreetGroupVisitorFunction visitor);
             Filter& setVisitor(StreetVisitorFunction visitor);
             Filter& setVisitor(BuildingVisitorFunction visitor);
             Filter& setVisitor(IntersectionVisitorFunction visitor);
 
-//            bool matches(
-//                    const QString& name,
-//                    const StringMatcherFunction& matcher = OsmAnd::MATCHES) const;
+            uint commonStartPartLength(
+                    const QString& name) const;
             bool matches(
                     const QString& name,
-                    const QHash<QString, QString>& names = {},
-                    const StringMatcherFunction& matcher = OsmAnd::CONTAINS) const;
-            bool contains(const AreaI& bbox31) const;
-            bool contains(const PointI& point) const;
+                    const QHash<QString, QString>& names = {}) const;
+//                    const StringMatcherFunction& matcher) const;
+            bool contains(
+                    const AreaI& bbox31) const;
+            bool contains(
+                    const PointI& point) const;
+
 //            bool filter(const QString& name, const AreaI& bbox) const;
 //            bool filter(
 //                    const Street& street,
@@ -86,11 +92,10 @@ namespace OsmAnd
 //                    bool call v) const;
             bool filter(
                     const Address& address,
-                    const StringMatcherFunction& matcher = OsmAnd::MATCHES,
+//                    const StringMatcherFunction& matcher,
                     bool callVisitor = true) const;
             bool filter(
                     const StreetGroup& streetGroup,
-                    const StringMatcherFunction& matcher = OsmAnd::MATCHES,
                     bool callVisitor = true) const;
             bool hasType(
                     const AddressType type) const;
@@ -118,11 +123,10 @@ namespace OsmAnd
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         static void loadBuildingsFromStreet(
-            const std::shared_ptr<const ObfReader>& reader,
-            const std::shared_ptr<const ObfStreet>& street,
-            const Filter &filter = Filter{},
-            QList< std::shared_ptr<const Building> >* resultOut = nullptr,
-            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+                const std::shared_ptr<const ObfReader>& reader,
+                const std::shared_ptr<const ObfStreet>& street,
+                const Filter &filter = Filter{},
+                const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         static void loadIntersectionsFromStreet(const std::shared_ptr<const ObfReader>& reader,
             const ObfStreet& street,

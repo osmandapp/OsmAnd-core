@@ -21,7 +21,11 @@ namespace OsmAnd
     private:
     protected:
     public:
-        StreetIntersection(const std::shared_ptr<const ObfStreet>& street);
+        StreetIntersection(
+                std::shared_ptr<const ObfStreet> street,
+                QString nativeName = {},
+                QHash<QString, QString> localizedNames = {},
+                PointI position31 = {});
         virtual ~StreetIntersection();
 
         const std::shared_ptr<const ObfStreet> street;

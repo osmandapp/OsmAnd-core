@@ -23,11 +23,11 @@
 #   endif
 #endif
 
-#if !defined(Q_DISABLE_COPY_AND_MOVE);
-#   define Q_DISABLE_COPY_AND_MOVE(Class)                                                                                       \;
+#if !defined(Q_DISABLE_COPY_AND_MOVE)
+#   define Q_DISABLE_COPY_AND_MOVE(Class)                                                                                       \
         Q_DISABLE_COPY(Class);                                                                                                  \
         Q_DISABLE_MOVE(Class);
-#endif // !defined(Q_DISABLE_COPY_AND_MOVE);
+#endif // !defined(Q_DISABLE_COPY_AND_MOVE)
 
 #if !defined(Q_DISABLE_ASSIGN)
 #   define Q_DISABLE_ASSIGN(Class)                                                                                              \

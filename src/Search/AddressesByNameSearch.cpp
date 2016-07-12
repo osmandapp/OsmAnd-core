@@ -110,12 +110,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                     
                     QList<std::shared_ptr<const Street>> streets;
                     streets << std::static_pointer_cast<const Street>(criteria.addressFilter);
-                    dataInterface->loadBuildingsFromStreets(
-                                                            streets,
-                                                            nullptr,
-                                                            criteria.bbox31.getValuePtrOrNullptr(),
-                                                            visitorFunction,
-                                                            queryController);
+                    dataInterface->loadBuildingsFromStreets(streets, filter, queryController);
                     
                     
                     const ObfAddressSectionReader::IntersectionVisitorFunction intersectionVisitorFunction =
@@ -144,11 +139,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                         }
                     };
                     
-                    dataInterface->loadIntersectionsFromStreets(
-                                                                streets,
-                                                                criteria.bbox31.getValuePtrOrNullptr(),
-                                                                intersectionVisitorFunction,
-                                                                queryController);
+                    dataInterface->loadIntersectionsFromStreets(streets, filter, queryController);
                     
                     break;
                 }

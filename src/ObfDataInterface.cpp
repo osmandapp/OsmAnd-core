@@ -12,6 +12,7 @@
 #include "IQueryController.h"
 #include "ObfAddressSectionInfo.h"
 #include "ObfAddressSectionReader.h"
+#include "ObfBuilding.h"
 #include "ObfInfo.h"
 #include "ObfMapObject.h"
 #include "ObfMapSectionInfo.h"
@@ -26,6 +27,7 @@
 #include "QKeyValueIterator.h"
 #include "Ref.h"
 #include "Street.h"
+#include "StreetGroup.h"
 
 
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
@@ -851,8 +853,6 @@ bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
 bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
         const QList<std::shared_ptr<const ObfStreet>>& streets,
         const ObfAddressSectionReader::Filter& filter,
-        QHash<std::shared_ptr<const ObfStreet>,
-        QList<std::shared_ptr<const Building>>> *resultOut /*= nullptr*/,
         const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
@@ -874,16 +874,11 @@ bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
                 if (addressSection != street->streetGroup->obfSection)
                     continue;
 
-                QList< std::shared_ptr<const Building> > intermediateResult;
                 OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
                     obfReader,
                     street,
                     filter,
-                    resultOut ? &intermediateResult : nullptr,
                     queryController);
-
-                if (resultOut)
-                    resultOut->insert(street, intermediateResult);
             }
         }
     }

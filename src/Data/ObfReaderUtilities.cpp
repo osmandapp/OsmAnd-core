@@ -110,29 +110,11 @@ int OsmAnd::ObfReaderUtilities::scanIndexedStringTable(
                 if (!keysPrefix.isEmpty())
                     key.prepend(keysPrefix);
 
-                if (filter.matches(key, OsmAnd::STARTS_WITH)) // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                uint commonLength = filter.commonStartPartLength(key); // (CollatorStringMatcher.cmatches(instance, key, query, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
+                if (commonLength > matchedCharactersCount)
                 {
-                    if (filter.name().size() > matchedCharactersCount)
-                    {
-                        matchedCharactersCount = filter.name().length();
-                        outValues.clear();
-                    }
-                    else if (filter.name().size() < matchedCharactersCount)
-                    {
-                        key = QString{};
-                    }
-                }
-                else if (filter.matches(key, OsmAnd::STARTS_WITH)) // (CollatorStringMatcher.cmatches(instance, query, key, StringMatcherMode.CHECK_ONLY_STARTS_WITH))
-                {
-                    if (key.size() > matchedCharactersCount)
-                    {
-                        matchedCharactersCount = key.length();
-                        outValues.clear();
-                    }
-                    else if (key.size() < matchedCharactersCount)
-                    {
-                        key = QString{};
-                    }
+                    matchedCharactersCount = commonLength;
+                    outValues.clear();
                 }
                 else
                 {

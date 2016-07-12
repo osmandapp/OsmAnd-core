@@ -14,20 +14,21 @@
 #include <OsmAndCore/Data/ObfMapSectionReader.h>
 #include <OsmAndCore/Data/ObfPoiSectionReader.h>
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
-#include <OsmAndCore/Data/ObfStreet.h>
-#include <OsmAndCore/Data/ObfStreetGroup.h>
 #include <OsmAndCore/Map/MapCommonTypes.h>
 
 namespace OsmAnd
 {
-    class ObfReader;
+    class IQueryController;
+    class ObfBuilding;
     class ObfFile;
     class ObfMapObject;
-    class IQueryController;
+    class ObfReader;
+    class ObfStreet;
+    class ObfStreetGroup;
 
     class OSMAND_CORE_API ObfDataInterface
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfDataInterface);
+        Q_DISABLE_COPY_AND_MOVE(ObfDataInterface)
 
     public:
         using Filter = ObfAddressSectionReader::Filter;
@@ -129,10 +130,8 @@ namespace OsmAnd
                 const Filter& filter,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool loadBuildingsFromStreets(
-                const QList<std::shared_ptr<const ObfStreet>> &streets,
+        bool loadBuildingsFromStreets(const QList<std::shared_ptr<const ObfStreet>> &streets,
                 const Filter& filter,
-                QHash<std::shared_ptr<const ObfStreet>, QList<std::shared_ptr<const Building>>>* resultOut = nullptr,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadIntersectionsFromStreets(

@@ -3,12 +3,14 @@
 #include "Street.h"
 #include "StreetGroup.h"
 
+
 OsmAnd::Building::Building(
         std::shared_ptr<const OsmAnd::ObfStreet> street,
-        OsmAnd::Building::Interpolation interpolation_,
         QString nativeName,
         QHash<QString, QString> localizedNames,
-        OsmAnd::PointI position31)
+        OsmAnd::PointI position31,
+        OsmAnd::Building::Interpolation interpolation,
+        QString postcode)
     : Address(AddressType::Building, nativeName, localizedNames, position31)
     , interpolation(interpolation_)
     , street(street_)
@@ -18,11 +20,12 @@ OsmAnd::Building::Building(
 }
 
 OsmAnd::Building::Building(
-        std::shared_ptr<const OsmAnd::StreetGroup> streetGroup_,
-        OsmAnd::Building::Interpolation interpolation_,
+        std::shared_ptr<const OsmAnd::StreetGroup> streetGroup,
         QString nativeName,
         QHash<QString, QString> localizedNames,
-        OsmAnd::PointI position31)
+        OsmAnd::PointI position31,
+        OsmAnd::Building::Interpolation interpolation,
+        QString postcode)
     : Address(AddressType::Building, nativeName, localizedNames, position31)
     , interpolation(interpolation_)
     , street(nullptr)

@@ -20,6 +20,7 @@ namespace OsmAnd
     class OSMAND_CORE_API Street Q_DECL_FINAL : public Address
     {
     public:
+        Street(QString nativeName, QHash<QString, QString> localizedNames, PointI position31);
         virtual QString toString() const;
     };
 }

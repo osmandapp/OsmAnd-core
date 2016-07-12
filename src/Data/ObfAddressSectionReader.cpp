@@ -1,5 +1,6 @@
 #include "ObfAddressSectionReader.h"
 #include "ObfAddressSectionReader_P.h"
+#include "ObfBuilding.h"
 #include "ObfStreetGroup.h"
 
 #include "ObfReader.h"
@@ -40,17 +41,16 @@ void OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(
         queryController);
 }
 
-void OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(const std::shared_ptr<const ObfReader>& reader,
+void OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
+        const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfStreet> &street,
     const Filter& filter,
-    QList< std::shared_ptr<const Building>>* resultOut /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfAddressSectionReader_P::loadBuildingsFromStreet(
         *reader->_p,
         street,
         filter,
-        resultOut,
         queryController);
 }
 
@@ -85,7 +85,7 @@ QString OsmAnd::ObfAddressSectionReader::Filter::name() const
     return _name;
 }
 
-OsmAnd::ObfAddressSectionReader::Filter::Filter(std::function<bool (bool, bool)> op)
+OsmAnd::ObfAddressSectionReader::Filter::Filter(BinaryBoolFunction op)
     : _op(op)
 {
 
@@ -113,9 +113,16 @@ OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter
 }
 
 OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setFilters(
-        QVector<const Filter&> filters)
+        QVector<Filter> filters)
 {
     _filters = filters;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setStringMatcherFunction(
+        OsmAnd::ObfAddressSectionReader::StringMatcherFunction stringMatcher)
+{
+    _stringMatcher = stringMatcher;
     return *this;
 }
 
@@ -154,24 +161,27 @@ OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter
     return *this;
 }
 
+uint OsmAnd::ObfAddressSectionReader::Filter::commonStartPartLength(
+        const QString &name) const
+{
+    if (name.startsWith(_name))
+        return _name.length();
+    else if (_name.startsWith(name))
+        return name.length();
+    else
+        return 0;
+}
+
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const QString &name,
-        const QHash<QString, QString> &names,
-        const OsmAnd::ObfAddressSectionReader::StringMatcherFunction &matcher) const
+        const QHash<QString, QString> &names) const
+//        const OsmAnd::ObfAddressSectionReader::StringMatcherFunction &matcher) const
 {
     if (_name.isNull())
         return true;
-
-    bool result = false;
-    result = result || matcher(name, _name);
+    bool result = _stringMatcher(name, _name);
     for (const auto& name : constOf(names))
-    {
-        result = result || matcher(name, _name);
-
-        if (result)
-            break;
-    }
-
+        result = result || _stringMatcher(name, _name);
     return result;
 }
 
@@ -190,10 +200,12 @@ bool OsmAnd::ObfAddressSectionReader::Filter::contains(
 
 bool OsmAnd::ObfAddressSectionReader::Filter::filter(
         const OsmAnd::Address& address,
-        const OsmAnd::ObfAddressSectionReader::StringMatcherFunction& matcher,
+//        const OsmAnd::ObfAddressSectionReader::StringMatcherFunction& matcher,
         bool callVisitor) const
 {
-    result = _op(contains(address.position31), matches(address.nativeName, address.nativeName, matcher));
+    bool result = _op(
+                contains(address.position31),
+                matches(address.nativeName, address.localizedNames));
     if (result && callVisitor)
         _addressVisitor(address);
     return result;
@@ -205,11 +217,13 @@ bool OsmAnd::ObfAddressSectionReader::Filter::filter(
 //}
 
 bool OsmAnd::ObfAddressSectionReader::Filter::filter(
-        const OsmAnd::ObfStreetGroup &streetGroup,
-        const OsmAnd::ObfAddressSectionReader::StringMatcherFunction &matcher,
+        const OsmAnd::StreetGroup &streetGroup,
+//        const OsmAnd::ObfAddressSectionReader::StringMatcherFunction &matcher,
         bool callVisitor) const
 {
-    bool result = _op(filter(static_cast<const Address&>(streetGroup), matcher, false), hasStreetGroupType(streetGroup.));
+    bool result = _op(
+                filter(static_cast<const Address&>(streetGroup), false),
+                hasStreetGroupType(streetGroup.type));
     if (result && callVisitor)
         _streetGroupVisitor(streetGroup);
     return result;
