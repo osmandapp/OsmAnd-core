@@ -16,11 +16,11 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IMapTiledDataProvider : public IMapDataProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(IMapTiledDataProvider)
+        Q_DISABLE_COPY_AND_MOVE(IMapTiledDataProvider);
     public:
         class OSMAND_CORE_API Data : public IMapDataProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data)
+            Q_DISABLE_COPY_AND_MOVE(Data);
         private:
         protected:
         public:

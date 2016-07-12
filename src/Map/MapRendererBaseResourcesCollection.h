@@ -18,7 +18,7 @@ namespace OsmAnd
 
     class MapRendererBaseResourcesCollection : public IMapRendererResourcesCollection
     {
-        Q_DISABLE_COPY_AND_MOVE(MapRendererBaseResourcesCollection)
+        Q_DISABLE_COPY_AND_MOVE(MapRendererBaseResourcesCollection);
 
     private:
     protected:

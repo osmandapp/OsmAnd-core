@@ -25,7 +25,7 @@ namespace OsmAnd
     {
         class WorkerPool_P Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(WorkerPool_P)
+            Q_DISABLE_COPY_AND_MOVE(WorkerPool_P);
 
         public:
             typedef WorkerPool::Order Order;
@@ -34,7 +34,7 @@ namespace OsmAnd
         private:
             class WorkerThread Q_DECL_FINAL : public QThread
             {
-                Q_DISABLE_COPY_AND_MOVE(WorkerThread)
+                Q_DISABLE_COPY_AND_MOVE(WorkerThread);
 
             private:
             protected:

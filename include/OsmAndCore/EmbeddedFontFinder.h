@@ -15,7 +15,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API EmbeddedFontFinder Q_DECL_FINAL : public IFontFinder
     {
-        Q_DISABLE_COPY_AND_MOVE(EmbeddedFontFinder)
+        Q_DISABLE_COPY_AND_MOVE(EmbeddedFontFinder);
 
     private:
         QList<SkTypeface*> _fonts;

@@ -124,7 +124,7 @@ namespace OsmAnd
 
         class OnlineTileSourcesProxy : public IOnlineTileSources
         {
-            Q_DISABLE_COPY_AND_MOVE(OnlineTileSourcesProxy)
+            Q_DISABLE_COPY_AND_MOVE(OnlineTileSourcesProxy);
         private:
         protected:
             OnlineTileSourcesProxy(ResourcesManager_P* owner);

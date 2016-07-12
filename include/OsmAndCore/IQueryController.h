@@ -11,7 +11,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IQueryController
     {
-        Q_DISABLE_COPY_AND_MOVE(IQueryController)
+        Q_DISABLE_COPY_AND_MOVE(IQueryController);
     private:
     protected:
         IQueryController();

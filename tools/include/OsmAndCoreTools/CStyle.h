@@ -29,7 +29,7 @@ namespace OsmAndTools
 {
     class OSMAND_CORE_TOOLS_API CStyle Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(CStyle)
+        Q_DISABLE_COPY_AND_MOVE(CStyle);
 
     public:
         enum class EmitterDialect
@@ -70,7 +70,7 @@ namespace OsmAndTools
             virtual bool emitStyle(const std::shared_ptr<const OsmAnd::IMapStyle>& mapStyle) = 0;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(BaseEmitter)
+            Q_DISABLE_COPY_AND_MOVE(BaseEmitter);
         };
 
         struct OSMAND_CORE_TOOLS_API DebugEmitter : public BaseEmitter
@@ -85,7 +85,7 @@ namespace OsmAndTools
             virtual bool emitStyle(const std::shared_ptr<const OsmAnd::IMapStyle>& mapStyle) Q_DECL_OVERRIDE;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(DebugEmitter)
+            Q_DISABLE_COPY_AND_MOVE(DebugEmitter);
 
             static QString dumpConstantValue(
                 const std::shared_ptr<const OsmAnd::IMapStyle>& mapStyle,

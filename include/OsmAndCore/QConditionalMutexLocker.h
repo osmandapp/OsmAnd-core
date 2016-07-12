@@ -9,7 +9,7 @@ namespace OsmAnd
     class OSMAND_CORE_API QConditionalMutexLocker Q_DECL_FINAL
     {
     public:
-        Q_DISABLE_COPY_AND_MOVE(QConditionalMutexLocker)
+        Q_DISABLE_COPY_AND_MOVE(QConditionalMutexLocker);
 
     private:
         QMutex* const _mutex;

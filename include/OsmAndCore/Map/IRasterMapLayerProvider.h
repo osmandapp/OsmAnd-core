@@ -18,11 +18,11 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IRasterMapLayerProvider : public IMapLayerProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(IRasterMapLayerProvider)
+        Q_DISABLE_COPY_AND_MOVE(IRasterMapLayerProvider);
     public:
         class OSMAND_CORE_API Data : public IMapLayerProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data)
+            Q_DISABLE_COPY_AND_MOVE(Data);
         private:
         protected:
         public:

@@ -14,14 +14,14 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IMapKeyedDataProvider : public IMapDataProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(IMapKeyedDataProvider)
+        Q_DISABLE_COPY_AND_MOVE(IMapKeyedDataProvider);
 
     public:
         typedef const void* Key;
 
         class OSMAND_CORE_API Data : public IMapDataProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data)
+            Q_DISABLE_COPY_AND_MOVE(Data);
         private:
         protected:
         public:

@@ -120,12 +120,12 @@ namespace OsmAnd
 
     class GPUAPI_OpenGL : public GPUAPI
     {
-        Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL)
+        Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL);
     public:
         template <typename T, typename Enable = void>
         struct glPresenseChecker
         {
-            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker)
+            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
 
             glPresenseChecker(
                     T* const unknownStuff,
@@ -142,7 +142,7 @@ namespace OsmAnd
         template <typename T>
         struct glPresenseChecker<T, typename std::enable_if< std::is_pointer<T>::value >::type> Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker)
+            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
 
             glPresenseChecker(
                 T* const pointerToFunctionPointer,
@@ -160,7 +160,7 @@ namespace OsmAnd
         template <typename T>
         struct glPresenseChecker<T, typename std::enable_if< std::is_function<T>::value >::type> Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker)
+            Q_DISABLE_COPY_AND_MOVE(glPresenseChecker);
 
             glPresenseChecker(
                 T* const function,
@@ -182,7 +182,7 @@ namespace OsmAnd
 
         class ProgramVariablesLookupContext
         {
-            Q_DISABLE_COPY_AND_MOVE(ProgramVariablesLookupContext)
+            Q_DISABLE_COPY_AND_MOVE(ProgramVariablesLookupContext);
         private:
             QMap< GlslVariableType, QMap<QString, GLint> > _variablesByName;
             QMap< GlslVariableType, QMap<GLint, QString> > _variablesByLocation;

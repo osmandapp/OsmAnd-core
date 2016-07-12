@@ -16,7 +16,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API RasterMapSymbol : public MapSymbol
     {
-        Q_DISABLE_COPY_AND_MOVE(RasterMapSymbol)
+        Q_DISABLE_COPY_AND_MOVE(RasterMapSymbol);
 
     private:
     protected:

@@ -17,7 +17,7 @@ namespace OsmAnd
     class MapRasterLayerProvider_GPU_P;
     class OSMAND_CORE_API MapRasterLayerProvider_GPU : public MapRasterLayerProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(MapRasterLayerProvider_GPU)
+        Q_DISABLE_COPY_AND_MOVE(MapRasterLayerProvider_GPU);
     private:
     protected:
     public:

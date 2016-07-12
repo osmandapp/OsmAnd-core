@@ -24,7 +24,7 @@ namespace OsmAnd
     template<typename KEY_TYPE, typename RESOURCE_TYPE>
     class SharedResourcesContainer
     {
-        Q_DISABLE_COPY_AND_MOVE(SharedResourcesContainer)
+        Q_DISABLE_COPY_AND_MOVE(SharedResourcesContainer);
 
     public:
         typedef std::shared_ptr<RESOURCE_TYPE> ResourcePtr;
@@ -55,7 +55,7 @@ namespace OsmAnd
             const ResourcePtr resourcePtr;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(AvailableResourceEntry)
+            Q_DISABLE_COPY_AND_MOVE(AvailableResourceEntry);
         };
 
         struct PromisedResourceEntry
@@ -79,7 +79,7 @@ namespace OsmAnd
             const proper::shared_future<ResourcePtr> sharedFuture;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(PromisedResourceEntry)
+            Q_DISABLE_COPY_AND_MOVE(PromisedResourceEntry);
         };
     private:
         QHash< KEY_TYPE, std::shared_ptr< AvailableResourceEntry > > _availableResources;

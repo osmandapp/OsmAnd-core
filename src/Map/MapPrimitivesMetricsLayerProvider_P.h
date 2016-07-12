@@ -19,7 +19,7 @@ namespace OsmAnd
 {
     class MapPrimitivesMetricsLayerProvider_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(MapPrimitivesMetricsLayerProvider_P)
+        Q_DISABLE_COPY_AND_MOVE(MapPrimitivesMetricsLayerProvider_P);
     private:
     protected:
         MapPrimitivesMetricsLayerProvider_P(MapPrimitivesMetricsLayerProvider* const owner);

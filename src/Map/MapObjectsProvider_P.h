@@ -25,7 +25,7 @@ namespace OsmAnd
 
     class MapObjectsProvider_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(MapObjectsProvider_P)
+        Q_DISABLE_COPY_AND_MOVE(MapObjectsProvider_P);
 
     private:
     protected:

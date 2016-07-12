@@ -17,12 +17,12 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IMapKeyedSymbolsProvider : public IMapKeyedDataProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(IMapKeyedSymbolsProvider)
+        Q_DISABLE_COPY_AND_MOVE(IMapKeyedSymbolsProvider);
 
     public:
         class OSMAND_CORE_API Data : public IMapKeyedDataProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data)
+            Q_DISABLE_COPY_AND_MOVE(Data);
         private:
         protected:
         public:

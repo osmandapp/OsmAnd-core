@@ -16,7 +16,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API CachingFontFinder Q_DECL_FINAL : public IFontFinder
     {
-        Q_DISABLE_COPY_AND_MOVE(CachingFontFinder)
+        Q_DISABLE_COPY_AND_MOVE(CachingFontFinder);
 
     private:
         static_assert(sizeof(SkFontStyle) == 4, "Check size of SkFontStyle");

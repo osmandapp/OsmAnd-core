@@ -30,7 +30,7 @@ namespace OsmAnd
     class ResourcesManager_P;
     class OSMAND_CORE_API ResourcesManager
     {
-        Q_DISABLE_COPY_AND_MOVE(ResourcesManager)
+        Q_DISABLE_COPY_AND_MOVE(ResourcesManager);
     public:
         enum class ResourceType
         {
@@ -58,7 +58,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Resource
         {
-            Q_DISABLE_COPY_AND_MOVE(Resource)
+            Q_DISABLE_COPY_AND_MOVE(Resource);
 
         public:
             struct OSMAND_CORE_API Metadata
@@ -89,7 +89,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API LocalResource : public Resource
         {
-            Q_DISABLE_COPY_AND_MOVE(LocalResource)
+            Q_DISABLE_COPY_AND_MOVE(LocalResource);
         private:
         protected:
             LocalResource(
@@ -109,7 +109,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API UnmanagedResource : public LocalResource
         {
-            Q_DISABLE_COPY_AND_MOVE(UnmanagedResource)
+            Q_DISABLE_COPY_AND_MOVE(UnmanagedResource);
         private:
         protected:
             UnmanagedResource(
@@ -128,7 +128,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API InstalledResource : public LocalResource
         {
-            Q_DISABLE_COPY_AND_MOVE(InstalledResource)
+            Q_DISABLE_COPY_AND_MOVE(InstalledResource);
         private:
         protected:
             InstalledResource(
@@ -149,7 +149,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API BuiltinResource : public Resource
         {
-            Q_DISABLE_COPY_AND_MOVE(BuiltinResource)
+            Q_DISABLE_COPY_AND_MOVE(BuiltinResource);
         private:
         protected:
             BuiltinResource(
@@ -164,7 +164,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API ResourceInRepository : public Resource
         {
-            Q_DISABLE_COPY_AND_MOVE(ResourceInRepository)
+            Q_DISABLE_COPY_AND_MOVE(ResourceInRepository);
         private:
         protected:
             ResourceInRepository(
@@ -193,7 +193,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfFile> obfFile;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(ObfMetadata)
+            Q_DISABLE_COPY_AND_MOVE(ObfMetadata);
         };
 
         struct OSMAND_CORE_API MapStyleMetadata : public Resource::Metadata
@@ -204,7 +204,7 @@ namespace OsmAnd
             const std::shared_ptr<UnresolvedMapStyle> mapStyle;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(MapStyleMetadata)
+            Q_DISABLE_COPY_AND_MOVE(MapStyleMetadata);
         };
 
         struct OSMAND_CORE_API OnlineTileSourcesMetadata : public Resource::Metadata
@@ -215,7 +215,7 @@ namespace OsmAnd
             const std::shared_ptr<const OnlineTileSources> sources;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(OnlineTileSourcesMetadata)
+            Q_DISABLE_COPY_AND_MOVE(OnlineTileSourcesMetadata);
         };
     private:
         PrivateImplementation<ResourcesManager_P> _p;

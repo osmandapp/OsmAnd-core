@@ -9,7 +9,7 @@ namespace OsmAnd
     class OSMAND_CORE_API QConditionalWriteLocker Q_DECL_FINAL
     {
     public:
-        Q_DISABLE_COPY_AND_MOVE(QConditionalWriteLocker)
+        Q_DISABLE_COPY_AND_MOVE(QConditionalWriteLocker);
 
     private:
         QReadWriteLock* const _lock;

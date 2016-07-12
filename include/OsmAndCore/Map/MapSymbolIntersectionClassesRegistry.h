@@ -16,7 +16,7 @@ namespace OsmAnd
     class MapSymbolIntersectionClassesRegistry_P;
     class OSMAND_CORE_API MapSymbolIntersectionClassesRegistry
     {
-        Q_DISABLE_COPY_AND_MOVE(MapSymbolIntersectionClassesRegistry)
+        Q_DISABLE_COPY_AND_MOVE(MapSymbolIntersectionClassesRegistry);
     public:
         typedef MapSymbolIntersectionClassId ClassId;
 

@@ -29,7 +29,7 @@ namespace OsmAnd
     class MapPresentationEnvironment_P;
     class OSMAND_CORE_API MapPresentationEnvironment
     {
-        Q_DISABLE_COPY_AND_MOVE(MapPresentationEnvironment)
+        Q_DISABLE_COPY_AND_MOVE(MapPresentationEnvironment);
     public:
         enum class LanguagePreference
         {

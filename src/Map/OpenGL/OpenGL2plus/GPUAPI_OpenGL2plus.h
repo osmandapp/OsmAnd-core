@@ -19,7 +19,7 @@ namespace OsmAnd
 {
     class GPUAPI_OpenGL2plus : public GPUAPI_OpenGL
     {
-        Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL2plus)
+        Q_DISABLE_COPY_AND_MOVE(GPUAPI_OpenGL2plus);
     private:
         void preprocessShader(QString& code);
 

@@ -22,7 +22,7 @@ namespace OsmAnd
     class ObfsCollection_P;
     class OSMAND_CORE_API ObfsCollection : public IObfsCollection
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfsCollection)
+        Q_DISABLE_COPY_AND_MOVE(ObfsCollection);
     public:
         typedef int SourceOriginId;
 

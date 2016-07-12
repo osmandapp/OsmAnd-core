@@ -19,7 +19,7 @@ namespace OsmAnd
         : public RasterMapSymbol
         , public IOnPathMapSymbol
     {
-        Q_DISABLE_COPY_AND_MOVE(OnPathRasterMapSymbol)
+        Q_DISABLE_COPY_AND_MOVE(OnPathRasterMapSymbol);
 
     private:
     protected:

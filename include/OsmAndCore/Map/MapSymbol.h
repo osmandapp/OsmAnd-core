@@ -22,7 +22,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API MapSymbol
     {
-        Q_DISABLE_COPY_AND_MOVE(MapSymbol)
+        Q_DISABLE_COPY_AND_MOVE(MapSymbol);
 
     public:
         enum class ContentClass

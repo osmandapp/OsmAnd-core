@@ -25,7 +25,7 @@ namespace OsmAndTools
 {
     class OSMAND_CORE_TOOLS_API EyePiece Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(EyePiece)
+        Q_DISABLE_COPY_AND_MOVE(EyePiece);
 
     public:
         enum class ImageFormat

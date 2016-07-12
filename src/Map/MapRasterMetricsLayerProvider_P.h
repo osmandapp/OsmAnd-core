@@ -19,7 +19,7 @@ namespace OsmAnd
 {
     class MapRasterMetricsLayerProvider_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(MapRasterMetricsLayerProvider_P)
+        Q_DISABLE_COPY_AND_MOVE(MapRasterMetricsLayerProvider_P);
     private:
     protected:
         MapRasterMetricsLayerProvider_P(MapRasterMetricsLayerProvider* const owner);

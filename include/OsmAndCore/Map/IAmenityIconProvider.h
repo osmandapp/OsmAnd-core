@@ -21,7 +21,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IAmenityIconProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(IAmenityIconProvider)
+        Q_DISABLE_COPY_AND_MOVE(IAmenityIconProvider);
 
     protected:
         IAmenityIconProvider();

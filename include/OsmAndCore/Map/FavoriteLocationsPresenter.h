@@ -23,7 +23,7 @@ namespace OsmAnd
     class FavoriteLocationsPresenter_P;
     class OSMAND_CORE_API FavoriteLocationsPresenter : public IMapKeyedSymbolsProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsPresenter)
+        Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsPresenter);
 
     private:
         PrivateImplementation<FavoriteLocationsPresenter_P> _p;

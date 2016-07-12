@@ -17,7 +17,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IWebClient
     {
-        Q_DISABLE_COPY_AND_MOVE(IWebClient)
+        Q_DISABLE_COPY_AND_MOVE(IWebClient);
 
     public:
         typedef std::function<void(
@@ -26,7 +26,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IRequestResult
         {
-            Q_DISABLE_COPY_AND_MOVE(IRequestResult)
+            Q_DISABLE_COPY_AND_MOVE(IRequestResult);
 
         private:
         protected:
@@ -39,7 +39,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IHttpRequestResult : public IRequestResult
         {
-            Q_DISABLE_COPY_AND_MOVE(IHttpRequestResult)
+            Q_DISABLE_COPY_AND_MOVE(IHttpRequestResult);
 
         private:
         protected:

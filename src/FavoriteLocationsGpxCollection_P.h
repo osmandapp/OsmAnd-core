@@ -18,7 +18,7 @@ namespace OsmAnd
     class FavoriteLocationsGpxCollection;
     class FavoriteLocationsGpxCollection_P Q_DECL_FINAL : public FavoriteLocationsCollection_P
     {
-        Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsGpxCollection_P)
+        Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsGpxCollection_P);
 
     private:
     protected:

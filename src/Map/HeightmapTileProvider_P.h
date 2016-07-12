@@ -20,7 +20,7 @@ namespace OsmAnd
 {
     class HeightmapTileProvider_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(HeightmapTileProvider_P)
+        Q_DISABLE_COPY_AND_MOVE(HeightmapTileProvider_P);
     private:
     protected:
         HeightmapTileProvider_P(HeightmapTileProvider* const owner,

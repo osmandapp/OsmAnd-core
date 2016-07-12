@@ -24,7 +24,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Amenity Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(Amenity)
+        Q_DISABLE_COPY_AND_MOVE(Amenity);
         OSMAND_USE_MEMORY_MANAGER(Amenity);
     public:
         struct OSMAND_CORE_API DecodedCategory Q_DECL_FINAL

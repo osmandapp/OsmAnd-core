@@ -27,11 +27,11 @@ namespace OsmAnd
     class AmenitySymbolsProvider_P;
     class OSMAND_CORE_API AmenitySymbolsProvider : public IMapTiledSymbolsProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(AmenitySymbolsProvider)
+        Q_DISABLE_COPY_AND_MOVE(AmenitySymbolsProvider);
     public:
         class OSMAND_CORE_API Data : public IMapTiledSymbolsProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data)
+            Q_DISABLE_COPY_AND_MOVE(Data);
         private:
         protected:
         public:
@@ -45,7 +45,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API AmenitySymbolsGroup : public MapSymbolsGroup
         {
-            Q_DISABLE_COPY_AND_MOVE(AmenitySymbolsGroup)
+            Q_DISABLE_COPY_AND_MOVE(AmenitySymbolsGroup);
 
         public:
         protected:

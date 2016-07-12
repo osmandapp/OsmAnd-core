@@ -17,7 +17,7 @@ namespace OsmAnd
     class MapObjectsProvider_P;
     class OSMAND_CORE_API MapObjectsProvider Q_DECL_FINAL : public IMapObjectsProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(MapObjectsProvider)
+        Q_DISABLE_COPY_AND_MOVE(MapObjectsProvider);
 
     private:
         PrivateImplementation<MapObjectsProvider_P> _p;

@@ -15,7 +15,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API SimpleQueryController : public IQueryController
     {
-        Q_DISABLE_COPY_AND_MOVE(SimpleQueryController)
+        Q_DISABLE_COPY_AND_MOVE(SimpleQueryController);
 
     private:
     protected:

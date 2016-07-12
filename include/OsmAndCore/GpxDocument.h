@@ -20,7 +20,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API GpxDocument : public GeoInfoDocument
     {
-        Q_DISABLE_COPY_AND_MOVE(GpxDocument)
+        Q_DISABLE_COPY_AND_MOVE(GpxDocument);
     public:
         struct OSMAND_CORE_API GpxExtension : public ExtraData
         {

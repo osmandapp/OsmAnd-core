@@ -25,7 +25,7 @@ namespace OsmAnd
     class CoreResourcesEmbeddedBundle;
     class CoreResourcesEmbeddedBundle_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(CoreResourcesEmbeddedBundle_P)
+        Q_DISABLE_COPY_AND_MOVE(CoreResourcesEmbeddedBundle_P);
 
     private:
 #if defined(OSMAND_TARGET_OS_windows)

@@ -33,7 +33,7 @@ namespace OsmAnd
     class ObfReader;
     class ObfReader_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfReader_P)
+        Q_DISABLE_COPY_AND_MOVE(ObfReader_P);
 
     private:
         const std::shared_ptr<QIODevice> _input;

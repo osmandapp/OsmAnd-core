@@ -27,7 +27,7 @@ namespace OsmAnd
     class MapMarker_P;
     class OSMAND_CORE_API MapMarker
     {
-        Q_DISABLE_COPY_AND_MOVE(MapMarker)
+        Q_DISABLE_COPY_AND_MOVE(MapMarker);
 
     public:
         typedef const void* OnSurfaceIconKey;

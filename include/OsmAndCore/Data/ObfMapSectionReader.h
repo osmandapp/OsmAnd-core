@@ -41,7 +41,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API DataBlock Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(DataBlock)
+            Q_DISABLE_COPY_AND_MOVE(DataBlock);
         private:
         protected:
             DataBlock(

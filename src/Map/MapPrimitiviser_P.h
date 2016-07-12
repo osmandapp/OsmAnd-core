@@ -19,7 +19,7 @@ namespace OsmAnd
     class MapPrimitiviser;
     class MapPrimitiviser_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(MapPrimitiviser_P)
+        Q_DISABLE_COPY_AND_MOVE(MapPrimitiviser_P);
 
     public:
         typedef MapPrimitiviser::CoastlineMapObject CoastlineMapObject;
@@ -66,7 +66,7 @@ namespace OsmAnd
             float defaultBlockPathSpacing;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(Context)
+            Q_DISABLE_COPY_AND_MOVE(Context);
         };
 
         static AreaI alignAreaForCoastlines(const AreaI& area31);

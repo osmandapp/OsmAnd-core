@@ -18,7 +18,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IFontFinder
     {
-        Q_DISABLE_COPY_AND_MOVE(IFontFinder)
+        Q_DISABLE_COPY_AND_MOVE(IFontFinder);
 
     private:
     protected:

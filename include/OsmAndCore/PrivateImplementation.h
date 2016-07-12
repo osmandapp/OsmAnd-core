@@ -13,7 +13,7 @@ namespace OsmAnd
     template<class PIMPL_CLASS>
     class PrivateImplementation Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(PrivateImplementation)
+        Q_DISABLE_COPY_AND_MOVE(PrivateImplementation);
 
     public:
         typedef typename std::remove_const<PIMPL_CLASS>::type NonConstPIMPL;
@@ -101,7 +101,7 @@ namespace OsmAnd
     template<class PIMPL_INTERFACE_CLASS>
     class ImplementationInterface Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ImplementationInterface)
+        Q_DISABLE_COPY_AND_MOVE(ImplementationInterface);
 
     public:
         typedef typename std::remove_const<PIMPL_INTERFACE_CLASS>::type NonConstInterface;

@@ -15,7 +15,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API BaseSearch : public ISearch
     {
-        Q_DISABLE_COPY_AND_MOVE(BaseSearch)
+        Q_DISABLE_COPY_AND_MOVE(BaseSearch);
     private:
     protected:
         BaseSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection);

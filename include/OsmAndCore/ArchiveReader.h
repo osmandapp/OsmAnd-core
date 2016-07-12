@@ -17,7 +17,7 @@ namespace OsmAnd
     class ArchiveReader_P;
     class OSMAND_CORE_API ArchiveReader
     {
-        Q_DISABLE_COPY_AND_MOVE(ArchiveReader)
+        Q_DISABLE_COPY_AND_MOVE(ArchiveReader);
     public:
         class OSMAND_CORE_API Item
         {

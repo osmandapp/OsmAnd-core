@@ -12,7 +12,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IOnSurfaceMapSymbol
     {
-        Q_DISABLE_COPY_AND_MOVE(IOnSurfaceMapSymbol)
+        Q_DISABLE_COPY_AND_MOVE(IOnSurfaceMapSymbol);
     private:
     protected:
         IOnSurfaceMapSymbol();

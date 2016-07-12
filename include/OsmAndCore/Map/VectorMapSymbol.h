@@ -13,7 +13,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API VectorMapSymbol : public MapSymbol
     {
-        Q_DISABLE_COPY_AND_MOVE(VectorMapSymbol)
+        Q_DISABLE_COPY_AND_MOVE(VectorMapSymbol);
 
     public:
 #pragma pack(push, 1)

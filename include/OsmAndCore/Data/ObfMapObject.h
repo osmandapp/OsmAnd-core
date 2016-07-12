@@ -18,7 +18,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfMapObject : public MapObject
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfMapObject)
+        Q_DISABLE_COPY_AND_MOVE(ObfMapObject);
     private:
     protected:
         ObfMapObject(const std::shared_ptr<const ObfSectionInfo>& obfSection);

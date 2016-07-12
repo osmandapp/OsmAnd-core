@@ -19,7 +19,7 @@ namespace OsmAnd
 {
     class ValueAnimator_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ValueAnimator_P)
+        Q_DISABLE_COPY_AND_MOVE(ValueAnimator_P);
     public:
         typedef ValueAnimator::TimingFunction TimingFunction;
         typedef ValueAnimator::AnimationContext AnimationContext;

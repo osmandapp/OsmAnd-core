@@ -23,11 +23,11 @@ namespace OsmAnd
     class UnresolvedMapStyle_P;
     class OSMAND_CORE_API UnresolvedMapStyle
     {
-        Q_DISABLE_COPY_AND_MOVE(UnresolvedMapStyle)
+        Q_DISABLE_COPY_AND_MOVE(UnresolvedMapStyle);
     public:
         class OSMAND_CORE_API RuleNode Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(RuleNode)
+            Q_DISABLE_COPY_AND_MOVE(RuleNode);
 
         private:
         protected:
@@ -44,7 +44,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API BaseRule
         {
-            Q_DISABLE_COPY_AND_MOVE(BaseRule)
+            Q_DISABLE_COPY_AND_MOVE(BaseRule);
 
         private:
         protected:
@@ -57,7 +57,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Rule Q_DECL_FINAL : public BaseRule
         {
-            Q_DISABLE_COPY_AND_MOVE(Rule)
+            Q_DISABLE_COPY_AND_MOVE(Rule);
 
         private:
         protected:
@@ -71,7 +71,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Attribute Q_DECL_FINAL : public BaseRule
         {
-            Q_DISABLE_COPY_AND_MOVE(Attribute)
+            Q_DISABLE_COPY_AND_MOVE(Attribute);
 
         private:
         protected:
@@ -84,7 +84,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Parameter Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(Parameter)
+            Q_DISABLE_COPY_AND_MOVE(Parameter);
 
         private:
         protected:

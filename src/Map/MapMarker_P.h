@@ -26,7 +26,7 @@ namespace OsmAnd
     class MapMarker;
     class MapMarker_P : public std::enable_shared_from_this<MapMarker_P>
     {
-        Q_DISABLE_COPY_AND_MOVE(MapMarker_P)
+        Q_DISABLE_COPY_AND_MOVE(MapMarker_P);
 
     public:
         typedef MapMarker::PinIconAlignment PinIconAlignment;

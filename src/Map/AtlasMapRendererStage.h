@@ -23,7 +23,7 @@ namespace OsmAnd
         : public MapRendererStage
         , protected AtlasMapRendererStageHelper
     {
-        Q_DISABLE_COPY_AND_MOVE(AtlasMapRendererStage)
+        Q_DISABLE_COPY_AND_MOVE(AtlasMapRendererStage);
     private:
     protected:
     public:

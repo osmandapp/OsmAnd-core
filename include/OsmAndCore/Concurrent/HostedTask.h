@@ -16,7 +16,7 @@ namespace OsmAnd
     {
         class OSMAND_CORE_API HostedTask : public Task
         {
-            Q_DISABLE_COPY_AND_MOVE(HostedTask)
+            Q_DISABLE_COPY_AND_MOVE(HostedTask);
         private:
         protected:
             std::shared_ptr<TaskHost> _host;

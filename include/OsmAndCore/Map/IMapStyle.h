@@ -21,7 +21,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IMapStyle
     {
-        Q_DISABLE_COPY_AND_MOVE(IMapStyle)
+        Q_DISABLE_COPY_AND_MOVE(IMapStyle);
     public:
         typedef unsigned int StringId;
         enum : unsigned int {
@@ -49,7 +49,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IRuleNode
         {
-            Q_DISABLE_COPY_AND_MOVE(IRuleNode)
+            Q_DISABLE_COPY_AND_MOVE(IRuleNode);
 
         private:
         protected:
@@ -71,7 +71,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IRule
         {
-            Q_DISABLE_COPY_AND_MOVE(IRule)
+            Q_DISABLE_COPY_AND_MOVE(IRule);
 
         private:
         protected:
@@ -88,7 +88,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IParameter
         {
-            Q_DISABLE_COPY_AND_MOVE(IParameter)
+            Q_DISABLE_COPY_AND_MOVE(IParameter);
 
         private:
         protected:
@@ -107,7 +107,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IAttribute
         {
-            Q_DISABLE_COPY_AND_MOVE(IAttribute)
+            Q_DISABLE_COPY_AND_MOVE(IAttribute);
 
         private:
         protected:

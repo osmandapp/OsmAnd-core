@@ -20,7 +20,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Building Q_DECL_FINAL: public Address
     {
-        Q_DISABLE_COPY_AND_MOVE(Building)
+        Q_DISABLE_COPY_AND_MOVE(Building);
 
     public:
         enum class Interpolation : int32_t
