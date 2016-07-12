@@ -17,7 +17,7 @@ namespace OsmAnd
 {
     class IObservable
     {
-        Q_DISABLE_COPY_AND_MOVE(IObservable);
+        Q_DISABLE_COPY_AND_MOVE(IObservable)
 
     public:
         typedef const void* Tag;
@@ -34,7 +34,7 @@ namespace OsmAnd
     template<typename... ARGS>
     class Observable : public IObservable
     {
-        Q_DISABLE_COPY_AND_MOVE(Observable);
+        Q_DISABLE_COPY_AND_MOVE(Observable)
     public:
         typedef std::function<void (ARGS...)> Handler;
         typedef IObservable::Tag Tag;
@@ -45,7 +45,7 @@ namespace OsmAnd
 
         struct NotifyRunnable : public QRunnable
         {
-            Q_DISABLE_COPY_AND_MOVE(NotifyRunnable);
+            Q_DISABLE_COPY_AND_MOVE(NotifyRunnable)
 
             typedef std::function<void()> NotifyFunctor;
             const NotifyFunctor notifyFunctor;
@@ -143,7 +143,7 @@ namespace OsmAnd
     {
         static_assert(std::is_same<RETURN_TYPE, void>::value, "RETURN_TYPE has to be 'void'");
 
-        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs)
     public:
         typedef typename Observable< ARGS... >::Tag Tag;
 
@@ -164,7 +164,7 @@ namespace OsmAnd
     {
         static_assert(std::is_same<RETURN_TYPE, void>::value, "RETURN_TYPE has to be 'void'");
 
-        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs)
     public:
         typedef typename Observable< ARGS... >::Tag Tag;
 
@@ -185,7 +185,7 @@ namespace OsmAnd
     {
         static_assert(std::is_same<RETURN_TYPE, void>::value, "RETURN_TYPE has to be 'void'");
 
-        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs)
     public:
         typedef typename Observable< ARGS... >::Tag Tag;
 
@@ -206,7 +206,7 @@ namespace OsmAnd
     {
         static_assert(std::is_same<RETURN_TYPE, void>::value, "RETURN_TYPE has to be 'void'");
 
-        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs)
     public:
         typedef typename Observable<>::Tag Tag;
 
@@ -225,7 +225,7 @@ namespace OsmAnd
     template<class F>
     class ObservableAs : public ObservableAs< decltype(&F::operator()) >
     {
-        Q_DISABLE_COPY_AND_MOVE(ObservableAs);
+        Q_DISABLE_COPY_AND_MOVE(ObservableAs)
     public:
         typedef typename ObservableAs< decltype(&F::operator()) >::Tag Tag;
 

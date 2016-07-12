@@ -17,7 +17,7 @@ namespace OsmAnd
     class HeightmapTileProvider_P;
     class OSMAND_CORE_API HeightmapTileProvider : public IMapElevationDataProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(HeightmapTileProvider);
+        Q_DISABLE_COPY_AND_MOVE(HeightmapTileProvider)
 
     private:
         PrivateImplementation<HeightmapTileProvider_P> _p;

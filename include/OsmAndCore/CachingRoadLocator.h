@@ -20,7 +20,7 @@ namespace OsmAnd
     class CachingRoadLocator_P;
     class OSMAND_CORE_API CachingRoadLocator : public IRoadLocator
     {
-        Q_DISABLE_COPY_AND_MOVE(CachingRoadLocator);
+        Q_DISABLE_COPY_AND_MOVE(CachingRoadLocator)
 
     public:
         typedef std::function<bool(const std::shared_ptr<const ObfRoutingSectionReader::DataBlock>& dataBlock)>

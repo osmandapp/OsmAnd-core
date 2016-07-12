@@ -22,7 +22,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API AmenitiesByNameSearch Q_DECL_FINAL : public BaseSearch
     {
-        Q_DISABLE_COPY_AND_MOVE(AmenitiesByNameSearch);
+        Q_DISABLE_COPY_AND_MOVE(AmenitiesByNameSearch)
     public:
         struct OSMAND_CORE_API Criteria : public BaseSearch::Criteria
         {

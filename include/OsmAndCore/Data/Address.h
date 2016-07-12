@@ -35,7 +35,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Address
     {
-        Q_DISABLE_COPY_AND_MOVE(Address);
+        Q_DISABLE_COPY_AND_MOVE(Address)
 
     private:
     protected:

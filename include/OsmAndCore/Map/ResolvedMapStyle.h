@@ -23,13 +23,13 @@ namespace OsmAnd
     class ResolvedMapStyle_P;
     class OSMAND_CORE_API ResolvedMapStyle : public IMapStyle
     {
-        Q_DISABLE_COPY_AND_MOVE(ResolvedMapStyle);
+        Q_DISABLE_COPY_AND_MOVE(ResolvedMapStyle)
     public:
         class Attribute;
 
         class OSMAND_CORE_API RuleNode Q_DECL_FINAL : public IMapStyle::IRuleNode
         {
-            Q_DISABLE_COPY_AND_MOVE(RuleNode);
+            Q_DISABLE_COPY_AND_MOVE(RuleNode)
 
         private:
         protected:
@@ -62,7 +62,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API BaseRule
         {
-            Q_DISABLE_COPY_AND_MOVE(BaseRule);
+            Q_DISABLE_COPY_AND_MOVE(BaseRule)
 
         private:
         protected:
@@ -81,7 +81,7 @@ namespace OsmAnd
             : public BaseRule
             , public IMapStyle::IRule
         {
-            Q_DISABLE_COPY_AND_MOVE(Rule);
+            Q_DISABLE_COPY_AND_MOVE(Rule)
 
         private:
         protected:
@@ -104,7 +104,7 @@ namespace OsmAnd
             : public BaseRule
             , public IMapStyle::IAttribute
         {
-            Q_DISABLE_COPY_AND_MOVE(Attribute);
+            Q_DISABLE_COPY_AND_MOVE(Attribute)
 
         private:
         protected:
@@ -126,7 +126,7 @@ namespace OsmAnd
         class OSMAND_CORE_API Parameter Q_DECL_FINAL
             : public IMapStyle::IParameter
         {
-            Q_DISABLE_COPY_AND_MOVE(Parameter);
+            Q_DISABLE_COPY_AND_MOVE(Parameter)
 
         private:
         protected:
@@ -161,7 +161,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API ParameterValueDefinition : public MapStyleValueDefinition
         {
-            Q_DISABLE_COPY_AND_MOVE(ParameterValueDefinition);
+            Q_DISABLE_COPY_AND_MOVE(ParameterValueDefinition)
 
         private:
         protected:

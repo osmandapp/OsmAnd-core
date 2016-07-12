@@ -17,7 +17,7 @@ namespace OsmAnd
     class MapRasterLayerProvider_Software_P;
     class OSMAND_CORE_API MapRasterLayerProvider_Software : public MapRasterLayerProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(MapRasterLayerProvider_Software);
+        Q_DISABLE_COPY_AND_MOVE(MapRasterLayerProvider_Software)
     private:
     protected:
     public:

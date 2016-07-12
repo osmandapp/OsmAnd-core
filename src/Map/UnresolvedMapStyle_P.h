@@ -23,7 +23,7 @@ namespace OsmAnd
     class UnresolvedMapStyle;
     class UnresolvedMapStyle_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(UnresolvedMapStyle_P);
+        Q_DISABLE_COPY_AND_MOVE(UnresolvedMapStyle_P)
     public:
         typedef UnresolvedMapStyle::RuleNode RuleNode;
         typedef UnresolvedMapStyle::BaseRule BaseRule;

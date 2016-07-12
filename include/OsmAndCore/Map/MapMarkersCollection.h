@@ -23,7 +23,7 @@ namespace OsmAnd
     class MapMarkersCollection_P;
     class OSMAND_CORE_API MapMarkersCollection : public IMapKeyedSymbolsProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(MapMarkersCollection);
+        Q_DISABLE_COPY_AND_MOVE(MapMarkersCollection)
 
     private:
         PrivateImplementation<MapMarkersCollection_P> _p;

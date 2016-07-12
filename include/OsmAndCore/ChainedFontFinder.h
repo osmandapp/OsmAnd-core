@@ -15,7 +15,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API ChainedFontFinder Q_DECL_FINAL : public IFontFinder
     {
-        Q_DISABLE_COPY_AND_MOVE(ChainedFontFinder);
+        Q_DISABLE_COPY_AND_MOVE(ChainedFontFinder)
 
     private:
     protected:

@@ -17,7 +17,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IAtlasMapRenderer
     {
-        Q_DISABLE_COPY_AND_MOVE(IAtlasMapRenderer);
+        Q_DISABLE_COPY_AND_MOVE(IAtlasMapRenderer)
 
     public:
         enum {

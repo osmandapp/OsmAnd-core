@@ -23,7 +23,7 @@ namespace OsmAnd
     class MapMarkerBuilder;
     class MapMarkerBuilder_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(MapMarkerBuilder_P);
+        Q_DISABLE_COPY_AND_MOVE(MapMarkerBuilder_P)
 
     private:
     protected:

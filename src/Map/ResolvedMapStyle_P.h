@@ -23,7 +23,7 @@ namespace OsmAnd
     class ResolvedMapStyle;
     class ResolvedMapStyle_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ResolvedMapStyle_P);
+        Q_DISABLE_COPY_AND_MOVE(ResolvedMapStyle_P)
     public:
         typedef ResolvedMapStyle::StringId StringId;
         typedef IMapStyle::ValueDefinitionId ValueDefinitionId;

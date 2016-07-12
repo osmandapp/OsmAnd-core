@@ -16,7 +16,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API StreetIntersection Q_DECL_FINAL : public Address
     {
-        Q_DISABLE_COPY_AND_MOVE(StreetIntersection);
+        Q_DISABLE_COPY_AND_MOVE(StreetIntersection)
 
     private:
     protected:

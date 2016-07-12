@@ -52,7 +52,7 @@ namespace OsmAnd
             ColorARGB shadowColor;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(Context);
+            Q_DISABLE_COPY_AND_MOVE(Context)
         };
 
         enum class PrimitivesType

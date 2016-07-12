@@ -36,7 +36,7 @@ namespace OsmAnd
 
         class BinaryMapObjectsDataBlocksCache : public ObfMapSectionReader::DataBlocksCache
         {
-            Q_DISABLE_COPY_AND_MOVE(BinaryMapObjectsDataBlocksCache);
+            Q_DISABLE_COPY_AND_MOVE(BinaryMapObjectsDataBlocksCache)
         private:
         protected:
         public:
@@ -55,7 +55,7 @@ namespace OsmAnd
 
         class RoadsDataBlocksCache : public ObfRoutingSectionReader::DataBlocksCache
         {
-            Q_DISABLE_COPY_AND_MOVE(RoadsDataBlocksCache);
+            Q_DISABLE_COPY_AND_MOVE(RoadsDataBlocksCache)
         private:
         protected:
         public:

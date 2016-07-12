@@ -19,7 +19,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API StreetGroup Q_DECL_FINAL : public Address
     {
-        Q_DISABLE_COPY_AND_MOVE(StreetGroup);
+        Q_DISABLE_COPY_AND_MOVE(StreetGroup)
 
     private:
     protected:

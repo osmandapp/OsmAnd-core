@@ -29,7 +29,7 @@ namespace OsmAndTools
 {
     class OSMAND_CORE_TOOLS_API Styler Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(Styler);
+        Q_DISABLE_COPY_AND_MOVE(Styler)
 
     public:
         struct OSMAND_CORE_TOOLS_API Configuration Q_DECL_FINAL

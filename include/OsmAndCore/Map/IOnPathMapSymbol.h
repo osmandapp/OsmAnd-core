@@ -15,7 +15,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IOnPathMapSymbol
     {
-        Q_DISABLE_COPY_AND_MOVE(IOnPathMapSymbol);
+        Q_DISABLE_COPY_AND_MOVE(IOnPathMapSymbol)
 
     public:
         struct PinPoint Q_DECL_FINAL

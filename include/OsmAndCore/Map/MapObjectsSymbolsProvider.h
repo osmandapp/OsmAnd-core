@@ -22,11 +22,11 @@ namespace OsmAnd
     class MapObjectsSymbolsProvider_P;
     class OSMAND_CORE_API MapObjectsSymbolsProvider : public IMapTiledSymbolsProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(MapObjectsSymbolsProvider);
+        Q_DISABLE_COPY_AND_MOVE(MapObjectsSymbolsProvider)
     public:
         class OSMAND_CORE_API Data : public IMapTiledSymbolsProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data);
+            Q_DISABLE_COPY_AND_MOVE(Data)
         private:
         protected:
         public:
@@ -43,7 +43,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API MapObjectSymbolsGroup : public MapSymbolsGroup
         {
-            Q_DISABLE_COPY_AND_MOVE(MapObjectSymbolsGroup);
+            Q_DISABLE_COPY_AND_MOVE(MapObjectSymbolsGroup)
 
         public:
         protected:

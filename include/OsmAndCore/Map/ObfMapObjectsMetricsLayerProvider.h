@@ -20,11 +20,11 @@ namespace OsmAnd
     class ObfMapObjectsMetricsLayerProvider_P;
     class OSMAND_CORE_API ObfMapObjectsMetricsLayerProvider : public IRasterMapLayerProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsMetricsLayerProvider);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsMetricsLayerProvider)
     public:
         class OSMAND_CORE_API Data : public IRasterMapLayerProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data);
+            Q_DISABLE_COPY_AND_MOVE(Data)
         private:
         protected:
         public:

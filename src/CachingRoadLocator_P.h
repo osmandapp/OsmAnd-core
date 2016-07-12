@@ -21,7 +21,7 @@ namespace OsmAnd
     class CachingRoadLocator;
     class CachingRoadLocator_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(CachingRoadLocator_P);
+        Q_DISABLE_COPY_AND_MOVE(CachingRoadLocator_P)
     private:
     protected:
         CachingRoadLocator_P(CachingRoadLocator* const owner);

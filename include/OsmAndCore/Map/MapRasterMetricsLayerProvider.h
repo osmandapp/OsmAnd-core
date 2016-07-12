@@ -21,11 +21,11 @@ namespace OsmAnd
     class MapRasterMetricsLayerProvider_P;
     class OSMAND_CORE_API MapRasterMetricsLayerProvider : public IRasterMapLayerProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(MapRasterMetricsLayerProvider);
+        Q_DISABLE_COPY_AND_MOVE(MapRasterMetricsLayerProvider)
     public:
         class OSMAND_CORE_API Data : public IRasterMapLayerProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data);
+            Q_DISABLE_COPY_AND_MOVE(Data)
         private:
         protected:
         public:

@@ -22,7 +22,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IFavoriteLocationsCollection
     {
-        Q_DISABLE_COPY_AND_MOVE(IFavoriteLocationsCollection);
+        Q_DISABLE_COPY_AND_MOVE(IFavoriteLocationsCollection)
 
     private:
     protected:

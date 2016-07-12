@@ -22,7 +22,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IObfsCollection
     {
-        Q_DISABLE_COPY_AND_MOVE(IObfsCollection);
+        Q_DISABLE_COPY_AND_MOVE(IObfsCollection)
     private:
     protected:
         IObfsCollection();

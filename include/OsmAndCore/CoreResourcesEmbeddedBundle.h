@@ -19,7 +19,7 @@ namespace OsmAnd
     class CoreResourcesEmbeddedBundle_P;
     class OSMAND_CORE_API CoreResourcesEmbeddedBundle : public ICoreResourcesProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(CoreResourcesEmbeddedBundle);
+        Q_DISABLE_COPY_AND_MOVE(CoreResourcesEmbeddedBundle)
 
     private:
         PrivateImplementation<CoreResourcesEmbeddedBundle_P> _p;

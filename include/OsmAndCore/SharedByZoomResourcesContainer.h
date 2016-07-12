@@ -28,7 +28,7 @@ namespace OsmAnd
     template<typename KEY_TYPE, typename RESOURCE_TYPE>
     class SharedByZoomResourcesContainer : protected SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>
     {
-        Q_DISABLE_COPY_AND_MOVE(SharedByZoomResourcesContainer);
+        Q_DISABLE_COPY_AND_MOVE(SharedByZoomResourcesContainer)
     public:
         typedef typename SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::ResourcePtr ResourcePtr;
     protected:
@@ -53,7 +53,7 @@ namespace OsmAnd
             const QSet<ZoomLevel> zoomLevels;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(AvailableResourceEntry);
+            Q_DISABLE_COPY_AND_MOVE(AvailableResourceEntry)
         };
 
         struct PromisedResourceEntry : public SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE>::PromisedResourceEntry
@@ -69,7 +69,7 @@ namespace OsmAnd
             const QSet<ZoomLevel> zoomLevels;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(PromisedResourceEntry);
+            Q_DISABLE_COPY_AND_MOVE(PromisedResourceEntry)
         };
     private:
         typedef SharedResourcesContainer<KEY_TYPE, RESOURCE_TYPE> base;

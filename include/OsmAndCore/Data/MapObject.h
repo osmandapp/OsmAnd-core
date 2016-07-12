@@ -21,11 +21,11 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API MapObject
     {
-        Q_DISABLE_COPY_AND_MOVE(MapObject);
+        Q_DISABLE_COPY_AND_MOVE(MapObject)
     public:
         class OSMAND_CORE_API AttributeMapping
         {
-            Q_DISABLE_COPY_AND_MOVE(AttributeMapping);
+            Q_DISABLE_COPY_AND_MOVE(AttributeMapping)
         public:
             struct OSMAND_CORE_API TagValue Q_DECL_FINAL
             {

@@ -18,7 +18,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfPoiSectionCategories Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfPoiSectionCategories);
+        Q_DISABLE_COPY_AND_MOVE(ObfPoiSectionCategories)
 
     private:
     protected:
@@ -46,7 +46,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfPoiSectionSubtypes Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfPoiSectionSubtypes);
+        Q_DISABLE_COPY_AND_MOVE(ObfPoiSectionSubtypes)
 
     private:
     protected:
@@ -78,7 +78,7 @@ namespace OsmAnd
     class ObfPoiSectionInfo_P;
     class OSMAND_CORE_API ObfPoiSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfPoiSectionInfo);
+        Q_DISABLE_COPY_AND_MOVE(ObfPoiSectionInfo)
     private:
         PrivateImplementation<ObfPoiSectionInfo_P> _p;
     protected:

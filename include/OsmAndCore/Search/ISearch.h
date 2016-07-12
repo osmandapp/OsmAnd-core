@@ -21,7 +21,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ISearch
     {
-        Q_DISABLE_COPY_AND_MOVE(ISearch);
+        Q_DISABLE_COPY_AND_MOVE(ISearch)
     public:
         struct OSMAND_CORE_API Criteria
         {

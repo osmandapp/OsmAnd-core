@@ -17,7 +17,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IFavoriteLocation
     {
-        Q_DISABLE_COPY_AND_MOVE(IFavoriteLocation);
+        Q_DISABLE_COPY_AND_MOVE(IFavoriteLocation)
     public:
         enum class LocationSource
         {

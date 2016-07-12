@@ -20,7 +20,7 @@ namespace OsmAnd
     class OnlineRasterMapLayerProvider_P;
     class OSMAND_CORE_API OnlineRasterMapLayerProvider : public IRasterMapLayerProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(OnlineRasterMapLayerProvider);
+        Q_DISABLE_COPY_AND_MOVE(OnlineRasterMapLayerProvider)
     private:
         PrivateImplementation<OnlineRasterMapLayerProvider_P> _p;
     protected:
