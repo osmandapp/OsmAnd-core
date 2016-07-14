@@ -44,8 +44,10 @@ namespace OsmAnd
         return stack.isNull() || stack.contains(needle, Qt::CaseInsensitive);
     }
 
-    static std::function<bool(bool, bool)> OR = std::logical_or<bool>();
-    static std::function<bool(bool, bool)> AND = std::logical_and<bool>();
+    using BinaryBoolFunction = std::function<bool(bool, bool)>;
+
+    static BinaryBoolFunction OR = std::logical_or<bool>();
+    static BinaryBoolFunction AND = std::logical_and<bool>();
 
     struct OSMAND_CORE_API Utilities Q_DECL_FINAL
     {

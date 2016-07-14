@@ -1,41 +1,41 @@
 #include "Building.h"
 
-#include "Street.h"
+#include "ObfStreetGroup.h"
+#include "ObfStreet.h"
 #include "StreetGroup.h"
+#include "Street.h"
 
 
 OsmAnd::Building::Building(
-        std::shared_ptr<const OsmAnd::ObfStreet> street,
+        std::shared_ptr<const OsmAnd::ObfStreet> street_,
         QString nativeName,
         QHash<QString, QString> localizedNames,
         OsmAnd::PointI position31,
-        OsmAnd::Building::Interpolation interpolation,
-        QString postcode)
+        OsmAnd::Building::Interpolation interpolation_,
+        QString postcode_)
     : Address(AddressType::Building, nativeName, localizedNames, position31)
-    , interpolation(interpolation_)
     , street(street_)
-    , streetGroup(street->streetGroup)
+    , streetGroup(street->obfStreetGroup)
+    , interpolation(interpolation_)
+    , postcode(postcode_)
 {
 
 }
 
 OsmAnd::Building::Building(
-        std::shared_ptr<const OsmAnd::StreetGroup> streetGroup,
+        std::shared_ptr<const OsmAnd::ObfStreetGroup> streetGroup_,
         QString nativeName,
         QHash<QString, QString> localizedNames,
         OsmAnd::PointI position31,
-        OsmAnd::Building::Interpolation interpolation,
-        QString postcode)
+        OsmAnd::Building::Interpolation interpolation_,
+        QString postcode_)
     : Address(AddressType::Building, nativeName, localizedNames, position31)
-    , interpolation(interpolation_)
     , street(nullptr)
     , streetGroup(streetGroup_)
+    , interpolation(interpolation_)
+    , postcode(postcode_)
 {
 
-}
-
-OsmAnd::Building::~Building()
-{
 }
 
 QString OsmAnd::Building::toString() const
@@ -52,4 +52,9 @@ OsmAnd::Building::Interpolation::Interpolation(
     , type(type_)
 {
 
+}
+
+QString OsmAnd::Building::Interpolation::toString() const
+{
+    return QStringLiteral("interpolation ") + nativeName;
 }

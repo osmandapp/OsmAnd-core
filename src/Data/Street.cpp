@@ -5,12 +5,12 @@
 #include <QStringBuilder>
 
 OsmAnd::Street::Street(QString nativeName, QHash<QString, QString> localizedNames, OsmAnd::PointI position31)
-    : Address(nativeName, localizedNames, position31)
+    : Address(AddressType::Street, nativeName, localizedNames, position31)
 {
 
 }
 
 QString OsmAnd::Street::toString() const
 {
-    return QStringLiteral("str. ") % _nativeName;
+    return QStringLiteral("str. ") % nativeName;
 }

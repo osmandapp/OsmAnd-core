@@ -1,8 +1,11 @@
 #include "ObfAddressSectionReader.h"
 #include "ObfAddressSectionReader_P.h"
-#include "ObfBuilding.h"
 #include "ObfStreetGroup.h"
-
+#include "StreetGroup.h"
+#include "ObfStreet.h"
+#include "Street.h"
+#include "ObfBuilding.h"
+#include "Building.h"
 #include "ObfReader.h"
 
 OsmAnd::ObfAddressSectionReader::ObfAddressSectionReader()
@@ -17,14 +20,12 @@ void OsmAnd::ObfAddressSectionReader::loadStreetGroups(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfAddressSectionInfo>& section,
     const Filter& filter,
-    QList< std::shared_ptr<const ObfStreetGroup> >* resultOut /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     ObfAddressSectionReader_P::loadStreetGroups(
         *reader->_p,
         section,
         filter,
-        resultOut,
         queryController);
 }
 
@@ -56,7 +57,7 @@ void OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
 
 void OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
         const std::shared_ptr<const ObfReader>& reader,
-        const ObfStreet &street,
+        const std::shared_ptr<const ObfStreet>& street,
         const Filter& filter,
         const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -141,9 +142,23 @@ OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter
 }
 
 OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
+        OsmAnd::ObfAddressSectionReader::ObfStreetGroupVisitorFunction visitor)
+{
+    _obfStreetGroupVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
         OsmAnd::ObfAddressSectionReader::StreetVisitorFunction visitor)
 {
     _streetVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
+        OsmAnd::ObfAddressSectionReader::ObfStreetVisitorFunction visitor)
+{
+    _obfStreetVisitor = visitor;
     return *this;
 }
 
@@ -155,9 +170,23 @@ OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter
 }
 
 OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
+        OsmAnd::ObfAddressSectionReader::ObfBuildingVisitorFunction visitor)
+{
+    _obfBuildingVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
         OsmAnd::ObfAddressSectionReader::IntersectionVisitorFunction visitor)
 {
     _intersectionVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
+        OsmAnd::ObfAddressSectionReader::ObfIntersectionVisitorFunction visitor)
+{
+    _obfIntersectionVisitor = visitor;
     return *this;
 }
 
@@ -185,61 +214,107 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
     return result;
 }
 
-bool OsmAnd::ObfAddressSectionReader::Filter::contains(
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::AreaI &bbox31) const
 {
 //    return !_bbox.isSet() || _bbox->contains(bbox);
     return !_bbox31.isSet() || _bbox31->contains(bbox31) || bbox31.contains(*_bbox31) || _bbox31->intersects(bbox31);
 }
 
-bool OsmAnd::ObfAddressSectionReader::Filter::contains(
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::PointI &point) const
 {
     return !_bbox31.isSet() || _bbox31->contains(point);
 }
 
-bool OsmAnd::ObfAddressSectionReader::Filter::filter(
-        const OsmAnd::Address& address,
-//        const OsmAnd::ObfAddressSectionReader::StringMatcherFunction& matcher,
-        bool callVisitor) const
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
+        const OsmAnd::Address& address) const
 {
-    bool result = _op(
-                contains(address.position31),
-                matches(address.nativeName, address.localizedNames));
-    if (result && callVisitor)
-        _addressVisitor(address);
+    return _op(matches(address.position31),
+               matches(address.nativeName, address.localizedNames));
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
+        const OsmAnd::StreetGroup& streetGroup) const
+{
+    return _op(matches(static_cast<const Address&>(streetGroup)),
+               matches(streetGroup.type));
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
+        std::unique_ptr<const OsmAnd::Address> address) const
+{
+    bool result = address && matches(*address);
+    if (result)
+        _addressVisitor(std::move(address));
     return result;
 }
 
-//bool OsmAnd::ObfAddressSectionReader::Filter::match(const QString &name, const OsmAnd::AreaI &bbox) const
-//{
-//    return _op(matches(name), contains(bbox));
-//}
-
-bool OsmAnd::ObfAddressSectionReader::Filter::filter(
-        const OsmAnd::StreetGroup &streetGroup,
-//        const OsmAnd::ObfAddressSectionReader::StringMatcherFunction &matcher,
-        bool callVisitor) const
+bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
+        std::unique_ptr<const OsmAnd::StreetGroup> streetGroup) const
 {
-    bool result = _op(
-                filter(static_cast<const Address&>(streetGroup), false),
-                hasStreetGroupType(streetGroup.type));
-    if (result && callVisitor)
-        _streetGroupVisitor(streetGroup);
+    bool result = streetGroup && matches(*streetGroup);
+    if (result)
+        _streetGroupVisitor(std::move(streetGroup));
     return result;
 }
 
-bool OsmAnd::ObfAddressSectionReader::Filter::hasType(
+bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
+        std::unique_ptr<const OsmAnd::ObfStreetGroup> streetGroup) const
+{
+    bool result = streetGroup && matches(streetGroup->streetGroup);
+    if (result)
+        _obfStreetGroupVisitor(std::move(streetGroup));
+    return result;
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
+        std::unique_ptr<const OsmAnd::Street> street) const
+{
+    bool result = street && matches(*street);
+    if (result)
+        _streetVisitor(std::move(street));
+    return result;
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
+        std::unique_ptr<const OsmAnd::ObfStreet> street) const
+{
+    bool result = street && matches(street->street);
+    if (result)
+        _obfStreetVisitor(std::move(street));
+    return result;
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
+        std::unique_ptr<const OsmAnd::Building> building) const
+{
+    bool result = building && matches(*building);
+    if (result)
+        _buildingVisitor(std::move(building));
+    return result;
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
+        std::unique_ptr<const OsmAnd::ObfBuilding> building) const
+{
+    bool result = building && matches(building->building);
+    if (result)
+        _obfBuildingVisitor(std::move(building));
+    return result;
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::AddressType type) const
 {
     return _addressTypes.isSet(type);
 }
 
-bool OsmAnd::ObfAddressSectionReader::Filter::hasStreetGroupType(
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::ObfAddressStreetGroupType type) const
 {
     bool result = _streetGroupTypes.isSet(type);
     for (const Filter& filter : _filters)
-        result = _op(result, filter.hasStreetGroupType(type));
+        result = _op(result, filter.matches(type));
     return result;
 }

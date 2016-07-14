@@ -135,7 +135,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                 rs->street = street;
                 // set connection point to sort
                 rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
-                rs->streetGroup = street->streetGroup;
+                rs->streetGroup = street->obfStreetGroup;
                 streetList.append(rs);
 //                return true;
 ////                }
@@ -218,25 +218,25 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             return bld;
         };
 
-        if (b->interpolation != Building::Interpolation::Disabled)
+        if (b->interpolation.type != Building::Interpolation::Type::Disabled)
         {
             LatLon s = Utilities::convert31ToLatLon(b->position31);
-            LatLon to = Utilities::convert31ToLatLon(b->interpolationPosition31);
-            double coeff = Utilities::projection31(*road->searchPoint31(), b->position31, b->interpolationPosition31);
+            LatLon to = Utilities::convert31ToLatLon(b->interpolation.position31);
+            double coeff = Utilities::projection31(*road->searchPoint31(), b->position31, b->interpolation.position31);
             double plat = s.latitude + (to.latitude - s.latitude) * coeff;
             double plon = s.longitude + (to.longitude - s.longitude) * coeff;
             if (Utilities::distance(road->searchPoint->latitude, road->searchPoint->longitude, plat, plon) < DISTANCE_BUILDING_PROXIMITY)
             {
                 auto bld = makeResult();
-                if (!b->interpolationNativeName.isEmpty())
+                if (!b->interpolation.nativeName.isEmpty())
                 {
                     int fi = extractFirstInteger(b->nativeName);
-                    int si = extractFirstInteger(b->interpolationNativeName);
+                    int si = extractFirstInteger(b->interpolation.nativeName);
                     if (si != 0 && fi != 0) {
                         int num = (int) (fi + (si - fi) * coeff);
-                        if (b->interpolation == Building::Interpolation::Even || b->interpolation == Building::Interpolation::Odd)
+                        if (b->interpolation == Building::Interpolation::Type::Even || b->interpolation == Building::Interpolation::Type::Odd)
                         {
-                            if (num % 2 == (b->interpolation == Building::Interpolation::Even ? 1 : 0))
+                            if (num % 2 == (b->interpolation == Building::Interpolation::Type::Even ? 1 : 0))
                                 num--;
                         }
 //                        else if (b->interpolationInterval > 0)

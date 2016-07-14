@@ -768,7 +768,7 @@ bool OsmAnd::ObfDataInterface::scanAddressesByName(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (!filter.contains(addressSection->area31))
+            if (!filter.matches(addressSection->area31))
                 continue;
 
             OsmAnd::ObfAddressSectionReader::scanAddressesByName(
@@ -798,14 +798,13 @@ bool OsmAnd::ObfDataInterface::loadStreetGroups(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (!filter.contains(addressSection->area31))
+            if (!filter.matches(addressSection->area31))
                 continue;
 
             OsmAnd::ObfAddressSectionReader::loadStreetGroups(
                 obfReader,
                 addressSection,
                 filter,
-                resultOut,
                 queryController);
         }
     }
@@ -829,7 +828,7 @@ bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (!filter.contains(addressSection->area31))
+            if (!filter.matches(addressSection->area31))
                 continue;
 
             for (const auto& streetGroup : constOf(streetGroups))
@@ -851,7 +850,7 @@ bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
 }
 
 bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
-        const QList<std::shared_ptr<const ObfStreet>>& streets,
+        const QVector<std::shared_ptr<const ObfStreet>>& streets,
         const ObfAddressSectionReader::Filter& filter,
         const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -866,12 +865,12 @@ bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (!filter.contains(addressSection->area31))
+            if (!filter.matches(addressSection->area31))
                 continue;
 
             for (const auto& street : constOf(streets))
             {
-                if (addressSection != street->streetGroup->obfSection)
+                if (addressSection != street->obfStreetGroup->obfSection)
                     continue;
 
                 OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
@@ -887,7 +886,7 @@ bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
 }
 
 bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
-    const QList< std::shared_ptr<const ObfStreet> >& streets,
+    const QVector<std::shared_ptr<const ObfStreet>>& streets,
     const Filter& filter,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -902,17 +901,17 @@ bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (!filter.contains(addressSection->area31))
+            if (!filter.matches(addressSection->area31))
                 continue;
 
             for (const auto& street : constOf(streets))
             {
-                if (addressSection != street->streetGroup->obfSection)
+                if (addressSection != street->obfStreetGroup->obfSection)
                     continue;
 
                 OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
                     obfReader,
-                    *street,
+                    street,
                     filter,
                     queryController);
             }

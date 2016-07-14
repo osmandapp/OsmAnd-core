@@ -33,19 +33,13 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Address
     {
-    public:
-        Address(const Address&) = default;
-        Address(Address&&) = default;
-        Address& operator=(const Address&) = default;
-        Address& operator=(Address&&) = default;
-        virtual ~Address() = default;
-
-        Address(
-                AddressType addressType,
+    protected:
+        Address(AddressType addressType,
                 QString nativeName,
                 QHash<QString, QString> localizedNames,
                 PointI position31);
-        virtual QString toString() const;
+    public:
+        virtual QString toString() const = 0;
 
         const AddressType addressType;
         const QString nativeName;

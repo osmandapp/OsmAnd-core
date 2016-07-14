@@ -130,12 +130,11 @@ namespace OsmAnd
                 const Filter& filter,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool loadBuildingsFromStreets(const QList<std::shared_ptr<const ObfStreet>> &streets,
+        bool loadBuildingsFromStreets(const QVector<std::shared_ptr<const ObfStreet> > &streets,
                 const Filter& filter,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool loadIntersectionsFromStreets(
-                const QList<std::shared_ptr<const ObfStreet> > &streets,
+        bool loadIntersectionsFromStreets(const QVector<std::shared_ptr<const ObfStreet> > &streets,
                 const Filter& filter = Filter{},
                 const std::shared_ptr<const IQueryController>& queryController = nullptr);
     };

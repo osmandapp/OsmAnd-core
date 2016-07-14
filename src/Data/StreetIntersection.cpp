@@ -9,8 +9,5 @@ OsmAnd::StreetIntersection::StreetIntersection(
     : Address(AddressType::StreetIntersection, nativeName, localizedNames, position31)
     , street(street_)
 {
-}
 
-OsmAnd::StreetIntersection::~StreetIntersection()
-{
 }

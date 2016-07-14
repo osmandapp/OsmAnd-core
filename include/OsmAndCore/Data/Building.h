@@ -16,7 +16,7 @@
 namespace OsmAnd
 {
     class ObfStreet;
-    class StreetGroup;
+    class ObfStreetGroup;
 
     class OSMAND_CORE_API Building Q_DECL_FINAL: public Address
     {
@@ -32,10 +32,15 @@ namespace OsmAnd
                 Odd = -3,
                 Alphabetic = -4
             };
-            Interpolation(Type type = Type::Disabled,
-                          QString nativeName = {},
-                          QHash<QString, QString> localizedNames = {},
-                          PointI position31 = {});
+
+            Interpolation(
+                    Type type = Type::Disabled,
+                    QString nativeName = {},
+                    QHash<QString, QString> localizedNames = {},
+                    PointI position31 = {});
+
+            virtual QString toString() const;
+
             const Type type;
         };
 
@@ -47,17 +52,17 @@ namespace OsmAnd
                 Interpolation interpolation = {},
                 QString postcode = {});
         Building(
-                std::shared_ptr<const StreetGroup> streetGroup,
+                std::shared_ptr<const ObfStreetGroup> streetGroup,
                 QString nativeName = {},
                 QHash<QString, QString> localizedNames = {},
                 PointI position31 = {},
                 Interpolation interpolation = {},
                 QString postcode = {});
-        virtual ~Building();
+
         virtual QString toString() const;
 
         const std::shared_ptr<const ObfStreet> street;
-        const std::shared_ptr<const StreetGroup> streetGroup;
+        const std::shared_ptr<const ObfStreetGroup> streetGroup;
         const Interpolation interpolation;
         const QString postcode;
     };

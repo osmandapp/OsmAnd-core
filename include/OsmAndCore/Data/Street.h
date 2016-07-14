@@ -21,6 +21,7 @@ namespace OsmAnd
     {
     public:
         Street(QString nativeName, QHash<QString, QString> localizedNames, PointI position31);
+
         virtual QString toString() const;
     };
 }
