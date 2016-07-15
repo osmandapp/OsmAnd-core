@@ -21,7 +21,7 @@ namespace OsmAnd
     class FavoriteLocation_P;
     class FavoriteLocation : public IFavoriteLocation
     {
-        Q_DISABLE_COPY_AND_MOVE(FavoriteLocation);
+        Q_DISABLE_COPY_AND_MOVE(FavoriteLocation)
 
     private:
         PrivateImplementation<FavoriteLocation_P> _p;

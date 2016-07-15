@@ -12,7 +12,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API DefaultLogSink : public ILogSink
     {
-        Q_DISABLE_COPY_AND_MOVE(DefaultLogSink);
+        Q_DISABLE_COPY_AND_MOVE(DefaultLogSink)
     private:
     protected:
     public:

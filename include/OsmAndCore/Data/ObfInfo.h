@@ -21,7 +21,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfInfo Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfInfo);
+        Q_DISABLE_COPY_AND_MOVE(ObfInfo)
 
     private:
     protected:

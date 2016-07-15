@@ -22,7 +22,7 @@ namespace OsmAnd
     class FavoriteLocation;
     class FavoriteLocation_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(FavoriteLocation_P);
+        Q_DISABLE_COPY_AND_MOVE(FavoriteLocation_P)
 
     private:
     protected:

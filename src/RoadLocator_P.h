@@ -21,7 +21,7 @@ namespace OsmAnd
     class RoadLocator;
     class RoadLocator_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(RoadLocator_P);
+        Q_DISABLE_COPY_AND_MOVE(RoadLocator_P)
     private:
         QList<std::shared_ptr<const Road> > roadsInRadius(
             const PointI position31,

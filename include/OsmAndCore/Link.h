@@ -16,7 +16,7 @@ namespace OsmAnd
     template<typename ENTITY>
     class Link Q_DECL_FINAL : public std::enable_shared_from_this < Link<ENTITY> >
     {
-        Q_DISABLE_COPY_AND_MOVE(Link);
+        Q_DISABLE_COPY_AND_MOVE(Link)
 
     public:
         typedef Link<ENTITY> LinkT;

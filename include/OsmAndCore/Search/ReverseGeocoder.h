@@ -27,7 +27,7 @@ namespace OsmAnd
     class ReverseGeocoder_P;
     class OSMAND_CORE_API ReverseGeocoder Q_DECL_FINAL : public BaseSearch
     {
-        Q_DISABLE_COPY_AND_MOVE(ReverseGeocoder);
+        Q_DISABLE_COPY_AND_MOVE(ReverseGeocoder)
     private:
         PrivateImplementation<ReverseGeocoder_P> _p;
     public:

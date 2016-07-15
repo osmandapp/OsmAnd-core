@@ -20,7 +20,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API BinaryMapObject Q_DECL_FINAL : public ObfMapObject
     {
-        Q_DISABLE_COPY_AND_MOVE(BinaryMapObject);
+        Q_DISABLE_COPY_AND_MOVE(BinaryMapObject)
     private:
     protected:
         BinaryMapObject(

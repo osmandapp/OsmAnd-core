@@ -16,7 +16,7 @@ namespace OsmAnd
     class ValueAnimator_P;
     class OSMAND_CORE_API ValueAnimator
     {
-        Q_DISABLE_COPY_AND_MOVE(ValueAnimator);
+        Q_DISABLE_COPY_AND_MOVE(ValueAnimator)
     public:
         typedef const void* Key;
 
@@ -106,7 +106,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API IAnimation
         {
-            Q_DISABLE_COPY_AND_MOVE(IAnimation);
+            Q_DISABLE_COPY_AND_MOVE(IAnimation)
 
         private:
         protected:

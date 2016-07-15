@@ -21,7 +21,7 @@
 
 //    class OSMAND_CORE_API ObfAddress
 //    {
-//        Q_DISABLE_COPY_AND_MOVE(ObfAddress);
+//        Q_DISABLE_COPY_AND_MOVE(ObfAddress)
 
 //    protected:
 //        ObfAddress(std::shared_ptr<const ObfAddressSectionInfo> obfSection, Address address);

@@ -20,7 +20,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API MapSymbolsGroup
     {
-        Q_DISABLE_COPY_AND_MOVE(MapSymbolsGroup);
+        Q_DISABLE_COPY_AND_MOVE(MapSymbolsGroup)
 
     public:
         enum class PresentationModeFlag : unsigned int

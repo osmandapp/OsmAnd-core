@@ -32,7 +32,7 @@ namespace OsmAnd
     class ObfReader_P;
     class OSMAND_CORE_API ObfReader
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfReader);
+        Q_DISABLE_COPY_AND_MOVE(ObfReader)
     private:
         PrivateImplementation<ObfReader_P> _p;
     protected:

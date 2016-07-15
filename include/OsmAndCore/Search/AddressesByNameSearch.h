@@ -24,7 +24,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API AddressesByNameSearch Q_DECL_FINAL : public BaseSearch
     {
-        Q_DISABLE_COPY_AND_MOVE(AddressesByNameSearch);
+        Q_DISABLE_COPY_AND_MOVE(AddressesByNameSearch)
     public:
         struct OSMAND_CORE_API Criteria : public BaseSearch::Criteria
         {

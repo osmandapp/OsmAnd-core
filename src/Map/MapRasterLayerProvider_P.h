@@ -22,7 +22,7 @@ namespace OsmAnd
 
     class MapRasterLayerProvider_P
     {
-        Q_DISABLE_COPY_AND_MOVE(MapRasterLayerProvider_P);
+        Q_DISABLE_COPY_AND_MOVE(MapRasterLayerProvider_P)
     private:
     protected:
         MapRasterLayerProvider_P(MapRasterLayerProvider* const owner);

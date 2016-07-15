@@ -52,7 +52,7 @@ namespace OsmAnd
 
     class MapRendererResourcesManager
     {
-        Q_DISABLE_COPY_AND_MOVE(MapRendererResourcesManager);
+        Q_DISABLE_COPY_AND_MOVE(MapRendererResourcesManager)
 
     public:
         typedef std::array<
@@ -66,7 +66,7 @@ namespace OsmAnd
         QAtomicInt _resourcesRequestTasksCounter;
         class ResourceRequestTask : public Concurrent::HostedTask
         {
-            Q_DISABLE_COPY_AND_MOVE(ResourceRequestTask);
+            Q_DISABLE_COPY_AND_MOVE(ResourceRequestTask)
         private:
             void execute();
             void postExecute(const bool wasCancelled);

@@ -11,7 +11,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API CoordinateSearch
     {
-        Q_DISABLE_COPY_AND_MOVE(CoordinateSearch);
+        Q_DISABLE_COPY_AND_MOVE(CoordinateSearch)
 
     public:
         static LatLon search(QString const &query);

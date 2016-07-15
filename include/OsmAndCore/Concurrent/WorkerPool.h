@@ -21,7 +21,7 @@ namespace OsmAnd
         class WorkerPool_P;
         class OSMAND_CORE_API WorkerPool Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(WorkerPool);
+            Q_DISABLE_COPY_AND_MOVE(WorkerPool)
 
         public:
             enum class Order

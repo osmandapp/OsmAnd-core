@@ -20,7 +20,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfStreetGroup Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfStreetGroup);
+        Q_DISABLE_COPY_AND_MOVE(ObfStreetGroup)
 
     public:
         ObfStreetGroup(

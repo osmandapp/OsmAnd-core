@@ -20,7 +20,7 @@ namespace OsmAnd
     class RoadLocator_P;
     class OSMAND_CORE_API RoadLocator : public IRoadLocator
     {
-        Q_DISABLE_COPY_AND_MOVE(RoadLocator);
+        Q_DISABLE_COPY_AND_MOVE(RoadLocator)
     private:
         PrivateImplementation<RoadLocator_P> _p;
     protected:

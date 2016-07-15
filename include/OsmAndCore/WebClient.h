@@ -21,12 +21,12 @@ namespace OsmAnd
     class WebClient_P;
     class OSMAND_CORE_API WebClient : public IWebClient
     {
-        Q_DISABLE_COPY_AND_MOVE(WebClient);
+        Q_DISABLE_COPY_AND_MOVE(WebClient)
 
     public:
         class OSMAND_CORE_API RequestResult
         {
-            Q_DISABLE_COPY_AND_MOVE(RequestResult);
+            Q_DISABLE_COPY_AND_MOVE(RequestResult)
 
         private:
         protected:
@@ -41,7 +41,7 @@ namespace OsmAnd
             : public RequestResult
             , public IWebClient::IHttpRequestResult
         {
-            Q_DISABLE_COPY_AND_MOVE(HttpRequestResult);
+            Q_DISABLE_COPY_AND_MOVE(HttpRequestResult)
 
         private:
         protected:

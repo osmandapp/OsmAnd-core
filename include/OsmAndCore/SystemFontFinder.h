@@ -16,7 +16,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API SystemFontFinder Q_DECL_FINAL : public IFontFinder
     {
-        Q_DISABLE_COPY_AND_MOVE(SystemFontFinder);
+        Q_DISABLE_COPY_AND_MOVE(SystemFontFinder)
 
     private:
     protected:

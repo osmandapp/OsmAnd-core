@@ -16,7 +16,7 @@ namespace OsmAnd
         : public RasterMapSymbol
         , public IBillboardMapSymbol
     {
-        Q_DISABLE_COPY_AND_MOVE(BillboardRasterMapSymbol);
+        Q_DISABLE_COPY_AND_MOVE(BillboardRasterMapSymbol)
     private:
     protected:
     public:

@@ -26,7 +26,7 @@ namespace OsmAnd
     class ObfRoutingSectionLevel_P;
     class OSMAND_CORE_API ObfRoutingSectionLevel
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionLevel);
+        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionLevel)
     private:
         PrivateImplementation<ObfRoutingSectionLevel_P> _p;
     protected:
@@ -42,7 +42,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API ObfRoutingSectionLevelTreeNode Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionLevelTreeNode);
+        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionLevelTreeNode)
     private:
     protected:
     public:
@@ -68,7 +68,7 @@ namespace OsmAnd
     class ObfRoutingSectionInfo_P;
     class OSMAND_CORE_API ObfRoutingSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionInfo);
+        Q_DISABLE_COPY_AND_MOVE(ObfRoutingSectionInfo)
     private:
         PrivateImplementation<ObfRoutingSectionInfo_P> _p;
     protected:

@@ -19,7 +19,7 @@ namespace OsmAnd
     {
         class OSMAND_CORE_API Task : public QRunnable
         {
-            Q_DISABLE_COPY_AND_MOVE(Task);
+            Q_DISABLE_COPY_AND_MOVE(Task)
         public:
             typedef std::function<void(Task* const task, bool& requestCancellation)> PreExecuteSignature;
             typedef std::function<void(Task* const task)> ExecuteSignature;
@@ -27,7 +27,7 @@ namespace OsmAnd
 
             class OSMAND_CORE_API Cancellator Q_DECL_FINAL
             {
-                Q_DISABLE_COPY_AND_MOVE(Cancellator);
+                Q_DISABLE_COPY_AND_MOVE(Cancellator)
             private:
                 mutable QReadWriteLock _taskRefLock;
                 Task* _taskRef;

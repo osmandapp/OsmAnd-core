@@ -21,17 +21,17 @@ namespace OsmAnd
     class GeoInfoPresenter_P;
     class OSMAND_CORE_API GeoInfoPresenter
     {
-        Q_DISABLE_COPY_AND_MOVE(GeoInfoPresenter);
+        Q_DISABLE_COPY_AND_MOVE(GeoInfoPresenter)
 
     public:
         class OSMAND_CORE_API MapObject : public OsmAnd::MapObject
         {
-            Q_DISABLE_COPY_AND_MOVE(MapObject);
+            Q_DISABLE_COPY_AND_MOVE(MapObject)
 
         public:
             class OSMAND_CORE_API AttributeMapping : public OsmAnd::MapObject::AttributeMapping
             {
-                Q_DISABLE_COPY_AND_MOVE(AttributeMapping);
+                Q_DISABLE_COPY_AND_MOVE(AttributeMapping)
 
             private:
             protected:
@@ -68,7 +68,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API WaypointMapObject : public MapObject
         {
-            Q_DISABLE_COPY_AND_MOVE(WaypointMapObject);
+            Q_DISABLE_COPY_AND_MOVE(WaypointMapObject)
 
         public:
             WaypointMapObject(
@@ -81,7 +81,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API TrackpointMapObject : public MapObject
         {
-            Q_DISABLE_COPY_AND_MOVE(TrackpointMapObject);
+            Q_DISABLE_COPY_AND_MOVE(TrackpointMapObject)
 
         public:
             TrackpointMapObject(
@@ -98,7 +98,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API TracklineMapObject : public MapObject
         {
-            Q_DISABLE_COPY_AND_MOVE(TracklineMapObject);
+            Q_DISABLE_COPY_AND_MOVE(TracklineMapObject)
 
         public:
             TracklineMapObject(
@@ -113,7 +113,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API RoutepointMapObject : public MapObject
         {
-            Q_DISABLE_COPY_AND_MOVE(RoutepointMapObject);
+            Q_DISABLE_COPY_AND_MOVE(RoutepointMapObject)
 
         public:
             RoutepointMapObject(
@@ -128,7 +128,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API RoutelineMapObject : public MapObject
         {
-            Q_DISABLE_COPY_AND_MOVE(RoutelineMapObject);
+            Q_DISABLE_COPY_AND_MOVE(RoutelineMapObject)
 
         public:
             RoutelineMapObject(

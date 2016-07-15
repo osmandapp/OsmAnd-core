@@ -16,7 +16,7 @@ namespace OsmAnd {
 
     class OSMAND_CORE_API ObfTransportSectionInfo : public ObfSectionInfo
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfTransportSectionInfo);
+        Q_DISABLE_COPY_AND_MOVE(ObfTransportSectionInfo)
     private:
     protected:
         ObfTransportSectionInfo(const std::shared_ptr<const ObfInfo>& container);

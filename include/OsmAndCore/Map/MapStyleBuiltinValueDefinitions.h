@@ -18,7 +18,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API MapStyleBuiltinValueDefinitions
     {
-        Q_DISABLE_COPY_AND_MOVE(MapStyleBuiltinValueDefinitions);
+        Q_DISABLE_COPY_AND_MOVE(MapStyleBuiltinValueDefinitions)
     public:
         class OSMAND_CORE_API MapStyleBuiltinValueDefinition : public MapStyleValueDefinition
         {
