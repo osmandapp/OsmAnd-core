@@ -64,12 +64,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                     
                     QList<std::shared_ptr<const StreetGroup>> streetGroups;
                     streetGroups << std::static_pointer_cast<const StreetGroup>(criteria.addressFilter);
-                    dataInterface->loadStreetsFromGroups(
-                                                         streetGroups,
-                                                         nullptr,
-                                                         criteria.bbox31.getValuePtrOrNullptr(),
-                                                         visitorFunction,
-                                                         queryController);
+                    dataInterface->loadStreetsFromGroups(streetGroups, filter, queryController);
                     break;
                 }
                     
