@@ -241,6 +241,24 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
                matches(streetGroup.type));
 }
 
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
+        const OsmAnd::Street &street) const
+{
+    return matches(static_cast<const Address&>(street));
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
+        const OsmAnd::Building &building) const
+{
+    return matches(static_cast<const Address&>(building));
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
+        const OsmAnd::ObfAddressSectionReader::AddressReference &addressReference) const
+{
+    return true;
+}
+
 bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
         std::unique_ptr<const OsmAnd::Address> address) const
 {
@@ -304,6 +322,15 @@ bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
     return result;
 }
 
+bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
+        std::unique_ptr<const OsmAnd::ObfAddressSectionReader::AddressReference> addressReference) const
+{
+    bool result = addressReference && matches(*addressReference);
+//    if (result)
+//        _add
+    return result;
+}
+
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::AddressType type) const
 {
@@ -317,4 +344,10 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
     for (const Filter& filter : _filters)
         result = _op(result, filter.matches(type));
     return result;
+}
+
+OsmAnd::ObfAddressSectionReader::AddressReference::AddressReference()
+    : dataIndexOffset(0)
+    , containerIndexOffset(0)
+{
 }

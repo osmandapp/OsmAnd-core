@@ -120,28 +120,28 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         criteria.streetGroupTypesMask = OsmAnd::ObfAddressStreetGroupTypesMask{};
         criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(
                                               std::pow(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, 2), *road->searchPoint31()));
-        addressByNameSearch->performSearch(
-                    criteria,
-                    [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
-                    const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
-            auto const& address = static_cast<const OsmAnd::AddressesByNameSearch::ResultEntry&>(resultEntry).address;
-            auto const& street = std::static_pointer_cast<const OsmAnd::ObfStreet>(address);
-            if (splitToWordsOrderedByLength(street->nativeName) == streetNamePacked)
-            {
-////                double d = Utilities::distance31(street->position31, position31);
-////                if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
-                const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
-                rs->searchPoint = road->searchPoint;
-                rs->street = street;
-                // set connection point to sort
-                rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
-                rs->streetGroup = street->obfStreetGroup;
-                streetList.append(rs);
-//                return true;
-////                }
-            }
-//            return false;
-        });
+//        addressByNameSearch->performSearch(
+//                    criteria,
+//                    [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
+//                    const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
+//            auto const& address = static_cast<const OsmAnd::AddressesByNameSearch::ResultEntry&>(resultEntry).address;
+//            auto const& street = std::static_pointer_cast<const OsmAnd::ObfStreet>(address);
+////            if (splitToWordsOrderedByLength(street->nativeName) == streetNamePacked)
+////            {
+//////                double d = Utilities::distance31(street->position31, position31);
+//////                if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
+//                const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
+//                rs->searchPoint = road->searchPoint;
+//                rs->street = street;
+//                // set connection point to sort
+////                rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
+//                rs->streetGroup = street->obfStreetGroup;
+//                streetList.append(rs);
+////                return true;
+//////                }
+////            }
+////            return false;
+//        });
     }
 
     if (streetList.isEmpty())
@@ -201,61 +201,62 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     QVector<std::shared_ptr<const ResultEntry>> result{};
     const AreaI bbox = (AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31());
     auto const& dataInterface = owner->obfsCollection->obtainDataInterface(&bbox);
-    QList<std::shared_ptr<const Street>> streets{street->street};
+//    QList<std::shared_ptr<const ObfStreet>> streets{street->street};
     QHash<std::shared_ptr<const Street>, QList<std::shared_ptr<const Building>>> buildingsForStreet{};
-    dataInterface->loadBuildingsFromStreets(streets, &buildingsForStreet);
-    auto const& buildings = buildingsForStreet[street->street];
-    for (const std::shared_ptr<const Building> b : buildings)
-    {
-        auto makeResult = [b, street, &result](){
-            auto bld = std::make_shared<ResultEntry>();
-            bld->searchPoint = street->searchPoint;
-            bld->street = street->street;
-            bld->streetGroup = street->streetGroup;
-            bld->building = b;
-            bld->connectionPoint = Utilities::convert31ToLatLon(b->position31);
-            result.append(std::static_pointer_cast<const ResultEntry>(bld));
-            return bld;
-        };
+//    dataInterface->loadBuildingsFromStreets(streets, &buildingsForStreet);
+//    auto const& buildings = buildingsForStreet[street->street];
+//    for (const std::shared_ptr<const Building> b : buildings)
+//    {
+//        auto makeResult = [b, street, &result](){
+//            auto bld = std::make_shared<ResultEntry>();
+//            bld->searchPoint = street->searchPoint;
+//            bld->street = street->street;
+//            bld->streetGroup = street->streetGroup;
+//            bld->building = b;
+//            bld->connectionPoint = Utilities::convert31ToLatLon(b->position31);
+//            result.append(std::static_pointer_cast<const ResultEntry>(bld));
+//            return bld;
+//        };
 
-        if (b->interpolation.type != Building::Interpolation::Type::Disabled)
-        {
-            LatLon s = Utilities::convert31ToLatLon(b->position31);
-            LatLon to = Utilities::convert31ToLatLon(b->interpolation.position31);
-            double coeff = Utilities::projection31(*road->searchPoint31(), b->position31, b->interpolation.position31);
-            double plat = s.latitude + (to.latitude - s.latitude) * coeff;
-            double plon = s.longitude + (to.longitude - s.longitude) * coeff;
-            if (Utilities::distance(road->searchPoint->latitude, road->searchPoint->longitude, plat, plon) < DISTANCE_BUILDING_PROXIMITY)
-            {
-                auto bld = makeResult();
-                if (!b->interpolation.nativeName.isEmpty())
-                {
-                    int fi = extractFirstInteger(b->nativeName);
-                    int si = extractFirstInteger(b->interpolation.nativeName);
-                    if (si != 0 && fi != 0) {
-                        int num = (int) (fi + (si - fi) * coeff);
-                        if (b->interpolation == Building::Interpolation::Type::Even || b->interpolation == Building::Interpolation::Type::Odd)
-                        {
-                            if (num % 2 == (b->interpolation == Building::Interpolation::Type::Even ? 1 : 0))
-                                num--;
-                        }
-//                        else if (b->interpolationInterval > 0)
+//        if (b->interpolation.type != Building::Interpolation::Type::Disabled)
+//        {
+//            LatLon s = Utilities::convert31ToLatLon(b->position31);
+//            LatLon to = Utilities::convert31ToLatLon(b->interpolation.position31);
+//            double coeff = Utilities::projection31(*road->searchPoint31(), b->position31, b->interpolation.position31);
+//            double plat = s.latitude + (to.latitude - s.latitude) * coeff;
+//            double plon = s.longitude + (to.longitude - s.longitude) * coeff;
+//            if (Utilities::distance(road->searchPoint->latitude, road->searchPoint->longitude, plat, plon) < DISTANCE_BUILDING_PROXIMITY)
+//            {
+//                auto bld = makeResult();
+//                if (!b->interpolation.nativeName.isEmpty())
+//                {
+//                    int fi = extractFirstInteger(b->nativeName);
+//                    int si = extractFirstInteger(b->interpolation.nativeName);
+//                    if (si != 0 && fi != 0) {
+//                        int num = (int) (fi + (si - fi) * coeff);
+//                        if (b->interpolation.type == Building::Interpolation::Type::Even
+//                                || b->interpolation.type == Building::Interpolation::Type::Odd)
 //                        {
-//                            int intv = b->interpolationInterval;
-//                            if ((num - fi) % intv != 0) {
-//                                num = ((num - fi) / intv) * intv + fi;
-//                            }
+//                            if (num % 2 == (b->interpolation.type == Building::Interpolation::Type::Even ? 1 : 0))
+//                                num--;
 //                        }
-                        bld->buildingInterpolation = QString::number(num);
-                    }
-                }
-            }
-        }
-        else if (Utilities::distance31(b->position31, *road->searchPoint31()) < DISTANCE_BUILDING_PROXIMITY)
-        {
-            makeResult();
-        }
-    }
+////                        else if (b->interpolationInterval > 0)
+////                        {
+////                            int intv = b->interpolationInterval;
+////                            if ((num - fi) % intv != 0) {
+////                                num = ((num - fi) / intv) * intv + fi;
+////                            }
+////                        }
+//                        bld->buildingInterpolation = QString::number(num);
+//                    }
+//                }
+//            }
+//        }
+//        else if (Utilities::distance31(b->position31, *road->searchPoint31()) < DISTANCE_BUILDING_PROXIMITY)
+//        {
+//            makeResult();
+//        }
+//    }
     return result;
 }
 

@@ -42,13 +42,10 @@ namespace OsmAnd
             Street = 4
         };
 
-        struct AddressReference
+        class AddressReference
         {
-            AddressReference()
-                : dataIndexOffset(0)
-                , containerIndexOffset(0)
-            {
-            }
+        public:
+            AddressReference();
 
             AddressNameIndexDataAtomType addressType;
             uint32_t dataIndexOffset;
