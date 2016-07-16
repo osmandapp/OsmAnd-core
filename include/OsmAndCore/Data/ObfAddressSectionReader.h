@@ -37,7 +37,7 @@ namespace OsmAnd
     public:
         enum class AddressNameIndexDataAtomType : uint32_t
         {
-            Unknown = ObfAddressStreetGroupType::Unknown,
+            Unknown = static_cast<int>(ObfAddressStreetGroupType::Unknown),
             CityOrTown = static_cast<int>(ObfAddressStreetGroupType::CityOrTown),
             Village = static_cast<int>(ObfAddressStreetGroupType::Village),
             Postcode = static_cast<int>(ObfAddressStreetGroupType::Postcode),

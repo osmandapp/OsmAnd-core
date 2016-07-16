@@ -328,9 +328,10 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::ObfAddressSectionReader::AddressReference& addressReference) const
 {
-    bool result = matches(addressReference.addressType()) &&
-                      matches(addressReference.position31()) &&
-                          matches(addressReference.name(), addressReference.nameEn());
+    bool result = matches(addressReference.addressType());
+    result = _op(result, matches(addressReference.position31()));
+    result = _op(result, matches(addressReference.name(), addressReference.nameEn()));
+
     for (const Filter& filter : _filters)
         result = _op(result, filter.matches(addressReference));
     return result;
