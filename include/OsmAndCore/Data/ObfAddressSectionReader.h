@@ -53,6 +53,7 @@ namespace OsmAnd
             uint32_t _dataIndexOffset;
             uint32_t _containerIndexOffset;
             PointI _position31;
+
         public:
             AddressReference(
                     AddressNameIndexDataAtomType addressType = AddressNameIndexDataAtomType::Unknown,
@@ -95,6 +96,7 @@ namespace OsmAnd
             std::shared_ptr<const ObfAddress> _parent;
 
             StringMatcherFunction _stringMatcher = OsmAnd::MATCHES;
+            const Qt::CaseSensitivity _caseSensitivity = Qt::CaseInsensitive;
 
             VisitorFunction _addressVisitor;
             AddressReferenceVisitorFunction _addressReferenceVisitor;
@@ -120,6 +122,7 @@ namespace OsmAnd
             Filter& setParent(std::shared_ptr<const ObfAddress> address);
 
             Filter& setStringMatcherFunction(StringMatcherFunction stringMatcher);
+//            Filter& setCaseSensitivity(Qt::CaseSensitivity caseSensitivity);
 
             Filter& setVisitor(VisitorFunction visitor);
             Filter& setVisitor(AddressReferenceVisitorFunction visitor);
@@ -134,6 +137,7 @@ namespace OsmAnd
 
             uint commonStartPartLength(const QString& name) const;
 
+            bool matches(const QString& name, const QString& nameEn) const;
             bool matches(const QString& name, const QHash<QString, QString>& names = {}) const;
             bool matches(const AreaI& bbox31) const;
             bool matches(const PointI& point) const;

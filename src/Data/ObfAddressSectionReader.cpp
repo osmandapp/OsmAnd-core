@@ -227,12 +227,19 @@ OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter
 uint OsmAnd::ObfAddressSectionReader::Filter::commonStartPartLength(
         const QString& name) const
 {
-    if (name.startsWith(_name))
+    if (name.startsWith(_name, _caseSensitivity))
         return _name.length();
-    else if (_name.startsWith(name))
+    else if (_name.startsWith(name, _caseSensitivity))
         return name.length();
     else
         return 0;
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
+        const QString& name,
+        const QString& nameEn) const
+{
+    return !_name.isNull() || _stringMatcher(name, _name) || _stringMatcher(nameEn, _name);
 }
 
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
@@ -321,9 +328,9 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::ObfAddressSectionReader::AddressReference& addressReference) const
 {
-    bool result = _op(matches(addressReference.addressType()),
-                      _op(matches(addressReference.position31()),
-                          matches(addressReference.name()) || matches(addressReference.nameEn())));
+    bool result = matches(addressReference.addressType()) &&
+                      matches(addressReference.position31()) &&
+                          matches(addressReference.name(), addressReference.nameEn());
     for (const Filter& filter : _filters)
         result = _op(result, filter.matches(addressReference));
     return result;
