@@ -24,6 +24,15 @@ namespace OsmAnd
         StreetIntersection
     };
 
+    inline Bitmask<AddressType> fullAddressTypeMask()
+    {
+        return Bitmask<AddressType>()
+                .set(AddressType::StreetGroup)
+                .set(AddressType::Street)
+                .set(AddressType::Building)
+                .set(AddressType::StreetIntersection);
+    }
+
     static const QMap<AddressType, QString> ADDRESS_TYPE_NAMES{
             {AddressType::StreetGroup, "Street group"},
             {AddressType::Street, "Street"},

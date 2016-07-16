@@ -115,8 +115,12 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, log.toLatin1());
         QString mainWord = extractMainWord(streetNamePacked);
         AreaI bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31());
-        addressByNameSearch->performSearch(ObfAddressSectionReader::Filter().setBbox(bbox31).setName(mainWord).setVisitor(
-                                               [&streets, streetNamePacked, road](std::unique_ptr<const ObfStreet> street){
+        auto filter =  ObfAddressSectionReader::Filter()
+                .setBbox(bbox31)
+                .setName(mainWord)
+                .setAddressNameIndexDataAtomType(Bitmask<ObfAddressSectionReader::AddressNameIndexDataAtomType>().set(ObfAddressSectionReader::AddressNameIndexDataAtomType::Street))
+                .setAddressTypes(Bitmask<AddressType>().set(AddressType::Street))
+                .setVisitor([&streets, streetNamePacked, road](std::unique_ptr<const ObfStreet> street) {
             if (splitToWordsOrderedByLength(street->street().nativeName()) == streetNamePacked)
             {
 ////                double d = Utilities::distance31(street->position31, position31);
@@ -129,7 +133,9 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                 rs->street = std::shared_ptr<const ObfStreet>(std::move(street));
                 streets.append(rs);
             }
-        }));
+        })
+                .buildTopLevelFilters();
+        addressByNameSearch->performSearch(filter);
     }
 
     if (streets.isEmpty())

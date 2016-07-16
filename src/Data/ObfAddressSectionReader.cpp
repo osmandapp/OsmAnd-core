@@ -89,6 +89,13 @@ QString OsmAnd::ObfAddressSectionReader::Filter::name() const
     return _name;
 }
 
+OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setAddressNameIndexDataAtomType(
+        const Bitmask<OsmAnd::ObfAddressSectionReader::AddressNameIndexDataAtomType>& addressNameIndexDataAtomType)
+{
+    _addressNameIndexDataAtomTypeMask = addressNameIndexDataAtomType;
+    return *this;
+}
+
 std::shared_ptr<const OsmAnd::ObfAddress> OsmAnd::ObfAddressSectionReader::Filter::parent() const
 {
     return _parent;
@@ -97,6 +104,13 @@ std::shared_ptr<const OsmAnd::ObfAddress> OsmAnd::ObfAddressSectionReader::Filte
 OsmAnd::Nullable<OsmAnd::AreaI> OsmAnd::ObfAddressSectionReader::Filter::obfInfoAreaBbox31() const
 {
     return _obfInfoAreaBbox31;
+}
+
+OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setAddressTypes(
+        const OsmAnd::Bitmask<OsmAnd::AddressType>& addressTypeMask)
+{
+    _addressTypeMask = addressTypeMask;
+    return *this;
 }
 
 OsmAnd::ObfAddressSectionReader::Filter::Filter(BinaryBoolFunction op)
@@ -224,6 +238,17 @@ OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter
     return *this;
 }
 
+OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::buildTopLevelFilters()
+{
+    Filter result(OR);
+    Filter topLevelFilter = Filter()
+            .setAddressNameIndexDataAtomType(fullObfAddressNameIndexDataAtomTypeMask().unset(_addressNameIndexDataAtomTypeMask).unset(AddressNameIndexDataAtomType::Unknown))
+            .setAddressTypes(fullAddressTypeMask().unset(_addressTypeMask));
+//    QVector<Filter> filters;
+    result.setFilters({topLevelFilter, *this});
+    return result;
+}
+
 uint OsmAnd::ObfAddressSectionReader::Filter::commonStartPartLength(
         const QString& name) const
 {
@@ -279,8 +304,8 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::Address& address) const
 {
-    bool result= _op(matches(address.position31()),
-                     matches(address.nativeName(), address.localizedNames()));
+    bool result = matches(address.position31());
+    result = _op(result, matches(address.nativeName(), address.localizedNames()));
     for (const Filter& filter : _filters)
         result = _op(result, filter.matches(address));
     return result;
@@ -289,8 +314,8 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::StreetGroup& streetGroup) const
 {
-    bool result = _op(matches(streetGroup.type),
-               matches(static_cast<const Address&>(streetGroup)));
+    bool result = matches(streetGroup.type);
+    result = _op(result, matches(static_cast<const Address&>(streetGroup)));
     for (const Filter& filter : _filters)
         result = _op(result, filter.matches(streetGroup));
     return result;
@@ -318,8 +343,8 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::Building& building) const
 {
-    bool result = _op(matches(static_cast<const Address&>(building)) || matches(static_cast<const Address&>(building.interpolation())),
-                      matches(building.postcode()));
+    bool result = matches(static_cast<const Address&>(building)) || matches(static_cast<const Address&>(building.interpolation()));
+    result = _op(result, matches(building.postcode()));
     for (const Filter& filter : _filters)
         result = _op(result, filter.matches(building));
     return result;
@@ -331,7 +356,6 @@ bool OsmAnd::ObfAddressSectionReader::Filter::matches(
     bool result = matches(addressReference.addressType());
     result = _op(result, matches(addressReference.position31()));
     result = _op(result, matches(addressReference.name(), addressReference.nameEn()));
-
     for (const Filter& filter : _filters)
         result = _op(result, filter.matches(addressReference));
     return result;
@@ -430,10 +454,16 @@ bool OsmAnd::ObfAddressSectionReader::Filter::operator()(
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(
         const OsmAnd::AddressType type) const
 {
-    bool result = _addressTypes.isSet(type);
+    bool result = _addressTypeMask.isSet(type);
     for (const Filter& filter : _filters)
         result = _op(result, filter.matches(type));
     return result;
+}
+
+bool OsmAnd::ObfAddressSectionReader::Filter::matches(
+        const OsmAnd::ObfAddressSectionReader::AddressNameIndexDataAtomType type) const
+{
+
 }
 
 bool OsmAnd::ObfAddressSectionReader::Filter::matches(

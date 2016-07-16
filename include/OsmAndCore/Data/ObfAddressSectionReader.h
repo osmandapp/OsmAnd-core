@@ -44,6 +44,15 @@ namespace OsmAnd
             Street = 4
         };
 
+        inline static Bitmask<AddressNameIndexDataAtomType> fullObfAddressNameIndexDataAtomTypeMask()
+        {
+            return Bitmask<AddressNameIndexDataAtomType>()
+                    .set(AddressNameIndexDataAtomType::CityOrTown)
+                    .set(AddressNameIndexDataAtomType::Postcode)
+                    .set(AddressNameIndexDataAtomType::Street)
+                    .set(AddressNameIndexDataAtomType::Village);
+        }
+
         class AddressReference
         {
         private:
@@ -71,54 +80,57 @@ namespace OsmAnd
             PointI position31() const;
         };
 
-        using VisitorFunction = std::function<void(std::unique_ptr<Address> address)>;
         using AddressReferenceVisitorFunction = std::function<void(std::unique_ptr<ObfAddressSectionReader::AddressReference> address)>;
-        using StreetGroupVisitorFunction = std::function<void(std::unique_ptr<StreetGroup> streetGroup)>;
-        using ObfStreetGroupVisitorFunction = std::function<void(std::unique_ptr<ObfStreetGroup> streetGroup)>;
-        using StreetVisitorFunction = std::function<void(std::unique_ptr<Street> street)>;
-        using ObfStreetVisitorFunction = std::function<void(std::unique_ptr<ObfStreet> street)>;
         using BuildingVisitorFunction = std::function<void(std::unique_ptr<Building> building)>;
-        using ObfBuildingVisitorFunction = std::function<void(std::unique_ptr<ObfBuilding> building)>;
         using IntersectionVisitorFunction = std::function<void(std::unique_ptr<StreetIntersection> streetIntersection)>;
+        using ObfBuildingVisitorFunction = std::function<void(std::unique_ptr<ObfBuilding> building)>;
         using ObfIntersectionVisitorFunction = std::function<void(std::unique_ptr<ObfStreetIntersection> streetIntersection)>;
+        using ObfStreetGroupVisitorFunction = std::function<void(std::unique_ptr<ObfStreetGroup> streetGroup)>;
+        using ObfStreetVisitorFunction = std::function<void(std::unique_ptr<ObfStreet> street)>;
+        using StreetGroupVisitorFunction = std::function<void(std::unique_ptr<StreetGroup> streetGroup)>;
+        using StreetVisitorFunction = std::function<void(std::unique_ptr<Street> street)>;
+        using VisitorFunction = std::function<void(std::unique_ptr<Address> address)>;
 
         using StringMatcherFunction = std::function<bool(const QString&, const QString&)>;
 
         class Filter
         {
         private:
-            QString _name;
+            Bitmask<AddressNameIndexDataAtomType> _addressNameIndexDataAtomTypeMask = fullObfAddressNameIndexDataAtomTypeMask();
+            Bitmask<AddressType> _addressTypeMask = fullAddressTypeMask();
             Nullable<AreaI> _bbox31;
             Nullable<AreaI> _obfInfoAreaBbox31;
-            Bitmask<AddressType> _addressTypes;
             ObfAddressStreetGroupTypesMask _streetGroupTypes = fullObfAddressStreetGroupTypesMask();
+            QString _name;
             QVector<Filter> _filters;
             std::shared_ptr<const ObfAddress> _parent;
 
             StringMatcherFunction _stringMatcher = OsmAnd::MATCHES;
             const Qt::CaseSensitivity _caseSensitivity = Qt::CaseInsensitive;
 
-            VisitorFunction _addressVisitor;
             AddressReferenceVisitorFunction _addressReferenceVisitor;
-            StreetGroupVisitorFunction _streetGroupVisitor;
-            ObfStreetGroupVisitorFunction _obfStreetGroupVisitor;
-            StreetVisitorFunction _streetVisitor;
-            ObfStreetVisitorFunction _obfStreetVisitor;
             BuildingVisitorFunction _buildingVisitor;
-            ObfBuildingVisitorFunction _obfBuildingVisitor;
             IntersectionVisitorFunction _intersectionVisitor;
+            ObfBuildingVisitorFunction _obfBuildingVisitor;
             ObfIntersectionVisitorFunction _obfIntersectionVisitor;
+            ObfStreetGroupVisitorFunction _obfStreetGroupVisitor;
+            ObfStreetVisitorFunction _obfStreetVisitor;
+            StreetGroupVisitorFunction _streetGroupVisitor;
+            StreetVisitorFunction _streetVisitor;
+            VisitorFunction _addressVisitor;
 
             const BinaryBoolFunction _op;
         public:
             Filter(BinaryBoolFunction op = AND);
 
             QString name() const;
-            Filter& setName(const QString& name);
-            Filter& setBbox(const AreaI& bbox31);
-            Filter& setObfInfoAreaBbox(const AreaI& bbox31);
+            Filter& setAddressNameIndexDataAtomType(const Bitmask<AddressNameIndexDataAtomType>& addressNameIndexDataAtomType);
             Filter& setAddressStreetGroupTypes(const ObfAddressStreetGroupTypesMask& streetGroupTypes);
+            Filter& setAddressTypes(const Bitmask<AddressType>& addressTypes);
+            Filter& setBbox(const AreaI& bbox31);
             Filter& setFilters(QVector<Filter> filters);
+            Filter& setName(const QString& name);
+            Filter& setObfInfoAreaBbox(const AreaI& bbox31);
             Filter& setParent(std::shared_ptr<const ObfAddress> address);
 
             Filter& setStringMatcherFunction(StringMatcherFunction stringMatcher);
@@ -135,6 +147,9 @@ namespace OsmAnd
             Filter& setVisitor(IntersectionVisitorFunction visitor);
             Filter& setVisitor(ObfIntersectionVisitorFunction visitor);
 
+            Filter& buildTopLevelFilters();
+
+
             uint commonStartPartLength(const QString& name) const;
 
             bool matches(const QString& name, const QString& nameEn) const;
@@ -142,6 +157,7 @@ namespace OsmAnd
             bool matches(const AreaI& bbox31) const;
             bool matches(const PointI& point) const;
             bool matches(const AddressType type) const;
+            bool matches(const AddressNameIndexDataAtomType type) const;
             bool matches(const ObfAddressStreetGroupType type) const;
 
             bool matches(const Address& address) const;
