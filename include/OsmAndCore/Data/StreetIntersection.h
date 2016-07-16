@@ -19,17 +19,18 @@ namespace OsmAnd
     {
     public:
         StreetIntersection(
-                std::shared_ptr<const ObfStreet> street,
+                std::shared_ptr<const Street> street,
                 QString nativeName = {},
                 QHash<QString, QString> localizedNames = {},
                 PointI position31 = {});
 
-        inline virtual QString toString() const
-        {
-            return "intersection " + nativeName + " (" + street->street.nativeName;
-        }
+        virtual QString toString() const;
 
-        const std::shared_ptr<const ObfStreet> street;
+        std::shared_ptr<const Street> streetPtr() const;
+        Street street() const;
+
+    private:
+        std::shared_ptr<const Street> _street;
     };
 }
 

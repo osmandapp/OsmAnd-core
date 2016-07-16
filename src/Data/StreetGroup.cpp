@@ -9,7 +9,7 @@ OsmAnd::StreetGroup::StreetGroup(
         QString nativeName,
         QHash<QString, QString> localizedNames,
         OsmAnd::PointI position31)
-    : OsmAnd::Address(AddressType::StreetGroup, nativeName, localizedNames, position31)
+    : OsmAnd::Address(nativeName, localizedNames, position31)
     , type(type_)
     , subtype(subtype_)
 {
@@ -18,5 +18,5 @@ OsmAnd::StreetGroup::StreetGroup(
 
 QString OsmAnd::StreetGroup::toString() const
 {
-    return QStringLiteral("city ") % nativeName;
+    return QStringLiteral("city ") % _nativeName;
 }

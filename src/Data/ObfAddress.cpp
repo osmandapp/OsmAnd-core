@@ -1,10 +1,20 @@
-//#include "ObfAddress.h"
+#include "ObfAddress.h"
 
-//OsmAnd::ObfAddress::ObfAddress(
-//        std::shared_ptr<const OsmAnd::ObfAddressSectionInfo> obfSection_,
-//        OsmAnd::Address address_)
-//    : obfSection(obfSection_)
-//    , address(address_)
-//{
+OsmAnd::ObfAddress::ObfAddress(
+        OsmAnd::AddressType type,
+        OsmAnd::ObfObjectId id)
+    : _type(type)
+    , _id(id)
+{
 
-//}
+}
+
+OsmAnd::ObfObjectId OsmAnd::ObfAddress::id() const
+{
+    return _id;
+}
+
+OsmAnd::AddressType OsmAnd::ObfAddress::type() const
+{
+    return _type;
+}

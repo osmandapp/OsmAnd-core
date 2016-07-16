@@ -45,14 +45,6 @@ namespace OsmAnd
         };
 
         Building(
-                std::shared_ptr<const ObfStreet> street,
-                QString nativeName = {},
-                QHash<QString, QString> localizedNames = {},
-                PointI position31 = {},
-                Interpolation interpolation = {},
-                QString postcode = {});
-        Building(
-                std::shared_ptr<const ObfStreetGroup> streetGroup,
                 QString nativeName = {},
                 QHash<QString, QString> localizedNames = {},
                 PointI position31 = {},
@@ -61,10 +53,12 @@ namespace OsmAnd
 
         virtual QString toString() const;
 
-        const std::shared_ptr<const ObfStreet> street;
-        const std::shared_ptr<const ObfStreetGroup> streetGroup;
-        const Interpolation interpolation;
-        const QString postcode;
+        QString postcode() const;
+        Interpolation interpolation() const;
+
+    private:
+        Interpolation _interpolation;
+        QString _postcode;
     };
 }
 

@@ -125,8 +125,7 @@ namespace OsmAnd
                 QList< std::shared_ptr<const ObfStreetGroup> >* resultOut = nullptr,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
-        bool loadStreetsFromGroups(
-                const QList<std::shared_ptr<const ObfStreetGroup> > &streetGroups,
+        bool loadStreetsFromGroups(const QVector<std::shared_ptr<const ObfStreetGroup> > &streetGroups,
                 const Filter& filter,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr);
 

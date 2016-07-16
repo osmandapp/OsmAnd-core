@@ -11,10 +11,10 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/PointsAndAreas.h>
-#include <OsmAndCore/Nullable.h>
-
+#include <OsmAndCore/Data/ObfAddressSectionReader.h>
 #include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/Nullable.h>
+#include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Search/BaseSearch.h>
 
 namespace OsmAnd
@@ -63,6 +63,9 @@ namespace OsmAnd
         explicit AddressesByNameSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection);
         virtual ~AddressesByNameSearch();
 
+        virtual void performSearch(
+            const ObfAddressSectionReader::Filter& filter,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
         virtual void performSearch(
             const ISearch::Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,

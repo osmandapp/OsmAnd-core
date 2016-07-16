@@ -12,16 +12,30 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/Building.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
+#include <OsmAndCore/Data/ObfAddress.h>
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API ObfBuilding Q_DECL_FINAL
+    class OSMAND_CORE_API ObfBuilding Q_DECL_FINAL : ObfAddress
     {
     public:
-        ObfBuilding(Building building, ObfObjectId id);
+        ObfBuilding(
+                Building building,
+                ObfObjectId id,
+                std::shared_ptr<const ObfStreet> street);
+        ObfBuilding(
+                Building building,
+                ObfObjectId id,
+                std::shared_ptr<const ObfStreetGroup> streetGroup);
 
-        const Building building;
-        const ObfObjectId id;
+        Building building() const;
+        std::shared_ptr<const ObfStreet> street() const;
+        std::shared_ptr<const ObfStreetGroup> streetGroup() const;
+
+    private:
+        Building _building;
+        std::shared_ptr<const ObfStreet> _street;
+        std::shared_ptr<const ObfStreetGroup> _streetGroup;
     };
 }
 

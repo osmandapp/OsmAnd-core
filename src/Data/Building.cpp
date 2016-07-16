@@ -7,40 +7,31 @@
 
 
 OsmAnd::Building::Building(
-        std::shared_ptr<const OsmAnd::ObfStreet> street_,
         QString nativeName,
         QHash<QString, QString> localizedNames,
         OsmAnd::PointI position31,
-        OsmAnd::Building::Interpolation interpolation_,
-        QString postcode_)
-    : Address(AddressType::Building, nativeName, localizedNames, position31)
-    , street(street_)
-    , streetGroup(street->obfStreetGroup)
-    , interpolation(interpolation_)
-    , postcode(postcode_)
-{
-
-}
-
-OsmAnd::Building::Building(
-        std::shared_ptr<const OsmAnd::ObfStreetGroup> streetGroup_,
-        QString nativeName,
-        QHash<QString, QString> localizedNames,
-        OsmAnd::PointI position31,
-        OsmAnd::Building::Interpolation interpolation_,
-        QString postcode_)
-    : Address(AddressType::Building, nativeName, localizedNames, position31)
-    , street(nullptr)
-    , streetGroup(streetGroup_)
-    , interpolation(interpolation_)
-    , postcode(postcode_)
+        OsmAnd::Building::Interpolation interpolation,
+        QString postcode)
+    : Address(nativeName, localizedNames, position31)
+    , _interpolation(interpolation)
+    , _postcode(postcode)
 {
 
 }
 
 QString OsmAnd::Building::toString() const
 {
-    return nativeName;
+    return _nativeName;
+}
+
+OsmAnd::Building::Interpolation OsmAnd::Building::interpolation() const
+{
+    return _interpolation;
+}
+
+QString OsmAnd::Building::postcode() const
+{
+    return _postcode;
 }
 
 OsmAnd::Building::Interpolation::Interpolation(
@@ -48,7 +39,7 @@ OsmAnd::Building::Interpolation::Interpolation(
         QString nativeName,
         QHash<QString, QString> localizedNames,
         OsmAnd::PointI position31)
-    : Address(AddressType::Building, nativeName, localizedNames, position31)
+    : Address(nativeName, localizedNames, position31)
     , type(type_)
 {
 
@@ -56,5 +47,5 @@ OsmAnd::Building::Interpolation::Interpolation(
 
 QString OsmAnd::Building::Interpolation::toString() const
 {
-    return QStringLiteral("interpolation ") + nativeName;
+    return QStringLiteral("interpolation ") + _nativeName;
 }

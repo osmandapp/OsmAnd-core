@@ -34,7 +34,7 @@ namespace OsmAnd
 //            if(o1.addressType < o2.addressType) {
 //                return true;
 //            }
-            return o1.dataIndexOffset < o2.dataIndexOffset;
+            return o1.dataIndexOffset() < o2.dataIndexOffset();
         }
 
     private:

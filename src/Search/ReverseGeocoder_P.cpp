@@ -106,7 +106,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>& road,
         double knownMinBuildingDistance) const
 {
-    QVector<std::shared_ptr<ResultEntry>> streetList{};
+    QVector<std::shared_ptr<ResultEntry>> streets{};
     QVector<std::shared_ptr<const ResultEntry>> result{};
     QStringList streetNamePacked = splitToWordsOrderedByLength(road->streetName);
     if (!streetNamePacked.isEmpty())
@@ -114,45 +114,33 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         QString log = QStringLiteral("Search street by name ") % road->streetName % QStringLiteral(" (original name: ") % streetNamePacked.join(",") % QStringLiteral(")");
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, log.toLatin1());
         QString mainWord = extractMainWord(streetNamePacked);
-        OsmAnd::AddressesByNameSearch::Criteria criteria;
-        criteria.name = mainWord;
-        criteria.includeStreets = true;
-        criteria.streetGroupTypesMask = OsmAnd::ObfAddressStreetGroupTypesMask{};
-        criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(
-                                              std::pow(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, 2), *road->searchPoint31()));
-//        addressByNameSearch->performSearch(
-//                    criteria,
-//                    [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
-//                    const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
-//            auto const& address = static_cast<const OsmAnd::AddressesByNameSearch::ResultEntry&>(resultEntry).address;
-//            auto const& street = std::static_pointer_cast<const OsmAnd::ObfStreet>(address);
-////            if (splitToWordsOrderedByLength(street->nativeName) == streetNamePacked)
-////            {
-//////                double d = Utilities::distance31(street->position31, position31);
-//////                if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
-//                const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
-//                rs->searchPoint = road->searchPoint;
-//                rs->street = street;
-//                // set connection point to sort
-////                rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
-//                rs->streetGroup = street->obfStreetGroup;
-//                streetList.append(rs);
-////                return true;
-//////                }
-////            }
-////            return false;
-//        });
+        AreaI bbox31 = (AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31());
+        addressByNameSearch->performSearch(ObfAddressSectionReader::Filter().setBbox(bbox31).setName(mainWord).setVisitor(
+                                               [&streets, streetNamePacked, road](std::unique_ptr<const ObfStreet> street){
+            if (splitToWordsOrderedByLength(street->street().nativeName()) == streetNamePacked)
+            {
+////                double d = Utilities::distance31(street->position31, position31);
+////                if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
+                const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
+                rs->searchPoint = road->searchPoint;
+                // set connection point to sort
+                rs->connectionPoint = Utilities::convert31ToLatLon(street->street().position31());
+                rs->streetGroup = street->obfStreetGroup();
+                rs->street = std::shared_ptr<const ObfStreet>(std::move(street));
+                streets.append(rs);
+            }
+        }));
     }
 
-    if (streetList.isEmpty())
+    if (streets.isEmpty())
     {
         result.append(road);
     }
     else
     {
-        std::sort(streetList.begin(), streetList.end(), DISTANCE_COMPARATOR);
+        std::sort(streets.begin(), streets.end(), DISTANCE_COMPARATOR);
         double streetDistance = 0;
-        for (const std::shared_ptr<ResultEntry> street : streetList)
+        for (const std::shared_ptr<ResultEntry> street : streets)
         {
             if (streetDistance == 0)
                 streetDistance = street->getDistance();

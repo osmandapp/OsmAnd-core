@@ -9,16 +9,17 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
-#include <OsmAndCore/PointsAndAreas.h>
-#include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/Address.h>
+#include <OsmAndCore/Data/DataCommonTypes.h>
+#include <OsmAndCore/Data/ObfAddress.h>
 #include <OsmAndCore/Data/StreetGroup.h>
+#include <OsmAndCore/PointsAndAreas.h>
 
 namespace OsmAnd
 {
     class ObfAddressSectionInfo;
 
-    class OSMAND_CORE_API ObfStreetGroup Q_DECL_FINAL
+    class OSMAND_CORE_API ObfStreetGroup Q_DECL_FINAL : public ObfAddress
     {
         Q_DISABLE_COPY_AND_MOVE(ObfStreetGroup)
 
@@ -29,10 +30,14 @@ namespace OsmAnd
                 ObfObjectId id = ObfObjectId::invalidId(),
                 uint32_t dataOffset = 0);
 
-        const std::shared_ptr<const ObfAddressSectionInfo> obfSection;
-        const StreetGroup streetGroup;
-        const ObfObjectId id = ObfObjectId::invalidId();
-        const uint32_t dataOffset = 0;
+        std::shared_ptr<const ObfAddressSectionInfo> obfSection() const;
+        StreetGroup streetGroup() const;
+        uint32_t dataOffset() const;
+
+    private:
+        std::shared_ptr<const ObfAddressSectionInfo> _obfSection;
+        StreetGroup _streetGroup;
+        uint32_t _dataOffset;
     };
 }
 

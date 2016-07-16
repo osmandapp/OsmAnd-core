@@ -1,20 +1,58 @@
 #include "AddressesByNameSearch.h"
 
-#include "ObfDataInterface.h"
-#include "ObfAddressSectionReader.h"
 #include "Address.h"
 #include "Building.h"
-#include "Street.h"
+#include "ObfAddress.h"
+#include "ObfAddressSectionReader.h"
+#include "ObfDataInterface.h"
+#include "ObfStreetGroup.h"
+#include "ObfStreet.h"
 #include "StreetGroup.h"
+#include "Street.h"
 #include "StreetIntersection.h"
 
-OsmAnd::AddressesByNameSearch::AddressesByNameSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection_)
+OsmAnd::AddressesByNameSearch::AddressesByNameSearch(
+        const std::shared_ptr<const IObfsCollection>& obfsCollection_)
     : BaseSearch(obfsCollection_)
 {
 }
 
 OsmAnd::AddressesByNameSearch::~AddressesByNameSearch()
 {
+}
+
+void OsmAnd::AddressesByNameSearch::performSearch(
+        const OsmAnd::ObfAddressSectionReader::Filter& filter,
+        const std::shared_ptr<const OsmAnd::IQueryController>& queryController) const
+{
+    const auto dataInterface = obfsCollection->obtainDataInterface(
+                filter.obfInfoAreaBbox31().getValuePtrOrNullptr(),
+                MinZoomLevel,
+                MaxZoomLevel,
+                ObfDataTypesMask().set(ObfDataType::Address));
+
+    if (filter.parent())
+        switch (filter.parent()->type())
+        {
+        case AddressType::StreetGroup:
+            dataInterface->loadStreetsFromGroups(
+                        {std::static_pointer_cast<const ObfStreetGroup>(filter.parent())},
+                        filter,
+                        queryController);
+            break;
+        case AddressType::Street:
+            dataInterface->loadBuildingsFromStreets(
+                        {std::static_pointer_cast<const ObfStreet>(filter.parent())},
+                        filter,
+                        queryController);
+            dataInterface->loadIntersectionsFromStreets(
+                        {std::static_pointer_cast<const ObfStreet>(filter.parent())},
+                        filter,
+                        queryController);
+            break;
+        }
+   else
+        dataInterface->scanAddressesByName(filter, queryController);
 }
 
 void OsmAnd::AddressesByNameSearch::performSearch(

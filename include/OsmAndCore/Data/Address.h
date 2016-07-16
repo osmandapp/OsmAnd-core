@@ -33,18 +33,22 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Address
     {
-    protected:
-        Address(AddressType addressType,
-                QString nativeName,
-                QHash<QString, QString> localizedNames,
-                PointI position31);
     public:
         virtual QString toString() const = 0;
 
-        const AddressType addressType;
-        const QString nativeName;
-        const QHash<QString, QString> localizedNames;
-        const PointI position31;
+        QString nativeName() const;
+        QHash<QString, QString> localizedNames() const;
+        PointI position31() const;
+
+    protected:
+        Address(
+                QString nativeName,
+                QHash<QString, QString> localizedNames,
+                PointI position31);
+
+        QString _nativeName;
+        QHash<QString, QString> _localizedNames;
+        PointI _position31;
     };
 }
 

@@ -768,14 +768,12 @@ bool OsmAnd::ObfDataInterface::scanAddressesByName(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (!filter.matches(addressSection->area31))
-                continue;
-
-            OsmAnd::ObfAddressSectionReader::scanAddressesByName(
-                obfReader,
-                addressSection,
-                filter,
-                queryController);
+            if (filter.matches(addressSection->area31))
+                OsmAnd::ObfAddressSectionReader::scanAddressesByName(
+                            obfReader,
+                            addressSection,
+                            filter,
+                            queryController);
         }
     }
 
@@ -813,7 +811,7 @@ bool OsmAnd::ObfDataInterface::loadStreetGroups(
 }
 
 bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
-        const QList<std::shared_ptr<const ObfStreetGroup>>& streetGroups,
+        const QVector<std::shared_ptr<const ObfStreetGroup>>& streetGroups,
         const Filter& filter,
         const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
@@ -833,10 +831,9 @@ bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
 
             for (const auto& streetGroup : constOf(streetGroups))
             {
-                if (addressSection != streetGroup->obfSection)
+                if (addressSection != streetGroup->obfSection())
                     continue;
 
-                QList< std::shared_ptr<const ObfStreet> > intermediateResult;
                 OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(
                     obfReader,
                     streetGroup,
@@ -870,7 +867,7 @@ bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
 
             for (const auto& street : constOf(streets))
             {
-                if (addressSection != street->obfStreetGroup->obfSection)
+                if (addressSection != street->obfStreetGroup()->obfSection())
                     continue;
 
                 OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
@@ -906,7 +903,7 @@ bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
 
             for (const auto& street : constOf(streets))
             {
-                if (addressSection != street->obfStreetGroup->obfSection)
+                if (addressSection != street->obfStreetGroup()->obfSection())
                     continue;
 
                 OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
