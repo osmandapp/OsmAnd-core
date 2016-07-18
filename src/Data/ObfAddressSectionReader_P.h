@@ -26,6 +26,7 @@ namespace OsmAnd
         using AddressNameIndexDataAtomType = ObfAddressSectionReader::AddressNameIndexDataAtomType;
         using BuildingVisitorFunction = ObfAddressSectionReader::BuildingVisitorFunction;
         using Filter = ObfAddressSectionReader::Filter;
+        using FilterBuilder = ObfAddressSectionReader::FilterBuilder;
         using IntersectionVisitorFunction = ObfAddressSectionReader::IntersectionVisitorFunction;
         using StreetGroupVisitorFunction = ObfAddressSectionReader::StreetGroupVisitorFunction;
         using StreetVisitorFunction = ObfAddressSectionReader::StreetVisitorFunction;
@@ -61,7 +62,7 @@ namespace OsmAnd
                 const Filter &filter,
                 const std::shared_ptr<const IQueryController>& queryController);
 
-        static QVector<ObfStreet> readStreetsFromGroup(
+        static void readStreetsFromGroup(
                 const ObfReader_P& reader,
                 const std::shared_ptr<const ObfStreetGroup>& streetGroup,
                 const Filter &filter,

@@ -94,6 +94,12 @@ namespace OsmAnd
             return *this;
         }
 
+//        template<typename RandomAccessIterator>
+//        BitmaskT& set(RandomAcccessIterator begin, RandomAcccessIterator end)
+//        {
+//            std::for_each(begin, end, [](BitmaskT& type) { this->set(type); });
+//        }
+
 #if !defined(SWIG)
         inline BitmaskT operator|(const FLAGS_ENUM flag) const
         {

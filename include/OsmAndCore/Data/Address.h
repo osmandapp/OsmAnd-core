@@ -24,21 +24,26 @@ namespace OsmAnd
         StreetIntersection
     };
 
-    inline Bitmask<AddressType> fullAddressTypeMask()
-    {
-        return Bitmask<AddressType>()
-                .set(AddressType::StreetGroup)
-                .set(AddressType::Street)
-                .set(AddressType::Building)
-                .set(AddressType::StreetIntersection);
-    }
-
     static const QMap<AddressType, QString> ADDRESS_TYPE_NAMES{
             {AddressType::StreetGroup, "Street group"},
             {AddressType::Street, "Street"},
             {AddressType::Building, "Building"},
             {AddressType::StreetIntersection, "Street intersection"},
     };
+
+    inline Bitmask<AddressType> fullAddressTypeMask()
+    {
+        Bitmask<AddressType> result;
+        for (auto type : ADDRESS_TYPE_NAMES.keys())
+            result.set(type);
+        return result;
+//        return Bitmask<AddressType>().set(ADDRESS_TYPE_NAMES.keys().begin());
+//        return Bitmask<AddressType>()
+//                .set(AddressType::StreetGroup)
+//                .set(AddressType::Street)
+//                .set(AddressType::Building)
+//                .set(AddressType::StreetIntersection);
+    }
 
     class OSMAND_CORE_API Address
     {

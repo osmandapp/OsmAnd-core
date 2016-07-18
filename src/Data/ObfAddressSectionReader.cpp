@@ -84,16 +84,10 @@ void OsmAnd::ObfAddressSectionReader::scanAddressesByName(
         queryController);
 }
 
-QString OsmAnd::ObfAddressSectionReader::Filter::name() const
+OsmAnd::ObfAddressSectionReader::Filter::Filter(BinaryBoolFunction op)
+    : _op(op)
 {
-    return _name;
-}
 
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setAddressNameIndexDataAtomType(
-        const Bitmask<OsmAnd::ObfAddressSectionReader::AddressNameIndexDataAtomType>& addressNameIndexDataAtomType)
-{
-    _addressNameIndexDataAtomTypeMask = addressNameIndexDataAtomType;
-    return *this;
 }
 
 std::shared_ptr<const OsmAnd::ObfAddress> OsmAnd::ObfAddressSectionReader::Filter::parent() const
@@ -104,149 +98,6 @@ std::shared_ptr<const OsmAnd::ObfAddress> OsmAnd::ObfAddressSectionReader::Filte
 OsmAnd::Nullable<OsmAnd::AreaI> OsmAnd::ObfAddressSectionReader::Filter::obfInfoAreaBbox31() const
 {
     return _obfInfoAreaBbox31;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setAddressTypes(
-        const OsmAnd::Bitmask<OsmAnd::AddressType>& addressTypeMask)
-{
-    _addressTypeMask = addressTypeMask;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter::Filter(BinaryBoolFunction op)
-    : _op(op)
-{
-    
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setName(
-        const QString& name)
-{
-    _name = name;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setBbox(
-        const OsmAnd::AreaI& bbox31)
-{
-    _bbox31 = bbox31;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::setObfInfoAreaBbox(
-        const OsmAnd::AreaI& bbox31)
-{
-    _obfInfoAreaBbox31 = bbox31;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setAddressStreetGroupTypes(
-        const OsmAnd::ObfAddressStreetGroupTypesMask& streetGroupTypes)
-{
-    _streetGroupTypes = streetGroupTypes;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setFilters(
-        QVector<Filter> filters)
-{
-    _filters = filters;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setParent(
-        std::shared_ptr<const ObfAddress> address)
-{
-    _parent = address;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setStringMatcherFunction(
-        OsmAnd::ObfAddressSectionReader::StringMatcherFunction stringMatcher)
-{
-    _stringMatcher = stringMatcher;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::VisitorFunction visitor)
-{
-    _addressVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::AddressReferenceVisitorFunction visitor)
-{
-    _addressReferenceVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::StreetGroupVisitorFunction visitor)
-{
-    _streetGroupVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::ObfStreetGroupVisitorFunction visitor)
-{
-    _obfStreetGroupVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::StreetVisitorFunction visitor)
-{
-    _streetVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::ObfStreetVisitorFunction visitor)
-{
-    _obfStreetVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::BuildingVisitorFunction visitor)
-{
-    _buildingVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::ObfBuildingVisitorFunction visitor)
-{
-    _obfBuildingVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::IntersectionVisitorFunction visitor)
-{
-    _intersectionVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter& OsmAnd::ObfAddressSectionReader::Filter::setVisitor(
-        OsmAnd::ObfAddressSectionReader::ObfIntersectionVisitorFunction visitor)
-{
-    _obfIntersectionVisitor = visitor;
-    return *this;
-}
-
-OsmAnd::ObfAddressSectionReader::Filter &OsmAnd::ObfAddressSectionReader::Filter::buildTopLevelFilters()
-{
-    Filter result(OR);
-    Filter topLevelFilter = Filter()
-            .setAddressNameIndexDataAtomType(fullObfAddressNameIndexDataAtomTypeMask().unset(_addressNameIndexDataAtomTypeMask).unset(AddressNameIndexDataAtomType::Unknown))
-            .setAddressTypes(fullAddressTypeMask().unset(_addressTypeMask));
-//    QVector<Filter> filters;
-    result.setFilters({topLevelFilter, *this});
-    return result;
 }
 
 uint OsmAnd::ObfAddressSectionReader::Filter::commonStartPartLength(
@@ -520,4 +371,187 @@ OsmAnd::ObfAddressSectionReader::AddressReference::AddressReference(
     , _position31(position31)
 {
 
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder::FilterBuilder(
+        OsmAnd::ObfAddressSectionReader::Filter filter)
+    : _filter(std::unique_ptr<Filter>(new Filter{filter}))
+{
+
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder::FilterBuilder(OsmAnd::BinaryBoolFunction op)
+    : _filter(std::unique_ptr<Filter>(new Filter{op}))
+{
+
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setAddressNameIndexDataAtomType(
+        const Bitmask<OsmAnd::ObfAddressSectionReader::AddressNameIndexDataAtomType>& addressNameIndexDataAtomType)
+{
+    _filter->_addressNameIndexDataAtomTypeMask = addressNameIndexDataAtomType;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setAddressTypes(
+        const OsmAnd::Bitmask<OsmAnd::AddressType>& addressTypeMask)
+{
+    _filter->_addressTypeMask = addressTypeMask;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setName(
+        const QString& name)
+{
+    _filter->_name = name;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setBbox(
+        const OsmAnd::AreaI& bbox31)
+{
+    _filter->_bbox31 = bbox31;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder &OsmAnd::ObfAddressSectionReader::FilterBuilder::setObfInfoAreaBbox(
+        const OsmAnd::AreaI& bbox31)
+{
+    _filter->_obfInfoAreaBbox31 = bbox31;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setAddressStreetGroupTypes(
+        const OsmAnd::ObfAddressStreetGroupTypesMask& streetGroupTypes)
+{
+    _filter->_streetGroupTypes = streetGroupTypes;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setFilters(
+        QVector<Filter> filters)
+{
+    _filter->_filters = filters;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setParent(
+        std::shared_ptr<const ObfAddress> address)
+{
+    _filter->_parent = address;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setStringMatcherFunction(
+        OsmAnd::ObfAddressSectionReader::StringMatcherFunction stringMatcher)
+{
+    _filter->_stringMatcher = stringMatcher;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::VisitorFunction visitor)
+{
+    _filter->_addressVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::AddressReferenceVisitorFunction visitor)
+{
+    _filter->_addressReferenceVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::StreetGroupVisitorFunction visitor)
+{
+    _filter->_streetGroupVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::ObfStreetGroupVisitorFunction visitor)
+{
+    _filter->_obfStreetGroupVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::StreetVisitorFunction visitor)
+{
+    _filter->_streetVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::ObfStreetVisitorFunction visitor)
+{
+    _filter->_obfStreetVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::BuildingVisitorFunction visitor)
+{
+    _filter->_buildingVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::ObfBuildingVisitorFunction visitor)
+{
+    _filter->_obfBuildingVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::IntersectionVisitorFunction visitor)
+{
+    _filter->_intersectionVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::FilterBuilder& OsmAnd::ObfAddressSectionReader::FilterBuilder::setVisitor(
+        OsmAnd::ObfAddressSectionReader::ObfIntersectionVisitorFunction visitor)
+{
+    _filter->_obfIntersectionVisitor = visitor;
+    return *this;
+}
+
+OsmAnd::ObfAddressSectionReader::Filter OsmAnd::ObfAddressSectionReader::FilterBuilder::buildTopLevelFilters()
+{
+//    auto addressNameIndexDataAtomTypeMask = fullObfAddressNameIndexDataAtomTypeMask().unset(_filter->_addressNameIndexDataAtomTypeMask).unset(AddressNameIndexDataAtomType::Unknown);
+    bool topLevelFiltersNeeded = false;
+    AddressType lower;
+    for (AddressType type : ADDRESS_TYPE_NAMES.keys())
+        if (_filter->_addressTypeMask.isSet(type))
+            lower = type;
+    Bitmask<AddressType> addressTypeMask;
+    for (AddressType type : ADDRESS_TYPE_NAMES.keys())
+        if (type == lower)
+            break;
+        else if (!_filter->_addressTypeMask.isSet(type))
+        {
+            addressTypeMask.set(type);
+            topLevelFiltersNeeded = true;
+        }
+//    auto addressTypeMask = fullAddressTypeMask().unset(_filter->_addressTypeMask);
+    if (topLevelFiltersNeeded)
+    {
+        Filter topLevelFilter = FilterBuilder()
+    //            .setAddressNameIndexDataAtomType(addressNameIndexDataAtomTypeMask)
+                .setAddressTypes(addressTypeMask)
+                .build();
+        return FilterBuilder(OR)
+                .setFilters({topLevelFilter, *_filter})
+                .build();
+    }
+    else
+        return *_filter;
+}
+
+OsmAnd::ObfAddressSectionReader::Filter OsmAnd::ObfAddressSectionReader::FilterBuilder::build()
+{
+    return buildTopLevelFilters();
 }

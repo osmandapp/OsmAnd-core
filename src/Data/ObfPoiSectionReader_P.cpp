@@ -1203,7 +1203,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                 baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                ObfReaderUtilities::scanIndexedStringTable(cis, ObfAddressSectionReader::Filter().setName(query), intermediateOffsets);
+                ObfReaderUtilities::scanIndexedStringTable(cis, ObfAddressSectionReader::FilterBuilder().setName(query).build(), intermediateOffsets);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
 
                 cis->PopLimit(oldLimit);
