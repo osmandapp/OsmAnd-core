@@ -45,7 +45,7 @@ if "%compiler%"=="msvc" (
 	set "PATH=%PATH%;%~dp0\tools.windows\bin"
 	set QTBASE_CONFIGURATION=^
 		-xplatform win32-msvc2013 ^
-		-debug-and-release -opensource -confirm-license -c++11 -no-gui -no-widgets -no-accessibility ^
+		-debug-and-release -opensource -confirm-license -c++std c++11 -no-gui -no-widgets -no-accessibility ^
 		-qt-sql-sqlite -no-opengl -no-nis -no-iconv -no-inotify -no-eventfd -largefile -no-fontconfig ^
 		-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
 		-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
@@ -94,7 +94,7 @@ if "%compiler%"=="gcc" (
 	if "%targetArch%"=="i686" (
 		set QTBASE_CONFIGURATION=^
 			-xplatform win32-g++-32 ^
-			-debug-and-release -opensource -confirm-license -c++11 -no-gui -no-widgets -no-accessibility ^
+			-debug-and-release -opensource -confirm-license -c++std c++11 -no-gui -no-widgets -no-accessibility ^
 			-qt-sql-sqlite -no-opengl -no-nis -no-iconv -no-inotify -no-eventfd -largefile -no-fontconfig ^
 			-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
 			-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
@@ -112,7 +112,7 @@ if "%compiler%"=="gcc" (
 	if "%targetArch%"=="amd64" (
 		set QTBASE_CONFIGURATION=^
 			-xplatform win32-g++-64 ^
-			-debug-and-release -opensource -confirm-license -c++11 -no-gui -no-widgets -no-accessibility ^
+			-debug-and-release -opensource -confirm-license -c++std c++11 -no-gui -no-widgets -no-accessibility ^
 			-qt-sql-sqlite -no-opengl -no-nis -no-iconv -no-inotify -no-eventfd -largefile -no-fontconfig ^
 			-qt-zlib -qt-pcre -no-icu -no-gif -no-libpng -no-libjpeg -no-freetype -no-angle -no-openssl ^
 			-no-dbus -no-audio-backend -no-qml-debug -no-directwrite -no-style-windows -no-style-windowsxp ^
