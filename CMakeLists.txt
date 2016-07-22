@@ -286,6 +286,7 @@ if (CMAKE_SHARED_LIBS_ALLOWED_ON_TARGET)
 				${Qt5Sql_SHARED_LIBRARIES}
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARIES}
+				${qtpcre_SHARED_LIBRARIES}
 		)
 	else()
 		target_link_libraries(OsmAndCore_shared
@@ -335,6 +336,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 				${Qt5Sql_SHARED_LIBRARIES}
 				${Qt5Network_SHARED_LIBRARIES}
 				${Qt5Core_SHARED_LIBRARIES}
+				${qtpcre_SHARED_LIBRARIES}
 		)
 	else()
 		target_link_libraries(OsmAndCore_static
@@ -385,6 +387,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 				${Qt5Sql_STATIC_LIBRARIES}
 				${Qt5Network_STATIC_LIBRARIES}
 				${Qt5Core_STATIC_LIBRARIES}
+				${qtpcre_STATIC_LIBRARIES}
 				${merged_link_libs_public}
 		)
 	endif()
@@ -420,6 +423,7 @@ if (CMAKE_STATIC_LIBS_ALLOWED_ON_TARGET AND
 			${Qt5Sql_STATIC_LIBRARIES}
 			${Qt5Network_STATIC_LIBRARIES}
 			${Qt5Core_STATIC_LIBRARIES}
+			${qtpcre_STATIC_LIBRARIES}
 			${merged_link_libs_public}
 	)
 endif()

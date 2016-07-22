@@ -70,7 +70,7 @@ makeStaticAndSharedFlavor()
 
 if [[ "$targetOS" == "linux" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
-		-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
+		-release -opensource -confirm-license -c++std c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
@@ -105,7 +105,7 @@ if [[ "$targetOS" == "linux" ]]; then
 	fi
 elif [[ "$targetOS" == "macosx" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
-		-debug-and-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
+		-debug-and-release -opensource -confirm-license -c++std c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib -no-framework
@@ -128,7 +128,7 @@ elif [[ "$targetOS" == "macosx" ]]; then
 		exit 1
 	fi
 elif [[ "$targetOS" == "cygwin" ]]; then
-	# cygwin-g++ mkspec does not specify C++ standard to allow -c++11 usage
+	# cygwin-g++ mkspec does not specify C++ standard to allow -c++std c++11 usage
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
@@ -151,7 +151,7 @@ elif [[ "$targetOS" == "cygwin" ]]; then
 	fi
 elif [[ "$targetOS" == "windows" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
-		-release -opensource -confirm-license -c++11 -largefile -no-accessibility -qt-sql-sqlite
+		-release -opensource -confirm-license -c++std c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
 		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
