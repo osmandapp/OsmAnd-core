@@ -92,16 +92,16 @@ if [[ "$targetOS" == "ios" ]]; then
 			ln -s "../../upstream.patched.ios.simulator.${compiler}.static/lib/cmake" "cmake")
 
 		# Make universal libraries using lipo
-		libraries=(Core Concurrent Network Sql Xml)
+		libraries=(qtpcre Qt5Core Qt5Concurrent Qt5Network Qt5Sql Qt5Xml)
 		for libName in "${libraries[@]}" ; do
 			echo "Packing '$libName'..."
 			lipo -create \
-				"$SRCLOC/upstream.patched.ios.simulator.${compiler}.static/lib/libQt5${libName}.a" \
-				"$SRCLOC/upstream.patched.ios.device.${compiler}.static/lib/libQt5${libName}.a" \
-				-output "$SRCLOC/upstream.patched.ios.${compiler}/lib/libQt5${libName}.a"
+				"$SRCLOC/upstream.patched.ios.simulator.${compiler}.static/lib/lib${libName}.a" \
+				"$SRCLOC/upstream.patched.ios.device.${compiler}.static/lib/lib${libName}.a" \
+				-output "$SRCLOC/upstream.patched.ios.${compiler}/lib/lib${libName}.a"
 			retcode=$?
 			if [ $retcode -ne 0 ]; then
-				echo "Failed to lipo 'libQt5${libName}.a', aborting..."
+				echo "Failed to lipo 'lib${libName}.a', aborting..."
 				rm -rf "$path"
 				exit $retcode
 			fi
