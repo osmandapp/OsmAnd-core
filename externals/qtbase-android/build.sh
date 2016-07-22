@@ -138,6 +138,9 @@ QTBASE_CONFIGURATION=$(echo "
 if [[ "$compiler"=="gcc" ]]; then
 	QTBASE_CONFIGURATION="-xplatform android-g++ ${QTBASE_CONFIGURATION}"
 fi
+if [[ "$targetArch"=="mips" ]]; then
+	QTBASE_CONFIGURATION="${QTBASE_CONFIGURATION} -no-use-gold-linker"
+fi
 
 # Function: makeFlavor(type)
 makeFlavor()
