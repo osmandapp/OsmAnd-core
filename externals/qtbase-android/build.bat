@@ -171,6 +171,11 @@ if "%compiler%"=="gcc" (
 		-xplatform android-g++ ^
 		%QTBASE_CONFIGURATION%
 )
+if "%targetArch%"=="mips" (
+	set QTBASE_CONFIGURATION=^
+		%QTBASE_CONFIGURATION% ^
+		-no-use-gold-linker
+)
 if "%EXPERIMENTAL_USE_MSVC%"=="0" (
 	set QTBASE_CONFIGURATION=^
 		-platform win32-g++ ^
