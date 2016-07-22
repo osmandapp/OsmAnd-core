@@ -1,10 +1,10 @@
-diff -rupN upstream.original/mkspecs/features/qt_functions.prf upstream.patched/mkspecs/features/qt_functions.prf
---- upstream.original/mkspecs/features/qt_functions.prf	2014-02-06 20:04:09.690123500 +0200
-+++ upstream.patched/mkspecs/features/qt_functions.prf	2014-02-06 22:08:52.447836300 +0200
-@@ -1,8 +1,5 @@
+--- upstream.original/mkspecs/features/qt_functions.prf	2016-07-21 22:28:52.000000000 +0300
++++ upstream.patched/mkspecs/features/qt_functions.prf	2016-07-21 22:33:34.000000000 +0300
+@@ -1,9 +1,6 @@
+ 
  defineReplace(qtPlatformTargetSuffix) {
--    ios:CONFIG(iphonesimulator, iphonesimulator|iphoneos): \
--        suffix = _iphonesimulator
+-    ios:CONFIG(simulator, simulator|device): \
+-        suffix = _$${simulator.sdk}
 -    else: \
 -        suffix =
 +    suffix =
