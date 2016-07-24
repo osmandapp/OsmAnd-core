@@ -54,8 +54,8 @@ namespace OsmAnd
 
             std::shared_ptr<const Building> building;
             QString buildingInterpolation;
-            std::shared_ptr<const Street> street;
-            std::shared_ptr<const StreetGroup> streetGroup;
+            std::shared_ptr<const ObfStreet> street;
+            std::shared_ptr<const ObfStreetGroup> streetGroup;
 
             double getDistance() const;
             Nullable<PointI> searchPoint31() const;

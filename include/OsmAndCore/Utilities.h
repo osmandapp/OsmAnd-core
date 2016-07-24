@@ -29,6 +29,26 @@
 
 namespace OsmAnd
 {
+    inline bool STARTS_WITH(const QString& stack, const QString& needle)
+    {
+        return stack.isNull() || stack.startsWith(needle, Qt::CaseInsensitive);
+    }
+
+    inline bool MATCHES(const QString& stack, const QString& needle)
+    {
+        return stack.isNull() || stack == needle;
+    }
+
+    inline bool CONTAINS(const QString& stack, const QString& needle)
+    {
+        return stack.isNull() || stack.contains(needle, Qt::CaseInsensitive);
+    }
+
+    using BinaryBoolFunction = std::function<bool(bool, bool)>;
+
+    static BinaryBoolFunction OR = std::logical_or<bool>();
+    static BinaryBoolFunction AND = std::logical_and<bool>();
+
     struct OSMAND_CORE_API Utilities Q_DECL_FINAL
     {
         inline static double toRadians(const double angle)

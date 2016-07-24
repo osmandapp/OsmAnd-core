@@ -7,24 +7,28 @@
 #include <QSet>
 #include "restore_internal_warnings.h"
 
-#include "Ref.h"
-#include "ObfReader.h"
-#include "ObfInfo.h"
-#include "ObfMapSectionReader.h"
-#include "ObfMapSectionInfo.h"
-#include "ObfRoutingSectionReader.h"
-#include "ObfRoutingSectionInfo.h"
-#include "ObfPoiSectionReader.h"
-#include "ObfPoiSectionInfo.h"
-#include "ObfAddressSectionReader.h"
-#include "ObfAddressSectionInfo.h"
-#include "ObfMapObject.h"
 #include "Amenity.h"
-#include "StreetGroup.h"
-#include "Street.h"
-#include "IQueryController.h"
 #include "FunctorQueryController.h"
+#include "IQueryController.h"
+#include "ObfAddressSectionInfo.h"
+#include "ObfAddressSectionReader.h"
+#include "ObfBuilding.h"
+#include "ObfInfo.h"
+#include "ObfMapObject.h"
+#include "ObfMapSectionInfo.h"
+#include "ObfMapSectionReader.h"
+#include "ObfPoiSectionInfo.h"
+#include "ObfPoiSectionReader.h"
+#include "ObfReader.h"
+#include "ObfRoutingSectionInfo.h"
+#include "ObfRoutingSectionReader.h"
+#include "ObfStreetGroup.h"
+#include "ObfStreet.h"
 #include "QKeyValueIterator.h"
+#include "Ref.h"
+#include "Street.h"
+#include "StreetGroup.h"
+
 
 OsmAnd::ObfDataInterface::ObfDataInterface(const QList< std::shared_ptr<const ObfReader> >& obfReaders_)
     : obfReaders(obfReaders_)
@@ -750,12 +754,7 @@ bool OsmAnd::ObfDataInterface::findAmenityForObfMapObject(
 }
 
 bool OsmAnd::ObfDataInterface::scanAddressesByName(
-    const QString& query,
-    QList< std::shared_ptr<const OsmAnd::Address> >* outAddresses,
-    const AreaI* const bbox31 /*= nullptr*/,
-    const ObfAddressStreetGroupTypesMask streetGroupTypesFilter /*= fullObfAddressStreetGroupTypesMask()*/,
-    const bool includeStreets /*= true*/,
-    const ObfAddressSectionReader::VisitorFunction visitor /*= nullptr*/,
+    const ObfAddressSectionReader::Filter& filter,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
@@ -769,27 +768,12 @@ bool OsmAnd::ObfDataInterface::scanAddressesByName(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (bbox31)
-            {
-                bool accept = false;
-                accept = accept || addressSection->area31.contains(*bbox31);
-                accept = accept || addressSection->area31.intersects(*bbox31);
-                accept = accept || bbox31->contains(addressSection->area31);
-
-                if (!accept)
-                    continue;
-            }
-
-            OsmAnd::ObfAddressSectionReader::scanAddressesByName(
-                obfReader,
-                addressSection,
-                query,
-                outAddresses,
-                bbox31,
-                streetGroupTypesFilter,
-                includeStreets,
-                visitor,
-                queryController);
+            if (filter.matches(addressSection->area31))
+                OsmAnd::ObfAddressSectionReader::scanAddressesByName(
+                            obfReader,
+                            addressSection,
+                            filter,
+                            queryController);
         }
     }
 
@@ -797,10 +781,8 @@ bool OsmAnd::ObfDataInterface::scanAddressesByName(
 }
 
 bool OsmAnd::ObfDataInterface::loadStreetGroups(
-    QList< std::shared_ptr<const StreetGroup> >* resultOut /*= nullptr*/,
-    const AreaI* const bbox31 /*= nullptr*/,
-    const ObfAddressStreetGroupTypesMask streetGroupTypesFilter /*= fullObfAddressStreetGroupTypesMask()*/,
-    const ObfAddressSectionReader::StreetGroupVisitorFunction visitor /*= nullptr*/,
+    const Filter& filter,
+    QList< std::shared_ptr<const ObfStreetGroup> >* resultOut /*= nullptr*/,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
@@ -814,24 +796,13 @@ bool OsmAnd::ObfDataInterface::loadStreetGroups(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (bbox31)
-            {
-                bool accept = false;
-                accept = accept || addressSection->area31.contains(*bbox31);
-                accept = accept || addressSection->area31.intersects(*bbox31);
-                accept = accept || bbox31->contains(addressSection->area31);
-
-                if (!accept)
-                    continue;
-            }
+            if (!filter.matches(addressSection->area31))
+                continue;
 
             OsmAnd::ObfAddressSectionReader::loadStreetGroups(
                 obfReader,
                 addressSection,
-                resultOut,
-                bbox31,
-                streetGroupTypesFilter,
-                visitor,
+                filter,
                 queryController);
         }
     }
@@ -840,11 +811,9 @@ bool OsmAnd::ObfDataInterface::loadStreetGroups(
 }
 
 bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
-    const QList< std::shared_ptr<const StreetGroup> >& streetGroups,
-    QHash< std::shared_ptr<const StreetGroup>, QList< std::shared_ptr<const Street> > >* resultOut /*= nullptr*/,
-    const AreaI* const bbox31 /*= nullptr*/,
-    const ObfAddressSectionReader::StreetVisitorFunction visitor /*= nullptr*/,
-    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+        const QVector<std::shared_ptr<const ObfStreetGroup>>& streetGroups,
+        const Filter& filter,
+        const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
     {
@@ -857,33 +826,19 @@ bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (bbox31)
-            {
-                bool accept = false;
-                accept = accept || addressSection->area31.contains(*bbox31);
-                accept = accept || addressSection->area31.intersects(*bbox31);
-                accept = accept || bbox31->contains(addressSection->area31);
-
-                if (!accept)
-                    continue;
-            }
+            if (!filter.matches(addressSection->area31))
+                continue;
 
             for (const auto& streetGroup : constOf(streetGroups))
             {
-                if (addressSection != streetGroup->obfSection)
+                if (addressSection != streetGroup->obfSection())
                     continue;
 
-                QList< std::shared_ptr<const Street> > intermediateResult;
                 OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(
                     obfReader,
                     streetGroup,
-                    resultOut ? &intermediateResult : nullptr,
-                    bbox31,
-                    visitor,
+                    filter,
                     queryController);
-
-                if (resultOut)
-                    resultOut->insert(streetGroup, intermediateResult);
             }
         }
     }
@@ -892,11 +847,9 @@ bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
 }
 
 bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
-    const QList< std::shared_ptr<const Street> >& streets,
-    QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const Building> > >* resultOut /*= nullptr*/,
-    const AreaI* const bbox31 /*= nullptr*/,
-    const ObfAddressSectionReader::BuildingVisitorFunction visitor /*= nullptr*/,
-    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+        const QVector<std::shared_ptr<const ObfStreet>>& streets,
+        const ObfAddressSectionReader::Filter& filter,
+        const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
     {
@@ -909,33 +862,19 @@ bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (bbox31)
-            {
-                bool accept = false;
-                accept = accept || addressSection->area31.contains(*bbox31);
-                accept = accept || addressSection->area31.intersects(*bbox31);
-                accept = accept || bbox31->contains(addressSection->area31);
-
-                if (!accept)
-                    continue;
-            }
+            if (!filter.matches(addressSection->area31))
+                continue;
 
             for (const auto& street : constOf(streets))
             {
-                if (addressSection != street->streetGroup->obfSection)
+                if (addressSection != street->obfStreetGroup()->obfSection())
                     continue;
 
-                QList< std::shared_ptr<const Building> > intermediateResult;
                 OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
                     obfReader,
                     street,
-                    resultOut ? &intermediateResult : nullptr,
-                    bbox31,
-                    visitor,
+                    filter,
                     queryController);
-
-                if (resultOut)
-                    resultOut->insert(street, intermediateResult);
             }
         }
     }
@@ -944,10 +883,8 @@ bool OsmAnd::ObfDataInterface::loadBuildingsFromStreets(
 }
 
 bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
-    const QList< std::shared_ptr<const Street> >& streets,
-    QHash< std::shared_ptr<const Street>, QList< std::shared_ptr<const StreetIntersection> > >* resultOut /*= nullptr*/,
-    const AreaI* const bbox31 /*= nullptr*/,
-    const ObfAddressSectionReader::IntersectionVisitorFunction visitor /*= nullptr*/,
+    const QVector<std::shared_ptr<const ObfStreet>>& streets,
+    const Filter& filter,
     const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
 {
     for (const auto& obfReader : constOf(obfReaders))
@@ -961,33 +898,19 @@ bool OsmAnd::ObfDataInterface::loadIntersectionsFromStreets(
             if (queryController && queryController->isAborted())
                 return false;
 
-            if (bbox31)
-            {
-                bool accept = false;
-                accept = accept || addressSection->area31.contains(*bbox31);
-                accept = accept || addressSection->area31.intersects(*bbox31);
-                accept = accept || bbox31->contains(addressSection->area31);
-
-                if (!accept)
-                    continue;
-            }
+            if (!filter.matches(addressSection->area31))
+                continue;
 
             for (const auto& street : constOf(streets))
             {
-                if (addressSection != street->streetGroup->obfSection)
+                if (addressSection != street->obfStreetGroup()->obfSection())
                     continue;
 
-                QList< std::shared_ptr<const StreetIntersection> > intermediateResult;
                 OsmAnd::ObfAddressSectionReader::loadIntersectionsFromStreet(
                     obfReader,
                     street,
-                    resultOut ? &intermediateResult : nullptr,
-                    bbox31,
-                    visitor,
+                    filter,
                     queryController);
-
-                if (resultOut)
-                    resultOut->insert(street, intermediateResult);
             }
         }
     }

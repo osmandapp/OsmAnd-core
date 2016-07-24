@@ -26,7 +26,7 @@ namespace OsmAnd
 
     class GPUAPI
     {
-        Q_DISABLE_COPY_AND_MOVE(GPUAPI);
+        Q_DISABLE_COPY_AND_MOVE(GPUAPI)
     public:
         typedef const void* RefInGPU;
         typedef uint32_t TextureFormat;
@@ -42,7 +42,7 @@ namespace OsmAnd
 
         class ResourceInGPU
         {
-            Q_DISABLE_COPY_AND_MOVE(ResourceInGPU);
+            Q_DISABLE_COPY_AND_MOVE(ResourceInGPU)
         public:
             enum class Type
             {
@@ -69,7 +69,7 @@ namespace OsmAnd
 
         class MetaResourceInGPU : public ResourceInGPU
         {
-            Q_DISABLE_COPY_AND_MOVE(MetaResourceInGPU);
+            Q_DISABLE_COPY_AND_MOVE(MetaResourceInGPU)
         private:
         protected:
             MetaResourceInGPU(const Type type, GPUAPI* api);
@@ -79,7 +79,7 @@ namespace OsmAnd
 
         class TextureInGPU : public ResourceInGPU
         {
-            Q_DISABLE_COPY_AND_MOVE(TextureInGPU);
+            Q_DISABLE_COPY_AND_MOVE(TextureInGPU)
         private:
         protected:
         public:
@@ -104,7 +104,7 @@ namespace OsmAnd
 
         class ArrayBufferInGPU : public ResourceInGPU
         {
-            Q_DISABLE_COPY_AND_MOVE(ArrayBufferInGPU);
+            Q_DISABLE_COPY_AND_MOVE(ArrayBufferInGPU)
         private:
         protected:
         public:
@@ -116,7 +116,7 @@ namespace OsmAnd
 
         class ElementArrayBufferInGPU : public ResourceInGPU
         {
-            Q_DISABLE_COPY_AND_MOVE(ElementArrayBufferInGPU);
+            Q_DISABLE_COPY_AND_MOVE(ElementArrayBufferInGPU)
         private:
         protected:
         public:
@@ -173,7 +173,7 @@ namespace OsmAnd
         class AtlasTextureInGPU;
         class AtlasTexturesPool
         {
-            Q_DISABLE_COPY_AND_MOVE(AtlasTexturesPool);
+            Q_DISABLE_COPY_AND_MOVE(AtlasTexturesPool)
         public:
             typedef std::function< AtlasTextureInGPU*() > AtlasTextureAllocator;
             typedef std::tuple< std::weak_ptr<AtlasTextureInGPU>, unsigned int > FreedSlotsEntry;
@@ -202,7 +202,7 @@ namespace OsmAnd
 
         class AtlasTextureInGPU : public TextureInGPU
         {
-            Q_DISABLE_COPY_AND_MOVE(AtlasTextureInGPU);
+            Q_DISABLE_COPY_AND_MOVE(AtlasTextureInGPU)
         private:
         protected:
 #if OSMAND_DEBUG
@@ -233,7 +233,7 @@ namespace OsmAnd
 
         class SlotOnAtlasTextureInGPU : public ResourceInGPU
         {
-            Q_DISABLE_COPY_AND_MOVE(SlotOnAtlasTextureInGPU);
+            Q_DISABLE_COPY_AND_MOVE(SlotOnAtlasTextureInGPU)
         private:
         protected:
         public:
@@ -250,7 +250,7 @@ namespace OsmAnd
 
         class MeshInGPU : public MetaResourceInGPU
         {
-            Q_DISABLE_COPY_AND_MOVE(MeshInGPU);
+            Q_DISABLE_COPY_AND_MOVE(MeshInGPU)
         private:
         protected:
         public:

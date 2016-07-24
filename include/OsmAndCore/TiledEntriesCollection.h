@@ -34,14 +34,14 @@ namespace OsmAnd
     template<typename ENTRY>
     class TiledEntriesCollection
     {
-        Q_DISABLE_COPY_AND_MOVE(TiledEntriesCollection);
+        Q_DISABLE_COPY_AND_MOVE(TiledEntriesCollection)
 
     public:
         typedef TiledEntriesCollection<ENTRY> Collection;
 
         class Link : public std::enable_shared_from_this < Link >
         {
-            Q_DISABLE_COPY_AND_MOVE(Link);
+            Q_DISABLE_COPY_AND_MOVE(Link)
 
         private:
         protected:
@@ -264,7 +264,7 @@ namespace OsmAnd
     template<typename ENTRY>
     class TiledEntriesCollectionEntry
     {
-        Q_DISABLE_COPY_AND_MOVE(TiledEntriesCollectionEntry);
+        Q_DISABLE_COPY_AND_MOVE(TiledEntriesCollectionEntry)
 
     public:
         typedef TiledEntriesCollection<ENTRY> Collection;

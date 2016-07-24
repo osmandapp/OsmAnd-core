@@ -18,7 +18,7 @@ namespace OsmAnd
     {
         class OSMAND_CORE_API Dispatcher
         {
-            Q_DISABLE_COPY_AND_MOVE(Dispatcher);
+            Q_DISABLE_COPY_AND_MOVE(Dispatcher)
         public:
             typedef std::function<void()> Delegate;
         private:

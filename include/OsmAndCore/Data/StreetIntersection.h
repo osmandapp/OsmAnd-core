@@ -9,26 +9,28 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/Address.h>
+#include <OsmAndCore/Data/ObfStreet.h>
 
 namespace OsmAnd
 {
-    class Street;
+    class ObfStreet;
 
     class OSMAND_CORE_API StreetIntersection Q_DECL_FINAL : public Address
     {
-        Q_DISABLE_COPY_AND_MOVE(StreetIntersection);
+    public:
+        StreetIntersection(
+                std::shared_ptr<const Street> street,
+                QString nativeName = {},
+                QHash<QString, QString> localizedNames = {},
+                PointI position31 = {});
+
+        virtual QString toString() const;
+
+        std::shared_ptr<const Street> streetPtr() const;
+        Street street() const;
 
     private:
-    protected:
-    public:
-        StreetIntersection(const std::shared_ptr<const Street>& street);
-        virtual ~StreetIntersection();
-
-        const std::shared_ptr<const Street> street;
-
-        QString nativeName;
-        QHash<QString, QString> localizedNames;
-        PointI position31;
+        std::shared_ptr<const Street> _street;
     };
 }
 

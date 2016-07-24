@@ -1,19 +1,22 @@
+#include "Address.h"
 #include "StreetGroup.h"
 
 #include <QStringBuilder>
 
-OsmAnd::StreetGroup::StreetGroup(const std::shared_ptr<const ObfAddressSectionInfo>& obfSection_)
-    : Address(obfSection_, AddressType::StreetGroup)
-    , id(ObfObjectId::invalidId())
-    , dataOffset(0)
+OsmAnd::StreetGroup::StreetGroup(
+        OsmAnd::ObfAddressStreetGroupType type_,
+        OsmAnd::ObfAddressStreetGroupSubtype subtype_,
+        QString nativeName,
+        QHash<QString, QString> localizedNames,
+        OsmAnd::PointI position31)
+    : OsmAnd::Address(nativeName, localizedNames, position31)
+    , type(type_)
+    , subtype(subtype_)
 {
-}
 
-OsmAnd::StreetGroup::~StreetGroup()
-{
 }
 
 QString OsmAnd::StreetGroup::toString() const
 {
-    return QStringLiteral("city ") % nativeName;
+    return QStringLiteral("city ") % _nativeName;
 }

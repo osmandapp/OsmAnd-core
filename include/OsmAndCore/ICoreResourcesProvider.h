@@ -20,7 +20,7 @@ namespace OsmAnd
 {
 	class OSMAND_CORE_API ICoreResourcesProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(ICoreResourcesProvider);
+        Q_DISABLE_COPY_AND_MOVE(ICoreResourcesProvider)
 
     protected:
         ICoreResourcesProvider();

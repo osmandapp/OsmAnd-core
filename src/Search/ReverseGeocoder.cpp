@@ -2,6 +2,8 @@
 #include "ReverseGeocoder_P.h"
 
 #include "AddressesByNameSearch.h"
+#include "ObfStreetGroup.h"
+#include "ObfStreet.h"
 #include "Utilities.h"
 
 OsmAnd::ReverseGeocoder::ReverseGeocoder(
@@ -65,9 +67,9 @@ QString OsmAnd::ReverseGeocoder::ResultEntry::toString() const
 {
     return QString() %
             (building ?              building->toString() : QString()) %
-            (street ?                QStringLiteral(" ") % street->toString() : QString()) %
+            (street ?                QStringLiteral(" ") % street->street().toString() : QString()) %
             (!streetName.isEmpty() ? QStringLiteral(" str. ") % streetName : QString()) %
-            (streetGroup ?           QStringLiteral(" ") % streetGroup->toString() : QString()) %
+            (streetGroup ?           QStringLiteral(" ") % streetGroup->streetGroup().toString() : QString()) %
             (!isnan(getDistance()) ? QStringLiteral(" dist=") % QString::number(getDistance()) : QString());
 }
 
@@ -78,4 +80,3 @@ OsmAnd::ReverseGeocoder::Criteria::Criteria()
 OsmAnd::ReverseGeocoder::Criteria::~Criteria()
 {
 }
-

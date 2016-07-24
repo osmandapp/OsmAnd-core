@@ -21,7 +21,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API IMapTiledSymbolsProvider : public IMapTiledDataProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(IMapTiledSymbolsProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapTiledSymbolsProvider)
 
     public:
         //NOTE: 'SWIGTYPE_p_std__shared_ptrT_OsmAnd__MapSymbolsGroup_const_t' is produced
@@ -36,7 +36,7 @@ namespace OsmAnd
 
         class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data);
+            Q_DISABLE_COPY_AND_MOVE(Data)
         private:
         protected:
         public:

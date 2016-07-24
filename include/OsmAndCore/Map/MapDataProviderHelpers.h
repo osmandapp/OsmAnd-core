@@ -12,7 +12,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API MapDataProviderHelpers Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(MapDataProviderHelpers);
+        Q_DISABLE_COPY_AND_MOVE(MapDataProviderHelpers)
 
         MapDataProviderHelpers();
         ~MapDataProviderHelpers();

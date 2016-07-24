@@ -94,6 +94,12 @@ namespace OsmAnd
             return *this;
         }
 
+//        template<typename RandomAccessIterator>
+//        BitmaskT& set(RandomAcccessIterator begin, RandomAcccessIterator end)
+//        {
+//            std::for_each(begin, end, [](BitmaskT& type) { this->set(type); });
+//        }
+
 #if !defined(SWIG)
         inline BitmaskT operator|(const FLAGS_ENUM flag) const
         {
@@ -111,6 +117,15 @@ namespace OsmAnd
             assert(static_cast<unsigned int>(flag) <= sizeof(unsigned int) * 8);
 
             _storage &= ~(STORAGE(1) << static_cast<unsigned int>(flag));
+
+            return *this;
+        }
+
+        inline BitmaskT& unset(const BitmaskT& otherMask)
+        {
+            assert(static_cast<unsigned int>(otherMask._storage) <= sizeof(unsigned int) * 8);
+
+            _storage &= ~(STORAGE(1) << static_cast<unsigned int>(otherMask._storage));
 
             return *this;
         }

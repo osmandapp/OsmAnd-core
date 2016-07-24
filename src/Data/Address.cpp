@@ -1,16 +1,27 @@
 #include "Address.h"
 
-OsmAnd::Address::Address(const std::shared_ptr<const ObfAddressSectionInfo>& obfSection_, const AddressType addressType_)
-    : obfSection(obfSection_)
-    , addressType(addressType_)
+OsmAnd::Address::Address(
+        QString nativeName,
+        QHash<QString, QString> localizedNames,
+        OsmAnd::PointI position31)
+    : _nativeName(nativeName)
+    , _localizedNames(localizedNames)
+    , _position31(position31)
 {
+
 }
 
-OsmAnd::Address::~Address()
+OsmAnd::PointI OsmAnd::Address::position31() const
 {
+    return _position31;
 }
 
-QString OsmAnd::Address::toString() const
+QHash<QString, QString> OsmAnd::Address::localizedNames() const
 {
-    return ADDRESS_TYPE_NAMES[addressType];
+    return _localizedNames;
+}
+
+QString OsmAnd::Address::nativeName() const
+{
+    return _nativeName;
 }

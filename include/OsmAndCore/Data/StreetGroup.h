@@ -15,26 +15,19 @@
 
 namespace OsmAnd
 {
-    class ObfAddressSectionInfo;
-
     class OSMAND_CORE_API StreetGroup Q_DECL_FINAL : public Address
     {
-        Q_DISABLE_COPY_AND_MOVE(StreetGroup);
-
-    private:
-    protected:
     public:
-        StreetGroup(const std::shared_ptr<const ObfAddressSectionInfo>& obfSection);
-        virtual ~StreetGroup();
+        StreetGroup(
+                ObfAddressStreetGroupType type,
+                ObfAddressStreetGroupSubtype subtype,
+                QString nativeName = {},
+                QHash<QString, QString> localizedNames = {},
+                PointI position31 = {});
         virtual QString toString() const;
 
-        ObfObjectId id;
-        ObfAddressStreetGroupType type;
-        ObfAddressStreetGroupSubtype subtype;
-        QString nativeName;
-        QHash<QString, QString> localizedNames;
-        PointI position31;
-        uint32_t dataOffset;
+        const ObfAddressStreetGroupType type;
+        const ObfAddressStreetGroupSubtype subtype;
     };
 }
 

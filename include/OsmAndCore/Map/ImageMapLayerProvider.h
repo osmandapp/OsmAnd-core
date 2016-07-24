@@ -18,12 +18,12 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API ImageMapLayerProvider : public IRasterMapLayerProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(ImageMapLayerProvider);
+        Q_DISABLE_COPY_AND_MOVE(ImageMapLayerProvider)
 
     public:
         class OSMAND_CORE_API AsyncImage Q_DECL_FINAL
         {
-            Q_DISABLE_COPY_AND_MOVE(AsyncImage);
+            Q_DISABLE_COPY_AND_MOVE(AsyncImage)
 
         private:
         protected:

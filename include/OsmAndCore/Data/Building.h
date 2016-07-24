@@ -15,44 +15,50 @@
 
 namespace OsmAnd
 {
-    class Street;
-    class StreetGroup;
+    class ObfStreet;
+    class ObfStreetGroup;
 
     class OSMAND_CORE_API Building Q_DECL_FINAL: public Address
     {
-        Q_DISABLE_COPY_AND_MOVE(Building);
-
     public:
-        enum class Interpolation : int32_t
+        class Interpolation Q_DECL_FINAL: public Address
         {
-            Disabled = 0,
-            All = -1,
-            Even = -2,
-            Odd = -3,
-            Alphabetic = -4
+        public:
+            enum class Type : int32_t
+            {
+                Disabled = 0,
+                All = -1,
+                Even = -2,
+                Odd = -3,
+                Alphabetic = -4
+            };
+
+            Interpolation(
+                    Type type = Type::Disabled,
+                    QString nativeName = {},
+                    QHash<QString, QString> localizedNames = {},
+                    PointI position31 = {});
+
+            virtual QString toString() const;
+
+            const Type type;
         };
 
-    private:
-    protected:
-    public:
-        Building(const std::shared_ptr<const Street>& street);
-        Building(const std::shared_ptr<const StreetGroup>& streetGroup);
-        virtual ~Building();
+        Building(
+                QString nativeName = {},
+                QHash<QString, QString> localizedNames = {},
+                PointI position31 = {},
+                Interpolation interpolation = {},
+                QString postcode = {});
+
         virtual QString toString() const;
 
-        const std::shared_ptr<const Street> street;
-        const std::shared_ptr<const StreetGroup> streetGroup;
+        QString postcode() const;
+        Interpolation interpolation() const;
 
-        ObfObjectId id;
-        QString nativeName;
-        QHash<QString, QString> localizedNames;
-        QString postcode;
-        PointI position31;
-
-        Interpolation interpolation;
-        QString interpolationNativeName;
-        QHash<QString, QString> interpolationLocalizedNames;
-        PointI interpolationPosition31;
+    private:
+        Interpolation _interpolation;
+        QString _postcode;
     };
 }
 

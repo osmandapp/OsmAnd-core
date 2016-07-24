@@ -31,7 +31,7 @@ namespace OsmAnd
 
     class MapPresentationEnvironment_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(MapPresentationEnvironment_P);
+        Q_DISABLE_COPY_AND_MOVE(MapPresentationEnvironment_P)
 
     public:
         typedef MapPresentationEnvironment::LanguagePreference LanguagePreference;

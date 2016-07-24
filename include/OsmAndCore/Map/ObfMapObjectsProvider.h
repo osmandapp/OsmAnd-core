@@ -22,7 +22,7 @@ namespace OsmAnd
     class ObfMapObjectsProvider_P;
     class OSMAND_CORE_API ObfMapObjectsProvider Q_DECL_FINAL : public IMapObjectsProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsProvider);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsProvider)
     public:
         enum class Mode
         {

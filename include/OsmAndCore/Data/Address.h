@@ -16,8 +16,6 @@
 
 namespace OsmAnd
 {
-    class ObfAddressSectionInfo;
-
     enum class AddressType
     {
         StreetGroup,
@@ -33,19 +31,38 @@ namespace OsmAnd
             {AddressType::StreetIntersection, "Street intersection"},
     };
 
+    inline Bitmask<AddressType> fullAddressTypeMask()
+    {
+        Bitmask<AddressType> result;
+        for (auto type : ADDRESS_TYPE_NAMES.keys())
+            result.set(type);
+        return result;
+//        return Bitmask<AddressType>().set(ADDRESS_TYPE_NAMES.keys().begin());
+//        return Bitmask<AddressType>()
+//                .set(AddressType::StreetGroup)
+//                .set(AddressType::Street)
+//                .set(AddressType::Building)
+//                .set(AddressType::StreetIntersection);
+    }
+
     class OSMAND_CORE_API Address
     {
-        Q_DISABLE_COPY_AND_MOVE(Address);
-
-    private:
-    protected:
-        Address(const std::shared_ptr<const ObfAddressSectionInfo>& obfSection, const AddressType addressType);
     public:
-        virtual ~Address();
-        virtual QString toString() const;
+        virtual QString toString() const = 0;
 
-        const std::shared_ptr<const ObfAddressSectionInfo> obfSection;
-        const AddressType addressType;
+        QString nativeName() const;
+        QHash<QString, QString> localizedNames() const;
+        PointI position31() const;
+
+    protected:
+        Address(
+                QString nativeName,
+                QHash<QString, QString> localizedNames,
+                PointI position31);
+
+        QString _nativeName;
+        QHash<QString, QString> _localizedNames;
+        PointI _position31;
     };
 }
 

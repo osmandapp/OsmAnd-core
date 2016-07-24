@@ -20,7 +20,7 @@ namespace OsmAnd
 
     class GeoInfoPresenter_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(GeoInfoPresenter_P);
+        Q_DISABLE_COPY_AND_MOVE(GeoInfoPresenter_P)
 
     public:
         typedef GeoInfoPresenter::MapObject MapObject;

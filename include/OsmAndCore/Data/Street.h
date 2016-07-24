@@ -19,24 +19,10 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Street Q_DECL_FINAL : public Address
     {
-        Q_DISABLE_COPY_AND_MOVE(Street);
-
-    private:
-    protected:
     public:
-        Street(const std::shared_ptr<const StreetGroup>& streetGroup);
-        virtual ~Street();
+        Street(QString nativeName, QHash<QString, QString> localizedNames, PointI position31);
+
         virtual QString toString() const;
-
-        ObfObjectId id;
-        QString nativeName;
-        QHash<QString, QString> localizedNames;
-        PointI position31;
-        uint32_t offset;
-        uint32_t firstBuildingInnerOffset;
-        uint32_t firstIntersectionInnerOffset;
-
-        const std::shared_ptr<const StreetGroup> streetGroup;
     };
 }
 

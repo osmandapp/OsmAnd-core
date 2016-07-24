@@ -25,7 +25,7 @@ namespace OsmAnd
     class FavoriteLocationsCollection;
     class FavoriteLocationsCollection_P
     {
-        Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsCollection_P);
+        Q_DISABLE_COPY_AND_MOVE(FavoriteLocationsCollection_P)
 
     private:
     protected:

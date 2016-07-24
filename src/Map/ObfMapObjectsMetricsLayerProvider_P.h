@@ -21,7 +21,7 @@ namespace OsmAnd
 
     class ObfMapObjectsMetricsLayerProvider_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsMetricsLayerProvider_P);
+        Q_DISABLE_COPY_AND_MOVE(ObfMapObjectsMetricsLayerProvider_P)
     private:
     protected:
         ObfMapObjectsMetricsLayerProvider_P(ObfMapObjectsMetricsLayerProvider* const owner);

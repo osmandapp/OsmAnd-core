@@ -13,11 +13,11 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API IMapElevationDataProvider : public IMapTiledDataProvider
     {
-        Q_DISABLE_COPY_AND_MOVE(IMapElevationDataProvider);
+        Q_DISABLE_COPY_AND_MOVE(IMapElevationDataProvider)
     public:
         class OSMAND_CORE_API Data : public IMapTiledDataProvider::Data
         {
-            Q_DISABLE_COPY_AND_MOVE(Data);
+            Q_DISABLE_COPY_AND_MOVE(Data)
         private:
         protected:
         public:

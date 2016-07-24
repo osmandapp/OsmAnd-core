@@ -11,10 +11,10 @@
 #include <OsmAndCore/restore_internal_warnings.h>
 
 #include <OsmAndCore.h>
-#include <OsmAndCore/PointsAndAreas.h>
-#include <OsmAndCore/Nullable.h>
-
+#include <OsmAndCore/Data/ObfAddressSectionReader.h>
 #include <OsmAndCore/IObfsCollection.h>
+#include <OsmAndCore/Nullable.h>
+#include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Search/BaseSearch.h>
 
 namespace OsmAnd
@@ -24,7 +24,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API AddressesByNameSearch Q_DECL_FINAL : public BaseSearch
     {
-        Q_DISABLE_COPY_AND_MOVE(AddressesByNameSearch);
+        Q_DISABLE_COPY_AND_MOVE(AddressesByNameSearch)
     public:
         struct OSMAND_CORE_API Criteria : public BaseSearch::Criteria
         {
@@ -63,6 +63,9 @@ namespace OsmAnd
         explicit AddressesByNameSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection);
         virtual ~AddressesByNameSearch();
 
+        virtual void performSearch(
+            const ObfAddressSectionReader::Filter& filter,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
         virtual void performSearch(
             const ISearch::Criteria& criteria,
             const NewResultEntryCallback newResultEntryCallback,

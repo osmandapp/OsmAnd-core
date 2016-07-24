@@ -23,7 +23,7 @@ namespace OsmAnd
 {
     class OSMAND_CORE_API GeoInfoDocument
     {
-        Q_DISABLE_COPY_AND_MOVE(GeoInfoDocument);
+        Q_DISABLE_COPY_AND_MOVE(GeoInfoDocument)
     public:
         struct OSMAND_CORE_API ExtraData
         {

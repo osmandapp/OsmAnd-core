@@ -1,24 +1,19 @@
+#include "Address.h"
 #include "Street.h"
-
 #include "StreetGroup.h"
 
 #include <QStringBuilder>
 
-OsmAnd::Street::Street(const std::shared_ptr<const StreetGroup>& streetGroup_)
-    : Address(streetGroup_->obfSection, AddressType::Street)
-    , streetGroup(streetGroup_)
-    , id(ObfObjectId::invalidId())
-    , offset(0)
-    , firstBuildingInnerOffset(0)
-    , firstIntersectionInnerOffset(0)
+OsmAnd::Street::Street(
+        QString nativeName,
+        QHash<QString, QString> localizedNames,
+        OsmAnd::PointI position31)
+    : Address(nativeName, localizedNames, position31)
 {
-}
 
-OsmAnd::Street::~Street()
-{
 }
 
 QString OsmAnd::Street::toString() const
 {
-    return QStringLiteral("str. ") % nativeName;
+    return QStringLiteral("str. ") % _nativeName;
 }

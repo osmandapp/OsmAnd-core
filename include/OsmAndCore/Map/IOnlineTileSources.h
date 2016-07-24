@@ -40,7 +40,7 @@ namespace OsmAnd
             float tileDensityFactor;
 
         private:
-            Q_DISABLE_COPY_AND_MOVE(Source);
+            Q_DISABLE_COPY_AND_MOVE(Source)
         };
 
     private:

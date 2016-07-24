@@ -42,7 +42,7 @@ namespace OsmAnd
 
     class OSMAND_CORE_API Road Q_DECL_FINAL : public ObfMapObject
     {
-        Q_DISABLE_COPY_AND_MOVE(Road);
+        Q_DISABLE_COPY_AND_MOVE(Road)
     private:
     protected:
         Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section);

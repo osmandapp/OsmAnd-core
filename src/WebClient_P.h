@@ -24,7 +24,7 @@ namespace OsmAnd
     class WebClient;
     class WebClient_P Q_DECL_FINAL
     {
-        Q_DISABLE_COPY_AND_MOVE(WebClient_P);
+        Q_DISABLE_COPY_AND_MOVE(WebClient_P)
     public:
         typedef WebClient::RequestProgressCallbackSignature RequestProgressCallbackSignature;
         typedef WebClient::RequestResult RequestResult;
