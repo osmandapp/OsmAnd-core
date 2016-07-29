@@ -1,7 +1,7 @@
 #include <cstring>
 #include "CollatorStringMatcher.h"
 
-CollatorStringMatcher::CollatorStringMatcher()
+OsmAnd::CollatorStringMatcher::CollatorStringMatcher()
 {
     Locale locale = Locale::getDefault();
 
@@ -23,27 +23,27 @@ CollatorStringMatcher::CollatorStringMatcher()
     collator->setStrength(Collator::PRIMARY);
 }
 
-CollatorStringMatcher::CollatorStringMatcher(QString _part, StringMatcherMode _mode) : CollatorStringMatcher()
+OsmAnd::CollatorStringMatcher::CollatorStringMatcher(QString _part, OsmAnd::CollatorStringMatcher::StringMatcherMode _mode) : CollatorStringMatcher()
 {
     part = _part;
     mode = _mode;
 }
 
-CollatorStringMatcher::~CollatorStringMatcher()
+OsmAnd::CollatorStringMatcher::~CollatorStringMatcher()
 {
 }
 
-Collator* CollatorStringMatcher::getCollator()
+Collator* OsmAnd::CollatorStringMatcher::getCollator()
 {
     return collator;
 }
 
-bool CollatorStringMatcher::matches(QString name)
+bool OsmAnd::CollatorStringMatcher::matches(QString name)
 {
     return CollatorStringMatcher::cmatches(collator, part, name, mode);
 }
 
-UnicodeString CollatorStringMatcher::qStrToUniStr(QString inStr)
+UnicodeString OsmAnd::CollatorStringMatcher::qStrToUniStr(QString inStr)
 {
     const ushort *utf16 = inStr.utf16();
     int length = inStr.length();
@@ -53,23 +53,23 @@ UnicodeString CollatorStringMatcher::qStrToUniStr(QString inStr)
     return returnString;
 }
 
-bool CollatorStringMatcher::cmatches(Collator *_collator, QString _base, QString _part, CollatorStringMatcher::StringMatcherMode _mode){
+bool OsmAnd::CollatorStringMatcher::cmatches(Collator *_collator, QString _base, QString _part, OsmAnd::CollatorStringMatcher::StringMatcherMode _mode){
     switch (_mode) {
-        case CollatorStringMatcher::CHECK_CONTAINS:
+        case OsmAnd::CollatorStringMatcher::CHECK_CONTAINS:
             return CollatorStringMatcher::ccontains(_collator, _base, _part);
-        case CollatorStringMatcher::CHECK_EQUALS_FROM_SPACE:
+        case OsmAnd::CollatorStringMatcher::CHECK_EQUALS_FROM_SPACE:
             return CollatorStringMatcher::cstartsWith(_collator, _base, _part, true, true, true);
-        case CollatorStringMatcher::CHECK_STARTS_FROM_SPACE:
+        case OsmAnd::CollatorStringMatcher::CHECK_STARTS_FROM_SPACE:
             return CollatorStringMatcher::cstartsWith(_collator, _base, _part, true, true, false);
-        case CollatorStringMatcher::CHECK_STARTS_FROM_SPACE_NOT_BEGINNING:
+        case OsmAnd::CollatorStringMatcher::CHECK_STARTS_FROM_SPACE_NOT_BEGINNING:
             return CollatorStringMatcher::cstartsWith(_collator, _base, _part, false, true, false);
-        case CollatorStringMatcher::CHECK_ONLY_STARTS_WITH:
+        case OsmAnd::CollatorStringMatcher::CHECK_ONLY_STARTS_WITH:
             return CollatorStringMatcher::cstartsWith(_collator, _base, _part, true, false, false);
     }
     return false;
 }
 
-int CollatorStringMatcher::cindexOf(Collator *_collator, int _start, QString _part, QString _base)
+int OsmAnd::CollatorStringMatcher::cindexOf(Collator *_collator, int _start, QString _part, QString _base)
 {
     UnicodeString part = qStrToUniStr(_part);
     UnicodeString base = qStrToUniStr(_base);
@@ -87,7 +87,7 @@ int CollatorStringMatcher::cindexOf(Collator *_collator, int _start, QString _pa
 
 }
 
-bool CollatorStringMatcher::ccontains(Collator *_collator, QString _base, QString _part)
+bool OsmAnd::CollatorStringMatcher::ccontains(Collator *_collator, QString _base, QString _part)
 {
     int pos = 0;
 
@@ -109,7 +109,7 @@ bool CollatorStringMatcher::ccontains(Collator *_collator, QString _base, QStrin
     return true;
 }
 
-bool CollatorStringMatcher::cstartsWith(Collator *_collator, QString _searchInParam, QString _theStart,
+bool OsmAnd::CollatorStringMatcher::cstartsWith(Collator *_collator, QString _searchInParam, QString _theStart,
                                         bool checkBeginning, bool checkSpaces, bool equals)
 {
     UnicodeString searchIn = qStrToUniStr(_searchInParam).toLower(Locale::getDefault());
@@ -168,7 +168,7 @@ bool CollatorStringMatcher::cstartsWith(Collator *_collator, QString _searchInPa
 }
 
 
-bool CollatorStringMatcher::isSpace(UChar c)
+bool OsmAnd::CollatorStringMatcher::isSpace(UChar c)
 {
     return !u_isalnum(c);
 }
