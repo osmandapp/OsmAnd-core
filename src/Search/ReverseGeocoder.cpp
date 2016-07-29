@@ -53,7 +53,7 @@ OsmAnd::Nullable<OsmAnd::PointI> OsmAnd::ReverseGeocoder::ResultEntry::searchPoi
 
 double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
 {
-    return isnan(dist) ? Utilities::distance(connectionPoint, searchPoint) : dist;
+    return std::isnan(dist) ? Utilities::distance(connectionPoint, searchPoint) : dist;
 }
 
 void OsmAnd::ReverseGeocoder::ResultEntry::setDistance(double dist)
@@ -68,7 +68,7 @@ QString OsmAnd::ReverseGeocoder::ResultEntry::toString() const
             (street ?                QStringLiteral(" ") % street->toString() : QString()) %
             (!streetName.isEmpty() ? QStringLiteral(" str. ") % streetName : QString()) %
             (streetGroup ?           QStringLiteral(" ") % streetGroup->toString() : QString()) %
-            (!isnan(getDistance()) ? QStringLiteral(" dist=") % QString::number(getDistance()) : QString());
+            (!std::isnan(getDistance()) ? QStringLiteral(" dist=") % QString::number(getDistance()) : QString());
 }
 
 OsmAnd::ReverseGeocoder::Criteria::Criteria()
