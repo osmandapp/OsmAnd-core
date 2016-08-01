@@ -391,6 +391,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_generateRende
 		bitmapData = malloc(bitmapDataSize);
 
 		stream->copyTo(bitmapData);
+		delete stream;
 		delete enc;
 	}
 	bitmapBuffer = ienv->NewDirectByteBuffer(bitmapData, bitmapDataSize);
