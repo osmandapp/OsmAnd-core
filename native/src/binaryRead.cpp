@@ -860,6 +860,8 @@ bool readMapDataBlocks(CodedInputStream* input, SearchQuery* req, MapTreeBounds*
 				mapObject->id += baseId;
 				if(req->publish(mapObject)) {
 					results.push_back(mapObject);
+				} else {
+					delete mapObject;
 				}
 			}
 			input->Skip(input->BytesUntilLimit());
