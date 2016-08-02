@@ -33,8 +33,7 @@ OsmAnd::CollatorStringMatcher::~CollatorStringMatcher()
 {
 }
 
-Collator* OsmAnd::CollatorStringMatcher::getCollator()
-{
+Collator *OsmAnd::CollatorStringMatcher::getCollator() const {
     return collator;
 }
 
@@ -53,7 +52,7 @@ UnicodeString OsmAnd::CollatorStringMatcher::qStrToUniStr(QString inStr)
     return returnString;
 }
 
-bool OsmAnd::CollatorStringMatcher::cmatches(Collator *_collator, QString _base, QString _part, OsmAnd::CollatorStringMatcher::StringMatcherMode _mode){
+bool OsmAnd::CollatorStringMatcher::cmatches(const Collator *_collator, QString _base, QString _part, OsmAnd::CollatorStringMatcher::StringMatcherMode _mode){
     switch (_mode) {
         case OsmAnd::CollatorStringMatcher::CHECK_CONTAINS:
             return CollatorStringMatcher::ccontains(_collator, _base, _part);
@@ -69,7 +68,7 @@ bool OsmAnd::CollatorStringMatcher::cmatches(Collator *_collator, QString _base,
     return false;
 }
 
-int OsmAnd::CollatorStringMatcher::cindexOf(Collator *_collator, int _start, QString _part, QString _base)
+int OsmAnd::CollatorStringMatcher::cindexOf(const Collator *_collator, int _start, QString _part, QString _base)
 {
     UnicodeString part = qStrToUniStr(_part);
     UnicodeString base = qStrToUniStr(_base);
@@ -87,7 +86,7 @@ int OsmAnd::CollatorStringMatcher::cindexOf(Collator *_collator, int _start, QSt
 
 }
 
-bool OsmAnd::CollatorStringMatcher::ccontains(Collator *_collator, QString _base, QString _part)
+bool OsmAnd::CollatorStringMatcher::ccontains(const Collator *_collator, QString _base, QString _part)
 {
     int pos = 0;
 
@@ -109,7 +108,7 @@ bool OsmAnd::CollatorStringMatcher::ccontains(Collator *_collator, QString _base
     return true;
 }
 
-bool OsmAnd::CollatorStringMatcher::cstartsWith(Collator *_collator, QString _searchInParam, QString _theStart,
+bool OsmAnd::CollatorStringMatcher::cstartsWith(const Collator *_collator, QString _searchInParam, QString _theStart,
                                         bool checkBeginning, bool checkSpaces, bool equals)
 {
     UnicodeString searchIn = qStrToUniStr(_searchInParam).toLower(Locale::getDefault());

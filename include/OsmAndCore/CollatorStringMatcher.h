@@ -1,5 +1,5 @@
-#ifndef UNTITLED_COLLATORSTRINGMATCHER_H
-#define UNTITLED_COLLATORSTRINGMATCHER_H
+#ifndef _OSMAND_CORE__COLLATORSTRINGMATCHER_H
+#define _OSMAND_CORE__COLLATORSTRINGMATCHER_H
 
 
 #include <OsmAndCore.h>
@@ -29,7 +29,7 @@ namespace OsmAnd
         QString part;
         StringMatcherMode mode;
 
-        static int cindexOf(Collator *_collator, int _start, QString _part, QString _base);
+        static int cindexOf(const Collator *_collator, int _start, QString _part, QString _base);
         static bool isSpace(UChar c);
         static UnicodeString qStrToUniStr(QString inStr);
 
@@ -37,14 +37,14 @@ namespace OsmAnd
         CollatorStringMatcher();
         CollatorStringMatcher(QString _part, StringMatcherMode _mode);
         ~CollatorStringMatcher();
-        Collator *getCollator();
+        Collator * getCollator() const;
         bool matches(QString name);
-        static bool cmatches(Collator *_collator, QString _base, QString _part, StringMatcherMode _mode);
-        static bool ccontains(Collator *_collator, QString _base, QString _part);
-        static bool cstartsWith(Collator *_collator, QString _searchInParam, QString _theStart,
+        static bool cmatches(const Collator *_collator, QString _base, QString _part, StringMatcherMode _mode);
+        static bool ccontains(const Collator *_collator, QString _base, QString _part);
+        static bool cstartsWith(const Collator *_collator, QString _searchInParam, QString _theStart,
                                 bool checkBeginning, bool checkSpaces, bool equals);
     };
 }
 
 
-#endif //UNTITLED_COLLATORSTRINGMATCHER_H
+#endif //_OSMAND_CORE__COLLATORSTRINGMATCHER_H

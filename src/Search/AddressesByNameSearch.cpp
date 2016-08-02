@@ -37,14 +37,16 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                 case AddressType::StreetGroup:
                 {
                     const ObfAddressSectionReader::StreetVisitorFunction visitorFunction =
-                    [newResultEntryCallback, criteria_, criteria]
+                    [this, newResultEntryCallback, criteria_, criteria]
                     (const std::shared_ptr<const OsmAnd::Street>& street) -> bool
                     {
                         bool accept = criteria.name.isEmpty();
-                        accept = accept || street->nativeName.contains(criteria.name, Qt::CaseInsensitive);
+//                        accept = accept || street->nativeName.contains(criteria.name, Qt::CaseInsensitive);
+                        accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), street->nativeName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
                         for (const auto& localizedName : constOf(street->localizedNames))
                         {
-                            accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
+//                            accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
+                            accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), localizedName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
                             if (accept)
                                 break;
                         }
@@ -76,20 +78,23 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                 case AddressType::Street:
                 {
                     const ObfAddressSectionReader::BuildingVisitorFunction visitorFunction =
-                    [newResultEntryCallback, criteria_, criteria]
+                    [this, newResultEntryCallback, criteria_, criteria]
                     (const std::shared_ptr<const OsmAnd::Building>& building) -> bool
                     {
                         bool accept = true;
                         if (!criteria.postcode.isEmpty())
                         {
-                            accept = criteria.postcode.compare(building->postcode, Qt::CaseInsensitive) == 0;
+//                            accept = criteria.postcode.compare(building->postcode, Qt::CaseInsensitive) == 0;
+                            accept = OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), building->postcode, criteria.postcode, OsmAnd::CollatorStringMatcher::CHECK_EQUALS_FROM_SPACE);
                         }
                         else
                         {
-                            accept = criteria.name.isEmpty() || building->nativeName.contains(criteria.name, Qt::CaseInsensitive);
+//                            accept = criteria.name.isEmpty() || building->nativeName.contains(criteria.name, Qt::CaseInsensitive);
+                            accept = criteria.name.isEmpty() || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), building->nativeName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
                             for (const auto& localizedName : constOf(building->localizedNames))
                             {
-                                accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
+//                                accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
+                                accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), localizedName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
                                 if (accept)
                                     break;
                             }
@@ -119,14 +124,16 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                     
                     
                     const ObfAddressSectionReader::IntersectionVisitorFunction intersectionVisitorFunction =
-                    [newResultEntryCallback, criteria_, criteria]
+                    [this, newResultEntryCallback, criteria_, criteria]
                     (const std::shared_ptr<const OsmAnd::StreetIntersection>& intersection) -> bool
                     {
                         bool accept = criteria.name.isEmpty();
-                        accept = accept || intersection->nativeName.contains(criteria.name, Qt::CaseInsensitive);
+//                        accept = accept || intersection->nativeName.contains(criteria.name, Qt::CaseInsensitive);
+                        accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), intersection->nativeName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
                         for (const auto& localizedName : constOf(intersection->localizedNames))
                         {
-                            accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
+//                            accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
+                            accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), localizedName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
                             if (accept)
                                 break;
                         }
