@@ -16,6 +16,7 @@
 
 #include <OsmAndCore/IObfsCollection.h>
 #include <OsmAndCore/Search/BaseSearch.h>
+#include <OsmAndCore/CollatorStringMatcher.h>
 
 namespace OsmAnd
 {
@@ -58,6 +59,7 @@ namespace OsmAnd
         };
 
     private:
+        OsmAnd::CollatorStringMatcher stringMatcher;
     protected:
     public:
         explicit AddressesByNameSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection);
