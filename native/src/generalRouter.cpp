@@ -6,7 +6,7 @@
 #include <cmath>
 
 const int RouteAttributeExpression::LESS_EXPRESSION = 1;
-const int RouteAttributeExpression::GREAT_EXPRESSION = 1;
+const int RouteAttributeExpression::GREAT_EXPRESSION = 2;
 
 
 float parseFloat(MAP_STR_STR attributes, string key, float def) {

@@ -34,11 +34,13 @@ static uint zoomOnlyForBasemaps  = 11;
 std::vector<BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
 
+#ifdef MALLOC_H 
 #include <malloc.h>
 void print_dump(const char* msg1, const char* msg2) {
 	struct mallinfo info = mallinfo();
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "MEMORY %s %s heap - %d  alloc - %d free - %d", msg1, msg2, info.usmblks,info.uordblks, info.fordblks);
 }
+#endif
  
 
 void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  RoutingIndex* routingIndex, RouteSubregion* sub);
