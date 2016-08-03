@@ -42,11 +42,13 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                     {
                         bool accept = criteria.name.isEmpty();
 //                        accept = accept || street->nativeName.contains(criteria.name, Qt::CaseInsensitive);
-                        accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), street->nativeName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
+                        accept = accept || stringMatcher.cmatches(street->nativeName, criteria.name,
+                                                                  CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
                         for (const auto& localizedName : constOf(street->localizedNames))
                         {
 //                            accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
-                            accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), localizedName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
+                            accept = accept || stringMatcher.cmatches(localizedName, criteria.name,
+                                                                      CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
                             if (accept)
                                 break;
                         }
@@ -85,16 +87,21 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                         if (!criteria.postcode.isEmpty())
                         {
 //                            accept = criteria.postcode.compare(building->postcode, Qt::CaseInsensitive) == 0;
-                            accept = OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), building->postcode, criteria.postcode, OsmAnd::CollatorStringMatcher::CHECK_EQUALS_FROM_SPACE);
+                            accept = stringMatcher.cmatches(building->postcode, criteria.postcode,
+                                                            CollatorStringMatcher::StringMatcherMode::CHECK_EQUALS_FROM_SPACE);
                         }
                         else
                         {
 //                            accept = criteria.name.isEmpty() || building->nativeName.contains(criteria.name, Qt::CaseInsensitive);
-                            accept = criteria.name.isEmpty() || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), building->nativeName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
+                            accept = criteria.name.isEmpty() || stringMatcher.cmatches(building->nativeName,
+                                                                                       criteria.name,
+                                                                                       CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
                             for (const auto& localizedName : constOf(building->localizedNames))
                             {
 //                                accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
-                                accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), localizedName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
+                                accept = accept || stringMatcher.cmatches(localizedName,
+                                                                          criteria.name,
+                                                                          CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
                                 if (accept)
                                     break;
                             }
@@ -129,11 +136,13 @@ void OsmAnd::AddressesByNameSearch::performSearch(
                     {
                         bool accept = criteria.name.isEmpty();
 //                        accept = accept || intersection->nativeName.contains(criteria.name, Qt::CaseInsensitive);
-                        accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), intersection->nativeName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
+                        accept = accept || stringMatcher.cmatches(intersection->nativeName, criteria.name,
+                                                                  CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
                         for (const auto& localizedName : constOf(intersection->localizedNames))
                         {
 //                            accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
-                            accept = accept || OsmAnd::CollatorStringMatcher::cmatches(stringMatcher.getCollator(), localizedName, criteria.name, OsmAnd::CollatorStringMatcher::CHECK_CONTAINS);
+                            accept = accept || stringMatcher.cmatches(localizedName, criteria.name,
+                                                                      CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
                             if (accept)
                                 break;
                         }

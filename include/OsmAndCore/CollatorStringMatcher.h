@@ -1,22 +1,21 @@
-#ifndef _OSMAND_CORE__COLLATORSTRINGMATCHER_H
-#define _OSMAND_CORE__COLLATORSTRINGMATCHER_H
-
+#ifndef _OSMAND_CORE_COLLATORSTRINGMATCHER_H
+#define _OSMAND_CORE_COLLATORSTRINGMATCHER_H
 
 #include <OsmAndCore.h>
 
-#include <unistd.h>
-#include "unicode/unistr.h"
-#include "unicode/uversion.h"
-#include "unicode/coll.h"
-#include "QtCore/QString"
-
+#include <QString>
+#include <OsmAndCore/PrivateImplementation.h>
 
 namespace OsmAnd
 {
+    class CollatorStringMatcher_P;
+
     class OSMAND_CORE_API CollatorStringMatcher
     {
+        Q_DISABLE_COPY_AND_MOVE(CollatorStringMatcher);
     public:
-        enum StringMatcherMode {
+        enum class StringMatcherMode
+        {
             CHECK_ONLY_STARTS_WITH,
             CHECK_STARTS_FROM_SPACE,
             CHECK_STARTS_FROM_SPACE_NOT_BEGINNING,
@@ -25,26 +24,18 @@ namespace OsmAnd
         };
 
     private:
-        Collator *collator;
-        QString part;
-        StringMatcherMode mode;
-
-        static int cindexOf(const Collator *_collator, int _start, QString _part, QString _base);
-        static bool isSpace(UChar c);
-        static UnicodeString qStrToUniStr(QString inStr);
+    protected:
+        PrivateImplementation<CollatorStringMatcher_P> _p;
 
     public:
         CollatorStringMatcher();
-        CollatorStringMatcher(QString _part, StringMatcherMode _mode);
-        ~CollatorStringMatcher();
-        Collator * getCollator() const;
-        bool matches(QString name);
-        static bool cmatches(const Collator *_collator, QString _base, QString _part, StringMatcherMode _mode);
-        static bool ccontains(const Collator *_collator, QString _base, QString _part);
-        static bool cstartsWith(const Collator *_collator, QString _searchInParam, QString _theStart,
-                                bool checkBeginning, bool checkSpaces, bool equals);
+        virtual ~CollatorStringMatcher();
+        bool cmatches(QString _base, QString _part, StringMatcherMode _mode) const;
+        bool ccontains(QString _base, QString _part) const;
+        bool cstartsWith(QString _searchInParam, QString _theStart,
+                         bool checkBeginning, bool checkSpaces, bool equals) const;
     };
 }
 
 
-#endif //_OSMAND_CORE__COLLATORSTRINGMATCHER_H
+#endif //_OSMAND_CORE_COLLATORSTRINGMATCHER_H
