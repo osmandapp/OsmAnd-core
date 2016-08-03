@@ -16,6 +16,9 @@
 #undef max
 #endif
 
+
+
+
 using namespace std;
 #define DO_(EXPRESSION) if (!(EXPRESSION)) return false
 using google::protobuf::io::CodedInputStream;
@@ -30,6 +33,13 @@ static uint detailedZoomStartForRouteSection = 13;
 static uint zoomOnlyForBasemaps  = 11;
 std::vector<BinaryMapFile* > openFiles;
 OsmAndStoredIndex* cache = NULL;
+
+#include <malloc.h>
+void print_dump(const char* msg1, const char* msg2) {
+	struct mallinfo info = mallinfo();
+	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "MEMORY %s %s heap - %d  alloc - %d free - %d", msg1, msg2, info.usmblks,info.uordblks, info.fordblks);
+}
+ 
 
 void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  RoutingIndex* routingIndex, RouteSubregion* sub);
 void searchRouteRegion(CodedInputStream** input, 
@@ -712,6 +722,7 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 
 	req->numberOfAcceptedObjects++;
 
+
 	MapDataObject* dataObject = new MapDataObject();
 	dataObject->points = req->cacheCoordinates;
 	dataObject->additionalTypes = additionalTypes;
@@ -721,8 +732,6 @@ MapDataObject* readMapDataObject(CodedInputStream* input, MapTreeBounds* tree, S
 	dataObject->stringIds = stringIds;
 	dataObject->namesOrder = namesOrder;
 	dataObject->polygonInnerCoordinates = innercoordinates;
-
-
 	return dataObject;
 
 }
@@ -855,11 +864,11 @@ bool readMapDataBlocks(CodedInputStream* input, SearchQuery* req, MapTreeBounds*
 			uint32_t length;
 			DO_((WireFormatLite::ReadPrimitive<uint32_t, WireFormatLite::TYPE_UINT32>(input, &length)));
 			int oldLimit = input->PushLimit(length);
-			MapDataObject* mapObject = readMapDataObject(input, tree, req, root, baseId);
+		 	MapDataObject* mapObject = readMapDataObject(input, tree, req, root, baseId);
 			if (mapObject != NULL) {
 				mapObject->id += baseId;
 				if(req->publish(mapObject)) {
-					results.push_back(mapObject);
+				  	results.push_back(mapObject);
 				} else {
 					delete mapObject;
 				}
@@ -1188,6 +1197,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 					}
 				}
 			}
+			q->publisher->clear();
 		}
 	}
 }
@@ -1286,7 +1296,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			deleteObjects(basemapResult);
 		}
 		q->publisher->clear();
-		q->publisher->publish(tempResult);
+		q->publisher->publishOnlyUnique(tempResult);
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 				"Search : tree - read( %d), accept( %d), objs - visit( %d), accept(%d), in result(%d) ",
 				q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees, q->numberOfVisitedObjects, q->numberOfAcceptedObjects,

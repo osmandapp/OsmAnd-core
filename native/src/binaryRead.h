@@ -370,10 +370,13 @@ struct ResultPublisher {
 		result.push_back(r);
 		return true;
 	}
-	bool publish(std::vector<MapDataObject*> r) {
+	bool publishOnlyUnique(std::vector<MapDataObject*> r) {
 		for(uint i = 0; i < r.size(); i++) {
-			publish(r[i]);
+			if(!publish(r[i])) {
+				delete r[i];
+			}
 		}
+		r.clear();
 		return true;
 	}
 
