@@ -151,9 +151,9 @@ RouteAttributeExpression::RouteAttributeExpression(vector<string>&vls, int type,
 	for (uint i = 0; i < vls.size(); i++) {
 		if(vls[i][0] != '$' && vls[i][0] != ':') {
 			double o = parseValue(vls[i], valueType);
-			if (o != DOUBLE_MISSING) {
-				cacheValues[i] = o;
-			}
+			cacheValues[i] = o;
+		} else {
+			cacheValues[i] = DOUBLE_MISSING;
 		}
 	}
 }
@@ -399,6 +399,7 @@ bool RouteAttributeExpression::matches(dynbitset& types, ParameterContext& param
 	if(f1 == DOUBLE_MISSING || f2 == DOUBLE_MISSING) {
 		return false;
 	}
+
 	if (expressionType == LESS_EXPRESSION) {
 		return f1 <= f2;
 	} else if (expressionType == GREAT_EXPRESSION) {
@@ -409,14 +410,13 @@ bool RouteAttributeExpression::matches(dynbitset& types, ParameterContext& param
 
 
 double RouteAttributeExpression::calculateExprValue(int id, dynbitset& types, ParameterContext& paramContext, GeneralRouter* router) {
-	string value = values[id];
-	// TODO initialize cacheValues correctly
+	
 	double cacheValue = cacheValues[id];
+	string value = values[id];
+	double o = DOUBLE_MISSING;
 	if(cacheValue != DOUBLE_MISSING) {
 		return cacheValue;
 	}
-	double o = DOUBLE_MISSING;
-
 	if (value.length() > 0 && value[0]=='$') {
 		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(value.substr(1));
 		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types)) {
@@ -435,6 +435,7 @@ double RouteAttributeExpression::calculateExprValue(int id, dynbitset& types, Pa
 			return DOUBLE_MISSING;		
 		}
 	}
+	cacheValues[id] = o;
 	return o;
 } 
 
