@@ -291,7 +291,7 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment> segment, int se
 	double ts = definePenaltyTransition(segment->getRoad());
 	double prevTs = definePenaltyTransition(prev->getRoad());
 	if(prevTs != ts) {
-		if(ts > prevTs) return (ts - prevTs);
+		return abs(ts - prevTs) / 2;
 	}
 	// if(prev->road->pointTypes.size() > (uint)prevSegmentEnd && prev->road->pointTypes[prevSegmentEnd].size() > 0){
 	// 	RoutingIndex* reg = prev->getRoad()->region;
