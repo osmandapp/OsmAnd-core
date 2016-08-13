@@ -351,5 +351,4 @@ private :
 };
 
 
-
 #endif /*_OSMAND_GENERAL_ROUTER_H*/

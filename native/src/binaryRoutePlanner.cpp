@@ -50,10 +50,7 @@ void printRoad(const char* prefix, SHARED_PTR<RouteSegment> segment) {
 
 // translate into meters
 static double squareRootDist(int x1, int y1, int x2, int y2) {
-	double dy = convert31YToMeters(y1, y2);
-	double dx = convert31XToMeters(x1, x2);
-	return sqrt(dx * dx + dy * dy);
-//		return measuredDist(x1, y1, x2, y2);
+	return squareRootDist31(x1, y1, x2, y2);
 }
 
 
