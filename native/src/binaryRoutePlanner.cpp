@@ -551,7 +551,9 @@ bool checkIfOppositieSegmentWasVisited(RoutingContext* ctx, bool reverseWaySearc
         SHARED_PTR<RouteSegment> from = !reverseWaySearch ? getParentDiffId(segment) : getParentDiffId(opposite);
         if (checkViaRestrictions(from, to)) {			
 			SHARED_PTR<RouteSegment> frs = SHARED_PTR<RouteSegment>(new RouteSegment(road, segmentPoint));
-			float distStartObstacles = segment->distanceFromStart + calculateTimeWithObstacles(ctx, road, segmentDist , obstaclesTime);
+			// obstacles already count on backward calculation (so don't include obstaclesTime)
+			float distStartObstacles = segment->distanceFromStart + 
+						calculateTimeWithObstacles(ctx, road, segmentDist, 0);
 			frs->parentRoute = segment;
 			frs->parentSegmentEnd = segmentPoint;
 			frs->reverseWaySearch = reverseWaySearch? 1 : -1;
