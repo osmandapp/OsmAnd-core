@@ -840,15 +840,11 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 	SkPaint* paint, vector<MapDataObjectPrimitive>& array, int objOrder) {
 	//double polygonLimit = 100;
 	//float orderToSwitch = 0;
-	double minPolygonSize = 1. / rc->polygonMinSizeToDisplay;
 	for (uint i = 0; i < array.size(); i++) {
 		rc->allObjects++;
 		MapDataObject* mObj = array[i].obj;
 		tag_value pair = mObj->types.at(array[i].typeInd);
 		if (objOrder == 0) {
-			if (array[i].order > minPolygonSize + ((int) array[i].order)) {
-				continue;
-			}
 			// polygon
 			drawPolygon(mObj, req, cv, paint, rc, pair);
 		} else if (objOrder == 1 || objOrder == 2) {
@@ -1050,6 +1046,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 		req->clearState();
 		const uint size = mapDataObjects.size();
 		float mult = 1. / getPowZoom(max(31 - (rc->getZoom() + 8), 0));
+		double minPolygonSize = rc->polygonMinSizeToDisplay;
 		uint i = 0;
 		for (; i < size; i++) {
 			MapDataObject* mobj = mapDataObjects[i];
@@ -1078,7 +1075,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 							MapDataObjectPrimitive pointObj = mapObj;
 							pointObj.objectType = 1;
 							double area = polygonArea(mobj, mult);
-							if(area > MAX_V) { 
+							if(area > MAX_V && area > minPolygonSize) { 
 								mapObj.order = mapObj.order + (1. / area);
 								polygonsArray.push_back(mapObj);
 								pointsArray.push_back(pointObj); // TODO fix duplicate text? verify if it is needed for icon
