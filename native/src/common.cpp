@@ -21,6 +21,7 @@ TextDrawInfo::TextDrawInfo(std::string itext)
 	: text(itext)
 	, drawOnPath(false)
 	, path(NULL)
+	, icon(NULL)
 	, pathRotate(0)
 	, intersectionMargin(0)
 	, intersectionSizeFactor(1)
@@ -34,7 +35,7 @@ TextDrawInfo::~TextDrawInfo()
 }
 
 IconDrawInfo::IconDrawInfo()
-	: bmp_1(NULL), bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL),
+	: bmp_1(NULL), bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL), visible(false),
 	  shield(NULL), intersectionMargin(0), intersectionSizeFactor(1)
 {
 
@@ -42,9 +43,8 @@ IconDrawInfo::IconDrawInfo()
 
 RenderingContext::~RenderingContext()
 {
-	std::vector<TextDrawInfo*>::iterator itTextToDraw;
-	for(itTextToDraw = textToDraw.begin(); itTextToDraw != textToDraw.end(); ++itTextToDraw)
-		delete (*itTextToDraw);
+	textToDraw.clear();
+	iconsToDraw.clear();
 }
 
 bool RenderingContext::interrupted()

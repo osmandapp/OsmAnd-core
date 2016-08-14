@@ -100,7 +100,7 @@ inline float absFloat(float a){
 	return a > 0 ? a : -a;
 }
 
-void fillTextProperties(RenderingContext* rc, TextDrawInfo* info, RenderingRuleSearchRequest* render, float cx, float cy) {
+void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo> info, RenderingRuleSearchRequest* render, float cx, float cy) {
 	info->centerX = cx;
 	// used only for draw on path where centerY doesn't play role
 	info->vOffset = getDensityValue(rc, render, render->props()->R_TEXT_DY) * rc->getTextScale() ;
@@ -161,7 +161,7 @@ int nextWord(uint8_t* s, uint* charRead) {
 
 }
 
-void drawWrappedText(RenderingContext* rc, SkCanvas* cv, TextDrawInfo* text, float textSize, SkPaint& paintText) {
+void drawWrappedText(RenderingContext* rc, SkCanvas* cv, SHARED_PTR<TextDrawInfo> text, float textSize, SkPaint& paintText) {
 	if(text->textWrap == 0) {
 		// set maximum for all text
 		text->textWrap = 15;
@@ -202,7 +202,7 @@ void drawWrappedText(RenderingContext* rc, SkCanvas* cv, TextDrawInfo* text, flo
 	}
 }
 
-bool calculatePathToRotate(RenderingContext* rc, TextDrawInfo* p) {
+bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p) {
 	if(p->path == NULL) {
 		return true;
 	}
@@ -397,7 +397,7 @@ void drawTestBox(SkCanvas* cv, SkRect* r, float rot, SkPaint* paintIcon, std::st
 }
 
 
-bool intersects(SkRect tRect, float tRot, TextDrawInfo* s)
+bool intersects(SkRect tRect, float tRot, SHARED_PTR<TextDrawInfo> s)
 {
 	float sRot = s->pathRotate;
 	if (absFloat(tRot) < M_PI / 15 && absFloat(sRot) < M_PI / 15) {
@@ -433,7 +433,7 @@ bool intersects(SkRect tRect, float tRot, TextDrawInfo* s)
 	return SkRect::Intersects(tRect, sRect);
 }
 
-bool intersects(TextDrawInfo* t, TextDrawInfo* s) {
+bool intersects(SHARED_PTR<TextDrawInfo> t, SHARED_PTR<TextDrawInfo> s) {
 	return intersects(t->bounds, t->pathRotate, s);
 }
 #if defined(WIN32)
@@ -443,9 +443,9 @@ inline float max(float a, float b) {
   return a > b ? a : b;
 }
 
-bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDrawInfo*>& boundIntersections, TextDrawInfo* text,
+bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_PTR<TextDrawInfo>>& boundIntersections, SHARED_PTR<TextDrawInfo> text,
 		SkPaint* paintText, SkPaint* paintIcon) {
-	vector<TextDrawInfo*> searchText;
+	vector<SHARED_PTR<TextDrawInfo>> searchText;
 	int textWrap = text->textWrap == 0 ? 25 : text->textWrap;
 	int text1Line = text->text.length() > textWrap  && !text->drawOnPath ? textWrap : text->text.length();
 	paintText->measureText(text->text.c_str(), text1Line, &text->bounds);
@@ -472,7 +472,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDraw
 //	drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text->text, NULL/*paintText*/);
 	boundIntersections.query_in_box(text->bounds, searchText);
 	for (uint32_t i = 0; i < searchText.size(); i++) {
-		TextDrawInfo* t = searchText.at(i);
+		SHARED_PTR<TextDrawInfo> t = searchText.at(i);
 		if (intersects(text, t)) {
 			return true;
 		}
@@ -483,7 +483,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDraw
 		boundIntersections.query_in_box(boundsSearch, searchText);
 //		drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
 		for (uint32_t i = 0; i < searchText.size(); i++) {
-			TextDrawInfo* t = searchText.at(i);
+			SHARED_PTR<TextDrawInfo> t = searchText.at(i);
 			if (t->minDistance > 0 && t->text == text->text && intersects(boundsSearch, text->pathRotate,  t)) {
 				return true;
 			}
@@ -496,14 +496,14 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<TextDraw
 }
 
 
-bool textOrder(TextDrawInfo* text1, TextDrawInfo* text2) {
+bool textOrder(SHARED_PTR<TextDrawInfo> text1, SHARED_PTR<TextDrawInfo> text2) {
 	if(text1->textOrder == text2->textOrder) {
 		return text1->secondOrder < text2->secondOrder;
 	}
 	return text1->textOrder < text2->textOrder;
 }
 
-void drawShield(TextDrawInfo* textDrawInfo, std::string res, SkPaint* paintIcon,  
+void drawShield(SHARED_PTR<TextDrawInfo> textDrawInfo, std::string res, SkPaint* paintIcon,  
 	RenderingContext* rc, SkCanvas* cv, SkRect& r, SkPaint::FontMetrics& fm) {
 	if(res.length() == 0) {
 		return;
@@ -529,7 +529,7 @@ static SkTypeface* sBoldItalicTypeface = nullptr;
 void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
 	r.inset(-100, -100);
-	quad_tree<TextDrawInfo*> boundsIntersect(r, 4, 0.6);
+	quad_tree<SHARED_PTR<TextDrawInfo>> boundsIntersect(r, 4, 0.6);
 
 #if defined(ANDROID)
     // This is never released because of always +1 of reference counter
@@ -560,11 +560,14 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 	std::sort(rc->textToDraw.begin(), rc->textToDraw.end(), textOrder);
     for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
     {
-        TextDrawInfo* textDrawInfo = *itdi;
+        SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
 
         // Skip empty text
 	    if(textDrawInfo->text.length() <= 0)
             continue;
+        if(textDrawInfo->icon && !textDrawInfo->icon->visible) {
+        	continue;
+        }
 
         // Prepare font
         SkTypeface* def = sDefaultTypeface;

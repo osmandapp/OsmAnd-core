@@ -246,7 +246,7 @@ int updatePaint(RenderingRuleSearchRequest* req, SkPaint* paint, int ind, int ar
 }
 
 void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingContext* rc, std::string tag,
-		std::string value, float xText, float yText, SkPath* path) {
+		std::string value, float xText, float yText, SkPath* path, SHARED_PTR<IconDrawInfo> ico) {
 	std::vector<std::string>::iterator it = obj->namesOrder.begin();
 	uint k = 0;
 	bool nameScanned = false;
@@ -277,7 +277,8 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 			req->setStringFilter(req->props()->R_NAME_TAG, tagName);
 			if (req->searchRule(RenderingRulesStorage::TEXT_RULES)
 					&& req->isSpecified(req->props()->R_TEXT_SIZE)) {
-				TextDrawInfo* info = new TextDrawInfo(name);
+				SHARED_PTR<TextDrawInfo> info(new TextDrawInfo(name));
+				info->icon = ico;
 				std::string tagName2 = req->getStringPropertyValue(req->props()->R_NAME_TAG2);
 				if(tagName2 != "") {
 					std::string tv = obj->objectNames[tagName2];
@@ -605,7 +606,7 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 				drawOneWayPaints(rc, cv, &path, oneway, onewayColor);
 			}
 			if (!drawOnlyShadow) {
-				renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path);
+				renderText(mObj, req, rc, pair.first, pair.second, middlePoint.fX, middlePoint.fY, &path, NULL);
 			}
 		}
 	}
@@ -772,7 +773,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 		PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 	}
 
-	renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL);
+	renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL, NULL);
 }
 
 void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
@@ -807,29 +808,30 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		py /= length;
 	}
 
+	SHARED_PTR<IconDrawInfo> ico;
 	if (bmp != NULL) {
-		IconDrawInfo ico;
-		ico.x = px;
-		ico.y = py;
-		ico.bmp_1 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON_1));	
-		ico.bmp = bmp;
-		ico.bmp2 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON2));	
-		ico.bmp3 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON3));	
-		ico.bmp4 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON4));	
-		ico.bmp5 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON5));	
-		ico.shield = shield;
-		ico.shiftPy = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PY, 0);
-		ico.shiftPx = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PX, 0);
-		ico.iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
-		ico.order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
-		ico.intersectionSizeFactor = req->getFloatPropertyValue(req->props()-> R_INTERSECTION_SIZE_FACTOR, 1);
-		ico.intersectionMargin = getDensityValue(rc, req, req->props()->R_INTERSECTION_MARGIN);
-		ico.secondOrder = ((mObj->id %10000) << 8) + ord;
-		if(ico.order >= 0) 
+		ico.reset(new IconDrawInfo());
+		ico->x = px;
+		ico->y = py;
+		ico->bmp_1 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON_1));	
+		ico->bmp = bmp;
+		ico->bmp2 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON2));	
+		ico->bmp3 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON3));	
+		ico->bmp4 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON4));	
+		ico->bmp5 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON5));	
+		ico->shield = shield;
+		ico->shiftPy = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PY, 0);
+		ico->shiftPx = req->getFloatPropertyValue(req-> props()-> R_ICON_SHIFT_PX, 0);
+		ico->iconSize = getDensityValue(rc, req, req->props()->R_ICON_VISIBLE_SIZE, -1);
+		ico->order = req->getIntPropertyValue(req-> props()-> R_ICON_ORDER, 100);
+		ico->intersectionSizeFactor = req->getFloatPropertyValue(req->props()-> R_INTERSECTION_SIZE_FACTOR, 1);
+		ico->intersectionMargin = getDensityValue(rc, req, req->props()->R_INTERSECTION_MARGIN);
+		ico->secondOrder = ((mObj->id %10000) << 8) + ord;
+		if(ico->order >= 0) 
 			rc->iconsToDraw.push_back(ico);
 	}
 	if (renderTxt) {
-		renderText(mObj, req, rc, pair.first, pair.second, px, py, NULL);
+		renderText(mObj, req, rc, pair.first, pair.second, px, py, NULL, ico);
 	}
 
 }
@@ -859,22 +861,22 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 		}
 	}
 }
-bool iconOrder(IconDrawInfo text1, IconDrawInfo text2) {
-	if(text1.order == text2.order)  
-		return text1.secondOrder < text2.secondOrder;
-	return text1.order < text2.order;
+bool iconOrder(SHARED_PTR<IconDrawInfo> text1, SHARED_PTR<IconDrawInfo> text2) {
+	if(text1->order == text2->order)  
+		return text1->secondOrder < text2->secondOrder;
+	return text1->order < text2->order;
 }
 
-SkRect makeRect(RenderingContext* rc,  IconDrawInfo& icon, SkBitmap* ico, SkRect* rm) {
+SkRect makeRect(RenderingContext* rc,  SHARED_PTR<IconDrawInfo> icon, SkBitmap* ico, SkRect* rm) {
 	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
-	float cx = icon.x;
-	float cy = icon.y;
+	float cx = icon->x;
+	float cy = icon->y;
 	if(rm != NULL) {
 		cx = rm -> centerX();
 		cy = rm -> centerY();
 	} else {
-		cx +=  icon.shiftPx *  ico->width() / 2 * coef;
-		cy +=  icon.shiftPy *  ico->height() / 2 * coef;
+		cx +=  icon->shiftPx *  ico->width() / 2 * coef;
+		cy +=  icon->shiftPy *  ico->height() / 2 * coef;
 	}
 	float left = cx -  ico->width() / 2 * coef;
 	float top = cy - ico->height() / 2 * coef; 
@@ -897,15 +899,15 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 	for(;ji< rc->iconsToDraw.size(); ji++)
 	{
-		IconDrawInfo icon = rc->iconsToDraw.at(ji);
-		if (icon.y >= 0 && icon.y < rc->getHeight() && icon.x >= 0 && icon.x < rc->getWidth() && icon.bmp != NULL) 
+		SHARED_PTR<IconDrawInfo> icon = rc->iconsToDraw.at(ji);
+		if (icon->y >= 0 && icon->y < rc->getHeight() && icon->x >= 0 && icon->x < rc->getWidth() && icon->bmp != NULL) 
 		{
-			SkBitmap* ico = icon.bmp;
+			SkBitmap* ico = icon->bmp;
 			
-			float vwidth = icon.iconSize >= 0 ? icon.iconSize : ico->width();
-			float vheight = icon.iconSize >= 0 ? icon.iconSize : ico->height();
-			float vleft = icon.x -  vwidth / 2 * coef;
-			float vtop = icon.y - vheight / 2 * coef; 
+			float vwidth = icon->iconSize >= 0 ? icon->iconSize : ico->width();
+			float vheight = icon->iconSize >= 0 ? icon->iconSize : ico->height();
+			float vleft = icon->x -  vwidth / 2 * coef;
+			float vtop = icon->y - vheight / 2 * coef; 
 						
 			bool intersects = false;
 			SkRect bbox = SkRect::MakeXYWH(0, 0, 0, 0);
@@ -925,30 +927,31 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			}
 			SkRect rm = makeRect(rc, icon, ico, NULL);
 			if (!intersects) {
-				if(icon.shield != NULL) {
-					SkRect r = makeRect(rc, icon, icon.shield, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.shield, (SkIRect*) NULL, r, &p));
+				icon->visible = true;
+				if(icon->shield != NULL) {
+					SkRect r = makeRect(rc, icon, icon->shield, &rm);
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->shield, (SkIRect*) NULL, r, &p));
 				}
-				if(icon.bmp_1 != NULL) {
-					SkRect r = makeRect(rc, icon, icon.bmp_1, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp_1, (SkIRect*) NULL, r, &p));
+				if(icon->bmp_1 != NULL) {
+					SkRect r = makeRect(rc, icon, icon->bmp_1, &rm);
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp_1, (SkIRect*) NULL, r, &p));
 				}
 				PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*ico, (SkIRect*) NULL, rm, &p));
-				if(icon.bmp2 != NULL) {
-					SkRect r = makeRect(rc, icon, icon.bmp2, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp2, (SkIRect*) NULL, r, &p));
+				if(icon->bmp2 != NULL) {
+					SkRect r = makeRect(rc, icon, icon->bmp2, &rm);
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp2, (SkIRect*) NULL, r, &p));
 				}
-				if(icon.bmp3 != NULL) {
-					SkRect r = makeRect(rc, icon, icon.bmp3, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp3, (SkIRect*) NULL, r, &p));
+				if(icon->bmp3 != NULL) {
+					SkRect r = makeRect(rc, icon, icon->bmp3, &rm);
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp3, (SkIRect*) NULL, r, &p));
 				}
-				if(icon.bmp4 != NULL) {
-					SkRect r = makeRect(rc, icon, icon.bmp4, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp4, (SkIRect*) NULL, r, &p));
+				if(icon->bmp4 != NULL) {
+					SkRect r = makeRect(rc, icon, icon->bmp4, &rm);
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp4, (SkIRect*) NULL, r, &p));
 				}
-				if(icon.bmp5 != NULL) {
-					SkRect r = makeRect(rc, icon, icon.bmp5, &rm);
-					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon.bmp5, (SkIRect*) NULL, r, &p));
+				if(icon->bmp5 != NULL) {
+					SkRect r = makeRect(rc, icon, icon->bmp5, &rm);
+					PROFILE_NATIVE_OPERATION(rc, canvas->drawBitmapRect(*icon->bmp5, (SkIRect*) NULL, r, &p));
 				}
 				if(bbox.width() > 0) {
 					bbox.inset(-bbox.width()/4, -bbox.height()/4);
@@ -960,6 +963,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			break;
 		}
 	}
+	rc->iconsToDraw.clear();
 }
 
 double polygonArea(MapDataObject* obj, float mult) {
