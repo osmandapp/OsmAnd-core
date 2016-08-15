@@ -29,7 +29,9 @@
 #include "Logging.h"
 
 const int MAX_V = 10;
-
+const int DEFAULT_POLYGON_MAX = 11;
+const int DEFAULT_LINE_MAX = 100;
+const int DEFAULT_POINTS_MAX = 200;
 #if defined(WIN32)
 #undef min
 #endif
@@ -1077,13 +1079,21 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 							double area = polygonArea(mobj, mult);
 							if(area > MAX_V && area > minPolygonSize) { 
 								mapObj.order = mapObj.order + (1. / area);
-								polygonsArray.push_back(mapObj);
-								pointsArray.push_back(pointObj); // TODO fix duplicate text? verify if it is needed for icon
+								if(mapObj.order < DEFAULT_POLYGON_MAX) {
+									polygonsArray.push_back(mapObj);
+								} else {
+									linesArray.push_back(mapObj);	
+								}
+								pointsArray.push_back(pointObj); 
 							}
 						} else if(objectType == 1) {
 							pointsArray.push_back(mapObj);
 						} else {
-							linesArray.push_back(mapObj);
+							if(mapObj.order < DEFAULT_POLYGON_MAX) {
+								polygonsArray.push_back(mapObj);	
+							} else {
+								linesArray.push_back(mapObj);
+							}
 						}
 						if (req->getIntPropertyValue(req->props()->R_SHADOW_LEVEL) > 0) {
 							rc->shadowLevelMin = std::min(rc->shadowLevelMin, order);
@@ -1114,18 +1124,17 @@ void doRendering(std::vector <MapDataObject* > mapDataObjects, SkCanvas* canvas,
 	std::vector<MapDataObjectPrimitive>  linesArray;
 	sortObjectsByProperOrder(mapDataObjects, req, rc, polygonsArray, pointsArray, linesArray);
 	rc->lastRenderedKey = 0;
-
 	drawObject(rc, canvas, req, paint, polygonsArray, 0);
-	rc->lastRenderedKey = 5;
+	rc->lastRenderedKey = DEFAULT_POLYGON_MAX;
 	if (rc->getShadowRenderingMode() > 1) {
 		drawObject(rc, canvas, req, paint, linesArray, 1);
 	}
-	rc->lastRenderedKey = 40;
+	rc->lastRenderedKey = (DEFAULT_POLYGON_MAX + DEFAULT_LINE_MAX) / 2;
 	drawObject(rc, canvas, req, paint, linesArray, 2);
-	rc->lastRenderedKey = 60;
+	rc->lastRenderedKey = DEFAULT_LINE_MAX;
 
 	drawObject(rc, canvas, req, paint, pointsArray, 3);
-	rc->lastRenderedKey = 125;
+	rc->lastRenderedKey = DEFAULT_POINTS_MAX;
 
 	drawIconsOverCanvas(rc, canvas);
 
