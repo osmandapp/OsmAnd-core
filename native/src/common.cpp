@@ -140,7 +140,7 @@ double convert31YToMeters(int y1, int y2, int x) {
 		if(md < 10 || y1 == y2) {
 			return md;
 		}
-		coefficientsY[ind] = md / abs((double)y1 - (double)y2);
+		coefficientsY[ind] = md / std::abs((double)y1 - (double)y2);
 	}
 	// translate into meters 
 	return ((double)y1 - y2) * coefficientsY[ind];
@@ -162,7 +162,7 @@ double convert31XToMeters(int x1, int x2, int y) {
 		if(md < 10  || x1 == x2) {
 			return md;
 		}
-		coefficientsX[ind] = md / abs((double)x1 - (double)x2);
+		coefficientsX[ind] = md / std::abs((double)x1 - (double)x2);
 	}
 	// translate into meters 
 	return ((double)x1 - x2) * coefficientsX[ind];
