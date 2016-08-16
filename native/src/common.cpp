@@ -123,6 +123,14 @@ double measuredDist31(int x1, int y1, int x2, int y2) {
   return getDistance(get31LatitudeY(y1),get31LongitudeX(x1), get31LatitudeY(y2), get31LongitudeX(x2));
 }
 
+double dabs(double d) {
+	if(d < 0) {
+		return -d;
+	} else {
+		return d;
+	}
+}
+
 double coefficientsY[256] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -140,7 +148,7 @@ double convert31YToMeters(int y1, int y2, int x) {
 		if(md < 10 || y1 == y2) {
 			return md;
 		}
-		coefficientsY[ind] = md / std::abs((double)y1 - (double)y2);
+		coefficientsY[ind] = md / dabs((double)y1 - (double)y2);
 	}
 	// translate into meters 
 	return ((double)y1 - y2) * coefficientsY[ind];
@@ -155,6 +163,7 @@ double coefficientsX[256] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   
 };	
+
 double convert31XToMeters(int x1, int x2, int y) {
 	int ind = y >> (31 - 8);
 	if(coefficientsX[ind] == 0) {
@@ -162,7 +171,7 @@ double convert31XToMeters(int x1, int x2, int y) {
 		if(md < 10  || x1 == x2) {
 			return md;
 		}
-		coefficientsX[ind] = md / std::abs((double)x1 - (double)x2);
+		coefficientsX[ind] = md / dabs((double)x1 - (double)x2);
 	}
 	// translate into meters 
 	return ((double)x1 - x2) * coefficientsX[ind];
