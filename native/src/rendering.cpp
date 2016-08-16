@@ -846,12 +846,12 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 		rc->allObjects++;
 		MapDataObject* mObj = array[i].obj;
 		tag_value pair = mObj->types.at(array[i].typeInd);
-		if (objOrder == 0) {
+		if (array[i].objectType == 3) {
 			// polygon
 			drawPolygon(mObj, req, cv, paint, rc, pair);
-		} else if (objOrder == 1 || objOrder == 2) {
+		} else if (array[i].objectType == 2) {
 			drawPolyline(mObj, req, cv, paint, rc, pair, mObj->getSimpleLayer(), objOrder == 1);
-		} else if (objOrder == 3) {
+		} else if (array[i].objectType == 1) {
 			drawPoint(mObj, req, cv, paint, rc, pair, array[i].typeInd);
 		}
 		if (i % 25 == 0 && rc->interrupted()) {
