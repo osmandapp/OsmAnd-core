@@ -121,6 +121,9 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo> info, Ren
 	info->bold = render->getIntPropertyValue(render->props()->R_TEXT_BOLD, 0) > 0;
 	info->italic = render->getIntPropertyValue(render->props()->R_TEXT_ITALIC, 0) > 0;
 	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE) * rc->getTextScale();
+	if (info->minDistance == 0) {
+		info->minDistance = 200;
+	}
 	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD) ;
 	info->shieldResIcon = render->getStringPropertyValue(render-> props()-> R_ICON);
 	info->textOrder = render->getIntPropertyValue(render->props()->R_TEXT_ORDER, 100);
@@ -479,7 +482,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	}
 	if(text->minDistance > 0) {
 		SkRect boundsSearch = text->bounds;
-		boundsSearch.inset(-max(rc->getDensityValue(5.0f), text->minDistance), -rc->getDensityValue(15));
+		boundsSearch.inset(-max(rc->getDensityValue(5.0f), text->minDistance), -max(-rc->getDensityValue(15), text->minDistance));
 		boundIntersections.query_in_box(boundsSearch, searchText);
 //		drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
 		for (uint32_t i = 0; i < searchText.size(); i++) {
