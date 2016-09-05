@@ -48,6 +48,16 @@ extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteSearchResu
 	}
 }
 
+
+
+extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_deleteRenderingContextHandle(JNIEnv* ienv,
+		jobject obj, jlong searchResult) {
+	RenderingContextResults* result = (RenderingContextResults*) searchResult;
+	if(result != NULL){
+		delete result;
+	}
+}
+
 extern "C" JNIEXPORT void JNICALL Java_net_osmand_NativeLibrary_closeBinaryMapFile(JNIEnv* ienv,
 		jobject obj, jobject path) {
 	const char* utf = ienv->GetStringUTFChars((jstring) path, NULL);
@@ -487,6 +497,7 @@ jfieldID jfield_RenderingContext_rotate = NULL;
 jfieldID jfield_RenderingContext_preferredLocale = NULL;
 jfieldID jfield_RenderingContext_pointCount = NULL;
 jfieldID jfield_RenderingContext_pointInsideCount = NULL;
+jfieldID jfield_RenderingContext_renderingContextHandle = NULL;
 jfieldID jfield_RenderingContext_visible = NULL;
 jfieldID jfield_RenderingContext_allObjects = NULL;
 jfieldID jfield_RenderingContext_density = NULL;
@@ -627,6 +638,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RenderingContext_rotate = getFid(env,  jclass_RenderingContext, "rotate", "F" );
 	jfield_RenderingContext_preferredLocale = getFid(env,  jclass_RenderingContext, "preferredLocale", "Ljava/lang/String;" );
 	jfield_RenderingContext_pointCount = getFid(env,  jclass_RenderingContext, "pointCount", "I" );
+	jfield_RenderingContext_renderingContextHandle = getFid(env,  jclass_RenderingContext, "renderingContextHandle", "J" );
 	jfield_RenderingContext_pointInsideCount = getFid(env,  jclass_RenderingContext, "pointInsideCount", "I" );
 	jfield_RenderingContext_visible = getFid(env,  jclass_RenderingContext, "visible", "I" );
 	jfield_RenderingContext_allObjects = getFid(env,  jclass_RenderingContext, "allObjects", "I" );
@@ -1183,6 +1195,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_NativeLibrary_loadRoutingDa
 
 void pushToJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext* rc)
 {
+	RenderingContextResults* results = new RenderingContextResults(rc);
+	env->SetLongField( jrc, jfield_RenderingContext_renderingContextHandle, (jlong) results);	
 	env->SetIntField( jrc, jfield_RenderingContext_pointCount, (jint) rc->pointCount);
 	env->SetIntField( jrc, jfield_RenderingContext_pointInsideCount, (jint)rc->pointInsideCount);
 	env->SetIntField( jrc, jfield_RenderingContext_visible, (jint)rc->visible);

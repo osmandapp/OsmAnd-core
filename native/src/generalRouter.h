@@ -217,7 +217,7 @@ string parseString(MAP_STR_STR attributes, string key, string def);
 class GeneralRouter {
 	friend class RouteAttributeContext;
 	friend class RouteAttributeEvalRule;
-	friend class RouteAttributeExpression;
+	friend struct RouteAttributeExpression;
 private:
 	vector<RouteAttributeContext*> objectAttributes;
 	MAP_STR_STR attributes;
@@ -226,7 +226,6 @@ private:
 	vector<tag_value> universalRulesById;
 	UNORDERED(map)<string, dynbitset > tagRuleMask;
 	vector<double> ruleToValue; // Object TODO;
-	bool shortestRoute;
 	
 	UNORDERED(map)<RoutingIndex*, MAP_INT_INT> regionConvert;
 		

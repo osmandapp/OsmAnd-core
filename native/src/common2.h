@@ -51,6 +51,119 @@ class FontRegistry {
 
 extern FontRegistry globalFontRegistry;
 
+template <typename T> class quad_tree {
+private :
+	struct node {
+        typedef std::vector<T> cont_t;
+        cont_t data;
+		node* children[4];
+		SkRect bounds;
+
+		node(SkRect& b) : bounds(b) {
+            for (int i = 0; i < 4; i++) {
+				children[i] = NULL;
+			}
+		}
+
+		node(const node& b) : data(b.data), bounds(b.bounds) {
+            for (int i = 0; i < 4; i++) {
+				if (b.children[i] != NULL) {
+					children[i] = new node(b.children[i]);
+				} else {
+					children[i] = NULL;
+				}
+			}
+		}
+
+
+		~node() {	
+			for (int i = 0; i < 4; i++) {
+				if (children[i] != NULL) {
+					delete children[i];
+				}
+			}
+		}
+	};
+	typedef typename node::cont_t cont_t;
+	typedef typename cont_t::iterator node_data_iterator;
+	double ratio;
+	unsigned int max_depth;
+	node root;
+public:
+	quad_tree(SkRect r=SkRect::MakeLTRB(0,0,0x7FFFFFFF,0x7FFFFFFF), int depth=8, double ratio = 0.55) : ratio(ratio), max_depth(depth), root(r) {
+	}
+
+	quad_tree(const quad_tree& ref) : ratio(ref.ratio), max_depth(ref.max_depth), root(ref.root) {}
+
+    void insert(T data, SkRect& box)
+    {
+        unsigned int depth=0;
+        do_insert_data(data, box, &root, depth);
+    }
+
+    void query_in_box(SkRect& box, std::vector<T>& result)
+    {
+        result.clear();
+        query_node(box, result, &root);
+    }
+
+private:
+
+    void query_node(SkRect& box, std::vector<T> & result, node* node) const {
+		if (node) {
+			if (SkRect::Intersects(box, node->bounds)) {
+				node_data_iterator i = node->data.begin();
+				node_data_iterator end = node->data.end();
+				while (i != end) {
+					result.push_back(*i);
+					++i;
+				}
+				for (int k = 0; k < 4; ++k) {
+					query_node(box, result, node->children[k]);
+				}
+			}
+		}
+	}
+
+
+    void do_insert_data(T data, SkRect& box, node * n, unsigned int& depth)
+    {
+        if (++depth >= max_depth) {
+			n->data.push_back(data);
+		} else {
+			SkRect& node_extent = n->bounds;
+			SkRect ext[4];
+			split_box(node_extent, ext);
+			for (int i = 0; i < 4; ++i) {
+				if (ext[i].contains(box)) {
+					if (!n->children[i]) {
+						n->children[i] = new node(ext[i]);
+					}
+					do_insert_data(data, box, n->children[i], depth);
+					return;
+				}
+			}
+			n->data.push_back(data);
+		}
+    }
+    void split_box(SkRect& node_extent,SkRect * ext)
+    {
+        //coord2d c=node_extent.center();
+
+    	float width=node_extent.width();
+    	float height=node_extent.height();
+
+        float lox=node_extent.fLeft;
+        float loy=node_extent.fTop;
+        float hix=node_extent.fRight;
+        float hiy=node_extent.fBottom;
+
+        ext[0]=SkRect::MakeLTRB(lox,loy,lox + width * ratio,loy + height * ratio);
+        ext[1]=SkRect::MakeLTRB(hix - width * ratio,loy,hix,loy + height * ratio);
+        ext[2]=SkRect::MakeLTRB(lox,hiy - height*ratio,lox + width * ratio,hiy);
+        ext[3]=SkRect::MakeLTRB(hix - width * ratio,hiy - height*ratio,hix,hiy);
+    }
+};
 
 
 
@@ -73,15 +186,18 @@ struct IconDrawInfo
 	float iconSize;
 	float intersectionMargin;
 	float intersectionSizeFactor;
+	SkRect bbox;
 
 	IconDrawInfo();
 };
+
 struct TextDrawInfo {
 	TextDrawInfo(std::string);
 	~TextDrawInfo();
 
 	std::string text;
 	SHARED_PTR<IconDrawInfo> icon;
+	bool visible;
 
 	SkRect bounds;
 	float centerX;
@@ -111,6 +227,7 @@ struct TextDrawInfo {
 
 
 static const int TILE_SIZE = 256;
+struct RenderingContextResults;
 struct RenderingContext
 {
 private :
@@ -125,8 +242,6 @@ private :
 	int width;
 	int height;
 	int defaultColor;
-	int waterwayArrows;
-	int noHighwayOnewayArrows;
 
 	int zoom;
 	float rotate;
@@ -136,6 +251,8 @@ private :
 	// int shadowRenderingMode = 3; solid border (CPU use like classic version or even smaller)
 	int shadowRenderingMode;
 	int shadowRenderingColor;
+	int waterwayArrows;
+	int noHighwayOnewayArrows;
 	string defaultIconsDir;
 
 public:
@@ -165,6 +282,10 @@ public :
 
 	std::vector<SHARED_PTR<TextDrawInfo>> textToDraw;
 	std::vector<SHARED_PTR<IconDrawInfo>> iconsToDraw;
+	quad_tree<SHARED_PTR<TextDrawInfo>> textIntersect; 
+	quad_tree<SHARED_PTR<IconDrawInfo>> iconsIntersect;
+
+	 
 	
 	// not expect any shadow
 	int shadowLevelMin;
@@ -177,13 +298,15 @@ public:
 	RenderingContext() : preferredLocale(""), density(1), screenDensityRatio(1),
 			textScale(1), //leftX, topY, width, height
 			defaultColor(0xfff1eee8), zoom(15), rotate(0),
-			shadowRenderingMode(2), shadowRenderingColor(0xff969696), // defaultIconsDir
+			shadowRenderingMode(2), shadowRenderingColor(0xff969696), noHighwayOnewayArrows(0),// defaultIconsDir
 			pointCount(0), pointInsideCount(0), visible(0), allObjects(0), lastRenderedKey(0),
 			// textRendering, nativeOperations, oneWayPaints, reverseWayPaints
 			// tileDivisor, cosRotateTileSize, sinRotateTileSize,  calcX, calcY
 			// textToDraw, iconsToDraw,
+			// textIntersect(), iconsIntersect()
 			shadowLevelMin(256), shadowLevelMax(0), polygonMinSizeToDisplay(0),
-			roadDensityZoomTile(0), roadsDensityLimitPerTile(0), noHighwayOnewayArrows(0)
+			roadDensityZoomTile(0), roadsDensityLimitPerTile(0)
+			
 	{
 		
 	}
@@ -315,8 +438,32 @@ public:
 	std::string getPreferredLocale(){
 		return this->preferredLocale;
 	}
+	friend struct RenderingContextResults;
 
 };
+
+
+struct RenderingContextResults 
+{
+
+public:
+	int zoom;
+	float density;
+	float screenDensityRatio;
+	float textScale;
+
+	double leftX;
+	double topY;
+	int width;
+	int height;
+
+	quad_tree<SHARED_PTR<TextDrawInfo>> textIntersect; 
+	quad_tree<SHARED_PTR<IconDrawInfo>> iconsIntersect;
+
+	RenderingContextResults(RenderingContext* context) ;
+
+};
+
 
 SkBitmap* getCachedBitmap(RenderingContext* rc, const std::string& bitmapResource);
 void purgeCachedBitmaps();
@@ -344,104 +491,6 @@ double convert31YToMeters(int y1, int y2, int x);
 double convert31XToMeters(int y1, int y2, int y);
 double alignAngleDifference(double diff);
 
-template <typename T> class quad_tree {
-private :
-	struct node {
-        typedef std::vector<T> cont_t;
-        cont_t data;
-		node* children[4];
-		SkRect bounds;
-
-		node(SkRect& b) : bounds(b) {
-            memset(children,0,4*sizeof(node*));
-		}
-
-		~node() {
-			for (int i = 0; i < 4; i++) {
-				if (children[i] != NULL) {
-					delete children[i];
-				}
-			}
-		}
-	};
-	typedef typename node::cont_t cont_t;
-	typedef typename cont_t::iterator node_data_iterator;
-	double ratio;
-	unsigned int max_depth;
-	node root;
-public:
-	quad_tree(SkRect r=SkRect::MakeLTRB(0,0,0x7FFFFFFF,0x7FFFFFFF), int depth=8, double ratio = 0.55) : ratio(ratio), max_depth(depth), root(r) {
-	}
-
-    void insert(T data, SkRect& box)
-    {
-        unsigned int depth=0;
-        do_insert_data(data, box, &root, depth);
-    }
-
-    void query_in_box(SkRect& box, std::vector<T>& result)
-    {
-        result.clear();
-        query_node(box, result, &root);
-    }
-
-private:
-
-    void query_node(SkRect& box, std::vector<T> & result, node* node) const {
-		if (node) {
-			if (SkRect::Intersects(box, node->bounds)) {
-				node_data_iterator i = node->data.begin();
-				node_data_iterator end = node->data.end();
-				while (i != end) {
-					result.push_back(*i);
-					++i;
-				}
-				for (int k = 0; k < 4; ++k) {
-					query_node(box, result, node->children[k]);
-				}
-			}
-		}
-	}
-
-
-    void do_insert_data(T data, SkRect& box, node * n, unsigned int& depth)
-    {
-        if (++depth >= max_depth) {
-			n->data.push_back(data);
-		} else {
-			SkRect& node_extent = n->bounds;
-			SkRect ext[4];
-			split_box(node_extent, ext);
-			for (int i = 0; i < 4; ++i) {
-				if (ext[i].contains(box)) {
-					if (!n->children[i]) {
-						n->children[i] = new node(ext[i]);
-					}
-					do_insert_data(data, box, n->children[i], depth);
-					return;
-				}
-			}
-			n->data.push_back(data);
-		}
-    }
-    void split_box(SkRect& node_extent,SkRect * ext)
-    {
-        //coord2d c=node_extent.center();
-
-    	float width=node_extent.width();
-    	float height=node_extent.height();
-
-        float lox=node_extent.fLeft;
-        float loy=node_extent.fTop;
-        float hix=node_extent.fRight;
-        float hiy=node_extent.fBottom;
-
-        ext[0]=SkRect::MakeLTRB(lox,loy,lox + width * ratio,loy + height * ratio);
-        ext[1]=SkRect::MakeLTRB(hix - width * ratio,loy,hix,loy + height * ratio);
-        ext[2]=SkRect::MakeLTRB(lox,hiy - height*ratio,lox + width * ratio,hiy);
-        ext[3]=SkRect::MakeLTRB(hix - width * ratio,hiy - height*ratio,hix,hiy);
-    }
-};
 
 int findFirstNumberEndIndex(string value); 
 

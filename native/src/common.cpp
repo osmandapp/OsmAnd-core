@@ -12,16 +12,32 @@
 #define isnan _isnan
 #define isinf !_finite
 #elif defined(__APPLE__)
-#	include <mach/mach_time.h>|
+#	include <mach/mach_time.h>
 #else
 #	include <time.h>
 #endif
 
+
+RenderingContextResults::RenderingContextResults(RenderingContext* rc) :textIntersect(),iconsIntersect()
+{
+	this->zoom = rc->zoom;
+	this->density = rc->density;
+	this->screenDensityRatio = rc->screenDensityRatio;
+	this->textScale = rc->textScale;
+	this->leftX = rc->leftX;
+	this->topY = rc->topY;
+	this->width = rc->width;
+	this->height = rc->height;
+	//this->textIntersect = rc->textIntersect;
+	// this->iconsIntersect = rc->iconsIntersect;
+}
+
 TextDrawInfo::TextDrawInfo(std::string itext)
 	: text(itext)
+	, icon(NULL)
+	, visible(false)
 	, drawOnPath(false)
 	, path(NULL)
-	, icon(NULL)
 	, pathRotate(0)
 	, intersectionMargin(0)
 	, intersectionSizeFactor(1)
@@ -35,8 +51,8 @@ TextDrawInfo::~TextDrawInfo()
 }
 
 IconDrawInfo::IconDrawInfo()
-	: bmp_1(NULL), bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL), visible(false),
-	  shield(NULL), intersectionMargin(0), intersectionSizeFactor(1)
+	: bmp_1(NULL), bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL), 
+	  shield(NULL), visible(false), intersectionMargin(0), intersectionSizeFactor(1), bbox()
 {
 
 }

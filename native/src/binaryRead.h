@@ -362,7 +362,7 @@ struct BinaryMapFile {
 struct ResultPublisher {
 	std::vector< MapDataObject*> result;
 	UNORDERED(set)<uint64_t > ids;
-
+	
 	bool publish(MapDataObject* r) {
 		if(r->id > 0 && !ids.insert(r->id).second) {
 			return false;
@@ -370,6 +370,7 @@ struct ResultPublisher {
 		result.push_back(r);
 		return true;
 	}
+
 	bool publishOnlyUnique(std::vector<MapDataObject*> r) {
 		for(uint i = 0; i < r.size(); i++) {
 			if(!publish(r[i])) {

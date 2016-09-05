@@ -696,7 +696,6 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	SkPath path;
 	uint i = 0;
 	bool containsPoint = false;
-	int bounds = 0;
 	std::vector< std::pair<int,int > > ps;
 	uint prevCross = 0;
 	for (; i < length; i++) {
@@ -888,12 +887,13 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 	std::sort(rc->iconsToDraw.begin(), rc->iconsToDraw.end(), iconOrder);
 	SkRect bounds = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
 	bounds.inset(-bounds.width()/4, -bounds.height()/4);
-	quad_tree<SkRect> boundsIntersect(bounds, 4, 0.6);
+	// quad_tree<SHARED_PTR<IconDrawInfo>> boundsIntersect(bounds, 4, 0.6);
+	rc->iconsIntersect = quad_tree<SHARED_PTR<IconDrawInfo>>(bounds, 4, 0.6);
 	size_t ji = 0;
 	SkPaint p;
 	p.setStyle(SkPaint::kStroke_Style);
 	p.setFilterLevel(SkPaint::kLow_FilterLevel);
-	vector<SkRect> searchText;
+	vector<SHARED_PTR<IconDrawInfo> > searchText;
 	float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 	for(;ji< rc->iconsToDraw.size(); ji++)
 	{
@@ -913,11 +913,10 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			{
 				bbox = SkRect::MakeXYWH(vleft, vtop, vwidth * coef,
 						vheight* coef );
-				boundsIntersect.query_in_box(bbox, searchText);
+				rc->iconsIntersect.query_in_box(bbox, searchText);
 			
 				for (uint32_t i = 0; i < searchText.size(); i++) {
-					SkRect& t = searchText.at(i);
-					if (SkRect::Intersects(t, bbox)) {
+					if (SkRect::Intersects(searchText[i]->bbox, bbox)) {
 						intersects =  true;
 						break;
 					}
@@ -953,7 +952,8 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 				}
 				if(bbox.width() > 0) {
 					bbox.inset(-bbox.width()/4, -bbox.height()/4);
-					boundsIntersect.insert(bbox, bbox);
+					icon->bbox = bbox;
+					rc->iconsIntersect.insert(icon, bbox);
 				}
 			}
 		}
@@ -961,6 +961,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			break;
 		}
 	}
+	// rc->iconsIntersect = boundsIntersect;
 	rc->iconsToDraw.clear();
 }
 

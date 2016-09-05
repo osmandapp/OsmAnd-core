@@ -122,7 +122,7 @@ void fillTextProperties(RenderingContext* rc, SHARED_PTR<TextDrawInfo> info, Ren
 	info->italic = render->getIntPropertyValue(render->props()->R_TEXT_ITALIC, 0) > 0;
 	info->minDistance = getDensityValue(rc, render, render->props()->R_TEXT_MIN_DISTANCE) * rc->getTextScale();
 	if (info->minDistance == 0) {
-		info->minDistance = 200;
+		info->minDistance = rc->getDensityValue(150) * rc->getTextScale();
 	}
 	info->shieldRes = render->getStringPropertyValue(render->props()->R_TEXT_SHIELD) ;
 	info->shieldResIcon = render->getStringPropertyValue(render-> props()-> R_ICON);
@@ -482,7 +482,8 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	}
 	if(text->minDistance > 0) {
 		SkRect boundsSearch = text->bounds;
-		boundsSearch.inset(-max(rc->getDensityValue(5.0f), text->minDistance), -max(-rc->getDensityValue(15), text->minDistance));
+		boundsSearch.inset(-max(rc->getDensityValue(5.0f), text->minDistance),
+		 		-max(rc->getDensityValue(15.0f), text->minDistance));
 		boundIntersections.query_in_box(boundsSearch, searchText);
 //		drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
 		for (uint32_t i = 0; i < searchText.size(); i++) {
@@ -600,6 +601,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 			if(rc->interrupted()){
 					return;
 			}
+			textDrawInfo->visible = true;
 			if (textDrawInfo->drawOnPath && textDrawInfo->path != NULL) {
 				if (textDrawInfo->textShadow > 0) {
 					paintText.setColor(textDrawInfo->textShadowColor);
@@ -625,6 +627,5 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 			}
 		}
 	}
+	// FIXME rc->textIntersect = boundsIntersect;
 }
-
-

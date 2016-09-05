@@ -12,7 +12,7 @@
 static const int REVERSE_WAY_RESTRICTION_ONLY = 1024;
 
 static const int ROUTE_POINTS = 11;
-static const float TURN_DEGREE_MIN = 45;
+// static const float TURN_DEGREE_MIN = 45;
 static const short RESTRICTION_NO_RIGHT_TURN = 1;
 static const short RESTRICTION_NO_LEFT_TURN = 2;
 static const short RESTRICTION_NO_U_TURN = 3;
