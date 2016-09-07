@@ -768,7 +768,7 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 	ienv->DeleteLocalRef(nm);
 
 	ienv->CallObjectMethod(resobj, jmethod_RenderedObject_setBbox, 
-		bbox.left(), bbox.top(), bbox.right(), bbox.bottom());
+		(jint)bbox.left(), (jint)bbox.top(), (jint)bbox.right(), (jint)bbox.bottom());
 	return resobj;
 }
 
