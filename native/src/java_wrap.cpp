@@ -1197,7 +1197,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRe
 		vector<jobject> collected;
 		vector<SHARED_PTR<TextDrawInfo> > searchText;
 
-		SkRect bbox = SkRect::MakeXYWH(x, y, 5, 5);
+		SkRect bbox = SkRect::MakeXYWH(x - 2, y - 2, 4, 4);
 		results->textIntersect.query_in_box(bbox, searchText);
 		bool intersects = false;
 		for (uint32_t i = 0; i < searchText.size(); i++) {
