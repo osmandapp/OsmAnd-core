@@ -24,7 +24,6 @@
 #include "renderRules.h"
 #include "binaryRead.h"
 #include "textdraw.cpp"
-#include "mapObjects.h"
 #include "rendering.h"
 #include "Logging.h"
 
@@ -279,7 +278,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 			req->setStringFilter(req->props()->R_NAME_TAG, tagName);
 			if (req->searchRule(RenderingRulesStorage::TEXT_RULES)
 					&& req->isSpecified(req->props()->R_TEXT_SIZE)) {
-				SHARED_PTR<TextDrawInfo> info(new TextDrawInfo(name));
+				SHARED_PTR<TextDrawInfo> info(new TextDrawInfo(name,obj));
 				info->icon = ico;
 				std::string tagName2 = req->getStringPropertyValue(req->props()->R_NAME_TAG2);
 				if(tagName2 != "") {
@@ -811,7 +810,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 
 	SHARED_PTR<IconDrawInfo> ico;
 	if (bmp != NULL) {
-		ico.reset(new IconDrawInfo());
+		ico.reset(new IconDrawInfo(mObj));
 		ico->x = px;
 		ico->y = py;
 		ico->bmp_1 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON_1));	
@@ -887,8 +886,8 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 	std::sort(rc->iconsToDraw.begin(), rc->iconsToDraw.end(), iconOrder);
 	SkRect bounds = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
 	bounds.inset(-bounds.width()/4, -bounds.height()/4);
-	// quad_tree<SHARED_PTR<IconDrawInfo>> boundsIntersect(bounds, 4, 0.6);
-	rc->iconsIntersect = quad_tree<SHARED_PTR<IconDrawInfo>>(bounds, 4, 0.6);
+	quad_tree<SHARED_PTR<IconDrawInfo>> boundsIntersect(bounds, 4, 0.6);
+	
 	size_t ji = 0;
 	SkPaint p;
 	p.setStyle(SkPaint::kStroke_Style);
@@ -913,7 +912,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			{
 				bbox = SkRect::MakeXYWH(vleft, vtop, vwidth * coef,
 						vheight* coef );
-				rc->iconsIntersect.query_in_box(bbox, searchText);
+				boundsIntersect.query_in_box(bbox, searchText);
 			
 				for (uint32_t i = 0; i < searchText.size(); i++) {
 					if (SkRect::Intersects(searchText[i]->bbox, bbox)) {
@@ -953,7 +952,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 				if(bbox.width() > 0) {
 					bbox.inset(-bbox.width()/4, -bbox.height()/4);
 					icon->bbox = bbox;
-					rc->iconsIntersect.insert(icon, bbox);
+					boundsIntersect.insert(icon, bbox);
 				}
 			}
 		}
@@ -961,7 +960,7 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			break;
 		}
 	}
-	// rc->iconsIntersect = boundsIntersect;
+	rc->iconsIntersect = quad_tree<SHARED_PTR<IconDrawInfo>>(boundsIntersect);
 	rc->iconsToDraw.clear();
 }
 

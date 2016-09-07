@@ -22,6 +22,7 @@ jclass jclassString;
 jclass jclassStringArray;
 jmethodID jmethod_Object_toString = NULL;
 
+jobject convertRenderedObjectToJava(JNIEnv* ienv, const MapDataObject& obj) ;
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
@@ -438,6 +439,10 @@ jfieldID jfield_RouteCalculationProgress_routingCalculatedTime = NULL;
 jfieldID jfield_RouteCalculationProgress_visitedSegments = NULL;
 jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
+jclass jclass_RenderedObject = NULL;	
+jmethodID jmethod_RenderedObject_putTag = NULL;
+jmethodID jmethod_RenderedObject_init = NULL;
+
 jclass jclass_RoutingConfiguration = NULL;
 jfieldID jfield_RoutingConfiguration_heuristicCoefficient = NULL;
 jfieldID jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES = NULL;
@@ -588,6 +593,12 @@ void loadJniRenderingContext(JNIEnv* env)
 	jmethod_GeneralRouter_getImpassableRoadIds = env->GetMethodID(jclass_GeneralRouter,
 				"getImpassableRoadIds", "()[J");
 
+	jclass_RenderedObject = findGlobalClass(env, "net/osmand/NativeLibrary$RenderedObject");	
+	jmethod_RenderedObject_putTag = env->GetMethodID(jclass_RenderedObject,
+				"putTag", "(Ljava/lang/String;Ljava/lang/String;)V");
+	jmethod_RenderedObject_init = env->GetMethodID(jclass_RenderedObject, "<init>", "()V");
+				
+
 	jclass_RouteAttributeContext = findGlobalClass(env, "net/osmand/router/GeneralRouter$RouteAttributeContext");	
 	jmethod_RouteAttributeContext_getRules = env->GetMethodID(jclass_RouteAttributeContext,
 				"getRules", "()[Lnet/osmand/router/GeneralRouter$RouteAttributeEvalRule;");
@@ -714,6 +725,19 @@ void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext*
 
 
 // ElapsedTimer routingTimer;
+
+jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj) {
+	jobject resobj = ienv->NewObject(jclass_RenderedObject, jmethod_RenderedObject_init);
+	for(uint i = 0; i < robj->types.size(); i++) 
+	{
+		jstring ts = ienv->NewStringUTF(robj->types[i].first.c_str());
+		jstring vs = ienv->NewStringUTF(robj->types[i].second.c_str());
+		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
+		ienv->DeleteLocalRef(ts);
+		ienv->DeleteLocalRef(vs);
+	}
+	return resobj;
+}
 
 jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobject reg) {
 	jintArray nameInts = ienv->NewIntArray(route->names.size());
@@ -1129,6 +1153,47 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_getRoute
 		ienv->DeleteLocalRef(robj);
 	}
 	return res;
+}
+// protected static native boolean searchRenderedObjects(RenderingContext context, int x, int y);
+extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRenderedObjects(JNIEnv* ienv,
+		jobject obj, jobject context, jint x, jint y) {
+	jlong handler = ienv->GetLongField( context, jfield_RenderingContext_renderingContextHandle);
+	if(handler != 0) 
+	{
+		RenderingContextResults* results = (RenderingContextResults*) handler;
+		vector<jobject> collected;
+		vector<SHARED_PTR<TextDrawInfo> > searchText;
+
+		SkRect bbox = SkRect::MakeXYWH(x, y, 5, 5);
+		results->textIntersect.query_in_box(bbox, searchText);
+		bool intersects = false;
+		for (uint32_t i = 0; i < searchText.size(); i++) {
+			if (SkRect::Intersects(searchText[i]->bounds, bbox) && 
+					searchText[i]->visible && !searchText[i]->drawOnPath) {
+				jobject jo = convertRenderedObjectToJava(ienv, &searchText[i]->object);
+				collected.push_back(jo);
+				intersects = true;
+			}
+		}
+		vector<SHARED_PTR<IconDrawInfo> > icons;
+		results->iconsIntersect.query_in_box(bbox, icons);
+		for (uint32_t i = 0; i < icons.size(); i++) {
+			if (SkRect::Intersects(icons[i]->bbox, bbox) && 
+					icons[i]->visible) {
+				jobject jo = convertRenderedObjectToJava(ienv, &icons[i]->object);
+				collected.push_back(jo);
+				intersects = true;
+			}
+		}
+		jobjectArray res = ienv->NewObjectArray(collected.size(), jclass_RenderedObject, NULL);
+		for (uint i = 0; i < collected.size(); i++) {
+			jobject robj = collected[i];
+			ienv->SetObjectArrayElement(res, i, robj);
+			ienv->DeleteLocalRef(robj);
+		}
+		return res;
+	}
+	return NULL;
 }
 
 //protected static native NativeRouteSearchResult loadRoutingData(RouteRegion reg, String regName, int regfp, RouteSubregion subreg,

@@ -8,7 +8,7 @@
 #include "renderRules.h"
 #include "Common.h"
 #include "common2.h"
-#include "mapObjects.h"
+
 
 /// !!! Fuly copied from MapRenderRepositories.java, should be carefully synchroinized
 bool isClockwiseWay(std::vector<int_pair>& c) ;

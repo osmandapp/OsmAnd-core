@@ -70,7 +70,6 @@ add_library(osmand SHARED
 	"${ROOT}/src/ElapsedTimer.cpp"
 	"${ROOT}/src/ExplicitSkiaReferences.cpp"
 	"${ROOT}/src/common.cpp"
-	"${ROOT}/src/mapObjects.cpp"
 	"${ROOT}/src/multipolygons.cpp"
 	"${ROOT}/src/renderRules.cpp"
 	"${ROOT}/src/rendering.cpp"

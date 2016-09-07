@@ -56,30 +56,18 @@ private :
 	struct node {
         typedef std::vector<T> cont_t;
         cont_t data;
-		node* children[4];
+		std::unique_ptr<node> children[4];
 		SkRect bounds;
 
-		node(SkRect& b) : bounds(b) {
-            for (int i = 0; i < 4; i++) {
-				children[i] = NULL;
-			}
-		}
+		node(SkRect& b) : bounds(b) {}
 
-		node(const node& b) : data(b.data), bounds(b.bounds) {
+		node(const node& b) : bounds(b.bounds) {
+			data = b.data;
             for (int i = 0; i < 4; i++) {
 				if (b.children[i] != NULL) {
-					children[i] = new node(b.children[i]);
+					children[i] = std::unique_ptr<node>(new node(*b.children[i]));
 				} else {
 					children[i] = NULL;
-				}
-			}
-		}
-
-
-		~node() {	
-			for (int i = 0; i < 4; i++) {
-				if (children[i] != NULL) {
-					delete children[i];
 				}
 			}
 		}
@@ -88,28 +76,58 @@ private :
 	typedef typename cont_t::iterator node_data_iterator;
 	double ratio;
 	unsigned int max_depth;
-	node root;
+	std::unique_ptr<node> root;
 public:
-	quad_tree(SkRect r=SkRect::MakeLTRB(0,0,0x7FFFFFFF,0x7FFFFFFF), int depth=8, double ratio = 0.55) : ratio(ratio), max_depth(depth), root(r) {
+	quad_tree(SkRect r=SkRect::MakeLTRB(0,0,0x7FFFFFFF,0x7FFFFFFF), int depth=8, double ratio = 0.55) : ratio(ratio), max_depth(depth),
+			root(new node(r)) {
+		
 	}
 
-	quad_tree(const quad_tree& ref) : ratio(ref.ratio), max_depth(ref.max_depth), root(ref.root) {}
+	quad_tree(const quad_tree& ref) : ratio(ref.ratio), max_depth(ref.max_depth), root(new node(*ref.root)) {
+		
+	}
+
+	quad_tree<T>& operator=(const quad_tree<T>& ref)
+	{
+		ratio = ref.ratio; 
+		max_depth = ref.max_depth;
+  		root = std::unique_ptr<node>(new node(*ref.root));
+  		return *this;
+	}
+
+	uint count() 
+	{
+		return size_node(root);
+	}
 
     void insert(T data, SkRect& box)
     {
         unsigned int depth=0;
-        do_insert_data(data, box, &root, depth);
+        do_insert_data(data, box, root, depth);
     }
 
     void query_in_box(SkRect& box, std::vector<T>& result)
     {
         result.clear();
-        query_node(box, result, &root);
+        query_node(box, result, root);
     }
 
 private:
 
-    void query_node(SkRect& box, std::vector<T> & result, node* node) const {
+	uint size_node(std::unique_ptr<node>& node) const 
+	{
+		int sz = node->data.size();
+		for (int k = 0; k < 4; ++k) {
+			if(node->children[k]) 
+			{
+				sz += size_node(node->children[k]);
+			}
+		}
+		return sz;
+	}
+
+    void query_node(SkRect& box, std::vector<T> & result, std::unique_ptr<node>& node) const 
+    {
 		if (node) {
 			if (SkRect::Intersects(box, node->bounds)) {
 				node_data_iterator i = node->data.begin();
@@ -126,7 +144,7 @@ private:
 	}
 
 
-    void do_insert_data(T data, SkRect& box, node * n, unsigned int& depth)
+    void do_insert_data(T data, SkRect& box, std::unique_ptr<node>&  n, unsigned int& depth)
     {
         if (++depth >= max_depth) {
 			n->data.push_back(data);
@@ -137,7 +155,7 @@ private:
 			for (int i = 0; i < 4; ++i) {
 				if (ext[i].contains(box)) {
 					if (!n->children[i]) {
-						n->children[i] = new node(ext[i]);
+						n->children[i] = std::unique_ptr<node>(new node(ext[i]));
 					}
 					do_insert_data(data, box, n->children[i], depth);
 					return;
@@ -165,6 +183,87 @@ private:
     }
 };
 
+typedef pair<std::string, std::string> tag_value;
+typedef pair<int, int> int_pair;
+typedef vector< pair<int, int> > coordinates;
+
+class MapDataObject
+{
+	static const unsigned int UNDEFINED_STRING = INT_MAX;
+public:
+
+	std::vector<tag_value>  types;
+	std::vector<tag_value>  additionalTypes;
+	coordinates points;
+	std::vector < coordinates > polygonInnerCoordinates;
+
+	UNORDERED(map)< std::string, unsigned int> stringIds;
+
+	UNORDERED(map)< std::string, std::string > objectNames;
+	std::vector< std::string > namesOrder;
+	bool area;
+	int64_t id;
+
+	//
+
+	bool cycle(){
+		return points[0] == points[points.size() -1];
+	}
+	bool containsAdditional(std::string key, std::string val) {
+		std::vector<tag_value>::iterator it = additionalTypes.begin();
+		bool valEmpty = (val == "");
+		while (it != additionalTypes.end()) {
+			if (it->first == key && (valEmpty || it->second == val)) {
+				return true;
+			}
+			it++;
+		}
+		return false;
+	}
+
+	bool contains(std::string key, std::string val) {
+		std::vector<tag_value>::iterator it = types.begin();
+		while (it != types.end()) {
+			if (it->first == key) {
+				return it->second == val;
+			}
+			it++;
+		}
+		return false;
+	}
+
+	int getSimpleLayer() {
+		std::vector<tag_value>::iterator it = additionalTypes.begin();
+		bool tunnel = false;
+		bool bridge = false;
+		while (it != additionalTypes.end()) {
+			if (it->first == "layer") {
+				if(it->second.length() > 0) {
+					if(it->second[0] == '-'){
+						return -1;
+					} else if (it->second[0] == '0'){
+						return 0;
+					} else {
+						return 1;
+					}
+				}
+			} else if (it->first == "tunnel") {
+				tunnel = "yes" == it->second;
+			} else if (it->first == "bridge") {
+				bridge = "yes" == it->second;
+			}
+			it++;
+		}
+		if (tunnel) {
+			return -1;
+		} else if (bridge) {
+			return 1;
+		}
+		return 0;
+	}
+};
+
+void deleteObjects(std::vector <MapDataObject* > & v);
 
 
 struct IconDrawInfo
@@ -176,6 +275,7 @@ struct IconDrawInfo
 	SkBitmap* bmp4;
 	SkBitmap* bmp5;
 	SkBitmap* shield;
+	MapDataObject object;
 	float x;
 	float y;
 	bool visible;
@@ -188,14 +288,15 @@ struct IconDrawInfo
 	float intersectionSizeFactor;
 	SkRect bbox;
 
-	IconDrawInfo();
+	IconDrawInfo(MapDataObject* mo);
 };
 
 struct TextDrawInfo {
-	TextDrawInfo(std::string);
+	TextDrawInfo(std::string, MapDataObject* mo);
 	~TextDrawInfo();
 
 	std::string text;
+	MapDataObject object;
 	SHARED_PTR<IconDrawInfo> icon;
 	bool visible;
 
@@ -303,7 +404,7 @@ public:
 			// textRendering, nativeOperations, oneWayPaints, reverseWayPaints
 			// tileDivisor, cosRotateTileSize, sinRotateTileSize,  calcX, calcY
 			// textToDraw, iconsToDraw,
-			// textIntersect(), iconsIntersect()
+			textIntersect(), iconsIntersect(),
 			shadowLevelMin(256), shadowLevelMax(0), polygonMinSizeToDisplay(0),
 			roadDensityZoomTile(0), roadsDensityLimitPerTile(0)
 			

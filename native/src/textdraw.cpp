@@ -599,7 +599,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon);
 		if (!intersects) {
 			if(rc->interrupted()){
-					return;
+				return;
 			}
 			textDrawInfo->visible = true;
 			if (textDrawInfo->drawOnPath && textDrawInfo->path != NULL) {
@@ -627,5 +627,5 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 			}
 		}
 	}
-	// FIXME rc->textIntersect = boundsIntersect;
+	rc->textIntersect = boundsIntersect;
 }

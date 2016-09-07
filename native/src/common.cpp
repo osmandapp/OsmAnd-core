@@ -18,7 +18,7 @@
 #endif
 
 
-RenderingContextResults::RenderingContextResults(RenderingContext* rc) :textIntersect(),iconsIntersect()
+RenderingContextResults::RenderingContextResults(RenderingContext* rc)
 {
 	this->zoom = rc->zoom;
 	this->density = rc->density;
@@ -28,11 +28,11 @@ RenderingContextResults::RenderingContextResults(RenderingContext* rc) :textInte
 	this->topY = rc->topY;
 	this->width = rc->width;
 	this->height = rc->height;
-	//this->textIntersect = rc->textIntersect;
-	// this->iconsIntersect = rc->iconsIntersect;
+	this->textIntersect = rc->textIntersect;
+	this->iconsIntersect = rc->iconsIntersect;
 }
 
-TextDrawInfo::TextDrawInfo(std::string itext)
+TextDrawInfo::TextDrawInfo(std::string itext, MapDataObject* mo)
 	: text(itext)
 	, icon(NULL)
 	, visible(false)
@@ -42,7 +42,19 @@ TextDrawInfo::TextDrawInfo(std::string itext)
 	, intersectionMargin(0)
 	, intersectionSizeFactor(1)
 {
+	object = *mo;
 }
+
+void deleteObjects(std::vector<MapDataObject* > & v)
+{
+	for(size_t i = 0; i< v.size(); i++)
+	{
+		delete v.at(i);
+	}
+	v.clear();
+}
+
+
 
 TextDrawInfo::~TextDrawInfo()
 {
@@ -50,11 +62,11 @@ TextDrawInfo::~TextDrawInfo()
 		delete path;
 }
 
-IconDrawInfo::IconDrawInfo()
+IconDrawInfo::IconDrawInfo(MapDataObject* obj)
 	: bmp_1(NULL), bmp(NULL), bmp2(NULL), bmp3(NULL), bmp4(NULL), bmp5(NULL), 
-	  shield(NULL), visible(false), intersectionMargin(0), intersectionSizeFactor(1), bbox()
+	  shield(NULL), visible(false), intersectionMargin(0), intersectionSizeFactor(1)
 {
-
+	object = *obj;
 }
 
 RenderingContext::~RenderingContext()

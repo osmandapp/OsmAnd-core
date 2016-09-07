@@ -14,7 +14,6 @@
 #include <map>
 #include <string>
 #include <stdint.h>
-#include "mapObjects.h"
 #include "multipolygons.h"
 #include "Common.h"
 #include "common2.h"
@@ -22,8 +21,6 @@
 #if defined(WIN32)
 #define close _close
 #endif
-
-#include "mapObjects.h"
 #include "renderRules.h"
 
 static const uint MAP_VERSION = 2;
