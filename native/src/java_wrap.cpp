@@ -742,7 +742,24 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 		ienv->DeleteLocalRef(ts);
 		ienv->DeleteLocalRef(vs);
 	}
-	
+	for(uint i = 0; i < robj->additionalTypes.size(); i++) 
+	{
+		jstring ts = ienv->NewStringUTF(robj->additionalTypes[i].first.c_str());
+		jstring vs = ienv->NewStringUTF(robj->additionalTypes[i].second.c_str());
+		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
+		ienv->DeleteLocalRef(ts);
+		ienv->DeleteLocalRef(vs);
+	}
+	UNORDERED(map)< std::string, std::string >::iterator it = robj->objectNames.begin();
+	for( ; it != robj->objectNames.end(); it++) 
+	{
+		jstring ts = ienv->NewStringUTF(it->first.c_str());
+		jstring vs = ienv->NewStringUTF(it->second.c_str());
+		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
+		ienv->DeleteLocalRef(ts);
+		ienv->DeleteLocalRef(vs);	
+	}
+		
 
 	ienv->CallObjectMethod(resobj, jmethod_RenderedObject_setNativeId, robj->id);
 
