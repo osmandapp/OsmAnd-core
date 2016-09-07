@@ -22,7 +22,7 @@ jclass jclassString;
 jclass jclassStringArray;
 jmethodID jmethod_Object_toString = NULL;
 
-jobject convertRenderedObjectToJava(JNIEnv* ienv, const MapDataObject& obj) ;
+jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox ) ;
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
@@ -441,6 +441,9 @@ jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
 jclass jclass_RenderedObject = NULL;	
 jmethodID jmethod_RenderedObject_putTag = NULL;
+jmethodID jmethod_RenderedObject_setNativeId = NULL;
+jmethodID jmethod_RenderedObject_setName = NULL;
+jmethodID jmethod_RenderedObject_setBbox = NULL;
 jmethodID jmethod_RenderedObject_init = NULL;
 
 jclass jclass_RoutingConfiguration = NULL;
@@ -596,6 +599,9 @@ void loadJniRenderingContext(JNIEnv* env)
 	jclass_RenderedObject = findGlobalClass(env, "net/osmand/NativeLibrary$RenderedObject");	
 	jmethod_RenderedObject_putTag = env->GetMethodID(jclass_RenderedObject,
 				"putTag", "(Ljava/lang/String;Ljava/lang/String;)V");
+	jmethod_RenderedObject_setNativeId = env->GetMethodID(jclass_RenderedObject, "setNativeId", "(J)V");
+	jmethod_RenderedObject_setName = env->GetMethodID(jclass_RenderedObject, "setName", "(Ljava/lang/String;)V");
+	jmethod_RenderedObject_setBbox = env->GetMethodID(jclass_RenderedObject, "setBbox", "(IIII)V");
 	jmethod_RenderedObject_init = env->GetMethodID(jclass_RenderedObject, "<init>", "()V");
 				
 
@@ -726,7 +732,7 @@ void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext*
 
 // ElapsedTimer routingTimer;
 
-jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj) {
+jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox ) {
 	jobject resobj = ienv->NewObject(jclass_RenderedObject, jmethod_RenderedObject_init);
 	for(uint i = 0; i < robj->types.size(); i++) 
 	{
@@ -736,6 +742,16 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj) {
 		ienv->DeleteLocalRef(ts);
 		ienv->DeleteLocalRef(vs);
 	}
+	
+
+	ienv->CallObjectMethod(resobj, jmethod_RenderedObject_setNativeId, robj->id);
+
+	jstring nm = ienv->NewStringUTF(name.c_str());
+	ienv->CallObjectMethod(resobj, jmethod_RenderedObject_setName, nm);
+	ienv->DeleteLocalRef(nm);
+
+	ienv->CallObjectMethod(resobj, jmethod_RenderedObject_setBbox, 
+		bbox.left(), bbox.top(), bbox.right(), bbox.bottom());
 	return resobj;
 }
 
@@ -1170,7 +1186,8 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRe
 		for (uint32_t i = 0; i < searchText.size(); i++) {
 			if (SkRect::Intersects(searchText[i]->bounds, bbox) && 
 					searchText[i]->visible && !searchText[i]->drawOnPath) {
-				jobject jo = convertRenderedObjectToJava(ienv, &searchText[i]->object);
+				jobject jo = convertRenderedObjectToJava(ienv, &searchText[i]->object, 
+					searchText[i]->text, searchText[i]->bounds);
 				collected.push_back(jo);
 				intersects = true;
 			}
@@ -1180,7 +1197,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRe
 		for (uint32_t i = 0; i < icons.size(); i++) {
 			if (SkRect::Intersects(icons[i]->bbox, bbox) && 
 					icons[i]->visible) {
-				jobject jo = convertRenderedObjectToJava(ienv, &icons[i]->object);
+				jobject jo = convertRenderedObjectToJava(ienv, &icons[i]->object, "", icons[i]->bbox);
 				collected.push_back(jo);
 				intersects = true;
 			}
