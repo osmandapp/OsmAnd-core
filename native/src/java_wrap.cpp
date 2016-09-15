@@ -441,6 +441,7 @@ jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
 jclass jclass_RenderedObject = NULL;	
 jmethodID jmethod_RenderedObject_putTag = NULL;
+jmethodID jmethod_RenderedObject_addLocation = NULL;
 jmethodID jmethod_RenderedObject_setNativeId = NULL;
 jmethodID jmethod_RenderedObject_setName = NULL;
 jmethodID jmethod_RenderedObject_setBbox = NULL;
@@ -599,6 +600,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jclass_RenderedObject = findGlobalClass(env, "net/osmand/NativeLibrary$RenderedObject");	
 	jmethod_RenderedObject_putTag = env->GetMethodID(jclass_RenderedObject,
 				"putTag", "(Ljava/lang/String;Ljava/lang/String;)V");
+	jmethod_RenderedObject_addLocation = env->GetMethodID(jclass_RenderedObject, "addLocation", "(II)V");
 	jmethod_RenderedObject_setNativeId = env->GetMethodID(jclass_RenderedObject, "setNativeId", "(J)V");
 	jmethod_RenderedObject_setName = env->GetMethodID(jclass_RenderedObject, "setName", "(Ljava/lang/String;)V");
 	jmethod_RenderedObject_setBbox = env->GetMethodID(jclass_RenderedObject, "setBbox", "(IIII)V");
@@ -758,6 +760,11 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
 		ienv->DeleteLocalRef(ts);
 		ienv->DeleteLocalRef(vs);	
+	}
+	for(uint i = 0; i < robj->points.size(); i++) 
+	{
+		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_addLocation, 
+			robj->points[i].first, robj->points[i].second);
 	}
 		
 
