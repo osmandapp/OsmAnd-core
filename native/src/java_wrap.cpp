@@ -740,7 +740,7 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 	{
 		jstring ts = ienv->NewStringUTF(robj->types[i].first.c_str());
 		jstring vs = ienv->NewStringUTF(robj->types[i].second.c_str());
-		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
+		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
 		ienv->DeleteLocalRef(ts);
 		ienv->DeleteLocalRef(vs);
 	}
@@ -748,7 +748,7 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 	{
 		jstring ts = ienv->NewStringUTF(robj->additionalTypes[i].first.c_str());
 		jstring vs = ienv->NewStringUTF(robj->additionalTypes[i].second.c_str());
-		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
+		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
 		ienv->DeleteLocalRef(ts);
 		ienv->DeleteLocalRef(vs);
 	}
@@ -757,24 +757,24 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 	{
 		jstring ts = ienv->NewStringUTF(it->first.c_str());
 		jstring vs = ienv->NewStringUTF(it->second.c_str());
-		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
+		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_putTag, ts, vs);
 		ienv->DeleteLocalRef(ts);
 		ienv->DeleteLocalRef(vs);	
 	}
 	for(uint i = 0; i < robj->points.size(); i++) 
 	{
-		ienv->CallObjectMethod(resobj, jmethod_RenderedObject_addLocation, 
+		ienv->CallVoidMethod(resobj, jmethod_RenderedObject_addLocation, 
 			robj->points[i].first, robj->points[i].second);
 	}
 		
 
-	ienv->CallObjectMethod(resobj, jmethod_RenderedObject_setNativeId, robj->id);
+	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setNativeId, robj->id);
 
 	jstring nm = ienv->NewStringUTF(name.c_str());
-	ienv->CallObjectMethod(resobj, jmethod_RenderedObject_setName, nm);
+	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setName, nm);
 	ienv->DeleteLocalRef(nm);
 
-	ienv->CallObjectMethod(resobj, jmethod_RenderedObject_setBbox, 
+	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setBbox, 
 		(jint)bbox.left(), (jint)bbox.top(), (jint)bbox.right(), (jint)bbox.bottom());
 	return resobj;
 }
