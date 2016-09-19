@@ -270,6 +270,7 @@ struct IconDrawInfo
 {
 	SkBitmap* bmp_1;
 	SkBitmap* bmp;
+	std::string bmpId;
 	SkBitmap* bmp2;
 	SkBitmap* bmp3;
 	SkBitmap* bmp4;

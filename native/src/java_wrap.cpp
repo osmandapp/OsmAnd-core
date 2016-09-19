@@ -441,6 +441,7 @@ jfieldID jfield_RouteCalculationProgress_loadedTiles = NULL;
 
 jclass jclass_RenderedObject = NULL;	
 jmethodID jmethod_RenderedObject_putTag = NULL;
+jmethodID jmethod_RenderedObject_setIconRes = NULL;
 jmethodID jmethod_RenderedObject_addLocation = NULL;
 jmethodID jmethod_RenderedObject_setNativeId = NULL;
 jmethodID jmethod_RenderedObject_setName = NULL;
@@ -600,6 +601,8 @@ void loadJniRenderingContext(JNIEnv* env)
 	jclass_RenderedObject = findGlobalClass(env, "net/osmand/NativeLibrary$RenderedObject");	
 	jmethod_RenderedObject_putTag = env->GetMethodID(jclass_RenderedObject,
 				"putTag", "(Ljava/lang/String;Ljava/lang/String;)V");
+	jmethod_RenderedObject_setIconRes = env->GetMethodID(jclass_RenderedObject,
+				"setIconRes", "(Ljava/lang/String;)V");
 	jmethod_RenderedObject_addLocation = env->GetMethodID(jclass_RenderedObject, "addLocation", "(II)V");
 	jmethod_RenderedObject_setNativeId = env->GetMethodID(jclass_RenderedObject, "setNativeId", "(J)V");
 	jmethod_RenderedObject_setName = env->GetMethodID(jclass_RenderedObject, "setName", "(Ljava/lang/String;)V");
@@ -1222,6 +1225,12 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRe
 			if (SkRect::Intersects(icons[i]->bbox, bbox) && 
 					icons[i]->visible) {
 				jobject jo = convertRenderedObjectToJava(ienv, &icons[i]->object, "", icons[i]->bbox);
+				
+				jstring nm = ienv->NewStringUTF(icons[i]->bmpId.c_str());
+				ienv->CallVoidMethod(jo, jmethod_RenderedObject_setIconRes, nm);
+				ienv->DeleteLocalRef(nm);
+				
+
 				collected.push_back(jo);
 				intersects = true;
 			}

@@ -815,6 +815,7 @@ void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* c
 		ico->y = py;
 		ico->bmp_1 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON_1));	
 		ico->bmp = bmp;
+		ico->bmpId = resId;
 		ico->bmp2 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON2));	
 		ico->bmp3 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON3));	
 		ico->bmp4 = getCachedBitmap(rc, req->getStringPropertyValue(req-> props()-> R_ICON4));	
