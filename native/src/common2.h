@@ -335,6 +335,7 @@ struct RenderingContext
 private :
 	// parameters
 	std::string preferredLocale;
+	bool transliterate;
 	float density;
 	float screenDensityRatio;
 	float textScale;
@@ -397,7 +398,7 @@ public :
 	int roadsDensityLimitPerTile;
 
 public:
-	RenderingContext() : preferredLocale(""), density(1), screenDensityRatio(1),
+	RenderingContext() : preferredLocale(""), transliterate(false), density(1), screenDensityRatio(1),
 			textScale(1), //leftX, topY, width, height
 			defaultColor(0xfff1eee8), zoom(15), rotate(0),
 			shadowRenderingMode(2), shadowRenderingColor(0xff969696), noHighwayOnewayArrows(0),// defaultIconsDir
@@ -540,6 +541,15 @@ public:
 	std::string getPreferredLocale(){
 		return this->preferredLocale;
 	}
+
+	void setTransliterate(bool pref){
+		this->transliterate = pref;		
+	}
+
+	bool getTransliterate(){
+		return this->transliterate;
+	}
+
 	friend struct RenderingContextResults;
 
 };

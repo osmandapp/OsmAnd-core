@@ -505,6 +505,8 @@ jfieldID jfield_RenderingContext_zoom = NULL;
 jfieldID jfield_RenderingContext_tileDivisor = NULL;
 jfieldID jfield_RenderingContext_rotate = NULL;
 jfieldID jfield_RenderingContext_preferredLocale = NULL;
+jfieldID jfield_RenderingContext_transliterate = NULL;
+
 jfieldID jfield_RenderingContext_pointCount = NULL;
 jfieldID jfield_RenderingContext_pointInsideCount = NULL;
 jfieldID jfield_RenderingContext_renderingContextHandle = NULL;
@@ -659,6 +661,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_RenderingContext_tileDivisor = getFid(env,  jclass_RenderingContext, "tileDivisor", "D" );
 	jfield_RenderingContext_rotate = getFid(env,  jclass_RenderingContext, "rotate", "F" );
 	jfield_RenderingContext_preferredLocale = getFid(env,  jclass_RenderingContext, "preferredLocale", "Ljava/lang/String;" );
+	jfield_RenderingContext_transliterate = getFid(env,  jclass_RenderingContext, "transliterate", "Z" );
 	jfield_RenderingContext_pointCount = getFid(env,  jclass_RenderingContext, "pointCount", "I" );
 	jfield_RenderingContext_renderingContextHandle = getFid(env,  jclass_RenderingContext, "renderingContextHandle", "J" );
 	jfield_RenderingContext_pointInsideCount = getFid(env,  jclass_RenderingContext, "pointInsideCount", "I" );
@@ -729,7 +732,10 @@ void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext*
 	rc->setScreenDensityRatio(env->GetFloatField( jrc, jfield_RenderingContext_screenDensityRatio ));
 	
 	jstring jpref = (jstring) env->GetObjectField(jrc, jfield_RenderingContext_preferredLocale);
+	jboolean transliterate = (jboolean) env->GetBooleanField(jrc, jfield_RenderingContext_transliterate);
+	
 	rc->setPreferredLocale(getString(env, jpref));
+	rc->setTransliterate(transliterate);
 	env->DeleteLocalRef(jpref);
 	rc->javaRenderingContext = jrc;
 }
@@ -1360,7 +1366,7 @@ SkBitmap* JNIRenderingContext::getCachedBitmap(const std::string& bitmapResource
 }
 
 std::string JNIRenderingContext::getTranslatedString(const std::string& name) {
-	if (this->getPreferredLocale() == "en") {
+	if (this->getPreferredLocale() == "en" || this->getTransliterate()) {
 		jstring n = this->env->NewStringUTF(name.c_str());
 		jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_JUnidecode, jmethod_JUnidecode_unidecode, n);
 		std::string res = getString(this->env, translate);
