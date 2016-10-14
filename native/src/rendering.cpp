@@ -256,6 +256,7 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 		bool nameTag = (*it).find("name") == 0;
 		std::string tagName = nameTag ? "" : (*it);
 		std::string name = obj->objectNames[*it];
+		bool missingName = rc->getPreferredLocale() != "";
 		it++;
 		if(nameTag) {
 			if(nameScanned) {
@@ -266,12 +267,15 @@ void renderText(MapDataObject* obj, RenderingRuleSearchRequest* req, RenderingCo
 				std::string sname  = obj->objectNames["name:"+rc->getPreferredLocale()];
 				if (sname.length() > 0) {
 					name = sname;
+					missingName = false;
 				}
 			}
 			nameScanned = true;				
 		}
-		if (name.length() > 0) {						
-			name = rc->getTranslatedString(name);
+		if (name.length() > 0) {
+			if(missingName) {						
+				name = rc->getTranslatedString(name);
+			}
 			name = rc->getReshapedString(name);
 			req->setInitialTagValueZoom(tag, value, rc->getZoom(), obj);
 			req->setIntFilter(req->props()->R_TEXT_LENGTH, name.length());			
