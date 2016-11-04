@@ -1218,7 +1218,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRe
 		bool intersects = false;
 		for (uint32_t i = 0; i < searchText.size(); i++) {
 			if (SkRect::Intersects(searchText[i]->bounds, bbox) && 
-					searchText[i]->visible && !searchText[i]->drawOnPath) {
+					searchText[i]->visible && !searchText[i]->drawOnPath && !searchText[i]->path) {
 				jobject jo = convertRenderedObjectToJava(ienv, &searchText[i]->object, 
 					searchText[i]->text, searchText[i]->bounds);
 				collected.push_back(jo);
