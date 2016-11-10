@@ -7,6 +7,7 @@
 
 const int RouteAttributeExpression::LESS_EXPRESSION = 1;
 const int RouteAttributeExpression::GREAT_EXPRESSION = 2;
+const int RouteAttributeExpression::EQUAL_EXPRESSION = 3;
 
 
 float parseFloat(MAP_STR_STR attributes, string key, float def) {
@@ -404,6 +405,8 @@ bool RouteAttributeExpression::matches(dynbitset& types, ParameterContext& param
 		return f1 <= f2;
 	} else if (expressionType == GREAT_EXPRESSION) {
 		return f1 >= f2;
+	} else if (expressionType == EQUAL_EXPRESSION) {
+		return f1 == f2;
 	}
 	return false;
 }
