@@ -64,6 +64,7 @@ struct ParameterContext {
 struct RouteAttributeExpression {
 	static const int LESS_EXPRESSION;
 	static const int GREAT_EXPRESSION;
+	static const int EQUAL_EXPRESSION ;
 		
 	vector<string> values;
 	int expressionType;
