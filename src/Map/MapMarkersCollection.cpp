@@ -31,16 +31,6 @@ void OsmAnd::MapMarkersCollection::removeAllMarkers()
     _p->removeAllMarkers();
 }
 
-OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMinZoom() const
-{
-    return minZoom;
-}
-
-OsmAnd::ZoomLevel OsmAnd::MapMarkersCollection::getMaxZoom() const
-{
-    return maxZoom;
-}
-
 QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::MapMarkersCollection::getProvidedDataKeys() const
 {
     return _p->getProvidedDataKeys();
