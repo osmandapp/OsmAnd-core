@@ -251,8 +251,9 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IOnlineTileSources::Source)
 	%shared_ptr(OsmAnd::OnlineTileSources)
 	%shared_ptr(OsmAnd::OnlineRasterMapLayerProvider)
-    %shared_ptr(OsmAnd::MapMarkersCollection)
-    %shared_ptr(OsmAnd::MapMarker)
+	%shared_ptr(OsmAnd::MapMarker)
+	%shared_ptr(OsmAnd::MapMarker::SymbolsGroup)
+	%shared_ptr(OsmAnd::MapMarkersCollection)
 %include <std_pair.i>
 %include <std_string.i>
 #ifdef SWIG_JAVA
