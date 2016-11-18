@@ -44,6 +44,7 @@ namespace OsmAnd
             Bottom = 2u << 2,
 
             Center = CenterHorizontal | CenterVertical,
+            CenterTop = CenterHorizontal | Top,
         };
 
         class SymbolsGroup
