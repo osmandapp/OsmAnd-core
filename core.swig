@@ -91,6 +91,7 @@
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
+#include <OsmAndCore/Map/MapMarker_P.h>
 #include <OsmAndCore/Map/MapMarker.h>
 #include <OsmAndCore/Map/MapMarkersCollection.h>
 #include <OsmAndCore/Map/MapMarkerBuilder.h>
@@ -126,7 +127,6 @@ using namespace OsmAnd;
 	%pointer_class(unsigned int, UIntPtr);
 	%pointer_class(float, FloatPtr);
 	%pointer_class(double, DoublePtr);
-%include <std_weak_ptr.i>
 %include <std_shared_ptr.i>
 	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::IObfsCollection)
