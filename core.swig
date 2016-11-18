@@ -86,6 +86,9 @@
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+#include <OsmAndCore/Map/MapMarkersCollection.h>
+#include <OsmAndCore/Map/MapMarker.h>
+#include <OsmAndCore/Map/MapMarkerBuilder.h>
 #include <OsmAndCore/IRoadLocator.h>
 #include <OsmAndCore/RoadLocator.h>
 #include <OsmAndCore/IQueryController.h>
@@ -243,6 +246,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::IOnlineTileSources::Source)
 	%shared_ptr(OsmAnd::OnlineTileSources)
 	%shared_ptr(OsmAnd::OnlineRasterMapLayerProvider)
+    %shared_ptr(OsmAnd::MapMarkersCollection)
+    %shared_ptr(OsmAnd::MapMarker)
 %include <std_pair.i>
 %include <std_string.i>
 #ifdef SWIG_JAVA
@@ -382,6 +387,9 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IOnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+%include <OsmAndCore/Map/MapMarkersCollection.h>
+%include <OsmAndCore/Map/MapMarker.h>
+%include <OsmAndCore/Map/MapMarkerBuilder.h>
 %include <OsmAndCore/IRoadLocator.h>
 %include <OsmAndCore/RoadLocator.h>
 %include <OsmAndCore/IQueryController.h>
