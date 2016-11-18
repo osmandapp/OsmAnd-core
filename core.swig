@@ -86,6 +86,7 @@
 #include <OsmAndCore/Map/IOnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+#include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapMarkersCollection.h>
 #include <OsmAndCore/Map/MapMarker.h>
 #include <OsmAndCore/Map/MapMarkerBuilder.h>
@@ -387,6 +388,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/IOnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
+%include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 %include <OsmAndCore/Map/MapMarkersCollection.h>
 %include <OsmAndCore/Map/MapMarker.h>
 %include <OsmAndCore/Map/MapMarkerBuilder.h>
