@@ -33,18 +33,17 @@ namespace OsmAnd
         typedef const void* OnSurfaceIconKey;
         enum PinIconAlignment : unsigned int
         {
-            XAxisMask = 0x3,
-            Left = 0u << 0,
-            CenterHorizontal = 1u << 0,
-            Right = 2u << 0,
+            XAxisMask = 3,
+            Left = 0,
+            CenterHorizontal = 1,
+            Right = 2,
 
-            YAxisMask = 0xC,
-            Top = 0u << 2,
-            CenterVertical = 1u << 2,
-            Bottom = 2u << 2,
+            YAxisMask = 12,
+            Top = 0,
+            CenterVertical = 4,
+            Bottom = 8,
 
-            Center = CenterHorizontal | CenterVertical,
-            CenterTop = CenterHorizontal | Top,
+            Center = 5,
         };
 
         class SymbolsGroup
