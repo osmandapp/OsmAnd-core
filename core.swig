@@ -49,6 +49,10 @@
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/IOnSurfaceMapSymbol.h>
+#include <OsmAndCore/Map/RasterMapSymbol.h>
+#include <OsmAndCore/Map/OnSurfaceRasterMapSymbol.h>
+#include <OsmAndCore/Map/OnSurfaceVectorMapSymbol.h>
 #include <OsmAndCore/Map/SymbolRasterizer.h>
 #include <OsmAndCore/Map/IMapStylesCollection.h>
 #include <OsmAndCore/Map/UnresolvedMapStyle.h>
@@ -87,8 +91,8 @@
 #include <OsmAndCore/Map/OnlineTileSources.h>
 #include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
-#include <OsmAndCore/Map/MapMarkersCollection.h>
 #include <OsmAndCore/Map/MapMarker.h>
+#include <OsmAndCore/Map/MapMarkersCollection.h>
 #include <OsmAndCore/Map/MapMarkerBuilder.h>
 #include <OsmAndCore/IRoadLocator.h>
 #include <OsmAndCore/RoadLocator.h>
@@ -389,8 +393,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/OnlineTileSources.h>
 %include <OsmAndCore/Map/OnlineRasterMapLayerProvider.h>
 %include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
-%include <OsmAndCore/Map/MapMarkersCollection.h>
 %include <OsmAndCore/Map/MapMarker.h>
+%include <OsmAndCore/Map/MapMarkersCollection.h>
 %include <OsmAndCore/Map/MapMarkerBuilder.h>
 %include <OsmAndCore/IRoadLocator.h>
 %include <OsmAndCore/RoadLocator.h>
