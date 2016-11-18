@@ -126,6 +126,7 @@ using namespace OsmAnd;
 	%pointer_class(unsigned int, UIntPtr);
 	%pointer_class(float, FloatPtr);
 	%pointer_class(double, DoublePtr);
+%include <std_weak_ptr.i>
 %include <std_shared_ptr.i>
 	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::IObfsCollection)
