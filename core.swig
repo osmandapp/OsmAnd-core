@@ -49,6 +49,7 @@
 #include <OsmAndCore/Map/MapCommonTypes.h>
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/MapSymbol.h>
+#include <OsmAndCore/Map/IBillboardMapSymbol.h>
 #include <OsmAndCore/Map/IOnSurfaceMapSymbol.h>
 #include <OsmAndCore/Map/RasterMapSymbol.h>
 #include <OsmAndCore/Map/OnSurfaceRasterMapSymbol.h>
@@ -79,6 +80,7 @@
 #include <OsmAndCore/Map/ImageMapLayerProvider.h>
 #include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 #include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
+#include <OsmAndCore/Map/AmenitySymbolsProvider.h>
 #include <OsmAndCore/Map/MapPrimitiviser.h>
 #include <OsmAndCore/Map/IMapObjectsProvider.h>
 #include <OsmAndCore/Map/MapObjectsProvider.h>
@@ -127,6 +129,7 @@ using namespace OsmAnd;
 	%pointer_class(float, FloatPtr);
 	%pointer_class(double, DoublePtr);
 %include <std_shared_ptr.i>
+    %shared_ptr(OsmAnd::IBillboardMapSymbol)
 	%shared_ptr(OsmAnd::ObfInfo)
 	%shared_ptr(OsmAnd::IObfsCollection)
 	%shared_ptr(OsmAnd::ObfsCollection)
@@ -228,6 +231,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::ImageMapLayerProvider)
 	%shared_ptr(OsmAnd::IMapTiledSymbolsProvider)
 	%shared_ptr(OsmAnd::IMapKeyedSymbolsProvider)
+    %shared_ptr(OsmAnd::AmenitySymbolsProvider)
+    %shared_ptr(OsmAnd::AmenitySymbolsProvider::AmenitySymbolsGroup)
 	%shared_ptr(OsmAnd::MapPrimitiviser)
 	%shared_ptr(OsmAnd::MapPrimitiviser::CoastlineMapObject)
 	%shared_ptr(OsmAnd::MapPrimitiviser::SurfaceMapObject)
@@ -383,6 +388,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/ImageMapLayerProvider.h>
 %include <OsmAndCore/Map/IMapTiledSymbolsProvider.h>
 %include <OsmAndCore/Map/IMapKeyedSymbolsProvider.h>
+%include <OsmAndCore/Map/AmenitySymbolsProvider.h>
 %include <OsmAndCore/Map/MapPrimitiviser.h>
 %include <OsmAndCore/Map/IMapObjectsProvider.h>
 %include <OsmAndCore/Map/ObfMapObjectsProvider.h>
