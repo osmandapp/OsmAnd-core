@@ -22,6 +22,18 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setIsHidden(const bool hidde
     return *this;
 }
 
+int OsmAnd::MapMarkerBuilder::getMarkerId() const
+{
+    return _p->getMarkerId();
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setMarkerId(const int markerId)
+{
+    _p->setMarkerId(markerId);
+    
+    return *this;
+}
+
 int OsmAnd::MapMarkerBuilder::getBaseOrder() const
 {
     return _p->getBaseOrder();

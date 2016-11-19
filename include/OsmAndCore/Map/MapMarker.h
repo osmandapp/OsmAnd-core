@@ -70,6 +70,7 @@ namespace OsmAnd
         PrivateImplementation<MapMarker_P> _p;
     protected:
         MapMarker(
+            const int markerId,
             const int baseOrder,
             const std::shared_ptr<const SkBitmap>& pinIcon,
             const PinIconVerticalAlignment pinIconVerticalAlignment,
@@ -82,6 +83,7 @@ namespace OsmAnd
     public:
         virtual ~MapMarker();
 
+        const int markerId;
         const int baseOrder;
         const std::shared_ptr<const SkBitmap> pinIcon;
         const PinIconVerticalAlignment pinIconVerticalAlignment;

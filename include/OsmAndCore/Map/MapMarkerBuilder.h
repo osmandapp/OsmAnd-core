@@ -36,6 +36,9 @@ namespace OsmAnd
         bool isHidden() const;
         MapMarkerBuilder& setIsHidden(const bool hidden);
 
+        int getMarkerId() const;
+        MapMarkerBuilder& setMarkerId(const int markerId);
+
         int getBaseOrder() const;
         MapMarkerBuilder& setBaseOrder(const int baseOrder);
 

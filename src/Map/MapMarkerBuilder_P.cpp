@@ -11,6 +11,7 @@
 
 OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     : _isHidden(false)
+    , _markerId(0)
     , _baseOrder(std::numeric_limits<int>::min())
     , _isAccuracyCircleSupported(false)
     , _isAccuracyCircleVisible(false)
@@ -38,6 +39,20 @@ void OsmAnd::MapMarkerBuilder_P::setIsHidden(const bool hidden)
     QWriteLocker scopedLocker(&_lock);
 
     _isHidden = hidden;
+}
+
+int OsmAnd::MapMarkerBuilder_P::getMarkerId() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _markerId;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setMarkerId(const int markerId)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _markerId = markerId;
 }
 
 int OsmAnd::MapMarkerBuilder_P::getBaseOrder() const
@@ -218,6 +233,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
 
     // Construct map symbols group for this marker
     const std::shared_ptr<MapMarker> marker(new MapMarker(
+        _markerId,
         _baseOrder,
         _pinIcon,
         _pinIconVerticalAlignment,

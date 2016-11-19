@@ -2,6 +2,7 @@
 #include "MapMarker_P.h"
 
 OsmAnd::MapMarker::MapMarker(
+    const int markerId_,
     const int baseOrder_,
     const std::shared_ptr<const SkBitmap>& pinIcon_,
     const PinIconVerticalAlignment pinIconVerticalAlignment_,
@@ -10,6 +11,7 @@ OsmAnd::MapMarker::MapMarker(
     const bool isAccuracyCircleSupported_,
     const FColorRGB accuracyCircleBaseColor_)
     : _p(new MapMarker_P(this))
+    , markerId(markerId_)
     , baseOrder(baseOrder_)
     , pinIcon(pinIcon_)
     , pinIconVerticalAlignment(pinIconVerticalAlignment_)
