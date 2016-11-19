@@ -461,7 +461,7 @@ $action
     }
 };
 
-%exception OsmAnd::IBillboardMapSymbol::dynamic_pointer_cast(std::shared_ptr<const OsmAnd::MapSymbol> mapSymbol) {
+%exception OsmAnd::IBillboardMapSymbol::dynamic_pointer_cast(shared_ptr<const OsmAnd::MapSymbol> mapSymbol) {
 $action
     if (!result) {
         jclass excep = jenv->FindClass("java/lang/ClassCastException");
@@ -470,13 +470,13 @@ $action
         }
     }
 }
-%extend std::shared_ptr<OsmAnd::IBillboardMapSymbol> {
-    static std::shared_ptr<OsmAnd::IBillboardMapSymbol> dynamic_pointer_cast(std::shared_ptr<const OsmAnd::MapSymbol> mapSymbol) {
+%extend OsmAnd::IBillboardMapSymbol {
+    static shared_ptr<OsmAnd::IBillboardMapSymbol> dynamic_pointer_cast(shared_ptr<const OsmAnd::MapSymbol> mapSymbol) {
         return dynamic_pointer_cast<const OsmAnd::IBillboardMapSymbol>(mapSymbol);
     }
 };
 
-%exception OsmAnd::ObfMapObject::dynamic_pointer_cast(std::shared_ptr<const OsmAnd::MapObject> mapObject) {
+%exception OsmAnd::ObfMapObject::dynamic_pointer_cast(shared_ptr<const OsmAnd::MapObject> mapObject) {
 $action
     if (!result) {
         jclass excep = jenv->FindClass("java/lang/ClassCastException");
@@ -485,8 +485,8 @@ $action
         }
     }
 }
-%extend std::shared_ptr<OsmAnd::ObfMapObject> {
-    static std::shared_ptr<OsmAnd::ObfMapObject> dynamic_pointer_cast(std::shared_ptr<const OsmAnd::MapObject> mapObject) {
+%extend OsmAnd::ObfMapObject {
+    static shared_ptr<OsmAnd::ObfMapObject> dynamic_pointer_cast(shared_ptr<const OsmAnd::MapObject> mapObject) {
         return dynamic_pointer_cast<const OsmAnd::ObfMapObject>(mapObject);
     }
 };
