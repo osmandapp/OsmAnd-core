@@ -32,15 +32,18 @@ namespace OsmAnd
         FavoriteLocationsPresenter(
             const std::shared_ptr<const IFavoriteLocationsCollection>& collection,
             const std::shared_ptr<const SkBitmap>& favoriteLocationPinIconBitmap = nullptr,
-            const Nullable<MapMarker::PinIconAlignment> favoriteLocationPinIconAlignment = Nullable<MapMarker::PinIconAlignment>());
+            const Nullable<MapMarker::PinIconVerticalAlignment> favoriteLocationPinIconVerticalAlignment = Nullable<MapMarker::PinIconVerticalAlignment>(),
+            const Nullable<MapMarker::PinIconHorisontalAlignment> favoriteLocationPinIconHorisontalAlignment = Nullable<MapMarker::PinIconHorisontalAlignment>());
         virtual ~FavoriteLocationsPresenter();
 
         const std::shared_ptr<const IFavoriteLocationsCollection> collection;
         const std::shared_ptr<const SkBitmap> favoriteLocationPinIconBitmap;
-        const Nullable<MapMarker::PinIconAlignment> favoriteLocationPinIconAlignment;
+        const Nullable<MapMarker::PinIconVerticalAlignment> favoriteLocationPinIconVerticalAlignment;
+        const Nullable<MapMarker::PinIconHorisontalAlignment> favoriteLocationPinIconHorisontalAlignment;
 
         static std::shared_ptr<const SkBitmap> getDefaultFavoriteLocationPinIconBitmap();
-        static MapMarker::PinIconAlignment getDefaultFavoriteLocationPinIconAlignment();
+        static MapMarker::PinIconVerticalAlignment getDefaultFavoriteLocationPinIconVerticalAlignment();
+        static MapMarker::PinIconHorisontalAlignment getDefaultFavoriteLocationPinIconHorisontalAlignment();
 
         virtual QList<IMapKeyedSymbolsProvider::Key> getProvidedDataKeys() const;
 

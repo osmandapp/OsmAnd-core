@@ -258,31 +258,29 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
             pinIcon->getPixels());
         pinIconSymbol->languageId = LanguageId::Invariant;
         pinIconSymbol->position31 = _position;
-        const auto xAxisAlignment = owner->pinIconAlignment & PinIconAlignment::XAxisMask;
-        const auto yAxisAlignment = owner->pinIconAlignment & PinIconAlignment::YAxisMask;
         PointI offset;
-        switch (xAxisAlignment)
+        switch (owner->pinIconHorisontalAlignment)
         {
-            case PinIconAlignment::Left:
+            case PinIconHorisontalAlignment::Left:
                 offset.x = -pinIcon->width() / 2;
                 break;
-            case PinIconAlignment::Right:
+            case PinIconHorisontalAlignment::Right:
                 offset.x = pinIcon->width() / 2;
                 break;
-            case PinIconAlignment::CenterHorizontal:
+            case PinIconHorisontalAlignment::CenterHorizontal:
             default:
                 offset.x = 0;
                 break;
         }
-        switch (yAxisAlignment)
+        switch (owner->pinIconVerticalAlignment)
         {
-            case PinIconAlignment::Top:
+            case PinIconVerticalAlignment::Top:
                 offset.y = -pinIcon->height() / 2;
                 break;
-            case PinIconAlignment::Bottom:
+            case PinIconVerticalAlignment::Bottom:
                 offset.y = pinIcon->height() / 2;
                 break;
-            case PinIconAlignment::CenterVertical:
+            case PinIconVerticalAlignment::CenterVertical:
             default:
                 offset.y = 0;
                 break;

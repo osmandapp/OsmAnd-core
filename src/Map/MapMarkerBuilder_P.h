@@ -45,7 +45,8 @@ namespace OsmAnd
         float _direction;
 
         std::shared_ptr<const SkBitmap> _pinIcon;
-        MapMarker::PinIconAlignment _pinIconAlignment;
+        MapMarker::PinIconVerticalAlignment _pinIconVerticalAlignment;
+        MapMarker::PinIconHorisontalAlignment _pinIconHorisontalAlignment;
         ColorARGB _pinIconModulationColor;
 
         QHash< MapMarker::OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > _onMapSurfaceIcons;
@@ -75,8 +76,10 @@ namespace OsmAnd
         std::shared_ptr<const SkBitmap> getPinIcon() const;
         void setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
 
-        MapMarker::PinIconAlignment getPinIconAlignment() const;
-        void setPinIconAlignment(const MapMarker::PinIconAlignment value);
+        MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
+        MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
+        void setPinIconVerticalAlignment(const MapMarker::PinIconVerticalAlignment value);
+        void setPinIconHorisontalAlignment(const MapMarker::PinIconHorisontalAlignment value);
 
         ColorARGB getPinIconModulationColor() const;
         void setPinIconModulationColor(const ColorARGB colorValue);

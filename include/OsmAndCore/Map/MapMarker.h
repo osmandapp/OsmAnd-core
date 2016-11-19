@@ -31,19 +31,19 @@ namespace OsmAnd
 
     public:
         typedef const void* OnSurfaceIconKey;
-        enum PinIconAlignment : unsigned int
+
+        enum PinIconVerticalAlignment : unsigned int
         {
-            XAxisMask = 3,
+            Top = 0,
+            CenterVertical = 1,
+            Bottom = 2,
+        };
+
+        enum PinIconHorisontalAlignment : unsigned int
+        {
             Left = 0,
             CenterHorizontal = 1,
             Right = 2,
-
-            YAxisMask = 12,
-            Top = 0,
-            CenterVertical = 4,
-            Bottom = 8,
-
-            Center = 5,
         };
 
         class SymbolsGroup
@@ -72,7 +72,8 @@ namespace OsmAnd
         MapMarker(
             const int baseOrder,
             const std::shared_ptr<const SkBitmap>& pinIcon,
-            const PinIconAlignment pinIconAlignment,
+            const PinIconVerticalAlignment pinIconVerticalAlignment,
+            const PinIconHorisontalAlignment pinIconHorisontalAlignment,
             const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons,
             const bool isAccuracyCircleSupported,
             const FColorRGB accuracyCircleBaseColor);
@@ -83,7 +84,8 @@ namespace OsmAnd
 
         const int baseOrder;
         const std::shared_ptr<const SkBitmap> pinIcon;
-        const PinIconAlignment pinIconAlignment;
+        const PinIconVerticalAlignment pinIconVerticalAlignment;
+        const PinIconHorisontalAlignment pinIconHorisontalAlignment;
         const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> > onMapSurfaceIcons;
         const bool isAccuracyCircleSupported;
         const FColorRGB accuracyCircleBaseColor;

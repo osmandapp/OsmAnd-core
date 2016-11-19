@@ -29,7 +29,8 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(MapMarker_P);
 
     public:
-        typedef MapMarker::PinIconAlignment PinIconAlignment;
+        typedef MapMarker::PinIconVerticalAlignment PinIconVerticalAlignment;
+        typedef MapMarker::PinIconHorisontalAlignment PinIconHorisontalAlignment;
 
     private:
     protected:

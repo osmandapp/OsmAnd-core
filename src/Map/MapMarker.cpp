@@ -4,14 +4,16 @@
 OsmAnd::MapMarker::MapMarker(
     const int baseOrder_,
     const std::shared_ptr<const SkBitmap>& pinIcon_,
-    const PinIconAlignment pinIconAlignment_,
+    const PinIconVerticalAlignment pinIconVerticalAlignment_,
+    const PinIconHorisontalAlignment pinIconHorisontalAlignment_,
     const QHash< OnSurfaceIconKey, std::shared_ptr<const SkBitmap> >& onMapSurfaceIcons_,
     const bool isAccuracyCircleSupported_,
     const FColorRGB accuracyCircleBaseColor_)
     : _p(new MapMarker_P(this))
     , baseOrder(baseOrder_)
     , pinIcon(pinIcon_)
-    , pinIconAlignment(pinIconAlignment_)
+    , pinIconVerticalAlignment(pinIconVerticalAlignment_)
+    , pinIconHorisontalAlignment(pinIconHorisontalAlignment_)
     , onMapSurfaceIcons(onMapSurfaceIcons_)
     , isAccuracyCircleSupported(isAccuracyCircleSupported_)
     , accuracyCircleBaseColor(accuracyCircleBaseColor_)

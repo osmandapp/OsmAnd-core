@@ -106,15 +106,27 @@ OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIcon(const std::shared
     return *this;
 }
 
-OsmAnd::MapMarker::PinIconAlignment OsmAnd::MapMarkerBuilder::getPinIconAlignment() const
+OsmAnd::MapMarker::PinIconVerticalAlignment OsmAnd::MapMarkerBuilder::getPinIconVerticalAlignment() const
 {
-    return _p->getPinIconAlignment();
+    return _p->getPinIconVerticalAlignment();
 }
 
-OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconAlignment(const MapMarker::PinIconAlignment value)
+OsmAnd::MapMarker::PinIconHorisontalAlignment OsmAnd::MapMarkerBuilder::getPinIconHorisontalAlignment() const
 {
-    _p->setPinIconAlignment(value);
+    return _p->getPinIconHorisontalAlignment();
+}
 
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconVerticalAlignment(const MapMarker::PinIconVerticalAlignment value)
+{
+    _p->setPinIconVerticalAlignment(value);
+
+    return *this;
+}
+
+OsmAnd::MapMarkerBuilder& OsmAnd::MapMarkerBuilder::setPinIconHorisontalAlignment(const MapMarker::PinIconHorisontalAlignment value)
+{
+    _p->setPinIconHorisontalAlignment(value);
+    
     return *this;
 }
 

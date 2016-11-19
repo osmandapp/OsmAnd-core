@@ -16,7 +16,8 @@ OsmAnd::MapMarkerBuilder_P::MapMarkerBuilder_P(MapMarkerBuilder* const owner_)
     , _isAccuracyCircleVisible(false)
     , _accuracyCircleRadius(0.0)
     , _direction(0.0f)
-    , _pinIconAlignment(MapMarker::PinIconAlignment::Center)
+    , _pinIconVerticalAlignment(MapMarker::PinIconVerticalAlignment::CenterVertical)
+    , _pinIconHorisontalAlignment(MapMarker::PinIconHorisontalAlignment::CenterHorizontal)
     , owner(owner_)
 {
 }
@@ -137,18 +138,32 @@ void OsmAnd::MapMarkerBuilder_P::setPinIcon(const std::shared_ptr<const SkBitmap
     _pinIcon = bitmap;
 }
 
-OsmAnd::MapMarker::PinIconAlignment OsmAnd::MapMarkerBuilder_P::getPinIconAlignment() const
+OsmAnd::MapMarker::PinIconVerticalAlignment OsmAnd::MapMarkerBuilder_P::getPinIconVerticalAlignment() const
 {
     QReadLocker scopedLocker(&_lock);
 
-    return _pinIconAlignment;
+    return _pinIconVerticalAlignment;
 }
 
-void OsmAnd::MapMarkerBuilder_P::setPinIconAlignment(const MapMarker::PinIconAlignment value)
+OsmAnd::MapMarker::PinIconHorisontalAlignment OsmAnd::MapMarkerBuilder_P::getPinIconHorisontalAlignment() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _pinIconHorisontalAlignment;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setPinIconVerticalAlignment(const MapMarker::PinIconVerticalAlignment value)
 {
     QWriteLocker scopedLocker(&_lock);
 
-    _pinIconAlignment = value;
+    _pinIconVerticalAlignment = value;
+}
+
+void OsmAnd::MapMarkerBuilder_P::setPinIconHorisontalAlignment(const MapMarker::PinIconHorisontalAlignment value)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _pinIconHorisontalAlignment = value;
 }
 
 OsmAnd::ColorARGB OsmAnd::MapMarkerBuilder_P::getPinIconModulationColor() const
@@ -205,7 +220,8 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     const std::shared_ptr<MapMarker> marker(new MapMarker(
         _baseOrder,
         _pinIcon,
-        _pinIconAlignment,
+        _pinIconVerticalAlignment,
+        _pinIconHorisontalAlignment,
         detachedOf(_onMapSurfaceIcons),
         _isAccuracyCircleSupported,
         _accuracyCircleBaseColor));

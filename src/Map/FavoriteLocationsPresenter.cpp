@@ -7,11 +7,13 @@
 OsmAnd::FavoriteLocationsPresenter::FavoriteLocationsPresenter(
     const std::shared_ptr<const IFavoriteLocationsCollection>& collection_,
     const std::shared_ptr<const SkBitmap>& favoriteLocationPinIconBitmap_ /*= nullptr*/,
-    const Nullable<MapMarker::PinIconAlignment> favoriteLocationPinIconAlignment_ /*= Nullable<MapMarker::PinIconAlignment>()*/)
+    const Nullable<MapMarker::PinIconVerticalAlignment> favoriteLocationPinIconVerticalAlignment_ /*= Nullable<MapMarker::PinIconVerticalAlignment>()*/,
+    const Nullable<MapMarker::PinIconHorisontalAlignment> favoriteLocationPinIconHorisontalAlignment_ /*= Nullable<MapMarker::PinIconHorisontalAlignment>()*/)
     : _p(new FavoriteLocationsPresenter_P(this))
     , collection(collection_)
     , favoriteLocationPinIconBitmap(favoriteLocationPinIconBitmap_)
-    , favoriteLocationPinIconAlignment(favoriteLocationPinIconAlignment_)
+    , favoriteLocationPinIconVerticalAlignment(favoriteLocationPinIconVerticalAlignment_)
+    , favoriteLocationPinIconHorisontalAlignment(favoriteLocationPinIconHorisontalAlignment_)
 {
     _p->subscribeToChanges();
     _p->syncFavoriteLocationMarkers();
@@ -29,10 +31,14 @@ std::shared_ptr<const SkBitmap> OsmAnd::FavoriteLocationsPresenter::getDefaultFa
     return defaultFavoriteLocationPinIconBitmap;
 }
 
-OsmAnd::MapMarker::PinIconAlignment OsmAnd::FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconAlignment()
+OsmAnd::MapMarker::PinIconVerticalAlignment OsmAnd::FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconVerticalAlignment()
 {
-    return static_cast<OsmAnd::MapMarker::PinIconAlignment>(
-        MapMarker::PinIconAlignment::CenterHorizontal | MapMarker::PinIconAlignment::Bottom);
+    return static_cast<OsmAnd::MapMarker::PinIconVerticalAlignment>(MapMarker::PinIconVerticalAlignment::Bottom);
+}
+
+OsmAnd::MapMarker::PinIconHorisontalAlignment OsmAnd::FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconHorisontalAlignment()
+{
+    return static_cast<OsmAnd::MapMarker::PinIconHorisontalAlignment>(MapMarker::PinIconHorisontalAlignment::CenterHorizontal);
 }
 
 QList<OsmAnd::IMapKeyedSymbolsProvider::Key> OsmAnd::FavoriteLocationsPresenter::getProvidedDataKeys() const

@@ -53,8 +53,10 @@ namespace OsmAnd
 
         std::shared_ptr<const SkBitmap> getPinIcon() const;
         MapMarkerBuilder& setPinIcon(const std::shared_ptr<const SkBitmap>& bitmap);
-        MapMarker::PinIconAlignment getPinIconAlignment() const;
-        MapMarkerBuilder& setPinIconAlignment(const MapMarker::PinIconAlignment value);
+        MapMarker::PinIconVerticalAlignment getPinIconVerticalAlignment() const;
+        MapMarker::PinIconHorisontalAlignment getPinIconHorisontalAlignment() const;
+        MapMarkerBuilder& setPinIconVerticalAlignment(const MapMarker::PinIconVerticalAlignment value);
+        MapMarkerBuilder& setPinIconHorisontalAlignment(const MapMarker::PinIconHorisontalAlignment value);
         ColorARGB getPinIconModulationColor() const;
         MapMarkerBuilder& setPinIconModulationColor(const ColorARGB colorValue);
 

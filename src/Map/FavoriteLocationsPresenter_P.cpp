@@ -80,10 +80,14 @@ void OsmAnd::FavoriteLocationsPresenter_P::syncFavoriteLocationMarkers()
         owner->favoriteLocationPinIconBitmap
         ? owner->favoriteLocationPinIconBitmap
         : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconBitmap());
-    markerBuilder.setPinIconAlignment(
-        owner->favoriteLocationPinIconAlignment.isSet()
-        ? *owner->favoriteLocationPinIconAlignment.getValuePtrOrNullptr()
-        : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconAlignment());
+    markerBuilder.setPinIconVerticalAlignment(
+        owner->favoriteLocationPinIconVerticalAlignment.isSet()
+        ? *owner->favoriteLocationPinIconVerticalAlignment.getValuePtrOrNullptr()
+        : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconVerticalAlignment());
+    markerBuilder.setPinIconHorisontalAlignment(
+        owner->favoriteLocationPinIconHorisontalAlignment.isSet()
+        ? *owner->favoriteLocationPinIconHorisontalAlignment.getValuePtrOrNullptr()
+        : FavoriteLocationsPresenter::getDefaultFavoriteLocationPinIconHorisontalAlignment());
     for (const auto& favoriteLocation : favoriteLocations)
     {
         if (_favoriteLocationToMarkerMap.contains(favoriteLocation))
