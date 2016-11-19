@@ -21,6 +21,7 @@ import net.osmand.core.jni.MapRendererState;
 import net.osmand.core.jni.MapStubStyle;
 import net.osmand.core.jni.PointI;
 import net.osmand.core.jni.ZoomLevel;
+import net.osmand.core.jni.MapSymbolInformationList;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
