@@ -361,6 +361,8 @@ using namespace OsmAnd;
 %include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 %include <OsmAndCore/Map/MapCommonTypes.h>
 %include <OsmAndCore/Map/MapSymbol.h>
+%include <OsmAndCore/Map/IBillboardMapSymbol.h>
+%include <OsmAndCore/Map/IOnSurfaceMapSymbol.h>
 %include <OsmAndCore/Map/MapSymbolsGroup.h>
 %include <OsmAndCore/Map/SymbolRasterizer.h>
 %include <OsmAndCore/Map/UnresolvedMapStyle.h>
