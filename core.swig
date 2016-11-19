@@ -403,6 +403,7 @@ using namespace OsmAnd;
 %include <OsmAndCore/Map/MapMarker.h>
 %include <OsmAndCore/Map/MapMarkersCollection.h>
 %include <OsmAndCore/Map/MapMarkerBuilder.h>
+	%template(MapSymbolInformationList) QList<OsmAnd::IMapRenderer::MapSymbolInformation>;
 %include <OsmAndCore/IRoadLocator.h>
 %include <OsmAndCore/RoadLocator.h>
 %include <OsmAndCore/IQueryController.h>
