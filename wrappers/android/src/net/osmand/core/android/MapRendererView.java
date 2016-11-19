@@ -268,6 +268,24 @@ public abstract class MapRendererView extends FrameLayout {
         return _mapRenderer.getState();
     }
 
+    public MapSymbolInformationList getSymbolsAt(PointI screenPoint) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getSymbolsAt(screenPoint);
+    }
+
+    public MapSymbolInformationList getSymbolsIn(AreaI screenPoint, boolean strict) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getSymbolsIn(screenPoint, strict);
+    }
+
+    public MapSymbolInformationList getSymbolsIn(AreaI screenPoint) {
+        NativeCore.checkIfLoaded();
+
+        return _mapRenderer.getSymbolsIn(screenPoint);
+    }
+
     public final long getSymbolsCount() {
         NativeCore.checkIfLoaded();
 
