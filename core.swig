@@ -472,7 +472,7 @@ $action
 }
 %extend OsmAnd::IBillboardMapSymbol {
     static std::shared_ptr<OsmAnd::IBillboardMapSymbol> dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbol> mapSymbol) {
-        return dynamic_pointer_cast<OsmAnd::IBillboardMapSymbol>(mapSymbol);
+        return std::dynamic_pointer_cast<OsmAnd::IBillboardMapSymbol>(mapSymbol);
     }
 };
 
@@ -487,6 +487,6 @@ $action
 }
 %extend OsmAnd::ObfMapObject {
     static std::shared_ptr<OsmAnd::ObfMapObject> dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapObject> mapObject) {
-        return dynamic_pointer_cast<OsmAnd::ObfMapObject>(mapObject);
+        return std::dynamic_pointer_cast<OsmAnd::ObfMapObject>(mapObject);
     }
 };
