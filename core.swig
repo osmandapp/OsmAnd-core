@@ -416,4 +416,19 @@ using namespace OsmAnd;
 %include <OsmAndCore/Search/AddressesByNameSearch.h>
 %include <OsmAndCore/Search/ReverseGeocoder.h>
 
+%exception OsmAnd::MapMarker::SymbolsGroup::dynamic_cast(OsmAnd::MapSymbolsGroup *symbolsGroup) {
+$action
+    if (!result) {
+        jclass excep = jenv->FindClass("java/lang/ClassCastException");
+        if (excep) {
+            jenv->ThrowNew(excep, "dynamic_cast exception");
+        }
+    }
+}
+%extend OsmAnd::MapMarker::SymbolsGroup {
+    static OsmAnd::MapMarker::SymbolsGroup *dynamic_cast(OsmAnd::MapSymbolsGroup *symbolsGroup) {
+        return dynamic_cast<OsmAnd::MapMarker::SymbolsGroup *>(symbolsGroup);
+    }
+};
+
 
