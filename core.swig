@@ -190,6 +190,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::MapSymbolsGroup)
 	%shared_ptr(OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters)
 	%shared_ptr(OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters)
+	%shared_ptr(OsmAnd::MapSymbolsGroup::AdditionalOnSurfaceSymbolInstanceParameters)
+	%shared_ptr(OsmAnd::MapSymbolsGroup::AdditionalOnPathSymbolInstanceParameters)
 	%shared_ptr(OsmAnd::MapSymbol)
 	%shared_ptr(OsmAnd::SymbolRasterizer)
 	%shared_ptr(OsmAnd::UnresolvedMapStyle)
