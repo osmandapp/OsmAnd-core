@@ -188,6 +188,8 @@ using namespace OsmAnd;
 	%shared_ptr(OsmAnd::BinaryMapObject)
 	%shared_ptr(OsmAnd::Road)
 	%shared_ptr(OsmAnd::MapSymbolsGroup)
+	%shared_ptr(OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters)
+	%shared_ptr(OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters)
 	%shared_ptr(OsmAnd::MapSymbol)
 	%shared_ptr(OsmAnd::SymbolRasterizer)
 	%shared_ptr(OsmAnd::UnresolvedMapStyle)
@@ -490,3 +492,19 @@ $action
         return std::dynamic_pointer_cast<OsmAnd::ObfMapObject>(mapObject);
     }
 };
+
+%exception OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters::dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters> instanceParameters) {
+$action
+    if (!result) {
+        jclass excep = jenv->FindClass("java/lang/ClassCastException");
+        if (excep) {
+            jenv->ThrowNew(excep, "dynamic_cast exception");
+        }
+    }
+}
+%extend OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters {
+    static std::shared_ptr<OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters> dynamic_pointer_cast(std::shared_ptr<OsmAnd::MapSymbolsGroup::AdditionalSymbolInstanceParameters> instanceParameters) {
+        return std::dynamic_pointer_cast<OsmAnd::MapSymbolsGroup::AdditionalBillboardSymbolInstanceParameters>(instanceParameters);
+    }
+};
+
