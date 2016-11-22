@@ -2,6 +2,7 @@
 #define _SWIG_UTILITIES_H_
 
 #include <OsmAndCore/stdlib_common.h>
+#include <OsmAndCore/Map/MapMarker.h>
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
@@ -73,7 +74,12 @@ namespace OsmAnd
         {
             return qUncompress(compressedData);
         }
-        
+
+        inline static OsmAnd::MapMarker::OnSurfaceIconKey getOnSurfaceIconKey(const int value)
+        {
+            return reinterpret_cast<OsmAnd::MapMarker::OnSurfaceIconKey>(value);
+        }
+
 #ifdef SWIG
         %apply (char *BYTE, size_t LENGTH) { (const char* const pBuffer, const size_t bufferSize) }
 #endif // SWIG
