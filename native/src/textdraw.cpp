@@ -627,5 +627,13 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 			}
 		}
 	}
+	// add all text for debug
+	for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
+    {
+        SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
+        if(!textDrawInfo->visible) {
+        	boundsIntersect.insert(textDrawInfo, textDrawInfo->bounds);
+        }
+    }
 	rc->textIntersect = boundsIntersect;
 }
