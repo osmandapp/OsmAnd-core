@@ -22,7 +22,7 @@ jclass jclassString;
 jclass jclassStringArray;
 jmethodID jmethod_Object_toString = NULL;
 
-jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox ) ;
+jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox, int order, bool visible) ;
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
@@ -445,6 +445,8 @@ jmethodID jmethod_RenderedObject_setIconRes = NULL;
 jmethodID jmethod_RenderedObject_addLocation = NULL;
 jmethodID jmethod_RenderedObject_setNativeId = NULL;
 jmethodID jmethod_RenderedObject_setName = NULL;
+jmethodID jmethod_RenderedObject_setOrder = NULL;
+jmethodID jmethod_RenderedObject_setVisible = NULL;
 jmethodID jmethod_RenderedObject_setBbox = NULL;
 jmethodID jmethod_RenderedObject_init = NULL;
 
@@ -606,6 +608,8 @@ void loadJniRenderingContext(JNIEnv* env)
 	jmethod_RenderedObject_setIconRes = env->GetMethodID(jclass_RenderedObject,
 				"setIconRes", "(Ljava/lang/String;)V");
 	jmethod_RenderedObject_addLocation = env->GetMethodID(jclass_RenderedObject, "addLocation", "(II)V");
+	jmethod_RenderedObject_setOrder = env->GetMethodID(jclass_RenderedObject, "setOrder", "(I)V");
+	jmethod_RenderedObject_setVisible = env->GetMethodID(jclass_RenderedObject, "setVisible", "(Z)V");
 	jmethod_RenderedObject_setNativeId = env->GetMethodID(jclass_RenderedObject, "setNativeId", "(J)V");
 	jmethod_RenderedObject_setName = env->GetMethodID(jclass_RenderedObject, "setName", "(Ljava/lang/String;)V");
 	jmethod_RenderedObject_setBbox = env->GetMethodID(jclass_RenderedObject, "setBbox", "(IIII)V");
@@ -743,7 +747,7 @@ void pullFromJavaRenderingContext(JNIEnv* env, jobject jrc, JNIRenderingContext*
 
 // ElapsedTimer routingTimer;
 
-jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox ) {
+jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::string name, SkRect bbox, int order, bool visible ) {
 	jobject resobj = ienv->NewObject(jclass_RenderedObject, jmethod_RenderedObject_init);
 	for(uint i = 0; i < robj->types.size(); i++) 
 	{
@@ -778,6 +782,8 @@ jobject convertRenderedObjectToJava(JNIEnv* ienv, MapDataObject* robj, std::stri
 		
 
 	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setNativeId, robj->id);
+	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setOrder, order);
+	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setVisible, visible);
 
 	jstring nm = ienv->NewStringUTF(name.c_str());
 	ienv->CallVoidMethod(resobj, jmethod_RenderedObject_setName, nm);
@@ -1203,9 +1209,9 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_getRoute
 	}
 	return res;
 }
-// protected static native boolean searchRenderedObjects(RenderingContext context, int x, int y);
+// protected static native boolean searchRenderedObjects(RenderingContext context, int x, int y, boolean notvisible);
 extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRenderedObjects(JNIEnv* ienv,
-		jobject obj, jobject context, jint x, jint y) {
+		jobject obj, jobject context, jint x, jint y, jboolean notvisible) {
 	jlong handler = ienv->GetLongField( context, jfield_RenderingContext_renderingContextHandle);
 	if(handler != 0) 
 	{
@@ -1218,9 +1224,10 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRe
 		bool intersects = false;
 		for (uint32_t i = 0; i < searchText.size(); i++) {
 			if (SkRect::Intersects(searchText[i]->bounds, bbox) && 
-					searchText[i]->visible && !searchText[i]->drawOnPath && !searchText[i]->path) {
+					((searchText[i]->visible && !searchText[i]->drawOnPath && !searchText[i]->path) || 
+					notvisible) )  {
 				jobject jo = convertRenderedObjectToJava(ienv, &searchText[i]->object, 
-					searchText[i]->text, searchText[i]->bounds);
+					searchText[i]->text, searchText[i]->bounds, searchText[i]->textOrder, searchText[i]->visible);
 				collected.push_back(jo);
 				intersects = true;
 			}
@@ -1229,8 +1236,9 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_searchRe
 		results->iconsIntersect.query_in_box(bbox, icons);
 		for (uint32_t i = 0; i < icons.size(); i++) {
 			if (SkRect::Intersects(icons[i]->bbox, bbox) && 
-					icons[i]->visible) {
-				jobject jo = convertRenderedObjectToJava(ienv, &icons[i]->object, "", icons[i]->bbox);
+					(icons[i]->visible || notvisible)) {
+				jobject jo = convertRenderedObjectToJava(ienv, &icons[i]->object, "", icons[i]->bbox,
+					icons[i]->order, icons[i]->visible);
 				
 				jstring nm = ienv->NewStringUTF(icons[i]->bmpId.c_str());
 				ienv->CallVoidMethod(jo, jmethod_RenderedObject_setIconRes, nm);
