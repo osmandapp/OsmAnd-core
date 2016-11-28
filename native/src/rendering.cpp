@@ -965,6 +965,21 @@ void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
 			break;
 		}
 	}
+	for(;ji< rc->iconsToDraw.size(); ji++)
+	{
+		SHARED_PTR<IconDrawInfo> icon = rc->iconsToDraw.at(ji);
+		if (!icon->visible && 
+			icon->y >= 0 && icon->y < rc->getHeight() && icon->x >= 0 && icon->x < rc->getWidth() && icon->bmp != NULL) 
+		{
+			SkBitmap* ico = icon->bmp;
+			float vwidth = icon->iconSize >= 0 ? icon->iconSize : ico->width();
+			float vheight = icon->iconSize >= 0 ? icon->iconSize : ico->height();
+			float vleft = icon->x -  vwidth / 2 * coef;
+			float vtop = icon->y - vheight / 2 * coef; 
+			SkRect bbox = SkRect::MakeXYWH(vleft, vtop, vwidth * coef,vheight* coef );
+			boundsIntersect.insert(icon, bbox);
+		}
+	}
 	rc->iconsIntersect = quad_tree<SHARED_PTR<IconDrawInfo>>(boundsIntersect);
 	rc->iconsToDraw.clear();
 }
