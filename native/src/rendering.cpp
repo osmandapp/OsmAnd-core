@@ -771,7 +771,10 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 			}
 		}
 	}
-
+	if (updatePaint(req, paint, -1, 1, rc)) {
+		PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
+		updatePaint(req, paint, 0, 1, rc);
+	}
 	PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 	if (updatePaint(req, paint, 1, 0, rc)) {
 		PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
