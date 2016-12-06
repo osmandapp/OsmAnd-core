@@ -28,6 +28,7 @@
 #include "Logging.h"
 
 const int MAX_V = 10;
+const int MAX_V_AREA = 2000;
 const int DEFAULT_POLYGON_MAX = 11;
 const int DEFAULT_LINE_MAX = 100;
 const int DEFAULT_POINTS_MAX = 200;
@@ -40,6 +41,7 @@ struct MapDataObjectPrimitive {
 	int typeInd;
 	double order;
 	int objectType;
+	double area;
 };
 
 
@@ -678,7 +680,7 @@ bool contains(vector<pair<int,int> > points, int x, int y) {
 }
 
 void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
-	RenderingContext* rc, tag_value pair) {
+	RenderingContext* rc, tag_value pair, double area) {
 	size_t length = mObj->points.size();
 	if (length <= 2) {
 		return;
@@ -779,8 +781,12 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	if (updatePaint(req, paint, 1, 0, rc)) {
 		PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 	}
-
-	renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL, NULL);
+	bool ignorePointArea = req->getIntPropertyValue(req->props()->R_IGNORE_POLYGON_AS_POINT_AREA, 0) != 0;
+	// ignorePointArea = false;
+	if(area > MAX_V_AREA || ignorePointArea) {
+		renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL, NULL);
+	}
+	
 }
 
 void drawPoint(MapDataObject* mObj,	RenderingRuleSearchRequest* req, SkCanvas* cv, SkPaint* paint,
@@ -854,7 +860,7 @@ void drawObject(RenderingContext* rc,  SkCanvas* cv, RenderingRuleSearchRequest*
 		tag_value pair = mObj->types.at(array[i].typeInd);
 		if (array[i].objectType == 3) {
 			// polygon
-			drawPolygon(mObj, req, cv, paint, rc, pair);
+			drawPolygon(mObj, req, cv, paint, rc, pair, array[i].area);
 		} else if (array[i].objectType == 2) {
 			drawPolyline(mObj, req, cv, paint, rc, pair, mObj->getSimpleLayer(), objOrder == 1);
 		} else if (array[i].objectType == 1) {
@@ -1088,11 +1094,14 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 				if (req->searchRule(RenderingRulesStorage::ORDER_RULES)) {					
 					int objectType = req->getIntPropertyValue(req->props()->R_OBJECT_TYPE);
 					int order = req->getIntPropertyValue(req->props()->R_ORDER);
+					bool ignorePointArea = req->getIntPropertyValue(req->props()->R_IGNORE_POLYGON_AS_POINT_AREA, 0) != 0;
+					ignorePointArea = false;
 					if(order >= 0) {
 						// int l = req->getIntPropertyValue(req->props()->R_LAYER);
 						MapDataObjectPrimitive mapObj;
 						mapObj.objectType = objectType;
 						mapObj.order = order;
+						mapObj.area = 0;
 						mapObj.typeInd = j;
 						mapObj.obj = mobj;
 						// polygon
@@ -1100,6 +1109,7 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 							MapDataObjectPrimitive pointObj = mapObj;
 							pointObj.objectType = 1;
 							double area = polygonArea(mobj, mult);
+							pointObj.area = area;
 							if(area > MAX_V && area > minPolygonSize) { 
 								mapObj.order = mapObj.order + (1. / area);
 								if(mapObj.order < DEFAULT_POLYGON_MAX) {
@@ -1107,7 +1117,9 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 								} else {
 									linesArray.push_back(mapObj);	
 								}
-								pointsArray.push_back(pointObj); 
+								if(area > MAX_V_AREA || ignorePointArea) {
+									pointsArray.push_back(pointObj); 
+								}
 							}
 						} else if(objectType == 1) {
 							pointsArray.push_back(mapObj);
