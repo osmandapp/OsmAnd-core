@@ -289,6 +289,8 @@ public:
 	RenderingRuleProperty* R_ATTR_BOOL_VALUE;
 	RenderingRuleProperty* R_ATTR_STRING_VALUE;
 	RenderingRuleProperty* R_IGNORE_POLYGON_AS_POINT_AREA;
+	RenderingRuleProperty* R_ADD_POINT;
+
 
 	UNORDERED(map)<string, RenderingRuleProperty*> properties;
 	vector<RenderingRuleProperty*> rules;
@@ -451,6 +453,7 @@ public:
 		R_SHADOW_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("shadowRadius"));
 		R_ONEWAY_ARROWS_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("onewayArrowsColor"));
 		R_IGNORE_POLYGON_AS_POINT_AREA = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("ignorePolygonAsPointArea"));
+		R_ADD_POINT = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("addPoint"));
 	}
 
 };
