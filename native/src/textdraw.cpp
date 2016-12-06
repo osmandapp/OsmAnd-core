@@ -25,11 +25,11 @@ const SkTypeface* FontRegistry::registerStream(const char* data, uint32_t length
 			bool bold, bool italic) {
 	SkMemoryStream* fontDataStream = new SkMemoryStream(data, length, true);
 	SkTypeface* typeface = SkTypeface::CreateFromStream(fontDataStream);
-    	fontDataStream->unref();
-     	if (!typeface) 
-	    {
-        		return nullptr;
-     	}
+    fontDataStream->unref();
+    if (!typeface) 
+    {
+        return nullptr;
+    }
  	FontEntry* entry = new FontEntry;
  	entry->bold = bold;
  	entry->italic = italic;
@@ -225,6 +225,7 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p) {
 	distances.resize(roadLength, 0);
 
 	float normalTextLen = 1.5 * textw;
+	bool verySharpAngle = false;
 	for (i = 0; i < len; i++) {
 		bool inside = points[i].fX >= 0 && points[i].fX <= rc->getWidth() &&
 				points[i].fY >= 0 && points[i].fY <= rc->getHeight();
@@ -232,6 +233,16 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p) {
 			float d = sqrt(
 					(points[i].fX - points[i - 1].fX) * (points[i].fX - points[i - 1].fX)
 							+ (points[i].fY - points[i - 1].fY) * (points[i].fY - points[i - 1].fY));
+			if(i > 1) {
+				float vx = (points[i].fX - points[i - 1].fX) / d;
+				float vy = (points[i].fY - points[i - 1].fY) / d;
+				float vvx = (points[i - 1].fX - points[i - 2].fX) / distances[i - 2];
+				float vvy = (points[i - 1].fY - points[i - 2].fY) / distances[i - 2];
+				float scalar = vx * vvx + vy * vvy;
+				if(scalar < - 0.5) {
+					verySharpAngle = true;
+				}
+			}
 			distances.push_back(d);
 			roadLength += d;
 			if(inside) {
@@ -249,7 +260,7 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p) {
 		}
 		prevInside = inside;
 	}
-	if (textw >= roadLength) {
+	if (textw >= roadLength || verySharpAngle) {
 		delete[] points;
 		return false;
 	}
