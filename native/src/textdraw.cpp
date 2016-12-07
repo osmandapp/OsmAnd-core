@@ -635,8 +635,11 @@ void combineSimilarText(RenderingContext* rc) {
 		if((*it)->drawOnPath && (*it)->path != NULL) 
 		{
 			int len = (*it)->path->countPoints();
-			if(len > 1)
-				namesMap[(*it)-> text].push_back(*it);
+			if(len > 1) 
+			{
+				std::string str = (*it)->text + ((char)(*it)->textOrder);
+				namesMap[str].push_back(*it);
+			}
 		}
 	}
 
