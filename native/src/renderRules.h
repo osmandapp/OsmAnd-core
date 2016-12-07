@@ -452,8 +452,8 @@ public:
 		R_SHADOW_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("shadowColor"));
 		R_SHADOW_RADIUS = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("shadowRadius"));
 		R_ONEWAY_ARROWS_COLOR = registerRuleInternal(RenderingRuleProperty::createOutputColorProperty("onewayArrowsColor"));
-		R_IGNORE_POLYGON_AS_POINT_AREA = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("ignorePolygonAsPointArea"));
-		R_ADD_POINT = registerRuleInternal(RenderingRuleProperty::createOutputIntProperty("addPoint"));
+		R_IGNORE_POLYGON_AS_POINT_AREA = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("ignorePolygonAsPointArea"));
+		R_ADD_POINT = registerRuleInternal(RenderingRuleProperty::createOutputBooleanProperty("addPoint"));
 	}
 
 };
@@ -582,6 +582,8 @@ public:
 	~RenderingRuleSearchRequest();
 
 	int getIntPropertyValue(RenderingRuleProperty* prop);
+
+	bool getBoolPropertyValue(RenderingRuleProperty* prop);
 
 	int getIntPropertyValue(RenderingRuleProperty* prop, int def);
 

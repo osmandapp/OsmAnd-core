@@ -102,7 +102,7 @@ SkPathEffect* getDashEffect(RenderingContext* rc, std::string input)
         }
     }
 
-    if(pathEffects.find(hash) != pathEffects.end())
+if(pathEffects.find(hash) != pathEffects.end())
         return pathEffects[hash];
 
     SkPathEffect* r = SkDashPathEffect::Create(&primFloats[0], primFloats.size(), 0);
@@ -783,7 +783,7 @@ void drawPolygon(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas*
 	if (updatePaint(req, paint, 1, 0, rc)) {
 		PROFILE_NATIVE_OPERATION(rc, cv->drawPath(path, *paint));
 	}
-	bool addTextForSmallAreas = req->getIntPropertyValue(req->props()->R_IGNORE_POLYGON_AS_POINT_AREA, 0) != 0;
+	bool addTextForSmallAreas = req->getBoolPropertyValue(req->props()->R_IGNORE_POLYGON_AS_POINT_AREA);
 	// ignorePointArea = false;
 	if(!prim.pointAdded &&  (prim.area > MAX_V_AREA || addTextForSmallAreas) && !ignoreTextInCenter) {
 		renderText(mObj, req, rc, pair.first, pair.second, xText, yText, NULL, NULL);
@@ -899,7 +899,7 @@ SkRect makeRect(RenderingContext* rc,  SHARED_PTR<IconDrawInfo> icon, SkBitmap* 
 	return r;
 }
 
-void drawIconsOverCanvas(RenderingContext* rc, SkCanvas* canvas)
+void drawIconsOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, SkCanvas* canvas)
 {
 	std::sort(rc->iconsToDraw.begin(), rc->iconsToDraw.end(), iconOrder);
 	SkRect bounds = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
@@ -1098,8 +1098,8 @@ void sortObjectsByProperOrder(std::vector <MapDataObject* > mapDataObjects,
 				if (req->searchRule(RenderingRulesStorage::ORDER_RULES)) {					
 					int objectType = req->getIntPropertyValue(req->props()->R_OBJECT_TYPE);
 					int order = req->getIntPropertyValue(req->props()->R_ORDER);
-					bool addTextForSmallAreas = req->getIntPropertyValue(req->props()->R_IGNORE_POLYGON_AS_POINT_AREA, 0) != 0;
-					bool addPoint = req->getIntPropertyValue(req->props()->R_ADD_POINT, 0) != 0;
+					bool addTextForSmallAreas = req->getBoolPropertyValue(req->props()->R_IGNORE_POLYGON_AS_POINT_AREA);
+					bool addPoint = req->getBoolPropertyValue(req->props()->R_ADD_POINT);
 					if(order >= 0) {
 						// int l = req->getIntPropertyValue(req->props()->R_LAYER);
 						MapDataObjectPrimitive mapObj;
@@ -1180,10 +1180,10 @@ void doRendering(std::vector <MapDataObject* > mapDataObjects, SkCanvas* canvas,
 	drawObject(rc, canvas, req, paint, pointsArray, 3);
 	rc->lastRenderedKey = DEFAULT_POINTS_MAX;
 
-	drawIconsOverCanvas(rc, canvas);
+	drawIconsOverCanvas(rc, req,canvas);
 
 	rc->textRendering.Start();
-	drawTextOverCanvas(rc, canvas);
+	drawTextOverCanvas(rc, req, canvas);
 	rc->textRendering.Pause();
 
 	delete paint;

@@ -446,6 +446,15 @@ int RenderingRuleSearchRequest::getIntPropertyValue(RenderingRuleProperty* prop)
 	return values[prop->id];
 }
 
+
+bool RenderingRuleSearchRequest::getBoolPropertyValue(RenderingRuleProperty* prop) {
+	if (prop == NULL) {
+		return false;
+	}
+	int v = values[prop->id];
+	return v != 0 && v != -1;
+}
+
 int RenderingRuleSearchRequest::getIntPropertyValue(RenderingRuleProperty* prop, int def) {
 	if (prop == NULL || values[prop->id] == -1) {
 		return def;
@@ -617,6 +626,8 @@ void RenderingRuleSearchRequest::loadOutputProperties(RenderingRule* rule, bool 
                     } else if(isSpecified(PROPS->R_ATTR_INT_VALUE)) {
                        values[rp->id] = getIntPropertyValue(PROPS->R_ATTR_INT_VALUE);
                        fvalues[rp->id] = getFloatPropertyValue(PROPS->R_ATTR_INT_VALUE);
+                    } else if(isSpecified(PROPS->R_ATTR_BOOL_VALUE)) {
+                       values[rp->id] = getIntPropertyValue(PROPS->R_ATTR_BOOL_VALUE);
                     }
                 } else if(rp->isFloat()) {
 					fvalues[rp->id] = rule->floatProperties[i];

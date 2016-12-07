@@ -458,7 +458,7 @@ inline float max(float a, float b) {
 }
 
 bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_PTR<TextDrawInfo>>& boundIntersections, SHARED_PTR<TextDrawInfo> text,
-		SkPaint* paintText, SkPaint* paintIcon) {
+		SkPaint* paintText, SkPaint* paintIcon, bool debugTextDisplayBBox, bool debugTextDisplayShieldBBox ) {
 	vector<SHARED_PTR<TextDrawInfo>> searchText;
 	int textWrap = text->textWrap == 0 ? 25 : text->textWrap;
 	int text1Line = text->text.length() > textWrap  && !text->drawOnPath ? textWrap : text->text.length();
@@ -483,7 +483,9 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	text->bounds.inset(- cf * text->bounds.width() / 2, - cf * text->bounds.height() / 2);
 
 	// for text purposes
-//	drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text->text, NULL/*paintText*/);
+	if(debugTextDisplayBBox) {
+		drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text->text, NULL/*paintText*/);
+	}
 	boundIntersections.query_in_box(text->bounds, searchText);
 	for (uint32_t i = 0; i < searchText.size(); i++) {
 		SHARED_PTR<TextDrawInfo> t = searchText.at(i);
@@ -496,7 +498,9 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 		boundsSearch.inset(-max(rc->getDensityValue(5.0f), text->minDistance),
 		 		-max(rc->getDensityValue(15.0f), text->minDistance));
 		boundIntersections.query_in_box(boundsSearch, searchText);
-//		drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
+		if(debugTextDisplayShieldBBox) {
+			drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
+		}
 		for (uint32_t i = 0; i < searchText.size(); i++) {
 			SHARED_PTR<TextDrawInfo> t = searchText.at(i);
 			if (t->minDistance > 0 && t->text == text->text && intersects(boundsSearch, text->pathRotate,  t)) {
@@ -697,10 +701,27 @@ static SkTypeface* sItalicTypeface = nullptr;
 static SkTypeface* sBoldTypeface = nullptr;
 static SkTypeface* sBoldItalicTypeface = nullptr;
 
-void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
+void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, SkCanvas* cv) {
 	SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
-	r.inset(-100, -100);
+	r.inset(-rc->getDensityValue(25), -rc->getDensityValue(25));
 	quad_tree<SHARED_PTR<TextDrawInfo>> boundsIntersect(r, 4, 0.6);
+	
+	bool debugTextDisplayBBox = false;
+	bool debugTextDisplayShieldBBox = false;
+	bool debugTextDoNotFindIntersections = false;
+	req->clearState();
+	// req->setIntFilter(req->props()->R_MINZOOM, rc->getZoom());
+	if (req->searchRenderingAttribute("debugTextDisplayBBox")) {
+		debugTextDisplayBBox = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
+	}
+	req->clearState();
+	if (req->searchRenderingAttribute("debugTextDisplayShieldBBox")) {
+		debugTextDisplayShieldBBox = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
+	}
+	req->clearState();
+	if (req->searchRenderingAttribute("debugTextDoNotFindIntersections")) {
+		debugTextDoNotFindIntersections = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
+	}
 
 #if defined(ANDROID)
     // This is never released because of always +1 of reference counter
@@ -729,6 +750,7 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 
 	// 1. Sort text using text order
 	std::sort(rc->textToDraw.begin(), rc->textToDraw.end(), textOrder);
+
 	combineSimilarText(rc);
 
     for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
@@ -767,7 +789,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 		textDrawInfo->centerY += ((-fm.fAscent)) ;
 		
 		// calculate if there is intersection
-		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon);
+		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon,
+			debugTextDisplayBBox, debugTextDisplayShieldBBox);
 		if (!intersects) {
 			if(rc->interrupted()){
 				return;
