@@ -300,7 +300,8 @@ struct TextDrawInfo {
 	MapDataObject object;
 	SHARED_PTR<IconDrawInfo> icon;
 	bool visible;
-
+	bool combined;
+	
 	SkRect bounds;
 	float centerX;
 	float centerY;
@@ -317,6 +318,7 @@ struct TextDrawInfo {
 	std::string shieldResIcon;
 	int textOrder;
 	int secondOrder;
+
 
 	bool drawOnPath;
 	SkPath* path;

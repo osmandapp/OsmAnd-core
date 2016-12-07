@@ -535,6 +535,162 @@ void drawShield(SHARED_PTR<TextDrawInfo> textDrawInfo, std::string res, SkPaint*
 	}
 }
 
+bool combine2Segments(std::vector<SkPoint>* pointsS, std::vector<SkPoint>* pointsP, 
+	SkPath* s, float combineGap, float* gapMetric, bool combine)
+{
+	float px0 = (*pointsP)[0].fX;
+	float py0 = (*pointsP)[0].fY;
+	float sxl =(*pointsS)[pointsS->size() - 1].fX;
+	float syl =(*pointsS)[pointsS->size() - 1].fY;
+	*gapMetric = abs(px0 - sxl) + abs(py0 - syl);
+	if(*gapMetric < combineGap)
+	{
+		// calculate scalar product to maker sure connecting good line
+		float px1 = (*pointsP)[1].fX;
+		float py1 = (*pointsP)[1].fY;
+		float sxl1 =(*pointsS)[pointsS->size() - 2].fX;
+		float syl1 =(*pointsS)[pointsS->size() - 2].fY;
+		float pvx = (px1 - px0) / sqrt((px1 - px0)*(px1 - px0) + (py1 - py0)*(py1 - py0));
+		float pvy = (py1 - py0) / sqrt((px1 - px0)*(px1 - px0) + (py1 - py0)*(py1 - py0));
+		float svx = (sxl - sxl1) / sqrt((sxl - sxl1)*(sxl - sxl1) + (syl - syl1)*(syl - syl1));
+		float svy = (syl - syl1) / sqrt((sxl - sxl1)*(sxl - sxl1) + (syl - syl1)*(syl - syl1));
+
+		if(pvx * svx + svy * pvy <= 0) {
+			return false;
+		}
+		if(combine) 
+		{
+			for(int k = 1; k < pointsP->size(); k++) 
+			{
+				s->lineTo((*pointsP)[k].fX, (*pointsP)[k].fY);
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+float calcLength(std::vector<SkPoint>* pointsP) {
+	float len = 0;
+	for(int i = 1; i <  (*pointsP).size(); i++) {
+		float dx =  (*pointsP)[i].fX -  (*pointsP)[i - 1].fX;
+		float dy =  (*pointsP)[i].fX -  (*pointsP)[i - 1].fX;
+		len += sqrt(dx * dx + dy * dy);
+	}
+	return len;
+}
+
+void combineSimilarText(RenderingContext* rc) {
+	float combineGap = rc->getDensityValue(15);
+	float combineMaxLength = rc->getDensityValue(550); // max length
+	UNORDERED(map)<std::string, vector<SHARED_PTR<TextDrawInfo> > > namesMap;
+	for(auto it = rc->textToDraw.begin(); it != rc->textToDraw.end(); it++) 
+	{
+		if((*it)->drawOnPath && (*it)->path != NULL) 
+		{
+			int len = (*it)->path->countPoints();
+			if(len > 1)
+				namesMap[(*it)-> text].push_back(*it);
+		}
+	}
+
+	std::vector<SkPoint> pointsS;
+	std::vector<SkPoint> pointsSCombine;
+	std::vector<SkPoint> pointsP;
+
+	for(auto it = namesMap.begin(); it != namesMap.end(); it++) 
+	{
+		vector<SHARED_PTR<TextDrawInfo> >  list = it->second;
+		int combined = 20; // max combined
+
+		bool combineOnIteration = true;
+		if(list.size() > 1) 
+		{
+			vector<float> distances;
+			// distances.resize(list.size());
+			for(auto p = list.begin(); p != list.end(); p++ ) 
+			{
+				int lenP = (*p)->path->countPoints();
+				pointsP.resize(lenP);
+				(*p)->path->getPoints(&pointsP[0], lenP);
+				distances.push_back(calcLength(&pointsP));
+			}
+
+			while(combined > 0 && combineOnIteration) 
+			{
+				combined--;
+				combineOnIteration = false;
+				int pi = 0;
+				for(auto p = list.begin(); p != list.end() && !combineOnIteration; p++, pi++ ) 
+				{
+					if((*p)->combined) continue;
+					int lenP = (*p)->path->countPoints();
+					pointsP.resize(lenP);
+					(*p)->path->getPoints(&pointsP[0], lenP);
+					if(distances[pi] > combineMaxLength) continue;
+					
+					auto sToCombine = p;
+					float minGap = combineGap;
+					int siCombine = pi;
+					float gapMeasure = 0;
+
+					auto s = p;
+					int si = pi + 1;
+					for(s++; s != list.end(); s++, si++ ) 
+					{
+						if((*s)->combined || p == s) continue;
+						if(distances[si] > combineMaxLength) continue;
+						int lenS = (*s)->path->countPoints();
+						pointsS.resize(lenS);
+						(*s)->path->getPoints(&pointsS[0], lenS);
+						// debug
+						// float xGap = abs(pointsP[0].fX - pointsS[lenS - 1].fX);
+						// float yGap = abs(pointsP[0].fY - pointsS[lenS - 1].fY);
+						// auto pid = (*p)->object.id / 128;
+						// auto sid = (*s)->object.id / 128;
+						// debugP("? Combine ? %f %f out of %s %d %d %ld %ld \n",  xGap, yGap, (*p)->text.c_str(), lenS, lenP, pid, sid);
+						// debug
+						if(combine2Segments(&pointsS, &pointsP, (*s)->path, combineGap, &gapMeasure, false) ||
+							combine2Segments(&pointsP, &pointsS, (*p)->path, combineGap, &gapMeasure, false)) {
+							if(minGap > gapMeasure) 
+							{
+								// debugP("? Combine ? %f\n", gapMeasure), 
+								minGap = gapMeasure;
+								sToCombine = s;
+								siCombine = si;
+								pointsSCombine = pointsS;
+							}
+						}
+					}
+					if(sToCombine != p )
+					{
+						if(combine2Segments(&pointsSCombine, &pointsP, (*sToCombine)->path, combineGap, &gapMeasure, true)) 
+						{
+							(*p)->combined = true;	
+							combineOnIteration = true;
+							// debugP("Combined %s - %d of %d %f ++ %f\n", (*p)->text.c_str(),(20 - combined), list.size(),
+							// 	distances[siCombine],distances[pi]);
+							distances[siCombine] += distances[pi];
+							
+							
+						} 
+						else if(combine2Segments(&pointsP, &pointsSCombine, (*p)->path, combineGap, &gapMeasure, true)) 
+						{
+							(*sToCombine)->combined = true;	
+							combineOnIteration = true;
+							
+							// debugP("Combined %s - %d of %d %f ++ %f\n", (*p)->text.c_str(),(20 - combined), list.size(),
+							// 	distances[pi], distances[siCombine]);
+							distances[pi] += distances[siCombine];
+						}
+					}
+				}
+			}
+		}
+		
+	}
+}
+	
 
 static SkTypeface* sDefaultTypeface = nullptr;
 static SkTypeface* sItalicTypeface = nullptr;
@@ -573,6 +729,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
 
 	// 1. Sort text using text order
 	std::sort(rc->textToDraw.begin(), rc->textToDraw.end(), textOrder);
+	combineSimilarText(rc);
+
     for(auto itdi = rc->textToDraw.begin(); itdi != rc->textToDraw.end(); ++itdi)
     {
         SHARED_PTR<TextDrawInfo> textDrawInfo = *itdi;
@@ -580,6 +738,8 @@ void drawTextOverCanvas(RenderingContext* rc, SkCanvas* cv) {
         // Skip empty text
 	    if(textDrawInfo->text.length() <= 0)
             continue;
+        if(textDrawInfo->combined)
+        	continue;
         if(textDrawInfo->icon && !textDrawInfo->icon->visible) {
         	continue;
         }
