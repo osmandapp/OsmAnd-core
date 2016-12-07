@@ -627,7 +627,7 @@ float calcLength(std::vector<SkPoint>* pointsP) {
 }
 
 void combineSimilarText(RenderingContext* rc) {
-	float combineGap = rc->getDensityValue(15);
+	float combineGap = rc->getDensityValue(45);
 	float combineMaxLength = rc->getDensityValue(550); // max length
 	UNORDERED(map)<std::string, vector<SHARED_PTR<TextDrawInfo> > > namesMap;
 	for(auto it = rc->textToDraw.begin(); it != rc->textToDraw.end(); it++) 
