@@ -20,6 +20,47 @@
 
 FontRegistry globalFontRegistry;
 
+struct DebugTextInfo {
+	bool debugTextDisplayBBox ;
+	bool debugTextDisplayShieldBBox ;
+	bool debugTextDoNotFindIntersections ;
+	bool debugTextDoNotFindIntersectionsSameName ;
+	bool debugTextDisplayShortRoadNames ;
+	DebugTextInfo(RenderingRuleSearchRequest* req) {
+		req->clearState();
+		// req->setIntFilter(req->props()->R_MINZOOM, rc->getZoom());
+		if (req->searchRenderingAttribute("debugTextDisplayBBox")) {
+			debugTextDisplayBBox = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
+		} else {
+			debugTextDisplayBBox = false;
+		}
+		req->clearState();
+		if (req->searchRenderingAttribute("debugTextDisplayShieldBBox")) {
+			debugTextDisplayShieldBBox = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
+		} else {
+			debugTextDisplayShieldBBox = false;
+		}
+		req->clearState();
+		if (req->searchRenderingAttribute("debugTextDisplayShortRoadNames")) {
+			debugTextDisplayShortRoadNames = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
+		} else {
+			debugTextDisplayShortRoadNames = false;
+		}
+		req->clearState();
+		if (req->searchRenderingAttribute("debugTextDoNotFindIntersections")) {
+			debugTextDoNotFindIntersections = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
+		} else {
+			debugTextDoNotFindIntersections  = false;	
+		}
+		req->clearState();
+		if (req->searchRenderingAttribute("debugTextDoNotFindIntersectionsSameName")) {
+			debugTextDoNotFindIntersectionsSameName = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
+		} else {
+			debugTextDoNotFindIntersectionsSameName  = false;	
+		}
+	}
+
+};
 
 const SkTypeface* FontRegistry::registerStream(const char* data, uint32_t length, string fontName, 
 			bool bold, bool italic) {
@@ -205,7 +246,7 @@ void drawWrappedText(RenderingContext* rc, SkCanvas* cv, SHARED_PTR<TextDrawInfo
 	}
 }
 
-bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p) {
+bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p, DebugTextInfo db) {
 	if(p->path == NULL) {
 		return true;
 	}
@@ -260,7 +301,7 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p) {
 		}
 		prevInside = inside;
 	}
-	if (textw >= roadLength || verySharpAngle) {
+	if ((textw >= roadLength || verySharpAngle) && !db.debugTextDisplayShortRoadNames) {
 		delete[] points;
 		return false;
 	}
@@ -458,7 +499,7 @@ inline float max(float a, float b) {
 }
 
 bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_PTR<TextDrawInfo>>& boundIntersections, SHARED_PTR<TextDrawInfo> text,
-		SkPaint* paintText, SkPaint* paintIcon, bool debugTextDisplayBBox, bool debugTextDisplayShieldBBox ) {
+		SkPaint* paintText, SkPaint* paintIcon, DebugTextInfo db) {
 	vector<SHARED_PTR<TextDrawInfo>> searchText;
 	int textWrap = text->textWrap == 0 ? 25 : text->textWrap;
 	int text1Line = text->text.length() > textWrap  && !text->drawOnPath ? textWrap : text->text.length();
@@ -466,7 +507,7 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	// make wider and multiline
 	text->bounds.inset(-rc->getDensityValue( 3), -(rc->getDensityValue(5) +
 		((text->text.length() - 1) / text1Line) * text->bounds.height()));
-	bool display = calculatePathToRotate(rc, text);
+	bool display = calculatePathToRotate(rc, text, db);
 	if (!display) {
 		return true;
 	}
@@ -483,13 +524,13 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	text->bounds.inset(- cf * text->bounds.width() / 2, - cf * text->bounds.height() / 2);
 
 	// for text purposes
-	if(debugTextDisplayBBox) {
+	if(db.debugTextDisplayBBox) {
 		drawTestBox(cv, &text->bounds, text->pathRotate, paintIcon, text->text, NULL/*paintText*/);
 	}
 	boundIntersections.query_in_box(text->bounds, searchText);
 	for (uint32_t i = 0; i < searchText.size(); i++) {
 		SHARED_PTR<TextDrawInfo> t = searchText.at(i);
-		if (intersects(text, t)) {
+		if (intersects(text, t) && !db.debugTextDoNotFindIntersections) {
 			return true;
 		}
 	}
@@ -498,12 +539,13 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 		boundsSearch.inset(-max(rc->getDensityValue(5.0f), text->minDistance),
 		 		-max(rc->getDensityValue(15.0f), text->minDistance));
 		boundIntersections.query_in_box(boundsSearch, searchText);
-		if(debugTextDisplayShieldBBox) {
+		if(db.debugTextDisplayShieldBBox) {
 			drawTestBox(cv, &boundsSearch, text->pathRotate, paintIcon, text->text, paintText);
 		}
 		for (uint32_t i = 0; i < searchText.size(); i++) {
 			SHARED_PTR<TextDrawInfo> t = searchText.at(i);
-			if (t->minDistance > 0 && t->text == text->text && intersects(boundsSearch, text->pathRotate,  t)) {
+			if (t->minDistance > 0 && t->text == text->text && intersects(boundsSearch, text->pathRotate,  t) &&
+				 !db.debugTextDoNotFindIntersectionsSameName) {
 				return true;
 			}
 		}
@@ -705,23 +747,9 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 	SkRect r = SkRect::MakeLTRB(0, 0, rc->getWidth(), rc->getHeight());
 	r.inset(-rc->getDensityValue(25), -rc->getDensityValue(25));
 	quad_tree<SHARED_PTR<TextDrawInfo>> boundsIntersect(r, 4, 0.6);
+	DebugTextInfo db(req);
 	
-	bool debugTextDisplayBBox = false;
-	bool debugTextDisplayShieldBBox = false;
-	bool debugTextDoNotFindIntersections = false;
-	req->clearState();
-	// req->setIntFilter(req->props()->R_MINZOOM, rc->getZoom());
-	if (req->searchRenderingAttribute("debugTextDisplayBBox")) {
-		debugTextDisplayBBox = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
-	}
-	req->clearState();
-	if (req->searchRenderingAttribute("debugTextDisplayShieldBBox")) {
-		debugTextDisplayShieldBBox = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
-	}
-	req->clearState();
-	if (req->searchRenderingAttribute("debugTextDoNotFindIntersections")) {
-		debugTextDoNotFindIntersections = req->getBoolPropertyValue(req->props()->R_ATTR_BOOL_VALUE);
-	}
+	
 
 #if defined(ANDROID)
     // This is never released because of always +1 of reference counter
@@ -790,7 +818,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 		
 		// calculate if there is intersection
 		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon,
-			debugTextDisplayBBox, debugTextDisplayShieldBBox);
+			db);
 		if (!intersects) {
 			if(rc->interrupted()){
 				return;
