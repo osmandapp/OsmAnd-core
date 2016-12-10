@@ -234,7 +234,8 @@ void drawWrappedText(RenderingContext* rc, SkCanvas* cv, SHARED_PTR<TextDrawInfo
 				}
 			} while(pos < end && charRead < text->textWrap);
 
-			PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, c_str, pos - start , text->centerX, text->centerY + line * (textSize + 2), paintText, 
+			PROFILE_NATIVE_OPERATION(rc, drawTextOnCanvas(cv, c_str, pos - start , text->centerX, 
+				text->centerY + line * (textSize + 2), paintText, 
 				text->textShadowColor, text->textShadow));
 			c_str += (pos - start);
 			start = pos;
@@ -503,7 +504,8 @@ bool findTextIntersection(SkCanvas* cv, RenderingContext* rc, quad_tree<SHARED_P
 	vector<SHARED_PTR<TextDrawInfo>> searchText;
 	int textWrap = text->textWrap == 0 ? 25 : text->textWrap;
 	int text1Line = text->text.length() > textWrap  && !text->drawOnPath ? textWrap : text->text.length();
-	paintText->measureText(text->text.c_str(), text1Line, &text->bounds);
+	paintText->measureText(text->text.c_str(), text1Line, &text->textBounds);
+	text->bounds = text->textBounds;
 	// make wider and multiline
 	text->bounds.inset(-rc->getDensityValue( 3), -(rc->getDensityValue(5) +
 		((text->text.length() - 1) / text1Line) * text->bounds.height()));
@@ -573,7 +575,7 @@ void drawShield(SHARED_PTR<TextDrawInfo> textDrawInfo, std::string res, SkPaint*
 	if (ico != NULL) {
 		float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
 		float left = textDrawInfo->centerX - ico->width() / 2 * coef - 0.5f;
-		float top = textDrawInfo->centerY - ico->height() / 2 * coef - fm.fDescent - 0.5f;
+		float top = textDrawInfo->centerY - ico->height() / 2 * coef - textDrawInfo->textBounds.height() / 2;
 		// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
 		SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
 					ico->height() * coef);
@@ -822,6 +824,7 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 		// calculate if there is intersection
 		bool intersects = findTextIntersection(cv, rc, boundsIntersect, textDrawInfo, &paintText, &paintIcon,
 			db);
+		textDrawInfo->centerY += textDrawInfo->textBounds.height() / 2;
 		if (!intersects) {
 			if(rc->interrupted()){
 				return;

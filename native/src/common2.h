@@ -303,6 +303,7 @@ struct TextDrawInfo {
 	bool combined;
 	
 	SkRect bounds;
+	SkRect textBounds;
 	float centerX;
 	float centerY;
 
