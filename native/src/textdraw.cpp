@@ -280,7 +280,7 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p, Deb
 				float vvx = (points[i - 1].fX - points[i - 2].fX) / distances[i - 2];
 				float vvy = (points[i - 1].fY - points[i - 2].fY) / distances[i - 2];
 				float scalar = vx * vvx + vy * vvy;
-				if(scalar < - 0.5) {
+				if(scalar < 0) {
 					verySharpAngle = true;
 				}
 			}
@@ -697,7 +697,7 @@ void combineSimilarText(RenderingContext* rc) {
 						// float yGap = abs(pointsP[0].fY - pointsS[lenS - 1].fY);
 						// auto pid = (*p)->object.id / 128;
 						// auto sid = (*s)->object.id / 128;
-						// debugP("? Combine ? %f %f out of %s %d %d %ld %ld \n",  xGap, yGap, (*p)->text.c_str(), lenS, lenP, pid, sid);
+						// printf("? Combine ? %f %f out of %s %d %d %ld %ld \n",  xGap, yGap, (*p)->text.c_str(), lenS, lenP, pid, sid);
 						// debug
 						if(combine2Segments(&pointsS, &pointsP, (*s)->path, combineGap, &gapMeasure, false) ||
 							combine2Segments(&pointsP, &pointsS, (*p)->path, combineGap, &gapMeasure, false)) {
@@ -717,8 +717,8 @@ void combineSimilarText(RenderingContext* rc) {
 						{
 							(*p)->combined = true;	
 							combineOnIteration = true;
-							// debugP("Combined %s - %d of %d %f ++ %f\n", (*p)->text.c_str(),(20 - combined), list.size(),
-							// 	distances[siCombine],distances[pi]);
+							// printf("Combined %s - %d of %d %f ++ %f\n", (*p)->text.c_str(),(20 - combined), list.size(),
+								// distances[siCombine],distances[pi]);
 							distances[siCombine] += distances[pi];
 							
 							
@@ -728,8 +728,8 @@ void combineSimilarText(RenderingContext* rc) {
 							(*sToCombine)->combined = true;	
 							combineOnIteration = true;
 							
-							// debugP("Combined %s - %d of %d %f ++ %f\n", (*p)->text.c_str(),(20 - combined), list.size(),
-							// 	distances[pi], distances[siCombine]);
+							// printf("Combined %s - %d of %d %f ++ %f\n", (*p)->text.c_str(),(20 - combined), list.size(),
+							 	// distances[pi], distances[siCombine]);
 							distances[pi] += distances[siCombine];
 						}
 					}
@@ -833,8 +833,9 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 					paintText.setStyle(SkPaint::kStroke_Style);
 					paintText.setStrokeWidth(2 + textDrawInfo->textShadow);
 					rc->nativeOperations.Pause();
+					// textDrawInfo->vOffset
 					cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-							textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent) , paintText);
+							 textDrawInfo->vOffset  -  fm.fTop / 4, paintText);
 					rc->nativeOperations.Start();
 					// reset
 					paintText.setStyle(SkPaint::kFill_Style);
@@ -842,8 +843,9 @@ void drawTextOverCanvas(RenderingContext* rc, RenderingRuleSearchRequest* req, S
 					paintText.setColor(textDrawInfo->textColor);
 				}
 				rc->nativeOperations.Pause();
+				// textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent)
 				cv->drawTextOnPathHV(textDrawInfo->text.c_str(), textDrawInfo->text.length(), *textDrawInfo->path, textDrawInfo->hOffset,
-						textDrawInfo->vOffset - ( fm.fAscent/2 + fm.fDescent) , paintText);
+						  textDrawInfo->vOffset  -  fm.fTop / 4, paintText);
 				rc->nativeOperations.Start();
 			} else {
 				drawShield(textDrawInfo, textDrawInfo->shieldRes, &paintIcon, rc, cv, r, fm);
