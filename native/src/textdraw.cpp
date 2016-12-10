@@ -574,8 +574,8 @@ void drawShield(SHARED_PTR<TextDrawInfo> textDrawInfo, std::string res, SkPaint*
 	SkBitmap* ico = getCachedBitmap(rc, res);
 	if (ico != NULL) {
 		float coef = rc->getDensityValue(rc->getScreenDensityRatio() * rc->getTextScale());
-		float left = textDrawInfo->centerX - ico->width() / 2 * coef - 0.5f;
-		float top = textDrawInfo->centerY - ico->height() / 2 * coef - textDrawInfo->textBounds.height() / 2;
+		float left = textDrawInfo->centerX - ico->width() / 2 * coef - 0.5f; //
+		float top = textDrawInfo->centerY - ico->height() / 2 * coef + fm.fTop / 4; //textDrawInfo->textBounds.height() / 2;
 		// SkIRect src =  SkIRect::MakeXYWH(0, 0, ico->width(), ico->height())
 		SkRect r = SkRect::MakeXYWH(left, top, ico->width() * coef,
 					ico->height() * coef);
