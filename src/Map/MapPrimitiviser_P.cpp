@@ -1539,7 +1539,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
                     polygonAreaInAbstractPixels <= context.polygonAreaMinimalThreshold;
             }
 
-            if (!*rejectByArea || ignorePolygonArea)
+            if (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonArea)
             {
                 const Stopwatch polygonEvaluationStopwatch(metric != nullptr);
 
@@ -1593,7 +1593,7 @@ std::shared_ptr<const OsmAnd::MapPrimitiviser_P::PrimitivesGroup> OsmAnd::MapPri
             if (metric)
                 metric->elapsedTimeForPolygonProcessing += polygonProcessingStopwatch.elapsed();
 
-            if (!*rejectByArea || ignorePolygonAsPointArea)
+            if (!rejectByArea.isSet() || *rejectByArea.getValuePtrOrNullptr() == false || ignorePolygonAsPointArea)
             {
                 const Stopwatch pointEvaluationStopwatch(metric != nullptr);
 
