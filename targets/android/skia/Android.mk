@@ -475,10 +475,6 @@ else
 		
 endif
 
-LOCAL_SHARED_LIBRARIES := \
-	libutils \
-	libz
-	
 LOCAL_STATIC_LIBRARIES += \
 	osmand_jpeg \
 	osmand_ft2 \
