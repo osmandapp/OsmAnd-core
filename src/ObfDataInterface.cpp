@@ -665,12 +665,13 @@ bool OsmAnd::ObfDataInterface::findAmenityById(
 {
     std::shared_ptr<const OsmAnd::Amenity> foundAmenity;
 
+    uint64_t obfId = id.id >> 7;
     const auto visitor =
-        [id, &foundAmenity]
+        [obfId, &foundAmenity]
         (const std::shared_ptr<const OsmAnd::Amenity>& amenity) -> bool
         {
             // todo: wrong IF since mapObject->id != amenity->id
-            //if (amenity->id == id)
+            if (amenity->id >> 1 == obfId)
                 foundAmenity = amenity;
 
             return false;
