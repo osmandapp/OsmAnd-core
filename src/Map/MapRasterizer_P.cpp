@@ -433,7 +433,10 @@ void OsmAnd::MapRasterizer_P::rasterizePolygon(
         }
     }
 
-    canvas.drawPath(path, paint);
+    if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_0, true))
+        canvas.drawPath(path, paint);
+    if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_1, true))
+        canvas.drawPath(path, paint);
     if (updatePaint(context, paint, primitive->evaluationResult, PaintValuesSet::Layer_2, false))
         canvas.drawPath(path, paint);
 }
