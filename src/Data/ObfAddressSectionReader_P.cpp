@@ -993,6 +993,17 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
             case OBF::OsmAndAddressNameIndexData::kAtomFieldNumber:
             {
                 std::sort(intermediateOffsets);
+
+                QVector<QVector<uint32_t>> refs(5);
+                QVector<QVector<uint32_t>> refsCotainer(5);
+
+                for (int i = 0; i < refs.size(); i++) {
+                    refs[i].resize(10);
+                    refsCotainer[i].resize(10);
+                }
+
+                std::cout << "refs size: " << refs.size() << std::endl;
+
                 for (const auto& intermediateOffset : constOf(intermediateOffsets))
                 {
                     const auto offset = baseOffset + intermediateOffset; 
@@ -1006,6 +1017,8 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
                         reader,
                         offset,
                         outAddressReferences,
+                        refs,
+                        refsCotainer,
                         bbox31,
                         streetGroupTypesFilter,
                         includeStreets,
@@ -1028,6 +1041,8 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexData(
     const ObfReader_P& reader,
     const uint32_t baseOffset,
     QVector<AddressReference>& outAddressReferences,
+    QVector<QVector<uint32_t>>& refs,
+    QVector<QVector<uint32_t>>& refsContainer,
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
@@ -1054,7 +1069,9 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexData(
                 readNameIndexDataAtom(
                     reader,
                     baseOffset,
-                    outAddressReferences, 
+                    outAddressReferences,
+                    refs,
+                    refsContainer,
                     bbox31,
                     streetGroupTypesFilter,
                     includeStreets,
@@ -1075,6 +1092,8 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
     const ObfReader_P& reader,
     const uint32_t baseOffset,
     QVector<AddressReference>& outAddressReferences,
+    QVector<QVector<uint32_t>>& refs,
+    QVector<QVector<uint32_t>>& refsContainer,
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
@@ -1083,11 +1102,30 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
     const auto cis = reader.getCodedInputStream().get();
 
     AddressReference addressReference;
+    int x, y;
+    bool add = true;
+    uint32_t shiftindex = 0;
+    uint32_t shiftcityindex = 0;
+    QVector<uint32_t> toAdd;
+    QVector<uint32_t> toAddCity;
 
     for (;;)
     {
-        const auto tag = cis->ReadTag();
-        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        const auto t = cis->ReadTag();
+        const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
+
+        if (tag == 0 || tag == OBF::AddressNameIndexDataAtom::kShiftToIndexFieldNumber) {
+            if (add) {
+                if (shiftindex != 0) {
+                    toAdd.append(shiftindex);
+                }
+                if (shiftcityindex != 0) {
+                    toAddCity.append(shiftcityindex);
+                }
+            }
+        }
+
+        switch (tag)
         {
             case 0:
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
@@ -1097,7 +1135,8 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
                     addressReference.containerIndexOffset = baseOffset - addressReference.containerIndexOffset;
                 if (addressReference.dataIndexOffset != 0)
                     addressReference.dataIndexOffset = baseOffset - addressReference.dataIndexOffset;
-                outAddressReferences.push_back(addressReference);
+                if (add)
+                    outAddressReferences.push_back(addressReference);
 
                 return;
             case OBF::AddressNameIndexDataAtom::kNameFieldNumber:
@@ -1125,14 +1164,30 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
                     cis->Skip(cis->BytesUntilLimit());
                     return;
                 }
+
+                toAdd = refs[(uint32_t) addressReference.addressType];
+                toAddCity = refsContainer[(uint32_t) addressReference.addressType]; //.at((uint32_t) addressReference.addressType);
+
                 break;
             }
             case OBF::AddressNameIndexDataAtom::kShiftToIndexFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&addressReference.dataIndexOffset));
+                shiftindex = baseOffset - addressReference.dataIndexOffset;
                 break;
             case OBF::AddressNameIndexDataAtom::kShiftToCityIndexFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&addressReference.containerIndexOffset));
+                shiftcityindex = baseOffset - addressReference.containerIndexOffset;
                 break;
+            case OBF::AddressNameIndexDataAtom::kXy16FieldNumber:
+            {
+                gpb::uint32 xy16;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&xy16));
+                x = (xy16 >> 16) << 15;
+                y = (xy16 & ((1 << 16) - 1)) << 15;
+                if (bbox31)
+                    add = bbox31->contains(x, y);
+                break;
+            }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
