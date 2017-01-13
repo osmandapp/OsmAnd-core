@@ -6,8 +6,8 @@
      # Make sure Xcode is set up properly
 -    isEmpty($$list($$system("/usr/bin/xcrun -find xcrun 2>/dev/null"))): \
 -        error("Xcode not set up properly. You may need to confirm the license agreement by running /usr/bin/xcodebuild.")
-+    isEmpty($$list($$system("/usr/bin/xcrun -find xcodebuild 2>/dev/null")))
-+       error("XXXXXXXXX Xcode not set up properly. You may need to confirm the license agreement by running /usr/bin/xcodebuild.")
++    #isEmpty($$list($$system("/usr/bin/xcrun -find xcodebuild 2>/dev/null")))
++    #   error("XXXXXXXXX Xcode not set up properly. You may need to confirm the license agreement by running /usr/bin/xcodebuild.")
  }
 
 
