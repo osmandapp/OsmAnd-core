@@ -10,6 +10,7 @@
 +       error("XXXXXXXXX Xcode not set up properly. You may need to confirm the license agreement by running /usr/bin/xcodebuild.")
  }
 
+
 --- upstream.original/configure
 +++ upstream.patched/configure
 @@ -548,9 +548,9 @@ if [ "$BUILD_ON_MAC" = "yes" ]; then
