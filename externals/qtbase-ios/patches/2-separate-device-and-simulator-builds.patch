@@ -20,13 +20,13 @@ diff -rupN upstream.original/mkspecs/macx-ios-clang-simulator/qmake.conf upstrea
  QMAKE_IOS_SIMULATOR_ARCHS = i386 x86_64
  
  include(../common/ios.conf)
---- upstream.original/mkspecs/macx-ios-clang-simulator/features/sdk.prf	2016-07-21 22:59:04.000000000 +0300
-+++ upstream.patched/mkspecs/macx-ios-clang-simulator/features/sdk.prf	2016-07-22 14:48:11.000000000 +0300
+--- upstream.original/mkspecs/macx-ios-clang-simulator/features/sdk.prf	2017-01-14 12:31:08.000000000 +0200
++++ upstream.patched/mkspecs/macx-ios-clang-simulator/features/sdk.prf	2017-01-14 12:41:34.000000000 +0200
 @@ -1,9 +1,6 @@
  
  # In case the user sets the SDK manually
  contains(QMAKE_MAC_SDK, ^$${simulator.sdk}.*) {
--    simulator_and_device: \
+-    contains(QT_CONFIG, simulator_and_device): \
 -        error("iOS simulator is handled automatically for simulator_and_device")
 -
      CONFIG += simulator $${simulator.sdk}
