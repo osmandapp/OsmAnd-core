@@ -121,6 +121,10 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
         {
             if (parseConstantValue(constantValue, dataType, isComplex, outValue.asConstantValue))
                 return true;
+
+            LogPrintf(LogSeverityLevel::Error,
+                      "'%s' was not defined as constant",
+                      qPrintable(constantOrAttributeName));
         }
 
         // Try as attribute
@@ -132,6 +136,7 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
             {
                 outValue.isDynamic = true;
                 outValue.asDynamicValue.attribute = *citAttribute;
+
                 return true;
             }
         }
@@ -313,8 +318,6 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveParameters()
 
 bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAttributes()
 {
-    QHash<StringId, std::shared_ptr<Attribute> > attributes;
-
     // Process styles chain in direct order to ensure "overridden" <case> elements are processed first
     auto citUnresolvedMapStyle = iteratorOf(owner->unresolvedMapStylesChain);
     while (citUnresolvedMapStyle.hasNext())
@@ -324,18 +327,17 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAttributes()
         for (const auto& unresolvedAttribute : constOf(unresolvedMapStyle->attributes))
         {
             const auto nameId = resolveStringIdInLUT(unresolvedAttribute->name);
-            auto& resolvedAttribute = attributes[nameId];
+            auto& resolvedAttribute_ = _attributes[nameId];
 
             // Create resolved attribute if needed
-            if (!resolvedAttribute)
-                resolvedAttribute.reset(new Attribute(nameId));
+            if (!resolvedAttribute_)
+                resolvedAttribute_.reset(new Attribute(nameId));
+            auto resolvedAttribute = std::const_pointer_cast<IMapStyle::IAttribute>(resolvedAttribute_);
 
             const auto resolvedRuleNode = resolveRuleNode(unresolvedAttribute->rootNode);
-            resolvedAttribute->rootNode->oneOfConditionalSubnodes.append(resolvedRuleNode->oneOfConditionalSubnodes);
+            resolvedAttribute->getRootNode()->getOneOfConditionalSubnodes().append(resolvedRuleNode->oneOfConditionalSubnodes);
         }
     }
-
-    _attributes = copyAs< StringId, std::shared_ptr<const IMapStyle::IAttribute> >(attributes);
 
     return true;
 }
