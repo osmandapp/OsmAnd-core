@@ -8,7 +8,7 @@ fi
 SRCLOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SRCLOC/../../../build/utils/functions.sh"
 
-prepareUpstreamFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-qtbase.git" "qt-v5.7.0"
+prepareUpstreamFromGit "$SRCLOC" "https://github.com/osmandapp/OsmAnd-external-qtbase.git" "qt-v5.7.1"
 patchUpstream "$SRCLOC"
 
 # Check if tools are present

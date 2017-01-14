@@ -72,7 +72,7 @@ if [[ "$targetOS" == "linux" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -c++std c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
-		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+		-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 		-v
 	" | tr '\n' ' ')
@@ -107,7 +107,7 @@ elif [[ "$targetOS" == "macosx" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-debug-and-release -opensource -confirm-license -c++std c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
-		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+		-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib -no-framework
 		-v
 	" | tr '\n' ' ')
@@ -132,7 +132,7 @@ elif [[ "$targetOS" == "cygwin" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
-		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+		-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 		-v
 	" | tr '\n' ' ')
@@ -153,7 +153,7 @@ elif [[ "$targetOS" == "windows" ]]; then
 	QTBASE_CONFIGURATION=$(echo "
 		-release -opensource -confirm-license -c++std c++11 -largefile -no-accessibility -qt-sql-sqlite
 		-no-qml-debug -qt-zlib -no-gif -no-libpng -no-libjpeg -no-openssl -qt-pcre
-		-nomake examples -nomake tools -no-gui -no-widgets -no-nis -no-cups -no-iconv -no-icu -no-dbus
+		-nomake examples -nomake tools -no-gui -no-widgets -no-cups -no-iconv -no-icu -no-dbus
 		-no-xcb -no-eglfs -no-directfb -no-linuxfb -no-kms -no-opengl -no-glib
 		-v
 	" | tr '\n' ' ')
