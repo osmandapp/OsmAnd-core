@@ -312,6 +312,7 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveParameters()
     return true;
 }
 
+
 bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAttributes()
 {
     // Process styles chain in direct order to ensure "overridden" <case> elements are processed first
@@ -319,22 +320,22 @@ bool OsmAnd::ResolvedMapStyle_P::mergeAndResolveAttributes()
     while (citUnresolvedMapStyle.hasNext())
     {
         const auto& unresolvedMapStyle = citUnresolvedMapStyle.next();
-
+        
         for (const auto& unresolvedAttribute : constOf(unresolvedMapStyle->attributes))
         {
             const auto nameId = resolveStringIdInLUT(unresolvedAttribute->name);
             auto& resolvedAttribute_ = _attributes[nameId];
-
+            
             // Create resolved attribute if needed
             if (!resolvedAttribute_)
                 resolvedAttribute_.reset(new Attribute(nameId));
-            auto resolvedAttribute = std::const_pointer_cast<IMapStyle::IAttribute>(resolvedAttribute_);
-
+            
+            auto resolvedAttribute = std::dynamic_pointer_cast<const Attribute>(resolvedAttribute_);
+            
             const auto resolvedRuleNode = resolveRuleNode(unresolvedAttribute->rootNode);
-            resolvedAttribute->getRootNode()->getOneOfConditionalSubnodes().append(resolvedRuleNode->oneOfConditionalSubnodes);
+            resolvedAttribute->rootNode->oneOfConditionalSubnodes.append(resolvedRuleNode->oneOfConditionalSubnodes);
         }
     }
-
     return true;
 }
 

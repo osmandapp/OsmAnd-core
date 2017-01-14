@@ -168,6 +168,15 @@ namespace OsmAnd
             return scaleDivisor31ToPixel;
         }
 
+        inline static double getTileDistanceWidth(float zoom)
+        {
+            double lat1 = 30;
+            double lon1 = getLongitudeFromTile(zoom, 0);
+            double lat2 = 30;
+            double lon2 = getLongitudeFromTile(zoom, 1);
+            return distance(lon1, lat1, lon2, lat2);
+        }
+        
         inline static double getLongitudeFromTile(const float zoom, const double x)
         {
             return x / getPowZoom(zoom) * 360.0 - 180.0;
