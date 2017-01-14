@@ -121,10 +121,6 @@ bool OsmAnd::ResolvedMapStyle_P::resolveValue(
         {
             if (parseConstantValue(constantValue, dataType, isComplex, outValue.asConstantValue))
                 return true;
-
-            LogPrintf(LogSeverityLevel::Error,
-                      "'%s' was not defined as constant",
-                      qPrintable(constantOrAttributeName));
         }
 
         // Try as attribute
