@@ -41,6 +41,8 @@ namespace OsmAnd
         bool remove(const SourceOriginId entryId);
 
         virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
+        virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
+            const QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources) const;
         virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(
             const AreaI* const pBbox31 = nullptr,
             const ZoomLevel minZoomLevel = MinZoomLevel,

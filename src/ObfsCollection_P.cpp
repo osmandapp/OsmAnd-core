@@ -274,6 +274,14 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ObfsCollection_P::getObf
 }
 
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataInterface(
+    const QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources) const
+{
+    // not implemented
+    QList< std::shared_ptr<const ObfReader> > obfReaders;
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterface(obfReaders));
+}
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ObfsCollection_P::obtainDataInterface(
     const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
     const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,

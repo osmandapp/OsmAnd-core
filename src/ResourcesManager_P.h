@@ -165,6 +165,8 @@ namespace OsmAnd
             ResourcesManager_P* const owner;
 
             virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const;
+            virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
+                const QList< std::shared_ptr<const LocalResource> > localResources) const;
             virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(
                 const AreaI* const pBbox31 = nullptr,
                 const ZoomLevel minZoomLevel = MinZoomLevel,

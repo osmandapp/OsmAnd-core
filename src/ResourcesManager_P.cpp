@@ -1623,6 +1623,49 @@ QList< std::shared_ptr<const OsmAnd::ObfFile> > OsmAnd::ResourcesManager_P::Obfs
 }
 
 std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterface(
+    const QList< std::shared_ptr<const LocalResource> > localResources) const
+{
+    QReadLocker scopedLocker(&owner->_localResourcesLock);
+    
+    bool otherBasemapPresent = false;
+    QList< std::shared_ptr<const InstalledResource> > lockedResources;
+    QList< std::shared_ptr<const ObfReader> > obfReaders;
+    for (const auto& localResource : localResources)
+    {
+        if (localResource->type != ResourceType::MapRegion &&
+            localResource->type != ResourceType::RoadMapRegion &&
+            localResource->type != ResourceType::SrtmMapRegion &&
+            localResource->type != ResourceType::WikiMapRegion)
+        {
+            continue;
+        }
+        
+        const auto& obfMetadata = std::static_pointer_cast<const ObfMetadata>(localResource->_metadata);
+        if (!obfMetadata)
+            continue;
+        
+        if (const auto installedResource = std::dynamic_pointer_cast<const InstalledResource>(localResource))
+        {
+            if (!installedResource->_lock.tryLockForReading())
+                continue;
+            lockedResources.push_back(installedResource);
+        }
+        
+        if (obfMetadata->obfFile->obfInfo->isBasemapWithCoastlines)
+            otherBasemapPresent = true;
+        std::shared_ptr<const ObfReader> obfReader(new ObfReader(obfMetadata->obfFile));
+        obfReaders.push_back(qMove(obfReader));
+    }
+    if (!otherBasemapPresent && owner->_miniBasemapObfFile)
+    {
+        std::shared_ptr<const ObfReader> obfReader(new ObfReader(owner->_miniBasemapObfFile));
+        obfReaders.push_back(qMove(obfReader));
+    }
+    
+    return std::shared_ptr<ObfDataInterface>(new ObfDataInterfaceProxy(obfReaders, lockedResources));
+}
+
+std::shared_ptr<OsmAnd::ObfDataInterface> OsmAnd::ResourcesManager_P::ObfsCollectionProxy::obtainDataInterface(
     const AreaI* const pBbox31 /*= nullptr*/,
     const ZoomLevel minZoomLevel /*= MinZoomLevel*/,
     const ZoomLevel maxZoomLevel /*= MaxZoomLevel*/,

@@ -14,6 +14,7 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/ObfFile.h>
+#include <OsmAndCore/ResourcesManager.h>
 
 namespace OsmAnd
 {
@@ -30,6 +31,8 @@ namespace OsmAnd
         virtual ~IObfsCollection();
 
         virtual QList< std::shared_ptr<const ObfFile> > getObfFiles() const = 0;
+        virtual std::shared_ptr<OsmAnd::ObfDataInterface> obtainDataInterface(
+            const QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources) const = 0;
         virtual std::shared_ptr<ObfDataInterface> obtainDataInterface(
             const AreaI* const pBbox31 = nullptr,
             const ZoomLevel minZoomLevel = MinZoomLevel,
