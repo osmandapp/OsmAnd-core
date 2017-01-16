@@ -766,8 +766,6 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
     }
 }
 
-
-
 void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
     const ObfReader_P& reader,
     const std::shared_ptr<const ObfAddressSectionInfo>& section,
@@ -782,6 +780,10 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
     const auto cis = reader.getCodedInputStream().get();
 
     QVector<AddressReference> indexReferences;
+    uint32_t baseOffset;
+    QVector<uint32_t> intermediateOffsets; // loffsets
+
+    std::cout << "readAddressesByName" << std::endl;
 
     for (;;)
     {
@@ -794,33 +796,115 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                     return;
 
                 return;
-            case OBF::OsmAndAddressIndex::kNameIndexFieldNumber:
+            case OBF::OsmAndAddressNameIndexData::kTableFieldNumber:
             {
                 const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+                baseOffset = cis->CurrentPosition();
                 const auto oldLimit = cis->PushLimit(length);
 
-                scanNameIndex(
-                    reader,
-                    query,
-                    indexReferences,
-                    bbox31,
-                    streetGroupTypesFilter,
-                    includeStreets,
-                    queryController);
-
+                ObfReaderUtilities::scanIndexedStringTable(cis, query, intermediateOffsets);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
+
                 cis->PopLimit(oldLimit);
+
+                if (intermediateOffsets.isEmpty())
+                {
+                    std::cout << "intermediateOffsets.isEmpty()" << std::endl;
+                    cis->Skip(cis->BytesUntilLimit());
+                    return;
+                }
+                break;
+            }
+            case OBF::OsmAndAddressIndex::kNameIndexFieldNumber:
+            {
+                std::sort(intermediateOffsets);
+
+                QVector<QVector<uint32_t>> refs(5);
+                QVector<QVector<uint32_t>> refsCotainer(5);
+
+                for (int i = 0; i < refs.size(); i++) {
+                    refs[i].resize(10);
+                    refsCotainer[i].resize(10);
+                }
+
+                std::cout << "refs size: " << refs.size() << std::endl;
+
+                for (const auto& intermediateOffset : constOf(intermediateOffsets))
+                {
+                    const auto offset = baseOffset + intermediateOffset;
+                    cis->Seek(offset);
+
+                    gpb::uint32 length;
+                    cis->ReadVarint32(&length);
+                    const auto oldLimit = cis->PushLimit(length);
+                    uint32_t stag = 0;
+
+                    for(;;) {
+                        uint32_t st = cis->ReadTag();
+                        stag = gpb::internal::WireFormatLite::GetTagFieldNumber(st);
+
+                        std::cout << "stag: " << stag << std::endl;
+
+                        if (stag == OBF::OsmAndAddressNameIndexData_AddressNameIndexData::kAtomFieldNumber) {
+                            uint32_t slen;
+                            cis->ReadVarint32(&slen);
+                            uint32_t soldLim = cis->PushLimit(slen);
+
+                            readNameIndexDataAtom(
+                                reader,
+                                baseOffset,
+                                indexReferences,
+                                refs,
+                                refsCotainer,
+                                bbox31,
+                                streetGroupTypesFilter,
+                                includeStreets,
+                                queryController);
+                            ObfReaderUtilities::ensureAllDataWasRead(cis);
+                            cis->PopLimit(soldLim);
+                        }
+                        else if (stag != 0){
+                            ObfReaderUtilities::skipUnknownField(cis, st);
+                        }
+
+                        if (stag == 0) break;
+                    }
+
+                    cis->PopLimit(oldLimit);
+                }
+
+                std::cout << "indexReferences size__: " << indexReferences.size() << std::endl;
+
+//                    cis->Skip(cis->BytesUntilLimit());
+//                    return;
 
                 qSort(indexReferences.begin(), indexReferences.end(), ObfAddressSectionReader_P::dereferencedLessThan);
                 uint32_t dataIndexOffset = 0;
                 for (const auto& indexReference : constOf(indexReferences))
                 {
                     std::shared_ptr<Address> address;
-                    if (dataIndexOffset == indexReference.dataIndexOffset) {
-                        continue;
-                    }
+//                    if (dataIndexOffset == indexReference.dataIndexOffset) {
+//                        continue;
+//                    }
+
+                    QVector<uint32_t> list = refs.at((int) indexReference.addressType);
+                    QVector<uint32_t> listContainer = refsCotainer.at((int) indexReference.addressType);
+
+                    std::cout << "list size: " << list.size() << std::endl;
+                    std::cout << "listContainer size: " << listContainer.size() << std::endl;
+
                     if (indexReference.addressType == AddressNameIndexDataAtomType::Street)
                     {
+
+//                        std::map<uint32_t, uint64_t> mp;
+                        QHash<uint32_t, uint64_t> mp;
+
+                        for (int j = 0; j < list.size(); j++) {
+                            mp.insert(list.at(j), listContainer.at(j));
+                        }
+
+                        qSort(list);
+
                         std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
                         {
                             cis->Seek(indexReference.containerIndexOffset);
@@ -841,7 +925,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                             ObfReaderUtilities::ensureAllDataWasRead(cis);
                             cis->PopLimit(oldLimit);
                         }
-                        
+
                         if (!streetGroup)
                             continue;
 
@@ -860,7 +944,7 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
 
                         if (!street)
                             continue;
-                        
+
                         if (!query.isNull())
                         {
                             bool accept = false;
@@ -948,6 +1032,186 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
     }
 }
 
+//void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
+//    const ObfReader_P& reader,
+//    const std::shared_ptr<const ObfAddressSectionInfo>& section,
+//    const QString& query,
+//    QList< std::shared_ptr<const OsmAnd::Address> >* outAddresses,
+//    const AreaI* const bbox31,
+//    const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
+//    const bool includeStreets,
+//    const ObfAddressSectionReader::VisitorFunction visitor,
+//    const std::shared_ptr<const IQueryController>& queryController)
+//{
+//    const auto cis = reader.getCodedInputStream().get();
+//
+//    QVector<AddressReference> indexReferences;
+//
+//    for (;;)
+//    {
+//        const auto tagPos = cis->CurrentPosition();
+//        const auto tag = cis->ReadTag();
+//        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+//        {
+//            case 0:
+//                if (!ObfReaderUtilities::reachedDataEnd(cis))
+//                    return;
+//
+//                return;
+//            case OBF::OsmAndAddressIndex::kNameIndexFieldNumber:
+//            {
+//                const auto length = ObfReaderUtilities::readBigEndianInt(cis);
+//                const auto oldLimit = cis->PushLimit(length);
+//
+//                scanNameIndex(
+//                    reader,
+//                    query,
+//                    indexReferences,
+//                    bbox31,
+//                    streetGroupTypesFilter,
+//                    includeStreets,
+//                    queryController);
+//
+//                ObfReaderUtilities::ensureAllDataWasRead(cis);
+//                cis->PopLimit(oldLimit);
+//
+//                qSort(indexReferences.begin(), indexReferences.end(), ObfAddressSectionReader_P::dereferencedLessThan);
+//                uint32_t dataIndexOffset = 0;
+//                for (const auto& indexReference : constOf(indexReferences))
+//                {
+//                    std::shared_ptr<Address> address;
+//                    if (dataIndexOffset == indexReference.dataIndexOffset) {
+//                        continue;
+//                    }
+//                    if (indexReference.addressType == AddressNameIndexDataAtomType::Street)
+//                    {
+//                        std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
+//                        {
+//                            cis->Seek(indexReference.containerIndexOffset);
+//
+//                            gpb::uint32 length;
+//                            cis->ReadVarint32(&length);
+//                            const auto oldLimit = cis->PushLimit(length);
+//
+//                            readStreetGroup(
+//                                reader,
+//                                section,
+//                                static_cast<ObfAddressStreetGroupType>(ObfAddressStreetGroupType::Unknown),
+//                                indexReference.containerIndexOffset,
+//                                streetGroup,
+//                                nullptr,
+//                                queryController);
+//
+//                            ObfReaderUtilities::ensureAllDataWasRead(cis);
+//                            cis->PopLimit(oldLimit);
+//                        }
+//
+//                        if (!streetGroup)
+//                            continue;
+//
+//                        std::shared_ptr<Street> street;
+//                        {
+//                            cis->Seek(indexReference.dataIndexOffset);
+//                            gpb::uint32 length;
+//                            cis->ReadVarint32(&length);
+//                            const auto oldLimit = cis->PushLimit(length);
+//
+//                            readStreet(reader, streetGroup, indexReference.dataIndexOffset, street, bbox31, queryController);
+//
+//                            ObfReaderUtilities::ensureAllDataWasRead(cis);
+//                            cis->PopLimit(oldLimit);
+//                        }
+//
+//                        if (!street)
+//                            continue;
+//
+//                        if (!query.isNull())
+//                        {
+//                            bool accept = false;
+//                            accept = accept || street->nativeName.contains(query, Qt::CaseInsensitive);
+//                            for (const auto& localizedName : constOf(street->localizedNames))
+//                            {
+//                                accept = accept || localizedName.contains(query, Qt::CaseInsensitive);
+//
+//                                if (accept)
+//                                    break;
+//                            }
+//
+//                            if (!accept)
+//                                continue;
+//                        }
+//                        address = street;
+//                    }
+//                    else
+//                    {
+//                        std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
+//                        {
+//                            cis->Seek(indexReference.dataIndexOffset);
+//
+//                            gpb::uint32 length;
+//                            const auto offset = cis->CurrentPosition();
+//                            cis->ReadVarint32(&length);
+//                            const auto oldLimit = cis->PushLimit(length);
+//
+//                            readStreetGroup(
+//                                reader,
+//                                section,
+//                                static_cast<ObfAddressStreetGroupType>(indexReference.addressType),
+//                                offset,
+//                                streetGroup,
+//                                bbox31,
+//                                queryController);
+//
+//                            ObfReaderUtilities::ensureAllDataWasRead(cis);
+//                            cis->PopLimit(oldLimit);
+//                        }
+//
+//                        if (!streetGroup)
+//                            continue;
+//
+//                        if (!query.isNull())
+//                        {
+//                            bool accept = false;
+//                            accept = accept || streetGroup->nativeName.contains(query, Qt::CaseInsensitive);
+//                            for (const auto& localizedName : constOf(streetGroup->localizedNames))
+//                            {
+//                                accept = accept || localizedName.contains(query, Qt::CaseInsensitive);
+//
+//                                if (accept)
+//                                    break;
+//                            }
+//
+//                            if (!accept)
+//                                continue;
+//                        }
+//                        address = streetGroup;
+//                    }
+//
+//
+//
+//                    if (address)
+//                    {
+//                        if (!visitor || visitor(address))
+//                        {
+//                            if (outAddresses)
+//                                outAddresses->push_back(address);
+//                        }
+//                    }
+//
+//                    if (queryController && queryController->isAborted())
+//                        return;
+//                }
+//
+//                cis->Skip(cis->BytesUntilLimit());
+//                return;
+//            }
+//            default:
+//                ObfReaderUtilities::skipUnknownField(cis, tag);
+//                break;
+//        }
+//    }
+//}
+
 void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
     const ObfReader_P& reader,
     const QString& query,
@@ -993,6 +1257,17 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
             case OBF::OsmAndAddressNameIndexData::kAtomFieldNumber:
             {
                 std::sort(intermediateOffsets);
+
+                QVector<QVector<uint32_t>> refs(5);
+                QVector<QVector<uint32_t>> refsCotainer(5);
+
+                for (int i = 0; i < refs.size(); i++) {
+                    refs[i].resize(10);
+                    refsCotainer[i].resize(10);
+                }
+
+                std::cout << "refs size: " << refs.size() << std::endl;
+
                 for (const auto& intermediateOffset : constOf(intermediateOffsets))
                 {
                     const auto offset = baseOffset + intermediateOffset; 
@@ -1006,6 +1281,8 @@ void OsmAnd::ObfAddressSectionReader_P::scanNameIndex(
                         reader,
                         offset,
                         outAddressReferences,
+                        refs,
+                        refsCotainer,
                         bbox31,
                         streetGroupTypesFilter,
                         includeStreets,
@@ -1028,6 +1305,8 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexData(
     const ObfReader_P& reader,
     const uint32_t baseOffset,
     QVector<AddressReference>& outAddressReferences,
+    QVector<QVector<uint32_t>>& refs,
+    QVector<QVector<uint32_t>>& refsContainer,
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
@@ -1054,7 +1333,9 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexData(
                 readNameIndexDataAtom(
                     reader,
                     baseOffset,
-                    outAddressReferences, 
+                    outAddressReferences,
+                    refs,
+                    refsContainer,
                     bbox31,
                     streetGroupTypesFilter,
                     includeStreets,
@@ -1075,6 +1356,8 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
     const ObfReader_P& reader,
     const uint32_t baseOffset,
     QVector<AddressReference>& outAddressReferences,
+    QVector<QVector<uint32_t>>& refs,
+    QVector<QVector<uint32_t>>& refsContainer,
     const AreaI* const bbox31,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter,
     const bool includeStreets,
@@ -1083,11 +1366,30 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
     const auto cis = reader.getCodedInputStream().get();
 
     AddressReference addressReference;
+    int x, y;
+    bool add = true;
+    uint32_t shiftindex = 0;
+    uint32_t shiftcityindex = 0;
+    QVector<uint32_t> toAdd;
+    QVector<uint32_t> toAddCity;
 
     for (;;)
     {
-        const auto tag = cis->ReadTag();
-        switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
+        const auto t = cis->ReadTag();
+        const auto tag = gpb::internal::WireFormatLite::GetTagFieldNumber(t);
+
+        if (tag == 0 || tag == OBF::AddressNameIndexDataAtom::kShiftToIndexFieldNumber) {
+            if (add) {
+                if (shiftindex != 0) {
+                    toAdd.append(shiftindex);
+                }
+                if (shiftcityindex != 0) {
+                    toAddCity.append(shiftcityindex);
+                }
+            }
+        }
+
+        switch (tag)
         {
             case 0:
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
@@ -1097,7 +1399,8 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
                     addressReference.containerIndexOffset = baseOffset - addressReference.containerIndexOffset;
                 if (addressReference.dataIndexOffset != 0)
                     addressReference.dataIndexOffset = baseOffset - addressReference.dataIndexOffset;
-                outAddressReferences.push_back(addressReference);
+                if (add)
+                    outAddressReferences.push_back(addressReference);
 
                 return;
             case OBF::AddressNameIndexDataAtom::kNameFieldNumber:
@@ -1125,14 +1428,30 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
                     cis->Skip(cis->BytesUntilLimit());
                     return;
                 }
+
+                toAdd = refs[(uint32_t) addressReference.addressType];
+                toAddCity = refsContainer[(uint32_t) addressReference.addressType]; //.at((uint32_t) addressReference.addressType);
+
                 break;
             }
             case OBF::AddressNameIndexDataAtom::kShiftToIndexFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&addressReference.dataIndexOffset));
+                shiftindex = baseOffset - addressReference.dataIndexOffset;
                 break;
             case OBF::AddressNameIndexDataAtom::kShiftToCityIndexFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&addressReference.containerIndexOffset));
+                shiftcityindex = baseOffset - addressReference.containerIndexOffset;
                 break;
+            case OBF::AddressNameIndexDataAtom::kXy16FieldNumber:
+            {
+                gpb::uint32 xy16;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&xy16));
+                x = (xy16 >> 16) << 15;
+                y = (xy16 & ((1 << 16) - 1)) << 15;
+                if (bbox31)
+                    add = bbox31->contains(x, y);
+                break;
+            }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
@@ -1250,8 +1569,11 @@ void OsmAnd::ObfAddressSectionReader_P::scanAddressesByName(
 {
     const auto cis = reader.getCodedInputStream().get();
     cis->Seek(section->offset);
-    auto oldLimit = cis->PushLimit(section->length);
-    cis->Skip(section->nameIndexInnerOffset);
+    uint32_t len;
+    cis->ReadVarint32(&len);
+//    auto oldLimit = cis->PushLimit(section->length);
+    auto oldLimit = cis->PushLimit(len);
+//    cis->Skip(section->nameIndexInnerOffset);
 
     readAddressesByName(
         reader,
