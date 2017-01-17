@@ -305,7 +305,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 {
     QVector<std::shared_ptr<const ResultEntry>> result{};
     auto searchPoint31 = Utilities::convertLatLonTo31(searchPoint);
-    auto roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 10);
+    auto roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 2);
     double distSquare = 0;
     QSet<ObfObjectId> set{};
     QSet<QString> streetNames{};
