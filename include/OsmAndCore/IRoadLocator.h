@@ -16,6 +16,17 @@ namespace OsmAnd
     class IObfsCollection;
     class Road;
 
+    struct OSMAND_CORE_API RoadInfo
+    {
+    public:
+        RoadInfo();
+        virtual ~RoadInfo();
+        
+        double distSquare;
+        uint32_t preciseX;
+        uint32_t preciseY;
+    };
+    
     class OSMAND_CORE_API IRoadLocator
     {
         Q_DISABLE_COPY_AND_MOVE(IRoadLocator);
@@ -32,7 +43,7 @@ namespace OsmAnd
             const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr) const = 0;
-        virtual QVector<std::pair<std::shared_ptr<const Road>, double>> findNearestRoads(
+        virtual QVector<std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>>> findNearestRoads(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel = RoutingDataLevel::Detailed,

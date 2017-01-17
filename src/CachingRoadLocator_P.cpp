@@ -62,7 +62,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::CachingRoadLocator_P::findNearestRoa
                 outDistanceToNearestRoadPoint);
 }
 
-QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::CachingRoadLocator_P::findNearestRoads(
+QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const OsmAnd::RoadInfo>>> OsmAnd::CachingRoadLocator_P::findNearestRoads(
         const OsmAnd::PointI position31,
         const double radiusInMeters,
         const OsmAnd::RoutingDataLevel dataLevel,

@@ -513,6 +513,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
     PointI position31;
 
     auto interpolation = Building::Interpolation::Disabled;
+    auto interpolationInterval = 0;
     QString interpolationNativeName;
     QHash<QString, QString> interpolationLocalizedNames;
     PointI interpolationPosition31;
@@ -551,6 +552,7 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
                 outBuilding->position31 = position31;
 
                 outBuilding->interpolation = interpolation;
+                outBuilding->interpolationInterval = interpolationInterval;
                 outBuilding->interpolationNativeName = interpolationNativeName;
                 outBuilding->interpolationLocalizedNames = interpolationLocalizedNames;
                 outBuilding->interpolationPosition31 = interpolationPosition31;
@@ -602,7 +604,10 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
             case OBF::BuildingIndex::kInterpolationFieldNumber:
             {
                 const auto value = ObfReaderUtilities::readSInt32(cis);
-                interpolation = static_cast<Building::Interpolation>(value);
+                if (value > 0)
+                    interpolationInterval = value;
+                else
+                    interpolation = static_cast<Building::Interpolation>(value);
                 break;
             }
             case OBF::BuildingIndex::kName2FieldNumber:

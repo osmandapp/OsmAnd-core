@@ -17,6 +17,7 @@ namespace OsmAnd
 {
     class IObfsCollection;
     class Road;
+    struct RoadInfo;
 
     class CachingRoadLocator;
     class CachingRoadLocator_P Q_DECL_FINAL
@@ -52,7 +53,7 @@ namespace OsmAnd
             const ObfRoutingSectionReader::VisitorFunction filter,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint) const;
-        QVector<std::pair<std::shared_ptr<const Road>, double>> findNearestRoads(
+        QVector<std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>>> findNearestRoads(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,

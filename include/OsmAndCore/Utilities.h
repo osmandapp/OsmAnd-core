@@ -248,7 +248,7 @@ namespace OsmAnd
 
         inline static double distance(const LatLon& a, const LatLon& b)
         {
-            return distance(a.longitude, a.latitude, b.longitude, b.longitude);
+            return distance(a.longitude, a.latitude, b.longitude, b.latitude);
         }
 
         inline static double distance(const Nullable<LatLon>& a, const Nullable<LatLon>& b)

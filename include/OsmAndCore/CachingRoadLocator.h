@@ -42,7 +42,7 @@ namespace OsmAnd
             const ObfRoutingSectionReader::VisitorFunction filter = nullptr,
             int* const outNearestRoadPointIndex = nullptr,
             double* const outDistanceToNearestRoadPoint = nullptr) const;
-        virtual QVector<std::pair<std::shared_ptr<const Road>, double>> findNearestRoads(
+        virtual QVector<std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>>> findNearestRoads(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel = RoutingDataLevel::Detailed,

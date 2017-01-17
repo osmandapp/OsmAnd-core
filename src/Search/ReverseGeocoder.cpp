@@ -26,14 +26,14 @@ void OsmAnd::ReverseGeocoder::performSearch(
     return _p->performSearch(criteria_, newResultEntryCallback, queryController);
 }
 
-QVector<OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeocoder::performSearch(
+std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeocoder::performSearch(
     const Criteria& criteria) const
 {
-    QVector<ResultEntry> result{};
+    std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> result;
     _p->performSearch(
                 criteria,
                 [&result](const OsmAnd::ISearch::Criteria& criteria, const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
-        result.append(static_cast<const OsmAnd::ReverseGeocoder::ResultEntry&>(resultEntry));
+                    result = std::make_shared<const OsmAnd::ReverseGeocoder::ResultEntry>(static_cast<const OsmAnd::ReverseGeocoder::ResultEntry&>(resultEntry));
     });
     return result;
 }
@@ -53,7 +53,19 @@ OsmAnd::Nullable<OsmAnd::PointI> OsmAnd::ReverseGeocoder::ResultEntry::searchPoi
 
 double OsmAnd::ReverseGeocoder::ResultEntry::getDistance() const
 {
-    return std::isnan(dist) ? Utilities::distance(connectionPoint, searchPoint) : dist;
+    if (std::isnan(dist))
+    {
+        if (connectionPoint.isSet() && searchPoint.isSet())
+        {
+            dist = Utilities::distance(connectionPoint, searchPoint);
+            return dist;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    return dist;
 }
 
 void OsmAnd::ReverseGeocoder::ResultEntry::setDistance(double dist)

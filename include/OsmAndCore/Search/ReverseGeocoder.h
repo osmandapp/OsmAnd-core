@@ -62,8 +62,8 @@ namespace OsmAnd
             void setDistance(double dist);
             QString toString() const;
 
-//        private:
-            double dist = NAN;
+        private:
+            mutable double dist = NAN;
         };
 
         explicit ReverseGeocoder(
@@ -75,8 +75,7 @@ namespace OsmAnd
                 const ISearch::Criteria& criteria,
                 const NewResultEntryCallback newResultEntryCallback,
                 const std::shared_ptr<const IQueryController>& queryController = nullptr) const;
-        QVector<OsmAnd::ReverseGeocoder::ResultEntry> performSearch(
-                const Criteria &criteria) const;
+        std::shared_ptr<const ResultEntry> performSearch(const Criteria &criteria) const;
     };
 }
 

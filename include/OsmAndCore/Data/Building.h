@@ -50,6 +50,7 @@ namespace OsmAnd
         PointI position31;
 
         Interpolation interpolation;
+        int32_t interpolationInterval;
         QString interpolationNativeName;
         QHash<QString, QString> interpolationLocalizedNames;
         PointI interpolationPosition31;

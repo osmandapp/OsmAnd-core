@@ -17,6 +17,7 @@ namespace OsmAnd
 {
     class IObfsCollection;
     class Road;
+    struct RoadInfo;
     
     class RoadLocator;
     class RoadLocator_P Q_DECL_FINAL
@@ -43,7 +44,7 @@ namespace OsmAnd
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint,
             QList< std::shared_ptr<const ObfRoutingSectionReader::DataBlock> >* const outReferencedCacheEntries) const;
-        QVector<std::pair<std::shared_ptr<const Road>, double>> findNearestRoads(
+        QVector<std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>>> findNearestRoads(
             const PointI position31,
             const double radiusInMeters,
             const RoutingDataLevel dataLevel,
@@ -69,12 +70,12 @@ namespace OsmAnd
             const ObfRoutingSectionReader::VisitorFunction filter,
             int* const outNearestRoadPointIndex,
             double* const outDistanceToNearestRoadPoint);
-        static QVector<std::pair<std::shared_ptr<const Road>, double>> sortedRoadsByDistance(
+        static QVector<std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>>> sortedRoadsByDistance(
             QList<std::shared_ptr<const Road>>& collection,
             const PointI position31,
             const double radiusInMeters,
             const ObfRoutingSectionReader::VisitorFunction filter);
-        static QVector<std::pair<std::shared_ptr<const Road>, double>> sortedRoadsByDistance(
+        static QVector<std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>>> sortedRoadsByDistance(
             QList<std::shared_ptr<const Road>>& collection,
             const PointI position31,
             const ObfRoutingSectionReader::VisitorFunction filter);

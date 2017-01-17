@@ -76,14 +76,14 @@ bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
         const std::shared_ptr<const ResultEntry>& a,
         const std::shared_ptr<const ResultEntry>& b)
 {
-    return a->getDistance() > b->getDistance();
+    return a->getDistance() < b->getDistance();
 }
 
 QStringList splitToWordsOrderedByLength(const QString &streetName)
 {
-    QStringList result = streetName.split("[ ()]");
+    QStringList result = streetName.split(QRegExp("[\\s()]"));
     result.erase(std::remove_if(result.begin(), result.end(), [](const QString& word){
-        return DEFAULT_SUFFIXES.contains(word);
+        return DEFAULT_SUFFIXES.contains(word.trimmed().toLower());
     }), result.end());
     std::sort(result.begin(), result.end(), [](const QString& a, const QString& b){
         return (a.length() != b.length()) ? (a.length() > b.length()) : (a > b);
@@ -93,10 +93,18 @@ QStringList splitToWordsOrderedByLength(const QString &streetName)
 
 QString extractMainWord(const QStringList &streetNamePacked)
 {
+    QString mainWord = "";
     for (QString word : streetNamePacked)
-        if (!SUFFIXES.contains(word))
-            return word;
-    return streetNamePacked[0];
+    {
+        if (!SUFFIXES.contains(word) && word.length() > mainWord.length())
+        {
+            mainWord = word;
+        }
+    }
+    if (mainWord.length() == 0)
+        return streetNamePacked[0];
+    else
+        return mainWord;
 }
 
 QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::ReverseGeocoder_P::justifyReverseGeocodingSearch(
@@ -108,35 +116,40 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     QStringList streetNamePacked = splitToWordsOrderedByLength(road->streetName);
     if (!streetNamePacked.isEmpty())
     {
-        QString log = QStringLiteral("Search street by name ") % road->streetName % QStringLiteral(" ") % streetNamePacked.join(",");
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, log.toLatin1());
+        //QString log = QStringLiteral("Search street by name ") % road->streetName % QStringLiteral(" ") % streetNamePacked.join(",");
+        //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, log.toLatin1());
         QString mainWord = extractMainWord(streetNamePacked);
         OsmAnd::AddressesByNameSearch::Criteria criteria;
         criteria.name = mainWord;
         criteria.includeStreets = true;
-        criteria.streetGroupTypesMask = OsmAnd::ObfAddressStreetGroupTypesMask{};
+        criteria.streetGroupTypesMask = ObfAddressStreetGroupTypesMask().set(ObfAddressStreetGroupType::CityOrTown);
         criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31()));
         addressByNameSearch->performSearch(
                     criteria,
                     [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
                     const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
             auto const& address = static_cast<const OsmAnd::AddressesByNameSearch::ResultEntry&>(resultEntry).address;
-            auto const& street = std::static_pointer_cast<const OsmAnd::Street>(address);
-            if (splitToWordsOrderedByLength(street->nativeName) == streetNamePacked)
+            if (address->addressType == OsmAnd::AddressType::Street)
             {
-////                double d = Utilities::distance31(street->position31, position31);
-////                if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
-                const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
-                rs->searchPoint = road->searchPoint;
-                rs->street = street;
-                // set connection point to sort
-                rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
-                rs->streetGroup = street->streetGroup;
-                streetList.append(rs);
-//                return true;
-////                }
+                auto const& street = std::static_pointer_cast<const OsmAnd::Street>(address);
+                if (splitToWordsOrderedByLength(street->nativeName) == streetNamePacked)
+                {
+                    if (road->searchPoint31().isSet())
+                    {
+                        const PointI position31 = *road->searchPoint31().getValuePtrOrNullptr();
+                        double d = Utilities::distance31(street->position31, position31);
+                        if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
+                            const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
+                            rs->street = street;
+                            rs->streetGroup = street->streetGroup;
+                            rs->searchPoint = road->searchPoint;
+                            rs->connectionPoint = Utilities::convert31ToLatLon(street->position31);
+                            rs->setDistance(d);
+                            streetList.append(rs);
+                        }
+                    }
+                }
             }
-//            return false;
         });
     }
 
@@ -154,6 +167,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                 streetDistance = street->getDistance();
             else if (street->getDistance() > streetDistance + DISTANCE_STREET_FROM_CLOSEST_WITH_SAME_NAME)
                 continue;
+            
             street->connectionPoint = road->connectionPoint;
             QVector<std::shared_ptr<const ResultEntry>> streetBuildings = loadStreetBuildings(road, street);
             std::sort(streetBuildings.begin(), streetBuildings.end(), DISTANCE_COMPARATOR);
@@ -221,27 +235,28 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             double coeff = Utilities::projection31(*road->searchPoint31(), b->position31, b->interpolationPosition31);
             double plat = s.latitude + (to.latitude - s.latitude) * coeff;
             double plon = s.longitude + (to.longitude - s.longitude) * coeff;
-            if (Utilities::distance(road->searchPoint->latitude, road->searchPoint->longitude, plat, plon) < DISTANCE_BUILDING_PROXIMITY)
+            if (Utilities::distance(road->searchPoint->longitude, road->searchPoint->latitude, plon, plat) < DISTANCE_BUILDING_PROXIMITY)
             {
                 auto bld = makeResult();
                 if (!b->interpolationNativeName.isEmpty())
                 {
                     int fi = extractFirstInteger(b->nativeName);
                     int si = extractFirstInteger(b->interpolationNativeName);
-                    if (si != 0 && fi != 0) {
+                    if (si != 0 && fi != 0)
+                    {
                         int num = (int) (fi + (si - fi) * coeff);
                         if (b->interpolation == Building::Interpolation::Even || b->interpolation == Building::Interpolation::Odd)
                         {
                             if (num % 2 == (b->interpolation == Building::Interpolation::Even ? 1 : 0))
                                 num--;
                         }
-//                        else if (b->interpolationInterval > 0)
-//                        {
-//                            int intv = b->interpolationInterval;
-//                            if ((num - fi) % intv != 0) {
-//                                num = ((num - fi) / intv) * intv + fi;
-//                            }
-//                        }
+                        else if (b->interpolationInterval > 0)
+                        {
+                            int intv = b->interpolationInterval;
+                            if ((num - fi) % intv != 0) {
+                                num = ((num - fi) / intv) * intv + fi;
+                            }
+                        }
                         bld->buildingInterpolation = QString::number(num);
                     }
                 }
@@ -260,13 +275,14 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 {
     QVector<std::shared_ptr<const ResultEntry>> result{};
     auto searchPoint31 = Utilities::convertLatLonTo31(searchPoint);
-    auto roads = roadLocator->findNearestRoads(searchPoint31, std::pow(STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS, 2));
+    auto roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 10);
     double distSquare = 0;
     QSet<ObfObjectId> set{};
+    QSet<QString> streetNames{};
     for (auto p : roads)
     {
         auto road = p.first;
-        double roadDistSquare = p.second;
+        double roadDistSquare = p.second->distSquare;
         if (set.contains(road->id))
             continue;
         else
@@ -276,11 +292,21 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             if (distSquare == 0 || distSquare > roadDistSquare)
                 distSquare = roadDistSquare;
             std::shared_ptr<ResultEntry> entry = std::make_shared<ResultEntry>();
-            if (!road->captions.isEmpty())
-                entry->streetName = road->captions.values()[0];
+            entry->streetName = road->getCaptionInNativeLanguage();
+            if (entry->streetName.isEmpty())
+            {
+                if (!road->captions.isEmpty())
+                    entry->streetName = road->captions.values().last();
+            }
+                
             entry->searchPoint = searchPoint;
-            entry->dist = std::sqrt(roadDistSquare);
-            result.append(entry);
+            entry->connectionPoint = LatLon(Utilities::get31LatitudeY(p.second->preciseY), Utilities::get31LongitudeX(p.second->preciseX));
+            
+            if (!streetNames.contains(entry->streetName))
+            {
+                streetNames.insert(entry->streetName);
+                result.append(entry);
+            }
         }
         if (roadDistSquare > std::pow(STOP_SEARCHING_STREET_WITH_MULTIPLIER_RADIUS, 2) &&
                 distSquare != 0 && roadDistSquare > THRESHOLD_MULTIPLIER_SKIP_STREETS_AFTER * distSquare)
@@ -288,6 +314,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         if (roadDistSquare > std::pow(STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS, 2))
             break;
     }
+    std::sort(result.begin(), result.end(), DISTANCE_COMPARATOR);
     return result;
 }
 

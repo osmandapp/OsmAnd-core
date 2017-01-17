@@ -64,7 +64,7 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoadEx(
         outDistanceToNearestRoadPoint);
 }
 
-QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLocator_P::findNearestRoads(
+QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const OsmAnd::RoadInfo>>> OsmAnd::RoadLocator_P::findNearestRoads(
         const OsmAnd::PointI position31,
         const double radiusInMeters,
         const OsmAnd::RoutingDataLevel dataLevel,
@@ -204,26 +204,28 @@ std::shared_ptr<const OsmAnd::Road> OsmAnd::RoadLocator_P::findNearestRoad(
     return minDistanceRoad;
 }
 
-QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLocator_P::sortedRoadsByDistance(
+QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const OsmAnd::RoadInfo>>> OsmAnd::RoadLocator_P::sortedRoadsByDistance(
     QList<std::shared_ptr<const Road>>& collection,
     const PointI position31,
     const double radiusInMeters,
     const ObfRoutingSectionReader::VisitorFunction filter)
 {
     auto result = sortedRoadsByDistance(collection, position31, filter);
-    result.erase(std::remove_if(result.begin(), result.end(), [radiusInMeters](std::pair<std::shared_ptr<const Road>, double> roadAndDistance) {
-         return roadAndDistance.second > radiusInMeters;
+    result.erase(std::remove_if(result.begin(), result.end(),
+                                [radiusInMeters]
+                                (std::pair<std::shared_ptr<const Road>, std::shared_ptr<const OsmAnd::RoadInfo>> roadAndDistance) {
+         return roadAndDistance.second->distSquare > radiusInMeters;
     }), result.end());
     return result;
 }
 
-QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLocator_P::sortedRoadsByDistance(
+QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const OsmAnd::RoadInfo>>> OsmAnd::RoadLocator_P::sortedRoadsByDistance(
     QList<std::shared_ptr<const Road>>& collection,
     const PointI position31,
     const ObfRoutingSectionReader::VisitorFunction filter)
 {
-    QVector<std::pair<std::shared_ptr<const Road>, double>> result{};
-    auto sqDistance = [position31](std::shared_ptr<const Road> road) {
+    QVector<std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>>> result{};
+    auto evRoadInfo = [position31](std::shared_ptr<const Road> road, std::shared_ptr<RoadInfo> roadInfo) {
         const auto& points31 = road->points31;
         double minSqDistance = std::numeric_limits<double>::max();
         for (auto idx = 1, count = points31.size(); idx < count; idx++)
@@ -257,16 +259,33 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, double>> OsmAnd::RoadLoca
             sqDistance = Utilities::squareDistance31(rx31, ry31, position31.x, position31.y);
 
             if (sqDistance < minSqDistance)
+            {
                 minSqDistance = sqDistance;
+                roadInfo->preciseX = rx31;
+                roadInfo->preciseY = ry31;
+                roadInfo->distSquare = minSqDistance;
+            }
         }
-        return minSqDistance;
     };
+    
     for (auto road : collection)
+    {
         if (!(road->points31.size() <= 1) || (filter && !filter(road)))
-            result.append(std::make_pair(road, sqDistance(road)));
-    std::sort(result.begin(), result.end(), [](std::pair<std::shared_ptr<const Road>, double> a, std::pair<std::shared_ptr<const Road>, double> b) {
-        return a.second < b.second;
+        {
+            auto roadInfo = std::make_shared<RoadInfo>();
+            evRoadInfo(road, roadInfo);
+            result.append(std::make_pair(road, roadInfo));
+        }
+    }
+    
+    std::sort(result.begin(), result.end(),
+              []
+              (std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>> a,
+               std::pair<std::shared_ptr<const Road>, std::shared_ptr<const RoadInfo>> b) {
+                  
+        return a.second->distSquare < b.second->distSquare;
     });
+    
     return result;
 }
 
