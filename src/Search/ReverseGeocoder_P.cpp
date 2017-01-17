@@ -79,16 +79,48 @@ bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
     return a->getDistance() < b->getDistance();
 }
 
+void addWord(QStringList &ls, QString word)
+{
+    const QString w = word.trimmed().toLower();
+    if (!w.isEmpty() && !DEFAULT_SUFFIXES.contains(w))
+        ls << w;
+}
+
 QStringList splitToWordsOrderedByLength(const QString &streetName)
 {
-    QStringList result = streetName.split(QRegExp("[\\s()]"));
-    result.erase(std::remove_if(result.begin(), result.end(), [](const QString& word){
-        return DEFAULT_SUFFIXES.contains(word.trimmed().toLower());
-    }), result.end());
-    std::sort(result.begin(), result.end(), [](const QString& a, const QString& b){
+    QStringList ls;
+    QString s = streetName;
+    int beginning = 0;
+    for (int i = 1; i < s.length(); i++)
+    {
+        if (s[i] == ' ')
+        {
+            addWord(ls, s.mid(beginning, i - beginning));
+            beginning = i;
+        }
+        else if (s[i] == '(')
+        {
+            addWord(ls, s.mid(beginning, i - beginning));
+            while (i < s.length())
+            {
+                auto c = s[i];
+                i++;
+                beginning = i;
+                if (c == ')')
+                    break;
+            }
+            
+        }
+    }
+    if (beginning < s.length())
+    {
+        QString lastWord = s.mid(beginning, s.length() - beginning);
+        addWord(ls, lastWord);
+    }
+    std::sort(ls.begin(), ls.end(), [](const QString& a, const QString& b){
         return (a.length() != b.length()) ? (a.length() > b.length()) : (a > b);
     });
-    return result;
+    return ls;
 }
 
 QString extractMainWord(const QStringList &streetNamePacked)
@@ -116,8 +148,6 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     QStringList streetNamePacked = splitToWordsOrderedByLength(road->streetName);
     if (!streetNamePacked.isEmpty())
     {
-        //QString log = QStringLiteral("Search street by name ") % road->streetName % QStringLiteral(" ") % streetNamePacked.join(",");
-        //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, log.toLatin1());
         QString mainWord = extractMainWord(streetNamePacked);
         OsmAnd::AddressesByNameSearch::Criteria criteria;
         criteria.name = mainWord;
