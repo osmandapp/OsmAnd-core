@@ -7,6 +7,8 @@
 #include "Road.h"
 #include "Utilities.h"
 
+#include <OsmAndCore/Data/ObfRoutingSectionReader.h>
+
 #include <QStringBuilder>
 
 // Location to test parameters http://www.openstreetmap.org/#map=18/53.896473/27.540071 (hno 44)
@@ -166,8 +168,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                 {
                     if (road->searchPoint31().isSet())
                     {
-                        const PointI position31 = *road->searchPoint31().getValuePtrOrNullptr();
-                        double d = Utilities::distance31(street->position31, position31);
+                        double d = Utilities::distance(Utilities::convert31ToLatLon(street->position31), *road->searchPoint);
                         if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
                             const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
                             rs->street = street;
@@ -204,11 +205,9 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             if (!streetBuildings.isEmpty())
             {
                 if (knownMinBuildingDistance == 0)
-                {
                     knownMinBuildingDistance = streetBuildings[0]->getDistance();
-                    result.append(streetBuildings[0]);
-                }
-                std::find_if(std::next(streetBuildings.begin()), streetBuildings.end(),
+
+                std::find_if(streetBuildings.begin(), streetBuildings.end(),
                              [&result, &knownMinBuildingDistance](const std::shared_ptr<const ResultEntry>& building){
                     bool stop = building->getDistance() > knownMinBuildingDistance * THRESHOLD_MULTIPLIER_SKIP_BUILDINGS_AFTER;
                     if (!stop)
@@ -262,7 +261,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         {
             LatLon s = Utilities::convert31ToLatLon(b->position31);
             LatLon to = Utilities::convert31ToLatLon(b->interpolationPosition31);
-            double coeff = Utilities::projection31(*road->searchPoint31(), b->position31, b->interpolationPosition31);
+            double coeff = Utilities::projectionCoeff31(*road->searchPoint31(), b->position31, b->interpolationPosition31);
             double plat = s.latitude + (to.latitude - s.latitude) * coeff;
             double plon = s.longitude + (to.longitude - s.longitude) * coeff;
             if (Utilities::distance(road->searchPoint->longitude, road->searchPoint->latitude, plon, plat) < DISTANCE_BUILDING_PROXIMITY)
@@ -292,7 +291,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                 }
             }
         }
-        else if (Utilities::distance31(b->position31, *road->searchPoint31()) < DISTANCE_BUILDING_PROXIMITY)
+        else if (Utilities::distance(Utilities::convert31ToLatLon(b->position31), *road->searchPoint) < DISTANCE_BUILDING_PROXIMITY)
         {
             makeResult();
         }
@@ -305,7 +304,20 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 {
     QVector<std::shared_ptr<const ResultEntry>> result{};
     auto searchPoint31 = Utilities::convertLatLonTo31(searchPoint);
-    auto roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 2);
+    auto roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 2, OsmAnd::RoutingDataLevel::Detailed,
+                                               [this]
+                                               (const std::shared_ptr<const OsmAnd::Road>& road) -> bool
+                                               {
+                                                   return !road->captions.empty();
+                                               });
+    if (roads.empty())
+        roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 10, OsmAnd::RoutingDataLevel::Detailed,
+                                              [this]
+                                              (const std::shared_ptr<const OsmAnd::Road>& road) -> bool
+                                              {
+                                                  return !road->captions.empty();
+                                              });
+    
     double distSquare = 0;
     QSet<ObfObjectId> set{};
     QSet<QString> streetNames{};
@@ -360,7 +372,7 @@ std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> OsmAnd::ReverseGeoco
         {
             double md = justified[0]->getDistance();
             minBuildingDistance = (minBuildingDistance == 0) ? md : std::min(md, minBuildingDistance);
-            complete << justified;
+            complete.append(justified);
         }
     }
     std::sort(complete.begin(), complete.end(), DISTANCE_COMPARATOR);

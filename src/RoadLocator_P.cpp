@@ -214,7 +214,7 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const Osm
     result.erase(std::remove_if(result.begin(), result.end(),
                                 [radiusInMeters]
                                 (std::pair<std::shared_ptr<const Road>, std::shared_ptr<const OsmAnd::RoadInfo>> roadAndDistance) {
-         return roadAndDistance.second->distSquare > radiusInMeters;
+                                    return roadAndDistance.second->distSquare > std::pow(radiusInMeters, 2);
     }), result.end());
     return result;
 }
@@ -270,7 +270,7 @@ QVector<std::pair<std::shared_ptr<const OsmAnd::Road>, std::shared_ptr<const Osm
     
     for (auto road : collection)
     {
-        if (!(road->points31.size() <= 1) || (filter && !filter(road)))
+        if (road->points31.size() > 1 && (!filter || filter(road)))
         {
             auto roadInfo = std::make_shared<RoadInfo>();
             evRoadInfo(road, roadInfo);

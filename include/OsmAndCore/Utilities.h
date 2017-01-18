@@ -267,10 +267,21 @@ namespace OsmAnd
 
         inline static double projection31(const PointI a, const PointI b, const PointI c)
         {
-            return projection31(
-                a.x, a.y,
-                b.x, b.y,
-                c.x, c.y);
+            return projection31(a.x, a.y, b.x, b.y, c.x, c.y);
+        }
+
+        inline static double projectionCoeff31(const PointI a, const PointI b, const PointI c)
+        {
+            double mDist = Utilities::x31toMeters(a.x - b.x) * Utilities::x31toMeters(a.x - b.x) +
+                           Utilities::x31toMeters(a.y - b.y) * Utilities::x31toMeters(a.y - b.y);
+            double projection = projection31(a.x, a.y, b.x, b.y, c.x, c.y);
+            if (projection < 0) {
+                return 0;
+            } else if (projection >= mDist) {
+                return 1;
+            } else {
+                return (projection / mDist);
+            }
         }
 
         inline static double normalizedAngleRadians(double angle)

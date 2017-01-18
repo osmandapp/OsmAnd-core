@@ -43,11 +43,7 @@ namespace OsmAnd
         const std::shared_ptr<const Street> street;
         const std::shared_ptr<const StreetGroup> streetGroup;
 
-        ObfObjectId id;
-        QString nativeName;
-        QHash<QString, QString> localizedNames;
         QString postcode;
-        PointI position31;
 
         Interpolation interpolation;
         int32_t interpolationInterval;

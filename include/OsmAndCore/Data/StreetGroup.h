@@ -28,12 +28,9 @@ namespace OsmAnd
         virtual ~StreetGroup();
         virtual QString toString() const;
 
-        ObfObjectId id;
         ObfAddressStreetGroupType type;
         ObfAddressStreetGroupSubtype subtype;
-        QString nativeName;
-        QHash<QString, QString> localizedNames;
-        PointI position31;
+
         uint32_t dataOffset;
     };
 }

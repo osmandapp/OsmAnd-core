@@ -44,8 +44,15 @@ namespace OsmAnd
         virtual ~Address();
         virtual QString toString() const;
 
+        virtual QString getName(const QString lang, bool transliterate) const;
+        
         const std::shared_ptr<const ObfAddressSectionInfo> obfSection;
         const AddressType addressType;
+
+        ObfObjectId id;
+        PointI position31;
+        QString nativeName;
+        QHash<QString, QString> localizedNames;
     };
 }
 

@@ -27,11 +27,7 @@ namespace OsmAnd
         Street(const std::shared_ptr<const StreetGroup>& streetGroup);
         virtual ~Street();
         virtual QString toString() const;
-
-        ObfObjectId id;
-        QString nativeName;
-        QHash<QString, QString> localizedNames;
-        PointI position31;
+        
         uint32_t offset;
         uint32_t firstBuildingInnerOffset;
         uint32_t firstIntersectionInnerOffset;
