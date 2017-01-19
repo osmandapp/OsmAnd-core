@@ -50,10 +50,8 @@ namespace OsmAnd
             uint32_t containerIndexOffset;
         };
 
-        static bool dereferencedLessThan(AddressReference& o1, AddressReference& o2) {
-//            if(o1.addressType < o2.addressType) {
-//                return true;
-//            }
+        static bool dereferencedLessThan(AddressReference& o1, AddressReference& o2)
+        {
             return o1.dataIndexOffset < o2.dataIndexOffset;
         }
 

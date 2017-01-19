@@ -933,15 +933,19 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                 cis->PopLimit(oldLimit);
 
                 qSort(indexReferences.begin(), indexReferences.end(), ObfAddressSectionReader_P::dereferencedLessThan);
-                uint32_t dataIndexOffset = 0;
+                uint32_t dataIndexOffsetStreet = 0;
+                uint32_t dataIndexOffsetStreetGroup = 0;
                 for (const auto& indexReference : constOf(indexReferences))
                 {
                     std::shared_ptr<Address> address;
-                    if (dataIndexOffset == indexReference.dataIndexOffset) {
-                        continue;
-                    }
+                    
                     if (indexReference.addressType == AddressNameIndexDataAtomType::Street)
                     {
+                        if (dataIndexOffsetStreet == indexReference.dataIndexOffset)
+                            continue;
+                        else
+                            dataIndexOffsetStreet = indexReference.dataIndexOffset;
+
                         std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
                         {
                             cis->Seek(indexReference.containerIndexOffset);
@@ -1001,6 +1005,11 @@ void OsmAnd::ObfAddressSectionReader_P::readAddressesByName(
                     }
                     else
                     {
+                        if (dataIndexOffsetStreetGroup == indexReference.dataIndexOffset)
+                            continue;
+                        else
+                            dataIndexOffsetStreetGroup = indexReference.dataIndexOffset;
+
                         std::shared_ptr<OsmAnd::StreetGroup> streetGroup;
                         {
                             cis->Seek(indexReference.dataIndexOffset);
@@ -1204,14 +1213,16 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
     const auto cis = reader.getCodedInputStream().get();
 
     AddressReference addressReference;
-
+    bool add = true;
+    
     for (;;)
     {
         const auto tag = cis->ReadTag();
         switch (gpb::internal::WireFormatLite::GetTagFieldNumber(tag))
         {
             case 0:
-                if (!ObfReaderUtilities::reachedDataEnd(cis))
+            {
+                if (!add || !ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
                 if (addressReference.containerIndexOffset != 0)
@@ -1221,6 +1232,7 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
                 outAddressReferences.push_back(addressReference);
 
                 return;
+            }
             case OBF::AddressNameIndexDataAtom::kNameFieldNumber:
             case OBF::AddressNameIndexDataAtom::kNameEnFieldNumber:
             {
@@ -1254,6 +1266,15 @@ void OsmAnd::ObfAddressSectionReader_P::readNameIndexDataAtom(
             case OBF::AddressNameIndexDataAtom::kShiftToCityIndexFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&addressReference.containerIndexOffset));
                 break;
+            case OBF::AddressNameIndexDataAtom::kXy16FieldNumber:
+            {
+                gpb::uint32 xy16;
+                cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&xy16));
+                int x = (xy16 >> 16) << 15;
+                int y = (xy16 & ((1 << 16) - 1)) << 15;
+                add = !bbox31 || bbox31->contains(x, y);
+                break;
+            }
             default:
                 ObfReaderUtilities::skipUnknownField(cis, tag);
                 break;
