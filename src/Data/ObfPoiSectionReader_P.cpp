@@ -870,12 +870,16 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 if (!ObfReaderUtilities::reachedDataEnd(cis))
                     return;
 
+                QList<QString> additionalNames;
+
                 auto itStringOrDataValue = mutableIteratorOf(stringOrDataValues);
                 while (itStringOrDataValue.hasNext())
                 {
                     const auto& entry = itStringOrDataValue.next();
 
                     const auto& tag = subtypes->subtypes[entry.key()]->tagName;
+                    if (tag.contains(QLatin1String("_name")))
+                        additionalNames.append(entry.value().toString());
                     if (!tag.startsWith(QLatin1String("name:")))
                         continue;
 
@@ -894,7 +898,16 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                         if (accept)
                             break;
                     }
-
+                    if (!accept)
+                    {
+                        for (const auto& additionalName : additionalNames)
+                        {
+                            accept = accept || additionalName.contains(query, Qt::CaseInsensitive);
+                            
+                            if (accept)
+                                break;
+                        }
+                    }
                     if (!accept)
                         return;
                 }
