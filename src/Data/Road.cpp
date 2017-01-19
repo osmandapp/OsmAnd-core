@@ -2,12 +2,66 @@
 
 #include "ObfRoutingSectionInfo.h"
 #include "ObfRoutingSectionInfo_P.h"
+#include "QKeyValueIterator.h"
+
+const QHash<QString, QStringList> GEOCODING_ACCESS {
+    {
+        QLatin1String("highway"),
+        {
+            QLatin1String("motorway"),
+            QLatin1String("motorway_link"),
+            QLatin1String("trunk"),
+            QLatin1String("trunk_link"),
+            QLatin1String("primary"),
+            QLatin1String("primary_link"),
+            QLatin1String("secondary"),
+            QLatin1String("secondary_link"),
+            QLatin1String("tertiary"),
+            QLatin1String("tertiary_link"),
+            QLatin1String("unclassified"),
+            QLatin1String("road"),
+            QLatin1String("residential"),
+            QLatin1String("track"),
+            QLatin1String("service"),
+            QLatin1String("living_street"),
+            QLatin1String("pedestrian")
+        }
+    },
+    {
+        QLatin1String("route"),
+        {
+            QLatin1String("ferry"),
+            QLatin1String("shuttle_train")
+        }
+    }
+};
 
 OsmAnd::Road::Road(const std::shared_ptr<const ObfRoutingSectionInfo>& section_)
     : ObfMapObject(section_)
     , section(section_)
 {
     attributeMapping = section->getAttributeMapping();
+}
+
+const bool OsmAnd::Road::hasGeocodingAccess() const
+{
+    bool access = false;
+    for (const auto& entry : rangeOf(constOf(GEOCODING_ACCESS)))
+    {
+        QString key = entry.key();
+        for (const auto& v : constOf(entry.value()))
+        {
+            if (this->containsAttribute(key, v))
+            {
+                access = true;
+                break;
+            }
+            
+        }
+        if (access)
+            break;
+    }
+    return access;
 }
 
 //OsmAnd::Road::Road( const std::shared_ptr<const Road>& that, int insertIdx, uint32_t x31, uint32_t y31 )

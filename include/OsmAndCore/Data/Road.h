@@ -55,6 +55,8 @@ namespace OsmAnd
         // Road information
         QHash< uint32_t, QVector<uint32_t> > pointsTypes;
         QHash< ObfObjectId, RoadRestriction > restrictions;
+        
+        const bool hasGeocodingAccess() const;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
     };
