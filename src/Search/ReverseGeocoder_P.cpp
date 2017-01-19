@@ -171,6 +171,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                         double d = Utilities::distance(Utilities::convert31ToLatLon(street->position31), *road->searchPoint);
                         if (d < DISTANCE_STREET_NAME_PROXIMITY_BY_NAME) {
                             const std::shared_ptr<ResultEntry> rs = std::make_shared<ResultEntry>();
+                            rs->road = road->road;
                             rs->street = street;
                             rs->streetGroup = street->streetGroup;
                             rs->searchPoint = road->searchPoint;
@@ -248,6 +249,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     {
         auto makeResult = [b, street, &result](){
             auto bld = std::make_shared<ResultEntry>();
+            bld->road = street->road;
             bld->searchPoint = street->searchPoint;
             bld->street = street->street;
             bld->streetGroup = street->streetGroup;
@@ -334,6 +336,7 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
             if (distSquare == 0 || distSquare > roadDistSquare)
                 distSquare = roadDistSquare;
             std::shared_ptr<ResultEntry> entry = std::make_shared<ResultEntry>();
+            entry->road = road;
             entry->streetName = road->getCaptionInNativeLanguage();
             if (entry->streetName.isEmpty())
             {

@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QHash>
 #include <QString>
+#include <QStringList>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -26,6 +27,7 @@ namespace OsmAnd
 
         AreaI area31;
         QHash<QString, QString> localizedNames;
+        QStringList attributeTagsTable;
 
         uint32_t nameIndexInnerOffset;
         uint32_t firstStreetGroupInnerOffset;

@@ -49,9 +49,9 @@ namespace OsmAnd
             Nullable<LatLon> searchPoint;
 
             Nullable<LatLon> connectionPoint;
-//            Nullable<const LatLon>& point;  // RouteSegmentPoint in Java
             QString streetName;
 
+            std::shared_ptr<const Road> road;
             std::shared_ptr<const Building> building;
             QString buildingInterpolation;
             std::shared_ptr<const Street> street;

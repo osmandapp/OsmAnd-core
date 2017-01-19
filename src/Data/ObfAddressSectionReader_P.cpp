@@ -78,6 +78,18 @@ void OsmAnd::ObfAddressSectionReader_P::read(
                 cis->PopLimit(oldLimit);
                 break;
             }
+            case OBF::OsmAndAddressIndex::kAttributeTagsTableFieldNumber:
+            {
+                gpb::uint32 length;
+                cis->ReadVarint32(&length);
+                auto oldLimit = cis->PushLimit(length);
+
+                ObfReaderUtilities::readStringTable(cis, section->attributeTagsTable);
+                
+                ObfReaderUtilities::ensureAllDataWasRead(cis);
+                cis->PopLimit(oldLimit);
+                break;
+            }
             case OBF::OsmAndAddressIndex::kCitiesFieldNumber:
                 if (section->firstStreetGroupInnerOffset == 0)
                     section->firstStreetGroupInnerOffset = tagPos - section->offset;
@@ -228,6 +240,11 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroup(
     bool autogenerateId = true;
     PointI position31;
     uint32_t dataOffset = 0;
+    
+    QStringList additionalTags;
+    QStringList attributeTagsTable;
+    if (section)
+        attributeTagsTable = section->attributeTagsTable;
 
     for (;;)
     {
@@ -277,6 +294,26 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetGroup(
                 QString value;
                 ObfReaderUtilities::readQString(cis, value);
                 localizedNames.insert(QLatin1String("en"), value);
+                break;
+            }
+            case OBF::CityIndex::kAttributeTagIdsFieldNumber:
+            {
+                const auto tgid = ObfReaderUtilities::readLength(cis);
+                if (tgid < attributeTagsTable.count())
+                    additionalTags << attributeTagsTable[tgid];
+                break;
+            }
+            case OBF::CityIndex::kAttributeValuesFieldNumber:
+            {
+                QString nm;
+                ObfReaderUtilities::readQString(cis, nm);
+                if (!additionalTags.empty())
+                {
+                    QString tg = additionalTags.front();
+                    additionalTags.pop_front();
+                    if (tg.startsWith(QLatin1String("name:")))
+                        localizedNames.insert(tg.mid(5), nm);
+                }
                 break;
             }
             case OBF::CityIndex::kIdFieldNumber:
@@ -366,6 +403,11 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
     bool autogenerateId = true;
     uint32_t firstBuildingInnerOffset = 0;
     uint32_t firstIntersectionInnerOffset = 0;
+    
+    QStringList additionalTags;
+    QStringList attributeTagsTable;
+    if (streetGroup && streetGroup->obfSection)
+        attributeTagsTable = streetGroup->obfSection->attributeTagsTable;
 
     for (;;)
     {
@@ -401,6 +443,26 @@ void OsmAnd::ObfAddressSectionReader_P::readStreet(
                 QString value;
                 ObfReaderUtilities::readQString(cis, value);
                 localizedNames.insert(QLatin1String("en"), value);
+                break;
+            }
+            case OBF::StreetIndex::kAttributeTagIdsFieldNumber:
+            {
+                const auto tgid = ObfReaderUtilities::readLength(cis);
+                if (tgid < attributeTagsTable.count())
+                    additionalTags << attributeTagsTable[tgid];
+                break;
+            }
+            case OBF::StreetIndex::kAttributeValuesFieldNumber:
+            {
+                QString nm;
+                ObfReaderUtilities::readQString(cis, nm);
+                if (!additionalTags.empty())
+                {
+                    QString tg = additionalTags.front();
+                    additionalTags.pop_front();
+                    if (tg.startsWith(QLatin1String("name:")))
+                        localizedNames.insert(tg.mid(5), nm);
+                }
                 break;
             }
             case OBF::StreetIndex::kXFieldNumber:
@@ -517,6 +579,13 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
     QString interpolationNativeName;
     QHash<QString, QString> interpolationLocalizedNames;
     PointI interpolationPosition31;
+    
+    QStringList additionalTags;
+    QStringList attributeTagsTable;
+    if (streetGroup && streetGroup->obfSection)
+        attributeTagsTable = streetGroup->obfSection->attributeTagsTable;
+    else if (street && street->obfSection)
+            attributeTagsTable = street->obfSection->attributeTagsTable;
 
     for (;;)
     {
@@ -572,9 +641,31 @@ void OsmAnd::ObfAddressSectionReader_P::readBuilding(
                 localizedNames.insert(QLatin1String("en"), value);
                 break;
             }
+            case OBF::BuildingIndex::kAttributeTagIdsFieldNumber:
+            {
+                const auto tgid = ObfReaderUtilities::readLength(cis);
+                if (tgid < attributeTagsTable.count())
+                    additionalTags << attributeTagsTable[tgid];
+                break;
+            }
+            case OBF::BuildingIndex::kAttributeValuesFieldNumber:
+            {
+                QString nm;
+                ObfReaderUtilities::readQString(cis, nm);
+                if (!additionalTags.empty())
+                {
+                    QString tg = additionalTags.front();
+                    additionalTags.pop_front();
+                    if (tg.startsWith(QLatin1String("name:")))
+                        localizedNames.insert(tg.mid(5), nm);
+                }
+                break;
+            }
             case OBF::BuildingIndex::kPostcodeFieldNumber:
+            {
                 ObfReaderUtilities::readQString(cis, postcode);
                 break;
+            }
             case OBF::BuildingIndex::kXFieldNumber:
             {
                 const auto d24 = ObfReaderUtilities::readSInt32(cis);
@@ -713,6 +804,11 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
     QHash<QString, QString> localizedNames;
     PointI position31;
 
+    QStringList additionalTags;
+    QStringList attributeTagsTable;
+    if (street && street->obfSection)
+        attributeTagsTable = street->obfSection->attributeTagsTable;
+
     for (;;)
     {
         const auto tag = cis->ReadTag();
@@ -741,6 +837,26 @@ void OsmAnd::ObfAddressSectionReader_P::readStreetIntersection(
 
                 localizedNames.insert(QLatin1String("en"), value);
 
+                break;
+            }
+            case OBF::StreetIntersection::kAttributeTagIdsFieldNumber:
+            {
+                const auto tgid = ObfReaderUtilities::readLength(cis);
+                if (tgid < attributeTagsTable.count())
+                    additionalTags << attributeTagsTable[tgid];
+                break;
+            }
+            case OBF::StreetIntersection::kAttributeValuesFieldNumber:
+            {
+                QString nm;
+                ObfReaderUtilities::readQString(cis, nm);
+                if (!additionalTags.empty())
+                {
+                    QString tg = additionalTags.front();
+                    additionalTags.pop_front();
+                    if (tg.startsWith(QLatin1String("name:")))
+                        localizedNames.insert(tg.mid(5), nm);
+                }
                 break;
             }
             case OBF::StreetIntersection::kIntersectedXFieldNumber:

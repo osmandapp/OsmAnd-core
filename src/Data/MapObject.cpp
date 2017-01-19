@@ -11,6 +11,7 @@
 #include "QKeyIterator.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
+#include <ICU.h>
 
 std::shared_ptr<const OsmAnd::MapObject::AttributeMapping> OsmAnd::MapObject::defaultAttributeMapping(OsmAnd::modifyAndReturn(
     std::shared_ptr<OsmAnd::MapObject::AttributeMapping>(new OsmAnd::MapObject::AttributeMapping()),
@@ -233,6 +234,21 @@ QHash<QString, QString> OsmAnd::MapObject::getCaptionsInAllLanguages() const
     }
 
     return result;
+}
+
+QString OsmAnd::MapObject::getName(const QString lang, bool transliterate) const
+{
+    QString name = QString();
+    if (!lang.isEmpty())
+        name = getCaptionInLanguage(lang);
+    
+    if (name.isNull())
+        name = getCaptionInNativeLanguage();
+    
+    if (transliterate && !name.isNull())
+        return OsmAnd::ICU::transliterateToLatin(name);
+    else
+        return name;
 }
 
 OsmAnd::MapObject::AttributeMapping::AttributeMapping()
