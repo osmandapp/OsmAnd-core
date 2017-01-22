@@ -2,6 +2,9 @@
 #include "ObfFile_P.h"
 
 #include <QFile>
+#include <QStringList>
+#include <OsmAndCore/Data/ObfInfo.h>
+#include <OsmAndCore/Utilities.h>
 
 OsmAnd::ObfFile::ObfFile(const QString& filePath_)
     : _p(new ObfFile_P(this))
@@ -21,4 +24,20 @@ OsmAnd::ObfFile::ObfFile(const QString& filePath_, const uint64_t fileSize_)
 
 OsmAnd::ObfFile::~ObfFile()
 {
+}
+
+const QString OsmAnd::ObfFile::getRegionName() const
+{
+    QStringList rg = obfInfo->getRegionNames();
+    if (rg.isEmpty())
+    {
+        QFileInfo fileInfo(filePath);
+        rg << fileInfo.fileName();
+    }
+
+    QString ls = rg.first();
+    if (ls.lastIndexOf('_') != -1)
+        return ls.mid(0, ls.lastIndexOf('_')).replace('_', ' ');
+
+    return ls;
 }

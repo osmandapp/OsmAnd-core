@@ -222,7 +222,10 @@ bool OsmAnd::ObfReader_P::readInfo(const ObfReader_P& reader, std::shared_ptr<Ob
                     return false;
 
                 if (loadedCorrectly)
+                {
+                    info->calculateCenterPointForRegions();
                     outInfo = info;
+                }
                 return loadedCorrectly;
             case OBF::OsmAndStructure::kVersionFieldNumber:
                 cis->ReadVarint32(reinterpret_cast<gpb::uint32*>(&info->version));

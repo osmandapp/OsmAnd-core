@@ -310,14 +310,14 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                                                [this]
                                                (const std::shared_ptr<const OsmAnd::Road>& road) -> bool
                                                {
-                                                   return !road->captions.empty();
+                                                   return !road->captions.isEmpty();
                                                });
-    if (roads.empty())
+    if (roads.isEmpty())
         roads = roadLocator->findNearestRoads(searchPoint31, STOP_SEARCHING_STREET_WITHOUT_MULTIPLIER_RADIUS * 10, OsmAnd::RoutingDataLevel::Detailed,
                                               [this]
                                               (const std::shared_ptr<const OsmAnd::Road>& road) -> bool
                                               {
-                                                  return !road->captions.empty();
+                                                  return !road->captions.isEmpty();
                                               });
     
     double distSquare = 0;

@@ -752,6 +752,7 @@ bool OsmAnd::ObfDataInterface::findAmenityForObfMapObject(
 
 bool OsmAnd::ObfDataInterface::scanAddressesByName(
     const QString& query,
+    const OsmAnd::CollatorStringMatcher::StringMatcherMode matcherMode,
     QList< std::shared_ptr<const OsmAnd::Address> >* outAddresses,
     const AreaI* const bbox31 /*= nullptr*/,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter /*= fullObfAddressStreetGroupTypesMask()*/,
@@ -785,6 +786,7 @@ bool OsmAnd::ObfDataInterface::scanAddressesByName(
                 obfReader,
                 addressSection,
                 query,
+                matcherMode,
                 outAddresses,
                 bbox31,
                 streetGroupTypesFilter,

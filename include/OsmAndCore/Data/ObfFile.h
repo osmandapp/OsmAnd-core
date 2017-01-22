@@ -31,6 +31,8 @@ namespace OsmAnd
         const uint64_t fileSize;
         const std::shared_ptr<const ObfInfo>& obfInfo;
 
+        const QString getRegionName() const;
+
     friend class OsmAnd::ObfReader_P;
     };
 }

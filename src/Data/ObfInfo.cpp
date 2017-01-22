@@ -4,6 +4,7 @@
 #include "ObfRoutingSectionInfo.h"
 #include "ObfPoiSectionInfo.h"
 #include "ObfAddressSectionInfo.h"
+#include <OsmAndCore/Utilities.h>
 
 OsmAnd::ObfInfo::ObfInfo()
     : version(-1)
@@ -139,4 +140,53 @@ bool OsmAnd::ObfInfo::containsDataFor(
     //TODO: ObfTransportSectionInfo
 
     return false;
+}
+
+const OsmAnd::Nullable<OsmAnd::LatLon> OsmAnd::ObfInfo::getRegionCenter() const
+{
+    Nullable<OsmAnd::LatLon> result;
+    for (const auto r : mapSections)
+    {
+        if (r->calculatedCenter.isSet())
+            return result = r->calculatedCenter;
+    }
+    return result;
+}
+
+void OsmAnd::ObfInfo::calculateCenterPointForRegions() const
+{
+    for (auto reg : addressSections)
+    {
+        for (auto map : mapSections)
+        {
+            if (reg->name == map->name)
+            {
+                if (!map->levels.isEmpty())
+                {
+                    reg->calculatedCenter = map->getCenterLatLon();
+                    break;
+                }
+            }
+        }
+        if (!reg->calculatedCenter.isSet())
+        {
+            for (auto map : routingSections)
+            {
+                if (reg->name == map->name)
+                {
+                    reg->calculatedCenter = OsmAnd::Utilities::convert31ToLatLon(map->area31.center());
+                    break;
+                }
+            }
+        }
+    }
+}
+
+const QStringList OsmAnd::ObfInfo::getRegionNames() const
+{
+    QStringList rg;
+    for (const auto r : addressSections)
+        rg << r->name;
+    
+    return rg;
 }

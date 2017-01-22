@@ -6,33 +6,21 @@
 
 #include <QString>
 #include "OsmAndCore.h"
-#include "PrivateImplementation.h"
-#include <unicode/coll.h>
 #include <CollatorStringMatcher.h>
 
 namespace OsmAnd
 {
-    class CollatorStringMatcher;
-
     class OSMAND_CORE_API CollatorStringMatcher_P Q_DECL_FINAL
     {
-
-    protected:
-        CollatorStringMatcher_P(CollatorStringMatcher* const owner);
-
     private:
-        Collator *collator;
-
     public:
+        CollatorStringMatcher_P();
         virtual ~CollatorStringMatcher_P();
 
-        ImplementationInterface<CollatorStringMatcher> owner;
-        bool cmatches(QString _base, QString _part, CollatorStringMatcher::StringMatcherMode _mode) const;
-        bool ccontains(QString _base, QString _part) const;
-        bool cstartsWith(QString _searchInParam, QString _theStart,
+        bool matches(const QString& _base, const QString& _part, CollatorStringMatcher::StringMatcherMode _mode) const;
+        bool contains(const QString& _base, const QString& _part) const;
+        bool startsWith(const QString& _searchInParam, const QString& _theStart,
                          bool checkBeginning, bool checkSpaces, bool equals) const;
-
-        friend class OsmAnd::CollatorStringMatcher;
     };
 }
 

@@ -1,8 +1,11 @@
 #include "CollatorStringMatcher.h"
 #include "CollatorStringMatcher_P.h"
 
-OsmAnd::CollatorStringMatcher::CollatorStringMatcher()
-    : _p(new CollatorStringMatcher_P(this))
+const OsmAnd::CollatorStringMatcher_P OsmAnd::CollatorStringMatcher::_p;
+
+OsmAnd::CollatorStringMatcher::CollatorStringMatcher(const QString& part, const StringMatcherMode mode)
+    : _part(part)
+    , _mode(mode)
 {
 }
 
@@ -10,30 +13,24 @@ OsmAnd::CollatorStringMatcher::~CollatorStringMatcher()
 {
 }
 
-bool OsmAnd::CollatorStringMatcher::cmatches(QString _base, QString _part,
-                                             OsmAnd::CollatorStringMatcher::StringMatcherMode _mode) const
+bool OsmAnd::CollatorStringMatcher::matches(const QString& name) const
 {
-    return _p->CollatorStringMatcher_P::cmatches(
-        _base,
-        _part,
-        _mode);
+    return _p.matches(name, _part, _mode);
 }
 
-bool OsmAnd::CollatorStringMatcher::ccontains(QString _base, QString _part) const
+bool OsmAnd::CollatorStringMatcher::cmatches(const QString& _base, const QString& _part,
+                                             OsmAnd::CollatorStringMatcher::StringMatcherMode _mode)
 {
-
-    return _p->CollatorStringMatcher_P::ccontains(
-        _base,
-        _part);
+    return _p.matches(_base, _part, _mode);
 }
 
-bool OsmAnd::CollatorStringMatcher::cstartsWith(QString _searchInParam, QString _theStart,
-                                                bool checkBeginning, bool checkSpaces, bool equals) const
+bool OsmAnd::CollatorStringMatcher::ccontains(const QString& _base, const QString& _part)
 {
-    return _p->cstartsWith(
-        _searchInParam,
-        _theStart,
-        checkBeginning,
-        checkSpaces,
-        equals);
+    return _p.contains(_base, _part);
+}
+
+bool OsmAnd::CollatorStringMatcher::cstartsWith(const QString& _searchInParam, const QString& _theStart,
+                                                bool checkBeginning, bool checkSpaces, bool equals)
+{
+    return _p.startsWith(_searchInParam, _theStart, checkBeginning, checkSpaces, equals);
 }

@@ -32,144 +32,129 @@ void OsmAnd::AddressesByNameSearch::performSearch(
 
     if (criteria.addressFilter != nullptr)
     {
-            switch (criteria.addressFilter->addressType)
+        const OsmAnd::CollatorStringMatcher stringMatcher(criteria.name, criteria.matcherMode);
+        switch (criteria.addressFilter->addressType)
+        {
+            case AddressType::StreetGroup:
             {
-                case AddressType::StreetGroup:
+                const ObfAddressSectionReader::StreetVisitorFunction visitorFunction =
+                [this, newResultEntryCallback, criteria_, criteria, &stringMatcher]
+                (const std::shared_ptr<const OsmAnd::Street>& street) -> bool
                 {
-                    const ObfAddressSectionReader::StreetVisitorFunction visitorFunction =
-                    [this, newResultEntryCallback, criteria_, criteria]
-                    (const std::shared_ptr<const OsmAnd::Street>& street) -> bool
+                    bool accept = criteria.name.isEmpty();
+                    accept = accept || stringMatcher.matches(street->nativeName);
+                    for (const auto& localizedName : constOf(street->localizedNames))
                     {
-                        bool accept = criteria.name.isEmpty();
-//                        accept = accept || street->nativeName.contains(criteria.name, Qt::CaseInsensitive);
-                        accept = accept || stringMatcher.cmatches(street->nativeName, criteria.name,
-                                                                  CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
-                        for (const auto& localizedName : constOf(street->localizedNames))
+                        accept = accept || stringMatcher.matches(localizedName);
+                        if (accept)
+                            break;
+                    }
+                    
+                    if (accept)
+                    {
+                        ResultEntry resultEntry;
+                        resultEntry.address = street;
+                        newResultEntryCallback(criteria_, resultEntry);
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                };
+                
+                QList<std::shared_ptr<const StreetGroup>> streetGroups;
+                streetGroups << std::static_pointer_cast<const StreetGroup>(criteria.addressFilter);
+                dataInterface->loadStreetsFromGroups(
+                                                     streetGroups,
+                                                     nullptr,
+                                                     criteria.bbox31.getValuePtrOrNullptr(),
+                                                     visitorFunction,
+                                                     queryController);
+                break;
+            }
+                
+            case AddressType::Street:
+            {
+                const ObfAddressSectionReader::BuildingVisitorFunction visitorFunction =
+                [this, newResultEntryCallback, criteria_, criteria, &stringMatcher]
+                (const std::shared_ptr<const OsmAnd::Building>& building) -> bool
+                {
+                    bool accept = true;
+                    if (!criteria.postcode.isEmpty())
+                    {
+                        accept = OsmAnd::CollatorStringMatcher::cmatches(building->postcode, criteria.postcode, criteria.matcherMode);
+                    }
+                    else
+                    {
+                        accept = criteria.name.isEmpty() || stringMatcher.matches(building->nativeName);
+                        for (const auto& localizedName : constOf(building->localizedNames))
                         {
-//                            accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
-                            accept = accept || stringMatcher.cmatches(localizedName, criteria.name,
-                                                                      CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
+                            accept = accept || stringMatcher.matches(localizedName);
                             if (accept)
                                 break;
                         }
-                        
-                        if (accept)
-                        {
-                            ResultEntry resultEntry;
-                            resultEntry.address = street;
-                            newResultEntryCallback(criteria_, resultEntry);
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    };
+                    }
                     
-                    QList<std::shared_ptr<const StreetGroup>> streetGroups;
-                    streetGroups << std::static_pointer_cast<const StreetGroup>(criteria.addressFilter);
-                    dataInterface->loadStreetsFromGroups(
-                                                         streetGroups,
-                                                         nullptr,
-                                                         criteria.bbox31.getValuePtrOrNullptr(),
-                                                         visitorFunction,
-                                                         queryController);
-                    break;
-                }
-                    
-                case AddressType::Street:
-                {
-                    const ObfAddressSectionReader::BuildingVisitorFunction visitorFunction =
-                    [this, newResultEntryCallback, criteria_, criteria]
-                    (const std::shared_ptr<const OsmAnd::Building>& building) -> bool
+                    if (accept)
                     {
-                        bool accept = true;
-                        if (!criteria.postcode.isEmpty())
-                        {
-//                            accept = criteria.postcode.compare(building->postcode, Qt::CaseInsensitive) == 0;
-                            accept = stringMatcher.cmatches(building->postcode, criteria.postcode,
-                                                            CollatorStringMatcher::StringMatcherMode::CHECK_EQUALS_FROM_SPACE);
-                        }
-                        else
-                        {
-//                            accept = criteria.name.isEmpty() || building->nativeName.contains(criteria.name, Qt::CaseInsensitive);
-                            accept = criteria.name.isEmpty() || stringMatcher.cmatches(building->nativeName,
-                                                                                       criteria.name,
-                                                                                       CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
-                            for (const auto& localizedName : constOf(building->localizedNames))
-                            {
-//                                accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
-                                accept = accept || stringMatcher.cmatches(localizedName,
-                                                                          criteria.name,
-                                                                          CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
-                                if (accept)
-                                    break;
-                            }
-                        }
-                        
+                        ResultEntry resultEntry;
+                        resultEntry.address = building;
+                        newResultEntryCallback(criteria_, resultEntry);
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                };
+                
+                QList<std::shared_ptr<const Street>> streets;
+                streets << std::static_pointer_cast<const Street>(criteria.addressFilter);
+                dataInterface->loadBuildingsFromStreets(
+                                                        streets,
+                                                        nullptr,
+                                                        criteria.bbox31.getValuePtrOrNullptr(),
+                                                        visitorFunction,
+                                                        queryController);
+                
+                
+                const ObfAddressSectionReader::IntersectionVisitorFunction intersectionVisitorFunction =
+                [this, newResultEntryCallback, criteria_, criteria, &stringMatcher]
+                (const std::shared_ptr<const OsmAnd::StreetIntersection>& intersection) -> bool
+                {
+                    bool accept = criteria.name.isEmpty();
+                    accept = accept || stringMatcher.matches(intersection->nativeName);
+                    for (const auto& localizedName : constOf(intersection->localizedNames))
+                    {
+                        accept = accept || stringMatcher.matches(localizedName);
                         if (accept)
-                        {
-                            ResultEntry resultEntry;
-                            resultEntry.address = building;
-                            newResultEntryCallback(criteria_, resultEntry);
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    };
+                            break;
+                    }
                     
-                    QList<std::shared_ptr<const Street>> streets;
-                    streets << std::static_pointer_cast<const Street>(criteria.addressFilter);
-                    dataInterface->loadBuildingsFromStreets(
+                    if (accept)
+                    {
+                        ResultEntry resultEntry;
+                        resultEntry.address = intersection;
+                        newResultEntryCallback(criteria_, resultEntry);
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                };
+                
+                dataInterface->loadIntersectionsFromStreets(
                                                             streets,
                                                             nullptr,
                                                             criteria.bbox31.getValuePtrOrNullptr(),
-                                                            visitorFunction,
+                                                            intersectionVisitorFunction,
                                                             queryController);
-                    
-                    
-                    const ObfAddressSectionReader::IntersectionVisitorFunction intersectionVisitorFunction =
-                    [this, newResultEntryCallback, criteria_, criteria]
-                    (const std::shared_ptr<const OsmAnd::StreetIntersection>& intersection) -> bool
-                    {
-                        bool accept = criteria.name.isEmpty();
-//                        accept = accept || intersection->nativeName.contains(criteria.name, Qt::CaseInsensitive);
-                        accept = accept || stringMatcher.cmatches(intersection->nativeName, criteria.name,
-                                                                  CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
-                        for (const auto& localizedName : constOf(intersection->localizedNames))
-                        {
-//                            accept = accept || localizedName.contains(criteria.name, Qt::CaseInsensitive);
-                            accept = accept || stringMatcher.cmatches(localizedName, criteria.name,
-                                                                      CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS);
-                            if (accept)
-                                break;
-                        }
-                        
-                        if (accept)
-                        {
-                            ResultEntry resultEntry;
-                            resultEntry.address = intersection;
-                            newResultEntryCallback(criteria_, resultEntry);
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    };
-                    
-                    dataInterface->loadIntersectionsFromStreets(
-                                                                streets,
-                                                                nullptr,
-                                                                criteria.bbox31.getValuePtrOrNullptr(),
-                                                                intersectionVisitorFunction,
-                                                                queryController);
-                    
-                    break;
-                }
+                
+                break;
             }
+        }
     }
     else
     {
@@ -186,6 +171,7 @@ void OsmAnd::AddressesByNameSearch::performSearch(
         
         dataInterface->scanAddressesByName(
                                            criteria.name,
+                                           criteria.matcherMode,
                                            nullptr,
                                            criteria.bbox31.getValuePtrOrNullptr(),
                                            criteria.streetGroupTypesMask,
@@ -211,6 +197,7 @@ QVector<OsmAnd::AddressesByNameSearch::ResultEntry> OsmAnd::AddressesByNameSearc
 OsmAnd::AddressesByNameSearch::Criteria::Criteria()
     : streetGroupTypesMask(fullObfAddressStreetGroupTypesMask())
     , includeStreets(true)
+    , matcherMode(CollatorStringMatcher::StringMatcherMode::CHECK_STARTS_FROM_SPACE)
 {
 }
 

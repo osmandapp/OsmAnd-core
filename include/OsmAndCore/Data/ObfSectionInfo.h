@@ -9,6 +9,8 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/PrivateImplementation.h>
+#include <OsmAndCore/Nullable.h>
+#include <OsmAndCore/LatLon.h>
 
 namespace OsmAnd
 {
@@ -30,6 +32,8 @@ namespace OsmAnd
         QString name;
         uint32_t length;
         uint32_t offset;
+
+        Nullable<LatLon> calculatedCenter;
     };
 }
 

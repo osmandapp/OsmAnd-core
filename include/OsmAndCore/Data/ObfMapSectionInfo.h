@@ -17,6 +17,8 @@
 #include <OsmAndCore/PrivateImplementation.h>
 #include <OsmAndCore/Data/ObfSectionInfo.h>
 #include <OsmAndCore/Data/MapObject.h>
+#include <OsmAndCore/LatLon.h>
+#include <OsmAndCore/Nullable.h>
 
 namespace OsmAnd
 {
@@ -86,6 +88,8 @@ namespace OsmAnd
         bool isBasemap;
         bool isBasemapWithCoastlines;
         QList< Ref<ObfMapSectionLevel> > levels;
+        
+        const Nullable<LatLon> getCenterLatLon() const;
 
     friend class OsmAnd::ObfMapSectionReader_P;
     };

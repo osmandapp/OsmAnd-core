@@ -15,6 +15,7 @@
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
 #include <OsmAndCore/Data/ObfPoiSectionReader.h>
 #include <OsmAndCore/Data/ObfAddressSectionReader.h>
+#include <OsmAndCore/CollatorStringMatcher.h>
 
 namespace OsmAnd
 {
@@ -114,6 +115,7 @@ namespace OsmAnd
 
         bool scanAddressesByName(
             const QString& query,
+            const CollatorStringMatcher::StringMatcherMode matcherMode,
             QList< std::shared_ptr<const OsmAnd::Address> >* outAddresses,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter = fullObfAddressStreetGroupTypesMask(),

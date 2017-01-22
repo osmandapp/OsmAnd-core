@@ -26,11 +26,12 @@ namespace OsmAnd
         StreetIntersection
     };
 
-    static const QMap<AddressType, QString> ADDRESS_TYPE_NAMES{
-            {AddressType::StreetGroup, "Street group"},
-            {AddressType::Street, "Street"},
-            {AddressType::Building, "Building"},
-            {AddressType::StreetIntersection, "Street intersection"},
+    static const QMap<AddressType, QString> ADDRESS_TYPE_NAMES
+    {
+            { AddressType::StreetGroup, "Street group" },
+            { AddressType::Street, "Street" },
+            { AddressType::Building, "Building" },
+            { AddressType::StreetIntersection, "Street intersection" },
     };
 
     class OSMAND_CORE_API Address

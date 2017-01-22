@@ -10,6 +10,7 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
+#include <OsmAndCore/CollatorStringMatcher.h>
 
 namespace OsmAnd
 {
@@ -75,6 +76,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfReader>& reader,
             const std::shared_ptr<const ObfAddressSectionInfo>& section,
             const QString& query,
+            const CollatorStringMatcher::StringMatcherMode matcherMode,
             QList< std::shared_ptr<const OsmAnd::Address> >* outAddresses,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressStreetGroupTypesMask streetGroupTypesFilter = fullObfAddressStreetGroupTypesMask(),

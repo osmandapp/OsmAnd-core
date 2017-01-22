@@ -39,6 +39,7 @@ namespace OsmAnd
             bool includeStreets;
             QString postcode;
             std::shared_ptr<const Address> addressFilter;
+            CollatorStringMatcher::StringMatcherMode matcherMode;
         };
 
         struct OSMAND_CORE_API ResultEntry : public IResultEntry
@@ -59,7 +60,6 @@ namespace OsmAnd
         };
 
     private:
-        OsmAnd::CollatorStringMatcher stringMatcher;
     protected:
     public:
         explicit AddressesByNameSearch(const std::shared_ptr<const IObfsCollection>& obfsCollection);

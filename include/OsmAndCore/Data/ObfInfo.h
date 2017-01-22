@@ -5,11 +5,14 @@
 
 #include <OsmAndCore/QtExtensions.h>
 #include <QList>
+#include <QStringList>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/Common.h>
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Ref.h>
+#include <OsmAndCore/Nullable.h>
+#include <OsmAndCore/LatLon.h>
 
 namespace OsmAnd
 {
@@ -48,6 +51,10 @@ namespace OsmAnd
 
         bool containsPOIFor(const AreaI pBbox31) const;
 
+        const Nullable<LatLon> getRegionCenter() const;
+        void calculateCenterPointForRegions() const;
+        
+        const QStringList getRegionNames() const;
     };
 }
 

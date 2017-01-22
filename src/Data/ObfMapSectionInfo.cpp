@@ -1,6 +1,8 @@
 #include "ObfMapSectionInfo.h"
 #include "ObfMapSectionInfo_P.h"
 
+#include <OsmAndCore/Utilities.h>
+
 OsmAnd::ObfMapSectionInfo::ObfMapSectionInfo(const std::shared_ptr<const ObfInfo>& container)
     : ObfSectionInfo(container)
     , _p(new ObfMapSectionInfo_P(this))
@@ -14,6 +16,17 @@ OsmAnd::ObfMapSectionInfo::~ObfMapSectionInfo()
 std::shared_ptr<const OsmAnd::ObfMapSectionAttributeMapping> OsmAnd::ObfMapSectionInfo::getAttributeMapping() const
 {
     return _p->getAttributeMapping();
+}
+
+const OsmAnd::Nullable<OsmAnd::LatLon> OsmAnd::ObfMapSectionInfo::getCenterLatLon() const
+{
+    OsmAnd::Nullable<OsmAnd::LatLon> result;
+    if (levels.isEmpty())
+        return result;
+    
+    const auto mapRoot = levels.last();    
+    result = OsmAnd::Utilities::convert31ToLatLon(mapRoot->area31.center());
+    return result;
 }
 
 OsmAnd::ObfMapSectionLevel::ObfMapSectionLevel()

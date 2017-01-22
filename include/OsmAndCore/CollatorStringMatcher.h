@@ -4,7 +4,6 @@
 #include <OsmAndCore.h>
 
 #include <QString>
-#include <OsmAndCore/PrivateImplementation.h>
 
 namespace OsmAnd
 {
@@ -24,16 +23,22 @@ namespace OsmAnd
         };
 
     private:
+        const QString _part;
+        const StringMatcherMode _mode;
+        
     protected:
-        PrivateImplementation<CollatorStringMatcher_P> _p;
+        static const CollatorStringMatcher_P _p;
 
     public:
-        CollatorStringMatcher();
+        CollatorStringMatcher(const QString& part, const StringMatcherMode mode);
         virtual ~CollatorStringMatcher();
-        bool cmatches(QString _base, QString _part, StringMatcherMode _mode) const;
-        bool ccontains(QString _base, QString _part) const;
-        bool cstartsWith(QString _searchInParam, QString _theStart,
-                         bool checkBeginning, bool checkSpaces, bool equals) const;
+        
+        bool matches(const QString& name) const;
+
+        static bool cmatches(const QString& _base, const QString& _part, StringMatcherMode _mode);
+        static bool ccontains(const QString& _base, const QString& _part);
+        static bool cstartsWith(const QString& _searchInParam, const QString& _theStart,
+                         bool checkBeginning, bool checkSpaces, bool equals);
     };
 }
 

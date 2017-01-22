@@ -1,95 +1,68 @@
 #include "CollatorStringMatcher_P.h"
 #include "CollatorStringMatcher.h"
+#include <QLocale>
 
-#include <cstring>
-#include "unicode/unistr.h"
-#include "unicode/coll.h"
 
-static bool isSpace(UChar c);
-static UnicodeString qStrToUniStr(QString inStr);
+static bool isSpace(QChar c);
 
-OsmAnd::CollatorStringMatcher_P::CollatorStringMatcher_P(CollatorStringMatcher* owner_)
-    : owner(owner_)
+OsmAnd::CollatorStringMatcher_P::CollatorStringMatcher_P()
 {
-    Locale locale = Locale::getDefault();
-
-    UErrorCode status = U_ZERO_ERROR;
-    if (std::strcmp(locale.getLanguage(), "ro") ||
-        std::strcmp(locale.getLanguage(), "cs") ||
-        std::strcmp(locale.getLanguage(), "sk"))
-    {
-        collator = Collator::createInstance(Locale("en", "US"), status);
-    }
-    else
-    {
-        collator = Collator::createInstance(status);
-    }
-
-    if (U_FAILURE(status)) {
-        return;
-    }
-
-    collator->setStrength(Collator::PRIMARY);
 }
 
 OsmAnd::CollatorStringMatcher_P::~CollatorStringMatcher_P()
 {
 }
 
-bool OsmAnd::CollatorStringMatcher_P::cmatches(QString _base, QString _part,
-                                               CollatorStringMatcher::StringMatcherMode _mode) const
+bool OsmAnd::CollatorStringMatcher_P::matches(const QString& _base, const QString& _part,
+                                               OsmAnd::CollatorStringMatcher::StringMatcherMode _mode) const
 {
     switch (_mode)
     {
         case CollatorStringMatcher::StringMatcherMode::CHECK_CONTAINS:
-            return ccontains(_base, _part);
+            return contains(_base, _part);
         case CollatorStringMatcher::StringMatcherMode::CHECK_EQUALS_FROM_SPACE:
-            return cstartsWith(_base, _part, true, true, true);
+            return startsWith(_base, _part, true, true, true);
         case CollatorStringMatcher::StringMatcherMode::CHECK_STARTS_FROM_SPACE:
-            return cstartsWith(_base, _part, true, true, false);
+            return startsWith(_base, _part, true, true, false);
         case CollatorStringMatcher::StringMatcherMode::CHECK_STARTS_FROM_SPACE_NOT_BEGINNING:
-            return cstartsWith(_base, _part, false, true, false);
+            return startsWith(_base, _part, false, true, false);
         case CollatorStringMatcher::StringMatcherMode::CHECK_ONLY_STARTS_WITH:
-            return cstartsWith(_base, _part, true, false, false);
+            return startsWith(_base, _part, true, false, false);
         default:
             return false;
     }
 }
 
-bool OsmAnd::CollatorStringMatcher_P::ccontains(QString _base, QString _part) const
+bool OsmAnd::CollatorStringMatcher_P::contains(const QString& _base, const QString& _part) const
 {
 
-    UnicodeString baseString = qStrToUniStr(_base);
-    UnicodeString partString = qStrToUniStr(_part);
+    if (_base.length() <= _part.length())
+        return _base.localeAwareCompare(_part) == 0;
 
-    if (baseString.length() <= partString.length())
-        return collator->equals(baseString, partString);
-
-    for (int pos = 0; pos <= baseString.length() - partString.length() + 1; pos++)
+    for (int pos = 0; pos <= _base.length() - _part.length() + 1; pos++)
     {
-        UnicodeString temp = baseString.tempSubString(pos, baseString.length());
+        QString temp = _base.mid(pos, _base.length());
 
         for (int length = temp.length(); length >= 0; length--)
         {
-            UnicodeString temp2 = temp.tempSubString(0, length);
-            if (collator->equals(temp2, partString))
+            QString temp2 = temp.mid(0, length);
+            if (temp2.localeAwareCompare(_part) == 0)
             {
                 return true;
             }
         }
-
     }
 
     return false;
 }
 
-bool OsmAnd::CollatorStringMatcher_P::cstartsWith(QString _searchInParam, QString _theStart,
+bool OsmAnd::CollatorStringMatcher_P::startsWith(const QString& _searchInParam, const QString& _theStart,
                                                   bool checkBeginning, bool checkSpaces, bool equals) const
 {
-    UnicodeString searchIn = qStrToUniStr(_searchInParam).toLower(Locale::getDefault());
-    UnicodeString theStart = qStrToUniStr(_theStart);
+    QLocale locale = QLocale();
+    QString searchIn = locale.toLower(_searchInParam);
 
-    int startLength = theStart.length();
+    int startLength = _theStart.length();
     int serchInLength = searchIn.length();
 
     if (startLength == 0) return true;
@@ -97,13 +70,13 @@ bool OsmAnd::CollatorStringMatcher_P::cstartsWith(QString _searchInParam, QStrin
 
     if (checkBeginning)
     {
-        bool starts = collator->equals(searchIn.tempSubString(0, startLength), theStart);
+        bool starts = searchIn.mid(0, startLength).localeAwareCompare(_theStart) == 0;
 
         if (starts)
         {
             if (equals)
             {
-                if (startLength == serchInLength || isSpace(searchIn.charAt(startLength)))
+                if (startLength == serchInLength || isSpace(searchIn.at(startLength)))
                 {
                     return true;
                 }
@@ -119,13 +92,13 @@ bool OsmAnd::CollatorStringMatcher_P::cstartsWith(QString _searchInParam, QStrin
     {
         for (int i = 1; i <= serchInLength - startLength; i++)
         {
-            if (isSpace(searchIn.charAt(i - 1)) && !isSpace(searchIn.charAt(i)))
+            if (isSpace(searchIn.at(i - 1)) && !isSpace(searchIn.at(i)))
             {
-                if (collator->equals(searchIn.tempSubString(i, startLength), theStart))
+                if (searchIn.mid(i, startLength).localeAwareCompare(_theStart) == 0)
                 {
                     if (equals)
                     {
-                        if (i + startLength == serchInLength || isSpace(searchIn.charAt(i + startLength)))
+                        if (i + startLength == serchInLength || isSpace(searchIn.at(i + startLength)))
                         {
                             return true;
                         }
@@ -142,17 +115,7 @@ bool OsmAnd::CollatorStringMatcher_P::cstartsWith(QString _searchInParam, QStrin
     return false;
 }
 
-UnicodeString qStrToUniStr(QString inStr)
+bool isSpace(QChar c)
 {
-    const ushort *utf16 = inStr.utf16();
-    int length = inStr.length();
-
-    UnicodeString returnString(utf16, length);
-
-    return returnString;
-}
-
-bool isSpace(UChar c)
-{
-    return !u_isalnum(c);
+    return !c.isDigit() && !c.isLetter();
 }
