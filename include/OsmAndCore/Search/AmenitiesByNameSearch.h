@@ -15,6 +15,7 @@
 
 #include <OsmAndCore/IObfsCollection.h>
 #include <OsmAndCore/Search/BaseSearch.h>
+#include <OsmAndCore/ResourcesManager.h>
 
 namespace OsmAnd
 {
@@ -34,6 +35,7 @@ namespace OsmAnd
             TileAcceptorFunction tileFilter;
             QString name;
             QHash<QString, QStringList> categoriesFilter;
+            QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources;
         };
 
         struct OSMAND_CORE_API ResultEntry : public IResultEntry

@@ -2,6 +2,7 @@
 #include "ICU_private.h"
 
 #include <cassert>
+#include <cstring>
 
 #include "QtExtensions.h"
 #include "ignore_warnings_on_external_includes.h"
