@@ -132,6 +132,15 @@ namespace OsmAnd
         Localized,
         Native
     };
+    
+    enum class StringMatcherMode
+    {
+        CHECK_ONLY_STARTS_WITH,
+        CHECK_STARTS_FROM_SPACE,
+        CHECK_STARTS_FROM_SPACE_NOT_BEGINNING,
+        CHECK_EQUALS_FROM_SPACE,
+        CHECK_CONTAINS
+    };
 }
 
 #endif // !defined(_OSMAND_CORE_COMMON_TYPES_H_)

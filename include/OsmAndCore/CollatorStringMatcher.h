@@ -4,31 +4,23 @@
 #include <OsmAndCore.h>
 
 #include <QString>
+#include <OsmAndCore/PrivateImplementation.h>
 
 namespace OsmAnd
 {
     class CollatorStringMatcher_P;
-
+    
     class OSMAND_CORE_API CollatorStringMatcher
     {
         Q_DISABLE_COPY_AND_MOVE(CollatorStringMatcher);
-    public:
-        enum class StringMatcherMode
-        {
-            CHECK_ONLY_STARTS_WITH,
-            CHECK_STARTS_FROM_SPACE,
-            CHECK_STARTS_FROM_SPACE_NOT_BEGINNING,
-            CHECK_EQUALS_FROM_SPACE,
-            CHECK_CONTAINS
-        };
 
     private:
         const QString _part;
         const StringMatcherMode _mode;
         
     protected:
-        static const CollatorStringMatcher_P _p;
-
+        PrivateImplementation<CollatorStringMatcher_P> _p;
+        
     public:
         CollatorStringMatcher(const QString& part, const StringMatcherMode mode);
         virtual ~CollatorStringMatcher();

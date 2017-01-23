@@ -10,17 +10,24 @@
 
 namespace OsmAnd
 {
+    class CollatorStringMatcher;
+    
     class OSMAND_CORE_API CollatorStringMatcher_P Q_DECL_FINAL
     {
-    private:
+    protected:
+        CollatorStringMatcher_P(CollatorStringMatcher* const owner);
+        
     public:
-        CollatorStringMatcher_P();
         virtual ~CollatorStringMatcher_P();
-
-        bool matches(const QString& _base, const QString& _part, CollatorStringMatcher::StringMatcherMode _mode) const;
+        
+        ImplementationInterface<CollatorStringMatcher> owner;
+        
+        bool matches(const QString& _base, const QString& _part, StringMatcherMode _mode) const;
         bool contains(const QString& _base, const QString& _part) const;
         bool startsWith(const QString& _searchInParam, const QString& _theStart,
                          bool checkBeginning, bool checkSpaces, bool equals) const;
+    
+        friend class OsmAnd::CollatorStringMatcher;
     };
 }
 

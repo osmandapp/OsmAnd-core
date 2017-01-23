@@ -17,6 +17,7 @@
 #include <OsmAndCore/IObfsCollection.h>
 #include <OsmAndCore/Search/BaseSearch.h>
 #include <OsmAndCore/CollatorStringMatcher.h>
+#include <OsmAndCore/ResourcesManager.h>
 
 namespace OsmAnd
 {
@@ -39,7 +40,8 @@ namespace OsmAnd
             bool includeStreets;
             QString postcode;
             std::shared_ptr<const Address> addressFilter;
-            CollatorStringMatcher::StringMatcherMode matcherMode;
+            StringMatcherMode matcherMode;
+            QList< std::shared_ptr<const ResourcesManager::LocalResource> > localResources;
         };
 
         struct OSMAND_CORE_API ResultEntry : public IResultEntry

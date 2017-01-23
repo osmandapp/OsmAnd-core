@@ -24,11 +24,8 @@ void OsmAnd::AddressesByNameSearch::performSearch(
 {
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
-    const auto dataInterface = obfsCollection->obtainDataInterface(
-        criteria.obfInfoAreaFilter.getValuePtrOrNullptr(),
-        MinZoomLevel,
-        MaxZoomLevel,
-        ObfDataTypesMask().set(ObfDataType::Address));
+    const auto dataInterface = criteria.localResources.isEmpty() ? obfsCollection->obtainDataInterface(
+        criteria.obfInfoAreaFilter.getValuePtrOrNullptr(), MinZoomLevel, MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::Address)) : obfsCollection->obtainDataInterface(criteria.localResources);
 
     if (criteria.addressFilter != nullptr)
     {
@@ -197,7 +194,7 @@ QVector<OsmAnd::AddressesByNameSearch::ResultEntry> OsmAnd::AddressesByNameSearc
 OsmAnd::AddressesByNameSearch::Criteria::Criteria()
     : streetGroupTypesMask(fullObfAddressStreetGroupTypesMask())
     , includeStreets(true)
-    , matcherMode(CollatorStringMatcher::StringMatcherMode::CHECK_STARTS_FROM_SPACE)
+    , matcherMode(StringMatcherMode::CHECK_STARTS_FROM_SPACE)
 {
 }
 

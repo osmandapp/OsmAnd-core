@@ -16,6 +16,7 @@
 #include <unicode/ushape.h>
 #include <unicode/translit.h>
 #include <unicode/brkiter.h>
+#include <unicode/coll.h>
 #include "restore_internal_warnings.h"
 
 #include "CoreResourcesEmbeddedBundle.h"
@@ -25,6 +26,7 @@ std::unique_ptr<QByteArray> g_IcuData;
 const Transliterator* g_pIcuAnyToLatinTransliterator = nullptr;
 const Transliterator* g_pIcuAccentsAndDiacriticsConverter = nullptr;
 const BreakIterator* g_pIcuLineBreakIterator = nullptr;
+const Collator* g_pIcuCollator = nullptr;
 
 bool OsmAnd::ICU::initialize()
 {
@@ -69,13 +71,41 @@ bool OsmAnd::ICU::initialize()
         LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU line break iterator: %d", icuError);
         return false;
     }
-
+    
+    Collator *collator = nullptr;
+    icuError = U_ZERO_ERROR;
+    Locale locale = Locale::getDefault();
+    if (std::strcmp(locale.getLanguage(), "ro") ||
+        std::strcmp(locale.getLanguage(), "cs") ||
+        std::strcmp(locale.getLanguage(), "sk"))
+    {
+        collator = Collator::createInstance(Locale("en", "US"), icuError);
+    }
+    else
+    {
+        collator = Collator::createInstance(icuError);
+    }
+    
+    if (U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "Failed to create global ICU collator: %d", icuError);
+        return false;
+    }
+    else
+    {
+        collator->setStrength(Collator::PRIMARY);
+        g_pIcuCollator = collator;
+    }
+    
     return true;
 }
 
 void OsmAnd::ICU::release()
 {
     // Release resources:
+
+    delete g_pIcuCollator;
+    g_pIcuCollator = nullptr;
 
     delete g_pIcuAccentsAndDiacriticsConverter;
     g_pIcuAccentsAndDiacriticsConverter = nullptr;
@@ -333,3 +363,157 @@ OSMAND_CORE_API QString OSMAND_CORE_CALL OsmAnd::ICU::stripAccentsAndDiacritics(
     }
     return output;
 }
+
+UnicodeString qStrToUniStr(QString input)
+{
+    UnicodeString icuString(reinterpret_cast<const UChar*>(input.unicode()), input.length());
+    return icuString;
+}
+
+bool isSpace(UChar c)
+{
+    return !u_isalnum(c);
+}
+
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cmatches(const QString& _base, const QString& _part, StringMatcherMode _mode)
+{
+    switch (_mode)
+    {
+        case StringMatcherMode::CHECK_CONTAINS:
+            return ccontains(_base, _part);
+        case StringMatcherMode::CHECK_EQUALS_FROM_SPACE:
+            return cstartsWith(_base, _part, true, true, true);
+        case StringMatcherMode::CHECK_STARTS_FROM_SPACE:
+            return cstartsWith(_base, _part, true, true, false);
+        case StringMatcherMode::CHECK_STARTS_FROM_SPACE_NOT_BEGINNING:
+            return cstartsWith(_base, _part, false, true, false);
+        case StringMatcherMode::CHECK_ONLY_STARTS_WITH:
+            return cstartsWith(_base, _part, true, false, false);
+        default:
+            return false;
+    }
+}
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::ccontains(const QString& _base, const QString& _part)
+{
+    UErrorCode icuError = U_ZERO_ERROR;
+    bool result = false;
+    const auto collator = g_pIcuCollator->clone();
+    if (collator == nullptr || U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
+        if (collator != nullptr)
+            delete collator;
+        return false;
+    }
+    else
+    {
+        UnicodeString baseString = qStrToUniStr(_base);
+        UnicodeString partString = qStrToUniStr(_part);
+        
+        if (baseString.length() <= partString.length())
+            return collator->equals(baseString, partString);
+        
+        for (int pos = 0; pos <= baseString.length() - partString.length() + 1; pos++)
+        {
+            UnicodeString temp = baseString.tempSubString(pos, baseString.length());
+            
+            for (int length = temp.length(); length >= 0; length--)
+            {
+                UnicodeString temp2 = temp.tempSubString(0, length);
+                if (collator->equals(temp2, partString))
+                {
+                    result = true;
+                    break;
+                }
+            }
+            if (result)
+                break;
+        }
+    }
+    if (collator != nullptr)
+        delete collator;
+    return result;
+}
+OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _searchInParam, const QString& _theStart,
+                                                  bool checkBeginning, bool checkSpaces, bool equals)
+{
+    UErrorCode icuError = U_ZERO_ERROR;
+    bool result = false;
+    const auto collator = g_pIcuCollator->clone();
+    if (collator == nullptr || U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
+        if (collator != nullptr)
+            delete collator;
+        return false;
+    }
+    else
+    {
+        UnicodeString searchIn = qStrToUniStr(_searchInParam).toLower(Locale::getDefault());
+        UnicodeString theStart = qStrToUniStr(_theStart);
+        
+        int startLength = theStart.length();
+        int serchInLength = searchIn.length();
+        
+        if (startLength == 0)
+        {
+            result = true;
+        }
+        else if (startLength > serchInLength)
+        {
+            result = false;
+        }
+        else
+        {
+            if (checkBeginning)
+            {
+                bool starts = collator->equals(searchIn.tempSubString(0, serchInLength), theStart);
+                if (starts)
+                {
+                    if (equals)
+                    {
+                        if (startLength == serchInLength || isSpace(searchIn.charAt(startLength)))
+                        {
+                            result = true;
+                        }
+                    }
+                    else
+                    {
+                        result = true;
+                    }
+                }
+            }
+            
+            if (!result && checkSpaces)
+            {
+                for (int i = 1; i <= serchInLength - startLength; i++)
+                {
+                    if (isSpace(searchIn.charAt(i - 1)) && !isSpace(searchIn.charAt(i)))
+                    {
+                        if (collator->equals(searchIn.tempSubString(i, startLength), theStart))
+                        {
+                            if (equals)
+                            {
+                                if (i + startLength == serchInLength || isSpace(searchIn.charAt(i + startLength)))
+                                {
+                                    result = true;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                result = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if (collator != nullptr)
+        delete collator;
+    return result;
+}
+

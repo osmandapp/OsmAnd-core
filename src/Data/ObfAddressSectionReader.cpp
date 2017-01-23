@@ -85,7 +85,7 @@ void OsmAnd::ObfAddressSectionReader::scanAddressesByName(
     const std::shared_ptr<const ObfReader>& reader,
     const std::shared_ptr<const ObfAddressSectionInfo>& section,
     const QString& query,
-    const OsmAnd::CollatorStringMatcher::StringMatcherMode matcherMode,
+    const StringMatcherMode matcherMode,
     QList< std::shared_ptr<const OsmAnd::Address> >* outAddresses,
     const AreaI* const bbox31 /*= nullptr*/,
     const ObfAddressStreetGroupTypesMask streetGroupTypesFilter /*= fullObfAddressStreetGroupTypesMask()*/,
