@@ -292,7 +292,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	// Main part do rendering
 	rc.nativeOperations.Start();
 	SkCanvas* canvas = new SkCanvas(*bitmap);
-//	canvas->drawColor(rc.getDefaultColor());
+	canvas->drawColor(rc.getDefaultColor());
 	if(result != NULL) {
 		doRendering(result->result, canvas, req, &rc);
 	}
