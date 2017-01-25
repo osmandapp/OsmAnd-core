@@ -30,6 +30,7 @@ namespace OsmAnd
             Criteria();
             virtual ~Criteria();
 
+            Nullable<PointI> xy31;
             Nullable<AreaI> bbox31;
             Nullable<AreaI> obfInfoAreaFilter;
             TileAcceptorFunction tileFilter;

@@ -12,10 +12,14 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/Address.h>
+#include <OsmAndCore/Data/Building.h>
+#include <OsmAndCore/Data/StreetIntersection.h>
 
 namespace OsmAnd
 {
     class StreetGroup;
+    class Building;
+    class StreetIntersection;
 
     class OSMAND_CORE_API Street Q_DECL_FINAL : public Address
     {
@@ -33,6 +37,9 @@ namespace OsmAnd
         uint32_t firstIntersectionInnerOffset;
 
         const std::shared_ptr<const StreetGroup> streetGroup;
+
+        QList<std::shared_ptr<const Building>> buildings;
+        QList<std::shared_ptr<const StreetIntersection>> intersectedStreets;
     };
 }
 

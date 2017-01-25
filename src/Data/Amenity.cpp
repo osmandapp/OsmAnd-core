@@ -4,6 +4,7 @@
 #include "QKeyValueIterator.h"
 #include "zlibUtilities.h"
 #include "Logging.h"
+#include <ICU.h>
 
 OsmAnd::Amenity::Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSection_)
     : obfSection(obfSection_)
@@ -13,6 +14,19 @@ OsmAnd::Amenity::Amenity(const std::shared_ptr<const ObfPoiSectionInfo>& obfSect
 
 OsmAnd::Amenity::~Amenity()
 {
+}
+
+void OsmAnd::Amenity::evaluateTypes()
+{
+    const auto& decodedCategories = getDecodedCategories();
+    for (const auto& decodedCategory : constOf(decodedCategories))
+    {
+        if (type.isEmpty())
+            type = decodedCategory.category;
+        if (!subType.isEmpty())
+            subType += QStringLiteral(";");
+        subType += decodedCategory.subcategory;
+    }
 }
 
 QList<OsmAnd::Amenity::DecodedCategory> OsmAnd::Amenity::getDecodedCategories() const
@@ -156,4 +170,19 @@ OsmAnd::Amenity::DecodedValue::DecodedValue()
 
 OsmAnd::Amenity::DecodedValue::~DecodedValue()
 {
+}
+
+QString OsmAnd::Amenity::getName(const QString lang, bool transliterate) const
+{
+    QString name = QString();
+    if (!lang.isEmpty() && !localizedNames.isEmpty() && localizedNames.contains(lang))
+        name = localizedNames[lang];
+    
+    if (name.isEmpty())
+        name = nativeName;
+    
+    if (transliterate && !name.isEmpty())
+        return OsmAnd::ICU::transliterateToLatin(name);
+    else
+        return name;
 }

@@ -19,11 +19,9 @@ void OsmAnd::AmenitiesInAreaSearch::performSearch(
 {
     const auto criteria = *dynamic_cast<const Criteria*>(&criteria_);
 
-    const auto dataInterface = obfsCollection->obtainDataInterface(
-        criteria.obfInfoAreaFilter.getValuePtrOrNullptr(),
-        MinZoomLevel,
-        MaxZoomLevel,
-        ObfDataTypesMask().set(ObfDataType::POI));
+    const auto dataInterface = criteria.localResources.isEmpty()
+        ? obfsCollection->obtainDataInterface(criteria.obfInfoAreaFilter.getValuePtrOrNullptr(), MinZoomLevel, MaxZoomLevel, ObfDataTypesMask().set(ObfDataType::POI))
+        : obfsCollection->obtainDataInterface(criteria.localResources);
 
     const ObfPoiSectionReader::VisitorFunction visitorFunction =
         [newResultEntryCallback, criteria_]

@@ -94,6 +94,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+            const PointI* const xy31,
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,
@@ -102,17 +103,20 @@ namespace OsmAnd
         static void scanNameIndex(
             const ObfReader_P& reader,
             const QString& query,
-            QSet<uint32_t>& outDataOffsets,
+            QMap<uint32_t, uint32_t>& outDataOffsets,
+            const PointI* const xy31,
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter);
         static void readNameIndexData(
             const ObfReader_P& reader,
-            QSet<uint32_t>& outDataOffsets,
+            QMap<uint32_t, uint32_t>& outDataOffsets,
+            const PointI* const xy31,
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter);
         static void readNameIndexDataAtom(
             const ObfReader_P& reader,
-            QSet<uint32_t>& outDataOffsets,
+            QMap<uint32_t, uint32_t>& outDataOffsets,
+            const PointI* const xy31,
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter);
 
@@ -168,6 +172,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+            const PointI* const xy31,
             const AreaI* const bbox31,
             const TileAcceptorFunction tileFilter,
             const QSet<ObfPoiCategoryId>* const categoriesFilter,

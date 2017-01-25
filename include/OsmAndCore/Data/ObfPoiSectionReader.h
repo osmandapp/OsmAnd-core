@@ -58,6 +58,7 @@ namespace OsmAnd
             const std::shared_ptr<const ObfPoiSectionInfo>& section,
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+            const PointI* const xy31 = nullptr,
             const AreaI* const bbox31 = nullptr,
             const TileAcceptorFunction tileFilter = nullptr,
             const QSet<ObfPoiCategoryId>* const categoriesFilter = nullptr,

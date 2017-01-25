@@ -16,6 +16,7 @@
 namespace OsmAnd
 {
     class ObfAddressSectionInfo;
+    class Street;
 
     class OSMAND_CORE_API StreetGroup Q_DECL_FINAL : public Address
     {
@@ -32,6 +33,8 @@ namespace OsmAnd
         ObfAddressStreetGroupSubtype subtype;
 
         uint32_t dataOffset;
+
+        QList<std::shared_ptr<const Street>> streets;
     };
 }
 

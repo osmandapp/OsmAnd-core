@@ -534,6 +534,7 @@ bool OsmAnd::ObfDataInterface::loadAmenities(
 bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
     const QString& query,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const PointI* const xy31 /*= nullptr*/,
     const AreaI* const pBbox31 /*= nullptr*/,
     const TileAcceptorFunction tileFilter /*= nullptr*/,
     const QHash<QString, QStringList>* const categoriesFilter /*= nullptr*/,
@@ -645,6 +646,7 @@ bool OsmAnd::ObfDataInterface::scanAmenitiesByName(
             poiSection,
             query,
             outAmenities,
+            xy31,
             pBbox31,
             tileFilter,
             categoriesFilter ? &categoriesFilterById : nullptr,

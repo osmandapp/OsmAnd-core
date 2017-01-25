@@ -60,11 +60,17 @@ namespace OsmAnd
         ObfObjectId id;
         QHash<int, QVariant> values;
 
+        QString type;
+        QString subType;
+
+        void evaluateTypes();
         QList<DecodedCategory> getDecodedCategories() const;
         QList<DecodedValue> getDecodedValues() const;
 
         static QHash< QString, QHash<QString, QList< std::shared_ptr<const OsmAnd::Amenity> > > > groupByCategories(
             const QList< std::shared_ptr<const OsmAnd::Amenity> >& input);
+
+        QString getName(const QString lang, bool transliterate) const;
     };
 }
 

@@ -94,6 +94,7 @@ namespace OsmAnd
         bool scanAmenitiesByName(
             const QString& query,
             QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+            const PointI* const xy31 = nullptr,
             const AreaI* const bbox31 = nullptr,
             const TileAcceptorFunction tileFilter = nullptr,
             const QHash<QString, QStringList>* const categoriesFilter = nullptr,

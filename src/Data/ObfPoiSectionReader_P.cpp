@@ -19,6 +19,8 @@
 #include "IQueryController.h"
 #include "Utilities.h"
 
+const int BUCKET_SEARCH_BY_NAME = 5;
+
 OsmAnd::ObfPoiSectionReader_P::ObfPoiSectionReader_P()
 {
 }
@@ -931,6 +933,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenity(
                 else
                     amenity->id = id;
                 amenity->values = detachedOf(intValues).unite(stringOrDataValues);
+                amenity->evaluateTypes();
                 outAmenity = amenity;
 
                 //////////////////////////////////////////////////////////////////////////
@@ -1098,6 +1101,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     const QString& query,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const PointI* const xy31,
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
@@ -1106,7 +1110,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 {
     const auto cis = reader.getCodedInputStream().get();
 
-    QSet<uint32_t> dataBoxesOffsetsSet;
+    QMap<uint32_t, uint32_t> dataBoxesOffsetsSet;
     QSet<ObfObjectId> processedObjectsSet;
 
     for (;;)
@@ -1129,6 +1133,7 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                     reader,
                     query,
                     dataBoxesOffsetsSet,
+                    xy31,
                     bbox31,
                     tileFilter);
 
@@ -1141,15 +1146,34 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
                 break;
             case OBF::OsmAndPoiIndex::kPoiDataFieldNumber:
             {
-                auto dataBoxesOffsets = vectorFrom(dataBoxesOffsetsSet);
-                std::sort(dataBoxesOffsets);
-
-                auto pDataOffset = dataBoxesOffsets.constData();
-                const auto dataBoxesCount = dataBoxesOffsets.size();
-                for (auto dataBoxIndex = 0; dataBoxIndex < dataBoxesCount; dataBoxIndex++)
+                auto offKeys = dataBoxesOffsetsSet.keys();
+                std::sort(offKeys,
+                          [&dataBoxesOffsetsSet]
+                          (const uint32_t& offset1, const uint32_t& offset2) -> bool
+                          {
+                              return dataBoxesOffsetsSet[offset1] < dataBoxesOffsetsSet[offset2];
+                          });
+                
+                int p = BUCKET_SEARCH_BY_NAME * 3;
+                if (p < offKeys.length())
                 {
-                    const auto dataOffset = *(pDataOffset++);
-
+                    for (int i = p + BUCKET_SEARCH_BY_NAME; ; i += BUCKET_SEARCH_BY_NAME)
+                    {
+                        if (i > offKeys.length())
+                        {
+                            std::sort(offKeys.begin() + p, offKeys.end());
+                            break;
+                        }
+                        else
+                        {
+                            std::sort(offKeys.begin() + p, offKeys.begin() + i);
+                        }
+                        p = i;
+                    }
+                }
+                
+                for (const auto dataOffset : offKeys)
+                {
                     cis->Seek(section->offset + dataOffset);
                     const auto length = ObfReaderUtilities::readBigEndianInt(cis);
                     const auto offset = cis->CurrentPosition();
@@ -1191,7 +1215,8 @@ void OsmAnd::ObfPoiSectionReader_P::readAmenitiesByName(
 void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
     const ObfReader_P& reader,
     const QString& query,
-    QSet<uint32_t>& outDataOffsets,
+    QMap<uint32_t, uint32_t>& outDataOffsets,
+    const PointI* const xy31,
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter)
 {
@@ -1242,6 +1267,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
                     readNameIndexData(
                         reader,
                         outDataOffsets,
+                        xy31,
                         bbox31, 
                         tileFilter);
                     ObfReaderUtilities::ensureAllDataWasRead(cis);
@@ -1260,7 +1286,8 @@ void OsmAnd::ObfPoiSectionReader_P::scanNameIndex(
 
 void OsmAnd::ObfPoiSectionReader_P::readNameIndexData(
     const ObfReader_P& reader,
-    QSet<uint32_t>& outDataOffsets,
+    QMap<uint32_t, uint32_t>& outDataOffsets,
+    const PointI* const xy31,
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter)
 {
@@ -1285,6 +1312,7 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexData(
                 readNameIndexDataAtom(
                     reader,
                     outDataOffsets,
+                    xy31,
                     bbox31,
                     tileFilter);
                 ObfReaderUtilities::ensureAllDataWasRead(cis);
@@ -1301,12 +1329,12 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexData(
 
 void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
     const ObfReader_P& reader,
-    QSet<uint32_t>& outDataOffsets,
+    QMap<uint32_t, uint32_t>& outDataOffsets,
+    const PointI* const xy31,
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter)
 {
     const auto cis = reader.getCodedInputStream().get();
-
     auto tileId = TileId::zero();
     auto zoom = MinZoomLevel;
 
@@ -1338,16 +1366,21 @@ void OsmAnd::ObfPoiSectionReader_P::readNameIndexDataAtom(
                 if (accept && tileFilter)
                     accept = tileFilter(tileId, zoom);
 
+                PointI position31;
+                uint32_t d = 0;
                 if (accept && bbox31)
                 {
-                    PointI position31;
                     position31.x = tileId.x << (31 - zoom);
                     position31.y = tileId.y << (31 - zoom);
                     accept = bbox31->contains(position31);
                 }
 
                 if (accept)
-                    outDataOffsets.insert(dataOffset);
+                {
+                    if (xy31)
+                        d = qAbs(xy31->x - position31.x) + qAbs(xy31->y - position31.y);
+                    outDataOffsets.insert(dataOffset, d);
+                }
                 break;
             }
             default:
@@ -1416,6 +1449,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
     const std::shared_ptr<const ObfPoiSectionInfo>& section,
     const QString& query,
     QList< std::shared_ptr<const OsmAnd::Amenity> >* outAmenities,
+    const PointI* const xy31,
     const AreaI* const bbox31,
     const TileAcceptorFunction tileFilter,
     const QSet<ObfPoiCategoryId>* const categoriesFilter,
@@ -1435,6 +1469,7 @@ void OsmAnd::ObfPoiSectionReader_P::scanAmenitiesByName(
         section,
         query,
         outAmenities,
+        xy31,
         bbox31,
         tileFilter,
         categoriesFilter,
