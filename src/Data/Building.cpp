@@ -2,6 +2,7 @@
 
 #include "Street.h"
 #include "StreetGroup.h"
+#include "Utilities.h"
 
 OsmAnd::Building::Building(const std::shared_ptr<const Street>& street_)
     : Address(street_ -> obfSection, AddressType::Building)
@@ -27,3 +28,52 @@ QString OsmAnd::Building::toString() const
 {
     return nativeName;
 }
+
+float OsmAnd::Building::evaluateInterpolation(const QString& hno) const
+{
+    if (interpolation != Interpolation::Disabled || interpolationInterval > 0 || nativeName.contains('-'))
+    {
+        int num = OsmAnd::Utilities::extractFirstInteger(hno);
+        QString fname = nativeName;
+        int numB = OsmAnd::Utilities::extractFirstInteger(fname);
+        int numT = numB;
+        if (num >= numB)
+        {
+            QString sname = interpolationNativeName;
+            if (fname.contains('-') && sname.isNull())
+            {
+                int l = fname.indexOf('-');
+                sname = fname.mid(l + 1, fname.length() - (l + 1));
+            }
+            if (!sname.isNull())
+            {
+                numT = OsmAnd::Utilities::extractFirstInteger(sname);
+                if (numT < num)
+                    return -1;
+            }
+            if (interpolation == Interpolation::Even && num % 2 == 1)
+                return -1;
+
+            if (interpolation == Interpolation::Odd && num % 2 == 0)
+                return -1;
+
+            if (interpolationInterval != 0 && (num - numB) % interpolationInterval != 0)
+                return -1;
+        }
+        else
+        {
+            return -1;
+        }
+        if (numT > numB)
+            return ((float)num - numB) / (((float)numT - numB));
+        
+        return 0;
+    }
+    return -1;
+}
+
+bool OsmAnd::Building::belongsToInterpolation(const QString& hno) const
+{
+    return evaluateInterpolation(hno) >= 0;
+}
+

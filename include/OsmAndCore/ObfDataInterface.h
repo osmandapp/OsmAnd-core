@@ -131,11 +131,19 @@ namespace OsmAnd
             const ObfAddressSectionReader::StreetGroupVisitorFunction visitor = nullptr,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
+        bool preloadStreets(
+            const QList< std::shared_ptr<StreetGroup> >& streetGroups,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
         bool loadStreetsFromGroups(
             const QList< std::shared_ptr<const StreetGroup> >& streetGroups,
             QHash< std::shared_ptr<const StreetGroup>, QList< std::shared_ptr<const Street> > >* resultOut = nullptr,
             const AreaI* const bbox31 = nullptr,
             const ObfAddressSectionReader::StreetVisitorFunction visitor = nullptr,
+            const std::shared_ptr<const IQueryController>& queryController = nullptr);
+
+        bool preloadBuildings(
+            const QList< std::shared_ptr<Street> >& streets,
             const std::shared_ptr<const IQueryController>& queryController = nullptr);
 
         bool loadBuildingsFromStreets(

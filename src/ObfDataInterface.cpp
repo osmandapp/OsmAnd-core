@@ -844,6 +844,43 @@ bool OsmAnd::ObfDataInterface::loadStreetGroups(
     return true;
 }
 
+bool OsmAnd::ObfDataInterface::preloadStreets(
+    const QList< std::shared_ptr<StreetGroup> >& streetGroups,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        if (queryController && queryController->isAborted())
+            return false;
+        
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& addressSection : constOf(obfInfo->addressSections))
+        {
+            if (queryController && queryController->isAborted())
+                return false;
+            
+            for (const auto& streetGroup : constOf(streetGroups))
+            {
+                if (addressSection != streetGroup->obfSection)
+                    continue;
+                
+                QList< std::shared_ptr<const Street> > intermediateResult;
+                OsmAnd::ObfAddressSectionReader::loadStreetsFromGroup(
+                                                                      obfReader,
+                                                                      streetGroup,
+                                                                      &intermediateResult,
+                                                                      nullptr,
+                                                                      nullptr,
+                                                                      queryController);
+                
+                streetGroup->streets = qMove(intermediateResult);
+            }
+        }
+    }
+    
+    return true;
+}
+
 bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
     const QList< std::shared_ptr<const StreetGroup> >& streetGroups,
     QHash< std::shared_ptr<const StreetGroup>, QList< std::shared_ptr<const Street> > >* resultOut /*= nullptr*/,
@@ -893,6 +930,43 @@ bool OsmAnd::ObfDataInterface::loadStreetsFromGroups(
         }
     }
 
+    return true;
+}
+
+bool OsmAnd::ObfDataInterface::preloadBuildings(
+    const QList< std::shared_ptr<Street> >& streets,
+    const std::shared_ptr<const IQueryController>& queryController /*= nullptr*/)
+{
+    for (const auto& obfReader : constOf(obfReaders))
+    {
+        if (queryController && queryController->isAborted())
+            return false;
+        
+        const auto& obfInfo = obfReader->obtainInfo();
+        for (const auto& addressSection : constOf(obfInfo->addressSections))
+        {
+            if (queryController && queryController->isAborted())
+                return false;
+            
+            for (const auto& street : constOf(streets))
+            {
+                if (addressSection != street->streetGroup->obfSection)
+                    continue;
+                
+                QList< std::shared_ptr<const Building> > intermediateResult;
+                OsmAnd::ObfAddressSectionReader::loadBuildingsFromStreet(
+                                                                         obfReader,
+                                                                         street,
+                                                                         &intermediateResult,
+                                                                         nullptr,
+                                                                         nullptr,
+                                                                         queryController);
+
+                street->buildings = qMove(intermediateResult);
+            }
+        }
+    }
+    
     return true;
 }
 

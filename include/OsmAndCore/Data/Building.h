@@ -50,6 +50,9 @@ namespace OsmAnd
         QString interpolationNativeName;
         QHash<QString, QString> interpolationLocalizedNames;
         PointI interpolationPosition31;
+        
+        float evaluateInterpolation(const QString& hno) const;
+        bool belongsToInterpolation(const QString& hno) const;
     };
 }
 

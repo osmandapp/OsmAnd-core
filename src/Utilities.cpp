@@ -18,6 +18,17 @@ OsmAnd::Utilities::~Utilities()
 {
 }
 
+int OsmAnd::Utilities::extractFirstInteger(const QString& s)
+{
+    int i = 0;
+    for (QChar k : s)
+        if (k.isDigit())
+            i = i * 10 + k.digitValue();
+        else
+            break;
+    return i;
+}
+
 bool OsmAnd::Utilities::extractFirstNumberPosition(const QString& value, int& first, int& last, bool allowSigned, bool allowDot)
 {
     first = -1;

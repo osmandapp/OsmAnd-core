@@ -12,8 +12,6 @@
 #include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Data/DataCommonTypes.h>
 #include <OsmAndCore/Data/Address.h>
-#include <OsmAndCore/Data/Building.h>
-#include <OsmAndCore/Data/StreetIntersection.h>
 
 namespace OsmAnd
 {

@@ -223,17 +223,6 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
     return result;
 }
 
-int extractFirstInteger(QString s)
-{
-    int i = 0;
-    for (QChar k : s)
-        if (k.isDigit())
-            i = i * 10 + k.digitValue();
-        else
-            break;
-    return i;
-}
-
 QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::ReverseGeocoder_P::loadStreetBuildings(
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> road,
         const std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry> street) const
@@ -271,8 +260,8 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
                 auto bld = makeResult();
                 if (!b->interpolationNativeName.isEmpty())
                 {
-                    int fi = extractFirstInteger(b->nativeName);
-                    int si = extractFirstInteger(b->interpolationNativeName);
+                    int fi = OsmAnd::Utilities::extractFirstInteger(b->nativeName);
+                    int si = OsmAnd::Utilities::extractFirstInteger(b->interpolationNativeName);
                     if (si != 0 && fi != 0)
                     {
                         int num = (int) (fi + (si - fi) * coeff);
