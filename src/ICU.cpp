@@ -518,3 +518,25 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
     return result;
 }
 
+OSMAND_CORE_API int OSMAND_CORE_CALL OsmAnd::ICU::ccompare(const QString& _s1, const QString& _s2)
+{
+    UErrorCode icuError = U_ZERO_ERROR;
+    int result = 0;
+    const auto collator = g_pIcuCollator->clone();
+    if (collator == nullptr || U_FAILURE(icuError))
+    {
+        LogPrintf(LogSeverityLevel::Error, "ICU error: %d", icuError);
+        if (collator != nullptr)
+            delete collator;
+        return result;
+    }
+    else
+    {
+        UnicodeString s1 = qStrToUniStr(_s1);
+        UnicodeString s2 = qStrToUniStr(_s2);
+        result = collator->compare(s1, s2);
+    }
+    if (collator != nullptr)
+        delete collator;
+    return result;
+}
