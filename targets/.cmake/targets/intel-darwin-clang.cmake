@@ -1,3 +1,4 @@
+set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_TARGET_OS darwin)
 set(CMAKE_TARGET_CPU_ARCH intel)
 set(CMAKE_C_COMPILER /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang)

@@ -100,6 +100,7 @@ struct RoutingIndex : BinaryPartIndex {
 struct RouteDataObject {
 	const static int RESTRICTION_SHIFT = 3;
 	const static uint64_t RESTRICTION_MASK = 7;
+	const static int HEIGHT_UNDEFINED = -80000;
 
 	RoutingIndex* region;
 	std::vector<uint32_t> types ;
@@ -110,6 +111,7 @@ struct RouteDataObject {
 	std::vector<std::vector<uint32_t> > pointNameTypes;
 	std::vector<std::vector<uint32_t> > pointNameIds;
 	std::vector<std::vector<std::string> > pointNames;
+	std::vector<double> heightDistanceArray;
 	int64_t id;
 
 	UNORDERED(map)<int, std::string > names;
@@ -157,6 +159,91 @@ struct RouteDataObject {
 		return pointsX[0] == pointsX[pointsX.size() - 1] && pointsY[0] == pointsY[pointsY.size() - 1] ; 
 	}
 
+
+ 	string getValue(string tag) {
+		uint sz = types.size();
+		for(uint i = 0; i < sz; i++) {
+			tag_value r = region->decodingRules[types[i]];
+			if(r.first == tag) {
+				return r.second;
+			}
+		}
+		return "";
+	}
+
+	std::vector<double> calculateHeightArray() {
+ 		if(heightDistanceArray.size() > 0) {
+ 			return heightDistanceArray;
+ 		}
+ 		string strStart = getValue("osmand_ele_start");
+ 		
+ 		if(strStart == "") {
+ 			return heightDistanceArray;
+ 		}
+ 		string strEnd = getValue("osmand_ele_end");
+ 		int startHeight = (int) atof(strStart.c_str());
+ 		int endHeight = startHeight;
+ 		if(strEnd != "") {
+ 			endHeight = (int) atof(strEnd.c_str());
+ 		}
+ 		
+ 		heightDistanceArray.resize(2*getPointsLength(), 0); 
+ 		double plon = 0;
+ 		double plat = 0;
+ 		int prevHeight = startHeight;
+ 		for(uint k = 0; k < getPointsLength(); k++) {
+ 			double lon = get31LongitudeX(pointsX[k]);
+ 			double lat = get31LatitudeY(pointsY[k]);
+ 			if(k > 0) {
+ 				double dd = getDistance(plat, plon, lat, lon);
+ 				int height = HEIGHT_UNDEFINED;
+ 				if(k == getPointsLength() - 1) {
+ 					height = endHeight;
+ 				} else {
+ 					if(pointTypes.size() > k && pointTypes[k].size() > 0) {
+ 						uint sz = pointTypes[k].size();
+						for(uint sti = 0; sti < sz; sti++) {
+							tag_value r = region->decodingRules[pointTypes[k][sti]];
+							if (r.first == "osmand_ele_asc") {
+ 								height = (int) (prevHeight + atof(r.second.c_str()));
+ 								break;
+ 							} else if (r.first == "osmand_ele_desc") {
+ 								height = (int) (prevHeight - atof(r.second.c_str()));
+ 								break;
+ 							}
+						}
+ 					}
+ 				}
+ 				heightDistanceArray[2*k] = dd;
+ 				heightDistanceArray[2*k+1] = height;
+ 				if(height != HEIGHT_UNDEFINED) {
+ 					// interpolate undefined
+ 					double totalDistance = dd;
+ 					int startUndefined = k;
+ 					while(startUndefined - 1 >= 0 && heightDistanceArray[2*(startUndefined - 1)+1] == HEIGHT_UNDEFINED) {
+ 						startUndefined --;
+ 						totalDistance += heightDistanceArray[2*(startUndefined)];
+ 					}
+ 					if(totalDistance > 0) {
+ 						double angle = (height - prevHeight) / totalDistance;
+ 						for(int j = startUndefined; j < k; j++) {
+ 							heightDistanceArray[2*j+1] =  ((heightDistanceArray[2*j] * angle) + heightDistanceArray[2*j-1]);
+ 						}
+ 					}
+ 					prevHeight = height;
+ 				}
+ 				
+ 			} else {
+ 				heightDistanceArray[0] = 0;
+ 				heightDistanceArray[1] = startHeight;
+ 			}
+ 			plat = lat;
+ 			plon = lon;
+ 		}
+ 		return heightDistanceArray;
+ 	}
+
+  
 	string getHighway() {
 		uint sz = types.size();
 		for(uint i=0; i < sz; i++) {
@@ -244,6 +331,8 @@ struct RouteDataObject {
 		}
 		return def;
 	}
+
+
 	
 	static double parseWeightInTon(string v, double def) {
 		int i = findFirstNumberEndIndex(v);

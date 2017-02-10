@@ -32,7 +32,8 @@ enum class RouteDataObjectAttribute : unsigned int {
 	OBSTACLES = 3, // "obstacle_time"
 	ROUTING_OBSTACLES = 4, // "obstacle"
 	ONEWAY = 5,// "oneway"
-	PENALTY_TRANSITION = 6 // 
+	PENALTY_TRANSITION = 6, // "penalty_transition"
+	OBSTACLE_SRTM_ALT_SPEED = 7 // "obstacle_srtm_alt_speed"
 };
 
 enum class GeneralRouterProfile {
