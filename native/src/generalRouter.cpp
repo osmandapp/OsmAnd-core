@@ -268,8 +268,7 @@ double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject> road, uin
  			int percentIncl = (int) (incl * 100);
  			percentIncl = (percentIncl + 2)/ 3 * 3 - 2; // 1, 4, 7, 10, .   
  			if(percentIncl > 0) {
- 				// IMPROVEMENT: register with value and cache parsed value
- 				objContext.paramContext.vars["incline"] = std::to_string(percentIncl);
+ 				objContext.paramContext.incline = percentIncl;
  				sum += objContext.evaluateDouble(road->region, types, 0) * diff;
  			}
  		}
@@ -462,6 +461,8 @@ double RouteAttributeExpression::calculateExprValue(int id, dynbitset& types, Pa
 			uint value = findBit.find_first();
 			return router->parseValueFromTag(value, valueType, router);
 		}
+	} else if(value == ":incline") {
+		return paramContext.incline;
 	} else if (value.length() > 0 && value[0]==':') {
 		string p = value.substr(1);
 		MAP_STR_STR::iterator it = paramContext.vars.find(p);

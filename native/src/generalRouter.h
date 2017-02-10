@@ -60,6 +60,8 @@ struct RoutingParameter {
 
 struct ParameterContext {
 	MAP_STR_STR vars;
+	double incline;
+	ParameterContext(): incline(0) {}
 };
 
 struct RouteAttributeExpression {
