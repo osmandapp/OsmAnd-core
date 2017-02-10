@@ -598,7 +598,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_GeneralRouter_rightTurn = getFid(env, jclass_GeneralRouter, "rightTurn", "F");
 	jfield_GeneralRouter_minDefaultSpeed = getFid(env, jclass_GeneralRouter, "minDefaultSpeed", "F");
 	jfield_GeneralRouter_maxDefaultSpeed = getFid(env, jclass_GeneralRouter, "maxDefaultSpeed", "F");
-	jfield_GeneralRouter_heightObstacles = getFid(env, jclass_GeneralRouter, "heightObstacles", "F");
+	jfield_GeneralRouter_heightObstacles = getFid(env, jclass_GeneralRouter, "heightObstacles", "Z");
 	jfield_GeneralRouter_objectAttributes = getFid(env, jclass_GeneralRouter, "objectAttributes", 
 		"[Lnet/osmand/router/GeneralRouter$RouteAttributeContext;");
 	jmethod_GeneralRouter_getImpassableRoadIds = env->GetMethodID(jclass_GeneralRouter,
