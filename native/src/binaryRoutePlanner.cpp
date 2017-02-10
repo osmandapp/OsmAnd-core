@@ -618,9 +618,12 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 			directionAllowed = false;
 			continue;
 		}
+		double heightObstacle = ctx->config->router.defineHeightObstacle(road, !reverseWaySearch ? prevInd : segmentPoint, 
+ 					!reverseWaySearch ? segmentPoint : prevInd);
 		bool alreadyVisited = checkIfOppositieSegmentWasVisited(ctx, reverseWaySearch, graphSegments, segment, oppositeSegments,
 				segmentPoint,  segmentDist, obstaclesTime);
 		obstaclesTime += obstacle;
+		obstaclesTime += heightObstacle;
 		if (alreadyVisited) {
 			directionAllowed = false;
 			continue;
