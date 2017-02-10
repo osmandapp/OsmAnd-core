@@ -464,6 +464,7 @@ jfieldID jfield_GeneralRouter_roundaboutTurn = NULL;
 jfieldID jfield_GeneralRouter_rightTurn = NULL;
 jfieldID jfield_GeneralRouter_minDefaultSpeed = NULL;
 jfieldID jfield_GeneralRouter_maxDefaultSpeed = NULL;
+jfieldID jfield_GeneralRouter_heightObstacles = NULL;
 jfieldID jfield_GeneralRouter_objectAttributes = NULL;
 jmethodID jmethod_GeneralRouter_getImpassableRoadIds = NULL;
 
@@ -597,6 +598,7 @@ void loadJniRenderingContext(JNIEnv* env)
 	jfield_GeneralRouter_rightTurn = getFid(env, jclass_GeneralRouter, "rightTurn", "F");
 	jfield_GeneralRouter_minDefaultSpeed = getFid(env, jclass_GeneralRouter, "minDefaultSpeed", "F");
 	jfield_GeneralRouter_maxDefaultSpeed = getFid(env, jclass_GeneralRouter, "maxDefaultSpeed", "F");
+	jfield_GeneralRouter_heightObstacles = getFid(env, jclass_GeneralRouter, "heightObstacles", "F");
 	jfield_GeneralRouter_objectAttributes = getFid(env, jclass_GeneralRouter, "objectAttributes", 
 		"[Lnet/osmand/router/GeneralRouter$RouteAttributeContext;");
 	jmethod_GeneralRouter_getImpassableRoadIds = env->GetMethodID(jclass_GeneralRouter,
@@ -1098,6 +1100,8 @@ void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobjec
 	rConfig.router.rightTurn = ienv->GetFloatField(router, jfield_GeneralRouter_rightTurn);
 	rConfig.router.minDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minDefaultSpeed);
 	rConfig.router.maxDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxDefaultSpeed);
+	rConfig.router.heightObstacles = ienv->GetBooleanField(router, jfield_GeneralRouter_heightObstacles);
+	
 	// Map<String, String> attributes; // Attributes are not sync not used for calculation
 	// Map<String, RoutingParameter> parameters;  // not used for calculation
 	// Map<String, Integer> universalRules; // dynamically managed

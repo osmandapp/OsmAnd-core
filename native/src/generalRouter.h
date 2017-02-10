@@ -234,6 +234,7 @@ private:
 public:
 	// cached values
 	bool _restrictionsAware ;
+	bool heightObstacles;
 	double leftTurn;
 	double roundaboutTurn;
 	double rightTurn;
@@ -241,7 +242,7 @@ public:
 	double maxDefaultSpeed ;
 	UNORDERED(set)<int64_t> impassableRoadIds;
 
-	GeneralRouter() : _restrictionsAware(true), minDefaultSpeed(10), maxDefaultSpeed(10) {
+	GeneralRouter() : _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10), maxDefaultSpeed(10) {
 	}
 
 	~GeneralRouter() {
@@ -276,6 +277,12 @@ public:
 	 * return delay in seconds (0 no obstacles)
 	 */
 	double defineObstacle(SHARED_PTR<RouteDataObject> road, uint point);
+
+
+  	/**
+ 	 * return delay in seconds for height obstacles
+ 	 */
+ 	double defineHeightObstacle(SHARED_PTR<RouteDataObject> road, uint startIndex, uint endIndex);
 	
 	/**
 	 * return delay in seconds (0 no obstacles)

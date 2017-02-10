@@ -246,6 +246,39 @@ double GeneralRouter::defineObstacle(SHARED_PTR<RouteDataObject> road, uint poin
 	return 0;
 }
 
+double GeneralRouter::defineHeightObstacle(SHARED_PTR<RouteDataObject> road, uint startIndex, uint endIndex) {
+	if(!heightObstacles) {
+ 		return 0;
+ 	}
+ 	vector<double> heightArray = road->calculateHeightArray();
+ 	if(heightArray.size() == 0 ) {
+ 		return 0;
+ 	}
+ 	
+ 	double sum = 0;
+ 	int knext;
+ 	vector<uint32_t> types;
+ 	RouteAttributeContext& objContext = getObjContext(RouteDataObjectAttribute::OBSTACLE_SRTM_ALT_SPEED);
+ 	for(uint k = startIndex; k != endIndex; k = knext) {
+ 		knext = startIndex < endIndex ? k + 1 : k - 1;
+ 		double dist = startIndex < endIndex ? heightArray[2 * knext] : heightArray[2 * k]  ;
+ 		double diff = heightArray[2 * knext + 1] - heightArray[2 * k + 1] ;
+ 		if(diff > 0 && dist > 0) {
+ 			double incl = diff / dist;
+ 			int percentIncl = (int) (incl * 100);
+ 			percentIncl = (percentIncl + 2)/ 3 * 3 - 2; // 1, 4, 7, 10, .   
+ 			if(percentIncl > 0) {
+ 				// IMPROVEMENT: register with value and cache parsed value
+ 				objContext.paramContext.vars["incline"] = std::to_string(percentIncl);
+ 				sum += objContext.evaluateDouble(road->region, types, 0) * diff;
+ 			}
+ 		}
+ 	}
+ 	return sum;
+ }
+
+
+
 
 double GeneralRouter::defineRoutingObstacle(SHARED_PTR<RouteDataObject> road, uint point) {
 	if(road->pointTypes.size() > point && road->pointTypes[point].size() > 0){
