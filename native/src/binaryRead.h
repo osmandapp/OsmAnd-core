@@ -190,13 +190,13 @@ struct RouteDataObject {
  		heightDistanceArray.resize(2*getPointsLength(), 0); 
  		double plon = 0;
  		double plat = 0;
- 		int prevHeight = startHeight;
+ 		double prevHeight = startHeight;
  		for(uint k = 0; k < getPointsLength(); k++) {
  			double lon = get31LongitudeX(pointsX[k]);
  			double lat = get31LatitudeY(pointsY[k]);
  			if(k > 0) {
  				double dd = getDistance(plat, plon, lat, lon);
- 				int height = HEIGHT_UNDEFINED;
+ 				double height = HEIGHT_UNDEFINED;
  				if(k == getPointsLength() - 1) {
  					height = endHeight;
  				} else {
@@ -205,10 +205,10 @@ struct RouteDataObject {
 						for(uint sti = 0; sti < sz; sti++) {
 							tag_value r = region->decodingRules[pointTypes[k][sti]];
 							if (r.first == "osmand_ele_asc") {
- 								height = (int) (prevHeight + atof(r.second.c_str()));
+ 								height = (prevHeight + atof(r.second.c_str()));
  								break;
  							} else if (r.first == "osmand_ele_desc") {
- 								height = (int) (prevHeight - atof(r.second.c_str()));
+ 								height = (prevHeight - atof(r.second.c_str()));
  								break;
  							}
 						}
