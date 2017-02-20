@@ -468,7 +468,7 @@ OSMAND_CORE_API bool OSMAND_CORE_CALL OsmAnd::ICU::cstartsWith(const QString& _s
         {
             if (checkBeginning)
             {
-                bool starts = collator->equals(searchIn.tempSubString(0, serchInLength), theStart);
+                bool starts = collator->equals(searchIn.tempSubString(0, startLength), theStart);
                 if (starts)
                 {
                     if (equals)
