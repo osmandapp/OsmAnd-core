@@ -507,7 +507,6 @@ float calculateTimeWithObstacles(RoutingContext* ctx, SHARED_PTR<RouteDataObject
 	if(speed > ctx->config->router.getMaxDefaultSpeed()) {
 		speed = ctx->config->router.getMaxDefaultSpeed();
 	}
-
 	return obstaclesTime + distOnRoadToPass / speed;
 }
 
