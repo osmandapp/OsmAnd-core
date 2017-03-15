@@ -455,7 +455,7 @@ bool readMapIndex(CodedInputStream* input, MapIndex* mapIndex, bool onlyInitEnco
 bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 	uint32_t tag;
 	uint32_t versionConfirm = -2;
-	file->external = file->inputName.find("map_external") != string::npos;
+	file->external = file->inputName.find("osmand_ext") != string::npos;
 	while ((tag = input->ReadTag()) != 0) {
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
 		// required uint32_t version = 1;
@@ -478,7 +478,7 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 			file->mapIndexes.push_back(mapIndex);
 			file->indexes.push_back(&file->mapIndexes.back());
 			file->basemap = file->basemap || mapIndex.name.find("basemap") != string::npos;
-			file->external = file->external || mapIndex.name.find("map_external") != string::npos;
+			file->external = file->external || mapIndex.name.find("osmand_ext") != string::npos;
 			break;
 		}
 		case OsmAnd::OBF::OsmAndStructure::kRoutingIndexFieldNumber: {
