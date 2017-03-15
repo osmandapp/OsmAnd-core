@@ -455,6 +455,7 @@ bool readMapIndex(CodedInputStream* input, MapIndex* mapIndex, bool onlyInitEnco
 bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 	uint32_t tag;
 	uint32_t versionConfirm = -2;
+	file->external = file->inputName.find("map_external") != string::npos;
 	while ((tag = input->ReadTag()) != 0) {
 		switch (WireFormatLite::GetTagFieldNumber(tag)) {
 		// required uint32_t version = 1;
@@ -477,6 +478,7 @@ bool initMapStructure(CodedInputStream* input, BinaryMapFile* file) {
 			file->mapIndexes.push_back(mapIndex);
 			file->indexes.push_back(&file->mapIndexes.back());
 			file->basemap = file->basemap || mapIndex.name.find("basemap") != string::npos;
+			file->external = file->external || mapIndex.name.find("map_external") != string::npos;
 			break;
 		}
 		case OsmAnd::OBF::OsmAndStructure::kRoutingIndexFieldNumber: {
@@ -1149,8 +1151,9 @@ void readMapObjects(SearchQuery* q, BinaryMapFile* file) {
 	}
 }
 
-void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & basemapResult, std::vector<MapDataObject*>& tempResult,
-		std::vector<MapDataObject*>& coastLines,std::vector<MapDataObject*>& basemapCoastLines,
+void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & basemapResult, 
+		std::vector<MapDataObject*>& tempResult, std::vector<MapDataObject*>& extResult,
+		 std::vector<MapDataObject*>& coastLines,std::vector<MapDataObject*>& basemapCoastLines,
 		int& count, bool& basemapExists, int& renderedState) {
 	vector< BinaryMapFile*>::iterator i = openFiles.begin();
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
@@ -1166,6 +1169,7 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		q->publisher->clear();
 		if (!q->publisher->isCancelled()) {
 			bool basemap = file->isBasemap();
+			bool external = file->isExternal();
 			readMapObjects(q, file);
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
@@ -1193,6 +1197,8 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 					// do not mess coastline and other types
 					if (basemap) {
 						basemapResult.push_back(*r);
+					} else if (external) {
+						extResult.push_back(*r);
 					} else {
 						tempResult.push_back(*r);
 						//renderRouteDataFile = -1;
@@ -1209,11 +1215,12 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 	int count = 0;
 	std::vector<MapDataObject*> basemapResult;
 	std::vector<MapDataObject*> tempResult;
+	std::vector<MapDataObject*> extResult;
 	std::vector<MapDataObject*> coastLines;
 	std::vector<MapDataObject*> basemapCoastLines;
 
 	bool basemapExists = false;
-	readMapObjectsForRendering(q, basemapResult, tempResult, coastLines, basemapCoastLines, count,
+	readMapObjectsForRendering(q, basemapResult, tempResult, extResult, coastLines, basemapCoastLines, count,
 			basemapExists, renderedState);
 
 	bool objectsFromMapSectionRead = tempResult.size() > 0;
@@ -1299,6 +1306,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		}
 		q->publisher->clear();
 		q->publisher->publishOnlyUnique(tempResult);
+		q->publisher->publishAll(extResult);
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
 				"Search : tree - read( %d), accept( %d), objs - visit( %d), accept(%d), in result(%d) ",
 				q->numberOfReadSubtrees, q->numberOfAcceptedSubtrees, q->numberOfVisitedObjects, q->numberOfAcceptedObjects,

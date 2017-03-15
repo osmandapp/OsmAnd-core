@@ -424,11 +424,16 @@ struct BinaryMapFile {
 	int fd;
 	int routefd;
 	bool basemap;
+	bool external;
 	bool roadOnly;
 	bool liveMap;
 
 	bool isBasemap(){
 		return basemap;
+	}
+
+	bool isExternal(){
+		return external;
 	}
 
 	bool isLiveMap(){
@@ -462,6 +467,14 @@ struct ResultPublisher {
 			if(!publish(r[i])) {
 				delete r[i];
 			}
+		}
+		r.clear();
+		return true;
+	}
+
+	bool publishAll(std::vector<MapDataObject*> r) {
+		for(uint i = 0; i < r.size(); i++) {
+			result.push_back(r[i]);
 		}
 		r.clear();
 		return true;
