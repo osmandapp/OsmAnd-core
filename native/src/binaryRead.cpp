@@ -1289,7 +1289,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 			o->additionalTypes.push_back(tag_value("layer", "-5"));
 			tempResult.push_back(o);
 		}
-		if (emptyData || basemapMissing) {
+		if ( (emptyData && extResult.size() == 0) || basemapMissing) {
 			// message
 			// avoid overflow int errors
 			MapDataObject* o = new MapDataObject();
@@ -1740,6 +1740,8 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 
 	mapFile->routefd = routeDescriptor;
 	mapFile->liveMap = inputName.find("live/") != string::npos;
+	mapFile->inputName = inputName;
+	mapFile->roadOnly = inputName.find(".road") != string::npos;
 	FileIndex* fo = NULL;
 	if (cache != NULL) {
 		struct stat stat;
@@ -1817,8 +1819,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 			return NULL;
 		}
 	}
-	mapFile->inputName = inputName;
-	mapFile->roadOnly = inputName.find(".road") != string::npos;
+	
 	openFiles.push_back(mapFile);
 	return mapFile;
 }
