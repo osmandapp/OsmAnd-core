@@ -1401,8 +1401,7 @@ std::string JNIRenderingContext::getReshapedString(const std::string& name) {
 	// jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_Reshaper, jmethod_Reshaper_reshape, n);
 	std::string res = getString(this->env, translate);
 	this->env->DeleteLocalRef(translate);
-	this->env->ReleaseByteArrayElements(n, NULL, JNI_ABORT);
-
+	
 	this->env->DeleteLocalRef(n);
 	return res;
 }
