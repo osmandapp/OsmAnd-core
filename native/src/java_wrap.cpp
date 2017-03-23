@@ -428,6 +428,7 @@ jclass jclass_JUnidecode;
 jclass jclass_Reshaper;
 jmethodID jmethod_JUnidecode_unidecode;
 jmethodID jmethod_Reshaper_reshape;
+jmethodID jmethod_Reshaper_reshapebytes;
 jclass jclass_RouteCalculationProgress = NULL;
 jfieldID jfield_RouteCalculationProgress_segmentNotFound = NULL;
 jfieldID jfield_RouteCalculationProgress_distanceFromBegin = NULL;
@@ -692,6 +693,7 @@ void loadJniRenderingContext(JNIEnv* env)
     jmethod_JUnidecode_unidecode = env->GetStaticMethodID(jclass_JUnidecode, "unidecode", "(Ljava/lang/String;)Ljava/lang/String;");
     jclass_Reshaper = findGlobalClass(env, "net/osmand/Reshaper");
     jmethod_Reshaper_reshape = env->GetStaticMethodID(jclass_Reshaper, "reshape", "(Ljava/lang/String;)Ljava/lang/String;");
+    jmethod_Reshaper_reshapebytes = env->GetStaticMethodID(jclass_Reshaper, "reshape", "([B)Ljava/lang/String;");
 
     jclass_RouteDataObject = findGlobalClass(env, "net/osmand/binary/RouteDataObject");
     jclass_NativeRouteSearchResult = findGlobalClass(env, "net/osmand/NativeLibrary$NativeRouteSearchResult");
@@ -1390,8 +1392,13 @@ std::string JNIRenderingContext::getTranslatedString(const std::string& name) {
 }
 
 std::string JNIRenderingContext::getReshapedString(const std::string& name) {
-	jstring n = this->env->NewStringUTF(name.c_str());
-	jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_Reshaper, jmethod_Reshaper_reshape, n);
+	jbyteArray n = this->env->NewByteArray(name.length());
+    this->env->SetByteArrayRegion(n, 0, name.length(), (const jbyte *) name.c_str());
+	jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_Reshaper, jmethod_Reshaper_reshapebytes, n);
+
+
+	// jstring n = this->env->NewStringUTF(name.c_str());
+	// jstring translate = (jstring) this->env->CallStaticObjectMethod(jclass_Reshaper, jmethod_Reshaper_reshape, n);
 	std::string res = getString(this->env, translate);
 	this->env->DeleteLocalRef(translate);
 	this->env->DeleteLocalRef(n);
