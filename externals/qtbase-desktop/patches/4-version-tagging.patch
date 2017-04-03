@@ -1,0 +1,11 @@
+--- upstream.original/src/corelib/global/qversiontagging.h	2016-10-26 19:35:41.347747769 +0100
++++ upstream.patched/src/corelib/global/qversiontagging.h	2016-10-27 20:10:21.111808987 +0100
+@@ -60,7 +60,7 @@ QT_BEGIN_NAMESPACE
+  * There will only be one copy of the section in the output library or application.
+  */
+ 
+-#if defined(QT_BUILD_CORE_LIB) || defined(QT_BOOTSTRAPPED) || defined(QT_NO_VERSION_TAGGING)
++#if defined(QT_BUILD_CORE_LIB) || defined(QT_BOOTSTRAPPED) || defined(QT_NO_VERSION_TAGGING) || defined(QT_STATIC)
+ // don't make tags in QtCore, bootstrapped systems or if the user asked not to
+ #elif defined(Q_CC_GNU) && !defined(Q_OS_ANDROID)
+ #  if defined(Q_PROCESSOR_X86) && (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD_KERNEL))
