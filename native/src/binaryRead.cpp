@@ -1170,7 +1170,22 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		if (!q->publisher->isCancelled()) {
 			bool basemap = file->isBasemap();
 			bool external = file->isExternal();
+			// int sleft = q->left;
+			// int sright = q->right;
+			// int stop = q->top;
+			// int sbottom = q->bottom;
+			// if(basemap && q->zoom > 12) {
+			// 	int shift = (31 - 12);
+			// 	q->left = (q->left >> shift) << shift;
+			// 	q->right = ((q->right >> shift) + 1) << shift;
+			// 	q->top = (q->top >> shift) << shift;
+			// 	q->bottom = ((q->bottom >> shift) + 1) << shift;
+			// }
 			readMapObjects(q, file);
+			// q->left = sleft;
+			// q->right = sright;
+			// q->top = stop;
+			// q->bottom = sbottom;
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
 
@@ -1257,6 +1272,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		bool basemapMissing = q->zoom <= zoomOnlyForBasemaps && basemapCoastLines.empty() && !basemapExists;
 		bool detailedLandData = q->zoom >= 14 && tempResult.size() > 0 && objectsFromMapSectionRead;
 		bool coastlinesWereAdded = false;
+		bool detailedCoastlinesWereAdded = false;
 		if (!coastLines.empty()) {
 			coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					basemapCoastLines.empty(), true, tempResult);
@@ -1264,15 +1280,19 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		} else {
 			addBasemapCoastlines = !detailedLandData;
 		}
+		detailedCoastlinesWereAdded = coastlinesWereAdded;
+		
 		if (addBasemapCoastlines) {
 			coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					true, true, tempResult);			
 		}
 		// processCoastlines always create new objects
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
+				"Detailed coastlines = %d, basemap coastlines %d, ocean tile %d. Detailed added %d, basemap processed %d, basemap added %d.",
+					coastLines.size(), basemapCoastLines.size(), ocean, detailedCoastlinesWereAdded, addBasemapCoastlines,
+					(addBasemapCoastlines ? false : coastlinesWereAdded));
 		deleteObjects(basemapCoastLines);
 		deleteObjects(coastLines);
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,"Ocean %d fillCompleteArea %d", 
-							ocean, !coastlinesWereAdded);
 		if (!coastlinesWereAdded && ocean) {
 			MapDataObject* o = new MapDataObject();
 			o->points.push_back(int_pair(q->left, q->top));
