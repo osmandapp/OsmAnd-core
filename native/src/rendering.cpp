@@ -491,6 +491,15 @@ void drawPolyline(MapDataObject* mObj, RenderingRuleSearchRequest* req, SkCanvas
 				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
 			} else onewayColor = 0xff6286ff;
 	}
+	if(pair.first == "seamark:type" && rc->getWaterwayArrows() > 0 && (
+		(rc->getZoom() >= 9 && pair.second == "separation_lane") ||
+		(rc->getZoom() >= 9 && pair.second == "separation_line")
+		)) {
+			oneway = 1;
+			if(req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR) != 0) {
+				onewayColor = req->getIntPropertyValue(req->props()->R_ONEWAY_ARROWS_COLOR);
+			} else onewayColor = 0xff6286ff;
+	}
 	if((pair.first == "piste:type" && (rc->getZoom() >= 14)) &&
 		(pair.second == "downhill" || pair.second == "sled"))
 		{
