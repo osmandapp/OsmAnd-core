@@ -317,20 +317,58 @@ struct RouteDataObject {
 		}
 		return def;
 	}
-	
+
 	static double parseLength(string v, double def) {
-		// 14"10' not supported
+		double f = 0;
+		// 14'10" 14 - inches, 10 feet
 		int i = findFirstNumberEndIndex(v);
 		if (i > 0) {
-			double f = atof(v.substr(0, i).c_str());
-			if (v.find("\"") != string::npos  || v.find("ft") != string::npos) {
+			f += atof(v.substr(0, i).c_str());
+			string pref = v.substr(i, v.length());
+			float add = 0;
+			for(int ik = 0; ik < pref.length(); ik++) {
+				if((pref[ik] >= '0' && pref[ik] <= '9') || pref[ik] == '.' || pref[ik] == '-') {
+					int first = findFirstNumberEndIndex(pref.substr(ik));
+					if(first != -1) {
+						add = parseLength(pref.substr(ik), 0);
+						pref = pref.substr(0, ik);
+					}
+					break;
+				}
+			}
+			if (pref.find("km") != string::npos) {
+				f *= 1000;  
+			}
+			if (pref.find("in") != string::npos || pref.find("\"") != string::npos) {
+				f *= 0.0254; 
+			} else if (pref.find("\'") != string::npos  || pref.find("ft") != string::npos 
+						|| pref.find("feet") != string::npos ) {
 				// foot to meters
 				f *= 0.3048;
+			} else if (pref.find("cm") != string::npos) {
+				f *= 0.01;
+			} else if (pref.find("mile") != string::npos) {
+				f *= 1609.34f;
 			}
-			return f;
+			return f + add;
+			
 		}
 		return def;
 	}
+	
+//	static double parseLength(string v, double def) {
+//		// 14"10' not supported
+//		int i = findFirstNumberEndIndex(v);
+//		if (i > 0) {
+//			double f = atof(v.substr(0, i).c_str());
+//			if (v.find("\"") != string::npos  || v.find("ft") != string::npos) {
+//				// foot to meters
+//				f *= 0.3048;
+//			}
+//			return f;
+//		}
+//		return def;
+//	}
 
 
 	
