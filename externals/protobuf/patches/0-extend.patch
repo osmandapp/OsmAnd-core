@@ -1,7 +1,7 @@
-diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.osmand/src/google/protobuf/io/coded_stream.cc
---- upstream.original/src/google/protobuf/io/coded_stream.cc	2011-04-30 20:22:04.000000000 +0300
-+++ upstream.osmand/src/google/protobuf/io/coded_stream.cc	2012-11-21 03:23:18.872394600 +0200
-@@ -160,6 +160,20 @@ void CodedInputStream::PrintTotalBytesLi
+diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.patched/src/google/protobuf/io/coded_stream.cc
+--- upstream.original/src/google/protobuf/io/coded_stream.cc  2011-04-30 20:22:04.000000000 +0300
++++ upstream.patched/src/google/protobuf/io/coded_stream.cc  2012-11-21 03:23:18.872394600 +0200
+@@ -175,6 +175,21 @@ void CodedInputStream::PrintTotalBytesLi
                  "in google/protobuf/io/coded_stream.h.";
  }
  
@@ -12,8 +12,9 @@ diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.osm
 +  } else {
 +    buffer_ = NULL;
 +    buffer_end_ = NULL;
++    buffer_size_after_limit_ = 0;
 +    input_->BackUp(total_bytes_read_ - filePointer);
-+    total_bytes_read_ -= filePointer;
++    total_bytes_read_ = filePointer;
 +    return Refresh();
 +  }
 +}
@@ -22,7 +23,7 @@ diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.osm
  bool CodedInputStream::Skip(int count) {
    if (count < 0) return false;  // security: count is often user-supplied
  
-@@ -401,6 +415,12 @@ uint32 CodedInputStream::ReadTagFallback
+@@ -419,6 +434,12 @@ uint32 CodedInputStream::ReadTagFallback
    }
  }
  
@@ -35,37 +36,39 @@ diff -rupN upstream.original/src/google/protobuf/io/coded_stream.cc upstream.osm
  bool CodedInputStream::ReadVarint64Slow(uint64* value) {
    // Slow path:  This read might cross the end of the buffer, so we
    // need to check and refresh the buffer if and when it does.
-diff -rupN upstream.original/src/google/protobuf/io/coded_stream.h upstream.osmand/src/google/protobuf/io/coded_stream.h
---- upstream.original/src/google/protobuf/io/coded_stream.h	2011-04-30 20:22:04.000000000 +0300
-+++ upstream.osmand/src/google/protobuf/io/coded_stream.h	2012-11-21 03:22:43.935667400 +0200
-@@ -174,6 +174,11 @@ class LIBPROTOBUF_EXPORT CodedInputStrea
-   // Skips a number of bytes.  Returns false if an underlying read error
+diff -rupN upstream.original/src/google/protobuf/io/coded_stream.h upstream.patched/src/google/protobuf/io/coded_stream.h
+--- upstream.original/src/google/protobuf/io/coded_stream.h 2013-02-26 18:56:42.000000000 +0100
++++ upstream.patched/src/google/protobuf/io/coded_stream.h  2016-07-03 17:16:35.000000000 +0200
+@@ -178,6 +178,12 @@ class LIBPROTOBUF_EXPORT CodedInputStrea
    // occurs.
    bool Skip(int count);
-+  
+ 
 +  //OSMAND{
 +  // Seeks in the file
 +  bool Seek(int filePointer);
 +  //}OSMAND
- 
++
++
    // Sets *data to point directly at the unread part of the CodedInputStream's
    // underlying buffer, and *size to the size of that buffer, but does not
-@@ -312,6 +317,11 @@ class LIBPROTOBUF_EXPORT CodedInputStrea
-   // Returns the number of bytes left until the nearest limit on the
+   // advance the stream's current position.  This will always either produce
+@@ -316,6 +322,12 @@ class LIBPROTOBUF_EXPORT CodedInputStrea
    // stack is hit, or -1 if no limits are in place.
-   int BytesUntilLimit();
-+  
+   int BytesUntilLimit() const;
+ 
 +  //OSMAND{
 +  // Returns the number of bytes totally read
 +  int TotalBytesRead();
 +  //}OSMAND
++
++
+   // Returns current position relative to the beginning of the input stream.
+   int CurrentPosition() const;
  
-   // Total Bytes Limit -----------------------------------------------
-   // To prevent malicious users from sending excessively large messages
-diff -rupN upstream.original/src/google/protobuf/wire_format_lite.h upstream.osmand/src/google/protobuf/wire_format_lite.h
---- upstream.original/src/google/protobuf/wire_format_lite.h	2011-04-30 20:22:04.000000000 +0300
-+++ upstream.osmand/src/google/protobuf/wire_format_lite.h	2012-11-21 03:32:23.575953900 +0200
-@@ -92,6 +92,9 @@ class LIBPROTOBUF_EXPORT WireFormatLite
+diff -rupN upstream.original/src/google/protobuf/wire_format_lite.h upstream.patched/src/google/protobuf/wire_format_lite.h
+--- upstream.original/src/google/protobuf/wire_format_lite.h  2011-04-30 20:22:04.000000000 +0300
++++ upstream.patched/src/google/protobuf/wire_format_lite.h  2012-11-21 03:32:23.575953900 +0200
+@@ -90,6 +90,9 @@ class LIBPROTOBUF_EXPORT WireFormatLite
      WIRETYPE_START_GROUP      = 3,
      WIRETYPE_END_GROUP        = 4,
      WIRETYPE_FIXED32          = 5,
