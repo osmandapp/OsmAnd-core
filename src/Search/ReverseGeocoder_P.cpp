@@ -8,8 +8,14 @@
 #include "Utilities.h"
 
 #include <OsmAndCore/Data/ObfRoutingSectionReader.h>
+#include <OsmAndCore/Search/CommonWords.h>
 
 #include <QStringBuilder>
+
+//
+//  OsmAnd-java/src/net/osmand/binary/GeocodingUtilities.java
+//  git revision 5da5d0d41d977acc31473eb7051b4ff0f4f8d118
+//
 
 // Location to test parameters http://www.openstreetmap.org/#map=18/53.896473/27.540071 (hno 44)
 const float THRESHOLD_MULTIPLIER_SKIP_STREETS_AFTER = 5;
@@ -21,29 +27,6 @@ const float DISTANCE_STREET_NAME_PROXIMITY_BY_NAME = 15000;
 
 const float THRESHOLD_MULTIPLIER_SKIP_BUILDINGS_AFTER = 1.5f;
 const float DISTANCE_BUILDING_PROXIMITY = 100;
-
-const QStringList SUFFIXES {
-        QStringLiteral("av."),
-        QStringLiteral("avenue"),
-        QStringLiteral("просп."),
-        QStringLiteral("пер."),
-        QStringLiteral("пр."),
-        QStringLiteral("заул."),
-        QStringLiteral("проспект"),
-        QStringLiteral("переул."),
-        QStringLiteral("бул."),
-        QStringLiteral("бульвар"),
-        QStringLiteral("тракт")
-};
-const QStringList DEFAULT_SUFFIXES {
-        QStringLiteral("str."),
-        QStringLiteral("street"),
-        QStringLiteral("улица"),
-        QStringLiteral("ул."),
-        QStringLiteral("вулица"),
-        QStringLiteral("вул."),
-        QStringLiteral("вулиця")
-};
 
 OsmAnd::ReverseGeocoder_P::ReverseGeocoder_P(
         OsmAnd::ReverseGeocoder* owner_,
@@ -81,28 +64,31 @@ bool OsmAnd::ReverseGeocoder_P::DISTANCE_COMPARATOR(
     return a->getDistance() < b->getDistance();
 }
 
-void addWord(QStringList &ls, QString word)
+void addWord(QStringList &ls, QString word, bool addCommonWords)
 {
     const QString w = word.trimmed().toLower();
-    if (!w.isEmpty() && !DEFAULT_SUFFIXES.contains(w))
+    if (!w.isEmpty()) {
+        if (!addCommonWords && OsmAnd::CommonWords::getCommonGeocoding(word) != -1)
+            return;
+        
         ls << w;
+    }
 }
 
-QStringList splitToWordsOrderedByLength(const QString &streetName)
+QStringList prepareStreetName(const QString &s, bool addCommonWords)
 {
     QStringList ls;
-    QString s = streetName;
     int beginning = 0;
     for (int i = 1; i < s.length(); i++)
     {
         if (s[i] == ' ')
         {
-            addWord(ls, s.mid(beginning, i - beginning));
+            addWord(ls, s.mid(beginning, i - beginning), addCommonWords);
             beginning = i;
         }
         else if (s[i] == '(')
         {
-            addWord(ls, s.mid(beginning, i - beginning));
+            addWord(ls, s.mid(beginning, i - beginning), addCommonWords);
             while (i < s.length())
             {
                 auto c = s[i];
@@ -114,31 +100,24 @@ QStringList splitToWordsOrderedByLength(const QString &streetName)
             
         }
     }
-    if (beginning < s.length())
-    {
+    if (beginning < s.length()) {
         QString lastWord = s.mid(beginning, s.length() - beginning);
-        addWord(ls, lastWord);
+        addWord(ls, lastWord, addCommonWords);
     }
-    std::sort(ls.begin(), ls.end(), [](const QString& a, const QString& b){
+    std::sort(ls.begin(), ls.end(), [](const QString& a, const QString& b) {
         return (a.length() != b.length()) ? (a.length() > b.length()) : (a > b);
     });
     return ls;
 }
 
-QString extractMainWord(const QStringList &streetNamePacked)
+QString extractMainWord(const QStringList &streetNamesPacked)
 {
     QString mainWord = "";
-    for (QString word : streetNamePacked)
-    {
-        if (!SUFFIXES.contains(word) && word.length() > mainWord.length())
-        {
+    for (QString word : streetNamesPacked)
+        if (word.length() > mainWord.length())
             mainWord = word;
-        }
-    }
-    if (mainWord.length() == 0)
-        return streetNamePacked[0];
-    else
-        return mainWord;
+
+    return mainWord;
 }
 
 QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::ReverseGeocoder_P::justifyReverseGeocodingSearch(
@@ -147,10 +126,11 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
 {
     QVector<std::shared_ptr<ResultEntry>> streetList{};
     QVector<std::shared_ptr<const ResultEntry>> result{};
-    QStringList streetNamePacked = splitToWordsOrderedByLength(road->streetName);
-    if (!streetNamePacked.isEmpty())
+    QStringList streetNamesUsed = prepareStreetName(road->streetName, true);
+    QStringList streetNamesPacked = streetNamesUsed.size() == 0 ? prepareStreetName(road->streetName, false) : streetNamesUsed;
+    if (!streetNamesPacked.isEmpty())
     {
-        QString mainWord = extractMainWord(streetNamePacked);
+        QString mainWord = extractMainWord(streetNamesPacked);
         OsmAnd::AddressesByNameSearch::Criteria criteria;
         criteria.name = mainWord;
         criteria.includeStreets = true;
@@ -158,13 +138,13 @@ QVector<std::shared_ptr<const OsmAnd::ReverseGeocoder::ResultEntry>> OsmAnd::Rev
         criteria.bbox31 = Nullable<AreaI>((AreaI)Utilities::boundingBox31FromAreaInMeters(DISTANCE_STREET_NAME_PROXIMITY_BY_NAME, *road->searchPoint31()));
         addressByNameSearch->performSearch(
                     criteria,
-                    [&streetList, streetNamePacked, road](const OsmAnd::ISearch::Criteria& criteria,
+                    [&streetList, streetNamesUsed, streetNamesPacked, road](const OsmAnd::ISearch::Criteria& criteria,
                     const OsmAnd::BaseSearch::IResultEntry& resultEntry) {
             auto const& address = static_cast<const OsmAnd::AddressesByNameSearch::ResultEntry&>(resultEntry).address;
             if (address->addressType == OsmAnd::AddressType::Street)
             {
                 auto const& street = std::static_pointer_cast<const OsmAnd::Street>(address);
-                if (splitToWordsOrderedByLength(street->nativeName) == streetNamePacked)
+                if (prepareStreetName(street->nativeName, true) == streetNamesUsed)
                 {
                     if (road->searchPoint31().isSet())
                     {
