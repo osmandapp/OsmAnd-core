@@ -160,6 +160,57 @@ if (CMAKE_TARGET_OS STREQUAL "ios" OR
 	endif()
 endif()
 
+set(CORE_LEGACY "${OSMAND_ROOT}/core-legacy")
+set(LEGACY_PROTOBUF "${CORE_LEGACY}/externals/protobuf/upstream.patched")
+set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
+
+if (CMAKE_TARGET_OS STREQUAL "ios")
+	file(GLOB legacy_sources
+		"${LEGACY_SRC}/binaryRead.h"
+		"${LEGACY_SRC}/binaryRead.cpp"
+		"${LEGACY_SRC}/binaryRoutePlanner.h"
+		"${LEGACY_SRC}/binaryRoutePlanner.cpp"
+		"${LEGACY_SRC}/commonOsmAndCore.h"
+		"${LEGACY_SRC}/common.cpp"
+		"${LEGACY_SRC}/multipolygons.h"
+		"${LEGACY_SRC}/multipolygons.cpp"
+		"${LEGACY_SRC}/ElapsedTimer.h"
+		"${LEGACY_SRC}/ElapsedTimer.cpp"
+		"${LEGACY_SRC}/generalRouter.h"
+		"${LEGACY_SRC}/generalRouter.cpp"
+		"${LEGACY_SRC}/renderRules.h"
+		"${LEGACY_SRC}/renderRules.cpp"
+		"${CORE_LEGACY}/native/proto/osmand_index.pb.h"
+		"${CORE_LEGACY}/native/proto/osmand_index.pb.cc"
+		"${CORE_LEGACY}/native/proto/OBF.pb.h"
+		"${CORE_LEGACY}/native/proto/OBF.pb.cc"
+
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/extension_set.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/generated_message_util.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/coded_stream.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/zero_copy_stream.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/zero_copy_stream_impl.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/zero_copy_stream_impl_lite.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/message_lite.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/repeated_field.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/common.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/once.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/atomicops_internals_x86_gcc.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/wire_format_lite.cc
+	)
+
+	set(legacy_dirs_public
+		"${CORE_LEGACY}/native/include"
+		"${CORE_LEGACY}/native/src"
+		"${LEGACY_PROTOBUF}/src/"
+	)
+
+	set(target_legacy_public_includes 
+		${legacy_dirs_public}
+	)
+	
+endif()
+
 file(GLOB includes
 	"include/proper/*.h*"
 	"include/*.h*"
@@ -190,6 +241,7 @@ set(merged_sources
 	${sources}
 	${sources_map}
 	${target_specific_sources}
+	${legacy_sources}
 	"protos/OBF.pb.h"
 )
 set(merged_dependencies
@@ -225,6 +277,7 @@ set(merged_include_dirs_private
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
 	${target_specific_public_includes}
+	${target_legacy_public_includes}
 )
 set(merged_link_libs_public
 	skia_static

@@ -14,7 +14,7 @@
 
 namespace OsmAnd
 {
-    namespace gpb = google::obf_protobuf;
+    namespace gpb = google::protobuf;
 
     /**
     Implementation of input stream for Google Protobuf via QFileDevice with memory mapping

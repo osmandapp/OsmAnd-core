@@ -4,7 +4,7 @@
 
 namespace OsmAnd
 {
-    namespace gpb = google::obf_protobuf;
+    namespace gpb = google::protobuf;
 }
 
 OsmAnd::QFileDeviceInputStream::QFileDeviceInputStream(
