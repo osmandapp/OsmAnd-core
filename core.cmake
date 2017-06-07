@@ -53,6 +53,9 @@ add_subdirectory("${OSMAND_ROOT}/core/externals/boost" "core/externals/boost")
 # OsmAnd Core
 add_subdirectory("${OSMAND_ROOT}/core" "core")
 
+# OsmAnd legacy
+add_subdirectory("${OSMAND_ROOT}/core-legacy/native" "core/legacy")
+
 # OsmAnd Core wrappers
 include("${OSMAND_ROOT}/core/wrappers/wrappers.cmake")
 

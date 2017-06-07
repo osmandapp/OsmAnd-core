@@ -166,16 +166,25 @@ set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
 
 if (CMAKE_TARGET_OS STREQUAL "ios")
 	file(GLOB legacy_sources
+		"${LEGACY_SRC}/binaryRead.h"
 		"${LEGACY_SRC}/binaryRead.cpp"
+		"${LEGACY_SRC}/binaryRoutePlanner.h"
 		"${LEGACY_SRC}/binaryRoutePlanner.cpp"
+		"${LEGACY_SRC}/commonOsmAndCore.h"
 		"${LEGACY_SRC}/common.cpp"
-		"${LEGACY_SRC}/ElapsedTimer.cpp"
-		"${LEGACY_SRC}/generalRouter.cpp"
+		"${LEGACY_SRC}/multipolygons.h"
 		"${LEGACY_SRC}/multipolygons.cpp"
+		"${LEGACY_SRC}/ElapsedTimer.h"
+		"${LEGACY_SRC}/ElapsedTimer.cpp"
+		"${LEGACY_SRC}/generalRouter.h"
+		"${LEGACY_SRC}/generalRouter.cpp"
+		"${LEGACY_SRC}/renderRules.h"
 		"${LEGACY_SRC}/renderRules.cpp"
+		"${CORE_LEGACY}/native/proto/osmand_index.pb.h"
+		"${CORE_LEGACY}/native/proto/osmand_index.pb.cc"
+		"${CORE_LEGACY}/native/proto/OBF.pb.h"
 		"${CORE_LEGACY}/native/proto/OBF.pb.cc"
-		# "${CORE_LEGACY}/native/proto/OBF.pb.cc"
-		# "${CORE_LEGACY}/native/proto/osmand_index.pb.cc"
+
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/extension_set.cc \
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/generated_message_util.cc \
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/coded_stream.cc \
