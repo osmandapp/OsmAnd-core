@@ -3,8 +3,8 @@
 #include <vector>
 #include <stack>
 #include <expat.h>
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 #include "renderRules.h"
 #include "Logging.h"
 

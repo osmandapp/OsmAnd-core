@@ -1,7 +1,7 @@
 #ifndef _OSMAND_BINARY_ROUTE_PLANNER_H
 #define _OSMAND_BINARY_ROUTE_PLANNER_H
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 #include "binaryRead.h"
 #include <algorithm>
 #include "Logging.h"

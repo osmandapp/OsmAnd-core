@@ -1,5 +1,5 @@
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 #include <queue>
 #include "binaryRead.h"
 #include "binaryRoutePlanner.h"

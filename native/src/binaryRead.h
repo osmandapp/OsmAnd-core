@@ -15,8 +15,8 @@
 #include <string>
 #include <stdint.h>
 #include "multipolygons.h"
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 
 #if defined(WIN32)
 #define close _close

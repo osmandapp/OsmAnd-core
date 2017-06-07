@@ -1,8 +1,8 @@
 #ifndef _OSMAND_RENDERING_H
 #define _OSMAND_RENDERING_H
 
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 #include "renderRules.h"
 #include <vector>
 #include <SkCanvas.h>

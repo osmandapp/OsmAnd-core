@@ -1,5 +1,5 @@
-#ifndef _OSMAND_COMMON_H
-#define _OSMAND_COMMON_H
+#ifndef _OSMAND_COMMON_CORE_H
+#define _OSMAND_COMMON_CORE_H
 
 #include <string>
 #include <vector>
@@ -611,4 +611,4 @@ int findFirstNumberEndIndex(string value);
 
 
 
-#endif /*_OSMAND_COMMON_H*/
+#endif /*_OSMAND_COMMON_CORE_H*/

@@ -1,5 +1,5 @@
-#ifndef _OSMAND_COMMON_H_
-#define _OSMAND_COMMON_H_
+#ifndef _OSMAND_COMMON_COLLECTIONS_H_
+#define _OSMAND_COMMON_COLLECTIONS_H_
 
 // Unordered containers
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -54,4 +54,4 @@ namespace OsmAnd
     typedef UNORDERED(map)<std::string, std::string> StringToStringMap;
 }
 
-#endif // _OSMAND_COMMON_H_
+#endif // _OSMAND_COMMON_COLLECTIONS_H_

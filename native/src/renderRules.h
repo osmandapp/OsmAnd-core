@@ -5,8 +5,8 @@
 #include <vector>
 #include <map>
 
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 
 
 /**

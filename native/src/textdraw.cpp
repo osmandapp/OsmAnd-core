@@ -11,8 +11,8 @@
 #include "SkUtils.h"
 #include "SkFontMgr.h"
 
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 #include "Logging.h"
 #include "renderRules.h"
 //#include "utf8.cpp"

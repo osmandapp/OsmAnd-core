@@ -6,8 +6,8 @@
 #include <set>
 
 #include "renderRules.h"
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 
 
 /// !!! Fuly copied from MapRenderRepositories.java, should be carefully synchroinized

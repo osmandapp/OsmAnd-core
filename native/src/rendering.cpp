@@ -19,8 +19,8 @@
 #include <SkPaint.h>
 #include <SkPath.h>
 
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 #include "renderRules.h"
 #include "binaryRead.h"
 #include "textdraw.cpp"

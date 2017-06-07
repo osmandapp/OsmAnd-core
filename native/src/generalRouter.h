@@ -3,8 +3,8 @@
 
 
 
-#include "Common.h"
-#include "common2.h"
+#include "CommonCollections.h"
+#include "commonOsmAndCore.h"
 #include <algorithm>
 #include "boost/dynamic_bitset.hpp"
 #include "Logging.h"
