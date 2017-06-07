@@ -160,6 +160,41 @@ if (CMAKE_TARGET_OS STREQUAL "ios" OR
 	endif()
 endif()
 
+if (CMAKE_TARGET_OS STREQUAL "ios")
+	file(GLOB legacy_sources
+		"${OSMAND_ROOT}/core-legacy/native/include/Common.h"
+		"${OSMAND_ROOT}/core-legacy/native/include/Logging.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/binaryRead.cpp"
+		"${OSMAND_ROOT}/core-legacy/native/src/binaryRead.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/binaryRoutePlanner.cpp"
+		"${OSMAND_ROOT}/core-legacy/native/src/binaryRoutePlanner.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/common.cpp"
+		"${OSMAND_ROOT}/core-legacy/native/src/common2.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/ElapsedTimer.cpp"
+		"${OSMAND_ROOT}/core-legacy/native/src/ElapsedTimer.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/generalRouter.cpp"
+		"${OSMAND_ROOT}/core-legacy/native/src/generalRouter.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/Internal.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/multipolygons.cpp"
+		"${OSMAND_ROOT}/core-legacy/native/src/multipolygons.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/renderRules.cpp"
+		"${OSMAND_ROOT}/core-legacy/native/src/renderRules.h"
+		"${OSMAND_ROOT}/core-legacy/native/proto/OBF.pb.h"
+		"${OSMAND_ROOT}/core-legacy/native/src/osmand_index.pb.h"
+	)
+
+	set(legacy_dirs_public
+		"${OSMAND_ROOT}/core-legacy/native/include"
+		"${OSMAND_ROOT}/core-legacy/native/src"
+		"${OSMAND_ROOT}/core-legacy/native/proto"
+	)
+
+	set(target_legacy_public_includes 
+		${legacy_dirs_public}
+	)
+
+endif()
+
 file(GLOB includes
 	"include/proper/*.h*"
 	"include/*.h*"
@@ -190,6 +225,7 @@ set(merged_sources
 	${sources}
 	${sources_map}
 	${target_specific_sources}
+	${legacy_sources}
 	"protos/OBF.pb.h"
 )
 set(merged_dependencies
@@ -225,6 +261,7 @@ set(merged_include_dirs_private
 set(merged_include_dirs_public
 	"${OSMAND_ROOT}/core/include"
 	${target_specific_public_includes}
+	${target_legacy_public_includes}
 )
 set(merged_link_libs_public
 	skia_static
