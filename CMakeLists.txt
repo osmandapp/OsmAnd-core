@@ -160,39 +160,46 @@ if (CMAKE_TARGET_OS STREQUAL "ios" OR
 	endif()
 endif()
 
+set(CORE_LEGACY "${OSMAND_ROOT}/core-legacy")
+set(LEGACY_PROTOBUF "${CORE_LEGACY}/externals/protobuf/upstream.patched")
+set(LEGACY_SRC "${CORE_LEGACY}/native/src/")
+
 if (CMAKE_TARGET_OS STREQUAL "ios")
 	file(GLOB legacy_sources
-		"${OSMAND_ROOT}/core-legacy/native/include/Common.h"
-		"${OSMAND_ROOT}/core-legacy/native/include/Logging.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/binaryRead.cpp"
-		"${OSMAND_ROOT}/core-legacy/native/src/binaryRead.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/binaryRoutePlanner.cpp"
-		"${OSMAND_ROOT}/core-legacy/native/src/binaryRoutePlanner.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/common.cpp"
-		"${OSMAND_ROOT}/core-legacy/native/src/common2.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/ElapsedTimer.cpp"
-		"${OSMAND_ROOT}/core-legacy/native/src/ElapsedTimer.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/generalRouter.cpp"
-		"${OSMAND_ROOT}/core-legacy/native/src/generalRouter.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/Internal.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/multipolygons.cpp"
-		"${OSMAND_ROOT}/core-legacy/native/src/multipolygons.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/renderRules.cpp"
-		"${OSMAND_ROOT}/core-legacy/native/src/renderRules.h"
-		"${OSMAND_ROOT}/core-legacy/native/proto/OBF.pb.h"
-		"${OSMAND_ROOT}/core-legacy/native/src/osmand_index.pb.h"
+		"${LEGACY_SRC}/binaryRead.cpp"
+		"${LEGACY_SRC}/binaryRoutePlanner.cpp"
+		"${LEGACY_SRC}/common.cpp"
+		"${LEGACY_SRC}/ElapsedTimer.cpp"
+		"${LEGACY_SRC}/generalRouter.cpp"
+		"${LEGACY_SRC}/multipolygons.cpp"
+		"${LEGACY_SRC}/renderRules.cpp"
+		"${CORE_LEGACY}/native/proto/OBF.pb.cc"
+		# "${CORE_LEGACY}/native/proto/OBF.pb.cc"
+		# "${CORE_LEGACY}/native/proto/osmand_index.pb.cc"
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/extension_set.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/generated_message_util.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/coded_stream.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/zero_copy_stream.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/zero_copy_stream_impl.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/io/zero_copy_stream_impl_lite.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/message_lite.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/repeated_field.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/common.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/once.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/atomicops_internals_x86_gcc.cc \
+		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/wire_format_lite.cc
 	)
 
 	set(legacy_dirs_public
-		"${OSMAND_ROOT}/core-legacy/native/include"
-		"${OSMAND_ROOT}/core-legacy/native/src"
-		"${OSMAND_ROOT}/core-legacy/native/proto"
+		"${CORE_LEGACY}/native/include"
+		"${CORE_LEGACY}/native/src"
+		"${LEGACY_PROTOBUF}/src/"
 	)
 
 	set(target_legacy_public_includes 
 		${legacy_dirs_public}
 	)
-
+	
 endif()
 
 file(GLOB includes
