@@ -26,6 +26,7 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/repeated_field.cc \
 	$(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/common.cc \
 	$(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/once.cc \
+	$(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/stubs/atomicops_internals_x86_gcc.cc \
 	$(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/wire_format_lite.cc
 
 LOCAL_MODULE := osmand_protobuf
