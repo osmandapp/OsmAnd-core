@@ -26,7 +26,7 @@
 
 namespace OsmAnd
 {
-    namespace gpb = google::obf_protobuf;
+    namespace gpb = google::protobuf;
 
     class ObfInfo;
 
