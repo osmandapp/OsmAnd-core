@@ -21,5 +21,6 @@ add_library(protobuf_osmand STATIC
 	"${UPSTREAM}/src/google/protobuf/repeated_field.cc"
 	"${UPSTREAM}/src/google/protobuf/stubs/common.cc"
 	"${UPSTREAM}/src/google/protobuf/stubs/once.cc"
+	"${UPSTREAM}/src/google/protobuf/stubs/atomicops_internals_x86_gcc.cc"
 	"${UPSTREAM}/src/google/protobuf/wire_format_lite.cc"
 )
