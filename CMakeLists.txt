@@ -180,10 +180,10 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/generalRouter.cpp"
 		"${LEGACY_SRC}/renderRules.h"
 		"${LEGACY_SRC}/renderRules.cpp"
-		"${CORE_LEGACY}/native/proto/osmand_index.pb.h"
-		"${CORE_LEGACY}/native/proto/osmand_index.pb.cc"
-		"${CORE_LEGACY}/native/proto/OBF.pb.h"
-		"${CORE_LEGACY}/native/proto/OBF.pb.cc"
+		"${LEGACY_SRC}/proto/osmand_index.pb.h"
+		"${LEGACY_SRC}/proto/osmand_index.pb.cc"
+		"${LEGACY_SRC}/proto/OBF.pb.h"
+		"${LEGACY_SRC}/proto/OBF.pb.cc"
 
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/extension_set.cc \
 		# $(OSMAND_PROTOBUF_RELATIVE)/src/google/protobuf/generated_message_util.cc \
