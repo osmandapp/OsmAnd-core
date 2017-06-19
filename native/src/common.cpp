@@ -358,7 +358,7 @@ double alignAngleDifference(double diff) {
 std::string to_lowercase( const std::string& in )
 {
     std::string out(in);
-    for (int i = 0; i < in.length(); i++) {
+    for (uint i = 0; i < in.length(); i++) {
         out[i] = std::tolower(in[i]);
     }
     return out;
