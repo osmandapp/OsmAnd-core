@@ -310,9 +310,7 @@ public:
     bool shortestRoute;
     bool allowPrivate;
 
-    GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), allowPrivate(false) {
-	}
-    
+    GeneralRouter();
     GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes = MAP_STR_STR());
     GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params = MAP_STR_STR());
 

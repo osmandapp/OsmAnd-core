@@ -6,7 +6,6 @@
 #include <algorithm>
 #include "Logging.h"
 #include "generalRouter.h"
-#include <cmath>
 
 typedef UNORDERED(map)<string, float> MAP_STR_FLOAT;
 typedef UNORDERED(map)<string, string> MAP_STR_STR;
