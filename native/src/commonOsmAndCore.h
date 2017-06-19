@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include <SkPath.h>
 #include <SkPaint.h>
@@ -186,6 +187,24 @@ private:
 typedef pair<std::string, std::string> tag_value;
 typedef pair<int, int> int_pair;
 typedef vector< pair<int, int> > coordinates;
+
+std::string to_lowercase( const std::string& in )
+{
+    std::string out;
+    std::transform( in.begin(), in.end(), std::back_inserter( out ), ::tolower );
+    return out;
+}
+
+std::vector<string> split_string( const std::string& in, char delimiter)
+{
+    std::vector<std::string> strings;
+    std::istringstream f(in);
+    std::string s;
+    while (std::getline(f, s, delimiter)) {
+        strings.push_back(s);
+    }
+    return strings;
+}
 
 class MapDataObject
 {

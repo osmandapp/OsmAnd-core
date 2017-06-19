@@ -9,12 +9,60 @@ const int RouteAttributeExpression::LESS_EXPRESSION = 1;
 const int RouteAttributeExpression::GREAT_EXPRESSION = 2;
 const int RouteAttributeExpression::EQUAL_EXPRESSION = 3;
 
+const double CAR_SHORTEST_DEFAULT_SPEED = 55/3.6f;
+const char* USE_SHORTEST_WAY = "short_way";
+const char* USE_HEIGHT_OBSTACLES = "height_obstacles";
+const char* ALLOW_PRIVATE = "allow_private";
+
+
+GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attribute) : GeneralRouter() {
+    this->profile = profile;
+    MAP_STR_STR::const_iterator it = attributes.begin();
+    for(;it != attributes.end(); it++) {
+        addAttribute(it->first, it->second);
+    }
+    for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
+        newRouteAttributeContext();
+    }
+}
+
+GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : GeneralRouter() {
+    this->profile = parent.profile;
+    MAP_STR_STR::const_iterator it = parent.attributes.begin();
+    for(;it != parent.attributes.end(); it++) {
+        addAttribute(it->first, it->second);
+    }
+
+    universalRules = parent.universalRules;
+    universalRulesById = parent.universalRulesById;
+    tagRuleMask = parent.tagRuleMask;
+    ruleToValue = parent.ruleToValue;
+    parameters = parent.parameters;
+    
+    for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
+        newRouteAttributeContext();
+    }
+        
+    this->allowPrivate = parseBool(params, ALLOW_PRIVATE, false);
+    this->shortestRoute = parseBool(params, USE_SHORTEST_WAY, false);
+    this->heightObstacles = parseBool(params, USE_HEIGHT_OBSTACLES, false);
+    if (shortestRoute) {
+        maxDefaultSpeed = min(CAR_SHORTEST_DEFAULT_SPEED, this->maxDefaultSpeed);
+    }
+}
 
 float parseFloat(MAP_STR_STR attributes, string key, float def) {
 	if(attributes.find(key) != attributes.end() && attributes[key] != "") {
 		return atof(attributes[key].c_str());
 	}
 	return def;
+}
+
+float parseFloat(string value, float def) {
+    if (value != "") {
+        return atof(value.c_str());
+    }
+    return def;
 }
 
 bool parseBool(MAP_STR_STR attributes, string key, bool def) {
@@ -24,11 +72,25 @@ bool parseBool(MAP_STR_STR attributes, string key, bool def) {
 	return def;
 }
 
+bool parseBool(string value, bool def) {
+    if (value != "") {
+        return value == "true";
+    }
+    return def;
+}
+
 string parseString(MAP_STR_STR attributes, string key, string def) {
 	if (attributes.find(key) != attributes.end() && attributes[key] != "") {
 		return attributes[key];
 	}
 	return def;
+}
+
+string parseString(string value, string def) {
+    if (value != "") {
+        return value;
+    }
+    return def;
 }
 
 dynbitset& increaseSize(dynbitset& t, uint targetSize) {
@@ -182,6 +244,11 @@ void RouteAttributeEvalRule::registerAndTagValueCondition(GeneralRouter* r, stri
 
 void RouteAttributeEvalRule::registerParamConditions(vector<string>& params) {
 	parameters.insert(parameters.end(), params.begin(), params.end());
+}
+
+void RouteAttributeEvalRule::registerAndParamCondition(string param, bool nt) {
+    param = nt ? "-" + param : param;
+    parameters.push_back(param);
 }
 
 void RouteAttributeEvalRule::registerSelectValue(string value, string type) {

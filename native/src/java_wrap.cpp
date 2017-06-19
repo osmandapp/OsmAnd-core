@@ -1087,22 +1087,22 @@ void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, RouteAttributeEvalR
 
 }
 
-void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobject jRouteConfig) {
-	rConfig.planRoadDirection = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_planRoadDirection);
-	rConfig.heurCoefficient = ienv->GetFloatField(jRouteConfig, jfield_RoutingConfiguration_heuristicCoefficient);
-	rConfig.zoomToLoad = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES);
+void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rConfig, jobject jRouteConfig) {
+	rConfig->planRoadDirection = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_planRoadDirection);
+	rConfig->heurCoefficient = ienv->GetFloatField(jRouteConfig, jfield_RoutingConfiguration_heuristicCoefficient);
+	rConfig->zoomToLoad = ienv->GetIntField(jRouteConfig, jfield_RoutingConfiguration_ZOOM_TO_LOAD_TILES);
 	jstring rName = (jstring) ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_routerName);
-	rConfig.routerName = getString(ienv, rName);
+	rConfig->routerName = getString(ienv, rName);
 
 	jobject lrouter = ienv->GetObjectField(jRouteConfig, jfield_RoutingConfiguration_router);
 	jobject router = ienv->NewGlobalRef(lrouter);
-	rConfig.router._restrictionsAware = ienv->GetBooleanField(router, jfield_GeneralRouter_restrictionsAware);
-	rConfig.router.leftTurn = ienv->GetFloatField(router, jfield_GeneralRouter_leftTurn);
-	rConfig.router.roundaboutTurn = ienv->GetFloatField(router, jfield_GeneralRouter_roundaboutTurn);
-	rConfig.router.rightTurn = ienv->GetFloatField(router, jfield_GeneralRouter_rightTurn);
-	rConfig.router.minDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minDefaultSpeed);
-	rConfig.router.maxDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxDefaultSpeed);
-	rConfig.router.heightObstacles = ienv->GetBooleanField(router, jfield_GeneralRouter_heightObstacles);
+	rConfig->router->_restrictionsAware = ienv->GetBooleanField(router, jfield_GeneralRouter_restrictionsAware);
+	rConfig->router->leftTurn = ienv->GetFloatField(router, jfield_GeneralRouter_leftTurn);
+	rConfig->router->roundaboutTurn = ienv->GetFloatField(router, jfield_GeneralRouter_roundaboutTurn);
+	rConfig->router->rightTurn = ienv->GetFloatField(router, jfield_GeneralRouter_rightTurn);
+	rConfig->router->minDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_minDefaultSpeed);
+	rConfig->router->maxDefaultSpeed = ienv->GetFloatField(router, jfield_GeneralRouter_maxDefaultSpeed);
+	rConfig->router->heightObstacles = ienv->GetBooleanField(router, jfield_GeneralRouter_heightObstacles);
 	
 	// Map<String, String> attributes; // Attributes are not sync not used for calculation
 	// Map<String, RoutingParameter> parameters;  // not used for calculation
@@ -1115,7 +1115,7 @@ void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobjec
 	jobjectArray objectAttributes = (jobjectArray) ienv->GetObjectField(router, jfield_GeneralRouter_objectAttributes);
 	for(int i = 0; i < ienv->GetArrayLength(objectAttributes); i++) {
 		// RouteAttributeContext
-		RouteAttributeContext* rctx = rConfig.router.newRouteAttributeContext();
+		RouteAttributeContext* rctx = rConfig->router->newRouteAttributeContext();
 		jobject ctx = ienv->GetObjectArrayElement(objectAttributes, i);
 		jobjectArray ar = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getParamKeys);
 		vector<string> paramKeys = convertJArrayToStrings(ienv, ar);
@@ -1130,7 +1130,7 @@ void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobjec
 		for(int j = 0; j < ienv->GetArrayLength(rules); j++) {
 			RouteAttributeEvalRule* erule = rctx->newEvaluationRule();
 			jobject rule = ienv->GetObjectArrayElement(rules, j);
-			parseRouteAttributeEvalRule(ienv, rule, erule, &rConfig.router);
+			parseRouteAttributeEvalRule(ienv, rule, erule, rConfig->router.get());
 			ienv->DeleteLocalRef(rule);
 		}
 		ienv->DeleteLocalRef(rules);
@@ -1142,7 +1142,7 @@ void parseRouteConfiguration(JNIEnv* ienv, RoutingConfiguration& rConfig, jobjec
 	if(impassableRoadIds != NULL && ienv->GetArrayLength(impassableRoadIds) > 0) {
 		jlong* iRi = (jlong*)ienv->GetLongArrayElements(impassableRoadIds, NULL);		
 		for(int i = 0; i < ienv->GetArrayLength(impassableRoadIds); i++) {
-			rConfig.router.impassableRoadIds.insert(iRi[i]);
+			rConfig->router->impassableRoadIds.insert(iRi[i]);
 		}
 		ienv->ReleaseLongArrayElements(impassableRoadIds, (jlong*)iRi, 0);
 	}
@@ -1159,9 +1159,9 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 		jobject obj, 
 		jintArray  coordinates, jobject jRouteConfig, jfloat initDirection,
 		jobjectArray regions, jobject progress, jobject precalculatedRoute, bool basemap) {
-	RoutingConfiguration config(initDirection);
+	SHARED_PTR<RoutingConfiguration> config = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration(initDirection));
 	parseRouteConfiguration(ienv, config, jRouteConfig);
-	RoutingContext c(&config);
+	RoutingContext c(config);
 	c.progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgressWrapper(ienv, progress));
 	int* data = (int*)ienv->GetIntArrayElements(coordinates, NULL);
 	c.startX = data[0];

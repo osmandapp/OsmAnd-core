@@ -33,8 +33,33 @@ enum class RouteDataObjectAttribute : unsigned int {
 	ROUTING_OBSTACLES = 4, // "obstacle"
 	ONEWAY = 5,// "oneway"
 	PENALTY_TRANSITION = 6, // "penalty_transition"
-	OBSTACLE_SRTM_ALT_SPEED = 7 // "obstacle_srtm_alt_speed"
+	OBSTACLE_SRTM_ALT_SPEED = 7, // "obstacle_srtm_alt_speed"
+    
+    UNDEFINED = 100000,
+    COUNT = 8
 };
+
+static RouteDataObjectAttribute parseRouteDataObjectAttribute(string attr, RouteDataObjectAttribute def) {
+    if ("speed" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::ROAD_SPEED;
+    } else if ("priority" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::ROAD_PRIORITIES;
+    } else if ("access" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::ACCESS;
+    } else if ("obstacle_time" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::OBSTACLES;
+    } else if ("obstacle" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::ROUTING_OBSTACLES;
+    } else if ("oneway" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::ONEWAY;
+    } else if ("penalty_transition" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::PENALTY_TRANSITION;
+    } else if ("obstacle_srtm_alt_speed" == to_lowercase(attr)) {
+        return RouteDataObjectAttribute::OBSTACLE_SRTM_ALT_SPEED;
+    } else {
+        return def;
+    }
+}
 
 enum class GeneralRouterProfile {
 	CAR,
@@ -42,6 +67,17 @@ enum class GeneralRouterProfile {
 	BICYCLE
 };
 
+static GeneralRouterProfile parseGeneralRouterProfile(string profile, GeneralRouterProfile def) {
+    if ("car" == to_lowercase(profile)) {
+        return GeneralRouterProfile::CAR;
+    } else if ("pedestrian" == to_lowercase(profile)) {
+        return GeneralRouterProfile::PEDESTRIAN;
+    } else if ("bicycle" == to_lowercase(profile)) {
+        return GeneralRouterProfile::BICYCLE;
+    } else {
+        return def;
+    }
+}
 	
 enum class RoutingParameterType {
 	NUMERIC,
@@ -51,11 +87,13 @@ enum class RoutingParameterType {
 
 struct RoutingParameter {
 	string id;
+    string group;
 	string name;
 	string description;
 	RoutingParameterType type;
 	vector<double> possibleValues; // Object TODO;
 	vector<string> possibleValueDescriptions;
+    bool defaultBoolean;
 };
 
 struct ParameterContext {
@@ -119,14 +157,31 @@ public:
 	// formated as [param1,-param2]
 	void registerParamConditions(vector<string>& params); 
 
-	void registerSelectValue(string selectValue, string selectType); 
+    void registerAndParamCondition(string param, bool nt);
+
+    void registerSelectValue(string selectValue, string selectType);
 
 	void registerExpression(RouteAttributeExpression& expression) {
 		expressions.push_back(expression);
 	}
-
-	// registerGreatCondition, registerLessCondition
-
+    
+    void registerLessCondition(string value1, string value2, string valueType) {
+        vector<string> vls{ value1, value2 };
+        RouteAttributeExpression exp(vls, RouteAttributeExpression::LESS_EXPRESSION, valueType);
+        registerExpression(exp);
+    }
+    
+    void registerGreatCondition(string value1, string value2, string valueType) {
+        vector<string> vls{ value1, value2 };
+        RouteAttributeExpression exp(vls, RouteAttributeExpression::GREAT_EXPRESSION, valueType);
+        registerExpression(exp);
+    }
+    
+    void registerEqualCondition(string value1, string value2, string valueType) {
+        vector<string> vls{ value1, value2 };
+        RouteAttributeExpression exp(vls, RouteAttributeExpression::EQUAL_EXPRESSION, valueType);
+        registerExpression(exp);
+    }
 };
 
 class RouteAttributeContext {
@@ -156,7 +211,7 @@ public:
 	RouteAttributeEvalRule* newEvaluationRule() {
 		RouteAttributeEvalRule* c = new RouteAttributeEvalRule();
 		rules.push_back(c);
-		return rules[rules.size() - 1];
+		return rules.back();
 	}
 
 	void printRules() {
@@ -165,6 +220,10 @@ public:
 			r->printRule(router);
 		}
 	}
+
+    RouteAttributeEvalRule* getLastRule() {
+        return rules.back();
+    }
 
 private:
 	double evaluate(dynbitset& types) {
@@ -212,17 +271,22 @@ private:
 };
 
 float parseFloat(MAP_STR_STR attributes, string key, float def);
+float parseFloat(string value, float def);
 
 bool parseBool(MAP_STR_STR attributes, string key, bool def);
+bool parseBool(string value, bool def);
 
 string parseString(MAP_STR_STR attributes, string key, string def);
+string parseString(string value, string def);
 
 
 class GeneralRouter {
 	friend class RouteAttributeContext;
 	friend class RouteAttributeEvalRule;
 	friend struct RouteAttributeExpression;
+    
 private:
+    GeneralRouterProfile profile;
 	vector<RouteAttributeContext*> objectAttributes;
 	MAP_STR_STR attributes;
 	UNORDERED(map)<string, RoutingParameter> parameters; 
@@ -243,9 +307,14 @@ public:
 	double minDefaultSpeed ;
 	double maxDefaultSpeed ;
 	UNORDERED(set)<int64_t> impassableRoadIds;
+    bool shortestRoute;
+    bool allowPrivate;
 
-	GeneralRouter() : _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10), maxDefaultSpeed(10) {
+    GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), allowPrivate(false) {
 	}
+    
+    GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes = MAP_STR_STR());
+    GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params = MAP_STR_STR());
 
 	~GeneralRouter() {
 		for (uint k = 0; k < objectAttributes.size(); k++) {
@@ -253,10 +322,45 @@ public:
 		}
 	}
 
+    SHARED_PTR<GeneralRouter> build(const MAP_STR_STR& params = MAP_STR_STR()) {
+        return SHARED_PTR<GeneralRouter>(new GeneralRouter(*this, params));
+    }
+
+    GeneralRouterProfile getProfile() {
+        return profile;
+    }
+    
+    UNORDERED(map)<string, RoutingParameter>& getParameters() {
+        return parameters;
+    }
+
+    void registerBooleanParameter(string id, string group, string name, string description, bool defaultValue) {
+        RoutingParameter rp{};
+        rp.group = group;
+        rp.name = name;
+        rp.description = description;
+        rp.id = id;
+        rp.type = RoutingParameterType::BOOLEAN;
+        rp.defaultBoolean = defaultValue;
+        parameters[rp.id] = rp;
+    }
+    
+    void registerNumericParameter(string id, string name, string description,
+                                  vector<double> vls, vector<string> vlsDescriptions) {
+        RoutingParameter rp{};
+        rp.name = name;
+        rp.description = description;
+        rp.id = id;
+        rp.possibleValues = vls;
+        rp.possibleValueDescriptions = vlsDescriptions;
+        rp.type = RoutingParameterType::NUMERIC;
+        parameters[rp.id] = rp;
+    }
+    
 	RouteAttributeContext* newRouteAttributeContext() {
 		RouteAttributeContext *c = new RouteAttributeContext(this);
 		objectAttributes.push_back(c);
-		return objectAttributes[objectAttributes.size() - 1];
+		return objectAttributes.back();
 	}
 
 	void addAttribute(string k, string v) ;
@@ -264,7 +368,7 @@ public:
 	bool containsAttribute(string attribute);
 	
 	string getAttribute(string attribute);
-	
+    
 	/**
 	 * return if the road is accepted for routing
 	 */
@@ -345,15 +449,18 @@ public:
 			objectAttributes[k]->printRules();
 		}
 	}
-private :
+    
+private:
 
 	double parseValueFromTag(uint id, string type, GeneralRouter* router);
 
 	uint registerTagValueAttribute(const tag_value& r);
 
+public:
 	bool isObjContextAvailable(RouteDataObjectAttribute a) {
 		return objectAttributes.size() > (unsigned int)a;
 	}
+    
 	RouteAttributeContext& getObjContext(RouteDataObjectAttribute a) {
 		return *objectAttributes[(unsigned int)a];
 	}
