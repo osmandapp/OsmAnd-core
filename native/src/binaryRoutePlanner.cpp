@@ -6,7 +6,6 @@
 #include "binaryRead.h"
 #include "binaryRoutePlanner.h"
 #include <functional>
-#include <cmath>
 
 #include "Logging.h"
 
