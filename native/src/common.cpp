@@ -1,7 +1,7 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 
-#include <algorithm>
+//#include <algorithm>
 #include <SkPath.h>
 #include <SkBitmap.h>
 #include <SkImageDecoder.h>
@@ -359,7 +359,7 @@ double alignAngleDifference(double diff) {
 std::string to_lowercase( const std::string& in )
 {
     std::string out;
-    std::transform( in.begin(), in.end(), std::back_inserter( out ), ::tolower );
+    //std::transform( in.begin(), in.end(), std::back_inserter( out ), ::tolower );
     return out;
 }
 
