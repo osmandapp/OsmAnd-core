@@ -1,6 +1,7 @@
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 
+#include <algorithm>
 #include <SkPath.h>
 #include <SkBitmap.h>
 #include <SkImageDecoder.h>
@@ -353,4 +354,22 @@ double alignAngleDifference(double diff) {
 	}
 	return diff;
 
+}
+
+std::string to_lowercase( const std::string& in )
+{
+    std::string out;
+    std::transform( in.begin(), in.end(), std::back_inserter( out ), ::tolower );
+    return out;
+}
+
+std::vector<string> split_string( const std::string& in, char delimiter)
+{
+    std::vector<std::string> strings;
+    std::istringstream f(in);
+    std::string s;
+    while (std::getline(f, s, delimiter)) {
+        strings.push_back(s);
+    }
+    return strings;
 }
