@@ -268,6 +268,13 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p, Deb
 
 	float normalTextLen = 1.5 * textw;
 	bool verySharpAngle = false;
+	auto types = p->object.types;
+	bool detectSharpAngle = false;
+	for(uint i = 0; i < types.size() ; i++) {
+		if(types[i].first == "highway" ){
+			detectSharpAngle = true;
+		}
+	}
 	for (i = 0; i < len; i++) {
 		bool inside = points[i].fX >= 0 && points[i].fX <= rc->getWidth() &&
 				points[i].fY >= 0 && points[i].fY <= rc->getHeight();
@@ -281,7 +288,7 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p, Deb
 				float vvx = (points[i - 1].fX - points[i - 2].fX) / distances[i - 2];
 				float vvy = (points[i - 1].fY - points[i - 2].fY) / distances[i - 2];
 				float scalar = vx * vvx + vy * vvy;
-				if(scalar < 0) {
+				if(scalar < 0 && detectSharpAngle) {
 					verySharpAngle = true;
 				}
 			}
@@ -302,6 +309,7 @@ bool calculatePathToRotate(RenderingContext* rc, SHARED_PTR<TextDrawInfo> p, Deb
 		}
 		prevInside = inside;
 	}
+	
 	if ((textw >= roadLength || verySharpAngle) && !db.debugTextDisplayShortRoadNames) {
 		delete[] points;
 		return false;
