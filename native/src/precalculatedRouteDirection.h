@@ -2,9 +2,9 @@
 #define _OSMAND_PRECALCULATED_ROUTE_DIRECTION_H
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
-#include "routeSegmentResult.h"
 
 struct RoutingContext;
+struct RouteSegmentResult;
 
 struct PrecalculatedRouteDirection {
 	vector<uint32_t> pointsX;
