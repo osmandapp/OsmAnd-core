@@ -13,11 +13,11 @@
 #include "rendering.h"
 #include "binaryRoutePlanner.h"
 #include "routingContext.h"
-#include "routingConfiguration.h"
-#include "routeSegmentResult.h"
-#include "routeSegment.h"
-#include "routeCalculationProgress.h"
-#include "precalculatedRouteDirection.h"
+//#include "routingConfiguration.h"
+//#include "routeSegmentResult.h"
+//#include "routeSegment.h"
+//#include "routeCalculationProgress.h"
+//#include "precalculatedRouteDirection.h"
 #include "Logging.h"
 
 JavaVM* globalJVM = NULL;
