@@ -1,10 +1,9 @@
-#include "CommonCollections.h"
-#include "commonOsmAndCore.h"
 #include <queue>
 #include <iterator>
 #include "binaryRead.h"
 #include "binaryRoutePlanner.h"
 #include "routingContext.h"
+#include "precalculatedRouteDirection.h"
 #include <functional>
 
 #include "Logging.h"
