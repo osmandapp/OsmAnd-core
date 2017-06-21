@@ -2,6 +2,7 @@
 #define _OSMAND_BINARY_ROUTE_PLANNER_H
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
+#include "precalculatedRouteDirection.h"
 
 struct RoutingContext;
 struct RouteSegmentResult;
