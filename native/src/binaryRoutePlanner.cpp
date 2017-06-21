@@ -76,7 +76,7 @@ int64_t calculateRoutePointId(SHARED_PTR<RouteSegment> segm, bool direction) {
 				direction ? segm->getSegmentStart() : segm->getSegmentStart() - 1, direction);
 }
 
-static double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
+inline double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
 	double distToFinalPoint = squareRootDist31(begX, begY,  endX, endY);
 	double result = distToFinalPoint /  ctx->config->router->getMaxDefaultSpeed();
 	if(!ctx->precalcRoute->empty){
