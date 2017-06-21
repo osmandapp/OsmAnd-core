@@ -159,6 +159,14 @@ struct RouteDataObject {
 		return pointsX[0] == pointsX[pointsX.size() - 1] && pointsY[0] == pointsY[pointsY.size() - 1] ; 
 	}
 
+    void insert(int pos, int x31, int y31) {
+        pointsX.insert(pointsX.begin() + pos, x31);
+        pointsY.insert(pointsY.begin() + pos, y31);
+        if (pointTypes.size() > pos) {
+            std::vector<uint32_t> types;
+            pointTypes.insert(pointTypes.begin() + pos, types);
+        }        
+    }
 
  	string getValue(string tag) {
 		uint sz = types.size();

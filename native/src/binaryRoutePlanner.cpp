@@ -2,9 +2,9 @@
 #include "commonOsmAndCore.h"
 #include <queue>
 #include <iterator>
-#include <expat.h>
 #include "binaryRead.h"
 #include "binaryRoutePlanner.h"
+#include "routingContext.h"
 #include <functional>
 
 #include "Logging.h"
@@ -44,19 +44,8 @@ void printRoad(const char* prefix, SHARED_PTR<RouteSegment> segment) {
 		segment->parentRoute.get() != NULL? segment->parentRoute->road->id : 0);	
 }
 
-// static double measuredDist(int x1, int y1, int x2, int y2) {
-// 	return getDistance(get31LatitudeY(y1), get31LongitudeX(x1), get31LatitudeY(y2),
-// 			get31LongitudeX(x2));
-// }
-
-// translate into meters
-static double squareRootDist(int x1, int y1, int x2, int y2) {
-	return squareRootDist31(x1, y1, x2, y2);
-}
-
-
 std::pair<int, int> getProjectionPoint(int px, int py, int xA, int yA, int xB, int yB) {
-	double mDist = squareRootDist(xA,yA, xB,yB);
+	double mDist = squareRootDist31(xA,yA, xB,yB);
 	int prx = xA;
 	int pry = yA;
 	double projection = calculateProjection31TileMetric(xA, yA, xB, yB, px, py);
@@ -89,99 +78,11 @@ int64_t calculateRoutePointId(SHARED_PTR<RouteSegment> segm, bool direction) {
 				direction ? segm->getSegmentStart() : segm->getSegmentStart() - 1, direction);
 }
 
-float PrecalculatedRouteDirection::getDeviationDistance(int x31, int y31) {
-	int ind = getIndex(x31, y31);
-	if(ind == -1) {
-		return 0;
-	}
-	return getDeviationDistance(x31, y31, ind);
-}
-
-float PrecalculatedRouteDirection::getDeviationDistance(int x31, int y31, int ind) {
-	float distToPoint = 0; //squareRootDist(x31, y31, pointsX.get(ind), pointsY.get(ind));
-	if(ind < (int)pointsX.size() - 1 && ind != 0) {
-		double nx = squareRootDist(x31, y31, pointsX[ind + 1], pointsY[ind + 1]);
-		double pr = squareRootDist(x31, y31, pointsX[ind - 1], pointsY[ind - 1]);
-		int nind =  nx > pr ? ind -1 : ind +1;
-		std::pair<int, int> proj = getProjectionPoint(x31, y31, pointsX[ind], pointsY[ind], pointsX[nind], pointsX[nind]);
-		distToPoint = (float) squareRootDist(x31, y31, (int)proj.first, (int)proj.second) ;
-	}
-	return distToPoint;
-}
-
-int PrecalculatedRouteDirection::SHIFT = (1 << (31 - 17));
-int PrecalculatedRouteDirection::SHIFTS[] = {1 << (31 - 15), 1 << (31 - 13), 1 << (31 - 12), 
-		1 << (31 - 11), 1 << (31 - 7)};
-int PrecalculatedRouteDirection::getIndex(int x31, int y31) {
-	int ind = -1;
-	vector<int> cachedS;
-	SkRect rct = SkRect::MakeLTRB(x31 - SHIFT, y31 - SHIFT, x31 + SHIFT, y31 + SHIFT);
-	quadTree.query_in_box(rct, cachedS);
-	if (cachedS.size() == 0) {
-		for (uint k = 0; k < 5 /* SHIFTS.size()*/; k++) {
-			rct = SkRect::MakeLTRB(x31 - SHIFTS[k], y31 - SHIFTS[k], x31 + SHIFTS[k], y31 + SHIFTS[k]);
-			quadTree.query_in_box(rct, cachedS);
-			if (cachedS.size() != 0) {
-				break;
-			}
-		}
-		if (cachedS.size() == 0) {
-			return -1;
-		}
-	}
-	double minDist = 0;
-	for (uint i = 0; i < cachedS.size(); i++) {
-		int n = cachedS[i];
-		double ds = squareRootDist(x31, y31, pointsX[n], pointsY[n]);
-		if (ds < minDist || i == 0) {
-			ind = n;
-			minDist = ds;
-		}
-	}
-	return ind;
-}
-
-float PrecalculatedRouteDirection::timeEstimate(int sx31, int sy31, int ex31, int ey31) {
-	uint64_t l1 = calc(sx31, sy31);
-	uint64_t l2 = calc(ex31, ey31);
-	int x31 = sx31;
-	int y31 = sy31;
-	bool start = false;
-	if(l1 == startPoint || l1 == endPoint) {
-		start = l1 == startPoint;
-		x31 = ex31;
-		y31 = ey31;
-	} else if(l2 == startPoint || l2 == endPoint) {
-		start = l2 == startPoint;
-		x31 = sx31;
-		y31 = sy31;
-	} else {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "! Alert unsupported time estimate ");
-		return -2;
-	}
-	int ind = getIndex(x31, y31);
-	if(ind == -1) {
-		return -1;
-	}
-	if((ind == 0 && start) || 
-			(ind == (int)pointsX.size() - 1 && !start)) {
-		return -1;
-	}
-	float distToPoint = getDeviationDistance(x31, y31, ind);
-	float deviationPenalty = distToPoint / minSpeed;
-    float finishTime = (start? startFinishTime : endFinishTime);
-	if(start) {
-		return (times[0] - times[ind]) +  deviationPenalty + finishTime;
-	} else {
-		return times[ind] + deviationPenalty + finishTime;
-	}
-}
-
 static double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
-	double distToFinalPoint = squareRootDist(begX, begY,  endX, endY);
+	double distToFinalPoint = squareRootDist31(begX, begY,  endX, endY);
 	double result = distToFinalPoint /  ctx->config->router->getMaxDefaultSpeed();
-	if(!ctx->precalcRoute.empty){
-		float te = ctx->precalcRoute.timeEstimate(begX, begY,  endX, endY);
+	if(!ctx->precalcRoute->empty){
+		float te = ctx->precalcRoute->timeEstimate(begX, begY,  endX, endY);
 		if(te > 0) return te;
 	}
 	return result;
@@ -610,7 +511,7 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		}
 			
 		// 2. calculate point and try to load neighbor ways if they are not loaded
-		segmentDist  += squareRootDist(x, y,  prevx, prevy);
+		segmentDist  += squareRootDist31(x, y,  prevx, prevy);
 			
 		// 2.1 calculate possible obstacle plus time
 		double obstacle = ctx->config->router->defineRoutingObstacle(road, segmentPoint);
@@ -633,7 +534,7 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 			continue;
 		}
 		// correct way of handling precalculatedRouteDirection 
-		if(!ctx->precalcRoute.empty) {
+		if(!ctx->precalcRoute->empty) {
 //				long nt = System.nanoTime();
 //				float devDistance = ctx.precalculatedRouteDirection.getDeviationDistance(x, y);
 //				// 1. linear method
@@ -646,9 +547,9 @@ void processRouteSegment(RoutingContext* ctx, bool reverseWaySearch, SEGMENTS_QU
 		// 3. get intersected ways
 		SHARED_PTR<RouteSegment> roadNext = ctx->loadRouteSegment(x, y); // ctx.config->memoryLimitation - ctx.memoryOverhead
 		float distStartObstacles = segment->distanceFromStart + calculateTimeWithObstacles(ctx, road, segmentDist , obstaclesTime);
-		if(!ctx->precalcRoute.empty && ctx->precalcRoute.followNext) {
+		if(!ctx->precalcRoute->empty && ctx->precalcRoute->followNext) {
 			//distStartObstacles = 0;
-			distStartObstacles = ctx->precalcRoute.getDeviationDistance(x, y) / ctx->precalcRoute.maxSpeed;
+			distStartObstacles = ctx->precalcRoute->getDeviationDistance(x, y) / ctx->precalcRoute->maxSpeed;
 		}
 		// We don't check if there are outgoing connections
 		bool processFurther = true;
@@ -1044,7 +945,7 @@ vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSid
 		}
 		return vector<RouteSegmentResult>();
 	} else {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Start point was found %lld [Native]", start->road->id);
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Start point was found %lld [Native]", start->road->id);
 	}
 	SHARED_PTR<RouteSegmentPoint> end = findRouteSegment(ctx->targetX, ctx->targetY, ctx);
 	if(end.get() == NULL) {
@@ -1054,7 +955,7 @@ vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSid
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "End point was not found [Native]");
 		return vector<RouteSegmentResult>();
 	} else {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "End point was found %lld [Native]", end->road->id);
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "End point was found %lld [Native]", end->road->id);
 	}
 	SHARED_PTR<RouteSegment> finalSegment = searchRouteInternal(ctx, start, end, leftSideNavigation);
 	vector<RouteSegmentResult> res = convertFinalSegmentToResults(ctx, finalSegment);
@@ -1062,203 +963,4 @@ vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSid
 	return res;
 }
 
-bool compareRoutingSubregionTile(SHARED_PTR<RoutingSubregionTile> o1, SHARED_PTR<RoutingSubregionTile> o2) {
-	int v1 = (o1->access + 1) * pow((float)10, o1->getUnloadCount() -1);
-	int v2 = (o2->access + 1) * pow((float)10, o2->getUnloadCount() -1);
-	return v1 < v2;
-}
-
-class RoutingRulesHandler {
-private:
-    SHARED_PTR<RoutingConfigurationBuilder> config;
-    SHARED_PTR<GeneralRouter> currentRouter;
-    string preType;
-    vector<RoutingRule*> rulesStack;
-    RouteDataObjectAttribute currentAttribute;
-
-public:
-    RoutingRulesHandler(SHARED_PTR<RoutingConfigurationBuilder> routingConfig) : config(routingConfig) {
-    }
-    
-private:
-    static UNORDERED(map)<string, string>& parseAttributes(const char **atts, UNORDERED(map)<string, string>& m) {
-        while (*atts != NULL) {
-            m[string(atts[0])] = string(atts[1]);
-            atts += 2;
-        }
-        return m;
-    }
-    
-    static string attrValue(UNORDERED(map)<string, string>& m, const string& key, string def = "") {
-        if (m.find(key) != m.end() && m[key] != "") {
-            return m[key];
-        }
-        return def;
-    }
-    
-    static SHARED_PTR<GeneralRouter> parseRoutingProfile(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<RoutingConfigurationBuilder> config) {
-        string currentSelectedRouter = attrValue(attrsMap, "name");
-        UNORDERED(map)<string, string> attrs;
-        attrs.insert(attrsMap.begin(), attrsMap.end());
-        GeneralRouterProfile c = parseGeneralRouterProfile(attrValue(attrsMap, "baseProfile"), GeneralRouterProfile::CAR);
-        SHARED_PTR<GeneralRouter> currentRouter = SHARED_PTR<GeneralRouter>(new GeneralRouter(c, attrs));
-        config->addRouter(currentSelectedRouter, currentRouter);
-        return currentRouter;
-    }
-    
-    static void parseAttribute(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<RoutingConfigurationBuilder> config, SHARED_PTR<GeneralRouter> currentRouter) {
-        if (currentRouter != nullptr) {
-            currentRouter->addAttribute(attrValue(attrsMap, "name"), attrValue(attrsMap, "value"));
-        } else {
-            config->addAttribute(attrValue(attrsMap, "name"), attrValue(attrsMap, "value"));
-        }
-    }
-    
-    static void parseRoutingParameter(UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<GeneralRouter> currentRouter) {
-        string description = attrValue(attrsMap, "description");
-        string group = attrValue(attrsMap, "group");
-        string name = attrValue(attrsMap, "name");
-        string id = attrValue(attrsMap, "id");
-        string type = attrValue(attrsMap, "type");
-        bool defaultValue = parseBool(attrValue(attrsMap, "default"), false);
-        if ("boolean" == to_lowercase(type)) {
-            currentRouter->registerBooleanParameter(id, group, name, description, defaultValue);
-        } else if ("numeric" == to_lowercase(type)) {
-            string values = attrValue(attrsMap, "values");
-            string valueDescriptions = attrValue(attrsMap, "valueDescriptions");
-            vector<string> strValues = split_string(values, ',');
-            vector<double> vls;
-            for (int i = 0; i < strValues.size(); i++) {
-                vls.push_back(parseFloat(strValues[i], false));
-            }
-            currentRouter->registerNumericParameter(id, name, description, vls, split_string(valueDescriptions, ','));
-        }
-    }
-    
-    static bool checkTag(const string& pname) {
-        return "select" == pname || "if" == pname || "ifnot" == pname
-        || "gt" == pname || "le" == pname || "eq" == pname;
-    }
-    
-    static void addSubclause(RoutingRule* rr, RouteAttributeContext& ctx, SHARED_PTR<GeneralRouter> currentRouter) {
-        bool no = "ifnot" == rr->tagName;
-        if (rr->param != "") {
-            ctx.getLastRule()->registerAndParamCondition(rr->param, no);
-        }
-        if (rr->t != "") {
-            ctx.getLastRule()->registerAndTagValueCondition(currentRouter.get(), rr->t, rr->v, no);
-        }
-        if (rr->tagName == "gt") {
-            ctx.getLastRule()->registerGreatCondition(rr->value1, rr->value2, rr->type);
-        } else if (rr->tagName == "le") {
-            ctx.getLastRule()->registerLessCondition(rr->value1, rr->value2, rr->type);
-        } else if (rr->tagName == "eq") {
-            ctx.getLastRule()->registerEqualCondition(rr->value1, rr->value2, rr->type);
-        }
-    }
-    
-    static void parseRoutingRule(const string& pname, UNORDERED(map)<string, string>& attrsMap, SHARED_PTR<GeneralRouter> currentRouter, RouteDataObjectAttribute& attr, string parentType, vector<RoutingRule*>& stack) {
-        if (checkTag(pname)) {
-            RoutingRule* rr = new RoutingRule();
-            rr->tagName = pname;
-            rr->t = attrValue(attrsMap, "t");
-            rr->v = attrValue(attrsMap, "v");
-            rr->param = attrValue(attrsMap, "param");
-            rr->value1 = attrValue(attrsMap, "value1");
-            rr->value2 = attrValue(attrsMap, "value2");
-            rr->type = attrValue(attrsMap, "type");
-            if ((rr->type.length() == 0) && parentType.length() > 0) {
-                rr->type = parentType;
-            }
-            
-            RouteAttributeContext& ctx = currentRouter->getObjContext(attr);
-            if ("select" == rr->tagName) {
-                string val = attrValue(attrsMap, "value");
-                string type = rr->type;
-                RouteAttributeEvalRule* rule = ctx.newEvaluationRule();
-                rule->registerSelectValue(val, type);
-                addSubclause(rr, ctx, currentRouter);
-                for (int i = 0; i < stack.size(); i++) {
-                    addSubclause(stack[i], ctx, currentRouter);
-                }
-            } else if (stack.size() > 0 && stack.back()->tagName == "select") {
-                addSubclause(rr, ctx, currentRouter);
-            }
-            stack.push_back(rr);
-        }
-    }
-    
-public:
-    static void startElementHandler(void *data, const char *tag, const char **atts) {
-        RoutingRulesHandler* handler = (RoutingRulesHandler*) data;
-        string name(tag);
-        UNORDERED(map)<string, string> attrsMap;
-        parseAttributes(atts, attrsMap);
-
-        if ("osmand_routing_config" == name) {
-            handler->config->defaultRouter = attrValue(attrsMap, "defaultProfile", "");
-        } else if ("routingProfile" == name) {
-            handler->currentRouter = parseRoutingProfile(attrsMap, handler->config);
-        } else if ("attribute" == name) {
-            parseAttribute(attrsMap, handler->config, handler->currentRouter);
-        } else if ("parameter" == name) {
-            parseRoutingParameter(attrsMap, handler->currentRouter);
-        } else if ("point" == name || "way" == name) {
-            string attribute = attrValue(attrsMap, "attribute");
-            handler->currentAttribute = parseRouteDataObjectAttribute(attribute, RouteDataObjectAttribute::UNDEFINED);
-            handler->preType = attrValue(attrsMap, "type");
-        } else {
-            parseRoutingRule(name, attrsMap, handler->currentRouter, handler->currentAttribute, handler->preType, handler->rulesStack);
-        }
-        
-    }
-    
-    static void endElementHandler(void *data, const char *tag) {
-        RoutingRulesHandler* handler = (RoutingRulesHandler*) data;
-        string pname(tag);
-        if (checkTag(pname)) {
-            RoutingRule* rr = handler->rulesStack.back();
-            handler->rulesStack.pop_back();
-            delete rr;
-        }
-    }
-};
-
-SHARED_PTR<RoutingConfigurationBuilder> parseRoutingConfigurationFromXml(const char* filename) {
-
-    XML_Parser parser = XML_ParserCreate(NULL);
-    SHARED_PTR<RoutingConfigurationBuilder> config = SHARED_PTR<RoutingConfigurationBuilder>(new RoutingConfigurationBuilder());
-    RoutingRulesHandler* handler = new RoutingRulesHandler(config);
-    XML_SetUserData(parser, handler);
-    XML_SetElementHandler(parser, RoutingRulesHandler::startElementHandler, RoutingRulesHandler::endElementHandler);
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "File can not be open %s", filename);
-        XML_ParserFree(parser);
-        delete handler;
-        return nullptr;
-    }
-    char buffer[512];
-    bool done = false;
-    while (!done) {
-        fgets(buffer, sizeof(buffer), file);
-        int len = (int)strlen(buffer);
-        if (feof(file) != 0) {
-            done = true;
-        }
-        if (XML_Parse(parser, buffer, len, done) == XML_STATUS_ERROR) {
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Routing xml parsing error: %s at line %d\n",
-                              XML_ErrorString(XML_GetErrorCode(parser)), (int)XML_GetCurrentLineNumber(parser));
-            fclose(file);
-            XML_ParserFree(parser);
-            delete handler;
-            return nullptr;
-        }
-    }
-    XML_ParserFree(parser);
-    delete handler;
-    fclose(file);
-    
-    return config;
-}
 

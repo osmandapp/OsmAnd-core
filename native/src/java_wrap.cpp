@@ -12,6 +12,12 @@
 #include "binaryRead.h"
 #include "rendering.h"
 #include "binaryRoutePlanner.h"
+#include "routingContext.h"
+#include "routingConfiguration.h"
+#include "routeSegmentResult.h"
+#include "routeSegment.h"
+#include "routeCalculationProgress.h"
+#include "precalculatedRouteDirection.h"
 #include "Logging.h"
 
 JavaVM* globalJVM = NULL;
@@ -983,7 +989,7 @@ public:
 
 void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext& ctx,  jobject precalculatedRoute) {
 	if(precalculatedRoute != NULL) {
-		ctx.precalcRoute.empty = false;
+		ctx.precalcRoute->empty = false;
 		jintArray pointsY = (jintArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsY);
 		jintArray pointsX = (jintArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_pointsX);
 		jfloatArray tms = (jfloatArray) ienv->GetObjectField(precalculatedRoute, jfield_PrecalculatedRouteDirection_tms);
@@ -993,20 +999,20 @@ void parsePrecalculatedRoute(JNIEnv* ienv, RoutingContext& ctx,  jobject precalc
 		for(int k = 0; k < ienv->GetArrayLength(pointsY); k++) {
 			int y = pointsYF[k];
 			int x = pointsXF[k];
-			int ind = ctx.precalcRoute.pointsX.size();
-			ctx.precalcRoute.pointsY.push_back(y);
-			ctx.precalcRoute.pointsX.push_back(x);
-			ctx.precalcRoute.times.push_back(tmsF[k]);
+			int ind = ctx.precalcRoute->pointsX.size();
+			ctx.precalcRoute->pointsY.push_back(y);
+			ctx.precalcRoute->pointsX.push_back(x);
+			ctx.precalcRoute->times.push_back(tmsF[k]);
 			SkRect r = SkRect::MakeLTRB(x, y, x, y);
-			ctx.precalcRoute.quadTree.insert(ind, r);
+			ctx.precalcRoute->quadTree.insert(ind, r);
 		}
-		ctx.precalcRoute.startPoint = ctx.precalcRoute.calc(ctx.startX, ctx.startY);
-		ctx.precalcRoute.endPoint = ctx.precalcRoute.calc(ctx.targetX, ctx.targetY);
-		ctx.precalcRoute.minSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_minSpeed);
-		ctx.precalcRoute.maxSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_maxSpeed);
-		ctx.precalcRoute.followNext = ienv->GetBooleanField(precalculatedRoute, jfield_PrecalculatedRouteDirection_followNext);
-		ctx.precalcRoute.startFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_startFinishTime);
-		ctx.precalcRoute.endFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_endFinishTime);
+		ctx.precalcRoute->startPoint = ctx.precalcRoute->calc(ctx.startX, ctx.startY);
+		ctx.precalcRoute->endPoint = ctx.precalcRoute->calc(ctx.targetX, ctx.targetY);
+		ctx.precalcRoute->minSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_minSpeed);
+		ctx.precalcRoute->maxSpeed = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_maxSpeed);
+		ctx.precalcRoute->followNext = ienv->GetBooleanField(precalculatedRoute, jfield_PrecalculatedRouteDirection_followNext);
+		ctx.precalcRoute->startFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_startFinishTime);
+		ctx.precalcRoute->endFinishTime = ienv->GetFloatField(precalculatedRoute, jfield_PrecalculatedRouteDirection_endFinishTime);
 		ienv->ReleaseIntArrayElements(pointsY, pointsYF, 0);
 		ienv->ReleaseIntArrayElements(pointsX, pointsXF, 0);
 		ienv->ReleaseFloatArrayElements(tms, tmsF, 0);

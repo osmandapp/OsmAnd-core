@@ -149,7 +149,7 @@ double getPowZoom(float zoom){
 }
 
 double measuredDist31(int x1, int y1, int x2, int y2) {
-  return getDistance(get31LatitudeY(y1),get31LongitudeX(x1), get31LatitudeY(y2), get31LongitudeX(x2));
+  return getDistance(get31LatitudeY(y1), get31LongitudeX(x1), get31LatitudeY(y2), get31LongitudeX(x2));
 }
 
 double dabs(double d) {

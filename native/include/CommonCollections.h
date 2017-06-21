@@ -47,6 +47,9 @@
 
 #include <string>
 
+typedef UNORDERED(map)<std::string, float> MAP_STR_FLOAT;
+typedef UNORDERED(map)<std::string, std::string> MAP_STR_STR;
+
 typedef unsigned int uint;
 namespace OsmAnd
 {

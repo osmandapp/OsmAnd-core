@@ -2,6 +2,7 @@
 #define _OSMAND_GENERAL_ROUTER_CPP
 #include "generalRouter.h"
 #include "binaryRoutePlanner.h"
+#include "routeSegment.h"
 #include <sstream>
 #include <cmath>
 
