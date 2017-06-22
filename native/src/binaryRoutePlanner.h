@@ -2,15 +2,12 @@
 #define _OSMAND_BINARY_ROUTE_PLANNER_H
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
-#include "precalculatedRouteDirection.h"
 
 struct RoutingContext;
 struct RouteSegmentResult;
 struct RouteSegmentPoint;
 
 //typedef std::pair<int, std::pair<string, string> > ROUTE_TRIPLE;
-
-std::pair<int, int> getProjectionPoint(int px, int py, int xA, int yA, int xB, int yB);
 
 SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* ctx);
 

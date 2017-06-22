@@ -610,6 +610,8 @@ double alignAngleDifference(double diff);
 
 int findFirstNumberEndIndex(string value); 
 
+std::pair<int, int> getProjectionPoint(int px, int py, int xA, int yA, int xB, int yB);
+
 std::string to_lowercase( const std::string& in );
 std::vector<string> split_string( const std::string& in, char delimiter);
 

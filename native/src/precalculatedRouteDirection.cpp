@@ -2,7 +2,6 @@
 #define _OSMAND_PRECALCULATED_ROUTE_DIRECTION_CPP
 #include "precalculatedRouteDirection.h"
 #include "routingContext.h"
-#include "binaryRoutePlanner.h"
 
 PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<RouteSegmentResult>& ls, float maxSpeed) {
     this->maxSpeed = maxSpeed;

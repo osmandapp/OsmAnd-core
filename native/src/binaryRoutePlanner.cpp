@@ -42,25 +42,6 @@ void printRoad(const char* prefix, SHARED_PTR<RouteSegment> segment) {
 		segment->parentRoute.get() != NULL? segment->parentRoute->road->id : 0);	
 }
 
-std::pair<int, int> getProjectionPoint(int px, int py, int xA, int yA, int xB, int yB) {
-	double mDist = squareRootDist31(xA,yA, xB,yB);
-	int prx = xA;
-	int pry = yA;
-	double projection = calculateProjection31TileMetric(xA, yA, xB, yB, px, py);
-	if (projection < 0) {
-		prx = xA;
-		pry = yA;
-	} else if (projection >= mDist * mDist) {
-		prx = xB;
-		pry = yB;
-	} else {
-		double c = projection / (mDist * mDist);
-		prx = (int) ((double)xA + ((double)xB - xA) * c);
-		pry = (int) ((double)yA + ((double)yB - yA) * c);
-	}
-	return std::pair<int, int> (prx, pry);
-}
-
 int64_t calculateRoutePointId(SHARED_PTR<RouteDataObject> road, int intervalId, bool positive) {
 	return (road->id << ROUTE_POINTS) + (intervalId << 1) + (positive ? 1 : 0);
 }
@@ -76,7 +57,7 @@ int64_t calculateRoutePointId(SHARED_PTR<RouteSegment> segm, bool direction) {
 				direction ? segm->getSegmentStart() : segm->getSegmentStart() - 1, direction);
 }
 
-inline double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
+static double h(RoutingContext* ctx, int begX, int begY, int endX, int endY) {
 	double distToFinalPoint = squareRootDist31(begX, begY,  endX, endY);
 	double result = distToFinalPoint /  ctx->config->router->getMaxDefaultSpeed();
 	if(!ctx->precalcRoute->empty){
