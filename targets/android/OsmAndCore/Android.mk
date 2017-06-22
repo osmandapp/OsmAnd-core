@@ -38,8 +38,11 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_CORE_RELATIVE)/src/multipolygons.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/renderRules.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/rendering.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/precalculatedRouteDirection.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/routingConfiguration.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/routingContext.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/binaryRead.cpp \
-        $(OSMAND_CORE_RELATIVE)/src/generalRouter.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/generalRouter.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/binaryRoutePlanner.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/proto/osmand_index.pb.cc \
 	$(OSMAND_CORE_RELATIVE)/src/java_wrap.cpp
