@@ -179,6 +179,8 @@ if (CMAKE_TARGET_OS STREQUAL "ios")
 		"${LEGACY_SRC}/generalRouter.h"
 		"${LEGACY_SRC}/generalRouter.cpp"
 
+        "${LEGACY_SRC}/turnType.h"
+        "${LEGACY_SRC}/turnType.cpp"
         "${LEGACY_SRC}/routeSegment.h"
 		"${LEGACY_SRC}/routeCalculationProgress.h"
 		"${LEGACY_SRC}/routeResultPreparation.h"
