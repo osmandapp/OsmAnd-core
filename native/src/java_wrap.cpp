@@ -927,7 +927,7 @@ jobject convertRouteSegmentResultToJava(JNIEnv* ienv, RouteSegmentResult& r, UNO
 	}
 	jobject robj = convertRouteDataObjectToJava(ienv, rdo, reg);
 	jobject resobj = ienv->NewObject(jclass_RouteSegmentResult, jmethod_RouteSegmentResult_ctor, robj,
-			r.startPointIndex, r.endPointIndex);
+			r.getStartPointIndex(), r.getEndPointIndex());
 	ienv->SetFloatField(resobj, jfield_RouteSegmentResult_routingTime, (jfloat)r.routingTime);
 	ienv->SetObjectField(resobj, jfield_RouteSegmentResult_preAttachedRoutes, ar);
 	if(reg != NULL) {
