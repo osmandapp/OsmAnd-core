@@ -93,8 +93,8 @@ void PrecalculatedRouteDirection::init(vector<RouteSegmentResult>& ls) {
     vector<int> y31;
     vector<float> speedSegments;
     for (RouteSegmentResult s : ls) {
-        bool plus = s.startPointIndex < s.endPointIndex;
-        int i = s.startPointIndex;
+        bool plus = s.getStartPointIndex() < s.getEndPointIndex();
+        int i = s.getStartPointIndex();
         SHARED_PTR<RouteDataObject> obj = s.object;
         float routeSpd = (s.routingTime == 0 || s.distance == 0) ? maxSpeed : (s.distance / s.routingTime);
         while (true) {
@@ -102,7 +102,7 @@ void PrecalculatedRouteDirection::init(vector<RouteSegmentResult>& ls) {
             x31.push_back(obj->pointsX[i]);
             y31.push_back(obj->pointsY[i]);
             speedSegments.push_back(routeSpd);
-            if (i == s.endPointIndex) {
+            if (i == s.getEndPointIndex()) {
                 break;
             }
         }

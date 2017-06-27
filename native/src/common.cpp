@@ -246,6 +246,15 @@ double squareRootDist31(int x1, int y1, int x2, int y2) {
 	return sqrt(dx * dx + dy * dy);
 }
 
+double degreesDiff(const double a1, const double a2)
+{
+    auto diff = a1 - a2;
+    while (diff > 180.0)
+        diff -= 360.0;
+    while (diff <= -180.0)
+        diff += 360.0;
+    return diff;
+}
 
 double checkLongitude(double longitude) {
 	while (longitude < -180 || longitude > 180) {
@@ -361,6 +370,22 @@ int findFirstNumberEndIndex(string value) {
 	}
 }
 
+double parseSpeed(string v, double def) {
+    if(v == "none") {
+        return 40;// RouteDataObject::NONE_MAX_SPEED;
+    } else {
+        int i = findFirstNumberEndIndex(v);
+        if (i > 0) {
+            double f = atof(v.substr(0, i).c_str());
+            f /= 3.6; // km/h -> m/s
+            if (v.find("mph") != string::npos) {
+                f *= 1.6;
+            }
+            return f;
+        }
+    }
+    return def;
+}
 
 double alignAngleDifference(double diff) {
 	while (diff > M_PI) {
@@ -373,7 +398,7 @@ double alignAngleDifference(double diff) {
 
 }
 
-std::string to_lowercase( const std::string& in )
+std::string to_lowercase(const std::string& in)
 {
     std::string out(in);
     for (uint i = 0; i < in.length(); i++) {
@@ -382,13 +407,116 @@ std::string to_lowercase( const std::string& in )
     return out;
 }
 
-std::vector<string> split_string( const std::string& in, char delimiter)
+std::vector<std::string> split_string( const std::string& str, const std::string& delimiters)
 {
-    std::vector<std::string> strings;
-    std::istringstream f(in);
-    std::string s;
-    while (std::getline(f, s, delimiter)) {
-        strings.push_back(s);
+    std::vector<std::string> tokens;
+    std::string::size_type pos, lastPos = 0, length = str.length();
+    
+    while (lastPos < length + 1) {
+        pos = str.find_first_of(delimiters, lastPos);
+        if (pos == std::string::npos) {
+            pos = length;
+        }
+        if (pos != lastPos)
+            tokens.push_back(str.substr(lastPos, pos - lastPos));
+        
+        lastPos = pos + 1;
     }
-    return strings;
+    return tokens;
+}
+
+bool endsWith(const std::string& str, const std::string& suffix){
+    return str.size() >= suffix.size() && !str.compare(str.size()-suffix.size(), suffix.size(), suffix);
+}
+
+bool startsWith(const std::string& str, const std::string& prefix){
+    return str.size() >= prefix.size() && !str.compare(0, prefix.size(), prefix);
+}
+
+std::string rtrim(const std::string& in, const char* t) {
+    string s(in);
+    s.erase(s.find_last_not_of(t) + 1);
+    return s;
+}
+
+std::string ltrim(const std::string& in, const char* t) {
+    string s(in);
+    s.erase(0, s.find_first_not_of(t));
+    return s;
+}
+
+std::string trim(const std::string& in, const char* t) {
+    return ltrim(rtrim(in, t), t);
+}
+
+void RouteTypeRule::analyze() {
+    string tl = to_lowercase(t);
+    if (tl == "oneway") {
+        type = ONEWAY;
+        if("-1" == v || "reverse" == v) {
+            intValue = -1;
+        } else if ("1" == v || "yes" == v) {
+            intValue = 1;
+        } else {
+            intValue = 0;
+        }
+    } else if (tl == "highway" && "traffic_signals" == v) {
+        type = TRAFFIC_SIGNALS;
+    } else if (tl == "railway" && ("crossing" == v || "level_crossing" == v)) {
+        type = RAILWAY_CROSSING;
+    } else if (tl == "roundabout" && !v.empty()) {
+        type = ROUNDABOUT;
+    } else if (tl == "junction" && "roundabout" == to_lowercase(v)) {
+        type = ROUNDABOUT;
+    } else if (tl == "highway" && !v.empty()) {
+        type = HIGHWAY_TYPE;
+    } else if (startsWith(t, "access") && !v.empty()) {
+        type = ACCESS;
+    } else if (tl == "maxspeed:conditional" && !v.empty()) {
+        conditions.clear();
+        vector<string> cts = split_string(v, ";");
+        for(auto& c : cts) {
+            auto ch = c.find("@");
+            if (ch != string::npos) {
+                RouteTypeCondition cond;
+                cond.floatValue = parseSpeed(c.substr(0, ch), 0);
+                cond.condition = trim(c.substr(ch + 1));
+                if (startsWith(cond.condition, "(")) {
+                    cond.condition = trim(cond.condition.substr(1, cond.condition.length() - 1));
+                }
+                if(endsWith(cond.condition, ")")) {
+                    cond.condition = trim(cond.condition.substr(0, cond.condition.length() - 1));
+                }
+                //cond.hours = OpeningHoursParser.parseOpenedHours(cond.condition);
+                conditions.push_back(cond);
+            }
+        }
+        type = MAXSPEED;
+    } else if (tl == "maxspeed" && !v.empty()){
+        type = MAXSPEED;
+        floatValue = parseSpeed(v, 0);
+    } else if (tl == "maxspeed:forward" && !v.empty()) {
+        type = MAXSPEED;
+        forward = 1;
+        floatValue = parseSpeed(v, 0);
+    } else if (tl == "maxspeed:backward" && !v.empty()) {
+        type = MAXSPEED;
+        forward = -1;
+        floatValue = parseSpeed(v, 0);
+    } else if (tl == "lanes" && !v.empty()) {
+        intValue = -1;
+        int i = 0;
+        type = LANES;
+        while (i < v.length() && isdigit(v[i])) {
+            i++;
+        }
+        if (i > 0) {
+            int val = 0;
+            if (sscanf(v.substr(0, i).c_str(), "%d", &val) != EOF) {
+                intValue = val;
+            } else {
+                intValue = 0;
+            }
+        }
+    }
 }

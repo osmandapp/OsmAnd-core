@@ -8,17 +8,7 @@
 #include "Logging.h"
 
 //	static bool PRINT_TO_CONSOLE_ROUTE_INFORMATION_TO_TEST = true;
-static const int REVERSE_WAY_RESTRICTION_ONLY = 1024;
 
-static const int ROUTE_POINTS = 11;
-// static const float TURN_DEGREE_MIN = 45;
-static const short RESTRICTION_NO_RIGHT_TURN = 1;
-static const short RESTRICTION_NO_LEFT_TURN = 2;
-static const short RESTRICTION_NO_U_TURN = 3;
-static const short RESTRICTION_NO_STRAIGHT_ON = 4;
-static const short RESTRICTION_ONLY_RIGHT_TURN = 5;
-static const short RESTRICTION_ONLY_LEFT_TURN = 6;
-static const short RESTRICTION_ONLY_STRAIGHT_ON = 7;
 static const bool TRACE_ROUTING = false;
 
 
@@ -766,15 +756,15 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 }
 
 bool combineTwoSegmentResult(RouteSegmentResult& toAdd, RouteSegmentResult& previous, bool reverse) {
-	bool ld = previous.endPointIndex > previous.startPointIndex;
-	bool rd = toAdd.endPointIndex > toAdd.startPointIndex;
+	bool ld = previous.getEndPointIndex() > previous.getStartPointIndex();
+	bool rd = toAdd.getEndPointIndex() > toAdd.getStartPointIndex();
 	if (rd == ld) {
-		if (toAdd.startPointIndex == previous.endPointIndex && !reverse) {
-			previous.endPointIndex = toAdd.endPointIndex;
+		if (toAdd.getStartPointIndex() == previous.getEndPointIndex() && !reverse) {
+			previous.setEndPointIndex(toAdd.getEndPointIndex());
 			previous.routingTime = previous.routingTime + toAdd.routingTime;
 			return true;
-		} else if (toAdd.endPointIndex == previous.startPointIndex && reverse) {
-			previous.startPointIndex = toAdd.startPointIndex;
+		} else if (toAdd.getEndPointIndex() == previous.getStartPointIndex() && reverse) {
+			previous.setStartPointIndex(toAdd.getStartPointIndex());
 			previous.routingTime = previous.routingTime + toAdd.routingTime;
 			return true;
 		}
@@ -783,7 +773,7 @@ bool combineTwoSegmentResult(RouteSegmentResult& toAdd, RouteSegmentResult& prev
 }
 
 void addRouteSegmentToResult(vector<RouteSegmentResult>& result, RouteSegmentResult& res, bool reverse) {
-	if (res.endPointIndex != res.startPointIndex) {
+	if (res.getEndPointIndex() != res.getStartPointIndex()) {
 		if (result.size() > 0) {
 			RouteSegmentResult& last = result.back();
 			if (last.object->id == res.object->id) {
@@ -799,8 +789,8 @@ void addRouteSegmentToResult(vector<RouteSegmentResult>& result, RouteSegmentRes
 void attachConnectedRoads(RoutingContext* ctx, vector<RouteSegmentResult>& res) {
 	vector<RouteSegmentResult>::iterator it = res.begin();
 	for (; it != res.end(); it++) {
-		bool plus = it->startPointIndex < it->endPointIndex;
-		int j = it->startPointIndex;
+		bool plus = it->getStartPointIndex() < it->getEndPointIndex();
+		int j = it->getStartPointIndex();
 		do {
 			SHARED_PTR<RouteSegment> s = ctx->loadRouteSegment(it->object->pointsX[j], it->object->pointsY[j]);
 			vector<RouteSegmentResult> r;
@@ -812,7 +802,7 @@ void attachConnectedRoads(RoutingContext* ctx, vector<RouteSegmentResult>& res) 
 			}
 			it->attachedRoutes.push_back(r);
 			j = plus ? j + 1 : j - 1;
-		}while(j != it->endPointIndex);
+		}while(j != it->getEndPointIndex());
 	}
 
 }

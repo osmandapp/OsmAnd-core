@@ -62,12 +62,12 @@ private:
         } else if ("numeric" == to_lowercase(type)) {
             string values = attrValue(attrsMap, "values");
             string valueDescriptions = attrValue(attrsMap, "valueDescriptions");
-            vector<string> strValues = split_string(values, ',');
+            vector<string> strValues = split_string(values, ",");
             vector<double> vls;
             for (int i = 0; i < strValues.size(); i++) {
                 vls.push_back(parseFloat(strValues[i], false));
             }
-            currentRouter->registerNumericParameter(id, name, description, vls, split_string(valueDescriptions, ','));
+            currentRouter->registerNumericParameter(id, name, description, vls, split_string(valueDescriptions, ","));
         }
     }
     

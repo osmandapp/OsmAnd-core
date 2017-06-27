@@ -97,4 +97,15 @@ public:
     vector< SHARED_PTR<RouteSegmentPoint> > others;
 };
 
+struct FinalRouteSegment : RouteSegment {
+public:
+    FinalRouteSegment(SHARED_PTR<RouteDataObject> road, int segmentStart) : RouteSegment(road, segmentStart) {
+    }
+        
+    ~FinalRouteSegment() {
+    }
+    bool reverseWaySearch;
+    SHARED_PTR<RouteSegment> opposite;
+};
+
 #endif /*_OSMAND_ROUTE_SEGMENT_H*/

@@ -188,13 +188,123 @@ typedef pair<std::string, std::string> tag_value;
 typedef pair<int, int> int_pair;
 typedef vector< pair<int, int> > coordinates;
 
+struct RouteTypeCondition {
+    string condition;
+    //OpeningHoursParser.OpeningHours hours = null;
+    float floatValue;
+    
+    RouteTypeCondition() : condition("") {
+    }
+};
+
+struct RouteTypeRule {
+    const static int ACCESS = 1;
+    const static int ONEWAY = 2;
+    const static int HIGHWAY_TYPE = 3;
+    const static int MAXSPEED = 4;
+    const static int ROUNDABOUT = 5;
+    const static int TRAFFIC_SIGNALS = 6;
+    const static int RAILWAY_CROSSING = 7;
+    const static int LANES = 8;
+    
+private:
+    string t;
+    string v;
+    int intValue;
+    float floatValue;
+    int type;
+    vector<RouteTypeCondition> conditions;
+    int forward;
+    
+public:
+    RouteTypeRule() : t(""), v("") {
+    }
+    
+    RouteTypeRule(string t, string v) : t(t) {
+        if ("true" == v) {
+            v = "yes";
+        }
+        if ("false" == v) {
+            v = "no";
+        }
+        this->v = v;
+        analyze();
+    }
+    
+    inline int isForward() {
+        return forward;
+    }
+    
+    inline const string& getTag() {
+        return t;
+    }
+    
+    inline const string& getValue() {
+        return v;
+    }
+    
+    inline bool roundabout() {
+        return type == ROUNDABOUT;
+    }
+    
+    inline int getType() {
+        return type;
+    }
+    
+    inline bool conditional() {
+        return !conditions.empty();
+    }
+    
+    inline int onewayDirection(){
+        if (type == ONEWAY){
+            return intValue;
+        }
+        return 0;
+    }
+    
+    inline float maxSpeed() {
+        if(type == MAXSPEED){
+            /*
+             if (conditions != null) {
+             Calendar i = Calendar.getInstance();
+             i.setTimeInMillis(System.currentTimeMillis());
+             for(RouteTypeCondition c : conditions) {
+             if(c.hours != null && c.hours.isOpenedForTime(i)) {
+             return c.floatValue;
+             }
+             }
+             }
+             */
+            return floatValue;
+        }
+        return -1;
+    }
+    
+    inline int lanes(){
+        if (type == LANES) {
+            return intValue;
+        }
+        return -1;
+    }
+    
+    inline string highwayRoad() {
+        if (type == HIGHWAY_TYPE){
+            return v;
+        }
+        return "";
+    }
+    
+private:
+    void analyze();
+};
+
 class MapDataObject
 {
 	static const unsigned int UNDEFINED_STRING = INT_MAX;
 public:
 
-	std::vector<tag_value>  types;
-	std::vector<tag_value>  additionalTypes;
+	std::vector< tag_value >  types;
+	std::vector< tag_value >  additionalTypes;
 	coordinates points;
 	std::vector < coordinates > polygonInnerCoordinates;
 
@@ -211,7 +321,7 @@ public:
 		return points[0] == points[points.size() -1];
 	}
 	bool containsAdditional(std::string key, std::string val) {
-		std::vector<tag_value>::iterator it = additionalTypes.begin();
+		auto it = additionalTypes.begin();
 		bool valEmpty = (val == "");
 		while (it != additionalTypes.end()) {
 			if (it->first == key && (valEmpty || it->second == val)) {
@@ -223,7 +333,7 @@ public:
 	}
 
 	bool contains(std::string key, std::string val) {
-		std::vector<tag_value>::iterator it = types.begin();
+		auto it = types.begin();
 		while (it != types.end()) {
 			if (it->first == key) {
 				return it->second == val;
@@ -234,12 +344,12 @@ public:
 	}
 
 	int getSimpleLayer() {
-		std::vector<tag_value>::iterator it = additionalTypes.begin();
+		auto it = additionalTypes.begin();
 		bool tunnel = false;
 		bool bridge = false;
 		while (it != additionalTypes.end()) {
 			if (it->first == "layer") {
-				if(it->second.length() > 0) {
+				if (it->second.length() > 0) {
 					if(it->second[0] == '-'){
 						return -1;
 					} else if (it->second[0] == '0'){
@@ -607,13 +717,23 @@ double convert31YToMeters(int y1, int y2, int x);
 double convert31XToMeters(int y1, int y2, int y);
 double alignAngleDifference(double diff);
 
+double degreesDiff(const double a1, const double a2);
+
 
 int findFirstNumberEndIndex(string value); 
+double parseSpeed(string v, double def);
 
 std::pair<int, int> getProjectionPoint(int px, int py, int xA, int yA, int xB, int yB);
 
-std::string to_lowercase( const std::string& in );
-std::vector<string> split_string( const std::string& in, char delimiter);
+std::string to_lowercase(const std::string& in);
+std::vector<std::string> split_string(const std::string& str, const std::string& delimiters);
+bool endsWith(const std::string& str, const std::string& suffix);
+bool startsWith(const std::string& str, const std::string& prefix);
 
+const static char* trim_chars = " \t\n\r\f\v";
+
+std::string rtrim(const std::string& in, const char* t = trim_chars);
+std::string ltrim(const std::string& in, const char* t = trim_chars);
+std::string trim(const std::string& in, const char* t = trim_chars);
 
 #endif /*_OSMAND_COMMON_CORE_H*/

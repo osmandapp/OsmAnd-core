@@ -118,7 +118,7 @@ dynbitset& align(dynbitset& t, uint targetSize) {
 double parseValue(string value, string type) {
 	double vl = -1;
 	if("speed" == type) {
-		vl = RouteDataObject::parseSpeed(value, vl);
+		vl = parseSpeed(value, vl);
 	} else if("weight" == type) {
 		vl = RouteDataObject::parseWeightInTon(value, vl);
 	} else if("length" == type) {
@@ -435,10 +435,10 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment> segment, int se
 uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
 	string key = r.first + "$" + r.second;
 	MAP_STR_INT::iterator it = universalRules.find(key);
-	if(it != universalRules.end()) {
+	if (it != universalRules.end()) {
 		return ((uint)it->second);
 	}
-	uint id = universalRules.size();
+	auto id = universalRules.size();
 	universalRulesById.push_back(r);
 	universalRules[key] = id;
 	dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
@@ -453,8 +453,8 @@ dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t
 		MAP_INT_INT::iterator nid = map.find(types[k]);
 		int vl;
 		if(nid == map.end()){
-			tag_value r = reg->decodingRules[types[k]];
-			vl = router->registerTagValueAttribute(r);
+			auto& r = reg->decodingRules[types[k]];
+			vl = router->registerTagValueAttribute(tag_value(r.getTag(), r.getValue()));
 			map[types[k]] = vl;
 		} else {
 			vl = nid->second;

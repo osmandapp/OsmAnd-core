@@ -41,7 +41,142 @@ void print_dump(const char* msg1, const char* msg2) {
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "MEMORY %s %s heap - %d  alloc - %d free - %d", msg1, msg2, info.usmblks,info.uordblks, info.fordblks);
 }
 #endif
- 
+
+void RoutingIndex::initRouteEncodingRule(uint32_t id, std::string tag, std::string val) {
+    RouteTypeRule rule(tag, val);
+    decodingRules[id] = rule;
+    
+    if (tag == "name") {
+        nameTypeRule = id;
+    } else if (tag == "ref") {
+        refTypeRule = id;
+    } else if (tag == "destination" || tag == "destination:forward" || tag == "destination:backward" || startsWith(tag, "destination:lang:")) {
+        destinationTypeRule = id;
+    } else if (tag == "destination:ref" || tag == "destination:ref:forward" || tag == "destination:ref:backward") {
+        destinationRefTypeRule = id;
+    }
+}
+
+int RouteDataObject::getOneway() {
+    auto sz = types.size();
+    for (int i = 0; i < sz; i++) {
+        auto& r = region->quickGetEncodingRule(types[i]);
+        if (r.onewayDirection() != 0) {
+            return r.onewayDirection();
+        } else if (r.roundabout()) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+string RouteDataObject::getValue(const string& tag) {
+    auto sz = types.size();
+    for (int i = 0; i < sz; i++) {
+        auto& r = region->decodingRules[types[i]];
+        if (r.getTag() == tag) {
+            return r.getValue();
+        }
+    }
+    return "";
+}
+
+std::vector<double> RouteDataObject::calculateHeightArray() {
+    if (heightDistanceArray.size() > 0) {
+        return heightDistanceArray;
+    }
+    string strStart = getValue("osmand_ele_start");
+    
+    if(strStart == "") {
+        return heightDistanceArray;
+    }
+    string strEnd = getValue("osmand_ele_end");
+    int startHeight = (int) atof(strStart.c_str());
+    int endHeight = startHeight;
+    if(strEnd != "") {
+        endHeight = (int) atof(strEnd.c_str());
+    }
+    
+    heightDistanceArray.resize(2*getPointsLength(), 0);
+    double plon = 0;
+    double plat = 0;
+    double prevHeight = startHeight;
+    for(uint k = 0; k < getPointsLength(); k++) {
+        double lon = get31LongitudeX(pointsX[k]);
+        double lat = get31LatitudeY(pointsY[k]);
+        if(k > 0) {
+            double dd = getDistance(plat, plon, lat, lon);
+            double height = HEIGHT_UNDEFINED;
+            if(k == getPointsLength() - 1) {
+                height = endHeight;
+            } else {
+                if(pointTypes.size() > k && pointTypes[k].size() > 0) {
+                    auto sz = pointTypes[k].size();
+                    for(int sti = 0; sti < sz; sti++) {
+                        auto& r = region->decodingRules[pointTypes[k][sti]];
+                        if (r.getTag() == "osmand_ele_asc") {
+                            height = (prevHeight + atof(r.getValue().c_str()));
+                            break;
+                        } else if (r.getTag() == "osmand_ele_desc") {
+                            height = (prevHeight - atof(r.getValue().c_str()));
+                            break;
+                        }
+                    }
+                }
+            }
+            heightDistanceArray[2*k] = dd;
+            heightDistanceArray[2*k+1] = height;
+            if(height != HEIGHT_UNDEFINED) {
+                // interpolate undefined
+                double totalDistance = dd;
+                int startUndefined = k;
+                while(startUndefined - 1 >= 0 && heightDistanceArray[2*(startUndefined - 1)+1] == HEIGHT_UNDEFINED) {
+                    startUndefined --;
+                    totalDistance += heightDistanceArray[2*(startUndefined)];
+                }
+                if(totalDistance > 0) {
+                    double angle = (height - prevHeight) / totalDistance;
+                    for(int j = startUndefined; j < k; j++) {
+                        heightDistanceArray[2*j+1] =  ((heightDistanceArray[2*j] * angle) + heightDistanceArray[2*j-1]);
+                    }
+                }
+                prevHeight = height;
+            }
+            
+        } else {
+            heightDistanceArray[0] = 0;
+            heightDistanceArray[1] = startHeight;
+        }
+        plat = lat;
+        plon = lon;
+    }
+    return heightDistanceArray;
+}
+
+
+string RouteDataObject::getHighway() {
+    auto sz = types.size();
+    for (int i = 0; i < sz; i++) {
+        auto& r = region->decodingRules[types[i]];
+        if (r.getTag() == "highway") {
+            return r.getValue();
+        }
+    }
+    return "";
+}
+
+bool RouteDataObject::roundabout() {
+    auto sz = types.size();
+    for (int i = 0; i < sz; i++) {
+        auto& r = region->decodingRules[types[i]];
+        if (r.getTag() == "roundabout" || r.getValue() == "roundabout") {
+            return true;
+        } else if(r.getTag() == "oneway" && r.getValue() != "no" && loop()) {
+            return true;
+        }
+    }
+    return false;
+}
 
 void searchRouteSubRegion(int fileInd, std::vector<RouteDataObject*>& list,  RoutingIndex* routingIndex, RouteSubregion* sub);
 void searchRouteRegion(CodedInputStream** input, 
@@ -959,7 +1094,7 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 	tempResult.reserve((size_t) (list.size() + tempResult.size()));
 	for (; rIterator != list.end(); rIterator++) {
 		RouteDataObject* r = (*rIterator);
-		if(r == NULL) {
+		if (r == NULL) {
 			continue;
 		}
 
@@ -975,12 +1110,12 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 		for (; typeIt != r->types.end(); typeIt++) {
 			uint32_t k = (*typeIt);
 			if (k < r->region->decodingRules.size()) {
-				tag_value t = r->region->decodingRules[k];
-				if (t.first == "highway" || t.first == "route" || t.first == "railway" || t.first == "aeroway"
-						|| t.first == "aerialway") {
-					obj->types.push_back(t);
+				auto& t = r->region->decodingRules[k];
+				if (t.getTag() == "highway" || t.getTag() == "route" || t.getTag() == "railway" || t.getTag() == "aeroway"
+						|| t.getTag() == "aerialway") {
+					obj->types.push_back(tag_value(t.getTag(), t.getValue()));
 				} else {
-					obj->additionalTypes.push_back(t);
+					obj->additionalTypes.push_back(tag_value(t.getTag(), t.getValue()));
 				}
 			}
 		}
@@ -991,12 +1126,12 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			obj->id = r->id;
 			UNORDERED(map)<int, std::string >::iterator nameIterator = r->names.begin();
 			for (; nameIterator != r->names.end(); nameIterator++) {
-				std::string ruleId = r->region->decodingRules[nameIterator->first].first;				
+				std::string ruleId = r->region->decodingRules[nameIterator->first].getTag();
 				obj->objectNames[ruleId] = nameIterator->second;
 				obj->namesOrder.push_back(ruleId);
 			}
 			obj->area = false;
-			if(renderedState < 2 && checkObjectBounds(q, obj)) {
+			if (renderedState < 2 && checkObjectBounds(q, obj)) {
 				renderedState |= 2;
 			}
 			tempResult.push_back(obj);
@@ -1250,7 +1385,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 					q->req->clearState();
 				}
 				q->publisher->clear();
-				uint sz = tempResult.size();
+				auto sz = tempResult.size();
 				readRouteDataAsMapObjects(q, file, tempResult, renderedState);
 				objectsFromRoutingSectionRead = tempResult.size() != sz;
 			}
