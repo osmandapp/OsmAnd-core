@@ -19,6 +19,7 @@ public:
 	float routingTime;
     float distance;
 	vector<vector<RouteSegmentResult> > attachedRoutes;
+    vector<vector<RouteSegmentResult> > attachedRoutesFrontEnd;
     vector<vector<RouteSegmentResult> > preAttachedRoutes;
 
     string description;
@@ -26,7 +27,7 @@ public:
     SHARED_PTR<TurnType> turnType;
 
 	RouteSegmentResult(SHARED_PTR<RouteDataObject> object, int startPointIndex, int endPointIndex) :
-		object(object), startPointIndex(startPointIndex), endPointIndex (endPointIndex), routingTime(0), description("") {
+		startPointIndex(startPointIndex), endPointIndex(endPointIndex), object(object), routingTime(0), description("") {
             updateCapacity();
 	}
     
@@ -36,8 +37,8 @@ public:
     vector<RouteSegmentResult> getAttachedRoutes(int routeInd);
 
     inline void updateCapacity() {
-        int capacity = abs(endPointIndex - startPointIndex) + 1;
-        attachedRoutes.resize(capacity);
+        //int capacity = abs(endPointIndex - startPointIndex) + 1;
+        //attachedRoutesFrontEnd.reserve(capacity);
     }
 
     inline int getStartPointIndex() const {

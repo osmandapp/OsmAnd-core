@@ -1154,15 +1154,17 @@ SHARED_PTR<TurnType> justifyUTurn(bool leftside, vector<RouteSegmentResult>& res
 
 void justifyUTurns(bool leftSide, vector<RouteSegmentResult>& result) {
     int next = 0;
-    for (int i = 0; i < result.size() - 1; i = next) {
-        next = i + 1;
-        const auto& t = result[i].turnType;
-        // justify turn
-        if (t) {
-            const auto& jt = justifyUTurn(leftSide, result, i, t);
-            if (jt) {
-                result[i].turnType = jt;
-                next = i + 2;
+    if (result.size() > 0) {
+        for (int i = 0; i < result.size() - 1; i = next) {
+            next = i + 1;
+            const auto& t = result[i].turnType;
+            // justify turn
+            if (t) {
+                const auto& jt = justifyUTurn(leftSide, result, i, t);
+                if (jt) {
+                    result[i].turnType = jt;
+                    next = i + 2;
+                }
             }
         }
     }

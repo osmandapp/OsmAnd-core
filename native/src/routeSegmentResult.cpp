@@ -4,7 +4,10 @@
 
 void RouteSegmentResult::attachRoute(int roadIndex, RouteSegmentResult& r) {
     int st = abs(roadIndex - startPointIndex);
-    attachedRoutes[st].push_back(r);
+    if (st >= attachedRoutesFrontEnd.size()) {
+        attachedRoutesFrontEnd.resize(st + 1);
+    }
+    attachedRoutesFrontEnd[st].push_back(r);
 }
 
 void RouteSegmentResult::copyPreattachedRoutes(RouteSegmentResult& toCopy, int shift) {
@@ -24,7 +27,11 @@ vector<RouteSegmentResult> RouteSegmentResult::getPreAttachedRoutes(int routeInd
 
 vector<RouteSegmentResult> RouteSegmentResult::getAttachedRoutes(int routeInd) {
     int st = abs(routeInd - startPointIndex);
-    return attachedRoutes[st];
+    if (st >= attachedRoutesFrontEnd.size()) {
+        return vector<RouteSegmentResult>();
+    } else {
+        return attachedRoutesFrontEnd[st];
+    }
 }
 
 #endif /*_OSMAND_ROUTE_SEGMENT_RESULT_CPP*/
