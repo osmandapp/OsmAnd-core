@@ -1128,8 +1128,15 @@ void convertRouteDataObjecToMapObjects(SearchQuery* q, std::vector<RouteDataObje
 			for (; nameIterator != r->names.end(); nameIterator++) {
 				std::string ruleId = r->region->decodingRules[nameIterator->first].getTag();
 				obj->objectNames[ruleId] = nameIterator->second;
-				obj->namesOrder.push_back(ruleId);
+				
 			}
+
+			for (auto nIterator = r->namesIds.begin();
+				nIterator != r->namesIds.end(); nIterator++) {
+				obj->namesOrder.push_back(
+					r->region->decodingRules[nIterator->first].getTag());
+			}
+			
 			obj->area = false;
 			if (renderedState < 2 && checkObjectBounds(q, obj)) {
 				renderedState |= 2;
