@@ -755,7 +755,7 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 	return NULL;
 }
 
-bool combineTwoSegmentResult(SHARED_PTR<RouteSegmentResult> toAdd, SHARED_PTR<RouteSegmentResult> previous, bool reverse) {
+bool combineTwoSegmentResultPlanner(SHARED_PTR<RouteSegmentResult> toAdd, SHARED_PTR<RouteSegmentResult> previous, bool reverse) {
 	bool ld = previous->getEndPointIndex() > previous->getStartPointIndex();
 	bool rd = toAdd->getEndPointIndex() > toAdd->getStartPointIndex();
 	if (rd == ld) {
@@ -777,7 +777,7 @@ void addRouteSegmentToResult(vector<SHARED_PTR<RouteSegmentResult> >& result, SH
 		if (result.size() > 0) {
 			auto last = result.back();
 			if (last->object->id == res->object->id) {
-				if (combineTwoSegmentResult(res, last, reverse)) {
+				if (combineTwoSegmentResultPlanner(res, last, reverse)) {
 					return;
 				}
 			}
