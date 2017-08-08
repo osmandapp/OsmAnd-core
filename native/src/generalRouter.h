@@ -21,10 +21,12 @@ typedef boost::dynamic_bitset<> dynbitset;
 
 #define DOUBLE_MISSING -1.1e9 // random big negative number
 
-const double CAR_SHORTEST_DEFAULT_SPEED = 55/3.6f;
-const char* USE_SHORTEST_WAY = "short_way";
-const char* USE_HEIGHT_OBSTACLES = "height_obstacles";
-const char* ALLOW_PRIVATE = "allow_private";
+struct GeneralRouterConstatns {
+    static const double CAR_SHORTEST_DEFAULT_SPEED;
+    static const char* USE_SHORTEST_WAY;
+    static const char* USE_HEIGHT_OBSTACLES;
+    static const char* ALLOW_PRIVATE;
+};
 
 enum class RouteDataObjectAttribute : unsigned int {
 	ROAD_SPEED = 0, //"speed"
