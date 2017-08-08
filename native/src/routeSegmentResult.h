@@ -5,7 +5,6 @@
 #include "binaryRead.h"
 #include "turnType.h"
 #include <algorithm>
-#include "Logging.h"
 
 struct RouteSegmentResult {
 private:
@@ -18,11 +17,12 @@ public:
     float segmentSpeed;
 	float routingTime;
     float distance;
-	vector<vector<RouteSegmentResult> > attachedRoutes;
-    vector<vector<RouteSegmentResult> > attachedRoutesFrontEnd;
-    vector<vector<RouteSegmentResult> > preAttachedRoutes;
+	vector<vector<SHARED_PTR<RouteSegmentResult> > > attachedRoutes;
+    vector<vector<SHARED_PTR<RouteSegmentResult> > > attachedRoutesFrontEnd;
+    vector<vector<SHARED_PTR<RouteSegmentResult> > > preAttachedRoutes;
 
     string description;
+    
     // this make not possible to make turns in between segment result for now
     SHARED_PTR<TurnType> turnType;
 
@@ -31,10 +31,10 @@ public:
             updateCapacity();
 	}
     
-    void attachRoute(int roadIndex, RouteSegmentResult& r);
-    void copyPreattachedRoutes(RouteSegmentResult& toCopy, int shift);
-    vector<RouteSegmentResult> getPreAttachedRoutes(int routeInd);
-    vector<RouteSegmentResult> getAttachedRoutes(int routeInd);
+    void attachRoute(int roadIndex, SHARED_PTR<RouteSegmentResult> r);
+    void copyPreattachedRoutes(SHARED_PTR<RouteSegmentResult> toCopy, int shift);
+    vector<SHARED_PTR<RouteSegmentResult> > getPreAttachedRoutes(int routeInd);
+    vector<SHARED_PTR<RouteSegmentResult> > getAttachedRoutes(int routeInd);
 
     inline void updateCapacity() {
         //int capacity = abs(endPointIndex - startPointIndex) + 1;

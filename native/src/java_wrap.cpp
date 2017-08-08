@@ -905,20 +905,20 @@ jobject convertRouteDataObjectToJava(JNIEnv* ienv, RouteDataObject* route, jobje
 	return robj;
 }
 
-jobject convertRouteSegmentResultToJava(JNIEnv* ienv, RouteSegmentResult& r, UNORDERED(map)<int64_t, int>& indexes,
+jobject convertRouteSegmentResultToJava(JNIEnv* ienv, SHARED_PTR<RouteSegmentResult> r, UNORDERED(map)<int64_t, int>& indexes,
 		jobjectArray regions) {
-	RouteDataObject* rdo = r.object.get();
+	RouteDataObject* rdo = r->object.get();
 	jobject reg = NULL;
 	int64_t fp = rdo->region->filePointer;
 	int64_t ln = rdo->region->length;
 	if(indexes.find((fp <<31) + ln) != indexes.end()) {
 		reg = ienv->GetObjectArrayElement(regions, indexes[(fp <<31) + ln]);
 	}
-	jobjectArray ar = ienv->NewObjectArray(r.attachedRoutes.size(), jclass_RouteSegmentResultAr, NULL);
-	for(jsize k = 0; k < (jsize)r.attachedRoutes.size(); k++) {
-		jobjectArray art = ienv->NewObjectArray(r.attachedRoutes[k].size(), jclass_RouteSegmentResult, NULL);
-		for(jsize kj = 0; kj < (jsize)r.attachedRoutes[k].size(); kj++) {
-			jobject jo = convertRouteSegmentResultToJava(ienv, r.attachedRoutes[k][kj], indexes, regions);
+	jobjectArray ar = ienv->NewObjectArray(r->attachedRoutes.size(), jclass_RouteSegmentResultAr, NULL);
+	for(jsize k = 0; k < (jsize)r->attachedRoutes.size(); k++) {
+		jobjectArray art = ienv->NewObjectArray(r->attachedRoutes[k].size(), jclass_RouteSegmentResult, NULL);
+		for(jsize kj = 0; kj < (jsize)r->attachedRoutes[k].size(); kj++) {
+			jobject jo = convertRouteSegmentResultToJava(ienv, r->attachedRoutes[k][kj], indexes, regions);
 			ienv->SetObjectArrayElement(art, kj, jo);
 			ienv->DeleteLocalRef(jo);
 		}
@@ -927,8 +927,8 @@ jobject convertRouteSegmentResultToJava(JNIEnv* ienv, RouteSegmentResult& r, UNO
 	}
 	jobject robj = convertRouteDataObjectToJava(ienv, rdo, reg);
 	jobject resobj = ienv->NewObject(jclass_RouteSegmentResult, jmethod_RouteSegmentResult_ctor, robj,
-			r.getStartPointIndex(), r.getEndPointIndex());
-	ienv->SetFloatField(resobj, jfield_RouteSegmentResult_routingTime, (jfloat)r.routingTime);
+			r->getStartPointIndex(), r->getEndPointIndex());
+	ienv->SetFloatField(resobj, jfield_RouteSegmentResult_routingTime, (jfloat)r->routingTime);
 	ienv->SetObjectField(resobj, jfield_RouteSegmentResult_preAttachedRoutes, ar);
 	if(reg != NULL) {
 		ienv->DeleteLocalRef(reg);
@@ -1177,7 +1177,7 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_net_osmand_NativeLibrary_nativeRo
 	c.basemap = basemap;
 	parsePrecalculatedRoute(ienv, c, precalculatedRoute);
 	ienv->ReleaseIntArrayElements(coordinates, (jint*)data, 0);
-	vector<RouteSegmentResult> r = searchRouteInternal(&c, false);
+	vector<SHARED_PTR<RouteSegmentResult> > r = searchRouteInternal(&c, false);
 	UNORDERED(map)<int64_t, int> indexes;
 	for (int t = 0; t< ienv->GetArrayLength(regions); t++) {
 		jobject oreg = ienv->GetObjectArrayElement(regions, t);

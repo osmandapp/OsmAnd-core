@@ -108,7 +108,7 @@ struct RoutingContext {
 	int targetY;
 	bool basemap;
 
-    vector<RouteSegmentResult> previouslyCalculatedRoute;
+    vector<SHARED_PTR<RouteSegmentResult> > previouslyCalculatedRoute;
     SHARED_PTR<PrecalculatedRouteDirection> precalcRoute;
 	SHARED_PTR<RouteSegment> finalRouteSegment;
 

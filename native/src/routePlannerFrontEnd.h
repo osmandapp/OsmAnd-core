@@ -2,11 +2,13 @@
 #define _OSMAND_ROUTE_PLANNER_FRONT_END_H
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
+#include "routingContext.h"
 
 struct RouteSegmentResult;
-struct RoutingContext;
 struct RouteSegmentPoint;
 struct PrecalculatedRouteDirection;
+struct RouteSegment;
+struct RoutingConfiguration;
 
 class RoutePlannerFrontEnd {
     
@@ -18,17 +20,22 @@ public:
     }
     
 private:
-    vector<RouteSegmentResult> searchRoute(RoutingContext* ctx,
+    vector<SHARED_PTR<RouteSegmentResult> > searchRoute(RoutingContext* ctx,
                                            vector<SHARED_PTR<RouteSegmentPoint>>& points,
                                            SHARED_PTR<PrecalculatedRouteDirection> routeDirection);
     
+    vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternalPrepare(RoutingContext* ctx, SHARED_PTR<RouteSegmentPoint> start, SHARED_PTR<RouteSegmentPoint> end, SHARED_PTR<PrecalculatedRouteDirection> routeDirection);
 public:
     
     void setUseFastRecalculation(bool use) {
         useSmartRouteRecalculation = use;
     }
 
-    vector<RouteSegmentResult> searchRoute(SHARED_PTR<RoutingContext> ctx,
+    SHARED_PTR<RoutingContext> buildRoutingContext(SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode rm = RouteCalculationMode::NORMAL);
+    
+    SHARED_PTR<RouteSegment> getRecalculationEnd(RoutingContext* ctx);
+
+    vector<SHARED_PTR<RouteSegmentResult> > searchRoute(SHARED_PTR<RoutingContext> ctx,
                                            int startX, int startY,
                                            int endX, int endY,
                                            vector<int> intermediatesX, vector<int> intermediatesY,

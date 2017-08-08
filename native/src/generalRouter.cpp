@@ -5,20 +5,16 @@
 #include "routeSegment.h"
 #include <sstream>
 #include <cmath>
+#include "Logging.h"
 
 const int RouteAttributeExpression::LESS_EXPRESSION = 1;
 const int RouteAttributeExpression::GREAT_EXPRESSION = 2;
 const int RouteAttributeExpression::EQUAL_EXPRESSION = 3;
 
-const double CAR_SHORTEST_DEFAULT_SPEED = 55/3.6f;
-const char* USE_SHORTEST_WAY = "short_way";
-const char* USE_HEIGHT_OBSTACLES = "height_obstacles";
-const char* ALLOW_PRIVATE = "allow_private";
-
 GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), allowPrivate(false) {
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attribute) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), allowPrivate(false) {
     
     this->profile = profile;
     MAP_STR_STR::const_iterator it = attributes.begin();
@@ -139,18 +135,18 @@ double parseValue(string value, string type) {
 
 void GeneralRouter::addAttribute(string k, string v) {
 	attributes[k] = v;
-	if(k=="restrictionsAware") {
-		_restrictionsAware = parseBool(attributes, v, _restrictionsAware);
-	} else if(k=="leftTurn") {
-		leftTurn = parseFloat(attributes, v, leftTurn);
-	} else if(k=="rightTurn") {
-		rightTurn = parseFloat(attributes, v, rightTurn);
-	} else if(k=="roundaboutTurn") {
-		roundaboutTurn = parseFloat(attributes, v, roundaboutTurn);
-	} else if(k=="minDefaultSpeed") {
-		minDefaultSpeed = parseFloat(attributes, v, minDefaultSpeed * 3.6f) / 3.6f;
-	} else if(k =="maxDefaultSpeed") {
-		maxDefaultSpeed = parseFloat(attributes, v, maxDefaultSpeed * 3.6f) / 3.6f;
+	if (k == "restrictionsAware") {
+		_restrictionsAware = parseBool(attributes, k, _restrictionsAware);
+	} else if (k == "leftTurn") {
+		leftTurn = parseFloat(attributes, k, leftTurn);
+	} else if (k == "rightTurn") {
+		rightTurn = parseFloat(attributes, k, rightTurn);
+	} else if (k == "roundaboutTurn") {
+		roundaboutTurn = parseFloat(attributes, k, roundaboutTurn);
+	} else if (k == "minDefaultSpeed") {
+		minDefaultSpeed = parseFloat(attributes, k, minDefaultSpeed * 3.6f) / 3.6f;
+	} else if (k =="maxDefaultSpeed") {
+		maxDefaultSpeed = parseFloat(attributes, k, maxDefaultSpeed * 3.6f) / 3.6f;
 	}
 }
 
@@ -230,7 +226,7 @@ void RouteAttributeEvalRule::registerAndTagValueCondition(GeneralRouter* r, stri
 	tagValueCondDefTag.push_back(tag);
 	tagValueCondDefValue.push_back(value);
 	tagValueCondDefNot.push_back(nt);
-	if(value == "") { 
+	if (value.empty()) {
 		if (nt) {
 			onlyNotTags.insert(tag);
 		} else {
@@ -432,13 +428,20 @@ double GeneralRouter::calculateTurnTime(SHARED_PTR<RouteSegment> segment, int se
 	return 0;
 }
 
+void GeneralRouter::printRules() {
+    for (uint k = 0; k < objectAttributes.size(); k++) {
+        OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "RouteAttributeContext  %d", k + 1);
+        objectAttributes[k]->printRules();
+    }
+}
+
 uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
 	string key = r.first + "$" + r.second;
 	MAP_STR_INT::iterator it = universalRules.find(key);
 	if (it != universalRules.end()) {
 		return ((uint)it->second);
 	}
-	auto id = universalRules.size();
+	int id = (int)universalRules.size();
 	universalRulesById.push_back(r);
 	universalRules[key] = id;
 	dynbitset& d = increaseSize(tagRuleMask[r.first], id + 1);
@@ -448,8 +451,13 @@ uint GeneralRouter::registerTagValueAttribute(const tag_value& r) {
 
 dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t>& types) {
 	dynbitset b(router->universalRules.size());
-	MAP_INT_INT map = router->regionConvert[reg];
-	for(uint k = 0; k < types.size(); k++) {
+    MAP_INT_INT map;
+    if (router->regionConvert.find(reg) != router->regionConvert.end()) {
+        map = router->regionConvert[reg];
+    } else {
+        router->regionConvert[reg] = map;
+    }
+	for (uint k = 0; k < types.size(); k++) {
 		MAP_INT_INT::iterator nid = map.find(types[k]);
 		int vl;
 		if(nid == map.end()){
@@ -459,7 +467,7 @@ dynbitset RouteAttributeContext::convert(RoutingIndex* reg, std::vector<uint32_t
 		} else {
 			vl = nid->second;
 		}
-		increaseSize(b, router->universalRules.size()).set(vl);
+		increaseSize(b, (uint)router->universalRules.size()).set(vl);
 	}
 	return b;
 }

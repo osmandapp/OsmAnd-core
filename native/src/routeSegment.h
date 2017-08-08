@@ -2,6 +2,7 @@
 #define _OSMAND_ROUTE_SEGMENT_H
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
+#include "Logging.h"
 
 struct RouteSegment {
     public :

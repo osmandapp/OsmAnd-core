@@ -57,6 +57,20 @@ void RoutingIndex::initRouteEncodingRule(uint32_t id, std::string tag, std::stri
     }
 }
 
+bool RouteDataObject::tunnel() {
+    auto sz = types.size();
+    for (int i = 0; i < sz; i++) {
+        auto& r = region->quickGetEncodingRule(types[i]);
+        if (r.getTag() == "tunnel" && r.getValue() == "yes") {
+            return true;
+        }
+        if (r.getTag() == "layer" && r.getValue() == "-1") {
+            return true;
+        }
+    }
+    return false;
+}
+
 int RouteDataObject::getOneway() {
     auto sz = types.size();
     for (int i = 0; i < sz; i++) {

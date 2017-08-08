@@ -1,13 +1,10 @@
 #ifndef _OSMAND_GENERAL_ROUTER_H
 #define _OSMAND_GENERAL_ROUTER_H
 
-
-
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include <algorithm>
 #include "boost/dynamic_bitset.hpp"
-#include "Logging.h"
 #include "binaryRead.h"
 
 struct RouteSegment;
@@ -24,6 +21,10 @@ typedef boost::dynamic_bitset<> dynbitset;
 
 #define DOUBLE_MISSING -1.1e9 // random big negative number
 
+const double CAR_SHORTEST_DEFAULT_SPEED = 55/3.6f;
+const char* USE_SHORTEST_WAY = "short_way";
+const char* USE_HEIGHT_OBSTACLES = "height_obstacles";
+const char* ALLOW_PRIVATE = "allow_private";
 
 enum class RouteDataObjectAttribute : unsigned int {
 	ROAD_SPEED = 0, //"speed"
@@ -440,13 +441,7 @@ public:
 	double calculateTurnTime(SHARED_PTR<RouteSegment> segment, int segmentEnd, 
 		SHARED_PTR<RouteSegment> prev, int prevSegmentEnd);
 
-
-	void printRules() {
-		for (uint k = 0; k < objectAttributes.size(); k++) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "RouteAttributeContext  %d", k + 1);
-			objectAttributes[k]->printRules();
-		}
-	}
+    void printRules();
     
 private:
 

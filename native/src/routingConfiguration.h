@@ -4,7 +4,6 @@
 #include "commonOsmAndCore.h"
 #include "generalRouter.h"
 #include <algorithm>
-#include "Logging.h"
 
 struct RoutingRule {
     string tagName;
