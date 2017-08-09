@@ -122,6 +122,7 @@ struct RoutingContext {
         this->config = cp->config;
         this->calculationMode = cp->calculationMode;
         this->leftSideNavigation = cp->leftSideNavigation;
+        this->basemap = cp->basemap;
         // copy local data and clear caches
         auto it = cp->subregionTiles.begin();
         for(;it != cp->subregionTiles.end(); it++) {
@@ -146,6 +147,7 @@ struct RoutingContext {
     RoutingContext(SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode calcMode = RouteCalculationMode::NORMAL) :
 		calculationMode(calcMode), routingTime(0), visitedSegments(0), loadedTiles(0), firstRoadDirection(0), firstRoadId(0), config(config), precalcRoute(new PrecalculatedRouteDirection()) {
 			precalcRoute->empty = true;
+            this->basemap = RouteCalculationMode::BASE == calcMode;
 	}
 
     void unloadAllData(RoutingContext* except = NULL) {
