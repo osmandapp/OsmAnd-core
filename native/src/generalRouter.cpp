@@ -17,10 +17,10 @@ const char* GeneralRouterConstatns::USE_HEIGHT_OBSTACLES = "height_obstacles";
 const char* GeneralRouterConstatns::ALLOW_PRIVATE = "allow_private";
 
 
-GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), allowPrivate(false) {
+GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), shortestRoute(false), allowPrivate(false) {
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_STR& attributes) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minDefaultSpeed(10),  maxDefaultSpeed(10), shortestRoute(false), allowPrivate(false) {
     
     this->profile = profile;
     MAP_STR_STR::const_iterator it = attributes.begin();
@@ -32,7 +32,7 @@ GeneralRouter::GeneralRouter(const GeneralRouterProfile profile, const MAP_STR_S
     }
 }
 
-GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), allowPrivate(false) {
+GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& params) : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), leftTurn(.0), roundaboutTurn(.0), rightTurn(.0), minDefaultSpeed(10),  maxDefaultSpeed(10), shortestRoute(false), allowPrivate(false) {
     
     this->profile = parent.profile;
     MAP_STR_STR::const_iterator it = parent.attributes.begin();

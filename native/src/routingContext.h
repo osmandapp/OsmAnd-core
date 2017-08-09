@@ -145,8 +145,7 @@ struct RoutingContext {
     }
     
     RoutingContext(SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode calcMode = RouteCalculationMode::NORMAL) :
-		calculationMode(calcMode), routingTime(0), visitedSegments(0), loadedTiles(0), firstRoadDirection(0), firstRoadId(0), config(config), precalcRoute(new PrecalculatedRouteDirection()) {
-			precalcRoute->empty = true;
+		calculationMode(calcMode), routingTime(0), visitedSegments(0), loadedTiles(0), firstRoadDirection(0), firstRoadId(0), config(config), leftSideNavigation(false), precalcRoute(new PrecalculatedRouteDirection()) {
             this->basemap = RouteCalculationMode::BASE == calcMode;
 	}
 

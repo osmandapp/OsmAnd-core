@@ -178,7 +178,7 @@ void attachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
 
 void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
     for (int i = 0; i < result.size(); i++) {
-        ctx->unloadUnusedTiles(ctx->config->memoryLimitation);
+        //ctx->unloadUnusedTiles(ctx->config->memoryLimitation);
         
         auto rr = result[i];
         auto road = rr->object;
@@ -1291,7 +1291,7 @@ void printAdditionalPointInfo(SHARED_PTR<RouteSegmentResult> res) {
                 }
             }
             bld.append("/>");
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "\t%s", bld.c_str());
+            //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "\t%s", bld.c_str());
         }
         if (plus) {
             k++;
@@ -1375,7 +1375,7 @@ void printResults(RoutingContext* ctx, int startX, int startY, int endX, int end
             additional.append(hs).append("]").append("\" ");
             additional.append("description = \"").append(res->description).append("\" ");
             
-            OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "\t<segment id=\"%d\" oid=\"%lld\" start=\"%d\" end=\"%d\" %s/>", (res->object->getId() >> SHIFT_ID), res->object->getId(), res->getStartPointIndex(), res->getEndPointIndex(), additional.c_str());
+            //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug, "\t<segment id=\"%d\" oid=\"%lld\" start=\"%d\" end=\"%d\" %s/>", (res->object->getId() >> SHIFT_ID), res->object->getId(), res->getStartPointIndex(), res->getEndPointIndex(), additional.c_str());
             int inc = res->getStartPointIndex() < res->getEndPointIndex() ? 1 : -1;
             int indexnext = res->getStartPointIndex();
             int prevX = 0;

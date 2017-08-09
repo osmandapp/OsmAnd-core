@@ -28,7 +28,7 @@ struct PrecalculatedRouteDirection {
 	}
 
 public:
-    PrecalculatedRouteDirection() {
+    PrecalculatedRouteDirection() : empty(true) {
     }
 
 private:

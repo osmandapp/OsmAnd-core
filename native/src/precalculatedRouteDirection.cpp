@@ -14,6 +14,7 @@ PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<int>& x31, vecto
 }
 
 PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2) {
+    this->empty = parent.empty;
     this->minSpeed = parent.minSpeed;
     this->maxSpeed = parent.maxSpeed;
     times.assign(s2 - s1 + 1, .0f);
@@ -89,6 +90,7 @@ void PrecalculatedRouteDirection::init(vector<int>& x31, vector<int>& y31, vecto
         totDec -= times[i];
         this->times.push_back(totDec);
     }
+    empty = false;
 }
 
 void PrecalculatedRouteDirection::init(vector<SHARED_PTR<RouteSegmentResult> >& ls) {
