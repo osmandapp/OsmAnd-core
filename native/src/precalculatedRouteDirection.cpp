@@ -40,7 +40,7 @@ SHARED_PTR<PrecalculatedRouteDirection> PrecalculatedRouteDirection::build(vecto
             break;
         }
     }
-    int endi = (int)ls.size() - 1;
+    int endi = (int)ls.size();
     d = cutoffDistance;
     for (; endi > 0; endi--) {
         d -= ls[endi - 1]->distance;
@@ -83,6 +83,9 @@ void PrecalculatedRouteDirection::init(vector<int>& x31, vector<int>& y31, vecto
         // indexedPoints.registerObjectXY();
         totaltm += tm;
     }
+    pointsX.clear();
+    pointsY.clear();
+    this->times.clear();
     pointsX.insert(pointsX.end(), x31.begin(), x31.end());
     pointsY.insert(pointsY.end(), y31.begin(), y31.end());
     float totDec = totaltm;

@@ -178,7 +178,7 @@ vector<SHARED_PTR<RouteSegmentResult> > runRouting(RoutingContext* ctx, SHARED_P
     vector<SHARED_PTR<RouteSegmentResult> > result = searchRouteInternal(ctx, false);
     
     timer.Pause();
-    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] routing took %.3f seconds) ", (float)timer.GetElapsedMs() / 1000.0);
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] routing took %.3f seconds", (double)timer.GetElapsedMs() / 1000.0);
 
     if (recalculationEnd) {
         OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "[Native] use precalculated route");
@@ -190,9 +190,12 @@ vector<SHARED_PTR<RouteSegmentResult> > runRouting(RoutingContext* ctx, SHARED_P
             current = pr;
         }
     }
-    ctx->routingTime = ctx->progress->routingCalculatedTime;
-    ctx->visitedSegments = ctx->progress->visitedSegments;
-    ctx->loadedTiles = ctx->progress->loadedTiles;    
+    if (ctx->finalRouteSegment) {
+        ctx->progress->routingCalculatedTime = ctx->finalRouteSegment->distanceFromStart;
+        ctx->routingTime = ctx->progress->routingCalculatedTime;
+    }
+    ctx->progress->visitedSegments = ctx->visitedSegments;
+    ctx->progress->loadedTiles = ctx->loadedTiles;
     return prepareResult(ctx, result);
 }
 
