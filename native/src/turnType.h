@@ -31,7 +31,7 @@ private:
     bool possiblyRightTurn;
     
 public:
-    TurnType(int vl) : value(vl), exitOut(0), turnAngle(.0f), skipToSpeak(false), possiblyLeftTurn(false), possiblyRightTurn(false) {
+    TurnType(int vl) : value(vl), exitOut(0), turnAngle(0), skipToSpeak(false), possiblyLeftTurn(false), possiblyRightTurn(false) {
     }
     
     static TurnType valueOf(int vs, bool leftSide);
