@@ -74,7 +74,7 @@ LOCAL_STATIC_LIBRARIES := \
 	osmand_expat
 LOCAL_WHOLE_STATIC_LIBRARIES := osmand_skia
 
-LOCAL_LDLIBS := -lz -llog -ldl
+LOCAL_LDLIBS := -lz -llog -ldl -ljnigraphics
 # example of local shared library
 # LIB_PATH := /home/victor/projects/OsmAnd/avian-core/avian-arm/libavian_ms.so
 # LOCAL_SHARE_LIBRARIES := libavian_ms
