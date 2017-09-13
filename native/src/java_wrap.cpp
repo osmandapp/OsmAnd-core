@@ -219,8 +219,6 @@ void fillRenderingAttributes(JNIRenderingContext& rc, RenderingRuleSearchRequest
 extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLibrary_generateRenderingDirect( JNIEnv* ienv, jobject obj,
     jobject renderingContext, jlong searchResult, jobject targetBitmap, jobject renderingRuleSearchRequest) {
 
-	loadModuleJNIGraphics();
-
 	// Gain information about bitmap
 	AndroidBitmapInfo bitmapInfo;
 	if(AndroidBitmap_getInfo(ienv, targetBitmap, &bitmapInfo) != ANDROID_BITMAP_RESUT_SUCCESS)
