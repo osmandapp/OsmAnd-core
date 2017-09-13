@@ -215,49 +215,13 @@ void fillRenderingAttributes(JNIRenderingContext& rc, RenderingRuleSearchRequest
 #include <android/bitmap.h>
 
 // libJniGraphics interface
-typedef int (*PTR_AndroidBitmap_getInfo)(JNIEnv*, jobject, AndroidBitmapInfo*);
-typedef int (*PTR_AndroidBitmap_lockPixels)(JNIEnv*, jobject, void**);
-typedef int (*PTR_AndroidBitmap_unlockPixels)(JNIEnv*, jobject);
-static PTR_AndroidBitmap_getInfo dl_AndroidBitmap_getInfo = 0;
-static PTR_AndroidBitmap_lockPixels dl_AndroidBitmap_lockPixels = 0;
-static PTR_AndroidBitmap_unlockPixels dl_AndroidBitmap_unlockPixels = 0;
-static void* module_libjnigraphics = 0;
-
-void loadModuleJNIGraphics(){	
-	if(!module_libjnigraphics)
-	{
-		module_libjnigraphics = dlopen("jnigraphics", /*RTLD_NOLOAD*/0x0004);
-		if(!module_libjnigraphics) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "jnigraphics was not found in loaded libraries");
-			module_libjnigraphics = dlopen("jnigraphics", RTLD_NOW);
-		}
-		if(!module_libjnigraphics) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "jnigraphics was not loaded in default location");
-#if (__x86_64__ || __aarch64__)
-			module_libjnigraphics = dlopen("/system/lib64/libjnigraphics.so", RTLD_NOW);
-#else
-			module_libjnigraphics = dlopen("/system/lib/libjnigraphics.so", RTLD_NOW);
-#endif
-		}
-		if(!module_libjnigraphics)
-		{
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to load jnigraphics via dlopen, will going to crash");
-			return;
-		}
-		dl_AndroidBitmap_getInfo = (PTR_AndroidBitmap_getInfo)dlsym(module_libjnigraphics, "AndroidBitmap_getInfo");
-		dl_AndroidBitmap_lockPixels = (PTR_AndroidBitmap_lockPixels)dlsym(module_libjnigraphics, "AndroidBitmap_lockPixels");
-		dl_AndroidBitmap_unlockPixels = (PTR_AndroidBitmap_unlockPixels)dlsym(module_libjnigraphics, "AndroidBitmap_unlockPixels");
-	}
-}
 
 extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLibrary_generateRenderingDirect( JNIEnv* ienv, jobject obj,
     jobject renderingContext, jlong searchResult, jobject targetBitmap, jobject renderingRuleSearchRequest) {
 
-	loadModuleJNIGraphics();
-
 	// Gain information about bitmap
 	AndroidBitmapInfo bitmapInfo;
-	if(dl_AndroidBitmap_getInfo(ienv, targetBitmap, &bitmapInfo) != ANDROID_BITMAP_RESUT_SUCCESS)
+	if(AndroidBitmap_getInfo(ienv, targetBitmap, &bitmapInfo) != ANDROID_BITMAP_RESUT_SUCCESS)
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to execute AndroidBitmap_getInfo");
 
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Creating SkBitmap in native w:%d h:%d s:%d f:%d!", bitmapInfo.width, bitmapInfo.height, bitmapInfo.stride, bitmapInfo.format);
@@ -275,7 +239,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 	}
 
 	void* lockedBitmapData = NULL;
-	if(dl_AndroidBitmap_lockPixels(ienv, targetBitmap, &lockedBitmapData) != ANDROID_BITMAP_RESUT_SUCCESS || !lockedBitmapData) {
+	if(AndroidBitmap_lockPixels(ienv, targetBitmap, &lockedBitmapData) != ANDROID_BITMAP_RESUT_SUCCESS || !lockedBitmapData) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to execute AndroidBitmap_lockPixels");
 	}
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Locked %d bytes at %p", bitmapInfo.stride * bitmapInfo.height, lockedBitmapData);
@@ -307,7 +271,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_net_osmand_plus_render_NativeOsmandLib
 
 	pushToJavaRenderingContext(ienv, renderingContext, &rc);
 	OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "End Rendering image");
-	if(dl_AndroidBitmap_unlockPixels(ienv, targetBitmap) != ANDROID_BITMAP_RESUT_SUCCESS) {
+	if(AndroidBitmap_unlockPixels(ienv, targetBitmap) != ANDROID_BITMAP_RESUT_SUCCESS) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Failed to execute AndroidBitmap_unlockPixels");
 	}
 
