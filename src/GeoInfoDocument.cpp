@@ -65,3 +65,27 @@ OsmAnd::GeoInfoDocument::Route::Route()
 OsmAnd::GeoInfoDocument::Route::~Route()
 {
 }
+
+bool OsmAnd::GeoInfoDocument::hasRtePt() const
+{
+    for (auto& r : routes)
+        if (r->points.size() > 0)
+            return true;
+
+    return false;
+}
+
+bool OsmAnd::GeoInfoDocument::hasWptPt() const
+{
+    return locationMarks.size() > 0;
+}
+
+bool OsmAnd::GeoInfoDocument::hasTrkPt() const
+{
+    for (auto& t : tracks)
+        for (auto& ts : t->segments)
+            if (ts->points.size() > 0)
+                return true;
+
+    return false;
+}

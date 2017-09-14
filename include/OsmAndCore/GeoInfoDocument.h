@@ -118,6 +118,10 @@ namespace OsmAnd
         QList< Ref<Track> > tracks;
         QList< Ref<Route> > routes;
         Ref<ExtraData> extraData;
+        
+        bool hasRtePt() const;
+        bool hasWptPt() const;
+        bool hasTrkPt() const;
     };
 }
 
