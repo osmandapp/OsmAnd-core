@@ -27,7 +27,7 @@ public:
     SHARED_PTR<TurnType> turnType;
 
 	RouteSegmentResult(SHARED_PTR<RouteDataObject> object, int startPointIndex, int endPointIndex) :
-		startPointIndex(startPointIndex), endPointIndex(endPointIndex), object(object), routingTime(0), description("") {
+		startPointIndex(startPointIndex), endPointIndex(endPointIndex), object(object), segmentTime(0), segmentSpeed(0), routingTime(0), distance(0), description("") {
             updateCapacity();
 	}
     
