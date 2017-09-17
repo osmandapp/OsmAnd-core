@@ -112,7 +112,7 @@ private:
             if ("select" == rr->tagName) {
                 string val = attrValue(attrsMap, "value");
                 string type = rr->type;
-                RouteAttributeEvalRule* rule = ctx.newEvaluationRule();
+                auto rule = ctx.newEvaluationRule();
                 rule->registerSelectValue(val, type);
                 addSubclause(rr, ctx, currentRouter);
                 for (int i = 0; i < stack.size(); i++) {

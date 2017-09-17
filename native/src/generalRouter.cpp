@@ -47,7 +47,7 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
     parameters = parent.parameters;
     
     for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
-        newRouteAttributeContext();
+        newRouteAttributeContext(parent.objectAttributes[i], params);
     }
         
     this->allowPrivate = parseBool(params, GeneralRouterConstatns::ALLOW_PRIVATE, false);
@@ -107,13 +107,14 @@ dynbitset& increaseSize(dynbitset& t, uint targetSize) {
 	return t;
 }
 
-dynbitset& align(dynbitset& t, uint targetSize) {
-	if(t.size() < targetSize) {
-		t.resize(targetSize);
-	} else if(t.size() > targetSize) {
+dynbitset align(dynbitset& t, uint targetSize) {
+    dynbitset bitset(t);
+	if (t.size() < targetSize) {
+		bitset.resize(targetSize);
+	} else if (t.size() > targetSize) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Error, "Bitset %d is longer than target %d", t.size(), targetSize);
 	}
-	return t;
+	return bitset;
 }
 
 
@@ -492,14 +493,19 @@ double RouteAttributeEvalRule::calcSelectValue(dynbitset& types, ParameterContex
 	}
 	if (selectValueDef.length() > 0 && selectValueDef[0]=='$') {
 		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(selectValueDef.substr(1));
-		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types)) {
-			dynbitset findBit(ms->second.size());
-			findBit |= ms->second;
-			findBit &= types;
-			uint value = findBit.find_first();
-			double vd = router->parseValueFromTag(value, selectType, router);;
-			return vd;
-		}
+		if (ms != router->tagRuleMask.end())
+        {
+            dynbitset bitset = align(ms->second, types.size());
+            if (bitset.intersects(types))
+            {
+                dynbitset findBit(bitset.size());
+                findBit |= bitset;
+                findBit &= types;
+                uint value = findBit.find_first();
+                double vd = router->parseValueFromTag(value, selectType, router);;
+                return vd;
+            }
+        }
 	} else if (selectValueDef.length() > 0 && selectValueDef[0]==':') {
 		string p = selectValueDef.substr(1);
 		MAP_STR_STR::iterator it = paramContext.vars.find(p);
@@ -539,14 +545,18 @@ double RouteAttributeExpression::calculateExprValue(int id, dynbitset& types, Pa
 		return cacheValue;
 	}
 	if (value.length() > 0 && value[0]=='$') {
-		UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(value.substr(1));
-		if (ms != router->tagRuleMask.end() && align(ms->second, types.size()).intersects(types)) {
-			dynbitset findBit(ms->second.size());
-			findBit |= ms->second;
-			findBit &= types;
-			uint value = findBit.find_first();
-			return router->parseValueFromTag(value, valueType, router);
-		}
+        UNORDERED(map)<string, dynbitset >::iterator ms = router->tagRuleMask.find(value.substr(1));
+        if (ms != router->tagRuleMask.end())
+        {
+            dynbitset bitset = align(ms->second, types.size());
+            if (bitset.intersects(types)) {
+                dynbitset findBit(bitset.size());
+                findBit |= bitset;
+                findBit &= types;
+                uint value = findBit.find_first();
+                return router->parseValueFromTag(value, valueType, router);
+            }
+        }
 	} else if(value == ":incline") {
 		return paramContext.incline;
 	} else if (value.length() > 0 && value[0]==':') {
