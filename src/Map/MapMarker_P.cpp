@@ -178,84 +178,23 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
 
     int order = owner->baseOrder;
 
-    if (owner->isAccuracyCircleSupported)
-    {
-        // Add a circle that represent precision circle
-        const std::shared_ptr<AccuracyCircleMapSymbol> accuracyCircleSymbol(new AccuracyCircleMapSymbol(
-            symbolsGroup));
-        accuracyCircleSymbol->order = order++;
-        accuracyCircleSymbol->position31 = _position;
-        VectorMapSymbol::generateCirclePrimitive(*accuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
-        accuracyCircleSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
-        accuracyCircleSymbol->scale = _accuracyCircleRadius;
-        accuracyCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-        accuracyCircleSymbol->direction = Q_SNAN;
-        symbolsGroup->symbols.push_back(accuracyCircleSymbol);
-
-        // Add a ring-line that represent precision circle
-        const std::shared_ptr<AccuracyCircleMapSymbol> precisionRingSymbol(new AccuracyCircleMapSymbol(
-            symbolsGroup));
-        precisionRingSymbol->order = order++;
-        precisionRingSymbol->position31 = _position;
-        VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->accuracyCircleBaseColor.withAlpha(0.4f));
-        precisionRingSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
-        precisionRingSymbol->scale = _accuracyCircleRadius;
-        precisionRingSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
-        precisionRingSymbol->direction = Q_SNAN;
-        symbolsGroup->symbols.push_back(precisionRingSymbol);
-    }
-
-    // Set of OnSurfaceMapSymbol from onMapSurfaceIcons
-    for (const auto& itOnMapSurfaceIcon : rangeOf(constOf(owner->onMapSurfaceIcons)))
-    {
-        const auto key = itOnMapSurfaceIcon.key();
-        const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
-
-        std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
-        ok = onMapSurfaceIcon->deepCopyTo(iconClone.get());
-        assert(ok);
-
-        // Get direction
-        float direction = 0.0f;
-        const auto citDirection = _directions.constFind(key);
-        if (citDirection != _directions.cend())
-            direction = *citDirection;
-
-        const std::shared_ptr<KeyedOnSurfaceRasterMapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceRasterMapSymbol(
-            key,
-            symbolsGroup));
-        onMapSurfaceIconSymbol->order = order++;
-        onMapSurfaceIconSymbol->bitmap = iconClone;
-        onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
-        onMapSurfaceIconSymbol->content = QString().sprintf(
-            "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
-            this,
-            symbolsGroup.get(),
-            iconClone->getPixels());
-        onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
-        onMapSurfaceIconSymbol->position31 = _position;
-        onMapSurfaceIconSymbol->direction = direction;
-        onMapSurfaceIconSymbol->isHidden = _isHidden;
-        symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
-    }
-
     // SpriteMapSymbol with pinIconBitmap as an icon
     if (owner->pinIcon)
     {
         std::shared_ptr<SkBitmap> pinIcon(new SkBitmap());
         ok = owner->pinIcon->deepCopyTo(pinIcon.get());
         assert(ok);
-
+        
         const std::shared_ptr<BillboardRasterMapSymbol> pinIconSymbol(new BillboardRasterMapSymbol(
-            symbolsGroup));
+                                                                                                   symbolsGroup));
         pinIconSymbol->order = order++;
         pinIconSymbol->bitmap = pinIcon;
         pinIconSymbol->size = PointI(pinIcon->width(), pinIcon->height());
         pinIconSymbol->content = QString().sprintf(
-            "markerGroup(%p:%p)->pinIconBitmap:%p",
-            this,
-            symbolsGroup.get(),
-            pinIcon->getPixels());
+                                                   "markerGroup(%p:%p)->pinIconBitmap:%p",
+                                                   this,
+                                                   symbolsGroup.get(),
+                                                   pinIcon->getPixels());
         pinIconSymbol->languageId = LanguageId::Invariant;
         pinIconSymbol->position31 = _position;
         PointI offset;
@@ -289,6 +228,77 @@ std::shared_ptr<OsmAnd::MapMarker::SymbolsGroup> OsmAnd::MapMarker_P::inflateSym
         pinIconSymbol->isHidden = _isHidden;
         pinIconSymbol->modulationColor = _pinIconModulationColor;
         symbolsGroup->symbols.push_back(pinIconSymbol);
+    }
+    
+    order++;
+    
+    int surfOrder = order;
+    // Set of OnSurfaceMapSymbol from onMapSurfaceIcons
+    for (const auto& itOnMapSurfaceIcon : rangeOf(constOf(owner->onMapSurfaceIcons)))
+    {
+        const auto key = itOnMapSurfaceIcon.key();
+        const auto& onMapSurfaceIcon = itOnMapSurfaceIcon.value();
+        
+        std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
+        ok = onMapSurfaceIcon->deepCopyTo(iconClone.get());
+        assert(ok);
+        
+        // Get direction
+        float direction = 0.0f;
+        const auto citDirection = _directions.constFind(key);
+        if (citDirection != _directions.cend())
+            direction = *citDirection;
+        
+        const std::shared_ptr<KeyedOnSurfaceRasterMapSymbol> onMapSurfaceIconSymbol(new KeyedOnSurfaceRasterMapSymbol(
+                                                                                                                      key,
+                                                                                                                      symbolsGroup));
+        int o = (int)(surfOrder + (long)key);
+        if (order < o)
+            order = o;
+        
+        onMapSurfaceIconSymbol->order = o;
+        
+        onMapSurfaceIconSymbol->bitmap = iconClone;
+        onMapSurfaceIconSymbol->size = PointI(iconClone->width(), iconClone->height());
+        onMapSurfaceIconSymbol->content = QString().sprintf(
+                                                            "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
+                                                            this,
+                                                            symbolsGroup.get(),
+                                                            iconClone->getPixels());
+        onMapSurfaceIconSymbol->languageId = LanguageId::Invariant;
+        onMapSurfaceIconSymbol->position31 = _position;
+        onMapSurfaceIconSymbol->direction = direction;
+        onMapSurfaceIconSymbol->isHidden = _isHidden;
+        symbolsGroup->symbols.push_back(onMapSurfaceIconSymbol);
+    }
+    
+    order++;
+
+    if (owner->isAccuracyCircleSupported)
+    {
+        // Add a circle that represent precision circle
+        const std::shared_ptr<AccuracyCircleMapSymbol> accuracyCircleSymbol(new AccuracyCircleMapSymbol(
+            symbolsGroup));
+        accuracyCircleSymbol->order = order++;
+        accuracyCircleSymbol->position31 = _position;
+        VectorMapSymbol::generateCirclePrimitive(*accuracyCircleSymbol, owner->accuracyCircleBaseColor.withAlpha(0.25f));
+        accuracyCircleSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
+        accuracyCircleSymbol->scale = _accuracyCircleRadius;
+        accuracyCircleSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
+        accuracyCircleSymbol->direction = Q_SNAN;
+        symbolsGroup->symbols.push_back(accuracyCircleSymbol);
+
+        // Add a ring-line that represent precision circle
+        const std::shared_ptr<AccuracyCircleMapSymbol> precisionRingSymbol(new AccuracyCircleMapSymbol(
+            symbolsGroup));
+        precisionRingSymbol->order = order++;
+        precisionRingSymbol->position31 = _position;
+        VectorMapSymbol::generateRingLinePrimitive(*precisionRingSymbol, owner->accuracyCircleBaseColor.withAlpha(0.4f));
+        precisionRingSymbol->isHidden = _isHidden && !_isAccuracyCircleVisible;
+        precisionRingSymbol->scale = _accuracyCircleRadius;
+        precisionRingSymbol->scaleType = VectorMapSymbol::ScaleType::InMeters;
+        precisionRingSymbol->direction = Q_SNAN;
+        symbolsGroup->symbols.push_back(precisionRingSymbol);
     }
 
     return symbolsGroup;
