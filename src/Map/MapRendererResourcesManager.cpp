@@ -1499,7 +1499,7 @@ void OsmAnd::MapRendererResourcesManager::cleanupJunkResources(
 
         // Some checks are only valid for keyed resources
         std::shared_ptr<IMapDataProvider> provider_;
-        if (std::dynamic_pointer_cast<IMapRendererKeyedResourcesCollection>(resourcesCollection))
+        if (dataProvider != nullptr && std::dynamic_pointer_cast<IMapRendererKeyedResourcesCollection>(resourcesCollection))
         {
             const auto keyedDataProvider = std::static_pointer_cast<IMapKeyedDataProvider>(dataProvider);
             const auto providedKeysSet = keyedDataProvider->getProvidedDataKeys().toSet();
