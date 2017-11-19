@@ -311,7 +311,7 @@ SHARED_PTR<TurnType> processRoundaboutTurn(vector<SHARED_PTR<RouteSegmentResult>
     return t;
 }
 
-static string getTurnLanesString(SHARED_PTR<RouteSegmentResult> segment) {
+string getTurnLanesString(SHARED_PTR<RouteSegmentResult> segment) {
     if (segment->object->getOneway() == 0) {
         if (segment->isForwardDirection()) {
             return segment->object->getValue("turn:lanes:forward");
@@ -323,7 +323,7 @@ static string getTurnLanesString(SHARED_PTR<RouteSegmentResult> segment) {
     }
 }
 
-static vector<int> calculateRawTurnLanes(string turnLanes, int calcTurnType) {
+vector<int> calculateRawTurnLanes(string turnLanes, int calcTurnType) {
     vector<string> splitLaneOptions = split_string(turnLanes, "\\|");
     vector<int> lanes(splitLaneOptions.size());
     for (int i = 0; i < splitLaneOptions.size(); i++) {
@@ -468,7 +468,7 @@ int countLanesMinOne(SHARED_PTR<RouteSegmentResult> attached) {
     return max(1, (lns + 1) / 2);
 }
 
-static vector<int> parseTurnLanes(const SHARED_PTR<RouteDataObject>& ro, double dirToNorthEastPi) {
+vector<int> parseTurnLanes(const SHARED_PTR<RouteDataObject>& ro, double dirToNorthEastPi) {
     string turnLanes;
     if (ro->getOneway() == 0) {
         // we should get direction to detect forward or backward
@@ -485,6 +485,33 @@ static vector<int> parseTurnLanes(const SHARED_PTR<RouteDataObject>& ro, double 
         return vector<int>();
     }
     return calculateRawTurnLanes(turnLanes, 0);
+}
+
+vector<int> parseLanes(const SHARED_PTR<RouteDataObject>& ro, double dirToNorthEastPi) {
+    int lns = 0;
+    if (ro->getOneway() == 0) {
+        // we should get direction to detect forward or backward
+        double cmp = ro->directionRoute(0, true);
+        
+        if (abs(alignAngleDifference(dirToNorthEastPi -cmp)) < M_PI / 2) {
+            if (!ro->getValue("lanes:forward").empty()) {
+                lns = atoi(ro->getValue("lanes:forward").c_str());
+            }
+        } else {
+            if (!ro->getValue("lanes:backward").empty()) {
+                lns = atoi(ro->getValue("lanes:backward").c_str());
+            }
+        }
+        if (lns == 0 && !ro->getValue("lanes").empty()) {
+            lns = atoi(ro->getValue("lanes").c_str()) / 2;
+        }
+    } else {
+        lns = atoi(ro->getValue("lanes").c_str());
+    }
+    if (lns > 0 ) {
+        return vector<int>(lns);
+    }
+    return vector<int>();
 }
 
 RoadSplitStructure calculateRoadSplitStructure(SHARED_PTR<RouteSegmentResult> prevSegm, SHARED_PTR<RouteSegmentResult> currentSegm, vector<SHARED_PTR<RouteSegmentResult> >& attachedRoutes) {

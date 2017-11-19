@@ -11,10 +11,10 @@ const int RouteAttributeExpression::LESS_EXPRESSION = 1;
 const int RouteAttributeExpression::GREAT_EXPRESSION = 2;
 const int RouteAttributeExpression::EQUAL_EXPRESSION = 3;
 
-const double GeneralRouterConstatns::CAR_SHORTEST_DEFAULT_SPEED = 55/3.6f;
-const char* GeneralRouterConstatns::USE_SHORTEST_WAY = "short_way";
-const char* GeneralRouterConstatns::USE_HEIGHT_OBSTACLES = "height_obstacles";
-const char* GeneralRouterConstatns::ALLOW_PRIVATE = "allow_private";
+const double GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED = 55/3.6f;
+const char* GeneralRouterConstants::USE_SHORTEST_WAY = "short_way";
+const char* GeneralRouterConstants::USE_HEIGHT_OBSTACLES = "height_obstacles";
+const char* GeneralRouterConstants::ALLOW_PRIVATE = "allow_private";
 
 
 GeneralRouter::GeneralRouter() : profile(GeneralRouterProfile::CAR), _restrictionsAware(true), heightObstacles(false), minDefaultSpeed(10),  maxDefaultSpeed(10), shortestRoute(false), allowPrivate(false) {
@@ -50,11 +50,11 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
         newRouteAttributeContext(parent.objectAttributes[i], params);
     }
         
-    this->allowPrivate = parseBool(params, GeneralRouterConstatns::ALLOW_PRIVATE, false);
-    this->shortestRoute = parseBool(params, GeneralRouterConstatns::USE_SHORTEST_WAY, false);
-    this->heightObstacles = parseBool(params, GeneralRouterConstatns::USE_HEIGHT_OBSTACLES, false);
+    this->allowPrivate = parseBool(params, GeneralRouterConstants::ALLOW_PRIVATE, false);
+    this->shortestRoute = parseBool(params, GeneralRouterConstants::USE_SHORTEST_WAY, false);
+    this->heightObstacles = parseBool(params, GeneralRouterConstants::USE_HEIGHT_OBSTACLES, false);
     if (shortestRoute) {
-        maxDefaultSpeed = min(GeneralRouterConstatns::CAR_SHORTEST_DEFAULT_SPEED, this->maxDefaultSpeed);
+        maxDefaultSpeed = min(GeneralRouterConstants::CAR_SHORTEST_DEFAULT_SPEED, this->maxDefaultSpeed);
     }
 }
 
