@@ -1881,7 +1881,7 @@ bool hasEnding (std::string const &fullString, std::string const &ending)
     }
 }
 
-BinaryMapFile* initBinaryMapFile(std::string inputName) {
+BinaryMapFile* initBinaryMapFile(std::string inputName, bool useLive) {
 	GOOGLE_PROTOBUF_VERIFY_VERSION;
 	std::map<std::string, BinaryMapFile*>::iterator iterator;
 	closeBinaryMapFile(inputName);
@@ -1943,7 +1943,7 @@ BinaryMapFile* initBinaryMapFile(std::string inputName) {
 			mapFile->indexes.push_back(&mapFile->mapIndexes.back());
 		}
 
-		for (int i = 0; i < fo->routingindex_size() && !mapFile->liveMap; i++) {
+		for (int i = 0; i < fo->routingindex_size() && (!mapFile->liveMap || useLive); i++) {
 			RoutingIndex *mi = new RoutingIndex();
 			RoutingPart mp = fo->routingindex(i);
 			mi->filePointer = mp.offset();
