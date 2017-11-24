@@ -84,12 +84,12 @@ extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initCacheMap
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_net_osmand_NativeLibrary_initBinaryMapFile(JNIEnv* ienv,
-		jobject obj, jobject path) {
+		jobject obj, jobject path, jboolean useLive) {
 	// Verify that the version of the library that we linked against is
 	const char* utf = ienv->GetStringUTFChars((jstring) path, NULL);
 	std::string inputName(utf);
 	ienv->ReleaseStringUTFChars((jstring) path, utf);
-	BinaryMapFile* fl = initBinaryMapFile(inputName);
+	BinaryMapFile* fl = initBinaryMapFile(inputName, useLive);
 	if(fl == NULL) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "File %s was not initialized", inputName.c_str());
 	}
