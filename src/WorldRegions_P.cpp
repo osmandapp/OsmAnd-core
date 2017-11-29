@@ -51,6 +51,13 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
         auto regionParentNameAttributeId = std::numeric_limits<uint32_t>::max();
         auto osmandRegionId = std::numeric_limits<uint32_t>::max();
 
+        auto langAttributeId = std::numeric_limits<uint32_t>::max();
+        auto metricAttributeId = std::numeric_limits<uint32_t>::max();
+        auto roadSignsAttributeId = std::numeric_limits<uint32_t>::max();
+        auto leftHandDrivingAttributeId = std::numeric_limits<uint32_t>::max();
+        auto wikiLinkAttributeId = std::numeric_limits<uint32_t>::max();
+        auto populationAttributeId = std::numeric_limits<uint32_t>::max();
+
         bool attributesLocated = false;
         const auto worldRegionsCollector =
             [outRegions,
@@ -61,7 +68,14 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                 &downloadNameAttributeId,
                 &regionFullNameAttributeId,
                 &osmandRegionId,
-                &regionParentNameAttributeId]
+                &regionParentNameAttributeId,
+             
+                &langAttributeId,
+                &metricAttributeId,
+                &roadSignsAttributeId,
+                &leftHandDrivingAttributeId,
+                &wikiLinkAttributeId,
+                &populationAttributeId]
             (const std::shared_ptr<const OsmAnd::BinaryMapObject>& mapObject) -> bool
             {
                 if (!attributesLocated)
@@ -71,6 +85,13 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     const QString regionFullNameAttribute(QLatin1String("region_full_name"));
                     const QString regionParentNameAttribute(QLatin1String("region_parent_name"));
                     const QString osmandRegionAttribute(QLatin1String("osmand_region"));
+                    
+                    const QString fieldLangAttribute(QLatin1String("region_lang"));
+                    const QString fieldMetricAttribute(QLatin1String("region_metric"));
+                    const QString fieldRoadSignsAttribute(QLatin1String("region_road_signs"));
+                    const QString fieldLeftHandDrivingAttribute(QLatin1String("region_left_hand_navigation"));
+                    const QString fieldWikiLinkAttribute(QLatin1String("region_wiki_link"));
+                    const QString fieldPopulationAttribute(QLatin1String("region_population"));
 
                     const auto& encodeMap = mapObject->attributeMapping->encodeMap;
                     auto citAttributes = encodeMap.cend();
@@ -89,6 +110,24 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     
                     if ((citAttributes = encodeMap.constFind(&osmandRegionAttribute)) != encodeMap.cend())
                         osmandRegionId = citAttributes->constBegin().value();
+
+                    if ((citAttributes = encodeMap.constFind(&fieldLangAttribute)) != encodeMap.cend())
+                        langAttributeId = citAttributes->constBegin().value();
+                    
+                    if ((citAttributes = encodeMap.constFind(&fieldMetricAttribute)) != encodeMap.cend())
+                        metricAttributeId = citAttributes->constBegin().value();
+                    
+                    if ((citAttributes = encodeMap.constFind(&fieldRoadSignsAttribute)) != encodeMap.cend())
+                        roadSignsAttributeId = citAttributes->constBegin().value();
+                    
+                    if ((citAttributes = encodeMap.constFind(&fieldLeftHandDrivingAttribute)) != encodeMap.cend())
+                        leftHandDrivingAttributeId = citAttributes->constBegin().value();
+                    
+                    if ((citAttributes = encodeMap.constFind(&fieldWikiLinkAttribute)) != encodeMap.cend())
+                        wikiLinkAttributeId = citAttributes->constBegin().value();
+                    
+                    if ((citAttributes = encodeMap.constFind(&fieldPopulationAttribute)) != encodeMap.cend())
+                        populationAttributeId = citAttributes->constBegin().value();
 
                     attributesLocated = true;
                 }
@@ -115,6 +154,30 @@ bool OsmAnd::WorldRegions_P::loadWorldRegions(
                     else if (attributeId == regionParentNameAttributeId)
                     {
                         worldRegion->parentRegionName = value;
+                    }
+                    else if (attributeId == langAttributeId)
+                    {
+                        worldRegion->regionLang = value;
+                    }
+                    else if (attributeId == leftHandDrivingAttributeId)
+                    {
+                        worldRegion->regionLeftHandDriving = value;
+                    }
+                    else if (attributeId == metricAttributeId)
+                    {
+                        worldRegion->regionMetric = value;
+                    }
+                    else if (attributeId == roadSignsAttributeId)
+                    {
+                        worldRegion->regionRoadSigns = value;
+                    }
+                    else if (attributeId == wikiLinkAttributeId)
+                    {
+                        worldRegion->wikiLink = value;
+                    }
+                    else if (attributeId == populationAttributeId)
+                    {
+                        worldRegion->population = value;
                     }
                 }
                 worldRegion->nativeName = mapObject->getCaptionInNativeLanguage();

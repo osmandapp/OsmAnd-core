@@ -240,7 +240,7 @@ bool OsmAnd::AtlasMapRendererSymbolsStage::obtainRenderableSymbols(
 
 #if !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 const auto removed = intersections.removeOne(symbolRef.renderable, symbolRef.renderable->intersectionBBox);
-                assert(removed);
+                //assert(removed);
 #endif // !OSMAND_KEEP_DISCARDED_SYMBOLS_IN_QUAD_TREE
                 plottedSymbols.erase(symbolRef.iterator);
             }

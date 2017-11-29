@@ -29,6 +29,13 @@ namespace OsmAnd
         QString nativeName;
         QHash<QString, QString> localizedNames;
 
+        QString regionLeftHandDriving;
+        QString regionLang;
+        QString regionMetric;
+        QString regionRoadSigns;
+        QString wikiLink;
+        QString population;
+        
         std::shared_ptr<const OsmAnd::BinaryMapObject> mapObject;
     };
 }
