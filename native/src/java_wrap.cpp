@@ -1035,7 +1035,7 @@ vector<string> convertJArrayToStrings(JNIEnv* ienv, jobjectArray ar) {
 	return res;
 }
 
-void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, RouteAttributeEvalRule* erule, GeneralRouter* router) {
+void parseRouteAttributeEvalRule(JNIEnv* ienv, jobject rule, shared_ptr<RouteAttributeEvalRule> erule, GeneralRouter* router) {
 	jstring jselectValue = (jstring) ienv->GetObjectField(rule, jfield_RouteAttributeEvalRule_selectValueDef);
 	string selectValue = getString(ienv, jselectValue);
 	ienv->DeleteLocalRef(jselectValue);
@@ -1134,7 +1134,8 @@ void parseRouteConfiguration(JNIEnv* ienv, SHARED_PTR<RoutingConfiguration> rCon
 		
 		jobjectArray rules = (jobjectArray) ienv->CallObjectMethod(ctx, jmethod_RouteAttributeContext_getRules);
 		for(int j = 0; j < ienv->GetArrayLength(rules); j++) {
-			RouteAttributeEvalRule* erule = rctx->newEvaluationRule();
+		
+			shared_ptr<RouteAttributeEvalRule> erule = rctx->newEvaluationRule();
 			jobject rule = ienv->GetObjectArrayElement(rules, j);
 			parseRouteAttributeEvalRule(ienv, rule, erule, rConfig->router.get());
 			ienv->DeleteLocalRef(rule);
