@@ -45,7 +45,8 @@ GeneralRouter::GeneralRouter(const GeneralRouter& parent, const MAP_STR_STR& par
     tagRuleMask = parent.tagRuleMask;
     ruleToValue = parent.ruleToValue;
     parameters = parent.parameters;
-    
+    parametersList = parent.parametersList;
+
     for (int i = 0; i < (int)RouteDataObjectAttribute::COUNT; i++) {
         newRouteAttributeContext(parent.objectAttributes[i], params);
     }

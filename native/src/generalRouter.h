@@ -321,10 +321,11 @@ private:
     GeneralRouterProfile profile;
 	vector<RouteAttributeContext*> objectAttributes;
 	MAP_STR_STR attributes;
-	UNORDERED(map)<string, RoutingParameter> parameters; 
+    vector<RoutingParameter> parametersList;
+	UNORDERED(map)<string, RoutingParameter> parameters;
 	MAP_STR_INT universalRules;
-	vector<tag_value> universalRulesById;
-	UNORDERED(map)<string, dynbitset > tagRuleMask;
+    vector<tag_value> universalRulesById;
+    UNORDERED(map)<string, dynbitset > tagRuleMask;
 	vector<double> ruleToValue; // Object TODO;
 	
 	UNORDERED(map)<RoutingIndex*, MAP_INT_INT> regionConvert;
@@ -364,6 +365,10 @@ public:
         return parameters;
     }
 
+    vector<RoutingParameter>& getParametersList() {
+        return parametersList;
+    }
+
     void registerBooleanParameter(string id, string group, string name, string description, bool defaultValue) {
         RoutingParameter rp{};
         rp.group = group;
@@ -373,6 +378,7 @@ public:
         rp.type = RoutingParameterType::BOOLEAN;
         rp.defaultBoolean = defaultValue;
         parameters[rp.id] = rp;
+        parametersList.push_back(rp);
     }
     
     void registerNumericParameter(string id, string name, string description,
@@ -385,6 +391,7 @@ public:
         rp.possibleValueDescriptions = vlsDescriptions;
         rp.type = RoutingParameterType::NUMERIC;
         parameters[rp.id] = rp;
+        parametersList.push_back(rp);
     }
     
 	RouteAttributeContext* newRouteAttributeContext() {
