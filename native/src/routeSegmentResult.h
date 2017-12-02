@@ -37,8 +37,9 @@ public:
     vector<SHARED_PTR<RouteSegmentResult> > getAttachedRoutes(int routeInd);
 
     inline void updateCapacity() {
-        //int capacity = abs(endPointIndex - startPointIndex) + 1;
-        //attachedRoutesFrontEnd.reserve(capacity);
+        int capacity = abs(endPointIndex - startPointIndex) + 1;
+        int oldLength = attachedRoutesFrontEnd.size();
+        attachedRoutesFrontEnd.resize(min(oldLength, capacity));
     }
 
     inline int getStartPointIndex() const {

@@ -190,6 +190,11 @@ vector<SHARED_PTR<RouteSegmentResult> > runRouting(RoutingContext* ctx, SHARED_P
             current = pr;
         }
     }
+    if (!result.empty()) {
+        for (auto seg : result) {
+            seg->preAttachedRoutes = seg->attachedRoutes;
+        }
+    }
     if (ctx->finalRouteSegment) {
         ctx->progress->routingCalculatedTime = ctx->finalRouteSegment->distanceFromStart;
         ctx->routingTime = ctx->progress->routingCalculatedTime;
