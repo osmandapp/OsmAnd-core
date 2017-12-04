@@ -28,17 +28,18 @@ struct PrecalculatedRouteDirection {
 	}
 
 public:
-    PrecalculatedRouteDirection() : minSpeed(0.f), maxSpeed(0.f), startFinishTime(0.f), endFinishTime(0.f), followNext(false), startPoint(0), endPoint(0), empty(true) {
+    PrecalculatedRouteDirection() {
+        init();
     }
 
 private:
     PrecalculatedRouteDirection(vector<SHARED_PTR<RouteSegmentResult> >& ls, float maxSpeed);
-
     PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed);
-    
     PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2);
 
 private:
+    void init();
+    
     void init(vector<int>& x31, vector<int>& y31);
     void init(vector<int>& x31, vector<int>& y31, vector<float>& speedSegments);
     void init(vector<SHARED_PTR<RouteSegmentResult> >& ls);

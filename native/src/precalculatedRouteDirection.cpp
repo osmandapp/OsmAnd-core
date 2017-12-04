@@ -3,20 +3,23 @@
 #include "precalculatedRouteDirection.h"
 #include "routingContext.h"
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<SHARED_PTR<RouteSegmentResult> >& ls, float maxSpeed) : PrecalculatedRouteDirection() {
-
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<SHARED_PTR<RouteSegmentResult> >& ls, float maxSpeed) {
+    init();
+    
     this->maxSpeed = maxSpeed;
     init(ls);
 }
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed) : PrecalculatedRouteDirection() {
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed) {
+    init();
 
     this->maxSpeed = maxSpeed;
     init(x31, y31);
 }
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2) : PrecalculatedRouteDirection() {
-    
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2) {
+    init();
+
     this->empty = parent.empty;
     this->minSpeed = parent.minSpeed;
     this->maxSpeed = parent.maxSpeed;
@@ -32,6 +35,17 @@ PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirec
         quadTree.insert(shiftInd, rct);
         times[shiftInd] = parent.times[i] - parent.times[s2];
     }
+}
+
+void PrecalculatedRouteDirection::init() {
+    minSpeed = 0.f;
+    maxSpeed = 0.f;
+    startFinishTime = 0.f;
+    endFinishTime = 0.f;
+    followNext = false;
+    startPoint = 0;
+    endPoint = 0;
+    empty = true;
 }
 
 SHARED_PTR<PrecalculatedRouteDirection> PrecalculatedRouteDirection::build(vector<SHARED_PTR<RouteSegmentResult> >& ls, float cutoffDistance, float maxSpeed) {
