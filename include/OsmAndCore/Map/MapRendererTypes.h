@@ -87,7 +87,7 @@ namespace OsmAnd
     struct FogConfiguration Q_DECL_FINAL
     {
         FogConfiguration()
-            : distanceToFog(400.0f)
+            : distanceToFog(400.0f) //700
             , originFactor(0.36f)
             , heightOriginFactor(0.05f)
             , density(1.9f)
