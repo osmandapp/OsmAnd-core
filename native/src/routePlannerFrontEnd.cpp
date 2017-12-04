@@ -284,7 +284,7 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(Routin
     return results;
 }
 
-vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED_PTR<RoutingContext> ctx, int startX, int startY, int endX, int endY, vector<int> intermediatesX, vector<int> intermediatesY, SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
+vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED_PTR<RoutingContext> ctx, int startX, int startY, int endX, int endY, vector<int>& intermediatesX, vector<int>& intermediatesY, SHARED_PTR<PrecalculatedRouteDirection> routeDirection) {
     
     if (!ctx->progress) {
         ctx->progress = SHARED_PTR<RouteCalculationProgress>(new RouteCalculationProgress());
@@ -320,6 +320,7 @@ vector<SHARED_PTR<RouteSegmentResult> > RoutePlannerFrontEnd::searchRoute(SHARED
         vector<SHARED_PTR<RouteSegmentResult> > ls = searchRoute(nctx, startX, startY, endX, endY, intermediatesX, intermediatesY);
         routeDirection = PrecalculatedRouteDirection::build(ls, ctx->config->DEVIATION_RADIUS, ctx->config->router->maxDefaultSpeed);
     }
+    
     if (intermediatesEmpty) {
         ctx->startX = startX;
         ctx->startY = startY;

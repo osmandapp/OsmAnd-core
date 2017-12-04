@@ -28,7 +28,7 @@ struct PrecalculatedRouteDirection {
 	}
 
 public:
-    PrecalculatedRouteDirection() : empty(true) {
+    PrecalculatedRouteDirection() : minSpeed(0.f), maxSpeed(0.f), startFinishTime(0.f), endFinishTime(0.f), followNext(false), startPoint(0), endPoint(0), empty(true) {
     }
 
 private:

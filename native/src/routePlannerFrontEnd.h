@@ -38,7 +38,7 @@ public:
     vector<SHARED_PTR<RouteSegmentResult> > searchRoute(SHARED_PTR<RoutingContext> ctx,
                                            int startX, int startY,
                                            int endX, int endY,
-                                           vector<int> intermediatesX, vector<int> intermediatesY,
+                                           vector<int>& intermediatesX, vector<int>& intermediatesY,
                                            SHARED_PTR<PrecalculatedRouteDirection> routeDirection = nullptr);
 };
 

@@ -3,17 +3,20 @@
 #include "precalculatedRouteDirection.h"
 #include "routingContext.h"
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<SHARED_PTR<RouteSegmentResult> >& ls, float maxSpeed) {
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<SHARED_PTR<RouteSegmentResult> >& ls, float maxSpeed) : PrecalculatedRouteDirection() {
+
     this->maxSpeed = maxSpeed;
     init(ls);
 }
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed) {
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed) : PrecalculatedRouteDirection() {
+
     this->maxSpeed = maxSpeed;
     init(x31, y31);
 }
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2) {
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2) : PrecalculatedRouteDirection() {
+    
     this->empty = parent.empty;
     this->minSpeed = parent.minSpeed;
     this->maxSpeed = parent.maxSpeed;
