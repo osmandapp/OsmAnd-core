@@ -124,7 +124,33 @@ struct RouteDataObject {
 		}
 		return "";
 	}
-
+    
+    inline string getName(string& lang, bool transliterate) {
+        if (!names.empty()) {
+            if (lang.empty()) {
+                return names[region->nameTypeRule];
+            }
+            for (auto it = names.begin(); it != names.end(); ++it) {
+                int k = it->first;
+                if (region->decodingRules.size() > k) {
+                    if (("name:" + lang) == region->decodingRules[k].getTag()) {
+                        return names[k];
+                    }
+                }
+            }
+            string nmDef = names[region->nameTypeRule];
+            if (transliterate && !nmDef.empty()) {
+                //return Junidecode.unidecode(nmDef); TODO
+            }
+            return nmDef;
+        }
+        return "";
+    }
+    
+    inline string getName(string& lang) {
+        return getName(lang, false);
+    }
+    
     inline string getRef(string& lang, bool transliterate, bool direction) {
         if (!names.empty()) {
             if (lang.empty()) {
@@ -145,6 +171,80 @@ struct RouteDataObject {
             return refDefault;
         }
         return "";
+    }
+    
+    inline string getDestinationRef(bool direction) {
+        if (!names.empty()) {
+            string refTag = (direction == true) ? "destination:ref:forward" : "destination:ref:backward";
+            string refTagDefault = "destination:ref";
+            string refDefault = "";
+            
+            for (auto it = names.begin(); it != names.end(); ++it) {
+                int k = it->first;
+                if (region->decodingRules.size() > k) {
+                    if (refTag == region->decodingRules[k].getTag()) {
+                        return names[k];
+                    }
+                    if (refTagDefault == region->decodingRules[k].getTag()) {
+                        refDefault = names[k];
+                    }
+                }
+            }
+            if (!refDefault.empty()) {
+                return refDefault;
+            }
+            //return names.get(region.refTypeRule);
+        }
+        return "";
+    }
+    
+    inline string getDestinationName(string& lang, bool transliterate, bool direction) {
+        //Issue #3289: Treat destination:ref like a destination, not like a ref
+        string destRef = ((getDestinationRef(direction) == "") || getDestinationRef(direction) == getRef(lang, transliterate, direction)) ? "" : getDestinationRef(direction);
+        string destRef1 = ("" == destRef ? "" : destRef + ", ");
+        
+        if (!names.empty()) {
+            // Issue #3181: Parse destination keys in this order:
+            //              destination:lang:XX:forward/backward
+            //              destination:forward/backward
+            //              destination:lang:XX
+            //              destination
+            
+            string destinationTagLangFB = "destination:lang:XX";
+            if (!lang.empty()) {
+                destinationTagLangFB = (direction == true) ? "destination:lang:" + lang + ":forward" : "destination:lang:" + lang + ":backward";
+            }
+            string destinationTagFB = (direction == true) ? "destination:forward" : "destination:backward";
+            string destinationTagLang = "destination:lang:XX";
+            if (!lang.empty()) {
+                destinationTagLang = "destination:lang:" + lang;
+            }
+            string destinationTagDefault = "destination";
+            string destinationDefault = "";
+            
+            for (auto it = names.begin(); it != names.end(); ++it) {
+                int k = it->first;
+                if (region->decodingRules.size() > k) {
+
+                    if (!lang.empty() && destinationTagLangFB == region->decodingRules[k].getTag()) {
+                        return destRef1 + /*((transliterate) ? Junidecode.unidecode(names.get(k)) :*/ names[k]; // TODO
+                    }
+                    if (destinationTagFB == region->decodingRules[k].getTag()) {
+                        return destRef1 + /*((transliterate) ? Junidecode.unidecode(names.get(k)) :*/ names[k]; // TODO
+                    }
+                    if (!lang.empty() && destinationTagLang == region->decodingRules[k].getTag()) {
+                        return destRef1 + /*((transliterate) ? Junidecode.unidecode(names.get(k)) :*/ names[k]; // TODO
+                    }
+                    if (destinationTagDefault == region->decodingRules[k].getTag()) {
+                        destinationDefault = names[k];
+                    }
+                }
+            }
+            if (!destinationDefault.empty()) {
+                return destRef1 + /*((transliterate) ? Junidecode.unidecode(destinationDefault) :*/ destinationDefault; // TODO
+            }
+        }
+        return "" == destRef ? "" : destRef;
     }
     
 	inline int64_t getId() {
@@ -198,6 +298,7 @@ struct RouteDataObject {
         return restrictions[i] >> RESTRICTION_SHIFT;
     }
     
+    bool tunnel();
     int getOneway();
     string getValue(const string& tag);
 

@@ -4,7 +4,6 @@
 #include "commonOsmAndCore.h"
 #include "generalRouter.h"
 #include <algorithm>
-#include "Logging.h"
 
 struct RoutingRule {
     string tagName;
@@ -35,7 +34,7 @@ struct RoutingConfiguration {
     // 1.5 Recalculate distance help
     float recalculateDistance;
 
-    RoutingConfiguration(float initDirection = -360, int memLimit = 64) : router(new GeneralRouter()), memoryLimitation(memLimit), initialDirection(initDirection) {
+    RoutingConfiguration(float initDirection = -360, int memLimit = 64) : router(new GeneralRouter(GeneralRouterProfile::CAR)), memoryLimitation(memLimit), initialDirection(initDirection), zoomToLoad(16), heurCoefficient(1), planRoadDirection(0), routerName(""), recalculateDistance(20000.0f) {
     }
 
     string getAttribute(SHARED_PTR<GeneralRouter> router, string propertyName) {
@@ -80,9 +79,7 @@ public:
         SHARED_PTR<RoutingConfiguration> i = SHARED_PTR<RoutingConfiguration>(new RoutingConfiguration());
         if (routers.find(router) != routers.end()) {
             i->router = routers[router];
-            if (!params.empty()) {
-                i->router = i->router->build(params);
-            }
+            i->router = i->router->build(params);
             i->routerName = router;
         }
         attributes["routerName"] = router;

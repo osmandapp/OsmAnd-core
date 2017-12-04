@@ -1,13 +1,10 @@
 #ifndef _OSMAND_GENERAL_ROUTER_H
 #define _OSMAND_GENERAL_ROUTER_H
 
-
-
 #include "CommonCollections.h"
 #include "commonOsmAndCore.h"
 #include <algorithm>
 #include "boost/dynamic_bitset.hpp"
-#include "Logging.h"
 #include "binaryRead.h"
 
 struct RouteSegment;
@@ -24,6 +21,12 @@ typedef boost::dynamic_bitset<> dynbitset;
 
 #define DOUBLE_MISSING -1.1e9 // random big negative number
 
+struct GeneralRouterConstants {
+    static const double CAR_SHORTEST_DEFAULT_SPEED;
+    static const char* USE_SHORTEST_WAY;
+    static const char* USE_HEIGHT_OBSTACLES;
+    static const char* ALLOW_PRIVATE;
+};
 
 enum class RouteDataObjectAttribute : unsigned int {
 	ROAD_SPEED = 0, //"speed"
@@ -152,6 +155,10 @@ private:
 
 	void printRule(GeneralRouter* r);
 public:
+    
+    RouteAttributeEvalRule() : selectValue(0), selectValueDef(""), selectType("") {
+    }
+    
 	void registerAndTagValueCondition(GeneralRouter* r, string tag, string value, bool nt); 
 
 	// formated as [param1,-param2]
@@ -188,40 +195,65 @@ class RouteAttributeContext {
 	friend class GeneralRouter;
 
 private:
-	vector<RouteAttributeEvalRule*> rules;
+	vector<SHARED_PTR<RouteAttributeEvalRule> > rules;
 	ParameterContext paramContext ;
 	GeneralRouter* router;
 
 public: 
 	RouteAttributeContext(GeneralRouter* r) : router(r) {
 	}
-
-	~RouteAttributeContext() {
-		for (uint k = 0; k < rules.size(); k++) {
-			delete rules[k];
-		}
-	}
-
+    
+    RouteAttributeContext(GeneralRouter* r, RouteAttributeContext* original, MAP_STR_STR params) : router(r) {
+        if (!params.empty()) {
+            paramContext.vars = params;
+        }
+        for (auto rt : original->rules) {
+            if (checkParameter(rt)) {
+                rules.push_back(rt);
+            }
+        }
+    }
+    
+    bool checkParameter(SHARED_PTR<RouteAttributeEvalRule> r) {
+        if (r->parameters.size() > 0) {
+            for (string p : r->parameters) {
+                bool _not = false;
+                if (!p.empty() && p[0] == '-') {
+                    _not = true;
+                    p = p.substr(1);
+                }
+                auto& vars = paramContext.vars;
+                bool val = vars.find(p) != vars.end();
+                if (_not && val) {
+                    return false;
+                } else if (!_not && !val) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
 	void registerParams(vector<string>& keys, vector<string>& vls) {
 		for(uint i = 0; i < keys.size(); i++) {
 			paramContext.vars[keys[i]] = vls[i];
 		}
 	}
 
-	RouteAttributeEvalRule* newEvaluationRule() {
-		RouteAttributeEvalRule* c = new RouteAttributeEvalRule();
+	SHARED_PTR<RouteAttributeEvalRule> newEvaluationRule() {
+        auto c = std::make_shared<RouteAttributeEvalRule>();
 		rules.push_back(c);
 		return rules.back();
 	}
 
 	void printRules() {
 		for (uint k = 0; k < rules.size(); k++) {
-			RouteAttributeEvalRule* r = rules[k];
+			auto r = rules[k];
 			r->printRule(router);
 		}
 	}
 
-    RouteAttributeEvalRule* getLastRule() {
+    SHARED_PTR<RouteAttributeEvalRule> getLastRule() {
         return rules.back();
     }
 
@@ -289,10 +321,11 @@ private:
     GeneralRouterProfile profile;
 	vector<RouteAttributeContext*> objectAttributes;
 	MAP_STR_STR attributes;
-	UNORDERED(map)<string, RoutingParameter> parameters; 
+    vector<RoutingParameter> parametersList;
+	UNORDERED(map)<string, RoutingParameter> parameters;
 	MAP_STR_INT universalRules;
-	vector<tag_value> universalRulesById;
-	UNORDERED(map)<string, dynbitset > tagRuleMask;
+    vector<tag_value> universalRulesById;
+    UNORDERED(map)<string, dynbitset > tagRuleMask;
 	vector<double> ruleToValue; // Object TODO;
 	
 	UNORDERED(map)<RoutingIndex*, MAP_INT_INT> regionConvert;
@@ -332,6 +365,10 @@ public:
         return parameters;
     }
 
+    vector<RoutingParameter>& getParametersList() {
+        return parametersList;
+    }
+
     void registerBooleanParameter(string id, string group, string name, string description, bool defaultValue) {
         RoutingParameter rp{};
         rp.group = group;
@@ -341,6 +378,7 @@ public:
         rp.type = RoutingParameterType::BOOLEAN;
         rp.defaultBoolean = defaultValue;
         parameters[rp.id] = rp;
+        parametersList.push_back(rp);
     }
     
     void registerNumericParameter(string id, string name, string description,
@@ -353,6 +391,7 @@ public:
         rp.possibleValueDescriptions = vlsDescriptions;
         rp.type = RoutingParameterType::NUMERIC;
         parameters[rp.id] = rp;
+        parametersList.push_back(rp);
     }
     
 	RouteAttributeContext* newRouteAttributeContext() {
@@ -361,7 +400,13 @@ public:
 		return objectAttributes.back();
 	}
 
-	void addAttribute(string k, string v) ;
+    RouteAttributeContext* newRouteAttributeContext(RouteAttributeContext* original, const MAP_STR_STR& params) {
+        RouteAttributeContext *c = new RouteAttributeContext(this, original, params);
+        objectAttributes.push_back(c);
+        return objectAttributes.back();
+    }
+
+    void addAttribute(string k, string v) ;
 
 	bool containsAttribute(string attribute);
 	
@@ -440,13 +485,7 @@ public:
 	double calculateTurnTime(SHARED_PTR<RouteSegment> segment, int segmentEnd, 
 		SHARED_PTR<RouteSegment> prev, int prevSegmentEnd);
 
-
-	void printRules() {
-		for (uint k = 0; k < objectAttributes.size(); k++) {
-			OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "RouteAttributeContext  %d", k + 1);
-			objectAttributes[k]->printRules();
-		}
-	}
+    void printRules();
     
 private:
 

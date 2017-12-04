@@ -755,29 +755,29 @@ SHARED_PTR<RouteSegmentPoint> findRouteSegment(int px, int py, RoutingContext* c
 	return NULL;
 }
 
-bool combineTwoSegmentResult(RouteSegmentResult& toAdd, RouteSegmentResult& previous, bool reverse) {
-	bool ld = previous.getEndPointIndex() > previous.getStartPointIndex();
-	bool rd = toAdd.getEndPointIndex() > toAdd.getStartPointIndex();
+bool combineTwoSegmentResultPlanner(SHARED_PTR<RouteSegmentResult> toAdd, SHARED_PTR<RouteSegmentResult> previous, bool reverse) {
+	bool ld = previous->getEndPointIndex() > previous->getStartPointIndex();
+	bool rd = toAdd->getEndPointIndex() > toAdd->getStartPointIndex();
 	if (rd == ld) {
-		if (toAdd.getStartPointIndex() == previous.getEndPointIndex() && !reverse) {
-			previous.setEndPointIndex(toAdd.getEndPointIndex());
-			previous.routingTime = previous.routingTime + toAdd.routingTime;
+		if (toAdd->getStartPointIndex() == previous->getEndPointIndex() && !reverse) {
+			previous->setEndPointIndex(toAdd->getEndPointIndex());
+			previous->routingTime = previous->routingTime + toAdd->routingTime;
 			return true;
-		} else if (toAdd.getEndPointIndex() == previous.getStartPointIndex() && reverse) {
-			previous.setStartPointIndex(toAdd.getStartPointIndex());
-			previous.routingTime = previous.routingTime + toAdd.routingTime;
+		} else if (toAdd->getEndPointIndex() == previous->getStartPointIndex() && reverse) {
+			previous->setStartPointIndex(toAdd->getStartPointIndex());
+			previous->routingTime = previous->routingTime + toAdd->routingTime;
 			return true;
 		}
 	}
 	return false;
 }
 
-void addRouteSegmentToResult(vector<RouteSegmentResult>& result, RouteSegmentResult& res, bool reverse) {
-	if (res.getEndPointIndex() != res.getStartPointIndex()) {
+void addRouteSegmentToResult(vector<SHARED_PTR<RouteSegmentResult> >& result, SHARED_PTR<RouteSegmentResult> res, bool reverse) {
+	if (res->getEndPointIndex() != res->getStartPointIndex()) {
 		if (result.size() > 0) {
-			RouteSegmentResult& last = result.back();
-			if (last.object->id == res.object->id) {
-				if (combineTwoSegmentResult(res, last, reverse)) {
+			auto last = result.back();
+			if (last->object->id == res->object->id) {
+				if (combineTwoSegmentResultPlanner(res, last, reverse)) {
 					return;
 				}
 			}
@@ -786,25 +786,24 @@ void addRouteSegmentToResult(vector<RouteSegmentResult>& result, RouteSegmentRes
 	}
 }
 
-void attachConnectedRoads(RoutingContext* ctx, vector<RouteSegmentResult>& res) {
-	vector<RouteSegmentResult>::iterator it = res.begin();
-	for (; it != res.end(); it++) {
+void attachConnectedRoads(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& res) {
+    for (auto it : res) {
 		bool plus = it->getStartPointIndex() < it->getEndPointIndex();
 		int j = it->getStartPointIndex();
 		do {
 			SHARED_PTR<RouteSegment> s = ctx->loadRouteSegment(it->object->pointsX[j], it->object->pointsY[j]);
-			vector<RouteSegmentResult> r;
+			vector<SHARED_PTR<RouteSegmentResult> > r;
 			RouteSegment* rs = s.get();
 			while(rs != NULL) {
-				RouteSegmentResult res(rs->road, rs->getSegmentStart(), rs->getSegmentStart());
+                auto res = std::make_shared<RouteSegmentResult>(rs->road, rs->getSegmentStart(), rs->getSegmentStart());
 				r.push_back(res);
 				rs = rs->next.get();
 			}
 			it->attachedRoutes.push_back(r);
 			j = plus ? j + 1 : j - 1;
-		}while(j != it->getEndPointIndex());
+            
+		} while (j != it->getEndPointIndex());
 	}
-
 }
 
 void processOneRoadIntersection(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegments,
@@ -856,18 +855,18 @@ void processOneRoadIntersection(RoutingContext* ctx, SEGMENTS_QUEUE& graphSegmen
 }
 
 float calcRoutingTime(float parentRoutingTime, SHARED_PTR<RouteSegment> finalSegment, 
-	SHARED_PTR<RouteSegment> segment, RouteSegmentResult& res) {
-	if(segment.get() != finalSegment.get()) {
-		if(parentRoutingTime != -1) {
-			res.routingTime = parentRoutingTime - segment->distanceFromStart;
+	SHARED_PTR<RouteSegment> segment, SHARED_PTR<RouteSegmentResult> res) {
+	if (segment.get() != finalSegment.get()) {
+		if (parentRoutingTime != -1) {
+			res->routingTime = parentRoutingTime - segment->distanceFromStart;
 		}
 		parentRoutingTime = segment->distanceFromStart;
 	}
 	return parentRoutingTime;
-
 }
-vector<RouteSegmentResult> convertFinalSegmentToResults(RoutingContext* ctx, SHARED_PTR<RouteSegment> finalSegment) {
-	vector<RouteSegmentResult> result;
+
+vector<SHARED_PTR<RouteSegmentResult> > convertFinalSegmentToResults(RoutingContext* ctx, SHARED_PTR<RouteSegment> finalSegment) {
+	vector<SHARED_PTR<RouteSegmentResult> > result;
 	if (finalSegment.get() != NULL) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Routing calculated time distance %f", finalSegment->distanceFromStart);
 		// Get results from opposite direction roads
@@ -877,7 +876,7 @@ vector<RouteSegmentResult> convertFinalSegmentToResults(RoutingContext* ctx, SHA
 					finalSegment->opposite->parentSegmentEnd;
 		float parentRoutingTime = -1;
 		while (segment.get() != NULL) {
-			RouteSegmentResult res(segment->road, parentSegmentStart, segment->getSegmentStart());
+            auto res = std::make_shared<RouteSegmentResult>(segment->road, parentSegmentStart, segment->getSegmentStart());
 			parentRoutingTime = calcRoutingTime(parentRoutingTime, finalSegment, segment, res);
 			parentSegmentStart = segment->parentSegmentEnd;
 			segment = segment->parentRoute;
@@ -892,7 +891,7 @@ vector<RouteSegmentResult> convertFinalSegmentToResults(RoutingContext* ctx, SHA
 						finalSegment->opposite->parentSegmentEnd : finalSegment->opposite->getSegmentStart();
 		parentRoutingTime = -1;
 		while (segment.get() != NULL) {
-			RouteSegmentResult res(segment->road, segment->getSegmentStart(), parentSegmentEnd);
+			auto res = std::make_shared<RouteSegmentResult>(segment->road, segment->getSegmentStart(), parentSegmentEnd);
 			parentRoutingTime = calcRoutingTime(parentRoutingTime, finalSegment, segment, res);
 			parentSegmentEnd = segment->parentSegmentEnd;
 			segment = segment->parentRoute;
@@ -905,14 +904,14 @@ vector<RouteSegmentResult> convertFinalSegmentToResults(RoutingContext* ctx, SHA
 	return result;
 }
 
-vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSideNavigation) {	
+vector<SHARED_PTR<RouteSegmentResult> > searchRouteInternal(RoutingContext* ctx, bool leftSideNavigation) {
 	SHARED_PTR<RouteSegmentPoint> start = findRouteSegment(ctx->startX, ctx->startY, ctx);
 	if(start.get() == NULL) {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "Start point was not found [Native]");
 		if(ctx->progress.get()) {
 			ctx->progress->setSegmentNotFound(0);
 		}
-		return vector<RouteSegmentResult>();
+		return vector<SHARED_PTR<RouteSegmentResult> >();
 	} else {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "Start point was found %lld [Native]", start->road->id);
 	}
@@ -922,12 +921,12 @@ vector<RouteSegmentResult> searchRouteInternal(RoutingContext* ctx, bool leftSid
 			ctx->progress->setSegmentNotFound(1);
 		}
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Warning, "End point was not found [Native]");
-		return vector<RouteSegmentResult>();
+		return vector<SHARED_PTR<RouteSegmentResult> >();
 	} else {
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "End point was found %lld [Native]", end->road->id);
 	}
 	SHARED_PTR<RouteSegment> finalSegment = searchRouteInternal(ctx, start, end, leftSideNavigation);
-	vector<RouteSegmentResult> res = convertFinalSegmentToResults(ctx, finalSegment);
+	vector<SHARED_PTR<RouteSegmentResult> > res = convertFinalSegmentToResults(ctx, finalSegment);
 	attachConnectedRoads(ctx, res);
 	return res;
 }

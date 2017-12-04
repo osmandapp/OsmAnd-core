@@ -108,7 +108,7 @@ struct RoutingContext {
 	int targetY;
 	bool basemap;
 
-    vector<RouteSegmentResult> previouslyCalculatedRoute;
+    vector<SHARED_PTR<RouteSegmentResult> > previouslyCalculatedRoute;
     SHARED_PTR<PrecalculatedRouteDirection> precalcRoute;
 	SHARED_PTR<RouteSegment> finalRouteSegment;
 
@@ -122,6 +122,7 @@ struct RoutingContext {
         this->config = cp->config;
         this->calculationMode = cp->calculationMode;
         this->leftSideNavigation = cp->leftSideNavigation;
+        this->basemap = cp->basemap;
         // copy local data and clear caches
         auto it = cp->subregionTiles.begin();
         for(;it != cp->subregionTiles.end(); it++) {
@@ -144,8 +145,8 @@ struct RoutingContext {
     }
     
     RoutingContext(SHARED_PTR<RoutingConfiguration> config, RouteCalculationMode calcMode = RouteCalculationMode::NORMAL) :
-		calculationMode(calcMode), routingTime(0), visitedSegments(0), loadedTiles(0), firstRoadDirection(0), firstRoadId(0), config(config), precalcRoute(new PrecalculatedRouteDirection()) {
-			precalcRoute->empty = true;
+		calculationMode(calcMode), routingTime(0), visitedSegments(0), loadedTiles(0), firstRoadDirection(0), firstRoadId(0), config(config), leftSideNavigation(false), precalcRoute(new PrecalculatedRouteDirection()) {
+            this->basemap = RouteCalculationMode::BASE == calcMode;
 	}
 
     void unloadAllData(RoutingContext* except = NULL) {

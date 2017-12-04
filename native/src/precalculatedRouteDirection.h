@@ -28,11 +28,11 @@ struct PrecalculatedRouteDirection {
 	}
 
 public:
-    PrecalculatedRouteDirection() {
+    PrecalculatedRouteDirection() : minSpeed(0.f), maxSpeed(0.f), startFinishTime(0.f), endFinishTime(0.f), followNext(false), startPoint(0), endPoint(0), empty(true) {
     }
 
 private:
-    PrecalculatedRouteDirection(vector<RouteSegmentResult>& ls, float maxSpeed);
+    PrecalculatedRouteDirection(vector<SHARED_PTR<RouteSegmentResult> >& ls, float maxSpeed);
 
     PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed);
     
@@ -41,10 +41,10 @@ private:
 private:
     void init(vector<int>& x31, vector<int>& y31);
     void init(vector<int>& x31, vector<int>& y31, vector<float>& speedSegments);
-    void init(vector<RouteSegmentResult>& ls);
+    void init(vector<SHARED_PTR<RouteSegmentResult> >& ls);
 
 public:
-    static SHARED_PTR<PrecalculatedRouteDirection> build(vector<RouteSegmentResult>& ls, float cutoffDistance, float maxSpeed);
+    static SHARED_PTR<PrecalculatedRouteDirection> build(vector<SHARED_PTR<RouteSegmentResult> >& ls, float cutoffDistance, float maxSpeed);
     static SHARED_PTR<PrecalculatedRouteDirection> build(vector<int>& x31, vector<int>& y31, float maxSpeed);
 
     SHARED_PTR<PrecalculatedRouteDirection> adopt(RoutingContext* ctx);

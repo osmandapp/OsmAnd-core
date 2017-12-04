@@ -3,6 +3,7 @@
 #include "routingConfiguration.h"
 #include "generalRouter.h"
 #include <expat.h>
+#include "Logging.h"
 
 class RoutingRulesHandler {
 private:
@@ -78,10 +79,10 @@ private:
     
     static void addSubclause(RoutingRule* rr, RouteAttributeContext& ctx, SHARED_PTR<GeneralRouter> currentRouter) {
         bool no = "ifnot" == rr->tagName;
-        if (rr->param != "") {
+        if (!rr->param.empty()) {
             ctx.getLastRule()->registerAndParamCondition(rr->param, no);
         }
-        if (rr->t != "") {
+        if (!rr->t.empty()) {
             ctx.getLastRule()->registerAndTagValueCondition(currentRouter.get(), rr->t, rr->v, no);
         }
         if (rr->tagName == "gt") {
@@ -111,7 +112,7 @@ private:
             if ("select" == rr->tagName) {
                 string val = attrValue(attrsMap, "value");
                 string type = rr->type;
-                RouteAttributeEvalRule* rule = ctx.newEvaluationRule();
+                auto rule = ctx.newEvaluationRule();
                 rule->registerSelectValue(val, type);
                 addSubclause(rr, ctx, currentRouter);
                 for (int i = 0; i < stack.size(); i++) {

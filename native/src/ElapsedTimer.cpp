@@ -30,7 +30,7 @@ void OsmAnd::ElapsedTimer::Pause()
 {
 	if (!isRunning)
 		return;
-    elapsed += (high_resolution_clock::now() - startPoint);
+    elapsed = (high_resolution_clock::now() - startPoint);
 	isRunning = false;
 }
 
@@ -45,3 +45,4 @@ uint64_t OsmAnd::ElapsedTimer::GetElapsedMs()
     Pause();
     return std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
 }
+

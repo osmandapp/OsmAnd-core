@@ -3,19 +3,26 @@
 #include "precalculatedRouteDirection.h"
 #include "routingContext.h"
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<RouteSegmentResult>& ls, float maxSpeed) {
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<SHARED_PTR<RouteSegmentResult> >& ls, float maxSpeed) : PrecalculatedRouteDirection() {
+
     this->maxSpeed = maxSpeed;
     init(ls);
 }
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed) {
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(vector<int>& x31, vector<int>& y31, float maxSpeed) : PrecalculatedRouteDirection() {
+
     this->maxSpeed = maxSpeed;
     init(x31, y31);
 }
 
-PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2) {
+PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirection& parent, int s1, int s2) : PrecalculatedRouteDirection() {
+    
+    this->empty = parent.empty;
     this->minSpeed = parent.minSpeed;
     this->maxSpeed = parent.maxSpeed;
+    times.assign(s2 - s1 + 1, .0f);
+    pointsX.assign(s2 - s1 + 1, 0);
+    pointsY.assign(s2 - s1 + 1, 0);
     for (int i = s1; i <= s2; i++) {
         int shiftInd = i - s1;
         pointsX[shiftInd] = parent.pointsX[i];
@@ -27,25 +34,25 @@ PrecalculatedRouteDirection::PrecalculatedRouteDirection(PrecalculatedRouteDirec
     }
 }
 
-SHARED_PTR<PrecalculatedRouteDirection> PrecalculatedRouteDirection::build(vector<RouteSegmentResult>& ls, float cutoffDistance, float maxSpeed) {
+SHARED_PTR<PrecalculatedRouteDirection> PrecalculatedRouteDirection::build(vector<SHARED_PTR<RouteSegmentResult> >& ls, float cutoffDistance, float maxSpeed) {
     int begi = 0;
     float d = cutoffDistance;
     for (; begi < ls.size(); begi++) {
-        d -= ls[begi].distance;
+        d -= ls[begi]->distance;
         if (d < 0) {
             break;
         }
     }
-    int endi = ls.size() - 1;
+    int endi = (int)ls.size();
     d = cutoffDistance;
     for (; endi > 0; endi--) {
-        d -= ls[endi - 1].distance;
+        d -= ls[endi - 1]->distance;
         if (d < 0) {
             break;
         }
     }
     if (begi < endi) {
-        vector<RouteSegmentResult> sublist(ls.begin() + begi, ls.begin() + endi);
+        vector<SHARED_PTR<RouteSegmentResult> > sublist(ls.begin() + begi, ls.begin() + endi);
         return SHARED_PTR<PrecalculatedRouteDirection>(new PrecalculatedRouteDirection(sublist, maxSpeed));
     }
     return nullptr;
@@ -79,30 +86,34 @@ void PrecalculatedRouteDirection::init(vector<int>& x31, vector<int>& y31, vecto
         // indexedPoints.registerObjectXY();
         totaltm += tm;
     }
+    pointsX.clear();
+    pointsY.clear();
+    this->times.clear();
     pointsX.insert(pointsX.end(), x31.begin(), x31.end());
     pointsY.insert(pointsY.end(), y31.begin(), y31.end());
     float totDec = totaltm;
     for(int i = 0; i < times.size(); i++) {
         totDec -= times[i];
-        times[i] = totDec;
+        this->times.push_back(totDec);
     }
+    empty = false;
 }
 
-void PrecalculatedRouteDirection::init(vector<RouteSegmentResult>& ls) {
+void PrecalculatedRouteDirection::init(vector<SHARED_PTR<RouteSegmentResult> >& ls) {
     vector<int> x31;
     vector<int> y31;
     vector<float> speedSegments;
-    for (RouteSegmentResult s : ls) {
-        bool plus = s.getStartPointIndex() < s.getEndPointIndex();
-        int i = s.getStartPointIndex();
-        SHARED_PTR<RouteDataObject> obj = s.object;
-        float routeSpd = (s.routingTime == 0 || s.distance == 0) ? maxSpeed : (s.distance / s.routingTime);
+    for (auto s : ls) {
+        bool plus = s->getStartPointIndex() < s->getEndPointIndex();
+        int i = s->getStartPointIndex();
+        SHARED_PTR<RouteDataObject> obj = s->object;
+        float routeSpd = (s->routingTime == 0 || s->distance == 0) ? maxSpeed : (s->distance / s->routingTime);
         while (true) {
             i = plus? i + 1 : i -1;
             x31.push_back(obj->pointsX[i]);
             y31.push_back(obj->pointsY[i]);
             speedSegments.push_back(routeSpd);
-            if (i == s.getEndPointIndex()) {
+            if (i == s->getEndPointIndex()) {
                 break;
             }
         }

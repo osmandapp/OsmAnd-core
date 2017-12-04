@@ -5,7 +5,6 @@
 #include "binaryRead.h"
 #include "turnType.h"
 #include <algorithm>
-#include "Logging.h"
 
 struct RouteSegmentResult {
 private:
@@ -18,27 +17,29 @@ public:
     float segmentSpeed;
 	float routingTime;
     float distance;
-	vector<vector<RouteSegmentResult> > attachedRoutes;
-    vector<vector<RouteSegmentResult> > attachedRoutesFrontEnd;
-    vector<vector<RouteSegmentResult> > preAttachedRoutes;
+	vector<vector<SHARED_PTR<RouteSegmentResult> > > attachedRoutes;
+    vector<vector<SHARED_PTR<RouteSegmentResult> > > attachedRoutesFrontEnd;
+    vector<vector<SHARED_PTR<RouteSegmentResult> > > preAttachedRoutes;
 
     string description;
+    
     // this make not possible to make turns in between segment result for now
     SHARED_PTR<TurnType> turnType;
 
 	RouteSegmentResult(SHARED_PTR<RouteDataObject> object, int startPointIndex, int endPointIndex) :
-		startPointIndex(startPointIndex), endPointIndex(endPointIndex), object(object), routingTime(0), description("") {
+		startPointIndex(startPointIndex), endPointIndex(endPointIndex), object(object), segmentTime(0), segmentSpeed(0), routingTime(0), distance(0), description("") {
             updateCapacity();
 	}
     
-    void attachRoute(int roadIndex, RouteSegmentResult& r);
-    void copyPreattachedRoutes(RouteSegmentResult& toCopy, int shift);
-    vector<RouteSegmentResult> getPreAttachedRoutes(int routeInd);
-    vector<RouteSegmentResult> getAttachedRoutes(int routeInd);
+    void attachRoute(int roadIndex, SHARED_PTR<RouteSegmentResult> r);
+    void copyPreattachedRoutes(SHARED_PTR<RouteSegmentResult> toCopy, int shift);
+    vector<SHARED_PTR<RouteSegmentResult> > getPreAttachedRoutes(int routeInd);
+    vector<SHARED_PTR<RouteSegmentResult> > getAttachedRoutes(int routeInd);
 
     inline void updateCapacity() {
-        //int capacity = abs(endPointIndex - startPointIndex) + 1;
-        //attachedRoutesFrontEnd.reserve(capacity);
+        int capacity = abs(endPointIndex - startPointIndex) + 1;
+        int oldLength = attachedRoutesFrontEnd.size();
+        attachedRoutesFrontEnd.resize(min(oldLength, capacity));
     }
 
     inline int getStartPointIndex() const {

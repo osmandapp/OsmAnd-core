@@ -14,7 +14,6 @@ public:
     int visitedSegments;
     int loadedTiles;
 
-protected:
 	bool cancelled;
     
 public:
@@ -33,8 +32,8 @@ public:
 
 	virtual void updateStatus(float distanceFromBegin,	int directSegmentQueueSize,	float distanceFromEnd,
 			int reverseSegmentQueueSize) {
-		this->distanceFromBegin = max(distanceFromBegin, this->distanceFromBegin );
-		this->distanceFromEnd = max(distanceFromEnd,this->distanceFromEnd);
+		this->distanceFromBegin = fmax(distanceFromBegin, this->distanceFromBegin );
+		this->distanceFromEnd = fmax(distanceFromEnd,this->distanceFromEnd);
 		this->directSegmentQueueSize = directSegmentQueueSize;
 		this->reverseSegmentQueueSize = reverseSegmentQueueSize;
 	}
