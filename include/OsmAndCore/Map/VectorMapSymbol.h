@@ -33,6 +33,7 @@ namespace OsmAnd
             Invalid = -1,
 
             TriangleFan,
+            TriangleStrip,
             LineLoop
         };
 
@@ -73,6 +74,11 @@ namespace OsmAnd
             const FColorARGB color = FColorARGB(1.0f, 1.0f, 1.0f, 1.0f),
             const unsigned int pointsCount = 360,
             float radius = 1.0f);
+
+        static void generateLinePrimitive(
+            VectorMapSymbol& mapSymbol,
+            const float lineWidth = 3.0f,
+            const FColorARGB color = FColorARGB(1.0f, 1.0f, 1.0f, 1.0f));
     };
 }
 

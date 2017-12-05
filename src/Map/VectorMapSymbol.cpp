@@ -117,3 +117,11 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
         pVertex += 1;
     }
 }
+
+void OsmAnd::VectorMapSymbol::generateLinePrimitive(
+    VectorMapSymbol& mapSymbol,
+    const float lineWidth /*= 3.0f*/,
+    const FColorARGB color /*= FColorARGB(1.0f, 1.0f, 1.0f, 1.0f)*/)
+{
+
+}
