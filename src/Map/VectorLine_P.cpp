@@ -76,7 +76,6 @@ bool OsmAnd::VectorLine_P::applyChanges()
             if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorLineMapSymbol>(symbol_))
             {
                 symbol->setPoints31(_points);
-                symbol->isHidden = _isHidden;
             }
         }
     }
@@ -90,8 +89,6 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
 {
     QReadLocker scopedLocker(&_lock);
 
-    bool ok;
-
     // Construct new map symbols group for this marker
     const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup(new VectorLine::SymbolsGroup(
         std::const_pointer_cast<VectorLine_P>(shared_from_this())));
@@ -99,16 +96,16 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
 
     int order = owner->baseOrder;
 
-    if (!owner->getPoints().empty())
+    if (!_points.empty())
     {
         const std::shared_ptr<OnSurfaceVectorLineMapSymbol> vectorLine(new OnSurfaceVectorLineMapSymbol(
             symbolsGroup));
         vectorLine->order = order++;
         vectorLine->setPoints31(_points);
-        VectorMapSymbol::generateLinePrimitive(*vectorLine, owner->lineWidth, owner->fillColor);
+        VectorMapSymbol::generateLinePrimitive(*vectorLine, _points, owner->lineWidth, owner->fillColor);
         vectorLine->isHidden = _isHidden;
         vectorLine->scale = 1.0f;
-        vectorLine->scaleType = VectorMapSymbol::ScaleType::Raw;
+        vectorLine->scaleType = VectorMapSymbol::ScaleType::InMeters;
         vectorLine->direction = Q_SNAN;
         symbolsGroup->symbols.push_back(vectorLine);
     }

@@ -5,8 +5,11 @@
 
 #include <OsmAndCore/QtExtensions.h>
 
+#include <QVector>
+
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Map/MapSymbol.h>
 
 namespace OsmAnd
@@ -77,6 +80,7 @@ namespace OsmAnd
 
         static void generateLinePrimitive(
             VectorMapSymbol& mapSymbol,
+            const QVector<PointI>& points,
             const double lineWidth = 3.0,
             const FColorARGB color = FColorARGB(1.0f, 1.0f, 1.0f, 1.0f));
     };

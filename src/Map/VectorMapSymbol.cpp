@@ -120,12 +120,13 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
 
 void OsmAnd::VectorMapSymbol::generateLinePrimitive(
     VectorMapSymbol& mapSymbol,
+    const QVector<PointI>& points,
     const double lineWidth /*= 3.0*/,
     const FColorARGB color /*= FColorARGB(1.0f, 1.0f, 1.0f, 1.0f)*/)
 {
     mapSymbol.releaseVerticesAndIndices();
 
-    int pointsCount = 360;
+    int pointsCount = points.size();
     float radius = (float) lineWidth;
 
     if (pointsCount == 0)
