@@ -1,4 +1,5 @@
 #include "VectorMapSymbol.h"
+#include "Utilities.h"
 
 OsmAnd::VectorMapSymbol::VectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
@@ -118,52 +119,3 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
     }
 }
 
-void OsmAnd::VectorMapSymbol::generateLinePrimitive(
-    VectorMapSymbol& mapSymbol,
-    const QVector<PointI>& points,
-    const double lineWidth /*= 3.0*/,
-    const FColorARGB color /*= FColorARGB(1.0f, 1.0f, 1.0f, 1.0f)*/)
-{
-    mapSymbol.releaseVerticesAndIndices();
-
-    int pointsCount = points.size();
-    float radius = (float) lineWidth;
-
-    if (pointsCount == 0)
-        return;
-
-    mapSymbol.primitiveType = PrimitiveType::TriangleFan;
-
-    // Circle has no reusable vertices, because it's rendered as triangle-fan,
-    // so there's no indices
-    mapSymbol.indices = nullptr;
-    mapSymbol.indicesCount = 0;
-
-    // Allocate space for pointsCount+2 vertices
-    mapSymbol.verticesCount = pointsCount + 2;
-    mapSymbol.vertices = new Vertex[mapSymbol.verticesCount];
-    auto pVertex = mapSymbol.vertices;
-
-    // First vertex is the center
-    pVertex->positionXY[0] = 0.0f;
-    pVertex->positionXY[1] = 0.0f;
-    pVertex->color = color;
-    pVertex += 1;
-
-    // Generate each next vertex except the last one
-    const auto step = (2.0*M_PI) / pointsCount;
-    for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
-    {
-        const auto angle = step * pointIdx;
-        pVertex->positionXY[0] = radius * qCos(angle);
-        pVertex->positionXY[1] = radius * qSin(angle);
-        pVertex->color = color;
-
-        pVertex += 1;
-    }
-
-    // Close the fan
-    pVertex->positionXY[0] = mapSymbol.vertices[1].positionXY[0];
-    pVertex->positionXY[1] = mapSymbol.vertices[1].positionXY[1];
-    pVertex->color = color;
-}

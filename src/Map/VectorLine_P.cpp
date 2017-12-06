@@ -1,11 +1,13 @@
 #include "VectorLine_P.h"
 #include "VectorLine.h"
+#include "Utilities.h"
 
 #include "ignore_warnings_on_external_includes.h"
 #include "restore_internal_warnings.h"
 
 #include "MapSymbol.h"
 #include "MapSymbolsGroup.h"
+#include "VectorMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
 #include "QKeyValueIterator.h"
 
@@ -95,18 +97,84 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
 
     int order = owner->baseOrder;
-
     if (!_points.empty())
     {
         const std::shared_ptr<OnSurfaceVectorLineMapSymbol> vectorLine(new OnSurfaceVectorLineMapSymbol(
             symbolsGroup));
+        
         vectorLine->order = order++;
         vectorLine->setPoints31(_points);
-        VectorMapSymbol::generateLinePrimitive(*vectorLine, _points, owner->lineWidth, owner->fillColor);
-        vectorLine->isHidden = _isHidden;
-        vectorLine->scale = 1.0f;
+        //VectorMapSymbol::generateLinePrimitive(*vectorLine, _points, owner->lineWidth, owner->fillColor);
+        
+        
+        vectorLine->releaseVerticesAndIndices();
+        int pointsCount = _points.size();
+        vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::TriangleStrip;
+        
+        // Line has no reusable vertices - TODO clarify
+        vectorLine->indices = nullptr;
+        vectorLine->indicesCount = 0;
+        
+        // Allocate space for vertices
+        
+        
         vectorLine->scaleType = VectorMapSymbol::ScaleType::InMeters;
-        vectorLine->direction = Q_SNAN;
+        vectorLine->scale = 1;
+        vectorLine->direction = 0;
+        
+        
+        vectorLine->verticesCount = 0;
+        if (pointsCount >= 2) {
+            vectorLine->verticesCount = pointsCount * 2;
+            vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
+            auto pVertex = vectorLine->vertices;
+            double nx = owner->lineWidth;
+            double ny = 0;
+            double ntan = atan2(_points[1].x - _points[0].x, _points[1].y - _points[0].y);
+            nx = owner->lineWidth * sin(ntan);
+            ny = owner->lineWidth * cos(ntan);
+            
+            for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
+            {
+                
+                int prevIndex = 0;
+                double distX = Utilities::distance(
+                    Utilities::convert31ToLatLon(PointI(_points[pointIdx].x, _points[prevIndex].y)),
+                    Utilities::convert31ToLatLon(PointI(_points[prevIndex].x, _points[prevIndex].y)));
+                
+                double distY = Utilities::distance(
+                    Utilities::convert31ToLatLon(PointI(_points[prevIndex].x, _points[pointIdx].y)),
+                    Utilities::convert31ToLatLon(PointI(_points[prevIndex].x, _points[prevIndex].y)));
+                
+                if(_points[prevIndex].x > _points[pointIdx].x) {
+                    distX = -distX;
+                }
+                if(_points[prevIndex].y > _points[pointIdx].y) {
+                    distY = -distY;
+                }
+                pVertex->positionXY[0] = distX - nx;
+                pVertex->positionXY[1] = distY - ny;
+                pVertex->color = owner->fillColor;
+                pVertex += 1;
+                
+                pVertex->positionXY[0] = distX + nx;
+                pVertex->positionXY[1] = distY + ny;
+                pVertex->color = owner->fillColor;
+                pVertex += 1;
+                
+                if(pointIdx > 0 && pointIdx < pointsCount - 1) {
+                    ntan = atan2(_points[pointIdx - 1].x - _points[pointIdx].x, _points[pointIdx - 1].y - _points[pointIdx].y);
+                    nx = owner->lineWidth * sin(ntan);
+                    ny = owner->lineWidth * cos(ntan);
+                    pVertex->positionXY[0] = distX + nx;
+                    pVertex->positionXY[1] = distY + ny;
+                    pVertex->color = owner->fillColor;
+                    pVertex += 1;
+                }
+            }
+            
+        }
+        vectorLine->isHidden = _isHidden;
         symbolsGroup->symbols.push_back(vectorLine);
     }
 

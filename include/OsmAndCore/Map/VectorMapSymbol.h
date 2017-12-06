@@ -78,11 +78,6 @@ namespace OsmAnd
             const unsigned int pointsCount = 360,
             float radius = 1.0f);
 
-        static void generateLinePrimitive(
-            VectorMapSymbol& mapSymbol,
-            const QVector<PointI>& points,
-            const double lineWidth = 3.0,
-            const FColorARGB color = FColorARGB(1.0f, 1.0f, 1.0f, 1.0f));
     };
 }
 
