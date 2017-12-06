@@ -77,7 +77,7 @@ namespace OsmAnd
 
         static void generateLinePrimitive(
             VectorMapSymbol& mapSymbol,
-            const float lineWidth = 3.0f,
+            const double lineWidth = 3.0,
             const FColorARGB color = FColorARGB(1.0f, 1.0f, 1.0f, 1.0f));
     };
 }
