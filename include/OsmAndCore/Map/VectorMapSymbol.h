@@ -9,7 +9,6 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
-#include <OsmAndCore/PointsAndAreas.h>
 #include <OsmAndCore/Map/MapSymbol.h>
 
 namespace OsmAnd
