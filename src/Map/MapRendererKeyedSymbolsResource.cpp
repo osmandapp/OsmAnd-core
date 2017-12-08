@@ -44,8 +44,24 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply(const MapS
 
     if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
     {
-        if (updatableMapSymbolGroup->update(mapState))
-            updatesApplied = true;
+        IUpdatableMapSymbolsGroup::UpdateResult result = updatableMapSymbolGroup->update(mapState);
+        switch (result)
+        {
+            case IUpdatableMapSymbolsGroup::UpdateResult::All:
+            case IUpdatableMapSymbolsGroup::UpdateResult::Primitive:
+            {
+                setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPendingForRenew);
+                resourcesManager->requestResourcesUploadOrUnload();
+                updatesApplied = true;
+                break;
+            }
+            case IUpdatableMapSymbolsGroup::UpdateResult::Properties:
+                updatesApplied = true;
+                break;
+                
+            default:
+                break;
+        }
     }
 
     return updatesApplied;
@@ -170,7 +186,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
 
     // All resources have been uploaded to GPU successfully by this point
     _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
-    _sourceData.reset();
+    //_sourceData.reset();
 
     for (const auto& entry : rangeOf(constOf(uploaded)))
     {

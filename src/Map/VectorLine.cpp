@@ -79,13 +79,30 @@ bool OsmAnd::VectorLine::SymbolsGroup::updatesPresent()
     return false;
 }
 
-bool OsmAnd::VectorLine::SymbolsGroup::update(const MapState& mapState)
+OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup::update(const MapState& mapState)
 {
+    UpdateResult result = UpdateResult::None;
     if (const auto vectorLineP = _vectorLineP.lock())
     {
         vectorLineP->update(mapState);
-        return vectorLineP->applyChanges();
+        
+        bool hasPropertiesChanges = vectorLineP->hasUnappliedChanges();
+        bool hasPrimitiveChanges = vectorLineP->hasUnappliedPrimitiveChanges();
+        if (hasPropertiesChanges && hasPrimitiveChanges)
+        {
+            result = UpdateResult::All;
+        }
+        else if (hasPropertiesChanges)
+        {
+            result = UpdateResult::Properties;
+        }
+        else if (hasPrimitiveChanges)
+        {
+            result = UpdateResult::Primitive;
+        }
+        
+        vectorLineP->applyChanges();
     }
 
-    return false;
+    return result;
 }

@@ -14,8 +14,16 @@
 
 namespace OsmAnd
 {
-    class OSMAND_CORE_API IUpdatableMapSymbolsGroup
+   class OSMAND_CORE_API IUpdatableMapSymbolsGroup
     {
+    public:
+        enum class UpdateResult
+        {
+            None = 0,
+            All,
+            Properties,
+            Primitive,
+        };
     private:
     protected:
         IUpdatableMapSymbolsGroup();
@@ -23,7 +31,7 @@ namespace OsmAnd
         virtual ~IUpdatableMapSymbolsGroup();
 
         virtual bool updatesPresent() = 0;
-        virtual bool update(const MapState& mapState) = 0;
+        virtual UpdateResult update(const MapState& mapState) = 0;
     };
 }
 

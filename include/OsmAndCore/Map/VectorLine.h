@@ -28,7 +28,6 @@ namespace OsmAnd
         Q_DISABLE_COPY_AND_MOVE(VectorLine);
 
     public:
-
         class SymbolsGroup
             : public MapSymbolsGroup
             , public IUpdatableMapSymbolsGroup
@@ -43,7 +42,7 @@ namespace OsmAnd
             const VectorLine* getVectorLine() const;
 
             virtual bool updatesPresent();
-            virtual bool update(const MapState& mapState);
+            virtual UpdateResult update(const MapState& mapState);
 
         friend class OsmAnd::VectorLine;
         friend class OsmAnd::VectorLine_P;

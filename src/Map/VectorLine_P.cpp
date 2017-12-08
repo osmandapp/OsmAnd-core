@@ -58,6 +58,13 @@ bool OsmAnd::VectorLine_P::hasUnappliedChanges() const
     return _hasUnappliedChanges;
 }
 
+bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _hasUnappliedPrimitiveChanges;
+}
+
 bool OsmAnd::VectorLine_P::update(const MapState& mapState)
 {
     QWriteLocker scopedLocker(&_lock);
@@ -174,7 +181,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->verticesCount = (pointsCount - 2) * 5 + 2 * 2;
     vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
     
-    double lineWidth = owner->lineWidth;// + (double)(rand() % 10 + 1);
+    double lineWidth = owner->lineWidth;// * (double)(rand() % 1000 + 1);
     auto pVertex = vectorLine->vertices;
     double ntan = atan2(_points[1].x - _points[0].x, _points[1].y - _points[0].y);
     double nx = lineWidth * sin(ntan) / 2;

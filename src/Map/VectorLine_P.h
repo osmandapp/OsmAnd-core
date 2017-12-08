@@ -66,7 +66,8 @@ namespace OsmAnd
         void setPoints(const QVector<PointI>& points);
 
         bool hasUnappliedChanges() const;
-        
+        bool hasUnappliedPrimitiveChanges() const;
+
         std::shared_ptr<VectorLine::SymbolsGroup> createSymbolsGroup(const MapState& mapState) const;
 
     friend class OsmAnd::VectorLine;

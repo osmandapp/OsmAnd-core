@@ -31,7 +31,7 @@ namespace OsmAnd
 
     public:
         typedef const void* OnSurfaceIconKey;
-
+        
         enum PinIconVerticalAlignment : unsigned int
         {
             Top = 0,
@@ -60,7 +60,7 @@ namespace OsmAnd
             const MapMarker* getMapMarker() const;
 
             virtual bool updatesPresent();
-            virtual bool update(const MapState& mapState);
+            virtual UpdateResult update(const MapState& mapState);
 
         friend class OsmAnd::MapMarker;
         friend class OsmAnd::MapMarker_P;

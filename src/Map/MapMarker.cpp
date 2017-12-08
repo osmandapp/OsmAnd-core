@@ -127,10 +127,10 @@ bool OsmAnd::MapMarker::SymbolsGroup::updatesPresent()
     return false;
 }
 
-bool OsmAnd::MapMarker::SymbolsGroup::update(const MapState& mapState)
+OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::MapMarker::SymbolsGroup::update(const MapState& mapState)
 {
     if (const auto mapMarkerP = _mapMarkerP.lock())
-        return mapMarkerP->applyChanges();
+        return mapMarkerP->applyChanges() ? UpdateResult::Properties : UpdateResult::None;
 
-    return false;
+    return UpdateResult::None;
 }
