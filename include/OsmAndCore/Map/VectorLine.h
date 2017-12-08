@@ -43,7 +43,7 @@ namespace OsmAnd
             const VectorLine* getVectorLine() const;
 
             virtual bool updatesPresent();
-            virtual bool update();
+            virtual bool update(const MapState& mapState);
 
         friend class OsmAnd::VectorLine;
         friend class OsmAnd::VectorLine_P;
@@ -75,7 +75,7 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
 
-        std::shared_ptr<SymbolsGroup> createSymbolsGroup() const;
+        std::shared_ptr<SymbolsGroup> createSymbolsGroup(const MapState& mapState) const;
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;

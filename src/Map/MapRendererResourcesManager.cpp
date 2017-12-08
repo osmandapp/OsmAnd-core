@@ -1201,7 +1201,7 @@ bool OsmAnd::MapRendererResourcesManager::updatesPresent() const
     return updatesPresent;
 }
 
-bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply() const
+bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply(const MapState& mapState) const
 {
     bool updatesApplied = false;
     bool updatesPresent = false;
@@ -1230,10 +1230,10 @@ bool OsmAnd::MapRendererResourcesManager::checkForUpdatesAndApply() const
 
             // Check if any resource has applied updates
             collectionSnapshot->forEachResourceExecute(
-                [&updatesApplied]
+                [&updatesApplied, &mapState]
                 (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel)
                 {
-                    if (entry->checkForUpdatesAndApply())
+                    if (entry->checkForUpdatesAndApply(mapState))
                         updatesApplied = true;
                 });
         }

@@ -127,7 +127,7 @@ bool OsmAnd::MapMarker::SymbolsGroup::updatesPresent()
     return false;
 }
 
-bool OsmAnd::MapMarker::SymbolsGroup::update()
+bool OsmAnd::MapMarker::SymbolsGroup::update(const MapState& mapState)
 {
     if (const auto mapMarkerP = _mapMarkerP.lock())
         return mapMarkerP->applyChanges();

@@ -11,6 +11,7 @@
 #include "MapRendererResourceState.h"
 #include "IQueryController.h"
 #include "IMapDataProvider.h"
+#include "MapRendererState.h"
 
 namespace OsmAnd
 {
@@ -37,7 +38,7 @@ namespace OsmAnd
         void markAsJunk();
 
         virtual bool updatesPresent();
-        virtual bool checkForUpdatesAndApply();
+        virtual bool checkForUpdatesAndApply(const MapState& mapState);
         
         typedef std::function < void(const bool requestSucceeded, const bool dataAvailable) > ObtainDataAsyncCallback;
         virtual bool supportsObtainDataAsync() const = 0;

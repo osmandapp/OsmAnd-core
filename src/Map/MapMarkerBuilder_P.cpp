@@ -241,6 +241,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
         detachedOf(_onMapSurfaceIcons),
         _isAccuracyCircleSupported,
         _accuracyCircleBaseColor));
+    
     marker->setIsHidden(_isHidden);
     if (_isAccuracyCircleSupported)
     {
@@ -249,6 +250,7 @@ std::shared_ptr<OsmAnd::MapMarker> OsmAnd::MapMarkerBuilder_P::buildAndAddToColl
     }
     marker->setPosition(_position);
     marker->setPinIconModulationColor(_pinIconModulationColor);
+    
     marker->applyChanges();
 
     // Add marker to collection and return it if adding was successful

@@ -12,7 +12,8 @@
 #include "QKeyValueIterator.h"
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
-: owner(owner_)
+: owner(owner_), _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false), 
+  _mapZoomLevel(InvalidZoomLevel), _mapVisualZoom(0.f), _mapVisualZoomShift(0.f)
 {
 }
 
@@ -57,11 +58,27 @@ bool OsmAnd::VectorLine_P::hasUnappliedChanges() const
     return _hasUnappliedChanges;
 }
 
+bool OsmAnd::VectorLine_P::update(const MapState& mapState)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    bool needUpdate = _mapZoomLevel != mapState.zoomLevel || 
+                      _mapVisualZoom != mapState.visualZoom || 
+                      _mapVisualZoomShift != mapState.visualZoomShift;
+
+    _mapZoomLevel = mapState.zoomLevel;
+    _mapVisualZoom = mapState.visualZoom;
+    _mapVisualZoomShift = mapState.visualZoomShift;
+
+    _hasUnappliedPrimitiveChanges = needUpdate;    
+    return needUpdate;
+}
+
 bool OsmAnd::VectorLine_P::applyChanges()
 {
     QReadLocker scopedLocker1(&_lock);
     
-    if (!_hasUnappliedChanges)
+    if (!_hasUnappliedChanges && !_hasUnappliedPrimitiveChanges)
         return false;
     
     QReadLocker scopedLocker2(&_symbolsGroupsRegistryLock);
@@ -80,13 +97,17 @@ bool OsmAnd::VectorLine_P::applyChanges()
                 if (!_points.empty())
                 {
                     symbol->setPosition31(_points[0]);
-                    //generatePrimitive(symbol);
+                    if (_hasUnappliedPrimitiveChanges && _points.size() > 1)
+                    {
+                        generatePrimitive(symbol);
+                    }
                 }
             }
         }
     }
     
     _hasUnappliedChanges = false;
+    _hasUnappliedPrimitiveChanges = false;
     
     return true;
 }
@@ -110,7 +131,7 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     return symbolsGroup;
 }
 
-std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::createSymbolsGroup() const
+std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::createSymbolsGroup(const MapState& mapState) const
 {
     const auto inflatedSymbolsGroup = inflateSymbolsGroup();
     registerSymbolsGroup(inflatedSymbolsGroup);

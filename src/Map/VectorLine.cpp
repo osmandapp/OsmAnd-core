@@ -48,9 +48,9 @@ bool OsmAnd::VectorLine::applyChanges()
     return _p->applyChanges();
 }
 
-std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine::createSymbolsGroup() const
+std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine::createSymbolsGroup(const MapState& mapState) const
 {
-    return _p->createSymbolsGroup();
+    return _p->createSymbolsGroup(mapState);
 }
 
 OsmAnd::VectorLine::SymbolsGroup::SymbolsGroup(const std::shared_ptr<VectorLine_P>& vectorLineP_)
@@ -79,10 +79,13 @@ bool OsmAnd::VectorLine::SymbolsGroup::updatesPresent()
     return false;
 }
 
-bool OsmAnd::VectorLine::SymbolsGroup::update()
+bool OsmAnd::VectorLine::SymbolsGroup::update(const MapState& mapState)
 {
     if (const auto vectorLineP = _vectorLineP.lock())
+    {
+        vectorLineP->update(mapState);
         return vectorLineP->applyChanges();
+    }
 
     return false;
 }

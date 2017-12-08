@@ -60,7 +60,7 @@ namespace OsmAnd
             const MapMarker* getMapMarker() const;
 
             virtual bool updatesPresent();
-            virtual bool update();
+            virtual bool update(const MapState& mapState);
 
         friend class OsmAnd::MapMarker;
         friend class OsmAnd::MapMarker_P;

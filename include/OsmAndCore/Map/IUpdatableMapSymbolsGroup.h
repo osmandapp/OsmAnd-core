@@ -10,6 +10,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapRendererState.h>
 
 namespace OsmAnd
 {
@@ -22,7 +23,7 @@ namespace OsmAnd
         virtual ~IUpdatableMapSymbolsGroup();
 
         virtual bool updatesPresent() = 0;
-        virtual bool update() = 0;
+        virtual bool update(const MapState& mapState) = 0;
     };
 }
 

@@ -10,6 +10,7 @@
 #include "MapRendererKeyedResourcesCollection.h"
 #include "MapRendererResourcesManager.h"
 #include "QKeyValueIterator.h"
+#include "MapRenderer.h"
 
 OsmAnd::MapRendererKeyedSymbolsResource::MapRendererKeyedSymbolsResource(
     MapRendererResourcesManager* owner_,
@@ -37,13 +38,13 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::updatesPresent()
     return updatesPresent;
 }
 
-bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply()
+bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply(const MapState& mapState)
 {
-    bool updatesApplied = MapRendererBaseKeyedResource::checkForUpdatesAndApply();
+    bool updatesApplied = MapRendererBaseKeyedResource::checkForUpdatesAndApply(mapState);
 
     if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
     {
-        if (updatableMapSymbolGroup->update())
+        if (updatableMapSymbolGroup->update(mapState))
             updatesApplied = true;
     }
 
@@ -76,6 +77,10 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
     std::shared_ptr<IMapKeyedDataProvider::Data> keyedData;
     IMapKeyedSymbolsProvider::Request request;
     request.key = key;
+    
+    const auto& mapState = resourcesManager->renderer->getState().getMapState();
+    request.mapState = mapState;
+
     request.queryController = queryController;
     const auto requestSucceeded = provider->obtainKeyedData(request, keyedData);
     if (!requestSucceeded)

@@ -56,7 +56,8 @@ void OsmAnd::IMapKeyedDataProvider::Request::copy(Request& dst, const IMapDataPr
 {
     const auto& src = MapDataProviderHelpers::castRequest<Request>(src_);
 
-    dst.key = src.key;
+    dst.key = src.key;    
+    dst.mapState = src.mapState;
 }
 
 std::shared_ptr<OsmAnd::IMapDataProvider::Request> OsmAnd::IMapKeyedDataProvider::Request::clone() const

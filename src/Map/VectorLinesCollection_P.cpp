@@ -68,7 +68,7 @@ bool OsmAnd::VectorLinesCollection_P::obtainData(
         return false;
     auto& line = *citLine;
 
-    outData.reset(new IMapKeyedSymbolsProvider::Data(request.key, line->createSymbolsGroup()));
+    outData.reset(new IMapKeyedSymbolsProvider::Data(request.key, line->createSymbolsGroup(request.mapState)));
 
     return true;
 }

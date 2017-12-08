@@ -24,7 +24,7 @@ bool OsmAnd::MapRendererBaseResource::updatesPresent()
     return false;
 }
 
-bool OsmAnd::MapRendererBaseResource::checkForUpdatesAndApply()
+bool OsmAnd::MapRendererBaseResource::checkForUpdatesAndApply(const MapState& mapState)
 {
     return false;
 }

@@ -34,10 +34,17 @@ namespace OsmAnd
 
         mutable QReadWriteLock _lock;
         bool _hasUnappliedChanges;
+        bool _hasUnappliedPrimitiveChanges;
 
         bool _isHidden;
 
         QVector<PointI> _points;
+
+        ZoomLevel _mapZoomLevel;
+        float _mapVisualZoom;
+        float _mapVisualZoomShift;
+
+        bool update(const MapState& mapState);
 
         bool applyChanges();
 
@@ -60,7 +67,7 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
         
-        std::shared_ptr<VectorLine::SymbolsGroup> createSymbolsGroup() const;
+        std::shared_ptr<VectorLine::SymbolsGroup> createSymbolsGroup(const MapState& mapState) const;
 
     friend class OsmAnd::VectorLine;
     friend class OsmAnd::VectorLinesCollection;

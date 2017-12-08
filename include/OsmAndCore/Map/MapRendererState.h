@@ -50,10 +50,31 @@ namespace OsmAnd
     };
     typedef Bitmask<MapRendererStateChange> MapRendererStateChanges;
 
+    struct OSMAND_CORE_API MapState Q_DECL_FINAL
+    {
+        MapState();
+        ~MapState();
+
+        PointI windowSize;
+        AreaI viewport;
+        float fieldOfView;
+        FColorRGB skyColor;
+        FogConfiguration fogConfiguration;
+        float azimuth;
+        float elevationAngle;
+        PointI target31;
+        ZoomLevel zoomLevel;
+        float visualZoom;
+        float visualZoomShift;
+        MapStubStyle stubsStyle;
+    };
+
     struct OSMAND_CORE_API MapRendererState Q_DECL_FINAL
     {
         MapRendererState();
         ~MapRendererState();
+
+        MapState getMapState() const; 
 
         QMap<int, std::shared_ptr<IMapLayerProvider> > mapLayersProviders;
         QMap<int, MapLayerConfiguration > mapLayersConfigurations;

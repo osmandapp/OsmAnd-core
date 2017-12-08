@@ -8,6 +8,7 @@
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
+#include <OsmAndCore/Map/MapRendererState.h>
 #include <OsmAndCore/Map/IMapDataProvider.h>
 
 namespace OsmAnd
@@ -33,11 +34,13 @@ namespace OsmAnd
 
         struct OSMAND_CORE_API Request : public IMapDataProvider::Request
         {
+            Key key;
+            
+            MapState mapState;
+
             Request();
             Request(const IMapDataProvider::Request& that);
             virtual ~Request();
-
-            Key key;
 
             static void copy(Request& dst, const IMapDataProvider::Request& src);
             virtual std::shared_ptr<IMapDataProvider::Request> clone() const Q_DECL_OVERRIDE;
