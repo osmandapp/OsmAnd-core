@@ -1,5 +1,4 @@
 #include "VectorMapSymbol.h"
-#include "Utilities.h"
 
 OsmAnd::VectorMapSymbol::VectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)

@@ -13,7 +13,7 @@
 #include "CommonTypes.h"
 #include "MapSymbolsGroup.h"
 #include "IUpdatableMapSymbolsGroup.h"
-#include "OnSurfaceVectorLineMapSymbol.h"
+#include "OnSurfaceVectorMapSymbol.h"
 #include "VectorLine.h"
 
 class SkBitmap;
@@ -46,6 +46,7 @@ namespace OsmAnd
         mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
+        std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const;
     public:
         virtual ~VectorLine_P();
 
