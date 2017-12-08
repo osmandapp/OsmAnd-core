@@ -34,7 +34,7 @@ struct RoutingConfiguration {
     // 1.5 Recalculate distance help
     float recalculateDistance;
 
-    RoutingConfiguration(float initDirection = -360, int memLimit = 64) : router(new GeneralRouter(GeneralRouterProfile::CAR)), memoryLimitation(memLimit), initialDirection(initDirection), zoomToLoad(16), heurCoefficient(1), planRoadDirection(0), routerName(""), recalculateDistance(20000.0f) {
+    RoutingConfiguration(float initDirection = -360, int memLimit = 64) : router(new GeneralRouter()), memoryLimitation(memLimit), initialDirection(initDirection), zoomToLoad(16), heurCoefficient(1), planRoadDirection(0), routerName(""), recalculateDistance(20000.0f) {
     }
 
     string getAttribute(SHARED_PTR<GeneralRouter> router, string propertyName) {
