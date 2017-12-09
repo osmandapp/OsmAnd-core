@@ -10,6 +10,7 @@
 #include "VectorMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
 #include "QKeyValueIterator.h"
+#include "IAtlasMapRenderer.h"
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : owner(owner_), _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false), 
@@ -181,7 +182,13 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->verticesCount = (pointsCount - 2) * 5 + 2 * 2;
     vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
     
-    double lineWidth = owner->lineWidth;// * (double)(rand() % 1000 + 1);
+    float zoom = _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
+    double metersPerPixel = Utilities::getMetersPerTileUnit(
+                                    zoom,
+                                    vectorLine->position31.y >> (ZoomLevel31 - _mapZoomLevel),
+                                    IAtlasMapRenderer::TileSize3D);
+    
+    double lineWidth = owner->lineWidth * metersPerPixel;
     auto pVertex = vectorLine->vertices;
     double ntan = atan2(_points[1].x - _points[0].x, _points[1].y - _points[0].y);
     double nx = lineWidth * sin(ntan) / 2;
