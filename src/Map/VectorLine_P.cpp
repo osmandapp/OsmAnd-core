@@ -12,8 +12,9 @@
 #include "QKeyValueIterator.h"
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
-: owner(owner_), _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false), 
-  _metersPerPixel(1.0), _mapZoomLevel(InvalidZoomLevel), _mapVisualZoom(0.f), _mapVisualZoomShift(0.f)
+: _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false),
+  _metersPerPixel(1.0), _mapZoomLevel(InvalidZoomLevel), _mapVisualZoom(0.f), _mapVisualZoomShift(0.f),
+  owner(owner_)
 {
 }
 
@@ -65,21 +66,33 @@ bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
     return _hasUnappliedPrimitiveChanges;
 }
 
-bool OsmAnd::VectorLine_P::update(const MapState& mapState)
+bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
-    QWriteLocker scopedLocker(&_lock);
+    bool chaged = _mapZoomLevel != mapState.zoomLevel ||
+                  _mapVisualZoom != mapState.visualZoom ||
+                  _mapVisualZoomShift != mapState.visualZoomShift ||
+                  _metersPerPixel != mapState.metersPerPixel;
+    return chaged;
+}
 
-    bool needUpdate = _mapZoomLevel != mapState.zoomLevel || 
-                      _mapVisualZoom != mapState.visualZoom || 
-                      _mapVisualZoomShift != mapState.visualZoomShift;
-
+void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
+{
     _metersPerPixel = mapState.metersPerPixel;
     _mapZoomLevel = mapState.zoomLevel;
     _mapVisualZoom = mapState.visualZoom;
     _mapVisualZoomShift = mapState.visualZoomShift;
+}
 
-    _hasUnappliedPrimitiveChanges = needUpdate;    
-    return needUpdate;
+bool OsmAnd::VectorLine_P::update(const MapState& mapState)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    bool mapStateChanged = isMapStateChanged(mapState);
+    if (mapStateChanged)
+        applyMapState(mapState);
+
+    _hasUnappliedPrimitiveChanges = mapStateChanged;
+    return mapStateChanged;
 }
 
 bool OsmAnd::VectorLine_P::applyChanges()
@@ -125,8 +138,7 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     QReadLocker scopedLocker(&_lock);
     
     // Construct new map symbols group for this marker
-    const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup(new VectorLine::SymbolsGroup(
-                                                                                              std::const_pointer_cast<VectorLine_P>(shared_from_this())));
+    const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup(new VectorLine::SymbolsGroup(std::const_pointer_cast<VectorLine_P>(shared_from_this())));
     symbolsGroup->presentationMode |= MapSymbolsGroup::PresentationModeFlag::ShowAllOrNothing;
     
     if (_points.size() > 1)
@@ -139,8 +151,10 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     return symbolsGroup;
 }
 
-std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::createSymbolsGroup(const MapState& mapState) const
+std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::createSymbolsGroup(const MapState& mapState)
 {
+    applyMapState(mapState);
+    
     const auto inflatedSymbolsGroup = inflateSymbolsGroup();
     registerSymbolsGroup(inflatedSymbolsGroup);
     return inflatedSymbolsGroup;

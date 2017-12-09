@@ -48,7 +48,7 @@ bool OsmAnd::VectorLine::applyChanges()
     return _p->applyChanges();
 }
 
-std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine::createSymbolsGroup(const MapState& mapState) const
+std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine::createSymbolsGroup(const MapState& mapState)
 {
     return _p->createSymbolsGroup(mapState);
 }

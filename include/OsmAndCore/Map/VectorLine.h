@@ -74,7 +74,7 @@ namespace OsmAnd
 
         bool hasUnappliedChanges() const;
 
-        std::shared_ptr<SymbolsGroup> createSymbolsGroup(const MapState& mapState) const;
+        std::shared_ptr<SymbolsGroup> createSymbolsGroup(const MapState& mapState);
 
     friend class OsmAnd::VectorLineBuilder;
     friend class OsmAnd::VectorLineBuilder_P;

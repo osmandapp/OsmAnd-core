@@ -49,6 +49,9 @@ namespace OsmAnd
 
         bool applyChanges();
 
+        bool isMapStateChanged(const MapState& mapState) const;
+        void applyMapState(const MapState& mapState);
+        
         std::shared_ptr<VectorLine::SymbolsGroup> inflateSymbolsGroup() const;
         mutable QReadWriteLock _symbolsGroupsRegistryLock;
         mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
@@ -69,7 +72,7 @@ namespace OsmAnd
         bool hasUnappliedChanges() const;
         bool hasUnappliedPrimitiveChanges() const;
 
-        std::shared_ptr<VectorLine::SymbolsGroup> createSymbolsGroup(const MapState& mapState) const;
+        std::shared_ptr<VectorLine::SymbolsGroup> createSymbolsGroup(const MapState& mapState);
 
     friend class OsmAnd::VectorLine;
     friend class OsmAnd::VectorLinesCollection;
