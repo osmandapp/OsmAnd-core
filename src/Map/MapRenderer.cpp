@@ -389,7 +389,7 @@ bool OsmAnd::MapRenderer::preUpdate(IMapRenderer_Metrics::Metric_update* const m
 {
     // Check for resources updates
     Stopwatch updatesStopwatch(metric != nullptr);
-    const auto& mapState = getState().getMapState();
+    const auto& mapState = getMapState(true);
     if (_resources->checkForUpdatesAndApply(mapState))
         invalidateFrame();
     if (metric)
@@ -1096,6 +1096,13 @@ OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
     return _requestedState;
+}
+
+OsmAnd::MapState OsmAnd::MapRenderer::getMapState(const bool calculateMetersPerPixel/* = false*/) const
+{
+    QMutexLocker scopedLocker(&_requestedStateMutex);
+
+    return _requestedState.getMapState(calculateMetersPerPixel ? getCurrentPixelsToMetersScaleFactor(_requestedState) : 1.0);
 }
 
 bool OsmAnd::MapRenderer::isFrameInvalidated() const

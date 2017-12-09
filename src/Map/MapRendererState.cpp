@@ -17,7 +17,7 @@ OsmAnd::MapRendererState::~MapRendererState()
 {
 }
 
-OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
+OsmAnd::MapState OsmAnd::MapRendererState::getMapState(const double metersPerPixel) const
 {
 	MapState mapState;
 
@@ -30,6 +30,8 @@ OsmAnd::MapState OsmAnd::MapRendererState::getMapState() const
 	mapState.visualZoom = visualZoom;
 	mapState.visualZoomShift = visualZoomShift;
 	mapState.stubsStyle = stubsStyle;
+    
+    mapState.metersPerPixel = metersPerPixel;
 
 	return mapState;
 }
@@ -44,6 +46,7 @@ OsmAnd::MapState::MapState()
     , visualZoom(1.0f)
     , visualZoomShift(0.0f)
     , stubsStyle(MapStubStyle::Light)
+    , metersPerPixel(1.0)
 {
 }
 

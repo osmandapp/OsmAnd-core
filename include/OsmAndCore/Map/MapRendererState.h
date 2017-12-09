@@ -54,7 +54,7 @@ namespace OsmAnd
     {
         MapState();
         ~MapState();
-
+        
         PointI windowSize;
         AreaI viewport;
         float fieldOfView;
@@ -67,6 +67,8 @@ namespace OsmAnd
         float visualZoom;
         float visualZoomShift;
         MapStubStyle stubsStyle;
+        
+        double metersPerPixel;
     };
 
     struct OSMAND_CORE_API MapRendererState Q_DECL_FINAL
@@ -74,7 +76,7 @@ namespace OsmAnd
         MapRendererState();
         ~MapRendererState();
 
-        MapState getMapState() const; 
+        MapState getMapState(const double metersPerPixel) const; 
 
         QMap<int, std::shared_ptr<IMapLayerProvider> > mapLayersProviders;
         QMap<int, MapLayerConfiguration > mapLayersConfigurations;

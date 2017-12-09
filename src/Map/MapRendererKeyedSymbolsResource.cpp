@@ -94,7 +94,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
     IMapKeyedSymbolsProvider::Request request;
     request.key = key;
     
-    const auto& mapState = resourcesManager->renderer->getState().getMapState();
+    const auto& mapState = resourcesManager->renderer->getMapState(true);
     request.mapState = mapState;
 
     request.queryController = queryController;

@@ -699,6 +699,21 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor() co
     return metersPerPixel;
 }
 
+double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor(const MapRendererState state) const
+{
+    InternalState internalState;
+    bool ok = updateInternalState(internalState, state, *getConfiguration());
+    
+    const auto tileSizeOnScreenInPixels =
+    internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
+    const auto metersPerPixel = Utilities::getMetersPerTileUnit(
+                                                                state.zoomLevel,
+                                                                internalState.targetTileId.y,
+                                                                tileSizeOnScreenInPixels);
+    
+    return metersPerPixel;
+}
+
 OsmAnd::AtlasMapRendererSkyStage* OsmAnd::AtlasMapRenderer_OpenGL::createSkyStage()
 {
     return new AtlasMapRendererSkyStage_OpenGL(this);

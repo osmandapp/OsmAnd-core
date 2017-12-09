@@ -49,6 +49,8 @@ namespace OsmAnd
     private:
     protected:
         IMapRenderer();
+        
+        virtual double getCurrentPixelsToMetersScaleFactor(const MapRendererState state) const = 0;
     public:
         virtual ~IMapRenderer();
 
@@ -79,6 +81,7 @@ namespace OsmAnd
         virtual void reloadEverything() = 0;
 
         virtual MapRendererState getState() const = 0;
+        virtual MapState getMapState(const bool calculateMetersPerPixel = false) const = 0;
         virtual bool isFrameInvalidated() const = 0;
         virtual void forcedFrameInvalidate() = 0;
         virtual void forcedGpuProcessingCycle() = 0;

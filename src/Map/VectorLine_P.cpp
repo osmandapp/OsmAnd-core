@@ -10,11 +10,10 @@
 #include "VectorMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
 #include "QKeyValueIterator.h"
-#include "IAtlasMapRenderer.h"
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : owner(owner_), _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false), 
-  _mapZoomLevel(InvalidZoomLevel), _mapVisualZoom(0.f), _mapVisualZoomShift(0.f)
+  _metersPerPixel(1.0), _mapZoomLevel(InvalidZoomLevel), _mapVisualZoom(0.f), _mapVisualZoomShift(0.f)
 {
 }
 
@@ -74,6 +73,7 @@ bool OsmAnd::VectorLine_P::update(const MapState& mapState)
                       _mapVisualZoom != mapState.visualZoom || 
                       _mapVisualZoomShift != mapState.visualZoomShift;
 
+    _metersPerPixel = mapState.metersPerPixel;
     _mapZoomLevel = mapState.zoomLevel;
     _mapVisualZoom = mapState.visualZoom;
     _mapVisualZoomShift = mapState.visualZoomShift;
@@ -182,13 +182,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->verticesCount = (pointsCount - 2) * 5 + 2 * 2;
     vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
     
-    float zoom = _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
-    double metersPerPixel = Utilities::getMetersPerTileUnit(
-                                    zoom,
-                                    vectorLine->position31.y >> (ZoomLevel31 - _mapZoomLevel),
-                                    IAtlasMapRenderer::TileSize3D);
     
-    double lineWidth = owner->lineWidth * metersPerPixel;
+    double lineWidth = owner->lineWidth * _metersPerPixel;
     auto pVertex = vectorLine->vertices;
     double ntan = atan2(_points[1].x - _points[0].x, _points[1].y - _points[0].y);
     double nx = lineWidth * sin(ntan) / 2;
