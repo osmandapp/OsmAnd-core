@@ -68,11 +68,10 @@ bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
 
 bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
-    bool chaged = _mapZoomLevel != mapState.zoomLevel ||
-                  _mapVisualZoom != mapState.visualZoom ||
-                  _mapVisualZoomShift != mapState.visualZoomShift ||
-                  _metersPerPixel != mapState.metersPerPixel;
-    return chaged;
+    bool changed = _mapZoomLevel != mapState.zoomLevel;
+    //_mapVisualZoom != mapState.visualZoom ||
+    //_mapVisualZoomShift != mapState.visualZoomShift;
+    return changed;
 }
 
 void OsmAnd::VectorLine_P::applyMapState(const MapState& mapState)
@@ -113,7 +112,18 @@ bool OsmAnd::VectorLine_P::applyChanges()
         {
             symbol_->isHidden = _isHidden;
             
-            if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
+            if (const auto roundJoin = std::dynamic_pointer_cast<LineRoundJoin>(symbol_))
+            {
+                roundJoin->order = owner->baseOrder;
+                roundJoin->position31 = _points[roundJoin->index];
+                VectorMapSymbol::generateCirclePrimitive(*roundJoin, owner->fillColor, 36,
+                                                         owner->lineWidth * _metersPerPixel / 3);
+                roundJoin->isHidden = _isHidden;
+                roundJoin->scale = 1;
+                roundJoin->scaleType = VectorMapSymbol::ScaleType::InMeters;
+                roundJoin->direction = Q_SNAN;
+            }
+            else if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
             {
                 if (!_points.empty())
                 {
@@ -133,6 +143,15 @@ bool OsmAnd::VectorLine_P::applyChanges()
     return true;
 }
 
+OsmAnd::VectorLine_P::LineRoundJoin::LineRoundJoin(const std::shared_ptr<MapSymbolsGroup>& group_)
+: OnSurfaceVectorMapSymbol(group_)
+{
+}
+
+OsmAnd::VectorLine_P::LineRoundJoin::~LineRoundJoin()
+{
+}
+
 std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateSymbolsGroup() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -146,6 +165,21 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
         const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine(new OnSurfaceVectorMapSymbol(symbolsGroup));
         generatePrimitive(vectorLine);
         symbolsGroup->symbols.push_back(vectorLine);
+        for (auto pointIdx = 0u; pointIdx < _points.size(); pointIdx++)
+        {
+            
+            const std::shared_ptr<LineRoundJoin> roundJoin(new LineRoundJoin(symbolsGroup));
+            roundJoin->index = pointIdx;
+            roundJoin->order = owner->baseOrder;
+            roundJoin->position31 = _points[pointIdx];
+            VectorMapSymbol::generateCirclePrimitive(*roundJoin, owner->fillColor, 36,
+                                                     owner->lineWidth * _metersPerPixel / 3);
+            roundJoin->isHidden = _isHidden;
+            roundJoin->scale = 1;
+            roundJoin->scaleType = VectorMapSymbol::ScaleType::InMeters;
+            roundJoin->direction = Q_SNAN;
+            symbolsGroup->symbols.push_back(roundJoin);
+        }
     }
     
     return symbolsGroup;
