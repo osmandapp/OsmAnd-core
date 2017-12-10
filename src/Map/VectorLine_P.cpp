@@ -207,7 +207,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
     
-    vectorLine->verticesCount = (pointsCount - 2) * 4 + 2 * 2;
+    vectorLine->verticesCount = (pointsCount - 2) * 2 + 2 * 2;
     vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
     
     
@@ -275,12 +275,12 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         else
         {
             PointD l1 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            PointD l3 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e2[pointIdx], b2[pointIdx+1]);
+            //PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e1[pointIdx], b1[pointIdx+1]);
+            //PointD l3 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e2[pointIdx], b2[pointIdx+1]);
             PointD l4 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e2[pointIdx], b2[pointIdx+1]);
             //l1 = b1[pointIdx];
-            l2 = b2[pointIdx];
-            l3 = e1[pointIdx];
+            //l2 = b2[pointIdx];
+            //l3 = e1[pointIdx];
             //l4 = e2[pointIdx];
             // bewel - connecting only 3 points (one excluded depends on angle)
             // miter - connecting 4 points
@@ -291,15 +291,15 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             pVertex->color = owner->fillColor;
             pVertex += 1;
             
-            pVertex->positionXY[0] = l2.x;
-            pVertex->positionXY[1] = l2.y;
-            pVertex->color = owner->fillColor;
-            pVertex += 1;
+            //pVertex->positionXY[0] = l2.x;
+            //pVertex->positionXY[1] = l2.y;
+            //pVertex->color = owner->fillColor;
+            //pVertex += 1;
             
-            pVertex->positionXY[0] = l3.x;
-            pVertex->positionXY[1] = l3.y;
-            pVertex->color = owner->fillColor;
-            pVertex += 1;
+            //pVertex->positionXY[0] = l3.x;
+            //pVertex->positionXY[1] = l3.y;
+            //pVertex->color = owner->fillColor;
+            //pVertex += 1;
             
             pVertex->positionXY[0] = l4.x;
             pVertex->positionXY[1] = l4.y;
