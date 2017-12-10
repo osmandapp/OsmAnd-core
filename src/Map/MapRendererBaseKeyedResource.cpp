@@ -14,6 +14,7 @@ OsmAnd::MapRendererBaseKeyedResource::~MapRendererBaseKeyedResource()
 {
     const volatile auto state = getState();
     if (state == MapRendererResourceState::Uploading ||
+        state == MapRendererResourceState::Renewing ||
         state == MapRendererResourceState::Uploaded ||
         state == MapRendererResourceState::IsBeingUsed ||
         state == MapRendererResourceState::Unloading)

@@ -69,6 +69,7 @@ bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
 bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
     bool changed = qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.5;
+    //_mapZoomLevel != mapState.zoomLevel ||
     //_mapVisualZoom != mapState.visualZoom ||
     //_mapVisualZoomShift != mapState.visualZoomShift;
     return changed;
@@ -190,30 +191,28 @@ OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::Poi
 
 std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const
 {
-    vectorLine->releaseVerticesAndIndices();
-    
     int order = owner->baseOrder;
     int pointsCount = _points.size();
     
     vectorLine->order = order++;
     vectorLine->position31 = _points[0];
     vectorLine->primitiveType = VectorMapSymbol::PrimitiveType::TriangleStrip;
-    
+
+    const auto verticesAndIndexes = std::make_shared<VectorMapSymbol::VerticesAndIndexes>();
     // Line has no reusable vertices - TODO clarify
-    vectorLine->indices = nullptr;
-    vectorLine->indicesCount = 0;
+    verticesAndIndexes->indices = nullptr;
+    verticesAndIndexes->indicesCount = 0;
     
     vectorLine->scaleType = VectorMapSymbol::ScaleType::InMeters;
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
     
-    vectorLine->verticesCount = (pointsCount - 2) * 2 + 2 * 2;
-    vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
-    
-    
     double radius = owner->lineWidth * _metersPerPixel / 2;// * (qSqrt(_mapZoomLevel) / 3);
+
+    verticesAndIndexes->verticesCount = (pointsCount - 2) * 2 + 2 * 2;
+    verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[verticesAndIndexes->verticesCount];
     
-    auto pVertex = vectorLine->vertices;
+    auto pVertex = verticesAndIndexes->vertices;
     auto beginPoint = Utilities::convert31ToLatLon(PointI(_points[0].x, _points[0].y));
     
     std::vector<OsmAnd::PointD> b1(pointsCount), b2(pointsCount), e1(pointsCount), e2(pointsCount);
@@ -310,5 +309,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     }
     
     vectorLine->isHidden = _isHidden;
+    
+    vectorLine->setVerticesAndIndexes(verticesAndIndexes);
+    
     return vectorLine;
 }

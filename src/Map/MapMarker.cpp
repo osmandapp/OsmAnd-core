@@ -134,3 +134,8 @@ OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::MapMarker::SymbolsGroup:
 
     return UpdateResult::None;
 }
+
+bool OsmAnd::MapMarker::SymbolsGroup::supportsResourcesRenew()
+{
+    return false;
+}

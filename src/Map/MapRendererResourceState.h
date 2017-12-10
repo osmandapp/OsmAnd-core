@@ -15,8 +15,8 @@ namespace OsmAnd
     // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => UnloadPending => Unloading => Unloaded => JustBeforeDeath
     // ... => RequestCanceledWhileBeingProcessed => JustBeforeDeath
 
-    // State chains for renew:
-    // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => UnloadPendingForRenew => UnloadingForRenew => Ready
+    // State chain for renew:
+    // ... => Ready => Uploading => Uploaded [=> IsBeingUsed] => PreparingRenew => PreparedRenew => Renewing => Uploaded
 
     enum class MapRendererResourceState
     {
@@ -59,11 +59,14 @@ namespace OsmAnd
         // Resource is unloaded, next state is "Dead"
         Unloaded,
 
-        // Resource is required to be renewed, and it needs to be unloaded from GPU first
-        UnloadPendingForRenew,
+        // Resource is required to be renewed, and it needs to be prepared (cached) first
+        PreparingRenew,
 
-        // Resource data is being removed from GPU before renewing
-        UnloadingForRenew,
+        // Resource is ready to be renewed
+        PreparedRenew,
+
+        // Resource data is being renewed (reuploaded to GPU)
+        Renewing,
 
         // JustBeforeDeath state is installed just before resource is deallocated completely
         JustBeforeDeath

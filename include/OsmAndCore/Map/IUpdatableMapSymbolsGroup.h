@@ -32,7 +32,9 @@ namespace OsmAnd
 
         virtual bool updatesPresent() = 0;
         virtual UpdateResult update(const MapState& mapState) = 0;
-    };
+
+        virtual bool supportsResourcesRenew() = 0;
+};
 }
 
 #endif // !defined(_OSMAND_CORE_I_UPDATABLE_MAP_SYMBOLS_GROUP_H_)

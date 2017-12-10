@@ -21,10 +21,10 @@ void OsmAnd::MapRendererKeyedResourcesCollection::verifyNoUploadedResourcesPrese
         {
             const auto state = keyedEntry->getState();
             if (state == MapRendererResourceState::Uploading ||
+                state == MapRendererResourceState::Renewing ||
                 state == MapRendererResourceState::Uploaded ||
                 state == MapRendererResourceState::IsBeingUsed ||
-                state == MapRendererResourceState::Unloading ||
-                state == MapRendererResourceState::UnloadingForRenew)
+                state == MapRendererResourceState::Unloading)
             {
                 stillUploadedResourcesPresent = true;
                 cancel = true;

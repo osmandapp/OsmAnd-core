@@ -79,6 +79,11 @@ bool OsmAnd::VectorLine::SymbolsGroup::updatesPresent()
     return false;
 }
 
+bool OsmAnd::VectorLine::SymbolsGroup::supportsResourcesRenew()
+{
+    return true;
+}
+
 OsmAnd::IUpdatableMapSymbolsGroup::UpdateResult OsmAnd::VectorLine::SymbolsGroup::update(const MapState& mapState)
 {
     UpdateResult result = UpdateResult::None;

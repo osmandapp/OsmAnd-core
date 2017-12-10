@@ -32,10 +32,27 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::updatesPresent()
     if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
     {
         if (updatableMapSymbolGroup->updatesPresent())
+        {
             updatesPresent = true;
+        }
     }
 
     return updatesPresent;
+}
+
+bool OsmAnd::MapRendererKeyedSymbolsResource::supportsResourcesRenew()
+{
+    bool supportsResourcesRenew = MapRendererBaseKeyedResource::supportsResourcesRenew();
+    
+    if (const auto updatableMapSymbolGroup = std::dynamic_pointer_cast<IUpdatableMapSymbolsGroup>(_mapSymbolsGroup))
+    {
+        if (updatableMapSymbolGroup->supportsResourcesRenew())
+        {
+            supportsResourcesRenew = true;
+        }
+    }
+    
+    return supportsResourcesRenew;
 }
 
 bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply(const MapState& mapState)
@@ -50,8 +67,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::checkForUpdatesAndApply(const MapS
             case IUpdatableMapSymbolsGroup::UpdateResult::All:
             case IUpdatableMapSymbolsGroup::UpdateResult::Primitive:
             {
-                setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::UnloadPendingForRenew);
-                resourcesManager->requestResourcesUploadOrUnload();
+                requestResourcesRenew();
                 updatesApplied = true;
                 break;
             }
@@ -94,7 +110,7 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::obtainData(
     IMapKeyedSymbolsProvider::Request request;
     request.key = key;
     
-    const auto& mapState = resourcesManager->renderer->getMapState(true);
+    const auto& mapState = resourcesManager->renderer->getMapState();
     request.mapState = mapState;
 
     request.queryController = queryController;
@@ -186,7 +202,9 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
 
     // All resources have been uploaded to GPU successfully by this point
     _retainableCacheMetadata = _sourceData->retainableCacheMetadata;
-    //_sourceData.reset();
+    bool supportsResourcesRenew = this->supportsResourcesRenew();
+    if (!supportsResourcesRenew)
+        _sourceData.reset();
 
     for (const auto& entry : rangeOf(constOf(uploaded)))
     {
@@ -194,7 +212,8 @@ bool OsmAnd::MapRendererKeyedSymbolsResource::uploadToGPU()
         auto& resource = entry.value();
 
         // Unload GPU data from symbol, since it's uploaded already
-        resourcesManager->releaseGpuUploadableDataFrom(symbol);
+        if (!supportsResourcesRenew)
+            resourcesManager->releaseGpuUploadableDataFrom(symbol);
 
         // Move reference
         _resourcesInGPU.insert(symbol, qMove(resource));
@@ -212,7 +231,11 @@ void OsmAnd::MapRendererKeyedSymbolsResource::lostDataInGPU()
 {
     for (auto& resourceInGPU : constOf(_resourcesInGPU))
         resourceInGPU->lostRefInGPU();
+    for (auto& resourceInGPU : constOf(_resourcesInGPUCache))
+        resourceInGPU->lostRefInGPU();
+
     _resourcesInGPU.clear();
+    _resourcesInGPUCache.clear();
 }
 
 void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
@@ -241,9 +264,51 @@ void OsmAnd::MapRendererKeyedSymbolsResource::releaseData()
     _sourceData.reset();
 }
 
-std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getGpuResourceFor(
-    const std::shared_ptr<const MapSymbol>& mapSymbol) const
+void OsmAnd::MapRendererKeyedSymbolsResource::requestResourcesRenew()
 {
+    if (setStateIf(MapRendererResourceState::Uploaded, MapRendererResourceState::PreparingRenew))
+    {
+        prepareResourcesRenew();
+    }
+}
+
+bool OsmAnd::MapRendererKeyedSymbolsResource::isRenewing()
+{
+    const volatile auto state = getState();
+    return (state == MapRendererResourceState::PreparedRenew ||
+            state == MapRendererResourceState::Renewing);
+}
+
+void OsmAnd::MapRendererKeyedSymbolsResource::prepareResourcesRenew()
+{
+    if (getState() == MapRendererResourceState::PreparingRenew)
+    {
+        _resourcesInGPUCache = _resourcesInGPU;
+        
+        if (setStateIf(MapRendererResourceState::PreparingRenew, MapRendererResourceState::PreparedRenew))
+            resourcesManager->requestResourcesUploadOrUnload();
+    }
+}
+
+void OsmAnd::MapRendererKeyedSymbolsResource::finishResourcesRenewing()
+{
+    _resourcesInGPUCache.clear();
+}
+
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getCachedGpuResourceFor(
+                                                                                                                const std::shared_ptr<const MapSymbol>& mapSymbol) const
+{
+    const auto citResourceInGPU = _resourcesInGPUCache.constFind(mapSymbol);
+    if (citResourceInGPU == _resourcesInGPUCache.cend())
+        return nullptr;
+    return *citResourceInGPU;
+}
+
+std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::MapRendererKeyedSymbolsResource::getGpuResourceFor(
+    const std::shared_ptr<const MapSymbol>& mapSymbol)
+{
+    _resourcesInGPUCache.clear();
+
     const auto citResourceInGPU = _resourcesInGPU.constFind(mapSymbol);
     if (citResourceInGPU == _resourcesInGPU.cend())
         return nullptr;

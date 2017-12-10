@@ -1283,8 +1283,7 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
         (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
         {
             // Skip not-"UnloadPending" resources
-            if (entry->getState() != MapRendererResourceState::UnloadPending &&
-                entry->getState() != MapRendererResourceState::UnloadPendingForRenew)
+            if (entry->getState() != MapRendererResourceState::UnloadPending)
                 return false;
 
             // Accept this resource
@@ -1297,37 +1296,21 @@ void OsmAnd::MapRendererResourcesManager::unloadResourcesFrom(
     for (const auto& resource : constOf(resources))
     {
         // Since state change is allowed (it's not changed to "Unloading" during query), check state here
-        if (!resource->setStateIf(MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading) &&
-            !resource->setStateIf(MapRendererResourceState::UnloadPendingForRenew, MapRendererResourceState::UnloadingForRenew))
+        if (!resource->setStateIf(MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading))
             continue;
         
-        if (resource->getState() == MapRendererResourceState::Unloading)
-        {
-            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading);
-        }
-        if (resource->getState() == MapRendererResourceState::UnloadingForRenew)
-        {
-            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::UnloadPendingForRenew, MapRendererResourceState::UnloadingForRenew);
-        }
-
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::UnloadPending, MapRendererResourceState::Unloading);
+        
         // Unload from GPU
         resource->unloadFromGPU();
-
-        // Don't wait until GPU will execute unloading, since this resource won't be used anymore and will eventually be deleted
-
-        // Mark as unloaded
-        assert(resource->getState() == MapRendererResourceState::Unloading || resource->getState() == MapRendererResourceState::UnloadingForRenew);
         
-        if (resource->getState() == MapRendererResourceState::Unloading)
-        {
-            resource->setState(MapRendererResourceState::Unloaded);
-            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unloading, MapRendererResourceState::Unloaded);
-        }
-        if (resource->getState() == MapRendererResourceState::UnloadingForRenew)
-        {
-            resource->setState(MapRendererResourceState::Ready);
-            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::UnloadingForRenew, MapRendererResourceState::Ready);
-        }
+        // Don't wait until GPU will execute unloading, since this resource won't be used anymore and will eventually be deleted
+        
+        assert(resource->getState() == MapRendererResourceState::Unloading);
+        
+        // Mark as unloaded
+        resource->setState(MapRendererResourceState::Unloaded);
+        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Unloading, MapRendererResourceState::Unloaded);
         
         // Count uploaded resources
         totalUnloaded++;
@@ -1369,7 +1352,8 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
         (const std::shared_ptr<MapRendererBaseResource>& entry, bool& cancel) -> bool
         {
             // Skip not-ready resources
-            if (entry->getState() != MapRendererResourceState::Ready)
+            if (entry->getState() != MapRendererResourceState::Ready &&
+                entry->getState() != MapRendererResourceState::PreparedRenew)
                 return false;
 
             // Check if limit was reached
@@ -1392,10 +1376,18 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
     for (const auto& resource : constOf(resources))
     {
         // Since state change is allowed (it's not changed to "Uploading" during query), check state here
-        if (!resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
+        if (resource->setStateIf(MapRendererResourceState::Ready, MapRendererResourceState::Uploading))
+        {
+            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Ready, MapRendererResourceState::Uploading);
+        }
+        else if (resource->setStateIf(MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing))
+        {
+            LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::PreparedRenew, MapRendererResourceState::Renewing);
+        }
+        else
+        {
             continue;
-        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Ready, MapRendererResourceState::Uploading);
-
+        }
         // Actually upload resource to GPU
         const auto didUpload = resource->uploadToGPU();
         if (!atLeastOneUploadFailed && !didUpload)
@@ -1424,10 +1416,10 @@ void OsmAnd::MapRendererResourcesManager::uploadResourcesFrom(
             renderer->gpuAPI->waitUntilUploadIsComplete();
 
         // Mark as uploaded
-        assert(resource->getState() == MapRendererResourceState::Uploading);
-        resource->setState(MapRendererResourceState::Uploaded);
-        LOG_RESOURCE_STATE_CHANGE(resource, MapRendererResourceState::Uploading, MapRendererResourceState::Uploaded);
+        assert(resource->getState() == MapRendererResourceState::Uploading || resource->getState() == MapRendererResourceState::Renewing);
 
+        resource->setState(MapRendererResourceState::Uploaded);
+        
         // Count uploaded resources
         totalUploaded++;
     }
@@ -1906,10 +1898,9 @@ void OsmAnd::MapRendererResourcesManager::blockingReleaseResourcesFrom(
                 //  - RequestCanceledWhileBeingProcessed (to allow cleanup of the process)
                 // should be retained, since they are being processed. So try to next time
                 if (state == MapRendererResourceState::Uploading ||
+                    state == MapRendererResourceState::Renewing ||
                     state == MapRendererResourceState::UnloadPending ||
-                    state == MapRendererResourceState::Unloading ||
-                    state == MapRendererResourceState::UnloadPendingForRenew ||
-                    state == MapRendererResourceState::UnloadingForRenew)
+                    state == MapRendererResourceState::Unloading)
                 {
                     // In case GPU context is lost, nothing can be done with this resource, so just remove it
                     if (gpuContextLost)

@@ -39,7 +39,7 @@ namespace OsmAnd
 
         virtual bool updatesPresent();
         virtual bool checkForUpdatesAndApply(const MapState& mapState);
-        
+
         typedef std::function < void(const bool requestSucceeded, const bool dataAvailable) > ObtainDataAsyncCallback;
         virtual bool supportsObtainDataAsync() const = 0;
         virtual bool obtainData(
@@ -54,6 +54,11 @@ namespace OsmAnd
         virtual void lostDataInGPU() = 0;
         virtual void releaseData() = 0;
 
+        virtual bool supportsResourcesRenew();
+        virtual void requestResourcesRenew();
+        virtual void prepareResourcesRenew();
+        virtual void finishResourcesRenewing();
+
         virtual void removeSelfFromCollection() = 0;
     public:
         virtual ~MapRendererBaseResource();
@@ -62,6 +67,8 @@ namespace OsmAnd
         const MapRendererResourceType type;
 
         const bool& isJunk;
+
+        virtual bool isRenewing();
 
         virtual MapRendererResourceState getState() const = 0;
         virtual void setState(const MapRendererResourceState newState) = 0;

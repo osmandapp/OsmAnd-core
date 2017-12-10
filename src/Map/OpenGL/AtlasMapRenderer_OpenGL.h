@@ -58,7 +58,7 @@ namespace OsmAnd
         virtual AtlasMapRendererSymbolsStage* createSymbolsStage();
         virtual AtlasMapRendererDebugStage* createDebugStage();
         
-        virtual double getCurrentPixelsToMetersScaleFactor(const MapRendererState state) const;
+        virtual double getCurrentPixelsToMetersScaleFactor(const ZoomLevel zoomLevel, MapRendererInternalState* _internalState) const;
     public:
         AtlasMapRenderer_OpenGL(GPUAPI_OpenGL* const gpuAPI);
         virtual ~AtlasMapRenderer_OpenGL();

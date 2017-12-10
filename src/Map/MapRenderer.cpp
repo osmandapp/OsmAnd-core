@@ -389,7 +389,7 @@ bool OsmAnd::MapRenderer::preUpdate(IMapRenderer_Metrics::Metric_update* const m
 {
     // Check for resources updates
     Stopwatch updatesStopwatch(metric != nullptr);
-    const auto& mapState = getMapState(true);
+    const auto& mapState = getMapState();
     if (_resources->checkForUpdatesAndApply(mapState))
         invalidateFrame();
     if (metric)
@@ -505,6 +505,8 @@ bool OsmAnd::MapRenderer::prePrepareFrame()
     {
         ok = updateInternalState(*getInternalStateRef(), _currentState, *currentConfiguration);
 
+        _currentState.metersPerPixel = getCurrentPixelsToMetersScaleFactor(_currentState.zoomLevel, getInternalStateRef());
+                
         // Anyways, invalidate the frame
         invalidateFrame();
 
@@ -1098,11 +1100,11 @@ OsmAnd::MapRendererState OsmAnd::MapRenderer::getState() const
     return _requestedState;
 }
 
-OsmAnd::MapState OsmAnd::MapRenderer::getMapState(const bool calculateMetersPerPixel/* = false*/) const
+OsmAnd::MapState OsmAnd::MapRenderer::getMapState() const
 {
     QMutexLocker scopedLocker(&_requestedStateMutex);
 
-    return _requestedState.getMapState(calculateMetersPerPixel ? getCurrentPixelsToMetersScaleFactor(_requestedState) : 1.0);
+    return currentState.getMapState();
 }
 
 bool OsmAnd::MapRenderer::isFrameInvalidated() const

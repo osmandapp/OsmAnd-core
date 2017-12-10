@@ -1267,8 +1267,10 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     GL_CHECK_PRESENT(glBindBuffer);
     GL_CHECK_PRESENT(glBufferData);
 
+    const auto s = symbol->getVerticesAndIndexes();
+    
     // Primitive map symbol has to have vertices, so checks are worthless
-    assert(symbol->vertices && symbol->verticesCount > 0);
+    assert(s->vertices && s->verticesCount > 0);
 
     // Create vertex buffer
     GLuint vertexBuffer;
@@ -1280,7 +1282,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     GL_CHECK_RESULT;
 
     // Upload data
-    glBufferData(GL_ARRAY_BUFFER, symbol->verticesCount*sizeof(VectorMapSymbol::Vertex), symbol->vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, s->verticesCount*sizeof(VectorMapSymbol::Vertex), s->vertices, GL_STATIC_DRAW);
     GL_CHECK_RESULT;
 
     // Unbind it
@@ -1291,11 +1293,11 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
     const std::shared_ptr<ArrayBufferInGPU> vertexBufferResource(new ArrayBufferInGPU(
         this,
         reinterpret_cast<RefInGPU>(vertexBuffer),
-        symbol->verticesCount));
+        s->verticesCount));
 
     // Primitive map symbol may have no index buffer, so check if it needs to be created
     std::shared_ptr<ElementArrayBufferInGPU> indexBufferResource;
-    if (symbol->indices != nullptr && symbol->indicesCount > 0)
+    if (s->indices != nullptr && s->indicesCount > 0)
     {
         // Create index buffer
         GLuint indexBuffer;
@@ -1309,8 +1311,8 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
         // Upload data
         glBufferData(
             GL_ELEMENT_ARRAY_BUFFER,
-            symbol->indicesCount*sizeof(VectorMapSymbol::Index),
-            symbol->indices,
+            s->indicesCount*sizeof(VectorMapSymbol::Index),
+            s->indices,
             GL_STATIC_DRAW);
         GL_CHECK_RESULT;
 
@@ -1322,7 +1324,7 @@ bool OsmAnd::GPUAPI_OpenGL::uploadSymbolAsMeshToGPU(
         indexBufferResource.reset(new ElementArrayBufferInGPU(
             this,
             reinterpret_cast<RefInGPU>(indexBuffer),
-            symbol->indicesCount));
+            s->indicesCount));
     }
 
     // Create mesh resource

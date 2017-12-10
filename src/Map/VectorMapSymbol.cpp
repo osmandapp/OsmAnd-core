@@ -3,10 +3,7 @@
 OsmAnd::VectorMapSymbol::VectorMapSymbol(
     const std::shared_ptr<MapSymbolsGroup>& group_)
     : MapSymbol(group_)
-    , vertices(nullptr)
-    , verticesCount(0)
-    , indices(nullptr)
-    , indicesCount(0)
+    , _verticesAndIndexes(nullptr)
     , primitiveType(PrimitiveType::Invalid)
     , scaleType(ScaleType::Raw)
     , scale(1.0f)
@@ -18,7 +15,15 @@ OsmAnd::VectorMapSymbol::~VectorMapSymbol()
     releaseVerticesAndIndices();
 }
 
-void OsmAnd::VectorMapSymbol::releaseVerticesAndIndices()
+OsmAnd::VectorMapSymbol::VerticesAndIndexes::VerticesAndIndexes()
+: vertices(nullptr)
+, verticesCount(0)
+, indices(nullptr)
+, indicesCount(0)
+{
+}
+
+OsmAnd::VectorMapSymbol::VerticesAndIndexes::~VerticesAndIndexes()
 {
     if (vertices != nullptr)
     {
@@ -26,7 +31,7 @@ void OsmAnd::VectorMapSymbol::releaseVerticesAndIndices()
         vertices = nullptr;
     }
     verticesCount = 0;
-
+    
     if (indices != nullptr)
     {
         delete[] indices;
@@ -35,28 +40,51 @@ void OsmAnd::VectorMapSymbol::releaseVerticesAndIndices()
     indicesCount = 0;
 }
 
+const std::shared_ptr<OsmAnd::VectorMapSymbol::VerticesAndIndexes> OsmAnd::VectorMapSymbol::getVerticesAndIndexes() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _verticesAndIndexes;
+}
+
+void OsmAnd::VectorMapSymbol::setVerticesAndIndexes(const std::shared_ptr<VerticesAndIndexes>& verticesAndIndexes)
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _verticesAndIndexes = verticesAndIndexes;
+}
+
+void OsmAnd::VectorMapSymbol::releaseVerticesAndIndices()
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _verticesAndIndexes.reset();
+}
+
 void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     VectorMapSymbol& mapSymbol,
     const FColorARGB color /*= FColorARGB(1.0f, 1.0f, 1.0f, 1.0f)*/,
     const unsigned int pointsCount /*= 360*/,
     float radius /*= 1.0f*/)
 {
-    mapSymbol.releaseVerticesAndIndices();
-
     if (pointsCount == 0)
+    {
+        mapSymbol.releaseVerticesAndIndices();
         return;
+    }
 
     mapSymbol.primitiveType = PrimitiveType::TriangleFan;
 
+    const auto verticesAndIndexes = std::make_shared<VerticesAndIndexes>();
     // Circle has no reusable vertices, because it's rendered as triangle-fan,
     // so there's no indices
-    mapSymbol.indices = nullptr;
-    mapSymbol.indicesCount = 0;
+    verticesAndIndexes->indices = nullptr;
+    verticesAndIndexes->indicesCount = 0;
 
     // Allocate space for pointsCount+2 vertices
-    mapSymbol.verticesCount = pointsCount + 2;
-    mapSymbol.vertices = new Vertex[mapSymbol.verticesCount];
-    auto pVertex = mapSymbol.vertices;
+    verticesAndIndexes->verticesCount = pointsCount + 2;
+    verticesAndIndexes->vertices = new Vertex[verticesAndIndexes->verticesCount];
+    auto pVertex = verticesAndIndexes->vertices;
 
     // First vertex is the center
     pVertex->positionXY[0] = 0.0f;
@@ -77,9 +105,11 @@ void OsmAnd::VectorMapSymbol::generateCirclePrimitive(
     }
 
     // Close the fan
-    pVertex->positionXY[0] = mapSymbol.vertices[1].positionXY[0];
-    pVertex->positionXY[1] = mapSymbol.vertices[1].positionXY[1];
+    pVertex->positionXY[0] = verticesAndIndexes->vertices[1].positionXY[0];
+    pVertex->positionXY[1] = verticesAndIndexes->vertices[1].positionXY[1];
     pVertex->color = color;
+    
+    mapSymbol.setVerticesAndIndexes(verticesAndIndexes);
 }
 
 void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
@@ -88,22 +118,24 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
     const unsigned int pointsCount /*= 360*/,
     float radius /*= 1.0f*/)
 {
-    mapSymbol.releaseVerticesAndIndices();
-
     if (pointsCount == 0)
+    {
+        mapSymbol.releaseVerticesAndIndices();
         return;
+    }
 
     mapSymbol.primitiveType = PrimitiveType::LineLoop;
 
+    const auto verticesAndIndexes = std::make_shared<VerticesAndIndexes>();
     // Ring as line-loop has no reusable vertices, because it's rendered as triangle-fan,
     // so there's no indices
-    mapSymbol.indices = nullptr;
-    mapSymbol.indicesCount = 0;
+    verticesAndIndexes->indices = nullptr;
+    verticesAndIndexes->indicesCount = 0;
 
     // Allocate space for pointsCount vertices
-    mapSymbol.verticesCount = pointsCount;
-    mapSymbol.vertices = new Vertex[mapSymbol.verticesCount];
-    auto pVertex = mapSymbol.vertices;
+    verticesAndIndexes->verticesCount = pointsCount;
+    verticesAndIndexes->vertices = new Vertex[verticesAndIndexes->verticesCount];
+    auto pVertex = verticesAndIndexes->vertices;
 
     // Generate each vertex
     const auto step = (2.0*M_PI) / pointsCount;
@@ -116,5 +148,7 @@ void OsmAnd::VectorMapSymbol::generateRingLinePrimitive(
 
         pVertex += 1;
     }
+    
+    mapSymbol.setVerticesAndIndexes(verticesAndIndexes);
 }
 

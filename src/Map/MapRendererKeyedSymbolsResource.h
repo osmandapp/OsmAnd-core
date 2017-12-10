@@ -32,10 +32,11 @@ namespace OsmAnd
         std::shared_ptr<IMapKeyedSymbolsProvider::Data> _sourceData;
         std::shared_ptr<MapSymbolsGroup> _mapSymbolsGroup;
         QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPU;
+        QHash< std::shared_ptr<const MapSymbol>, std::shared_ptr<const GPUAPI::ResourceInGPU> > _resourcesInGPUCache;
 
-        virtual bool updatesPresent();
-        virtual bool checkForUpdatesAndApply(const MapState& mapState);
-        
+        virtual bool updatesPresent() Q_DECL_OVERRIDE;
+        virtual bool checkForUpdatesAndApply(const MapState& mapState) Q_DECL_OVERRIDE;
+
         virtual bool supportsObtainDataAsync() const Q_DECL_OVERRIDE;
         virtual bool obtainData(
             bool& dataAvailable,
@@ -48,10 +49,19 @@ namespace OsmAnd
         virtual void unloadFromGPU() Q_DECL_OVERRIDE;
         virtual void lostDataInGPU() Q_DECL_OVERRIDE;
         virtual void releaseData() Q_DECL_OVERRIDE;
+
+        virtual bool supportsResourcesRenew() Q_DECL_OVERRIDE;
+        virtual void requestResourcesRenew() Q_DECL_OVERRIDE;
+        virtual void prepareResourcesRenew() Q_DECL_OVERRIDE;
+        virtual void finishResourcesRenewing() Q_DECL_OVERRIDE;
+        
     public:
         virtual ~MapRendererKeyedSymbolsResource();
 
-        std::shared_ptr<const GPUAPI::ResourceInGPU> getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;
+        virtual bool isRenewing() Q_DECL_OVERRIDE;
+
+        std::shared_ptr<const GPUAPI::ResourceInGPU> getGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol);
+        std::shared_ptr<const GPUAPI::ResourceInGPU> getCachedGpuResourceFor(const std::shared_ptr<const MapSymbol>& mapSymbol) const;
 
         friend class OsmAnd::MapRendererResourcesManager;
     };

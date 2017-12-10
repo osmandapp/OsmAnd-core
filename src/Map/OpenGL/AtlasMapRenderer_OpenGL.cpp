@@ -699,16 +699,13 @@ double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor() co
     return metersPerPixel;
 }
 
-double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor(const MapRendererState state) const
+double OsmAnd::AtlasMapRenderer_OpenGL::getCurrentPixelsToMetersScaleFactor(const ZoomLevel zoomLevel, MapRendererInternalState* _internalState) const
 {
-    InternalState internalState;
-    bool ok = updateInternalState(internalState, state, *getConfiguration());
-    
-    const auto tileSizeOnScreenInPixels =
-    internalState.referenceTileSizeOnScreenInPixels * internalState.tileOnScreenScaleFactor;
+    const auto internalState = static_cast<InternalState*>(_internalState);
+    const auto tileSizeOnScreenInPixels = internalState->referenceTileSizeOnScreenInPixels * internalState->tileOnScreenScaleFactor;
     const auto metersPerPixel = Utilities::getMetersPerTileUnit(
-                                                                state.zoomLevel,
-                                                                internalState.targetTileId.y,
+                                                                zoomLevel,
+                                                                internalState->targetTileId.y,
                                                                 tileSizeOnScreenInPixels);
     
     return metersPerPixel;
