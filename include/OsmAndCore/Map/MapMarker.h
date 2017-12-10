@@ -62,6 +62,8 @@ namespace OsmAnd
             virtual bool updatesPresent();
             virtual UpdateResult update(const MapState& mapState);
 
+            virtual bool supportsResourcesRenew();
+
         friend class OsmAnd::MapMarker;
         friend class OsmAnd::MapMarker_P;
         };

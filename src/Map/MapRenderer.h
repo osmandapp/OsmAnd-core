@@ -240,7 +240,7 @@ namespace OsmAnd
         virtual void reloadEverything();
 
         virtual MapRendererState getState() const;
-        virtual MapState getMapState(const bool calculateMetersPerPixel = false) const;
+        virtual MapState getMapState() const;
         virtual bool isFrameInvalidated() const;
         virtual void forcedFrameInvalidate();
         virtual void forcedGpuProcessingCycle();

@@ -30,6 +30,9 @@ namespace OsmAnd
     class IMapTiledSymbolsProvider;
     class IMapKeyedSymbolsProvider;
     class MapSymbol;
+    
+    struct MapRendererInternalState;
+    
     namespace IMapRenderer_Metrics
     {
         struct Metric_update;
@@ -50,7 +53,7 @@ namespace OsmAnd
     protected:
         IMapRenderer();
         
-        virtual double getCurrentPixelsToMetersScaleFactor(const MapRendererState state) const = 0;
+        virtual double getCurrentPixelsToMetersScaleFactor(const ZoomLevel zoomLevel, MapRendererInternalState* _internalState) const = 0;
     public:
         virtual ~IMapRenderer();
 
@@ -81,7 +84,7 @@ namespace OsmAnd
         virtual void reloadEverything() = 0;
 
         virtual MapRendererState getState() const = 0;
-        virtual MapState getMapState(const bool calculateMetersPerPixel = false) const = 0;
+        virtual MapState getMapState() const = 0;
         virtual bool isFrameInvalidated() const = 0;
         virtual void forcedFrameInvalidate() = 0;
         virtual void forcedGpuProcessingCycle() = 0;

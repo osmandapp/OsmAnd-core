@@ -28,3 +28,25 @@ bool OsmAnd::MapRendererBaseResource::checkForUpdatesAndApply(const MapState& ma
 {
     return false;
 }
+
+bool OsmAnd::MapRendererBaseResource::supportsResourcesRenew()
+{
+    return false;
+}
+
+void OsmAnd::MapRendererBaseResource::requestResourcesRenew()
+{
+}
+
+bool OsmAnd::MapRendererBaseResource::isRenewing()
+{
+    return false;
+}
+
+void OsmAnd::MapRendererBaseResource::prepareResourcesRenew()
+{
+}
+
+void OsmAnd::MapRendererBaseResource::finishResourcesRenewing()
+{
+}

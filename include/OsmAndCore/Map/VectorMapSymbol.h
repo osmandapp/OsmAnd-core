@@ -30,6 +30,19 @@ namespace OsmAnd
 #pragma pack(pop)
         typedef uint16_t Index;
 
+        struct VerticesAndIndexes
+        {
+        public:
+            VerticesAndIndexes();
+            ~VerticesAndIndexes();
+        public:
+            Vertex* vertices;
+            unsigned int verticesCount;
+            
+            Index* indices;
+            unsigned int indicesCount;
+        };
+        
         enum class PrimitiveType
         {
             Invalid = -1,
@@ -46,17 +59,18 @@ namespace OsmAnd
         };
 
     private:
+        std::shared_ptr<VerticesAndIndexes> _verticesAndIndexes;
+    protected:
+        mutable QReadWriteLock _lock;
+
     protected:
         VectorMapSymbol(
             const std::shared_ptr<MapSymbolsGroup>& group);
     public:
         virtual ~VectorMapSymbol();
-
-        Vertex* vertices;
-        unsigned int verticesCount;
-
-        Index* indices;
-        unsigned int indicesCount;
+        
+        const std::shared_ptr<VerticesAndIndexes> getVerticesAndIndexes() const;
+        void setVerticesAndIndexes(const std::shared_ptr<VerticesAndIndexes>& verticesAndIndexes);
 
         PrimitiveType primitiveType;
 

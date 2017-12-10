@@ -76,7 +76,7 @@ namespace OsmAnd
         MapRendererState();
         ~MapRendererState();
 
-        MapState getMapState(const double metersPerPixel) const; 
+        MapState getMapState() const; 
 
         QMap<int, std::shared_ptr<IMapLayerProvider> > mapLayersProviders;
         QMap<int, MapLayerConfiguration > mapLayersConfigurations;
@@ -99,6 +99,8 @@ namespace OsmAnd
         float visualZoom;
         float visualZoomShift;
         MapStubStyle stubsStyle;
+        
+        double metersPerPixel;
     };
 }
 

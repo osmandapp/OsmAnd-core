@@ -52,6 +52,8 @@ namespace OsmAnd
             virtual bool updatesPresent();
             virtual UpdateResult update(const MapState& mapState);
 
+            virtual bool supportsResourcesRenew();
+
         friend class OsmAnd::VectorLine;
         friend class OsmAnd::VectorLine_P;
         };

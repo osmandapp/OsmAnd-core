@@ -1734,6 +1734,11 @@ std::shared_ptr<const OsmAnd::GPUAPI::ResourceInGPU> OsmAnd::AtlasMapRendererSym
 
             resource->setState(MapRendererResourceState::Uploaded);
         }
+        else if (resource->isRenewing())
+        {
+            if (const auto keyedResource = std::dynamic_pointer_cast<MapRendererKeyedSymbolsResource>(resource))
+                gpuResource = keyedResource->getCachedGpuResourceFor(mapSymbol);
+        }
 
         // Stop as soon as GPU resource found
         if (gpuResource)
