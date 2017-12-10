@@ -197,7 +197,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
     
     
-    double radius = owner->lineWidth * _metersPerPixel ;
+    double radius = owner->lineWidth * _metersPerPixel / 2 * (qSqrt(_mapZoomLevel) / 3);
     
     auto pVertex = vectorLine->vertices;
     auto beginPoint = Utilities::convert31ToLatLon(PointI(_points[0].x, _points[0].y));
