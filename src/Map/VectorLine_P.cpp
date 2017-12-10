@@ -68,7 +68,7 @@ bool OsmAnd::VectorLine_P::hasUnappliedPrimitiveChanges() const
 
 bool OsmAnd::VectorLine_P::isMapStateChanged(const MapState& mapState) const
 {
-    bool changed = _mapZoomLevel != mapState.zoomLevel;
+    bool changed = qAbs(_mapZoomLevel + _mapVisualZoom - mapState.zoomLevel - mapState.visualZoom) > 0.5;
     //_mapVisualZoom != mapState.visualZoom ||
     //_mapVisualZoomShift != mapState.visualZoomShift;
     return changed;
