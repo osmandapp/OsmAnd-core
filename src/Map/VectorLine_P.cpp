@@ -188,6 +188,53 @@ OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::Poi
     return r;
 }
 
+OsmAnd::PointD OsmAnd::VectorLine_P::getProjection(PointD point, PointD from, PointD to ) const
+{
+
+    double mDist = (from.x - to.x) * (from.x - to.x) + (from.y - to.y) * (from.y - to.y);
+    double projection = scalarMultiplication(from.x, from.y, to.x, to.y, point.x, point.y);
+    if (projection < 0)
+    {
+        return from;
+    }
+    else if (projection >= mDist)
+    {
+        return to;
+    }
+    return PointD(from.x + (to.x - from.x) * (projection / mDist),
+                  from.y + (to.y - from.y) * (projection / mDist));
+}
+
+double OsmAnd::VectorLine_P::scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const
+{
+    // Scalar multiplication between (AB, AC)
+    return (xB - xA) * (xC - xA) + (yB - yA) * (yC - yA);
+}
+
+int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, uint start, uint end, double epsilon, std::vector<bool>& include) const
+{
+    double dmax = -1;
+    int index = -1;
+    for (int i = start + 1; i <= end - 1; i++) {
+        PointD proj = getProjection(points[i],points[start], points[end]);
+        double d = qSqrt((points[i].x-proj.x)*(points[i].x-proj.x)+
+                         (points[i].y-proj.y)*(points[i].y-proj.y));
+        // calculate distance from line
+        if (d > dmax) {
+            dmax = d;
+            index = i;
+        }
+    }
+    if (dmax >= epsilon) {
+        int enabled1 = simplifyDouglasPeucker(points, start, index, epsilon, include);
+        int enabled2 = simplifyDouglasPeucker(points, index, end, epsilon, include);
+        return enabled1 + enabled2 ;
+    } else {
+        include[end] = true;
+        return 1;
+    }
+}
+
 std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const
 {
     vectorLine->releaseVerticesAndIndices();
@@ -207,13 +254,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
     
-    vectorLine->verticesCount = (pointsCount - 2) * 2 + 2 * 2;
-    vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
-    
-    
     double radius = owner->lineWidth * _metersPerPixel / 2;// * (qSqrt(_mapZoomLevel) / 3);
     
-    auto pVertex = vectorLine->vertices;
     auto beginPoint = Utilities::convert31ToLatLon(PointI(_points[0].x, _points[0].y));
     
     std::vector<OsmAnd::PointD> b1(pointsCount), b2(pointsCount), e1(pointsCount), e2(pointsCount);
@@ -245,10 +287,24 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         e1[pointIdx] = OsmAnd::PointD(distX - nx1, distY + ny1);
         e2[pointIdx] = OsmAnd::PointD(distX + nx1, distY - ny1);
     }
+    std::vector<bool> include(pointsCount, false);
+    include[0] = true;
+    int pointAlloc = simplifyDouglasPeucker(e1, 0, (uint) e1.size(), radius / 2, include);
     
+    
+    vectorLine->verticesCount = (pointAlloc - 2) * 2 + 2 * 2;
+    vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
+    auto pVertex = vectorLine->vertices;
+    uint mainPointInd = 0;
+    uint prevPointInd = 0;
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
-        if (pointIdx == 0)
+        if(!include[pointIdx])
+        {
+            continue;
+        }
+        
+        if (mainPointInd == 0)
         {
             pVertex->positionXY[0] = e1[pointIdx].x;
             pVertex->positionXY[1] = e1[pointIdx].y;
@@ -260,7 +316,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             pVertex->color = owner->fillColor;
             pVertex += 1;
         }
-        else if (pointIdx == pointsCount - 1)
+        else if (mainPointInd == pointAlloc - 1)
         {
             pVertex->positionXY[0] = b1[pointIdx].x;
             pVertex->positionXY[1] = b1[pointIdx].y;
@@ -274,10 +330,15 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         }
         else
         {
-            PointD l1 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            //PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            //PointD l3 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e2[pointIdx], b2[pointIdx+1]);
-            PointD l4 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e2[pointIdx], b2[pointIdx+1]);
+            uint nextPointIdx = pointIdx + 1;
+            while(!include[nextPointIdx] && nextPointIdx < pointsCount - 1)
+            {
+                nextPointIdx++;
+            }
+            PointD l1 = findLineIntersection(e1[prevPointInd], b1[pointIdx], e1[pointIdx], b1[nextPointIdx]);
+            //PointD l2 = findLineIntersection(e2[prevPointInd], b2[pointIdx], e1[pointIdx], b1[nextPointIdx]);
+            //PointD l3 = findLineIntersection(e1[prevPointInd], b1[pointIdx], e2[pointIdx], b2[nextPointIdx]);
+            PointD l4 = findLineIntersection(e2[prevPointInd], b2[pointIdx], e2[pointIdx], b2[nextPointIdx]);
             //l1 = b1[pointIdx];
             //l2 = b2[pointIdx];
             //l3 = e1[pointIdx];
@@ -307,6 +368,8 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             pVertex += 1;
             
         }
+        prevPointInd = pointIdx;
+        mainPointInd++;
     }
     
     vectorLine->isHidden = _isHidden;

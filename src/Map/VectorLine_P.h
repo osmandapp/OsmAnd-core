@@ -61,6 +61,12 @@ namespace OsmAnd
         
         PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
         
+        PointD getProjection(PointD point, PointD from, PointD to ) const;
+        double scalarMultiplication(double xA, double yA, double xB, double yB, double xC, double yC) const;
+        
+        int simplifyDouglasPeucker(std::vector<PointD>& points, uint begin, uint end, double epsilon,
+                                   std::vector<bool>& include) const;
+        
         
     public:
         virtual ~VectorLine_P();
