@@ -59,6 +59,8 @@ namespace OsmAnd
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
         std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const;
         
+        PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
+        
         
     public:
         virtual ~VectorLine_P();
