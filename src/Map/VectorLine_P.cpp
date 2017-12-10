@@ -112,18 +112,7 @@ bool OsmAnd::VectorLine_P::applyChanges()
         {
             symbol_->isHidden = _isHidden;
             
-            if (const auto roundJoin = std::dynamic_pointer_cast<LineRoundJoin>(symbol_))
-            {
-                roundJoin->order = owner->baseOrder;
-                roundJoin->position31 = _points[roundJoin->index];
-                VectorMapSymbol::generateCirclePrimitive(*roundJoin, owner->fillColor, 36,
-                                                         owner->lineWidth * _metersPerPixel / 3);
-                roundJoin->isHidden = _isHidden;
-                roundJoin->scale = 1;
-                roundJoin->scaleType = VectorMapSymbol::ScaleType::InMeters;
-                roundJoin->direction = Q_SNAN;
-            }
-            else if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
+            if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
             {
                 if (!_points.empty())
                 {
@@ -143,15 +132,6 @@ bool OsmAnd::VectorLine_P::applyChanges()
     return true;
 }
 
-OsmAnd::VectorLine_P::LineRoundJoin::LineRoundJoin(const std::shared_ptr<MapSymbolsGroup>& group_)
-: OnSurfaceVectorMapSymbol(group_)
-{
-}
-
-OsmAnd::VectorLine_P::LineRoundJoin::~LineRoundJoin()
-{
-}
-
 std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateSymbolsGroup() const
 {
     QReadLocker scopedLocker(&_lock);
@@ -165,21 +145,7 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
         const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine(new OnSurfaceVectorMapSymbol(symbolsGroup));
         generatePrimitive(vectorLine);
         symbolsGroup->symbols.push_back(vectorLine);
-        for (auto pointIdx = 0u; pointIdx < _points.size(); pointIdx++)
-        {
-            
-            const std::shared_ptr<LineRoundJoin> roundJoin(new LineRoundJoin(symbolsGroup));
-            roundJoin->index = pointIdx;
-            roundJoin->order = owner->baseOrder;
-            roundJoin->position31 = _points[pointIdx];
-            VectorMapSymbol::generateCirclePrimitive(*roundJoin, owner->fillColor, 36,
-                                                     owner->lineWidth * _metersPerPixel / 3);
-            roundJoin->isHidden = _isHidden;
-            roundJoin->scale = 1;
-            roundJoin->scaleType = VectorMapSymbol::ScaleType::InMeters;
-            roundJoin->direction = Q_SNAN;
-            symbolsGroup->symbols.push_back(roundJoin);
-        }
+        
     }
     
     return symbolsGroup;
@@ -227,75 +193,72 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
     
-    vectorLine->verticesCount = (pointsCount - 2) * 5 + 2 * 2;
+    vectorLine->verticesCount = (pointsCount - 2) * 4 + 2 * 2;
     vectorLine->vertices = new VectorMapSymbol::Vertex[vectorLine->verticesCount];
     
     
-    double lineWidth = owner->lineWidth * _metersPerPixel;
-    auto pVertex = vectorLine->vertices;
-    double ntan = atan2(_points[1].x - _points[0].x, _points[1].y - _points[0].y);
-    double nx = lineWidth * sin(ntan) / 2;
-    double ny = lineWidth * cos(ntan) / 2;
+    double radius = owner->lineWidth * _metersPerPixel ;
     
-    double nx1 = lineWidth * sin(ntan + M_PI_4) / 2;
-    double ny1 = lineWidth * cos(ntan + M_PI_4) / 2;
-    double nx2 = lineWidth * sin(ntan - M_PI_4) / 2;
-    double ny2 = lineWidth * cos(ntan - M_PI_4) / 2;
+    auto pVertex = vectorLine->vertices;
+    auto beginPoint = Utilities::convert31ToLatLon(PointI(_points[0].x, _points[0].y));
+    std::vector<double> bx1(pointsCount), bx2(pointsCount), by1(pointsCount), by2(pointsCount);
+    std::vector<double> ex1(pointsCount), ex2(pointsCount), ey1(pointsCount), ey2(pointsCount);
+    double ntan = 0, nx1 = 0, ny1 = 0;
+    for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
+    {
+        
+        double distX = Utilities::distance(
+            Utilities::convert31ToLatLon(PointI(_points[pointIdx].x, _points[0].y)), beginPoint);
+        double distY = Utilities::distance(
+            Utilities::convert31ToLatLon(PointI(_points[0].x, _points[pointIdx].y)), beginPoint);
+        if (_points[0].x > _points[pointIdx].x)
+        {
+            distX = -distX;
+        }
+        if (_points[0].y > _points[pointIdx].y)
+        {
+            distY = -distY;
+        }
+        bx1[pointIdx] = distX - nx1;
+        bx2[pointIdx] = distX + nx1;
+        by1[pointIdx] = distY + ny1;
+        by2[pointIdx] = distY - ny1;
+        if(pointIdx < pointsCount - 1) {
+            ntan = atan2(_points[pointIdx+1].x - _points[pointIdx].x,
+                            _points[pointIdx+1].y - _points[pointIdx].y);
+            nx1 = radius * sin(M_PI_2 - ntan) ;
+            ny1 = radius * cos(M_PI_2 - ntan) ;
+        }
+    
+        ex1[pointIdx] = distX - nx1;
+        ex2[pointIdx] = distX + nx1;
+        ey1[pointIdx] = distY + ny1;
+        ey2[pointIdx] = distY - ny1;
+    }
     
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
         
-        int prevIndex = 0;
-        double distX = Utilities::distance(
-                                           Utilities::convert31ToLatLon(PointI(_points[pointIdx].x, _points[prevIndex].y)),
-                                           Utilities::convert31ToLatLon(PointI(_points[prevIndex].x, _points[prevIndex].y)));
+        if (pointIdx > 0) {
+            pVertex->positionXY[0] = bx1[pointIdx];
+            pVertex->positionXY[1] = by1[pointIdx];
+            pVertex->color = owner->fillColor;
+            pVertex += 1;
         
-        double distY = Utilities::distance(
-                                           Utilities::convert31ToLatLon(PointI(_points[prevIndex].x, _points[pointIdx].y)),
-                                           Utilities::convert31ToLatLon(PointI(_points[prevIndex].x, _points[prevIndex].y)));
-        
-        if (_points[prevIndex].x > _points[pointIdx].x)
-        {
-            distX = -distX;
+            pVertex->positionXY[0] = bx2[pointIdx];
+            pVertex->positionXY[1] = by2[pointIdx];
+            pVertex->color = owner->fillColor;
+            pVertex += 1;
         }
-        if (_points[prevIndex].y > _points[pointIdx].y)
+        if (pointIdx < pointsCount - 1)
         {
-            distY = -distY;
-        }
-        pVertex->positionXY[0] = distX - nx2;
-        pVertex->positionXY[1] = distY - ny2;
-        pVertex->color = owner->fillColor;
-        pVertex += 1;
-        
-        pVertex->positionXY[0] = distX - nx1;
-        pVertex->positionXY[1] = distY - ny1;
-        pVertex->color = owner->fillColor;
-        pVertex += 1;
-        
-        if (pointIdx > 0 && pointIdx < pointsCount - 1)
-        {
-            ntan = atan2(_points[pointIdx + 1].x - _points[pointIdx].x,
-                         _points[pointIdx + 1].y - _points[pointIdx].y);
-            nx = lineWidth * sin(ntan) / 2;
-            ny = lineWidth * cos(ntan) / 2;
-            
-            nx1 = lineWidth * sin(ntan + M_PI_4) / 2;
-            ny1 = lineWidth * cos(ntan + M_PI_4) / 2;
-            nx2 = lineWidth * sin(ntan - M_PI_4) / 2;
-            ny2 = lineWidth * cos(ntan - M_PI_4) / 2;
-            
-            pVertex->positionXY[0] = distX;
-            pVertex->positionXY[1] = distY;
+            pVertex->positionXY[0] = ex1[pointIdx];
+            pVertex->positionXY[1] = ey1[pointIdx];
             pVertex->color = owner->fillColor;
             pVertex += 1;
             
-            pVertex->positionXY[0] = distX + nx1;
-            pVertex->positionXY[1] = distY + ny1;
-            pVertex->color = owner->fillColor;
-            pVertex += 1;
-            
-            pVertex->positionXY[0] = distX + nx2;
-            pVertex->positionXY[1] = distY + ny2;
+            pVertex->positionXY[0] = ex2[pointIdx];
+            pVertex->positionXY[1] = ey2[pointIdx];
             pVertex->color = owner->fillColor;
             pVertex += 1;
         }

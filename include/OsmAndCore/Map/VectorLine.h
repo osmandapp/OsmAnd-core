@@ -23,6 +23,14 @@ namespace OsmAnd
     class VectorLinesCollection_P;
 
     class VectorLine_P;
+    typedef enum
+    {
+        kRoundJoinType = 0,
+        kBezelJoinType,
+        kMiterJoinType
+        
+    } kVectorLineJoinType;
+    
     class OSMAND_CORE_API VectorLine
     {
         Q_DISABLE_COPY_AND_MOVE(VectorLine);

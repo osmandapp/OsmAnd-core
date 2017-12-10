@@ -59,19 +59,7 @@ namespace OsmAnd
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
         std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const;
         
-        class LineRoundJoin : public OnSurfaceVectorMapSymbol
-        {
-        private:
-        protected:
-            LineRoundJoin(const std::shared_ptr<MapSymbolsGroup>& group);
-            
-        public:
-            virtual ~LineRoundJoin();
-            int index;
-            
-            friend class OsmAnd::VectorLine_P;
-        };
-
+        
     public:
         virtual ~VectorLine_P();
 
