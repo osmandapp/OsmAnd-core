@@ -289,7 +289,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     }
     std::vector<bool> include(pointsCount, false);
     include[0] = true;
-    int pointAlloc = simplifyDouglasPeucker(e1, 0, (uint) e1.size(), radius / 2, include);
+    int pointAlloc = simplifyDouglasPeucker(e1, 0, (uint) e1.size(), radius / 3, include);
     
     verticesAndIndexes->verticesCount = (pointAlloc - 2) * 2 + 2 * 2;
     verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[verticesAndIndexes->verticesCount];
