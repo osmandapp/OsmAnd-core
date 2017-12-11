@@ -50,6 +50,8 @@ void OsmAnd::VectorLine_P::setPoints(const QVector<PointI>& points)
     QWriteLocker scopedLocker(&_lock);
     
     _points = points;
+    
+    _hasUnappliedPrimitiveChanges = true;
     _hasUnappliedChanges = true;
 }
 
@@ -92,7 +94,7 @@ bool OsmAnd::VectorLine_P::update(const MapState& mapState)
     if (mapStateChanged)
         applyMapState(mapState);
 
-    _hasUnappliedPrimitiveChanges = mapStateChanged;
+    _hasUnappliedPrimitiveChanges |= mapStateChanged;
     return mapStateChanged;
 }
 
@@ -325,14 +327,14 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[verticesAndIndexes->verticesCount];
     auto pVertex = verticesAndIndexes->vertices;
 
-    /*
+    
     OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f",
                       verticesAndIndexes->verticesCount,
                       _mapZoomLevel,
                       _mapVisualZoom,
                       _metersPerPixel,
                       radius);
-     */
+    
     
     // generate triangles
     for (auto pointIdx = 0u; pointIdx < pointsSimpleCount; pointIdx++)
