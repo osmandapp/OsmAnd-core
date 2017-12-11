@@ -10,6 +10,7 @@
 #include "VectorMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
 #include "QKeyValueIterator.h"
+#include "Logging.h"
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false),
@@ -145,6 +146,7 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     {
         const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine(new OnSurfaceVectorMapSymbol(symbolsGroup));
         generatePrimitive(vectorLine);
+        vectorLine->allowFastCheckByFrustum = false;
         symbolsGroup->symbols.push_back(vectorLine);
         
     }
@@ -236,6 +238,11 @@ int OsmAnd::VectorLine_P::simplifyDouglasPeucker(std::vector<PointD>& points, ui
     }
 }
 
+float OsmAnd::VectorLine_P::zoom() const
+{
+    return _mapZoomLevel + (_mapVisualZoom >= 1.0f ? _mapVisualZoom - 1.0f : (_mapVisualZoom - 1.0f) * 2.0f);
+}
+
 std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const
 {
     int order = owner->baseOrder;
@@ -254,8 +261,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
     
+    float zoom = this->zoom();
     double radius = owner->lineWidth * _metersPerPixel /
-                        (_mapZoomLevel >= 23 ? 1 : qSqrt(23 - _mapZoomLevel)) ;
+                        (zoom >= 23 ? 1 : qSqrt(23 - zoom)) ;
 
     // generate array of points
     std::vector<OsmAnd::PointD> pointsToPlot(pointsCount);
@@ -313,11 +321,19 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         insertIdx++;
     }
     
-    
     verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
     verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[verticesAndIndexes->verticesCount];
     auto pVertex = verticesAndIndexes->vertices;
 
+    /*
+    OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f",
+                      verticesAndIndexes->verticesCount,
+                      _mapZoomLevel,
+                      _mapVisualZoom,
+                      _metersPerPixel,
+                      radius);
+     */
+    
     // generate triangles
     for (auto pointIdx = 0u; pointIdx < pointsSimpleCount; pointIdx++)
     {

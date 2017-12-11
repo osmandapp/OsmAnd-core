@@ -45,6 +45,8 @@ namespace OsmAnd
         float _mapVisualZoom;
         float _mapVisualZoomShift;
 
+        float zoom() const;
+
         bool update(const MapState& mapState);
 
         bool applyChanges();
