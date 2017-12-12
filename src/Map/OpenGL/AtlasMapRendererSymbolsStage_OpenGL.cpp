@@ -2153,7 +2153,8 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
             scaleFactor = symbol->scale;
             break;
         case VectorMapSymbol::ScaleType::In31:
-            scaleFactor = symbol->scale * Utilities::getPowZoom(currentState.zoomLevel - 24);
+            scaleFactor = symbol->scale * AtlasMapRenderer::TileSize3D /
+                                Utilities::getPowZoom(31 - currentState.zoomLevel);
             break;
         case VectorMapSymbol::ScaleType::InMeters:
             scaleFactor = symbol->scale / Utilities::getMetersPerTileUnit(

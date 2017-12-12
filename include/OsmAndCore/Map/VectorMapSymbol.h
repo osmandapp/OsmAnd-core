@@ -57,7 +57,6 @@ namespace OsmAnd
         enum class ScaleType
         {
             Raw,
-            In16,
             In31,
             InMeters
         };

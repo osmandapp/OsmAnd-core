@@ -11,6 +11,7 @@
 #include "OnSurfaceVectorMapSymbol.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
+#include "IAtlasMapRenderer.h"
 
 OsmAnd::VectorLine_P::VectorLine_P(VectorLine* const owner_)
 : _hasUnappliedChanges(false), _hasUnappliedPrimitiveChanges(false), _isHidden(false),
@@ -259,36 +260,16 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     verticesAndIndexes->indicesCount = 0;
     
     vectorLine->scaleType = VectorMapSymbol::ScaleType::In31;
-    //vectorLine->scaleType = VectorMapSymbol::ScaleType::InMeters;
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
     
     float zoom = this->zoom();
-    //double radius = owner->lineWidth * _metersPerPixel /
-    //                    (zoom >= 23 ? 1 : qSqrt(23 - zoom)) ;
-    double radius = owner->lineWidth * Utilities::getPowZoom( 31 - 8 - _mapZoomLevel)  / 16;
+    double radius = owner->lineWidth * Utilities::getPowZoom( 31 - _mapZoomLevel) * qSqrt(zoom) /
+                        (IAtlasMapRenderer::TileSize3D * IAtlasMapRenderer::TileSize3D);
     // generate array of points
     std::vector<OsmAnd::PointD> pointsToPlot(pointsCount);
-    //auto beginPoint = Utilities::convert31ToLatLon(PointI(_points[0].x, _points[0].y));
-    auto beginPoint = PointD(_points[0].x, _points[0].y);
-    
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
-        /*
-        double distX = Utilities::distance(
-                                           Utilities::convert31ToLatLon(PointI(_points[pointIdx].x, _points[0].y)), beginPoint);
-        double distY = Utilities::distance(
-                                           Utilities::convert31ToLatLon(PointI(_points[0].x, _points[pointIdx].y)), beginPoint);
-        if (_points[0].x > _points[pointIdx].x)
-        {
-            distX = -distX;
-        }
-        if (_points[0].y > _points[pointIdx].y)
-        {
-            distY = -distY;
-        }
-        pointsToPlot[pointIdx] = PointD(distX, distY);*/
-        
         pointsToPlot[pointIdx] = PointD((_points[pointIdx].x-_points[0].x), (_points[pointIdx].y-_points[0].y));
     }
     
