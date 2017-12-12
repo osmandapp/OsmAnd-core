@@ -120,10 +120,10 @@ bool OsmAnd::VectorLine_P::applyChanges()
             {
                 if (!_points.empty())
                 {
-                    symbol->setPosition31(_points[0]);
                     if (_hasUnappliedPrimitiveChanges && _points.size() > 1)
                     {
                         generatePrimitive(symbol);
+                        symbol->setPosition31(_points[0]);
                     }
                 }
             }
