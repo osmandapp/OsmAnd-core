@@ -2135,10 +2135,17 @@ bool OsmAnd::AtlasMapRendererSymbolsStage_OpenGL::renderOnSurfaceVectorSymbol(
     }
 
     // Get proper scale
-    const auto& position31 =
-        (renderable->instanceParameters && renderable->instanceParameters->overridesPosition31)
+    PointI position31;
+    if (gpuResource->position31 != nullptr)
+    {
+        position31 = PointI(gpuResource->position31->x, gpuResource->position31->y);
+    }
+    else
+    {
+        position31 = (renderable->instanceParameters && renderable->instanceParameters->overridesPosition31)
         ? renderable->instanceParameters->position31
         : symbol->getPosition31();
+    }
     float scaleFactor = 1.0f;
     switch (symbol->scaleType)
     {

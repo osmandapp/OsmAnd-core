@@ -123,7 +123,6 @@ bool OsmAnd::VectorLine_P::applyChanges()
                     if (_hasUnappliedPrimitiveChanges && _points.size() > 1)
                     {
                         generatePrimitive(symbol);
-                        symbol->setPosition31(_points[0]);
                     }
                 }
             }
@@ -325,6 +324,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     
     verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
     verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[verticesAndIndexes->verticesCount];
+    verticesAndIndexes->position31 = new PointI(vectorLine->position31.x, vectorLine->position31.y);
     auto pVertex = verticesAndIndexes->vertices;
 
     
