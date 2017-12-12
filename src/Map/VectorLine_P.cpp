@@ -258,21 +258,23 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     verticesAndIndexes->indices = nullptr;
     verticesAndIndexes->indicesCount = 0;
     
-    vectorLine->scaleType = VectorMapSymbol::ScaleType::InMeters;
+    vectorLine->scaleType = VectorMapSymbol::ScaleType::In31;
+    //vectorLine->scaleType = VectorMapSymbol::ScaleType::InMeters;
     vectorLine->scale = 1.0;
     vectorLine->direction = 0.f;
     
     float zoom = this->zoom();
-    double radius = owner->lineWidth * _metersPerPixel /
-                        (zoom >= 23 ? 1 : qSqrt(23 - zoom)) ;
-
+    //double radius = owner->lineWidth * _metersPerPixel /
+    //                    (zoom >= 23 ? 1 : qSqrt(23 - zoom)) ;
+    double radius = owner->lineWidth * Utilities::getPowZoom( 31 - 8 - _mapZoomLevel)  / 16;
     // generate array of points
     std::vector<OsmAnd::PointD> pointsToPlot(pointsCount);
-    auto beginPoint = Utilities::convert31ToLatLon(PointI(_points[0].x, _points[0].y));
+    //auto beginPoint = Utilities::convert31ToLatLon(PointI(_points[0].x, _points[0].y));
+    auto beginPoint = PointD(_points[0].x, _points[0].y);
     
     for (auto pointIdx = 0u; pointIdx < pointsCount; pointIdx++)
     {
-        
+        /*
         double distX = Utilities::distance(
                                            Utilities::convert31ToLatLon(PointI(_points[pointIdx].x, _points[0].y)), beginPoint);
         double distY = Utilities::distance(
@@ -285,7 +287,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         {
             distY = -distY;
         }
-        pointsToPlot[pointIdx] = PointD(distX, distY);
+        pointsToPlot[pointIdx] = PointD(distX, distY);*/
+        
+        pointsToPlot[pointIdx] = PointD((_points[pointIdx].x-_points[0].x), (_points[pointIdx].y-_points[0].y));
     }
     
     std::vector<bool> include(pointsCount, false);
