@@ -973,6 +973,8 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 		}
 	}
 	if(ocean) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile %d %d zoom=12",
+				current->left >> 19, current->top >> 19);
 		req->ocean = ocean;
 	}
 	return true;
