@@ -625,7 +625,8 @@ struct SearchQuery {
 	ResultPublisher* publisher;
 
 	coordinates cacheCoordinates;
-	bool ocean;
+	uint ocean;
+	uint oceanTiles;
 
 	uint numberOfVisitedObjects;
 	uint numberOfAcceptedObjects;
@@ -636,7 +637,8 @@ struct SearchQuery {
 			req(req), left(l), right(r), top(t), bottom(b),publisher(publisher) {
 		numberOfAcceptedObjects = numberOfVisitedObjects = 0;
 		numberOfAcceptedSubtrees = numberOfReadSubtrees = 0;
-		ocean = false;
+		oceanTiles = 0;
+		ocean = 0;
 	}
 	SearchQuery(int l, int r, int t, int b) :
 				left(l), right(r), top(t), bottom(b) {

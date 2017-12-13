@@ -51,6 +51,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 		combineMultipolygonLine(completedRings, uncompletedRings, cs);
 	}
 	if (completedRings.size() == 0 && uncompletedRings.size() == 0) {
+		// printf("No completed & uncompleted");
 		return false;
 	}
 	bool coastlineCrossScreen = uncompletedRings.size() > 0; 
@@ -75,6 +76,7 @@ bool processCoastlines(std::vector<MapDataObject*>&  coastLines, int leftX, int 
 
 	}
 	if (!showIfThereIncompleted && uncompletedRings.size() > 0) {
+		// printf("There are ignored uncompleted");
 		return false;
 	}
 	int landFound = 0;

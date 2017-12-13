@@ -897,7 +897,7 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 	int tag;
 	int si;
 	req->numberOfReadSubtrees++;
-	bool ocean = false;
+	int oceanTag = -1;
 	while ((tag = input->ReadTag()) != 0) {
 		if (req->publisher->isCancelled()) {
 			return false;
@@ -945,13 +945,15 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 			break;
 		}
 		case OsmAnd::OBF::OsmAndMapIndex_MapDataBox::kOceanFieldNumber : {
+			bool ocean = false;
 			DO_((WireFormatLite::ReadPrimitive<bool, WireFormatLite::TYPE_BOOL>(input, &ocean)));			
+			oceanTag = ocean ? 1 : 0;
 			break;
 		}
 		case OsmAnd::OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber: {
 			MapTreeBounds* child = new MapTreeBounds();
 			// ocean set only if there is no children
-			ocean = false;
+			oceanTag = -1;
 			readInt(input, &child->length);
 			child->filePointer = input->TotalBytesRead();
 			int oldLimit = input->PushLimit(child->length);
@@ -972,10 +974,13 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 		}
 		}
 	}
-	if(ocean) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile %d %d zoom=12",
-				current->left >> 19, current->top >> 19);
-		req->ocean = ocean;
+	if(oceanTag >= 0) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile = %d %d %d zoom=12",
+				oceanTag, current->left >> 19, current->top >> 19);
+		req->oceanTiles++;
+		if(oceanTag == 1) {
+			req->ocean++;
+		}
 	}
 	return true;
 }
@@ -1423,7 +1428,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		deleteObjects(basemapCoastLines);
 		deleteObjects(basemapResult);
 	} else {
-		bool ocean = q->ocean;
+		float ocean = q->oceanTiles > 0 ? ((float)q->ocean) / q->oceanTiles : 0;
 		bool addBasemapCoastlines = true;
 		bool emptyData = q->zoom > zoomOnlyForBasemaps && tempResult.empty() && coastLines.empty();
 		// determine if there are enough objects like land/lake..
@@ -1446,12 +1451,12 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		}
 		// processCoastlines always create new objects
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
-				"Detailed coastlines = %d, basemap coastlines %d, ocean tile %d. Detailed added %d, basemap processed %d, basemap added %d.",
+				"Detailed coastlines = %d, basemap coastlines %d, ocean tile %f. Detailed added %d, basemap processed %d, basemap added %d.",
 					coastLines.size(), basemapCoastLines.size(), ocean, detailedCoastlinesWereAdded, addBasemapCoastlines,
 					(addBasemapCoastlines ? false : coastlinesWereAdded));
 		deleteObjects(basemapCoastLines);
 		deleteObjects(coastLines);
-		if (!coastlinesWereAdded && ocean) {
+		if (!coastlinesWereAdded && ocean > 0.5) {
 			MapDataObject* o = new MapDataObject();
 			o->points.push_back(int_pair(q->left, q->top));
 			o->points.push_back(int_pair(q->right, q->top));
