@@ -5,12 +5,16 @@ OsmAnd::VectorLine::VectorLine(
     const int lineId_,
     const int baseOrder_,
     const double lineWidth_,
-    const FColorARGB fillColor_)
+    const FColorARGB fillColor_,
+    const std::shared_ptr<const SkBitmap>& pathIcon_/* = nullptr*/,
+    const float pathIconStep_/* = -1*/)
     : _p(new VectorLine_P(this))
     , lineId(lineId_)
     , baseOrder(baseOrder_)
     , lineWidth(lineWidth_)
     , fillColor(fillColor_)
+    , pathIcon(pathIcon_)
+    , pathIconStep(pathIconStep_)
 {
 }
 

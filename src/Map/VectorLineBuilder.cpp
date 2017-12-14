@@ -82,6 +82,30 @@ OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPoints(const QVector<Os
     return *this;
 }
 
+std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder::getPathIcon() const
+{
+    _p->getPathIcon();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+{
+    _p->setPathIcon(bitmap);
+
+    return *this;    
+}
+
+float OsmAnd::VectorLineBuilder::getPathIconStep() const
+{
+    _p->getPathIconStep();
+}
+
+OsmAnd::VectorLineBuilder& OsmAnd::VectorLineBuilder::setPathIconStep(const float step)
+{
+    _p->setPathIconStep(step);
+
+    return *this;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder::buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection)
 {
     return _p->buildAndAddToCollection(collection);

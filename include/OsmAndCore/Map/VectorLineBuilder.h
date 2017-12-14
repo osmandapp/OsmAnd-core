@@ -16,6 +16,8 @@
 #include <OsmAndCore/LatLon.h>
 #include <OsmAndCore/Map/VectorLine.h>
 
+class SkBitmap;
+
 namespace OsmAnd
 {
     class VectorLinesCollection;
@@ -48,6 +50,12 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         VectorLineBuilder& setPoints(const QVector<PointI>& points);
+
+        std::shared_ptr<const SkBitmap> getPathIcon() const;
+        VectorLineBuilder& setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+
+        float getPathIconStep() const;
+        VectorLineBuilder& setPathIconStep(const float step);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
     };

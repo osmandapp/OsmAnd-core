@@ -107,6 +107,34 @@ void OsmAnd::VectorLineBuilder_P::setPoints(const QVector<OsmAnd::PointI> points
     _points = points;
 }
 
+std::shared_ptr<const SkBitmap> OsmAnd::VectorLineBuilder_P::getPathIcon() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pathIcon;
+}
+
+void OsmAnd::VectorLineBuilder_P::setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _pathIcon = bitmap;
+}
+
+float OsmAnd::VectorLineBuilder_P::getPathIconStep() const
+{
+    QReadLocker scopedLocker(&_lock);
+
+    return _pathIconStep;
+}
+
+void OsmAnd::VectorLineBuilder_P::setPathIconStep(const float step)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    _pathIconStep = step;
+}
+
 std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::buildAndAddToCollection(
     const std::shared_ptr<VectorLinesCollection>& collection)
 {
@@ -117,7 +145,9 @@ std::shared_ptr<OsmAnd::VectorLine> OsmAnd::VectorLineBuilder_P::buildAndAddToCo
         _lineId,
         _baseOrder,
         _lineWidth,
-        _fillColor));
+        _fillColor,
+        _pathIcon,
+        _pathIconStep));
     line->setIsHidden(_isHidden);
     line->setPoints(_points);
     line->applyChanges();

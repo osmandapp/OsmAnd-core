@@ -15,6 +15,8 @@
 #include <OsmAndCore/Map/MapSymbolsGroup.h>
 #include <OsmAndCore/Map/IUpdatableMapSymbolsGroup.h>
 
+class SkBitmap;
+
 namespace OsmAnd
 {
     class VectorLineBuilder;
@@ -65,7 +67,10 @@ namespace OsmAnd
             const int lineId,
             const int baseOrder,
             const double lineWidth,
-            const FColorARGB fillColor);
+            const FColorARGB fillColor,
+            const std::shared_ptr<const SkBitmap>& pathIcon = nullptr,
+            const float pathIconStep = -1
+        );
 
         bool applyChanges();
     public:
@@ -75,6 +80,8 @@ namespace OsmAnd
         const int baseOrder;
         const double lineWidth;
         const FColorARGB fillColor;
+        const std::shared_ptr<const SkBitmap> pathIcon;
+        const float pathIconStep;
 
         bool isHidden() const;
         void setIsHidden(const bool hidden);

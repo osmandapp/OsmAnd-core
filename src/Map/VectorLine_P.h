@@ -59,8 +59,10 @@ namespace OsmAnd
         mutable QHash< MapSymbolsGroup*, std::weak_ptr< MapSymbolsGroup > > _symbolsGroupsRegistry;
         void registerSymbolsGroup(const std::shared_ptr<MapSymbolsGroup>& symbolsGroup) const;
         void unregisterSymbolsGroup(MapSymbolsGroup* const symbolsGroup) const;
+
         std::shared_ptr<OnSurfaceVectorMapSymbol> generatePrimitive(const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine) const;
-        
+        void generateArrowsOnPath(const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup) const;
+
         PointD findLineIntersection(PointD p1, PointD p2, PointD p3, PointD p4) const;
         
         PointD getProjection(PointD point, PointD from, PointD to ) const;
@@ -68,7 +70,6 @@ namespace OsmAnd
         
         int simplifyDouglasPeucker(std::vector<PointD>& points, uint begin, uint end, double epsilon,
                                    std::vector<bool>& include) const;
-        
         
     public:
         virtual ~VectorLine_P();

@@ -43,6 +43,9 @@ namespace OsmAnd
 
         float _direction;
 
+        std::shared_ptr<const SkBitmap> _pathIcon;
+        float _pathIconStep;
+ 
     public:
         virtual ~VectorLineBuilder_P();
 
@@ -64,6 +67,12 @@ namespace OsmAnd
 
         QVector<PointI> getPoints() const;
         void setPoints(const QVector<PointI> poinst);
+
+        std::shared_ptr<const SkBitmap> getPathIcon() const;
+        void setPathIcon(const std::shared_ptr<const SkBitmap>& bitmap);
+
+        float getPathIconStep() const;
+        void setPathIconStep(const float step);
 
         std::shared_ptr<VectorLine> buildAndAddToCollection(const std::shared_ptr<VectorLinesCollection>& collection);
 

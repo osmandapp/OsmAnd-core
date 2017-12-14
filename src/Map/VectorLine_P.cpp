@@ -5,10 +5,14 @@
 #include "ignore_warnings_on_external_includes.h"
 #include "restore_internal_warnings.h"
 
+#include <SkBitmap.h>
+#include <SkPathMeasure.h>
+
 #include "MapSymbol.h"
 #include "MapSymbolsGroup.h"
 #include "VectorMapSymbol.h"
 #include "OnSurfaceVectorMapSymbol.h"
+#include "OnSurfaceRasterMapSymbol.h"
 #include "QKeyValueIterator.h"
 #include "Logging.h"
 #include "IAtlasMapRenderer.h"
@@ -113,23 +117,20 @@ bool OsmAnd::VectorLine_P::applyChanges()
         if (!symbolGroup)
             continue;
         
+        const auto& vectorLineSymbolGroup = std::dynamic_pointer_cast<VectorLine::SymbolsGroup>(symbolGroup);
+        bool needUpdatePrimitive = _hasUnappliedPrimitiveChanges && _points.size() > 1;
         for (const auto& symbol_ : constOf(symbolGroup->symbols))
         {
             symbol_->isHidden = _isHidden;
             
             if (const auto symbol = std::dynamic_pointer_cast<OnSurfaceVectorMapSymbol>(symbol_))
             {
-                if (!_points.empty())
-                {
-                    if (_hasUnappliedPrimitiveChanges && _points.size() > 1)
-                    {
-                        generatePrimitive(symbol);
-                    }
-                }
+                if (needUpdatePrimitive)
+                    generatePrimitive(symbol);
             }
         }
     }
-    
+
     _hasUnappliedChanges = false;
     _hasUnappliedPrimitiveChanges = false;
     
@@ -146,11 +147,12 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
     
     if (_points.size() > 1)
     {
-        const std::shared_ptr<OnSurfaceVectorMapSymbol> vectorLine(new OnSurfaceVectorMapSymbol(symbolsGroup));
+        const auto& vectorLine = std::make_shared<OnSurfaceVectorMapSymbol>(symbolsGroup);
         generatePrimitive(vectorLine);
         vectorLine->allowFastCheckByFrustum = false;
         symbolsGroup->symbols.push_back(vectorLine);
         
+        generateArrowsOnPath(symbolsGroup);
     }
     
     return symbolsGroup;
@@ -388,3 +390,65 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     
     return vectorLine;
 }
+
+void OsmAnd::VectorLine_P::generateArrowsOnPath(const std::shared_ptr<VectorLine::SymbolsGroup> symbolsGroup) const
+{
+    if (owner->pathIconStep > 0 && owner->pathIcon)
+    {
+        SkPath path;
+        const auto& start = _points[0];
+        path.moveTo(start.x, start.y);
+        for (int i = 1; i < _points.size(); i++)
+        {
+            const auto& p = _points[i];
+            path.lineTo(p.x, p.y);
+        }
+        SkPathMeasure pathMeasure(path, false);
+        
+        bool ok = false;
+        const auto length = pathMeasure.getLength();
+        
+        float step = Utilities::metersToX31(owner->pathIconStep * _metersPerPixel);
+        auto iconOffset = 0.5f * step;
+        const auto iconInstancesCount = static_cast<int>((length - iconOffset) / step) + 1;
+        if (iconInstancesCount > 0)
+        {
+            int surfOrder = owner->baseOrder - 1;
+            // Set of OnSurfaceMapSymbol from onMapSurfaceIcons
+            const auto& onMapSurfaceIcon = owner->pathIcon;
+            
+            std::shared_ptr<SkBitmap> iconClone(new SkBitmap());
+            ok = onMapSurfaceIcon->deepCopyTo(iconClone.get());
+            assert(ok);
+            
+            for (auto iconInstanceIdx = 0; iconInstanceIdx < iconInstancesCount; iconInstanceIdx++, iconOffset += step)
+            {
+                SkPoint p;
+                SkVector t;
+                ok = pathMeasure.getPosTan(iconOffset, &p, &t);
+                if (!ok)
+                    break;
+                
+                // Get direction
+                float direction = Utilities::normalizedAngleDegrees(qRadiansToDegrees(atan2(-t.x(), t.y())));
+                const auto arrowSymbol = std::make_shared<OnSurfaceRasterMapSymbol>(symbolsGroup);
+                
+                arrowSymbol->order = surfOrder;
+                
+                arrowSymbol->bitmap = iconClone;
+                arrowSymbol->size = PointI(iconClone->width(), iconClone->height());
+                arrowSymbol->content = QString().sprintf(
+                                                         "markerGroup(%p:%p)->onMapSurfaceIconBitmap:%p",
+                                                         this,
+                                                         symbolsGroup.get(),
+                                                         iconClone->getPixels());
+                arrowSymbol->languageId = LanguageId::Invariant;
+                arrowSymbol->position31 = PointI(p.x(), p.y());
+                arrowSymbol->direction = direction;
+                arrowSymbol->isHidden = _isHidden;
+                symbolsGroup->symbols.push_back(arrowSymbol);
+            }
+        }
+    }
+}
+
