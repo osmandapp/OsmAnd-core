@@ -152,7 +152,8 @@ std::shared_ptr<OsmAnd::VectorLine::SymbolsGroup> OsmAnd::VectorLine_P::inflateS
         vectorLine->allowFastCheckByFrustum = false;
         symbolsGroup->symbols.push_back(vectorLine);
         
-        generateArrowsOnPath(symbolsGroup);
+        // TODO: needs to be updatable
+        //generateArrowsOnPath(symbolsGroup);
     }
     
     return symbolsGroup;
@@ -309,7 +310,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         insertIdx++;
     }
     
-    verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
+    verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 4 + 2 * 2;
     verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[verticesAndIndexes->verticesCount];
     verticesAndIndexes->position31 = new PointI(vectorLine->position31.x, vectorLine->position31.y);
     auto pVertex = verticesAndIndexes->vertices;
@@ -349,14 +350,16 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         }
         else
         {
+            /*
             PointD l1 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            //PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            //PointD l3 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e2[pointIdx], b2[pointIdx+1]);
+            PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e1[pointIdx], b1[pointIdx+1]);
+            PointD l3 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e2[pointIdx], b2[pointIdx+1]);
             PointD l4 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e2[pointIdx], b2[pointIdx+1]);
-            //l1 = b1[pointIdx];
-            //l2 = b2[pointIdx];
-            //l3 = e1[pointIdx];
-            //l4 = e2[pointIdx];
+             */
+            PointD l1 = b1[pointIdx];
+            PointD l2 = b2[pointIdx];
+            PointD l3 = e1[pointIdx];
+            PointD l4 = e2[pointIdx];
             // bewel - connecting only 3 points (one excluded depends on angle)
             // miter - connecting 4 points
             // round - generating between 2-3 point triangles (in place of triangle different between bewel/miter)
@@ -366,15 +369,15 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             pVertex->color = owner->fillColor;
             pVertex += 1;
             
-            //pVertex->positionXY[0] = l2.x;
-            //pVertex->positionXY[1] = l2.y;
-            //pVertex->color = owner->fillColor;
-            //pVertex += 1;
+            pVertex->positionXY[0] = l2.x;
+            pVertex->positionXY[1] = l2.y;
+            pVertex->color = owner->fillColor;
+            pVertex += 1;
             
-            //pVertex->positionXY[0] = l3.x;
-            //pVertex->positionXY[1] = l3.y;
-            //pVertex->color = owner->fillColor;
-            //pVertex += 1;
+            pVertex->positionXY[0] = l3.x;
+            pVertex->positionXY[1] = l3.y;
+            pVertex->color = owner->fillColor;
+            pVertex += 1;
             
             pVertex->positionXY[0] = l4.x;
             pVertex->positionXY[1] = l4.y;
