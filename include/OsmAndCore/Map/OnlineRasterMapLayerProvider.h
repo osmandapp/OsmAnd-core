@@ -39,7 +39,7 @@ namespace OsmAnd
 
         const QString name;
         const QString pathSuffix;
-        const QString urlPattern;
+        QString urlPattern;
 #if !defined(SWIG)
         //NOTE: This stuff breaks SWIG due to conflict with get*();
         const ZoomLevel minZoom;
