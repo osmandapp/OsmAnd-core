@@ -235,6 +235,9 @@ void splitRoadsAndAttachRoadSegments(RoutingContext* ctx, vector<SHARED_PTR<Rout
 }
 
 void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResult> >& result) {
+    // for Naismith
+    bool usePedestrianHeight = ctx->config->router->getProfile() == GeneralRouterProfile::PEDESTRIAN && ctx->config->router->heightObstacles;
+    
     for (int i = 0; i < result.size(); i++) {
         auto rr = result[i];
         auto road = rr->object;
@@ -252,6 +255,15 @@ void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
         bool plus = rr->getStartPointIndex() < rr->getEndPointIndex();
         int next;
         double distance = 0;
+        
+        //for Naismith
+        float prevHeight = -99999.0f;
+        vector<double> heightDistanceArray;
+        if (usePedestrianHeight) {
+            road->calculateHeightArray();
+            heightDistanceArray = road->heightDistanceArray;
+        }
+        
         for (int j = rr->getStartPointIndex(); j != rr->getEndPointIndex(); j = next) {
             next = plus ? j + 1 : j - 1;
             double d = measuredDist31(road->pointsX[j], road->pointsY[j], road->pointsX[next], road->pointsY[next]);
@@ -261,6 +273,21 @@ void calculateTimeSpeed(RoutingContext* ctx, vector<SHARED_PTR<RouteSegmentResul
                 obstacle = 0;
             }
             distOnRoadToPass += d / speed + obstacle;
+            
+            //for Naismith
+            if (usePedestrianHeight) {
+                int heightIndex = 2 * j + 1;
+                if (!heightDistanceArray.empty() && heightIndex < heightDistanceArray.size()) {
+                    float height = heightDistanceArray[heightIndex];
+                    if (prevHeight != -99999.0f) {
+                        float heightDiff = height - prevHeight;
+                        if (heightDiff > 0) {  //ascent only
+                            distOnRoadToPass += heightDiff * 6.0f;  //Naismith's rule: add 1 hour per every 600m of ascent
+                        }
+                    }
+                    prevHeight = height;
+                }
+            }
         }
         // last point turn time can be added
         // if(i + 1 < result.size()) { distOnRoadToPass += ctx.getRouter().calculateTurnTime(); }
@@ -669,6 +696,8 @@ int inferSlightTurnFromLanes(vector<int>& oLanes, RoadSplitStructure& rs) {
         }
     }
     // remove all non-slight turns
+    // https://github.com/osmandapp/Osmand/commit/ba7c11a25d2bc0ffbeb812a61c7f8cfbf9a4ad80
+    /*
     if (possibleTurns.size() > 1) {
         for (auto it = possibleTurns.begin(); it != possibleTurns.end(); ) {
             if (!TurnType::isSlightTurn(*it)) {
@@ -679,6 +708,7 @@ int inferSlightTurnFromLanes(vector<int>& oLanes, RoadSplitStructure& rs) {
             }
         }
     }
+     */
     int infer = 0;
     if (possibleTurns.size() == 1) {
         infer = *possibleTurns.begin();
