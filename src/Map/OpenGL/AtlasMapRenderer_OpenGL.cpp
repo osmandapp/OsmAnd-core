@@ -302,7 +302,7 @@ bool OsmAnd::AtlasMapRenderer_OpenGL::updateInternalState(
 
     // Calculate skyplane size
     float zSkyplaneK = internalState->zSkyplane / _zNear;
-    internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth * 2.0f;
+    internalState->skyplaneSize.x = zSkyplaneK * internalState->projectionPlaneHalfWidth * 3.0f;
     internalState->skyplaneSize.y = zSkyplaneK * internalState->projectionPlaneHalfHeight * 2.0f;
 
     // Update frustum
