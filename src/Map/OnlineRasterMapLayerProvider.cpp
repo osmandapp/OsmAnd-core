@@ -22,6 +22,7 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     const float tileDensityFactor_ /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : _p(new OnlineRasterMapLayerProvider_P(this, webClient))
+    , _threadPool(new QThreadPool())
     , _lastRequestedZoom(ZoomLevel0)
     , _priority(0)
     , localCachePath(_p->_localCachePath)
@@ -43,6 +44,8 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
 
 OsmAnd::OnlineRasterMapLayerProvider::~OnlineRasterMapLayerProvider()
 {
+    _threadPool->waitForDone();
+    delete _threadPool;
 }
 
 void OsmAnd::OnlineRasterMapLayerProvider::setLocalCachePath(
@@ -122,7 +125,7 @@ void OsmAnd::OnlineRasterMapLayerProvider::obtainDataAsync(
     const auto taskRunnable = new QRunnableFunctor(task);
     taskRunnable->setAutoDelete(true);
     int priority = getAndDecreasePriority();
-    QThreadPool::globalInstance()->start(taskRunnable, priority);
+    _threadPool->start(taskRunnable, priority);
 }
 
 OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getLastRequestedZoom() const

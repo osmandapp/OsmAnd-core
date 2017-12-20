@@ -25,6 +25,9 @@ namespace OsmAnd
     private:
         PrivateImplementation<OnlineRasterMapLayerProvider_P> _p;
     protected:
+        
+        QThreadPool *_threadPool;
+        
         mutable QReadWriteLock _lock;
         ZoomLevel _lastRequestedZoom;
         int _priority;
