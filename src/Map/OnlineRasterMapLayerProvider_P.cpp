@@ -86,6 +86,10 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
                 "Failed to decode tile file '%s'",
                 qPrintable(localFile.absoluteFilePath()));
 
+            QFile tileFile(localFile.absoluteFilePath());
+            if (tileFile.exists())
+                tileFile.remove();
+
             return false;
         }
 
@@ -99,6 +103,7 @@ bool OsmAnd::OnlineRasterMapLayerProvider_P::obtainData(
             owner->alphaChannelPresence,
             owner->getTileDensityFactor(),
             bitmap));
+        
         return true;
     }
 

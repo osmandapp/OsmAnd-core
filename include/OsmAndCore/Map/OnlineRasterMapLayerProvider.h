@@ -6,6 +6,7 @@
 #include <OsmAndCore/QtExtensions.h>
 #include <QString>
 #include <QDir>
+#include <QReadWriteLock>
 
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
@@ -24,6 +25,13 @@ namespace OsmAnd
     private:
         PrivateImplementation<OnlineRasterMapLayerProvider_P> _p;
     protected:
+        mutable QReadWriteLock _lock;
+        ZoomLevel _lastRequestedZoom;
+        int _priority;
+
+        ZoomLevel getLastRequestedZoom() const;
+        void setLastRequestedZoom(const ZoomLevel zoomLevel);
+        int getAndDecreasePriority();
     public:
         OnlineRasterMapLayerProvider(
             const QString& name,

@@ -3,9 +3,13 @@
 
 #include "QtExtensions.h"
 #include <QStandardPaths>
+#include <QThreadPool>
 
 #include "OsmAndCore.h"
 #include "MapDataProviderHelpers.h"
+#include "QRunnableFunctor.h"
+
+#include <Logging.h>
 
 OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     const QString& name_,
@@ -18,6 +22,8 @@ OsmAnd::OnlineRasterMapLayerProvider::OnlineRasterMapLayerProvider(
     const float tileDensityFactor_ /*= 1.0f*/,
     const std::shared_ptr<const IWebClient>& webClient /*= std::shared_ptr<const IWebClient>(new WebClient())*/)
     : _p(new OnlineRasterMapLayerProvider_P(this, webClient))
+    , _lastRequestedZoom(ZoomLevel0)
+    , _priority(0)
     , localCachePath(_p->_localCachePath)
     , networkAccessAllowed(_p->_networkAccessAllowed)
     , name(name_)
@@ -92,7 +98,57 @@ void OsmAnd::OnlineRasterMapLayerProvider::obtainDataAsync(
     const IMapDataProvider::ObtainDataAsyncCallback callback,
     const bool collectMetric /*= false*/)
 {
-    MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+    //MapDataProviderHelpers::nonNaturalObtainDataAsync(this, request, callback, collectMetric);
+    
+    const auto& r = MapDataProviderHelpers::castRequest<OnlineRasterMapLayerProvider::Request>(request);
+    setLastRequestedZoom(r.zoom);
+
+    const auto requestClone = request.clone();
+    const QRunnableFunctor::Callback task =
+    [this, requestClone, callback, collectMetric]
+    (const QRunnableFunctor* const runnable)
+    {
+        std::shared_ptr<IMapDataProvider::Data> data;
+        std::shared_ptr<Metric> metric;
+
+        const auto& r = MapDataProviderHelpers::castRequest<OnlineRasterMapLayerProvider::Request>(*requestClone);
+        bool requestSucceeded = false;
+        if (r.zoom == getLastRequestedZoom())
+            requestSucceeded = this->obtainData(*requestClone, data, collectMetric ? &metric : nullptr);
+
+        callback(this, requestSucceeded, data, metric);
+    };
+    
+    const auto taskRunnable = new QRunnableFunctor(task);
+    taskRunnable->setAutoDelete(true);
+    int priority = getAndDecreasePriority();
+    QThreadPool::globalInstance()->start(taskRunnable, priority);
+}
+
+OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getLastRequestedZoom() const
+{
+    QReadLocker scopedLocker(&_lock);
+    
+    return _lastRequestedZoom;
+}
+
+void OsmAnd::OnlineRasterMapLayerProvider::setLastRequestedZoom(const ZoomLevel zoomLevel)
+{
+    QWriteLocker scopedLocker(&_lock);
+
+    if (_lastRequestedZoom != zoomLevel)
+        _priority = 0;
+    
+    _lastRequestedZoom = zoomLevel;
+}
+
+int OsmAnd::OnlineRasterMapLayerProvider::getAndDecreasePriority()
+{
+    QWriteLocker scopedLocker(&_lock);
+    
+    _priority--;
+    
+    return _priority;
 }
 
 OsmAnd::ZoomLevel OsmAnd::OnlineRasterMapLayerProvider::getMinZoom() const
