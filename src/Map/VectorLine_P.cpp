@@ -185,12 +185,13 @@ void OsmAnd::VectorLine_P::unregisterSymbolsGroup(MapSymbolsGroup* const symbols
 OsmAnd::PointD OsmAnd::VectorLine_P::findLineIntersection(PointD p1, OsmAnd::PointD p2, OsmAnd::PointD p3, OsmAnd::PointD p4) const
 {
     double d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
-    double atn1 = atan2(p1.x - p2.x, p1.y - p2.y);
-    double atn2 = atan2(p3.x - p4.x, p3.y - p4.y);
-    double df = qAbs(atn1 - atn2);
+    //double atn1 = atan2(p1.x - p2.x, p1.y - p2.y);
+    //double atn2 = atan2(p3.x - p4.x, p3.y - p4.y);
+    //double df = qAbs(atn1 - atn2);
     // printf("\n %f %f d=%f df=%f df-PI=%f df-2PI=%f", atn1, atn2, d, df, df - M_PI, df - 2 * M_PI);
-    double THRESHOLD = M_PI / 6;
-    if(d == 0 || df < THRESHOLD  || qAbs(df - M_PI) < THRESHOLD || qAbs(df - 2 * M_PI) < THRESHOLD  ) {
+    //double THRESHOLD = M_PI / 6;
+    if(d == 0 // || df < THRESHOLD  || qAbs(df - M_PI) < THRESHOLD || qAbs(df - 2 * M_PI) < THRESHOLD
+       ) {
         // in case of lines connecting p2 == p3
         return p2;
     }
@@ -316,15 +317,15 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         insertIdx++;
     }
     
-    verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
-    verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[verticesAndIndexes->verticesCount];
     verticesAndIndexes->position31 = new PointI(vectorLine->position31.x, vectorLine->position31.y);
-    auto pVertex = verticesAndIndexes->vertices;
-
+    
+    std::vector<VectorMapSymbol::Vertex> vertices;
+    VectorMapSymbol::Vertex vertex;
+    VectorMapSymbol::Vertex* pVertex = &vertex;
     
     //OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info, "=== pointsCount=%d zoom=%d visualZoom=%f metersPerPixel=%f radius=%f simpleCount=%d cnt=%d", verticesAndIndexes->verticesCount,
     //  _mapZoomLevel, _mapVisualZoom, _metersPerPixel, radius, pointsSimpleCount,pointsCount);
-    
+    bool direction = true;
     
     // generate triangles
     for (auto pointIdx = 0u; pointIdx < pointsSimpleCount; pointIdx++)
@@ -332,67 +333,126 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         
         if (pointIdx == 0)
         {
-            pVertex->positionXY[0] = e1[pointIdx].x;
-            pVertex->positionXY[1] = e1[pointIdx].y;
-            pVertex->color = owner->fillColor;
-            pVertex += 1;
-            
             pVertex->positionXY[0] = e2[pointIdx].x;
             pVertex->positionXY[1] = e2[pointIdx].y;
             pVertex->color = owner->fillColor;
-            pVertex += 1;
+            vertices.push_back(vertex);
+            
+            pVertex->positionXY[0] = e1[pointIdx].x;
+            pVertex->positionXY[1] = e1[pointIdx].y;
+            pVertex->color = owner->fillColor;
+            vertices.push_back(vertex);
+            
+            direction = true;
         }
         else if (pointIdx == pointsSimpleCount - 1)
         {
-            pVertex->positionXY[0] = b1[pointIdx].x;
-            pVertex->positionXY[1] = b1[pointIdx].y;
-            pVertex->color = owner->fillColor;
-            pVertex += 1;
-        
+            if(!direction) {
+                pVertex->positionXY[0] = b1[pointIdx].x;
+                pVertex->positionXY[1] = b1[pointIdx].y;
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+            }
+            
             pVertex->positionXY[0] = b2[pointIdx].x;
             pVertex->positionXY[1] = b2[pointIdx].y;
             pVertex->color = owner->fillColor;
-            pVertex += 1;
+            vertices.push_back(vertex);
+            if(direction) {
+                pVertex->positionXY[0] = b1[pointIdx].x;
+                pVertex->positionXY[1] = b1[pointIdx].y;
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+            }
         }
         else
         {
             
             PointD l1 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            //PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e1[pointIdx], b1[pointIdx+1]);
-            //PointD l3 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e2[pointIdx], b2[pointIdx+1]);
-            PointD l4 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e2[pointIdx], b2[pointIdx+1]);
+            PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e2[pointIdx], b2[pointIdx+1]);
+            bool l1Intersects = (l1.x >= qMin(e1[pointIdx-1].x,b1[pointIdx].x)
+                                  && l1.x <= qMax(e1[pointIdx-1].x,b1[pointIdx].x)) ||
+                                (l1.x >= qMin(e1[pointIdx].x,b1[pointIdx+1].x)
+                                  && l1.x <= qMax(e1[pointIdx].x,b1[pointIdx+1].x));
+            bool l2Intersects = (l2.x >= qMin(e2[pointIdx-1].x,b2[pointIdx].x)
+                                 && l2.x <= qMax(e2[pointIdx-1].x,b2[pointIdx].x)) ||
+                                (l2.x >= qMin(e2[pointIdx].x,b2[pointIdx+1].x)
+                                 && l2.x <= qMax(e2[pointIdx].x,b2[pointIdx+1].x));
             
-//            l1 = b1[pointIdx];
-//            l2 = b2[pointIdx];
-//            l3 = e1[pointIdx];
-//            l4 = e2[pointIdx];
             // bewel - connecting only 3 points (one excluded depends on angle)
             // miter - connecting 4 points
             // round - generating between 2-3 point triangles (in place of triangle different between bewel/miter)
             
-            pVertex->positionXY[0] = l1.x;
-            pVertex->positionXY[1] = l1.y;
-            pVertex->color = owner->fillColor;
-            pVertex += 1;
-            
-//            pVertex->positionXY[0] = l2.x;
-//            pVertex->positionXY[1] = l2.y;
-//            pVertex->color = owner->fillColor;
-//            pVertex += 1;
-            
-//            pVertex->positionXY[0] = l3.x;
-//            pVertex->positionXY[1] = l3.y;
-//            pVertex->color = owner->fillColor;
-//            pVertex += 1;
-            
-            pVertex->positionXY[0] = l4.x;
-            pVertex->positionXY[1] = l4.y;
-            pVertex->color = owner->fillColor;
-            pVertex += 1;
+            if(!l2Intersects && !l1Intersects) {
+                // skip point
+            } else if(l2Intersects) {
+                if(direction) {
+                    pVertex->positionXY[0] = l2.x;
+                    pVertex->positionXY[1] = l2.y;
+                    pVertex->color = owner->fillColor;
+                    vertices.push_back(vertex);
+                }
+                pVertex->positionXY[0] = b1[pointIdx].x;
+                pVertex->positionXY[1] = b1[pointIdx].y;
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+                if(!direction) {
+                    pVertex->positionXY[0] = l2.x;
+                    pVertex->positionXY[1] = l2.y;
+                    pVertex->color = owner->fillColor;
+                    vertices.push_back(vertex);
+                }
+                pVertex->positionXY[0] = e1[pointIdx].x;
+                pVertex->positionXY[1] = e1[pointIdx].y;
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+                if(direction) {
+                    pVertex->positionXY[0] = l2.x;
+                    pVertex->positionXY[1] = l2.y;
+                    pVertex->color = owner->fillColor;
+                    vertices.push_back(vertex);
+                }
+                direction = !direction;
+            } else if(l1Intersects) {
+                
+                if(!direction) {
+                    pVertex->positionXY[0] = l1.x;
+                    pVertex->positionXY[1] = l1.y;
+                    pVertex->color = owner->fillColor;
+                    vertices.push_back(vertex);
+                }
+                pVertex->positionXY[0] = b2[pointIdx].x;
+                pVertex->positionXY[1] = b2[pointIdx].y;
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+                if(direction) {
+                    pVertex->positionXY[0] = l1.x;
+                    pVertex->positionXY[1] = l1.y;
+                    pVertex->color = owner->fillColor;
+                    vertices.push_back(vertex);
+                }
+                pVertex->positionXY[0] = e2[pointIdx].x;
+                pVertex->positionXY[1] = e2[pointIdx].y;
+                pVertex->color = owner->fillColor;
+                vertices.push_back(vertex);
+                if(!direction) {
+                    pVertex->positionXY[0] = l1.x;
+                    pVertex->positionXY[1] = l1.y;
+                    pVertex->color = owner->fillColor;
+                    vertices.push_back(vertex);
+                }
+                direction = !direction;
+            }
+
             
         }
     }
     
+    //verticesAndIndexes->verticesCount = (pointsSimpleCount - 2) * 2 + 2 * 2;
+    verticesAndIndexes->verticesCount = vertices.size();
+    verticesAndIndexes->vertices = new VectorMapSymbol::Vertex[vertices.size()];
+    std::copy(vertices.begin(), vertices.end(), verticesAndIndexes->vertices);
+
     vectorLine->isHidden = _isHidden;
     
     vectorLine->setVerticesAndIndexes(verticesAndIndexes);
