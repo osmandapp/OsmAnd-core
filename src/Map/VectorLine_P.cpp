@@ -288,7 +288,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
     int pointsSimpleCount = simplifyDouglasPeucker(pointsToPlot, 0, (uint) pointsToPlot.size() - 1, radius / 3, include) + 1;
     
     // generate base points for connecting lines with triangles
-    std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount);
+    std::vector<OsmAnd::PointD> b1(pointsSimpleCount), b2(pointsSimpleCount), e1(pointsSimpleCount), e2(pointsSimpleCount), original(pointsSimpleCount);
     double ntan = 0, nx1 = 0, ny1 = 0;
     uint prevPointIdx = 0;
     uint insertIdx = 0;
@@ -300,6 +300,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         }
         PointD pnt = pointsToPlot[pointIdx];
         PointD prevPnt = pointsToPlot[prevPointIdx];
+        original[insertIdx]=pnt;
         if(pointIdx > 0)
         {
             ntan = atan2(_points[pointIdx].x - _points[prevPointIdx].x,
@@ -367,7 +368,7 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
         }
         else
         {
-            
+            int smoothLevel = 1; // could be constant & could be dynamic depends on the angle
             PointD l1 = findLineIntersection(e1[pointIdx-1], b1[pointIdx], e1[pointIdx], b1[pointIdx+1]);
             PointD l2 = findLineIntersection(e2[pointIdx-1], b2[pointIdx], e2[pointIdx], b2[pointIdx+1]);
             bool l1Intersects = (l1.x >= qMin(e1[pointIdx-1].x,b1[pointIdx].x)
@@ -385,63 +386,76 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
             
             if(!l2Intersects && !l1Intersects) {
                 // skip point
-            } else if(l2Intersects) {
-                if(direction) {
-                    pVertex->positionXY[0] = l2.x;
-                    pVertex->positionXY[1] = l2.y;
+            } else {
+                bool startDirection = l2Intersects;
+                const PointD& lp = startDirection ? l2 : l1;
+                const std::vector<OsmAnd::PointD>& bp = startDirection ? b1 : b2;
+                const std::vector<OsmAnd::PointD>& ep = startDirection ? e1 : e2;
+                int phase = direction == startDirection ? 0 : 2;
+                if(phase % 3 == 0) {
+                    pVertex->positionXY[0] = lp.x;
+                    pVertex->positionXY[1] = lp.y;
                     pVertex->color = owner->fillColor;
                     vertices.push_back(vertex);
+                    phase++;
                 }
-                pVertex->positionXY[0] = b1[pointIdx].x;
-                pVertex->positionXY[1] = b1[pointIdx].y;
-                pVertex->color = owner->fillColor;
-                vertices.push_back(vertex);
-                if(!direction) {
-                    pVertex->positionXY[0] = l2.x;
-                    pVertex->positionXY[1] = l2.y;
-                    pVertex->color = owner->fillColor;
-                    vertices.push_back(vertex);
-                }
-                pVertex->positionXY[0] = e1[pointIdx].x;
-                pVertex->positionXY[1] = e1[pointIdx].y;
-                pVertex->color = owner->fillColor;
-                vertices.push_back(vertex);
-                if(direction) {
-                    pVertex->positionXY[0] = l2.x;
-                    pVertex->positionXY[1] = l2.y;
-                    pVertex->color = owner->fillColor;
-                    vertices.push_back(vertex);
-                }
-                direction = !direction;
-            } else if(l1Intersects) {
                 
-                if(!direction) {
-                    pVertex->positionXY[0] = l1.x;
-                    pVertex->positionXY[1] = l1.y;
-                    pVertex->color = owner->fillColor;
-                    vertices.push_back(vertex);
-                }
-                pVertex->positionXY[0] = b2[pointIdx].x;
-                pVertex->positionXY[1] = b2[pointIdx].y;
+                pVertex->positionXY[0] = bp[pointIdx].x;
+                pVertex->positionXY[1] = bp[pointIdx].y;
                 pVertex->color = owner->fillColor;
                 vertices.push_back(vertex);
-                if(direction) {
-                    pVertex->positionXY[0] = l1.x;
-                    pVertex->positionXY[1] = l1.y;
+                phase++;
+                if(phase % 3 == 0) {
+                    pVertex->positionXY[0] = lp.x;
+                    pVertex->positionXY[1] = lp.y;
                     pVertex->color = owner->fillColor;
                     vertices.push_back(vertex);
+                    phase++;
                 }
-                pVertex->positionXY[0] = e2[pointIdx].x;
-                pVertex->positionXY[1] = e2[pointIdx].y;
+                
+                
+                if(smoothLevel > 0) {
+                    double dv = 1.0 / (1 << smoothLevel);
+                    double nt = dv;
+                    while(nt < 1) {
+                        double rx = bp[pointIdx].x*nt + ep[pointIdx].x*(1-nt);
+                        double ry = bp[pointIdx].y*nt + ep[pointIdx].y*(1-nt);
+                        double ld = (rx-original[pointIdx].x)*(rx-original[pointIdx].x) +
+                                    (ry-original[pointIdx].y)*(ry-original[pointIdx].y);
+                        pVertex->positionXY[0] = original[pointIdx].x + radius/sqrt(ld)*(rx-original[pointIdx].x);
+                        pVertex->positionXY[1] = original[pointIdx].y + radius/sqrt(ld)*(ry-original[pointIdx].y);
+                        pVertex->color = owner->fillColor;
+                        vertices.push_back(vertex);
+                        phase++;
+                        if(phase % 3 == 0) {
+                            pVertex->positionXY[0] = lp.x;
+                            pVertex->positionXY[1] = lp.y;
+                            pVertex->color = owner->fillColor;
+                            vertices.push_back(vertex);
+                            phase++;
+                        }
+                        nt += dv;
+                    }
+                }
+                
+                
+                pVertex->positionXY[0] = ep[pointIdx].x;
+                pVertex->positionXY[1] = ep[pointIdx].y;
                 pVertex->color = owner->fillColor;
                 vertices.push_back(vertex);
-                if(!direction) {
-                    pVertex->positionXY[0] = l1.x;
-                    pVertex->positionXY[1] = l1.y;
+                phase++;
+                if(phase % 3 == 0) {
+                    pVertex->positionXY[0] = lp.x;
+                    pVertex->positionXY[1] = lp.y;
                     pVertex->color = owner->fillColor;
                     vertices.push_back(vertex);
+                    phase++;
                 }
-                direction = !direction;
+                if(smoothLevel > 0) {
+                    //direction = direction;
+                } else {
+                    direction = !direction;
+                }
             }
 
             
