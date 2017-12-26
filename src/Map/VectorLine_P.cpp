@@ -428,6 +428,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                         vertices.push_back(vertex);
                         phase++;
                         if(phase % 3 == 0) {
+                            // avoid overlap
+                            vertices.push_back(vertex);
+                            
                             pVertex->positionXY[0] = lp.x;
                             pVertex->positionXY[1] = lp.y;
                             pVertex->color = owner->fillColor;
@@ -445,6 +448,9 @@ std::shared_ptr<OsmAnd::OnSurfaceVectorMapSymbol> OsmAnd::VectorLine_P::generate
                 vertices.push_back(vertex);
                 phase++;
                 if(phase % 3 == 0) {
+                    // avoid overlap
+                    vertices.push_back(vertex);
+                    
                     pVertex->positionXY[0] = lp.x;
                     pVertex->positionXY[1] = lp.y;
                     pVertex->color = owner->fillColor;
