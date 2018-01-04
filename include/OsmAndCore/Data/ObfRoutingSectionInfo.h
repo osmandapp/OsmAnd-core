@@ -61,8 +61,15 @@ namespace OsmAnd
 
     struct OSMAND_CORE_API ObfRoutingSectionAttributeMapping : public MapObject::AttributeMapping
     {
+        uint32_t refAttributeId;
+        QHash< QStringRef, uint32_t > localizedRefAttributes;
+        QHash< uint32_t, QStringRef> localizedRefAttributeIds;
+        QSet< uint32_t > refAttributeIds;
+
         ObfRoutingSectionAttributeMapping();
         virtual ~ObfRoutingSectionAttributeMapping();
+        
+        virtual void registerMapping(const uint32_t id, const QString& tag, const QString& value);
     };
 
     class ObfRoutingSectionInfo_P;

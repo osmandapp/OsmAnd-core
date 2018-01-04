@@ -52,6 +52,37 @@ OsmAnd::ObfRoutingSectionAttributeMapping::~ObfRoutingSectionAttributeMapping()
 {
 }
 
+void OsmAnd::ObfRoutingSectionAttributeMapping::registerMapping(
+                                                          const uint32_t id,
+                                                          const QString& tag,
+                                                          const QString& value)
+{
+    MapObject::AttributeMapping::registerMapping(id, tag, value);
+
+    // Create decode mapping
+    auto pDecode = decodeMap.getRef(id);
+    if (!pDecode)
+    {
+        LogPrintf(LogSeverityLevel::Error,
+                  "Decode attribute #%u is not defined. Capture of %s = %s ignored.",
+                  id,
+                  qPrintable(tag),
+                  qPrintable(value));
+        return;
+    }
+    const QStringRef tagRef(&pDecode->tag);
+    const QStringRef valueRef(&pDecode->value);
+    
+    // Capture quick-access rules
+    if (tag.startsWith(QLatin1String("ref:")))
+    {
+        const auto languageIdRef = tagRef.mid(QLatin1String("ref:").size());
+        localizedRefAttributes.insert(languageIdRef, id);
+        localizedRefAttributeIds.insert(id, languageIdRef);
+        refAttributeIds.insert(id);
+    }
+}
+
     /*else
     {
         LogPrintf(LogSeverityLevel::Debug, "%s = %s", qPrintable(ruleTag), qPrintable(ruleValue));

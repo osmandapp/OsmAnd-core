@@ -3,6 +3,7 @@
 #include "ObfRoutingSectionInfo.h"
 #include "ObfRoutingSectionInfo_P.h"
 #include "QKeyValueIterator.h"
+#include <ICU.h>
 
 const QHash<QString, QStringList> GEOCODING_ACCESS {
     {
@@ -62,6 +63,41 @@ const bool OsmAnd::Road::hasGeocodingAccess() const
             break;
     }
     return access;
+}
+
+QString OsmAnd::Road::getRefInNativeLanguage() const
+{
+    const auto citName = captions.constFind(attributeMapping->refAttributeId);
+    if (citName == captions.cend())
+        return QString::null;
+    return *citName;
+}
+
+QString OsmAnd::Road::getRefInLanguage(const QString& lang) const
+{
+    const auto citNameAttributeId = attributeMapping->localizedRefAttributes.constFind(&lang);
+    if (citNameAttributeId == attributeMapping->localizedRefAttributes.cend())
+        return QString::null;
+    
+    const auto citCaption = captions.constFind(*citNameAttributeId);
+    if (citCaption == captions.cend())
+        return QString::null;
+    return *citCaption;
+}
+
+QString OsmAnd::Road::getRef(const QString lang, bool transliterate) const
+{
+    QString name = QString();
+    if (!lang.isEmpty())
+        name = getRefInLanguage(lang);
+    
+    if (name.isNull())
+        name = getRefInNativeLanguage();
+    
+    if (transliterate && !name.isNull())
+        return OsmAnd::ICU::transliterateToLatin(name);
+    else
+        return name;
 }
 
 //OsmAnd::Road::Road( const std::shared_ptr<const Road>& that, int insertIdx, uint32_t x31, uint32_t y31 )

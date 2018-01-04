@@ -12,11 +12,11 @@
 #include <OsmAndCore.h>
 #include <OsmAndCore/CommonTypes.h>
 #include <OsmAndCore/Data/ObfMapObject.h>
+#include <OsmAndCore/Data/ObfRoutingSectionInfo.h>
 
 namespace OsmAnd
 {
     class ObfRoutingSectionReader_P;
-    class ObfRoutingSectionInfo;
 
     enum class RoadDirection : int32_t
     {
@@ -51,11 +51,16 @@ namespace OsmAnd
 
         // General information
         const std::shared_ptr<const ObfRoutingSectionInfo> section;
+        std::shared_ptr<const ObfRoutingSectionAttributeMapping> attributeMapping;
 
         // Road information
         QHash< uint32_t, QVector<uint32_t> > pointsTypes;
         QHash< ObfObjectId, RoadRestriction > restrictions;
-        
+
+        QString getRefInNativeLanguage() const;
+        QString getRefInLanguage(const QString& lang) const;
+        QString getRef(const QString lang, bool transliterate) const;
+
         const bool hasGeocodingAccess() const;
 
     friend class OsmAnd::ObfRoutingSectionReader_P;
