@@ -1451,7 +1451,8 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		if (!coastLines.empty()) {
 			coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					basemapCoastLines.empty(), true, tempResult);
-			addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
+			//addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
+			addBasemapCoastlines = !coastlinesWereAdded;
 		} else {
 			//addBasemapCoastlines = !detailedLandData;
 			addBasemapCoastlines = true;
