@@ -1453,7 +1453,8 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 					basemapCoastLines.empty(), true, tempResult);
 			addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
 		} else {
-			addBasemapCoastlines = !detailedLandData;
+			//addBasemapCoastlines = !detailedLandData;
+			addBasemapCoastlines = true;
 		}
 		detailedCoastlinesWereAdded = coastlinesWereAdded;
 		
