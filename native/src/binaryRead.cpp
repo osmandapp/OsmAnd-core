@@ -1332,8 +1332,8 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 	int bright = q->right;
 	int btop = q->top;
 	int bbottom = q->bottom;
-	if(q->zoom > 11) {
-		int shift = (31 - 11);
+	if(q->zoom > zoomOnlyForBasemaps) {
+		int shift = (31 - zoomOnlyForBasemaps);
 		bleft = (q->left >> shift) << shift;
 		bright = ((q->right >> shift) + 1) << shift;
 		btop = (q->top >> shift) << shift;
@@ -1460,12 +1460,19 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		detailedCoastlinesWereAdded = coastlinesWereAdded;
 		
 		if (addBasemapCoastlines) {
-			int shift = (31 - 11);
-		
+			int bleft = q->left;
+			int bright = q->right;
+			int btop = q->top;
+			int bbottom = q->bottom;
+			if(q->zoom > zoomOnlyForBasemaps) {
+				int shift = (31 - zoomOnlyForBasemaps);
+				bleft = (q->left >> shift) << shift;
+				bright = ((q->right >> shift) + 1) << shift;
+				btop = (q->top >> shift) << shift;
+				bbottom = ((q->bottom >> shift) + 1) << shift;
+			}
 			coastlinesWereAdded = processCoastlines(basemapCoastLines, 
-				(q->left >> shift) << shift, ((q->right >> shift) + 1) << shift, 
-				((q->bottom >> shift) + 1) << shift, (q->top >> shift) << shift,
-				 q->zoom, true, true, tempResult);			
+				bleft, bright, bbottom, btop, q->zoom, true, true, tempResult);			
 		}
 		// processCoastlines always create new objects
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
