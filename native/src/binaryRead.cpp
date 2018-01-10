@@ -1324,6 +1324,21 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		basemapExists |= file->isBasemap();
 	}
 	i = openFiles.begin();
+	int sleft = q->left;
+	int sright = q->right;
+	int stop = q->top;
+	int sbottom = q->bottom;
+	int bleft = q->left;
+	int bright = q->right;
+	int btop = q->top;
+	int bbottom = q->bottom;
+	if(q->zoom > 11) {
+		int shift = (31 - 11);
+		bleft = (q->left >> shift) << shift;
+		bright = ((q->right >> shift) + 1) << shift;
+		btop = (q->top >> shift) << shift;
+		bbottom = ((q->bottom >> shift) + 1) << shift;
+	}
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = *i;
 		if (q->req != NULL) {
@@ -1333,22 +1348,19 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		if (!q->publisher->isCancelled()) {
 			bool basemap = file->isBasemap();
 			bool external = file->isExternal();
-			// int sleft = q->left;
-			// int sright = q->right;
-			// int stop = q->top;
-			// int sbottom = q->bottom;
-			// if(basemap && q->zoom > 12) {
-			// 	int shift = (31 - 12);
-			// 	q->left = (q->left >> shift) << shift;
-			// 	q->right = ((q->right >> shift) + 1) << shift;
-			// 	q->top = (q->top >> shift) << shift;
-			// 	q->bottom = ((q->bottom >> shift) + 1) << shift;
-			// }
+			
+			 if(basemap) {
+			 	q->left = bleft;
+			 	q->right = bright;
+			 	q->top = btop;
+		 		q->bottom = bbottom;
+			} else {
+				q->left = sleft;
+			 	q->right = sright;
+			 	q->top = stop;
+		 		q->bottom = sbottom;
+			}
 			readMapObjects(q, file);
-			// q->left = sleft;
-			// q->right = sright;
-			// q->top = stop;
-			// q->bottom = sbottom;
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
 
@@ -1446,8 +1458,12 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		detailedCoastlinesWereAdded = coastlinesWereAdded;
 		
 		if (addBasemapCoastlines) {
-			coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
-					true, true, tempResult);			
+			int shift = (31 - 11);
+		
+			coastlinesWereAdded = processCoastlines(basemapCoastLines, 
+				(q->left >> shift) << shift, ((q->right >> shift) + 1) << shift, 
+				((q->bottom >> shift) + 1) << shift, (q->top >> shift) << shift,
+				 q->zoom, true, true, tempResult);			
 		}
 		// processCoastlines always create new objects
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
