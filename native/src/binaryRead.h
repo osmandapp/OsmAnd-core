@@ -374,6 +374,15 @@ struct RouteDataObject {
 		return directionRoute(startPoint, plus, 5);
 	}
     
+    bool bearingVsRouteDirection(double bearing) {
+        bool direction = true;
+        if (bearing >= 0) {
+            double diff = alignAngleDifference(directionRoute(0, true) - bearing / 180.f * M_PI);
+            direction = abs(diff) < M_PI / 2.f;
+        }
+        return direction;
+    }
+    
 	// Gives route direction of EAST degrees from NORTH ]-PI, PI]
 	double directionRoute(int startPoint, bool plus, float dist) {
 		int x = pointsX[startPoint];

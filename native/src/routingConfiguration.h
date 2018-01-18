@@ -60,7 +60,6 @@ private:
     UNORDERED(map)<string, SHARED_PTR<GeneralRouter> > routers;
     MAP_STR_STR attributes;
     UNORDERED(map)<int64_t, int_pair> impassableRoadLocations;
-    std::vector<SHARED_PTR<RouteDataObject> > impassableRoads;
 
 public:
     string defaultRouter;
@@ -96,18 +95,13 @@ public:
         return i;
     }
     
-    std::vector<SHARED_PTR<RouteDataObject> >& getImpassableRoads() {
-        return impassableRoads;
-    }
-    
     UNORDERED(map)<int64_t, int_pair>& getImpassableRoadLocations() {
         return impassableRoadLocations;
     }
     
-    bool addImpassableRoad(SHARED_PTR<RouteDataObject> route, int x31, int y31) {
-        if (impassableRoadLocations.find(route->id) == impassableRoadLocations.end()) {
-            impassableRoadLocations[route->id] = int_pair(x31, y31);
-            impassableRoads.push_back(route);
+    bool addImpassableRoad(int64_t routeId, int x31, int y31) {
+        if (impassableRoadLocations.find(routeId) == impassableRoadLocations.end()) {
+            impassableRoadLocations[routeId] = int_pair(x31, y31);
             return true;
         }
         return false;
@@ -125,9 +119,8 @@ public:
         attributes[name] = value;
     }
 
-    void removeImpassableRoad(SHARED_PTR<RouteDataObject> obj) {
-        impassableRoadLocations.erase(obj->id);
-        impassableRoads.erase(std::remove(impassableRoads.begin(), impassableRoads.end(), obj), impassableRoads.end());
+    void removeImpassableRoad(int64_t routeId) {
+        impassableRoadLocations.erase(routeId);
     }
 };
 
