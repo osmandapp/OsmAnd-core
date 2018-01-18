@@ -378,7 +378,7 @@ struct RouteDataObject {
         bool direction = true;
         if (bearing >= 0) {
             double diff = alignAngleDifference(directionRoute(0, true) - bearing / 180.f * M_PI);
-            direction = abs(diff) < M_PI / 2.f;
+            direction = fabs(diff) < M_PI / 2.f;
         }
         return direction;
     }

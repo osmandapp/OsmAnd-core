@@ -68,6 +68,7 @@ private:
         std::string toString() const;
     };
     
+public:
     /**
      * Interface to represent a single rule
      * <p/>
