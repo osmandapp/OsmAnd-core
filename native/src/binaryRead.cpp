@@ -897,7 +897,7 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 	int tag;
 	int si;
 	req->numberOfReadSubtrees++;
-	bool ocean = false;
+	int oceanTag = -1;
 	while ((tag = input->ReadTag()) != 0) {
 		if (req->publisher->isCancelled()) {
 			return false;
@@ -945,13 +945,15 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 			break;
 		}
 		case OsmAnd::OBF::OsmAndMapIndex_MapDataBox::kOceanFieldNumber : {
+			bool ocean = false;
 			DO_((WireFormatLite::ReadPrimitive<bool, WireFormatLite::TYPE_BOOL>(input, &ocean)));			
+			oceanTag = ocean ? 1 : 0;
 			break;
 		}
 		case OsmAnd::OBF::OsmAndMapIndex_MapDataBox::kBoxesFieldNumber: {
 			MapTreeBounds* child = new MapTreeBounds();
 			// ocean set only if there is no children
-			ocean = false;
+			oceanTag = -1;
 			readInt(input, &child->length);
 			child->filePointer = input->TotalBytesRead();
 			int oldLimit = input->PushLimit(child->length);
@@ -972,10 +974,13 @@ bool searchMapTreeBounds(CodedInputStream* input, MapTreeBounds* current, MapTre
 		}
 		}
 	}
-	if(ocean) {
-		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile %d %d zoom=12",
-				current->left >> 19, current->top >> 19);
-		req->ocean = ocean;
+	if(oceanTag >= 0) {
+		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Debug,  "Ocean tile = %d %d %d zoom=12",
+				oceanTag, current->left >> 19, current->top >> 19);
+		req->oceanTiles++;
+		if(oceanTag == 1) {
+			req->ocean++;
+		}
 	}
 	return true;
 }
@@ -1319,6 +1324,21 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		basemapExists |= file->isBasemap();
 	}
 	i = openFiles.begin();
+	int sleft = q->left;
+	int sright = q->right;
+	int stop = q->top;
+	int sbottom = q->bottom;
+	int bleft = q->left;
+	int bright = q->right;
+	int btop = q->top;
+	int bbottom = q->bottom;
+	if(q->zoom > zoomOnlyForBasemaps) {
+		int shift = (31 - zoomOnlyForBasemaps);
+		bleft = (q->left >> shift) << shift;
+		bright = ((q->right >> shift) + 1) << shift;
+		btop = (q->top >> shift) << shift;
+		bbottom = ((q->bottom >> shift) + 1) << shift;
+	}
 	for (; i != openFiles.end() && !q->publisher->isCancelled(); i++) {
 		BinaryMapFile* file = *i;
 		if (q->req != NULL) {
@@ -1328,22 +1348,19 @@ void readMapObjectsForRendering(SearchQuery* q, std::vector<MapDataObject*> & ba
 		if (!q->publisher->isCancelled()) {
 			bool basemap = file->isBasemap();
 			bool external = file->isExternal();
-			// int sleft = q->left;
-			// int sright = q->right;
-			// int stop = q->top;
-			// int sbottom = q->bottom;
-			// if(basemap && q->zoom > 12) {
-			// 	int shift = (31 - 12);
-			// 	q->left = (q->left >> shift) << shift;
-			// 	q->right = ((q->right >> shift) + 1) << shift;
-			// 	q->top = (q->top >> shift) << shift;
-			// 	q->bottom = ((q->bottom >> shift) + 1) << shift;
-			// }
+			
+			 if(basemap) {
+			 	q->left = bleft;
+			 	q->right = bright;
+			 	q->top = btop;
+		 		q->bottom = bbottom;
+			} else {
+				q->left = sleft;
+			 	q->right = sright;
+			 	q->top = stop;
+		 		q->bottom = sbottom;
+			}
 			readMapObjects(q, file);
-			// q->left = sleft;
-			// q->right = sright;
-			// q->top = stop;
-			// q->bottom = sbottom;
 			std::vector<MapDataObject*>::iterator r = q->publisher->result.begin();
 			tempResult.reserve((size_t) (q->publisher->result.size() + tempResult.size()));
 
@@ -1423,7 +1440,7 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		deleteObjects(basemapCoastLines);
 		deleteObjects(basemapResult);
 	} else {
-		bool ocean = q->ocean;
+		float ocean = q->oceanTiles > 0 ? ((float)q->ocean) / q->oceanTiles : 0;
 		bool addBasemapCoastlines = true;
 		bool emptyData = q->zoom > zoomOnlyForBasemaps && tempResult.empty() && coastLines.empty();
 		// determine if there are enough objects like land/lake..
@@ -1434,24 +1451,37 @@ ResultPublisher* searchObjectsForRendering(SearchQuery* q, bool skipDuplicates, 
 		if (!coastLines.empty()) {
 			coastlinesWereAdded = processCoastlines(coastLines, q->left, q->right, q->bottom, q->top, q->zoom,
 					basemapCoastLines.empty(), true, tempResult);
-			addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
+			//addBasemapCoastlines = (!coastlinesWereAdded && !detailedLandData) || q->zoom <= zoomOnlyForBasemaps;
+			addBasemapCoastlines = !coastlinesWereAdded;
 		} else {
-			addBasemapCoastlines = !detailedLandData;
+			//addBasemapCoastlines = !detailedLandData;
+			addBasemapCoastlines = true;
 		}
 		detailedCoastlinesWereAdded = coastlinesWereAdded;
 		
 		if (addBasemapCoastlines) {
-			coastlinesWereAdded = processCoastlines(basemapCoastLines, q->left, q->right, q->bottom, q->top, q->zoom,
-					true, true, tempResult);			
+			int bleft = q->left;
+			int bright = q->right;
+			int btop = q->top;
+			int bbottom = q->bottom;
+			if(q->zoom > zoomOnlyForBasemaps) {
+				int shift = (31 - zoomOnlyForBasemaps);
+				bleft = (q->left >> shift) << shift;
+				bright = ((q->right >> shift) + 1) << shift;
+				btop = (q->top >> shift) << shift;
+				bbottom = ((q->bottom >> shift) + 1) << shift;
+			}
+			coastlinesWereAdded = processCoastlines(basemapCoastLines, 
+				bleft, bright, bbottom, btop, q->zoom, true, true, tempResult);			
 		}
 		// processCoastlines always create new objects
 		OsmAnd::LogPrintf(OsmAnd::LogSeverityLevel::Info,
-				"Detailed coastlines = %d, basemap coastlines %d, ocean tile %d. Detailed added %d, basemap processed %d, basemap added %d.",
+				"Detailed coastlines = %d, basemap coastlines %d, ocean tile %f. Detailed added %d, basemap processed %d, basemap added %d.",
 					coastLines.size(), basemapCoastLines.size(), ocean, detailedCoastlinesWereAdded, addBasemapCoastlines,
 					(addBasemapCoastlines ? false : coastlinesWereAdded));
 		deleteObjects(basemapCoastLines);
 		deleteObjects(coastLines);
-		if (!coastlinesWereAdded && ocean) {
+		if (!coastlinesWereAdded && ocean > 0.5) {
 			MapDataObject* o = new MapDataObject();
 			o->points.push_back(int_pair(q->left, q->top));
 			o->points.push_back(int_pair(q->right, q->top));
