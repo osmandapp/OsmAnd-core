@@ -90,14 +90,14 @@ public:
          * @param checkPrevious only check for overflowing times (after midnight) or don't check for it
          * @return true if the feature is open
          */
-        virtual bool isOpenedForTime(const std::tm& date, bool checkPrevious) const = 0;
+        virtual bool isOpenedForTime(const tm& dateTime, bool checkPrevious) const = 0;
         
         /**
          * Check if, for this rule, the feature is opened for time "cal"
          * @param date
          * @return true if the feature is open
          */
-        virtual bool isOpenedForTime(const std::tm& date) const = 0;
+        virtual bool isOpenedForTime(const tm& dateTime) const = 0;
         
         /**
          * Check if the previous day before "date" is part of this rule
@@ -105,7 +105,7 @@ public:
          * @param date; the time to check
          * @return true if the previous day is part of the rule
          */
-        virtual bool containsPreviousDay(const std::tm& date) const = 0;
+        virtual bool containsPreviousDay(const tm& dateTime) const = 0;
         
         /**
          * Check if the day of "date" is part of this rule
@@ -113,7 +113,7 @@ public:
          * @param date the time to check
          * @return true if the day is part of the rule
          */
-        virtual bool containsDay(const std::tm& date) const = 0;
+        virtual bool containsDay(const tm& dateTime) const = 0;
         
         /**
          * Check if the next day after "cal" is part of this rule
@@ -121,7 +121,7 @@ public:
          * @param cal the time to check
          * @return true if the next day is part of the rule
          */
-        virtual bool containsNextDay(const std::tm& date) const = 0;
+        virtual bool containsNextDay(const tm& dateTime) const = 0;
         
         /**
          * Check if the month of "date" is part of this rule
@@ -129,7 +129,7 @@ public:
          * @param date the time to check
          * @return true if the month is part of the rule
          */
-        virtual bool containsMonth(const std::tm& date) const = 0;
+        virtual bool containsMonth(const tm& dateTime) const = 0;
         
         /**
          * @return true if the rule overlap to the next day
@@ -140,11 +140,11 @@ public:
          * @param date
          * @return true if rule applies for current time
          */
-        virtual bool contains(const std::tm& date) const = 0;
+        virtual bool contains(const tm& dateTime) const = 0;
         
         virtual bool isOpened24_7() const = 0;
 
-        virtual std::string getTime(const std::tm& date, bool checkAnotherDay, int limit, bool opening) const = 0;
+        virtual std::string getTime(const tm& dateTime, bool checkAnotherDay, int limit, bool opening) const = 0;
 
         virtual std::string toRuleString() const = 0;
         virtual std::string toLocalRuleString() const = 0;
@@ -159,10 +159,10 @@ public:
     struct BasicOpeningHourRule : public OpeningHoursRule
     {
     private:
-        int getCurrentDay(const std::tm& date) const;
+        int getCurrentDay(const tm& dateTime) const;
         int getPreviousDay(int currentDay) const;
         int getNextDay(int currentDay) const;
-        int getCurrentTimeInMinutes(const std::tm& date) const;
+        int getCurrentTimeInMinutes(const tm& dateTime) const;
         std::string toRuleString(const std::vector<std::string>& dayNames, const std::vector<std::string>& monthNames) const;
         void addArray(const std::vector<bool>& array, const std::vector<std::string>& arrayNames, std::stringstream& b) const;
 
@@ -320,7 +320,7 @@ public:
          * @param date the time to check
          * @return true if this day is part of the rule
          */
-        bool containsDay(const std::tm& date) const;
+        bool containsDay(const tm& dateTime) const;
         
         bool hasOverlapTimes() const;
 
@@ -330,7 +330,7 @@ public:
          * @param date the time to check
          * @return true if the next day is part of the rule
          */
-        bool containsNextDay(const std::tm& date) const;
+        bool containsNextDay(const tm& dateTime) const;
         
         /**
          * Check if the previous weekday of time "date" is part of this rule
@@ -338,7 +338,7 @@ public:
          * @param date the time to check
          * @return true if the previous day is part of the rule
          */
-        bool containsPreviousDay(const std::tm& date) const;
+        bool containsPreviousDay(const tm& dateTime) const;
         
         /**
          * Check if the month of "date" is part of this rule
@@ -346,7 +346,7 @@ public:
          * @param date the time to check
          * @return true if the month is part of the rule
          */
-        bool containsMonth(const std::tm& date) const;
+        bool containsMonth(const tm& dateTime) const;
         
         /**
          * Check if this rule says the feature is open at time "date"
@@ -354,14 +354,14 @@ public:
          * @param date the time to check
          * @return false in all other cases, also if only day is wrong
          */
-        bool isOpenedForTime(const std::tm& date, bool checkPrevious) const;
-        bool isOpenedForTime(const std::tm& date) const;
+        bool isOpenedForTime(const tm& dateTime, bool checkPrevious) const;
+        bool isOpenedForTime(const tm& dateTime) const;
 
-        bool contains(const std::tm& date) const;
+        bool contains(const tm& dateTime) const;
         
         bool isOpened24_7() const;
 
-        std::string getTime(const std::tm& date, bool checkAnotherDay, int limit, bool opening) const;
+        std::string getTime(const tm& dateTime, bool checkAnotherDay, int limit, bool opening) const;
 
         std::string toRuleString() const;
         std::string toLocalRuleString() const;
@@ -380,7 +380,7 @@ public:
         int timesSize() const;
         void deleteTimeRange(int position);
         
-        int calculate(const std::tm& date) const;
+        int calculate(const tm& dateTime) const;
     };
     
     struct UnparseableRule : public OpeningHoursRule
@@ -392,12 +392,12 @@ public:
         UnparseableRule(const std::string& ruleString);
         virtual ~UnparseableRule();
 
-        bool isOpenedForTime(const std::tm& date, bool checkPrevious) const;
-        bool containsPreviousDay(const std::tm& date) const;
+        bool isOpenedForTime(const tm& dateTime, bool checkPrevious) const;
+        bool containsPreviousDay(const tm& dateTime) const;
         bool hasOverlapTimes() const;
-        bool containsDay(const std::tm& date) const;
-        bool containsNextDay(const std::tm& date) const;
-        bool containsMonth(const std::tm& date) const;
+        bool containsDay(const tm& dateTime) const;
+        bool containsNextDay(const tm& dateTime) const;
+        bool containsMonth(const tm& dateTime) const;
 
         bool isOpened24_7() const;
         
@@ -405,10 +405,10 @@ public:
         std::string toLocalRuleString() const;
         std::string toString() const;
 
-        std::string getTime(const std::tm& date, bool checkAnotherDay, int limit, bool opening) const;
+        std::string getTime(const tm& dateTime, bool checkAnotherDay, int limit, bool opening) const;
         
-        bool isOpenedForTime(const std::tm& date) const;
-        bool contains(const std::tm& date) const;
+        bool isOpenedForTime(const tm& dateTime) const;
+        bool contains(const tm& dateTime) const;
     };
     
     /**
@@ -460,7 +460,7 @@ public:
          * @param cal the time to check
          * @return true if feature is open
          */
-        bool isOpenedForTimeV2(const std::tm& date) const;
+        bool isOpenedForTimeV2(const tm& dateTime) const;
         
         /**
          * check if the feature is opened at time "cal"
@@ -468,24 +468,24 @@ public:
          * @param cal the time to check
          * @return true if feature is open
          */
-        bool isOpenedForTime(const std::tm& date) const;
+        bool isOpenedForTime(const tm& dateTime) const;
 
         
         bool isOpened24_7() const;
         
-        std::string getNearToOpeningTime(const std::tm& date) const;
-        std::string getOpeningTime(const std::tm& date) const;
-        std::string getNearToClosingTime(const std::tm& date) const;
-        std::string getClosingTime(const std::tm& date) const;
+        std::string getNearToOpeningTime(const tm& dateTime) const;
+        std::string getOpeningTime(const tm& dateTime) const;
+        std::string getNearToClosingTime(const tm& dateTime) const;
+        std::string getClosingTime(const tm& dateTime) const;
         
-        std::string getOpeningDay(const std::tm& date) const;
-        std::string getTime(const std::tm& date, int limit, bool opening) const;
-        std::string getTimeDay(const std::tm& date, int limit, bool opening) const;
-        std::string getTimeAnotherDay(const std::tm& date, int limit, bool opening) const;
+        std::string getOpeningDay(const tm& dateTime) const;
+        std::string getTime(const tm& dateTime, int limit, bool opening) const;
+        std::string getTimeDay(const tm& dateTime, int limit, bool opening) const;
+        std::string getTimeAnotherDay(const tm& dateTime, int limit, bool opening) const;
 
-        std::string getCurrentRuleTime(const std::tm& date) const;
+        std::string getCurrentRuleTime(const tm& dateTime) const;
         
-        std::string getCurrentRuleTimeV1(const std::tm& date) const;
+        std::string getCurrentRuleTimeV1(const tm& dateTime) const;
         
         std::string toString() const;
         std::string toLocalString() const;
@@ -513,7 +513,7 @@ public:
 
     static std::shared_ptr<OpeningHours> parseOpenedHours(const std::string& format);
 
-    //bool isOpenedForTime(const std::tm& time) const;
+    //bool isOpenedForTime(const tm& dateTime) const;
     static void runTest();
 
 };
