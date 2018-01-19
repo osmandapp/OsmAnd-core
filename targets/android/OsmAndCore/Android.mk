@@ -38,8 +38,8 @@ LOCAL_SRC_FILES := \
 	$(OSMAND_CORE_RELATIVE)/src/multipolygons.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/renderRules.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/rendering.cpp \
-	$(OSMAND_CORE_RELATIVE)/src/routeTypeRule.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/openingHoursParser.cpp \
+	$(OSMAND_CORE_RELATIVE)/src/routeTypeRule.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/precalculatedRouteDirection.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/routingConfiguration.cpp \
 	$(OSMAND_CORE_RELATIVE)/src/routingContext.cpp \
