@@ -82,7 +82,7 @@ void RouteTypeRule::analyze() {
         }
         if (i > 0) {
             int val = 0;
-            if (std::sscanf(v.substr(0, i).c_str(), "%d", &val) != EOF) {
+            if (sscanf(v.substr(0, i).c_str(), "%d", &val) != EOF) {
                 intValue = val;
             } else {
                 intValue = 0;
